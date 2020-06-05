@@ -508,7 +508,7 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     __tracebackhide__ = True
 
     if isinstance(expected, Decimal):
-        cls = ApproxDecimal
+        cls = ApproxDecimal  # type: Type[ApproxBase]
     elif isinstance(expected, Number):
         cls = ApproxScalar
     elif isinstance(expected, Mapping):
@@ -534,7 +534,7 @@ def _is_numpy_array(obj):
     """
     import sys
 
-    np = sys.modules.get("numpy")
+    np = sys.modules.get("numpy")  # type: Any
     if np is not None:
         return isinstance(obj, np.ndarray)
     return False
@@ -712,6 +712,7 @@ def raises(  # noqa: F811
     fail(message)
 
 
+# This doesn't work with mypy for now. Use fail.Exception instead.
 raises.Exception = fail.Exception  # type: ignore
 
 

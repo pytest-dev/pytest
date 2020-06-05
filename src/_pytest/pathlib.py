@@ -348,7 +348,7 @@ def make_numbered_dir_with_cleanup(
     raise e
 
 
-def resolve_from_str(input, root):
+def resolve_from_str(input: str, root):
     assert not isinstance(input, Path), "would break on py2"
     root = Path(root)
     input = expanduser(input)

@@ -1,9 +1,18 @@
 """ support for skip/xfail functions and markers. """
+from typing import Optional
+from typing import Tuple
+
+from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import Parser
 from _pytest.mark.evaluate import MarkEvaluator
+from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.python import Function
+from _pytest.reports import BaseReport
+from _pytest.runner import CallInfo
 from _pytest.store import StoreKey
 
 
@@ -12,7 +21,7 @@ evalxfail_key = StoreKey[MarkEvaluator]()
 unexpectedsuccess_key = StoreKey[str]()
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--runxfail",
@@ -31,7 +40,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     if config.option.runxfail:
         # yay a hack
         import pytest
@@ -42,7 +51,7 @@ def pytest_configure(config):
         def nop(*args, **kwargs):
             pass
 
-        nop.Exception = xfail.Exception
+        nop.Exception = xfail.Exception  # type: ignore[attr-defined] # noqa: F821
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line(
@@ -72,7 +81,7 @@ def pytest_configure(config):
 
 
 @hookimpl(tryfirst=True)
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item: Item) -> None:
     # Check if skip or skipif are specified as pytest marks
     item._store[skipped_by_mark_key] = False
     eval_skipif = MarkEvaluator(item, "skipif")
@@ -94,7 +103,7 @@ def pytest_runtest_setup(item):
 
 
 @hookimpl(hookwrapper=True)
-def pytest_pyfunc_call(pyfuncitem):
+def pytest_pyfunc_call(pyfuncitem: Function):
     check_xfail_no_run(pyfuncitem)
     outcome = yield
     passed = outcome.excinfo is None
@@ -102,7 +111,7 @@ def pytest_pyfunc_call(pyfuncitem):
         check_strict_xfail(pyfuncitem)
 
 
-def check_xfail_no_run(item):
+def check_xfail_no_run(item: Item) -> None:
     """check xfail(run=False)"""
     if not item.config.option.runxfail:
         evalxfail = item._store[evalxfail_key]
@@ -111,7 +120,7 @@ def check_xfail_no_run(item):
                 xfail("[NOTRUN] " + evalxfail.getexplanation())
 
 
-def check_strict_xfail(pyfuncitem):
+def check_strict_xfail(pyfuncitem: Function) -> None:
     """check xfail(strict=True) for the given PASSING test"""
     evalxfail = pyfuncitem._store[evalxfail_key]
     if evalxfail.istrue():
@@ -124,7 +133,7 @@ def check_strict_xfail(pyfuncitem):
 
 
 @hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
     outcome = yield
     rep = outcome.get_result()
     evalxfail = item._store.get(evalxfail_key, None)
@@ -139,7 +148,8 @@ def pytest_runtest_makereport(item, call):
 
     elif item.config.option.runxfail:
         pass  # don't interfere
-    elif call.excinfo and call.excinfo.errisinstance(xfail.Exception):
+    elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
+        assert call.excinfo.value.msg is not None
         rep.wasxfail = "reason: " + call.excinfo.value.msg
         rep.outcome = "skipped"
     elif evalxfail and not rep.skipped and evalxfail.wasvalid() and evalxfail.istrue():
@@ -169,15 +179,17 @@ def pytest_runtest_makereport(item, call):
         # the location of where the skip exception was raised within pytest
         _, _, reason = rep.longrepr
         filename, line = item.reportinfo()[:2]
+        assert line is not None
         rep.longrepr = str(filename), line + 1, reason
 
 
 # called by terminalreporter progress reporting
 
 
-def pytest_report_teststatus(report):
+def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:
     if hasattr(report, "wasxfail"):
         if report.skipped:
             return "xfailed", "x", "XFAIL"
         elif report.passed:
             return "xpassed", "X", "XPASS"
+    return None

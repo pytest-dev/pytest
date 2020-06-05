@@ -32,7 +32,7 @@ class TestReportSerialization:
         assert test_b_call.outcome == "passed"
         assert test_b_call._to_json()["longrepr"] is None
 
-    def test_xdist_report_longrepr_reprcrash_130(self, testdir):
+    def test_xdist_report_longrepr_reprcrash_130(self, testdir) -> None:
         """Regarding issue pytest-xdist#130
 
         This test came originally from test_remote.py in xdist (ca03269).
@@ -50,6 +50,7 @@ class TestReportSerialization:
         rep.longrepr.sections.append(added_section)
         d = rep._to_json()
         a = TestReport._from_json(d)
+        assert a.longrepr is not None
         # Check assembled == rep
         assert a.__dict__.keys() == rep.__dict__.keys()
         for key in rep.__dict__.keys():
@@ -67,7 +68,7 @@ class TestReportSerialization:
         # Missing section attribute PR171
         assert added_section in a.longrepr.sections
 
-    def test_reprentries_serialization_170(self, testdir):
+    def test_reprentries_serialization_170(self, testdir) -> None:
         """Regarding issue pytest-xdist#170
 
         This test came originally from test_remote.py in xdist (ca03269).
@@ -87,6 +88,7 @@ class TestReportSerialization:
         rep = reports[1]
         d = rep._to_json()
         a = TestReport._from_json(d)
+        assert a.longrepr is not None
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
@@ -102,7 +104,7 @@ class TestReportSerialization:
             assert rep_entries[i].reprlocals.lines == a_entries[i].reprlocals.lines
             assert rep_entries[i].style == a_entries[i].style
 
-    def test_reprentries_serialization_196(self, testdir):
+    def test_reprentries_serialization_196(self, testdir) -> None:
         """Regarding issue pytest-xdist#196
 
         This test came originally from test_remote.py in xdist (ca03269).
@@ -122,6 +124,7 @@ class TestReportSerialization:
         rep = reports[1]
         d = rep._to_json()
         a = TestReport._from_json(d)
+        assert a.longrepr is not None
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
@@ -157,6 +160,7 @@ class TestReportSerialization:
             assert newrep.failed == rep.failed
             assert newrep.skipped == rep.skipped
             if newrep.skipped and not hasattr(newrep, "wasxfail"):
+                assert newrep.longrepr is not None
                 assert len(newrep.longrepr) == 3
             assert newrep.outcome == rep.outcome
             assert newrep.when == rep.when
@@ -316,7 +320,7 @@ class TestReportSerialization:
         # elsewhere and we do check the contents of the longrepr object after loading it.
         loaded_report.longrepr.toterminal(tw_mock)
 
-    def test_chained_exceptions_no_reprcrash(self, testdir, tw_mock):
+    def test_chained_exceptions_no_reprcrash(self, testdir, tw_mock) -> None:
         """Regression test for tracebacks without a reprcrash (#5971)
 
         This happens notably on exceptions raised by multiprocess.pool: the exception transfer
@@ -367,7 +371,7 @@ class TestReportSerialization:
 
         reports = reprec.getreports("pytest_runtest_logreport")
 
-        def check_longrepr(longrepr):
+        def check_longrepr(longrepr) -> None:
             assert isinstance(longrepr, ExceptionChainRepr)
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
@@ -378,6 +382,7 @@ class TestReportSerialization:
             assert "ValueError: value error" in str(tb2)
 
             assert fileloc1 is None
+            assert fileloc2 is not None
             assert fileloc2.message == "ValueError: value error"
 
         # 3 reports: setup/call/teardown: get the call report
@@ -394,6 +399,7 @@ class TestReportSerialization:
         check_longrepr(loaded_report.longrepr)
 
         # for same reasons as previous test, ensure we don't blow up here
+        assert loaded_report.longrepr is not None
         loaded_report.longrepr.toterminal(tw_mock)
 
     def test_report_prevent_ConftestImportFailure_hiding_exception(self, testdir):

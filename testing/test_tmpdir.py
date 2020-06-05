@@ -1,6 +1,8 @@
 import os
 import stat
 import sys
+from typing import Callable
+from typing import List
 
 import attr
 
@@ -263,10 +265,10 @@ class TestNumberedDir:
 
         lockfile.unlink()
 
-    def test_lock_register_cleanup_removal(self, tmp_path):
+    def test_lock_register_cleanup_removal(self, tmp_path: Path) -> None:
         lock = create_cleanup_lock(tmp_path)
 
-        registry = []
+        registry = []  # type: List[Callable[..., None]]
         register_cleanup_lock_removal(lock, register=registry.append)
 
         (cleanup_func,) = registry
@@ -285,7 +287,7 @@ class TestNumberedDir:
 
         assert not lock.exists()
 
-    def _do_cleanup(self, tmp_path):
+    def _do_cleanup(self, tmp_path: Path) -> None:
         self.test_make(tmp_path)
         cleanup_numbered_dir(
             root=tmp_path,
@@ -367,7 +369,7 @@ class TestRmRf:
 
         assert not adir.is_dir()
 
-    def test_on_rm_rf_error(self, tmp_path):
+    def test_on_rm_rf_error(self, tmp_path: Path) -> None:
         adir = tmp_path / "dir"
         adir.mkdir()
 
@@ -377,32 +379,32 @@ class TestRmRf:
 
         # unknown exception
         with pytest.warns(pytest.PytestWarning):
-            exc_info = (None, RuntimeError(), None)
-            on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
+            exc_info1 = (None, RuntimeError(), None)
+            on_rm_rf_error(os.unlink, str(fn), exc_info1, start_path=tmp_path)
             assert fn.is_file()
 
         # we ignore FileNotFoundError
-        exc_info = (None, FileNotFoundError(), None)
-        assert not on_rm_rf_error(None, str(fn), exc_info, start_path=tmp_path)
+        exc_info2 = (None, FileNotFoundError(), None)
+        assert not on_rm_rf_error(None, str(fn), exc_info2, start_path=tmp_path)
 
         # unknown function
         with pytest.warns(
             pytest.PytestWarning,
             match=r"^\(rm_rf\) unknown function None when removing .*foo.txt:\nNone: ",
         ):
-            exc_info = (None, PermissionError(), None)
-            on_rm_rf_error(None, str(fn), exc_info, start_path=tmp_path)
+            exc_info3 = (None, PermissionError(), None)
+            on_rm_rf_error(None, str(fn), exc_info3, start_path=tmp_path)
             assert fn.is_file()
 
         # ignored function
         with pytest.warns(None) as warninfo:
-            exc_info = (None, PermissionError(), None)
-            on_rm_rf_error(os.open, str(fn), exc_info, start_path=tmp_path)
+            exc_info4 = (None, PermissionError(), None)
+            on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
             assert fn.is_file()
         assert not [x.message for x in warninfo]
 
-        exc_info = (None, PermissionError(), None)
-        on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
+        exc_info5 = (None, PermissionError(), None)
+        on_rm_rf_error(os.unlink, str(fn), exc_info5, start_path=tmp_path)
         assert not fn.is_file()
 
 

@@ -2,6 +2,8 @@ import os
 import re
 import sys
 import textwrap
+from typing import Dict
+from typing import Generator
 
 import pytest
 from _pytest.compat import TYPE_CHECKING
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def mp():
+def mp() -> Generator[MonkeyPatch, None, None]:
     cwd = os.getcwd()
     sys_path = list(sys.path)
     yield MonkeyPatch()
@@ -20,14 +22,14 @@ def mp():
     os.chdir(cwd)
 
 
-def test_setattr():
+def test_setattr() -> None:
     class A:
         x = 1
 
     monkeypatch = MonkeyPatch()
     pytest.raises(AttributeError, monkeypatch.setattr, A, "notexists", 2)
     monkeypatch.setattr(A, "y", 2, raising=False)
-    assert A.y == 2
+    assert A.y == 2  # type: ignore
     monkeypatch.undo()
     assert not hasattr(A, "y")
 
@@ -49,17 +51,17 @@ class TestSetattrWithImportPath:
         monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
 
-    def test_string_expression_class(self, monkeypatch):
+    def test_string_expression_class(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.setattr("_pytest.config.Config", 42)
         import _pytest
 
-        assert _pytest.config.Config == 42
+        assert _pytest.config.Config == 42  # type: ignore
 
-    def test_unicode_string(self, monkeypatch):
+    def test_unicode_string(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.setattr("_pytest.config.Config", 42)
         import _pytest
 
-        assert _pytest.config.Config == 42
+        assert _pytest.config.Config == 42  # type: ignore
         monkeypatch.delattr("_pytest.config.Config")
 
     def test_wrong_target(self, monkeypatch):
@@ -73,10 +75,10 @@ class TestSetattrWithImportPath:
             AttributeError, lambda: monkeypatch.setattr("os.path.qweqwe", None)
         )
 
-    def test_unknown_attr_non_raising(self, monkeypatch):
+    def test_unknown_attr_non_raising(self, monkeypatch: MonkeyPatch) -> None:
         # https://github.com/pytest-dev/pytest/issues/746
         monkeypatch.setattr("os.path.qweqwe", 42, raising=False)
-        assert os.path.qweqwe == 42
+        assert os.path.qweqwe == 42  # type: ignore
 
     def test_delattr(self, monkeypatch):
         monkeypatch.delattr("os.path.abspath")
@@ -123,8 +125,8 @@ def test_setitem():
     assert d["x"] == 5
 
 
-def test_setitem_deleted_meanwhile():
-    d = {}
+def test_setitem_deleted_meanwhile() -> None:
+    d = {}  # type: Dict[str, object]
     monkeypatch = MonkeyPatch()
     monkeypatch.setitem(d, "x", 2)
     del d["x"]
@@ -148,8 +150,8 @@ def test_setenv_deleted_meanwhile(before):
         assert key not in os.environ
 
 
-def test_delitem():
-    d = {"x": 1}
+def test_delitem() -> None:
+    d = {"x": 1}  # type: Dict[str, object]
     monkeypatch = MonkeyPatch()
     monkeypatch.delitem(d, "x")
     assert "x" not in d
@@ -241,7 +243,7 @@ def test_monkeypatch_plugin(testdir):
     assert tuple(res) == (1, 0, 0), res
 
 
-def test_syspath_prepend(mp):
+def test_syspath_prepend(mp: MonkeyPatch):
     old = list(sys.path)
     mp.syspath_prepend("world")
     mp.syspath_prepend("hello")
@@ -253,7 +255,7 @@ def test_syspath_prepend(mp):
     assert sys.path == old
 
 
-def test_syspath_prepend_double_undo(mp):
+def test_syspath_prepend_double_undo(mp: MonkeyPatch):
     old_syspath = sys.path[:]
     try:
         mp.syspath_prepend("hello world")
@@ -265,24 +267,24 @@ def test_syspath_prepend_double_undo(mp):
         sys.path[:] = old_syspath
 
 
-def test_chdir_with_path_local(mp, tmpdir):
+def test_chdir_with_path_local(mp: MonkeyPatch, tmpdir):
     mp.chdir(tmpdir)
     assert os.getcwd() == tmpdir.strpath
 
 
-def test_chdir_with_str(mp, tmpdir):
+def test_chdir_with_str(mp: MonkeyPatch, tmpdir):
     mp.chdir(tmpdir.strpath)
     assert os.getcwd() == tmpdir.strpath
 
 
-def test_chdir_undo(mp, tmpdir):
+def test_chdir_undo(mp: MonkeyPatch, tmpdir):
     cwd = os.getcwd()
     mp.chdir(tmpdir)
     mp.undo()
     assert os.getcwd() == cwd
 
 
-def test_chdir_double_undo(mp, tmpdir):
+def test_chdir_double_undo(mp: MonkeyPatch, tmpdir):
     mp.chdir(tmpdir.strpath)
     mp.undo()
     tmpdir.chdir()

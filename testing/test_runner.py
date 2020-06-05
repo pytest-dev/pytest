@@ -465,27 +465,27 @@ def test_report_extra_parameters(reporttype: "Type[reports.BaseReport]") -> None
 
 
 def test_callinfo() -> None:
-    ci = runner.CallInfo.from_call(lambda: 0, "123")
-    assert ci.when == "123"
+    ci = runner.CallInfo.from_call(lambda: 0, "collect")
+    assert ci.when == "collect"
     assert ci.result == 0
     assert "result" in repr(ci)
-    assert repr(ci) == "<CallInfo when='123' result: 0>"
-    assert str(ci) == "<CallInfo when='123' result: 0>"
+    assert repr(ci) == "<CallInfo when='collect' result: 0>"
+    assert str(ci) == "<CallInfo when='collect' result: 0>"
 
-    ci = runner.CallInfo.from_call(lambda: 0 / 0, "123")
-    assert ci.when == "123"
-    assert not hasattr(ci, "result")
-    assert repr(ci) == "<CallInfo when='123' excinfo={!r}>".format(ci.excinfo)
-    assert str(ci) == repr(ci)
-    assert ci.excinfo
+    ci2 = runner.CallInfo.from_call(lambda: 0 / 0, "collect")
+    assert ci2.when == "collect"
+    assert not hasattr(ci2, "result")
+    assert repr(ci2) == "<CallInfo when='collect' excinfo={!r}>".format(ci2.excinfo)
+    assert str(ci2) == repr(ci2)
+    assert ci2.excinfo
 
     # Newlines are escaped.
     def raise_assertion():
         assert 0, "assert_msg"
 
-    ci = runner.CallInfo.from_call(raise_assertion, "call")
-    assert repr(ci) == "<CallInfo when='call' excinfo={!r}>".format(ci.excinfo)
-    assert "\n" not in repr(ci)
+    ci3 = runner.CallInfo.from_call(raise_assertion, "call")
+    assert repr(ci3) == "<CallInfo when='call' excinfo={!r}>".format(ci3.excinfo)
+    assert "\n" not in repr(ci3)
 
 
 # design question: do we want general hooks in python files?
@@ -884,7 +884,7 @@ def test_store_except_info_on_error() -> None:
                 raise IndexError("TEST")
 
     try:
-        runner.pytest_runtest_call(ItemMightRaise())
+        runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type] # noqa: F821
     except IndexError:
         pass
     # Check that exception info is stored on sys
@@ -895,7 +895,7 @@ def test_store_except_info_on_error() -> None:
 
     # The next run should clear the exception info stored by the previous run
     ItemMightRaise.raise_error = False
-    runner.pytest_runtest_call(ItemMightRaise())
+    runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type] # noqa: F821
     assert not hasattr(sys, "last_type")
     assert not hasattr(sys, "last_value")
     assert not hasattr(sys, "last_traceback")

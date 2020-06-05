@@ -15,7 +15,9 @@ from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Mapping
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Union
 
@@ -41,23 +43,34 @@ from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.fixtures import FuncFixtureInfo
+from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
+from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.pathlib import parts
+from _pytest.reports import TerminalRepr
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
+if TYPE_CHECKING:
+    from typing import Type
+    from typing_extensions import Literal
+    from _pytest.fixtures import _Scope
 
-def pytest_addoption(parser):
+
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
         "--fixtures",
@@ -112,13 +125,14 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.showfixtures:
         showfixtures(config)
         return 0
     if config.option.show_fixtures_per_test:
         show_fixtures_per_test(config)
         return 0
+    return None
 
 
 def pytest_generate_tests(metafunc: "Metafunc") -> None:
@@ -127,7 +141,7 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
         metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc]
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.addinivalue_line(
         "markers",
         "parametrize(argnames, argvalues): call a test function multiple "
@@ -161,7 +175,7 @@ def async_warn_and_skip(nodeid: str) -> None:
 
 
 @hookimpl(trylast=True)
-def pytest_pyfunc_call(pyfuncitem: "Function"):
+def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     testfunction = pyfuncitem.obj
     if is_async_function(testfunction):
         async_warn_and_skip(pyfuncitem.nodeid)
@@ -173,16 +187,20 @@ def pytest_pyfunc_call(pyfuncitem: "Function"):
     return True
 
 
-def pytest_collect_file(path, parent):
+def pytest_collect_file(path: py.path.local, parent) -> Optional["Module"]:
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
             if not path_matches_patterns(
                 path, parent.config.getini("python_files") + ["__init__.py"]
             ):
-                return
+                return None
         ihook = parent.session.gethookproxy(path)
-        return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
+        module = ihook.pytest_pycollect_makemodule(
+            path=path, parent=parent
+        )  # type: Module
+        return module
+    return None
 
 
 def path_matches_patterns(path, patterns):
@@ -190,14 +208,16 @@ def path_matches_patterns(path, patterns):
     return any(path.fnmatch(pattern) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(path, parent):
+def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
     if path.basename == "__init__.py":
-        return Package.from_parent(parent, fspath=path)
-    return Module.from_parent(parent, fspath=path)
+        pkg = Package.from_parent(parent, fspath=path)  # type: Package
+        return pkg
+    mod = Module.from_parent(parent, fspath=path)  # type: Module
+    return mod
 
 
 @hookimpl(hookwrapper=True)
-def pytest_pycollect_makeitem(collector, name, obj):
+def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
     outcome = yield
     res = outcome.get_result()
     if res is not None:
@@ -238,6 +258,18 @@ def pytest_pycollect_makeitem(collector, name, obj):
 class PyobjMixin:
     _ALLOW_MARKERS = True
 
+    # Function and attributes that the mixin needs (for type-checking only).
+    if TYPE_CHECKING:
+        name = ""  # type: str
+        parent = None  # type: Optional[nodes.Node]
+        own_markers = []  # type: List[Mark]
+
+        def getparent(self, cls: Type[nodes._NodeType]) -> Optional[nodes._NodeType]:
+            ...
+
+        def listchain(self) -> List[nodes.Node]:
+            ...
+
     @property
     def module(self):
         """Python module object this node was collected from (can be None)."""
@@ -274,7 +306,10 @@ class PyobjMixin:
 
     def _getobj(self):
         """Gets the underlying Python object. May be overwritten by subclasses."""
-        return getattr(self.parent.obj, self.name)
+        # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
+        assert self.parent is not None
+        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        return getattr(obj, self.name)
 
     def getmodpath(self, stopatmodule=True, includemodule=False):
         """ return python path relative to the containing module. """
@@ -361,7 +396,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 return True
         return False
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not getattr(self.obj, "__test__", True):
             return []
 
@@ -370,8 +405,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
         dicts = [getattr(self.obj, "__dict__", {})]
         for basecls in self.obj.__class__.__mro__:
             dicts.append(basecls.__dict__)
-        seen = set()
-        values = []
+        seen = set()  # type: Set[str]
+        values = []  # type: List[Union[nodes.Item, nodes.Collector]]
         for dic in dicts:
             # Note: seems like the dict can change during iteration -
             # be careful not to remove the list() without consideration.
@@ -393,12 +428,21 @@ class PyCollector(PyobjMixin, nodes.Collector):
         values.sort(key=sort_key)
         return values
 
-    def _makeitem(self, name, obj):
+    def _makeitem(
+        self, name: str, obj
+    ) -> Union[
+        None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]
+    ]:
         # assert self.ihook.fspath == self.fspath, self
-        return self.ihook.pytest_pycollect_makeitem(collector=self, name=name, obj=obj)
+        item = self.ihook.pytest_pycollect_makeitem(
+            collector=self, name=name, obj=obj
+        )  # type: Union[None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]]
+        return item
 
     def _genfunctions(self, name, funcobj):
-        module = self.getparent(Module).obj
+        modulecol = self.getparent(Module)
+        assert modulecol is not None
+        module = modulecol.obj
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         fm = self.session._fixturemanager
@@ -412,7 +456,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         methods = []
         if hasattr(module, "pytest_generate_tests"):
             methods.append(module.pytest_generate_tests)
-        if hasattr(cls, "pytest_generate_tests"):
+        if cls is not None and hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
 
         self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
@@ -447,7 +491,7 @@ class Module(nodes.File, PyCollector):
     def _getobj(self):
         return self._importtestmodule()
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self._inject_setup_module_fixture()
         self._inject_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
@@ -592,17 +636,17 @@ class Package(Module):
     def gethookproxy(self, fspath: py.path.local):
         return super()._gethookproxy(fspath)
 
-    def isinitpath(self, path):
+    def isinitpath(self, path: py.path.local) -> bool:
         return path in self.session._initialpaths
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.fspath.dirpath()
         init_module = this_path.join("__init__.py")
         if init_module.check(file=1) and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
             yield Module.from_parent(self, fspath=init_module)
-        pkg_prefixes = set()
+        pkg_prefixes = set()  # type: Set[py.path.local]
         for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
             # We will visit our own __init__.py file, in which case we skip it.
             is_file = path.isfile()
@@ -659,10 +703,11 @@ class Class(PyCollector):
         """
         return super().from_parent(name=name, parent=parent)
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
+            assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
@@ -672,6 +717,7 @@ class Class(PyCollector):
             )
             return []
         elif hasnew(self.obj):
+            assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
                     "cannot collect test class %r because it has a "
@@ -743,9 +789,12 @@ class Instance(PyCollector):
     # can be removed at node structure reorganization time
 
     def _getobj(self):
-        return self.parent.obj()
+        # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
+        assert self.parent is not None
+        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        return obj()
 
-    def collect(self):
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self.session._fixturemanager.parsefactories(self)
         return super().collect()
 
@@ -767,16 +816,17 @@ def hasnew(obj):
 
 
 class CallSpec2:
-    def __init__(self, metafunc):
+    def __init__(self, metafunc: "Metafunc") -> None:
         self.metafunc = metafunc
-        self.funcargs = {}
-        self._idlist = []
-        self.params = {}
-        self._arg2scopenum = {}  # used for sorting parametrized resources
-        self.marks = []
-        self.indices = {}
+        self.funcargs = {}  # type: Dict[str, object]
+        self._idlist = []  # type: List[str]
+        self.params = {}  # type: Dict[str, object]
+        # Used for sorting parametrized resources.
+        self._arg2scopenum = {}  # type: Dict[str, int]
+        self.marks = []  # type: List[Mark]
+        self.indices = {}  # type: Dict[str, int]
 
-    def copy(self):
+    def copy(self) -> "CallSpec2":
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
@@ -786,25 +836,39 @@ class CallSpec2:
         cs._idlist = list(self._idlist)
         return cs
 
-    def _checkargnotcontained(self, arg):
+    def _checkargnotcontained(self, arg: str) -> None:
         if arg in self.params or arg in self.funcargs:
             raise ValueError("duplicate {!r}".format(arg))
 
-    def getparam(self, name):
+    def getparam(self, name: str) -> object:
         try:
             return self.params[name]
         except KeyError:
             raise ValueError(name)
 
     @property
-    def id(self):
+    def id(self) -> str:
         return "-".join(map(str, self._idlist))
 
-    def setmulti2(self, valtypes, argnames, valset, id, marks, scopenum, param_index):
+    def setmulti2(
+        self,
+        valtypes: "Mapping[str, Literal['params', 'funcargs']]",
+        argnames: typing.Sequence[str],
+        valset: Iterable[object],
+        id: str,
+        marks: Iterable[Union[Mark, MarkDecorator]],
+        scopenum: int,
+        param_index: int,
+    ) -> None:
         for arg, val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             valtype_for_arg = valtypes[arg]
-            getattr(self, valtype_for_arg)[arg] = val
+            if valtype_for_arg == "params":
+                self.params[arg] = val
+            elif valtype_for_arg == "funcargs":
+                self.funcargs[arg] = val
+            else:  # pragma: no cover
+                assert False, "Unhandled valtype for arg: {}".format(valtype_for_arg)
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
@@ -864,7 +928,7 @@ class Metafunc:
                 Callable[[object], Optional[object]],
             ]
         ] = None,
-        scope: "Optional[str]" = None,
+        scope: "Optional[_Scope]" = None,
         *,
         _param_mark: Optional[Mark] = None
     ) -> None:
@@ -1044,7 +1108,7 @@ class Metafunc:
         self,
         argnames: typing.Sequence[str],
         indirect: Union[bool, typing.Sequence[str]],
-    ) -> Dict[str, str]:
+    ) -> Dict[str, "Literal['params', 'funcargs']"]:
         """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
         to the function, based on the ``indirect`` parameter of the parametrized() call.
 
@@ -1056,7 +1120,9 @@ class Metafunc:
             * "funcargs" if the argname should be a parameter to the parametrized test function.
         """
         if isinstance(indirect, bool):
-            valtypes = dict.fromkeys(argnames, "params" if indirect else "funcargs")
+            valtypes = dict.fromkeys(
+                argnames, "params" if indirect else "funcargs"
+            )  # type: Dict[str, Literal["params", "funcargs"]]
         elif isinstance(indirect, Sequence):
             valtypes = dict.fromkeys(argnames, "funcargs")
             for arg in indirect:
@@ -1308,13 +1374,13 @@ def _show_fixtures_per_test(config, session):
         write_item(session_item)
 
 
-def showfixtures(config):
+def showfixtures(config: Config) -> Union[int, ExitCode]:
     from _pytest.main import wrap_session
 
     return wrap_session(config, _showfixtures_main)
 
 
-def _showfixtures_main(config, session):
+def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
@@ -1325,7 +1391,7 @@ def _showfixtures_main(config, session):
     fm = session._fixturemanager
 
     available = []
-    seen = set()
+    seen = set()  # type: Set[Tuple[str, str]]
 
     for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None
@@ -1481,7 +1547,8 @@ class Function(PyobjMixin, nodes.Item):
         return getimfunc(self.obj)
 
     def _getobj(self):
-        return getattr(self.parent.obj, self.originalname)
+        assert self.parent is not None
+        return getattr(self.parent.obj, self.originalname)  # type: ignore[attr-defined]
 
     @property
     def _pyfuncitem(self):
@@ -1525,7 +1592,10 @@ class Function(PyobjMixin, nodes.Item):
                     for entry in excinfo.traceback[1:-1]:
                         entry.set_repr_style("short")
 
-    def repr_failure(self, excinfo, outerr=None):
+    # TODO: Type ignored -- breaks Liskov Substitution.
+    def repr_failure(  # type: ignore[override] # noqa: F821
+        self, excinfo: ExceptionInfo[BaseException], outerr: None = None
+    ) -> Union[str, TerminalRepr]:
         assert outerr is None, "XXX outerr usage is deprecated"
         style = self.config.getoption("tbstyle", "auto")
         if style == "auto":

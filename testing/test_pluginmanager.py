@@ -1,6 +1,7 @@
 import os
 import sys
 import types
+from typing import List
 
 import pytest
 from _pytest.config import ExitCode
@@ -10,7 +11,7 @@ from _pytest.main import Session
 
 
 @pytest.fixture
-def pytestpm():
+def pytestpm() -> PytestPluginManager:
     return PytestPluginManager()
 
 
@@ -86,7 +87,7 @@ class TestPytestPluginInteractions:
         config.pluginmanager.register(A())
         assert len(values) == 2
 
-    def test_hook_tracing(self, _config_for_test):
+    def test_hook_tracing(self, _config_for_test) -> None:
         pytestpm = _config_for_test.pluginmanager  # fully initialized with plugins
         saveindent = []
 
@@ -99,7 +100,7 @@ class TestPytestPluginInteractions:
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
 
-        values = []
+        values = []  # type: List[str]
         pytestpm.trace.root.setwriter(values.append)
         undo = pytestpm.enable_tracing()
         try:
@@ -215,20 +216,20 @@ class TestPytestPluginManager:
         assert pm.get_plugin("pytest_xyz") == mod
         assert pm.is_registered(mod)
 
-    def test_consider_module(self, testdir, pytestpm):
+    def test_consider_module(self, testdir, pytestpm: PytestPluginManager) -> None:
         testdir.syspathinsert()
         testdir.makepyfile(pytest_p1="#")
         testdir.makepyfile(pytest_p2="#")
         mod = types.ModuleType("temp")
-        mod.pytest_plugins = ["pytest_p1", "pytest_p2"]
+        mod.__dict__["pytest_plugins"] = ["pytest_p1", "pytest_p2"]
         pytestpm.consider_module(mod)
         assert pytestpm.get_plugin("pytest_p1").__name__ == "pytest_p1"
         assert pytestpm.get_plugin("pytest_p2").__name__ == "pytest_p2"
 
-    def test_consider_module_import_module(self, testdir, _config_for_test):
+    def test_consider_module_import_module(self, testdir, _config_for_test) -> None:
         pytestpm = _config_for_test.pluginmanager
         mod = types.ModuleType("x")
-        mod.pytest_plugins = "pytest_a"
+        mod.__dict__["pytest_plugins"] = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         reprec = testdir.make_hook_recorder(pytestpm)
         testdir.syspathinsert(aplugin.dirpath())

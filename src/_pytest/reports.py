@@ -1,9 +1,12 @@
 from io import StringIO
 from pprint import pprint
 from typing import Any
+from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 import attr
@@ -21,9 +24,18 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import TYPE_CHECKING
-from _pytest.nodes import Node
+from _pytest.config import Config
+from _pytest.nodes import Collector
+from _pytest.nodes import Item
 from _pytest.outcomes import skip
 from _pytest.pathlib import Path
+
+if TYPE_CHECKING:
+    from typing import NoReturn
+    from typing_extensions import Type
+    from typing_extensions import Literal
+
+    from _pytest.runner import CallInfo
 
 
 def getslaveinfoline(node):
@@ -38,10 +50,14 @@ def getslaveinfoline(node):
         return s
 
 
+_R = TypeVar("_R", bound="BaseReport")
+
+
 class BaseReport:
     when = None  # type: Optional[str]
     location = None  # type: Optional[Tuple[str, Optional[int], str]]
-    longrepr = None
+    # TODO: Improve this Any.
+    longrepr = None  # type: Optional[Any]
     sections = []  # type: List[Tuple[str, str]]
     nodeid = None  # type: str
 
@@ -69,13 +85,13 @@ class BaseReport:
             except UnicodeEncodeError:
                 out.line("<unprintable longrepr>")
 
-    def get_sections(self, prefix):
+    def get_sections(self, prefix: str) -> Iterator[Tuple[str, str]]:
         for name, content in self.sections:
             if name.startswith(prefix):
                 yield prefix, content
 
     @property
-    def longreprtext(self):
+    def longreprtext(self) -> str:
         """
         Read-only property that returns the full string representation
         of ``longrepr``.
@@ -90,7 +106,7 @@ class BaseReport:
         return exc.strip()
 
     @property
-    def caplog(self):
+    def caplog(self) -> str:
         """Return captured log lines, if log capturing is enabled
 
         .. versionadded:: 3.5
@@ -100,7 +116,7 @@ class BaseReport:
         )
 
     @property
-    def capstdout(self):
+    def capstdout(self) -> str:
         """Return captured text from stdout, if capturing is enabled
 
         .. versionadded:: 3.0
@@ -110,7 +126,7 @@ class BaseReport:
         )
 
     @property
-    def capstderr(self):
+    def capstderr(self) -> str:
         """Return captured text from stderr, if capturing is enabled
 
         .. versionadded:: 3.0
@@ -128,7 +144,7 @@ class BaseReport:
         return self.nodeid.split("::")[0]
 
     @property
-    def count_towards_summary(self):
+    def count_towards_summary(self) -> bool:
         """
         **Experimental**
 
@@ -143,7 +159,7 @@ class BaseReport:
         return True
 
     @property
-    def head_line(self):
+    def head_line(self) -> Optional[str]:
         """
         **Experimental**
 
@@ -163,8 +179,9 @@ class BaseReport:
         if self.location is not None:
             fspath, lineno, domain = self.location
             return domain
+        return None
 
-    def _get_verbose_word(self, config):
+    def _get_verbose_word(self, config: Config):
         _category, _short, verbose = config.hook.pytest_report_teststatus(
             report=self, config=config
         )
@@ -182,7 +199,7 @@ class BaseReport:
         return _report_to_json(self)
 
     @classmethod
-    def _from_json(cls, reportdict):
+    def _from_json(cls: "Type[_R]", reportdict) -> _R:
         """
         This was originally the serialize_report() function from xdist (ca03269).
 
@@ -195,7 +212,9 @@ class BaseReport:
         return cls(**kwargs)
 
 
-def _report_unserialization_failure(type_name, report_class, reportdict):
+def _report_unserialization_failure(
+    type_name: str, report_class: "Type[BaseReport]", reportdict
+) -> "NoReturn":
     url = "https://github.com/pytest-dev/pytest/issues"
     stream = StringIO()
     pprint("-" * 100, stream=stream)
@@ -216,15 +235,15 @@ class TestReport(BaseReport):
 
     def __init__(
         self,
-        nodeid,
+        nodeid: str,
         location: Tuple[str, Optional[int], str],
         keywords,
-        outcome,
+        outcome: "Literal['passed', 'failed', 'skipped']",
         longrepr,
-        when,
-        sections=(),
-        duration=0,
-        user_properties=None,
+        when: "Literal['setup', 'call', 'teardown']",
+        sections: Iterable[Tuple[str, str]] = (),
+        duration: float = 0,
+        user_properties: Optional[Iterable[Tuple[str, object]]] = None,
         **extra
     ) -> None:
         #: normalized collection node id
@@ -263,24 +282,27 @@ class TestReport(BaseReport):
 
         self.__dict__.update(extra)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<{} {!r} when={!r} outcome={!r}>".format(
             self.__class__.__name__, self.nodeid, self.when, self.outcome
         )
 
     @classmethod
-    def from_item_and_call(cls, item, call) -> "TestReport":
+    def from_item_and_call(cls, item: Item, call: "CallInfo[None]") -> "TestReport":
         """
         Factory method to create and fill a TestReport with standard item and call info.
         """
         when = call.when
+        # Remove "collect" from the Literal type -- only for collection calls.
+        assert when != "collect"
         duration = call.duration
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []
         if not call.excinfo:
-            outcome = "passed"
-            longrepr = None
+            outcome = "passed"  # type: Literal["passed", "failed", "skipped"]
+            # TODO: Improve this Any.
+            longrepr = None  # type: Optional[Any]
         else:
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
@@ -316,7 +338,13 @@ class CollectReport(BaseReport):
     when = "collect"
 
     def __init__(
-        self, nodeid: str, outcome, longrepr, result: List[Node], sections=(), **extra
+        self,
+        nodeid: str,
+        outcome: "Literal['passed', 'skipped', 'failed']",
+        longrepr,
+        result: Optional[List[Union[Item, Collector]]],
+        sections: Iterable[Tuple[str, str]] = (),
+        **extra
     ) -> None:
         self.nodeid = nodeid
         self.outcome = outcome
@@ -329,28 +357,29 @@ class CollectReport(BaseReport):
     def location(self):
         return (self.fspath, None, self.fspath)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<CollectReport {!r} lenresult={} outcome={!r}>".format(
             self.nodeid, len(self.result), self.outcome
         )
 
 
 class CollectErrorRepr(TerminalRepr):
-    def __init__(self, msg):
+    def __init__(self, msg) -> None:
         self.longrepr = msg
 
     def toterminal(self, out) -> None:
         out.line(self.longrepr, red=True)
 
 
-def pytest_report_to_serializable(report):
+def pytest_report_to_serializable(report: BaseReport):
     if isinstance(report, (TestReport, CollectReport)):
         data = report._to_json()
         data["$report_type"] = report.__class__.__name__
         return data
+    return None
 
 
-def pytest_report_from_serializable(data):
+def pytest_report_from_serializable(data) -> Optional[BaseReport]:
     if "$report_type" in data:
         if data["$report_type"] == "TestReport":
             return TestReport._from_json(data)
@@ -359,9 +388,10 @@ def pytest_report_from_serializable(data):
         assert False, "Unknown report_type unserialize data: {}".format(
             data["$report_type"]
         )
+    return None
 
 
-def _report_to_json(report):
+def _report_to_json(report: BaseReport):
     """
     This was originally the serialize_report() function from xdist (ca03269).
 
@@ -369,11 +399,12 @@ def _report_to_json(report):
     serialization.
     """
 
-    def serialize_repr_entry(entry):
-        entry_data = {"type": type(entry).__name__, "data": attr.asdict(entry)}
-        for key, value in entry_data["data"].items():
+    def serialize_repr_entry(entry: Union[ReprEntry, ReprEntryNative]):
+        data = attr.asdict(entry)
+        for key, value in data.items():
             if hasattr(value, "__dict__"):
-                entry_data["data"][key] = attr.asdict(value)
+                data[key] = attr.asdict(value)
+        entry_data = {"type": type(entry).__name__, "data": data}
         return entry_data
 
     def serialize_repr_traceback(reprtraceback: ReprTraceback):

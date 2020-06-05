@@ -1,8 +1,17 @@
+from typing import Generator
+from typing import Optional
+from typing import Union
+
 import pytest
 from _pytest._io.saferepr import saferepr
+from _pytest.config import Config
+from _pytest.config import ExitCode
+from _pytest.config.argparsing import Parser
+from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import SubRequest
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
         "--setuponly",
@@ -19,7 +28,9 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_fixture_setup(fixturedef, request):
+def pytest_fixture_setup(
+    fixturedef: FixtureDef, request: SubRequest
+) -> Generator[None, None, None]:
     yield
     if request.config.option.setupshow:
         if hasattr(request, "param"):
@@ -27,24 +38,25 @@ def pytest_fixture_setup(fixturedef, request):
             # display it now and during the teardown (in .finish()).
             if fixturedef.ids:
                 if callable(fixturedef.ids):
-                    fixturedef.cached_param = fixturedef.ids(request.param)
+                    param = fixturedef.ids(request.param)
                 else:
-                    fixturedef.cached_param = fixturedef.ids[request.param_index]
+                    param = fixturedef.ids[request.param_index]
             else:
-                fixturedef.cached_param = request.param
+                param = request.param
+            fixturedef.cached_param = param  # type: ignore[attr-defined] # noqa: F821
         _show_fixture_action(fixturedef, "SETUP")
 
 
-def pytest_fixture_post_finalizer(fixturedef) -> None:
+def pytest_fixture_post_finalizer(fixturedef: FixtureDef) -> None:
     if fixturedef.cached_result is not None:
         config = fixturedef._fixturemanager.config
         if config.option.setupshow:
             _show_fixture_action(fixturedef, "TEARDOWN")
             if hasattr(fixturedef, "cached_param"):
-                del fixturedef.cached_param
+                del fixturedef.cached_param  # type: ignore[attr-defined] # noqa: F821
 
 
-def _show_fixture_action(fixturedef, msg):
+def _show_fixture_action(fixturedef: FixtureDef, msg: str) -> None:
     config = fixturedef._fixturemanager.config
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
@@ -67,7 +79,7 @@ def _show_fixture_action(fixturedef, msg):
             tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
     if hasattr(fixturedef, "cached_param"):
-        tw.write("[{}]".format(saferepr(fixturedef.cached_param, maxsize=42)))
+        tw.write("[{}]".format(saferepr(fixturedef.cached_param, maxsize=42)))  # type: ignore[attr-defined]
 
     tw.flush()
 
@@ -76,6 +88,7 @@ def _show_fixture_action(fixturedef, msg):
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.setuponly:
         config.option.setupshow = True
+    return None

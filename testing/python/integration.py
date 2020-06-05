@@ -1,10 +1,14 @@
+from typing import Any
+
 import pytest
 from _pytest import python
 from _pytest import runner
 
 
 class TestOEJSKITSpecials:
-    def test_funcarg_non_pycollectobj(self, testdir, recwarn):  # rough jstests usage
+    def test_funcarg_non_pycollectobj(
+        self, testdir, recwarn
+    ) -> None:  # rough jstests usage
         testdir.makeconftest(
             """
             import pytest
@@ -28,13 +32,14 @@ class TestOEJSKITSpecials:
         )
         # this hook finds funcarg factories
         rep = runner.collect_one_node(collector=modcol)
-        clscol = rep.result[0]
+        # TODO: Don't treat as Any.
+        clscol = rep.result[0]  # type: Any
         clscol.obj = lambda arg1: None
         clscol.funcargs = {}
         pytest._fillfuncargs(clscol)
         assert clscol.funcargs["arg1"] == 42
 
-    def test_autouse_fixture(self, testdir, recwarn):  # rough jstests usage
+    def test_autouse_fixture(self, testdir, recwarn) -> None:  # rough jstests usage
         testdir.makeconftest(
             """
             import pytest
@@ -61,20 +66,21 @@ class TestOEJSKITSpecials:
         )
         # this hook finds funcarg factories
         rep = runner.collect_one_node(modcol)
-        clscol = rep.result[0]
+        # TODO: Don't treat as Any.
+        clscol = rep.result[0]  # type: Any
         clscol.obj = lambda: None
         clscol.funcargs = {}
         pytest._fillfuncargs(clscol)
         assert not clscol.funcargs
 
 
-def test_wrapped_getfslineno():
+def test_wrapped_getfslineno() -> None:
     def func():
         pass
 
     def wrap(f):
-        func.__wrapped__ = f
-        func.patchings = ["qwe"]
+        func.__wrapped__ = f  # type: ignore
+        func.patchings = ["qwe"]  # type: ignore
         return func
 
     @wrap
@@ -87,14 +93,14 @@ def test_wrapped_getfslineno():
 
 
 class TestMockDecoration:
-    def test_wrapped_getfuncargnames(self):
+    def test_wrapped_getfuncargnames(self) -> None:
         from _pytest.compat import getfuncargnames
 
         def wrap(f):
             def func():
                 pass
 
-            func.__wrapped__ = f
+            func.__wrapped__ = f  # type: ignore
             return func
 
         @wrap
@@ -322,10 +328,11 @@ class TestReRunTests:
         )
 
 
-def test_pytestconfig_is_session_scoped():
+def test_pytestconfig_is_session_scoped() -> None:
     from _pytest.fixtures import pytestconfig
 
-    assert pytestconfig._pytestfixturefunction.scope == "session"
+    marker = pytestconfig._pytestfixturefunction  # type: ignore
+    assert marker.scope == "session"
 
 
 class TestNoselikeTestAttribute:

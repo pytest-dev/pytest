@@ -1,16 +1,22 @@
 import os
 import platform
 from datetime import datetime
+from typing import cast
+from typing import List
+from typing import Tuple
 from xml.dom import minidom
 
 import py
 import xmlschema
 
 import pytest
+from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
 from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
+from _pytest.reports import TestReport
 from _pytest.store import Store
 
 
@@ -860,10 +866,13 @@ def test_mangle_test_address():
     assert newnames == ["a.my.py.thing", "Class", "method", "[a-1-::]"]
 
 
-def test_dont_configure_on_slaves(tmpdir):
-    gotten = []
+def test_dont_configure_on_slaves(tmpdir) -> None:
+    gotten = []  # type: List[object]
 
     class FakeConfig:
+        if TYPE_CHECKING:
+            slaveinput = None
+
         def __init__(self):
             self.pluginmanager = self
             self.option = self
@@ -877,7 +886,7 @@ def test_dont_configure_on_slaves(tmpdir):
         xmlpath = str(tmpdir.join("junix.xml"))
         register = gotten.append
 
-    fake_config = FakeConfig()
+    fake_config = cast(Config, FakeConfig())
     from _pytest import junitxml
 
     junitxml.pytest_configure(fake_config)
@@ -1089,18 +1098,18 @@ def test_double_colon_split_method_issue469(testdir, run_and_parse):
     node.assert_attr(name="test_func[double::colon]")
 
 
-def test_unicode_issue368(testdir):
+def test_unicode_issue368(testdir) -> None:
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
     ustr = "ВНИ!"
 
     class Report(BaseReport):
         longrepr = ustr
-        sections = []
+        sections = []  # type: List[Tuple[str, str]]
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
 
-    test_report = Report()
+    test_report = cast(TestReport, Report())
 
     # hopefully this is not too brittle ...
     log.pytest_sessionstart()
@@ -1113,7 +1122,7 @@ def test_unicode_issue368(testdir):
     node_reporter.append_skipped(test_report)
     test_report.longrepr = "filename", 1, "Skipped: 卡嘣嘣"
     node_reporter.append_skipped(test_report)
-    test_report.wasxfail = ustr
+    test_report.wasxfail = ustr  # type: ignore[attr-defined] # noqa: F821
     node_reporter.append_skipped(test_report)
     log.pytest_sessionfinish()
 
@@ -1363,17 +1372,17 @@ def test_fancy_items_regression(testdir, run_and_parse):
 
 
 @parametrize_families
-def test_global_properties(testdir, xunit_family):
+def test_global_properties(testdir, xunit_family) -> None:
     path = testdir.tmpdir.join("test_global_properties.xml")
     log = LogXML(str(path), None, family=xunit_family)
 
     class Report(BaseReport):
-        sections = []
+        sections = []  # type: List[Tuple[str, str]]
         nodeid = "test_node_id"
 
     log.pytest_sessionstart()
-    log.add_global_property("foo", 1)
-    log.add_global_property("bar", 2)
+    log.add_global_property("foo", "1")
+    log.add_global_property("bar", "2")
     log.pytest_sessionfinish()
 
     dom = minidom.parse(str(path))
@@ -1397,19 +1406,19 @@ def test_global_properties(testdir, xunit_family):
     assert actual == expected
 
 
-def test_url_property(testdir):
+def test_url_property(testdir) -> None:
     test_url = "http://www.github.com/pytest-dev"
     path = testdir.tmpdir.join("test_url_property.xml")
     log = LogXML(str(path), None)
 
     class Report(BaseReport):
         longrepr = "FooBarBaz"
-        sections = []
+        sections = []  # type: List[Tuple[str, str]]
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
         url = test_url
 
-    test_report = Report()
+    test_report = cast(TestReport, Report())
 
     log.pytest_sessionstart()
     node_reporter = log._opentestcase(test_report)

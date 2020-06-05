@@ -12,6 +12,7 @@ from fnmatch import fnmatch
 from io import StringIO
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -31,6 +32,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
@@ -53,7 +55,7 @@ IGNORE_PAM = [  # filenames added when obtaining details about the current user
 ]
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     parser.addoption(
         "--lsof",
         action="store_true",
@@ -78,7 +80,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     if config.getvalue("lsof"):
         checker = LsofFdLeakChecker()
         if checker.matching_platform():
@@ -137,7 +139,7 @@ class LsofFdLeakChecker:
             return True
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_protocol(self, item):
+    def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
         lines1 = self.get_open_files()
         yield
         if hasattr(sys, "pypy_version_info"):
@@ -399,7 +401,7 @@ def _sys_snapshot():
 
 
 @pytest.fixture
-def _config_for_test():
+def _config_for_test() -> Generator[Config, None, None]:
     from _pytest.config import get_config
 
     config = get_config()
@@ -645,8 +647,8 @@ class Testdir:
         for basename, value in items:
             p = self.tmpdir.join(basename).new(ext=ext)
             p.dirpath().ensure_dir()
-            source = Source(value)
-            source = "\n".join(to_text(line) for line in source.lines)
+            source_ = Source(value)
+            source = "\n".join(to_text(line) for line in source_.lines)
             p.write(source.strip().encode(encoding), "wb")
             if ret is None:
                 ret = p
@@ -837,7 +839,7 @@ class Testdir:
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
-    def genitems(self, colitems):
+    def genitems(self, colitems: List[Union[Item, Collector]]) -> List[Item]:
         """Generate all test items from a collection node.
 
         This recurses into the collection node and returns a list of all the
@@ -845,7 +847,7 @@ class Testdir:
 
         """
         session = colitems[0].session
-        result = []
+        result = []  # type: List[Item]
         for colitem in colitems:
             result.extend(session.genitems(colitem))
         return result
@@ -938,7 +940,7 @@ class Testdir:
             rec = []
 
             class Collect:
-                def pytest_configure(x, config):
+                def pytest_configure(x, config: Config) -> None:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
             plugins.append(Collect())
@@ -1167,8 +1169,10 @@ class Testdir:
 
         popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
         if stdin is Testdir.CLOSE_STDIN:
+            assert popen.stdin is not None
             popen.stdin.close()
         elif isinstance(stdin, bytes):
+            assert popen.stdin is not None
             popen.stdin.write(stdin)
 
         return popen

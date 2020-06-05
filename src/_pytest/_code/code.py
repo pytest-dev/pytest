@@ -15,6 +15,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterable
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Pattern
 from typing import Sequence
@@ -46,7 +47,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
     from weakref import ReferenceType
 
-    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value"]
+    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:
@@ -728,7 +729,7 @@ class FormattedExcinfo:
                 failindent = indentstr
         return lines
 
-    def repr_locals(self, locals: Dict[str, object]) -> Optional["ReprLocals"]:
+    def repr_locals(self, locals: Mapping[str, object]) -> Optional["ReprLocals"]:
         if self.showlocals:
             lines = []
             keys = [loc for loc in locals if loc[0] != "@"]

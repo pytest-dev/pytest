@@ -113,7 +113,7 @@ class TestMetafunc:
             fail.Exception,
             match=r"parametrize\(\) call in func got an unexpected scope value 'doggy'",
         ):
-            metafunc.parametrize("x", [1], scope="doggy")
+            metafunc.parametrize("x", [1], scope="doggy")  # type: ignore[arg-type] # noqa: F821
 
     def test_parametrize_request_name(self, testdir: Testdir) -> None:
         """Show proper error  when 'request' is used as a parameter name in parametrize (#6183)"""

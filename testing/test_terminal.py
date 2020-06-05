@@ -6,6 +6,7 @@ import os
 import sys
 import textwrap
 from io import StringIO
+from typing import cast
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -17,9 +18,11 @@ import _pytest.config
 import _pytest.terminal
 import pytest
 from _pytest._io.wcwidth import wcswidth
+from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
+from _pytest.reports import CollectReport
 from _pytest.terminal import _folded_skips
 from _pytest.terminal import _get_line_with_reprcrash_message
 from _pytest.terminal import _plugin_nameversions
@@ -1043,17 +1046,17 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     assert "collected 10 items" in result.stdout.str()
 
 
-def test_getreportopt():
+def test_getreportopt() -> None:
     from _pytest.terminal import _REPORTCHARS_DEFAULT
 
-    class Config:
+    class FakeConfig:
         class Option:
             reportchars = _REPORTCHARS_DEFAULT
             disable_warnings = False
 
         option = Option()
 
-    config = Config()
+    config = cast(Config, FakeConfig())
 
     assert _REPORTCHARS_DEFAULT == "fE"
 
@@ -1994,7 +1997,7 @@ class TestProgressWithTeardown:
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])
 
 
-def test_skip_reasons_folding():
+def test_skip_reasons_folding() -> None:
     path = "xyz"
     lineno = 3
     message = "justso"
@@ -2003,28 +2006,28 @@ def test_skip_reasons_folding():
     class X:
         pass
 
-    ev1 = X()
+    ev1 = cast(CollectReport, X())
     ev1.when = "execute"
     ev1.skipped = True
     ev1.longrepr = longrepr
 
-    ev2 = X()
+    ev2 = cast(CollectReport, X())
     ev2.when = "execute"
     ev2.longrepr = longrepr
     ev2.skipped = True
 
     # ev3 might be a collection report
-    ev3 = X()
+    ev3 = cast(CollectReport, X())
     ev3.when = "collect"
     ev3.longrepr = longrepr
     ev3.skipped = True
 
     values = _folded_skips(py.path.local(), [ev1, ev2, ev3])
     assert len(values) == 1
-    num, fspath, lineno, reason = values[0]
+    num, fspath, lineno_, reason = values[0]
     assert num == 3
     assert fspath == path
-    assert lineno == lineno
+    assert lineno_ == lineno
     assert reason == message
 
 
@@ -2052,8 +2055,8 @@ def test_line_with_reprcrash(monkeypatch):
     def check(msg, width, expected):
         __tracebackhide__ = True
         if msg:
-            rep.longrepr.reprcrash.message = msg
-        actual = _get_line_with_reprcrash_message(config, rep(), width)
+            rep.longrepr.reprcrash.message = msg  # type: ignore
+        actual = _get_line_with_reprcrash_message(config, rep(), width)  # type: ignore
 
         assert actual == expected
         if actual != "{} {}".format(mocked_verbose_word, mocked_pos):
