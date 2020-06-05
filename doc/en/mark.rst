@@ -8,7 +8,7 @@ metadata on your test functions. You can find the full list of builtin markers
 in the :ref:`API Reference<marks ref>`. Or you can list all the markers, including 
 builtin and custom, using the CLI - :code:`pytest --markers`.
 
-Here are some examples:
+Here are some of the builtin markers:
 
 * :ref:`usefixtures <usefixtures>` - use fixtures on a test function or class
 * :ref:`filterwarnings <filterwarnings>` - filter certain warnings of a test function
