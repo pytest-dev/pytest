@@ -4,8 +4,8 @@ Marking test functions with attributes
 ======================================
 
 By using the ``pytest.mark`` helper you can easily set
-metadata on your test functions. You can find the full list of builtin markers 
-in the :ref:`API Reference<marks ref>`. Or you can list all the markers, including 
+metadata on your test functions. You can find the full list of builtin markers
+in the :ref:`API Reference<marks ref>`. Or you can list all the markers, including
 builtin and custom, using the CLI - :code:`pytest --markers`.
 
 Here are some of the builtin markers:
