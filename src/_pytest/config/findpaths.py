@@ -46,7 +46,8 @@ def load_config_dict_from_file(
             return dict(iniconfig["pytest"].items())
         else:
             # "pytest.ini" files are always the source of configuration, even if empty
-            return {} if filepath.basename == "pytest.ini" else None
+            if filepath.basename == "pytest.ini":
+                return {}
 
     # '.cfg' files are considered if they contain a "[tool:pytest]" section
     elif filepath.ext == ".cfg":
@@ -58,7 +59,6 @@ def load_config_dict_from_file(
             # If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
             # plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
             fail(CFG_PYTEST_SECTION.format(filename="setup.cfg"), pytrace=False)
-        return None
 
     # '.toml' files are considered if they contain a [tool.pytest.ini_options] table
     elif filepath.ext == ".toml":
@@ -70,13 +70,11 @@ def load_config_dict_from_file(
         if result is not None:
             # TOML supports richer data types than ini files (strings, arrays, floats, ints, etc),
             # however we need to convert all scalar values to str for compatibility with the rest
-            # of the configuration system, which expects strings only. We needed to change the
+            # of the configuration system, which expects strings only.
             def make_scalar(v: Any) -> Union[str, List[str]]:
                 return v if isinstance(v, list) else str(v)
 
             return {k: make_scalar(v) for k, v in result.items()}
-        else:
-            return None
 
     return None
 
