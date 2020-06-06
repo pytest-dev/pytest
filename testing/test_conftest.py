@@ -309,7 +309,7 @@ def test_no_conftest(testdir):
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     result = testdir.runpytest()
-    assert result.ret == ExitCode.INTERNAL_ERROR
+    assert result.ret == ExitCode.USAGE_ERROR
 
 
 def test_conftest_existing_resultlog(testdir):
@@ -610,7 +610,7 @@ def test_conftest_exception_handling(testdir):
         """
     )
     res = testdir.runpytest()
-    assert res.ret == 3
+    assert res.ret == 4
     assert "raise ValueError()" in [line.strip() for line in res.errlines]
 
 
@@ -677,4 +677,4 @@ def test_plugin_error(testdir):
             "*E*TypeError*",
         ]
     )
-    assert result.ret == ExitCode.INTERNAL_ERROR
+    assert result.ret == ExitCode.USAGE_ERROR

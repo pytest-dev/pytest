@@ -145,7 +145,7 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
             formatted_tb = str(exc_repr)
             for line in formatted_tb.splitlines():
                 tw.line(line.rstrip(), red=True)
-            return ExitCode.INTERNAL_ERROR
+            return ExitCode.USAGE_ERROR
         else:
             try:
                 ret = config.hook.pytest_cmdline_main(
