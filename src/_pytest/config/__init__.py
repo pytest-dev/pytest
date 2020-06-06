@@ -33,7 +33,6 @@ import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
 from .exceptions import UsageError
 from .findpaths import determine_setup
-from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
@@ -449,7 +448,7 @@ class PytestPluginManager(PluginManager):
             if i != -1:
                 path = path[:i]
             anchor = current.join(path, abs=1)
-            if exists(anchor):  # we found some file object
+            if anchor.exists():  # we found some file object
                 self._try_load_conftest(anchor)
                 foundanchor = True
         if not foundanchor:

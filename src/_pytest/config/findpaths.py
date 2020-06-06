@@ -18,13 +18,6 @@ if TYPE_CHECKING:
     from . import Config
 
 
-def exists(path, ignore=OSError):
-    try:
-        return path.check()
-    except ignore:
-        return False
-
-
 def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
     """Parses the given generic '.ini' file using legacy IniConfig parser, returning
     the parsed object.
