@@ -1127,8 +1127,8 @@ class Config:
             description, type, default = self._parser._inidict[name]
         except KeyError:
             raise ValueError("unknown configuration value: {!r}".format(name))
-        value = self._get_override_ini_value(name)
-        if value is None:
+        override_value = self._get_override_ini_value(name)
+        if override_value is None:
             try:
                 value = self.inicfg[name]
             except KeyError:
@@ -1137,6 +1137,8 @@ class Config:
                 if type is None:
                     return ""
                 return []
+        else:
+            value = override_value
         # coerce the values based on types
         # note: some coercions are only required if we are reading from .ini files, because
         # the file format doesn't contain type information, but when reading from toml we will
@@ -1163,7 +1165,7 @@ class Config:
             else:
                 return value
         elif type == "bool":
-            return bool(_strtobool(value.strip()))
+            return bool(_strtobool(str(value).strip()))
         else:
             assert type is None
             return value

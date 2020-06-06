@@ -1,5 +1,4 @@
 import os
-from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -71,7 +70,7 @@ def load_config_dict_from_file(
             # TOML supports richer data types than ini files (strings, arrays, floats, ints, etc),
             # however we need to convert all scalar values to str for compatibility with the rest
             # of the configuration system, which expects strings only.
-            def make_scalar(v: Any) -> Union[str, List[str]]:
+            def make_scalar(v: object) -> Union[str, List[str]]:
                 return v if isinstance(v, list) else str(v)
 
             return {k: make_scalar(v) for k, v in result.items()}
@@ -79,12 +78,11 @@ def load_config_dict_from_file(
     return None
 
 
-LocatedConfig = Tuple[
+def locate_config(
+    args: Iterable[Union[str, py.path.local]]
+) -> Tuple[
     Optional[py.path.local], Optional[py.path.local], Dict[str, Union[str, List[str]]],
-]
-
-
-def locate_config(args: List[Union[str, py.path.local]]) -> LocatedConfig:
+]:
     """
     Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict).
@@ -163,7 +161,7 @@ def determine_setup(
     args: List[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
-) -> Tuple[py.path.local, Optional[str], Any]:
+) -> Tuple[py.path.local, Optional[str], Dict[str, Union[str, List[str]]]]:
     rootdir = None
     dirs = get_dirs_from_args(args)
     if inifile:

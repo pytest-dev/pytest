@@ -59,6 +59,16 @@ pyproject.toml
         "integration",
     ]
 
+.. note::
+
+    One might wonder why ``[tool.pytest.ini_options]`` instead of ``[tool.pytest]`` as is the
+    case with other tools.
+
+    The reason is that the pytest team intends to fully utilize the rich TOML data format
+    for configuration in the future, reserving the ``[tool.pytest]`` table for that.
+    The ``ini_options`` table is being used, for now, as a bridge between the existing
+    ``.ini`` configuration system and the future configuration format.
+
 tox.ini
 ~~~~~~~
 
