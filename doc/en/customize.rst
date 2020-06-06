@@ -39,8 +39,9 @@ Here's a summary what ``pytest`` uses ``rootdir`` for:
 influence how modules are imported. See :ref:`pythonpath` for more details.
 
 The ``--rootdir=path`` command-line option can be used to force a specific directory.
-The directory passed may contain environment variables when it is used in conjunction
-with ``addopts`` in a ``pytest.ini`` file.
+Note that contrary to other command-line options, ``--rootdir`` cannot be used with
+:confval:`addopts` inside ``pytest.ini`` because the ``rootdir`` is used to *find* ``pytest.ini``
+already.
 
 Finding the ``rootdir``
 ~~~~~~~~~~~~~~~~~~~~~~~
