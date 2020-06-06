@@ -29,6 +29,7 @@ doc/*/_changelog_towncrier_draft.rst
 build/
 dist/
 *.egg-info
+htmlcov/
 issue/
 env/
 .env/
