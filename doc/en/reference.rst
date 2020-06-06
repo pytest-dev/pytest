@@ -1604,3 +1604,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         [pytest]
         xfail_strict = True
+
+
+.. confval:: required_plugins
+
+   A space seperated list of plugins that must be present for pytest to run
+
+   .. code-block:: ini
+
+       [pytest]
+       require_plugins = pluginA pluginB pluginC

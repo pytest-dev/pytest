@@ -952,6 +952,12 @@ class Config:
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")
         self._parser.addini("minversion", "minimally required pytest version")
+        self._parser.addini(
+            "require_plugins",
+            "plugins that must be present for pytest to run",
+            type="args",
+            default=[],
+        )
         self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
@@ -1035,7 +1041,8 @@ class Config:
         self.known_args_namespace = ns = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
-        self._validatekeys()
+        self._validate_keys()
+        self._validate_plugins()
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1078,12 +1085,26 @@ class Config:
                     )
                 )
 
-    def _validatekeys(self):
+    def _validate_keys(self) -> None:
         for key in sorted(self._get_unknown_ini_keys()):
-            message = "Unknown config ini key: {}\n".format(key)
-            if self.known_args_namespace.strict_config:
-                fail(message, pytrace=False)
-            sys.stderr.write("WARNING: {}".format(message))
+            self._emit_warning_or_fail("Unknown config ini key: {}\n".format(key))
+
+    def _validate_plugins(self) -> None:
+        # so iterate over all required plugins and see if pluginmanager hasplugin
+        # NOTE: This also account for -p no:<plugin> ( e.g: -p no:celery )
+        # raise ValueError(self._parser._inidict['requiredplugins'])
+        # raise ValueError(self.getini("requiredplugins"))
+        # raise ValueError(self.pluginmanager.hasplugin('debugging'))
+        for plugin in self.getini("require_plugins"):
+            if not self.pluginmanager.hasplugin(plugin):
+                self._emit_warning_or_fail(
+                    "Missing required plugin: {}\n".format(plugin)
+                )
+
+    def _emit_warning_or_fail(self, message: str) -> None:
+        if self.known_args_namespace.strict_config:
+            fail(message, pytrace=False)
+        sys.stderr.write("WARNING: {}".format(message))
 
     def _get_unknown_ini_keys(self) -> List[str]:
         parser_inicfg = self._parser._inidict

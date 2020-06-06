@@ -212,6 +212,77 @@ class TestParseIni:
             with pytest.raises(pytest.fail.Exception, match=exception_text):
                 testdir.runpytest("--strict-config")
 
+    @pytest.mark.parametrize(
+        "ini_file_text, stderr_output, exception_text",
+        [
+            (
+                """
+          [pytest]
+          require_plugins = fakePlugin1 fakePlugin2
+          """,
+                [
+                    "WARNING: Missing required plugin: fakePlugin1",
+                    "WARNING: Missing required plugin: fakePlugin2",
+                ],
+                "Missing required plugin: fakePlugin1",
+            ),
+            (
+                """
+          [pytest]
+          require_plugins = a monkeypatch z
+          """,
+                [
+                    "WARNING: Missing required plugin: a",
+                    "WARNING: Missing required plugin: z",
+                ],
+                "Missing required plugin: a",
+            ),
+            (
+                """
+          [pytest]
+          require_plugins = a monkeypatch z
+          addopts = -p no:monkeypatch
+          """,
+                [
+                    "WARNING: Missing required plugin: a",
+                    "WARNING: Missing required plugin: monkeypatch",
+                    "WARNING: Missing required plugin: z",
+                ],
+                "Missing required plugin: a",
+            ),
+            (
+                """
+          [some_other_header]
+          require_plugins = wont be triggered
+          [pytest]
+          minversion = 5.0.0
+          """,
+                [],
+                "",
+            ),
+            (
+                """
+          [pytest]
+          minversion = 5.0.0
+          """,
+                [],
+                "",
+            ),
+        ],
+    )
+    def test_missing_required_plugins(
+        self, testdir, ini_file_text, stderr_output, exception_text
+    ):
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
+        testdir.parseconfig()
+
+        result = testdir.runpytest()
+        result.stderr.fnmatch_lines(stderr_output)
+
+        if stderr_output:
+            with pytest.raises(pytest.fail.Exception, match=exception_text):
+                testdir.runpytest("--strict-config")
+
 
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
