@@ -1090,11 +1090,6 @@ class Config:
             self._emit_warning_or_fail("Unknown config ini key: {}\n".format(key))
 
     def _validate_plugins(self) -> None:
-        # so iterate over all required plugins and see if pluginmanager hasplugin
-        # NOTE: This also account for -p no:<plugin> ( e.g: -p no:celery )
-        # raise ValueError(self._parser._inidict['requiredplugins'])
-        # raise ValueError(self.getini("requiredplugins"))
-        # raise ValueError(self.pluginmanager.hasplugin('debugging'))
         for plugin in self.getini("require_plugins"):
             if not self.pluginmanager.hasplugin(plugin):
                 self._emit_warning_or_fail(

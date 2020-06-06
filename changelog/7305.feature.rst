@@ -1,0 +1,3 @@
+A new INI key `require_plugins` has been added that allows the user to specify a list of plugins required for pytest to run.
+
+The `--strict-config` flag can be used to treat these warnings as errors.

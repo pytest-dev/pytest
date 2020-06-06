@@ -1561,6 +1561,18 @@ passed multiple times. The expected format is ``name=value``. For example::
    See :ref:`change naming conventions` for more detailed examples.
 
 
+.. confval:: require_plugins
+
+   A space separated list of plugins that must be present for pytest to run.
+   If any one of the plugins is not found, emit a warning.
+   If pytest is run with ``--strict-config`` exceptions are raised in place of warnings.
+
+   .. code-block:: ini
+
+       [pytest]
+       require_plugins = pluginA pluginB pluginC
+
+
 .. confval:: testpaths
 
 
@@ -1604,13 +1616,3 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         [pytest]
         xfail_strict = True
-
-
-.. confval:: required_plugins
-
-   A space seperated list of plugins that must be present for pytest to run
-
-   .. code-block:: ini
-
-       [pytest]
-       require_plugins = pluginA pluginB pluginC
