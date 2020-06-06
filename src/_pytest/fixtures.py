@@ -1496,7 +1496,7 @@ class FixtureManager:
     def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         nodeid = None
         try:
-            p = py.path.local(plugin.__file__)
+            p = py.path.local(plugin.__file__)  # type: ignore[attr-defined] # noqa: F821
         except AttributeError:
             pass
         else:

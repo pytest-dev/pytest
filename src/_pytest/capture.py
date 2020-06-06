@@ -123,9 +123,9 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
         return
 
     buffered = hasattr(stream.buffer, "raw")
-    raw_stdout = stream.buffer.raw if buffered else stream.buffer
+    raw_stdout = stream.buffer.raw if buffered else stream.buffer  # type: ignore[attr-defined]
 
-    if not isinstance(raw_stdout, io._WindowsConsoleIO):
+    if not isinstance(raw_stdout, io._WindowsConsoleIO):  # type: ignore[attr-defined]
         return
 
     def _reopen_stdio(f, mode):
@@ -135,7 +135,7 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
             buffering = -1
 
         return io.TextIOWrapper(
-            open(os.dup(f.fileno()), mode, buffering),
+            open(os.dup(f.fileno()), mode, buffering),  # type: ignore[arg-type]
             f.encoding,
             f.errors,
             f.newlines,

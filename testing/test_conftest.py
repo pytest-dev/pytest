@@ -7,6 +7,7 @@ import pytest
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
 from _pytest.pathlib import Path
+from _pytest.pathlib import symlink_or_skip
 
 
 def ConftestWithSetinitial(path):
@@ -190,14 +191,9 @@ def test_conftest_confcutdir(testdir):
     result.stdout.no_fnmatch_line("*warning: could not load initial*")
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_conftest_symlink(testdir):
     """
-    Ensure that conftest.py is not found unless it's not a parent in the current
-    directory structure (i.e.: symlinks are not resolved).
+    conftest.py discovery follows normal path resolution and does not resolve symlinks.
     """
     # Structure:
     # /real
@@ -212,8 +208,8 @@ def test_conftest_symlink(testdir):
 
     real = testdir.tmpdir.mkdir("real")
     realtests = real.mkdir("app").mkdir("tests")
-    testdir.tmpdir.join("symlinktests").mksymlinkto(realtests)
-    testdir.tmpdir.join("symlink").mksymlinkto(real)
+    symlink_or_skip(realtests, testdir.tmpdir.join("symlinktests"))
+    symlink_or_skip(real, testdir.tmpdir.join("symlink"))
     testdir.makepyfile(
         **{
             "real/app/tests/test_foo.py": "def test1(fixture): pass",
@@ -241,12 +237,9 @@ def test_conftest_symlink(testdir):
     assert result.ret == ExitCode.OK
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_conftest_symlink_files(testdir):
-    """Check conftest.py loading when running in directory with symlinks."""
+    """Symlinked conftest.py are found when pytest is executed in a directory with symlinked
+    files."""
     real = testdir.tmpdir.mkdir("real")
     source = {
         "app/test_foo.py": "def test1(fixture): pass",
@@ -270,7 +263,7 @@ def test_conftest_symlink_files(testdir):
     build = testdir.tmpdir.mkdir("build")
     build.mkdir("app")
     for f in source:
-        build.join(f).mksymlinkto(real.join(f))
+        symlink_or_skip(real.join(f), build.join(f))
     build.chdir()
     result = testdir.runpytest("-vs", "app/test_foo.py")
     result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
