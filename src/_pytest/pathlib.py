@@ -478,7 +478,7 @@ def import_module(
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         return mod
 
-    pkgpath = path.pypkgpath()
+    pkgpath = resolve_package_path(path)
     if pkgpath is not None:
         pkgroot = pkgpath.dirpath()
         names = path.new(ext="").relto(pkgroot).split(path.sep)
@@ -519,3 +519,19 @@ def import_module(
         if ignore != "1":
             raise path.ImportMismatchError(modname, modfile, path)
     return mod
+
+
+def resolve_package_path(path):
+    """ return the Python package path by looking for the last
+    directory upwards which still contains an __init__.py.
+    Return None if a pkgpath can not be determined.
+    """
+    pkgpath = None
+    for parent in path.parts(reverse=True):
+        if parent.isdir():
+            if not parent.join("__init__.py").exists():
+                break
+            if not parent.basename.isidentifier():
+                break
+            pkgpath = parent
+    return pkgpath

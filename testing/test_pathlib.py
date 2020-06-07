@@ -14,6 +14,7 @@ from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import import_module
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import Path
+from _pytest.pathlib import resolve_package_path
 
 
 class TestFNMatcherPort:
@@ -290,6 +291,23 @@ class TestImport:
         )
         with pytest.raises(ImportError):
             import_module(simple_module, mode="importlib")
+
+
+def test_resolve_package_path(tmpdir):
+    pkg = tmpdir.ensure("pkg1", dir=1)
+    pkg.ensure("__init__.py")
+    pkg.ensure("subdir/__init__.py")
+    assert resolve_package_path(pkg) == pkg
+    assert resolve_package_path(pkg.join("subdir", "__init__.py")) == pkg
+
+
+def test_package_unimportable(tmpdir):
+    pkg = tmpdir.ensure("pkg1-1", dir=1)
+    pkg.ensure("__init__.py")
+    subdir = pkg.ensure("subdir/__init__.py").dirpath()
+    assert resolve_package_path(subdir) == subdir
+    assert resolve_package_path(subdir.ensure("xyz.py")) == subdir
+    assert not resolve_package_path(pkg)
 
 
 def test_access_denied_during_cleanup(tmp_path, monkeypatch):
