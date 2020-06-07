@@ -1041,8 +1041,8 @@ class Config:
         self.known_args_namespace = ns = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
-        self._validate_keys()
         self._validate_plugins()
+        self._validate_keys()
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
