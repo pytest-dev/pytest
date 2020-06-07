@@ -11,7 +11,7 @@ from _pytest.pathlib import ensure_deletable
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_extended_length_path_str
 from _pytest.pathlib import get_lock_path
-from _pytest.pathlib import import_module
+from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import Path
@@ -84,8 +84,10 @@ class TestFNMatcherPort:
         assert not match(pattern, path)
 
 
-class TestImport:
-    """Copied over from py lib.
+class TestImportPath:
+    """
+
+    Most of the tests here were copied from py lib's tests for "py.local.path.pyimport".
 
     Having our own pyimport-like function is inline with removing py.path dependency in the future.
     """
@@ -143,66 +145,66 @@ class TestImport:
         )
 
     def test_smoke_test(self, path1):
-        obj = import_module(path1.join("execfile.py"))
+        obj = import_path(path1.join("execfile.py"))
         assert obj.x == 42  # type: ignore[attr-defined]
         assert obj.__name__ == "execfile"
 
     def test_renamed_dir_creates_mismatch(self, tmpdir, monkeypatch):
         p = tmpdir.ensure("a", "test_x123.py")
-        import_module(p)
+        import_path(p)
         tmpdir.join("a").move(tmpdir.join("b"))
         with pytest.raises(ImportPathMismatchError):
-            import_module(tmpdir.join("b", "test_x123.py"))
+            import_path(tmpdir.join("b", "test_x123.py"))
 
         # Errors can be ignored.
         monkeypatch.setenv("PY_IGNORE_IMPORTMISMATCH", "1")
-        import_module(tmpdir.join("b", "test_x123.py"))
+        import_path(tmpdir.join("b", "test_x123.py"))
 
         # PY_IGNORE_IMPORTMISMATCH=0 does not ignore error.
         monkeypatch.setenv("PY_IGNORE_IMPORTMISMATCH", "0")
         with pytest.raises(ImportPathMismatchError):
-            import_module(tmpdir.join("b", "test_x123.py"))
+            import_path(tmpdir.join("b", "test_x123.py"))
 
     def test_messy_name(self, tmpdir):
         # http://bitbucket.org/hpk42/py-trunk/issue/129
         path = tmpdir.ensure("foo__init__.py")
-        module = import_module(path)
+        module = import_path(path)
         assert module.__name__ == "foo__init__"
 
     def test_dir(self, tmpdir):
         p = tmpdir.join("hello_123")
         p_init = p.ensure("__init__.py")
-        m = import_module(p)
+        m = import_path(p)
         assert m.__name__ == "hello_123"
-        m = import_module(p_init)
+        m = import_path(p_init)
         assert m.__name__ == "hello_123"
 
     def test_a(self, path1):
         otherdir = path1.join("otherdir")
-        mod = import_module(otherdir.join("a.py"))
+        mod = import_path(otherdir.join("a.py"))
         assert mod.result == "got it"  # type: ignore[attr-defined]
         assert mod.__name__ == "otherdir.a"
 
     def test_b(self, path1):
         otherdir = path1.join("otherdir")
-        mod = import_module(otherdir.join("b.py"))
+        mod = import_path(otherdir.join("b.py"))
         assert mod.stuff == "got it"  # type: ignore[attr-defined]
         assert mod.__name__ == "otherdir.b"
 
     def test_c(self, path1):
         otherdir = path1.join("otherdir")
-        mod = import_module(otherdir.join("c.py"))
+        mod = import_path(otherdir.join("c.py"))
         assert mod.value == "got it"  # type: ignore[attr-defined]
 
     def test_d(self, path1):
         otherdir = path1.join("otherdir")
-        mod = import_module(otherdir.join("d.py"))
+        mod = import_path(otherdir.join("d.py"))
         assert mod.value2 == "got it"  # type: ignore[attr-defined]
 
     def test_import_after(self, tmpdir):
         tmpdir.ensure("xxxpackage", "__init__.py")
         mod1path = tmpdir.ensure("xxxpackage", "module1.py")
-        mod1 = import_module(mod1path)
+        mod1 = import_path(mod1path)
         assert mod1.__name__ == "xxxpackage.module1"
         from xxxpackage import module1
 
@@ -217,7 +219,7 @@ class TestImport:
             pseudopath = tmpdir.ensure(name + ending)
             mod.__file__ = str(pseudopath)
             monkeypatch.setitem(sys.modules, name, mod)
-            newmod = import_module(p)
+            newmod = import_path(p)
             assert mod == newmod
         monkeypatch.undo()
         mod = ModuleType(name)
@@ -225,7 +227,7 @@ class TestImport:
         mod.__file__ = str(pseudopath)
         monkeypatch.setitem(sys.modules, name, mod)
         with pytest.raises(ImportPathMismatchError) as excinfo:
-            import_module(p)
+            import_path(p)
         modname, modfile, orig = excinfo.value.args
         assert modname == name
         assert modfile == pseudopath
@@ -238,21 +240,21 @@ class TestImport:
         # see issue
         p1 = tmpdir.ensure("proja", "__init__.py")
         p2 = tmpdir.ensure("sub", "proja", "__init__.py")
-        m1 = import_module(p1)
-        m2 = import_module(p2)
+        m1 = import_path(p1)
+        m2 = import_path(p2)
         assert m1 == m2
 
     def test_ensuresyspath_append(self, tmpdir):
         root1 = tmpdir.mkdir("root1")
         file1 = root1.ensure("x123.py")
         assert str(root1) not in sys.path
-        import_module(file1, mode="append")
+        import_path(file1, mode="append")
         assert str(root1) == sys.path[-1]
         assert str(root1) not in sys.path[:-1]
 
     def test_invalid_path(self, tmpdir):
         with pytest.raises(ImportError):
-            import_module(tmpdir.join("invalid.py"))
+            import_path(tmpdir.join("invalid.py"))
 
     @pytest.fixture
     def simple_module(self, tmpdir):
@@ -268,20 +270,20 @@ class TestImport:
 
     def test_importmode_importlib(self, simple_module):
         """importlib mode does not change sys.path"""
-        module = import_module(simple_module, mode="importlib")
+        module = import_path(simple_module, mode="importlib")
         assert module.foo(2) == 42  # type: ignore[attr-defined]
         assert simple_module.dirname not in sys.path
 
     def test_importmode_twice_is_different_module(self, simple_module):
         """importlib mode always returns a new module"""
-        module1 = import_module(simple_module, mode="importlib")
-        module2 = import_module(simple_module, mode="importlib")
+        module1 = import_path(simple_module, mode="importlib")
+        module2 = import_path(simple_module, mode="importlib")
         assert module1 is not module2
 
     def test_no_meta_path_found(self, simple_module, monkeypatch):
         """Even without any meta_path should still import module"""
         monkeypatch.setattr(sys, "meta_path", [])
-        module = import_module(simple_module, mode="importlib")
+        module = import_path(simple_module, mode="importlib")
         assert module.foo(2) == 42  # type: ignore[attr-defined]
 
         # mode='importlib' fails if no spec is found to load the module
@@ -291,7 +293,7 @@ class TestImport:
             importlib.util, "spec_from_file_location", lambda *args: None
         )
         with pytest.raises(ImportError):
-            import_module(simple_module, mode="importlib")
+            import_path(simple_module, mode="importlib")
 
 
 def test_resolve_package_path(tmp_path):

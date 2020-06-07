@@ -422,7 +422,7 @@ def symlink_or_skip(src, dst, **kwargs):
 
 
 class ImportMode(Enum):
-    """Possible values for `mode` parameter of `import_module`"""
+    """Possible values for `mode` parameter of `import_path`"""
 
     prepend = "prepend"
     append = "append"
@@ -430,29 +430,31 @@ class ImportMode(Enum):
 
 
 class ImportPathMismatchError(ImportError):
-    """Raised on import_module() if there is a mismatch of __file__'s.
+    """Raised on import_path() if there is a mismatch of __file__'s.
 
-    This can happen when `import_module` is given different filenames with the same basename,
-    when those filenames don't reside in packages.
+    This can happen when `import_path` is called multiple times with different filenames that has
+    the same basename but reside in packages
+    (for example "/tests1/test_foo.py" and "/tests2/test_foo.py").
     """
 
 
-def import_module(
+def import_path(
     p: Union[str, py.path.local, Path],
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend
 ) -> ModuleType:
     """
-    Imports and returns a module from the given path.
+    Imports and returns a module from the given path, which can be a file (a module) or
+    a directory (a package).
 
     The import mechanism used is controlled by the `mode` parameter:
 
     * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
-      `__init__.py` files into account) will be put at the *start* of `sys.path`, if not
-      already in  `sys.path`, before being imported with `__import__.
+      `__init__.py` files into account) will be put at the *start* of `sys.path` before
+      being imported with `__import__.
 
     * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
-      to the end of `sys.path`.
+      to the end of `sys.path`, if not already in `sys.path`.
 
     * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
       to import the module, which avoids having to use `__import__` and muck with `sys.path`
@@ -488,24 +490,24 @@ def import_module(
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         return mod
 
-    pkgpath = resolve_package_path(path)
-    if pkgpath is not None:
-        pkgroot = pkgpath.parent
-        names = str(path.with_suffix("").relative_to(pkgroot)).split(os.path.sep)
+    pkg_path = resolve_package_path(path)
+    if pkg_path is not None:
+        pkg_root = pkg_path.parent
+        names = list(path.with_suffix("").relative_to(pkg_root).parts)
         if names[-1] == "__init__":
             names.pop()
         modname = ".".join(names)
     else:
-        pkgroot = path.parent
+        pkg_root = path.parent
         modname = path.stem
 
     if mode == ImportMode.append:
-        if str(pkgroot) not in sys.path:
-            sys.path.append(str(pkgroot))
+        if str(pkg_root) not in sys.path:
+            sys.path.append(str(pkg_root))
     else:
         assert mode == ImportMode.prepend, "unexpected mode: {}".format(mode)
-        if str(pkgroot) != sys.path[0]:
-            sys.path.insert(0, str(pkgroot))
+        if str(pkg_root) != sys.path[0]:
+            sys.path.insert(0, str(pkg_root))
 
     __import__(modname)
 

@@ -33,7 +33,7 @@ from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.outcomes import OutcomeException
-from _pytest.pathlib import import_module
+from _pytest.pathlib import import_path
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
@@ -536,7 +536,7 @@ class DoctestModule(pytest.Module):
             )
         else:
             try:
-                module = import_module(self.fspath)
+                module = import_path(self.fspath)
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
                     pytest.skip("unable to import module %r" % self.fspath)

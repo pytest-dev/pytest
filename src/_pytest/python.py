@@ -59,7 +59,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
-from _pytest.pathlib import import_module
+from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.reports import TerminalRepr
@@ -550,7 +550,7 @@ class Module(nodes.File, PyCollector):
         # we assume we are only called once per module
         importmode = self.config.getoption("--import-mode")
         try:
-            mod = import_module(self.fspath, mode=importmode)
+            mod = import_path(self.fspath, mode=importmode)
         except SyntaxError:
             raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
         except ImportPathMismatchError as e:
