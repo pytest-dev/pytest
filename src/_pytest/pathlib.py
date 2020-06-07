@@ -511,22 +511,27 @@ def import_module(
 
     mod = sys.modules[modname]
     if path.name == "__init__.py":
-        return mod  # we don't check anything as we might
-        # be in a namespace package ... too icky to check
-    modfile = mod.__file__
-    if modfile.endswith((".pyc", ".pyo")):
-        modfile = modfile[:-1]
-    if modfile.endswith(os.path.sep + "__init__.py"):
+        # we don't check anything as we might be in a namespace package...
+        # still not clear how to handle this correctly
+        return mod
+
+    module_file = mod.__file__
+    if module_file.endswith((".pyc", ".pyo")):
+        module_file = module_file[:-1]
+    if module_file.endswith(os.path.sep + "__init__.py"):
         if path.name != "__init__.py":
-            modfile = modfile[: -(len("__init__.py") + 1)]
-    try:
-        issame = os.path.samefile(str(path), modfile)
-    except FileNotFoundError:
-        issame = False
-    if not issame:
-        ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
-        if ignore != "1":
-            raise ImportPathMismatchError(modname, modfile, path)
+            module_file = module_file[: -(len(os.path.sep + "__init__.py"))]
+
+    ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
+    if ignore != "1":
+        try:
+            is_same = os.path.samefile(str(path), module_file)
+        except FileNotFoundError:
+            is_same = False
+
+        if not is_same:
+            raise ImportPathMismatchError(modname, module_file, path)
+
     return mod
 
 
