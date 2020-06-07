@@ -376,18 +376,18 @@ Handling stale issues/PRs
 -------------------------
 
 Stale issues/PRs are those where pytest contributors have asked for questions/changes
-and the authors didn't got around to answer/implement them yet after a somewhat long time, or
-the discussion simply died because people seemed to lost interest.
+and the authors didn't get around to answer/implement them yet after a somewhat long time, or
+the discussion simply died because people seemed to lose interest.
 
 There are many reasons why people don't answer questions or implement requested changes:
-they might get busy, lost interest, or just forgot about it,
+they might get busy, lose interest, or just forget about it,
 but the fact is that this is very common in open source software.
 
 The pytest team really appreciates every issue and pull request, but being a high-volume project
 with many issues and pull requests being submitted daily, we try to reduce the number of stale
 issues and PRs by regularly closing them. When an issue/pull request is closed in this manner,
 it is by no means a dismissal of the topic being tackled by the issue/pull request, but it
-is just a way for us to clear up the queue and make the maintainers work more manageable. Submitters
+is just a way for us to clear up the queue and make the maintainers' work more manageable. Submitters
 can always reopen the issue/pull request in their own time later if it makes sense.
 
 When to close
@@ -411,7 +411,7 @@ When closing a Pull Request, it needs to be acknowledge the time, effort, and in
 
     First of all we would like to thank you for your time and effort on working on this, the pytest team deeply appreciates it.
 
-    We noticed it has been awhile since you have updated this PR, however. pytest is a high activity project, with may issues/PRs being opened daily, so it is hard for us maintainers to track which PRs are ready for merging, for review, or need more attention.
+    We noticed it has been awhile since you have updated this PR, however. pytest is a high activity project, with many issues/PRs being opened daily, so it is hard for us maintainers to track which PRs are ready for merging, for review, or need more attention.
 
     So for those reasons we think it is best to close the PR for now, but with the only intention to cleanup our queue, it is by no means a rejection of your changes. We still encourage you to re-open this PR (it is just a click of a button away) when you are ready to get back to it.
 
