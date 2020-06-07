@@ -418,7 +418,7 @@ def symlink_or_skip(src, dst, **kwargs):
         skip("symlinks not supported: {}".format(e))
 
 
-def import_module(p: Union[str, py.path.local, Path], modname=None, ensuresyspath=True):
+def import_module(p: Union[str, py.path.local, Path], ensuresyspath=True):
     """
     Imports and returns a module from the given path.
 
@@ -441,17 +441,17 @@ def import_module(p: Union[str, py.path.local, Path], modname=None, ensuresyspat
     mild opt-in via this option. Note that it works only in
     recent versions of python.
     """
-    path = py.path.local(p)
     import py.error
+
+    path = py.path.local(p)
 
     if not path.check():
         raise py.error.ENOENT(path)
 
+    modname = path.purebasename
+
     if ensuresyspath == "importlib":
         import importlib.util
-
-        if modname is None:
-            modname = path.purebasename
 
         for meta_importer in sys.meta_path:
             spec = meta_importer.find_spec(modname, [path.dirname])
@@ -468,53 +468,35 @@ def import_module(p: Union[str, py.path.local, Path], modname=None, ensuresyspat
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         return mod
 
-    if modname is None:
-        pkgpath = path.pypkgpath()
-        if pkgpath is not None:
-            pkgroot = pkgpath.dirpath()
-            names = path.new(ext="").relto(pkgroot).split(path.sep)
-            if names[-1] == "__init__":
-                names.pop()
-            modname = ".".join(names)
-        else:
-            pkgroot = path.dirpath()
-            modname = path.purebasename
-
-        path._ensuresyspath(ensuresyspath, pkgroot)
-        __import__(modname)
-        mod = sys.modules[modname]
-        if path.basename == "__init__.py":
-            return mod  # we don't check anything as we might
-            # be in a namespace package ... too icky to check
-        modfile = mod.__file__
-        if modfile.endswith((".pyc", ".pyo")):
-            modfile = modfile[:-1]
-        if modfile.endswith(os.path.sep + "__init__.py"):
-            if path.basename != "__init__.py":
-                modfile = modfile[: -(len("__init__.py") + 1)]
-        try:
-            issame = path.samefile(modfile)
-        except py.error.ENOENT:
-            issame = False
-        if not issame:
-            ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
-            if ignore != "1":
-                raise path.ImportMismatchError(modname, modfile, path)
-        return mod
+    pkgpath = path.pypkgpath()
+    if pkgpath is not None:
+        pkgroot = pkgpath.dirpath()
+        names = path.new(ext="").relto(pkgroot).split(path.sep)
+        if names[-1] == "__init__":
+            names.pop()
+        modname = ".".join(names)
     else:
-        try:
-            return sys.modules[modname]
-        except KeyError:
-            # we have a custom modname, do a pseudo-import
-            import types
+        pkgroot = path.dirpath()
+        modname = path.purebasename
 
-            mod = types.ModuleType(modname)
-            mod.__file__ = str(path)
-            sys.modules[modname] = mod
-            try:
-                with open(str(path)) as f:
-                    exec(f.read(), mod.__dict__)
-            except BaseException:
-                del sys.modules[modname]
-                raise
-        return mod
+    path._ensuresyspath(ensuresyspath, pkgroot)
+    __import__(modname)
+    mod = sys.modules[modname]
+    if path.basename == "__init__.py":
+        return mod  # we don't check anything as we might
+        # be in a namespace package ... too icky to check
+    modfile = mod.__file__
+    if modfile.endswith((".pyc", ".pyo")):
+        modfile = modfile[:-1]
+    if modfile.endswith(os.path.sep + "__init__.py"):
+        if path.basename != "__init__.py":
+            modfile = modfile[: -(len("__init__.py") + 1)]
+    try:
+        issame = path.samefile(modfile)
+    except py.error.ENOENT:
+        issame = False
+    if not issame:
+        ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
+        if ignore != "1":
+            raise path.ImportMismatchError(modname, modfile, path)
+    return mod

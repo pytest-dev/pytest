@@ -176,11 +176,6 @@ class TestImport:
         m = import_module(p_init)
         assert m.__name__ == "hello_123"
 
-    def test_pyimport_execfile_different_name(self, path1):
-        obj = import_module(path1.join("execfile.py"), modname="0x.y.z")
-        assert obj.x == 42
-        assert obj.__name__ == "0x.y.z"
-
     def test_pyimport_a(self, path1):
         otherdir = path1.join("otherdir")
         mod = import_module(otherdir.join("a.py"))
