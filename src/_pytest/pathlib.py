@@ -19,7 +19,10 @@ from typing import Set
 from typing import TypeVar
 from typing import Union
 
+
 from _pytest.outcomes import skip
+import py
+
 from _pytest.warning_types import PytestWarning
 
 if sys.version_info[:2] >= (3, 6):
@@ -415,12 +418,14 @@ def symlink_or_skip(src, dst, **kwargs):
         skip("symlinks not supported: {}".format(e))
 
 
-def import_module(path, modname=None, ensuresyspath=True):
-    """ return path as an imported python module.
+def import_module(p: Union[str, py.path.local, Path], modname=None, ensuresyspath=True):
+    """
+    Imports and returns a module from the given path.
 
-    If modname is None, look for the containing package
-    and construct an according module name.
+    If modname is None, get the module name from `path`, considering packages.
+
     The module will be put/looked up in sys.modules.
+
     if ensuresyspath is True then the root dir for importing
     the file (taking __init__.py files into account) will
     be prepended to sys.path if it isn't there already.
@@ -436,6 +441,7 @@ def import_module(path, modname=None, ensuresyspath=True):
     mild opt-in via this option. Note that it works only in
     recent versions of python.
     """
+    path = py.path.local(p)
     import py.error
 
     if not path.check():
@@ -459,10 +465,9 @@ def import_module(path, modname=None, ensuresyspath=True):
                 "Can't find module {} at location {}".format(modname, str(path))
             )
         mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
         return mod
 
-    pkgpath = None
     if modname is None:
         pkgpath = path.pypkgpath()
         if pkgpath is not None:
@@ -482,19 +487,17 @@ def import_module(path, modname=None, ensuresyspath=True):
             return mod  # we don't check anything as we might
             # be in a namespace package ... too icky to check
         modfile = mod.__file__
-        if modfile[-4:] in (".pyc", ".pyo"):
+        if modfile.endswith((".pyc", ".pyo")):
             modfile = modfile[:-1]
-        elif modfile.endswith("$py.class"):
-            modfile = modfile[:-9] + ".py"
         if modfile.endswith(os.path.sep + "__init__.py"):
             if path.basename != "__init__.py":
-                modfile = modfile[:-12]
+                modfile = modfile[: -(len("__init__.py") + 1)]
         try:
             issame = path.samefile(modfile)
         except py.error.ENOENT:
             issame = False
         if not issame:
-            ignore = os.getenv("PY_IGNORE_IMPORTMISMATCH")
+            ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
             if ignore != "1":
                 raise path.ImportMismatchError(modname, modfile, path)
         return mod
@@ -511,7 +514,7 @@ def import_module(path, modname=None, ensuresyspath=True):
             try:
                 with open(str(path)) as f:
                     exec(f.read(), mod.__dict__)
-            except:  # noqa: E722
+            except BaseException:
                 del sys.modules[modname]
                 raise
         return mod

@@ -16,7 +16,7 @@ from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import Path
 
 
-class TestPort:
+class TestFNMatcherPort:
     """Test that our port of py.common.FNMatcher (fnmatch_ex) produces the same results as the
     original py.path.local.fnmatch method.
     """
@@ -216,7 +216,7 @@ class TestImport:
         name = "pointsback123"
         ModuleType = type(os)
         p = tmpdir.ensure(name + ".py")
-        for ending in (".pyc", "$py.class", ".pyo"):
+        for ending in (".pyc", ".pyo"):
             mod = ModuleType(name)
             pseudopath = tmpdir.ensure(name + ending)
             mod.__file__ = str(pseudopath)
