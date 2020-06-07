@@ -7,12 +7,14 @@ import shutil
 import sys
 import uuid
 import warnings
+from enum import Enum
 from functools import partial
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
 from os.path import sep
 from posixpath import sep as posix_sep
+from types import ModuleType
 from typing import Iterable
 from typing import Iterator
 from typing import Set
@@ -418,40 +420,48 @@ def symlink_or_skip(src, dst, **kwargs):
         skip("symlinks not supported: {}".format(e))
 
 
-def import_module(p: Union[str, py.path.local, Path], ensuresyspath=True):
+class ImportMode(Enum):
+    """Possible values for `mode` parameter of `import_module`"""
+
+    prepend = "prepend"
+    append = "append"
+    importlib = "importlib"
+
+
+def import_module(
+    p: Union[str, py.path.local, Path],
+    *,
+    mode: Union[str, ImportMode] = ImportMode.prepend
+) -> ModuleType:
     """
     Imports and returns a module from the given path.
 
-    If modname is None, get the module name from `path`, considering packages.
+    The import mechanism used is controlled by the `mode` parameter:
 
-    The module will be put/looked up in sys.modules.
+    * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
+      `__init__.py` files into account) will be put at the *start* of `sys.path`, if not
+      already in  `sys.path`, before being imported with `__import__.
 
-    if ensuresyspath is True then the root dir for importing
-    the file (taking __init__.py files into account) will
-    be prepended to sys.path if it isn't there already.
-    If ensuresyspath=="append" the root dir will be appended
-    if it isn't already contained in sys.path.
-    if ensuresyspath is False no modification of syspath happens.
+    * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
+      to the end of `sys.path`.
 
-    Special value of ensuresyspath=="importlib" is intended
-    purely for using in pytest, it is capable only of importing
-    separate .py files outside packages, e.g. for test suite
-    without any __init__.py file. It effectively allows having
-    same-named test modules in different places and offers
-    mild opt-in via this option. Note that it works only in
-    recent versions of python.
+    * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
+      to import the module, which avoids having to use `__import__` and muck with `sys.path`
+      at all. It effectively allows having same-named test modules in different places.
     """
     import py.error
+
+    mode = ImportMode(mode)
 
     path = py.path.local(p)
 
     if not path.check():
         raise py.error.ENOENT(path)
 
-    modname = path.purebasename
-
-    if ensuresyspath == "importlib":
+    if mode == ImportMode.importlib:
         import importlib.util
+
+        modname = path.purebasename
 
         for meta_importer in sys.meta_path:
             spec = meta_importer.find_spec(modname, [path.dirname])
@@ -479,7 +489,16 @@ def import_module(p: Union[str, py.path.local, Path], ensuresyspath=True):
         pkgroot = path.dirpath()
         modname = path.purebasename
 
-    path._ensuresyspath(ensuresyspath, pkgroot)
+    if mode == ImportMode.append:
+        if str(pkgroot) not in sys.path:
+            sys.path.append(str(pkgroot))
+    else:
+        assert mode == ImportMode.prepend, "internal error, unexpected mode: {}".format(
+            mode
+        )
+        if str(pkgroot) != sys.path[0]:
+            sys.path.insert(0, str(pkgroot))
+
     __import__(modname)
     mod = sys.modules[modname]
     if path.basename == "__init__.py":

@@ -513,7 +513,7 @@ class PytestPluginManager(PluginManager):
             _ensure_removed_sysmodule(conftestpath.purebasename)
 
         try:
-            mod = import_module(conftestpath, ensuresyspath=importmode)
+            mod = import_module(conftestpath, mode=importmode)
         except Exception as e:
             raise ConftestImportFailure(conftestpath, sys.exc_info()) from e
 

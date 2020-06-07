@@ -549,7 +549,7 @@ class Module(nodes.File, PyCollector):
         # we assume we are only called once per module
         importmode = self.config.getoption("--import-mode")
         try:
-            mod = import_module(self.fspath, ensuresyspath=importmode)
+            mod = import_module(self.fspath, mode=importmode)
         except SyntaxError:
             raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
         except self.fspath.ImportMismatchError as e:

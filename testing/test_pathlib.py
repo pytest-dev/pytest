@@ -244,7 +244,7 @@ class TestImport:
         root1 = tmpdir.mkdir("root1")
         file1 = root1.ensure("x123.py")
         assert str(root1) not in sys.path
-        import_module(file1, ensuresyspath="append")
+        import_module(file1, mode="append")
         assert str(root1) == sys.path[-1]
         assert str(root1) not in sys.path[:-1]
 
