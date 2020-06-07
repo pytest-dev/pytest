@@ -5,9 +5,12 @@ import textwrap
 from typing import Dict
 from typing import Generator
 
+import py
+
 import pytest
 from _pytest.compat import TYPE_CHECKING
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pytester import Testdir
 
 if TYPE_CHECKING:
     from typing import Type
@@ -45,9 +48,12 @@ def test_setattr() -> None:
     monkeypatch.undo()  # double-undo makes no modification
     assert A.x == 5
 
+    with pytest.raises(TypeError):
+        monkeypatch.setattr(A, "y")  # type: ignore[call-overload]
+
 
 class TestSetattrWithImportPath:
-    def test_string_expression(self, monkeypatch):
+    def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
 
@@ -64,30 +70,31 @@ class TestSetattrWithImportPath:
         assert _pytest.config.Config == 42  # type: ignore
         monkeypatch.delattr("_pytest.config.Config")
 
-    def test_wrong_target(self, monkeypatch):
-        pytest.raises(TypeError, lambda: monkeypatch.setattr(None, None))
+    def test_wrong_target(self, monkeypatch: MonkeyPatch) -> None:
+        with pytest.raises(TypeError):
+            monkeypatch.setattr(None, None)  # type: ignore[call-overload]
 
-    def test_unknown_import(self, monkeypatch):
-        pytest.raises(ImportError, lambda: monkeypatch.setattr("unkn123.classx", None))
+    def test_unknown_import(self, monkeypatch: MonkeyPatch) -> None:
+        with pytest.raises(ImportError):
+            monkeypatch.setattr("unkn123.classx", None)
 
-    def test_unknown_attr(self, monkeypatch):
-        pytest.raises(
-            AttributeError, lambda: monkeypatch.setattr("os.path.qweqwe", None)
-        )
+    def test_unknown_attr(self, monkeypatch: MonkeyPatch) -> None:
+        with pytest.raises(AttributeError):
+            monkeypatch.setattr("os.path.qweqwe", None)
 
     def test_unknown_attr_non_raising(self, monkeypatch: MonkeyPatch) -> None:
         # https://github.com/pytest-dev/pytest/issues/746
         monkeypatch.setattr("os.path.qweqwe", 42, raising=False)
         assert os.path.qweqwe == 42  # type: ignore
 
-    def test_delattr(self, monkeypatch):
+    def test_delattr(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.delattr("os.path.abspath")
         assert not hasattr(os.path, "abspath")
         monkeypatch.undo()
         assert os.path.abspath
 
 
-def test_delattr():
+def test_delattr() -> None:
     class A:
         x = 1
 
@@ -107,7 +114,7 @@ def test_delattr():
     assert A.x == 1
 
 
-def test_setitem():
+def test_setitem() -> None:
     d = {"x": 1}
     monkeypatch = MonkeyPatch()
     monkeypatch.setitem(d, "x", 2)
@@ -135,7 +142,7 @@ def test_setitem_deleted_meanwhile() -> None:
 
 
 @pytest.mark.parametrize("before", [True, False])
-def test_setenv_deleted_meanwhile(before):
+def test_setenv_deleted_meanwhile(before: bool) -> None:
     key = "qwpeoip123"
     if before:
         os.environ[key] = "world"
@@ -167,10 +174,10 @@ def test_delitem() -> None:
     assert d == {"hello": "world", "x": 1}
 
 
-def test_setenv():
+def test_setenv() -> None:
     monkeypatch = MonkeyPatch()
     with pytest.warns(pytest.PytestWarning):
-        monkeypatch.setenv("XYZ123", 2)
+        monkeypatch.setenv("XYZ123", 2)  # type: ignore[arg-type]
     import os
 
     assert os.environ["XYZ123"] == "2"
@@ -178,7 +185,7 @@ def test_setenv():
     assert "XYZ123" not in os.environ
 
 
-def test_delenv():
+def test_delenv() -> None:
     name = "xyz1234"
     assert name not in os.environ
     monkeypatch = MonkeyPatch()
@@ -208,31 +215,28 @@ class TestEnvironWarnings:
 
     VAR_NAME = "PYTEST_INTERNAL_MY_VAR"
 
-    def test_setenv_non_str_warning(self, monkeypatch):
+    def test_setenv_non_str_warning(self, monkeypatch: MonkeyPatch) -> None:
         value = 2
         msg = (
             "Value of environment variable PYTEST_INTERNAL_MY_VAR type should be str, "
             "but got 2 (type: int); converted to str implicitly"
         )
         with pytest.warns(pytest.PytestWarning, match=re.escape(msg)):
-            monkeypatch.setenv(str(self.VAR_NAME), value)
+            monkeypatch.setenv(str(self.VAR_NAME), value)  # type: ignore[arg-type]
 
 
-def test_setenv_prepend():
+def test_setenv_prepend() -> None:
     import os
 
     monkeypatch = MonkeyPatch()
-    with pytest.warns(pytest.PytestWarning):
-        monkeypatch.setenv("XYZ123", 2, prepend="-")
-    assert os.environ["XYZ123"] == "2"
-    with pytest.warns(pytest.PytestWarning):
-        monkeypatch.setenv("XYZ123", 3, prepend="-")
+    monkeypatch.setenv("XYZ123", "2", prepend="-")
+    monkeypatch.setenv("XYZ123", "3", prepend="-")
     assert os.environ["XYZ123"] == "3-2"
     monkeypatch.undo()
     assert "XYZ123" not in os.environ
 
 
-def test_monkeypatch_plugin(testdir):
+def test_monkeypatch_plugin(testdir: Testdir) -> None:
     reprec = testdir.inline_runsource(
         """
         def test_method(monkeypatch):
@@ -243,7 +247,7 @@ def test_monkeypatch_plugin(testdir):
     assert tuple(res) == (1, 0, 0), res
 
 
-def test_syspath_prepend(mp: MonkeyPatch):
+def test_syspath_prepend(mp: MonkeyPatch) -> None:
     old = list(sys.path)
     mp.syspath_prepend("world")
     mp.syspath_prepend("hello")
@@ -255,7 +259,7 @@ def test_syspath_prepend(mp: MonkeyPatch):
     assert sys.path == old
 
 
-def test_syspath_prepend_double_undo(mp: MonkeyPatch):
+def test_syspath_prepend_double_undo(mp: MonkeyPatch) -> None:
     old_syspath = sys.path[:]
     try:
         mp.syspath_prepend("hello world")
@@ -267,24 +271,24 @@ def test_syspath_prepend_double_undo(mp: MonkeyPatch):
         sys.path[:] = old_syspath
 
 
-def test_chdir_with_path_local(mp: MonkeyPatch, tmpdir):
+def test_chdir_with_path_local(mp: MonkeyPatch, tmpdir: py.path.local) -> None:
     mp.chdir(tmpdir)
     assert os.getcwd() == tmpdir.strpath
 
 
-def test_chdir_with_str(mp: MonkeyPatch, tmpdir):
+def test_chdir_with_str(mp: MonkeyPatch, tmpdir: py.path.local) -> None:
     mp.chdir(tmpdir.strpath)
     assert os.getcwd() == tmpdir.strpath
 
 
-def test_chdir_undo(mp: MonkeyPatch, tmpdir):
+def test_chdir_undo(mp: MonkeyPatch, tmpdir: py.path.local) -> None:
     cwd = os.getcwd()
     mp.chdir(tmpdir)
     mp.undo()
     assert os.getcwd() == cwd
 
 
-def test_chdir_double_undo(mp: MonkeyPatch, tmpdir):
+def test_chdir_double_undo(mp: MonkeyPatch, tmpdir: py.path.local) -> None:
     mp.chdir(tmpdir.strpath)
     mp.undo()
     tmpdir.chdir()
@@ -292,7 +296,7 @@ def test_chdir_double_undo(mp: MonkeyPatch, tmpdir):
     assert os.getcwd() == tmpdir.strpath
 
 
-def test_issue185_time_breaks(testdir):
+def test_issue185_time_breaks(testdir: Testdir) -> None:
     testdir.makepyfile(
         """
         import time
@@ -310,7 +314,7 @@ def test_issue185_time_breaks(testdir):
     )
 
 
-def test_importerror(testdir):
+def test_importerror(testdir: Testdir) -> None:
     p = testdir.mkpydir("package")
     p.join("a.py").write(
         textwrap.dedent(
@@ -360,7 +364,7 @@ def test_issue156_undo_staticmethod(Sample: "Type[Sample]") -> None:
     assert Sample.hello()
 
 
-def test_undo_class_descriptors_delattr():
+def test_undo_class_descriptors_delattr() -> None:
     class SampleParent:
         @classmethod
         def hello(_cls):
@@ -387,7 +391,7 @@ def test_undo_class_descriptors_delattr():
     assert original_world == SampleChild.world
 
 
-def test_issue1338_name_resolving():
+def test_issue1338_name_resolving() -> None:
     pytest.importorskip("requests")
     monkeypatch = MonkeyPatch()
     try:
@@ -396,7 +400,7 @@ def test_issue1338_name_resolving():
         monkeypatch.undo()
 
 
-def test_context():
+def test_context() -> None:
     monkeypatch = MonkeyPatch()
 
     import functools
@@ -408,7 +412,9 @@ def test_context():
     assert inspect.isclass(functools.partial)
 
 
-def test_syspath_prepend_with_namespace_packages(testdir, monkeypatch):
+def test_syspath_prepend_with_namespace_packages(
+    testdir: Testdir, monkeypatch: MonkeyPatch
+) -> None:
     for dirname in "hello", "world":
         d = testdir.mkdir(dirname)
         ns = d.mkdir("ns_pkg")
