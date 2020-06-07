@@ -503,7 +503,7 @@ def import_module(
         if str(pkgroot) not in sys.path:
             sys.path.append(str(pkgroot))
     else:
-        assert mode == ImportMode.prepend, "unexpedted mode: {}".format(mode)
+        assert mode == ImportMode.prepend, "unexpected mode: {}".format(mode)
         if str(pkgroot) != sys.path[0]:
             sys.path.insert(0, str(pkgroot))
 
