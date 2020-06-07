@@ -1570,7 +1570,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. code-block:: ini
 
        [pytest]
-       require_plugins = pluginA pluginB pluginC
+       require_plugins = pytest-xdist pytest-mock
 
 
 .. confval:: testpaths
