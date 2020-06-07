@@ -30,6 +30,9 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest import timing
+from _pytest._code import ExceptionInfo
+from _pytest._code.code import ExceptionChainRepr
+from _pytest._code.code import ReprExceptionInfo
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
@@ -315,6 +318,9 @@ class TerminalReporter:
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = None  # type: Optional[float]
         self._already_displayed_warnings = None  # type: Optional[int]
+        self._keyboardinterrupt_memo = (
+            None
+        )  # type: Optional[Union[ReprExceptionInfo, ExceptionChainRepr]]
 
     @property
     def writer(self) -> TerminalWriter:
@@ -783,7 +789,7 @@ class TerminalReporter:
             self.write_sep("!", str(session.shouldfail), red=True)
         if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
-            del self._keyboardinterrupt_memo
+            self._keyboardinterrupt_memo = None
         elif session.shouldstop:
             self.write_sep("!", str(session.shouldstop), red=True)
         self.summary_stats()
@@ -799,15 +805,17 @@ class TerminalReporter:
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
 
-    def pytest_keyboard_interrupt(self, excinfo) -> None:
+    def pytest_keyboard_interrupt(self, excinfo: ExceptionInfo[BaseException]) -> None:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
 
     def pytest_unconfigure(self) -> None:
-        if hasattr(self, "_keyboardinterrupt_memo"):
+        if self._keyboardinterrupt_memo is not None:
             self._report_keyboardinterrupt()
 
     def _report_keyboardinterrupt(self) -> None:
         excrepr = self._keyboardinterrupt_memo
+        assert excrepr is not None
+        assert excrepr.reprcrash is not None
         msg = excrepr.reprcrash.message
         self.write_sep("!", msg)
         if "KeyboardInterrupt" in msg:

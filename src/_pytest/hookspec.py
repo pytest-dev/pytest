@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     import warnings
     from typing_extensions import Literal
 
+    from _pytest.code import ExceptionInfo
     from _pytest.config import Config
     from _pytest.config import ExitCode
     from _pytest.config import PytestPluginManager
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
     from _pytest.nodes import Collector
     from _pytest.nodes import Item
     from _pytest.nodes import Node
+    from _pytest.outcomes import Exit
     from _pytest.python import Function
     from _pytest.python import Metafunc
     from _pytest.python import Module
@@ -761,7 +763,9 @@ def pytest_internalerror(excrepr, excinfo):
     """ called for internal errors. """
 
 
-def pytest_keyboard_interrupt(excinfo):
+def pytest_keyboard_interrupt(
+    excinfo: "ExceptionInfo[Union[KeyboardInterrupt, Exit]]",
+) -> None:
     """ called for keyboard interrupt. """
 
 

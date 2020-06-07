@@ -749,7 +749,7 @@ class CaptureManager:
             yield
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_keyboard_interrupt(self, excinfo):
+    def pytest_keyboard_interrupt(self) -> None:
         self.stop_global_capturing()
 
     @pytest.hookimpl(tryfirst=True)
