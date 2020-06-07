@@ -96,8 +96,6 @@ class TestImport:
         assert path.join("samplefile").check()
 
     def setuptestfs(self, path):
-        if path.join("samplefile").check():
-            return
         # print "setting up test fs for", repr(path)
         samplefile = path.ensure("samplefile")
         samplefile.write("samplefile\n")
@@ -247,6 +245,43 @@ class TestImport:
         import_module(file1, mode="append")
         assert str(root1) == sys.path[-1]
         assert str(root1) not in sys.path[:-1]
+
+    def test_invalid_path(self, tmpdir):
+        with pytest.raises(py.error.ENOENT):
+            import_module(tmpdir.join("invalid.py"))
+
+    @pytest.fixture
+    def simple_module(self, tmpdir):
+        fn = tmpdir.join("mymod.py")
+        fn.write(
+            dedent(
+                """
+            def foo(x): return 40 + x
+            """
+            )
+        )
+        return fn
+
+    def test_importmode_importlib(self, simple_module):
+        """importlib mode does not change sys.path"""
+        module = import_module(simple_module, mode="importlib")
+        assert module.foo(2) == 42
+        assert simple_module.dirname not in sys.path
+
+    def test_no_meta_path_found(self, simple_module, monkeypatch):
+        """Even without any meta_path should still import module"""
+        monkeypatch.setattr(sys, "meta_path", [])
+        module = import_module(simple_module, mode="importlib")
+        assert module.foo(2) == 42
+
+        # mode='importlib' fails if no spec is found to load the module
+        import importlib.util
+
+        monkeypatch.setattr(
+            importlib.util, "spec_from_file_location", lambda *args: None
+        )
+        with pytest.raises(ImportError):
+            import_module(simple_module, mode="importlib")
 
 
 def test_access_denied_during_cleanup(tmp_path, monkeypatch):
