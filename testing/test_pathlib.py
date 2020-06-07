@@ -144,7 +144,7 @@ class TestImport:
 
     def test_smoke_test(self, path1):
         obj = import_module(path1.join("execfile.py"))
-        assert obj.x == 42
+        assert obj.x == 42  # type: ignore[attr-defined]
         assert obj.__name__ == "execfile"
 
     def test_renamed_dir_creates_mismatch(self, tmpdir, monkeypatch):
@@ -180,24 +180,24 @@ class TestImport:
     def test_a(self, path1):
         otherdir = path1.join("otherdir")
         mod = import_module(otherdir.join("a.py"))
-        assert mod.result == "got it"
+        assert mod.result == "got it"  # type: ignore[attr-defined]
         assert mod.__name__ == "otherdir.a"
 
     def test_b(self, path1):
         otherdir = path1.join("otherdir")
         mod = import_module(otherdir.join("b.py"))
-        assert mod.stuff == "got it"
+        assert mod.stuff == "got it"  # type: ignore[attr-defined]
         assert mod.__name__ == "otherdir.b"
 
     def test_c(self, path1):
         otherdir = path1.join("otherdir")
         mod = import_module(otherdir.join("c.py"))
-        assert mod.value == "got it"
+        assert mod.value == "got it"  # type: ignore[attr-defined]
 
     def test_d(self, path1):
         otherdir = path1.join("otherdir")
         mod = import_module(otherdir.join("d.py"))
-        assert mod.value2 == "got it"
+        assert mod.value2 == "got it"  # type: ignore[attr-defined]
 
     def test_import_after(self, tmpdir):
         tmpdir.ensure("xxxpackage", "__init__.py")
@@ -269,7 +269,7 @@ class TestImport:
     def test_importmode_importlib(self, simple_module):
         """importlib mode does not change sys.path"""
         module = import_module(simple_module, mode="importlib")
-        assert module.foo(2) == 42
+        assert module.foo(2) == 42  # type: ignore[attr-defined]
         assert simple_module.dirname not in sys.path
 
     def test_importmode_twice_is_different_module(self, simple_module):
@@ -282,7 +282,7 @@ class TestImport:
         """Even without any meta_path should still import module"""
         monkeypatch.setattr(sys, "meta_path", [])
         module = import_module(simple_module, mode="importlib")
-        assert module.foo(2) == 42
+        assert module.foo(2) == 42  # type: ignore[attr-defined]
 
         # mode='importlib' fails if no spec is found to load the module
         import importlib.util
