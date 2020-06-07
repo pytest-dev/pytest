@@ -17,6 +17,7 @@ from posixpath import sep as posix_sep
 from types import ModuleType
 from typing import Iterable
 from typing import Iterator
+from typing import Optional
 from typing import Set
 from typing import TypeVar
 from typing import Union
@@ -428,6 +429,14 @@ class ImportMode(Enum):
     importlib = "importlib"
 
 
+class ImportPathMismatchError(ImportError):
+    """Raised on import_module() if there is a mismatch of __file__'s.
+
+    This can happen when `import_module` is given different filenames with the same basename,
+    when those filenames don't reside in packages.
+    """
+
+
 def import_module(
     p: Union[str, py.path.local, Path],
     *,
@@ -448,23 +457,24 @@ def import_module(
     * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
       to import the module, which avoids having to use `__import__` and muck with `sys.path`
       at all. It effectively allows having same-named test modules in different places.
-    """
-    import py.error
 
+    :raise ImportPathMismatchError: if after importing the given `path` and the module `__file__`
+        are different. Only raised in `prepend` and `append` modes.
+    """
     mode = ImportMode(mode)
 
-    path = py.path.local(p)
+    path = Path(p)
 
-    if not path.check():
-        raise py.error.ENOENT(path)
+    if not path.exists():
+        raise ImportError(path)
 
     if mode == ImportMode.importlib:
         import importlib.util
 
-        modname = path.purebasename
+        modname = path.stem
 
         for meta_importer in sys.meta_path:
-            spec = meta_importer.find_spec(modname, [path.dirname])
+            spec = meta_importer.find_spec(modname, [str(path.parent)])
             if spec is not None:
                 break
         else:
@@ -480,58 +490,57 @@ def import_module(
 
     pkgpath = resolve_package_path(path)
     if pkgpath is not None:
-        pkgroot = pkgpath.dirpath()
-        names = path.new(ext="").relto(pkgroot).split(path.sep)
+        pkgroot = pkgpath.parent
+        names = str(path.with_suffix("").relative_to(pkgroot)).split(os.path.sep)
         if names[-1] == "__init__":
             names.pop()
         modname = ".".join(names)
     else:
-        pkgroot = path.dirpath()
-        modname = path.purebasename
+        pkgroot = path.parent
+        modname = path.stem
 
     if mode == ImportMode.append:
         if str(pkgroot) not in sys.path:
             sys.path.append(str(pkgroot))
     else:
-        assert mode == ImportMode.prepend, "internal error, unexpected mode: {}".format(
-            mode
-        )
+        assert mode == ImportMode.prepend, "unexpedted mode: {}".format(mode)
         if str(pkgroot) != sys.path[0]:
             sys.path.insert(0, str(pkgroot))
 
     __import__(modname)
+
     mod = sys.modules[modname]
-    if path.basename == "__init__.py":
+    if path.name == "__init__.py":
         return mod  # we don't check anything as we might
         # be in a namespace package ... too icky to check
     modfile = mod.__file__
     if modfile.endswith((".pyc", ".pyo")):
         modfile = modfile[:-1]
     if modfile.endswith(os.path.sep + "__init__.py"):
-        if path.basename != "__init__.py":
+        if path.name != "__init__.py":
             modfile = modfile[: -(len("__init__.py") + 1)]
     try:
-        issame = path.samefile(modfile)
-    except py.error.ENOENT:
+        issame = os.path.samefile(path, modfile)
+    except FileNotFoundError:
         issame = False
     if not issame:
         ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
         if ignore != "1":
-            raise path.ImportMismatchError(modname, modfile, path)
+            raise ImportPathMismatchError(modname, modfile, path)
     return mod
 
 
-def resolve_package_path(path):
-    """ return the Python package path by looking for the last
+def resolve_package_path(path: Path) -> Optional[Path]:
+    """Return the Python package path by looking for the last
     directory upwards which still contains an __init__.py.
-    Return None if a pkgpath can not be determined.
+    Return None if it can not be determined.
     """
-    pkgpath = None
-    for parent in path.parts(reverse=True):
-        if parent.isdir():
-            if not parent.join("__init__.py").exists():
+    result = None
+    for parent in itertools.chain((path,), path.parents):
+        if parent.is_dir():
+            if not parent.joinpath("__init__.py").is_file():
                 break
-            if not parent.basename.isidentifier():
+            if not parent.name.isidentifier():
                 break
-            pkgpath = parent
-    return pkgpath
+            result = parent
+    return result

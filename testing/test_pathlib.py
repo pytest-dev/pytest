@@ -12,6 +12,7 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_extended_length_path_str
 from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import import_module
+from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import Path
 from _pytest.pathlib import resolve_package_path
@@ -150,7 +151,7 @@ class TestImport:
         p = tmpdir.ensure("a", "test_x123.py")
         import_module(p)
         tmpdir.join("a").move(tmpdir.join("b"))
-        with pytest.raises(tmpdir.ImportMismatchError):
+        with pytest.raises(ImportPathMismatchError):
             import_module(tmpdir.join("b", "test_x123.py"))
 
         # Errors can be ignored.
@@ -159,7 +160,7 @@ class TestImport:
 
         # PY_IGNORE_IMPORTMISMATCH=0 does not ignore error.
         monkeypatch.setenv("PY_IGNORE_IMPORTMISMATCH", "0")
-        with pytest.raises(tmpdir.ImportMismatchError):
+        with pytest.raises(ImportPathMismatchError):
             import_module(tmpdir.join("b", "test_x123.py"))
 
     def test_messy_name(self, tmpdir):
@@ -223,13 +224,13 @@ class TestImport:
         pseudopath = tmpdir.ensure(name + "123.py")
         mod.__file__ = str(pseudopath)
         monkeypatch.setitem(sys.modules, name, mod)
-        with pytest.raises(pseudopath.ImportMismatchError) as excinfo:
+        with pytest.raises(ImportPathMismatchError) as excinfo:
             import_module(p)
         modname, modfile, orig = excinfo.value.args
         assert modname == name
         assert modfile == pseudopath
         assert orig == p
-        assert issubclass(pseudopath.ImportMismatchError, ImportError)
+        assert issubclass(ImportPathMismatchError, ImportError)
 
     def test_issue131_on__init__(self, tmpdir):
         # __init__.py files may be namespace packages, and thus the
@@ -250,7 +251,7 @@ class TestImport:
         assert str(root1) not in sys.path[:-1]
 
     def test_invalid_path(self, tmpdir):
-        with pytest.raises(py.error.ENOENT):
+        with pytest.raises(ImportError):
             import_module(tmpdir.join("invalid.py"))
 
     @pytest.fixture
@@ -293,20 +294,27 @@ class TestImport:
             import_module(simple_module, mode="importlib")
 
 
-def test_resolve_package_path(tmpdir):
-    pkg = tmpdir.ensure("pkg1", dir=1)
-    pkg.ensure("__init__.py")
-    pkg.ensure("subdir/__init__.py")
+def test_resolve_package_path(tmp_path):
+    pkg = tmp_path / "pkg1"
+    pkg.mkdir()
+    (pkg / "__init__.py").touch()
+    (pkg / "subdir").mkdir()
+    (pkg / "subdir/__init__.py").touch()
     assert resolve_package_path(pkg) == pkg
-    assert resolve_package_path(pkg.join("subdir", "__init__.py")) == pkg
+    assert resolve_package_path(pkg.joinpath("subdir", "__init__.py")) == pkg
 
 
-def test_package_unimportable(tmpdir):
-    pkg = tmpdir.ensure("pkg1-1", dir=1)
-    pkg.ensure("__init__.py")
-    subdir = pkg.ensure("subdir/__init__.py").dirpath()
+def test_package_unimportable(tmp_path):
+    pkg = tmp_path / "pkg1-1"
+    pkg.mkdir()
+    pkg.joinpath("__init__.py").touch()
+    subdir = pkg.joinpath("subdir")
+    subdir.mkdir()
+    pkg.joinpath("subdir/__init__.py").touch()
     assert resolve_package_path(subdir) == subdir
-    assert resolve_package_path(subdir.ensure("xyz.py")) == subdir
+    xyz = subdir.joinpath("xyz.py")
+    xyz.touch()
+    assert resolve_package_path(xyz) == subdir
     assert not resolve_package_path(pkg)
 
 

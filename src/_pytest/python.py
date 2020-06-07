@@ -60,6 +60,7 @@ from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.pathlib import import_module
+from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.reports import TerminalRepr
 from _pytest.warning_types import PytestCollectionWarning
@@ -552,7 +553,7 @@ class Module(nodes.File, PyCollector):
             mod = import_module(self.fspath, mode=importmode)
         except SyntaxError:
             raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
-        except self.fspath.ImportMismatchError as e:
+        except ImportPathMismatchError as e:
             raise self.CollectError(
                 "import file mismatch:\n"
                 "imported module %r has this __file__ attribute:\n"
