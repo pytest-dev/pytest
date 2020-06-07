@@ -520,7 +520,7 @@ def import_module(
         if path.name != "__init__.py":
             modfile = modfile[: -(len("__init__.py") + 1)]
     try:
-        issame = os.path.samefile(path, modfile)
+        issame = os.path.samefile(str(path), modfile)
     except FileNotFoundError:
         issame = False
     if not issame:
