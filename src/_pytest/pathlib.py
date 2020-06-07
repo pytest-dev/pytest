@@ -473,18 +473,18 @@ def import_path(
     if mode == ImportMode.importlib:
         import importlib.util
 
-        modname = path.stem
+        module_name = path.stem
 
         for meta_importer in sys.meta_path:
-            spec = meta_importer.find_spec(modname, [str(path.parent)])
+            spec = meta_importer.find_spec(module_name, [str(path.parent)])
             if spec is not None:
                 break
         else:
-            spec = importlib.util.spec_from_file_location(modname, str(path))
+            spec = importlib.util.spec_from_file_location(module_name, str(path))
 
         if spec is None:
             raise ImportError(
-                "Can't find module {} at location {}".format(modname, str(path))
+                "Can't find module {} at location {}".format(module_name, str(path))
             )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
@@ -496,10 +496,10 @@ def import_path(
         names = list(path.with_suffix("").relative_to(pkg_root).parts)
         if names[-1] == "__init__":
             names.pop()
-        modname = ".".join(names)
+        module_name = ".".join(names)
     else:
         pkg_root = path.parent
-        modname = path.stem
+        module_name = path.stem
 
     if mode == ImportMode.append:
         if str(pkg_root) not in sys.path:
@@ -509,30 +509,27 @@ def import_path(
         if str(pkg_root) != sys.path[0]:
             sys.path.insert(0, str(pkg_root))
 
-    __import__(modname)
+    __import__(module_name)
 
-    mod = sys.modules[modname]
+    mod = sys.modules[module_name]
     if path.name == "__init__.py":
-        # we don't check anything as we might be in a namespace package...
-        # still not clear how to handle this correctly
         return mod
-
-    module_file = mod.__file__
-    if module_file.endswith((".pyc", ".pyo")):
-        module_file = module_file[:-1]
-    if module_file.endswith(os.path.sep + "__init__.py"):
-        if path.name != "__init__.py":
-            module_file = module_file[: -(len(os.path.sep + "__init__.py"))]
 
     ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
     if ignore != "1":
+        module_file = mod.__file__
+        if module_file.endswith((".pyc", ".pyo")):
+            module_file = module_file[:-1]
+        if module_file.endswith(os.path.sep + "__init__.py"):
+            module_file = module_file[: -(len(os.path.sep + "__init__.py"))]
+
         try:
             is_same = os.path.samefile(str(path), module_file)
         except FileNotFoundError:
             is_same = False
 
         if not is_same:
-            raise ImportPathMismatchError(modname, module_file, path)
+            raise ImportPathMismatchError(module_name, module_file, path)
 
     return mod
 
