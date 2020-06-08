@@ -22,10 +22,9 @@ from typing import Set
 from typing import TypeVar
 from typing import Union
 
-
-from _pytest.outcomes import skip
 import py
 
+from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
 if sys.version_info[:2] >= (3, 6):
