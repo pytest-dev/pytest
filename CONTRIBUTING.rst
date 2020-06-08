@@ -396,7 +396,7 @@ When to close
 Here are a few general rules the maintainers use to decide when to close issues/PRs because
 of lack of inactivity:
 
-* Issues labeled ``question``: closed after 14 days inactive.
+* Issues labeled ``question`` or ``needs information``: closed after 14 days inactive.
 * Issues labeled ``proposal``: closed after six months inactive.
 * Pull requests: after one month, consider pinging the author, update linked issue, or consider closing. For pull requests which are nearly finished, the team should consider finishing it up and merging it.
 
