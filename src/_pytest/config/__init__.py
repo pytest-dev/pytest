@@ -988,9 +988,7 @@ class Config:
         package_files = (
             str(file)
             for dist in importlib_metadata.distributions()
-            # Type ignored due to missing stub:
-            # https://github.com/python/typeshed/pull/3795
-            if any(ep.group == "pytest11" for ep in dist.entry_points)  # type: ignore
+            if any(ep.group == "pytest11" for ep in dist.entry_points)
             for file in dist.files or []
         )
 

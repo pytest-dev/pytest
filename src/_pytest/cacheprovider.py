@@ -464,8 +464,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: Config) -> None:
-    # Type ignored: pending mechanism to store typed objects scoped to config.
-    config.cache = Cache.for_config(config)  # type: ignore # noqa: F821
+    config.cache = Cache.for_config(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 
