@@ -25,6 +25,7 @@ from typing import Union
 
 import py
 
+from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
@@ -470,7 +471,7 @@ def import_path(
     if not path.exists():
         raise ImportError(path)
 
-    if mode == ImportMode.importlib:
+    if mode is ImportMode.importlib:
         module_name = path.stem
 
         for meta_importer in sys.meta_path:
@@ -502,13 +503,14 @@ def import_path(
     # change sys.path permanently: restoring it at the end of this function would cause surprising
     # problems because of delayed imports: for example, a conftest.py file imported by this function
     # might have local imports, which would fail at runtime if we restored sys.path.
-    if mode == ImportMode.append:
+    if mode is ImportMode.append:
         if str(pkg_root) not in sys.path:
             sys.path.append(str(pkg_root))
-    else:
-        assert mode == ImportMode.prepend, "unexpected mode: {}".format(mode)
+    elif mode is ImportMode.prepend:
         if str(pkg_root) != sys.path[0]:
             sys.path.insert(0, str(pkg_root))
+    else:
+        assert_never(mode)
 
     importlib.import_module(module_name)
 

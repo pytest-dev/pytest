@@ -1,15 +1,22 @@
+import enum
 import sys
 from functools import partial
 from functools import wraps
+from typing import Union
 
 import pytest
 from _pytest.compat import _PytestWrapper
+from _pytest.compat import assert_never
 from _pytest.compat import cached_property
 from _pytest.compat import get_real_func
 from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
+from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import OutcomeException
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
 
 
 def test_is_generator():
@@ -205,3 +212,55 @@ def test_cached_property() -> None:
     assert ncalls == 1
     assert c2.prop == 2
     assert c1.prop == 1
+
+
+def test_assert_never_union() -> None:
+    x = 10  # type: Union[int, str]
+
+    if isinstance(x, int):
+        pass
+    else:
+        with pytest.raises(AssertionError):
+            assert_never(x)  # type: ignore[arg-type]
+
+    if isinstance(x, int):
+        pass
+    elif isinstance(x, str):
+        pass
+    else:
+        assert_never(x)
+
+
+def test_assert_never_enum() -> None:
+    E = enum.Enum("E", "a b")
+    x = E.a  # type: E
+
+    if x is E.a:
+        pass
+    else:
+        with pytest.raises(AssertionError):
+            assert_never(x)  # type: ignore[arg-type]
+
+    if x is E.a:
+        pass
+    elif x is E.b:
+        pass
+    else:
+        assert_never(x)
+
+
+def test_assert_never_literal() -> None:
+    x = "a"  # type: Literal["a", "b"]
+
+    if x == "a":
+        pass
+    else:
+        with pytest.raises(AssertionError):
+            assert_never(x)  # type: ignore[arg-type]
+
+    if x == "a":
+        pass
+    elif x == "b":
+        pass
+    else:
+        assert_never(x)
