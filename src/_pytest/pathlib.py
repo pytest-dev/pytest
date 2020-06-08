@@ -18,6 +18,7 @@ from typing import Set
 from typing import TypeVar
 from typing import Union
 
+from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
 if sys.version_info[:2] >= (3, 6):
@@ -397,3 +398,11 @@ def fnmatch_ex(pattern: str, path) -> bool:
 def parts(s: str) -> Set[str]:
     parts = s.split(sep)
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
+
+
+def symlink_or_skip(src, dst, **kwargs):
+    """Makes a symlink or skips the test in case symlinks are not supported."""
+    try:
+        os.symlink(str(src), str(dst), **kwargs)
+    except OSError as e:
+        skip("symlinks not supported: {}".format(e))

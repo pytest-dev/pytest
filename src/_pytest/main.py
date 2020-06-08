@@ -665,7 +665,6 @@ class Session(nodes.FSCollector):
                     "file or package not found: " + arg + " (missing __init__.py?)"
                 )
             raise UsageError("file not found: " + arg)
-        fspath = fspath.realpath()
         return (fspath, parts)
 
     def matchnodes(

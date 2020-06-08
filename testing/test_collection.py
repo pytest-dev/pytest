@@ -3,12 +3,11 @@ import pprint
 import sys
 import textwrap
 
-import py
-
 import pytest
 from _pytest.config import ExitCode
 from _pytest.main import _in_venv
 from _pytest.main import Session
+from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Testdir
 
 
@@ -1164,29 +1163,21 @@ def test_collect_pyargs_with_testpaths(testdir, monkeypatch):
     result.stdout.fnmatch_lines(["*1 passed in*"])
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_collect_symlink_file_arg(testdir):
-    """Test that collecting a direct symlink, where the target does not match python_files works (#4325)."""
+    """Collect a direct symlink works even if it does not match python_files (#4325)."""
     real = testdir.makepyfile(
         real="""
         def test_nodeid(request):
-            assert request.node.nodeid == "real.py::test_nodeid"
+            assert request.node.nodeid == "symlink.py::test_nodeid"
         """
     )
     symlink = testdir.tmpdir.join("symlink.py")
-    symlink.mksymlinkto(real)
+    symlink_or_skip(real, symlink)
     result = testdir.runpytest("-v", symlink)
-    result.stdout.fnmatch_lines(["real.py::test_nodeid PASSED*", "*1 passed in*"])
+    result.stdout.fnmatch_lines(["symlink.py::test_nodeid PASSED*", "*1 passed in*"])
     assert result.ret == 0
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_collect_symlink_out_of_tree(testdir):
     """Test collection of symlink via out-of-tree rootdir."""
     sub = testdir.tmpdir.join("sub")
@@ -1204,7 +1195,7 @@ def test_collect_symlink_out_of_tree(testdir):
 
     out_of_tree = testdir.tmpdir.join("out_of_tree").ensure(dir=True)
     symlink_to_sub = out_of_tree.join("symlink_to_sub")
-    symlink_to_sub.mksymlinkto(sub)
+    symlink_or_skip(sub, symlink_to_sub)
     sub.chdir()
     result = testdir.runpytest("-vs", "--rootdir=%s" % sub, symlink_to_sub)
     result.stdout.fnmatch_lines(
@@ -1270,22 +1261,19 @@ def test_collect_pkg_init_only(testdir):
     result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 @pytest.mark.parametrize("use_pkg", (True, False))
 def test_collect_sub_with_symlinks(use_pkg, testdir):
+    """Collection works with symlinked files and broken symlinks"""
     sub = testdir.mkdir("sub")
     if use_pkg:
         sub.ensure("__init__.py")
-    sub.ensure("test_file.py").write("def test_file(): pass")
+    sub.join("test_file.py").write("def test_file(): pass")
 
     # Create a broken symlink.
-    sub.join("test_broken.py").mksymlinkto("test_doesnotexist.py")
+    symlink_or_skip("test_doesnotexist.py", sub.join("test_broken.py"))
 
     # Symlink that gets collected.
-    sub.join("test_symlink.py").mksymlinkto("test_file.py")
+    symlink_or_skip("test_file.py", sub.join("test_symlink.py"))
 
     result = testdir.runpytest("-v", str(sub))
     result.stdout.fnmatch_lines(
