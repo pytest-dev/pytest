@@ -1,13 +1,13 @@
 import os
-from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
+import iniconfig
 import py
-from iniconfig import IniConfig
-from iniconfig import ParseError
 
 from .exceptions import UsageError
 from _pytest.compat import TYPE_CHECKING
@@ -17,52 +17,95 @@ if TYPE_CHECKING:
     from . import Config
 
 
-def exists(path, ignore=OSError):
+def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
+    """Parses the given generic '.ini' file using legacy IniConfig parser, returning
+    the parsed object.
+
+    Raises UsageError if the file cannot be parsed.
+    """
     try:
-        return path.check()
-    except ignore:
-        return False
+        return iniconfig.IniConfig(path)
+    except iniconfig.ParseError as exc:
+        raise UsageError(str(exc))
 
 
-def getcfg(args, config=None):
+def load_config_dict_from_file(
+    filepath: py.path.local,
+) -> Optional[Dict[str, Union[str, List[str]]]]:
+    """Loads pytest configuration from the given file path, if supported.
+
+    Return None if the file does not contain valid pytest configuration.
     """
-    Search the list of arguments for a valid ini-file for pytest,
+
+    # configuration from ini files are obtained from the [pytest] section, if present.
+    if filepath.ext == ".ini":
+        iniconfig = _parse_ini_config(filepath)
+
+        if "pytest" in iniconfig:
+            return dict(iniconfig["pytest"].items())
+        else:
+            # "pytest.ini" files are always the source of configuration, even if empty
+            if filepath.basename == "pytest.ini":
+                return {}
+
+    # '.cfg' files are considered if they contain a "[tool:pytest]" section
+    elif filepath.ext == ".cfg":
+        iniconfig = _parse_ini_config(filepath)
+
+        if "tool:pytest" in iniconfig.sections:
+            return dict(iniconfig["tool:pytest"].items())
+        elif "pytest" in iniconfig.sections:
+            # If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
+            # plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
+            fail(CFG_PYTEST_SECTION.format(filename="setup.cfg"), pytrace=False)
+
+    # '.toml' files are considered if they contain a [tool.pytest.ini_options] table
+    elif filepath.ext == ".toml":
+        import toml
+
+        config = toml.load(filepath)
+
+        result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
+        if result is not None:
+            # TOML supports richer data types than ini files (strings, arrays, floats, ints, etc),
+            # however we need to convert all scalar values to str for compatibility with the rest
+            # of the configuration system, which expects strings only.
+            def make_scalar(v: object) -> Union[str, List[str]]:
+                return v if isinstance(v, list) else str(v)
+
+            return {k: make_scalar(v) for k, v in result.items()}
+
+    return None
+
+
+def locate_config(
+    args: Iterable[Union[str, py.path.local]]
+) -> Tuple[
+    Optional[py.path.local], Optional[py.path.local], Dict[str, Union[str, List[str]]],
+]:
+    """
+    Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict).
-
-    note: config is optional and used only to issue warnings explicitly (#2891).
     """
-    inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
+    config_names = [
+        "pytest.ini",
+        "pyproject.toml",
+        "tox.ini",
+        "setup.cfg",
+    ]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [py.path.local()]
     for arg in args:
         arg = py.path.local(arg)
         for base in arg.parts(reverse=True):
-            for inibasename in inibasenames:
-                p = base.join(inibasename)
-                if exists(p):
-                    try:
-                        iniconfig = IniConfig(p)
-                    except ParseError as exc:
-                        raise UsageError(str(exc))
-
-                    if (
-                        inibasename == "setup.cfg"
-                        and "tool:pytest" in iniconfig.sections
-                    ):
-                        return base, p, iniconfig["tool:pytest"]
-                    elif "pytest" in iniconfig.sections:
-                        if inibasename == "setup.cfg" and config is not None:
-
-                            fail(
-                                CFG_PYTEST_SECTION.format(filename=inibasename),
-                                pytrace=False,
-                            )
-                        return base, p, iniconfig["pytest"]
-                    elif inibasename == "pytest.ini":
-                        # allowed to be empty
-                        return base, p, {}
-    return None, None, None
+            for config_name in config_names:
+                p = base.join(config_name)
+                if p.isfile():
+                    ini_config = load_config_dict_from_file(p)
+                    if ini_config is not None:
+                        return base, p, ini_config
+    return None, None, {}
 
 
 def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
@@ -118,29 +161,16 @@ def determine_setup(
     args: List[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
-) -> Tuple[py.path.local, Optional[str], Any]:
+) -> Tuple[py.path.local, Optional[str], Dict[str, Union[str, List[str]]]]:
+    rootdir = None
     dirs = get_dirs_from_args(args)
     if inifile:
-        iniconfig = IniConfig(inifile)
-        is_cfg_file = str(inifile).endswith(".cfg")
-        sections = ["tool:pytest", "pytest"] if is_cfg_file else ["pytest"]
-        for section in sections:
-            try:
-                inicfg = iniconfig[
-                    section
-                ]  # type: Optional[py.iniconfig._SectionWrapper]
-                if is_cfg_file and section == "pytest" and config is not None:
-                    fail(
-                        CFG_PYTEST_SECTION.format(filename=str(inifile)), pytrace=False
-                    )
-                break
-            except KeyError:
-                inicfg = None
+        inicfg = load_config_dict_from_file(py.path.local(inifile)) or {}
         if rootdir_cmd_arg is None:
             rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)
-        rootdir, inifile, inicfg = getcfg([ancestor], config=config)
+        rootdir, inifile, inicfg = locate_config([ancestor])
         if rootdir is None and rootdir_cmd_arg is None:
             for possible_rootdir in ancestor.parts(reverse=True):
                 if possible_rootdir.join("setup.py").exists():
@@ -148,7 +178,7 @@ def determine_setup(
                     break
             else:
                 if dirs != [ancestor]:
-                    rootdir, inifile, inicfg = getcfg(dirs, config=config)
+                    rootdir, inifile, inicfg = locate_config(dirs)
                 if rootdir is None:
                     if config is not None:
                         cwd = config.invocation_dir

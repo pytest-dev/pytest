@@ -706,10 +706,10 @@ class TestTerminalFunctional:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["rootdir: *test_header0"])
 
-        # with inifile
+        # with configfile
         testdir.makeini("""[pytest]""")
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
 
         # with testpaths option, and not passing anything in the command-line
         testdir.makeini(
@@ -720,12 +720,12 @@ class TestTerminalFunctional:
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            ["rootdir: *test_header0, inifile: tox.ini, testpaths: tests, gui"]
+            ["rootdir: *test_header0, configfile: tox.ini, testpaths: tests, gui"]
         )
 
         # with testpaths option, passing directory in command-line: do not show testpaths then
         result = testdir.runpytest("tests")
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
 
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile(

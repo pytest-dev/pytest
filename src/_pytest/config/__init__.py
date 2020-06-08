@@ -34,7 +34,6 @@ import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
 from .exceptions import UsageError
 from .findpaths import determine_setup
-from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
@@ -450,7 +449,7 @@ class PytestPluginManager(PluginManager):
             if i != -1:
                 path = path[:i]
             anchor = current.join(path, abs=1)
-            if exists(anchor):  # we found some file object
+            if anchor.exists():  # we found some file object
                 self._try_load_conftest(anchor)
                 foundanchor = True
         if not foundanchor:
@@ -1069,13 +1068,8 @@ class Config:
 
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
-                    "%s:%d: requires pytest-%s, actual pytest-%s'"
-                    % (
-                        self.inicfg.config.path,
-                        self.inicfg.lineof("minversion"),
-                        minver,
-                        pytest.__version__,
-                    )
+                    "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
+                    % (self.inifile, minver, pytest.__version__,)
                 )
 
     def _validatekeys(self):
@@ -1123,7 +1117,7 @@ class Config:
         x.append(line)  # modifies the cached list inline
 
     def getini(self, name: str):
-        """ return configuration value from an :ref:`ini file <inifiles>`. If the
+        """ return configuration value from an :ref:`ini file <configfiles>`. If the
         specified name hasn't been registered through a prior
         :py:func:`parser.addini <_pytest.config.argparsing.Parser.addini>`
         call (usually from a plugin), a ValueError is raised. """
@@ -1138,8 +1132,8 @@ class Config:
             description, type, default = self._parser._inidict[name]
         except KeyError:
             raise ValueError("unknown configuration value: {!r}".format(name))
-        value = self._get_override_ini_value(name)
-        if value is None:
+        override_value = self._get_override_ini_value(name)
+        if override_value is None:
             try:
                 value = self.inicfg[name]
             except KeyError:
@@ -1148,18 +1142,35 @@ class Config:
                 if type is None:
                     return ""
                 return []
+        else:
+            value = override_value
+        # coerce the values based on types
+        # note: some coercions are only required if we are reading from .ini files, because
+        # the file format doesn't contain type information, but when reading from toml we will
+        # get either str or list of str values (see _parse_ini_config_from_pyproject_toml).
+        # for example:
+        #
+        #   ini:
+        #     a_line_list = "tests acceptance"
+        #   in this case, we need to split the string to obtain a list of strings
+        #
+        #   toml:
+        #     a_line_list = ["tests", "acceptance"]
+        #   in this case, we already have a list ready to use
+        #
         if type == "pathlist":
-            dp = py.path.local(self.inicfg.config.path).dirpath()
-            values = []
-            for relpath in shlex.split(value):
-                values.append(dp.join(relpath, abs=True))
-            return values
+            dp = py.path.local(self.inifile).dirpath()
+            input_values = shlex.split(value) if isinstance(value, str) else value
+            return [dp.join(x, abs=True) for x in input_values]
         elif type == "args":
-            return shlex.split(value)
+            return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":
-            return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+            if isinstance(value, str):
+                return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+            else:
+                return value
         elif type == "bool":
-            return bool(_strtobool(value.strip()))
+            return bool(_strtobool(str(value).strip()))
         else:
             assert type is None
             return value
