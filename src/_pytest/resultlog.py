@@ -5,6 +5,7 @@ import os
 
 import py
 
+from _pytest._code.code import ExceptionRepr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.reports import CollectReport
@@ -99,9 +100,9 @@ class ResultLog:
                 longrepr = "%s:%d: %s" % report.longrepr  # type: ignore
             self.log_outcome(report, code, longrepr)
 
-    def pytest_internalerror(self, excrepr):
-        reprcrash = getattr(excrepr, "reprcrash", None)
-        path = getattr(reprcrash, "path", None)
-        if path is None:
+    def pytest_internalerror(self, excrepr: ExceptionRepr) -> None:
+        if excrepr.reprcrash is not None:
+            path = excrepr.reprcrash.path
+        else:
             path = "cwd:%s" % py.path.local()
         self.write_log_entry(path, "!", str(excrepr))

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     import warnings
     from typing_extensions import Literal
 
+    from _pytest._code.code import ExceptionRepr
     from _pytest.code import ExceptionInfo
     from _pytest.config import Config
     from _pytest.config import ExitCode
@@ -759,8 +760,14 @@ def pytest_doctest_prepare_content(content):
 # -------------------------------------------------------------------------
 
 
-def pytest_internalerror(excrepr, excinfo):
-    """ called for internal errors. """
+def pytest_internalerror(
+    excrepr: "ExceptionRepr", excinfo: "ExceptionInfo[BaseException]",
+) -> Optional[bool]:
+    """Called for internal errors.
+
+    Return True to suppress the fallback handling of printing an
+    INTERNALERROR message directly to sys.stderr.
+    """
 
 
 def pytest_keyboard_interrupt(

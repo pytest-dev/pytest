@@ -48,6 +48,7 @@ from _pytest.warning_types import PytestConfigWarning
 if TYPE_CHECKING:
     from typing import Type
 
+    from _pytest._code.code import _TracebackStyle
     from .argparsing import Argument
 
 
@@ -893,9 +894,13 @@ class Config:
 
         return self
 
-    def notify_exception(self, excinfo, option=None):
+    def notify_exception(
+        self,
+        excinfo: ExceptionInfo[BaseException],
+        option: Optional[argparse.Namespace] = None,
+    ) -> None:
         if option and getattr(option, "fulltrace", False):
-            style = "long"
+            style = "long"  # type: _TracebackStyle
         else:
             style = "native"
         excrepr = excinfo.getrepr(

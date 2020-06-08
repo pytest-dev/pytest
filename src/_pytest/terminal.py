@@ -31,8 +31,7 @@ import pytest
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
-from _pytest._code.code import ExceptionChainRepr
-from _pytest._code.code import ReprExceptionInfo
+from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
@@ -318,9 +317,7 @@ class TerminalReporter:
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = None  # type: Optional[float]
         self._already_displayed_warnings = None  # type: Optional[int]
-        self._keyboardinterrupt_memo = (
-            None
-        )  # type: Optional[Union[ReprExceptionInfo, ExceptionChainRepr]]
+        self._keyboardinterrupt_memo = None  # type: Optional[ExceptionRepr]
 
     @property
     def writer(self) -> TerminalWriter:
@@ -454,10 +451,10 @@ class TerminalReporter:
         if set_main_color:
             self._set_main_color()
 
-    def pytest_internalerror(self, excrepr):
+    def pytest_internalerror(self, excrepr: ExceptionRepr) -> bool:
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
-        return 1
+        return True
 
     def pytest_warning_recorded(
         self, warning_message: warnings.WarningMessage, nodeid: str,

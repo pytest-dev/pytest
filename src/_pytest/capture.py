@@ -753,7 +753,7 @@ class CaptureManager:
         self.stop_global_capturing()
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_internalerror(self, excinfo):
+    def pytest_internalerror(self) -> None:
         self.stop_global_capturing()
 
 

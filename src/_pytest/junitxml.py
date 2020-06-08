@@ -26,6 +26,7 @@ import pytest
 from _pytest import deprecated
 from _pytest import nodes
 from _pytest import timing
+from _pytest._code.code import ExceptionRepr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import filename_arg
@@ -642,7 +643,7 @@ class LogXML:
             else:
                 reporter.append_collect_skipped(report)
 
-    def pytest_internalerror(self, excrepr) -> None:
+    def pytest_internalerror(self, excrepr: ExceptionRepr) -> None:
         reporter = self.node_reporter("internal")
         reporter.attrs.update(classname="pytest", name="internal")
         reporter._add_simple(Junit.error, "internal error", excrepr)
