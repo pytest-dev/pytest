@@ -501,6 +501,9 @@ def import_path(
         pkg_root = path.parent
         module_name = path.stem
 
+    # change sys.path permanently: restoring it at the end of this function would cause surprising
+    # problems because of delayed imports: for example, a conftest.py file imported by this function
+    # might have local imports, which would fail at runtime if we restored sys.path.
     if mode == ImportMode.append:
         if str(pkg_root) not in sys.path:
             sys.path.append(str(pkg_root))
