@@ -1,4 +1,5 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import argparse
 import fnmatch
 import functools
 import importlib
@@ -30,6 +31,7 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
+from _pytest.pathlib import Path
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
@@ -177,12 +179,41 @@ def pytest_addoption(parser: Parser) -> None:
         "--basetemp",
         dest="basetemp",
         default=None,
+        type=validate_basetemp,
         metavar="dir",
         help=(
             "base temporary directory for this test run."
             "(warning: this directory is removed if it exists)"
         ),
     )
+
+
+def validate_basetemp(path: str) -> str:
+    # GH 7119
+    msg = "basetemp must not be empty, the current working directory or any parent directory of it"
+
+    # empty path
+    if not path:
+        raise argparse.ArgumentTypeError(msg)
+
+    def is_ancestor(base: Path, query: Path) -> bool:
+        """ return True if query is an ancestor of base, else False."""
+        if base == query:
+            return True
+        for parent in base.parents:
+            if parent == query:
+                return True
+        return False
+
+    # check if path is an ancestor of cwd
+    if is_ancestor(Path.cwd(), Path(path).absolute()):
+        raise argparse.ArgumentTypeError(msg)
+
+    # check symlinks for ancestors
+    if is_ancestor(Path.cwd().resolve(), Path(path).resolve()):
+        raise argparse.ArgumentTypeError(msg)
+
+    return path
 
 
 def wrap_session(
