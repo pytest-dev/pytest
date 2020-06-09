@@ -393,7 +393,7 @@ class TestAssert_reprcompare:
                             ||     ||
         """
         diff = callequal(left, right)
-
+        assert diff is not None
         assert diff[1:] == [
             "=============================== ACTUAL ===============================",
             "",
