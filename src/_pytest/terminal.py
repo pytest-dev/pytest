@@ -367,11 +367,11 @@ class TerminalReporter:
 
     @property
     def no_header(self) -> bool:
-        return self.config.option.no_header
+        return bool(self.config.option.no_header)
 
     @property
     def no_summary(self) -> bool:
-        return self.config.option.no_summary
+        return bool(self.config.option.no_summary)
 
     @property
     def showfspath(self) -> bool:
