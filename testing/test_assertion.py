@@ -888,6 +888,7 @@ class TestAssert_reprcompare_attrsclass:
         right = SimpleDataObject(OtherDataObject(1, "b"), "b")
 
         lines = callequal(left, right)
+        assert lines is not None
         assert "Matching attributes" not in lines
         for line in lines[1:]:
             assert "field_b:" not in line
@@ -908,8 +909,8 @@ class TestAssert_reprcompare_attrsclass:
         right = SimpleDataObject(OtherDataObject(1, "b"), "b")
 
         lines = callequal(left, right)
+        assert lines is not None
         assert "field_d: 'a' != 'b'" in lines
-        print("\n".join(lines))
 
     def test_attrs_verbose(self) -> None:
         @attr.s

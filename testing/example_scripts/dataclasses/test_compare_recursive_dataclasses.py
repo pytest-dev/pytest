@@ -5,7 +5,7 @@ from dataclasses import field
 @dataclass
 class SimpleDataObject:
     field_a: int = field()
-    field_b: int = field()
+    field_b: str = field()
 
 
 @dataclass
