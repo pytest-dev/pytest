@@ -235,4 +235,3 @@ def test_caplog_captures_despite_exception(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*DEBUG message will be shown*"])
     assert result.ret == 1
-
