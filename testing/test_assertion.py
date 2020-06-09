@@ -781,6 +781,47 @@ class TestAssert_reprcompare_dataclass:
                 "*Omitting 1 identical items, use -vv to show*",
                 "*Differing attributes:*",
                 "*field_b: 'b' != 'c'*",
+                "*- c*",
+                "*+ b*",
+            ]
+        )
+
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+    def test_recursive_dataclasses(self, testdir):
+        p = testdir.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
+        result = testdir.runpytest(p)
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.fnmatch_lines(
+            [
+                "*Omitting 1 identical items, use -vv to show*",
+                "*Differing attributes:*",
+                "*field_b: ComplexDataObject2(*SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(*SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
+                "*Drill down into differing attribute field_b:*",
+                "*Omitting 1 identical items, use -vv to show*",
+                "*Differing attributes:*",
+                "*Full output truncated*",
+            ]
+        )
+
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+    def test_recursive_dataclasses_verbose(self, testdir):
+        p = testdir.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
+        result = testdir.runpytest(p, "-vv")
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.fnmatch_lines(
+            [
+                "*Matching attributes:*",
+                "*['field_a']*",
+                "*Differing attributes:*",
+                "*field_b: ComplexDataObject2(*SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(*SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
+                "*Matching attributes:*",
+                "*['field_a']*",
+                "*Differing attributes:*",
+                "*field_b: SimpleDataObject(field_a=2, field_b='c') != SimpleDataObject(field_a=3, field_b='c')*",  # noqa
+                "*Matching attributes:*",
+                "*['field_b']*",
+                "*Differing attributes:*",
+                "*field_a: 2 != 3",
             ]
         )
 
@@ -831,6 +872,45 @@ class TestAssert_reprcompare_attrsclass:
         assert "Matching attributes" not in lines
         for line in lines[1:]:
             assert "field_a" not in line
+
+    def test_attrs_recursive(self) -> None:
+        @attr.s
+        class OtherDataObject:
+            field_c = attr.ib()
+            field_d = attr.ib()
+
+        @attr.s
+        class SimpleDataObject:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        left = SimpleDataObject(OtherDataObject(1, "a"), "b")
+        right = SimpleDataObject(OtherDataObject(1, "b"), "b")
+
+        lines = callequal(left, right)
+        assert lines is not None
+        assert "Matching attributes" not in lines
+        for line in lines[1:]:
+            assert "field_b:" not in line
+            assert "field_c:" not in line
+
+    def test_attrs_recursive_verbose(self) -> None:
+        @attr.s
+        class OtherDataObject:
+            field_c = attr.ib()
+            field_d = attr.ib()
+
+        @attr.s
+        class SimpleDataObject:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        left = SimpleDataObject(OtherDataObject(1, "a"), "b")
+        right = SimpleDataObject(OtherDataObject(1, "b"), "b")
+
+        lines = callequal(left, right)
+        assert lines is not None
+        assert "field_d: 'a' != 'b'" in lines
 
     def test_attrs_verbose(self) -> None:
         @attr.s
