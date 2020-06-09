@@ -343,7 +343,7 @@ class LogCaptureFixture:
         """Creates a new funcarg."""
         self._item = item
         # dict of log name -> log level
-        self._initial_log_levels = {}  # type: Dict[Optional[str], int]
+        self._initial_logger_levels = {}  # type: Dict[Optional[str], int]
 
     def _finalize(self) -> None:
         """Finalizes the fixture.
@@ -351,7 +351,7 @@ class LogCaptureFixture:
         This restores the log levels changed by :meth:`set_level`.
         """
         # restore log levels
-        for logger_name, level in self._initial_log_levels.items():
+        for logger_name, level in self._initial_logger_levels.items():
             logger = logging.getLogger(logger_name)
             logger.setLevel(level)
 
@@ -430,8 +430,9 @@ class LogCaptureFixture:
         """
         logger_obj = logging.getLogger(logger)
         # save the original log-level to restore it during teardown
-        self._initial_log_levels.setdefault(logger, logger_obj.level)
+        self._initial_logger_levels.setdefault(logger, logger_obj.level)
         logger_obj.setLevel(level)
+        self.handler.setLevel(level)
 
     @contextmanager
     def at_level(
@@ -446,10 +447,13 @@ class LogCaptureFixture:
         logger_obj = logging.getLogger(logger)
         orig_level = logger_obj.level
         logger_obj.setLevel(level)
+        handler_orig_level = self.handler.level
+        self.handler.setLevel(level)
         try:
             yield
         finally:
             logger_obj.setLevel(orig_level)
+            self.handler.setLevel(handler_orig_level)
 
 
 @pytest.fixture
