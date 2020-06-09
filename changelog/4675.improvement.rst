@@ -1,1 +1,1 @@
-Rich comparision for dataclasses and `attrs`-classes is now recursive.
+Rich comparison for dataclasses and `attrs`-classes is now recursive.
