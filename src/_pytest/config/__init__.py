@@ -872,7 +872,7 @@ class Config:
 
     def pytest_cmdline_parse(
         self, pluginmanager: PytestPluginManager, args: List[str]
-        ) -> object:
+    ) -> object:
         try:
             self.parse(args)
         except UsageError:
