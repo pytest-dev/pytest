@@ -1,6 +1,7 @@
 import atexit
 import contextlib
 import fnmatch
+import importlib.util
 import itertools
 import os
 import shutil
@@ -470,8 +471,6 @@ def import_path(
         raise ImportError(path)
 
     if mode == ImportMode.importlib:
-        import importlib.util
-
         module_name = path.stem
 
         for meta_importer in sys.meta_path:
@@ -511,7 +510,7 @@ def import_path(
         if str(pkg_root) != sys.path[0]:
             sys.path.insert(0, str(pkg_root))
 
-    __import__(module_name)
+    importlib.import_module(module_name)
 
     mod = sys.modules[module_name]
     if path.name == "__init__.py":

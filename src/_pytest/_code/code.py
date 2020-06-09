@@ -1204,7 +1204,10 @@ _PY_DIR = py.path.local(py.__file__).dirpath()
 
 
 def filter_traceback(entry: TracebackEntry) -> bool:
-    """Return True if a TracebackEntry instance should be removed from tracebacks:
+    """Return True if a TracebackEntry instance should be included in tracebacks.
+
+    We hide traceback entries of:
+
     * dynamically generated code (no code to show up for it);
     * internal traceback from pytest or its internal libraries, py and pluggy.
     """

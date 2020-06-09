@@ -99,6 +99,15 @@ class ConftestImportFailure(Exception):
         )
 
 
+def filter_traceback_for_conftest_import_failure(entry) -> bool:
+    """filters tracebacks entries which point to pytest internals or importlib.
+
+    Make a special case for importlib because we use it to import test modules and conftest files
+    in _pytest.pathlib.import_path.
+    """
+    return filter_traceback(entry) and "importlib" not in str(entry.path).split(os.sep)
+
+
 def main(args=None, plugins=None) -> Union[int, ExitCode]:
     """ return exit code, after performing an in-process test run.
 
@@ -116,7 +125,9 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
             tw.line(
                 "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
             )
-            exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+            exc_info.traceback = exc_info.traceback.filter(
+                filter_traceback_for_conftest_import_failure
+            )
             exc_repr = (
                 exc_info.getrepr(style="short", chain=False)
                 if exc_info.traceback
