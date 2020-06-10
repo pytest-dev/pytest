@@ -1138,6 +1138,213 @@ class TestRootdir:
             assert inifile is None
 
 
+class TestAppendIniArgs:
+    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    def test_append_ini_values(self, testdir, name):
+        section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
+        testdir.tmpdir.join(name).write(
+            textwrap.dedent(
+                """
+            {section}
+            custom = 1.0""".format(
+                    section=section
+                )
+            )
+        )
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("custom", "")"""
+        )
+        testdir.makepyfile(
+            """
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("custom")
+                print('\\ncustom_option:%s\\n' % ini_val)"""
+        )
+
+        result = testdir.runpytest("--append-ini", "custom=2.0", "-s")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["custom_option:1.0", "custom_option:2.0"])
+
+        result = testdir.runpytest(
+            "--override-ini", "custom=2.0", "--override-ini=custom=3.0", "-s"
+        )
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["custom_option:1.0", "custom_option:3.0"])
+
+    def test_override_ini_pathlist(self, testdir):
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("paths", "my new ini value", type="pathlist")"""
+        )
+        testdir.makeini(
+            """
+            [pytest]
+            paths=blah.py"""
+        )
+        testdir.makepyfile(
+            """
+            import py.path
+            def test_pathlist(pytestconfig):
+                config_paths = pytestconfig.getini("paths")
+                print(config_paths)
+                for cpf in config_paths:
+                    priant('\\nuser_path:%s' % cpf.basename)"""
+        )
+        result = testdir.runpytest(
+            "--append-ini", "paths=foo/bar1.py foo/bar2.py", "-s"
+        )
+        result.stdout.fnmatch_lines(
+            ["user_path:blah.py", "user_path:bar1.py", "user_path:bar2.py"]
+        )
+
+    def test_override_multiple_and_default(self, testdir):
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                addini = parser.addini
+                addini("custom_option_1", "", default="o1")
+                addini("custom_option_2", "", default="o2")
+                addini("custom_option_3", "", default=False, type="bool")
+                addini("custom_option_4", "", default=True, type="bool")"""
+        )
+        testdir.makeini(
+            """
+            [pytest]
+            custom_option_1=custom_option_1
+            custom_option_2=custom_option_2
+        """
+        )
+        testdir.makepyfile(
+            """
+            def test_multiple_options(pytestconfig):
+                prefix = "custom_option"
+                for x in range(1, 5):
+                    ini_value=pytestconfig.getini("%s_%d" % (prefix, x))
+                    print('\\nini%d:%s' % (x, ini_value))
+        """
+        )
+        result = testdir.runpytest(
+            "--append-ini",
+            "custom_option_1=fulldir=/tmp/user1",
+            "-a",
+            "custom_option_2=url=/tmp/user2?a=b&d=e",
+            "-a",
+            "custom_option_3=True",
+            "-a",
+            "custom_option_4=no",
+            "-s",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "ini1:custom_option_1" "ini1:fulldir=/tmp/user1",
+                "ini1:custom_option_2" "ini2:url=/tmp/user2?a=b&d=e",
+                "ini3:True",
+                "ini4:False",
+            ]
+        )
+
+    def test_override_ini_usage_error_bad_style(self, testdir):
+        testdir.makeini(
+            """
+            [pytest]
+            xdist_strict=False
+        """
+        )
+        result = testdir.runpytest("--append-ini", "xdist_strict", "True")
+        result.stderr.fnmatch_lines(
+            [
+                "ERROR: -a/--append-ini expects option=value style (got: 'xdist_strict').",
+            ]
+        )
+
+    @pytest.mark.parametrize("with_ini", [True, False])
+    def test_override_ini_handled_asap(self, testdir, with_ini):
+        """-a should be handled as soon as possible and always append to what's in ini files (#2238)"""
+        if with_ini:
+            testdir.makeini(
+                """
+                [pytest]
+                python_files=test_*.py
+            """
+            )
+        testdir.makepyfile(
+            unittest_ini_handle="""
+            def test():
+                pass
+        """
+        )
+        result = testdir.runpytest("--append-ini", "python_files=unittest_*.py")
+        result.stdout.fnmatch_lines(["*1 passed in*"])
+
+    def test_addopts_before_initini(self, monkeypatch, _config_for_test, _sys_snapshot):
+        cache_dir = ".custom_cache"
+        monkeypatch.setenv("PYTEST_ADDOPTS", "-a cache_dir=%s" % cache_dir)
+        config = _config_for_test
+        config._preparse([], addopts=True)
+        assert config._override_ini == ["cache_dir=%s" % cache_dir]
+
+    def test_addopts_from_env_not_concatenated(self, monkeypatch, _config_for_test):
+        """PYTEST_ADDOPTS should not take values from normal args (#4265)."""
+        monkeypatch.setenv("PYTEST_ADDOPTS", "-a")
+        config = _config_for_test
+        with pytest.raises(UsageError) as excinfo:
+            config._preparse(["cache_dir=ignored"], addopts=True)
+        assert (
+            "error: argument -a/--append-ini: expected one argument (via PYTEST_ADDOPTS)"
+            in excinfo.value.args[0]
+        )
+
+    def test_addopts_from_ini_not_concatenated(self, testdir):
+        """addopts from ini should not take values from normal args (#4265)."""
+        testdir.makeini(
+            """
+            [pytest]
+            addopts=-a
+        """
+        )
+        result = testdir.runpytest("cache_dir=ignored")
+        result.stderr.fnmatch_lines(
+            [
+                "%s: error: argument -a/--append-ini: expected one argument (via addopts config)"
+                % (testdir.request.config._parser.optparser.prog,)
+            ]
+        )
+        assert result.ret == _pytest.config.ExitCode.USAGE_ERROR
+
+    def test_append_ini_does_not_contain_paths(self, _config_for_test, _sys_snapshot):
+        """Check that -a no longer swallows all options after it (#3103)"""
+        config = _config_for_test
+        config._preparse(["-a", "cache_dir=/cache", "/some/test/path"])
+        assert config._append_ini == ["cache_dir=/cache"]
+
+    def test_multiple_append_ini_options(self, testdir):
+        """Ensure a file path following a '-o' option does not generate an error (#3103)"""
+        testdir.makepyfile(
+            **{
+                "conftest.py": """
+                def pytest_addoption(parser):
+                    parser.addini('foo', default=None, help='some option')
+                    parser.addini('bar', default=None, help='some option')
+            """,
+                "test_foo.py": """
+                def test(pytestconfig):
+                    assert pytestconfig.getini('foo') == '1'
+                    assert pytestconfig.getini('bar') == '0'
+            """,
+                "test_bar.py": """
+                def test():
+                    assert False
+            """,
+            }
+        )
+        result = testdir.runpytest("-a", "foo=1", "-a", "bar=0", "test_foo.py")
+        assert "ERROR:" not in result.stderr.str()
+        result.stdout.fnmatch_lines(["collected 1 item", "*= 1 passed in *="])
+
+
 class TestOverrideIniArgs:
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_override_ini_names(self, testdir, name):

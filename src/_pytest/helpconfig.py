@@ -91,6 +91,13 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         help='override ini option with "option=value" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.',
     )
+    group._addoption(
+        "-a",
+        "--append-ini",
+        dest="append_ini",
+        action="append",
+        help='append to ini option with "option=value" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.',
+    )
 
 
 @pytest.hookimpl(hookwrapper=True)

@@ -821,6 +821,7 @@ class Config:
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache = {}  # type: Dict[str, Any]
+        self._append_ini = ()  # type: Sequence[str]
         self._override_ini = ()  # type: Sequence[str]
         self._opt2dest = {}  # type: Dict[str, str]
         self._cleanup = []  # type: List[Callable[[], None]]
@@ -951,6 +952,7 @@ class Config:
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")
         self._parser.addini("minversion", "minimally required pytest version")
+        self._append_ini = ns.append_ini or ()
         self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
@@ -1158,6 +1160,9 @@ class Config:
         #     a_line_list = ["tests", "acceptance"]
         #   in this case, we already have a list ready to use
         #
+        append_value = self._get_append_ini_value(name)
+        if append_value:
+            value = " ".join([value, append_value])
         if type == "pathlist":
             dp = py.path.local(self.inifile).dirpath()
             input_values = shlex.split(value) if isinstance(value, str) else value
@@ -1188,6 +1193,29 @@ class Config:
                 relroot = modpath.join(relroot, abs=True)
             values.append(relroot)
         return values
+
+    def _get_append_ini_value(self, name: str) -> Optional[str]:
+        value = None
+        # append_ini is a list of "ini=value" options
+        # append all values if multiple values are set for same ini-name,
+        # e.g. -a foo=bar1 -a foo=bar2 will append 'bar1 bar2' to foo
+        for ini_config in self._append_ini:
+            try:
+                key, append_ini_value = ini_config.split("=", 1)
+            except ValueError:
+                raise UsageError(
+                    "-a/--append-ini expects option=value style (got: {!r}).".format(
+                        ini_config
+                    )
+                )
+            else:
+                if key == name:
+                    value = (
+                        append_ini_value
+                        if value is None
+                        else " ".join([value, append_ini_value])
+                    )
+        return value
 
     def _get_override_ini_value(self, name: str) -> Optional[str]:
         value = None
