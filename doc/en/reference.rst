@@ -1561,16 +1561,15 @@ passed multiple times. The expected format is ``name=value``. For example::
    See :ref:`change naming conventions` for more detailed examples.
 
 
-.. confval:: require_plugins
+.. confval:: required_plugins
 
    A space separated list of plugins that must be present for pytest to run.
-   If any one of the plugins is not found, emit a warning.
-   If pytest is run with ``--strict-config`` exceptions are raised in place of warnings.
+   If any one of the plugins is not found, emit a error.
 
    .. code-block:: ini
 
        [pytest]
-       require_plugins = html xdist
+       required_plugins = pytest-html pytest-xdist
 
 
 .. confval:: testpaths

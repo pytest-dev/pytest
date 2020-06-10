@@ -1,3 +1,1 @@
-New `require_plugins` configuration option allows the user to specify a list of plugins required for pytest to run. Warnings are raised if these plugins are not found when running pytest.
-
-The `--strict-config` flag can be used to treat these warnings as errors.
+New `required_plugins` configuration option allows the user to specify a list of plugins required for pytest to run. An error is raised if any required plugins are not found when running pytest.

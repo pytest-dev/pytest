@@ -953,7 +953,7 @@ class Config:
         self._parser.addini("addopts", "extra command line options", "args")
         self._parser.addini("minversion", "minimally required pytest version")
         self._parser.addini(
-            "require_plugins",
+            "required_plugins",
             "plugins that must be present for pytest to run",
             type="args",
             default=[],
@@ -1090,11 +1090,21 @@ class Config:
             self._emit_warning_or_fail("Unknown config ini key: {}\n".format(key))
 
     def _validate_plugins(self) -> None:
-        for plugin in self.getini("require_plugins"):
-            if not self.pluginmanager.hasplugin(plugin):
-                self._emit_warning_or_fail(
-                    "Missing required plugin: {}\n".format(plugin)
-                )
+        plugin_info = self.pluginmanager.list_plugin_distinfo()
+        plugin_dist_names = [
+            "{dist.project_name}".format(dist=dist) for _, dist in plugin_info
+        ]
+
+        required_plugin_list = []
+        for plugin in sorted(self.getini("required_plugins")):
+            if plugin not in plugin_dist_names:
+                required_plugin_list.append(plugin)
+
+        if required_plugin_list:
+            fail(
+                "Missing required plugins: {}".format(", ".join(required_plugin_list)),
+                pytrace=False,
+            )
 
     def _emit_warning_or_fail(self, message: str) -> None:
         if self.known_args_namespace.strict_config:

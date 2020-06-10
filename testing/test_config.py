@@ -213,51 +213,36 @@ class TestParseIni:
                 testdir.runpytest("--strict-config")
 
     @pytest.mark.parametrize(
-        "ini_file_text, stderr_output, exception_text",
+        "ini_file_text, exception_text",
         [
             (
                 """
           [pytest]
-          require_plugins = fakePlugin1 fakePlugin2
+          required_plugins = fakePlugin1 fakePlugin2
           """,
-                [
-                    "WARNING: Missing required plugin: fakePlugin1",
-                    "WARNING: Missing required plugin: fakePlugin2",
-                ],
-                "Missing required plugin: fakePlugin1",
+                "Missing required plugins: fakePlugin1, fakePlugin2",
             ),
             (
                 """
           [pytest]
-          require_plugins = a monkeypatch z
+          required_plugins = a pytest-xdist z
           """,
-                [
-                    "WARNING: Missing required plugin: a",
-                    "WARNING: Missing required plugin: z",
-                ],
-                "Missing required plugin: a",
+                "Missing required plugins: a, z",
             ),
             (
                 """
           [pytest]
-          require_plugins = a monkeypatch z
-          addopts = -p no:monkeypatch
+          required_plugins = a q j b c z
           """,
-                [
-                    "WARNING: Missing required plugin: a",
-                    "WARNING: Missing required plugin: monkeypatch",
-                    "WARNING: Missing required plugin: z",
-                ],
-                "Missing required plugin: a",
+                "Missing required plugins: a, b, c, j, q, z",
             ),
             (
                 """
           [some_other_header]
-          require_plugins = wont be triggered
+          required_plugins = wont be triggered
           [pytest]
           minversion = 5.0.0
           """,
-                [],
                 "",
             ),
             (
@@ -265,23 +250,21 @@ class TestParseIni:
           [pytest]
           minversion = 5.0.0
           """,
-                [],
                 "",
             ),
         ],
     )
-    def test_missing_required_plugins(
-        self, testdir, ini_file_text, stderr_output, exception_text
-    ):
+    def test_missing_required_plugins(self, testdir, ini_file_text, exception_text):
+        pytest.importorskip("xdist")
+
         testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
-        testdir.parseconfig()
+        testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
 
-        result = testdir.runpytest()
-        result.stderr.fnmatch_lines(stderr_output)
-
-        if stderr_output:
+        if exception_text:
             with pytest.raises(pytest.fail.Exception, match=exception_text):
-                testdir.runpytest("--strict-config")
+                testdir.parseconfig()
+        else:
+            testdir.parseconfig()
 
 
 class TestConfigCmdlineParsing:
@@ -681,6 +664,7 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
 
     class Dist:
         files = ()
+        metadata = {"name": "foo"}
         entry_points = (EntryPoint(),)
 
     def my_dists():
@@ -711,6 +695,7 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
     class Distribution:
         version = "1.0"
         files = ("foo.txt",)
+        metadata = {"name": "foo"}
         entry_points = (DummyEntryPoint(),)
 
     def distributions():
@@ -735,6 +720,7 @@ def test_importlib_metadata_broken_distribution(testdir, monkeypatch):
     class Distribution:
         version = "1.0"
         files = None
+        metadata = {"name": "foo"}
         entry_points = (DummyEntryPoint(),)
 
     def distributions():
@@ -760,6 +746,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block
     class Distribution:
         version = "1.0"
         files = ("foo.txt",)
+        metadata = {"name": "foo"}
         entry_points = (DummyEntryPoint(),)
 
     def distributions():
@@ -791,6 +778,7 @@ def test_disable_plugin_autoload(testdir, monkeypatch, parse_args, should_load):
             return sys.modules[self.name]
 
     class Distribution:
+        metadata = {"name": "foo"}
         entry_points = (DummyEntryPoint(),)
         files = ()
 
