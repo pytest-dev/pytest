@@ -1090,19 +1090,21 @@ class Config:
             self._emit_warning_or_fail("Unknown config ini key: {}\n".format(key))
 
     def _validate_plugins(self) -> None:
+        required_plugins = sorted(self.getini("required_plugins"))
+        if not required_plugins:
+            return
+
         plugin_info = self.pluginmanager.list_plugin_distinfo()
-        plugin_dist_names = [
-            "{dist.project_name}".format(dist=dist) for _, dist in plugin_info
-        ]
+        plugin_dist_names = [dist.project_name for _, dist in plugin_info]
 
-        required_plugin_list = []
-        for plugin in sorted(self.getini("required_plugins")):
+        missing_plugins = []
+        for plugin in required_plugins:
             if plugin not in plugin_dist_names:
-                required_plugin_list.append(plugin)
+                missing_plugins.append(plugin)
 
-        if required_plugin_list:
+        if missing_plugins:
             fail(
-                "Missing required plugins: {}".format(", ".join(required_plugin_list)),
+                "Missing required plugins: {}".format(", ".join(missing_plugins)),
                 pytrace=False,
             )
 
