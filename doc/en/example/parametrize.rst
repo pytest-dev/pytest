@@ -351,6 +351,30 @@ And then when we run the test:
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
+Indirect parametrization
+---------------------------------------------------
+
+Using the ``indirect=True`` parameter when parametrizing a test allows to
+parametrize a test with a fixture receiving the values before passing them to a
+test:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def fixt(request):
+        return request.param * 3
+
+
+    @pytest.mark.parametrize("fixt", ["a", "b"], indirect=True)
+    def test_indirect(fixt):
+        assert len(fixt) == 3
+
+This can be used, for example, to do more expensive setup at test run time in
+the fixture, rather than having to run those setup steps at collection time.
+
 .. regendoc:wipe
 
 Apply indirect on particular arguments

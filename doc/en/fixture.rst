@@ -665,6 +665,37 @@ Running it:
 voila! The ``smtp_connection`` fixture function picked up our mail server name
 from the module namespace.
 
+.. _`using-markers`:
+
+Using markers to pass data to fixtures
+-------------------------------------------------------------
+
+Using the :py:class:`request <FixtureRequest>` object, a fixture can also access
+markers which are applied to a test function. This can be useful to pass data
+into a fixture from a test:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def fixt(request):
+        marker = request.node.get_closest_marker("fixt_data")
+        if marker is None:
+            # Handle missing marker in some way...
+            data = None
+        else:
+            data = marker.args[0]
+
+        # Do something with the data
+        return data
+
+
+    @pytest.mark.fixt_data(42)
+    def test_fixt(fixt):
+        assert fixt == 42
+
 .. _`fixture-factory`:
 
 Factories as fixtures
