@@ -527,9 +527,11 @@ class LoggingPlugin:
         # File logging.
         self.log_file_level = get_log_level_for_setting(config, "log_file_level")
         log_file = get_option_ini(config, "log_file") or os.devnull
+
         # Keep the log file relative to the inidir file (if it exists) (#7336)
-        if log_file != os.devnull and getattr(config, "inifile"):
-            log_file = os.path.join(config.inifile.dirname, log_file)  # type: ignore[union-attr]
+        inidir = getattr(getattr(config, "inifile", None), "dirname", None)
+        if log_file != os.devnull and inidir:
+            log_file = os.path.join(inidir, log_file)
         self.log_file_handler = _FileHandler(log_file, mode="w", encoding="UTF-8")
         log_file_format = get_option_ini(config, "log_file_format", "log_format")
         log_file_date_format = get_option_ini(
