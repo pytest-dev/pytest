@@ -247,7 +247,9 @@ def _diff_text(left: str, right: str, screen_width: int, verbose: int = 0) -> Li
     return explanation
 
 
-def _compare_eq_any(left: Any, right: Any, screen_width: int, verbose: int = 0) -> List[str]:
+def _compare_eq_any(
+    left: Any, right: Any, screen_width: int, verbose: int = 0
+) -> List[str]:
     explanation = []  # type: List[str]
     if istext(left) and istext(right):
         explanation = _diff_text(left, right, screen_width, verbose)
@@ -477,7 +479,9 @@ def _compare_eq_cls(
                 ("%s: %r != %r") % (field, getattr(left, field), getattr(right, field)),
                 "",
                 "Drill down into differing attribute %s:" % field,
-                *_compare_eq_any(getattr(left, field), getattr(right, field), screen_width, verbose),
+                *_compare_eq_any(
+                    getattr(left, field), getattr(right, field), screen_width, verbose
+                ),
             ]
     return explanation
 
