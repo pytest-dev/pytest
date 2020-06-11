@@ -260,7 +260,7 @@ def _compare_eq_any(left: Any, right: Any, screen_width: int, verbose: int = 0) 
             explanation = _compare_eq_dict(left, right, verbose)
         elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
             type_fn = (isdatacls, isattrs)
-            explanation = _compare_eq_cls(left, right, verbose, type_fn)
+            explanation = _compare_eq_cls(left, right, screen_width, verbose, type_fn)
         elif verbose > 0:
             explanation = _compare_eq_verbose(left, right)
         if isiterable(left) and isiterable(right):
@@ -442,6 +442,7 @@ def _compare_eq_dict(
 def _compare_eq_cls(
     left: Any,
     right: Any,
+    screen_width: int,
     verbose: int,
     type_fns: Tuple[Callable[[Any], bool], Callable[[Any], bool]],
 ) -> List[str]:
@@ -476,7 +477,7 @@ def _compare_eq_cls(
                 ("%s: %r != %r") % (field, getattr(left, field), getattr(right, field)),
                 "",
                 "Drill down into differing attribute %s:" % field,
-                *_compare_eq_any(getattr(left, field), getattr(right, field), verbose),
+                *_compare_eq_any(getattr(left, field), getattr(right, field), screen_width, verbose),
             ]
     return explanation
 
