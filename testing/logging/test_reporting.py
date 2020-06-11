@@ -1152,3 +1152,82 @@ def test_logging_emit_error_supressed(testdir: Testdir) -> None:
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_log_file_is_in_pytest_ini_rootdir(testdir):
+    # as per https://docs.pytest.org/en/5.4.3/reference.html log_file
+    # the file should be relative to the pytest inifile
+    testdir.makefile(
+        ".ini",
+        pytest="""
+        [pytest]
+        log_cli = True
+        log_cli_level = DEBUG
+        log_file = logfile.txt
+        log_file_level = DEBUG
+        """,
+    )
+    sub = testdir.mkdir("sub")
+    p = testdir.makepyfile(
+        """
+        def test_this():
+            import logging
+            logging.getLogger().info("Normal message")
+    """
+    )
+    p.move(sub.join(p.basename))
+    os.chdir(sub.strpath)
+    testdir.runpytest()
+    testdir.chdir()
+    files = set(os.listdir())
+    assert {"logfile.txt", "pytest.ini"}.issubset(files)
+
+
+def test_log_file_can_be_specified_to_child_dir(testdir):
+    testdir.makefile(
+        ".ini",
+        pytest="""
+        [pytest]
+        log_cli = True
+        log_cli_level = DEBUG
+        log_file = sub/logfile.txt
+        log_file_level = DEBUG
+        """,
+    )
+    sub = testdir.mkdir("sub")
+    p = testdir.makepyfile(
+        """
+        def test_this():
+            import logging
+            logging.getLogger().info("Normal message")
+    """
+    )
+    p.move(sub.join(p.basename))
+    os.chdir(sub.strpath)
+    testdir.runpytest()
+    files = set(os.listdir())
+    assert "logfile.txt" in files
+    assert "pytest.ini" not in files
+
+
+def test_log_file_cli_is_also_relative(testdir):
+    testdir.makefile(
+        ".ini",
+        pytest="""
+        [pytest]
+        """,
+    )
+    sub = testdir.mkdir("sub")
+    p = testdir.makepyfile(
+        """
+        def test_this():
+            import logging
+            logging.getLogger().info("Normal message")
+    """
+    )
+    p.move(sub.join(p.basename))
+    os.chdir(sub.strpath)
+    testdir.runpytest("--log-file", "sub{}logfile.txt".format(os.sep))
+    files = set(os.listdir())
+    assert "logfile.txt" in files
+    assert "pytest.ini" not in files
