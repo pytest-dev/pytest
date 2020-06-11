@@ -161,7 +161,7 @@ def determine_setup(
     args: List[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
-) -> Tuple[py.path.local, Optional[str], Dict[str, Union[str, List[str]]]]:
+) -> Tuple[py.path.local, Optional[py.path.local], Dict[str, Union[str, List[str]]]]:
     rootdir = None
     dirs = get_dirs_from_args(args)
     if inifile:
