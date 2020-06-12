@@ -1,4 +1,5 @@
 import atexit
+import contextlib
 import fnmatch
 import itertools
 import os
@@ -290,10 +291,14 @@ def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) ->
         return False
     else:
         if lock_time < consider_lock_dead_if_created_before:
-            lock.unlink()
-            return True
-        else:
-            return False
+            # wa want to ignore any errors while trying to remove the lock such as:
+            # - PermissionDenied, like the file permissions have changed since the lock creation
+            # - FileNotFoundError, in case another pytest process got here first.
+            # and any other cause of failure.
+            with contextlib.suppress(OSError):
+                lock.unlink()
+                return True
+        return False
 
 
 def try_cleanup(path: Path, consider_lock_dead_if_created_before: float) -> None:
