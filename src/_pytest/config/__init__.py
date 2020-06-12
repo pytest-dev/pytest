@@ -1087,7 +1087,7 @@ class Config:
 
     def _validate_keys(self) -> None:
         for key in sorted(self._get_unknown_ini_keys()):
-            self._emit_warning_or_fail("Unknown config ini key: {}\n".format(key))
+            self._warn_or_fail_if_strict("Unknown config ini key: {}\n".format(key))
 
     def _validate_plugins(self) -> None:
         required_plugins = sorted(self.getini("required_plugins"))
@@ -1108,7 +1108,7 @@ class Config:
                 pytrace=False,
             )
 
-    def _emit_warning_or_fail(self, message: str) -> None:
+    def _warn_or_fail_if_strict(self, message: str) -> None:
         if self.known_args_namespace.strict_config:
             fail(message, pytrace=False)
         sys.stderr.write("WARNING: {}".format(message))
