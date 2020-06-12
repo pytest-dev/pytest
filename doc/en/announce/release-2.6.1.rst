@@ -32,7 +32,7 @@ Changes 2.6.1
   purely the nodeid.  The line number is still shown in failure reports.
   Thanks Floris Bruynooghe.
 
-- fix issue437 where assertion rewriting could cause pytest-xdist slaves
+- fix issue437 where assertion rewriting could cause pytest-xdist worker nodes
   to collect different tests. Thanks Bruno Oliveira.
 
 - fix issue555: add "errors" attribute to capture-streams to satisfy

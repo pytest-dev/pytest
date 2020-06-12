@@ -1,0 +1,1 @@
+Remove last internal uses of deprecated "slave" term from old pytest-xdist.

@@ -341,7 +341,7 @@ class LFPlugin:
 
     def pytest_sessionfinish(self, session: Session) -> None:
         config = self.config
-        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
+        if config.getoption("cacheshow") or hasattr(config, "workerinput"):
             return
 
         assert config.cache is not None
@@ -386,7 +386,7 @@ class NFPlugin:
 
     def pytest_sessionfinish(self) -> None:
         config = self.config
-        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
+        if config.getoption("cacheshow") or hasattr(config, "workerinput"):
             return
 
         if config.getoption("collectonly"):
