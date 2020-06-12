@@ -380,9 +380,9 @@ class TerminalReporter:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
             self.currentfspath = fspath
-            fspath = self.startdir.bestrelpath(fspath)
+            relfspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
-            self._tw.write(fspath + " ")
+            self._tw.write(relfspath + " ")
         self._tw.write(res, flush=True, **markup)
 
     def write_ensure_prefix(self, prefix, extra: str = "", **kwargs) -> None:

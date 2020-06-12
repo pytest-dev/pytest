@@ -495,7 +495,7 @@ def pytest_report_header(config: Config) -> Optional[str]:
         # starting with .., ../.. if sensible
 
         try:
-            displaypath = cachedir.relative_to(config.rootdir)
+            displaypath = cachedir.relative_to(str(config.rootdir))
         except ValueError:
             displaypath = cachedir
         return "cachedir: {}".format(displaypath)

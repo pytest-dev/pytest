@@ -308,10 +308,9 @@ class PytestPluginManager(PluginManager):
         self._dirpath2confmods = {}  # type: Dict[Any, List[object]]
         # Maps a py.path.local to a module object.
         self._conftestpath2mod = {}  # type: Dict[Any, object]
-        self._confcutdir = None
+        self._confcutdir = None  # type: Optional[py.path.local]
         self._noconftest = False
-        # Set of py.path.local's.
-        self._duplicatepaths = set()  # type: Set[Any]
+        self._duplicatepaths = set()  # type: Set[py.path.local]
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
@@ -945,13 +944,12 @@ class Config:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
-        r = determine_setup(
+        self.rootdir, self.inifile, self.inicfg = determine_setup(
             ns.inifilename,
             ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             config=self,
         )
-        self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info["rootdir"] = self.rootdir
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")
@@ -1162,6 +1160,8 @@ class Config:
         #   in this case, we already have a list ready to use
         #
         if type == "pathlist":
+            # TODO: This assert is probably not valid in all cases.
+            assert self.inifile is not None
             dp = py.path.local(self.inifile).dirpath()
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp.join(x, abs=True) for x in input_values]
