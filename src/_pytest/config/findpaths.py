@@ -165,7 +165,8 @@ def determine_setup(
     rootdir = None
     dirs = get_dirs_from_args(args)
     if inifile:
-        inicfg = load_config_dict_from_file(py.path.local(inifile)) or {}
+        inifile = py.path.local(inifile)
+        inicfg = load_config_dict_from_file(inifile) or {}
         if rootdir_cmd_arg is None:
             rootdir = get_common_ancestor(dirs)
     else:
