@@ -177,7 +177,7 @@ def test_makedir_for_resultlog(testdir, LineMatcher):
     LineMatcher(lines).fnmatch_lines([". *:test_pass"])
 
 
-def test_no_resultlog_on_slaves(testdir):
+def test_no_resultlog_on_workers(testdir):
     config = testdir.parseconfig("-p", "resultlog", "--resultlog=resultlog")
 
     assert resultlog_key not in config._store
@@ -186,7 +186,7 @@ def test_no_resultlog_on_slaves(testdir):
     pytest_unconfigure(config)
     assert resultlog_key not in config._store
 
-    config.slaveinput = {}
+    config.workerinput = {}
     pytest_configure(config)
     assert resultlog_key not in config._store
     pytest_unconfigure(config)

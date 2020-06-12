@@ -6159,7 +6159,7 @@ time or change existing behaviors in order to make them less surprising/more use
   purely the nodeid.  The line number is still shown in failure reports.
   Thanks Floris Bruynooghe.
 
-- fix issue437 where assertion rewriting could cause pytest-xdist slaves
+- fix issue437 where assertion rewriting could cause pytest-xdist worker nodes
   to collect different tests. Thanks Bruno Oliveira.
 
 - fix issue555: add "errors" attribute to capture-streams to satisfy
@@ -6706,7 +6706,7 @@ Bug fixes:
 - Issue 265 - integrate nose setup/teardown with setupstate
   so it doesn't try to teardown if it did not setup
 
-- issue 271 - don't write junitxml on slave nodes
+- issue 271 - don't write junitxml on worker nodes
 
 - Issue 274 - don't try to show full doctest example
   when doctest does not know the example location
@@ -7588,7 +7588,7 @@ Bug fixes:
 - fix assert reinterpreation that sees a call containing "keyword=..."
 
 - fix issue66: invoke pytest_sessionstart and pytest_sessionfinish
-  hooks on slaves during dist-testing, report module/session teardown
+  hooks on worker nodes during dist-testing, report module/session teardown
   hooks correctly.
 
 - fix issue65: properly handle dist-testing if no

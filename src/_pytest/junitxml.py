@@ -427,8 +427,8 @@ def pytest_addoption(parser: Parser) -> None:
 
 def pytest_configure(config: Config) -> None:
     xmlpath = config.option.xmlpath
-    # prevent opening xmllog on slave nodes (xdist)
-    if xmlpath and not hasattr(config, "slaveinput"):
+    # prevent opening xmllog on worker nodes (xdist)
+    if xmlpath and not hasattr(config, "workerinput"):
         junit_family = config.getini("junit_family")
         if not junit_family:
             _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
@@ -506,17 +506,17 @@ class LogXML:
     def finalize(self, report: TestReport) -> None:
         nodeid = getattr(report, "nodeid", report)
         # local hack to handle xdist report order
-        slavenode = getattr(report, "node", None)
-        reporter = self.node_reporters.pop((nodeid, slavenode))
+        workernode = getattr(report, "node", None)
+        reporter = self.node_reporters.pop((nodeid, workernode))
         if reporter is not None:
             reporter.finalize()
 
     def node_reporter(self, report: Union[TestReport, str]) -> _NodeReporter:
         nodeid = getattr(report, "nodeid", report)  # type: Union[str, TestReport]
         # local hack to handle xdist report order
-        slavenode = getattr(report, "node", None)
+        workernode = getattr(report, "node", None)
 
-        key = nodeid, slavenode
+        key = nodeid, workernode
 
         if key in self.node_reporters:
             # TODO: breaks for --dist=each

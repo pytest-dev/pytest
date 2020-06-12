@@ -29,8 +29,8 @@ def pytest_addoption(parser: Parser) -> None:
 
 def pytest_configure(config: Config) -> None:
     resultlog = config.option.resultlog
-    # prevent opening resultlog on slave nodes (xdist)
-    if resultlog and not hasattr(config, "slaveinput"):
+    # prevent opening resultlog on worker nodes (xdist)
+    if resultlog and not hasattr(config, "workerinput"):
         dirname = os.path.dirname(os.path.abspath(resultlog))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
