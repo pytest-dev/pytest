@@ -1067,6 +1067,11 @@ class Config:
             # Imported lazily to improve start-up time.
             from packaging.version import Version
 
+            if not isinstance(minver, str):
+                raise pytest.UsageError(
+                    "%s: 'minversion' must be a single value" % self.inifile
+                )
+
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
                     "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
