@@ -951,6 +951,12 @@ class Config:
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")
         self._parser.addini("minversion", "minimally required pytest version")
+        self._parser.addini(
+            "required_plugins",
+            "plugins that must be present for pytest to run",
+            type="args",
+            default=[],
+        )
         self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
@@ -1034,7 +1040,8 @@ class Config:
         self.known_args_namespace = ns = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
-        self._validatekeys()
+        self._validate_plugins()
+        self._validate_keys()
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1072,12 +1079,33 @@ class Config:
                     % (self.inifile, minver, pytest.__version__,)
                 )
 
-    def _validatekeys(self):
+    def _validate_keys(self) -> None:
         for key in sorted(self._get_unknown_ini_keys()):
-            message = "Unknown config ini key: {}\n".format(key)
-            if self.known_args_namespace.strict_config:
-                fail(message, pytrace=False)
-            sys.stderr.write("WARNING: {}".format(message))
+            self._warn_or_fail_if_strict("Unknown config ini key: {}\n".format(key))
+
+    def _validate_plugins(self) -> None:
+        required_plugins = sorted(self.getini("required_plugins"))
+        if not required_plugins:
+            return
+
+        plugin_info = self.pluginmanager.list_plugin_distinfo()
+        plugin_dist_names = [dist.project_name for _, dist in plugin_info]
+
+        missing_plugins = []
+        for plugin in required_plugins:
+            if plugin not in plugin_dist_names:
+                missing_plugins.append(plugin)
+
+        if missing_plugins:
+            fail(
+                "Missing required plugins: {}".format(", ".join(missing_plugins)),
+                pytrace=False,
+            )
+
+    def _warn_or_fail_if_strict(self, message: str) -> None:
+        if self.known_args_namespace.strict_config:
+            fail(message, pytrace=False)
+        sys.stderr.write("WARNING: {}".format(message))
 
     def _get_unknown_ini_keys(self) -> List[str]:
         parser_inicfg = self._parser._inidict

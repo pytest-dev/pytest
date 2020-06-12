@@ -80,7 +80,7 @@ def pytest_addoption(parser: Parser) -> None:
     group._addoption(
         "--strict-config",
         action="store_true",
-        help="invalid ini keys for the `pytest` section of the configuration file raise errors.",
+        help="any warnings encountered while parsing the `pytest` section of the configuration file raise errors.",
     )
     group._addoption(
         "--strict-markers",
