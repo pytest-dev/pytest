@@ -683,13 +683,14 @@ class TestConfigFromdictargs:
         )
         with cwd.ensure(dir=True).as_cwd():
             config = Config.fromdictargs(option_dict, ())
+            inipath = py.path.local(inifile)
 
         assert config.args == [str(cwd)]
         assert config.option.inifilename == inifile
         assert config.option.capture == "no"
 
         # this indicates this is the file used for getting configuration values
-        assert config.inifile == inifile
+        assert config.inifile == inipath
         assert config.inicfg.get("name") == "value"
         assert config.inicfg.get("should_not_be_set") is None
 

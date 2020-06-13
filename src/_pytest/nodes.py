@@ -393,7 +393,7 @@ class Node(metaclass=NodeMeta):
         # It will be better to just always display paths relative to invocation_dir, but
         # this requires a lot of plumbing (#6428).
         try:
-            abspath = Path(os.getcwd()) != Path(self.config.invocation_dir)
+            abspath = Path(os.getcwd()) != Path(str(self.config.invocation_dir))
         except OSError:
             abspath = True
 

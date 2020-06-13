@@ -928,8 +928,13 @@ class TerminalRepr:
         raise NotImplementedError()
 
 
+# This class is abstract -- only subclasses are instantiated.
 @attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ExceptionRepr(TerminalRepr):
+    # Provided by in subclasses.
+    reprcrash = None  # type: Optional[ReprFileLocation]
+    reprtraceback = None  # type: ReprTraceback
+
     def __attrs_post_init__(self):
         self.sections = []  # type: List[Tuple[str, str, str]]
 

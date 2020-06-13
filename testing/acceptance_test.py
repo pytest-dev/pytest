@@ -580,8 +580,9 @@ class TestInvocationVariants:
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_equivalence_pytest_pytest(self):
-        assert pytest.main == py.test.cmdline.main
+    def test_equivalence_pytest_pydottest(self) -> None:
+        # Type ignored because `py.test` is not and will not be typed.
+        assert pytest.main == py.test.cmdline.main  # type: ignore[attr-defined]
 
     def test_invoke_with_invalid_type(self):
         with pytest.raises(

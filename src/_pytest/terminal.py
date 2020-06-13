@@ -30,6 +30,8 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest import timing
+from _pytest._code import ExceptionInfo
+from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
@@ -315,6 +317,7 @@ class TerminalReporter:
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = None  # type: Optional[float]
         self._already_displayed_warnings = None  # type: Optional[int]
+        self._keyboardinterrupt_memo = None  # type: Optional[ExceptionRepr]
 
     @property
     def writer(self) -> TerminalWriter:
@@ -377,9 +380,9 @@ class TerminalReporter:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
             self.currentfspath = fspath
-            fspath = self.startdir.bestrelpath(fspath)
+            relfspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
-            self._tw.write(fspath + " ")
+            self._tw.write(relfspath + " ")
         self._tw.write(res, flush=True, **markup)
 
     def write_ensure_prefix(self, prefix, extra: str = "", **kwargs) -> None:
@@ -448,10 +451,10 @@ class TerminalReporter:
         if set_main_color:
             self._set_main_color()
 
-    def pytest_internalerror(self, excrepr):
+    def pytest_internalerror(self, excrepr: ExceptionRepr) -> bool:
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
-        return 1
+        return True
 
     def pytest_warning_recorded(
         self, warning_message: warnings.WarningMessage, nodeid: str,
@@ -783,7 +786,7 @@ class TerminalReporter:
             self.write_sep("!", str(session.shouldfail), red=True)
         if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
-            del self._keyboardinterrupt_memo
+            self._keyboardinterrupt_memo = None
         elif session.shouldstop:
             self.write_sep("!", str(session.shouldstop), red=True)
         self.summary_stats()
@@ -799,15 +802,17 @@ class TerminalReporter:
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
 
-    def pytest_keyboard_interrupt(self, excinfo) -> None:
+    def pytest_keyboard_interrupt(self, excinfo: ExceptionInfo[BaseException]) -> None:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
 
     def pytest_unconfigure(self) -> None:
-        if hasattr(self, "_keyboardinterrupt_memo"):
+        if self._keyboardinterrupt_memo is not None:
             self._report_keyboardinterrupt()
 
     def _report_keyboardinterrupt(self) -> None:
         excrepr = self._keyboardinterrupt_memo
+        assert excrepr is not None
+        assert excrepr.reprcrash is not None
         msg = excrepr.reprcrash.message
         self.write_sep("!", msg)
         if "KeyboardInterrupt" in msg:

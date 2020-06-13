@@ -656,7 +656,7 @@ class Package(Module):
 
             parts_ = parts(path.strpath)
             if any(
-                pkg_prefix in parts_ and pkg_prefix.join("__init__.py") != path
+                str(pkg_prefix) in parts_ and pkg_prefix.join("__init__.py") != path
                 for pkg_prefix in pkg_prefixes
             ):
                 continue
@@ -1332,7 +1332,7 @@ def _show_fixtures_per_test(config, session):
 
     def get_best_relpath(func):
         loc = getlocation(func, curdir)
-        return curdir.bestrelpath(loc)
+        return curdir.bestrelpath(py.path.local(loc))
 
     def write_fixture(fixture_def):
         argname = fixture_def.argname
@@ -1406,7 +1406,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 (
                     len(fixturedef.baseid),
                     fixturedef.func.__module__,
-                    curdir.bestrelpath(loc),
+                    curdir.bestrelpath(py.path.local(loc)),
                     fixturedef.argname,
                     fixturedef,
                 )

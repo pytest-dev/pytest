@@ -48,6 +48,7 @@ from _pytest.warning_types import PytestConfigWarning
 if TYPE_CHECKING:
     from typing import Type
 
+    from _pytest._code.code import _TracebackStyle
     from .argparsing import Argument
 
 
@@ -307,10 +308,9 @@ class PytestPluginManager(PluginManager):
         self._dirpath2confmods = {}  # type: Dict[Any, List[object]]
         # Maps a py.path.local to a module object.
         self._conftestpath2mod = {}  # type: Dict[Any, object]
-        self._confcutdir = None
+        self._confcutdir = None  # type: Optional[py.path.local]
         self._noconftest = False
-        # Set of py.path.local's.
-        self._duplicatepaths = set()  # type: Set[Any]
+        self._duplicatepaths = set()  # type: Set[py.path.local]
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
@@ -893,9 +893,13 @@ class Config:
 
         return self
 
-    def notify_exception(self, excinfo, option=None):
+    def notify_exception(
+        self,
+        excinfo: ExceptionInfo[BaseException],
+        option: Optional[argparse.Namespace] = None,
+    ) -> None:
         if option and getattr(option, "fulltrace", False):
-            style = "long"
+            style = "long"  # type: _TracebackStyle
         else:
             style = "native"
         excrepr = excinfo.getrepr(
@@ -940,13 +944,12 @@ class Config:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
-        r = determine_setup(
+        self.rootdir, self.inifile, self.inicfg = determine_setup(
             ns.inifilename,
             ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             config=self,
         )
-        self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info["rootdir"] = self.rootdir
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")
@@ -994,9 +997,7 @@ class Config:
         package_files = (
             str(file)
             for dist in importlib_metadata.distributions()
-            # Type ignored due to missing stub:
-            # https://github.com/python/typeshed/pull/3795
-            if any(ep.group == "pytest11" for ep in dist.entry_points)  # type: ignore
+            if any(ep.group == "pytest11" for ep in dist.entry_points)
             for file in dist.files or []
         )
 
@@ -1072,6 +1073,11 @@ class Config:
         if minver:
             # Imported lazily to improve start-up time.
             from packaging.version import Version
+
+            if not isinstance(minver, str):
+                raise pytest.UsageError(
+                    "%s: 'minversion' must be a single value" % self.inifile
+                )
 
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
@@ -1187,6 +1193,8 @@ class Config:
         #   in this case, we already have a list ready to use
         #
         if type == "pathlist":
+            # TODO: This assert is probably not valid in all cases.
+            assert self.inifile is not None
             dp = py.path.local(self.inifile).dirpath()
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp.join(x, abs=True) for x in input_values]
