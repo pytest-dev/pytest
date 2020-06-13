@@ -437,7 +437,9 @@ def pytest_runtest_teardown(item: "Item", nextitem: "Optional[Item]") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_runtest_makereport(item: "Item", call: "CallInfo[None]") -> Optional[object]:
+def pytest_runtest_makereport(
+    item: "Item", call: "CallInfo[None]"
+) -> Optional["TestReport"]:
     """ return a :py:class:`_pytest.runner.TestReport` object
     for the given :py:class:`pytest.Item <_pytest.main.Item>` and
     :py:class:`_pytest.runner.CallInfo`.
