@@ -23,6 +23,8 @@ from typing import Set
 from typing import Tuple
 from typing import Union
 
+import py
+
 from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
@@ -177,10 +179,10 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         """
         if self.session is not None and not self._session_paths_checked:
             self._session_paths_checked = True
-            for path in self.session._initialpaths:
+            for initial_path in self.session._initialpaths:
                 # Make something as c:/projects/my_project/path.py ->
                 #     ['c:', 'projects', 'my_project', 'path.py']
-                parts = str(path).split(os.path.sep)
+                parts = str(initial_path).split(os.path.sep)
                 # add 'path' to basenames to be checked.
                 self._basenames_to_check_rewrite.add(os.path.splitext(parts[-1])[0])
 
@@ -213,7 +215,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             return True
 
         if self.session is not None:
-            if self.session.isinitpath(fn):
+            if self.session.isinitpath(py.path.local(fn)):
                 state.trace(
                     "matched test file (was specified on cmdline): {!r}".format(fn)
                 )

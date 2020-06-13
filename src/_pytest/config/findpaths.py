@@ -63,7 +63,7 @@ def load_config_dict_from_file(
     elif filepath.ext == ".toml":
         import toml
 
-        config = toml.load(filepath)
+        config = toml.load(str(filepath))
 
         result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
         if result is not None:
@@ -161,16 +161,18 @@ def determine_setup(
     args: List[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
-) -> Tuple[py.path.local, Optional[str], Dict[str, Union[str, List[str]]]]:
+) -> Tuple[py.path.local, Optional[py.path.local], Dict[str, Union[str, List[str]]]]:
     rootdir = None
     dirs = get_dirs_from_args(args)
     if inifile:
-        inicfg = load_config_dict_from_file(py.path.local(inifile)) or {}
+        inipath_ = py.path.local(inifile)
+        inipath = inipath_  # type: Optional[py.path.local]
+        inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
             rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)
-        rootdir, inifile, inicfg = locate_config([ancestor])
+        rootdir, inipath, inicfg = locate_config([ancestor])
         if rootdir is None and rootdir_cmd_arg is None:
             for possible_rootdir in ancestor.parts(reverse=True):
                 if possible_rootdir.join("setup.py").exists():
@@ -178,7 +180,7 @@ def determine_setup(
                     break
             else:
                 if dirs != [ancestor]:
-                    rootdir, inifile, inicfg = locate_config(dirs)
+                    rootdir, inipath, inicfg = locate_config(dirs)
                 if rootdir is None:
                     if config is not None:
                         cwd = config.invocation_dir
@@ -196,4 +198,5 @@ def determine_setup(
                     rootdir
                 )
             )
-    return rootdir, inifile, inicfg or {}
+    assert rootdir is not None
+    return rootdir, inipath, inicfg or {}
