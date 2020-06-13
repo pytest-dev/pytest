@@ -100,9 +100,9 @@ class ConftestImportFailure(Exception):
 
 class PluginImportFailure(ImportError):
     def __init__(self, plugin, excinfo):
-        super().__init__(plugin, excinfo)
         self.plugin = plugin
         self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
+        super().__init__(str(self))
 
     def __str__(self):
         return "{}: {} (from {})".format(
