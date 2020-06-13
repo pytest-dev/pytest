@@ -265,6 +265,13 @@ class TestParseIni:
             (
                 """
           [pytest]
+          required_plugins = pytest-xdist>1.0.0,<2.0.0
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
           required_plugins = pytest-xdist~=1.32.0 pytest-xdist==1.32.0 pytest-xdist!=0.0.1 pytest-xdist<=99.99.0
             pytest-xdist>=1.32.0 pytest-xdist<9.9.9 pytest-xdist>1.30.0 pytest-xdist===1.32.0
           """,
@@ -280,16 +287,9 @@ class TestParseIni:
             (
                 """
           [pytest]
-          required_plugins = pytest-xdist==aegsrgrsgs
+          required_plugins = pytest-xdist==aegsrgrsgs pytest-xdist==-1 pytest-xdist>2.1.1,>3.0.0
           """,
-                "Missing required plugins: pytest-xdist==aegsrgrsgs",
-            ),
-            (
-                """
-          [pytest]
-          required_plugins = pytest-xdist==-1
-          """,
-                "Missing required plugins: pytest-xdist==-1",
+                "Missing required plugins: pytest-xdist==-1, pytest-xdist==aegsrgrsgs, pytest-xdist>2.1.1,>3.0.0",
             ),
             (
                 """

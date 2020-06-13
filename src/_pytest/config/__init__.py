@@ -1101,7 +1101,7 @@ class Config:
         plugin_info = self.pluginmanager.list_plugin_distinfo()
         plugin_dist_info = {dist.project_name: dist.version for _, dist in plugin_info}
 
-        missing_plugins = ["a"]
+        missing_plugins = []
         for required_plugin in required_plugins:
             spec = None
             try:
