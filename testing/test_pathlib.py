@@ -1,6 +1,5 @@
 import os.path
 import sys
-
 import unittest.mock
 from textwrap import dedent
 
