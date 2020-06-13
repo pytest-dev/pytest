@@ -1,6 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
 import typing
-import warnings
 from typing import AbstractSet
 from typing import List
 from typing import Optional
@@ -23,8 +22,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
-from _pytest.deprecated import MINUS_K_COLON
-from _pytest.deprecated import MINUS_K_DASH
 from _pytest.store import StoreKey
 
 if TYPE_CHECKING:
@@ -181,12 +178,14 @@ def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
 
     if keywordexpr.startswith("-"):
         # To be removed in pytest 7.0.0.
-        warnings.warn(MINUS_K_DASH, stacklevel=2)
+        # Uncomment this after 6.0 release (#7361)
+        # warnings.warn(MINUS_K_DASH, stacklevel=2)
         keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
     if keywordexpr[-1:] == ":":
         # To be removed in pytest 7.0.0.
-        warnings.warn(MINUS_K_COLON, stacklevel=2)
+        # Uncomment this after 6.0 release (#7361)
+        # warnings.warn(MINUS_K_COLON, stacklevel=2)
         selectuntil = True
         keywordexpr = keywordexpr[:-1]
 

@@ -125,6 +125,7 @@ def test__fillfuncargs_is_deprecated() -> None:
         pytest._fillfuncargs(mock.Mock())
 
 
+@pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
 def test_minus_k_dash_is_deprecated(testdir) -> None:
     threepass = testdir.makepyfile(
         test_threepass="""
@@ -137,6 +138,7 @@ def test_minus_k_dash_is_deprecated(testdir) -> None:
     result.stdout.fnmatch_lines(["*The `-k '-expr'` syntax*deprecated*"])
 
 
+@pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
 def test_minus_k_colon_is_deprecated(testdir) -> None:
     threepass = testdir.makepyfile(
         test_threepass="""
