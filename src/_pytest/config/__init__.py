@@ -680,7 +680,7 @@ class PytestPluginManager(PluginManager):
                 stacklevel=2,
             )
         except Exception as e:
-            raise (PluginImportFailure(modname, sys.exc_info())).with_traceback(
+            raise PluginImportFailure(modname, sys.exc_info()).with_traceback(
                 e.__traceback__
             )
 
