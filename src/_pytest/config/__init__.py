@@ -143,6 +143,10 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
                 ),
                 red=True,
             )
+            if e.plugin is not None:
+                tw.line(
+                    "    while importing plugin '{e.plugin}'.".format(e=e), red=True
+                )
             exc_info.traceback = exc_info.traceback.filter(
                 filter_traceback_for_conftest_import_failure
             )
