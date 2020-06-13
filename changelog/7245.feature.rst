@@ -1,0 +1,14 @@
+New ``--import-mode=importlib`` option that uses `importlib <https://docs.python.org/3/library/importlib.html>`__ to import test modules.
+
+Traditionally pytest used ``__import__`` while changing ``sys.path`` to import test modules (which
+also changes ``sys.modules`` as a side-effect), which works but has a number of drawbacks, like requiring test modules
+that don't live in packages to have unique names (as they need to reside under a unique name in ``sys.modules``).
+
+``--import-mode=importlib`` uses more fine grained import mechanisms from ``importlib`` which don't
+require pytest to change ``sys.path`` or ``sys.modules`` at all, eliminating much of the drawbacks
+of the previous mode.
+
+We intend to make ``--import-mode=importlib`` the default in future versions, so users are encouraged
+to try the new mode and provide feedback (both positive or negative) in issue `#7245 <https://github.com/pytest-dev/pytest/issues/7245>`__.
+
+You can read more about this option in `the documentation <https://docs.pytest.org/en/latest/pythonpath.html#import-modes>`__.

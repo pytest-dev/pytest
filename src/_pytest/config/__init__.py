@@ -41,6 +41,7 @@ from _pytest.compat import importlib_metadata
 from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
+from _pytest.pathlib import import_path
 from _pytest.pathlib import Path
 from _pytest.store import Store
 from _pytest.warning_types import PytestConfigWarning
@@ -98,6 +99,15 @@ class ConftestImportFailure(Exception):
         )
 
 
+def filter_traceback_for_conftest_import_failure(entry) -> bool:
+    """filters tracebacks entries which point to pytest internals or importlib.
+
+    Make a special case for importlib because we use it to import test modules and conftest files
+    in _pytest.pathlib.import_path.
+    """
+    return filter_traceback(entry) and "importlib" not in str(entry.path).split(os.sep)
+
+
 def main(args=None, plugins=None) -> Union[int, ExitCode]:
     """ return exit code, after performing an in-process test run.
 
@@ -115,7 +125,9 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
             tw.line(
                 "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
             )
-            exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+            exc_info.traceback = exc_info.traceback.filter(
+                filter_traceback_for_conftest_import_failure
+            )
             exc_repr = (
                 exc_info.getrepr(style="short", chain=False)
                 if exc_info.traceback
@@ -450,21 +462,21 @@ class PytestPluginManager(PluginManager):
                 path = path[:i]
             anchor = current.join(path, abs=1)
             if anchor.exists():  # we found some file object
-                self._try_load_conftest(anchor)
+                self._try_load_conftest(anchor, namespace.importmode)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current)
+            self._try_load_conftest(current, namespace.importmode)
 
-    def _try_load_conftest(self, anchor):
-        self._getconftestmodules(anchor)
+    def _try_load_conftest(self, anchor, importmode):
+        self._getconftestmodules(anchor, importmode)
         # let's also consider test* subdirs
         if anchor.check(dir=1):
             for x in anchor.listdir("test*"):
                 if x.check(dir=1):
-                    self._getconftestmodules(x)
+                    self._getconftestmodules(x, importmode)
 
     @lru_cache(maxsize=128)
-    def _getconftestmodules(self, path):
+    def _getconftestmodules(self, path, importmode):
         if self._noconftest:
             return []
 
@@ -482,13 +494,13 @@ class PytestPluginManager(PluginManager):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
-                mod = self._importconftest(conftestpath)
+                mod = self._importconftest(conftestpath, importmode)
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist
 
-    def _rget_with_confmod(self, name, path):
-        modules = self._getconftestmodules(path)
+    def _rget_with_confmod(self, name, path, importmode):
+        modules = self._getconftestmodules(path, importmode)
         for mod in reversed(modules):
             try:
                 return mod, getattr(mod, name)
@@ -496,7 +508,7 @@ class PytestPluginManager(PluginManager):
                 continue
         raise KeyError(name)
 
-    def _importconftest(self, conftestpath):
+    def _importconftest(self, conftestpath, importmode):
         # Use a resolved Path object as key to avoid loading the same conftest twice
         # with build systems that create build directories containing
         # symlinks to actual files.
@@ -512,7 +524,7 @@ class PytestPluginManager(PluginManager):
             _ensure_removed_sysmodule(conftestpath.purebasename)
 
         try:
-            mod = conftestpath.pyimport()
+            mod = import_path(conftestpath, mode=importmode)
         except Exception as e:
             raise ConftestImportFailure(conftestpath, sys.exc_info()) from e
 
@@ -1213,7 +1225,9 @@ class Config:
 
     def _getconftest_pathlist(self, name, path):
         try:
-            mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
+            mod, relroots = self.pluginmanager._rget_with_confmod(
+                name, path, self.getoption("importmode")
+            )
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()

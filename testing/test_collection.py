@@ -1342,3 +1342,83 @@ def test_fscollector_from_parent(tmpdir, request):
         parent=request.session, fspath=tmpdir / "foo", x=10
     )
     assert collector.x == 10
+
+
+class TestImportModeImportlib:
+    def test_collect_duplicate_names(self, testdir):
+        """--import-mode=importlib can import modules with same names that are not in packages."""
+        testdir.makepyfile(
+            **{
+                "tests_a/test_foo.py": "def test_foo1(): pass",
+                "tests_b/test_foo.py": "def test_foo2(): pass",
+            }
+        )
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        result.stdout.fnmatch_lines(
+            [
+                "tests_a/test_foo.py::test_foo1 *",
+                "tests_b/test_foo.py::test_foo2 *",
+                "* 2 passed in *",
+            ]
+        )
+
+    def test_conftest(self, testdir):
+        """Directory containing conftest modules are not put in sys.path as a side-effect of
+        importing them."""
+        tests_dir = testdir.tmpdir.join("tests")
+        testdir.makepyfile(
+            **{
+                "tests/conftest.py": "",
+                "tests/test_foo.py": """
+                import sys
+                def test_check():
+                    assert r"{tests_dir}" not in sys.path
+                """.format(
+                    tests_dir=tests_dir
+                ),
+            }
+        )
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    def setup_conftest_and_foo(self, testdir):
+        """Setup a tests folder to be used to test if modules in that folder can be imported
+        due to side-effects of --import-mode or not."""
+        testdir.makepyfile(
+            **{
+                "tests/conftest.py": "",
+                "tests/foo.py": """
+                    def foo(): return 42
+                """,
+                "tests/test_foo.py": """
+                    def test_check():
+                        from foo import foo
+                        assert foo() == 42
+                """,
+            }
+        )
+
+    def test_modules_importable_as_side_effect(self, testdir):
+        """In import-modes `prepend` and `append`, we are able to import modules from folders
+        containing conftest.py files due to the side effect of changing sys.path."""
+        self.setup_conftest_and_foo(testdir)
+        result = testdir.runpytest("-v", "--import-mode=prepend")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    def test_modules_not_importable_as_side_effect(self, testdir):
+        """In import-mode `importlib`, modules in folders containing conftest.py are not
+        importable, as don't change sys.path or sys.modules as side effect of importing
+        the conftest.py file.
+        """
+        self.setup_conftest_and_foo(testdir)
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        exc_name = (
+            "ModuleNotFoundError" if sys.version_info[:2] > (3, 5) else "ImportError"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "*{}: No module named 'foo'".format(exc_name),
+                "tests?test_foo.py:2: {}".format(exc_name),
+                "* 1 failed in *",
+            ]
+        )

@@ -59,6 +59,8 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
+from _pytest.pathlib import import_path
+from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.reports import TerminalRepr
 from _pytest.warning_types import PytestCollectionWarning
@@ -113,15 +115,6 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="disable string escape non-ascii characters, might cause unwanted "
         "side effects(use at your own risk)",
-    )
-
-    group.addoption(
-        "--import-mode",
-        default="prepend",
-        choices=["prepend", "append"],
-        dest="importmode",
-        help="prepend/append to sys.path when importing test modules, "
-        "default is to prepend.",
     )
 
 
@@ -557,10 +550,10 @@ class Module(nodes.File, PyCollector):
         # we assume we are only called once per module
         importmode = self.config.getoption("--import-mode")
         try:
-            mod = self.fspath.pyimport(ensuresyspath=importmode)
+            mod = import_path(self.fspath, mode=importmode)
         except SyntaxError:
             raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
-        except self.fspath.ImportMismatchError as e:
+        except ImportPathMismatchError as e:
             raise self.CollectError(
                 "import file mismatch:\n"
                 "imported module %r has this __file__ attribute:\n"
