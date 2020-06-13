@@ -4342,6 +4342,6 @@ def test_yield_fixture_with_no_value(testdir):
     )
     expected = "E               ValueError: custom did not yield a value"
     result = testdir.runpytest()
-    result.assert_outcomes(error=1)
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines([expected])
     assert result.ret == ExitCode.TESTS_FAILED
