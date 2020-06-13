@@ -118,6 +118,20 @@ def pytest_addoption(parser: Parser) -> None:
         help="increase verbosity.",
     )
     group._addoption(
+        "--no-header",
+        action="store_true",
+        default=False,
+        dest="no_header",
+        help="disable header",
+    )
+    group._addoption(
+        "--no-summary",
+        action="store_true",
+        default=False,
+        dest="no_summary",
+        help="disable summary",
+    )
+    group._addoption(
         "-q",
         "--quiet",
         action=MoreQuietAction,
@@ -353,6 +367,14 @@ class TerminalReporter:
     @property
     def showheader(self) -> bool:
         return self.verbosity >= 0
+
+    @property
+    def no_header(self) -> bool:
+        return bool(self.config.option.no_header)
+
+    @property
+    def no_summary(self) -> bool:
+        return bool(self.config.option.no_summary)
 
     @property
     def showfspath(self) -> bool:
@@ -663,25 +685,26 @@ class TerminalReporter:
             return
         self.write_sep("=", "test session starts", bold=True)
         verinfo = platform.python_version()
-        msg = "platform {} -- Python {}".format(sys.platform, verinfo)
-        pypy_version_info = getattr(sys, "pypy_version_info", None)
-        if pypy_version_info:
-            verinfo = ".".join(map(str, pypy_version_info[:3]))
-            msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
-        msg += ", pytest-{}, py-{}, pluggy-{}".format(
-            pytest.__version__, py.__version__, pluggy.__version__
-        )
-        if (
-            self.verbosity > 0
-            or self.config.option.debug
-            or getattr(self.config.option, "pastebin", None)
-        ):
-            msg += " -- " + str(sys.executable)
-        self.write_line(msg)
-        lines = self.config.hook.pytest_report_header(
-            config=self.config, startdir=self.startdir
-        )
-        self._write_report_lines_from_hooks(lines)
+        if not self.no_header:
+            msg = "platform {} -- Python {}".format(sys.platform, verinfo)
+            pypy_version_info = getattr(sys, "pypy_version_info", None)
+            if pypy_version_info:
+                verinfo = ".".join(map(str, pypy_version_info[:3]))
+                msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
+            msg += ", pytest-{}, py-{}, pluggy-{}".format(
+                pytest.__version__, py.__version__, pluggy.__version__
+            )
+            if (
+                self.verbosity > 0
+                or self.config.option.debug
+                or getattr(self.config.option, "pastebin", None)
+            ):
+                msg += " -- " + str(sys.executable)
+            self.write_line(msg)
+            lines = self.config.hook.pytest_report_header(
+                config=self.config, startdir=self.startdir
+            )
+            self._write_report_lines_from_hooks(lines)
 
     def _write_report_lines_from_hooks(
         self, lines: List[Union[str, List[str]]]
@@ -778,7 +801,7 @@ class TerminalReporter:
             ExitCode.USAGE_ERROR,
             ExitCode.NO_TESTS_COLLECTED,
         )
-        if exitstatus in summary_exit_codes:
+        if exitstatus in summary_exit_codes and not self.no_summary:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
