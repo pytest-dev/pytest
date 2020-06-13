@@ -1,5 +1,7 @@
 import inspect
 import textwrap
+from typing import Callable
+from typing import Optional
 
 import pytest
 from _pytest.compat import MODULE_NOT_FOUND_ERROR
@@ -1051,7 +1053,7 @@ class TestLiterals:
             ("1e3", "999"),
             # The current implementation doesn't understand that numbers inside
             # strings shouldn't be treated as numbers:
-            pytest.param("'3.1416'", "'3.14'", marks=pytest.mark.xfail),
+            pytest.param("'3.1416'", "'3.14'", marks=pytest.mark.xfail),  # type: ignore
         ],
     )
     def test_number_non_matches(self, testdir, expression, output):
@@ -1477,7 +1479,9 @@ class Broken:
 @pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
     "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
 )
-def test_warning_on_unwrap_of_broken_object(stop):
+def test_warning_on_unwrap_of_broken_object(
+    stop: Optional[Callable[[object], object]]
+) -> None:
     bad_instance = Broken()
     assert inspect.unwrap.__module__ == "inspect"
     with _patch_unwrap_mock_aware():
@@ -1486,7 +1490,7 @@ def test_warning_on_unwrap_of_broken_object(stop):
             pytest.PytestWarning, match="^Got KeyError.* when unwrapping"
         ):
             with pytest.raises(KeyError):
-                inspect.unwrap(bad_instance, stop=stop)
+                inspect.unwrap(bad_instance, stop=stop)  # type: ignore[arg-type] # noqa: F821
     assert inspect.unwrap.__module__ == "inspect"
 
 

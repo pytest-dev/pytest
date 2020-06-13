@@ -289,7 +289,7 @@ Here is a simple overview, with pytest-specific bits:
 
 
 Writing Tests
-----------------------------
+~~~~~~~~~~~~~
 
 Writing tests for plugins or for pytest itself is often done using the `testdir fixture <https://docs.pytest.org/en/latest/reference.html#testdir>`_, as a "black-box" test.
 
@@ -328,6 +328,19 @@ one file which looks like a good fit. For example, a regression test about a bug
 should go into ``test_cacheprovider.py``, given that this option is implemented in ``cacheprovider.py``.
 If in doubt, go ahead and open a PR with your best guess and we can discuss this over the code.
 
+Joining the Development Team
+----------------------------
+
+Anyone who has successfully seen through a pull request which did not
+require any extra work from the development team to merge will
+themselves gain commit access if they so wish (if we forget to ask please send a friendly
+reminder).  This does not mean there is any change in your contribution workflow:
+everyone goes through the same pull-request-and-review process and
+no-one merges their own pull requests unless already approved.  It does however mean you can
+participate in the development process more fully since you can merge
+pull requests from other contributors yourself after having reviewed
+them.
+
 
 Backporting bug fixes for the next patch release
 ------------------------------------------------
@@ -359,15 +372,56 @@ actual latest release). The procedure for this is:
    * Delete the PR body, it usually contains a duplicate commit message.
 
 
-Joining the Development Team
-----------------------------
+Handling stale issues/PRs
+-------------------------
 
-Anyone who has successfully seen through a pull request which did not
-require any extra work from the development team to merge will
-themselves gain commit access if they so wish (if we forget to ask please send a friendly
-reminder).  This does not mean there is any change in your contribution workflow:
-everyone goes through the same pull-request-and-review process and
-no-one merges their own pull requests unless already approved.  It does however mean you can
-participate in the development process more fully since you can merge
-pull requests from other contributors yourself after having reviewed
-them.
+Stale issues/PRs are those where pytest contributors have asked for questions/changes
+and the authors didn't get around to answer/implement them yet after a somewhat long time, or
+the discussion simply died because people seemed to lose interest.
+
+There are many reasons why people don't answer questions or implement requested changes:
+they might get busy, lose interest, or just forget about it,
+but the fact is that this is very common in open source software.
+
+The pytest team really appreciates every issue and pull request, but being a high-volume project
+with many issues and pull requests being submitted daily, we try to reduce the number of stale
+issues and PRs by regularly closing them. When an issue/pull request is closed in this manner,
+it is by no means a dismissal of the topic being tackled by the issue/pull request, but it
+is just a way for us to clear up the queue and make the maintainers' work more manageable. Submitters
+can always reopen the issue/pull request in their own time later if it makes sense.
+
+When to close
+~~~~~~~~~~~~~
+
+Here are a few general rules the maintainers use to decide when to close issues/PRs because
+of lack of inactivity:
+
+* Issues labeled ``question`` or ``needs information``: closed after 14 days inactive.
+* Issues labeled ``proposal``: closed after six months inactive.
+* Pull requests: after one month, consider pinging the author, update linked issue, or consider closing. For pull requests which are nearly finished, the team should consider finishing it up and merging it.
+
+The above are **not hard rules**, but merely **guidelines**, and can be (and often are!) reviewed on a case-by-case basis.
+
+Closing pull requests
+~~~~~~~~~~~~~~~~~~~~~
+
+When closing a Pull Request, it needs to be acknowledge the time, effort, and interest demonstrated by the person which submitted it. As mentioned previously, it is not the intent of the team to dismiss stalled pull request entirely but to merely to clear up our queue, so a message like the one below is warranted when closing a pull request that went stale:
+
+    Hi <contributor>,
+
+    First of all we would like to thank you for your time and effort on working on this, the pytest team deeply appreciates it.
+
+    We noticed it has been awhile since you have updated this PR, however. pytest is a high activity project, with many issues/PRs being opened daily, so it is hard for us maintainers to track which PRs are ready for merging, for review, or need more attention.
+
+    So for those reasons we think it is best to close the PR for now, but with the only intention to cleanup our queue, it is by no means a rejection of your changes. We still encourage you to re-open this PR (it is just a click of a button away) when you are ready to get back to it.
+
+    Again we appreciate your time for working on this, and hope you might get back to this at a later time!
+
+    <bye>
+
+Closing Issues
+--------------
+
+When a pull request is submitted to fix an issue, add text like ``closes #XYZW`` to the PR description and/or commits (where ``XYZW`` is the issue number). See the `GitHub docs <https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword>`_ for more information.
+
+When an issue is due to user error (e.g. misunderstanding of a functionality), please politely explain to the user why the issue raised is really a non-issue and ask them to close the issue if they have no further questions. If the original requestor is unresponsive, the issue will be handled as described in the section `Handling stale issues/PRs`_ above.

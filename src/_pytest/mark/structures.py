@@ -1,15 +1,18 @@
+import collections.abc
 import inspect
+import typing
 import warnings
-from collections import namedtuple
-from collections.abc import MutableMapping
 from typing import Any
+from typing import Callable
 from typing import Iterable
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 import attr
@@ -17,20 +20,30 @@ import attr
 from .._code import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
+from ..compat import NotSetType
+from ..compat import overload
+from ..compat import TYPE_CHECKING
+from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
+
+if TYPE_CHECKING:
+    from _pytest.python import FunctionDefinition
+
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
-def istestfunc(func):
+def istestfunc(func) -> bool:
     return (
         hasattr(func, "__call__")
         and getattr(func, "__name__", "<lambda>") != "<lambda>"
     )
 
 
-def get_empty_parameterset_mark(config, argnames, func):
+def get_empty_parameterset_mark(
+    config: Config, argnames: Sequence[str], func
+) -> "MarkDecorator":
     from ..nodes import Collector
 
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
@@ -56,13 +69,28 @@ def get_empty_parameterset_mark(config, argnames, func):
     return mark(reason=reason)
 
 
-class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
+class ParameterSet(
+    NamedTuple(
+        "ParameterSet",
+        [
+            ("values", Sequence[Union[object, NotSetType]]),
+            ("marks", "typing.Collection[Union[MarkDecorator, Mark]]"),
+            ("id", Optional[str]),
+        ],
+    )
+):
     @classmethod
-    def param(cls, *values, marks=(), id=None):
+    def param(
+        cls,
+        *values: object,
+        marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
+        id: Optional[str] = None
+    ) -> "ParameterSet":
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
-            assert isinstance(marks, (tuple, list, set))
+            # TODO(py36): Change to collections.abc.Collection.
+            assert isinstance(marks, (collections.abc.Sequence, set))
 
         if id is not None:
             if not isinstance(id, str):
@@ -73,7 +101,11 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return cls(values, marks, id)
 
     @classmethod
-    def extract_from(cls, parameterset, force_tuple=False):
+    def extract_from(
+        cls,
+        parameterset: Union["ParameterSet", Sequence[object], object],
+        force_tuple: bool = False,
+    ) -> "ParameterSet":
         """
         :param parameterset:
             a legacy style parameterset that may or may not be a tuple,
@@ -89,10 +121,20 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         if force_tuple:
             return cls.param(parameterset)
         else:
-            return cls(parameterset, marks=[], id=None)
+            # TODO: Refactor to fix this type-ignore. Currently the following
+            # type-checks but crashes:
+            #
+            #   @pytest.mark.parametrize(('x', 'y'), [1, 2])
+            #   def test_foo(x, y): pass
+            return cls(parameterset, marks=[], id=None)  # type: ignore[arg-type] # noqa: F821
 
     @staticmethod
-    def _parse_parametrize_args(argnames, argvalues, *args, **kwargs):
+    def _parse_parametrize_args(
+        argnames: Union[str, List[str], Tuple[str, ...]],
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        *args,
+        **kwargs
+    ) -> Tuple[Union[List[str], Tuple[str, ...]], bool]:
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -101,13 +143,23 @@ class ParameterSet(namedtuple("ParameterSet", "values, marks, id")):
         return argnames, force_tuple
 
     @staticmethod
-    def _parse_parametrize_parameters(argvalues, force_tuple):
+    def _parse_parametrize_parameters(
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        force_tuple: bool,
+    ) -> List["ParameterSet"]:
         return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
 
     @classmethod
-    def _for_parametrize(cls, argnames, argvalues, func, config, function_definition):
+    def _for_parametrize(
+        cls,
+        argnames: Union[str, List[str], Tuple[str, ...]],
+        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        func,
+        config: Config,
+        function_definition: "FunctionDefinition",
+    ) -> Tuple[Union[List[str], Tuple[str, ...]], List["ParameterSet"]]:
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -189,6 +241,12 @@ class Mark:
         )
 
 
+# A generic parameter designating an object to which a Mark may
+# be applied -- a test function (callable) or class.
+# Note: a lambda is not allowed, but this can't be represented.
+_Markable = TypeVar("_Markable", bound=Union[Callable[..., object], type])
+
+
 @attr.s
 class MarkDecorator:
     """A decorator for applying a mark on test functions and classes.
@@ -260,7 +318,20 @@ class MarkDecorator:
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
 
-    def __call__(self, *args: object, **kwargs: object):
+    # Type ignored because the overloads overlap with an incompatible
+    # return type. Not much we can do about that. Thankfully mypy picks
+    # the first match so it works out even if we break the rules.
+    @overload
+    def __call__(self, arg: _Markable) -> _Markable:  # type: ignore[misc] # noqa: F821
+        raise NotImplementedError()
+
+    @overload  # noqa: F811
+    def __call__(  # noqa: F811
+        self, *args: object, **kwargs: object
+    ) -> "MarkDecorator":
+        raise NotImplementedError()
+
+    def __call__(self, *args: object, **kwargs: object):  # noqa: F811
         """Call the MarkDecorator."""
         if args and not kwargs:
             func = args[0]
@@ -271,7 +342,7 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
-def get_unpacked_marks(obj):
+def get_unpacked_marks(obj) -> List[Mark]:
     """
     obtain the unpacked marks that are stored on an object
     """
@@ -323,7 +394,7 @@ class MarkGenerator:
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """
 
-    _config = None
+    _config = None  # type: Optional[Config]
     _markers = set()  # type: Set[str]
 
     def __getattr__(self, name: str) -> MarkDecorator:
@@ -370,7 +441,7 @@ class MarkGenerator:
 MARK_GEN = MarkGenerator()
 
 
-class NodeKeywords(MutableMapping):
+class NodeKeywords(collections.abc.MutableMapping):
     def __init__(self, node):
         self.node = node
         self.parent = node.parent
@@ -400,8 +471,8 @@ class NodeKeywords(MutableMapping):
             seen.update(self.parent.keywords)
         return seen
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._seen())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<NodeKeywords for node {}>".format(self.node)

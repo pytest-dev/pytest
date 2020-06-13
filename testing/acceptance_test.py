@@ -1,16 +1,14 @@
 import os
 import sys
-import textwrap
 import types
 
 import attr
 import py
 
-import _pytest.runner
 import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import ExitCode
-from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Testdir
 
 
@@ -149,7 +147,8 @@ class TestGeneralUsage:
         else:
             assert loaded == ["myplugin1", "myplugin2", "mycov"]
 
-    def test_assertion_magic(self, testdir):
+    @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
+    def test_assertion_rewrite(self, testdir, import_mode):
         p = testdir.makepyfile(
             """
             def test_this():
@@ -157,7 +156,7 @@ class TestGeneralUsage:
                 assert x
         """
         )
-        result = testdir.runpytest(p)
+        result = testdir.runpytest(p, "--import-mode={}".format(import_mode))
         result.stdout.fnmatch_lines([">       assert x", "E       assert 0"])
         assert result.ret == 1
 
@@ -267,29 +266,6 @@ class TestGeneralUsage:
         result = testdir.runpytest()
         assert result.ret != 0
         assert "should be seen" in result.stdout.str()
-
-    @pytest.mark.skipif(
-        not hasattr(py.path.local, "mksymlinkto"),
-        reason="symlink not available on this platform",
-    )
-    def test_chdir(self, testdir):
-        testdir.tmpdir.join("py").mksymlinkto(py._pydir)
-        p = testdir.tmpdir.join("main.py")
-        p.write(
-            textwrap.dedent(
-                """\
-                import sys, os
-                sys.path.insert(0, '')
-                import py
-                print(py.__file__)
-                print(py.__path__)
-                os.chdir(os.path.dirname(os.getcwd()))
-                print(py.log)
-                """
-            )
-        )
-        result = testdir.runpython(p)
-        assert not result.ret
 
     def test_issue109_sibling_conftests_not_loaded(self, testdir):
         sub1 = testdir.mkdir("sub1")
@@ -605,8 +581,9 @@ class TestInvocationVariants:
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_equivalence_pytest_pytest(self):
-        assert pytest.main == py.test.cmdline.main
+    def test_equivalence_pytest_pydottest(self) -> None:
+        # Type ignored because `py.test` is not and will not be typed.
+        assert pytest.main == py.test.cmdline.main  # type: ignore[attr-defined]
 
     def test_invoke_with_invalid_type(self):
         with pytest.raises(
@@ -764,19 +741,9 @@ class TestInvocationVariants:
 
     def test_cmdline_python_package_symlink(self, testdir, monkeypatch):
         """
-        test --pyargs option with packages with path containing symlink can
-        have conftest.py in their package (#2985)
+        --pyargs with packages with path containing symlink can have conftest.py in
+        their package (#2985)
         """
-        # dummy check that we can actually create symlinks: on Windows `os.symlink` is available,
-        # but normal users require special admin privileges to create symlinks.
-        if sys.platform == "win32":
-            try:
-                os.symlink(
-                    str(testdir.tmpdir.ensure("tmpfile")),
-                    str(testdir.tmpdir.join("tmpfile2")),
-                )
-            except OSError as e:
-                pytest.skip(str(e.args[0]))
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
 
         dirname = "lib"
@@ -792,13 +759,13 @@ class TestInvocationVariants:
             "import pytest\n@pytest.fixture\ndef a_fixture():pass"
         )
 
-        d_local = testdir.mkdir("local")
-        symlink_location = os.path.join(str(d_local), "lib")
-        os.symlink(str(d), symlink_location, target_is_directory=True)
+        d_local = testdir.mkdir("symlink_root")
+        symlink_location = d_local / "lib"
+        symlink_or_skip(d, symlink_location, target_is_directory=True)
 
         # The structure of the test directory is now:
         # .
-        # ├── local
+        # ├── symlink_root
         # │   └── lib -> ../lib
         # └── lib
         #     └── foo
@@ -809,32 +776,23 @@ class TestInvocationVariants:
         #             └── test_bar.py
 
         # NOTE: the different/reversed ordering is intentional here.
-        search_path = ["lib", os.path.join("local", "lib")]
+        search_path = ["lib", os.path.join("symlink_root", "lib")]
         monkeypatch.setenv("PYTHONPATH", prepend_pythonpath(*search_path))
         for p in search_path:
             monkeypatch.syspath_prepend(p)
 
         # module picked up in symlink-ed directory:
-        # It picks up local/lib/foo/bar (symlink) via sys.path.
+        # It picks up symlink_root/lib/foo/bar (symlink) via sys.path.
         result = testdir.runpytest("--pyargs", "-v", "foo.bar")
         testdir.chdir()
         assert result.ret == 0
-        if hasattr(py.path.local, "mksymlinkto"):
-            result.stdout.fnmatch_lines(
-                [
-                    "lib/foo/bar/test_bar.py::test_bar PASSED*",
-                    "lib/foo/bar/test_bar.py::test_other PASSED*",
-                    "*2 passed*",
-                ]
-            )
-        else:
-            result.stdout.fnmatch_lines(
-                [
-                    "*lib/foo/bar/test_bar.py::test_bar PASSED*",
-                    "*lib/foo/bar/test_bar.py::test_other PASSED*",
-                    "*2 passed*",
-                ]
-            )
+        result.stdout.fnmatch_lines(
+            [
+                "symlink_root/lib/foo/bar/test_bar.py::test_bar PASSED*",
+                "symlink_root/lib/foo/bar/test_bar.py::test_other PASSED*",
+                "*2 passed*",
+            ]
+        )
 
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
@@ -896,37 +854,21 @@ class TestInvocationVariants:
         assert request.config.pluginmanager.hasplugin("python")
 
 
-def fake_time(monkeypatch: MonkeyPatch) -> None:
-    """Monkeypatch time functions to make TestDurations not rely on actual time."""
-    import time
-
-    current_time = 1586202699.9859412
-
-    def sleep(seconds: float) -> None:
-        nonlocal current_time
-        current_time += seconds
-
-    monkeypatch.setattr(time, "sleep", sleep)
-    monkeypatch.setattr(_pytest.runner, "time", lambda: current_time)
-    monkeypatch.setattr(_pytest.runner, "perf_counter", lambda: current_time)
-
-
 class TestDurations:
     source = """
-        import time
+        from _pytest import timing
         def test_something():
             pass
         def test_2():
-            time.sleep(0.010)
+            timing.sleep(0.010)
         def test_1():
-            time.sleep(0.002)
+            timing.sleep(0.002)
         def test_3():
-            time.sleep(0.020)
+            timing.sleep(0.020)
     """
 
-    def test_calls(self, testdir):
+    def test_calls(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
 
@@ -938,18 +880,17 @@ class TestDurations:
             ["(8 durations < 0.005s hidden.  Use -vv to show these durations.)"]
         )
 
-    def test_calls_show_2(self, testdir):
+    def test_calls_show_2(self, testdir, mock_timing):
+
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         result = testdir.runpytest_inprocess("--durations=2")
         assert result.ret == 0
 
         lines = result.stdout.get_lines_after("*slowest*durations*")
         assert "4 passed" in lines[2]
 
-    def test_calls_showall(self, testdir):
+    def test_calls_showall(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         result = testdir.runpytest_inprocess("--durations=0")
         assert result.ret == 0
 
@@ -962,9 +903,8 @@ class TestDurations:
                 else:
                     raise AssertionError("not found {} {}".format(x, y))
 
-    def test_calls_showall_verbose(self, testdir):
+    def test_calls_showall_verbose(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         result = testdir.runpytest_inprocess("--durations=0", "-vv")
         assert result.ret == 0
 
@@ -976,17 +916,15 @@ class TestDurations:
                 else:
                     raise AssertionError("not found {} {}".format(x, y))
 
-    def test_with_deselected(self, testdir):
+    def test_with_deselected(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         result = testdir.runpytest_inprocess("--durations=2", "-k test_3")
         assert result.ret == 0
 
         result.stdout.fnmatch_lines(["*durations*", "*call*test_3*"])
 
-    def test_with_failing_collection(self, testdir):
+    def test_with_failing_collection(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         testdir.makepyfile(test_collecterror="""xyz""")
         result = testdir.runpytest_inprocess("--durations=2", "-k test_1")
         assert result.ret == 2
@@ -996,9 +934,8 @@ class TestDurations:
         # output
         result.stdout.no_fnmatch_line("*duration*")
 
-    def test_with_not(self, testdir):
+    def test_with_not(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         result = testdir.runpytest_inprocess("-k not 1")
         assert result.ret == 0
 
@@ -1006,27 +943,26 @@ class TestDurations:
 class TestDurationsWithFixture:
     source = """
         import pytest
-        import time
+        from _pytest import timing
 
         @pytest.fixture
         def setup_fixt():
-            time.sleep(0.02)
+            timing.sleep(2)
 
         def test_1(setup_fixt):
-            time.sleep(0.02)
+            timing.sleep(5)
     """
 
-    def test_setup_function(self, testdir):
+    def test_setup_function(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
-        fake_time(testdir.monkeypatch)
         result = testdir.runpytest_inprocess("--durations=10")
         assert result.ret == 0
 
         result.stdout.fnmatch_lines_random(
             """
             *durations*
-            * setup *test_1*
-            * call *test_1*
+            5.00s call *test_1*
+            2.00s setup *test_1*
         """
         )
 

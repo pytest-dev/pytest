@@ -98,7 +98,7 @@ class TestEvaluator:
         expl = ev.getexplanation()
         assert expl == "condition: not hasattr(os, 'murks')"
 
-    def test_marked_skip_with_not_string(self, testdir):
+    def test_marked_skip_with_not_string(self, testdir) -> None:
         item = testdir.getitem(
             """
             import pytest
@@ -109,6 +109,7 @@ class TestEvaluator:
         )
         ev = MarkEvaluator(item, "skipif")
         exc = pytest.raises(pytest.fail.Exception, ev.istrue)
+        assert exc.value.msg is not None
         assert (
             """Failed: you need to specify reason=STRING when using booleans as conditions."""
             in exc.value.msg
@@ -194,7 +195,7 @@ class TestXFail:
         assert len(reports) == 3
         callreport = reports[1]
         assert callreport.failed
-        assert callreport.longrepr == "[XPASS(strict)] nope"
+        assert str(callreport.longrepr) == "[XPASS(strict)] nope"
         assert not hasattr(callreport, "wasxfail")
 
     def test_xfail_run_anyway(self, testdir):
@@ -869,7 +870,7 @@ def test_reportchars_all_error(testdir):
     result.stdout.fnmatch_lines(["ERROR*test_foo*"])
 
 
-def test_errors_in_xfail_skip_expressions(testdir):
+def test_errors_in_xfail_skip_expressions(testdir) -> None:
     testdir.makepyfile(
         """
         import pytest
@@ -886,7 +887,8 @@ def test_errors_in_xfail_skip_expressions(testdir):
     )
     result = testdir.runpytest()
     markline = "                ^"
-    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (6,):
+    pypy_version_info = getattr(sys, "pypy_version_info", None)
+    if pypy_version_info is not None and pypy_version_info < (6,):
         markline = markline[5:]
     elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
         markline = markline[4:]

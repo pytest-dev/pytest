@@ -279,9 +279,9 @@ class TestImportHookInstallation:
             ]
         )
 
-    def test_register_assert_rewrite_checks_types(self):
+    def test_register_assert_rewrite_checks_types(self) -> None:
         with pytest.raises(TypeError):
-            pytest.register_assert_rewrite(["pytest_tests_internal_non_existing"])
+            pytest.register_assert_rewrite(["pytest_tests_internal_non_existing"])  # type: ignore
         pytest.register_assert_rewrite(
             "pytest_tests_internal_non_existing", "pytest_tests_internal_non_existing2"
         )
@@ -326,8 +326,10 @@ class TestAssert_reprcompare:
     def test_different_types(self):
         assert callequal([0, 1], "foo") is None
 
-    def test_summary(self):
-        summary = callequal([0, 1], [0, 2])[0]
+    def test_summary(self) -> None:
+        lines = callequal([0, 1], [0, 2])
+        assert lines is not None
+        summary = lines[0]
         assert len(summary) < 65
 
     def test_text_diff(self):
@@ -337,21 +339,24 @@ class TestAssert_reprcompare:
             "+ spam",
         ]
 
-    def test_text_skipping(self):
+    def test_text_skipping(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs")
+        assert lines is not None
         assert "Skipping" in lines[1]
         for line in lines:
             assert "a" * 50 not in line
 
-    def test_text_skipping_verbose(self):
+    def test_text_skipping_verbose(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=1)
+        assert lines is not None
         assert "- " + "a" * 50 + "eggs" in lines
         assert "+ " + "a" * 50 + "spam" in lines
 
-    def test_multiline_text_diff(self):
+    def test_multiline_text_diff(self) -> None:
         left = "foo\nspam\nbar"
         right = "foo\neggs\nbar"
         diff = callequal(left, right)
+        assert diff is not None
         assert "- eggs" in diff
         assert "+ spam" in diff
 
@@ -376,8 +381,9 @@ class TestAssert_reprcompare:
             "+ b'spam'",
         ]
 
-    def test_list(self):
+    def test_list(self) -> None:
         expl = callequal([0, 1], [0, 2])
+        assert expl is not None
         assert len(expl) > 1
 
     @pytest.mark.parametrize(
@@ -421,21 +427,25 @@ class TestAssert_reprcompare:
             ),
         ],
     )
-    def test_iterable_full_diff(self, left, right, expected):
+    def test_iterable_full_diff(self, left, right, expected) -> None:
         """Test the full diff assertion failure explanation.
 
         When verbose is False, then just a -v notice to get the diff is rendered,
         when verbose is True, then ndiff of the pprint is returned.
         """
         expl = callequal(left, right, verbose=0)
+        assert expl is not None
         assert expl[-1] == "Use -v to get the full diff"
-        expl = "\n".join(callequal(left, right, verbose=1))
-        assert expl.endswith(textwrap.dedent(expected).strip())
+        verbose_expl = callequal(left, right, verbose=1)
+        assert verbose_expl is not None
+        assert "\n".join(verbose_expl).endswith(textwrap.dedent(expected).strip())
 
-    def test_list_different_lengths(self):
+    def test_list_different_lengths(self) -> None:
         expl = callequal([0, 1], [0, 1, 2])
+        assert expl is not None
         assert len(expl) > 1
         expl = callequal([0, 1, 2], [0, 1])
+        assert expl is not None
         assert len(expl) > 1
 
     def test_list_wrap_for_multiple_lines(self):
@@ -545,27 +555,31 @@ class TestAssert_reprcompare:
             "  }",
         ]
 
-    def test_dict(self):
+    def test_dict(self) -> None:
         expl = callequal({"a": 0}, {"a": 1})
+        assert expl is not None
         assert len(expl) > 1
 
-    def test_dict_omitting(self):
+    def test_dict_omitting(self) -> None:
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1})
+        assert lines is not None
         assert lines[1].startswith("Omitting 1 identical item")
         assert "Common items" not in lines
         for line in lines[1:]:
             assert "b" not in line
 
-    def test_dict_omitting_with_verbosity_1(self):
+    def test_dict_omitting_with_verbosity_1(self) -> None:
         """ Ensure differing items are visible for verbosity=1 (#1512) """
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1}, verbose=1)
+        assert lines is not None
         assert lines[1].startswith("Omitting 1 identical item")
         assert lines[2].startswith("Differing items")
         assert lines[3] == "{'a': 0} != {'a': 1}"
         assert "Common items" not in lines
 
-    def test_dict_omitting_with_verbosity_2(self):
+    def test_dict_omitting_with_verbosity_2(self) -> None:
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1}, verbose=2)
+        assert lines is not None
         assert lines[1].startswith("Common items:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "{'b': 1}"
@@ -614,15 +628,17 @@ class TestAssert_reprcompare:
             "+ (1, 2, 3)",
         ]
 
-    def test_set(self):
+    def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})
+        assert expl is not None
         assert len(expl) > 1
 
-    def test_frozenzet(self):
+    def test_frozenzet(self) -> None:
         expl = callequal(frozenset([0, 1]), {0, 2})
+        assert expl is not None
         assert len(expl) > 1
 
-    def test_Sequence(self):
+    def test_Sequence(self) -> None:
         # Test comparing with a Sequence subclass.
         class TestSequence(collections.abc.MutableSequence):
             def __init__(self, iterable):
@@ -644,15 +660,18 @@ class TestAssert_reprcompare:
                 pass
 
         expl = callequal(TestSequence([0, 1]), list([0, 2]))
+        assert expl is not None
         assert len(expl) > 1
 
-    def test_list_tuples(self):
+    def test_list_tuples(self) -> None:
         expl = callequal([], [(1, 2)])
+        assert expl is not None
         assert len(expl) > 1
         expl = callequal([(1, 2)], [])
+        assert expl is not None
         assert len(expl) > 1
 
-    def test_repr_verbose(self):
+    def test_repr_verbose(self) -> None:
         class Nums:
             def __init__(self, nums):
                 self.nums = nums
@@ -669,21 +688,25 @@ class TestAssert_reprcompare:
         assert callequal(nums_x, nums_y) is None
 
         expl = callequal(nums_x, nums_y, verbose=1)
+        assert expl is not None
         assert "+" + repr(nums_x) in expl
         assert "-" + repr(nums_y) in expl
 
         expl = callequal(nums_x, nums_y, verbose=2)
+        assert expl is not None
         assert "+" + repr(nums_x) in expl
         assert "-" + repr(nums_y) in expl
 
-    def test_list_bad_repr(self):
+    def test_list_bad_repr(self) -> None:
         class A:
             def __repr__(self):
                 raise ValueError(42)
 
         expl = callequal([], [A()])
+        assert expl is not None
         assert "ValueError" in "".join(expl)
         expl = callequal({}, {"1": A()}, verbose=2)
+        assert expl is not None
         assert expl[0].startswith("{} == <[ValueError")
         assert "raised in repr" in expl[0]
         assert expl[1:] == [
@@ -707,9 +730,10 @@ class TestAssert_reprcompare:
         expl = callequal(A(), "")
         assert not expl
 
-    def test_repr_no_exc(self):
-        expl = " ".join(callequal("foo", "bar"))
-        assert "raised in repr()" not in expl
+    def test_repr_no_exc(self) -> None:
+        expl = callequal("foo", "bar")
+        assert expl is not None
+        assert "raised in repr()" not in " ".join(expl)
 
     def test_unicode(self):
         assert callequal("£€", "£") == [
@@ -734,11 +758,12 @@ class TestAssert_reprcompare:
     def test_format_nonascii_explanation(self):
         assert util.format_explanation("λ")
 
-    def test_mojibake(self):
+    def test_mojibake(self) -> None:
         # issue 429
         left = b"e"
         right = b"\xc3\xa9"
         expl = callequal(left, right)
+        assert expl is not None
         for line in expl:
             assert isinstance(line, str)
         msg = "\n".join(expl)
@@ -756,6 +781,47 @@ class TestAssert_reprcompare_dataclass:
                 "*Omitting 1 identical items, use -vv to show*",
                 "*Differing attributes:*",
                 "*field_b: 'b' != 'c'*",
+                "*- c*",
+                "*+ b*",
+            ]
+        )
+
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+    def test_recursive_dataclasses(self, testdir):
+        p = testdir.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
+        result = testdir.runpytest(p)
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.fnmatch_lines(
+            [
+                "*Omitting 1 identical items, use -vv to show*",
+                "*Differing attributes:*",
+                "*field_b: ComplexDataObject2(*SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(*SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
+                "*Drill down into differing attribute field_b:*",
+                "*Omitting 1 identical items, use -vv to show*",
+                "*Differing attributes:*",
+                "*Full output truncated*",
+            ]
+        )
+
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+    def test_recursive_dataclasses_verbose(self, testdir):
+        p = testdir.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
+        result = testdir.runpytest(p, "-vv")
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.fnmatch_lines(
+            [
+                "*Matching attributes:*",
+                "*['field_a']*",
+                "*Differing attributes:*",
+                "*field_b: ComplexDataObject2(*SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(*SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
+                "*Matching attributes:*",
+                "*['field_a']*",
+                "*Differing attributes:*",
+                "*field_b: SimpleDataObject(field_a=2, field_b='c') != SimpleDataObject(field_a=3, field_b='c')*",  # noqa
+                "*Matching attributes:*",
+                "*['field_b']*",
+                "*Differing attributes:*",
+                "*field_a: 2 != 3",
             ]
         )
 
@@ -791,7 +857,7 @@ class TestAssert_reprcompare_dataclass:
 
 
 class TestAssert_reprcompare_attrsclass:
-    def test_attrs(self):
+    def test_attrs(self) -> None:
         @attr.s
         class SimpleDataObject:
             field_a = attr.ib()
@@ -801,12 +867,52 @@ class TestAssert_reprcompare_attrsclass:
         right = SimpleDataObject(1, "c")
 
         lines = callequal(left, right)
+        assert lines is not None
         assert lines[1].startswith("Omitting 1 identical item")
         assert "Matching attributes" not in lines
         for line in lines[1:]:
             assert "field_a" not in line
 
-    def test_attrs_verbose(self):
+    def test_attrs_recursive(self) -> None:
+        @attr.s
+        class OtherDataObject:
+            field_c = attr.ib()
+            field_d = attr.ib()
+
+        @attr.s
+        class SimpleDataObject:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        left = SimpleDataObject(OtherDataObject(1, "a"), "b")
+        right = SimpleDataObject(OtherDataObject(1, "b"), "b")
+
+        lines = callequal(left, right)
+        assert lines is not None
+        assert "Matching attributes" not in lines
+        for line in lines[1:]:
+            assert "field_b:" not in line
+            assert "field_c:" not in line
+
+    def test_attrs_recursive_verbose(self) -> None:
+        @attr.s
+        class OtherDataObject:
+            field_c = attr.ib()
+            field_d = attr.ib()
+
+        @attr.s
+        class SimpleDataObject:
+            field_a = attr.ib()
+            field_b = attr.ib()
+
+        left = SimpleDataObject(OtherDataObject(1, "a"), "b")
+        right = SimpleDataObject(OtherDataObject(1, "b"), "b")
+
+        lines = callequal(left, right)
+        assert lines is not None
+        assert "field_d: 'a' != 'b'" in lines
+
+    def test_attrs_verbose(self) -> None:
         @attr.s
         class SimpleDataObject:
             field_a = attr.ib()
@@ -816,6 +922,7 @@ class TestAssert_reprcompare_attrsclass:
         right = SimpleDataObject(1, "c")
 
         lines = callequal(left, right, verbose=2)
+        assert lines is not None
         assert lines[1].startswith("Matching attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
@@ -824,12 +931,13 @@ class TestAssert_reprcompare_attrsclass:
         @attr.s
         class SimpleDataObject:
             field_a = attr.ib()
-            field_b = attr.ib(**{ATTRS_EQ_FIELD: False})
+            field_b = attr.ib(**{ATTRS_EQ_FIELD: False})  # type: ignore
 
         left = SimpleDataObject(1, "b")
         right = SimpleDataObject(1, "b")
 
         lines = callequal(left, right, verbose=2)
+        assert lines is not None
         assert lines[1].startswith("Matching attributes:")
         assert "Omitting" not in lines[1]
         assert lines[2] == "['field_a']"
@@ -946,8 +1054,8 @@ class TestTruncateExplanation:
     # to calculate that results have the expected length.
     LINES_IN_TRUNCATION_MSG = 2
 
-    def test_doesnt_truncate_when_input_is_empty_list(self):
-        expl = []
+    def test_doesnt_truncate_when_input_is_empty_list(self) -> None:
+        expl = []  # type: List[str]
         result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
         assert result == expl
 

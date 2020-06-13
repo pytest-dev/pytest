@@ -6,7 +6,9 @@ import sys
 import textwrap
 from io import UnsupportedOperation
 from typing import BinaryIO
+from typing import cast
 from typing import Generator
+from typing import TextIO
 
 import pytest
 from _pytest import capture
@@ -1351,7 +1353,7 @@ def test_error_attribute_issue555(testdir):
     not sys.platform.startswith("win") and sys.version_info[:2] >= (3, 6),
     reason="only py3.6+ on windows",
 )
-def test_py36_windowsconsoleio_workaround_non_standard_streams():
+def test_py36_windowsconsoleio_workaround_non_standard_streams() -> None:
     """
     Ensure _py36_windowsconsoleio_workaround function works with objects that
     do not implement the full ``io``-based stream protocol, for example execnet channels (#2666).
@@ -1362,7 +1364,7 @@ def test_py36_windowsconsoleio_workaround_non_standard_streams():
         def write(self, s):
             pass
 
-    stream = DummyStream()
+    stream = cast(TextIO, DummyStream())
     _py36_windowsconsoleio_workaround(stream)
 
 

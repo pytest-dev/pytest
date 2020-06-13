@@ -4,14 +4,20 @@ import warnings
 from contextlib import contextmanager
 from functools import lru_cache
 from typing import Generator
+from typing import Optional
 from typing import Tuple
 
 import pytest
 from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.main import Session
+from _pytest.nodes import Item
+from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
-    from typing_extensions import Type
+    from typing import Type
+    from typing_extensions import Literal
 
 
 @lru_cache(maxsize=50)
@@ -49,7 +55,7 @@ def _parse_filter(
     return (action, message, category, module, lineno)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("pytest-warnings")
     group.addoption(
         "-W",
@@ -66,7 +72,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.addinivalue_line(
         "markers",
         "filterwarnings(warning): add a warning filter to the given test. "
@@ -75,13 +81,18 @@ def pytest_configure(config):
 
 
 @contextmanager
-def catch_warnings_for_item(config, ihook, when, item):
+def catch_warnings_for_item(
+    config: Config,
+    ihook,
+    when: "Literal['config', 'collect', 'runtest']",
+    item: Optional[Item],
+) -> Generator[None, None, None]:
     """
     Context manager that catches warnings generated in the contained execution block.
 
     ``item`` can be None if we are not in the context of an item execution.
 
-    Each warning captured triggers the ``pytest_warning_captured`` hook.
+    Each warning captured triggers the ``pytest_warning_recorded`` hook.
     """
     cmdline_filters = config.getoption("pythonwarnings") or []
     inifilters = config.getini("filterwarnings")
@@ -102,6 +113,7 @@ def catch_warnings_for_item(config, ihook, when, item):
         for arg in cmdline_filters:
             warnings.filterwarnings(*_parse_filter(arg, escape=True))
 
+        nodeid = "" if item is None else item.nodeid
         if item is not None:
             for mark in item.iter_markers(name="filterwarnings"):
                 for arg in mark.args:
@@ -111,15 +123,28 @@ def catch_warnings_for_item(config, ihook, when, item):
 
         for warning_message in log:
             ihook.pytest_warning_captured.call_historic(
-                kwargs=dict(warning_message=warning_message, when=when, item=item)
+                kwargs=dict(
+                    warning_message=warning_message,
+                    when=when,
+                    item=item,
+                    location=None,
+                )
+            )
+            ihook.pytest_warning_recorded.call_historic(
+                kwargs=dict(
+                    warning_message=warning_message,
+                    nodeid=nodeid,
+                    when=when,
+                    location=None,
+                )
             )
 
 
-def warning_record_to_str(warning_message):
+def warning_record_to_str(warning_message: warnings.WarningMessage) -> str:
     """Convert a warnings.WarningMessage to a string."""
     warn_msg = warning_message.message
     msg = warnings.formatwarning(
-        warn_msg,
+        str(warn_msg),
         warning_message.category,
         warning_message.filename,
         warning_message.lineno,
@@ -129,7 +154,7 @@ def warning_record_to_str(warning_message):
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_protocol(item):
+def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     with catch_warnings_for_item(
         config=item.config, ihook=item.ihook, when="runtest", item=item
     ):
@@ -146,7 +171,9 @@ def pytest_collection(session: Session) -> Generator[None, None, None]:
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_terminal_summary(terminalreporter):
+def pytest_terminal_summary(
+    terminalreporter: TerminalReporter,
+) -> Generator[None, None, None]:
     config = terminalreporter.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None
@@ -155,7 +182,7 @@ def pytest_terminal_summary(terminalreporter):
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_sessionfinish(session):
+def pytest_sessionfinish(session: Session) -> Generator[None, None, None]:
     config = session.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None
@@ -163,10 +190,10 @@ def pytest_sessionfinish(session):
         yield
 
 
-def _issue_warning_captured(warning, hook, stacklevel):
+def _issue_warning_captured(warning: Warning, hook, stacklevel: int) -> None:
     """
     This function should be used instead of calling ``warnings.warn`` directly when we are in the "configure" stage:
-    at this point the actual options might not have been set, so we manually trigger the pytest_warning_captured
+    at this point the actual options might not have been set, so we manually trigger the pytest_warning_recorded
     hook so we can display these warnings in the terminal. This is a hack until we can sort out #2891.
 
     :param warning: the warning instance.
@@ -176,12 +203,15 @@ def _issue_warning_captured(warning, hook, stacklevel):
     with warnings.catch_warnings(record=True) as records:
         warnings.simplefilter("always", type(warning))
         warnings.warn(warning, stacklevel=stacklevel)
-    # Mypy can't infer that record=True means records is not None; help it.
-    assert records is not None
     frame = sys._getframe(stacklevel - 1)
     location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
     hook.pytest_warning_captured.call_historic(
         kwargs=dict(
             warning_message=records[0], when="config", item=None, location=location
+        )
+    )
+    hook.pytest_warning_recorded.call_historic(
+        kwargs=dict(
+            warning_message=records[0], when="config", nodeid="", location=location
         )
     )

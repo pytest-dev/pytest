@@ -148,26 +148,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
     explanation = None
     try:
         if op == "==":
-            if istext(left) and istext(right):
-                explanation = _diff_text(left, right, verbose)
-            else:
-                if issequence(left) and issequence(right):
-                    explanation = _compare_eq_sequence(left, right, verbose)
-                elif isset(left) and isset(right):
-                    explanation = _compare_eq_set(left, right, verbose)
-                elif isdict(left) and isdict(right):
-                    explanation = _compare_eq_dict(left, right, verbose)
-                elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
-                    type_fn = (isdatacls, isattrs)
-                    explanation = _compare_eq_cls(left, right, verbose, type_fn)
-                elif verbose > 0:
-                    explanation = _compare_eq_verbose(left, right)
-                if isiterable(left) and isiterable(right):
-                    expl = _compare_eq_iterable(left, right, verbose)
-                    if explanation is not None:
-                        explanation.extend(expl)
-                    else:
-                        explanation = expl
+            explanation = _compare_eq_any(left, right, verbose)
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
@@ -185,6 +166,28 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
         return None
 
     return [summary] + explanation
+
+
+def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
+    explanation = []  # type: List[str]
+    if istext(left) and istext(right):
+        explanation = _diff_text(left, right, verbose)
+    else:
+        if issequence(left) and issequence(right):
+            explanation = _compare_eq_sequence(left, right, verbose)
+        elif isset(left) and isset(right):
+            explanation = _compare_eq_set(left, right, verbose)
+        elif isdict(left) and isdict(right):
+            explanation = _compare_eq_dict(left, right, verbose)
+        elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
+            type_fn = (isdatacls, isattrs)
+            explanation = _compare_eq_cls(left, right, verbose, type_fn)
+        elif verbose > 0:
+            explanation = _compare_eq_verbose(left, right)
+        if isiterable(left) and isiterable(right):
+            expl = _compare_eq_iterable(left, right, verbose)
+            explanation.extend(expl)
+    return explanation
 
 
 def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
@@ -439,7 +442,10 @@ def _compare_eq_cls(
         explanation += ["Differing attributes:"]
         for field in diff:
             explanation += [
-                ("%s: %r != %r") % (field, getattr(left, field), getattr(right, field))
+                ("%s: %r != %r") % (field, getattr(left, field), getattr(right, field)),
+                "",
+                "Drill down into differing attribute %s:" % field,
+                *_compare_eq_any(getattr(left, field), getattr(right, field), verbose),
             ]
     return explanation
 

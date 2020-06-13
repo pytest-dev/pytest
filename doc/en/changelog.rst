@@ -28,6 +28,29 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 5.4.3 (2020-06-02)
+=========================
+
+Bug Fixes
+---------
+
+- `#6428 <https://github.com/pytest-dev/pytest/issues/6428>`_: Paths appearing in error messages are now correct in case the current working directory has
+  changed since the start of the session.
+
+
+- `#6755 <https://github.com/pytest-dev/pytest/issues/6755>`_: Support deleting paths longer than 260 characters on windows created inside tmpdir.
+
+
+- `#6956 <https://github.com/pytest-dev/pytest/issues/6956>`_: Prevent pytest from printing ConftestImportFailure traceback to stdout.
+
+
+- `#7150 <https://github.com/pytest-dev/pytest/issues/7150>`_: Prevent hiding the underlying exception when ``ConfTestImportFailure`` is raised.
+
+
+- `#7215 <https://github.com/pytest-dev/pytest/issues/7215>`_: Fix regression where running with ``--pdb`` would call the ``tearDown`` methods of ``unittest.TestCase``
+  subclasses for skipped tests.
+
+
 pytest 5.4.2 (2020-05-08)
 =========================
 
@@ -6136,7 +6159,7 @@ time or change existing behaviors in order to make them less surprising/more use
   purely the nodeid.  The line number is still shown in failure reports.
   Thanks Floris Bruynooghe.
 
-- fix issue437 where assertion rewriting could cause pytest-xdist slaves
+- fix issue437 where assertion rewriting could cause pytest-xdist worker nodes
   to collect different tests. Thanks Bruno Oliveira.
 
 - fix issue555: add "errors" attribute to capture-streams to satisfy
@@ -6683,7 +6706,7 @@ Bug fixes:
 - Issue 265 - integrate nose setup/teardown with setupstate
   so it doesn't try to teardown if it did not setup
 
-- issue 271 - don't write junitxml on slave nodes
+- issue 271 - don't write junitxml on worker nodes
 
 - Issue 274 - don't try to show full doctest example
   when doctest does not know the example location
@@ -7565,7 +7588,7 @@ Bug fixes:
 - fix assert reinterpreation that sees a call containing "keyword=..."
 
 - fix issue66: invoke pytest_sessionstart and pytest_sessionfinish
-  hooks on slaves during dist-testing, report module/session teardown
+  hooks on worker nodes during dist-testing, report module/session teardown
   hooks correctly.
 
 - fix issue65: properly handle dist-testing if no

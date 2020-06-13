@@ -1,9 +1,12 @@
 import io
 import os
 import re
+from typing import cast
 
 import pytest
+from _pytest.capture import CaptureManager
 from _pytest.pytester import Testdir
+from _pytest.terminal import TerminalReporter
 
 
 def test_nothing_logged(testdir):
@@ -808,7 +811,7 @@ def test_log_file_unicode(testdir):
 
 
 @pytest.mark.parametrize("has_capture_manager", [True, False])
-def test_live_logging_suspends_capture(has_capture_manager, request):
+def test_live_logging_suspends_capture(has_capture_manager: bool, request) -> None:
     """Test that capture manager is suspended when we emitting messages for live logging.
 
     This tests the implementation calls instead of behavior because it is difficult/impossible to do it using
@@ -835,8 +838,10 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
         def section(self, *args, **kwargs):
             pass
 
-    out_file = DummyTerminal()
-    capture_manager = MockCaptureManager() if has_capture_manager else None
+    out_file = cast(TerminalReporter, DummyTerminal())
+    capture_manager = (
+        cast(CaptureManager, MockCaptureManager()) if has_capture_manager else None
+    )
     handler = _LiveLoggingStreamHandler(out_file, capture_manager)
     handler.set_when("call")
 
@@ -849,7 +854,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
         assert MockCaptureManager.calls == ["enter disabled", "exit disabled"]
     else:
         assert MockCaptureManager.calls == []
-    assert out_file.getvalue() == "\nsome message\n"
+    assert cast(io.StringIO, out_file).getvalue() == "\nsome message\n"
 
 
 def test_collection_live_logging(testdir):

@@ -1,0 +1,2 @@
+Exit with an error if the ``--basetemp`` argument is empty, the current working directory or parent directory of it.
+This is done to protect against accidental data loss, as any directory passed to this argument is cleared.

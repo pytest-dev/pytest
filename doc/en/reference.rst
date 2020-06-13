@@ -711,6 +711,7 @@ Session related reporting hooks:
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_warning_captured
+.. autofunction:: pytest_warning_recorded
 
 Central hook for reporting about test execution:
 
@@ -1018,17 +1019,17 @@ UsageError
 Configuration Options
 ---------------------
 
-Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini`` or ``setup.cfg``
-file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
-(``[tool:pytest]`` for ``setup.cfg`` files).
+Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``pyproject.toml``, ``tox.ini`` or ``setup.cfg``
+file, usually located at the root of your repository. To see each file format in details, see
+:ref:`config file formats`.
 
 .. warning::
-    Usage of ``setup.cfg`` is not recommended unless for very simple use cases. ``.cfg``
+    Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
     files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
     down problems.
-    When possible, it is recommended to use the latter files to hold your pytest configuration.
+    When possible, it is recommended to use the latter files, or ``pyproject.toml``, to hold your pytest configuration.
 
-Configuration file options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
+Configuration options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
 
    pytest -o console_output_style=classic -o cache_dir=/tmp/mycache
@@ -1055,8 +1056,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: cache_dir
-
-
 
    Sets a directory where stores content of cache plugin. Default directory is
    ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
@@ -1558,6 +1557,17 @@ passed multiple times. The expected format is ``name=value``. For example::
    to collect those tests.
 
    See :ref:`change naming conventions` for more detailed examples.
+
+
+.. confval:: required_plugins
+
+   A space separated list of plugins that must be present for pytest to run.
+   If any one of the plugins is not found, emit an error.
+
+   .. code-block:: ini
+
+       [pytest]
+       required_plugins = pytest-html pytest-xdist
 
 
 .. confval:: testpaths

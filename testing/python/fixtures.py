@@ -1894,7 +1894,9 @@ class TestAutouseManagement:
         reprec = testdir.inline_run("-v", "-s", confcut)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
-        values = config.pluginmanager._getconftestmodules(p)[0].values
+        values = config.pluginmanager._getconftestmodules(p, importmode="prepend")[
+            0
+        ].values
         assert values == ["fin_a1", "fin_a2", "fin_b1", "fin_b2"] * 2
 
     def test_scope_ordering(self, testdir):
@@ -3799,7 +3801,7 @@ class TestScopeOrdering:
         request = FixtureRequest(items[0])
         assert request.fixturenames == "m1 f1".split()
 
-    def test_func_closure_with_native_fixtures(self, testdir, monkeypatch):
+    def test_func_closure_with_native_fixtures(self, testdir, monkeypatch) -> None:
         """Sanity check that verifies the order returned by the closures and the actual fixture execution order:
         The execution order may differ because of fixture inter-dependencies.
         """
@@ -3849,9 +3851,8 @@ class TestScopeOrdering:
         )
         testdir.runpytest()
         # actual fixture execution differs: dependent fixtures must be created first ("my_tmpdir")
-        assert (
-            pytest.FIXTURE_ORDER == "s1 my_tmpdir_factory p1 m1 my_tmpdir f1 f2".split()
-        )
+        FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined] # noqa: F821
+        assert FIXTURE_ORDER == "s1 my_tmpdir_factory p1 m1 my_tmpdir f1 f2".split()
 
     def test_func_closure_module(self, testdir):
         testdir.makepyfile(
@@ -4159,7 +4160,7 @@ def test_fixture_duplicated_arguments() -> None:
     """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
     with pytest.raises(TypeError) as excinfo:
 
-        @pytest.fixture("session", scope="session")
+        @pytest.fixture("session", scope="session")  # type: ignore[call-overload] # noqa: F821
         def arg(arg):
             pass
 
@@ -4171,7 +4172,7 @@ def test_fixture_duplicated_arguments() -> None:
 
     with pytest.raises(TypeError) as excinfo:
 
-        @pytest.fixture(
+        @pytest.fixture(  # type: ignore[call-overload] # noqa: F821
             "function",
             ["p1"],
             True,
@@ -4199,7 +4200,7 @@ def test_fixture_with_positionals() -> None:
 
     with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
 
-        @pytest.fixture("function", [0], True)
+        @pytest.fixture("function", [0], True)  # type: ignore[call-overload] # noqa: F821
         def fixture_with_positionals():
             pass
 
@@ -4213,7 +4214,7 @@ def test_fixture_with_positionals() -> None:
 def test_fixture_with_too_many_positionals() -> None:
     with pytest.raises(TypeError) as excinfo:
 
-        @pytest.fixture("function", [0], True, ["id"], "name", "extra")
+        @pytest.fixture("function", [0], True, ["id"], "name", "extra")  # type: ignore[call-overload] # noqa: F821
         def fixture_with_positionals():
             pass
 

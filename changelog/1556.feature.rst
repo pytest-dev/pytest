@@ -1,0 +1,17 @@
+pytest now supports ``pyproject.toml`` files for configuration.
+
+The configuration options is similar to the one available in other formats, but must be defined
+in a ``[tool.pytest.ini_options]`` table to be picked up by pytest:
+
+.. code-block:: toml
+
+    # pyproject.toml
+    [tool.pytest.ini_options]
+    minversion = "6.0"
+    addopts = "-ra -q"
+    testpaths = [
+        "tests",
+        "integration",
+    ]
+
+More information can be found `in the docs <https://docs.pytest.org/en/stable/customize.html#configuration-file-formats>`__.

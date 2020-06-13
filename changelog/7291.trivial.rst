@@ -1,0 +1,1 @@
+Replaced ``py.iniconfig`` with `iniconfig <https://pypi.org/project/iniconfig/>`__.

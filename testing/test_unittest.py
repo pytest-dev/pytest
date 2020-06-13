@@ -1,4 +1,5 @@
 import gc
+from typing import List
 
 import pytest
 from _pytest.config import ExitCode
@@ -1158,13 +1159,13 @@ def test_trace(testdir, monkeypatch):
     assert result.ret == 0
 
 
-def test_pdb_teardown_called(testdir, monkeypatch):
+def test_pdb_teardown_called(testdir, monkeypatch) -> None:
     """Ensure tearDown() is always called when --pdb is given in the command-line.
 
     We delay the normal tearDown() calls when --pdb is given, so this ensures we are calling
     tearDown() eventually to avoid memory leaks when using --pdb.
     """
-    teardowns = []
+    teardowns = []  # type: List[str]
     monkeypatch.setattr(
         pytest, "test_pdb_teardown_called_teardowns", teardowns, raising=False
     )
@@ -1191,6 +1192,40 @@ def test_pdb_teardown_called(testdir, monkeypatch):
         "test_pdb_teardown_called.MyTestCase.test_1",
         "test_pdb_teardown_called.MyTestCase.test_2",
     ]
+
+
+@pytest.mark.parametrize("mark", ["@unittest.skip", "@pytest.mark.skip"])
+def test_pdb_teardown_skipped(testdir, monkeypatch, mark: str) -> None:
+    """
+    With --pdb, setUp and tearDown should not be called for skipped tests.
+    """
+    tracked = []  # type: List[str]
+    monkeypatch.setattr(pytest, "test_pdb_teardown_skipped", tracked, raising=False)
+
+    testdir.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        class MyTestCase(unittest.TestCase):
+
+            def setUp(self):
+                pytest.test_pdb_teardown_skipped.append("setUp:" + self.id())
+
+            def tearDown(self):
+                pytest.test_pdb_teardown_skipped.append("tearDown:" + self.id())
+
+            {mark}("skipped for reasons")
+            def test_1(self):
+                pass
+
+    """.format(
+            mark=mark
+        )
+    )
+    result = testdir.runpytest_inprocess("--pdb")
+    result.stdout.fnmatch_lines("* 1 skipped in *")
+    assert tracked == []
 
 
 def test_async_support(testdir):

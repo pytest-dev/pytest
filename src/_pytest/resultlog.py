@@ -5,13 +5,18 @@ import os
 
 import py
 
+from _pytest._code.code import ExceptionRepr
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
+from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 from _pytest.store import StoreKey
 
 
 resultlog_key = StoreKey["ResultLog"]()
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
     group.addoption(
         "--resultlog",
@@ -23,10 +28,10 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     resultlog = config.option.resultlog
-    # prevent opening resultlog on slave nodes (xdist)
-    if resultlog and not hasattr(config, "slaveinput"):
+    # prevent opening resultlog on worker nodes (xdist)
+    if resultlog and not hasattr(config, "workerinput"):
         dirname = os.path.dirname(os.path.abspath(resultlog))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
@@ -40,7 +45,7 @@ def pytest_configure(config):
         _issue_warning_captured(RESULT_LOG, config.hook, stacklevel=2)
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     resultlog = config._store.get(resultlog_key, None)
     if resultlog:
         resultlog.logfile.close()
@@ -64,7 +69,7 @@ class ResultLog:
             testpath = report.fspath
         self.write_log_entry(testpath, lettercode, longrepr)
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.when != "call" and report.passed:
             return
         res = self.config.hook.pytest_report_teststatus(
@@ -78,12 +83,13 @@ class ResultLog:
         elif report.passed:
             longrepr = ""
         elif report.skipped:
+            assert report.longrepr is not None
             longrepr = str(report.longrepr[2])
         else:
             longrepr = str(report.longrepr)
         self.log_outcome(report, code, longrepr)
 
-    def pytest_collectreport(self, report):
+    def pytest_collectreport(self, report: CollectReport) -> None:
         if not report.passed:
             if report.failed:
                 code = "F"
@@ -91,12 +97,12 @@ class ResultLog:
             else:
                 assert report.skipped
                 code = "S"
-                longrepr = "%s:%d: %s" % report.longrepr
+                longrepr = "%s:%d: %s" % report.longrepr  # type: ignore
             self.log_outcome(report, code, longrepr)
 
-    def pytest_internalerror(self, excrepr):
-        reprcrash = getattr(excrepr, "reprcrash", None)
-        path = getattr(reprcrash, "path", None)
-        if path is None:
+    def pytest_internalerror(self, excrepr: ExceptionRepr) -> None:
+        if excrepr.reprcrash is not None:
+            path = excrepr.reprcrash.path
+        else:
             path = "cwd:%s" % py.path.local()
         self.write_log_entry(path, "!", str(excrepr))
