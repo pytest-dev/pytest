@@ -361,18 +361,28 @@ def pytest_make_parametrize_id(
 
 
 # -------------------------------------------------------------------------
-# generic runtest related hooks
+# runtest related hooks
 # -------------------------------------------------------------------------
 
 
 @hookspec(firstresult=True)
 def pytest_runtestloop(session: "Session") -> Optional[object]:
-    """ called for performing the main runtest loop
-    (after collection finished).
+    """Performs the main runtest loop (after collection finished).
 
-    Stops at first non-None result, see :ref:`firstresult`
+    The default hook implementation performs the runtest protocol for all items
+    collected in the session (``session.items``), unless the collection failed
+    or the ``collectonly`` pytest option is set.
 
-    :param _pytest.main.Session session: the pytest session object
+    If at any point :py:func:`pytest.exit` is called, the loop is
+    terminated immediately.
+
+    If at any point ``session.shouldfail`` or ``session.shouldstop`` are set, the
+    loop is terminated after the runtest protocol for the current item is finished.
+
+    :param _pytest.main.Session session: The pytest session object.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+    The return value is not used, but only stops further processing.
     """
 
 
@@ -380,60 +390,91 @@ def pytest_runtestloop(session: "Session") -> Optional[object]:
 def pytest_runtest_protocol(
     item: "Item", nextitem: "Optional[Item]"
 ) -> Optional[object]:
-    """ implements the runtest_setup/call/teardown protocol for
-    the given test item, including capturing exceptions and calling
-    reporting hooks.
+    """Performs the runtest protocol for a single test item.
 
-    :arg item: test item for which the runtest protocol is performed.
+    The default runtest protocol is this (see individual hooks for full details):
 
-    :arg nextitem: the scheduled-to-be-next test item (or None if this
-                   is the end my friend).  This argument is passed on to
-                   :py:func:`pytest_runtest_teardown`.
+    - ``pytest_runtest_logstart(nodeid, location)``
 
-    :return boolean: True if no further hook implementations should be invoked.
+    - Setup phase:
+        - ``call = pytest_runtest_setup(item)`` (wrapped in ``CallInfo(when="setup")``)
+        - ``report = pytest_runtest_makereport(item, call)``
+        - ``pytest_runtest_logreport(report)``
+        - ``pytest_exception_interact(call, report)`` if an interactive exception occurred
 
+    - Call phase, if the the setup passed and the ``setuponly`` pytest option is not set:
+        - ``call = pytest_runtest_call(item)`` (wrapped in ``CallInfo(when="call")``)
+        - ``report = pytest_runtest_makereport(item, call)``
+        - ``pytest_runtest_logreport(report)``
+        - ``pytest_exception_interact(call, report)`` if an interactive exception occurred
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    - Teardown phase:
+        - ``call = pytest_runtest_teardown(item, nextitem)`` (wrapped in ``CallInfo(when="teardown")``)
+        - ``report = pytest_runtest_makereport(item, call)``
+        - ``pytest_runtest_logreport(report)``
+        - ``pytest_exception_interact(call, report)`` if an interactive exception occurred
+
+    - ``pytest_runtest_logfinish(nodeid, location)``
+
+    :arg item: Test item for which the runtest protocol is performed.
+
+    :arg nextitem: The scheduled-to-be-next test item (or None if this is the end my friend).
+
+    Stops at first non-None result, see :ref:`firstresult`.
+    The return value is not used, but only stops further processing.
+    """
 
 
 def pytest_runtest_logstart(
     nodeid: str, location: Tuple[str, Optional[int], str]
 ) -> None:
-    """ signal the start of running a single test item.
+    """Called at the start of running the runtest protocol for a single item.
 
-    This hook will be called **before** :func:`pytest_runtest_setup`, :func:`pytest_runtest_call` and
-    :func:`pytest_runtest_teardown` hooks.
+    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
 
-    :param str nodeid: full id of the item
-    :param location: a triple of ``(filename, linenum, testname)``
+    :param str nodeid: Full node ID of the item.
+    :param location: A triple of ``(filename, lineno, testname)``.
     """
 
 
 def pytest_runtest_logfinish(
     nodeid: str, location: Tuple[str, Optional[int], str]
 ) -> None:
-    """ signal the complete finish of running a single test item.
+    """Called at the end of running the runtest protocol for a single item.
 
-    This hook will be called **after** :func:`pytest_runtest_setup`, :func:`pytest_runtest_call` and
-    :func:`pytest_runtest_teardown` hooks.
+    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
 
-    :param str nodeid: full id of the item
-    :param location: a triple of ``(filename, linenum, testname)``
+    :param str nodeid: Full node ID of the item.
+    :param location: A triple of ``(filename, lineno, testname)``.
     """
 
 
 def pytest_runtest_setup(item: "Item") -> None:
-    """ called before ``pytest_runtest_call(item)``. """
+    """Called to perform the setup phase for a test item.
+
+    The default implementation runs ``setup()`` on ``item`` and all of its
+    parents (which haven't been setup yet). This includes obtaining the
+    values of fixtures required by the item (which haven't been obtained
+    yet).
+    """
 
 
 def pytest_runtest_call(item: "Item") -> None:
-    """ called to execute the test ``item``. """
+    """Called to run the test for test item (the call phase).
+
+    The default implementation calls ``item.runtest()``.
+    """
 
 
 def pytest_runtest_teardown(item: "Item", nextitem: "Optional[Item]") -> None:
-    """ called after ``pytest_runtest_call``.
+    """Called to perform the teardown phase for a test item.
 
-    :arg nextitem: the scheduled-to-be-next test item (None if no further
+    The default implementation runs the finalizers and calls ``teardown()``
+    on ``item`` and all of its parents (which need to be torn down). This
+    includes running the teardown phase of fixtures required by the item (if
+    they go out of scope).
+
+    :arg nextitem: The scheduled-to-be-next test item (None if no further
                    test item is scheduled).  This argument can be used to
                    perform exact teardowns, i.e. calling just enough finalizers
                    so that nextitem only needs to call setup-functions.
@@ -444,16 +485,23 @@ def pytest_runtest_teardown(item: "Item", nextitem: "Optional[Item]") -> None:
 def pytest_runtest_makereport(
     item: "Item", call: "CallInfo[None]"
 ) -> Optional["TestReport"]:
-    """ return a :py:class:`_pytest.runner.TestReport` object
-    for the given :py:class:`pytest.Item <_pytest.main.Item>` and
-    :py:class:`_pytest.runner.CallInfo`.
+    """Called to create a :py:class:`_pytest.reports.TestReport` for each of
+    the setup, call and teardown runtest phases of a test item.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
+
+    :param CallInfo[None] call: The ``CallInfo`` for the phase.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+    """
 
 
 def pytest_runtest_logreport(report: "TestReport") -> None:
-    """ process a test setup/call/teardown report relating to
-    the respective phase of executing a test. """
+    """Process the :py:class:`_pytest.reports.TestReport` produced for each
+    of the setup, call and teardown runtest phases of an item.
+
+    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
+    """
 
 
 @hookspec(firstresult=True)
@@ -785,11 +833,17 @@ def pytest_keyboard_interrupt(
 def pytest_exception_interact(
     node: "Node", call: "CallInfo[object]", report: "Union[CollectReport, TestReport]"
 ) -> None:
-    """called when an exception was raised which can potentially be
+    """Called when an exception was raised which can potentially be
     interactively handled.
 
-    This hook is only called if an exception was raised
-    that is not an internal exception like ``skip.Exception``.
+    May be called during collection (see :py:func:`pytest_make_collect_report`),
+    in which case ``report`` is a :py:class:`_pytest.reports.CollectReport`.
+
+    May be called during runtest of an item (see :py:func:`pytest_runtest_protocol`),
+    in which case ``report`` is a :py:class:`_pytest.reports.TestReport`.
+
+    This hook is not called if the exception that was raised is an internal
+    exception like ``skip.Exception``.
     """
 
 

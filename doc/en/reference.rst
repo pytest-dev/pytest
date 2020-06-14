@@ -644,8 +644,8 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 
 .. autofunction:: pytest_plugin_registered
 
-Test running hooks
-~~~~~~~~~~~~~~~~~~
+Test running (runtest) hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
 
@@ -663,9 +663,6 @@ these hooks in :py:mod:`_pytest.runner` and maybe also
 in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
 and its input/output capturing in order to immediately drop
 into interactive debugging when a test failure occurs.
-
-The :py:mod:`_pytest.terminal` reported specifically uses
-the reporting hook to print information about a test run.
 
 .. autofunction:: pytest_pyfunc_call
 
@@ -765,7 +762,7 @@ Collector
 CollectReport
 ~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.runner.CollectReport()
+.. autoclass:: _pytest.reports.CollectReport()
     :members:
     :show-inheritance:
     :inherited-members:
@@ -889,7 +886,7 @@ Session
 TestReport
 ~~~~~~~~~~
 
-.. autoclass:: _pytest.runner.TestReport()
+.. autoclass:: _pytest.reports.TestReport()
     :members:
     :show-inheritance:
     :inherited-members:
