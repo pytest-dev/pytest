@@ -762,6 +762,14 @@ Collector
     :members:
     :show-inheritance:
 
+CollectReport
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.runner.CollectReport()
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
 Config
 ~~~~~~
 
