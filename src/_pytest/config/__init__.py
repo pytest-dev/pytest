@@ -1207,9 +1207,13 @@ class Config:
         #     a_line_list = ["tests", "acceptance"]
         #   in this case, we already have a list ready to use
         #
-        append_value = self._get_append_ini_value(name)
-        if append_value:
-            value = value  # + append_value
+        append_values = self._get_append_ini_value(name, type)
+        value = (
+            value + append_values
+            if isinstance(value, str)
+            else value + append_values.split(" ")
+        )
+
         if type == "pathlist":
             # TODO: This assert is probably not valid in all cases.
             assert self.inifile is not None
@@ -1245,8 +1249,8 @@ class Config:
             values.append(relroot)
         return values
 
-    def _get_append_ini_value(self, name: str) -> Optional[str]:
-        value = None
+    def _get_append_ini_value(self, name: str, ini_type) -> str:
+        value = ""
         # append_ini is a list of "ini=value" options
         # append all values if multiple values are set for same ini-name,
         # e.g. -a foo=bar1 -a foo=bar2 will append 'bar1 bar2' to foo
@@ -1261,11 +1265,14 @@ class Config:
                 )
             else:
                 if key == name:
-                    value = (
-                        append_ini_value
-                        if value is None
-                        else value  # + append_ini_value
-                    )
+                    if ini_type in ["pathlist", "args", "linelist"]:
+                        value = "{} {}".format(value, append_ini_value)
+                    else:
+                        self._warn_or_fail_if_strict(
+                            "append_ini option invalid for argument '{}' with type '{}'".format(
+                                name, ini_type
+                            )
+                        )
         return value
 
     def _get_override_ini_value(self, name: str) -> Optional[str]:
