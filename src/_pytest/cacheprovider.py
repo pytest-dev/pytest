@@ -341,7 +341,7 @@ class LFPlugin:
 
     def pytest_sessionfinish(self, session: Session) -> None:
         config = self.config
-        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
+        if config.getoption("cacheshow") or hasattr(config, "workerinput"):
             return
 
         assert config.cache is not None
@@ -386,7 +386,7 @@ class NFPlugin:
 
     def pytest_sessionfinish(self) -> None:
         config = self.config
-        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
+        if config.getoption("cacheshow") or hasattr(config, "workerinput"):
             return
 
         if config.getoption("collectonly"):
@@ -464,8 +464,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: Config) -> None:
-    # Type ignored: pending mechanism to store typed objects scoped to config.
-    config.cache = Cache.for_config(config)  # type: ignore # noqa: F821
+    config.cache = Cache.for_config(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 
@@ -496,7 +495,7 @@ def pytest_report_header(config: Config) -> Optional[str]:
         # starting with .., ../.. if sensible
 
         try:
-            displaypath = cachedir.relative_to(config.rootdir)
+            displaypath = cachedir.relative_to(str(config.rootdir))
         except ValueError:
             displaypath = cachedir
         return "cachedir: {}".format(displaypath)

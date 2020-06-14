@@ -170,7 +170,7 @@ several problems:
 
 1. in distributed testing the master process would setup test resources
    that are never needed because it only co-ordinates the test run
-   activities of the slave processes.
+   activities of the worker processes.
 
 2. if you only perform a collection (with "--collect-only")
    resource-setup will still be executed.

@@ -38,13 +38,13 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
 
 
-def getslaveinfoline(node):
+def getworkerinfoline(node):
     try:
-        return node._slaveinfocache
+        return node._workerinfocache
     except AttributeError:
-        d = node.slaveinfo
+        d = node.workerinfo
         ver = "%s.%s.%s" % d["version_info"][:3]
-        node._slaveinfocache = s = "[{}] {} -- Python {} {}".format(
+        node._workerinfocache = s = "[{}] {} -- Python {} {}".format(
             d["id"], d["sysplatform"], ver, d["executable"]
         )
         return s
@@ -71,7 +71,7 @@ class BaseReport:
 
     def toterminal(self, out) -> None:
         if hasattr(self, "node"):
-            out.line(getslaveinfoline(self.node))
+            out.line(getworkerinfoline(self.node))
 
         longrepr = self.longrepr
         if longrepr is None:

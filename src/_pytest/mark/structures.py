@@ -66,9 +66,7 @@ def get_empty_parameterset_mark(
         fs,
         lineno,
     )
-    # Type ignored because MarkDecorator.__call__() is a bit tough to
-    # annotate ATM.
-    return mark(reason=reason)  # type: ignore[no-any-return] # noqa: F723
+    return mark(reason=reason)
 
 
 class ParameterSet(

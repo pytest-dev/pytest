@@ -33,6 +33,7 @@ else:
 
 
 if TYPE_CHECKING:
+    from typing import NoReturn
     from typing import Type
     from typing_extensions import Final
 
@@ -401,3 +402,38 @@ else:
     from collections import OrderedDict
 
     order_preserving_dict = OrderedDict
+
+
+# Perform exhaustiveness checking.
+#
+# Consider this example:
+#
+#     MyUnion = Union[int, str]
+#
+#     def handle(x: MyUnion) -> int {
+#         if isinstance(x, int):
+#             return 1
+#         elif isinstance(x, str):
+#             return 2
+#         else:
+#             raise Exception('unreachable')
+#
+# Now suppose we add a new variant:
+#
+#     MyUnion = Union[int, str, bytes]
+#
+# After doing this, we must remember ourselves to go and update the handle
+# function to handle the new variant.
+#
+# With `assert_never` we can do better:
+#
+#     // throw new Error('unreachable');
+#     return assert_never(x)
+#
+# Now, if we forget to handle the new variant, the type-checker will emit a
+# compile-time error, instead of the runtime error we would have gotten
+# previously.
+#
+# This also work for Enums (if you use `is` to compare) and Literals.
+def assert_never(value: "NoReturn") -> "NoReturn":
+    assert False, "Unhandled value: {} ({})".format(value, type(value).__name__)

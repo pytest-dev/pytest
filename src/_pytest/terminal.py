@@ -30,6 +30,8 @@ from more_itertools import collapse
 import pytest
 from _pytest import nodes
 from _pytest import timing
+from _pytest._code import ExceptionInfo
+from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
@@ -114,6 +116,20 @@ def pytest_addoption(parser: Parser) -> None:
         default=0,
         dest="verbose",
         help="increase verbosity.",
+    )
+    group._addoption(
+        "--no-header",
+        action="store_true",
+        default=False,
+        dest="no_header",
+        help="disable header",
+    )
+    group._addoption(
+        "--no-summary",
+        action="store_true",
+        default=False,
+        dest="no_summary",
+        help="disable summary",
     )
     group._addoption(
         "-q",
@@ -315,6 +331,7 @@ class TerminalReporter:
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = None  # type: Optional[float]
         self._already_displayed_warnings = None  # type: Optional[int]
+        self._keyboardinterrupt_memo = None  # type: Optional[ExceptionRepr]
 
     @property
     def writer(self) -> TerminalWriter:
@@ -352,6 +369,14 @@ class TerminalReporter:
         return self.verbosity >= 0
 
     @property
+    def no_header(self) -> bool:
+        return bool(self.config.option.no_header)
+
+    @property
+    def no_summary(self) -> bool:
+        return bool(self.config.option.no_summary)
+
+    @property
     def showfspath(self) -> bool:
         if self._showfspath is None:
             return self.verbosity >= 0
@@ -377,9 +402,9 @@ class TerminalReporter:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
             self.currentfspath = fspath
-            fspath = self.startdir.bestrelpath(fspath)
+            relfspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
-            self._tw.write(fspath + " ")
+            self._tw.write(relfspath + " ")
         self._tw.write(res, flush=True, **markup)
 
     def write_ensure_prefix(self, prefix, extra: str = "", **kwargs) -> None:
@@ -448,10 +473,10 @@ class TerminalReporter:
         if set_main_color:
             self._set_main_color()
 
-    def pytest_internalerror(self, excrepr):
+    def pytest_internalerror(self, excrepr: ExceptionRepr) -> bool:
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
-        return 1
+        return True
 
     def pytest_warning_recorded(
         self, warning_message: warnings.WarningMessage, nodeid: str,
@@ -660,25 +685,26 @@ class TerminalReporter:
             return
         self.write_sep("=", "test session starts", bold=True)
         verinfo = platform.python_version()
-        msg = "platform {} -- Python {}".format(sys.platform, verinfo)
-        pypy_version_info = getattr(sys, "pypy_version_info", None)
-        if pypy_version_info:
-            verinfo = ".".join(map(str, pypy_version_info[:3]))
-            msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
-        msg += ", pytest-{}, py-{}, pluggy-{}".format(
-            pytest.__version__, py.__version__, pluggy.__version__
-        )
-        if (
-            self.verbosity > 0
-            or self.config.option.debug
-            or getattr(self.config.option, "pastebin", None)
-        ):
-            msg += " -- " + str(sys.executable)
-        self.write_line(msg)
-        lines = self.config.hook.pytest_report_header(
-            config=self.config, startdir=self.startdir
-        )
-        self._write_report_lines_from_hooks(lines)
+        if not self.no_header:
+            msg = "platform {} -- Python {}".format(sys.platform, verinfo)
+            pypy_version_info = getattr(sys, "pypy_version_info", None)
+            if pypy_version_info:
+                verinfo = ".".join(map(str, pypy_version_info[:3]))
+                msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
+            msg += ", pytest-{}, py-{}, pluggy-{}".format(
+                pytest.__version__, py.__version__, pluggy.__version__
+            )
+            if (
+                self.verbosity > 0
+                or self.config.option.debug
+                or getattr(self.config.option, "pastebin", None)
+            ):
+                msg += " -- " + str(sys.executable)
+            self.write_line(msg)
+            lines = self.config.hook.pytest_report_header(
+                config=self.config, startdir=self.startdir
+            )
+            self._write_report_lines_from_hooks(lines)
 
     def _write_report_lines_from_hooks(
         self, lines: List[Union[str, List[str]]]
@@ -775,7 +801,7 @@ class TerminalReporter:
             ExitCode.USAGE_ERROR,
             ExitCode.NO_TESTS_COLLECTED,
         )
-        if exitstatus in summary_exit_codes:
+        if exitstatus in summary_exit_codes and not self.no_summary:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
@@ -783,7 +809,7 @@ class TerminalReporter:
             self.write_sep("!", str(session.shouldfail), red=True)
         if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
-            del self._keyboardinterrupt_memo
+            self._keyboardinterrupt_memo = None
         elif session.shouldstop:
             self.write_sep("!", str(session.shouldstop), red=True)
         self.summary_stats()
@@ -799,15 +825,17 @@ class TerminalReporter:
         # Display any extra warnings from teardown here (if any).
         self.summary_warnings()
 
-    def pytest_keyboard_interrupt(self, excinfo) -> None:
+    def pytest_keyboard_interrupt(self, excinfo: ExceptionInfo[BaseException]) -> None:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
 
     def pytest_unconfigure(self) -> None:
-        if hasattr(self, "_keyboardinterrupt_memo"):
+        if self._keyboardinterrupt_memo is not None:
             self._report_keyboardinterrupt()
 
     def _report_keyboardinterrupt(self) -> None:
         excrepr = self._keyboardinterrupt_memo
+        assert excrepr is not None
+        assert excrepr.reprcrash is not None
         msg = excrepr.reprcrash.message
         self.write_sep("!", msg)
         if "KeyboardInterrupt" in msg:

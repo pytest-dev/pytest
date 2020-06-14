@@ -1559,6 +1559,17 @@ passed multiple times. The expected format is ``name=value``. For example::
    See :ref:`change naming conventions` for more detailed examples.
 
 
+.. confval:: required_plugins
+
+   A space separated list of plugins that must be present for pytest to run.
+   If any one of the plugins is not found, emit an error.
+
+   .. code-block:: ini
+
+       [pytest]
+       required_plugins = pytest-html pytest-xdist
+
+
 .. confval:: testpaths
 
 

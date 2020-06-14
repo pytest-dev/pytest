@@ -393,7 +393,7 @@ class Node(metaclass=NodeMeta):
         # It will be better to just always display paths relative to invocation_dir, but
         # this requires a lot of plumbing (#6428).
         try:
-            abspath = Path(os.getcwd()) != Path(self.config.invocation_dir)
+            abspath = Path(os.getcwd()) != Path(str(self.config.invocation_dir))
         except OSError:
             abspath = True
 
@@ -547,7 +547,9 @@ class FSCollector(Collector):
         # check if we have the common case of running
         # hooks with all conftest.py files
         pm = self.config.pluginmanager
-        my_conftestmodules = pm._getconftestmodules(fspath)
+        my_conftestmodules = pm._getconftestmodules(
+            fspath, self.config.getoption("importmode")
+        )
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # one or more conftests are not in use at this fspath

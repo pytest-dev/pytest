@@ -866,12 +866,12 @@ def test_mangle_test_address():
     assert newnames == ["a.my.py.thing", "Class", "method", "[a-1-::]"]
 
 
-def test_dont_configure_on_slaves(tmpdir) -> None:
+def test_dont_configure_on_workers(tmpdir) -> None:
     gotten = []  # type: List[object]
 
     class FakeConfig:
         if TYPE_CHECKING:
-            slaveinput = None
+            workerinput = None
 
         def __init__(self):
             self.pluginmanager = self
@@ -891,7 +891,7 @@ def test_dont_configure_on_slaves(tmpdir) -> None:
 
     junitxml.pytest_configure(fake_config)
     assert len(gotten) == 1
-    FakeConfig.slaveinput = None
+    FakeConfig.workerinput = None
     junitxml.pytest_configure(fake_config)
     assert len(gotten) == 1
 
@@ -1250,7 +1250,7 @@ def test_record_fixtures_xunit2(testdir, fixture_name, run_and_parse):
 
 
 def test_random_report_log_xdist(testdir, monkeypatch, run_and_parse):
-    """xdist calls pytest_runtest_logreport as they are executed by the slaves,
+    """xdist calls pytest_runtest_logreport as they are executed by the workers,
     with nodes from several nodes overlapping, so junitxml must cope with that
     to produce correct reports. #1064
     """

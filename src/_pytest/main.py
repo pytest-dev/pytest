@@ -80,7 +80,7 @@ def pytest_addoption(parser: Parser) -> None:
     group._addoption(
         "--strict-config",
         action="store_true",
-        help="invalid ini keys for the `pytest` section of the configuration file raise errors.",
+        help="any warnings encountered while parsing the `pytest` section of the configuration file raise errors.",
     )
     group._addoption(
         "--strict-markers",
@@ -172,6 +172,14 @@ def pytest_addoption(parser: Parser) -> None:
         dest="collect_in_virtualenv",
         default=False,
         help="Don't ignore tests in a local virtualenv directory",
+    )
+    group.addoption(
+        "--import-mode",
+        default="prepend",
+        choices=["prepend", "append", "importlib"],
+        dest="importmode",
+        help="prepend/append to sys.path when importing test modules and conftest files, "
+        "default is to prepend.",
     )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
@@ -439,7 +447,7 @@ class Session(nodes.FSCollector):
         )  # type: Dict[Tuple[Type[nodes.Collector], str], CollectReport]
 
         # Dirnames of pkgs with dunder-init files.
-        self._collection_pkg_roots = {}  # type: Dict[py.path.local, Package]
+        self._collection_pkg_roots = {}  # type: Dict[str, Package]
 
         self._bestrelpathcache = _bestrelpath_cache(
             config.rootdir
@@ -601,7 +609,7 @@ class Session(nodes.FSCollector):
                             col = self._collectfile(pkginit, handle_dupes=False)
                             if col:
                                 if isinstance(col[0], Package):
-                                    self._collection_pkg_roots[parent] = col[0]
+                                    self._collection_pkg_roots[str(parent)] = col[0]
                                 # always store a list in the cache, matchnodes expects it
                                 self._collection_node_cache1[col[0].fspath] = [col[0]]
 
@@ -623,8 +631,8 @@ class Session(nodes.FSCollector):
                         for x in self._collectfile(pkginit):
                             yield x
                             if isinstance(x, Package):
-                                self._collection_pkg_roots[dirpath] = x
-                if dirpath in self._collection_pkg_roots:
+                                self._collection_pkg_roots[str(dirpath)] = x
+                if str(dirpath) in self._collection_pkg_roots:
                     # Do not collect packages here.
                     continue
 

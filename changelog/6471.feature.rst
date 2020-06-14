@@ -1,0 +1,4 @@
+New command-line flags:
+
+* `--no-header`: disables the initial header, including platform, version, and plugins.
+* `--no-summary`: disables the final test summary, including warnings.

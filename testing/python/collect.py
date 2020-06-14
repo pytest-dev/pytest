@@ -1,4 +1,3 @@
-import os
 import sys
 import textwrap
 from typing import Any
@@ -109,11 +108,10 @@ class TestModule:
         assert result.ret == 2
 
         stdout = result.stdout.str()
-        for name in ("_pytest", os.path.join("py", "_path")):
-            if verbose == 2:
-                assert name in stdout
-            else:
-                assert name not in stdout
+        if verbose == 2:
+            assert "_pytest" in stdout
+        else:
+            assert "_pytest" not in stdout
 
     def test_show_traceback_import_error_unicode(self, testdir):
         """Check test modules collected which raise ImportError with unicode messages

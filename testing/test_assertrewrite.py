@@ -1258,7 +1258,7 @@ class TestEarlyRewriteBailout:
 
         def spy_find_spec(name, path):
             self.find_spec_calls.append(name)
-            return importlib.machinery.PathFinder.find_spec(name, path)  # type: ignore
+            return importlib.machinery.PathFinder.find_spec(name, path)
 
         hook = AssertionRewritingHook(pytestconfig)
         # use default patterns, otherwise we inherit pytest's testing config

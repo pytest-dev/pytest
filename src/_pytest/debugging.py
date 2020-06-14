@@ -2,11 +2,13 @@
 import argparse
 import functools
 import sys
+import types
 from typing import Generator
 from typing import Tuple
 from typing import Union
 
 from _pytest import outcomes
+from _pytest._code import ExceptionInfo
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
@@ -280,9 +282,10 @@ class PdbInvoke:
             out, err = capman.read_global_capture()
             sys.stdout.write(out)
             sys.stdout.write(err)
+        assert call.excinfo is not None
         _enter_pdb(node, call.excinfo, report)
 
-    def pytest_internalerror(self, excrepr, excinfo) -> None:
+    def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)
 
@@ -320,7 +323,9 @@ def maybe_wrap_pytest_function_for_tracing(pyfuncitem):
         wrap_pytest_function_for_tracing(pyfuncitem)
 
 
-def _enter_pdb(node: Node, excinfo, rep: BaseReport) -> BaseReport:
+def _enter_pdb(
+    node: Node, excinfo: ExceptionInfo[BaseException], rep: BaseReport
+) -> BaseReport:
     # XXX we re-use the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
@@ -349,7 +354,7 @@ def _enter_pdb(node: Node, excinfo, rep: BaseReport) -> BaseReport:
     return rep
 
 
-def _postmortem_traceback(excinfo):
+def _postmortem_traceback(excinfo: ExceptionInfo[BaseException]) -> types.TracebackType:
     from doctest import UnexpectedException
 
     if isinstance(excinfo.value, UnexpectedException):
@@ -361,10 +366,11 @@ def _postmortem_traceback(excinfo):
         # Use the underlying exception instead:
         return excinfo.value.excinfo[2]
     else:
+        assert excinfo._excinfo is not None
         return excinfo._excinfo[2]
 
 
-def post_mortem(t) -> None:
+def post_mortem(t: types.TracebackType) -> None:
     p = pytestPDB._init_pdb("post_mortem")
     p.reset()
     p.interaction(None, t)

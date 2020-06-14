@@ -928,8 +928,13 @@ class TerminalRepr:
         raise NotImplementedError()
 
 
+# This class is abstract -- only subclasses are instantiated.
 @attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ExceptionRepr(TerminalRepr):
+    # Provided by in subclasses.
+    reprcrash = None  # type: Optional[ReprFileLocation]
+    reprtraceback = None  # type: ReprTraceback
+
     def __attrs_post_init__(self):
         self.sections = []  # type: List[Tuple[str, str, str]]
 
@@ -1199,7 +1204,10 @@ _PY_DIR = py.path.local(py.__file__).dirpath()
 
 
 def filter_traceback(entry: TracebackEntry) -> bool:
-    """Return True if a TracebackEntry instance should be removed from tracebacks:
+    """Return True if a TracebackEntry instance should be included in tracebacks.
+
+    We hide traceback entries of:
+
     * dynamically generated code (no code to show up for it);
     * internal traceback from pytest or its internal libraries, py and pluggy.
     """

@@ -147,7 +147,8 @@ class TestGeneralUsage:
         else:
             assert loaded == ["myplugin1", "myplugin2", "mycov"]
 
-    def test_assertion_magic(self, testdir):
+    @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
+    def test_assertion_rewrite(self, testdir, import_mode):
         p = testdir.makepyfile(
             """
             def test_this():
@@ -155,7 +156,7 @@ class TestGeneralUsage:
                 assert x
         """
         )
-        result = testdir.runpytest(p)
+        result = testdir.runpytest(p, "--import-mode={}".format(import_mode))
         result.stdout.fnmatch_lines([">       assert x", "E       assert 0"])
         assert result.ret == 1
 
@@ -580,8 +581,9 @@ class TestInvocationVariants:
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_equivalence_pytest_pytest(self):
-        assert pytest.main == py.test.cmdline.main
+    def test_equivalence_pytest_pydottest(self) -> None:
+        # Type ignored because `py.test` is not and will not be typed.
+        assert pytest.main == py.test.cmdline.main  # type: ignore[attr-defined]
 
     def test_invoke_with_invalid_type(self):
         with pytest.raises(
