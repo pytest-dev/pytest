@@ -653,7 +653,7 @@ class PytestPluginManager(PluginManager):
         except ImportError as e:
             raise ImportError(
                 'Error importing plugin "{}": {}'.format(modname, str(e.args[0]))
-            ).with_traceback(e.__traceback__)
+            ).with_traceback(e.__traceback__) from e
 
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured
@@ -1247,12 +1247,12 @@ class Config:
         for ini_config in self._override_ini:
             try:
                 key, user_ini_value = ini_config.split("=", 1)
-            except ValueError:
+            except ValueError as e:
                 raise UsageError(
                     "-o/--override-ini expects option=value style (got: {!r}).".format(
                         ini_config
                     )
-                )
+                ) from e
             else:
                 if key == name:
                     value = user_ini_value
