@@ -409,16 +409,15 @@ class SetupState:
             raise exc
 
     def prepare(self, colitem) -> None:
-        """ setup objects along the collector chain to the test-method
-            and teardown previously setup objects."""
-        needed_collectors = colitem.listchain()
-        self._teardown_towards(needed_collectors)
+        """Setup objects along the collector chain to the test-method."""
 
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
                 exc = col._prepare_exc  # type: ignore[attr-defined] # noqa: F821
                 raise exc
+
+        needed_collectors = colitem.listchain()
         for col in needed_collectors[len(self.stack) :]:
             self.stack.append(col)
             try:
