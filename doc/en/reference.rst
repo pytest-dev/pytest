@@ -15,41 +15,41 @@ Functions
 pytest.approx
 ~~~~~~~~~~~~~
 
-.. autofunction:: _pytest.python_api.approx
+.. autofunction:: pytest.approx
 
 pytest.fail
 ~~~~~~~~~~~
 
 **Tutorial**: :ref:`skipping`
 
-.. autofunction:: _pytest.outcomes.fail
+.. autofunction:: pytest.fail
 
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.skip(msg, [allow_module_level=False])
+.. autofunction:: pytest.skip(msg, [allow_module_level=False])
 
 .. _`pytest.importorskip ref`:
 
 pytest.importorskip
 ~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.importorskip
+.. autofunction:: pytest.importorskip
 
 pytest.xfail
 ~~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.xfail
+.. autofunction:: pytest.xfail
 
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.exit
+.. autofunction:: pytest.exit
 
 pytest.main
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.config.main
+.. autofunction:: pytest.main
 
 pytest.param
 ~~~~~~~~~~~~
