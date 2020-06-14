@@ -502,7 +502,9 @@ class TerminalReporter:
     def pytest_deselected(self, items) -> None:
         self._add_stats("deselected", items)
 
-    def pytest_runtest_logstart(self, nodeid, location) -> None:
+    def pytest_runtest_logstart(
+        self, nodeid: str, location: Tuple[str, Optional[int], str]
+    ) -> None:
         # ensure that the path is printed before the
         # 1st test of a module starts running
         if self.showlongtestinfo:
@@ -569,7 +571,7 @@ class TerminalReporter:
         assert self._session is not None
         return len(self._progress_nodeids_reported) == self._session.testscollected
 
-    def pytest_runtest_logfinish(self, nodeid) -> None:
+    def pytest_runtest_logfinish(self, nodeid: str) -> None:
         assert self._session
         if self.verbosity <= 0 and self._show_progress_info:
             if self._show_progress_info == "count":

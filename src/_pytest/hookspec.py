@@ -396,7 +396,9 @@ def pytest_runtest_protocol(
     Stops at first non-None result, see :ref:`firstresult` """
 
 
-def pytest_runtest_logstart(nodeid, location):
+def pytest_runtest_logstart(
+    nodeid: str, location: Tuple[str, Optional[int], str]
+) -> None:
     """ signal the start of running a single test item.
 
     This hook will be called **before** :func:`pytest_runtest_setup`, :func:`pytest_runtest_call` and
@@ -407,7 +409,9 @@ def pytest_runtest_logstart(nodeid, location):
     """
 
 
-def pytest_runtest_logfinish(nodeid, location):
+def pytest_runtest_logfinish(
+    nodeid: str, location: Tuple[str, Optional[int], str]
+) -> None:
     """ signal the complete finish of running a single test item.
 
     This hook will be called **after** :func:`pytest_runtest_setup`, :func:`pytest_runtest_call` and
