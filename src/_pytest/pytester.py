@@ -452,28 +452,47 @@ class RunResult:
         )
 
     def parseoutcomes(self) -> Dict[str, int]:
-        """Return a dictionary of outcomestring->num from parsing the terminal
+        """Return a dictionary of outcome noun -> count from parsing the terminal
         output that the test process produced.
 
+        The returned nouns will always be in plural form::
+
+            ======= 1 failed, 1 passed, 1 warning, 1 error in 0.13s ====
+
+        Will return ``{"failed": 1, "passed": 1, "warnings": 1, "errors": 1}``
         """
-        for line in reversed(self.outlines):
+        return self.parse_summary_nouns(self.outlines)
+
+    @classmethod
+    def parse_summary_nouns(cls, lines) -> Dict[str, int]:
+        """Extracts the nouns from a pytest terminal summary line.
+
+        It always returns the plural noun for consistency::
+
+            ======= 1 failed, 1 passed, 1 warning, 1 error in 0.13s ====
+
+        Will return ``{"failed": 1, "passed": 1, "warnings": 1, "errors": 1}``
+        """
+        for line in reversed(lines):
             if rex_session_duration.search(line):
                 outcomes = rex_outcome.findall(line)
                 ret = {noun: int(count) for (count, noun) in outcomes}
                 break
         else:
             raise ValueError("Pytest terminal summary report not found")
-        if "errors" in ret:
-            assert "error" not in ret
-            ret["error"] = ret.pop("errors")
-        return ret
+
+        to_plural = {
+            "warning": "warnings",
+            "error": "errors",
+        }
+        return {to_plural.get(k, k): v for k, v in ret.items()}
 
     def assert_outcomes(
         self,
         passed: int = 0,
         skipped: int = 0,
         failed: int = 0,
-        error: int = 0,
+        errors: int = 0,
         xpassed: int = 0,
         xfailed: int = 0,
     ) -> None:
@@ -487,7 +506,7 @@ class RunResult:
             "passed": d.get("passed", 0),
             "skipped": d.get("skipped", 0),
             "failed": d.get("failed", 0),
-            "error": d.get("error", 0),
+            "errors": d.get("errors", 0),
             "xpassed": d.get("xpassed", 0),
             "xfailed": d.get("xfailed", 0),
         }
@@ -495,7 +514,7 @@ class RunResult:
             "passed": passed,
             "skipped": skipped,
             "failed": failed,
-            "error": error,
+            "errors": errors,
             "xpassed": xpassed,
             "xfailed": xfailed,
         }
