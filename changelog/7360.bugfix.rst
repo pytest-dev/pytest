@@ -1,1 +1,2 @@
-Disable caching when evaluating expressions in marks.
+Fix possibly incorrect evaluation of string expressions passed to ``pytest.mark.skipif` and ``pytest.mark.xfail``,
+in rare circumstances where the exact same string is used but refers to different global values.
