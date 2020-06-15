@@ -1106,13 +1106,26 @@ class Config:
         if not required_plugins:
             return
 
+        # Imported lazily to improve start-up time.
+        from packaging.version import Version
+        from packaging.requirements import InvalidRequirement, Requirement
+
         plugin_info = self.pluginmanager.list_plugin_distinfo()
-        plugin_dist_names = [dist.project_name for _, dist in plugin_info]
+        plugin_dist_info = {dist.project_name: dist.version for _, dist in plugin_info}
 
         missing_plugins = []
-        for plugin in required_plugins:
-            if plugin not in plugin_dist_names:
-                missing_plugins.append(plugin)
+        for required_plugin in required_plugins:
+            spec = None
+            try:
+                spec = Requirement(required_plugin)
+            except InvalidRequirement:
+                missing_plugins.append(required_plugin)
+                continue
+
+            if spec.name not in plugin_dist_info:
+                missing_plugins.append(required_plugin)
+            elif Version(plugin_dist_info[spec.name]) not in spec.specifier:
+                missing_plugins.append(required_plugin)
 
         if missing_plugins:
             fail(

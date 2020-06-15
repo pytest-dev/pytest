@@ -250,6 +250,63 @@ class TestParseIni:
             ),
             (
                 """
+          [pytest]
+          required_plugins = pytest-xdist
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist==1.32.0
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist>1.0.0,<2.0.0
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist~=1.32.0 pytest-xdist==1.32.0 pytest-xdist!=0.0.1 pytest-xdist<=99.99.0
+            pytest-xdist>=1.32.0 pytest-xdist<9.9.9 pytest-xdist>1.30.0 pytest-xdist===1.32.0
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist>9.9.9 pytest-xdist==1.32.0 pytest-xdist==8.8.8
+          """,
+                "Missing required plugins: pytest-xdist==8.8.8, pytest-xdist>9.9.9",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist==aegsrgrsgs pytest-xdist==-1 pytest-xdist>2.1.1,>3.0.0
+          """,
+                "Missing required plugins: pytest-xdist==-1, pytest-xdist==aegsrgrsgs, pytest-xdist>2.1.1,>3.0.0",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist== pytest-xdist<=
+          """,
+                "Missing required plugins: pytest-xdist<=, pytest-xdist==",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist= pytest-xdist<
+          """,
+                "Missing required plugins: pytest-xdist<, pytest-xdist=",
+            ),
+            (
+                """
           [some_other_header]
           required_plugins = wont be triggered
           [pytest]

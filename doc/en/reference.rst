@@ -1562,12 +1562,14 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: required_plugins
 
    A space separated list of plugins that must be present for pytest to run.
+   Plugins can be listed with or without version specifiers directly following
+   their name. Whitespace between different version specifiers is not allowed.
    If any one of the plugins is not found, emit an error.
 
    .. code-block:: ini
 
        [pytest]
-       required_plugins = pytest-html pytest-xdist
+       required_plugins = pytest-django>=3.0.0,<4.0.0 pytest-html pytest-xdist>=1.0.0
 
 
 .. confval:: testpaths
