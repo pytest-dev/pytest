@@ -1182,7 +1182,9 @@ class Config:
         except KeyError:
             raise ValueError("unknown configuration value: {!r}".format(name))
         override_value = self._get_override_ini_value(name)
-        if override_value is None:
+        append_value = self._get_append_ini_value(name, type)
+
+        if override_value is None and append_value == "":
             try:
                 value = self.inicfg[name]
             except KeyError:
@@ -1192,7 +1194,10 @@ class Config:
                     return ""
                 return []
         else:
-            value = override_value
+            if override_value is None:
+                value = append_value
+            else:
+                value = override_value + append_value
         # coerce the values based on types
         # note: some coercions are only required if we are reading from .ini files, because
         # the file format doesn't contain type information, but when reading from toml we will
@@ -1207,13 +1212,6 @@ class Config:
         #     a_line_list = ["tests", "acceptance"]
         #   in this case, we already have a list ready to use
         #
-        append_values = self._get_append_ini_value(name, type)
-        value = (
-            value + append_values
-            if isinstance(value, str)
-            else value + append_values.split(" ")
-        )
-
         if type == "pathlist":
             # TODO: This assert is probably not valid in all cases.
             assert self.inifile is not None
