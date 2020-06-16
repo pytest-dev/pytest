@@ -287,7 +287,7 @@ Bug Fixes
 - `#6646 <https://github.com/pytest-dev/pytest/issues/6646>`_: Assertion rewriting hooks are (re)stored for the current item, which fixes them being still used after e.g. pytester's :func:`testdir.runpytest <_pytest.pytester.Testdir.runpytest>` etc.
 
 
-- `#6660 <https://github.com/pytest-dev/pytest/issues/6660>`_: :func:`pytest.exit() <_pytest.outcomes.exit>` is handled when emitted from the :func:`pytest_sessionfinish <_pytest.hookspec.pytest_sessionfinish>` hook.  This includes quitting from a debugger.
+- `#6660 <https://github.com/pytest-dev/pytest/issues/6660>`_: :py:func:`pytest.exit` is handled when emitted from the :func:`pytest_sessionfinish <_pytest.hookspec.pytest_sessionfinish>` hook.  This includes quitting from a debugger.
 
 
 - `#6752 <https://github.com/pytest-dev/pytest/issues/6752>`_: When :py:func:`pytest.raises` is used as a function (as opposed to a context manager),
@@ -399,7 +399,7 @@ Improvements
 - `#6231 <https://github.com/pytest-dev/pytest/issues/6231>`_: Improve check for misspelling of :ref:`pytest.mark.parametrize ref`.
 
 
-- `#6257 <https://github.com/pytest-dev/pytest/issues/6257>`_: Handle :py:func:`_pytest.outcomes.exit` being used via :py:func:`~_pytest.hookspec.pytest_internalerror`, e.g. when quitting pdb from post mortem.
+- `#6257 <https://github.com/pytest-dev/pytest/issues/6257>`_: Handle :py:func:`pytest.exit` being used via :py:func:`~_pytest.hookspec.pytest_internalerror`, e.g. when quitting pdb from post mortem.
 
 
 

@@ -1,6 +1,8 @@
 import sys
 import warnings
 from types import ModuleType
+from typing import Any
+from typing import List
 
 import pytest
 from _pytest.deprecated import PYTEST_COLLECT_MODULE
@@ -20,15 +22,15 @@ COLLECT_FAKEMODULE_ATTRIBUTES = [
 
 
 class FakeCollectModule(ModuleType):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("pytest.collect")
         self.__all__ = list(COLLECT_FAKEMODULE_ATTRIBUTES)
         self.__pytest = pytest
 
-    def __dir__(self):
+    def __dir__(self) -> List[str]:
         return dir(super()) + self.__all__
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if name not in self.__all__:
             raise AttributeError(name)
         warnings.warn(PYTEST_COLLECT_MODULE.format(name=name), stacklevel=2)

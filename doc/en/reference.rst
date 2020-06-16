@@ -15,41 +15,41 @@ Functions
 pytest.approx
 ~~~~~~~~~~~~~
 
-.. autofunction:: _pytest.python_api.approx
+.. autofunction:: pytest.approx
 
 pytest.fail
 ~~~~~~~~~~~
 
 **Tutorial**: :ref:`skipping`
 
-.. autofunction:: _pytest.outcomes.fail
+.. autofunction:: pytest.fail
 
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.skip(msg, [allow_module_level=False])
+.. autofunction:: pytest.skip(msg, [allow_module_level=False])
 
 .. _`pytest.importorskip ref`:
 
 pytest.importorskip
 ~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.importorskip
+.. autofunction:: pytest.importorskip
 
 pytest.xfail
 ~~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.xfail
+.. autofunction:: pytest.xfail
 
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.exit
+.. autofunction:: pytest.exit
 
 pytest.main
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.config.main
+.. autofunction:: pytest.main
 
 pytest.param
 ~~~~~~~~~~~~
@@ -644,31 +644,6 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 
 .. autofunction:: pytest_plugin_registered
 
-Test running hooks
-~~~~~~~~~~~~~~~~~~
-
-All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
-
-.. autofunction:: pytest_runtestloop
-.. autofunction:: pytest_runtest_protocol
-.. autofunction:: pytest_runtest_logstart
-.. autofunction:: pytest_runtest_logfinish
-.. autofunction:: pytest_runtest_setup
-.. autofunction:: pytest_runtest_call
-.. autofunction:: pytest_runtest_teardown
-.. autofunction:: pytest_runtest_makereport
-
-For deeper understanding you may look at the default implementation of
-these hooks in :py:mod:`_pytest.runner` and maybe also
-in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
-and its input/output capturing in order to immediately drop
-into interactive debugging when a test failure occurs.
-
-The :py:mod:`_pytest.terminal` reported specifically uses
-the reporting hook to print information about a test run.
-
-.. autofunction:: pytest_pyfunc_call
-
 Collection hooks
 ~~~~~~~~~~~~~~~~
 
@@ -693,6 +668,28 @@ items, delete or otherwise amend the test items:
 .. autofunction:: pytest_collection_modifyitems
 
 .. autofunction:: pytest_collection_finish
+
+Test running (runtest) hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
+
+.. autofunction:: pytest_runtestloop
+.. autofunction:: pytest_runtest_protocol
+.. autofunction:: pytest_runtest_logstart
+.. autofunction:: pytest_runtest_logfinish
+.. autofunction:: pytest_runtest_setup
+.. autofunction:: pytest_runtest_call
+.. autofunction:: pytest_runtest_teardown
+.. autofunction:: pytest_runtest_makereport
+
+For deeper understanding you may look at the default implementation of
+these hooks in :py:mod:`_pytest.runner` and maybe also
+in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
+and its input/output capturing in order to immediately drop
+into interactive debugging when a test failure occurs.
+
+.. autofunction:: pytest_pyfunc_call
 
 Reporting hooks
 ~~~~~~~~~~~~~~~
@@ -761,6 +758,14 @@ Collector
 .. autoclass:: _pytest.nodes.Collector()
     :members:
     :show-inheritance:
+
+CollectReport
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.reports.CollectReport()
+    :members:
+    :show-inheritance:
+    :inherited-members:
 
 Config
 ~~~~~~
@@ -881,7 +886,7 @@ Session
 TestReport
 ~~~~~~~~~~
 
-.. autoclass:: _pytest.runner.TestReport()
+.. autoclass:: _pytest.reports.TestReport()
     :members:
     :show-inheritance:
     :inherited-members:
