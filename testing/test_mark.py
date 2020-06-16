@@ -706,6 +706,36 @@ class TestFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=1)
 
+    def test_reevaluate_dynamic_expr(self, testdir):
+        """#7360"""
+        py_file1 = testdir.makepyfile(
+            test_reevaluate_dynamic_expr1="""
+            import pytest
+
+            skip = True
+
+            @pytest.mark.skipif("skip")
+            def test_should_skip():
+                assert True
+        """
+        )
+        py_file2 = testdir.makepyfile(
+            test_reevaluate_dynamic_expr2="""
+            import pytest
+
+            skip = False
+
+            @pytest.mark.skipif("skip")
+            def test_should_not_skip():
+                assert True
+        """
+        )
+
+        file_name1 = os.path.basename(py_file1.strpath)
+        file_name2 = os.path.basename(py_file2.strpath)
+        reprec = testdir.inline_run(file_name1, file_name2)
+        reprec.assertoutcome(passed=1, skipped=1)
+
 
 class TestKeywordSelection:
     def test_select_simple(self, testdir):
