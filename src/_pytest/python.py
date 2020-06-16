@@ -1590,9 +1590,8 @@ class Function(PyobjMixin, nodes.Item):
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override] # noqa: F821
-        self, excinfo: ExceptionInfo[BaseException], outerr: None = None
+        self, excinfo: ExceptionInfo[BaseException],
     ) -> Union[str, TerminalRepr]:
-        assert outerr is None, "XXX outerr usage is deprecated"
         style = self.config.getoption("tbstyle", "auto")
         if style == "auto":
             style = "long"
