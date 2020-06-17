@@ -1199,7 +1199,7 @@ class TestRootdir:
 
 
 class TestAppendIniArgs:
-    def test_override_ini_usage_error_bad_style(self, testdir):
+    def test_append_ini_usage_error_bad_style(self, testdir):
         testdir.makeini(
             """
             [pytest]
@@ -1214,42 +1214,69 @@ class TestAppendIniArgs:
         )
 
     @pytest.mark.parametrize(
-        "ini_option_name, append_value",
+        "ini_option_name, append_value, match_value",
         [
-            ("my_paths", "bar/baz.txt"),
-            ("my_args", "foo bar"),
-            ("my_linelist", "third line"),
+            (
+                "my_paths",
+                "bar/baz.txt",
+                ["appended_option:bar.txt", "appended_option:baz.txt"],
+            ),
+            ("my_args", "bar baz", "appended_option:['foo', 'bar', 'baz']"),
+            (
+                "my_linelist",
+                "third line",
+                "appended_option:['first line', 'second line', 'third line']",
+            ),
+            ("my_args", "", "appended_option:['foo']"),
         ],
     )
-    # GLEB
-    def test_override_ini_usage_valid_types(
-        self, testdir, ini_option_name, append_value
+    def test_append_ini_usage_valid_types(
+        self, testdir, ini_option_name, append_value, match_value
     ):
         testdir.makeconftest(
             """
             def pytest_addoption(parser):
                 addini = parser.addini
                 addini("my_paths", "", default="/foo/bar.txt", type="pathlist")
-                addini("my_args", "", default=a, type="args")
+                addini("my_args", "", default="foo", type="args")
                 addini("my_linelist", "", default="a line", type="linelist")"""
         )
         testdir.makeini(
             """
             [pytest]
             my_paths=foo/bar.txt
-            my_args=a
+            my_args=foo
             my_linelist=first line
               second line
         """
         )
-        # TODO: NEED TO ACTUALLY TEST
-        testdir.runpytest("--append-ini", "{}={}".format(ini_option_name, append_value))
+        testdir.makepyfile(
+            """
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("{opt_name}")
+                if '{opt_name}' == 'my_paths':
+                    for file_path in ini_val:
+                        print('\\nappended_option:%s' % file_path.basename)
+                else:
+                    print('\\nappended_option:%s\\n' % ini_val)""".format(
+                opt_name=ini_option_name
+            )
+        )
+
+        result = testdir.runpytest(
+            "--append-ini", "{}={}".format(ini_option_name, append_value), "-s"
+        )
+        result.stdout.fnmatch_lines(match_value)
 
     @pytest.mark.parametrize(
-        "ini_option_name, append_value", [("my_bool", "False"), ("my_none", "")]
+        "ini_option_name, append_value, match_value",
+        [
+            ("my_bool", "False", "appended_option:True"),
+            ("my_none", None, "appended_option:None"),
+        ],
     )
-    def test_override_ini_usage_invalid_types(
-        self, testdir, ini_option_name, append_value
+    def test_append_ini_usage_invalid_types(
+        self, testdir, ini_option_name, append_value, match_value
     ):
         testdir.makeconftest(
             """
@@ -1261,20 +1288,70 @@ class TestAppendIniArgs:
         testdir.makeini(
             """
             [pytest]
-            my_bool=foo/bar.txt
-            my_none=a
+            my_bool=True
+            my_none=None
         """
         )
-        # TODO: NEED TO ACTUALLY TEST
-        testdir.runpytest("--append-ini", "{}={}".format(ini_option_name, append_value))
+        testdir.makepyfile(
+            """
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("{opt_name}")
+                #raise ValueError('\\nappended_option:%s\\n' % ini_val)
+                print('\\nappended_option:%s\\n' % ini_val)""".format(
+                opt_name=ini_option_name
+            )
+        )
 
-    def test_override_ini_usage_no_such_key(self, testdir):
-        # TODO: Test what happens when no INI key is provided
-        pass
+        result = testdir.runpytest(
+            "--append-ini", "{}={}".format(ini_option_name, append_value), "-s"
+        )
+        result.stdout.fnmatch_lines(match_value)
 
-    def test_override_ini_usage_multiple_values(self, tesdir):
-        # TODO: Test what happens when multiple values are provided for the same INI key
-        pass
+        # TODO: Add strict config check too and also check to make sure warning is raised when no strict config check
+
+    def test_append_ini_usage_no_such_key(self, testdir):
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                addini = parser.addini
+                addini("my_args", "", default="foo", type="args")"""
+        )
+        testdir.makepyfile(
+            """
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("my_args")
+                print('\\nappended_option:%s\\n' % ini_val)"""
+        )
+
+        result = testdir.runpytest("--append-ini", "{}={}".format("my_args", "z"), "-s")
+        result.stdout.fnmatch_lines("appended_option:None")
+
+        # TODO: Add strict config check too and also check to make sure warning is raised when no strict config check
+
+    def test_append_ini_usage_with_override_ini_usage(self, testdir):
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                addini = parser.addini
+                addini("my_args", "", default="foo", type="args")"""
+        )
+        testdir.makeini(
+            """
+            [pytest]
+            my_args=foo
+        """
+        )
+        testdir.makepyfile(
+            """
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("my_args")
+                print('\\nappended_option:%s\\n' % ini_val)""".format()
+        )
+
+        result = testdir.runpytest(
+            "--append-ini", "my_args=z", "--override-ini", "my_args=y", "-s"
+        )
+        result.stdout.fnmatch_lines("appended_option:['y', 'z']")
 
 
 class TestOverrideIniArgs:

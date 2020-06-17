@@ -1182,22 +1182,36 @@ class Config:
         except KeyError:
             raise ValueError("unknown configuration value: {!r}".format(name))
         override_value = self._get_override_ini_value(name)
-        append_value = self._get_append_ini_value(name, type)
+        append_values = self._get_append_ini_values(name, type)
 
-        if override_value is None and append_value == "":
-            try:
-                value = self.inicfg[name]
-            except KeyError:
+        value = None
+        try:
+            value = self.inicfg[name]
+        except KeyError:
+            pass
+        if override_value is None and not append_values:
+            if value is None:
                 if default is not None:
                     return default
                 if type is None:
                     return ""
                 return []
         else:
-            if override_value is None:
-                value = append_value
-            else:
-                value = override_value + append_value
+            if override_value:
+                value = override_value
+            if append_values:
+                if not value:
+                    self._warn_or_fail_if_strict(
+                        "append_ini option invalid for argument '{}' since it has no value".format(
+                            name
+                        )
+                    )
+                else:
+                    value = (
+                        value + append_values
+                        if isinstance(value, list)
+                        else "{} {}".format(value, " ".join(append_values))
+                    )
         # coerce the values based on types
         # note: some coercions are only required if we are reading from .ini files, because
         # the file format doesn't contain type information, but when reading from toml we will
@@ -1216,6 +1230,8 @@ class Config:
             # TODO: This assert is probably not valid in all cases.
             assert self.inifile is not None
             dp = py.path.local(self.inifile).dirpath()
+            if not value:  # we need this because otherwise mypy raises an error
+                value = []
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp.join(x, abs=True) for x in input_values]
         elif type == "args":
@@ -1247,8 +1263,8 @@ class Config:
             values.append(relroot)
         return values
 
-    def _get_append_ini_value(self, name: str, ini_type) -> str:
-        value = ""
+    def _get_append_ini_values(self, name: str, ini_type) -> List[str]:
+        value = []
         # append_ini is a list of "ini=value" options
         # append all values if multiple values are set for same ini-name,
         # e.g. -a foo=bar1 -a foo=bar2 will append 'bar1 bar2' to foo
@@ -1263,8 +1279,10 @@ class Config:
                 )
             else:
                 if key == name:
-                    if ini_type in ["pathlist", "args", "linelist"]:
-                        value = "{} {}".format(value, append_ini_value)
+                    if ini_type in ["pathlist", "args"]:
+                        value.append(append_ini_value)
+                    elif ini_type == "linelist":
+                        value.append("\n{}".format(append_ini_value))
                     else:
                         self._warn_or_fail_if_strict(
                             "append_ini option invalid for argument '{}' with type '{}'".format(
