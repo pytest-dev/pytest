@@ -208,21 +208,39 @@ class TestParseIni:
                 [],
                 "",
             ),
+            (
+                """
+          [pytest]
+          conftest_ini_key = 1
+          """,
+                [],
+                [],
+                "",
+            ),
         ],
     )
     def test_invalid_ini_keys(
         self, testdir, ini_file_text, invalid_keys, stderr_output, exception_text
     ):
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("conftest_ini_key", "")
+        """
+        )
         testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
+
         config = testdir.parseconfig()
         assert sorted(config._get_unknown_ini_keys()) == sorted(invalid_keys)
 
         result = testdir.runpytest()
         result.stderr.fnmatch_lines(stderr_output)
 
-        if stderr_output:
+        if exception_text:
             with pytest.raises(pytest.fail.Exception, match=exception_text):
                 testdir.runpytest("--strict-config")
+        else:
+            testdir.runpytest("--strict-config")
 
     @pytest.mark.parametrize(
         "ini_file_text, exception_text",
