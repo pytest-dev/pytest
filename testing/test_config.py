@@ -208,21 +208,39 @@ class TestParseIni:
                 [],
                 "",
             ),
+            (
+                """
+          [pytest]
+          conftest_ini_key = 1
+          """,
+                [],
+                [],
+                "",
+            ),
         ],
     )
     def test_invalid_ini_keys(
         self, testdir, ini_file_text, invalid_keys, stderr_output, exception_text
     ):
+        testdir.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("conftest_ini_key", "")
+        """
+        )
         testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
+
         config = testdir.parseconfig()
         assert sorted(config._get_unknown_ini_keys()) == sorted(invalid_keys)
 
         result = testdir.runpytest()
         result.stderr.fnmatch_lines(stderr_output)
 
-        if stderr_output:
+        if exception_text:
             with pytest.raises(pytest.fail.Exception, match=exception_text):
                 testdir.runpytest("--strict-config")
+        else:
+            testdir.runpytest("--strict-config")
 
     @pytest.mark.parametrize(
         "ini_file_text, exception_text",
@@ -247,6 +265,63 @@ class TestParseIni:
           required_plugins = a q j b c z
           """,
                 "Missing required plugins: a, b, c, j, q, z",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist==1.32.0
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist>1.0.0,<2.0.0
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist~=1.32.0 pytest-xdist==1.32.0 pytest-xdist!=0.0.1 pytest-xdist<=99.99.0
+            pytest-xdist>=1.32.0 pytest-xdist<9.9.9 pytest-xdist>1.30.0 pytest-xdist===1.32.0
+          """,
+                "",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist>9.9.9 pytest-xdist==1.32.0 pytest-xdist==8.8.8
+          """,
+                "Missing required plugins: pytest-xdist==8.8.8, pytest-xdist>9.9.9",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist==aegsrgrsgs pytest-xdist==-1 pytest-xdist>2.1.1,>3.0.0
+          """,
+                "Missing required plugins: pytest-xdist==-1, pytest-xdist==aegsrgrsgs, pytest-xdist>2.1.1,>3.0.0",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist== pytest-xdist<=
+          """,
+                "Missing required plugins: pytest-xdist<=, pytest-xdist==",
+            ),
+            (
+                """
+          [pytest]
+          required_plugins = pytest-xdist= pytest-xdist<
+          """,
+                "Missing required plugins: pytest-xdist<, pytest-xdist=",
             ),
             (
                 """

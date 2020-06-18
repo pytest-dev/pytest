@@ -10,25 +10,14 @@ from typing import Optional
 from ..outcomes import fail
 from ..outcomes import TEST_OUTCOME
 from .structures import Mark
-from _pytest.config import Config
 from _pytest.nodes import Item
-from _pytest.store import StoreKey
 
 
-evalcache_key = StoreKey[Dict[str, Any]]()
+def compiled_eval(expr: str, d: Dict[str, object]) -> Any:
+    import _pytest._code
 
-
-def cached_eval(config: Config, expr: str, d: Dict[str, object]) -> Any:
-    default = {}  # type: Dict[str, object]
-    evalcache = config._store.setdefault(evalcache_key, default)
-    try:
-        return evalcache[expr]
-    except KeyError:
-        import _pytest._code
-
-        exprcode = _pytest._code.compile(expr, mode="eval")
-        evalcache[expr] = x = eval(exprcode, d)
-        return x
+    exprcode = _pytest._code.compile(expr, mode="eval")
+    return eval(exprcode, d)
 
 
 class MarkEvaluator:
@@ -98,7 +87,7 @@ class MarkEvaluator:
                     self.expr = expr
                     if isinstance(expr, str):
                         d = self._getglobals()
-                        result = cached_eval(self.item.config, expr, d)
+                        result = compiled_eval(expr, d)
                     else:
                         if "reason" not in mark.kwargs:
                             # XXX better be checked at collection time

@@ -653,12 +653,12 @@ class LoggingPlugin:
                 yield  # run all the tests
 
     @pytest.hookimpl
-    def pytest_runtest_logstart(self):
+    def pytest_runtest_logstart(self) -> None:
         self.log_cli_handler.reset()
         self.log_cli_handler.set_when("start")
 
     @pytest.hookimpl
-    def pytest_runtest_logreport(self):
+    def pytest_runtest_logreport(self) -> None:
         self.log_cli_handler.set_when("logreport")
 
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:

@@ -335,6 +335,8 @@ class TestReport(BaseReport):
 
 
 class CollectReport(BaseReport):
+    """Collection report object."""
+
     when = "collect"
 
     def __init__(
@@ -346,11 +348,24 @@ class CollectReport(BaseReport):
         sections: Iterable[Tuple[str, str]] = (),
         **extra
     ) -> None:
+        #: normalized collection node id
         self.nodeid = nodeid
+
+        #: test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
+
+        #: None or a failure representation.
         self.longrepr = longrepr
+
+        #: The collected items and collection nodes.
         self.result = result or []
+
+        #: list of pairs ``(str, str)`` of extra information which needs to
+        #: marshallable. Used by pytest to add captured text
+        #: from ``stdout`` and ``stderr``, but may be used by other plugins
+        #: to add arbitrary information to reports.
         self.sections = list(sections)
+
         self.__dict__.update(extra)
 
     @property

@@ -1,0 +1,1 @@
+py>=1.8.2 is now required.

@@ -653,7 +653,7 @@ class PytestPluginManager(PluginManager):
         except ImportError as e:
             raise ImportError(
                 'Error importing plugin "{}": {}'.format(modname, str(e.args[0]))
-            ).with_traceback(e.__traceback__)
+            ).with_traceback(e.__traceback__) from e
 
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured
@@ -1057,7 +1057,6 @@ class Config:
             args, namespace=copy.copy(self.option)
         )
         self._validate_plugins()
-        self._validate_keys()
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1080,6 +1079,7 @@ class Config:
                 )
             else:
                 raise
+        self._validate_keys()
 
     def _checkversion(self):
         import pytest
@@ -1109,13 +1109,26 @@ class Config:
         if not required_plugins:
             return
 
+        # Imported lazily to improve start-up time.
+        from packaging.version import Version
+        from packaging.requirements import InvalidRequirement, Requirement
+
         plugin_info = self.pluginmanager.list_plugin_distinfo()
-        plugin_dist_names = [dist.project_name for _, dist in plugin_info]
+        plugin_dist_info = {dist.project_name: dist.version for _, dist in plugin_info}
 
         missing_plugins = []
-        for plugin in required_plugins:
-            if plugin not in plugin_dist_names:
-                missing_plugins.append(plugin)
+        for required_plugin in required_plugins:
+            spec = None
+            try:
+                spec = Requirement(required_plugin)
+            except InvalidRequirement:
+                missing_plugins.append(required_plugin)
+                continue
+
+            if spec.name not in plugin_dist_info:
+                missing_plugins.append(required_plugin)
+            elif Version(plugin_dist_info[spec.name]) not in spec.specifier:
+                missing_plugins.append(required_plugin)
 
         if missing_plugins:
             fail(
@@ -1299,12 +1312,12 @@ class Config:
         for ini_config in self._override_ini:
             try:
                 key, user_ini_value = ini_config.split("=", 1)
-            except ValueError:
+            except ValueError as e:
                 raise UsageError(
                     "-o/--override-ini expects option=value style (got: {!r}).".format(
                         ini_config
                     )
-                )
+                ) from e
             else:
                 if key == name:
                     value = user_ini_value
