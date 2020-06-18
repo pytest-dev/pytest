@@ -236,7 +236,7 @@ class TestParseIni:
         result = testdir.runpytest()
         result.stderr.fnmatch_lines(stderr_output)
 
-        if stderr_output:
+        if exception_text:
             with pytest.raises(pytest.fail.Exception, match=exception_text):
                 testdir.runpytest("--strict-config")
         else:
