@@ -1137,9 +1137,15 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        if self.known_args_namespace.strict_config:
+        # we check for 'known_args_namespace' since at certain steps in the loading process
+        # this value is not yet present on self ( e.g.: addopts )
+        if hasattr(self, "known_args_namespace"):
+            if self.known_args_namespace.strict_config:
+                fail(message, pytrace=False)
+            else:
+                sys.stderr.write("WARNING: {}".format(message))
+        else:
             fail(message, pytrace=False)
-        sys.stderr.write("WARNING: {}".format(message))
 
     def _get_unknown_ini_keys(self) -> List[str]:
         parser_inicfg = self._parser._inidict
@@ -1197,11 +1203,7 @@ class Config:
         override_value = self._get_override_ini_value(name)
         append_values = self._get_append_ini_values(name, type)
 
-        value = None
-        try:
-            value = self.inicfg[name]
-        except KeyError:
-            pass
+        value = self.inicfg.get(name, None)
         if override_value is None and not append_values:
             if value is None:
                 if default is not None:
@@ -1214,10 +1216,11 @@ class Config:
                 value = override_value
             if append_values:
                 if not value:
-                    self._warn_or_fail_if_strict(
+                    fail(
                         "append_ini option invalid for argument '{}' since it has no value".format(
                             name
-                        )
+                        ),
+                        pytrace=False,
                     )
                 else:
                     value = (

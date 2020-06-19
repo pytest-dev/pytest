@@ -1430,13 +1430,6 @@ class TestAppendIniArgs:
         )
 
         result = testdir.runpytest("--append-ini", "{}={}".format("my_args", "z"), "-s")
-        result.stdout.fnmatch_lines("appended_option:None")
-        result.stderr.fnmatch_lines("WARNING: {}".format(error_text))
-
-        # TODO: Add strict config check too and also check to make sure warning is raised when no strict config check
-        result = testdir.runpytest(
-            "--append-ini", "{}={}".format("my_args", "z"), "-s", "--strict-config"
-        )
         result.stdout.fnmatch_lines(
             [
                 "=================================== FAILURES ===================================",
