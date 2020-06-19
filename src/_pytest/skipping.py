@@ -10,7 +10,6 @@ from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
-from _pytest.python import Function
 from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
 from _pytest.store import StoreKey
@@ -103,12 +102,12 @@ def pytest_runtest_setup(item: Item) -> None:
 
 
 @hookimpl(hookwrapper=True)
-def pytest_pyfunc_call(pyfuncitem: Function):
-    check_xfail_no_run(pyfuncitem)
+def pytest_runtest_call(item: Item):
+    check_xfail_no_run(item)
     outcome = yield
     passed = outcome.excinfo is None
     if passed:
-        check_strict_xfail(pyfuncitem)
+        check_strict_xfail(item)
 
 
 def check_xfail_no_run(item: Item) -> None:
@@ -120,14 +119,14 @@ def check_xfail_no_run(item: Item) -> None:
                 xfail("[NOTRUN] " + evalxfail.getexplanation())
 
 
-def check_strict_xfail(pyfuncitem: Function) -> None:
+def check_strict_xfail(item: Item) -> None:
     """check xfail(strict=True) for the given PASSING test"""
-    evalxfail = pyfuncitem._store[evalxfail_key]
+    evalxfail = item._store[evalxfail_key]
     if evalxfail.istrue():
-        strict_default = pyfuncitem.config.getini("xfail_strict")
+        strict_default = item.config.getini("xfail_strict")
         is_strict_xfail = evalxfail.get("strict", strict_default)
         if is_strict_xfail:
-            del pyfuncitem._store[evalxfail_key]
+            del item._store[evalxfail_key]
             explanation = evalxfail.getexplanation()
             fail("[XPASS(strict)] " + explanation, pytrace=False)
 
