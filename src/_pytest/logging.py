@@ -487,13 +487,13 @@ def get_log_level_for_setting(config: Config, *setting_names: str) -> Optional[i
         log_level = log_level.upper()
     try:
         return int(getattr(logging, log_level, log_level))
-    except ValueError:
+    except ValueError as e:
         # Python logging does not recognise this as a logging level
         raise pytest.UsageError(
             "'{}' is not recognized as a logging level name for "
             "'{}'. Please consider passing the "
             "logging level num instead.".format(log_level, setting_name)
-        )
+        ) from e
 
 
 # run after terminalreporter/capturemanager are configured

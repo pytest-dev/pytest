@@ -26,7 +26,7 @@ def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
     try:
         return iniconfig.IniConfig(path)
     except iniconfig.ParseError as exc:
-        raise UsageError(str(exc))
+        raise UsageError(str(exc)) from exc
 
 
 def load_config_dict_from_file(

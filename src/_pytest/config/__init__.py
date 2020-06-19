@@ -1189,8 +1189,8 @@ class Config:
     def _getini(self, name: str) -> Any:
         try:
             description, type, default = self._parser._inidict[name]
-        except KeyError:
-            raise ValueError("unknown configuration value: {!r}".format(name))
+        except KeyError as e:
+            raise ValueError("unknown configuration value: {!r}".format(name)) from e
         override_value = self._get_override_ini_value(name)
         if override_value is None:
             try:
@@ -1286,14 +1286,14 @@ class Config:
             if val is None and skip:
                 raise AttributeError(name)
             return val
-        except AttributeError:
+        except AttributeError as e:
             if default is not notset:
                 return default
             if skip:
                 import pytest
 
                 pytest.skip("no {!r} option found".format(name))
-            raise ValueError("no option named {!r}".format(name))
+            raise ValueError("no option named {!r}".format(name)) from e
 
     def getvalue(self, name, path=None):
         """ (deprecated, use getoption()) """
