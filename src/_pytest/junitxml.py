@@ -236,10 +236,16 @@ class _NodeReporter:
         self._add_simple(Junit.skipped, "collection skipped", report.longrepr)
 
     def append_error(self, report: TestReport) -> None:
-        if report.when == "teardown":
-            msg = "test teardown failure"
+        assert report.longrepr is not None
+        if getattr(report.longrepr, "reprcrash", None) is not None:
+            reason = report.longrepr.reprcrash.message
         else:
-            msg = "test setup failure"
+            reason = str(report.longrepr)
+
+        if report.when == "teardown":
+            msg = 'failed on teardown with "{}"'.format(reason)
+        else:
+            msg = 'failed on setup with "{}"'.format(reason)
         self._add_simple(Junit.error, msg, report.longrepr)
 
     def append_skipped(self, report: TestReport) -> None:

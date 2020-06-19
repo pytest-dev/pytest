@@ -1,0 +1,1 @@
+Add details to error message for junit.
