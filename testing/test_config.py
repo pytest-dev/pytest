@@ -1343,15 +1343,32 @@ class TestAppendIniArgs:
         )
         result.stdout.fnmatch_lines(match_value)
 
+        result = testdir.runpytest(
+            "--append-ini",
+            "{}={}".format(ini_option_name, append_value),
+            "-s",
+            "--strict-config",
+        )
+
     @pytest.mark.parametrize(
-        "ini_option_name, append_value, match_value",
+        "ini_option_name, append_value, stdout_match, stderr_match",
         [
-            ("my_bool", "False", "appended_option:True"),
-            ("my_none", None, "appended_option:None"),
+            (
+                "my_bool",
+                "False",
+                "appended_option:True",
+                "append_ini option invalid for argument 'my_bool' with type 'bool'",
+            ),
+            (
+                "my_none",
+                "None",
+                "appended_option:None",
+                "append_ini option invalid for argument 'my_none' with type 'None'",
+            ),
         ],
     )
     def test_append_ini_usage_invalid_types(
-        self, testdir, ini_option_name, append_value, match_value
+        self, testdir, ini_option_name, append_value, stdout_match, stderr_match
     ):
         testdir.makeconftest(
             """
@@ -1371,7 +1388,6 @@ class TestAppendIniArgs:
             """
             def test_pass(pytestconfig):
                 ini_val = pytestconfig.getini("{opt_name}")
-                #raise ValueError('\\nappended_option:%s\\n' % ini_val)
                 print('\\nappended_option:%s\\n' % ini_val)""".format(
                 opt_name=ini_option_name
             )
@@ -1380,9 +1396,20 @@ class TestAppendIniArgs:
         result = testdir.runpytest(
             "--append-ini", "{}={}".format(ini_option_name, append_value), "-s"
         )
-        result.stdout.fnmatch_lines(match_value)
+        result.stdout.fnmatch_lines(stdout_match)
+        result.stderr.fnmatch_lines("WARNING: {}".format(stderr_match))
 
-        # TODO: Add strict config check too and also check to make sure warning is raised when no strict config check
+        result = testdir.runpytest(
+            "--append-ini",
+            "{}={}".format(ini_option_name, append_value),
+            "-s",
+            "--strict-config",
+        )
+        failures_text = [
+            "=================================== FAILURES ===================================",
+            stderr_match,
+        ]
+        result.stdout.fnmatch_lines(failures_text)
 
     def test_append_ini_usage_no_such_key(self, testdir):
         testdir.makeconftest(
@@ -1398,10 +1425,24 @@ class TestAppendIniArgs:
                 print('\\nappended_option:%s\\n' % ini_val)"""
         )
 
+        error_text = (
+            "append_ini option invalid for argument 'my_args' since it has no value"
+        )
+
         result = testdir.runpytest("--append-ini", "{}={}".format("my_args", "z"), "-s")
         result.stdout.fnmatch_lines("appended_option:None")
+        result.stderr.fnmatch_lines("WARNING: {}".format(error_text))
 
         # TODO: Add strict config check too and also check to make sure warning is raised when no strict config check
+        result = testdir.runpytest(
+            "--append-ini", "{}={}".format("my_args", "z"), "-s", "--strict-config"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "=================================== FAILURES ===================================",
+                error_text,
+            ]
+        )
 
     def test_append_ini_usage_with_override_ini_usage(self, testdir):
         testdir.makeconftest(

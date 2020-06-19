@@ -96,7 +96,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--append-ini",
         dest="append_ini",
         action="append",
-        help='append to ini option with "option=value" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.',
+        help='append to ini option with "option=value" style, e.g. `-a xfail_strict=True -a cache_dir=cache`.',
     )
 
 
