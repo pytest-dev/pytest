@@ -1400,6 +1400,13 @@ def test_warn_missing(testdir):
     result = testdir.run(sys.executable, "-OO", "-m", "pytest")
     result.stdout.fnmatch_lines(warning_output)
 
+    warning_output = [
+        "=*= warnings summary =*=",
+        "*PytestConfigWarning: ASSERTIONS ARE NOT EXECUTED and FAILING TESTS WILL PASS.  Are you using python -O?",
+    ]
+    result = testdir.run(sys.executable, "-OO", "-m", "pytest", "--assert=plain")
+    result.stdout.fnmatch_lines(warning_output)
+
 
 def test_recursion_source_decode(testdir):
     testdir.makepyfile(
