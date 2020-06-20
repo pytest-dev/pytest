@@ -1,0 +1,1 @@
+New ``--append-ini`` flag allows the user to append an ``args``, ``linelist``, or ``pathlist`` type ini option with ``option=value`` style
