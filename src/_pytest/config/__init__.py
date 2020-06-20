@@ -992,7 +992,7 @@ class Config:
                 mode = "plain"
             else:
                 self._mark_plugins_for_rewrite(hook)
-        _warn_about_missing_assertion(mode)
+        self._warn_about_missing_assertion(mode)
 
     def _mark_plugins_for_rewrite(self, hook) -> None:
         """
@@ -1136,7 +1136,12 @@ class Config:
     def _warn_or_fail_if_strict(self, message: str) -> None:
         if self.known_args_namespace.strict_config:
             fail(message, pytrace=False)
-        sys.stderr.write("WARNING: {}".format(message))
+
+        from _pytest.warnings import _issue_warning_captured
+
+        _issue_warning_captured(
+            PytestConfigWarning(message), self.hook, stacklevel=2,
+        )
 
     def _get_unknown_ini_keys(self) -> List[str]:
         parser_inicfg = self._parser._inidict
@@ -1303,6 +1308,27 @@ class Config:
         """ (deprecated, use getoption(skip=True)) """
         return self.getoption(name, skip=True)
 
+    def _warn_about_missing_assertion(self, mode: str) -> None:
+        if not _assertion_supported():
+            from _pytest.warnings import _issue_warning_captured
+
+            warning_text = (
+                "assertions not in test modules or"
+                " plugins will be ignored"
+                " because assert statements are not executed "
+                "by the underlying Python interpreter "
+                "(are you using python -O?)\n"
+            )
+            if mode == "plain":
+                warning_text = (
+                    "ASSERTIONS ARE NOT EXECUTED"
+                    " and FAILING TESTS WILL PASS.  Are you"
+                    " using python -O?"
+                )
+            _issue_warning_captured(
+                PytestConfigWarning(warning_text), self.hook, stacklevel=2,
+            )
+
 
 def _assertion_supported():
     try:
@@ -1311,24 +1337,6 @@ def _assertion_supported():
         return True
     else:
         return False
-
-
-def _warn_about_missing_assertion(mode):
-    if not _assertion_supported():
-        if mode == "plain":
-            sys.stderr.write(
-                "WARNING: ASSERTIONS ARE NOT EXECUTED"
-                " and FAILING TESTS WILL PASS.  Are you"
-                " using python -O?"
-            )
-        else:
-            sys.stderr.write(
-                "WARNING: assertions not in test modules or"
-                " plugins will be ignored"
-                " because assert statements are not executed "
-                "by the underlying Python interpreter "
-                "(are you using python -O?)\n"
-            )
 
 
 def create_terminal_writer(config: Config, *args, **kwargs) -> TerminalWriter:

@@ -163,7 +163,7 @@ class TestParseIni:
         assert result.ret == 0
 
     @pytest.mark.parametrize(
-        "ini_file_text, invalid_keys, stderr_output, exception_text",
+        "ini_file_text, invalid_keys, warning_output, exception_text",
         [
             (
                 """
@@ -173,8 +173,9 @@ class TestParseIni:
           """,
                 ["unknown_ini", "another_unknown_ini"],
                 [
-                    "WARNING: Unknown config ini key: another_unknown_ini",
-                    "WARNING: Unknown config ini key: unknown_ini",
+                    "=*= warnings summary =*=",
+                    "*PytestConfigWarning:*Unknown config ini key: another_unknown_ini",
+                    "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
                 ],
                 "Unknown config ini key: another_unknown_ini",
             ),
@@ -185,7 +186,10 @@ class TestParseIni:
           minversion = 5.0.0
           """,
                 ["unknown_ini"],
-                ["WARNING: Unknown config ini key: unknown_ini"],
+                [
+                    "=*= warnings summary =*=",
+                    "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
+                ],
                 "Unknown config ini key: unknown_ini",
             ),
             (
@@ -220,7 +224,7 @@ class TestParseIni:
         ],
     )
     def test_invalid_ini_keys(
-        self, testdir, ini_file_text, invalid_keys, stderr_output, exception_text
+        self, testdir, ini_file_text, invalid_keys, warning_output, exception_text
     ):
         testdir.makeconftest(
             """
@@ -234,7 +238,7 @@ class TestParseIni:
         assert sorted(config._get_unknown_ini_keys()) == sorted(invalid_keys)
 
         result = testdir.runpytest()
-        result.stderr.fnmatch_lines(stderr_output)
+        result.stdout.fnmatch_lines(warning_output)
 
         if exception_text:
             with pytest.raises(pytest.fail.Exception, match=exception_text):

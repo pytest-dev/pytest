@@ -1385,11 +1385,21 @@ def test_exception_handling_no_traceback(testdir):
 
 @pytest.mark.skipif("'__pypy__' in sys.builtin_module_names")
 def test_warn_missing(testdir):
+
     testdir.makepyfile("")
+
+    warning_output = [
+        "warning :*PytestConfigWarning:*assert statements are not executed*"
+    ]
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
-    result.stderr.fnmatch_lines(["*WARNING*assert statements are not executed*"])
+    result.stdout.fnmatch_lines(warning_output)
+
+    warning_output = [
+        "=*= warnings summary =*=",
+        "*PytestConfigWarning:*assert statements are not executed*",
+    ]
     result = testdir.run(sys.executable, "-OO", "-m", "pytest")
-    result.stderr.fnmatch_lines(["*WARNING*assert statements are not executed*"])
+    result.stdout.fnmatch_lines(warning_output)
 
 
 def test_recursion_source_decode(testdir):
