@@ -1778,5 +1778,7 @@ def test_conftest_import_error_repr(tmpdir):
     ):
         try:
             raise RuntimeError("some error")
-        except Exception as e:
-            raise ConftestImportFailure(path, sys.exc_info()) from e
+        except Exception as exc:
+            assert exc.__traceback__ is not None
+            exc_info = (type(exc), exc, exc.__traceback__)
+            raise ConftestImportFailure(path, exc_info) from exc
