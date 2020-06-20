@@ -1406,7 +1406,7 @@ class TestAppendIniArgs:
             "--strict-config",
         )
         failures_text = [
-            "=================================== FAILURES ===================================",
+            "=*= FAILURES =*=",
             stderr_match,
         ]
         result.stdout.fnmatch_lines(failures_text)
@@ -1430,12 +1430,7 @@ class TestAppendIniArgs:
         )
 
         result = testdir.runpytest("--append-ini", "{}={}".format("my_args", "z"), "-s")
-        result.stdout.fnmatch_lines(
-            [
-                "=================================== FAILURES ===================================",
-                error_text,
-            ]
-        )
+        result.stdout.fnmatch_lines(["=*= FAILURES =*=", error_text])
 
     def test_append_ini_usage_with_override_ini_usage(self, testdir):
         testdir.makeconftest(
