@@ -3,6 +3,7 @@ import os
 import platform
 import sys
 import traceback
+from typing import Generator
 from typing import Optional
 from typing import Tuple
 
@@ -244,24 +245,16 @@ def pytest_runtest_setup(item: Item) -> None:
 
 
 @hookimpl(hookwrapper=True)
-def pytest_runtest_call(item: Item):
+def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
+    xfailed = item._store.get(xfailed_key, None)
+    if xfailed is None:
+        item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
+
     if not item.config.option.runxfail:
-        xfailed = item._store.get(xfailed_key, None)
-        if xfailed is None:
-            item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
         if xfailed and not xfailed.run:
             xfail("[NOTRUN] " + xfailed.reason)
 
-    outcome = yield
-    passed = outcome.excinfo is None
-
-    if passed:
-        xfailed = item._store.get(xfailed_key, None)
-        if xfailed is None:
-            item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
-        if xfailed and xfailed.strict:
-            del item._store[xfailed_key]
-            fail("[XPASS(strict)] " + xfailed.reason, pytrace=False)
+    yield
 
 
 @hookimpl(hookwrapper=True)
