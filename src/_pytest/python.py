@@ -13,6 +13,7 @@ from collections.abc import Sequence
 from functools import partial
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import Iterable
 from typing import List
 from typing import Mapping
@@ -263,6 +264,9 @@ class PyobjMixin:
         def listchain(self) -> List[nodes.Node]:
             ...
 
+        def iterchain(self) -> Generator[nodes.Node, None, None]:
+            ...
+
     @property
     def module(self):
         """Python module object this node was collected from (can be None)."""
@@ -306,10 +310,8 @@ class PyobjMixin:
 
     def getmodpath(self, stopatmodule=True, includemodule=False):
         """ return python path relative to the containing module. """
-        chain = self.listchain()
-        chain.reverse()
         parts = []
-        for node in chain:
+        for node in self.iterchain():
             if isinstance(node, Instance):
                 continue
             name = node.name

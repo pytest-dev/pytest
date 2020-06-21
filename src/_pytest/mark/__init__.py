@@ -147,7 +147,7 @@ class KeywordMatcher:
         # Add the names of the current item and any parent items
         import pytest
 
-        for node in item.listchain():
+        for node in item.iterchain():
             if not isinstance(node, (pytest.Instance, pytest.Session)):
                 mapped_names.add(node.name)
 

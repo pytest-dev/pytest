@@ -3,6 +3,7 @@ import warnings
 from functools import lru_cache
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -247,14 +248,18 @@ class Node(metaclass=NodeMeta):
     def teardown(self) -> None:
         pass
 
+    def iterchain(self) -> Generator["Node", None, None]:
+        """ iterator over all parent collectors up to root of collection tree,
+            starting from self. """
+        item = self  # type: Optional[Node]
+        while item is not None:
+            yield item
+            item = item.parent
+
     def listchain(self) -> List["Node"]:
         """ return list of all parent collectors up to self,
             starting from root of collection tree. """
-        chain = []
-        item = self  # type: Optional[Node]
-        while item is not None:
-            chain.append(item)
-            item = item.parent
+        chain = list(self.iterchain())
         chain.reverse()
         return chain
 
@@ -299,7 +304,7 @@ class Node(metaclass=NodeMeta):
         iterate over all markers of the node
         returns sequence of tuples (node, mark)
         """
-        for node in reversed(self.listchain()):
+        for node in self.iterchain():
             for mark in node.own_markers:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
@@ -326,7 +331,7 @@ class Node(metaclass=NodeMeta):
     def listextrakeywords(self) -> Set[str]:
         """ Return a set of all extra keywords in self and any parents."""
         extra_keywords = set()  # type: Set[str]
-        for item in self.listchain():
+        for item in self.iterchain():
             extra_keywords.update(item.extra_keyword_matches)
         return extra_keywords
 
