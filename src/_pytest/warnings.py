@@ -48,8 +48,8 @@ def _parse_filter(
             lineno = int(lineno_)
             if lineno < 0:
                 raise ValueError
-        except (ValueError, OverflowError):
-            raise warnings._OptionError("invalid lineno {!r}".format(lineno_))
+        except (ValueError, OverflowError) as e:
+            raise warnings._OptionError("invalid lineno {!r}".format(lineno_)) from e
     else:
         lineno = 0
     return (action, message, category, module, lineno)

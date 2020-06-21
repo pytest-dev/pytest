@@ -1778,5 +1778,5 @@ def test_conftest_import_error_repr(tmpdir):
     ):
         try:
             raise RuntimeError("some error")
-        except Exception:
-            raise ConftestImportFailure(path, sys.exc_info())
+        except Exception as e:
+            raise ConftestImportFailure(path, sys.exc_info()) from e
