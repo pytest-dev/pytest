@@ -1384,27 +1384,34 @@ def test_exception_handling_no_traceback(testdir):
 
 
 @pytest.mark.skipif("'__pypy__' in sys.builtin_module_names")
-def test_warn_missing(testdir):
+@pytest.mark.parametrize(
+    "cmdline_args, warning_output",
+    [
+        (
+            ["-OO", "-m", "pytest", "-h"],
+            ["warning :*PytestConfigWarning:*assert statements are not executed*"],
+        ),
+        (
+            ["-OO", "-m", "pytest"],
+            [
+                "=*= warnings summary =*=",
+                "*PytestConfigWarning:*assert statements are not executed*",
+            ],
+        ),
+        (
+            ["-OO", "-m", "pytest", "--assert=plain"],
+            [
+                "=*= warnings summary =*=",
+                "*PytestConfigWarning: ASSERTIONS ARE NOT EXECUTED and FAILING TESTS WILL PASS.  "
+                "Are you using python -O?",
+            ],
+        ),
+    ],
+)
+def test_warn_missing(testdir, cmdline_args, warning_output):
     testdir.makepyfile("")
 
-    warning_output = [
-        "warning :*PytestConfigWarning:*assert statements are not executed*"
-    ]
-    result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
-    result.stdout.fnmatch_lines(warning_output)
-
-    warning_output = [
-        "=*= warnings summary =*=",
-        "*PytestConfigWarning:*assert statements are not executed*",
-    ]
-    result = testdir.run(sys.executable, "-OO", "-m", "pytest")
-    result.stdout.fnmatch_lines(warning_output)
-
-    warning_output = [
-        "=*= warnings summary =*=",
-        "*PytestConfigWarning: ASSERTIONS ARE NOT EXECUTED and FAILING TESTS WILL PASS.  Are you using python -O?",
-    ]
-    result = testdir.run(sys.executable, "-OO", "-m", "pytest", "--assert=plain")
+    result = testdir.run(sys.executable, *cmdline_args)
     result.stdout.fnmatch_lines(warning_output)
 
 
