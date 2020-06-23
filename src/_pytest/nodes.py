@@ -276,7 +276,7 @@ class Node(metaclass=NodeMeta):
             marker_ = getattr(MARK_GEN, marker)
         else:
             raise ValueError("is not a string or pytest.mark.* Marker")
-        self.keywords[marker_.name] = marker
+        self.keywords[marker_.name] = marker_
         if append:
             self.own_markers.append(marker_.mark)
         else:
