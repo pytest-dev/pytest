@@ -639,7 +639,7 @@ Automatically adding markers based on test names
 
 .. regendoc:wipe
 
-If you a test suite where test function names indicate a certain
+If you have a test suite where test function names indicate a certain
 type of test, you can implement a hook that automatically defines
 markers so that you can use the ``-m`` option with it. Let's look
 at this test module:
