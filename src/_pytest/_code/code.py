@@ -213,7 +213,7 @@ class TracebackEntry:
         return source.getstatement(self.lineno)
 
     @property
-    def path(self):
+    def path(self) -> Union[py.path.local, str]:
         """ path to the source code """
         return self.frame.code.path
 
