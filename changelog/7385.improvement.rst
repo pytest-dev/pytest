@@ -1,0 +1,13 @@
+``--junitxml`` now includes the exception cause in the ``message`` XML attribute for failures during setup and teardown.
+
+Previously:
+
+.. code-block:: xml
+
+    <error message="test setup failure">
+
+Now:
+
+.. code-block:: xml
+
+    <error message="failed on setup with &quot;ValueError: Some error during setup&quot;">

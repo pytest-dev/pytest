@@ -266,7 +266,7 @@ class TestPython:
 
             @pytest.fixture
             def arg(request):
-                raise ValueError()
+                raise ValueError("Error reason")
             def test_function(arg):
                 pass
         """
@@ -278,7 +278,7 @@ class TestPython:
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(classname="test_setup_error", name="test_function")
         fnode = tnode.find_first_by_tag("error")
-        fnode.assert_attr(message="test setup failure")
+        fnode.assert_attr(message='failed on setup with "ValueError: Error reason"')
         assert "ValueError" in fnode.toxml()
 
     @parametrize_families
@@ -290,7 +290,7 @@ class TestPython:
             @pytest.fixture
             def arg():
                 yield
-                raise ValueError()
+                raise ValueError('Error reason')
             def test_function(arg):
                 pass
         """
@@ -301,7 +301,7 @@ class TestPython:
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(classname="test_teardown_error", name="test_function")
         fnode = tnode.find_first_by_tag("error")
-        fnode.assert_attr(message="test teardown failure")
+        fnode.assert_attr(message='failed on teardown with "ValueError: Error reason"')
         assert "ValueError" in fnode.toxml()
 
     @parametrize_families
@@ -328,7 +328,9 @@ class TestPython:
         fnode = first.find_first_by_tag("failure")
         fnode.assert_attr(message="Exception: Call Exception")
         snode = second.find_first_by_tag("error")
-        snode.assert_attr(message="test teardown failure")
+        snode.assert_attr(
+            message='failed on teardown with "Exception: Teardown Exception"'
+        )
 
     @parametrize_families
     def test_skip_contains_name_reason(self, testdir, run_and_parse, xunit_family):
