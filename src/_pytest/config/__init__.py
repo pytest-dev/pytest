@@ -1,5 +1,6 @@
 """ command line options, ini-file and conftest.py processing. """
 import argparse
+import collections.abc
 import contextlib
 import copy
 import enum
@@ -654,7 +655,9 @@ class PytestPluginManager(PluginManager):
     def consider_module(self, mod: types.ModuleType) -> None:
         self._import_plugin_specs(getattr(mod, "pytest_plugins", []))
 
-    def _import_plugin_specs(self, spec) -> None:
+    def _import_plugin_specs(
+        self, spec: Union[None, types.ModuleType, str, Sequence[str]]
+    ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
         for import_spec in plugins:
             self.import_plugin(import_spec)
@@ -702,24 +705,26 @@ class PytestPluginManager(PluginManager):
             self.register(mod, modname)
 
 
-def _get_plugin_specs_as_list(specs) -> List[str]:
-    """
-    Parses a list of "plugin specs" and returns a list of plugin names.
-
-    Plugin specs can be given as a list of strings separated by "," or already as a list/tuple in
-    which case it is returned as a list. Specs can also be `None` in which case an
-    empty list is returned.
-    """
-    if specs is not None and not isinstance(specs, types.ModuleType):
-        if isinstance(specs, str):
-            specs = specs.split(",") if specs else []
-        if not isinstance(specs, (list, tuple)):
-            raise UsageError(
-                "Plugin specs must be a ','-separated string or a "
-                "list/tuple of strings for plugin names. Given: %r" % specs
-            )
+def _get_plugin_specs_as_list(
+    specs: Union[None, types.ModuleType, str, Sequence[str]]
+) -> List[str]:
+    """Parse a plugins specification into a list of plugin names."""
+    # None means empty.
+    if specs is None:
+        return []
+    # Workaround for #3899 - a submodule which happens to be called "pytest_plugins".
+    if isinstance(specs, types.ModuleType):
+        return []
+    # Comma-separated list.
+    if isinstance(specs, str):
+        return specs.split(",") if specs else []
+    # Direct specification.
+    if isinstance(specs, collections.abc.Sequence):
         return list(specs)
-    return []
+    raise UsageError(
+        "Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: %r"
+        % specs
+    )
 
 
 def _ensure_removed_sysmodule(modname: str) -> None:
