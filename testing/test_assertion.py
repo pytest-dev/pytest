@@ -797,8 +797,8 @@ class TestAssert_reprcompare_dataclass:
                 "*Differing attributes:*",
                 "*field_b: ComplexDataObject2(*SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(*SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
                 "*Drill down into differing attribute field_b:*",
-                "*Omitting 1 identical items, use -vv to show*",
                 "*Differing attributes:*",
+                "*field_a: ComplexDataObject*",
                 "*Full output truncated*",
             ]
         )
@@ -813,15 +813,14 @@ class TestAssert_reprcompare_dataclass:
                 "*Matching attributes:*",
                 "*['field_a']*",
                 "*Differing attributes:*",
-                "*field_b: ComplexDataObject2(*SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(*SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
-                "*Matching attributes:*",
-                "*['field_a']*",
-                "*Differing attributes:*",
-                "*field_b: SimpleDataObject(field_a=2, field_b='c') != SimpleDataObject(field_a=3, field_b='c')*",  # noqa
+                "*field_b=SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(field_a=ComplexDataObject*",
+                "*Drill down into differing attribute field_b:*",
+                "*field_a: ComplexDataObject(field_a=SimpleDataObject(field_a=3, field_b='b')*",
+                "*Drill down into differing attribute field_a:*",
                 "*Matching attributes:*",
                 "*['field_b']*",
                 "*Differing attributes:*",
-                "*field_a: 2 != 3",
+                "*field_a: SimpleDataObject(field_a=3, field_b='b') != SimpleDataObject(field_a=1, field_b='b')*",
             ]
         )
 
@@ -910,7 +909,9 @@ class TestAssert_reprcompare_attrsclass:
 
         lines = callequal(left, right)
         assert lines is not None
-        assert "field_d: 'a' != 'b'" in lines
+        assert (
+            "    field_d: 'a' != 'b'" in lines
+        )  # indentation in output because of nested object structure
 
     def test_attrs_verbose(self) -> None:
         @attr.s
