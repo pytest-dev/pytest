@@ -1,5 +1,7 @@
 """Utilities for assertion debugging"""
 import collections.abc
+from collections import Counter
+import inspect
 import pprint
 from typing import AbstractSet
 from typing import Any
@@ -10,8 +12,6 @@ from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
-import inspect
-from collections import Counter
 
 import _pytest._code
 from _pytest import outcomes
@@ -204,11 +204,11 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     :return: explanation of an AssertionError
     :rtype: List[str]
     """
-    explanation = []  # type: List[str]
+    explanation = []  # type: Optional[List[str]]
 
-    my_name: str = inspect.currentframe().f_code.co_name
-    num_calls: int = _get_number_of_calls(func_name=my_name)
-    indentation: str = " " * 4 * (num_calls - 1)
+    my_name = inspect.currentframe().f_code.co_name  # type: str
+    num_calls = _get_number_of_calls(func_name=my_name)  # type: int
+    indentation = " " * 4 * (num_calls - 1)  # type: str
 
     if istext(left) and istext(right):
         explanation = _diff_text(left=left, right=right, verbose=verbose)
