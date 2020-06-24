@@ -910,7 +910,7 @@ class TestAssert_reprcompare_attrsclass:
         lines = callequal(left, right)
         assert lines is not None
         assert (
-                "    field_d: 'a' != 'b'" in lines
+            "    field_d: 'a' != 'b'" in lines
         )  # indentation in output because of nested object structure
 
     def test_attrs_verbose(self) -> None:

@@ -40,7 +40,7 @@ def test_recursive_dataclasses():
         SimpleDataObject(1, "b"),
         ComplexDataObject2(
             ComplexDataObject(SimpleDataObject(1, "b"), SimpleDataObject(2, "c")),
-            SimpleDataObject(3, "c")
+            SimpleDataObject(3, "c"),
         ),
     )
 

@@ -211,9 +211,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     indentation = " " * 4 * (num_calls - 1)  # type: str
 
     if istext(left) and istext(right):
-        explanation = _diff_text(
-            left=left, right=right, verbose=verbose
-        )
+        explanation = _diff_text(left=left, right=right, verbose=verbose)
     else:
         if issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(
@@ -234,7 +232,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
                 right=right,
                 verbose=verbose,
                 type_fns=type_fn,
-                indentation=indentation
+                indentation=indentation,
             )
         elif verbose > 0:
             explanation = _compare_eq_verbose(
@@ -294,9 +292,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     return explanation
 
 
-def _compare_eq_verbose(
-    left: Any, right: Any, indentation: str
-) -> List[str]:
+def _compare_eq_verbose(left: Any, right: Any, indentation: str) -> List[str]:
     keepends = True
     left_lines = repr(left).splitlines(keepends)
     right_lines = repr(right).splitlines(keepends)
@@ -413,9 +409,7 @@ def _compare_eq_sequence(
 
 
 def _compare_eq_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
-    indentation: str
+    left: AbstractSet[Any], right: AbstractSet[Any], indentation: str
 ) -> List[str]:
     explanation = []
     diff_left = left - right
@@ -521,7 +515,9 @@ def _compare_eq_cls(
             field_left = getattr(left, field)
             field_right = getattr(right, field)
             explanation += [
-                "{}{}: {!r} != {!r}".format(indentation, field, field_left, field_right),
+                "{}{}: {!r} != {!r}".format(
+                    indentation, field, field_left, field_right
+                ),
                 "",
                 "{}Drill down into differing attribute {}:".format(indentation, field),
                 *_compare_eq_any(field_left, field_right, verbose),
