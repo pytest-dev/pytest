@@ -204,7 +204,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     :return: explanation of an AssertionError
     :rtype: List[str]
     """
-    explanation: List[str] = []
+    explanation = []  # type: List[str]
 
     my_name: str = inspect.currentframe().f_code.co_name
     num_calls: int = _get_number_of_calls(func_name=my_name)
@@ -345,7 +345,7 @@ def _compare_eq_sequence(
     indentation: str
 ) -> List[str]:
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
-    explanation: List[str] = []
+    explanation = []  # type: List[str]
     len_left = len(left)
     len_right = len(right)
     for i in range(min(len_left, len_right)):
@@ -366,7 +366,7 @@ def _compare_eq_sequence(
                 right_value = right[i]
 
             explanation += [
-                f"{indentation}At index {i} diff: {left_value} != {right_value}"
+                "{}At index {} diff: {!r} != {!r}".format(indentation, i, left_value, right_value)
             ]
             break
 
@@ -388,11 +388,12 @@ def _compare_eq_sequence(
 
         if len_diff == 1:
             explanation += [
-                f"{indentation}{dir_with_more} contains one more item: {extra}"
+                "{}{} contains one more item: {}".format(indentation, dir_with_more, extra)
             ]
         else:
             explanation += [
-                f"{indentation}{dir_with_more} contains {len_diff} more items, first extra item: {extra}"
+                "%s%s contains %d more items, first extra item: %s"
+                % (indentation, dir_with_more, len_diff, extra)
             ]
     return explanation
 
@@ -406,11 +407,11 @@ def _compare_eq_set(
     diff_left = left - right
     diff_right = right - left
     if diff_left:
-        explanation.append(f"{indentation}Extra items in the left set:")
+        explanation.append("{}Extra items in the left set:".format(indentation))
         for item in diff_left:
             explanation.append(saferepr(item))
     if diff_right:
-        explanation.append(f"{indentation}Extra items in the right set:")
+        explanation.append("{}Extra items in the right set:".format(indentation))
         for item in diff_right:
             explanation.append(saferepr(item))
     return explanation
@@ -422,27 +423,27 @@ def _compare_eq_dict(
     indentation: str,
     verbose: int = 0
 ) -> List[str]:
-    explanation: List[str] = []
+    explanation = []  # type: List[str]
     set_left = set(left)
     set_right = set(right)
     common = set_left.intersection(set_right)
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
-        explanation += [f"{indentation}Omitting {len(same)} identical items, use -vv to show"]
+        explanation += ["{}Omitting {} identical items, use -vv to show".format(indentation, len(same))]
     elif same:
-        explanation += [f"{indentation}Common items:"]
+        explanation += ["{}Common items:".format(indentation)]
         explanation += [indentation + pprint.pformat(same).splitlines()[0]]
     diff = {k for k in common if left[k] != right[k]}
     if diff:
-        explanation += [f"{indentation}Differing items:"]
+        explanation += ["{}Differing items:".format(indentation)]
         for k in diff:
             explanation += [indentation + saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
     extra_left = set_left - set_right
     len_extra_left = len(extra_left)
     if len_extra_left:
         explanation.append(
-            f"{indentation}Left contains {len_extra_left} more item%s:"
-            % ("" if len_extra_left == 1 else "s")
+            "%sLeft contains %d more item%s:"
+            % (indentation, len_extra_left, "" if len_extra_left == 1 else "s")
         )
         explanation.extend(
             indentation + pprint.pformat({k: left[k] for k in extra_left}).splitlines()[0]
@@ -451,8 +452,8 @@ def _compare_eq_dict(
     len_extra_right = len(extra_right)
     if len_extra_right:
         explanation.append(
-            f"{indentation}Right contains {len_extra_right} more item%s:"
-            % ("" if len_extra_right == 1 else "s")
+            "%sRight contains %d more item%s:"
+            % (indentation, len_extra_right, "" if len_extra_right == 1 else "s")
         )
         explanation.extend(
             indentation + pprint.pformat({k: right[k] for k in extra_right}).splitlines()[0]
@@ -487,20 +488,20 @@ def _compare_eq_cls(
 
     explanation = []
     if same and verbose < 2:
-        explanation.append(f"Omitting {len(same)} identical items, use -vv to show")
+        explanation.append("Omitting %s identical items, use -vv to show" % len(same))
     elif same:
-        explanation += [f"{indentation}Matching attributes:"]
+        explanation += ["{}Matching attributes:".format(indentation)]
         mystr = [indentation + pprint.pformat(same).splitlines()[0]]
         explanation += mystr
     if diff:
-        explanation += [f"{indentation}Differing attributes:"]
+        explanation += ["{}Differing attributes:".format(indentation)]
         for field in diff:
             field_left = getattr(left, field)
             field_right = getattr(right, field)
             explanation += [
-                f"{indentation}{field}: {field_left} != {field_right}",
+                "%s%s: %r != %r" % (indentation, field, field_left, field_right),
                 "",
-                f"{indentation}Drill down into differing attribute {field}:",
+                "%sDrill down into differing attribute %s:" % (indentation, field),
                 *_compare_eq_any(field_left, field_right, verbose),
             ]
     return explanation
