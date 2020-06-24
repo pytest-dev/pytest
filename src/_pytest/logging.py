@@ -141,9 +141,14 @@ class PercentStyleMultiline(logging.PercentStyle):
 
         if auto_indent_option is None:
             return 0
-        elif type(auto_indent_option) is int:
+        elif isinstance(auto_indent_option, bool):
+            if auto_indent_option:
+                return -1
+            else:
+                return 0
+        elif isinstance(auto_indent_option, int):
             return int(auto_indent_option)
-        elif type(auto_indent_option) is str:
+        elif isinstance(auto_indent_option, str):
             try:
                 return int(auto_indent_option)
             except ValueError:
@@ -153,9 +158,6 @@ class PercentStyleMultiline(logging.PercentStyle):
                     return -1
             except ValueError:
                 return 0
-        elif type(auto_indent_option) is bool:
-            if auto_indent_option:
-                return -1
 
         return 0
 

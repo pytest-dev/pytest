@@ -143,7 +143,7 @@ def pytest_configure(config: "Config") -> None:
 @hookspec(firstresult=True)
 def pytest_cmdline_parse(
     pluginmanager: "PytestPluginManager", args: List[str]
-) -> Optional[object]:
+) -> Optional["Config"]:
     """return initialized config object, parsing the specified args.
 
     Stops at first non-None result, see :ref:`firstresult`

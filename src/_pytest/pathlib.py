@@ -466,7 +466,7 @@ def import_path(
     """
     mode = ImportMode(mode)
 
-    path = Path(p)
+    path = Path(str(p))
 
     if not path.exists():
         raise ImportError(path)

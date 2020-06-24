@@ -585,11 +585,11 @@ class TestInvocationVariants:
         # Type ignored because `py.test` is not and will not be typed.
         assert pytest.main == py.test.cmdline.main  # type: ignore[attr-defined]
 
-    def test_invoke_with_invalid_type(self):
+    def test_invoke_with_invalid_type(self) -> None:
         with pytest.raises(
             TypeError, match="expected to be a list of strings, got: '-h'"
         ):
-            pytest.main("-h")
+            pytest.main("-h")  # type: ignore[arg-type]
 
     def test_invoke_with_path(self, tmpdir, capsys):
         retcode = pytest.main(tmpdir)

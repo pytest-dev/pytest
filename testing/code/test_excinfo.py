@@ -372,7 +372,7 @@ def test_excinfo_no_python_sourcecode(tmpdir):
     for item in excinfo.traceback:
         print(item)  # XXX: for some reason jinja.Template.render is printed in full
         item.source  # shouldn't fail
-        if item.path.basename == "test.txt":
+        if isinstance(item.path, py.path.local) and item.path.basename == "test.txt":
             assert str(item.source) == "{{ h()}}:"
 
 
