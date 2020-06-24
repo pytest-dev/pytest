@@ -46,11 +46,19 @@ def get_empty_parameterset_mark(
 ) -> "MarkDecorator":
     from ..nodes import Collector
 
+    fs, lineno = getfslineno(func)
+    reason = "got empty parameter set %r, function %s at %s:%d" % (
+        argnames,
+        func.__name__,
+        fs,
+        lineno,
+    )
+
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):
-        mark = MARK_GEN.skip
+        mark = MARK_GEN.skip(reason=reason)
     elif requested_mark == "xfail":
-        mark = MARK_GEN.xfail(run=False)
+        mark = MARK_GEN.xfail(reason=reason, run=False)
     elif requested_mark == "fail_at_collect":
         f_name = func.__name__
         _, lineno = getfslineno(func)
@@ -59,14 +67,7 @@ def get_empty_parameterset_mark(
         )
     else:
         raise LookupError(requested_mark)
-    fs, lineno = getfslineno(func)
-    reason = "got empty parameter set %r, function %s at %s:%d" % (
-        argnames,
-        func.__name__,
-        fs,
-        lineno,
-    )
-    return mark(reason=reason)
+    return mark
 
 
 class ParameterSet(
@@ -379,6 +380,76 @@ def store_mark(obj, mark: Mark) -> None:
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 
+# Typing for builtin pytest marks. This is cheating; it gives builtin marks
+# special privilege, and breaks modularity. But practicality beats purity...
+if TYPE_CHECKING:
+    from _pytest.fixtures import _Scope
+
+    class _SkipMarkDecorator(MarkDecorator):
+        @overload  # type: ignore[override,misc]
+        def __call__(self, arg: _Markable) -> _Markable:
+            raise NotImplementedError()
+
+        @overload  # noqa: F811
+        def __call__(self, reason: str = ...) -> "MarkDecorator":  # noqa: F811
+            raise NotImplementedError()
+
+    class _SkipifMarkDecorator(MarkDecorator):
+        def __call__(  # type: ignore[override]
+            self,
+            condition: Union[str, bool] = ...,
+            *conditions: Union[str, bool],
+            reason: str = ...
+        ) -> MarkDecorator:
+            raise NotImplementedError()
+
+    class _XfailMarkDecorator(MarkDecorator):
+        @overload  # type: ignore[override,misc]
+        def __call__(self, arg: _Markable) -> _Markable:
+            raise NotImplementedError()
+
+        @overload  # noqa: F811
+        def __call__(  # noqa: F811
+            self,
+            condition: Union[str, bool] = ...,
+            *conditions: Union[str, bool],
+            reason: str = ...,
+            run: bool = ...,
+            raises: Union[BaseException, Tuple[BaseException, ...]] = ...,
+            strict: bool = ...
+        ) -> MarkDecorator:
+            raise NotImplementedError()
+
+    class _ParametrizeMarkDecorator(MarkDecorator):
+        def __call__(  # type: ignore[override]
+            self,
+            argnames: Union[str, List[str], Tuple[str, ...]],
+            argvalues: Iterable[Union[ParameterSet, Sequence[object], object]],
+            *,
+            indirect: Union[bool, Sequence[str]] = ...,
+            ids: Optional[
+                Union[
+                    Iterable[Union[None, str, float, int, bool]],
+                    Callable[[object], Optional[object]],
+                ]
+            ] = ...,
+            scope: Optional[_Scope] = ...
+        ) -> MarkDecorator:
+            raise NotImplementedError()
+
+    class _UsefixturesMarkDecorator(MarkDecorator):
+        def __call__(  # type: ignore[override]
+            self, *fixtures: str
+        ) -> MarkDecorator:
+            raise NotImplementedError()
+
+    class _FilterwarningsMarkDecorator(MarkDecorator):
+        def __call__(  # type: ignore[override]
+            self, *filters: str
+        ) -> MarkDecorator:
+            raise NotImplementedError()
+
+
 class MarkGenerator:
     """Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.
@@ -396,6 +467,15 @@ class MarkGenerator:
 
     _config = None  # type: Optional[Config]
     _markers = set()  # type: Set[str]
+
+    # See TYPE_CHECKING above.
+    if TYPE_CHECKING:
+        skip = None  # type: _SkipMarkDecorator
+        skipif = None  # type: _SkipifMarkDecorator
+        xfail = None  # type: _XfailMarkDecorator
+        parametrize = None  # type: _ParametrizeMarkDecorator
+        usefixtures = None  # type: _UsefixturesMarkDecorator
+        filterwarnings = None  # type: _FilterwarningsMarkDecorator
 
     def __getattr__(self, name: str) -> MarkDecorator:
         if name[0] == "_":

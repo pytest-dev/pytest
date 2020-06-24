@@ -1054,7 +1054,7 @@ class Testdir:
             args.append("--basetemp=%s" % self.tmpdir.dirpath("basetemp"))
         return args
 
-    def parseconfig(self, *args: Union[str, py.path.local]) -> Config:
+    def parseconfig(self, *args) -> Config:
         """Return a new pytest Config instance from given commandline args.
 
         This invokes the pytest bootstrapping code in _pytest.config to create
@@ -1070,14 +1070,14 @@ class Testdir:
 
         import _pytest.config
 
-        config = _pytest.config._prepareconfig(args, self.plugins)  # type: Config
+        config = _pytest.config._prepareconfig(args, self.plugins)  # type: ignore[arg-type]
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
         self.request.addfinalizer(config._ensure_unconfigure)
         return config
 
-    def parseconfigure(self, *args):
+    def parseconfigure(self, *args) -> Config:
         """Return a new pytest configured Config instance.
 
         This returns a new :py:class:`_pytest.config.Config` instance like
@@ -1318,7 +1318,7 @@ class Testdir:
         Returns a :py:class:`RunResult`.
         """
         __tracebackhide__ = True
-        p = make_numbered_dir(root=Path(self.tmpdir), prefix="runpytest-")
+        p = make_numbered_dir(root=Path(str(self.tmpdir)), prefix="runpytest-")
         args = ("--basetemp=%s" % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:

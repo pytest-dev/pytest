@@ -534,8 +534,8 @@ def test_outcomeexception_passes_except_Exception() -> None:
     with pytest.raises(outcomes.OutcomeException):
         try:
             raise outcomes.OutcomeException("test")
-        except Exception:
-            raise NotImplementedError()
+        except Exception as e:
+            raise NotImplementedError from e
 
 
 def test_pytest_exit() -> None:

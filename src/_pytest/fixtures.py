@@ -938,13 +938,13 @@ def _eval_scope_callable(
         # Type ignored because there is no typing mechanism to specify
         # keyword arguments, currently.
         result = scope_callable(fixture_name=fixture_name, config=config)  # type: ignore[call-arg] # noqa: F821
-    except Exception:
+    except Exception as e:
         raise TypeError(
             "Error evaluating {} while defining fixture '{}'.\n"
             "Expected a function with the signature (*, fixture_name, config)".format(
                 scope_callable, fixture_name
             )
-        )
+        ) from e
     if not isinstance(result, str):
         fail(
             "Expected {} to return a 'str' while defining fixture '{}', but it returned:\n"

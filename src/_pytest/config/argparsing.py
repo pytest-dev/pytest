@@ -265,9 +265,9 @@ class Argument:
         else:
             try:
                 self.dest = self._short_opts[0][1:]
-            except IndexError:
+            except IndexError as e:
                 self.dest = "???"  # Needed for the error repr.
-                raise ArgumentError("need a long or short option", self)
+                raise ArgumentError("need a long or short option", self) from e
 
     def names(self) -> List[str]:
         return self._short_opts + self._long_opts
