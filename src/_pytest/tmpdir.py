@@ -13,6 +13,7 @@ from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import Path
+from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
 
@@ -135,7 +136,7 @@ def get_user() -> Optional[str]:
         return None
 
 
-def pytest_configure(config) -> None:
+def pytest_configure(config: Config) -> None:
     """Create a TempdirFactory and attach it to the config object.
 
     This is to comply with existing plugins which expect the handler to be
