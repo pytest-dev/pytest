@@ -3,8 +3,10 @@ import collections.abc
 from collections import Counter
 import inspect
 import pprint
+import types
 from typing import AbstractSet
 from typing import Any
+from typing import cast
 from typing import Callable
 from typing import Iterable
 from typing import List
@@ -206,7 +208,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     """
     explanation = []
 
-    my_name = inspect.currentframe().f_code.co_name
+    my_name = cast(types.FrameType, inspect.currentframe()).f_code.co_name
     num_calls = _get_number_of_calls(func_name=my_name)  # type: int
     indentation = " " * 4 * (num_calls - 1)  # type: str
 
