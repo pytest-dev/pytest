@@ -10,6 +10,8 @@ from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+import inspect
+from collections import Counter
 
 import _pytest._code
 from _pytest import outcomes
@@ -96,6 +98,25 @@ def _format_lines(lines: Sequence[str]) -> List[str]:
     return result
 
 
+def _get_number_of_calls(
+    func_name: str
+) -> int:
+    """
+    Get the number of calls for the specified function.
+    To get this, the stack is going to be inspected.
+
+    :param str func_name: the name of the function
+    :return: number of calls from stack
+    :rtype: int
+    :raises ValueError: if the func_name was not found in the stack.s
+    """
+    functions = [frame.function for frame in inspect.stack()]
+    func_calls: int = Counter(functions).get(func_name, 0)
+    if func_calls == 0:
+        raise ValueError("Wrong function name given!")
+    return func_calls
+
+
 def issequence(x: Any) -> bool:
     return isinstance(x, collections.abc.Sequence) and not isinstance(x, str)
 
@@ -169,23 +190,42 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
 
 
 def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
-    explanation = []  # type: List[str]
+    """
+    Compare 2 objects.
+    The generic comparison function, which calls other functions based on the input's type.
+
+    :param left
+    :type left: Any
+    :param right
+    :type right: Any
+    :param verbose
+    :type verbose: int
+    .. note:: indendation used for better visual perception of the comparison report.
+    :return: explanation of an AssertionError
+    :rtype: List[str]
+    """
+    explanation: List[str] = []
+
+    my_name: str = inspect.currentframe().f_code.co_name
+    num_calls: int = _get_number_of_calls(func_name=my_name)
+    indentation: str = " " * 4 * (num_calls - 1)
+
     if istext(left) and istext(right):
         explanation = _diff_text(left, right, verbose)
     else:
         if issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left, right, verbose)
+            explanation = _compare_eq_sequence(left, right, indentation)
         elif isset(left) and isset(right):
-            explanation = _compare_eq_set(left, right, verbose)
+            explanation = _compare_eq_set(left, right, verbose, indentation)
         elif isdict(left) and isdict(right):
-            explanation = _compare_eq_dict(left, right, verbose)
+            explanation = _compare_eq_dict(left, right, verbose, indentation)
         elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
             type_fn = (isdatacls, isattrs)
-            explanation = _compare_eq_cls(left, right, verbose, type_fn)
+            explanation = _compare_eq_cls(left, right, verbose, type_fn, indentation)
         elif verbose > 0:
-            explanation = _compare_eq_verbose(left, right)
+            explanation = _compare_eq_verbose(left, right, indentation)
         if isiterable(left) and isiterable(right):
-            expl = _compare_eq_iterable(left, right, verbose)
+            expl = _compare_eq_iterable(left, right, verbose, indentation)
             explanation.extend(expl)
     return explanation
 
@@ -238,14 +278,18 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     return explanation
 
 
-def _compare_eq_verbose(left: Any, right: Any) -> List[str]:
+def _compare_eq_verbose(
+    left: Any,
+    right: Any,
+    indentation: str
+) -> List[str]:
     keepends = True
     left_lines = repr(left).splitlines(keepends)
     right_lines = repr(right).splitlines(keepends)
 
     explanation = []  # type: List[str]
-    explanation += ["+" + line for line in left_lines]
-    explanation += ["-" + line for line in right_lines]
+    explanation += [indentation + "+" + line for line in left_lines]
+    explanation += [indentation + "-" + line for line in right_lines]
 
     return explanation
 
@@ -263,7 +307,9 @@ def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
 
 
 def _compare_eq_iterable(
-    left: Iterable[Any], right: Iterable[Any], verbose: int = 0
+    left: Iterable[Any],
+    right: Iterable[Any],
+    verbose: int = 0
 ) -> List[str]:
     if not verbose:
         return ["Use -v to get the full diff"]
@@ -294,10 +340,12 @@ def _compare_eq_iterable(
 
 
 def _compare_eq_sequence(
-    left: Sequence[Any], right: Sequence[Any], verbose: int = 0
+    left: Sequence[Any],
+    right: Sequence[Any],
+    indentation: str
 ) -> List[str]:
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
-    explanation = []  # type: List[str]
+    explanation: List[str] = []
     len_left = len(left)
     len_right = len(right)
     for i in range(min(len_left, len_right)):
@@ -311,14 +359,14 @@ def _compare_eq_sequence(
                 # 102
                 # >>> s[0:1]
                 # b'f'
-                left_value = left[i : i + 1]
-                right_value = right[i : i + 1]
+                left_value = left[i: i + 1]
+                right_value = right[i: i + 1]
             else:
                 left_value = left[i]
                 right_value = right[i]
 
             explanation += [
-                "At index {} diff: {!r} != {!r}".format(i, left_value, right_value)
+                f"{indentation}At index {i} diff: {left_value} != {right_value}"
             ]
             break
 
@@ -340,70 +388,74 @@ def _compare_eq_sequence(
 
         if len_diff == 1:
             explanation += [
-                "{} contains one more item: {}".format(dir_with_more, extra)
+                f"{indentation}{dir_with_more} contains one more item: {extra}"
             ]
         else:
             explanation += [
-                "%s contains %d more items, first extra item: %s"
-                % (dir_with_more, len_diff, extra)
+                f"{indentation}{dir_with_more} contains {len_diff} more items, first extra item: {extra}"
             ]
     return explanation
 
 
 def _compare_eq_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+    left: AbstractSet[Any],
+    right: AbstractSet[Any],
+    indentation: str
 ) -> List[str]:
     explanation = []
     diff_left = left - right
     diff_right = right - left
     if diff_left:
-        explanation.append("Extra items in the left set:")
+        explanation.append(f"{indentation}Extra items in the left set:")
         for item in diff_left:
             explanation.append(saferepr(item))
     if diff_right:
-        explanation.append("Extra items in the right set:")
+        explanation.append(f"{indentation}Extra items in the right set:")
         for item in diff_right:
             explanation.append(saferepr(item))
     return explanation
 
 
 def _compare_eq_dict(
-    left: Mapping[Any, Any], right: Mapping[Any, Any], verbose: int = 0
+    left: Mapping[Any, Any],
+    right: Mapping[Any, Any],
+    indentation: str,
+    verbose: int = 0
 ) -> List[str]:
-    explanation = []  # type: List[str]
+    explanation: List[str] = []
     set_left = set(left)
     set_right = set(right)
     common = set_left.intersection(set_right)
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
-        explanation += ["Omitting %s identical items, use -vv to show" % len(same)]
+        explanation += [f"{indentation}Omitting {len(same)} identical items, use -vv to show"]
     elif same:
-        explanation += ["Common items:"]
-        explanation += pprint.pformat(same).splitlines()
+        explanation += [f"{indentation}Common items:"]
+        explanation += [indentation + pprint.pformat(same).splitlines()[0]]
     diff = {k for k in common if left[k] != right[k]}
     if diff:
-        explanation += ["Differing items:"]
+        explanation += [f"{indentation}Differing items:"]
         for k in diff:
-            explanation += [saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
+            explanation += [indentation + saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
     extra_left = set_left - set_right
     len_extra_left = len(extra_left)
     if len_extra_left:
         explanation.append(
-            "Left contains %d more item%s:"
-            % (len_extra_left, "" if len_extra_left == 1 else "s")
+            f"{indentation}Left contains {len_extra_left} more item%s:"
+            % ("" if len_extra_left == 1 else "s")
         )
         explanation.extend(
-            pprint.pformat({k: left[k] for k in extra_left}).splitlines()
+            indentation + pprint.pformat({k: left[k] for k in extra_left}).splitlines()[0]
         )
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
     if len_extra_right:
         explanation.append(
-            "Right contains %d more item%s:"
-            % (len_extra_right, "" if len_extra_right == 1 else "s")
+            f"{indentation}Right contains {len_extra_right} more item%s:"
+            % ("" if len_extra_right == 1 else "s")
         )
         explanation.extend(
-            pprint.pformat({k: right[k] for k in extra_right}).splitlines()
+            indentation + pprint.pformat({k: right[k] for k in extra_right}).splitlines()[0]
         )
     return explanation
 
@@ -413,6 +465,7 @@ def _compare_eq_cls(
     right: Any,
     verbose: int,
     type_fns: Tuple[Callable[[Any], bool], Callable[[Any], bool]],
+    indentation: str
 ) -> List[str]:
     isdatacls, isattrs = type_fns
     if isdatacls(left):
@@ -434,18 +487,21 @@ def _compare_eq_cls(
 
     explanation = []
     if same and verbose < 2:
-        explanation.append("Omitting %s identical items, use -vv to show" % len(same))
+        explanation.append(f"Omitting {len(same)} identical items, use -vv to show")
     elif same:
-        explanation += ["Matching attributes:"]
-        explanation += pprint.pformat(same).splitlines()
+        explanation += [f"{indentation}Matching attributes:"]
+        mystr = [indentation + pprint.pformat(same).splitlines()[0]]
+        explanation += mystr
     if diff:
-        explanation += ["Differing attributes:"]
+        explanation += [f"{indentation}Differing attributes:"]
         for field in diff:
+            field_left = getattr(left, field)
+            field_right = getattr(right, field)
             explanation += [
-                ("%s: %r != %r") % (field, getattr(left, field), getattr(right, field)),
+                f"{indentation}{field}: {field_left} != {field_right}",
                 "",
-                "Drill down into differing attribute %s:" % field,
-                *_compare_eq_any(getattr(left, field), getattr(right, field), verbose),
+                f"{indentation}Drill down into differing attribute {field}:",
+                *_compare_eq_any(field_left, field_right, verbose),
             ]
     return explanation
 
