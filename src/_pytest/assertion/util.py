@@ -111,7 +111,7 @@ def _get_number_of_calls(
     :raises ValueError: if the func_name was not found in the stack.s
     """
     functions = [frame.function for frame in inspect.stack()]
-    func_calls: int = Counter(functions).get(func_name, 0)
+    func_calls = Counter(functions).get(func_name, 0)  # int
     if func_calls == 0:
         raise ValueError("Wrong function name given!")
     return func_calls
@@ -211,21 +211,21 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     indentation: str = " " * 4 * (num_calls - 1)
 
     if istext(left) and istext(right):
-        explanation = _diff_text(left, right, verbose)
+        explanation = _diff_text(left=left, right=right, verbose=verbose)
     else:
         if issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left, right, indentation)
+            explanation = _compare_eq_sequence(left=left, right=right, indentation=indentation)
         elif isset(left) and isset(right):
-            explanation = _compare_eq_set(left, right, verbose, indentation)
+            explanation = _compare_eq_set(left=left, right=right, indentation=indentation)
         elif isdict(left) and isdict(right):
-            explanation = _compare_eq_dict(left, right, verbose, indentation)
+            explanation = _compare_eq_dict(left=left, right=right, verbose=verbose, indentation=indentation)
         elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
             type_fn = (isdatacls, isattrs)
-            explanation = _compare_eq_cls(left, right, verbose, type_fn, indentation)
+            explanation = _compare_eq_cls(left=left, right=right, verbose=verbose, type_fns=type_fn, indentation=indentation)
         elif verbose > 0:
-            explanation = _compare_eq_verbose(left, right, indentation)
+            explanation = _compare_eq_verbose(left=left, right=right, indentation=indentation)
         if isiterable(left) and isiterable(right):
-            expl = _compare_eq_iterable(left, right, verbose, indentation)
+            expl = _compare_eq_iterable(left=left, right=right, verbose=verbose)
             explanation.extend(expl)
     return explanation
 
