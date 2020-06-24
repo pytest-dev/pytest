@@ -445,9 +445,7 @@ def _compare_eq_dict(
             "%sLeft contains %d more item%s:"
             % (indentation, len_extra_left, "" if len_extra_left == 1 else "s")
         )
-        explanation.extend(
-            indentation + pprint.pformat({k: left[k] for k in extra_left}).splitlines()[0]
-        )
+        explanation += [indentation + pprint.pformat({k: left[k] for k in extra_left}).splitlines()[0]]
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
     if len_extra_right:
@@ -455,9 +453,7 @@ def _compare_eq_dict(
             "%sRight contains %d more item%s:"
             % (indentation, len_extra_right, "" if len_extra_right == 1 else "s")
         )
-        explanation.extend(
-            indentation + pprint.pformat({k: right[k] for k in extra_right}).splitlines()[0]
-        )
+        explanation += [indentation + pprint.pformat({k: right[k] for k in extra_right}).splitlines()[0]]
     return explanation
 
 
