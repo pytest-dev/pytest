@@ -204,9 +204,9 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     :return: explanation of an AssertionError
     :rtype: List[str]
     """
-    explanation = []  # type: Optional[List[str]]
+    explanation = []
 
-    my_name = inspect.currentframe().f_code.co_name  # type: str
+    my_name = inspect.currentframe().f_code.co_name
     num_calls = _get_number_of_calls(func_name=my_name)  # type: int
     indentation = " " * 4 * (num_calls - 1)  # type: str
 

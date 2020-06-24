@@ -813,9 +813,9 @@ class TestAssert_reprcompare_dataclass:
                 "*Matching attributes:*",
                 "*['field_a']*",
                 "*Differing attributes:*",
-                "*field_b: ComplexDataObject2(field_a=ComplexDataObject(field_a=SimpleDataObject(field_a=3, field_b='b'), field_b=SimpleDataObject(field_a=2, field_b='c')), field_b=SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(field_a=ComplexDataObject(field_a=SimpleDataObject(field_a=1, field_b='b'), field_b=SimpleDataObject(field_a=2, field_b='c')), field_b=SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
+                "*field_b=SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(field_a=ComplexDataObject*",
                 "*Drill down into differing attribute field_b:*",
-                "*field_a: ComplexDataObject(field_a=SimpleDataObject(field_a=3, field_b='b'), field_b=SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject(field_a=SimpleDataObject(field_a=1, field_b='b'), field_b=SimpleDataObject(field_a=2, field_b='c'))*",
+                "*field_a: ComplexDataObject(field_a=SimpleDataObject(field_a=3, field_b='b')*",
                 "*Drill down into differing attribute field_a:*",
                 "*Matching attributes:*",
                 "*['field_b']*",
