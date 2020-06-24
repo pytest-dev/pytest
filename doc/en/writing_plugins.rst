@@ -17,7 +17,7 @@ reporting by calling :ref:`well specified hooks <hook-reference>` of the followi
 * builtin plugins: loaded from pytest's internal ``_pytest`` directory.
 
 * :ref:`external plugins <extplugins>`: modules discovered through
-  `setuptools entry points`_
+  `entry points`_
 
 * `conftest.py plugins`_: modules auto-discovered in test directories
 
@@ -35,7 +35,7 @@ Plugin discovery order at tool startup
 
 * by loading all builtin plugins
 
-* by loading all plugins registered through `setuptools entry points`_.
+* by loading all plugins registered through `entry points`_.
 
 * by pre-scanning the command line for the ``-p name`` option
   and loading the specified plugin before actual command line parsing.
@@ -129,6 +129,7 @@ Also consider :ref:`contributing your plugin to pytest-dev<submitplugin>`
 once it has some happy users other than yourself.
 
 
+.. _`entry points`:
 .. _`setuptools entry points`:
 .. _`pip-installable plugins`:
 
@@ -138,10 +139,10 @@ Making your plugin installable by others
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
 that ``pytest`` finds your plugin module.  Entry points are
-a feature that is provided by `setuptools`_. pytest looks up
-the ``pytest11`` entrypoint to discover its
+a feature that is provided by `setuptools`_ and many other packaging tools.
+pytest looks up the ``pytest11`` entrypoint to discover its
 plugins and you can thus make your plugin available by defining
-it in your setuptools-invocation:
+it in for example your setuptools-invocation:
 
 .. sourcecode:: python
 
@@ -156,6 +157,10 @@ it in your setuptools-invocation:
         # custom PyPI classifier for pytest plugins
         classifiers=["Framework :: Pytest"],
     )
+
+Or via tools dependants mechanism when using other packaging framework like `poetry
+<https://python-poetry.org/docs/pyproject/#plugins>`_ or `flit
+<https://flit.readthedocs.io/en/stable/entrypoints.html#specifying-entry-points>`_.
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
