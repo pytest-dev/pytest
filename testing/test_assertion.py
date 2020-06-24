@@ -820,7 +820,7 @@ class TestAssert_reprcompare_dataclass:
                 "*Matching attributes:*",
                 "*['field_b']*",
                 "*Differing attributes:*",
-                "*field_a: SimpleDataObject(field_a=3, field_b='b') != SimpleDataObject(field_a=1, field_b='b')*"
+                "*field_a: SimpleDataObject(field_a=3, field_b='b') != SimpleDataObject(field_a=1, field_b='b')*",
             ]
         )
 
@@ -909,7 +909,9 @@ class TestAssert_reprcompare_attrsclass:
 
         lines = callequal(left, right)
         assert lines is not None
-        assert "    field_d: 'a' != 'b'" in lines  # indentation in output because of nested object structure
+        assert (
+                "    field_d: 'a' != 'b'" in lines
+        )  # indentation in output because of nested object structure
 
     def test_attrs_verbose(self) -> None:
         @attr.s

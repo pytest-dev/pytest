@@ -1,13 +1,13 @@
 """Utilities for assertion debugging"""
 import collections.abc
-from collections import Counter
 import inspect
 import pprint
 import types
+from collections import Counter
 from typing import AbstractSet
 from typing import Any
-from typing import cast
 from typing import Callable
+from typing import cast
 from typing import Iterable
 from typing import List
 from typing import Mapping
@@ -100,9 +100,7 @@ def _format_lines(lines: Sequence[str]) -> List[str]:
     return result
 
 
-def _get_number_of_calls(
-    func_name: str
-) -> int:
+def _get_number_of_calls(func_name: str) -> int:
     """
     Get the number of calls for the specified function.
     To get this, the stack is going to be inspected.
@@ -213,19 +211,35 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     indentation = " " * 4 * (num_calls - 1)  # type: str
 
     if istext(left) and istext(right):
-        explanation = _diff_text(left=left, right=right, verbose=verbose)
+        explanation = _diff_text(
+            left=left, right=right, verbose=verbose
+        )
     else:
         if issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left=left, right=right, indentation=indentation)
+            explanation = _compare_eq_sequence(
+                left=left, right=right, indentation=indentation
+            )
         elif isset(left) and isset(right):
-            explanation = _compare_eq_set(left=left, right=right, indentation=indentation)
+            explanation = _compare_eq_set(
+                left=left, right=right, indentation=indentation
+            )
         elif isdict(left) and isdict(right):
-            explanation = _compare_eq_dict(left=left, right=right, verbose=verbose, indentation=indentation)
+            explanation = _compare_eq_dict(
+                left=left, right=right, verbose=verbose, indentation=indentation
+            )
         elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
             type_fn = (isdatacls, isattrs)
-            explanation = _compare_eq_cls(left=left, right=right, verbose=verbose, type_fns=type_fn, indentation=indentation)
+            explanation = _compare_eq_cls(
+                left=left,
+                right=right,
+                verbose=verbose,
+                type_fns=type_fn,
+                indentation=indentation
+            )
         elif verbose > 0:
-            explanation = _compare_eq_verbose(left=left, right=right, indentation=indentation)
+            explanation = _compare_eq_verbose(
+                left=left, right=right, indentation=indentation
+            )
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left=left, right=right, verbose=verbose)
             explanation.extend(expl)
@@ -281,9 +295,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
 
 
 def _compare_eq_verbose(
-    left: Any,
-    right: Any,
-    indentation: str
+    left: Any, right: Any, indentation: str
 ) -> List[str]:
     keepends = True
     left_lines = repr(left).splitlines(keepends)
@@ -309,9 +321,7 @@ def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
 
 
 def _compare_eq_iterable(
-    left: Iterable[Any],
-    right: Iterable[Any],
-    verbose: int = 0
+    left: Iterable[Any], right: Iterable[Any], verbose: int = 0
 ) -> List[str]:
     if not verbose:
         return ["Use -v to get the full diff"]
@@ -342,9 +352,7 @@ def _compare_eq_iterable(
 
 
 def _compare_eq_sequence(
-    left: Sequence[Any],
-    right: Sequence[Any],
-    indentation: str
+    left: Sequence[Any], right: Sequence[Any], indentation: str
 ) -> List[str]:
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
     explanation = []  # type: List[str]
@@ -361,14 +369,16 @@ def _compare_eq_sequence(
                 # 102
                 # >>> s[0:1]
                 # b'f'
-                left_value = left[i: i + 1]
-                right_value = right[i: i + 1]
+                left_value = left[i : i + 1]
+                right_value = right[i : i + 1]
             else:
                 left_value = left[i]
                 right_value = right[i]
 
             explanation += [
-                "{}At index {} diff: {!r} != {!r}".format(indentation, i, left_value, right_value)
+                "{}At index {} diff: {!r} != {!r}".format(
+                    indentation, i, left_value, right_value
+                )
             ]
             break
 
@@ -390,7 +400,9 @@ def _compare_eq_sequence(
 
         if len_diff == 1:
             explanation += [
-                "{}{} contains one more item: {}".format(indentation, dir_with_more, extra)
+                "{}{} contains one more item: {}".format(
+                    indentation, dir_with_more, extra
+                )
             ]
         else:
             explanation += [
@@ -423,7 +435,7 @@ def _compare_eq_dict(
     left: Mapping[Any, Any],
     right: Mapping[Any, Any],
     indentation: str,
-    verbose: int = 0
+    verbose: int = 0,
 ) -> List[str]:
     explanation = []  # type: List[str]
     set_left = set(left)
@@ -431,7 +443,11 @@ def _compare_eq_dict(
     common = set_left.intersection(set_right)
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
-        explanation += ["{}Omitting {} identical items, use -vv to show".format(indentation, len(same))]
+        explanation += [
+            "{}Omitting {} identical items, use -vv to show".format(
+                indentation, len(same)
+            )
+        ]
     elif same:
         explanation += ["{}Common items:".format(indentation)]
         explanation += [indentation + pprint.pformat(same).splitlines()[0]]
@@ -439,7 +455,9 @@ def _compare_eq_dict(
     if diff:
         explanation += ["{}Differing items:".format(indentation)]
         for k in diff:
-            explanation += [indentation + saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
+            explanation += [
+                indentation + saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})
+            ]
     extra_left = set_left - set_right
     len_extra_left = len(extra_left)
     if len_extra_left:
@@ -447,7 +465,10 @@ def _compare_eq_dict(
             "%sLeft contains %d more item%s:"
             % (indentation, len_extra_left, "" if len_extra_left == 1 else "s")
         )
-        explanation += [indentation + pprint.pformat({k: left[k] for k in extra_left}).splitlines()[0]]
+        explanation += [
+            indentation
+            + pprint.pformat({k: left[k] for k in extra_left}).splitlines()[0]
+        ]
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
     if len_extra_right:
@@ -455,7 +476,10 @@ def _compare_eq_dict(
             "%sRight contains %d more item%s:"
             % (indentation, len_extra_right, "" if len_extra_right == 1 else "s")
         )
-        explanation += [indentation + pprint.pformat({k: right[k] for k in extra_right}).splitlines()[0]]
+        explanation += [
+            indentation
+            + pprint.pformat({k: right[k] for k in extra_right}).splitlines()[0]
+        ]
     return explanation
 
 
@@ -464,7 +488,7 @@ def _compare_eq_cls(
     right: Any,
     verbose: int,
     type_fns: Tuple[Callable[[Any], bool], Callable[[Any], bool]],
-    indentation: str
+    indentation: str,
 ) -> List[str]:
     isdatacls, isattrs = type_fns
     if isdatacls(left):
@@ -497,9 +521,9 @@ def _compare_eq_cls(
             field_left = getattr(left, field)
             field_right = getattr(right, field)
             explanation += [
-                "%s%s: %r != %r" % (indentation, field, field_left, field_right),
+                "{}{}: {!r} != {!r}".format(indentation, field, field_left, field_right),
                 "",
-                "%sDrill down into differing attribute %s:" % (indentation, field),
+                "{}Drill down into differing attribute {}:".format(indentation, field),
                 *_compare_eq_any(field_left, field_right, verbose),
             ]
     return explanation
