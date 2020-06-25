@@ -1050,6 +1050,40 @@ class TestFormatExplanation:
         assert util.format_explanation(expl) == res
 
 
+class TestGetNumOfFunctionCalls:
+    def test_lookup_calling_function(self) -> None:
+        num_calls = util._get_number_of_calls(func_name="test_lookup_calling_function")
+        assert num_calls == 1
+
+    def test_lookup_called_function(self) -> None:
+        num_calls = util._get_number_of_calls(func_name="_get_number_of_calls")
+        assert num_calls == 1
+
+    def test_lookup_recursive_function(self) -> None:
+        def recursive_one(execution_num: int):
+            if execution_num == 1:
+                num_calls_one = util._get_number_of_calls(func_name="recursive_one")
+                assert num_calls_one == 1
+                num_calls_two = util._get_number_of_calls(func_name="recursive_two")
+                assert num_calls_two == 1
+                recursive_two(execution_num=2)
+            elif execution_num == 2:
+                num_calls_one = util._get_number_of_calls(func_name="recursive_one")
+                assert num_calls_one == 2
+                num_calls_two = util._get_number_of_calls(func_name="recursive_two")
+                assert num_calls_two == 2
+
+        def recursive_two(execution_num):
+            if execution_num == 1 or execution_num == 2:
+                recursive_one(execution_num)
+
+        recursive_two(execution_num=1)
+
+    def test_lookup_non_existing_function(self) -> None:
+        with pytest.raises(ValueError, match="Wrong function name given!"):
+            _ = util._get_number_of_calls(func_name="i_don_t_exist")
+
+
 class TestTruncateExplanation:
     # The number of lines in the truncation explanation message. Used
     # to calculate that results have the expected length.
