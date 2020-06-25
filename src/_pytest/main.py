@@ -302,8 +302,8 @@ def _main(config: Config, session: "Session") -> Optional[Union[int, ExitCode]]:
     return None
 
 
-def pytest_collection(session: "Session") -> Sequence[nodes.Item]:
-    return session.perform_collect()
+def pytest_collection(session: "Session") -> None:
+    session.perform_collect()
 
 
 def pytest_runtestloop(session: "Session") -> bool:
@@ -343,9 +343,7 @@ def _in_venv(path: py.path.local) -> bool:
     return any([fname.basename in activates for fname in bindir.listdir()])
 
 
-def pytest_ignore_collect(
-    path: py.path.local, config: Config
-) -> "Optional[Literal[True]]":
+def pytest_ignore_collect(path: py.path.local, config: Config) -> Optional[bool]:
     ignore_paths = config._getconftest_pathlist("collect_ignore", path=path.dirpath())
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")

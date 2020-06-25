@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 
 def pytest_pycollect_makeitem(
-    collector: PyCollector, name: str, obj
+    collector: PyCollector, name: str, obj: object
 ) -> Optional["UnitTestCase"]:
     # has unittest been imported and is obj a subclass of its TestCase?
     try:

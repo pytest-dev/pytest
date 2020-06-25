@@ -467,9 +467,9 @@ class TerminalReporter:
     def line(self, msg: str, **kw: bool) -> None:
         self._tw.line(msg, **kw)
 
-    def _add_stats(self, category: str, items: List) -> None:
+    def _add_stats(self, category: str, items: Sequence) -> None:
         set_main_color = category not in self.stats
-        self.stats.setdefault(category, []).extend(items[:])
+        self.stats.setdefault(category, []).extend(items)
         if set_main_color:
             self._set_main_color()
 
@@ -499,7 +499,7 @@ class TerminalReporter:
             #     which garbles our output if we use self.write_line
             self.write_line(msg)
 
-    def pytest_deselected(self, items) -> None:
+    def pytest_deselected(self, items: Sequence[Item]) -> None:
         self._add_stats("deselected", items)
 
     def pytest_runtest_logstart(
