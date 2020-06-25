@@ -76,7 +76,7 @@ def broken_testdir(testdir):
 
 
 def _strip_resource_warnings(lines):
-    # Assert no output on stderr, except for unreliable ResourceWarnings.
+    # Strip unreliable ResourceWarnings, so no-output assertions on stderr can work.
     # (https://github.com/pytest-dev/pytest/issues/5088)
     return [
         x
