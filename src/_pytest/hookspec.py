@@ -806,18 +806,6 @@ def pytest_warning_recorded(
 
 
 # -------------------------------------------------------------------------
-# doctest hooks
-# -------------------------------------------------------------------------
-
-
-@hookspec(firstresult=True)
-def pytest_doctest_prepare_content(content):
-    """ return processed content for a given doctest
-
-    Stops at first non-None result, see :ref:`firstresult` """
-
-
-# -------------------------------------------------------------------------
 # error handling and internal debugging hooks
 # -------------------------------------------------------------------------
 
