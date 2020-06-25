@@ -13,14 +13,14 @@ from typing import Union
 
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
-from _pytest.fixtures import yield_fixture
+from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
     from typing import Type
 
 
-@yield_fixture
+@fixture
 def recwarn():
     """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
