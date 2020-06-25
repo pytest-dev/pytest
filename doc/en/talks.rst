@@ -2,6 +2,10 @@
 Talks and Tutorials
 ==========================
 
+.. sidebar:: Next Open Trainings
+
+   - `"pytest: Test Driven Development (nicht nur) für Python" <https://workshoptage.ch/workshops/2020/pytest-test-driven-development-nicht-nur-fuer-python/>`_ (German) at the `CH Open Workshoptage <https://workshoptage.ch/>`_, September 8 2020, HSLU Campus Rotkreuz (ZG), Switzerland.
+
 .. _`funcargs`: funcargs.html
 
 Books
