@@ -4,6 +4,7 @@ import warnings
 from types import TracebackType
 from typing import Any
 from typing import Callable
+from typing import Generator
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -25,7 +26,7 @@ T = TypeVar("T")
 
 
 @fixture
-def recwarn():
+def recwarn() -> Generator["WarningsRecorder", None, None]:
     """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
     See http://docs.python.org/library/warnings.html for information
