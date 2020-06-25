@@ -9,6 +9,7 @@ from typing import List
 from typing import Optional
 from typing import Pattern
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 from _pytest.compat import overload
@@ -18,6 +19,9 @@ from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
     from typing import Type
+
+
+T = TypeVar("T")
 
 
 @fixture
@@ -67,11 +71,10 @@ def warns(
 @overload  # noqa: F811
 def warns(  # noqa: F811
     expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
-    func: Callable,
+    func: Callable[..., T],
     *args: Any,
-    match: Optional[Union[str, "Pattern"]] = ...,
     **kwargs: Any
-) -> Union[Any]:
+) -> T:
     raise NotImplementedError()
 
 
@@ -97,7 +100,7 @@ def warns(  # noqa: F811
         ...    warnings.warn("my warning", RuntimeWarning)
 
     In the context manager form you may use the keyword argument ``match`` to assert
-    that the exception matches a text or regex::
+    that the warning matches a text or regex::
 
         >>> with warns(UserWarning, match='must be 0 or None'):
         ...     warnings.warn("value must be 0 or None", UserWarning)
