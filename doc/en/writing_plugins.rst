@@ -158,7 +158,7 @@ it in for example your setuptools-invocation:
         classifiers=["Framework :: Pytest"],
     )
 
-Or via tools dependants mechanism when using other packaging framework like `poetry
+Or via tool specific mechanism when using other packaging framework like `poetry
 <https://python-poetry.org/docs/pyproject/#plugins>`_ or `flit
 <https://flit.readthedocs.io/en/stable/entrypoints.html#specifying-entry-points>`_.
 
