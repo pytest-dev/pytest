@@ -208,6 +208,12 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["yes", "no", "auto"],
         help="color terminal output (yes/no/auto).",
     )
+    group._addoption(
+        "--code-highlight",
+        default="yes",
+        choices=["yes", "no"],
+        help="Whether code should be highlighted (only if --color is also enabled)",
+    )
 
     parser.addini(
         "console_output_style",
