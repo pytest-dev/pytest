@@ -244,8 +244,8 @@ and `pytest-datafiles <https://pypi.org/project/pytest-datafiles/>`__.
 
 .. _smtpshared:
 
-Scope: sharing a fixture instance across tests in a class, module or session
-----------------------------------------------------------------------------
+Scope: sharing fixtures across classes, modules, packages or session
+--------------------------------------------------------------------
 
 .. regendoc:wipe
 
@@ -356,29 +356,23 @@ instance, you can simply declare it:
         # all tests needing it
         ...
 
-Finally, the ``class`` scope will invoke the fixture once per test *class*.
+
+Fixture scopes
+^^^^^^^^^^^^^^
+
+Fixtures are created when first requested by a test, and are destroyed based on their ``scope``:
+
+* ``function``: the default scope, the fixture is destroyed at the end of the test.
+* ``class``: the fixture is destroyed during teardown of the last test in the class.
+* ``module``: the fixture is destroyed during teardown of the last test in the module.
+* ``package``: the fixture is destroyed during teardown of the last test in the package.
+* ``session``: the fixture is destroyed at the end of the test session.
 
 .. note::
 
-    Pytest will only cache one instance of a fixture at a time.
-    This means that when using a parametrized fixture, pytest may invoke a fixture more than once in the given scope.
-
-
-``package`` scope (experimental)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-
-In pytest 3.7 the ``package`` scope has been introduced. Package-scoped fixtures
-are finalized when the last test of a *package* finishes.
-
-.. warning::
-    This functionality is considered **experimental** and may be removed in future
-    versions if hidden corner-cases or serious problems with this functionality
-    are discovered after it gets more usage in the wild.
-
-    Use this new feature sparingly and please make sure to report any issues you find.
-
+    Pytest only caches one instance of a fixture at a time, which
+    means that when using a parametrized fixture, pytest may invoke a fixture more than once in
+    the given scope.
 
 .. _dynamic scope:
 

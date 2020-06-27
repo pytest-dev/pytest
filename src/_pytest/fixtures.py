@@ -1274,8 +1274,7 @@ def fixture(  # noqa: F811
 
     :arg scope: the scope for which this fixture is shared, one of
                 ``"function"`` (default), ``"class"``, ``"module"``,
-                ``"package"`` or ``"session"`` (``"package"`` is considered **experimental**
-                at this time).
+                ``"package"`` or ``"session"``.
 
                 This parameter may also be a callable which receives ``(fixture_name, config)``
                 as parameters, and must return a ``str`` with one of the values mentioned above.
