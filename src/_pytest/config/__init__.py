@@ -1360,18 +1360,19 @@ class Config:
         if not _assertion_supported():
             from _pytest.warnings import _issue_warning_captured
 
-            warning_text = (
-                "assertions not in test modules or"
-                " plugins will be ignored"
-                " because assert statements are not executed "
-                "by the underlying Python interpreter "
-                "(are you using python -O?)\n"
-            )
             if mode == "plain":
                 warning_text = (
                     "ASSERTIONS ARE NOT EXECUTED"
                     " and FAILING TESTS WILL PASS.  Are you"
                     " using python -O?"
+                )
+            else:
+                warning_text = (
+                    "assertions not in test modules or"
+                    " plugins will be ignored"
+                    " because assert statements are not executed "
+                    "by the underlying Python interpreter "
+                    "(are you using python -O?)\n"
                 )
             _issue_warning_captured(
                 PytestConfigWarning(warning_text), self.hook, stacklevel=2,
