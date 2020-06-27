@@ -4,14 +4,19 @@ Marking test functions with attributes
 ======================================
 
 By using the ``pytest.mark`` helper you can easily set
-metadata on your test functions. There are
-some builtin markers, for example:
+metadata on your test functions. You can find the full list of builtin markers
+in the :ref:`API Reference<marks ref>`. Or you can list all the markers, including
+builtin and custom, using the CLI - :code:`pytest --markers`.
 
+Here are some of the builtin markers:
+
+* :ref:`usefixtures <usefixtures>` - use fixtures on a test function or class
+* :ref:`filterwarnings <filterwarnings>` - filter certain warnings of a test function
 * :ref:`skip <skip>` - always skip a test function
 * :ref:`skipif <skipif>` - skip a test function if a certain condition is met
 * :ref:`xfail <xfail>` - produce an "expected failure" outcome if a certain
   condition is met
-* :ref:`parametrize <parametrizemark>` to perform multiple calls
+* :ref:`parametrize <parametrizemark>` - perform multiple calls
   to the same test function.
 
 It's easy to create custom markers or to apply markers

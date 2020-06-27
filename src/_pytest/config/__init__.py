@@ -1,5 +1,6 @@
 """ command line options, ini-file and conftest.py processing. """
 import argparse
+import collections.abc
 import contextlib
 import copy
 import enum
@@ -14,10 +15,14 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import IO
+from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Set
+from typing import TextIO
 from typing import Tuple
 from typing import Union
 
@@ -33,7 +38,6 @@ import _pytest.hookspec  # the extension point definitions
 from .exceptions import PrintHelp
 from .exceptions import UsageError
 from .findpaths import determine_setup
-from .findpaths import exists
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
@@ -41,6 +45,8 @@ from _pytest.compat import importlib_metadata
 from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
+from _pytest.pathlib import import_path
+from _pytest.pathlib import ImportMode
 from _pytest.pathlib import Path
 from _pytest.store import Store
 from _pytest.warning_types import PytestConfigWarning
@@ -48,6 +54,8 @@ from _pytest.warning_types import PytestConfigWarning
 if TYPE_CHECKING:
     from typing import Type
 
+    from _pytest._code.code import _TracebackStyle
+    from _pytest.terminal import TerminalReporter
     from .argparsing import Argument
 
 
@@ -86,18 +94,36 @@ class ExitCode(enum.IntEnum):
 
 
 class ConftestImportFailure(Exception):
-    def __init__(self, path, excinfo):
+    def __init__(
+        self,
+        path: py.path.local,
+        excinfo: Tuple["Type[Exception]", Exception, TracebackType],
+    ) -> None:
         super().__init__(path, excinfo)
         self.path = path
-        self.excinfo = excinfo  # type: Tuple[Type[Exception], Exception, TracebackType]
+        self.excinfo = excinfo
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{}: {} (from {})".format(
             self.excinfo[0].__name__, self.excinfo[1], self.path
         )
 
 
-def main(args=None, plugins=None) -> Union[int, ExitCode]:
+def filter_traceback_for_conftest_import_failure(
+    entry: _pytest._code.TracebackEntry,
+) -> bool:
+    """filters tracebacks entries which point to pytest internals or importlib.
+
+    Make a special case for importlib because we use it to import test modules and conftest files
+    in _pytest.pathlib.import_path.
+    """
+    return filter_traceback(entry) and "importlib" not in str(entry.path).split(os.sep)
+
+
+def main(
+    args: Optional[List[str]] = None,
+    plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
+) -> Union[int, ExitCode]:
     """ return exit code, after performing an in-process test run.
 
     :arg args: list of command line arguments.
@@ -114,7 +140,9 @@ def main(args=None, plugins=None) -> Union[int, ExitCode]:
             tw.line(
                 "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
             )
-            exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+            exc_info.traceback = exc_info.traceback.filter(
+                filter_traceback_for_conftest_import_failure
+            )
             exc_repr = (
                 exc_info.getrepr(style="short", chain=False)
                 if exc_info.traceback
@@ -164,7 +192,7 @@ class cmdline:  # compatibility namespace
     main = staticmethod(main)
 
 
-def filename_arg(path, optname):
+def filename_arg(path: str, optname: str) -> str:
     """ Argparse type validator for filename arguments.
 
     :path: path of filename
@@ -175,7 +203,7 @@ def filename_arg(path, optname):
     return path
 
 
-def directory_arg(path, optname):
+def directory_arg(path: str, optname: str) -> str:
     """Argparse type validator for directory arguments.
 
     :path: path of directory
@@ -226,13 +254,16 @@ builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def get_config(args=None, plugins=None):
+def get_config(
+    args: Optional[List[str]] = None,
+    plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
+) -> "Config":
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
     config = Config(
         pluginmanager,
         invocation_params=Config.InvocationParams(
-            args=args or (), plugins=plugins, dir=Path().resolve()
+            args=args or (), plugins=plugins, dir=Path.cwd(),
         ),
     )
 
@@ -242,10 +273,11 @@ def get_config(args=None, plugins=None):
 
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
+
     return config
 
 
-def get_plugin_manager():
+def get_plugin_manager() -> "PytestPluginManager":
     """
     Obtain a new instance of the
     :py:class:`_pytest.config.PytestPluginManager`, with default plugins
@@ -258,8 +290,9 @@ def get_plugin_manager():
 
 
 def _prepareconfig(
-    args: Optional[Union[py.path.local, List[str]]] = None, plugins=None
-):
+    args: Optional[Union[py.path.local, List[str]]] = None,
+    plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
+) -> "Config":
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -277,9 +310,10 @@ def _prepareconfig(
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
-        return pluginmanager.hook.pytest_cmdline_parse(
+        config = pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )
+        return config
     except BaseException:
         config._ensure_unconfigure()
         raise
@@ -295,28 +329,25 @@ class PytestPluginManager(PluginManager):
     * ``conftest.py`` loading during start-up;
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         import _pytest.assertion
 
         super().__init__("pytest")
         # The objects are module objects, only used generically.
-        self._conftest_plugins = set()  # type: Set[object]
+        self._conftest_plugins = set()  # type: Set[types.ModuleType]
 
-        # state related to local conftest plugins
-        # Maps a py.path.local to a list of module objects.
-        self._dirpath2confmods = {}  # type: Dict[Any, List[object]]
-        # Maps a py.path.local to a module object.
-        self._conftestpath2mod = {}  # type: Dict[Any, object]
-        self._confcutdir = None
+        # State related to local conftest plugins.
+        self._dirpath2confmods = {}  # type: Dict[py.path.local, List[types.ModuleType]]
+        self._conftestpath2mod = {}  # type: Dict[Path, types.ModuleType]
+        self._confcutdir = None  # type: Optional[py.path.local]
         self._noconftest = False
-        # Set of py.path.local's.
-        self._duplicatepaths = set()  # type: Set[Any]
+        self._duplicatepaths = set()  # type: Set[py.path.local]
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
         if os.environ.get("PYTEST_DEBUG"):
-            err = sys.stderr
-            encoding = getattr(err, "encoding", "utf8")
+            err = sys.stderr  # type: IO[str]
+            encoding = getattr(err, "encoding", "utf8")  # type: str
             try:
                 err = open(
                     os.dup(err.fileno()), mode=err.mode, buffering=1, encoding=encoding,
@@ -331,7 +362,7 @@ class PytestPluginManager(PluginManager):
         # Used to know when we are importing conftests after the pytest_configure stage
         self._configured = False
 
-    def parse_hookimpl_opts(self, plugin, name):
+    def parse_hookimpl_opts(self, plugin: _PluggyPlugin, name: str):
         # pytest hooks are always prefixed with pytest_
         # so we avoid accessing possibly non-readable attributes
         # (see issue #1073)
@@ -360,7 +391,7 @@ class PytestPluginManager(PluginManager):
                 opts.setdefault(name, hasattr(method, name) or name in known_marks)
         return opts
 
-    def parse_hookspec_opts(self, module_or_class, name):
+    def parse_hookspec_opts(self, module_or_class, name: str):
         opts = super().parse_hookspec_opts(module_or_class, name)
         if opts is None:
             method = getattr(module_or_class, name)
@@ -377,7 +408,9 @@ class PytestPluginManager(PluginManager):
                 }
         return opts
 
-    def register(self, plugin, name=None):
+    def register(
+        self, plugin: _PluggyPlugin, name: Optional[str] = None
+    ) -> Optional[str]:
         if name in _pytest.deprecated.DEPRECATED_EXTERNAL_PLUGINS:
             warnings.warn(
                 PytestConfigWarning(
@@ -387,8 +420,8 @@ class PytestPluginManager(PluginManager):
                     )
                 )
             )
-            return
-        ret = super().register(plugin, name)
+            return None
+        ret = super().register(plugin, name)  # type: Optional[str]
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
                 kwargs=dict(plugin=plugin, manager=self)
@@ -398,15 +431,16 @@ class PytestPluginManager(PluginManager):
                 self.consider_module(plugin)
         return ret
 
-    def getplugin(self, name):
+    def getplugin(self, name: str):
         # support deprecated naming because plugins (xdist e.g.) use it
-        return self.get_plugin(name)
+        plugin = self.get_plugin(name)  # type: Optional[_PluggyPlugin]
+        return plugin
 
-    def hasplugin(self, name):
+    def hasplugin(self, name: str) -> bool:
         """Return True if the plugin with the given name is registered."""
         return bool(self.get_plugin(name))
 
-    def pytest_configure(self, config):
+    def pytest_configure(self, config: "Config") -> None:
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
         config.addinivalue_line(
@@ -424,7 +458,7 @@ class PytestPluginManager(PluginManager):
     #
     # internal API for local conftest plugin handling
     #
-    def _set_initial_conftests(self, namespace):
+    def _set_initial_conftests(self, namespace: argparse.Namespace) -> None:
         """ load initial conftest files given a preparsed "namespace".
             As conftest files may add their own command line options
             which have arguments ('--my-opt somepath') we might get some
@@ -442,29 +476,33 @@ class PytestPluginManager(PluginManager):
         self._using_pyargs = namespace.pyargs
         testpaths = namespace.file_or_dir
         foundanchor = False
-        for path in testpaths:
-            path = str(path)
+        for testpath in testpaths:
+            path = str(testpath)
             # remove node-id syntax
             i = path.find("::")
             if i != -1:
                 path = path[:i]
             anchor = current.join(path, abs=1)
-            if exists(anchor):  # we found some file object
-                self._try_load_conftest(anchor)
+            if anchor.exists():  # we found some file object
+                self._try_load_conftest(anchor, namespace.importmode)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current)
+            self._try_load_conftest(current, namespace.importmode)
 
-    def _try_load_conftest(self, anchor):
-        self._getconftestmodules(anchor)
+    def _try_load_conftest(
+        self, anchor: py.path.local, importmode: Union[str, ImportMode]
+    ) -> None:
+        self._getconftestmodules(anchor, importmode)
         # let's also consider test* subdirs
         if anchor.check(dir=1):
             for x in anchor.listdir("test*"):
                 if x.check(dir=1):
-                    self._getconftestmodules(x)
+                    self._getconftestmodules(x, importmode)
 
     @lru_cache(maxsize=128)
-    def _getconftestmodules(self, path):
+    def _getconftestmodules(
+        self, path: py.path.local, importmode: Union[str, ImportMode],
+    ) -> List[types.ModuleType]:
         if self._noconftest:
             return []
 
@@ -477,18 +515,20 @@ class PytestPluginManager(PluginManager):
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir
         clist = []
-        for parent in directory.realpath().parts():
+        for parent in directory.parts():
             if self._confcutdir and self._confcutdir.relto(parent):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
-                mod = self._importconftest(conftestpath)
+                mod = self._importconftest(conftestpath, importmode)
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist
 
-    def _rget_with_confmod(self, name, path):
-        modules = self._getconftestmodules(path)
+    def _rget_with_confmod(
+        self, name: str, path: py.path.local, importmode: Union[str, ImportMode],
+    ) -> Tuple[types.ModuleType, Any]:
+        modules = self._getconftestmodules(path, importmode)
         for mod in reversed(modules):
             try:
                 return mod, getattr(mod, name)
@@ -496,7 +536,9 @@ class PytestPluginManager(PluginManager):
                 continue
         raise KeyError(name)
 
-    def _importconftest(self, conftestpath):
+    def _importconftest(
+        self, conftestpath: py.path.local, importmode: Union[str, ImportMode],
+    ) -> types.ModuleType:
         # Use a resolved Path object as key to avoid loading the same conftest twice
         # with build systems that create build directories containing
         # symlinks to actual files.
@@ -512,9 +554,11 @@ class PytestPluginManager(PluginManager):
             _ensure_removed_sysmodule(conftestpath.purebasename)
 
         try:
-            mod = conftestpath.pyimport()
+            mod = import_path(conftestpath, mode=importmode)
         except Exception as e:
-            raise ConftestImportFailure(conftestpath, sys.exc_info()) from e
+            assert e.__traceback__ is not None
+            exc_info = (type(e), e, e.__traceback__)
+            raise ConftestImportFailure(conftestpath, exc_info) from e
 
         self._check_non_top_pytest_plugins(mod, conftestpath)
 
@@ -530,7 +574,9 @@ class PytestPluginManager(PluginManager):
         self.consider_conftest(mod)
         return mod
 
-    def _check_non_top_pytest_plugins(self, mod, conftestpath):
+    def _check_non_top_pytest_plugins(
+        self, mod: types.ModuleType, conftestpath: py.path.local,
+    ) -> None:
         if (
             hasattr(mod, "pytest_plugins")
             and self._configured
@@ -552,7 +598,9 @@ class PytestPluginManager(PluginManager):
     #
     #
 
-    def consider_preparse(self, args, *, exclude_only=False):
+    def consider_preparse(
+        self, args: Sequence[str], *, exclude_only: bool = False
+    ) -> None:
         i = 0
         n = len(args)
         while i < n:
@@ -573,7 +621,7 @@ class PytestPluginManager(PluginManager):
                     continue
                 self.consider_pluginarg(parg)
 
-    def consider_pluginarg(self, arg):
+    def consider_pluginarg(self, arg: str) -> None:
         if arg.startswith("no:"):
             name = arg[3:]
             if name in essential_plugins:
@@ -598,21 +646,23 @@ class PytestPluginManager(PluginManager):
                     del self._name2plugin["pytest_" + name]
             self.import_plugin(arg, consider_entry_points=True)
 
-    def consider_conftest(self, conftestmodule):
+    def consider_conftest(self, conftestmodule: types.ModuleType) -> None:
         self.register(conftestmodule, name=conftestmodule.__file__)
 
-    def consider_env(self):
+    def consider_env(self) -> None:
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
-    def consider_module(self, mod):
+    def consider_module(self, mod: types.ModuleType) -> None:
         self._import_plugin_specs(getattr(mod, "pytest_plugins", []))
 
-    def _import_plugin_specs(self, spec):
+    def _import_plugin_specs(
+        self, spec: Union[None, types.ModuleType, str, Sequence[str]]
+    ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
         for import_spec in plugins:
             self.import_plugin(import_spec)
 
-    def import_plugin(self, modname, consider_entry_points=False):
+    def import_plugin(self, modname: str, consider_entry_points: bool = False) -> None:
         """
         Imports a plugin with ``modname``. If ``consider_entry_points`` is True, entry point
         names are also considered to find a plugin.
@@ -624,7 +674,6 @@ class PytestPluginManager(PluginManager):
         assert isinstance(modname, str), (
             "module name as text required, got %r" % modname
         )
-        modname = str(modname)
         if self.is_blocked(modname) or self.get_plugin(modname) is not None:
             return
 
@@ -641,7 +690,7 @@ class PytestPluginManager(PluginManager):
         except ImportError as e:
             raise ImportError(
                 'Error importing plugin "{}": {}'.format(modname, str(e.args[0]))
-            ).with_traceback(e.__traceback__)
+            ).with_traceback(e.__traceback__) from e
 
         except Skipped as e:
             from _pytest.warnings import _issue_warning_captured
@@ -656,27 +705,29 @@ class PytestPluginManager(PluginManager):
             self.register(mod, modname)
 
 
-def _get_plugin_specs_as_list(specs):
-    """
-    Parses a list of "plugin specs" and returns a list of plugin names.
-
-    Plugin specs can be given as a list of strings separated by "," or already as a list/tuple in
-    which case it is returned as a list. Specs can also be `None` in which case an
-    empty list is returned.
-    """
-    if specs is not None and not isinstance(specs, types.ModuleType):
-        if isinstance(specs, str):
-            specs = specs.split(",") if specs else []
-        if not isinstance(specs, (list, tuple)):
-            raise UsageError(
-                "Plugin specs must be a ','-separated string or a "
-                "list/tuple of strings for plugin names. Given: %r" % specs
-            )
+def _get_plugin_specs_as_list(
+    specs: Union[None, types.ModuleType, str, Sequence[str]]
+) -> List[str]:
+    """Parse a plugins specification into a list of plugin names."""
+    # None means empty.
+    if specs is None:
+        return []
+    # Workaround for #3899 - a submodule which happens to be called "pytest_plugins".
+    if isinstance(specs, types.ModuleType):
+        return []
+    # Comma-separated list.
+    if isinstance(specs, str):
+        return specs.split(",") if specs else []
+    # Direct specification.
+    if isinstance(specs, collections.abc.Sequence):
         return list(specs)
-    return []
+    raise UsageError(
+        "Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: %r"
+        % specs
+    )
 
 
-def _ensure_removed_sysmodule(modname):
+def _ensure_removed_sysmodule(modname: str) -> None:
     try:
         del sys.modules[modname]
     except KeyError:
@@ -691,7 +742,7 @@ class Notset:
 notset = Notset()
 
 
-def _iter_rewritable_modules(package_files):
+def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
     """
     Given an iterable of file names in a source distribution, return the "names" that should
     be marked for assertion rewrite (for example the package "pytest_mock/__init__.py" should
@@ -754,6 +805,10 @@ def _iter_rewritable_modules(package_files):
             yield from _iter_rewritable_modules(new_package_files)
 
 
+def _args_converter(args: Iterable[str]) -> Tuple[str, ...]:
+    return tuple(args)
+
+
 class Config:
     """
     Access to configuration values, pluginmanager and plugin hooks.
@@ -781,9 +836,9 @@ class Config:
             Plugins accessing ``InvocationParams`` must be aware of that.
         """
 
-        args = attr.ib(converter=tuple)
+        args = attr.ib(type=Tuple[str, ...], converter=_args_converter)
         """tuple of command-line arguments as passed to ``pytest.main()``."""
-        plugins = attr.ib()
+        plugins = attr.ib(type=Optional[Sequence[Union[str, _PluggyPlugin]]])
         """list of extra plugins, might be `None`."""
         dir = attr.ib(type=Path)
         """directory where ``pytest.main()`` was invoked from."""
@@ -798,7 +853,7 @@ class Config:
 
         if invocation_params is None:
             invocation_params = self.InvocationParams(
-                args=(), plugins=None, dir=Path().resolve()
+                args=(), plugins=None, dir=Path.cwd()
             )
 
         self.option = argparse.Namespace()
@@ -839,23 +894,23 @@ class Config:
             self.cache = None  # type: Optional[Cache]
 
     @property
-    def invocation_dir(self):
+    def invocation_dir(self) -> py.path.local:
         """Backward compatibility"""
         return py.path.local(str(self.invocation_params.dir))
 
-    def add_cleanup(self, func):
+    def add_cleanup(self, func: Callable[[], None]) -> None:
         """ Add a function to be called when the config object gets out of
         use (usually coninciding with pytest_unconfigure)."""
         self._cleanup.append(func)
 
-    def _do_configure(self):
+    def _do_configure(self) -> None:
         assert not self._configured
         self._configured = True
         with warnings.catch_warnings():
             warnings.simplefilter("default")
             self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
-    def _ensure_unconfigure(self):
+    def _ensure_unconfigure(self) -> None:
         if self._configured:
             self._configured = False
             self.hook.pytest_unconfigure(config=self)
@@ -864,10 +919,15 @@ class Config:
             fin = self._cleanup.pop()
             fin()
 
-    def get_terminal_writer(self):
-        return self.pluginmanager.get_plugin("terminalreporter")._tw
+    def get_terminal_writer(self) -> TerminalWriter:
+        terminalreporter = self.pluginmanager.get_plugin(
+            "terminalreporter"
+        )  # type: TerminalReporter
+        return terminalreporter._tw
 
-    def pytest_cmdline_parse(self, pluginmanager, args):
+    def pytest_cmdline_parse(
+        self, pluginmanager: PytestPluginManager, args: List[str]
+    ) -> "Config":
         try:
             self.parse(args)
         except UsageError:
@@ -891,9 +951,13 @@ class Config:
 
         return self
 
-    def notify_exception(self, excinfo, option=None):
+    def notify_exception(
+        self,
+        excinfo: ExceptionInfo[BaseException],
+        option: Optional[argparse.Namespace] = None,
+    ) -> None:
         if option and getattr(option, "fulltrace", False):
-            style = "long"
+            style = "long"  # type: _TracebackStyle
         else:
             style = "native"
         excrepr = excinfo.getrepr(
@@ -905,7 +969,7 @@ class Config:
                 sys.stderr.write("INTERNALERROR> %s\n" % line)
                 sys.stderr.flush()
 
-    def cwd_relative_nodeid(self, nodeid):
+    def cwd_relative_nodeid(self, nodeid: str) -> str:
         # nodeid's are relative to the rootpath, compute relative to cwd
         if self.invocation_dir != self.rootdir:
             fullpath = self.rootdir.join(nodeid)
@@ -913,7 +977,7 @@ class Config:
         return nodeid
 
     @classmethod
-    def fromdictargs(cls, option_dict, args):
+    def fromdictargs(cls, option_dict, args) -> "Config":
         """ constructor usable for subprocesses. """
         config = get_config(args)
         config.option.__dict__.update(option_dict)
@@ -931,24 +995,29 @@ class Config:
                 setattr(self.option, opt.dest, opt.default)
 
     @hookimpl(trylast=True)
-    def pytest_load_initial_conftests(self, early_config):
+    def pytest_load_initial_conftests(self, early_config: "Config") -> None:
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
     def _initini(self, args: Sequence[str]) -> None:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
-        r = determine_setup(
+        self.rootdir, self.inifile, self.inicfg = determine_setup(
             ns.inifilename,
             ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             config=self,
         )
-        self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info["rootdir"] = self.rootdir
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")
         self._parser.addini("minversion", "minimally required pytest version")
+        self._parser.addini(
+            "required_plugins",
+            "plugins that must be present for pytest to run",
+            type="args",
+            default=[],
+        )
         self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
@@ -971,7 +1040,7 @@ class Config:
                 self._mark_plugins_for_rewrite(hook)
         _warn_about_missing_assertion(mode)
 
-    def _mark_plugins_for_rewrite(self, hook):
+    def _mark_plugins_for_rewrite(self, hook) -> None:
         """
         Given an importhook, mark for rewrite any top-level
         modules or packages in the distribution package for
@@ -1030,6 +1099,7 @@ class Config:
         self.known_args_namespace = ns = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        self._validate_plugins()
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1052,8 +1122,9 @@ class Config:
                 )
             else:
                 raise
+        self._validate_keys()
 
-    def _checkversion(self):
+    def _checkversion(self) -> None:
         import pytest
 
         minver = self.inicfg.get("minversion", None)
@@ -1061,16 +1132,61 @@ class Config:
             # Imported lazily to improve start-up time.
             from packaging.version import Version
 
+            if not isinstance(minver, str):
+                raise pytest.UsageError(
+                    "%s: 'minversion' must be a single value" % self.inifile
+                )
+
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
-                    "%s:%d: requires pytest-%s, actual pytest-%s'"
-                    % (
-                        self.inicfg.config.path,
-                        self.inicfg.lineof("minversion"),
-                        minver,
-                        pytest.__version__,
-                    )
+                    "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
+                    % (self.inifile, minver, pytest.__version__,)
                 )
+
+    def _validate_keys(self) -> None:
+        for key in sorted(self._get_unknown_ini_keys()):
+            self._warn_or_fail_if_strict("Unknown config ini key: {}\n".format(key))
+
+    def _validate_plugins(self) -> None:
+        required_plugins = sorted(self.getini("required_plugins"))
+        if not required_plugins:
+            return
+
+        # Imported lazily to improve start-up time.
+        from packaging.version import Version
+        from packaging.requirements import InvalidRequirement, Requirement
+
+        plugin_info = self.pluginmanager.list_plugin_distinfo()
+        plugin_dist_info = {dist.project_name: dist.version for _, dist in plugin_info}
+
+        missing_plugins = []
+        for required_plugin in required_plugins:
+            spec = None
+            try:
+                spec = Requirement(required_plugin)
+            except InvalidRequirement:
+                missing_plugins.append(required_plugin)
+                continue
+
+            if spec.name not in plugin_dist_info:
+                missing_plugins.append(required_plugin)
+            elif Version(plugin_dist_info[spec.name]) not in spec.specifier:
+                missing_plugins.append(required_plugin)
+
+        if missing_plugins:
+            fail(
+                "Missing required plugins: {}".format(", ".join(missing_plugins)),
+                pytrace=False,
+            )
+
+    def _warn_or_fail_if_strict(self, message: str) -> None:
+        if self.known_args_namespace.strict_config:
+            fail(message, pytrace=False)
+        sys.stderr.write("WARNING: {}".format(message))
+
+    def _get_unknown_ini_keys(self) -> List[str]:
+        parser_inicfg = self._parser._inidict
+        return [name for name in self.inicfg if name not in parser_inicfg]
 
     def parse(self, args: List[str], addopts: bool = True) -> None:
         # parse given cmdline arguments into this config object.
@@ -1097,7 +1213,7 @@ class Config:
         except PrintHelp:
             pass
 
-    def addinivalue_line(self, name, line):
+    def addinivalue_line(self, name: str, line: str) -> None:
         """ add a line to an ini-file option. The option must have been
         declared but might not yet be set in which case the line becomes the
         the first line in its value. """
@@ -1106,7 +1222,7 @@ class Config:
         x.append(line)  # modifies the cached list inline
 
     def getini(self, name: str):
-        """ return configuration value from an :ref:`ini file <inifiles>`. If the
+        """ return configuration value from an :ref:`ini file <configfiles>`. If the
         specified name hasn't been registered through a prior
         :py:func:`parser.addini <_pytest.config.argparsing.Parser.addini>`
         call (usually from a plugin), a ValueError is raised. """
@@ -1116,13 +1232,13 @@ class Config:
             self._inicache[name] = val = self._getini(name)
             return val
 
-    def _getini(self, name: str) -> Any:
+    def _getini(self, name: str):
         try:
             description, type, default = self._parser._inidict[name]
-        except KeyError:
-            raise ValueError("unknown configuration value: {!r}".format(name))
-        value = self._get_override_ini_value(name)
-        if value is None:
+        except KeyError as e:
+            raise ValueError("unknown configuration value: {!r}".format(name)) from e
+        override_value = self._get_override_ini_value(name)
+        if override_value is None:
             try:
                 value = self.inicfg[name]
             except KeyError:
@@ -1131,29 +1247,52 @@ class Config:
                 if type is None:
                     return ""
                 return []
+        else:
+            value = override_value
+        # coerce the values based on types
+        # note: some coercions are only required if we are reading from .ini files, because
+        # the file format doesn't contain type information, but when reading from toml we will
+        # get either str or list of str values (see _parse_ini_config_from_pyproject_toml).
+        # for example:
+        #
+        #   ini:
+        #     a_line_list = "tests acceptance"
+        #   in this case, we need to split the string to obtain a list of strings
+        #
+        #   toml:
+        #     a_line_list = ["tests", "acceptance"]
+        #   in this case, we already have a list ready to use
+        #
         if type == "pathlist":
-            dp = py.path.local(self.inicfg.config.path).dirpath()
-            values = []
-            for relpath in shlex.split(value):
-                values.append(dp.join(relpath, abs=True))
-            return values
+            # TODO: This assert is probably not valid in all cases.
+            assert self.inifile is not None
+            dp = py.path.local(self.inifile).dirpath()
+            input_values = shlex.split(value) if isinstance(value, str) else value
+            return [dp.join(x, abs=True) for x in input_values]
         elif type == "args":
-            return shlex.split(value)
+            return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":
-            return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+            if isinstance(value, str):
+                return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+            else:
+                return value
         elif type == "bool":
-            return bool(_strtobool(value.strip()))
+            return _strtobool(str(value).strip())
         else:
             assert type is None
             return value
 
-    def _getconftest_pathlist(self, name, path):
+    def _getconftest_pathlist(
+        self, name: str, path: py.path.local
+    ) -> Optional[List[py.path.local]]:
         try:
-            mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
+            mod, relroots = self.pluginmanager._rget_with_confmod(
+                name, path, self.getoption("importmode")
+            )
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()
-        values = []
+        values = []  # type: List[py.path.local]
         for relroot in relroots:
             if not isinstance(relroot, py.path.local):
                 relroot = relroot.replace("/", py.path.local.sep)
@@ -1169,12 +1308,12 @@ class Config:
         for ini_config in self._override_ini:
             try:
                 key, user_ini_value = ini_config.split("=", 1)
-            except ValueError:
+            except ValueError as e:
                 raise UsageError(
                     "-o/--override-ini expects option=value style (got: {!r}).".format(
                         ini_config
                     )
-                )
+                ) from e
             else:
                 if key == name:
                     value = user_ini_value
@@ -1195,25 +1334,25 @@ class Config:
             if val is None and skip:
                 raise AttributeError(name)
             return val
-        except AttributeError:
+        except AttributeError as e:
             if default is not notset:
                 return default
             if skip:
                 import pytest
 
                 pytest.skip("no {!r} option found".format(name))
-            raise ValueError("no option named {!r}".format(name))
+            raise ValueError("no option named {!r}".format(name)) from e
 
-    def getvalue(self, name, path=None):
+    def getvalue(self, name: str, path=None):
         """ (deprecated, use getoption()) """
         return self.getoption(name)
 
-    def getvalueorskip(self, name, path=None):
+    def getvalueorskip(self, name: str, path=None):
         """ (deprecated, use getoption(skip=True)) """
         return self.getoption(name, skip=True)
 
 
-def _assertion_supported():
+def _assertion_supported() -> bool:
     try:
         assert False
     except AssertionError:
@@ -1222,7 +1361,7 @@ def _assertion_supported():
         return False
 
 
-def _warn_about_missing_assertion(mode):
+def _warn_about_missing_assertion(mode) -> None:
     if not _assertion_supported():
         if mode == "plain":
             sys.stderr.write(
@@ -1240,21 +1379,28 @@ def _warn_about_missing_assertion(mode):
             )
 
 
-def create_terminal_writer(config: Config, *args, **kwargs) -> TerminalWriter:
+def create_terminal_writer(
+    config: Config, file: Optional[TextIO] = None
+) -> TerminalWriter:
     """Create a TerminalWriter instance configured according to the options
     in the config object. Every code which requires a TerminalWriter object
     and has access to a config object should use this function.
     """
-    tw = TerminalWriter(*args, **kwargs)
+    tw = TerminalWriter(file=file)
     if config.option.color == "yes":
         tw.hasmarkup = True
-    if config.option.color == "no":
+    elif config.option.color == "no":
         tw.hasmarkup = False
+
+    if config.option.code_highlight == "yes":
+        tw.code_highlight = True
+    elif config.option.code_highlight == "no":
+        tw.code_highlight = False
     return tw
 
 
-def _strtobool(val):
-    """Convert a string representation of truth to true (1) or false (0).
+def _strtobool(val: str) -> bool:
+    """Convert a string representation of truth to True or False.
 
     True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
     are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
@@ -1264,8 +1410,8 @@ def _strtobool(val):
     """
     val = val.lower()
     if val in ("y", "yes", "t", "true", "on", "1"):
-        return 1
+        return True
     elif val in ("n", "no", "f", "false", "off", "0"):
-        return 0
+        return False
     else:
         raise ValueError("invalid truth value {!r}".format(val))

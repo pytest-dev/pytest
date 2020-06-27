@@ -7,6 +7,7 @@ import pytest
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
 from _pytest.pathlib import Path
+from _pytest.pathlib import symlink_or_skip
 
 
 def ConftestWithSetinitial(path):
@@ -22,6 +23,7 @@ def conftest_setinitial(conftest, args, confcutdir=None):
             self.confcutdir = str(confcutdir)
             self.noconftest = False
             self.pyargs = False
+            self.importmode = "prepend"
 
     conftest._set_initial_conftests(Namespace())
 
@@ -42,35 +44,38 @@ class TestConftestValueAccessGlobal:
     def test_basic_init(self, basedir):
         conftest = PytestPluginManager()
         p = basedir.join("adir")
-        assert conftest._rget_with_confmod("a", p)[1] == 1
+        assert conftest._rget_with_confmod("a", p, importmode="prepend")[1] == 1
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
         conftest = PytestPluginManager()
         assert not len(conftest._dirpath2confmods)
-        conftest._getconftestmodules(basedir)
+        conftest._getconftestmodules(basedir, importmode="prepend")
         snap1 = len(conftest._dirpath2confmods)
         assert snap1 == 1
-        conftest._getconftestmodules(basedir.join("adir"))
+        conftest._getconftestmodules(basedir.join("adir"), importmode="prepend")
         assert len(conftest._dirpath2confmods) == snap1 + 1
-        conftest._getconftestmodules(basedir.join("b"))
+        conftest._getconftestmodules(basedir.join("b"), importmode="prepend")
         assert len(conftest._dirpath2confmods) == snap1 + 2
 
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
         with pytest.raises(KeyError):
-            conftest._rget_with_confmod("a", basedir)
+            conftest._rget_with_confmod("a", basedir, importmode="prepend")
 
     def test_value_access_by_path(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
         adir = basedir.join("adir")
-        assert conftest._rget_with_confmod("a", adir)[1] == 1
-        assert conftest._rget_with_confmod("a", adir.join("b"))[1] == 1.5
+        assert conftest._rget_with_confmod("a", adir, importmode="prepend")[1] == 1
+        assert (
+            conftest._rget_with_confmod("a", adir.join("b"), importmode="prepend")[1]
+            == 1.5
+        )
 
     def test_value_access_with_confmod(self, basedir):
         startdir = basedir.join("adir", "b")
         startdir.ensure("xx", dir=True)
         conftest = ConftestWithSetinitial(startdir)
-        mod, value = conftest._rget_with_confmod("a", startdir)
+        mod, value = conftest._rget_with_confmod("a", startdir, importmode="prepend")
         assert value == 1.5
         path = py.path.local(mod.__file__)
         assert path.dirpath() == basedir.join("adir", "b")
@@ -90,7 +95,7 @@ def test_doubledash_considered(testdir):
     conf.ensure("conftest.py")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.basename, conf.basename])
-    values = conftest._getconftestmodules(conf)
+    values = conftest._getconftestmodules(conf, importmode="prepend")
     assert len(values) == 1
 
 
@@ -113,13 +118,13 @@ def test_conftest_global_import(testdir):
         import py, pytest
         from _pytest.config import PytestPluginManager
         conf = PytestPluginManager()
-        mod = conf._importconftest(py.path.local("conftest.py"))
+        mod = conf._importconftest(py.path.local("conftest.py"), importmode="prepend")
         assert mod.x == 3
         import conftest
         assert conftest is mod, (conftest, mod)
         subconf = py.path.local().ensure("sub", "conftest.py")
         subconf.write("y=4")
-        mod2 = conf._importconftest(subconf)
+        mod2 = conf._importconftest(subconf, importmode="prepend")
         assert mod != mod2
         assert mod2.y == 4
         import conftest
@@ -135,17 +140,17 @@ def test_conftestcutdir(testdir):
     p = testdir.mkdir("x")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [testdir.tmpdir], confcutdir=p)
-    values = conftest._getconftestmodules(p)
+    values = conftest._getconftestmodules(p, importmode="prepend")
     assert len(values) == 0
-    values = conftest._getconftestmodules(conf.dirpath())
+    values = conftest._getconftestmodules(conf.dirpath(), importmode="prepend")
     assert len(values) == 0
     assert conf not in conftest._conftestpath2mod
     # but we can still import a conftest directly
-    conftest._importconftest(conf)
-    values = conftest._getconftestmodules(conf.dirpath())
+    conftest._importconftest(conf, importmode="prepend")
+    values = conftest._getconftestmodules(conf.dirpath(), importmode="prepend")
     assert values[0].__file__.startswith(str(conf))
     # and all sub paths get updated properly
-    values = conftest._getconftestmodules(p)
+    values = conftest._getconftestmodules(p, importmode="prepend")
     assert len(values) == 1
     assert values[0].__file__.startswith(str(conf))
 
@@ -154,7 +159,7 @@ def test_conftestcutdir_inplace_considered(testdir):
     conf = testdir.makeconftest("")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.dirpath()], confcutdir=conf.dirpath())
-    values = conftest._getconftestmodules(conf.dirpath())
+    values = conftest._getconftestmodules(conf.dirpath(), importmode="prepend")
     assert len(values) == 1
     assert values[0].__file__.startswith(str(conf))
 
@@ -190,16 +195,25 @@ def test_conftest_confcutdir(testdir):
     result.stdout.no_fnmatch_line("*warning: could not load initial*")
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_conftest_symlink(testdir):
-    """Ensure that conftest.py is used for resolved symlinks."""
+    """
+    conftest.py discovery follows normal path resolution and does not resolve symlinks.
+    """
+    # Structure:
+    # /real
+    # /real/conftest.py
+    # /real/app
+    # /real/app/tests
+    # /real/app/tests/test_foo.py
+
+    # Links:
+    # /symlinktests -> /real/app/tests (running at symlinktests should fail)
+    # /symlink -> /real (running at /symlink should work)
+
     real = testdir.tmpdir.mkdir("real")
     realtests = real.mkdir("app").mkdir("tests")
-    testdir.tmpdir.join("symlinktests").mksymlinkto(realtests)
-    testdir.tmpdir.join("symlink").mksymlinkto(real)
+    symlink_or_skip(realtests, testdir.tmpdir.join("symlinktests"))
+    symlink_or_skip(real, testdir.tmpdir.join("symlink"))
     testdir.makepyfile(
         **{
             "real/app/tests/test_foo.py": "def test1(fixture): pass",
@@ -216,38 +230,20 @@ def test_conftest_symlink(testdir):
             ),
         }
     )
+
+    # Should fail because conftest cannot be found from the link structure.
     result = testdir.runpytest("-vs", "symlinktests")
-    result.stdout.fnmatch_lines(
-        [
-            "*conftest_loaded*",
-            "real/app/tests/test_foo.py::test1 fixture_used",
-            "PASSED",
-        ]
-    )
-    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*fixture 'fixture' not found*"])
+    assert result.ret == ExitCode.TESTS_FAILED
 
     # Should not cause "ValueError: Plugin already registered" (#4174).
     result = testdir.runpytest("-vs", "symlink")
     assert result.ret == ExitCode.OK
 
-    realtests.ensure("__init__.py")
-    result = testdir.runpytest("-vs", "symlinktests/test_foo.py::test1")
-    result.stdout.fnmatch_lines(
-        [
-            "*conftest_loaded*",
-            "real/app/tests/test_foo.py::test1 fixture_used",
-            "PASSED",
-        ]
-    )
-    assert result.ret == ExitCode.OK
 
-
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_conftest_symlink_files(testdir):
-    """Check conftest.py loading when running in directory with symlinks."""
+    """Symlinked conftest.py are found when pytest is executed in a directory with symlinked
+    files."""
     real = testdir.tmpdir.mkdir("real")
     source = {
         "app/test_foo.py": "def test1(fixture): pass",
@@ -271,7 +267,7 @@ def test_conftest_symlink_files(testdir):
     build = testdir.tmpdir.mkdir("build")
     build.mkdir("app")
     for f in source:
-        build.join(f).mksymlinkto(real.join(f))
+        symlink_or_skip(real.join(f), build.join(f))
     build.chdir()
     result = testdir.runpytest("-vs", "app/test_foo.py")
     result.stdout.fnmatch_lines(["*conftest_loaded*", "PASSED"])
@@ -348,13 +344,13 @@ def test_conftest_import_order(testdir, monkeypatch):
     ct2 = sub.join("conftest.py")
     ct2.write("")
 
-    def impct(p):
+    def impct(p, importmode):
         return p
 
     conftest = PytestPluginManager()
     conftest._confcutdir = testdir.tmpdir
     monkeypatch.setattr(conftest, "_importconftest", impct)
-    assert conftest._getconftestmodules(sub) == [ct1, ct2]
+    assert conftest._getconftestmodules(sub, importmode="prepend") == [ct1, ct2]
 
 
 def test_fixture_dependency(testdir):

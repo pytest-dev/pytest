@@ -9,7 +9,7 @@ In case of Python 2 and 3, the difference between the languages makes it even mo
 because many new Python 3 features cannot be used in a Python 2/3 compatible code base.
 
 Python 2.7 EOL has been reached `in 2020 <https://legacy.python.org/dev/peps/pep-0373/#id4>`__, with
-the last release planned for mid-April, 2020.
+the last release made in April, 2020.
 
 Python 3.4 EOL has been reached `in 2019 <https://www.python.org/dev/peps/pep-0429/#release-schedule>`__, with the last release made in March, 2019.
 

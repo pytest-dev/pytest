@@ -91,7 +91,8 @@ This has the following benefits:
     See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
-Note that using this scheme your test files must have **unique names**, because
+Note that this scheme has a drawback if you are using ``prepend`` :ref:`import mode <import-modes>`
+(which is the default): your test files must have **unique names**, because
 ``pytest`` will import them as *top-level* modules since there are no packages
 to derive a full package name from. In other words, the test files in the example above will
 be imported as ``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to
@@ -118,8 +119,11 @@ Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test
 you to have modules with the same name. But now this introduces a subtle problem: in order to load
 the test modules from the ``tests`` directory, pytest prepends the root of the repository to
 ``sys.path``, which adds the side-effect that now ``mypkg`` is also importable.
+
 This is problematic if you are using a tool like `tox`_ to test your package in a virtual environment,
 because you want to test the *installed* version of your package, not the local code from the repository.
+
+.. _`src-layout`:
 
 In this situation, it is **strongly** suggested to use a ``src`` layout where application root package resides in a
 sub-directory of your root:
@@ -144,6 +148,15 @@ sub-directory of your root:
 
 This layout prevents a lot of common pitfalls and has many benefits, which are better explained in this excellent
 `blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_.
+
+.. note::
+    The new ``--import-mode=importlib`` (see :ref:`import-modes`) doesn't have
+    any of the drawbacks above because ``sys.path`` and ``sys.modules`` are not changed when importing
+    test modules, so users that run
+    into this issue are strongly encouraged to try it and report if the new option works well for them.
+
+    The ``src`` directory layout is still strongly recommended however.
+
 
 Tests as part of application code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -190,8 +203,8 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 .. note::
 
-    If ``pytest`` finds an "a/b/test_module.py" test file while
-    recursing into the filesystem it determines the import name
+    In ``prepend`` and ``append`` import-modes, if pytest finds a ``"a/b/test_module.py"``
+    test file while recursing into the filesystem it determines the import name
     as follows:
 
     * determine ``basedir``: this is the first "upward" (towards the root)
@@ -211,6 +224,10 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     that in larger projects multiple test modules might import
     from each other and thus deriving a canonical import name helps
     to avoid surprises such as a test module getting imported twice.
+
+    With ``--import-mode=importlib`` things are less convoluted because
+    pytest doesn't need to change ``sys.path`` or ``sys.modules``, making things
+    much less surprising.
 
 
 .. _`virtualenv`: https://pypi.org/project/virtualenv/

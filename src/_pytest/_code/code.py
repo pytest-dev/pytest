@@ -15,6 +15,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterable
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Pattern
 from typing import Sequence
@@ -46,7 +47,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
     from weakref import ReferenceType
 
-    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value"]
+    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:
@@ -212,7 +213,7 @@ class TracebackEntry:
         return source.getstatement(self.lineno)
 
     @property
-    def path(self):
+    def path(self) -> Union[py.path.local, str]:
         """ path to the source code """
         return self.frame.code.path
 
@@ -728,7 +729,7 @@ class FormattedExcinfo:
                 failindent = indentstr
         return lines
 
-    def repr_locals(self, locals: Dict[str, object]) -> Optional["ReprLocals"]:
+    def repr_locals(self, locals: Mapping[str, object]) -> Optional["ReprLocals"]:
         if self.showlocals:
             lines = []
             keys = [loc for loc in locals if loc[0] != "@"]
@@ -927,8 +928,13 @@ class TerminalRepr:
         raise NotImplementedError()
 
 
+# This class is abstract -- only subclasses are instantiated.
 @attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ExceptionRepr(TerminalRepr):
+    # Provided by in subclasses.
+    reprcrash = None  # type: Optional[ReprFileLocation]
+    reprtraceback = None  # type: ReprTraceback
+
     def __attrs_post_init__(self):
         self.sections = []  # type: List[Tuple[str, str, str]]
 
@@ -1198,7 +1204,10 @@ _PY_DIR = py.path.local(py.__file__).dirpath()
 
 
 def filter_traceback(entry: TracebackEntry) -> bool:
-    """Return True if a TracebackEntry instance should be removed from tracebacks:
+    """Return True if a TracebackEntry instance should be included in tracebacks.
+
+    We hide traceback entries of:
+
     * dynamically generated code (no code to show up for it);
     * internal traceback from pytest or its internal libraries, py and pluggy.
     """

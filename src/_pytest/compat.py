@@ -1,6 +1,7 @@
 """
 python version compatibility code
 """
+import enum
 import functools
 import inspect
 import os
@@ -32,14 +33,22 @@ else:
 
 
 if TYPE_CHECKING:
+    from typing import NoReturn
     from typing import Type
+    from typing_extensions import Final
 
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 
 
-NOTSET = object()
+# fmt: off
+# Singleton type for NOTSET, as described in:
+# https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
+class NotSetType(enum.Enum):
+    token = 0
+NOTSET = NotSetType.token  # type: Final # noqa: E305
+# fmt: on
 
 MODULE_NOT_FOUND_ERROR = (
     "ModuleNotFoundError" if sys.version_info[:2] >= (3, 6) else "ImportError"
@@ -393,3 +402,38 @@ else:
     from collections import OrderedDict
 
     order_preserving_dict = OrderedDict
+
+
+# Perform exhaustiveness checking.
+#
+# Consider this example:
+#
+#     MyUnion = Union[int, str]
+#
+#     def handle(x: MyUnion) -> int {
+#         if isinstance(x, int):
+#             return 1
+#         elif isinstance(x, str):
+#             return 2
+#         else:
+#             raise Exception('unreachable')
+#
+# Now suppose we add a new variant:
+#
+#     MyUnion = Union[int, str, bytes]
+#
+# After doing this, we must remember ourselves to go and update the handle
+# function to handle the new variant.
+#
+# With `assert_never` we can do better:
+#
+#     // throw new Error('unreachable');
+#     return assert_never(x)
+#
+# Now, if we forget to handle the new variant, the type-checker will emit a
+# compile-time error, instead of the runtime error we would have gotten
+# previously.
+#
+# This also work for Enums (if you use `is` to compare) and Literals.
+def assert_never(value: "NoReturn") -> "NoReturn":
+    assert False, "Unhandled value: {} ({})".format(value, type(value).__name__)

@@ -179,7 +179,7 @@ In the failure traceback we see that the test function was called with a
 function.  The test function fails on our deliberate ``assert 0``.  Here is
 the exact protocol used by ``pytest`` to call the test function this way:
 
-1. pytest :ref:`finds <test discovery>` the ``test_ehlo`` because
+1. pytest :ref:`finds <test discovery>` the test ``test_ehlo`` because
    of the ``test_`` prefix.  The test function needs a function argument
    named ``smtp_connection``.  A matching fixture function is discovered by
    looking for a fixture-marked function named ``smtp_connection``.
@@ -665,6 +665,37 @@ Running it:
 voila! The ``smtp_connection`` fixture function picked up our mail server name
 from the module namespace.
 
+.. _`using-markers`:
+
+Using markers to pass data to fixtures
+-------------------------------------------------------------
+
+Using the :py:class:`request <FixtureRequest>` object, a fixture can also access
+markers which are applied to a test function. This can be useful to pass data
+into a fixture from a test:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def fixt(request):
+        marker = request.node.get_closest_marker("fixt_data")
+        if marker is None:
+            # Handle missing marker in some way...
+            data = None
+        else:
+            data = marker.args[0]
+
+        # Do something with the data
+        return data
+
+
+    @pytest.mark.fixt_data(42)
+    def test_fixt(fixt):
+        assert fixt == 42
+
 .. _`fixture-factory`:
 
 Factories as fixtures
@@ -828,7 +859,7 @@ be used with ``-k`` to select specific cases to run, and they will
 also identify the specific case when one is failing.  Running pytest
 with ``--collect-only`` will show the generated IDs.
 
-Numbers, strings, booleans and None will have their usual string
+Numbers, strings, booleans and ``None`` will have their usual string
 representation used in the test ID. For other objects, pytest will
 make a string based on the argument name.  It is possible to customise
 the string used in a test ID for a certain fixture value by using the
@@ -867,7 +898,7 @@ the string used in a test ID for a certain fixture value by using the
 The above shows how ``ids`` can be either a list of strings to use or
 a function which will be called with the fixture value and then
 has to return a string to use.  In the latter case if the function
-return ``None`` then pytest's auto-generated ID will be used.
+returns ``None`` then pytest's auto-generated ID will be used.
 
 Running the above tests results in the following test IDs being used:
 

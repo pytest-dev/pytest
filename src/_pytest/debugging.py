@@ -2,25 +2,40 @@
 import argparse
 import functools
 import sys
+import types
+from typing import Generator
+from typing import Tuple
+from typing import Union
 
 from _pytest import outcomes
+from _pytest._code import ExceptionInfo
+from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import hookimpl
+from _pytest.config import PytestPluginManager
+from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
+from _pytest.nodes import Node
+from _pytest.reports import BaseReport
+
+if TYPE_CHECKING:
+    from _pytest.capture import CaptureManager
+    from _pytest.runner import CallInfo
 
 
-def _validate_usepdb_cls(value):
+def _validate_usepdb_cls(value: str) -> Tuple[str, str]:
     """Validate syntax of --pdbcls option."""
     try:
         modname, classname = value.split(":")
-    except ValueError:
+    except ValueError as e:
         raise argparse.ArgumentTypeError(
             "{!r} is not in the format 'modname:classname'".format(value)
-        )
+        ) from e
     return (modname, classname)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "--pdb",
@@ -44,7 +59,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     import pdb
 
     if config.getvalue("trace"):
@@ -61,7 +76,7 @@ def pytest_configure(config):
 
     # NOTE: not using pytest_unconfigure, since it might get called although
     #       pytest_configure was not (if another plugin raises UsageError).
-    def fin():
+    def fin() -> None:
         (
             pdb.set_trace,
             pytestPDB._pluginmanager,
@@ -74,20 +89,20 @@ def pytest_configure(config):
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
 
-    _pluginmanager = None
-    _config = None
+    _pluginmanager = None  # type: PytestPluginManager
+    _config = None  # type: Config
     _saved = []  # type: list
     _recursive_debug = 0
     _wrapped_pdb_cls = None
 
     @classmethod
-    def _is_capturing(cls, capman):
+    def _is_capturing(cls, capman: "CaptureManager") -> Union[str, bool]:
         if capman:
             return capman.is_capturing()
         return False
 
     @classmethod
-    def _import_pdb_cls(cls, capman):
+    def _import_pdb_cls(cls, capman: "CaptureManager"):
         if not cls._config:
             import pdb
 
@@ -115,7 +130,7 @@ class pytestPDB:
                 value = ":".join((modname, classname))
                 raise UsageError(
                     "--pdbcls: could not import {!r}: {}".format(value, exc)
-                )
+                ) from exc
         else:
             import pdb
 
@@ -126,10 +141,12 @@ class pytestPDB:
         return wrapped_cls
 
     @classmethod
-    def _get_pdb_wrapper_class(cls, pdb_cls, capman):
+    def _get_pdb_wrapper_class(cls, pdb_cls, capman: "CaptureManager"):
         import _pytest.config
 
-        class PytestPdbWrapper(pdb_cls):
+        # Type ignored because mypy doesn't support "dynamic"
+        # inheritance like this.
+        class PytestPdbWrapper(pdb_cls):  # type: ignore[valid-type,misc] # noqa: F821
             _pytest_capman = capman
             _continued = False
 
@@ -248,7 +265,7 @@ class pytestPDB:
         return _pdb
 
     @classmethod
-    def set_trace(cls, *args, **kwargs):
+    def set_trace(cls, *args, **kwargs) -> None:
         """Invoke debugging via ``Pdb.set_trace``, dropping any IO capturing."""
         frame = sys._getframe().f_back
         _pdb = cls._init_pdb("set_trace", *args, **kwargs)
@@ -256,23 +273,26 @@ class pytestPDB:
 
 
 class PdbInvoke:
-    def pytest_exception_interact(self, node, call, report):
+    def pytest_exception_interact(
+        self, node: Node, call: "CallInfo", report: BaseReport
+    ) -> None:
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
             capman.suspend_global_capture(in_=True)
             out, err = capman.read_global_capture()
             sys.stdout.write(out)
             sys.stdout.write(err)
+        assert call.excinfo is not None
         _enter_pdb(node, call.excinfo, report)
 
-    def pytest_internalerror(self, excrepr, excinfo):
+    def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)
 
 
 class PdbTrace:
     @hookimpl(hookwrapper=True)
-    def pytest_pyfunc_call(self, pyfuncitem):
+    def pytest_pyfunc_call(self, pyfuncitem) -> Generator[None, None, None]:
         wrap_pytest_function_for_tracing(pyfuncitem)
         yield
 
@@ -303,7 +323,9 @@ def maybe_wrap_pytest_function_for_tracing(pyfuncitem):
         wrap_pytest_function_for_tracing(pyfuncitem)
 
 
-def _enter_pdb(node, excinfo, rep):
+def _enter_pdb(
+    node: Node, excinfo: ExceptionInfo[BaseException], rep: BaseReport
+) -> BaseReport:
     # XXX we re-use the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
@@ -327,12 +349,12 @@ def _enter_pdb(node, excinfo, rep):
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
     tb = _postmortem_traceback(excinfo)
-    rep._pdbshown = True
+    rep._pdbshown = True  # type: ignore[attr-defined] # noqa: F821
     post_mortem(tb)
     return rep
 
 
-def _postmortem_traceback(excinfo):
+def _postmortem_traceback(excinfo: ExceptionInfo[BaseException]) -> types.TracebackType:
     from doctest import UnexpectedException
 
     if isinstance(excinfo.value, UnexpectedException):
@@ -344,10 +366,11 @@ def _postmortem_traceback(excinfo):
         # Use the underlying exception instead:
         return excinfo.value.excinfo[2]
     else:
+        assert excinfo._excinfo is not None
         return excinfo._excinfo[2]
 
 
-def post_mortem(t):
+def post_mortem(t: types.TracebackType) -> None:
     p = pytestPDB._init_pdb("post_mortem")
     p.reset()
     p.interaction(None, t)

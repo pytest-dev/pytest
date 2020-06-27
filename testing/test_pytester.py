@@ -763,9 +763,38 @@ def test_testdir_outcomes_with_multiple_errors(testdir):
     """
     )
     result = testdir.runpytest(str(p1))
-    result.assert_outcomes(error=2)
+    result.assert_outcomes(errors=2)
 
-    assert result.parseoutcomes() == {"error": 2}
+    assert result.parseoutcomes() == {"errors": 2}
+
+
+def test_parse_summary_line_always_plural():
+    """Parsing summaries always returns plural nouns (#6505)"""
+    lines = [
+        "some output 1",
+        "some output 2",
+        "======= 1 failed, 1 passed, 1 warning, 1 error in 0.13s ====",
+        "done.",
+    ]
+    assert pytester.RunResult.parse_summary_nouns(lines) == {
+        "errors": 1,
+        "failed": 1,
+        "passed": 1,
+        "warnings": 1,
+    }
+
+    lines = [
+        "some output 1",
+        "some output 2",
+        "======= 1 failed, 1 passed, 2 warnings, 2 errors in 0.13s ====",
+        "done.",
+    ]
+    assert pytester.RunResult.parse_summary_nouns(lines) == {
+        "errors": 2,
+        "failed": 1,
+        "passed": 1,
+        "warnings": 2,
+    }
 
 
 def test_makefile_joins_absolute_path(testdir: Testdir) -> None:

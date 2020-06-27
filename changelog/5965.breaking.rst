@@ -1,0 +1,9 @@
+symlinks are no longer resolved during collection and matching `conftest.py` files with test file paths.
+
+Resolving symlinks for the current directory and during collection was introduced as a bugfix in 3.9.0, but it actually is a new feature which had unfortunate consequences in Windows and surprising results in other platforms.
+
+The team decided to step back on resolving symlinks at all, planning to review this in the future with a more solid solution (see discussion in
+`#6523 <https://github.com/pytest-dev/pytest/pull/6523>`__ for details).
+
+This might break test suites which made use of this feature; the fix is to create a symlink
+for the entire test tree, and not only to partial files/tress as it was possible previously.

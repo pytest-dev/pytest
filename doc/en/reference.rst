@@ -15,41 +15,41 @@ Functions
 pytest.approx
 ~~~~~~~~~~~~~
 
-.. autofunction:: _pytest.python_api.approx
+.. autofunction:: pytest.approx
 
 pytest.fail
 ~~~~~~~~~~~
 
 **Tutorial**: :ref:`skipping`
 
-.. autofunction:: _pytest.outcomes.fail
+.. autofunction:: pytest.fail
 
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.skip(msg, [allow_module_level=False])
+.. autofunction:: pytest.skip(msg, [allow_module_level=False])
 
 .. _`pytest.importorskip ref`:
 
 pytest.importorskip
 ~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.importorskip
+.. autofunction:: pytest.importorskip
 
 pytest.xfail
 ~~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.xfail
+.. autofunction:: pytest.xfail
 
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.exit
+.. autofunction:: pytest.exit
 
 pytest.main
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.config.main
+.. autofunction:: pytest.main
 
 pytest.param
 ~~~~~~~~~~~~
@@ -644,31 +644,6 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 
 .. autofunction:: pytest_plugin_registered
 
-Test running hooks
-~~~~~~~~~~~~~~~~~~
-
-All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
-
-.. autofunction:: pytest_runtestloop
-.. autofunction:: pytest_runtest_protocol
-.. autofunction:: pytest_runtest_logstart
-.. autofunction:: pytest_runtest_logfinish
-.. autofunction:: pytest_runtest_setup
-.. autofunction:: pytest_runtest_call
-.. autofunction:: pytest_runtest_teardown
-.. autofunction:: pytest_runtest_makereport
-
-For deeper understanding you may look at the default implementation of
-these hooks in :py:mod:`_pytest.runner` and maybe also
-in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
-and its input/output capturing in order to immediately drop
-into interactive debugging when a test failure occurs.
-
-The :py:mod:`_pytest.terminal` reported specifically uses
-the reporting hook to print information about a test run.
-
-.. autofunction:: pytest_pyfunc_call
-
 Collection hooks
 ~~~~~~~~~~~~~~~~
 
@@ -693,6 +668,28 @@ items, delete or otherwise amend the test items:
 .. autofunction:: pytest_collection_modifyitems
 
 .. autofunction:: pytest_collection_finish
+
+Test running (runtest) hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
+
+.. autofunction:: pytest_runtestloop
+.. autofunction:: pytest_runtest_protocol
+.. autofunction:: pytest_runtest_logstart
+.. autofunction:: pytest_runtest_logfinish
+.. autofunction:: pytest_runtest_setup
+.. autofunction:: pytest_runtest_call
+.. autofunction:: pytest_runtest_teardown
+.. autofunction:: pytest_runtest_makereport
+
+For deeper understanding you may look at the default implementation of
+these hooks in :py:mod:`_pytest.runner` and maybe also
+in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
+and its input/output capturing in order to immediately drop
+into interactive debugging when a test failure occurs.
+
+.. autofunction:: pytest_pyfunc_call
 
 Reporting hooks
 ~~~~~~~~~~~~~~~
@@ -761,6 +758,14 @@ Collector
 .. autoclass:: _pytest.nodes.Collector()
     :members:
     :show-inheritance:
+
+CollectReport
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.reports.CollectReport()
+    :members:
+    :show-inheritance:
+    :inherited-members:
 
 Config
 ~~~~~~
@@ -881,7 +886,7 @@ Session
 TestReport
 ~~~~~~~~~~
 
-.. autoclass:: _pytest.runner.TestReport()
+.. autoclass:: _pytest.reports.TestReport()
     :members:
     :show-inheritance:
     :inherited-members:
@@ -1019,17 +1024,17 @@ UsageError
 Configuration Options
 ---------------------
 
-Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini`` or ``setup.cfg``
-file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
-(``[tool:pytest]`` for ``setup.cfg`` files).
+Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``pyproject.toml``, ``tox.ini`` or ``setup.cfg``
+file, usually located at the root of your repository. To see each file format in details, see
+:ref:`config file formats`.
 
 .. warning::
-    Usage of ``setup.cfg`` is not recommended unless for very simple use cases. ``.cfg``
+    Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
     files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
     down problems.
-    When possible, it is recommended to use the latter files to hold your pytest configuration.
+    When possible, it is recommended to use the latter files, or ``pyproject.toml``, to hold your pytest configuration.
 
-Configuration file options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
+Configuration options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
 
    pytest -o console_output_style=classic -o cache_dir=/tmp/mycache
@@ -1056,8 +1061,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: cache_dir
-
-
 
    Sets a directory where stores content of cache plugin. Default directory is
    ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
@@ -1559,6 +1562,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    to collect those tests.
 
    See :ref:`change naming conventions` for more detailed examples.
+
+
+.. confval:: required_plugins
+
+   A space separated list of plugins that must be present for pytest to run.
+   Plugins can be listed with or without version specifiers directly following
+   their name. Whitespace between different version specifiers is not allowed.
+   If any one of the plugins is not found, emit an error.
+
+   .. code-block:: ini
+
+       [pytest]
+       required_plugins = pytest-django>=3.0.0,<4.0.0 pytest-html pytest-xdist>=1.0.0
 
 
 .. confval:: testpaths

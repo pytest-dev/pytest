@@ -6,6 +6,7 @@ import os
 import sys
 import textwrap
 from io import StringIO
+from typing import cast
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -17,9 +18,11 @@ import _pytest.config
 import _pytest.terminal
 import pytest
 from _pytest._io.wcwidth import wcswidth
+from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
+from _pytest.reports import CollectReport
 from _pytest.terminal import _folded_skips
 from _pytest.terminal import _get_line_with_reprcrash_message
 from _pytest.terminal import _plugin_nameversions
@@ -695,6 +698,29 @@ class TestTerminalFunctional:
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines(["plugins: *"])
 
+    def test_no_header_trailer_info(self, testdir, request):
+        testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        testdir.makepyfile(
+            """
+            def test_passes():
+                pass
+        """
+        )
+        result = testdir.runpytest("--no-header")
+        verinfo = ".".join(map(str, sys.version_info[:3]))
+        result.stdout.no_fnmatch_line(
+            "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s"
+            % (
+                sys.platform,
+                verinfo,
+                pytest.__version__,
+                py.__version__,
+                pluggy.__version__,
+            )
+        )
+        if request.config.pluginmanager.list_plugin_distinfo():
+            result.stdout.no_fnmatch_line("plugins: *")
+
     def test_header(self, testdir):
         testdir.tmpdir.join("tests").ensure_dir()
         testdir.tmpdir.join("gui").ensure_dir()
@@ -703,10 +729,10 @@ class TestTerminalFunctional:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["rootdir: *test_header0"])
 
-        # with inifile
+        # with configfile
         testdir.makeini("""[pytest]""")
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
 
         # with testpaths option, and not passing anything in the command-line
         testdir.makeini(
@@ -717,12 +743,42 @@ class TestTerminalFunctional:
         )
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            ["rootdir: *test_header0, inifile: tox.ini, testpaths: tests, gui"]
+            ["rootdir: *test_header0, configfile: tox.ini, testpaths: tests, gui"]
         )
 
         # with testpaths option, passing directory in command-line: do not show testpaths then
         result = testdir.runpytest("tests")
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, inifile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
+
+    def test_no_header(self, testdir):
+        testdir.tmpdir.join("tests").ensure_dir()
+        testdir.tmpdir.join("gui").ensure_dir()
+
+        # with testpaths option, and not passing anything in the command-line
+        testdir.makeini(
+            """
+            [pytest]
+            testpaths = tests gui
+        """
+        )
+        result = testdir.runpytest("--no-header")
+        result.stdout.no_fnmatch_line(
+            "rootdir: *test_header0, inifile: tox.ini, testpaths: tests, gui"
+        )
+
+        # with testpaths option, passing directory in command-line: do not show testpaths then
+        result = testdir.runpytest("tests", "--no-header")
+        result.stdout.no_fnmatch_line("rootdir: *test_header0, inifile: tox.ini")
+
+    def test_no_summary(self, testdir):
+        p1 = testdir.makepyfile(
+            """
+            def test_no_summary():
+                assert false
+        """
+        )
+        result = testdir.runpytest(p1, "--no-summary")
+        result.stdout.no_fnmatch_line("*= FAILURES =*")
 
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile(
@@ -1043,17 +1099,17 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     assert "collected 10 items" in result.stdout.str()
 
 
-def test_getreportopt():
+def test_getreportopt() -> None:
     from _pytest.terminal import _REPORTCHARS_DEFAULT
 
-    class Config:
+    class FakeConfig:
         class Option:
             reportchars = _REPORTCHARS_DEFAULT
             disable_warnings = False
 
         option = Option()
 
-    config = Config()
+    config = cast(Config, FakeConfig())
 
     assert _REPORTCHARS_DEFAULT == "fE"
 
@@ -1478,6 +1534,21 @@ def test_terminal_summary_warnings_header_once(testdir):
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 1
+
+
+@pytest.mark.filterwarnings("default")
+def test_terminal_no_summary_warnings_header_once(testdir):
+    testdir.makepyfile(
+        """
+        def test_failure():
+            import warnings
+            warnings.warn("warning_from_" + "test")
+            assert 0
+    """
+    )
+    result = testdir.runpytest("--no-summary")
+    result.stdout.no_fnmatch_line("*= warnings summary =*")
+    result.stdout.no_fnmatch_line("*= short test summary info =*")
 
 
 @pytest.fixture(scope="session")
@@ -1994,7 +2065,7 @@ class TestProgressWithTeardown:
         output.stdout.re_match_lines([r"[\.E]{40} \s+ \[100%\]"])
 
 
-def test_skip_reasons_folding():
+def test_skip_reasons_folding() -> None:
     path = "xyz"
     lineno = 3
     message = "justso"
@@ -2003,28 +2074,28 @@ def test_skip_reasons_folding():
     class X:
         pass
 
-    ev1 = X()
+    ev1 = cast(CollectReport, X())
     ev1.when = "execute"
     ev1.skipped = True
     ev1.longrepr = longrepr
 
-    ev2 = X()
+    ev2 = cast(CollectReport, X())
     ev2.when = "execute"
     ev2.longrepr = longrepr
     ev2.skipped = True
 
     # ev3 might be a collection report
-    ev3 = X()
+    ev3 = cast(CollectReport, X())
     ev3.when = "collect"
     ev3.longrepr = longrepr
     ev3.skipped = True
 
     values = _folded_skips(py.path.local(), [ev1, ev2, ev3])
     assert len(values) == 1
-    num, fspath, lineno, reason = values[0]
+    num, fspath, lineno_, reason = values[0]
     assert num == 3
     assert fspath == path
-    assert lineno == lineno
+    assert lineno_ == lineno
     assert reason == message
 
 
@@ -2052,8 +2123,8 @@ def test_line_with_reprcrash(monkeypatch):
     def check(msg, width, expected):
         __tracebackhide__ = True
         if msg:
-            rep.longrepr.reprcrash.message = msg
-        actual = _get_line_with_reprcrash_message(config, rep(), width)
+            rep.longrepr.reprcrash.message = msg  # type: ignore
+        actual = _get_line_with_reprcrash_message(config, rep(), width)  # type: ignore
 
         assert actual == expected
         if actual != "{} {}".format(mocked_verbose_word, mocked_pos):
@@ -2125,6 +2196,12 @@ def test_collecterror(testdir):
             "*= 1 error in *",
         ]
     )
+
+
+def test_no_summary_collecterror(testdir):
+    p1 = testdir.makepyfile("raise SyntaxError()")
+    result = testdir.runpytest("-ra", "--no-summary", str(p1))
+    result.stdout.no_fnmatch_line("*= ERRORS =*")
 
 
 def test_via_exec(testdir: Testdir) -> None:

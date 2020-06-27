@@ -2,6 +2,7 @@
 from _pytest import python
 from _pytest import unittest
 from _pytest.config import hookimpl
+from _pytest.nodes import Item
 
 
 @hookimpl(trylast=True)
@@ -20,7 +21,7 @@ def teardown_nose(item):
             call_optional(item.parent.obj, "teardown")
 
 
-def is_potential_nosetest(item):
+def is_potential_nosetest(item: Item) -> bool:
     # extra check needed since we do not do nose style setup/teardown
     # on direct unittest style classes
     return isinstance(item, python.Function) and not isinstance(

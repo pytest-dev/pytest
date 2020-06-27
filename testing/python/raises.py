@@ -6,9 +6,9 @@ from _pytest.outcomes import Failed
 
 
 class TestRaises:
-    def test_check_callable(self):
+    def test_check_callable(self) -> None:
         with pytest.raises(TypeError, match=r".* must be callable"):
-            pytest.raises(RuntimeError, "int('qwe')")
+            pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload] # noqa: F821
 
     def test_raises(self):
         excinfo = pytest.raises(ValueError, int, "qwe")
@@ -18,19 +18,19 @@ class TestRaises:
         excinfo = pytest.raises(ValueError, int, "hello")
         assert "invalid literal" in str(excinfo.value)
 
-    def test_raises_callable_no_exception(self):
+    def test_raises_callable_no_exception(self) -> None:
         class A:
             def __call__(self):
                 pass
 
         try:
             pytest.raises(ValueError, A())
-        except pytest.raises.Exception:
+        except pytest.fail.Exception:
             pass
 
-    def test_raises_falsey_type_error(self):
+    def test_raises_falsey_type_error(self) -> None:
         with pytest.raises(TypeError):
-            with pytest.raises(AssertionError, match=0):
+            with pytest.raises(AssertionError, match=0):  # type: ignore[call-overload] # noqa: F821
                 raise AssertionError("ohai")
 
     def test_raises_repr_inflight(self):
@@ -126,23 +126,23 @@ class TestRaises:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*2 failed*"])
 
-    def test_noclass(self):
+    def test_noclass(self) -> None:
         with pytest.raises(TypeError):
-            pytest.raises("wrong", lambda: None)
+            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload] # noqa: F821
 
-    def test_invalid_arguments_to_raises(self):
+    def test_invalid_arguments_to_raises(self) -> None:
         with pytest.raises(TypeError, match="unknown"):
-            with pytest.raises(TypeError, unknown="bogus"):
+            with pytest.raises(TypeError, unknown="bogus"):  # type: ignore[call-overload] # noqa: F821
                 raise ValueError()
 
     def test_tuple(self):
         with pytest.raises((KeyError, ValueError)):
             raise KeyError("oops")
 
-    def test_no_raise_message(self):
+    def test_no_raise_message(self) -> None:
         try:
             pytest.raises(ValueError, int, "0")
-        except pytest.raises.Exception as e:
+        except pytest.fail.Exception as e:
             assert e.msg == "DID NOT RAISE {}".format(repr(ValueError))
         else:
             assert False, "Expected pytest.raises.Exception"
@@ -150,7 +150,7 @@ class TestRaises:
         try:
             with pytest.raises(ValueError):
                 pass
-        except pytest.raises.Exception as e:
+        except pytest.fail.Exception as e:
             assert e.msg == "DID NOT RAISE {}".format(repr(ValueError))
         else:
             assert False, "Expected pytest.raises.Exception"
@@ -252,7 +252,7 @@ class TestRaises:
         ):
             pytest.raises(ClassLooksIterableException, lambda: None)
 
-    def test_raises_with_raising_dunder_class(self):
+    def test_raises_with_raising_dunder_class(self) -> None:
         """Test current behavior with regard to exceptions via __class__ (#4284)."""
 
         class CrappyClass(Exception):
@@ -262,12 +262,12 @@ class TestRaises:
                 assert False, "via __class__"
 
         with pytest.raises(AssertionError) as excinfo:
-            with pytest.raises(CrappyClass()):
+            with pytest.raises(CrappyClass()):  # type: ignore[call-overload] # noqa: F821
                 pass
         assert "via __class__" in excinfo.value.args[0]
 
     def test_raises_context_manager_with_kwargs(self):
         with pytest.raises(TypeError) as excinfo:
-            with pytest.raises(Exception, foo="bar"):
+            with pytest.raises(Exception, foo="bar"):  # type: ignore[call-overload] # noqa: F821
                 pass
         assert "Unexpected keyword arguments" in str(excinfo.value)

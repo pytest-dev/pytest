@@ -13,14 +13,14 @@ from _pytest.nodes import Node
 class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
-    def test_pytest_exists_in_namespace_all(self, attr, modulename):
+    def test_pytest_exists_in_namespace_all(self, attr: str, modulename: str) -> None:
         module = sys.modules[modulename]
-        assert attr in module.__all__
+        assert attr in module.__all__  # type: ignore
 
-    def test_pytest_mark_notcallable(self):
+    def test_pytest_mark_notcallable(self) -> None:
         mark = Mark()
         with pytest.raises(TypeError):
-            mark()
+            mark()  # type: ignore[operator] # noqa: F821
 
     def test_mark_with_param(self):
         def some_function(abc):
@@ -30,10 +30,11 @@ class TestMark:
             pass
 
         assert pytest.mark.foo(some_function) is some_function
-        assert pytest.mark.foo.with_args(some_function) is not some_function
+        marked_with_args = pytest.mark.foo.with_args(some_function)
+        assert marked_with_args is not some_function  # type: ignore[comparison-overlap] # noqa: F821
 
         assert pytest.mark.foo(SomeClass) is SomeClass
-        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass
+        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap] # noqa: F821
 
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
@@ -705,6 +706,36 @@ class TestFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=1)
 
+    def test_reevaluate_dynamic_expr(self, testdir):
+        """#7360"""
+        py_file1 = testdir.makepyfile(
+            test_reevaluate_dynamic_expr1="""
+            import pytest
+
+            skip = True
+
+            @pytest.mark.skipif("skip")
+            def test_should_skip():
+                assert True
+        """
+        )
+        py_file2 = testdir.makepyfile(
+            test_reevaluate_dynamic_expr2="""
+            import pytest
+
+            skip = False
+
+            @pytest.mark.skipif("skip")
+            def test_should_not_skip():
+                assert True
+        """
+        )
+
+        file_name1 = os.path.basename(py_file1.strpath)
+        file_name2 = os.path.basename(py_file2.strpath)
+        reprec = testdir.inline_run(file_name1, file_name2)
+        reprec.assertoutcome(passed=1, skipped=1)
+
 
 class TestKeywordSelection:
     def test_select_simple(self, testdir):
@@ -1044,9 +1075,9 @@ def test_markers_from_parametrize(testdir):
     result.assert_outcomes(passed=4)
 
 
-def test_pytest_param_id_requires_string():
+def test_pytest_param_id_requires_string() -> None:
     with pytest.raises(TypeError) as excinfo:
-        pytest.param(id=True)
+        pytest.param(id=True)  # type: ignore[arg-type] # noqa: F821
     (msg,) = excinfo.value.args
     assert msg == "Expected id to be a string, got <class 'bool'>: True"
 

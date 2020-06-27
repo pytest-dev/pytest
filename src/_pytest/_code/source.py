@@ -215,7 +215,7 @@ class Source:
             newex.offset = ex.offset
             newex.lineno = ex.lineno
             newex.text = ex.text
-            raise newex
+            raise newex from ex
         else:
             if flag & ast.PyCF_ONLY_AST:
                 assert isinstance(co, ast.AST)

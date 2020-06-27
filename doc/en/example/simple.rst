@@ -3,6 +3,50 @@
 Basic patterns and examples
 ==========================================================
 
+How to change command line options defaults
+-------------------------------------------
+
+It can be tedious to type the same series of command line options
+every time you use ``pytest``.  For example, if you always want to see
+detailed info on skipped and xfailed tests, as well as have terser "dot"
+progress output, you can write it into a configuration file:
+
+.. code-block:: ini
+
+    # content of pytest.ini
+    [pytest]
+    addopts = -ra -q
+
+
+Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
+line options while the environment is in use:
+
+.. code-block:: bash
+
+    export PYTEST_ADDOPTS="-v"
+
+Here's how the command-line is built in the presence of ``addopts`` or the environment variable:
+
+.. code-block:: text
+
+    <pytest.ini:addopts> $PYTEST_ADDOPTS <extra command-line arguments>
+
+So if the user executes in the command-line:
+
+.. code-block:: bash
+
+    pytest -m slow
+
+The actual command line executed is:
+
+.. code-block:: bash
+
+    pytest -ra -q -v -m slow
+
+Note that as usual for other command-line applications, in case of conflicting options the last one wins, so the example
+above will show verbose output because ``-v`` overwrites ``-q``.
+
+
 .. _request example:
 
 Pass different values to a test function, depending on command line options

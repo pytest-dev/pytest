@@ -6,6 +6,7 @@ from .code import Frame
 from .code import getfslineno
 from .code import getrawcode
 from .code import Traceback
+from .code import TracebackEntry
 from .source import compile_ as compile
 from .source import Source
 
@@ -17,6 +18,7 @@ __all__ = [
     "getfslineno",
     "getrawcode",
     "Traceback",
+    "TracebackEntry",
     "compile",
     "Source",
 ]

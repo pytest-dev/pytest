@@ -2,11 +2,17 @@
 import os
 import sys
 from argparse import Action
+from typing import List
+from typing import Optional
+from typing import Union
 
 import py
 
 import pytest
+from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
+from _pytest.config.argparsing import Parser
 
 
 class HelpAction(Action):
@@ -36,7 +42,7 @@ class HelpAction(Action):
             raise PrintHelp
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
         "--version",
@@ -90,7 +96,7 @@ def pytest_addoption(parser):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_cmdline_parse():
     outcome = yield
-    config = outcome.get_result()
+    config = outcome.get_result()  # type: Config
     if config.option.debug:
         path = os.path.abspath("pytestdebug.log")
         debugfile = open(path, "w")
@@ -109,7 +115,7 @@ def pytest_cmdline_parse():
         undo_tracing = config.pluginmanager.enable_tracing()
         sys.stderr.write("writing pytestdebug information to %s\n" % path)
 
-        def unset_tracing():
+        def unset_tracing() -> None:
             debugfile.close()
             sys.stderr.write("wrote pytestdebug information to %s\n" % debugfile.name)
             config.trace.root.setwriter(None)
@@ -118,7 +124,7 @@ def pytest_cmdline_parse():
         config.add_cleanup(unset_tracing)
 
 
-def showversion(config):
+def showversion(config: Config) -> None:
     if config.option.version > 1:
         sys.stderr.write(
             "This is pytest version {}, imported from {}\n".format(
@@ -133,7 +139,7 @@ def showversion(config):
         sys.stderr.write("pytest {}\n".format(pytest.__version__))
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     if config.option.version > 0:
         showversion(config)
         return 0
@@ -142,9 +148,10 @@ def pytest_cmdline_main(config):
         showhelp(config)
         config._ensure_unconfigure()
         return 0
+    return None
 
 
-def showhelp(config):
+def showhelp(config: Config) -> None:
     import textwrap
 
     reporter = config.pluginmanager.get_plugin("terminalreporter")
@@ -217,7 +224,7 @@ def showhelp(config):
 conftest_options = [("pytest_plugins", "list of plugin names to load")]
 
 
-def getpluginversioninfo(config):
+def getpluginversioninfo(config: Config) -> List[str]:
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
     if plugininfo:
@@ -229,7 +236,7 @@ def getpluginversioninfo(config):
     return lines
 
 
-def pytest_report_header(config):
+def pytest_report_header(config: Config) -> List[str]:
     lines = []
     if config.option.debug or config.option.traceconfig:
         lines.append(

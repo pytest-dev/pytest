@@ -2,68 +2,74 @@ import sys
 
 import pytest
 from _pytest.runner import runtestprotocol
-from _pytest.skipping import MarkEvaluator
+from _pytest.skipping import evaluate_skip_marks
+from _pytest.skipping import evaluate_xfail_marks
 from _pytest.skipping import pytest_runtest_setup
 
 
-class TestEvaluator:
+class TestEvaluation:
     def test_no_marker(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        evalskipif = MarkEvaluator(item, "skipif")
-        assert not evalskipif
-        assert not evalskipif.istrue()
+        skipped = evaluate_skip_marks(item)
+        assert not skipped
 
-    def test_marked_no_args(self, testdir):
+    def test_marked_xfail_no_args(self, testdir):
         item = testdir.getitem(
             """
             import pytest
-            @pytest.mark.xyz
+            @pytest.mark.xfail
             def test_func():
                 pass
         """
         )
-        ev = MarkEvaluator(item, "xyz")
-        assert ev
-        assert ev.istrue()
-        expl = ev.getexplanation()
-        assert expl == ""
-        assert not ev.get("run", False)
+        xfailed = evaluate_xfail_marks(item)
+        assert xfailed
+        assert xfailed.reason == ""
+        assert xfailed.run
+
+    def test_marked_skipif_no_args(self, testdir):
+        item = testdir.getitem(
+            """
+            import pytest
+            @pytest.mark.skipif
+            def test_func():
+                pass
+        """
+        )
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == ""
 
     def test_marked_one_arg(self, testdir):
         item = testdir.getitem(
             """
             import pytest
-            @pytest.mark.xyz("hasattr(os, 'sep')")
+            @pytest.mark.skipif("hasattr(os, 'sep')")
             def test_func():
                 pass
         """
         )
-        ev = MarkEvaluator(item, "xyz")
-        assert ev
-        assert ev.istrue()
-        expl = ev.getexplanation()
-        assert expl == "condition: hasattr(os, 'sep')"
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == "condition: hasattr(os, 'sep')"
 
     def test_marked_one_arg_with_reason(self, testdir):
         item = testdir.getitem(
             """
             import pytest
-            @pytest.mark.xyz("hasattr(os, 'sep')", attr=2, reason="hello world")
+            @pytest.mark.skipif("hasattr(os, 'sep')", attr=2, reason="hello world")
             def test_func():
                 pass
         """
         )
-        ev = MarkEvaluator(item, "xyz")
-        assert ev
-        assert ev.istrue()
-        expl = ev.getexplanation()
-        assert expl == "hello world"
-        assert ev.get("attr") == 2
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == "hello world"
 
     def test_marked_one_arg_twice(self, testdir):
         lines = [
             """@pytest.mark.skipif("not hasattr(os, 'murks')")""",
-            """@pytest.mark.skipif("hasattr(os, 'murks')")""",
+            """@pytest.mark.skipif(condition="hasattr(os, 'murks')")""",
         ]
         for i in range(0, 2):
             item = testdir.getitem(
@@ -76,11 +82,9 @@ class TestEvaluator:
             """
                 % (lines[i], lines[(i + 1) % 2])
             )
-            ev = MarkEvaluator(item, "skipif")
-            assert ev
-            assert ev.istrue()
-            expl = ev.getexplanation()
-            assert expl == "condition: not hasattr(os, 'murks')"
+            skipped = evaluate_skip_marks(item)
+            assert skipped
+            assert skipped.reason == "condition: not hasattr(os, 'murks')"
 
     def test_marked_one_arg_twice2(self, testdir):
         item = testdir.getitem(
@@ -92,13 +96,11 @@ class TestEvaluator:
                 pass
         """
         )
-        ev = MarkEvaluator(item, "skipif")
-        assert ev
-        assert ev.istrue()
-        expl = ev.getexplanation()
-        assert expl == "condition: not hasattr(os, 'murks')"
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == "condition: not hasattr(os, 'murks')"
 
-    def test_marked_skip_with_not_string(self, testdir):
+    def test_marked_skipif_with_boolean_without_reason(self, testdir) -> None:
         item = testdir.getitem(
             """
             import pytest
@@ -107,12 +109,33 @@ class TestEvaluator:
                 pass
         """
         )
-        ev = MarkEvaluator(item, "skipif")
-        exc = pytest.raises(pytest.fail.Exception, ev.istrue)
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            evaluate_skip_marks(item)
+        assert excinfo.value.msg is not None
         assert (
-            """Failed: you need to specify reason=STRING when using booleans as conditions."""
-            in exc.value.msg
+            """Error evaluating 'skipif': you need to specify reason=STRING when using booleans as conditions."""
+            in excinfo.value.msg
         )
+
+    def test_marked_skipif_with_invalid_boolean(self, testdir) -> None:
+        item = testdir.getitem(
+            """
+            import pytest
+
+            class InvalidBool:
+                def __bool__(self):
+                    raise TypeError("INVALID")
+
+            @pytest.mark.skipif(InvalidBool(), reason="xxx")
+            def test_func():
+                pass
+        """
+        )
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            evaluate_skip_marks(item)
+        assert excinfo.value.msg is not None
+        assert "Error evaluating 'skipif' condition as a boolean" in excinfo.value.msg
+        assert "INVALID" in excinfo.value.msg
 
     def test_skipif_class(self, testdir):
         (item,) = testdir.getitems(
@@ -125,10 +148,9 @@ class TestEvaluator:
         """
         )
         item.config._hackxyz = 3
-        ev = MarkEvaluator(item, "skipif")
-        assert ev.istrue()
-        expl = ev.getexplanation()
-        assert expl == "condition: config._hackxyz"
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == "condition: config._hackxyz"
 
 
 class TestXFail:
@@ -904,7 +926,7 @@ def test_reportchars_all_error(testdir):
     result.stdout.fnmatch_lines(["ERROR*test_foo*"])
 
 
-def test_errors_in_xfail_skip_expressions(testdir):
+def test_errors_in_xfail_skip_expressions(testdir) -> None:
     testdir.makepyfile(
         """
         import pytest
@@ -921,17 +943,18 @@ def test_errors_in_xfail_skip_expressions(testdir):
     )
     result = testdir.runpytest()
     markline = "                ^"
-    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (6,):
+    pypy_version_info = getattr(sys, "pypy_version_info", None)
+    if pypy_version_info is not None and pypy_version_info < (6,):
         markline = markline[5:]
     elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
         markline = markline[4:]
     result.stdout.fnmatch_lines(
         [
             "*ERROR*test_nameerror*",
-            "*evaluating*skipif*expression*",
+            "*evaluating*skipif*condition*",
             "*asd*",
             "*ERROR*test_syntax*",
-            "*evaluating*xfail*expression*",
+            "*evaluating*xfail*condition*",
             "    syntax error",
             markline,
             "SyntaxError: invalid syntax",
@@ -957,25 +980,12 @@ def test_xfail_skipif_with_globals(testdir):
     result.stdout.fnmatch_lines(["*SKIP*x == 3*", "*XFAIL*test_boolean*", "*x == 3*"])
 
 
-def test_direct_gives_error(testdir):
-    testdir.makepyfile(
-        """
-        import pytest
-        @pytest.mark.skipif(True)
-        def test_skip1():
-            pass
-    """
-    )
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*1 error*"])
-
-
 def test_default_markers(testdir):
     result = testdir.runpytest("--markers")
     result.stdout.fnmatch_lines(
         [
-            "*skipif(*condition)*skip*",
-            "*xfail(*condition, reason=None, run=True, raises=None, strict=False)*expected failure*",
+            "*skipif(condition, ..., [*], reason=...)*skip*",
+            "*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=xfail_strict)*expected failure*",
         ]
     )
 
@@ -1170,7 +1180,9 @@ def test_mark_xfail_item(testdir):
         class MyItem(pytest.Item):
             nodeid = 'foo'
             def setup(self):
-                marker = pytest.mark.xfail(True, reason="Expected failure")
+                marker = pytest.mark.xfail("1 == 2", reason="Expected failure - false")
+                self.add_marker(marker)
+                marker = pytest.mark.xfail(True, reason="Expected failure - true")
                 self.add_marker(marker)
             def runtest(self):
                 assert False

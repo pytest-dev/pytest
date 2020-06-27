@@ -1,10 +1,11 @@
 """Issue #7110"""
 import asyncio
+from typing import List
 
 import asynctest
 
 
-teardowns = []
+teardowns = []  # type: List[None]
 
 
 class Test(asynctest.TestCase):

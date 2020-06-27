@@ -130,6 +130,7 @@ def test_syntax_errors(expr: str, column: int, message: str) -> None:
         "123.232",
         "True",
         "False",
+        "None",
         "if",
         "else",
         "while",

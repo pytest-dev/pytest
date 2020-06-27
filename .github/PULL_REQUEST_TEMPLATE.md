@@ -7,6 +7,10 @@ Here is a quick checklist that should be present in PRs.
 - [ ] Include new tests or update existing tests when applicable.
 - [X] Allow maintainers to push and squash when merging my commits. Please uncheck this if you prefer to squash the commits yourself.
 
+If this change fixes an issue, please:
+
+- [ ] Add text like ``closes #XYZW`` to the PR description and/or commits (where ``XYZW`` is the issue number). See the [github docs](https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) for more information.
+
 Unless your change is trivial or a small documentation fix (e.g., a typo or reword of a small section) please:
 
 - [ ] Create a new changelog file in the `changelog` folder, with a name like `<ISSUE NUMBER>.<TYPE>.rst`. See [changelog/README.rst](https://github.com/pytest-dev/pytest/blob/master/changelog/README.rst) for details.

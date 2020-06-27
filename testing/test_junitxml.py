@@ -1,16 +1,22 @@
 import os
 import platform
 from datetime import datetime
+from typing import cast
+from typing import List
+from typing import Tuple
 from xml.dom import minidom
 
 import py
 import xmlschema
 
 import pytest
+from _pytest.compat import TYPE_CHECKING
+from _pytest.config import Config
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
 from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
+from _pytest.reports import TestReport
 from _pytest.store import Store
 
 
@@ -201,23 +207,23 @@ class TestPython:
         timestamp = datetime.strptime(node["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
         assert start_time <= timestamp < datetime.now()
 
-    def test_timing_function(self, testdir, run_and_parse):
+    def test_timing_function(self, testdir, run_and_parse, mock_timing):
         testdir.makepyfile(
             """
-            import time, pytest
+            from _pytest import timing
             def setup_module():
-                time.sleep(0.01)
+                timing.sleep(1)
             def teardown_module():
-                time.sleep(0.01)
+                timing.sleep(2)
             def test_sleep():
-                time.sleep(0.01)
+                timing.sleep(4)
         """
         )
         result, dom = run_and_parse()
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         val = tnode["time"]
-        assert round(float(val), 2) >= 0.03
+        assert float(val) == 7.0
 
     @pytest.mark.parametrize("duration_report", ["call", "total"])
     def test_junit_duration_report(
@@ -260,7 +266,7 @@ class TestPython:
 
             @pytest.fixture
             def arg(request):
-                raise ValueError()
+                raise ValueError("Error reason")
             def test_function(arg):
                 pass
         """
@@ -272,7 +278,7 @@ class TestPython:
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(classname="test_setup_error", name="test_function")
         fnode = tnode.find_first_by_tag("error")
-        fnode.assert_attr(message="test setup failure")
+        fnode.assert_attr(message='failed on setup with "ValueError: Error reason"')
         assert "ValueError" in fnode.toxml()
 
     @parametrize_families
@@ -284,7 +290,7 @@ class TestPython:
             @pytest.fixture
             def arg():
                 yield
-                raise ValueError()
+                raise ValueError('Error reason')
             def test_function(arg):
                 pass
         """
@@ -295,7 +301,7 @@ class TestPython:
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(classname="test_teardown_error", name="test_function")
         fnode = tnode.find_first_by_tag("error")
-        fnode.assert_attr(message="test teardown failure")
+        fnode.assert_attr(message='failed on teardown with "ValueError: Error reason"')
         assert "ValueError" in fnode.toxml()
 
     @parametrize_families
@@ -322,7 +328,9 @@ class TestPython:
         fnode = first.find_first_by_tag("failure")
         fnode.assert_attr(message="Exception: Call Exception")
         snode = second.find_first_by_tag("error")
-        snode.assert_attr(message="test teardown failure")
+        snode.assert_attr(
+            message='failed on teardown with "Exception: Teardown Exception"'
+        )
 
     @parametrize_families
     def test_skip_contains_name_reason(self, testdir, run_and_parse, xunit_family):
@@ -860,10 +868,13 @@ def test_mangle_test_address():
     assert newnames == ["a.my.py.thing", "Class", "method", "[a-1-::]"]
 
 
-def test_dont_configure_on_slaves(tmpdir):
-    gotten = []
+def test_dont_configure_on_workers(tmpdir) -> None:
+    gotten = []  # type: List[object]
 
     class FakeConfig:
+        if TYPE_CHECKING:
+            workerinput = None
+
         def __init__(self):
             self.pluginmanager = self
             self.option = self
@@ -877,12 +888,12 @@ def test_dont_configure_on_slaves(tmpdir):
         xmlpath = str(tmpdir.join("junix.xml"))
         register = gotten.append
 
-    fake_config = FakeConfig()
+    fake_config = cast(Config, FakeConfig())
     from _pytest import junitxml
 
     junitxml.pytest_configure(fake_config)
     assert len(gotten) == 1
-    FakeConfig.slaveinput = None
+    FakeConfig.workerinput = None
     junitxml.pytest_configure(fake_config)
     assert len(gotten) == 1
 
@@ -1089,18 +1100,18 @@ def test_double_colon_split_method_issue469(testdir, run_and_parse):
     node.assert_attr(name="test_func[double::colon]")
 
 
-def test_unicode_issue368(testdir):
+def test_unicode_issue368(testdir) -> None:
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
     ustr = "ВНИ!"
 
     class Report(BaseReport):
         longrepr = ustr
-        sections = []
+        sections = []  # type: List[Tuple[str, str]]
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
 
-    test_report = Report()
+    test_report = cast(TestReport, Report())
 
     # hopefully this is not too brittle ...
     log.pytest_sessionstart()
@@ -1113,7 +1124,7 @@ def test_unicode_issue368(testdir):
     node_reporter.append_skipped(test_report)
     test_report.longrepr = "filename", 1, "Skipped: 卡嘣嘣"
     node_reporter.append_skipped(test_report)
-    test_report.wasxfail = ustr
+    test_report.wasxfail = ustr  # type: ignore[attr-defined] # noqa: F821
     node_reporter.append_skipped(test_report)
     log.pytest_sessionfinish()
 
@@ -1241,7 +1252,7 @@ def test_record_fixtures_xunit2(testdir, fixture_name, run_and_parse):
 
 
 def test_random_report_log_xdist(testdir, monkeypatch, run_and_parse):
-    """xdist calls pytest_runtest_logreport as they are executed by the slaves,
+    """xdist calls pytest_runtest_logreport as they are executed by the workers,
     with nodes from several nodes overlapping, so junitxml must cope with that
     to produce correct reports. #1064
     """
@@ -1363,17 +1374,17 @@ def test_fancy_items_regression(testdir, run_and_parse):
 
 
 @parametrize_families
-def test_global_properties(testdir, xunit_family):
+def test_global_properties(testdir, xunit_family) -> None:
     path = testdir.tmpdir.join("test_global_properties.xml")
     log = LogXML(str(path), None, family=xunit_family)
 
     class Report(BaseReport):
-        sections = []
+        sections = []  # type: List[Tuple[str, str]]
         nodeid = "test_node_id"
 
     log.pytest_sessionstart()
-    log.add_global_property("foo", 1)
-    log.add_global_property("bar", 2)
+    log.add_global_property("foo", "1")
+    log.add_global_property("bar", "2")
     log.pytest_sessionfinish()
 
     dom = minidom.parse(str(path))
@@ -1397,19 +1408,19 @@ def test_global_properties(testdir, xunit_family):
     assert actual == expected
 
 
-def test_url_property(testdir):
+def test_url_property(testdir) -> None:
     test_url = "http://www.github.com/pytest-dev"
     path = testdir.tmpdir.join("test_url_property.xml")
     log = LogXML(str(path), None)
 
     class Report(BaseReport):
         longrepr = "FooBarBaz"
-        sections = []
+        sections = []  # type: List[Tuple[str, str]]
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
         url = test_url
 
-    test_report = Report()
+    test_report = cast(TestReport, Report())
 
     log.pytest_sessionstart()
     node_reporter = log._opentestcase(test_report)

@@ -3,6 +3,7 @@ from decimal import Decimal
 from fractions import Fraction
 from operator import eq
 from operator import ne
+from typing import Optional
 
 import pytest
 from pytest import approx
@@ -121,18 +122,22 @@ class TestApprox:
             assert a == approx(x, rel=5e-1, abs=0.0)
             assert a != approx(x, rel=5e-2, abs=0.0)
 
-    def test_negative_tolerance(self):
+    @pytest.mark.parametrize(
+        ("rel", "abs"),
+        [
+            (-1e100, None),
+            (None, -1e100),
+            (1e100, -1e100),
+            (-1e100, 1e100),
+            (-1e100, -1e100),
+        ],
+    )
+    def test_negative_tolerance(
+        self, rel: Optional[float], abs: Optional[float]
+    ) -> None:
         # Negative tolerances are not allowed.
-        illegal_kwargs = [
-            dict(rel=-1e100),
-            dict(abs=-1e100),
-            dict(rel=1e100, abs=-1e100),
-            dict(rel=-1e100, abs=1e100),
-            dict(rel=-1e100, abs=-1e100),
-        ]
-        for kwargs in illegal_kwargs:
-            with pytest.raises(ValueError):
-                1.1 == approx(1, **kwargs)
+        with pytest.raises(ValueError):
+            1.1 == approx(1, rel, abs)
 
     def test_inf_tolerance(self):
         # Everything should be equal if the tolerance is infinite.
@@ -143,19 +148,21 @@ class TestApprox:
             assert a == approx(x, rel=0.0, abs=inf)
             assert a == approx(x, rel=inf, abs=inf)
 
-    def test_inf_tolerance_expecting_zero(self):
+    def test_inf_tolerance_expecting_zero(self) -> None:
         # If the relative tolerance is zero but the expected value is infinite,
         # the actual tolerance is a NaN, which should be an error.
-        illegal_kwargs = [dict(rel=inf, abs=0.0), dict(rel=inf, abs=inf)]
-        for kwargs in illegal_kwargs:
-            with pytest.raises(ValueError):
-                1 == approx(0, **kwargs)
+        with pytest.raises(ValueError):
+            1 == approx(0, rel=inf, abs=0.0)
+        with pytest.raises(ValueError):
+            1 == approx(0, rel=inf, abs=inf)
 
-    def test_nan_tolerance(self):
-        illegal_kwargs = [dict(rel=nan), dict(abs=nan), dict(rel=nan, abs=nan)]
-        for kwargs in illegal_kwargs:
-            with pytest.raises(ValueError):
-                1.1 == approx(1, **kwargs)
+    def test_nan_tolerance(self) -> None:
+        with pytest.raises(ValueError):
+            1.1 == approx(1, rel=nan)
+        with pytest.raises(ValueError):
+            1.1 == approx(1, abs=nan)
+        with pytest.raises(ValueError):
+            1.1 == approx(1, rel=nan, abs=nan)
 
     def test_reasonable_defaults(self):
         # Whatever the defaults are, they should work for numbers close to 1
@@ -428,10 +435,11 @@ class TestApprox:
         assert a12 != approx(a21)
         assert a21 != approx(a12)
 
-    def test_doctests(self, mocked_doctest_runner):
+    def test_doctests(self, mocked_doctest_runner) -> None:
         import doctest
 
         parser = doctest.DocTestParser()
+        assert approx.__doc__ is not None
         test = parser.get_doctest(
             approx.__doc__, {"approx": approx}, approx.__name__, None, None
         )

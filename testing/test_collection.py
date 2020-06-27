@@ -3,12 +3,11 @@ import pprint
 import sys
 import textwrap
 
-import py
-
 import pytest
 from _pytest.config import ExitCode
 from _pytest.main import _in_venv
 from _pytest.main import Session
+from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Testdir
 
 
@@ -634,13 +633,14 @@ class TestSession:
 
 
 class Test_getinitialnodes:
-    def test_global_file(self, testdir, tmpdir):
+    def test_global_file(self, testdir, tmpdir) -> None:
         x = tmpdir.ensure("x.py")
         with tmpdir.as_cwd():
             config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == "x.py"
+        assert col.parent is not None
         assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config
@@ -1163,29 +1163,21 @@ def test_collect_pyargs_with_testpaths(testdir, monkeypatch):
     result.stdout.fnmatch_lines(["*1 passed in*"])
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_collect_symlink_file_arg(testdir):
-    """Test that collecting a direct symlink, where the target does not match python_files works (#4325)."""
+    """Collect a direct symlink works even if it does not match python_files (#4325)."""
     real = testdir.makepyfile(
         real="""
         def test_nodeid(request):
-            assert request.node.nodeid == "real.py::test_nodeid"
+            assert request.node.nodeid == "symlink.py::test_nodeid"
         """
     )
     symlink = testdir.tmpdir.join("symlink.py")
-    symlink.mksymlinkto(real)
+    symlink_or_skip(real, symlink)
     result = testdir.runpytest("-v", symlink)
-    result.stdout.fnmatch_lines(["real.py::test_nodeid PASSED*", "*1 passed in*"])
+    result.stdout.fnmatch_lines(["symlink.py::test_nodeid PASSED*", "*1 passed in*"])
     assert result.ret == 0
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 def test_collect_symlink_out_of_tree(testdir):
     """Test collection of symlink via out-of-tree rootdir."""
     sub = testdir.tmpdir.join("sub")
@@ -1203,7 +1195,7 @@ def test_collect_symlink_out_of_tree(testdir):
 
     out_of_tree = testdir.tmpdir.join("out_of_tree").ensure(dir=True)
     symlink_to_sub = out_of_tree.join("symlink_to_sub")
-    symlink_to_sub.mksymlinkto(sub)
+    symlink_or_skip(sub, symlink_to_sub)
     sub.chdir()
     result = testdir.runpytest("-vs", "--rootdir=%s" % sub, symlink_to_sub)
     result.stdout.fnmatch_lines(
@@ -1269,22 +1261,19 @@ def test_collect_pkg_init_only(testdir):
     result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
 
 
-@pytest.mark.skipif(
-    not hasattr(py.path.local, "mksymlinkto"),
-    reason="symlink not available on this platform",
-)
 @pytest.mark.parametrize("use_pkg", (True, False))
 def test_collect_sub_with_symlinks(use_pkg, testdir):
+    """Collection works with symlinked files and broken symlinks"""
     sub = testdir.mkdir("sub")
     if use_pkg:
         sub.ensure("__init__.py")
-    sub.ensure("test_file.py").write("def test_file(): pass")
+    sub.join("test_file.py").write("def test_file(): pass")
 
     # Create a broken symlink.
-    sub.join("test_broken.py").mksymlinkto("test_doesnotexist.py")
+    symlink_or_skip("test_doesnotexist.py", sub.join("test_broken.py"))
 
     # Symlink that gets collected.
-    sub.join("test_symlink.py").mksymlinkto("test_file.py")
+    symlink_or_skip("test_file.py", sub.join("test_symlink.py"))
 
     result = testdir.runpytest("-v", str(sub))
     result.stdout.fnmatch_lines(
@@ -1353,3 +1342,83 @@ def test_fscollector_from_parent(tmpdir, request):
         parent=request.session, fspath=tmpdir / "foo", x=10
     )
     assert collector.x == 10
+
+
+class TestImportModeImportlib:
+    def test_collect_duplicate_names(self, testdir):
+        """--import-mode=importlib can import modules with same names that are not in packages."""
+        testdir.makepyfile(
+            **{
+                "tests_a/test_foo.py": "def test_foo1(): pass",
+                "tests_b/test_foo.py": "def test_foo2(): pass",
+            }
+        )
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        result.stdout.fnmatch_lines(
+            [
+                "tests_a/test_foo.py::test_foo1 *",
+                "tests_b/test_foo.py::test_foo2 *",
+                "* 2 passed in *",
+            ]
+        )
+
+    def test_conftest(self, testdir):
+        """Directory containing conftest modules are not put in sys.path as a side-effect of
+        importing them."""
+        tests_dir = testdir.tmpdir.join("tests")
+        testdir.makepyfile(
+            **{
+                "tests/conftest.py": "",
+                "tests/test_foo.py": """
+                import sys
+                def test_check():
+                    assert r"{tests_dir}" not in sys.path
+                """.format(
+                    tests_dir=tests_dir
+                ),
+            }
+        )
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    def setup_conftest_and_foo(self, testdir):
+        """Setup a tests folder to be used to test if modules in that folder can be imported
+        due to side-effects of --import-mode or not."""
+        testdir.makepyfile(
+            **{
+                "tests/conftest.py": "",
+                "tests/foo.py": """
+                    def foo(): return 42
+                """,
+                "tests/test_foo.py": """
+                    def test_check():
+                        from foo import foo
+                        assert foo() == 42
+                """,
+            }
+        )
+
+    def test_modules_importable_as_side_effect(self, testdir):
+        """In import-modes `prepend` and `append`, we are able to import modules from folders
+        containing conftest.py files due to the side effect of changing sys.path."""
+        self.setup_conftest_and_foo(testdir)
+        result = testdir.runpytest("-v", "--import-mode=prepend")
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
+
+    def test_modules_not_importable_as_side_effect(self, testdir):
+        """In import-mode `importlib`, modules in folders containing conftest.py are not
+        importable, as don't change sys.path or sys.modules as side effect of importing
+        the conftest.py file.
+        """
+        self.setup_conftest_and_foo(testdir)
+        result = testdir.runpytest("-v", "--import-mode=importlib")
+        exc_name = (
+            "ModuleNotFoundError" if sys.version_info[:2] > (3, 5) else "ImportError"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "*{}: No module named 'foo'".format(exc_name),
+                "tests?test_foo.py:2: {}".format(exc_name),
+                "* 1 failed in *",
+            ]
+        )

@@ -1,7 +1,10 @@
 """ generic mechanism for marking and selecting python functions. """
+import typing
 import warnings
 from typing import AbstractSet
+from typing import List
 from typing import Optional
+from typing import Union
 
 import attr
 
@@ -16,8 +19,10 @@ from .structures import MarkGenerator
 from .structures import ParameterSet
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import MINUS_K_COLON
 from _pytest.deprecated import MINUS_K_DASH
 from _pytest.store import StoreKey
@@ -25,13 +30,18 @@ from _pytest.store import StoreKey
 if TYPE_CHECKING:
     from _pytest.nodes import Item
 
+
 __all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
 
 
 old_mark_config_key = StoreKey[Optional[Config]]()
 
 
-def param(*values, **kw):
+def param(
+    *values: object,
+    marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
+    id: Optional[str] = None
+) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
 
@@ -48,10 +58,10 @@ def param(*values, **kw):
     :keyword marks: a single mark or a list of marks to be applied to this parameter set.
     :keyword str id: the id to attribute to this parameter set.
     """
-    return ParameterSet.param(*values, **kw)
+    return ParameterSet.param(*values, marks=marks, id=id)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(
         "-k",
@@ -94,7 +104,7 @@ def pytest_addoption(parser):
 
 
 @hookimpl(tryfirst=True)
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     import _pytest.config
 
     if config.option.markers:
@@ -109,6 +119,8 @@ def pytest_cmdline_main(config):
             tw.line()
         config._ensure_unconfigure()
         return 0
+
+    return None
 
 
 @attr.s(slots=True)
@@ -135,9 +147,9 @@ class KeywordMatcher:
         # Add the names of the current item and any parent items
         import pytest
 
-        for item in item.listchain():
-            if not isinstance(item, (pytest.Instance, pytest.Session)):
-                mapped_names.add(item.name)
+        for node in item.listchain():
+            if not isinstance(node, (pytest.Instance, pytest.Session)):
+                mapped_names.add(node.name)
 
         # Add the names added as extra keywords to current or parent items
         mapped_names.update(item.listextrakeywords())
@@ -162,7 +174,7 @@ class KeywordMatcher:
         return False
 
 
-def deselect_by_keyword(items, config):
+def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
     keywordexpr = config.option.keyword.lstrip()
     if not keywordexpr:
         return
@@ -218,7 +230,7 @@ class MarkMatcher:
         return name in self.own_mark_names
 
 
-def deselect_by_mark(items, config):
+def deselect_by_mark(items: "List[Item]", config: Config) -> None:
     matchexpr = config.option.markexpr
     if not matchexpr:
         return
@@ -243,12 +255,12 @@ def deselect_by_mark(items, config):
         items[:] = remaining
 
 
-def pytest_collection_modifyitems(items, config):
+def pytest_collection_modifyitems(items: "List[Item]", config: Config) -> None:
     deselect_by_keyword(items, config)
     deselect_by_mark(items, config)
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config._store[old_mark_config_key] = MARK_GEN._config
     MARK_GEN._config = config
 
@@ -261,5 +273,5 @@ def pytest_configure(config):
         )
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     MARK_GEN._config = config._store.get(old_mark_config_key, None)

@@ -1,23 +1,32 @@
 import atexit
+import contextlib
 import fnmatch
+import importlib.util
 import itertools
 import os
 import shutil
 import sys
 import uuid
 import warnings
+from enum import Enum
 from functools import partial
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
 from os.path import sep
 from posixpath import sep as posix_sep
+from types import ModuleType
 from typing import Iterable
 from typing import Iterator
+from typing import Optional
 from typing import Set
 from typing import TypeVar
 from typing import Union
 
+import py
+
+from _pytest.compat import assert_never
+from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
 if sys.version_info[:2] >= (3, 6):
@@ -100,10 +109,41 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     return True
 
 
+def ensure_extended_length_path(path: Path) -> Path:
+    """Get the extended-length version of a path (Windows).
+
+    On Windows, by default, the maximum length of a path (MAX_PATH) is 260
+    characters, and operations on paths longer than that fail. But it is possible
+    to overcome this by converting the path to "extended-length" form before
+    performing the operation:
+    https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+
+    On Windows, this function returns the extended-length absolute version of path.
+    On other platforms it returns path unchanged.
+    """
+    if sys.platform.startswith("win32"):
+        path = path.resolve()
+        path = Path(get_extended_length_path_str(str(path)))
+    return path
+
+
+def get_extended_length_path_str(path: str) -> str:
+    """Converts to extended length path as a str"""
+    long_path_prefix = "\\\\?\\"
+    unc_long_path_prefix = "\\\\?\\UNC\\"
+    if path.startswith((long_path_prefix, unc_long_path_prefix)):
+        return path
+    # UNC
+    if path.startswith("\\\\"):
+        return unc_long_path_prefix + path[2:]
+    return long_path_prefix + path
+
+
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only.
     """
+    path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
     shutil.rmtree(str(path), onerror=onerror)
 
@@ -220,6 +260,7 @@ def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
 
 def maybe_delete_a_numbered_dir(path: Path) -> None:
     """removes a numbered directory if its lock can be obtained and it does not seem to be in use"""
+    path = ensure_extended_length_path(path)
     lock_path = None
     try:
         lock_path = create_cleanup_lock(path)
@@ -257,10 +298,14 @@ def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) ->
         return False
     else:
         if lock_time < consider_lock_dead_if_created_before:
-            lock.unlink()
-            return True
-        else:
-            return False
+            # wa want to ignore any errors while trying to remove the lock such as:
+            # - PermissionDenied, like the file permissions have changed since the lock creation
+            # - FileNotFoundError, in case another pytest process got here first.
+            # and any other cause of failure.
+            with contextlib.suppress(OSError):
+                lock.unlink()
+                return True
+        return False
 
 
 def try_cleanup(path: Path, consider_lock_dead_if_created_before: float) -> None:
@@ -305,18 +350,20 @@ def make_numbered_dir_with_cleanup(
             e = exc
         else:
             consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
-            cleanup_numbered_dir(
-                root=root,
-                prefix=prefix,
-                keep=keep,
-                consider_lock_dead_if_created_before=consider_lock_dead_if_created_before,
+            # Register a cleanup for program exit
+            atexit.register(
+                cleanup_numbered_dir,
+                root,
+                prefix,
+                keep,
+                consider_lock_dead_if_created_before,
             )
             return p
     assert e is not None
     raise e
 
 
-def resolve_from_str(input, root):
+def resolve_from_str(input: str, root):
     assert not isinstance(input, Path), "would break on py2"
     root = Path(root)
     input = expanduser(input)
@@ -365,3 +412,142 @@ def fnmatch_ex(pattern: str, path) -> bool:
 def parts(s: str) -> Set[str]:
     parts = s.split(sep)
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
+
+
+def symlink_or_skip(src, dst, **kwargs):
+    """Makes a symlink or skips the test in case symlinks are not supported."""
+    try:
+        os.symlink(str(src), str(dst), **kwargs)
+    except OSError as e:
+        skip("symlinks not supported: {}".format(e))
+
+
+class ImportMode(Enum):
+    """Possible values for `mode` parameter of `import_path`"""
+
+    prepend = "prepend"
+    append = "append"
+    importlib = "importlib"
+
+
+class ImportPathMismatchError(ImportError):
+    """Raised on import_path() if there is a mismatch of __file__'s.
+
+    This can happen when `import_path` is called multiple times with different filenames that has
+    the same basename but reside in packages
+    (for example "/tests1/test_foo.py" and "/tests2/test_foo.py").
+    """
+
+
+def import_path(
+    p: Union[str, py.path.local, Path],
+    *,
+    mode: Union[str, ImportMode] = ImportMode.prepend
+) -> ModuleType:
+    """
+    Imports and returns a module from the given path, which can be a file (a module) or
+    a directory (a package).
+
+    The import mechanism used is controlled by the `mode` parameter:
+
+    * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
+      `__init__.py` files into account) will be put at the *start* of `sys.path` before
+      being imported with `__import__.
+
+    * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
+      to the end of `sys.path`, if not already in `sys.path`.
+
+    * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
+      to import the module, which avoids having to use `__import__` and muck with `sys.path`
+      at all. It effectively allows having same-named test modules in different places.
+
+    :raise ImportPathMismatchError: if after importing the given `path` and the module `__file__`
+        are different. Only raised in `prepend` and `append` modes.
+    """
+    mode = ImportMode(mode)
+
+    path = Path(str(p))
+
+    if not path.exists():
+        raise ImportError(path)
+
+    if mode is ImportMode.importlib:
+        module_name = path.stem
+
+        for meta_importer in sys.meta_path:
+            spec = meta_importer.find_spec(module_name, [str(path.parent)])
+            if spec is not None:
+                break
+        else:
+            spec = importlib.util.spec_from_file_location(module_name, str(path))
+
+        if spec is None:
+            raise ImportError(
+                "Can't find module {} at location {}".format(module_name, str(path))
+            )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        return mod
+
+    pkg_path = resolve_package_path(path)
+    if pkg_path is not None:
+        pkg_root = pkg_path.parent
+        names = list(path.with_suffix("").relative_to(pkg_root).parts)
+        if names[-1] == "__init__":
+            names.pop()
+        module_name = ".".join(names)
+    else:
+        pkg_root = path.parent
+        module_name = path.stem
+
+    # change sys.path permanently: restoring it at the end of this function would cause surprising
+    # problems because of delayed imports: for example, a conftest.py file imported by this function
+    # might have local imports, which would fail at runtime if we restored sys.path.
+    if mode is ImportMode.append:
+        if str(pkg_root) not in sys.path:
+            sys.path.append(str(pkg_root))
+    elif mode is ImportMode.prepend:
+        if str(pkg_root) != sys.path[0]:
+            sys.path.insert(0, str(pkg_root))
+    else:
+        assert_never(mode)
+
+    importlib.import_module(module_name)
+
+    mod = sys.modules[module_name]
+    if path.name == "__init__.py":
+        return mod
+
+    ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
+    if ignore != "1":
+        module_file = mod.__file__
+        if module_file.endswith((".pyc", ".pyo")):
+            module_file = module_file[:-1]
+        if module_file.endswith(os.path.sep + "__init__.py"):
+            module_file = module_file[: -(len(os.path.sep + "__init__.py"))]
+
+        try:
+            is_same = os.path.samefile(str(path), module_file)
+        except FileNotFoundError:
+            is_same = False
+
+        if not is_same:
+            raise ImportPathMismatchError(module_name, module_file, path)
+
+    return mod
+
+
+def resolve_package_path(path: Path) -> Optional[Path]:
+    """Return the Python package path by looking for the last
+    directory upwards which still contains an __init__.py.
+    Return None if it can not be determined.
+    """
+    result = None
+    for parent in itertools.chain((path,), path.parents):
+        if parent.is_dir():
+            if not parent.joinpath("__init__.py").is_file():
+                break
+            if not parent.name.isidentifier():
+                break
+            result = parent
+    return result

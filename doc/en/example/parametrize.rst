@@ -351,6 +351,30 @@ And then when we run the test:
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
+Indirect parametrization
+---------------------------------------------------
+
+Using the ``indirect=True`` parameter when parametrizing a test allows to
+parametrize a test with a fixture receiving the values before passing them to a
+test:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def fixt(request):
+        return request.param * 3
+
+
+    @pytest.mark.parametrize("fixt", ["a", "b"], indirect=True)
+    def test_indirect(fixt):
+        assert len(fixt) == 3
+
+This can be used, for example, to do more expensive setup at test run time in
+the fixture, rather than having to run those setup steps at collection time.
+
 .. regendoc:wipe
 
 Apply indirect on particular arguments
@@ -482,11 +506,10 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssss...ssssssssssss                                          [100%]
+   ssssssssssss......sss......                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.5' not found
-   SKIPPED [12] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.7' not found
-   3 passed, 24 skipped in 0.12s
+   SKIPPED [15] $REGENDOC_TMPDIR/CWD/multipython.py:29: 'python3.5' not found
+   12 passed, 15 skipped in 0.12s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------

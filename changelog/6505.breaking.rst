@@ -1,0 +1,20 @@
+``Testdir.run().parseoutcomes()`` now always returns the parsed nouns in plural form.
+
+Originally ``parseoutcomes()`` would always returns the nouns in plural form, but a change
+meant to improve the terminal summary by using singular form single items (``1 warning`` or ``1 error``)
+caused an unintended regression by changing the keys returned by ``parseoutcomes()``.
+
+Now the API guarantees to always return the plural form, so calls like this:
+
+.. code-block:: python
+
+    result = testdir.runpytest()
+    result.assert_outcomes(error=1)
+
+Need to be changed to:
+
+
+.. code-block:: python
+
+    result = testdir.runpytest()
+    result.assert_outcomes(errors=1)
