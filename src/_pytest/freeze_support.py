@@ -2,9 +2,13 @@
 Provides a function to report all internal modules for using freezing tools
 pytest
 """
+import types
+from typing import Iterator
+from typing import List
+from typing import Union
 
 
-def freeze_includes():
+def freeze_includes() -> List[str]:
     """
     Returns a list of module names used by pytest that should be
     included by cx_freeze.
@@ -17,7 +21,9 @@ def freeze_includes():
     return result
 
 
-def _iter_all_modules(package, prefix=""):
+def _iter_all_modules(
+    package: Union[str, types.ModuleType], prefix: str = "",
+) -> Iterator[str]:
     """
     Iterates over the names of all modules that can be found in the given
     package, recursively.
@@ -29,10 +35,13 @@ def _iter_all_modules(package, prefix=""):
     import os
     import pkgutil
 
-    if type(package) is not str:
-        path, prefix = package.__path__[0], package.__name__ + "."
-    else:
+    if isinstance(package, str):
         path = package
+    else:
+        # Type ignored because typeshed doesn't define ModuleType.__path__
+        # (only defined on packages).
+        package_path = package.__path__  # type: ignore[attr-defined]
+        path, prefix = package_path[0], package.__name__ + "."
     for _, name, is_package in pkgutil.iter_modules([path]):
         if is_package:
             for m in _iter_all_modules(os.path.join(path, name), prefix=name + "."):

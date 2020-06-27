@@ -422,7 +422,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         return values
 
     def _makeitem(
-        self, name: str, obj
+        self, name: str, obj: object
     ) -> Union[
         None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]
     ]:

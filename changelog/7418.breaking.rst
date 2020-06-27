@@ -1,0 +1,2 @@
+Remove the `pytest_doctest_prepare_content` hook specification. This hook
+hasn't been triggered by pytest for at least 10 years.
