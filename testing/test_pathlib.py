@@ -91,7 +91,7 @@ class TestImportPath:
     Having our own pyimport-like function is inline with removing py.path dependency in the future.
     """
 
-    @pytest.yield_fixture(scope="session")
+    @pytest.fixture(scope="session")
     def path1(self, tmpdir_factory):
         path = tmpdir_factory.mktemp("path")
         self.setuptestfs(path)

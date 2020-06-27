@@ -33,13 +33,13 @@ def checked_order():
     ]
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def fix1(request, arg1, checked_order):
     checked_order.append((request.node.name, "fix1", arg1))
     yield "fix1-" + arg1
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def fix2(request, fix1, arg2, checked_order):
     checked_order.append((request.node.name, "fix2", arg2))
     yield "fix2-" + arg2 + fix1

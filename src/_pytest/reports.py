@@ -1,6 +1,7 @@
 from io import StringIO
 from pprint import pprint
 from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -69,7 +70,7 @@ class BaseReport:
         def __getattr__(self, key: str) -> Any:
             raise NotImplementedError()
 
-    def toterminal(self, out) -> None:
+    def toterminal(self, out: TerminalWriter) -> None:
         if hasattr(self, "node"):
             out.line(getworkerinfoline(self.node))
 
@@ -187,7 +188,7 @@ class BaseReport:
         )
         return verbose
 
-    def _to_json(self):
+    def _to_json(self) -> Dict[str, Any]:
         """
         This was originally the serialize_report() function from xdist (ca03269).
 
@@ -199,7 +200,7 @@ class BaseReport:
         return _report_to_json(self)
 
     @classmethod
-    def _from_json(cls: "Type[_R]", reportdict) -> _R:
+    def _from_json(cls: "Type[_R]", reportdict: Dict[str, object]) -> _R:
         """
         This was originally the serialize_report() function from xdist (ca03269).
 
@@ -382,11 +383,13 @@ class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg) -> None:
         self.longrepr = msg
 
-    def toterminal(self, out) -> None:
+    def toterminal(self, out: TerminalWriter) -> None:
         out.line(self.longrepr, red=True)
 
 
-def pytest_report_to_serializable(report: BaseReport):
+def pytest_report_to_serializable(
+    report: Union[CollectReport, TestReport]
+) -> Optional[Dict[str, Any]]:
     if isinstance(report, (TestReport, CollectReport)):
         data = report._to_json()
         data["$report_type"] = report.__class__.__name__
@@ -394,7 +397,9 @@ def pytest_report_to_serializable(report: BaseReport):
     return None
 
 
-def pytest_report_from_serializable(data) -> Optional[BaseReport]:
+def pytest_report_from_serializable(
+    data: Dict[str, Any],
+) -> Optional[Union[CollectReport, TestReport]]:
     if "$report_type" in data:
         if data["$report_type"] == "TestReport":
             return TestReport._from_json(data)
@@ -406,7 +411,7 @@ def pytest_report_from_serializable(data) -> Optional[BaseReport]:
     return None
 
 
-def _report_to_json(report: BaseReport):
+def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     """
     This was originally the serialize_report() function from xdist (ca03269).
 
@@ -414,7 +419,9 @@ def _report_to_json(report: BaseReport):
     serialization.
     """
 
-    def serialize_repr_entry(entry: Union[ReprEntry, ReprEntryNative]):
+    def serialize_repr_entry(
+        entry: Union[ReprEntry, ReprEntryNative]
+    ) -> Dict[str, Any]:
         data = attr.asdict(entry)
         for key, value in data.items():
             if hasattr(value, "__dict__"):
@@ -422,25 +429,28 @@ def _report_to_json(report: BaseReport):
         entry_data = {"type": type(entry).__name__, "data": data}
         return entry_data
 
-    def serialize_repr_traceback(reprtraceback: ReprTraceback):
+    def serialize_repr_traceback(reprtraceback: ReprTraceback) -> Dict[str, Any]:
         result = attr.asdict(reprtraceback)
         result["reprentries"] = [
             serialize_repr_entry(x) for x in reprtraceback.reprentries
         ]
         return result
 
-    def serialize_repr_crash(reprcrash: Optional[ReprFileLocation]):
+    def serialize_repr_crash(
+        reprcrash: Optional[ReprFileLocation],
+    ) -> Optional[Dict[str, Any]]:
         if reprcrash is not None:
             return attr.asdict(reprcrash)
         else:
             return None
 
-    def serialize_longrepr(rep):
+    def serialize_longrepr(rep: BaseReport) -> Dict[str, Any]:
+        assert rep.longrepr is not None
         result = {
             "reprcrash": serialize_repr_crash(rep.longrepr.reprcrash),
             "reprtraceback": serialize_repr_traceback(rep.longrepr.reprtraceback),
             "sections": rep.longrepr.sections,
-        }
+        }  # type: Dict[str, Any]
         if isinstance(rep.longrepr, ExceptionChainRepr):
             result["chain"] = []
             for repr_traceback, repr_crash, description in rep.longrepr.chain:
@@ -473,7 +483,7 @@ def _report_to_json(report: BaseReport):
     return d
 
 
-def _report_kwargs_from_json(reportdict):
+def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
     """
     This was originally the serialize_report() function from xdist (ca03269).
 

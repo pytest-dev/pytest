@@ -370,13 +370,14 @@ class TestWarns:
 
     @pytest.mark.filterwarnings("ignore")
     def test_can_capture_previously_warned(self) -> None:
-        def f():
+        def f() -> int:
             warnings.warn(UserWarning("ohai"))
             return 10
 
         assert f() == 10
         assert pytest.warns(UserWarning, f) == 10
         assert pytest.warns(UserWarning, f) == 10
+        assert pytest.warns(UserWarning, f) != "10"  # type: ignore[comparison-overlap]
 
     def test_warns_context_manager_with_kwargs(self) -> None:
         with pytest.raises(TypeError) as excinfo:
