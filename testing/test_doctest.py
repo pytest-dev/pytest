@@ -3,6 +3,8 @@ import textwrap
 from typing import Callable
 from typing import Optional
 
+import py
+
 import pytest
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_mocked
@@ -14,9 +16,9 @@ from _pytest.doctest import DoctestTextfile
 
 
 class TestDoctests:
-    def test_collect_testtextfile(self, testdir):
-        w = testdir.maketxtfile(whatever="")
-        checkfile = testdir.maketxtfile(
+    def test_collect_testtextfile(self, pytester):
+        w = pytester.maketxtfile(whatever="")
+        checkfile = pytester.maketxtfile(
             test_something="""
             alskdjalsdk
             >>> i = 5
@@ -25,48 +27,48 @@ class TestDoctests:
         """
         )
 
-        for x in (testdir.tmpdir, checkfile):
+        for x in (pytester.path, checkfile):
             # print "checking that %s returns custom items" % (x,)
-            items, reprec = testdir.inline_genitems(x)
+            items, reprec = pytester.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestTextfile)
         # Empty file has no items.
-        items, reprec = testdir.inline_genitems(w)
+        items, reprec = pytester.inline_genitems(w)
         assert len(items) == 0
 
-    def test_collect_module_empty(self, testdir):
-        path = testdir.makepyfile(whatever="#")
-        for p in (path, testdir.tmpdir):
-            items, reprec = testdir.inline_genitems(p, "--doctest-modules")
+    def test_collect_module_empty(self, pytester):
+        path = pytester.makepyfile(whatever="#")
+        for p in (path, pytester.path):
+            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 0
 
-    def test_collect_module_single_modulelevel_doctest(self, testdir):
-        path = testdir.makepyfile(whatever='""">>> pass"""')
-        for p in (path, testdir.tmpdir):
-            items, reprec = testdir.inline_genitems(p, "--doctest-modules")
+    def test_collect_module_single_modulelevel_doctest(self, pytester):
+        path = pytester.makepyfile(whatever='""">>> pass"""')
+        for p in (path, pytester.path):
+            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
 
-    def test_collect_module_two_doctest_one_modulelevel(self, testdir):
-        path = testdir.makepyfile(
+    def test_collect_module_two_doctest_one_modulelevel(self, pytester):
+        path = pytester.makepyfile(
             whatever="""
             '>>> x = None'
             def my_func():
                 ">>> magic = 42 "
         """
         )
-        for p in (path, testdir.tmpdir):
-            items, reprec = testdir.inline_genitems(p, "--doctest-modules")
+        for p in (path, pytester.path):
+            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
             assert items[0].parent is items[1].parent
 
-    def test_collect_module_two_doctest_no_modulelevel(self, testdir):
-        path = testdir.makepyfile(
+    def test_collect_module_two_doctest_no_modulelevel(self, pytester):
+        path = pytester.makepyfile(
             whatever="""
             '# Empty'
             def my_func():
@@ -83,72 +85,72 @@ class TestDoctests:
                 '''
         """
         )
-        for p in (path, testdir.tmpdir):
-            items, reprec = testdir.inline_genitems(p, "--doctest-modules")
+        for p in (path, pytester.path):
+            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
             assert items[0].parent is items[1].parent
 
-    def test_simple_doctestfile(self, testdir):
-        p = testdir.maketxtfile(
+    def test_simple_doctestfile(self, pytester):
+        p = pytester.maketxtfile(
             test_doc="""
             >>> x = 1
             >>> x == 1
             False
         """
         )
-        reprec = testdir.inline_run(p)
+        reprec = pytester.inline_run(p)
         reprec.assertoutcome(failed=1)
 
-    def test_new_pattern(self, testdir):
-        p = testdir.maketxtfile(
+    def test_new_pattern(self, pytester):
+        p = pytester.maketxtfile(
             xdoc="""
             >>> x = 1
             >>> x == 1
             False
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
+        reprec = pytester.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(failed=1)
 
-    def test_multiple_patterns(self, testdir):
+    def test_multiple_patterns(self, pytester):
         """Test support for multiple --doctest-glob arguments (#1255)."""
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             xdoc="""
             >>> 1
             1
         """
         )
-        testdir.makefile(
+        pytester.makefile(
             ".foo",
             test="""
             >>> 1
             1
         """,
         )
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             test_normal="""
             >>> 1
             1
         """
         )
         expected = {"xdoc.txt", "test.foo", "test_normal.txt"}
-        assert {x.basename for x in testdir.tmpdir.listdir()} == expected
+        assert {x.name for x in pytester.path.iterdir()} == expected
         args = ["--doctest-glob=xdoc*.txt", "--doctest-glob=*.foo"]
-        result = testdir.runpytest(*args)
+        result = pytester.runpytest(*args)
         result.stdout.fnmatch_lines(["*test.foo *", "*xdoc.txt *", "*2 passed*"])
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*test_normal.txt *", "*1 passed*"])
 
     @pytest.mark.parametrize(
         "   test_string,    encoding",
         [("foo", "ascii"), ("öäü", "latin1"), ("öäü", "utf-8")],
     )
-    def test_encoding(self, testdir, test_string, encoding):
+    def test_encoding(self, pytester, test_string, encoding):
         """Test support for doctest_encoding ini option."""
-        testdir.makeini(
+        pytester.makeini(
             """
             [pytest]
             doctest_encoding={}
@@ -162,21 +164,22 @@ class TestDoctests:
         """.format(
             test_string, repr(test_string)
         )
-        testdir._makefile(".txt", [doctest], {}, encoding=encoding)
+        fn = pytester.path / "test_encoding.txt"
+        fn.write_text(doctest, encoding=encoding)
 
-        result = testdir.runpytest()
+        result = pytester.runpytest()
 
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_doctest_unexpected_exception(self, testdir):
-        testdir.maketxtfile(
+    def test_doctest_unexpected_exception(self, pytester):
+        pytester.maketxtfile(
             """
             >>> i = 0
             >>> 0 / i
             2
         """
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
                 "test_doctest_unexpected_exception.txt F *",
@@ -196,8 +199,8 @@ class TestDoctests:
             consecutive=True,
         )
 
-    def test_doctest_outcomes(self, testdir):
-        testdir.maketxtfile(
+    def test_doctest_outcomes(self, pytester):
+        pytester.maketxtfile(
             test_skip="""
             >>> 1
             1
@@ -219,7 +222,7 @@ class TestDoctests:
             bar
             """,
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
                 "collected 3 items",
@@ -232,11 +235,11 @@ class TestDoctests:
             ]
         )
 
-    def test_docstring_partial_context_around_error(self, testdir):
+    def test_docstring_partial_context_around_error(self, pytester):
         """Test that we show some context before the actual line of a failing
         doctest.
         """
-        testdir.makepyfile(
+        pytester.makepyfile(
             '''
             def foo():
                 """
@@ -258,7 +261,7 @@ class TestDoctests:
                 """
         '''
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
                 "*docstring_partial_context_around_error*",
@@ -276,11 +279,11 @@ class TestDoctests:
         result.stdout.no_fnmatch_line("*text-line-2*")
         result.stdout.no_fnmatch_line("*text-line-after*")
 
-    def test_docstring_full_context_around_error(self, testdir):
+    def test_docstring_full_context_around_error(self, pytester):
         """Test that we show the whole context before the actual line of a failing
         doctest, provided that the context is up to 10 lines long.
         """
-        testdir.makepyfile(
+        pytester.makepyfile(
             '''
             def foo():
                 """
@@ -292,7 +295,7 @@ class TestDoctests:
                 """
         '''
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
                 "*docstring_full_context_around_error*",
@@ -306,8 +309,8 @@ class TestDoctests:
             ]
         )
 
-    def test_doctest_linedata_missing(self, testdir):
-        testdir.tmpdir.join("hello.py").write(
+    def test_doctest_linedata_missing(self, pytester):
+        pytester.path.joinpath("hello.py").write_text(
             textwrap.dedent(
                 """\
                 class Fun(object):
@@ -320,13 +323,13 @@ class TestDoctests:
                 """
             )
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             ["*hello*", "006*>>> 1/0*", "*UNEXPECTED*ZeroDivision*", "*1 failed*"]
         )
 
-    def test_doctest_linedata_on_property(self, testdir):
-        testdir.makepyfile(
+    def test_doctest_linedata_on_property(self, pytester):
+        pytester.makepyfile(
             """
             class Sample(object):
                 @property
@@ -338,7 +341,7 @@ class TestDoctests:
                     return 'something'
             """
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
                 "*= FAILURES =*",
@@ -355,8 +358,8 @@ class TestDoctests:
             ]
         )
 
-    def test_doctest_no_linedata_on_overriden_property(self, testdir):
-        testdir.makepyfile(
+    def test_doctest_no_linedata_on_overriden_property(self, pytester):
+        pytester.makepyfile(
             """
             class Sample(object):
                 @property
@@ -369,7 +372,7 @@ class TestDoctests:
                 some_property = property(some_property.__get__, None, None, some_property.__doc__)
             """
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
                 "*= FAILURES =*",
@@ -386,14 +389,14 @@ class TestDoctests:
             ]
         )
 
-    def test_doctest_unex_importerror_only_txt(self, testdir):
-        testdir.maketxtfile(
+    def test_doctest_unex_importerror_only_txt(self, pytester):
+        pytester.maketxtfile(
             """
             >>> import asdalsdkjaslkdjasd
             >>>
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines(
             [
@@ -403,21 +406,21 @@ class TestDoctests:
             ]
         )
 
-    def test_doctest_unex_importerror_with_module(self, testdir):
-        testdir.tmpdir.join("hello.py").write(
+    def test_doctest_unex_importerror_with_module(self, pytester):
+        pytester.path.joinpath("hello.py").write_text(
             textwrap.dedent(
                 """\
                 import asdalsdkjaslkdjasd
                 """
             )
         )
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             """
             >>> import hello
             >>>
         """
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines(
             [
@@ -427,8 +430,8 @@ class TestDoctests:
             ]
         )
 
-    def test_doctestmodule(self, testdir):
-        p = testdir.makepyfile(
+    def test_doctestmodule(self, pytester):
+        p = pytester.makepyfile(
             """
             '''
                 >>> x = 1
@@ -438,12 +441,12 @@ class TestDoctests:
             '''
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1)
 
-    def test_doctestmodule_external_and_issue116(self, testdir):
-        p = testdir.mkpydir("hello")
-        p.join("__init__.py").write(
+    def test_doctestmodule_external_and_issue116(self, pytester):
+        p = pytester.mkpydir("hello")
+        p.joinpath("__init__.py").write_text(
             textwrap.dedent(
                 """\
                 def somefunc():
@@ -455,7 +458,7 @@ class TestDoctests:
                 """
             )
         )
-        result = testdir.runpytest(p, "--doctest-modules")
+        result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(
             [
                 "003 *>>> i = 0",
@@ -468,15 +471,15 @@ class TestDoctests:
             ]
         )
 
-    def test_txtfile_failing(self, testdir):
-        p = testdir.maketxtfile(
+    def test_txtfile_failing(self, pytester):
+        p = pytester.maketxtfile(
             """
             >>> i = 0
             >>> i + 1
             2
         """
         )
-        result = testdir.runpytest(p, "-s")
+        result = pytester.runpytest(p, "-s")
         result.stdout.fnmatch_lines(
             [
                 "001 >>> i = 0",
@@ -489,25 +492,25 @@ class TestDoctests:
             ]
         )
 
-    def test_txtfile_with_fixtures(self, testdir):
-        p = testdir.maketxtfile(
+    def test_txtfile_with_fixtures(self, pytester):
+        p = pytester.maketxtfile(
             """
-            >>> dir = getfixture('tmpdir')
-            >>> type(dir).__name__
-            'LocalPath'
+            >>> p = getfixture('tmp_path')
+            >>> p.is_dir()
+            True
         """
         )
-        reprec = testdir.inline_run(p)
+        reprec = pytester.inline_run(p)
         reprec.assertoutcome(passed=1)
 
-    def test_txtfile_with_usefixtures_in_ini(self, testdir):
-        testdir.makeini(
+    def test_txtfile_with_usefixtures_in_ini(self, pytester):
+        pytester.makeini(
             """
             [pytest]
             usefixtures = myfixture
         """
         )
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
             @pytest.fixture
@@ -516,36 +519,36 @@ class TestDoctests:
         """
         )
 
-        p = testdir.maketxtfile(
+        p = pytester.maketxtfile(
             """
             >>> import os
             >>> os.environ["HELLO"]
             'WORLD'
         """
         )
-        reprec = testdir.inline_run(p)
+        reprec = pytester.inline_run(p)
         reprec.assertoutcome(passed=1)
 
-    def test_doctestmodule_with_fixtures(self, testdir):
-        p = testdir.makepyfile(
+    def test_doctestmodule_with_fixtures(self, pytester):
+        p = pytester.makepyfile(
             """
             '''
-                >>> dir = getfixture('tmpdir')
-                >>> type(dir).__name__
-                'LocalPath'
+                >>> p = getfixture('tmp_path')
+                >>> p.is_dir()
+                True
             '''
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
-    def test_doctestmodule_three_tests(self, testdir):
-        p = testdir.makepyfile(
+    def test_doctestmodule_three_tests(self, pytester):
+        p = pytester.makepyfile(
             """
             '''
-            >>> dir = getfixture('tmpdir')
-            >>> type(dir).__name__
-            'LocalPath'
+            >>> p = getfixture('tmp_path')
+            >>> p.is_dir()
+            True
             '''
             def my_func():
                 '''
@@ -563,11 +566,11 @@ class TestDoctests:
                 '''
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=3)
 
-    def test_doctestmodule_two_tests_one_fail(self, testdir):
-        p = testdir.makepyfile(
+    def test_doctestmodule_two_tests_one_fail(self, pytester):
+        p = pytester.makepyfile(
             """
             class MyClass(object):
                 def bad_meth(self):
@@ -584,17 +587,17 @@ class TestDoctests:
                     '''
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1, passed=1)
 
-    def test_ignored_whitespace(self, testdir):
-        testdir.makeini(
+    def test_ignored_whitespace(self, pytester):
+        pytester.makeini(
             """
             [pytest]
             doctest_optionflags = ELLIPSIS NORMALIZE_WHITESPACE
         """
         )
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             """
             class MyClass(object):
                 '''
@@ -605,17 +608,17 @@ class TestDoctests:
                 pass
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
-    def test_non_ignored_whitespace(self, testdir):
-        testdir.makeini(
+    def test_non_ignored_whitespace(self, pytester):
+        pytester.makeini(
             """
             [pytest]
             doctest_optionflags = ELLIPSIS
         """
         )
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             """
             class MyClass(object):
                 '''
@@ -626,46 +629,46 @@ class TestDoctests:
                 pass
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1, passed=0)
 
-    def test_ignored_whitespace_glob(self, testdir):
-        testdir.makeini(
+    def test_ignored_whitespace_glob(self, pytester):
+        pytester.makeini(
             """
             [pytest]
             doctest_optionflags = ELLIPSIS NORMALIZE_WHITESPACE
         """
         )
-        p = testdir.maketxtfile(
+        p = pytester.maketxtfile(
             xdoc="""
             >>> a = "foo    "
             >>> print(a)
             foo
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
+        reprec = pytester.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(passed=1)
 
-    def test_non_ignored_whitespace_glob(self, testdir):
-        testdir.makeini(
+    def test_non_ignored_whitespace_glob(self, pytester):
+        pytester.makeini(
             """
             [pytest]
             doctest_optionflags = ELLIPSIS
         """
         )
-        p = testdir.maketxtfile(
+        p = pytester.maketxtfile(
             xdoc="""
             >>> a = "foo    "
             >>> print(a)
             foo
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
+        reprec = pytester.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(failed=1, passed=0)
 
-    def test_contains_unicode(self, testdir):
+    def test_contains_unicode(self, pytester):
         """Fix internal error with docstrings containing non-ascii characters."""
-        testdir.makepyfile(
+        pytester.makepyfile(
             '''\
             def foo():
                 """
@@ -674,11 +677,11 @@ class TestDoctests:
                 """
             '''
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["Got nothing", "* 1 failed in*"])
 
-    def test_ignore_import_errors_on_doctest(self, testdir):
-        p = testdir.makepyfile(
+    def test_ignore_import_errors_on_doctest(self, pytester):
+        p = pytester.makepyfile(
             """
             import asdf
 
@@ -691,14 +694,14 @@ class TestDoctests:
         """
         )
 
-        reprec = testdir.inline_run(
+        reprec = pytester.inline_run(
             p, "--doctest-modules", "--doctest-ignore-import-errors"
         )
         reprec.assertoutcome(skipped=1, failed=1, passed=0)
 
-    def test_junit_report_for_doctest(self, testdir):
+    def test_junit_report_for_doctest(self, pytester):
         """#713: Fix --junit-xml option when used with --doctest-modules."""
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             """
             def foo():
                 '''
@@ -708,15 +711,15 @@ class TestDoctests:
                 pass
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules", "--junit-xml=junit.xml")
+        reprec = pytester.inline_run(p, "--doctest-modules", "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
 
-    def test_unicode_doctest(self, testdir):
+    def test_unicode_doctest(self, pytester):
         """
         Test case for issue 2434: DecodeError on Python 2 when doctest contains non-ascii
         characters.
         """
-        p = testdir.maketxtfile(
+        p = pytester.maketxtfile(
             test_unicode_doctest="""
             .. doctest::
 
@@ -729,17 +732,17 @@ class TestDoctests:
                 1
         """
         )
-        result = testdir.runpytest(p)
+        result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(
             ["*UNEXPECTED EXCEPTION: ZeroDivisionError*", "*1 failed*"]
         )
 
-    def test_unicode_doctest_module(self, testdir):
+    def test_unicode_doctest_module(self, pytester):
         """
         Test case for issue 2434: DecodeError on Python 2 when doctest docstring
         contains non-ascii characters.
         """
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             test_unicode_doctest_module="""
             def fix_bad_unicode(text):
                 '''
@@ -749,15 +752,15 @@ class TestDoctests:
                 return "único"
         """
         )
-        result = testdir.runpytest(p, "--doctest-modules")
+        result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["* 1 passed *"])
 
-    def test_print_unicode_value(self, testdir):
+    def test_print_unicode_value(self, pytester):
         """
         Test case for issue 3583: Printing Unicode in doctest under Python 2.7
         doesn't work
         """
-        p = testdir.maketxtfile(
+        p = pytester.maketxtfile(
             test_print_unicode_value=r"""
             Here is a doctest::
 
@@ -765,12 +768,12 @@ class TestDoctests:
                 åéîøü
         """
         )
-        result = testdir.runpytest(p)
+        result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["* 1 passed *"])
 
-    def test_reportinfo(self, testdir):
+    def test_reportinfo(self, pytester):
         """Make sure that DoctestItem.reportinfo() returns lineno."""
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             test_reportinfo="""
             def foo(x):
                 '''
@@ -780,16 +783,16 @@ class TestDoctests:
                 return 'c'
         """
         )
-        items, reprec = testdir.inline_genitems(p, "--doctest-modules")
+        items, reprec = pytester.inline_genitems(p, "--doctest-modules")
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
 
-    def test_valid_setup_py(self, testdir):
+    def test_valid_setup_py(self, pytester):
         """
         Test to make sure that pytest ignores valid setup.py files when ran
         with --doctest-modules
         """
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             setup="""
             from setuptools import setup, find_packages
             setup(name='sample',
@@ -799,33 +802,33 @@ class TestDoctests:
             )
         """
         )
-        result = testdir.runpytest(p, "--doctest-modules")
+        result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["*collected 0 items*"])
 
-    def test_invalid_setup_py(self, testdir):
+    def test_invalid_setup_py(self, pytester):
         """
         Test to make sure that pytest reads setup.py files that are not used
         for python packages when ran with --doctest-modules
         """
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             setup="""
             def test_foo():
                 return 'bar'
         """
         )
-        result = testdir.runpytest(p, "--doctest-modules")
+        result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["*collected 1 item*"])
 
 
 class TestLiterals:
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
-    def test_allow_unicode(self, testdir, config_mode):
+    def test_allow_unicode(self, pytester, config_mode):
         """Test that doctests which output unicode work in all python versions
         tested by pytest when the ALLOW_UNICODE option is used (either in
         the ini file or by an inline comment).
         """
         if config_mode == "ini":
-            testdir.makeini(
+            pytester.makeini(
                 """
             [pytest]
             doctest_optionflags = ALLOW_UNICODE
@@ -835,7 +838,7 @@ class TestLiterals:
         else:
             comment = "#doctest: +ALLOW_UNICODE"
 
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             test_doc="""
             >>> b'12'.decode('ascii') {comment}
             '12'
@@ -843,7 +846,7 @@ class TestLiterals:
                 comment=comment
             )
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             foo="""
             def foo():
               '''
@@ -854,17 +857,17 @@ class TestLiterals:
                 comment=comment
             )
         )
-        reprec = testdir.inline_run("--doctest-modules")
+        reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
 
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
-    def test_allow_bytes(self, testdir, config_mode):
+    def test_allow_bytes(self, pytester, config_mode):
         """Test that doctests which output bytes work in all python versions
         tested by pytest when the ALLOW_BYTES option is used (either in
         the ini file or by an inline comment)(#1287).
         """
         if config_mode == "ini":
-            testdir.makeini(
+            pytester.makeini(
                 """
             [pytest]
             doctest_optionflags = ALLOW_BYTES
@@ -874,7 +877,7 @@ class TestLiterals:
         else:
             comment = "#doctest: +ALLOW_BYTES"
 
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             test_doc="""
             >>> b'foo'  {comment}
             'foo'
@@ -882,7 +885,7 @@ class TestLiterals:
                 comment=comment
             )
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             foo="""
             def foo():
               '''
@@ -893,34 +896,34 @@ class TestLiterals:
                 comment=comment
             )
         )
-        reprec = testdir.inline_run("--doctest-modules")
+        reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
 
-    def test_unicode_string(self, testdir):
+    def test_unicode_string(self, pytester):
         """Test that doctests which output unicode fail in Python 2 when
         the ALLOW_UNICODE option is not used. The same test should pass
         in Python 3.
         """
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             test_doc="""
             >>> b'12'.decode('ascii')
             '12'
         """
         )
-        reprec = testdir.inline_run()
+        reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_bytes_literal(self, testdir):
+    def test_bytes_literal(self, pytester):
         """Test that doctests which output bytes fail in Python 3 when
         the ALLOW_BYTES option is not used. (#1287).
         """
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             test_doc="""
             >>> b'foo'
             'foo'
         """
         )
-        reprec = testdir.inline_run()
+        reprec = pytester.inline_run()
         reprec.assertoutcome(failed=1)
 
     def test_number_re(self) -> None:
@@ -954,10 +957,10 @@ class TestLiterals:
             assert _number_re.match(s) is None
 
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
-    def test_number_precision(self, testdir, config_mode):
+    def test_number_precision(self, pytester, config_mode):
         """Test the NUMBER option."""
         if config_mode == "ini":
-            testdir.makeini(
+            pytester.makeini(
                 """
                 [pytest]
                 doctest_optionflags = NUMBER
@@ -967,7 +970,7 @@ class TestLiterals:
         else:
             comment = "#doctest: +NUMBER"
 
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             test_doc="""
 
             Scalars:
@@ -1024,7 +1027,7 @@ class TestLiterals:
                 comment=comment
             )
         )
-        reprec = testdir.inline_run()
+        reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
     @pytest.mark.parametrize(
@@ -1048,8 +1051,8 @@ class TestLiterals:
             pytest.param("'3.1416'", "'3.14'", marks=pytest.mark.xfail),  # type: ignore
         ],
     )
-    def test_number_non_matches(self, testdir, expression, output):
-        testdir.maketxtfile(
+    def test_number_non_matches(self, pytester, expression, output):
+        pytester.maketxtfile(
             test_doc="""
             >>> {expression} #doctest: +NUMBER
             {output}
@@ -1057,11 +1060,11 @@ class TestLiterals:
                 expression=expression, output=output
             )
         )
-        reprec = testdir.inline_run()
+        reprec = pytester.inline_run()
         reprec.assertoutcome(passed=0, failed=1)
 
-    def test_number_and_allow_unicode(self, testdir):
-        testdir.maketxtfile(
+    def test_number_and_allow_unicode(self, pytester):
+        pytester.maketxtfile(
             test_doc="""
             >>> from collections import namedtuple
             >>> T = namedtuple('T', 'a b c')
@@ -1069,7 +1072,7 @@ class TestLiterals:
             T(a=0.233, b=u'str', c='bytes')
             """
         )
-        reprec = testdir.inline_run()
+        reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
 
 
@@ -1080,18 +1083,18 @@ class TestDoctestSkips:
     """
 
     @pytest.fixture(params=["text", "module"])
-    def makedoctest(self, testdir, request):
+    def makedoctest(self, pytester, request):
         def makeit(doctest):
             mode = request.param
             if mode == "text":
-                testdir.maketxtfile(doctest)
+                pytester.maketxtfile(doctest)
             else:
                 assert mode == "module"
-                testdir.makepyfile('"""\n%s"""' % doctest)
+                pytester.makepyfile('"""\n%s"""' % doctest)
 
         return makeit
 
-    def test_one_skipped(self, testdir, makedoctest):
+    def test_one_skipped(self, pytester, makedoctest):
         makedoctest(
             """
             >>> 1 + 1  # doctest: +SKIP
@@ -1100,10 +1103,10 @@ class TestDoctestSkips:
             4
         """
         )
-        reprec = testdir.inline_run("--doctest-modules")
+        reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=1)
 
-    def test_one_skipped_failed(self, testdir, makedoctest):
+    def test_one_skipped_failed(self, pytester, makedoctest):
         makedoctest(
             """
             >>> 1 + 1  # doctest: +SKIP
@@ -1112,10 +1115,10 @@ class TestDoctestSkips:
             200
         """
         )
-        reprec = testdir.inline_run("--doctest-modules")
+        reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(failed=1)
 
-    def test_all_skipped(self, testdir, makedoctest):
+    def test_all_skipped(self, pytester, makedoctest):
         makedoctest(
             """
             >>> 1 + 1  # doctest: +SKIP
@@ -1124,16 +1127,16 @@ class TestDoctestSkips:
             200
         """
         )
-        reprec = testdir.inline_run("--doctest-modules")
+        reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(skipped=1)
 
-    def test_vacuous_all_skipped(self, testdir, makedoctest):
+    def test_vacuous_all_skipped(self, pytester, makedoctest):
         makedoctest("")
-        reprec = testdir.inline_run("--doctest-modules")
+        reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=0, skipped=0)
 
-    def test_continue_on_failure(self, testdir):
-        testdir.maketxtfile(
+    def test_continue_on_failure(self, pytester):
+        pytester.maketxtfile(
             test_something="""
             >>> i = 5
             >>> def foo():
@@ -1145,7 +1148,9 @@ class TestDoctestSkips:
             >>> i + 1
         """
         )
-        result = testdir.runpytest("--doctest-modules", "--doctest-continue-on-failure")
+        result = pytester.runpytest(
+            "--doctest-modules", "--doctest-continue-on-failure"
+        )
         result.assert_outcomes(passed=0, failed=1)
         # The lines that contains the failure are 4, 5, and 8.  The first one
         # is a stack trace and the other two are mismatches.
@@ -1158,11 +1163,11 @@ class TestDoctestAutoUseFixtures:
 
     SCOPES = ["module", "session", "class", "function"]
 
-    def test_doctest_module_session_fixture(self, testdir):
+    def test_doctest_module_session_fixture(self, pytester):
         """Test that session fixtures are initialized for doctest modules (#768)."""
         # session fixture which changes some global data, which will
         # be accessed by doctests in a module
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
             import sys
@@ -1175,7 +1180,7 @@ class TestDoctestAutoUseFixtures:
                 del sys.pytest_session_data
         """
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             foo="""
             import sys
 
@@ -1190,16 +1195,16 @@ class TestDoctestAutoUseFixtures:
               '''
         """
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["*2 passed*"])
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("enable_doctest", [True, False])
-    def test_fixture_scopes(self, testdir, scope, enable_doctest):
+    def test_fixture_scopes(self, pytester, scope, enable_doctest):
         """Test that auto-use fixtures work properly with doctest modules.
         See #1057 and #1100.
         """
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
 
@@ -1210,7 +1215,7 @@ class TestDoctestAutoUseFixtures:
                 scope=scope
             )
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             test_1='''
             def test_foo():
                 """
@@ -1223,19 +1228,19 @@ class TestDoctestAutoUseFixtures:
         )
         params = ("--doctest-modules",) if enable_doctest else ()
         passes = 3 if enable_doctest else 2
-        result = testdir.runpytest(*params)
+        result = pytester.runpytest(*params)
         result.stdout.fnmatch_lines(["*=== %d passed in *" % passes])
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("autouse", [True, False])
     @pytest.mark.parametrize("use_fixture_in_doctest", [True, False])
     def test_fixture_module_doctest_scopes(
-        self, testdir, scope, autouse, use_fixture_in_doctest
+        self, pytester, scope, autouse, use_fixture_in_doctest
     ):
         """Test that auto-use fixtures work properly with doctest files.
         See #1057 and #1100.
         """
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
 
@@ -1247,29 +1252,29 @@ class TestDoctestAutoUseFixtures:
             )
         )
         if use_fixture_in_doctest:
-            testdir.maketxtfile(
+            pytester.maketxtfile(
                 test_doc="""
                 >>> getfixture('auto')
                 99
             """
             )
         else:
-            testdir.maketxtfile(
+            pytester.maketxtfile(
                 test_doc="""
                 >>> 1 + 1
                 2
             """
             )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         result.stdout.no_fnmatch_line("*FAILURES*")
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
     @pytest.mark.parametrize("scope", SCOPES)
-    def test_auto_use_request_attributes(self, testdir, scope):
+    def test_auto_use_request_attributes(self, pytester, scope):
         """Check that all attributes of a request in an autouse fixture
         behave as expected when requested for a doctest item.
         """
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
 
@@ -1286,13 +1291,13 @@ class TestDoctestAutoUseFixtures:
                 scope=scope
             )
         )
-        testdir.maketxtfile(
+        pytester.maketxtfile(
             test_doc="""
             >>> 1 + 1
             2
         """
         )
-        result = testdir.runpytest("--doctest-modules")
+        result = pytester.runpytest("--doctest-modules")
         str(result.stdout.no_fnmatch_line("*FAILURES*"))
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
@@ -1302,12 +1307,12 @@ class TestDoctestNamespaceFixture:
     SCOPES = ["module", "session", "class", "function"]
 
     @pytest.mark.parametrize("scope", SCOPES)
-    def test_namespace_doctestfile(self, testdir, scope):
+    def test_namespace_doctestfile(self, pytester, scope):
         """
         Check that inserting something into the namespace works in a
         simple text file doctest
         """
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
             import contextlib
@@ -1319,22 +1324,22 @@ class TestDoctestNamespaceFixture:
                 scope=scope
             )
         )
-        p = testdir.maketxtfile(
+        p = pytester.maketxtfile(
             """
             >>> print(cl.__name__)
             contextlib
         """
         )
-        reprec = testdir.inline_run(p)
+        reprec = pytester.inline_run(p)
         reprec.assertoutcome(passed=1)
 
     @pytest.mark.parametrize("scope", SCOPES)
-    def test_namespace_pyfile(self, testdir, scope):
+    def test_namespace_pyfile(self, pytester, scope):
         """
         Check that inserting something into the namespace works in a
         simple Python file docstring doctest
         """
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
             import contextlib
@@ -1346,7 +1351,7 @@ class TestDoctestNamespaceFixture:
                 scope=scope
             )
         )
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             """
             def foo():
                 '''
@@ -1355,13 +1360,13 @@ class TestDoctestNamespaceFixture:
                 '''
         """
         )
-        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
 
 class TestDoctestReportingOption:
-    def _run_doctest_report(self, testdir, format):
-        testdir.makepyfile(
+    def _run_doctest_report(self, pytester, format):
+        pytester.makepyfile(
             """
             def foo():
                 '''
@@ -1377,17 +1382,17 @@ class TestDoctestReportingOption:
                       '2  3  6')
             """
         )
-        return testdir.runpytest("--doctest-modules", "--doctest-report", format)
+        return pytester.runpytest("--doctest-modules", "--doctest-report", format)
 
     @pytest.mark.parametrize("format", ["udiff", "UDIFF", "uDiFf"])
-    def test_doctest_report_udiff(self, testdir, format):
-        result = self._run_doctest_report(testdir, format)
+    def test_doctest_report_udiff(self, pytester, format):
+        result = self._run_doctest_report(pytester, format)
         result.stdout.fnmatch_lines(
             ["     0  1  4", "    -1  2  4", "    +1  2  5", "     2  3  6"]
         )
 
-    def test_doctest_report_cdiff(self, testdir):
-        result = self._run_doctest_report(testdir, "cdiff")
+    def test_doctest_report_cdiff(self, pytester):
+        result = self._run_doctest_report(pytester, "cdiff")
         result.stdout.fnmatch_lines(
             [
                 "         a  b",
@@ -1402,8 +1407,8 @@ class TestDoctestReportingOption:
             ]
         )
 
-    def test_doctest_report_ndiff(self, testdir):
-        result = self._run_doctest_report(testdir, "ndiff")
+    def test_doctest_report_ndiff(self, pytester):
+        result = self._run_doctest_report(pytester, "ndiff")
         result.stdout.fnmatch_lines(
             [
                 "         a  b",
@@ -1417,8 +1422,8 @@ class TestDoctestReportingOption:
         )
 
     @pytest.mark.parametrize("format", ["none", "only_first_failure"])
-    def test_doctest_report_none_or_only_first_failure(self, testdir, format):
-        result = self._run_doctest_report(testdir, format)
+    def test_doctest_report_none_or_only_first_failure(self, pytester, format):
+        result = self._run_doctest_report(pytester, format)
         result.stdout.fnmatch_lines(
             [
                 "Expected:",
@@ -1434,8 +1439,8 @@ class TestDoctestReportingOption:
             ]
         )
 
-    def test_doctest_report_invalid(self, testdir):
-        result = self._run_doctest_report(testdir, "obviously_invalid_format")
+    def test_doctest_report_invalid(self, pytester):
+        result = self._run_doctest_report(pytester, "obviously_invalid_format")
         result.stderr.fnmatch_lines(
             [
                 "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
@@ -1444,9 +1449,9 @@ class TestDoctestReportingOption:
 
 
 @pytest.mark.parametrize("mock_module", ["mock", "unittest.mock"])
-def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, testdir):
+def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, pytester):
     pytest.importorskip(mock_module)
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         from {mock_module} import call
         class Example(object):
@@ -1458,7 +1463,7 @@ def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, testdir):
             mock_module=mock_module
         )
     )
-    result = testdir.runpytest("--doctest-modules")
+    result = pytester.runpytest("--doctest-modules")
     result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
@@ -1485,10 +1490,10 @@ def test_warning_on_unwrap_of_broken_object(
     assert inspect.unwrap.__module__ == "inspect"
 
 
-def test_is_setup_py_not_named_setup_py(tmpdir):
-    not_setup_py = tmpdir.join("not_setup.py")
-    not_setup_py.write('from setuptools import setup; setup(name="foo")')
-    assert not _is_setup_py(not_setup_py)
+def test_is_setup_py_not_named_setup_py(tmp_path):
+    not_setup_py = tmp_path.joinpath("not_setup.py")
+    not_setup_py.write_text('from setuptools import setup; setup(name="foo")')
+    assert not _is_setup_py(py.path.local(str(not_setup_py)))
 
 
 @pytest.mark.parametrize("mod", ("setuptools", "distutils.core"))
@@ -1499,11 +1504,11 @@ def test_is_setup_py_is_a_setup_py(tmpdir, mod):
 
 
 @pytest.mark.parametrize("mod", ("setuptools", "distutils.core"))
-def test_is_setup_py_different_encoding(tmpdir, mod):
-    setup_py = tmpdir.join("setup.py")
+def test_is_setup_py_different_encoding(tmp_path, mod):
+    setup_py = tmp_path.joinpath("setup.py")
     contents = (
         "# -*- coding: cp1252 -*-\n"
         'from {} import setup; setup(name="foo", description="€")\n'.format(mod)
     )
-    setup_py.write_binary(contents.encode("cp1252"))
-    assert _is_setup_py(setup_py)
+    setup_py.write_bytes(contents.encode("cp1252"))
+    assert _is_setup_py(py.path.local(str(setup_py)))

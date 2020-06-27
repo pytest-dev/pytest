@@ -801,9 +801,5 @@ def test_parse_summary_line_always_plural():
 
 def test_makefile_joins_absolute_path(testdir: Testdir) -> None:
     absfile = testdir.tmpdir / "absfile"
-    if sys.platform == "win32":
-        with pytest.raises(OSError):
-            testdir.makepyfile(**{str(absfile): ""})
-    else:
-        p1 = testdir.makepyfile(**{str(absfile): ""})
-        assert str(p1) == (testdir.tmpdir / absfile) + ".py"
+    p1 = testdir.makepyfile(**{str(absfile): ""})
+    assert str(p1) == str(testdir.tmpdir / "absfile.py")

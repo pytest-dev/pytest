@@ -1,10 +1,12 @@
 """(Disabled by default) support for testing pytest and pytest plugins."""
 import collections.abc
+import contextlib
 import gc
 import importlib
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import traceback
@@ -19,12 +21,14 @@ from typing import List
 from typing import Optional
 from typing import overload
 from typing import Sequence
+from typing import TextIO
 from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 from weakref import WeakKeyDictionary
 
+import attr
 import py
 from iniconfig import IniConfig
 
@@ -47,7 +51,7 @@ from _pytest.pathlib import make_numbered_dir
 from _pytest.python import Module
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
-from _pytest.tmpdir import TempdirFactory
+from _pytest.tmpdir import TempPathFactory
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -176,11 +180,11 @@ def _pytest(request: FixtureRequest) -> "PytestArg":
 
 class PytestArg:
     def __init__(self, request: FixtureRequest) -> None:
-        self.request = request
+        self._request = request
 
     def gethookrecorder(self, hook) -> "HookRecorder":
         hookrecorder = HookRecorder(hook._pm)
-        self.request.addfinalizer(hookrecorder.finish_recording)
+        self._request.addfinalizer(hookrecorder.finish_recording)
         return hookrecorder
 
 
@@ -430,13 +434,29 @@ def LineMatcher_fixture(request: FixtureRequest) -> Type["LineMatcher"]:
 
 
 @pytest.fixture
-def testdir(request: FixtureRequest, tmpdir_factory: TempdirFactory) -> "Testdir":
-    """A :class: `TestDir` instance, that can be used to run and test pytest itself.
-
-    It is particularly useful for testing plugins. It is similar to the `tmpdir` fixture
-    but provides methods which aid in testing pytest itself.
+def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "PyTester":
     """
-    return Testdir(request, tmpdir_factory)
+    Facilities to write tests/configuration files, execute pytest in isolation, and match
+    against expected output, perfect for black-box testing of pytest plugins.
+
+    It attempts to isolate the test run from external factors as much as possible, modifying
+    the current  working directory to ``path`` and environment variables during initialization.
+
+    It attempts to isolate the test run from external factors as much as possible, modifying
+    the current  working directory to ``tmp_path`` and environment variables during initialization.
+    """
+    return PyTester(request, tmp_path_factory)
+
+
+@pytest.fixture
+def testdir(pytester: "PyTester") -> "Testdir":
+    """
+    Identical to :fixture:`test_path`, and provides an instance whose methods return
+    legacy ``py.path.local`` objects instead when applicable.
+
+    New code should avoid using :fixture:`testdir` in favor of :fixture:`test_path`.
+    """
+    return Testdir(pytester)
 
 
 @pytest.fixture
@@ -599,16 +619,17 @@ class SysPathsSnapshot:
 
 
 @final
-class Testdir:
-    """Temporary test directory with tools to test/run pytest itself.
+class PyTester:
+    """
+    Facilities to write tests/configuration files, execute pytest in isolation, and match
+    against expected output, perfect for black-box testing of pytest plugins.
 
-    This is based on the :fixture:`tmpdir` fixture but provides a number of methods
-    which aid with testing pytest itself.  Unless :py:meth:`chdir` is used all
-    methods will use :py:attr:`tmpdir` as their current working directory.
+    It attempts to isolate the test run from external factors as much as possible, modifying
+    the current  working directory to ``path`` and environment variables during initialization.
 
     Attributes:
 
-    :ivar tmpdir: The :py:class:`py.path.local` instance of the temporary directory.
+    :ivar Path path: temporary directory path used to create files/run tests from, etc.
 
     :ivar plugins:
        A list of plugins to use with :py:meth:`parseconfig` and
@@ -624,8 +645,10 @@ class Testdir:
     class TimeoutExpired(Exception):
         pass
 
-    def __init__(self, request: FixtureRequest, tmpdir_factory: TempdirFactory) -> None:
-        self.request = request
+    def __init__(
+        self, request: FixtureRequest, tmp_path_factory: TempPathFactory
+    ) -> None:
+        self._request = request
         self._mod_collections: WeakKeyDictionary[
             Module, List[Union[Item, Collector]]
         ] = (WeakKeyDictionary())
@@ -634,46 +657,48 @@ class Testdir:
         else:
             name = request.node.name
         self._name = name
-        self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
-        self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
+        self._path: Path = tmp_path_factory.mktemp(name, numbered=True)
         self.plugins: List[Union[str, _PluggyPlugin]] = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
         self.chdir()
-        self.request.addfinalizer(self.finalize)
-        self._method = self.request.config.getoption("--runpytest")
+        self._request.addfinalizer(self._finalize)
+        self._method = self._request.config.getoption("--runpytest")
 
-        mp = self.monkeypatch = MonkeyPatch()
-        mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
+        self._monkeypatch = mp = MonkeyPatch()
+        mp.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path_factory.mktemp("tmproot")))
         # Ensure no unexpected caching via tox.
         mp.delenv("TOX_ENV_DIR", raising=False)
         # Discard outer pytest options.
         mp.delenv("PYTEST_ADDOPTS", raising=False)
         # Ensure no user config is used.
-        tmphome = str(self.tmpdir)
+        tmphome = str(self.path)
         mp.setenv("HOME", tmphome)
         mp.setenv("USERPROFILE", tmphome)
         # Do not use colors for inner runs by default.
         mp.setenv("PY_COLORS", "0")
 
+    @property
+    def path(self) -> Path:
+        """Temporary directory where files are created and pytest is executed."""
+        return self._path
+
     def __repr__(self) -> str:
-        return f"<Testdir {self.tmpdir!r}>"
+        return f"<PyTester {self.path!r}>"
 
-    def __str__(self) -> str:
-        return str(self.tmpdir)
-
-    def finalize(self) -> None:
-        """Clean up global state artifacts.
+    def _finalize(self) -> None:
+        """
+        Clean up global state artifacts.
 
         Some methods modify the global interpreter state and this tries to
-        clean this up.  It does not remove the temporary directory however so
+        clean this up. It does not remove the temporary directory however so
         it can be looked at after the test run has finished.
         """
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
-        self.monkeypatch.undo()
+        self._monkeypatch.undo()
 
     def __take_sys_modules_snapshot(self) -> SysModulesSnapshot:
         # Some zope modules used by twisted-related tests keep internal state
@@ -687,7 +712,7 @@ class Testdir:
     def make_hook_recorder(self, pluginmanager: PytestPluginManager) -> HookRecorder:
         """Create a new :py:class:`HookRecorder` for a PluginManager."""
         pluginmanager.reprec = reprec = HookRecorder(pluginmanager)
-        self.request.addfinalizer(reprec.finish_recording)
+        self._request.addfinalizer(reprec.finish_recording)
         return reprec
 
     def chdir(self) -> None:
@@ -695,9 +720,9 @@ class Testdir:
 
         This is done automatically upon instantiation.
         """
-        self.tmpdir.chdir()
+        os.chdir(self.path)
 
-    def _makefile(self, ext: str, lines, files, encoding: str = "utf-8"):
+    def _makefile(self, ext: str, lines, files, encoding: str = "utf-8") -> Path:
         items = list(files.items())
 
         def to_text(s):
@@ -710,17 +735,18 @@ class Testdir:
 
         ret = None
         for basename, value in items:
-            p = self.tmpdir.join(basename).new(ext=ext)
-            p.dirpath().ensure_dir()
+            p = self.path.joinpath(basename).with_suffix(ext)
+            p.parent.mkdir(parents=True, exist_ok=True)
             source_ = Source(value)
             source = "\n".join(to_text(line) for line in source_.lines)
-            p.write(source.strip().encode(encoding), "wb")
+            p.write_text(source.strip(), encoding=encoding)
             if ret is None:
                 ret = p
+        assert ret is not None
         return ret
 
-    def makefile(self, ext: str, *args: str, **kwargs):
-        r"""Create new file(s) in the testdir.
+    def makefile(self, ext: str, *args: str, **kwargs) -> Path:
+        r"""Create new file(s) in the test directory.
 
         :param str ext:
             The extension the file(s) should use, including the dot, e.g. `.py`.
@@ -743,11 +769,11 @@ class Testdir:
         """
         return self._makefile(ext, args, kwargs)
 
-    def makeconftest(self, source):
+    def makeconftest(self, source) -> Path:
         """Write a contest.py file with 'source' as contents."""
         return self.makepyfile(conftest=source)
 
-    def makeini(self, source):
+    def makeini(self, source) -> Path:
         """Write a tox.ini file with 'source' as contents."""
         return self.makefile(".ini", tox=source)
 
@@ -756,14 +782,14 @@ class Testdir:
         p = self.makeini(source)
         return IniConfig(p)["pytest"]
 
-    def makepyprojecttoml(self, source):
+    def makepyprojecttoml(self, source) -> Path:
         """Write a pyproject.toml file with 'source' as contents.
 
         .. versionadded:: 6.0
         """
         return self.makefile(".toml", pyproject=source)
 
-    def makepyfile(self, *args, **kwargs):
+    def makepyfile(self, *args, **kwargs) -> Path:
         r"""Shortcut for .makefile() with a .py extension.
 
         Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting
@@ -783,7 +809,7 @@ class Testdir:
         """
         return self._makefile(".py", args, kwargs)
 
-    def maketxtfile(self, *args, **kwargs):
+    def maketxtfile(self, *args, **kwargs) -> Path:
         r"""Shortcut for .makefile() with a .txt extension.
 
         Defaults to the test name with a '.txt' extension, e.g test_foobar.txt, overwriting
@@ -810,67 +836,74 @@ class Testdir:
         test.
         """
         if path is None:
-            path = self.tmpdir
+            path = self.path
 
-        self.monkeypatch.syspath_prepend(str(path))
+        self._monkeypatch.syspath_prepend(str(path))
 
-    def mkdir(self, name) -> py.path.local:
+    def mkdir(self, name: str) -> Path:
         """Create a new (sub)directory."""
-        return self.tmpdir.mkdir(name)
+        p = self.path / name
+        p.mkdir()
+        return p
 
-    def mkpydir(self, name) -> py.path.local:
-        """Create a new Python package.
+    def mkpydir(self, name: str) -> Path:
+        """Create a new python package.
 
         This creates a (sub)directory with an empty ``__init__.py`` file so it
         gets recognised as a Python package.
         """
-        p = self.mkdir(name)
-        p.ensure("__init__.py")
+        p = self.path / name
+        p.mkdir()
+        p.joinpath("__init__.py").touch()
         return p
 
-    def copy_example(self, name=None) -> py.path.local:
+    def copy_example(self, name=None) -> Path:
         """Copy file from project's directory into the testdir.
 
         :param str name: The name of the file to copy.
-        :returns: Path to the copied directory (inside ``self.tmpdir``).
+        :return: path to the copied directory (inside ``self.path``).
+
         """
         import warnings
         from _pytest.warning_types import PYTESTER_COPY_EXAMPLE
 
         warnings.warn(PYTESTER_COPY_EXAMPLE, stacklevel=2)
-        example_dir = self.request.config.getini("pytester_example_dir")
+        example_dir = self._request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")
-        example_dir = self.request.config.rootdir.join(example_dir)
+        example_dir = Path(str(self._request.config.rootdir)) / example_dir
 
-        for extra_element in self.request.node.iter_markers("pytester_example_path"):
+        for extra_element in self._request.node.iter_markers("pytester_example_path"):
             assert extra_element.args
-            example_dir = example_dir.join(*extra_element.args)
+            example_dir = example_dir.joinpath(*extra_element.args)
 
         if name is None:
             func_name = self._name
             maybe_dir = example_dir / func_name
             maybe_file = example_dir / (func_name + ".py")
 
-            if maybe_dir.isdir():
+            if maybe_dir.is_dir():
                 example_path = maybe_dir
-            elif maybe_file.isfile():
+            elif maybe_file.is_file():
                 example_path = maybe_file
             else:
                 raise LookupError(
                     "{} cant be found as module or package in {}".format(
-                        func_name, example_dir.bestrelpath(self.request.config.rootdir)
+                        func_name, example_dir.bestrelpath(self._request.config.rootdir)
                     )
                 )
         else:
-            example_path = example_dir.join(name)
+            example_path = example_dir.joinpath(name)
 
-        if example_path.isdir() and not example_path.join("__init__.py").isfile():
-            example_path.copy(self.tmpdir)
-            return self.tmpdir
-        elif example_path.isfile():
-            result = self.tmpdir.join(example_path.basename)
-            example_path.copy(result)
+        if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
+            # TODO: py.path.local.copy can copy files to existing directories,
+            # while with shutil.copytree the destination directory cannot exist,
+            # we will need to roll our own in order to drop py.path.local completely
+            py.path.local(example_path).copy(py.path.local(self.path))
+            return self.path
+        elif example_path.is_file():
+            result = self.path.joinpath(example_path.name)
+            shutil.copy(example_path, result)
             return result
         else:
             raise LookupError(
@@ -879,7 +912,7 @@ class Testdir:
 
     Session = Session
 
-    def getnode(self, config: Config, arg):
+    def getnode(self, config: Config, arg) -> Optional[Union[Collector, Item]]:
         """Return the collection node of a file.
 
         :param _pytest.config.Config config:
@@ -935,7 +968,7 @@ class Testdir:
         # used from runner functional tests
         item = self.getitem(source)
         # the test class where we are called from wants to provide the runner
-        testclassinstance = self.request.instance
+        testclassinstance = self._request.instance
         runner = testclassinstance.getrunner()
         return runner(item)
 
@@ -1016,7 +1049,7 @@ class Testdir:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
             plugins.append(Collect())
-            ret = pytest.main(list(args), plugins=plugins)
+            ret = pytest.main([str(x) for x in args], plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
             else:
@@ -1024,7 +1057,7 @@ class Testdir:
                 class reprec:  # type: ignore
                     pass
 
-            reprec.ret = ret
+            reprec.ret = ret  # type: ignore
 
             # Typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing.
@@ -1095,7 +1128,7 @@ class Testdir:
             if str(x).startswith("--basetemp"):
                 break
         else:
-            args.append("--basetemp=%s" % self.tmpdir.dirpath("basetemp"))
+            args.append("--basetemp=%s" % self.path.parent.joinpath("basetemp"))
         return args
 
     def parseconfig(self, *args) -> Config:
@@ -1109,15 +1142,16 @@ class Testdir:
         If :py:attr:`plugins` has been populated they should be plugin modules
         to be registered with the PluginManager.
         """
-        args = self._ensure_basetemp(args)
-
         import _pytest.config
 
-        config = _pytest.config._prepareconfig(args, self.plugins)  # type: ignore[arg-type]
+        new_args = self._ensure_basetemp(args)
+        new_args = [str(x) for x in new_args]
+
+        config = _pytest.config._prepareconfig(new_args, self.plugins)  # type: ignore[arg-type]
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
-        self.request.addfinalizer(config._ensure_unconfigure)
+        self._request.addfinalizer(config._ensure_unconfigure)
         return config
 
     def parseconfigure(self, *args) -> Config:
@@ -1177,10 +1211,10 @@ class Testdir:
             directory to ensure it is a package.
         """
         if isinstance(source, Path):
-            path = self.tmpdir.join(str(source))
+            path = self.path.joinpath(source)
             assert not withinit, "not supported for paths"
         else:
-            kw = {self._name: Source(source).strip()}
+            kw = {self._name: str(source)}
             path = self.makepyfile(**kw)
         if withinit:
             self.makepyfile(__init__="#")
@@ -1208,8 +1242,8 @@ class Testdir:
     def popen(
         self,
         cmdargs,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout: Union[int, TextIO] = subprocess.PIPE,
+        stderr: Union[int, TextIO] = subprocess.PIPE,
         stdin=CLOSE_STDIN,
         **kw,
     ):
@@ -1244,18 +1278,22 @@ class Testdir:
         return popen
 
     def run(
-        self, *cmdargs, timeout: Optional[float] = None, stdin=CLOSE_STDIN
+        self,
+        *cmdargs: Union[str, py.path.local, Path],
+        timeout: Optional[float] = None,
+        stdin=CLOSE_STDIN,
     ) -> RunResult:
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
 
-        :param args:
-            The sequence of arguments to pass to `subprocess.Popen()`.
-        :param timeout:
+        :param cmdargs:
+            The sequence of arguments to pass to `subprocess.Popen()`, with ``Path``
+            and ``py.path.local`` objects being converted to ``str`` automatically.
+        :kwarg timeout:
             The period in seconds after which to timeout and raise
-            :py:class:`Testdir.TimeoutExpired`.
-        :param stdin:
+            :py:class:`Testdir.TimeoutExpired`
+        :kwarg stdin:
             Optional standard input.  Bytes are being send, closing
             the pipe, otherwise it is passed through to ``popen``.
             Defaults to ``CLOSE_STDIN``, which translates to using a pipe
@@ -1266,15 +1304,15 @@ class Testdir:
         __tracebackhide__ = True
 
         cmdargs = tuple(
-            str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
+            str(arg) if isinstance(arg, (py.path.local, Path)) else arg
+            for arg in cmdargs
         )
-        p1 = self.tmpdir.join("stdout")
-        p2 = self.tmpdir.join("stderr")
+        p1 = self.path.joinpath("stdout")
+        p2 = self.path.joinpath("stderr")
         print("running:", *cmdargs)
-        print("     in:", py.path.local())
-        f1 = open(str(p1), "w", encoding="utf8")
-        f2 = open(str(p2), "w", encoding="utf8")
-        try:
+        print("     in:", Path.cwd())
+
+        with p1.open("w", encoding="utf8") as f1, p2.open("w", encoding="utf8") as f2:
             now = timing.time()
             popen = self.popen(
                 cmdargs,
@@ -1305,23 +1343,16 @@ class Testdir:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:
                     handle_timeout()
-        finally:
-            f1.close()
-            f2.close()
-        f1 = open(str(p1), encoding="utf8")
-        f2 = open(str(p2), encoding="utf8")
-        try:
+
+        with p1.open(encoding="utf8") as f1, p2.open(encoding="utf8") as f2:
             out = f1.read().splitlines()
             err = f2.read().splitlines()
-        finally:
-            f1.close()
-            f2.close()
+
         self._dump_lines(out, sys.stdout)
         self._dump_lines(err, sys.stderr)
-        try:
+
+        with contextlib.suppress(ValueError):
             ret = ExitCode(ret)
-        except ValueError:
-            pass
         return RunResult(ret, out, err, timing.time() - now)
 
     def _dump_lines(self, lines, fp):
@@ -1366,7 +1397,7 @@ class Testdir:
         :rtype: RunResult
         """
         __tracebackhide__ = True
-        p = make_numbered_dir(root=Path(str(self.tmpdir)), prefix="runpytest-")
+        p = make_numbered_dir(root=self.path, prefix="runpytest-")
         args = ("--basetemp=%s" % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
@@ -1384,7 +1415,8 @@ class Testdir:
 
         The pexpect child is returned.
         """
-        basetemp = self.tmpdir.mkdir("temp-pexpect")
+        basetemp = self.path / "temp-pexpect"
+        basetemp.mkdir()
         invoke = " ".join(map(str, self._getpytestargs()))
         cmd = f"{invoke} --basetemp={basetemp} {string}"
         return self.spawn(cmd, expect_timeout=expect_timeout)
@@ -1399,10 +1431,10 @@ class Testdir:
             pytest.skip("pypy-64 bit not supported")
         if not hasattr(pexpect, "spawn"):
             pytest.skip("pexpect.spawn not available")
-        logfile = self.tmpdir.join("spawn.out").open("wb")
+        logfile = self.path.joinpath("spawn.out").open("wb")
 
         child = pexpect.spawn(cmd, logfile=logfile)
-        self.request.addfinalizer(logfile.close)
+        self._request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child
 
@@ -1423,6 +1455,174 @@ class LineComp:
         self.stringio.seek(0)
         lines1 = val.split("\n")
         LineMatcher(lines1).fnmatch_lines(lines2)
+
+
+@final
+@attr.s(repr=False, str=False)
+class Testdir:
+    """
+    Similar to :class:`PyTester`, but this class works with legacy py.path.local objects instead.
+
+    All methods just forward to an internal :class:`PyTester` instance, converting results
+    to `py.path.local` objects as necessary.
+    """
+
+    __test__ = False
+
+    CLOSE_STDIN = PyTester.CLOSE_STDIN
+    TimeoutExpired = PyTester.TimeoutExpired
+    Session = PyTester.Session
+
+    _pytester = attr.ib(type=PyTester)
+
+    @property
+    def tmpdir(self) -> py.path.local:
+        return py.path.local(self._pytester.path)
+
+    @property
+    def request(self):
+        return self._pytester._request
+
+    @property
+    def plugins(self):
+        return self._pytester.plugins
+
+    @plugins.setter
+    def plugins(self, plugins):
+        self._pytester.plugins = plugins
+
+    @property
+    def monkeypatch(self) -> MonkeyPatch:
+        return self._pytester._monkeypatch
+
+    def make_hook_recorder(self, pluginmanager) -> HookRecorder:
+        return self._pytester.make_hook_recorder(pluginmanager)
+
+    def chdir(self) -> None:
+        return self._pytester.chdir()
+
+    def finalize(self) -> None:
+        return self._pytester._finalize()
+
+    def makefile(self, ext, *args, **kwargs) -> py.path.local:
+        return py.path.local(str(self._pytester.makefile(ext, *args, **kwargs)))
+
+    def makeconftest(self, source) -> py.path.local:
+        return py.path.local(str(self._pytester.makeconftest(source)))
+
+    def makeini(self, source) -> py.path.local:
+        return py.path.local(str(self._pytester.makeini(source)))
+
+    def getinicfg(self, source) -> py.path.local:
+        return py.path.local(str(self._pytester.getinicfg(source)))
+
+    def makepyprojecttoml(self, source) -> py.path.local:
+        return py.path.local(str(self._pytester.makepyprojecttoml(source)))
+
+    def makepyfile(self, *args, **kwargs) -> py.path.local:
+        return py.path.local(str(self._pytester.makepyfile(*args, **kwargs)))
+
+    def maketxtfile(self, *args, **kwargs) -> py.path.local:
+        return py.path.local(str(self._pytester.maketxtfile(*args, **kwargs)))
+
+    def syspathinsert(self, path=None) -> None:
+        return self._pytester.syspathinsert(path)
+
+    def mkdir(self, name) -> py.path.local:
+        return py.path.local(str(self._pytester.mkdir(name)))
+
+    def mkpydir(self, name) -> py.path.local:
+        return py.path.local(str(self._pytester.mkpydir(name)))
+
+    def copy_example(self, name=None) -> py.path.local:
+        return py.path.local(str(self._pytester.copy_example(name)))
+
+    def getnode(self, config: Config, arg) -> Optional[Union[Item, Collector]]:
+        return self._pytester.getnode(config, arg)
+
+    def getpathnode(self, path):
+        return self._pytester.getpathnode(path)
+
+    def genitems(self, colitems: List[Union[Item, Collector]]) -> List[Item]:
+        return self._pytester.genitems(colitems)
+
+    def runitem(self, source):
+        return self._pytester.runitem(source)
+
+    def inline_runsource(self, source, *cmdlineargs):
+        return self._pytester.inline_runsource(source, *cmdlineargs)
+
+    def inline_genitems(self, *args):
+        return self._pytester.inline_genitems(*args)
+
+    def inline_run(self, *args, plugins=(), no_reraise_ctrlc: bool = False):
+        return self._pytester.inline_run(
+            *args, plugins=plugins, no_reraise_ctrlc=no_reraise_ctrlc
+        )
+
+    def runpytest_inprocess(self, *args, **kwargs) -> RunResult:
+        return self._pytester.runpytest_inprocess(*args, **kwargs)
+
+    def runpytest(self, *args, **kwargs) -> RunResult:
+        return self._pytester.runpytest(*args, **kwargs)
+
+    def parseconfig(self, *args) -> Config:
+        return self._pytester.parseconfig(*args)
+
+    def parseconfigure(self, *args) -> Config:
+        return self._pytester.parseconfigure(*args)
+
+    def getitem(self, source, funcname="test_func"):
+        return self._pytester.getitem(source, funcname)
+
+    def getitems(self, source):
+        return self._pytester.getitems(source)
+
+    def getmodulecol(self, source, configargs=(), withinit=False):
+        return self._pytester.getmodulecol(
+            source, configargs=configargs, withinit=withinit
+        )
+
+    def collect_by_name(
+        self, modcol: Module, name: str
+    ) -> Optional[Union[Item, Collector]]:
+        return self._pytester.collect_by_name(modcol, name)
+
+    def popen(
+        self,
+        cmdargs,
+        stdout: Union[int, TextIO] = subprocess.PIPE,
+        stderr: Union[int, TextIO] = subprocess.PIPE,
+        stdin=CLOSE_STDIN,
+        **kw,
+    ):
+        return self._pytester.popen(cmdargs, stdout, stderr, stdin, **kw)
+
+    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN) -> RunResult:
+        return self._pytester.run(*cmdargs, timeout=timeout, stdin=stdin)
+
+    def runpython(self, script) -> RunResult:
+        return self._pytester.runpython(script)
+
+    def runpython_c(self, command):
+        return self._pytester.runpython_c(command)
+
+    def runpytest_subprocess(self, *args, timeout=None) -> RunResult:
+        return self._pytester.runpytest_subprocess(*args, timeout=timeout)
+
+    def spawn_pytest(
+        self, string: str, expect_timeout: float = 10.0
+    ) -> "pexpect.spawn":
+        return self._pytester.spawn_pytest(string, expect_timeout=expect_timeout)
+
+    def spawn(self, cmd: str, expect_timeout: float = 10.0) -> "pexpect.spawn":
+        return self._pytester.spawn(cmd, expect_timeout=expect_timeout)
+
+    def __repr__(self) -> str:
+        return f"<Testdir {self.tmpdir!r}>"
+
+    def __str__(self) -> str:
+        return str(self.tmpdir)
 
 
 class LineMatcher:
