@@ -233,7 +233,11 @@ if sys.version_info[:2] >= (3, 7):
                 E         Matching attributes:
                 E         ['b']
                 E         Differing attributes:
-                E         a: 1 != 2
+                E         ['a']
+                E         Drill down into differing attribute a:
+                E           a: 1 != 2
+                E           +1
+                E           -2
                 """,
                 id="Compare data classes",
             ),
@@ -257,7 +261,11 @@ if sys.version_info[:2] >= (3, 7):
                 E         Matching attributes:
                 E         ['a']
                 E         Differing attributes:
-                E         b: 'spam' != 'eggs'
+                E         ['b']
+                E         Drill down into differing attribute b:
+                E           b: 'spam' != 'eggs'
+                E           - eggs
+                E           + spam
                 """,
                 id="Compare attrs classes",
             ),

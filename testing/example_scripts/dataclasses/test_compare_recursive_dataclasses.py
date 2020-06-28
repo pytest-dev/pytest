@@ -1,47 +1,38 @@
 from dataclasses import dataclass
-from dataclasses import field
-from typing import Union
 
 
 @dataclass
-class SimpleDataObject:
-    field_a: int = field()
-    field_b: str = field()
+class S:
+    a: int
+    b: str
 
 
 @dataclass
-class ComplexDataObject:
-    field_a: SimpleDataObject = field()
-    field_b: SimpleDataObject = field()
+class C:
+    c: S
+    d: S
 
 
 @dataclass
-class ComplexDataObject2:
-    field_a: Union[SimpleDataObject, ComplexDataObject] = field()
-    field_b: Union[SimpleDataObject, ComplexDataObject] = field()
+class C2:
+    e: C
+    f: S
 
 
 @dataclass
-class ComplexDataObject3:
-    field_a: Union[SimpleDataObject, ComplexDataObject2] = field()
-    field_b: Union[SimpleDataObject, ComplexDataObject2] = field()
+class C3:
+    g: S
+    h: C2
+    i: str
+    j: str
 
 
 def test_recursive_dataclasses():
-
-    left = ComplexDataObject3(
-        SimpleDataObject(1, "b"),
-        ComplexDataObject2(
-            ComplexDataObject(SimpleDataObject(3, "b"), SimpleDataObject(2, "c")),
-            SimpleDataObject(2, "c"),
-        ),
+    left = C3(
+        S(10, "ten"), C2(C(S(1, "one"), S(2, "two")), S(2, "three")), "equal", "left",
     )
-    right = ComplexDataObject3(
-        SimpleDataObject(1, "b"),
-        ComplexDataObject2(
-            ComplexDataObject(SimpleDataObject(1, "b"), SimpleDataObject(2, "c")),
-            SimpleDataObject(3, "c"),
-        ),
+    right = C3(
+        S(20, "xxx"), C2(C(S(1, "one"), S(2, "yyy")), S(3, "three")), "equal", "right",
     )
 
     assert left == right

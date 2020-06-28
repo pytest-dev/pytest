@@ -778,12 +778,16 @@ class TestAssert_reprcompare_dataclass:
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.fnmatch_lines(
             [
-                "*Omitting 1 identical items, use -vv to show*",
-                "*Differing attributes:*",
-                "*field_b: 'b' != 'c'*",
-                "*- c*",
-                "*+ b*",
-            ]
+                "E         Omitting 1 identical items, use -vv to show",
+                "E         Differing attributes:",
+                "E         ['field_b']",
+                "E         ",
+                "E         Drill down into differing attribute field_b:",
+                "E           field_b: 'b' != 'c'...",
+                "E         ",
+                "E         ...Full output truncated (3 lines hidden), use '-vv' to show",
+            ],
+            consecutive=True,
         )
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
@@ -793,14 +797,16 @@ class TestAssert_reprcompare_dataclass:
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.fnmatch_lines(
             [
-                "*Omitting 1 identical items, use -vv to show*",
-                "*Differing attributes:*",
-                "*field_b: ComplexDataObject2(*SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(*SimpleDataObject(field_a=3, field_b='c'))*",  # noqa
-                "*Drill down into differing attribute field_b:*",
-                "*Differing attributes:*",
-                "*field_a: ComplexDataObject*",
-                "*Full output truncated*",
-            ]
+                "E         Omitting 1 identical items, use -vv to show",
+                "E         Differing attributes:",
+                "E         ['g', 'h', 'j']",
+                "E         ",
+                "E         Drill down into differing attribute g:",
+                "E           g: S(a=10, b='ten') != S(a=20, b='xxx')...",
+                "E         ",
+                "E         ...Full output truncated (52 lines hidden), use '-vv' to show",
+            ],
+            consecutive=True,
         )
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
@@ -810,18 +816,30 @@ class TestAssert_reprcompare_dataclass:
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.fnmatch_lines(
             [
-                "*Matching attributes:*",
-                "*['field_a']*",
-                "*Differing attributes:*",
-                "*field_b=SimpleDataObject(field_a=2, field_b='c')) != ComplexDataObject2(field_a=ComplexDataObject*",
-                "*Drill down into differing attribute field_b:*",
-                "*field_a: ComplexDataObject(field_a=SimpleDataObject(field_a=3, field_b='b')*",
-                "*Drill down into differing attribute field_a:*",
-                "*Matching attributes:*",
-                "*['field_b']*",
-                "*Differing attributes:*",
-                "*field_a: SimpleDataObject(field_a=3, field_b='b') != SimpleDataObject(field_a=1, field_b='b')*",
-            ]
+                "E         Matching attributes:",
+                "E         ['i']",
+                "E         Differing attributes:",
+                "E         ['g', 'h', 'j']",
+                "E         ",
+                "E         Drill down into differing attribute g:",
+                "E           g: S(a=10, b='ten') != S(a=20, b='xxx')",
+                "E           ",
+                "E           Differing attributes:",
+                "E           ['a', 'b']",
+                "E           ",
+                "E           Drill down into differing attribute a:",
+                "E             a: 10 != 20",
+                "E             +10",
+                "E             -20",
+                "E           ",
+                "E           Drill down into differing attribute b:",
+                "E             b: 'ten' != 'xxx'",
+                "E             - xxx",
+                "E             + ten",
+                "E         ",
+                "E         Drill down into differing attribute h:",
+            ],
+            consecutive=True,
         )
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
@@ -867,9 +885,9 @@ class TestAssert_reprcompare_attrsclass:
 
         lines = callequal(left, right)
         assert lines is not None
-        assert lines[1].startswith("Omitting 1 identical item")
+        assert lines[2].startswith("Omitting 1 identical item")
         assert "Matching attributes" not in lines
-        for line in lines[1:]:
+        for line in lines[2:]:
             assert "field_a" not in line
 
     def test_attrs_recursive(self) -> None:
@@ -909,9 +927,8 @@ class TestAssert_reprcompare_attrsclass:
 
         lines = callequal(left, right)
         assert lines is not None
-        assert (
-            "    field_d: 'a' != 'b'" in lines
-        )  # indentation in output because of nested object structure
+        # indentation in output because of nested object structure
+        assert "    field_d: 'a' != 'b'" in lines
 
     def test_attrs_verbose(self) -> None:
         @attr.s
@@ -924,9 +941,9 @@ class TestAssert_reprcompare_attrsclass:
 
         lines = callequal(left, right, verbose=2)
         assert lines is not None
-        assert lines[1].startswith("Matching attributes:")
-        assert "Omitting" not in lines[1]
-        assert lines[2] == "['field_a']"
+        assert lines[2].startswith("Matching attributes:")
+        assert "Omitting" not in lines[2]
+        assert lines[3] == "['field_a']"
 
     def test_attrs_with_attribute_comparison_off(self):
         @attr.s
@@ -938,11 +955,12 @@ class TestAssert_reprcompare_attrsclass:
         right = SimpleDataObject(1, "b")
 
         lines = callequal(left, right, verbose=2)
+        print(lines)
         assert lines is not None
-        assert lines[1].startswith("Matching attributes:")
+        assert lines[2].startswith("Matching attributes:")
         assert "Omitting" not in lines[1]
-        assert lines[2] == "['field_a']"
-        for line in lines[2:]:
+        assert lines[3] == "['field_a']"
+        for line in lines[3:]:
             assert "field_b" not in line
 
     def test_comparing_two_different_attrs_classes(self):
@@ -1048,40 +1066,6 @@ class TestFormatExplanation:
             ]
         )
         assert util.format_explanation(expl) == res
-
-
-class TestGetNumOfFunctionCalls:
-    def test_lookup_calling_function(self) -> None:
-        num_calls = util._get_number_of_calls(func_name="test_lookup_calling_function")
-        assert num_calls == 1
-
-    def test_lookup_called_function(self) -> None:
-        num_calls = util._get_number_of_calls(func_name="_get_number_of_calls")
-        assert num_calls == 1
-
-    def test_lookup_recursive_function(self) -> None:
-        def recursive_one(execution_num: int):
-            if execution_num == 1:
-                num_calls_one = util._get_number_of_calls(func_name="recursive_one")
-                assert num_calls_one == 1
-                num_calls_two = util._get_number_of_calls(func_name="recursive_two")
-                assert num_calls_two == 1
-                recursive_two(execution_num=2)
-            elif execution_num == 2:
-                num_calls_one = util._get_number_of_calls(func_name="recursive_one")
-                assert num_calls_one == 2
-                num_calls_two = util._get_number_of_calls(func_name="recursive_two")
-                assert num_calls_two == 2
-
-        def recursive_two(execution_num):
-            if execution_num == 1 or execution_num == 2:
-                recursive_one(execution_num)
-
-        recursive_two(execution_num=1)
-
-    def test_lookup_non_existing_function(self) -> None:
-        with pytest.raises(ValueError, match="Wrong function name given!"):
-            _ = util._get_number_of_calls(func_name="i_don_t_exist")
 
 
 class TestTruncateExplanation:
