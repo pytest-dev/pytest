@@ -104,7 +104,7 @@ def pytest_addoption(parser: Parser) -> None:
 @pytest.hookimpl(hookwrapper=True)
 def pytest_cmdline_parse():
     outcome = yield
-    config = outcome.get_result()
+    config = outcome.get_result()  # type: Config
     if config.option.debug:
         path = os.path.abspath("pytestdebug.log")
         debugfile = open(path, "w")
@@ -132,7 +132,7 @@ def pytest_cmdline_parse():
         config.add_cleanup(unset_tracing)
 
 
-def showversion(config):
+def showversion(config: Config) -> None:
     if config.option.version > 1:
         sys.stderr.write(
             "This is pytest version {}, imported from {}\n".format(
@@ -232,7 +232,7 @@ def showhelp(config: Config) -> None:
 conftest_options = [("pytest_plugins", "list of plugin names to load")]
 
 
-def getpluginversioninfo(config):
+def getpluginversioninfo(config: Config) -> List[str]:
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
     if plugininfo:

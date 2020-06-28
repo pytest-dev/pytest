@@ -2,6 +2,11 @@
 Talks and Tutorials
 ==========================
 
+.. sidebar:: Next Open Trainings
+
+   - `Free 1h webinar: "pytest: Test Driven Development für Python" <https://mylearning.ch/kurse/online-kurse/tech-webinar/>`_ (German), online, August 18 2020.
+   - `"pytest: Test Driven Development (nicht nur) für Python" <https://workshoptage.ch/workshops/2020/pytest-test-driven-development-nicht-nur-fuer-python/>`_ (German) at the `CH Open Workshoptage <https://workshoptage.ch/>`_, September 8 2020, HSLU Campus Rotkreuz (ZG), Switzerland.
+
 .. _`funcargs`: funcargs.html
 
 Books

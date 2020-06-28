@@ -422,7 +422,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         return values
 
     def _makeitem(
-        self, name: str, obj
+        self, name: str, obj: object
     ) -> Union[
         None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]
     ]:
@@ -551,8 +551,10 @@ class Module(nodes.File, PyCollector):
         importmode = self.config.getoption("--import-mode")
         try:
             mod = import_path(self.fspath, mode=importmode)
-        except SyntaxError:
-            raise self.CollectError(ExceptionInfo.from_current().getrepr(style="short"))
+        except SyntaxError as e:
+            raise self.CollectError(
+                ExceptionInfo.from_current().getrepr(style="short")
+            ) from e
         except ImportPathMismatchError as e:
             raise self.CollectError(
                 "import file mismatch:\n"
@@ -562,8 +564,8 @@ class Module(nodes.File, PyCollector):
                 "  %s\n"
                 "HINT: remove __pycache__ / .pyc files and/or use a "
                 "unique basename for your test file modules" % e.args
-            )
-        except ImportError:
+            ) from e
+        except ImportError as e:
             exc_info = ExceptionInfo.from_current()
             if self.config.getoption("verbose") < 2:
                 exc_info.traceback = exc_info.traceback.filter(filter_traceback)
@@ -578,7 +580,7 @@ class Module(nodes.File, PyCollector):
                 "Hint: make sure your test modules/packages have valid Python names.\n"
                 "Traceback:\n"
                 "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
-            )
+            ) from e
         except _pytest.runner.Skipped as e:
             if e.allow_module_level:
                 raise
@@ -587,7 +589,7 @@ class Module(nodes.File, PyCollector):
                 "To decorate a test function, use the @pytest.mark.skip "
                 "or @pytest.mark.skipif decorators instead, and to skip a "
                 "module use `pytestmark = pytest.mark.{skip,skipif}."
-            )
+            ) from e
         self.config.pluginmanager.consider_module(mod)
         return mod
 
@@ -836,8 +838,8 @@ class CallSpec2:
     def getparam(self, name: str) -> object:
         try:
             return self.params[name]
-        except KeyError:
-            raise ValueError(name)
+        except KeyError as e:
+            raise ValueError(name) from e
 
     @property
     def id(self) -> str:
@@ -1074,8 +1076,8 @@ class Metafunc:
         except TypeError:
             try:
                 iter(ids)
-            except TypeError:
-                raise TypeError("ids must be a callable or an iterable")
+            except TypeError as e:
+                raise TypeError("ids must be a callable or an iterable") from e
             num_ids = len(parameters)
 
         # num_ids == 0 is a special case: https://github.com/pytest-dev/pytest/issues/1849

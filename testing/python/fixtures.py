@@ -1315,7 +1315,7 @@ class TestFixtureUsages:
 
             DB_INITIALIZED = None
 
-            @pytest.yield_fixture(scope="session", autouse=True)
+            @pytest.fixture(scope="session", autouse=True)
             def db():
                 global DB_INITIALIZED
                 DB_INITIALIZED = True
@@ -2960,8 +2960,7 @@ class TestFixtureMarker:
             """
             import pytest
 
-            @pytest.yield_fixture(params=[object(), object()],
-                                  ids=['alpha', 'beta'])
+            @pytest.fixture(params=[object(), object()], ids=['alpha', 'beta'])
             def fix(request):
                  yield request.param
 

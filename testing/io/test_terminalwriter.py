@@ -213,19 +213,32 @@ class TestTerminalWriterLineWidth:
 
 
 @pytest.mark.parametrize(
-    "has_markup, expected",
+    ("has_markup", "code_highlight", "expected"),
     [
         pytest.param(
-            True, "{kw}assert{hl-reset} {number}0{hl-reset}\n", id="with markup"
+            True,
+            True,
+            "{kw}assert{hl-reset} {number}0{hl-reset}\n",
+            id="with markup and code_highlight",
         ),
-        pytest.param(False, "assert 0\n", id="no markup"),
+        pytest.param(
+            True, False, "assert 0\n", id="with markup but no code_highlight",
+        ),
+        pytest.param(
+            False, True, "assert 0\n", id="without markup but with code_highlight",
+        ),
+        pytest.param(
+            False, False, "assert 0\n", id="neither markup nor code_highlight",
+        ),
     ],
 )
-def test_code_highlight(has_markup, expected, color_mapping):
+def test_code_highlight(has_markup, code_highlight, expected, color_mapping):
     f = io.StringIO()
     tw = terminalwriter.TerminalWriter(f)
     tw.hasmarkup = has_markup
+    tw.code_highlight = code_highlight
     tw._write_source(["assert 0"])
+
     assert f.getvalue().splitlines(keepends=True) == color_mapping.format([expected])
 
     with pytest.raises(

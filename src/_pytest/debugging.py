@@ -28,10 +28,10 @@ def _validate_usepdb_cls(value: str) -> Tuple[str, str]:
     """Validate syntax of --pdbcls option."""
     try:
         modname, classname = value.split(":")
-    except ValueError:
+    except ValueError as e:
         raise argparse.ArgumentTypeError(
             "{!r} is not in the format 'modname:classname'".format(value)
-        )
+        ) from e
     return (modname, classname)
 
 
@@ -130,7 +130,7 @@ class pytestPDB:
                 value = ":".join((modname, classname))
                 raise UsageError(
                     "--pdbcls: could not import {!r}: {}".format(value, exc)
-                )
+                ) from exc
         else:
             import pdb
 

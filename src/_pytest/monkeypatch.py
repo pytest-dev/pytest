@@ -73,7 +73,7 @@ def resolve(name: str) -> object:
             if expected == used:
                 raise
             else:
-                raise ImportError("import error in {}: {}".format(used, ex))
+                raise ImportError("import error in {}: {}".format(used, ex)) from ex
         found = annotated_getattr(found, part, used)
     return found
 
@@ -81,12 +81,12 @@ def resolve(name: str) -> object:
 def annotated_getattr(obj: object, name: str, ann: str) -> object:
     try:
         obj = getattr(obj, name)
-    except AttributeError:
+    except AttributeError as e:
         raise AttributeError(
             "{!r} object at {} has no attribute {!r}".format(
                 type(obj).__name__, ann, name
             )
-        )
+        ) from e
     return obj
 
 

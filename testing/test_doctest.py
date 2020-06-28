@@ -1176,7 +1176,7 @@ class TestDoctestAutoUseFixtures:
             import pytest
             import sys
 
-            @pytest.yield_fixture(autouse=True, scope='session')
+            @pytest.fixture(autouse=True, scope='session')
             def myfixture():
                 assert not hasattr(sys, 'pytest_session_data')
                 sys.pytest_session_data = 1

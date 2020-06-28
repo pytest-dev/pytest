@@ -11,6 +11,7 @@ import py.path
 import _pytest._code
 import pytest
 from _pytest.compat import importlib_metadata
+from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
@@ -1115,21 +1116,17 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     assert [x.function.__module__ for x in values] == expected
 
 
-def test_get_plugin_specs_as_list():
-    from _pytest.config import _get_plugin_specs_as_list
-
-    def exp_match(val):
+def test_get_plugin_specs_as_list() -> None:
+    def exp_match(val: object) -> str:
         return (
-            "Plugin specs must be a ','-separated string"
-            " or a list/tuple of strings for plugin names. Given: {}".format(
-                re.escape(repr(val))
-            )
+            "Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: %s"
+            % re.escape(repr(val))
         )
 
     with pytest.raises(pytest.UsageError, match=exp_match({"foo"})):
-        _get_plugin_specs_as_list({"foo"})
+        _get_plugin_specs_as_list({"foo"})  # type: ignore[arg-type]
     with pytest.raises(pytest.UsageError, match=exp_match({})):
-        _get_plugin_specs_as_list(dict())
+        _get_plugin_specs_as_list(dict())  # type: ignore[arg-type]
 
     assert _get_plugin_specs_as_list(None) == []
     assert _get_plugin_specs_as_list("") == []
@@ -1963,5 +1960,7 @@ def test_conftest_import_error_repr(tmpdir):
     ):
         try:
             raise RuntimeError("some error")
-        except Exception:
-            raise ConftestImportFailure(path, sys.exc_info())
+        except Exception as exc:
+            assert exc.__traceback__ is not None
+            exc_info = (type(exc), exc, exc.__traceback__)
+            raise ConftestImportFailure(path, exc_info) from exc
