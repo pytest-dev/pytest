@@ -1186,7 +1186,7 @@ class Config:
         from _pytest.warnings import _issue_warning_captured
 
         _issue_warning_captured(
-            PytestConfigWarning(message), self.hook, stacklevel=2,
+            PytestConfigWarning(message), self.hook, stacklevel=3,
         )
 
     def _get_unknown_ini_keys(self) -> List[str]:
@@ -1375,7 +1375,7 @@ class Config:
                     "(are you using python -O?)\n"
                 )
             _issue_warning_captured(
-                PytestConfigWarning(warning_text), self.hook, stacklevel=2,
+                PytestConfigWarning(warning_text), self.hook, stacklevel=3,
             )
 
 
