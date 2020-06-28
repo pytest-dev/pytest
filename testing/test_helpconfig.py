@@ -38,6 +38,34 @@ def test_help(testdir):
     )
 
 
+def test_empty_help_param(testdir):
+    """Tests empty help param is displayed correctly.
+    """
+    testdir.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("test_ini", "", default=True, type="bool")
+    """
+    )
+    result = testdir.runpytest("--help")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*test_ini*(bool):*"])
+
+
+def test_none_help_param(testdir):
+    """Tests help param None is displayed as empty string.
+    """
+    testdir.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("test_ini", None, default=True, type="bool")
+    """
+    )
+    result = testdir.runpytest("--help")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*test_ini*(bool):*"])
+
+
 def test_hookvalidation_unknown(testdir):
     testdir.makeconftest(
         """
