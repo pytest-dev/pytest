@@ -95,9 +95,10 @@ def pytest_sessionfinish(session: "Session") -> None:
 
 
 def pytest_runtest_protocol(item: Item, nextitem: Optional[Item]) -> bool:
-    item.ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
+    ihook = item.ihook
+    ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
     runtestprotocol(item, nextitem=nextitem)
-    item.ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
+    ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
     return True
 
 
