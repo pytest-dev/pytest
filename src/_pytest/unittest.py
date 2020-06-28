@@ -302,9 +302,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
     if (
         unittest
         and call.excinfo
-        and call.excinfo.errisinstance(
-            unittest.SkipTest  # type: ignore[attr-defined] # noqa: F821
-        )
+        and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
     ):
         excinfo = call.excinfo
         # let's substitute the excinfo with a pytest.skip one

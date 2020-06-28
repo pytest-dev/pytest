@@ -265,7 +265,7 @@ def wrap_session(
                     session.exitstatus = exc.returncode
                 sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
             else:
-                if excinfo.errisinstance(SystemExit):
+                if isinstance(excinfo.value, SystemExit):
                     sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
 
     finally:

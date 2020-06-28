@@ -215,11 +215,18 @@ def call_and_report(
 
 
 def check_interactive_exception(call: "CallInfo", report: BaseReport) -> bool:
-    return call.excinfo is not None and not (
-        hasattr(report, "wasxfail")
-        or call.excinfo.errisinstance(Skipped)
-        or call.excinfo.errisinstance(bdb.BdbQuit)
-    )
+    """Check whether the call raised an exception that should be reported as
+    interactive."""
+    if call.excinfo is None:
+        # Didn't raise.
+        return False
+    if hasattr(report, "wasxfail"):
+        # Exception was expected.
+        return False
+    if isinstance(call.excinfo.value, (Skipped, bdb.BdbQuit)):
+        # Special control flow exception.
+        return False
+    return True
 
 
 def call_runtest_hook(
@@ -287,7 +294,7 @@ class CallInfo(Generic[_T]):
             result = func()  # type: Optional[_T]
         except BaseException:
             excinfo = ExceptionInfo.from_current()
-            if reraise is not None and excinfo.errisinstance(reraise):
+            if reraise is not None and isinstance(excinfo.value, reraise):
                 raise
             result = None
         # use the perf counter
@@ -325,7 +332,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
         if unittest is not None:
             # Type ignored because unittest is loaded dynamically.
             skip_exceptions.append(unittest.SkipTest)  # type: ignore
-        if call.excinfo.errisinstance(tuple(skip_exceptions)):
+        if isinstance(call.excinfo.value, tuple(skip_exceptions)):
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
             assert isinstance(r_, ExceptionChainRepr), repr(r_)

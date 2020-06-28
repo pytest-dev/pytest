@@ -558,7 +558,10 @@ class ExceptionInfo(Generic[_E]):
     def errisinstance(
         self, exc: Union["Type[BaseException]", Tuple["Type[BaseException]", ...]]
     ) -> bool:
-        """ return True if the exception is an instance of exc """
+        """Return True if the exception is an instance of exc.
+
+        Consider using ``isinstance(excinfo.value, exc)`` instead.
+        """
         return isinstance(self.value, exc)
 
     def _getreprcrash(self) -> "ReprFileLocation":
@@ -804,7 +807,7 @@ class FormattedExcinfo:
         if self.tbfilter:
             traceback = traceback.filter()
 
-        if excinfo.errisinstance(RecursionError):
+        if isinstance(excinfo.value, RecursionError):
             traceback, extraline = self._truncate_recursive_traceback(traceback)
         else:
             extraline = None

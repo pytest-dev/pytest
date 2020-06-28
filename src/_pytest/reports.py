@@ -308,7 +308,7 @@ class TestReport(BaseReport):
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
                 longrepr = excinfo
-            elif excinfo.errisinstance(skip.Exception):
+            elif isinstance(excinfo.value, skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
                 longrepr = (str(r.path), r.lineno, r.message)
