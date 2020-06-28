@@ -3,9 +3,12 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import cast
+from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -138,12 +141,15 @@ class TestMetafunc:
         class DummyFixtureDef:
             scope = attr.ib()
 
-        fixtures_defs = dict(
-            session_fix=[DummyFixtureDef("session")],
-            package_fix=[DummyFixtureDef("package")],
-            module_fix=[DummyFixtureDef("module")],
-            class_fix=[DummyFixtureDef("class")],
-            func_fix=[DummyFixtureDef("function")],
+        fixtures_defs = cast(
+            Dict[str, Sequence[fixtures.FixtureDef]],
+            dict(
+                session_fix=[DummyFixtureDef("session")],
+                package_fix=[DummyFixtureDef("package")],
+                module_fix=[DummyFixtureDef("module")],
+                class_fix=[DummyFixtureDef("class")],
+                func_fix=[DummyFixtureDef("function")],
+            ),
         )
 
         # use arguments to determine narrow scope; the cause of the bug is that it would look on all
