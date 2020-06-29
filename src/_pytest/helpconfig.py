@@ -167,17 +167,17 @@ def showhelp(config: Config) -> None:
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
     for name in config._parser._ininames:
-        help, type, default = config._parser._inidict[name]
-        if type is None:
-            type = "string"
-        spec = "{} ({}):".format(name, type)
+        help_text, ini_type, default = config._parser._inidict[name]
+        if ini_type is None:
+            ini_type = "string"
+        spec = "{} ({}):".format(name, ini_type)
         tw.write("  %s" % spec)
         spec_len = len(spec)
         if spec_len > (indent_len - 3):
             # Display help starting at a new line.
             tw.line()
             helplines = textwrap.wrap(
-                help,
+                help_text,
                 columns,
                 initial_indent=indent,
                 subsequent_indent=indent,
@@ -189,7 +189,9 @@ def showhelp(config: Config) -> None:
         else:
             # Display help starting after the spec, following lines indented.
             tw.write(" " * (indent_len - spec_len - 2))
-            wrapped = textwrap.wrap(help, columns - indent_len, break_on_hyphens=False)
+            wrapped = textwrap.wrap(
+                help_text, columns - indent_len, break_on_hyphens=False
+            )
 
             tw.line(wrapped[0])
             for line in wrapped[1:]:
@@ -203,8 +205,8 @@ def showhelp(config: Config) -> None:
         ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "set to disable plugin auto-loading"),
         ("PYTEST_DEBUG", "set to enable debug tracing of pytest's internals"),
     ]
-    for name, help in vars:
-        tw.line("  {:<24} {}".format(name, help))
+    for name, help_text in vars:
+        tw.line("  {:<24} {}".format(name, help_text))
     tw.line()
     tw.line()
 
