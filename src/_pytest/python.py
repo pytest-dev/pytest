@@ -209,16 +209,12 @@ def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
     return mod
 
 
-@hookimpl(hookwrapper=True)
-def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
-    outcome = yield
-    res = outcome.get_result()
-    if res is not None:
-        return
+@hookimpl(trylast=True)
+def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj: object):
     # nothing was collected elsewhere, let's do it here
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
-            outcome.force_result(Class.from_parent(collector, name=name, obj=obj))
+            return Class.from_parent(collector, name=name, obj=obj)
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
@@ -245,7 +241,7 @@ def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
                 res.warn(PytestCollectionWarning(reason))
             else:
                 res = list(collector._genfunctions(name, obj))
-            outcome.force_result(res)
+            return res
 
 
 class PyobjMixin:
