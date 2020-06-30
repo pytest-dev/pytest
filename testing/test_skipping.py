@@ -235,6 +235,20 @@ class TestXFail:
             ["*def test_func():*", "*assert 0*", "*1 failed*1 pass*"]
         )
 
+    def test_xfail_run_with_skip_mark(self, testdir):
+        p = testdir.makepyfile(
+            """
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location() -> None:
+                assert 0
+        """
+        )
+        result = testdir.runpytest(p, "-rs")
+        result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
+        result = testdir.runpytest(p, "-rs --runxfail")
+        result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
+
     def test_xfail_evalfalse_but_fails(self, testdir):
         item = testdir.getitem(
             """
