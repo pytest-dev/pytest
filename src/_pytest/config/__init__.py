@@ -1247,39 +1247,9 @@ class Config:
             self._inicache[name] = val = self._getini(name)
             return val
 
-    def _getini(self, name: str):
-        try:
-            description, type, default = self._parser._inidict[name]
-        except KeyError as e:
-            raise ValueError("unknown configuration value: {!r}".format(name)) from e
-        override_value = self._get_override_ini_value(name)
-        append_values = self._get_append_ini_values(name, type)
-
-        value = self.inicfg.get(name, None)
-        if override_value is None and not append_values:
-            if value is None:
-                if default is not None:
-                    return default
-                if type is None:
-                    return ""
-                return []
-        else:
-            if override_value:
-                value = override_value
-            if append_values:
-                if not value:
-                    fail(
-                        "append_ini option invalid for argument '{}' since it has no value".format(
-                            name
-                        ),
-                        pytrace=False,
-                    )
-                else:
-                    value = (
-                        value + append_values
-                        if isinstance(value, list)
-                        else "{} {}".format(value, " ".join(append_values))
-                    )
+    def _coerce_ini_option_based_on_type(
+        self, value: Union[List, str, None], ini_type: Optional[str]
+    ) -> Union[List, bool, str, None]:
         # coerce the values based on types
         # note: some coercions are only required if we are reading from .ini files, because
         # the file format doesn't contain type information, but when reading from toml we will
@@ -1294,7 +1264,7 @@ class Config:
         #     a_line_list = ["tests", "acceptance"]
         #   in this case, we already have a list ready to use
         #
-        if type == "pathlist":
+        if ini_type == "pathlist":
             # TODO: This assert is probably not valid in all cases.
             assert self.inifile is not None
             dp = py.path.local(self.inifile).dirpath()
@@ -1302,18 +1272,31 @@ class Config:
                 value = []
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp.join(x, abs=True) for x in input_values]
-        elif type == "args":
+        elif ini_type == "args":
             return shlex.split(value) if isinstance(value, str) else value
-        elif type == "linelist":
+        elif ini_type == "linelist":
             if isinstance(value, str):
                 return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
             else:
                 return value
-        elif type == "bool":
+        elif ini_type == "bool":
             return _strtobool(str(value).strip())
         else:
-            assert type is None
+            assert ini_type is None
             return value
+
+    def _getini(self, name: str):
+        try:
+            description, type, default = self._parser._inidict[name]
+        except KeyError as e:
+            raise ValueError("unknown configuration value: {!r}".format(name)) from e
+        override_value = self._get_override_ini_value(name)
+        append_values = self._get_append_ini_values(name, type)
+
+        value = self._resolve_ini_option(
+            name, default, override_value, append_values, type
+        )
+        return self._coerce_ini_option_based_on_type(value, type) if value else value
 
     def _getconftest_pathlist(
         self, name: str, path: py.path.local
@@ -1359,6 +1342,41 @@ class Config:
                                 name, ini_type
                             )
                         )
+        return value
+
+    def _resolve_ini_option(
+        self,
+        name: str,
+        default_value: str,
+        override_value: Optional[str],
+        append_values: List,
+        ini_type: Optional[str],
+    ) -> Union[List, str, None]:
+        value = self.inicfg.get(name, None)
+        if override_value is None and not append_values:
+            if value is None:
+                if default_value is not None:
+                    return default_value
+                if ini_type is None:
+                    return ""
+                return []
+        else:
+            if override_value:
+                value = override_value
+            if append_values:
+                if not value:
+                    fail(
+                        "append_ini option invalid for argument '{}' since it has no value".format(
+                            name
+                        ),
+                        pytrace=False,
+                    )
+                else:
+                    value = (
+                        value + append_values
+                        if isinstance(value, list)
+                        else "{} {}".format(value, " ".join(append_values))
+                    )
         return value
 
     def _get_override_ini_value(self, name: str) -> Optional[str]:
