@@ -25,13 +25,14 @@ if TYPE_CHECKING:
 
 
 class Source:
-    """ an immutable object holding a source code fragment,
-        possibly deindenting it.
+    """An immutable object holding a source code fragment.
+
+    When using Source(...), the source lines are deindented.
     """
 
     _compilecounter = 0
 
-    def __init__(self, *parts, deindent: bool = True) -> None:
+    def __init__(self, *parts) -> None:
         self.lines = lines = []  # type: List[str]
         for part in parts:
             if not part:
@@ -43,9 +44,8 @@ class Source:
             elif isinstance(part, str):
                 partlines = part.split("\n")
             else:
-                partlines = getsource(part, deindent=deindent).lines
-            if deindent:
-                partlines = _deindent_function(partlines)
+                partlines = getsource(part).lines
+            partlines = deindent(partlines)
             lines.extend(partlines)
 
     def __eq__(self, other):
@@ -306,22 +306,18 @@ def getrawcode(obj, trycall: bool = True):
         return obj
 
 
-def getsource(obj, *, deindent: bool = True) -> Source:
+def getsource(obj) -> Source:
     obj = getrawcode(obj)
     try:
         strsrc = inspect.getsource(obj)
     except IndentationError:
         strsrc = '"Buggy python version consider upgrading, cannot get source"'
     assert isinstance(strsrc, str)
-    return Source(strsrc, deindent=deindent)
+    return Source(strsrc)
 
 
 def deindent(lines: Sequence[str]) -> List[str]:
     return textwrap.dedent("\n".join(lines)).splitlines()
-
-
-# Internal alias to avoid shadowing with `deindent` parameter.
-_deindent_function = deindent
 
 
 def get_statement_startend2(lineno: int, node: ast.AST) -> Tuple[int, Optional[int]]:

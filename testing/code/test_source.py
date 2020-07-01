@@ -4,6 +4,7 @@
 import ast
 import inspect
 import sys
+import textwrap
 from types import CodeType
 from typing import Any
 from typing import Dict
@@ -64,8 +65,6 @@ def test_source_from_inner_function() -> None:
     def f():
         pass
 
-    source = _pytest._code.Source(f, deindent=False)
-    assert str(source).startswith("    def f():")
     source = _pytest._code.Source(f)
     assert str(source).startswith("def f():")
 
@@ -557,7 +556,7 @@ def test_code_of_object_instance_with_call() -> None:
 def getstatement(lineno: int, source) -> Source:
     from _pytest._code.source import getstatementrange_ast
 
-    src = _pytest._code.Source(source, deindent=False)
+    src = _pytest._code.Source(source)
     ast, start, end = getstatementrange_ast(lineno, src)
     return src[start:end]
 
@@ -633,7 +632,7 @@ def test_source_with_decorator() -> None:
         assert False
 
     src = inspect.getsource(deco_mark)
-    assert str(Source(deco_mark, deindent=False)) == src
+    assert textwrap.indent(str(Source(deco_mark)), "    ") + "\n" == src
     assert src.startswith("    @pytest.mark.foo")
 
     @pytest.fixture
@@ -646,7 +645,9 @@ def test_source_with_decorator() -> None:
     # existing behavior here for explicitness, but perhaps we should revisit/change this
     # in the future
     assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
-    assert str(Source(get_real_func(deco_fixture), deindent=False)) == src
+    assert (
+        textwrap.indent(str(Source(get_real_func(deco_fixture))), "    ") + "\n" == src
+    )
 
 
 def test_single_line_else() -> None:
