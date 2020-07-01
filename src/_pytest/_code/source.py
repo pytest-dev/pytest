@@ -8,10 +8,10 @@ import warnings
 from bisect import bisect_right
 from types import CodeType
 from types import FrameType
+from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -32,21 +32,17 @@ class Source:
 
     _compilecounter = 0
 
-    def __init__(self, *parts) -> None:
-        self.lines = lines = []  # type: List[str]
-        for part in parts:
-            if not part:
-                partlines = []  # type: List[str]
-            elif isinstance(part, Source):
-                partlines = part.lines
-            elif isinstance(part, (tuple, list)):
-                partlines = [x.rstrip("\n") for x in part]
-            elif isinstance(part, str):
-                partlines = part.split("\n")
-            else:
-                partlines = getsource(part).lines
-            partlines = deindent(partlines)
-            lines.extend(partlines)
+    def __init__(self, obj: object = None) -> None:
+        if not obj:
+            self.lines = []  # type: List[str]
+        elif isinstance(obj, Source):
+            self.lines = obj.lines
+        elif isinstance(obj, (tuple, list)):
+            self.lines = deindent(x.rstrip("\n") for x in obj)
+        elif isinstance(obj, str):
+            self.lines = deindent(obj.split("\n"))
+        else:
+            self.lines = deindent(getsource(obj).lines)
 
     def __eq__(self, other):
         try:
@@ -312,7 +308,7 @@ def getsource(obj) -> Source:
     return Source(strsrc)
 
 
-def deindent(lines: Sequence[str]) -> List[str]:
+def deindent(lines: Iterable[str]) -> List[str]:
     return textwrap.dedent("\n".join(lines)).splitlines()
 
 
