@@ -270,7 +270,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
         else:
             rep.longrepr = "Unexpected success"
         rep.outcome = "failed"
-    elif item.config.option.runxfail and xfailed:
+    elif item.config.option.runxfail:
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
         assert call.excinfo.value.msg is not None
@@ -291,7 +291,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
             else:
                 rep.outcome = "passed"
                 rep.wasxfail = xfailed.reason
-    elif (
+    if (
         item._store.get(skipped_by_mark_key, True)
         and rep.skipped
         and type(rep.longrepr) is tuple
