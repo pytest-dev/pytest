@@ -227,9 +227,9 @@ class TestSourceParsingAndCompiling:
         ''')"""
         )
         s = source.getstatement(0)
-        assert s == str(source)
+        assert s == source
         s = source.getstatement(1)
-        assert s == str(source)
+        assert s == source
 
     def test_getstatementrange_within_constructs(self) -> None:
         source = Source(
@@ -445,7 +445,7 @@ def test_getsource_fallback() -> None:
     expected = """def x():
     pass"""
     src = getsource(x)
-    assert src == expected
+    assert str(src) == expected
 
 
 def test_idem_compile_and_getsource() -> None:
@@ -454,7 +454,7 @@ def test_idem_compile_and_getsource() -> None:
     expected = "def x(): pass"
     co = _pytest._code.compile(expected)
     src = getsource(co)
-    assert src == expected
+    assert str(src) == expected
 
 
 def test_compile_ast() -> None:

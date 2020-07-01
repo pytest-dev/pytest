@@ -44,13 +44,10 @@ class Source:
         else:
             self.lines = deindent(getsource(obj).lines)
 
-    def __eq__(self, other):
-        try:
-            return self.lines == other.lines
-        except AttributeError:
-            if isinstance(other, str):
-                return str(self) == other
-            return False
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Source):
+            return NotImplemented
+        return self.lines == other.lines
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.
     __hash__ = None  # type: ignore
