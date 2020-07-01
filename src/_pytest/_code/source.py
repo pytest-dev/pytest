@@ -308,10 +308,7 @@ def getrawcode(obj, trycall: bool = True):
 
 def getsource(obj) -> Source:
     obj = getrawcode(obj)
-    try:
-        strsrc = inspect.getsource(obj)
-    except IndentationError:
-        strsrc = '"Buggy python version consider upgrading, cannot get source"'
+    strsrc = inspect.getsource(obj)
     assert isinstance(strsrc, str)
     return Source(strsrc)
 
