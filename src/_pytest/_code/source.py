@@ -1,13 +1,9 @@
 import ast
 import inspect
-import linecache
-import sys
 import textwrap
 import tokenize
 import warnings
 from bisect import bisect_right
-from types import CodeType
-from types import FrameType
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -15,13 +11,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import py
-
 from _pytest.compat import overload
-from _pytest.compat import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 
 class Source:
@@ -29,8 +19,6 @@ class Source:
 
     When using Source(...), the source lines are deindented.
     """
-
-    _compilecounter = 0
 
     def __init__(self, obj: object = None) -> None:
         if not obj:
@@ -121,124 +109,6 @@ class Source:
 
     def __str__(self) -> str:
         return "\n".join(self.lines)
-
-    @overload
-    def compile(
-        self,
-        filename: Optional[str] = ...,
-        mode: str = ...,
-        flag: "Literal[0]" = ...,
-        dont_inherit: int = ...,
-        _genframe: Optional[FrameType] = ...,
-    ) -> CodeType:
-        raise NotImplementedError()
-
-    @overload  # noqa: F811
-    def compile(  # noqa: F811
-        self,
-        filename: Optional[str] = ...,
-        mode: str = ...,
-        flag: int = ...,
-        dont_inherit: int = ...,
-        _genframe: Optional[FrameType] = ...,
-    ) -> Union[CodeType, ast.AST]:
-        raise NotImplementedError()
-
-    def compile(  # noqa: F811
-        self,
-        filename: Optional[str] = None,
-        mode: str = "exec",
-        flag: int = 0,
-        dont_inherit: int = 0,
-        _genframe: Optional[FrameType] = None,
-    ) -> Union[CodeType, ast.AST]:
-        """ return compiled code object. if filename is None
-            invent an artificial filename which displays
-            the source/line position of the caller frame.
-        """
-        if not filename or py.path.local(filename).check(file=0):
-            if _genframe is None:
-                _genframe = sys._getframe(1)  # the caller
-            fn, lineno = _genframe.f_code.co_filename, _genframe.f_lineno
-            base = "<%d-codegen " % self._compilecounter
-            self.__class__._compilecounter += 1
-            if not filename:
-                filename = base + "%s:%d>" % (fn, lineno)
-            else:
-                filename = base + "%r %s:%d>" % (filename, fn, lineno)
-        source = "\n".join(self.lines) + "\n"
-        try:
-            co = compile(source, filename, mode, flag)
-        except SyntaxError as ex:
-            # re-represent syntax errors from parsing python strings
-            msglines = self.lines[: ex.lineno]
-            if ex.offset:
-                msglines.append(" " * ex.offset + "^")
-            msglines.append("(code was compiled probably from here: %s)" % filename)
-            newex = SyntaxError("\n".join(msglines))
-            newex.offset = ex.offset
-            newex.lineno = ex.lineno
-            newex.text = ex.text
-            raise newex from ex
-        else:
-            if flag & ast.PyCF_ONLY_AST:
-                assert isinstance(co, ast.AST)
-                return co
-            assert isinstance(co, CodeType)
-            lines = [(x + "\n") for x in self.lines]
-            # Type ignored because linecache.cache is private.
-            linecache.cache[filename] = (1, None, lines, filename)  # type: ignore
-            return co
-
-
-#
-# public API shortcut functions
-#
-
-
-@overload
-def compile_(
-    source: Union[str, bytes, ast.mod, ast.AST],
-    filename: Optional[str] = ...,
-    mode: str = ...,
-    flags: "Literal[0]" = ...,
-    dont_inherit: int = ...,
-) -> CodeType:
-    raise NotImplementedError()
-
-
-@overload  # noqa: F811
-def compile_(  # noqa: F811
-    source: Union[str, bytes, ast.mod, ast.AST],
-    filename: Optional[str] = ...,
-    mode: str = ...,
-    flags: int = ...,
-    dont_inherit: int = ...,
-) -> Union[CodeType, ast.AST]:
-    raise NotImplementedError()
-
-
-def compile_(  # noqa: F811
-    source: Union[str, bytes, ast.mod, ast.AST],
-    filename: Optional[str] = None,
-    mode: str = "exec",
-    flags: int = 0,
-    dont_inherit: int = 0,
-) -> Union[CodeType, ast.AST]:
-    """ compile the given source to a raw code object,
-        and maintain an internal cache which allows later
-        retrieval of the source code for the code object
-        and any recursively created code objects.
-    """
-    if isinstance(source, ast.AST):
-        # XXX should Source support having AST?
-        assert filename is not None
-        co = compile(source, filename, mode, flags, dont_inherit)
-        assert isinstance(co, (CodeType, ast.AST))
-        return co
-    _genframe = sys._getframe(1)  # the caller
-    s = Source(source)
-    return s.compile(filename, mode, flags, _genframe=_genframe)
 
 
 #

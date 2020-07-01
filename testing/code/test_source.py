@@ -3,6 +3,7 @@
 # or redundant on purpose and can't be disable on a line-by-line basis
 import ast
 import inspect
+import linecache
 import sys
 import textwrap
 from types import CodeType
@@ -31,14 +32,6 @@ def test_source_str_function() -> None:
         """
     )
     assert str(x) == "\n3"
-
-
-def test_unicode() -> None:
-    x = Source("4")
-    assert str(x) == "4"
-    co = _pytest._code.compile('"å"', mode="eval")
-    val = eval(co)
-    assert isinstance(val, str)
 
 
 def test_source_from_function() -> None:
@@ -83,15 +76,6 @@ def test_source_strip_multiline() -> None:
     assert source2.lines == [" hello"]
 
 
-def test_syntaxerror_rerepresentation() -> None:
-    ex = pytest.raises(SyntaxError, _pytest._code.compile, "xyz xyz")
-    assert ex is not None
-    assert ex.value.lineno == 1
-    assert ex.value.offset in {5, 7}  # cpython: 7, pypy3.6 7.1.1: 5
-    assert ex.value.text
-    assert ex.value.text.rstrip("\n") == "xyz xyz"
-
-
 class TestAccesses:
     def setup_class(self) -> None:
         self.source = Source(
@@ -124,7 +108,7 @@ class TestAccesses:
         assert len(values) == 4
 
 
-class TestSourceParsingAndCompiling:
+class TestSourceParsing:
     def setup_class(self) -> None:
         self.source = Source(
             """\
@@ -134,39 +118,6 @@ class TestSourceParsingAndCompiling:
                         4)
         """
         ).strip()
-
-    def test_compile(self) -> None:
-        co = _pytest._code.compile("x=3")
-        d = {}  # type: Dict[str, Any]
-        exec(co, d)
-        assert d["x"] == 3
-
-    def test_compile_and_getsource_simple(self) -> None:
-        co = _pytest._code.compile("x=3")
-        exec(co)
-        source = _pytest._code.Source(co)
-        assert str(source) == "x=3"
-
-    def test_compile_and_getsource_through_same_function(self) -> None:
-        def gensource(source):
-            return _pytest._code.compile(source)
-
-        co1 = gensource(
-            """
-            def f():
-                raise KeyError()
-        """
-        )
-        co2 = gensource(
-            """
-            def f():
-                raise ValueError()
-        """
-        )
-        source1 = inspect.getsource(co1)
-        assert "KeyError" in source1
-        source2 = inspect.getsource(co2)
-        assert "ValueError" in source2
 
     def test_getstatement(self) -> None:
         # print str(self.source)
@@ -264,44 +215,6 @@ class TestSourceParsingAndCompiling:
         source = Source(":")
         pytest.raises(SyntaxError, lambda: source.getstatementrange(0))
 
-    def test_compile_to_ast(self) -> None:
-        source = Source("x = 4")
-        mod = source.compile(flag=ast.PyCF_ONLY_AST)
-        assert isinstance(mod, ast.Module)
-        compile(mod, "<filename>", "exec")
-
-    def test_compile_and_getsource(self) -> None:
-        co = self.source.compile()
-        exec(co, globals())
-        f(7)  # type: ignore
-        excinfo = pytest.raises(AssertionError, f, 6)  # type: ignore
-        assert excinfo is not None
-        frame = excinfo.traceback[-1].frame
-        assert isinstance(frame.code.fullsource, Source)
-        stmt = frame.code.fullsource.getstatement(frame.lineno)
-        assert str(stmt).strip().startswith("assert")
-
-    @pytest.mark.parametrize("name", ["", None, "my"])
-    def test_compilefuncs_and_path_sanity(self, name: Optional[str]) -> None:
-        def check(comp, name) -> None:
-            co = comp(self.source, name)
-            if not name:
-                expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 2)  # type: ignore
-            else:
-                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 2)  # type: ignore
-            fn = co.co_filename
-            assert fn.endswith(expected)
-
-        mycode = _pytest._code.Code(self.test_compilefuncs_and_path_sanity)
-        mylineno = mycode.firstlineno
-        mypath = mycode.path
-
-        for comp in _pytest._code.compile, _pytest._code.Source.compile:
-            check(comp, name)
-
-    def test_offsetless_synerr(self):
-        pytest.raises(SyntaxError, _pytest._code.compile, "lambda a,a: 0", mode="eval")
-
 
 def test_getstartingblock_singleline() -> None:
     class A:
@@ -331,18 +244,16 @@ def test_getline_finally() -> None:
 
 
 def test_getfuncsource_dynamic() -> None:
-    source = """
-        def f():
-            raise ValueError
+    def f():
+        raise ValueError
 
-        def g(): pass
-    """
-    co = _pytest._code.compile(source)
-    exec(co, globals())
-    f_source = _pytest._code.Source(f)  # type: ignore
-    g_source = _pytest._code.Source(g)  # type: ignore
+    def g():
+        pass
+
+    f_source = _pytest._code.Source(f)
+    g_source = _pytest._code.Source(g)
     assert str(f_source).strip() == "def f():\n    raise ValueError"
-    assert str(g_source).strip() == "def g(): pass"
+    assert str(g_source).strip() == "def g():\n    pass"
 
 
 def test_getfuncsource_with_multine_string() -> None:
@@ -405,23 +316,6 @@ def test_getsource_fallback() -> None:
     assert str(src) == expected
 
 
-def test_idem_compile_and_getsource() -> None:
-    from _pytest._code.source import getsource
-
-    expected = "def x(): pass"
-    co = _pytest._code.compile(expected)
-    src = getsource(co)
-    assert str(src) == expected
-
-
-def test_compile_ast() -> None:
-    # We don't necessarily want to support this.
-    # This test was added just for coverage.
-    stmt = ast.parse("def x(): pass")
-    co = _pytest._code.compile(stmt, filename="foo.py")
-    assert isinstance(co, CodeType)
-
-
 def test_findsource_fallback() -> None:
     from _pytest._code.source import findsource
 
@@ -431,15 +325,15 @@ def test_findsource_fallback() -> None:
     assert src[lineno] == "    def x():"
 
 
-def test_findsource() -> None:
+def test_findsource(monkeypatch) -> None:
     from _pytest._code.source import findsource
 
-    co = _pytest._code.compile(
-        """if 1:
-    def x():
-        pass
-"""
-    )
+    filename = "<pytest-test_findsource>"
+    lines = ["if 1:\n", "    def x():\n", "          pass\n"]
+    co = compile("".join(lines), filename, "exec")
+
+    # Type ignored because linecache.cache is private.
+    monkeypatch.setitem(linecache.cache, filename, (1, None, lines, filename))  # type: ignore[attr-defined]
 
     src, lineno = findsource(co)
     assert src is not None
