@@ -31,9 +31,8 @@ class Source:
 
     _compilecounter = 0
 
-    def __init__(self, *parts, **kwargs) -> None:
+    def __init__(self, *parts, deindent: bool = True) -> None:
         self.lines = lines = []  # type: List[str]
-        de = kwargs.get("deindent", True)
         for part in parts:
             if not part:
                 partlines = []  # type: List[str]
@@ -44,9 +43,9 @@ class Source:
             elif isinstance(part, str):
                 partlines = part.split("\n")
             else:
-                partlines = getsource(part, deindent=de).lines
-            if de:
-                partlines = deindent(partlines)
+                partlines = getsource(part, deindent=deindent).lines
+            if deindent:
+                partlines = _deindent_function(partlines)
             lines.extend(partlines)
 
     def __eq__(self, other):
@@ -307,18 +306,22 @@ def getrawcode(obj, trycall: bool = True):
         return obj
 
 
-def getsource(obj, **kwargs) -> Source:
+def getsource(obj, *, deindent: bool = True) -> Source:
     obj = getrawcode(obj)
     try:
         strsrc = inspect.getsource(obj)
     except IndentationError:
         strsrc = '"Buggy python version consider upgrading, cannot get source"'
     assert isinstance(strsrc, str)
-    return Source(strsrc, **kwargs)
+    return Source(strsrc, deindent=deindent)
 
 
 def deindent(lines: Sequence[str]) -> List[str]:
     return textwrap.dedent("\n".join(lines)).splitlines()
+
+
+# Internal alias to avoid shadowing with `deindent` parameter.
+_deindent_function = deindent
 
 
 def get_statement_startend2(lineno: int, node: ast.AST) -> Tuple[int, Optional[int]]:
