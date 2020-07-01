@@ -307,12 +307,10 @@ if True:
         pass
 
 
-def test_getsource_fallback() -> None:
-    from _pytest._code.source import getsource
-
+def test_source_fallback() -> None:
+    src = Source(x)
     expected = """def x():
     pass"""
-    src = getsource(x)
     assert str(src) == expected
 
 

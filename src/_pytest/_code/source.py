@@ -30,7 +30,9 @@ class Source:
         elif isinstance(obj, str):
             self.lines = deindent(obj.split("\n"))
         else:
-            self.lines = deindent(getsource(obj).lines)
+            rawcode = getrawcode(obj)
+            src = inspect.getsource(rawcode)
+            self.lines = deindent(src.split("\n"))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Source):
@@ -139,12 +141,6 @@ def getrawcode(obj, trycall: bool = True):
                 if hasattr(x, "co_firstlineno"):
                     return x
         return obj
-
-
-def getsource(obj) -> Source:
-    obj = getrawcode(obj)
-    strsrc = inspect.getsource(obj)
-    return Source(strsrc)
 
 
 def deindent(lines: Iterable[str]) -> List[str]:
