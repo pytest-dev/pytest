@@ -132,21 +132,6 @@ class Source:
         newsource.lines[:] = deindent(self.lines)
         return newsource
 
-    def isparseable(self, deindent: bool = True) -> bool:
-        """ return True if source is parseable, heuristically
-            deindenting it by default.
-        """
-        if deindent:
-            source = str(self.deindent())
-        else:
-            source = str(self)
-        try:
-            ast.parse(source)
-        except (SyntaxError, ValueError, TypeError):
-            return False
-        else:
-            return True
-
     def __str__(self) -> str:
         return "\n".join(self.lines)
 
