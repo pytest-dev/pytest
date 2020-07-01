@@ -89,19 +89,6 @@ class Source:
         source.lines[:] = self.lines[start:end]
         return source
 
-    def putaround(
-        self, before: str = "", after: str = "", indent: str = " " * 4
-    ) -> "Source":
-        """ return a copy of the source object with
-            'before' and 'after' wrapped around it.
-        """
-        beforesource = Source(before)
-        aftersource = Source(after)
-        newsource = Source()
-        lines = [(indent + line) for line in self.lines]
-        newsource.lines = beforesource.lines + lines + aftersource.lines
-        return newsource
-
     def indent(self, indent: str = " " * 4) -> "Source":
         """ return a copy of the source object with
             all lines indented by the given indent-string.

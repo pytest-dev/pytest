@@ -69,39 +69,6 @@ def test_source_from_inner_function() -> None:
     assert str(source).startswith("def f():")
 
 
-def test_source_putaround_simple() -> None:
-    source = Source("raise ValueError")
-    source = source.putaround(
-        "try:",
-        """\
-        except ValueError:
-            x = 42
-        else:
-            x = 23""",
-    )
-    assert (
-        str(source)
-        == """\
-try:
-    raise ValueError
-except ValueError:
-    x = 42
-else:
-    x = 23"""
-    )
-
-
-def test_source_putaround() -> None:
-    source = Source()
-    source = source.putaround(
-        """
-        if 1:
-            x=1
-    """
-    )
-    assert str(source).strip() == "if 1:\n    x=1"
-
-
 def test_source_strips() -> None:
     source = Source("")
     assert source == Source()
