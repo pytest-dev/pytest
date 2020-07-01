@@ -9,7 +9,6 @@ from typing import Tuple
 
 import attr
 
-import _pytest._code
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -105,7 +104,8 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
         if hasattr(item, "obj"):
             globals_.update(item.obj.__globals__)  # type: ignore[attr-defined]
         try:
-            condition_code = _pytest._code.compile(condition, mode="eval")
+            filename = "<{} condition>".format(mark.name)
+            condition_code = compile(condition, filename, "eval")
             result = eval(condition_code, globals_)
         except SyntaxError as exc:
             msglines = [
