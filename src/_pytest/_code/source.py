@@ -309,7 +309,6 @@ def getrawcode(obj, trycall: bool = True):
 def getsource(obj) -> Source:
     obj = getrawcode(obj)
     strsrc = inspect.getsource(obj)
-    assert isinstance(strsrc, str)
     return Source(strsrc)
 
 
