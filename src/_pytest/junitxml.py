@@ -71,7 +71,7 @@ _py_ext_re = re.compile(r"\.py$")
 
 
 def bin_xml_escape(arg: str) -> py.xml.raw:
-    def repl(matchobj: "Match[str]") -> str:
+    def repl(matchobj: Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
             return "#x%02X" % i
