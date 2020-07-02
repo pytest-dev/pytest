@@ -328,7 +328,7 @@ def getimfunc(func):
         return func
 
 
-def safe_getattr(object: Any, name: str, default: Any) -> Any:
+def safe_getattr(obj: Any, name: str, default: Any) -> Any:
     """ Like getattr but return default upon any Exception or any OutcomeException.
 
     Attribute access can potentially fail for 'evil' Python objects.
@@ -337,7 +337,7 @@ def safe_getattr(object: Any, name: str, default: Any) -> Any:
     instead of Exception (for more details check #2707)
     """
     try:
-        return getattr(object, name, default)
+        return getattr(obj, name, default)
     except TEST_OUTCOME:
         return default
 

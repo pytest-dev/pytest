@@ -83,7 +83,7 @@ class MoreQuietAction(argparse.Action):
         dest: str,
         default: object = None,
         required: bool = False,
-        help: Optional[str] = None,
+        help_text: Optional[str] = None,
     ) -> None:
         super().__init__(
             option_strings=option_strings,
@@ -91,7 +91,7 @@ class MoreQuietAction(argparse.Action):
             nargs=0,
             default=default,
             required=required,
-            help=help,
+            help=help_text,
         )
 
     def __call__(
@@ -217,7 +217,10 @@ def pytest_addoption(parser: Parser) -> None:
 
     parser.addini(
         "console_output_style",
-        help='console output: "classic", or with additional progress information ("progress" (percentage) | "count").',
+        help_text=(
+            'console output: "classic", or with additional progress information'
+            ' ("progress" (percentage) | "count").'
+        ),
         default="progress",
     )
 

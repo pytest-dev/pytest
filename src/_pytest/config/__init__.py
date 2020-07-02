@@ -840,7 +840,7 @@ class Config:
         """tuple of command-line arguments as passed to ``pytest.main()``."""
         plugins = attr.ib(type=Optional[Sequence[Union[str, _PluggyPlugin]]])
         """list of extra plugins, might be `None`."""
-        dir = attr.ib(type=Path)
+        dir = attr.ib(type=Path)  # noqa: A003
         """directory where ``pytest.main()`` was invoked from."""
 
     def __init__(
@@ -1015,7 +1015,7 @@ class Config:
         self._parser.addini(
             "required_plugins",
             "plugins that must be present for pytest to run",
-            type="args",
+            ini_type="args",
             default=[],
         )
         self._override_ini = ns.override_ini or ()
@@ -1239,7 +1239,7 @@ class Config:
 
     def _getini(self, name: str):
         try:
-            description, type, default = self._parser._inidict[name]
+            description, ini_type, default = self._parser._inidict[name]
         except KeyError as e:
             raise ValueError("unknown configuration value: {!r}".format(name)) from e
         override_value = self._get_override_ini_value(name)
@@ -1249,7 +1249,7 @@ class Config:
             except KeyError:
                 if default is not None:
                     return default
-                if type is None:
+                if ini_type is None:
                     return ""
                 return []
         else:
@@ -1268,23 +1268,23 @@ class Config:
         #     a_line_list = ["tests", "acceptance"]
         #   in this case, we already have a list ready to use
         #
-        if type == "pathlist":
+        if ini_type == "pathlist":
             # TODO: This assert is probably not valid in all cases.
             assert self.inifile is not None
             dp = py.path.local(self.inifile).dirpath()
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp.join(x, abs=True) for x in input_values]
-        elif type == "args":
+        elif ini_type == "args":
             return shlex.split(value) if isinstance(value, str) else value
-        elif type == "linelist":
+        elif ini_type == "linelist":
             if isinstance(value, str):
                 return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
             else:
                 return value
-        elif type == "bool":
+        elif ini_type == "bool":
             return _strtobool(str(value).strip())
         else:
-            assert type is None
+            assert ini_type is None
             return value
 
     def _getconftest_pathlist(

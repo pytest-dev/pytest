@@ -463,9 +463,9 @@ class TestSession:
 
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
-        id = "::".join([p.basename, "test_func"])
+        node_id = "::".join([p.basename, "test_func"])
         # XXX migrate to collectonly? (see below)
-        config = testdir.parseconfig(id)
+        config = testdir.parseconfig(node_id)
         topdir = testdir.tmpdir
         rcol = Session.from_config(config)
         assert topdir == rcol.fspath
@@ -488,8 +488,8 @@ class TestSession:
 
     def test_collect_protocol_single_function(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
-        id = "::".join([p.basename, "test_func"])
-        items, hookrec = testdir.inline_genitems(id)
+        node_id = "::".join([p.basename, "test_func"])
+        items, hookrec = testdir.inline_genitems(node_id)
         (item,) = items
         assert item.name == "test_func"
         newid = item.nodeid
@@ -518,8 +518,8 @@ class TestSession:
         """
         )
         normid = p.basename + "::TestClass::test_method"
-        for id in [p.basename, p.basename + "::TestClass", normid]:
-            items, hookrec = testdir.inline_genitems(id)
+        for node_id in [p.basename, p.basename + "::TestClass", normid]:
+            items, hookrec = testdir.inline_genitems(node_id)
             assert len(items) == 1
             assert items[0].name == "test_method"
             newid = items[0].nodeid
@@ -544,9 +544,9 @@ class TestSession:
         """
             % p.basename
         )
-        id = p.basename
+        node_id = p.basename
 
-        items, hookrec = testdir.inline_genitems(id)
+        items, hookrec = testdir.inline_genitems(node_id)
         pprint.pprint(hookrec.calls)
         assert len(items) == 2
         hookrec.assert_contains(
@@ -589,9 +589,9 @@ class TestSession:
         test_bbb = bbb.join("test_bbb.py")
         p.move(test_bbb)
 
-        id = "."
+        node_id = "."
 
-        items, hookrec = testdir.inline_genitems(id)
+        items, hookrec = testdir.inline_genitems(node_id)
         assert len(items) == 2
         pprint.pprint(hookrec.calls)
         hookrec.assert_contains(

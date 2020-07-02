@@ -1403,9 +1403,9 @@ def pytestconfig(request: FixtureRequest) -> Config:
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "usefixtures",
-        type="args",
+        ini_type="args",
         default=[],
-        help="list of default fixtures to be used with this project",
+        help_text="list of default fixtures to be used with this project",
     )
 
 

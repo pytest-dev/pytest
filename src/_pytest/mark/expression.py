@@ -51,7 +51,7 @@ class TokenType(enum.Enum):
 
 @attr.s(frozen=True, slots=True)
 class Token:
-    type = attr.ib(type=TokenType)
+    tokenType = attr.ib(type=TokenType)
     value = attr.ib(type=str)
     pos = attr.ib(type=int)
 
@@ -74,23 +74,23 @@ class ParseError(Exception):
 class Scanner:
     __slots__ = ("tokens", "current")
 
-    def __init__(self, input: str) -> None:
-        self.tokens = self.lex(input)
+    def __init__(self, scanner_input: str) -> None:
+        self.tokens = self.lex(scanner_input)
         self.current = next(self.tokens)
 
-    def lex(self, input: str) -> Iterator[Token]:
+    def lex(self, lex_input: str) -> Iterator[Token]:
         pos = 0
-        while pos < len(input):
-            if input[pos] in (" ", "\t"):
+        while pos < len(lex_input):
+            if lex_input[pos] in (" ", "\t"):
                 pos += 1
-            elif input[pos] == "(":
+            elif lex_input[pos] == "(":
                 yield Token(TokenType.LPAREN, "(", pos)
                 pos += 1
-            elif input[pos] == ")":
+            elif lex_input[pos] == ")":
                 yield Token(TokenType.RPAREN, ")", pos)
                 pos += 1
             else:
-                match = re.match(r"(:?\w|:|\+|-|\.|\[|\])+", input[pos:])
+                match = re.match(r"(:?\w|:|\+|-|\.|\[|\])+", lex_input[pos:])
                 if match:
                     value = match.group(0)
                     if value == "or":
@@ -104,25 +104,26 @@ class Scanner:
                     pos += len(value)
                 else:
                     raise ParseError(
-                        pos + 1, 'unexpected character "{}"'.format(input[pos]),
+                        pos + 1, 'unexpected character "{}"'.format(lex_input[pos]),
                     )
         yield Token(TokenType.EOF, "", pos)
 
-    def accept(self, type: TokenType, *, reject: bool = False) -> Optional[Token]:
-        if self.current.type is type:
+    def accept(self, want_type: TokenType, *, reject: bool = False) -> Optional[Token]:
+        if self.current.tokenType is want_type:
             token = self.current
-            if token.type is not TokenType.EOF:
+            if token.tokenType is not TokenType.EOF:
                 self.current = next(self.tokens)
             return token
         if reject:
-            self.reject((type,))
+            self.reject((want_type,))
         return None
 
     def reject(self, expected: Sequence[TokenType]) -> "NoReturn":
         raise ParseError(
             self.current.pos + 1,
             "expected {}; got {}".format(
-                " OR ".join(type.value for type in expected), self.current.type.value,
+                " OR ".join(expected_type.value for expected_type in expected),
+                self.current.tokenType.value,
             ),
         )
 
@@ -198,13 +199,13 @@ class Expression:
     def __init__(self, code: types.CodeType) -> None:
         self.code = code
 
-    @classmethod
-    def compile(self, input: str) -> "Expression":
+    @classmethod  # noqa: A003
+    def compile(self, input_expression: str) -> "Expression":  # noqa: A003
         """Compile a match expression.
 
-        :param input: The input expression - one line.
+        :param input_expression: The input expression - one line.
         """
-        astexpr = expression(Scanner(input))
+        astexpr = expression(Scanner(input_expression))
         code = compile(
             astexpr, filename="<pytest match expression>", mode="eval",
         )  # type: types.CodeType

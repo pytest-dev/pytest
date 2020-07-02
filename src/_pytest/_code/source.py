@@ -158,8 +158,8 @@ class Source:
     def __str__(self) -> str:
         return "\n".join(self.lines)
 
-    @overload
-    def compile(
+    @overload  # noqa: A003
+    def compile(  # noqa: A003
         self,
         filename: Optional[str] = ...,
         mode: str = ...,
@@ -169,8 +169,8 @@ class Source:
     ) -> CodeType:
         raise NotImplementedError()
 
-    @overload  # noqa: F811
-    def compile(  # noqa: F811
+    @overload  # noqa: A003, F811
+    def compile(  # noqa: A003, F811
         self,
         filename: Optional[str] = ...,
         mode: str = ...,
@@ -180,7 +180,7 @@ class Source:
     ) -> Union[CodeType, ast.AST]:
         raise NotImplementedError()
 
-    def compile(  # noqa: F811
+    def compile(  # noqa: A003, F811
         self,
         filename: Optional[str] = None,
         mode: str = "exec",

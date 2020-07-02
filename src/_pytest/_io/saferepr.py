@@ -45,7 +45,7 @@ class SafeRepr(reprlib.Repr):
         self.maxstring = maxsize
         self.maxsize = maxsize
 
-    def repr(self, x: object) -> str:
+    def repr(self, x: object) -> str:  # noqa: A003
         try:
             s = super().repr(x)
         except (KeyboardInterrupt, SystemExit):
@@ -90,7 +90,7 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
 
     def _format(
         self,
-        object: object,
+        obj: object,
         stream: IO[str],
         indent: int,
         allowance: int,
@@ -98,13 +98,13 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
         level: int,
     ) -> None:
         # Type ignored because _dispatch is private.
-        p = self._dispatch.get(type(object).__repr__, None)  # type: ignore[attr-defined] # noqa: F821
+        p = self._dispatch.get(type(obj).__repr__, None)  # type: ignore[attr-defined] # noqa: F821
 
-        objid = id(object)
+        objid = id(obj)
         if objid in context or p is None:
             # Type ignored because _format is private.
             super()._format(  # type: ignore[misc] # noqa: F821
-                object, stream, indent, allowance, context, level,
+                obj, stream, indent, allowance, context, level,
             )
             return
 
@@ -114,7 +114,7 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
 
 
 def _pformat_dispatch(
-    object: object,
+    obj: object,
     indent: int = 1,
     width: int = 80,
     depth: Optional[int] = None,
@@ -123,4 +123,4 @@ def _pformat_dispatch(
 ) -> str:
     return AlwaysDispatchingPrettyPrinter(
         indent=indent, width=width, depth=depth, compact=compact
-    ).pformat(object)
+    ).pformat(obj)

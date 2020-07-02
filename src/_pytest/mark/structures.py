@@ -85,7 +85,7 @@ class ParameterSet(
         cls,
         *values: object,
         marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
-        id: Optional[str] = None
+        param_id: Optional[str] = None
     ) -> "ParameterSet":
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
@@ -93,13 +93,15 @@ class ParameterSet(
             # TODO(py36): Change to collections.abc.Collection.
             assert isinstance(marks, (collections.abc.Sequence, set))
 
-        if id is not None:
-            if not isinstance(id, str):
+        if param_id is not None:
+            if not isinstance(param_id, str):
                 raise TypeError(
-                    "Expected id to be a string, got {}: {!r}".format(type(id), id)
+                    "Expected id to be a string, got {}: {!r}".format(
+                        type(param_id), param_id
+                    )
                 )
-            id = ascii_escaped(id)
-        return cls(values, marks, id)
+            param_id = ascii_escaped(param_id)
+        return cls(values, marks, param_id)
 
     @classmethod
     def extract_from(

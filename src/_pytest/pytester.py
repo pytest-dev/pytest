@@ -76,7 +76,8 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     parser.addini(
-        "pytester_example_dir", help="directory to take the pytester example files from"
+        "pytester_example_dir",
+        help_text="directory to take the pytester example files from",
     )
 
 
@@ -1591,6 +1592,6 @@ class LineMatcher:
         self._log_output = []
         pytest.fail(log_text)
 
-    def str(self) -> str:
+    def string(self) -> str:
         """Return the entire original text."""
         return "\n".join(self.lines)

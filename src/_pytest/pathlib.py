@@ -156,14 +156,14 @@ def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
             yield x
 
 
-def extract_suffixes(iter: Iterable[PurePath], prefix: str) -> Iterator[str]:
+def extract_suffixes(iterator: Iterable[PurePath], prefix: str) -> Iterator[str]:
     """
-    :param iter: iterator over path names
+    :param iterator: iterator over path names
     :param prefix: expected prefix of the path names
     :returns: the parts of the paths following the prefix
     """
     p_len = len(prefix)
-    for p in iter:
+    for p in iterator:
         yield p.name[p_len:]
 
 
@@ -363,15 +363,15 @@ def make_numbered_dir_with_cleanup(
     raise e
 
 
-def resolve_from_str(input: str, root):
-    assert not isinstance(input, Path), "would break on py2"
+def resolve_from_str(input_str: str, root):
+    assert not isinstance(input_str, Path), "would break on py2"
     root = Path(root)
-    input = expanduser(input)
-    input = expandvars(input)
-    if isabs(input):
-        return Path(input)
+    input_str = expanduser(input_str)
+    input_str = expandvars(input_str)
+    if isabs(input_str):
+        return Path(input_str)
     else:
-        return root.joinpath(input)
+        return root.joinpath(input_str)
 
 
 def fnmatch_ex(pattern: str, path) -> bool:

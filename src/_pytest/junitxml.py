@@ -70,7 +70,7 @@ _py_ext_re = re.compile(r"\.py$")
 
 
 def bin_xml_escape(arg: str) -> py.xml.raw:
-    def repl(matchobj: "re.Match[str]") -> str:
+    def repl(matchobj) -> str:  # FIX IN SEPERATE PR
         i = ord(matchobj.group())
         if i <= 0xFF:
             return "#x%02X" % i
@@ -419,7 +419,7 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "junit_log_passing_tests",
         "Capture log information for passing tests to JUnit report: ",
-        type="bool",
+        ini_type="bool",
         default=True,
     )
     parser.addini(

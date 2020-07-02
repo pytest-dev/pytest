@@ -40,7 +40,7 @@ old_mark_config_key = StoreKey[Optional[Config]]()
 def param(
     *values: object,
     marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
-    id: Optional[str] = None
+    param_id: Optional[str] = None
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
@@ -56,9 +56,9 @@ def param(
 
     :param values: variable args of the values of the parameter set, in order.
     :keyword marks: a single mark or a list of marks to be applied to this parameter set.
-    :keyword str id: the id to attribute to this parameter set.
+    :keyword str param_id: the id to attribute to this parameter set.
     """
-    return ParameterSet.param(*values, marks=marks, id=id)
+    return ParameterSet.param(*values, marks=marks, param_id=param_id)
 
 
 def pytest_addoption(parser: Parser) -> None:

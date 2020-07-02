@@ -55,7 +55,7 @@ def option(request):
 
 
 @pytest.mark.parametrize(
-    "input,expected",
+    "input_params,expected",
     [
         ([DistInfo(project_name="test", version=1)], ["test-1"]),
         ([DistInfo(project_name="pytest-test", version=1)], ["test-1"]),
@@ -69,8 +69,8 @@ def option(request):
     ],
     ids=["normal", "prefix-strip", "deduplicate"],
 )
-def test_plugin_nameversion(input, expected):
-    pluginlist = [(None, x) for x in input]
+def test_plugin_nameversion(input_params, expected):
+    pluginlist = [(None, x) for x in input_params]
     result = _plugin_nameversions(pluginlist)
     assert result == expected
 

@@ -27,7 +27,7 @@ TESTCASES = [
         E         + [1, 4, 3]
         E         ?     ^
         """,
-        id="Compare lists, one item differs",
+        param_id="Compare lists, one item differs",
     ),
     pytest.param(
         """
@@ -45,7 +45,7 @@ TESTCASES = [
         E         + [1, 2, 3]
         E         ?      +++
         """,
-        id="Compare lists, one extra item",
+        param_id="Compare lists, one extra item",
     ),
     pytest.param(
         """
@@ -64,7 +64,7 @@ TESTCASES = [
         E         ?     ---
         E         + [1, 3]
         """,
-        id="Compare lists, one item missing",
+        param_id="Compare lists, one item missing",
     ),
     pytest.param(
         """
@@ -83,7 +83,7 @@ TESTCASES = [
         E         + (1, 4, 3)
         E         ?     ^
         """,
-        id="Compare tuples",
+        param_id="Compare tuples",
     ),
     pytest.param(
         """
@@ -105,7 +105,7 @@ TESTCASES = [
         E         + {1, 3, 4}
         E         ?     ^  ^
         """,
-        id="Compare sets",
+        param_id="Compare sets",
     ),
     pytest.param(
         """
@@ -129,7 +129,7 @@ TESTCASES = [
         E         + {1: 'spam', 3: 'eggs'}
         E         ?             ^
         """,
-        id="Compare dicts with differing keys",
+        param_id="Compare dicts with differing keys",
     ),
     pytest.param(
         """
@@ -151,7 +151,7 @@ TESTCASES = [
         E         + {1: 'spam', 2: 'eggs'}
         E         ?                 ^^^^
         """,
-        id="Compare dicts with differing values",
+        param_id="Compare dicts with differing values",
     ),
     pytest.param(
         """
@@ -175,7 +175,7 @@ TESTCASES = [
         E         + {1: 'spam', 2: 'eggs'}
         E         ?             ^   ^^^^
         """,
-        id="Compare dicts with differing items",
+        param_id="Compare dicts with differing items",
     ),
     pytest.param(
         """
@@ -192,7 +192,7 @@ TESTCASES = [
         E         + spmaeggs
         E         ?   +
         """,
-        id="Compare strings",
+        param_id="Compare strings",
     ),
     pytest.param(
         """
@@ -207,7 +207,7 @@ TESTCASES = [
         E           spam bacon eggs
         E         ?      +++++
         """,
-        id='Test "not in" string',
+        param_id='Test "not in" string',
     ),
 ]
 if sys.version_info[:2] >= (3, 7):
@@ -235,7 +235,7 @@ if sys.version_info[:2] >= (3, 7):
                 E         Differing attributes:
                 E         a: 1 != 2
                 """,
-                id="Compare data classes",
+                param_id="Compare data classes",
             ),
             pytest.param(
                 """
@@ -259,7 +259,7 @@ if sys.version_info[:2] >= (3, 7):
                 E         Differing attributes:
                 E         b: 'spam' != 'eggs'
                 """,
-                id="Compare attrs classes",
+                param_id="Compare attrs classes",
             ),
         ]
     )

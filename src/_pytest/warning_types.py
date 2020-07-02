@@ -98,7 +98,7 @@ class UnformattedWarning(Generic[_W]):
     category = attr.ib(type="Type[_W]")
     template = attr.ib(type=str)
 
-    def format(self, **kwargs: Any) -> _W:
+    def format(self, **kwargs: Any) -> _W:  # noqa: A003
         """Returns an instance of the warning category, formatted with given kwargs"""
         return self.category(self.template.format(**kwargs))
 

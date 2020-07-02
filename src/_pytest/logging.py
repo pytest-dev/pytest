@@ -83,7 +83,7 @@ class ColoredLevelFormatter(logging.Formatter):
                 colorized_formatted_levelname, self._fmt
             )
 
-    def format(self, record: logging.LogRecord) -> str:
+    def format(self, record: logging.LogRecord) -> str:  # noqa: A003
         fmt = self._level_to_fmt_mapping.get(record.levelno, self._original_fmt)
         self._style._fmt = fmt
         return super().format(record)
@@ -161,7 +161,7 @@ class PercentStyleMultiline(logging.PercentStyle):
 
         return 0
 
-    def format(self, record: logging.LogRecord) -> str:
+    def format(self, record: logging.LogRecord) -> str:  # noqa: A003
         if "\n" in record.message:
             if hasattr(record, "auto_indent"):
                 # passed in from the "extra={}" kwarg on the call to logging.log()
@@ -198,9 +198,12 @@ def pytest_addoption(parser: Parser) -> None:
     """Add options to control log capturing."""
     group = parser.getgroup("logging")
 
-    def add_option_ini(option, dest, default=None, type=None, **kwargs):
+    def add_option_ini(option, dest, default=None, ini_type=None, **kwargs):
         parser.addini(
-            dest, default=default, type=type, help="default value for " + option
+            dest,
+            default=default,
+            ini_type=ini_type,
+            help_text="default value for " + option,
         )
         group.addoption(option, dest=dest, **kwargs)
 
@@ -230,8 +233,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "log_cli",
         default=False,
-        type="bool",
-        help='enable log display during test run (also known as "live logging").',
+        ini_type="bool",
+        help_text='enable log display during test run (also known as "live logging").',
     )
     add_option_ini(
         "--log-cli-level", dest="log_cli_level", default=None, help="cli logging level."
@@ -303,7 +306,7 @@ class catching_logs:
             root_logger.setLevel(min(self.orig_level, self.level))
         return self.handler
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exit_type, exit_value, exit_traceback):
         root_logger = logging.getLogger()
         if self.level is not None:
             root_logger.setLevel(self.orig_level)

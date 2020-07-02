@@ -55,10 +55,12 @@ class ApproxBase:
     __array_ufunc__ = None
     __array_priority__ = 100
 
-    def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
+    def __init__(
+        self, expected, rel=None, absolute_tolerance=None, nan_ok: bool = False
+    ) -> None:
         __tracebackhide__ = True
         self.expected = expected
-        self.abs = abs
+        self.absolute_tolerance = absolute_tolerance
         self.rel = rel
         self.nan_ok = nan_ok
         self._check_type()
@@ -78,7 +80,12 @@ class ApproxBase:
         return not (actual == self)
 
     def _approx_scalar(self, x) -> "ApproxScalar":
-        return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
+        return ApproxScalar(
+            x,
+            rel=self.rel,
+            absolute_tolerance=self.absolute_tolerance,
+            nan_ok=self.nan_ok,
+        )
 
     def _yield_comparisons(self, actual):
         """
@@ -294,7 +301,9 @@ class ApproxScalar(ApproxBase):
 
         # Figure out what the absolute tolerance should be.  ``self.abs`` is
         # either None or a value specified by the user.
-        absolute_tolerance = set_default(self.abs, self.DEFAULT_ABSOLUTE_TOLERANCE)
+        absolute_tolerance = set_default(
+            self.absolute_tolerance, self.DEFAULT_ABSOLUTE_TOLERANCE
+        )
 
         if absolute_tolerance < 0:
             raise ValueError(
@@ -306,7 +315,7 @@ class ApproxScalar(ApproxBase):
         # If the user specified an absolute tolerance but not a relative one,
         # just return the absolute tolerance.
         if self.rel is None:
-            if self.abs is not None:
+            if self.absolute_tolerance is not None:
                 return absolute_tolerance
 
         # Figure out what the relative tolerance should be.  ``self.rel`` is
@@ -338,7 +347,9 @@ class ApproxDecimal(ApproxScalar):
     DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
 
 
-def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
+def approx(
+    expected, rel=None, abs=None, nan_ok: bool = False  # noqa: A002
+) -> ApproxBase:
     """
     Assert that two numbers (or two sets of numbers) are equal to each other
     within some tolerance.

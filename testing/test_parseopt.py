@@ -254,8 +254,8 @@ class TestParser:
     def test_drop_short_help0(self, parser: parseopt.Parser) -> None:
         parser.addoption("--func-args", "--doit", help="foo", action="store_true")
         parser.parse([])
-        help = parser.optparser.format_help()
-        assert "--func-args, --doit  foo" in help
+        help_text = parser.optparser.format_help()
+        assert "--func-args, --doit  foo" in help_text
 
     # testing would be more helpful with all help generated
     def test_drop_short_help1(self, parser: parseopt.Parser) -> None:
@@ -269,8 +269,8 @@ class TestParser:
             help="show help message and configuration info",
         )
         parser.parse(["-h"])
-        help = parser.optparser.format_help()
-        assert "-doit, --func-args  foo" in help
+        help_text = parser.optparser.format_help()
+        assert "-doit, --func-args  foo" in help_text
 
     def test_multiple_metavar_help(self, parser: parseopt.Parser) -> None:
         """
@@ -283,8 +283,8 @@ class TestParser:
         )
         group._addoption("-h", "--help", action="store_true", dest="help")
         parser.parse(["-h"])
-        help = parser.optparser.format_help()
-        assert "--preferences=value1 value2 value3" in help
+        help_text = parser.optparser.format_help()
+        assert "--preferences=value1 value2 value3" in help_text
 
 
 def test_argcomplete(testdir, monkeypatch) -> None:

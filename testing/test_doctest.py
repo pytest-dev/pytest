@@ -1369,7 +1369,7 @@ class TestDoctestNamespaceFixture:
 
 
 class TestDoctestReportingOption:
-    def _run_doctest_report(self, testdir, format):
+    def _run_doctest_report(self, testdir, format_spec):
         testdir.makepyfile(
             """
             def foo():
@@ -1386,11 +1386,11 @@ class TestDoctestReportingOption:
                       '2  3  6')
             """
         )
-        return testdir.runpytest("--doctest-modules", "--doctest-report", format)
+        return testdir.runpytest("--doctest-modules", "--doctest-report", format_spec)
 
-    @pytest.mark.parametrize("format", ["udiff", "UDIFF", "uDiFf"])
-    def test_doctest_report_udiff(self, testdir, format):
-        result = self._run_doctest_report(testdir, format)
+    @pytest.mark.parametrize("format_spec", ["udiff", "UDIFF", "uDiFf"])
+    def test_doctest_report_udiff(self, testdir, format_spec):
+        result = self._run_doctest_report(testdir, format_spec)
         result.stdout.fnmatch_lines(
             ["     0  1  4", "    -1  2  4", "    +1  2  5", "     2  3  6"]
         )
@@ -1425,9 +1425,9 @@ class TestDoctestReportingOption:
             ]
         )
 
-    @pytest.mark.parametrize("format", ["none", "only_first_failure"])
-    def test_doctest_report_none_or_only_first_failure(self, testdir, format):
-        result = self._run_doctest_report(testdir, format)
+    @pytest.mark.parametrize("format_spec", ["none", "only_first_failure"])
+    def test_doctest_report_none_or_only_first_failure(self, testdir, format_spec):
+        result = self._run_doctest_report(testdir, format_spec)
         result.stdout.fnmatch_lines(
             [
                 "Expected:",

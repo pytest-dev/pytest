@@ -15,11 +15,11 @@ fault_handler_stderr_key = StoreKey[TextIO]()
 
 
 def pytest_addoption(parser: Parser) -> None:
-    help = (
+    help_text = (
         "Dump the traceback of all threads if a test takes "
         "more than TIMEOUT seconds to finish."
     )
-    parser.addini("faulthandler_timeout", help, default=0.0)
+    parser.addini("faulthandler_timeout", help_text, default=0.0)
 
 
 def pytest_configure(config: Config) -> None:

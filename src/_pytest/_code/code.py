@@ -136,7 +136,7 @@ class Frame:
             return Source("")
         return self.code.fullsource.getstatement(self.lineno)
 
-    def eval(self, code, **vars):
+    def eval_frame(self, code, **vars):
         """ evaluate 'code' in the frame
 
             'vars' are optional additional local variables
@@ -156,13 +156,13 @@ class Frame:
         f_locals.update(vars)
         exec(code, self.f_globals, f_locals)
 
-    def repr(self, object: object) -> str:
-        """ return a 'safe' (non-recursive, one-line) string repr for 'object'
+    def repr(self, obj: object) -> str:  # noqa: A003
+        """ return a 'safe' (non-recursive, one-line) string repr for 'obj'
         """
-        return saferepr(object)
+        return saferepr(obj)
 
-    def is_true(self, object):
-        return object
+    def is_true(self, obj):
+        return obj
 
     def getargs(self, var: bool = False):
         """ return a list of tuples (name, value) for all arguments
@@ -217,8 +217,8 @@ class TracebackEntry:
         """ path to the source code """
         return self.frame.code.path
 
-    @property
-    def locals(self) -> Dict[str, Any]:
+    @property  # noqa : A003
+    def locals(self) -> Dict[str, Any]:  # noqa: A003
         """ locals of underlying frame """
         return self.frame.f_locals
 
@@ -356,7 +356,7 @@ class Traceback(List[TracebackEntry]):
         else:
             return super().__getitem__(key)
 
-    def filter(
+    def filter(  # noqa: A003
         self, fn: Callable[[TracebackEntry], bool] = lambda x: not x.ishidden()
     ) -> "Traceback":
         """ return a Traceback instance with certain items removed
@@ -398,7 +398,7 @@ class Traceback(List[TracebackEntry]):
                 loc = f.f_locals
                 for otherloc in values:
                     if f.is_true(
-                        f.eval(
+                        f.eval_frame(
                             co_equal,
                             __recursioncache_locals_1=loc,
                             __recursioncache_locals_2=otherloc,
@@ -489,8 +489,8 @@ class ExceptionInfo(Generic[_E]):
         assert self._excinfo is None, "ExceptionInfo was already filled"
         self._excinfo = exc_info
 
-    @property
-    def type(self) -> "Type[_E]":
+    @property  # noqa: A003
+    def type(self) -> "Type[_E]":  # noqa: A003
         """the exception class"""
         assert (
             self._excinfo is not None
@@ -729,13 +729,13 @@ class FormattedExcinfo:
                 failindent = indentstr
         return lines
 
-    def repr_locals(self, locals: Mapping[str, object]) -> Optional["ReprLocals"]:
+    def repr_locals(self, locals_dict: Mapping[str, object]) -> Optional["ReprLocals"]:
         if self.showlocals:
             lines = []
-            keys = [loc for loc in locals if loc[0] != "@"]
+            keys = [loc for loc in locals_dict if loc[0] != "@"]
             keys.sort()
             for name in keys:
-                value = locals[name]
+                value = locals_dict[name]
                 if name == "__builtins__":
                     lines.append("__builtins__ = <builtins>")
                 else:

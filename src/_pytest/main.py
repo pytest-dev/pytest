@@ -49,14 +49,14 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "norecursedirs",
         "directory patterns to avoid for recursion",
-        type="args",
+        ini_type="args",
         default=[".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv"],
     )
     parser.addini(
         "testpaths",
         "directories to search for tests when no files or directories are given in the "
         "command line.",
-        type="args",
+        ini_type="args",
         default=[],
     )
     group = parser.getgroup("general", "running and selection options")

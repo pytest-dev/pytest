@@ -131,7 +131,7 @@ class Cache:
         except (ValueError, OSError):
             return default
 
-    def set(self, key, value) -> None:
+    def save(self, key, value) -> None:
         """ save value for the given key.
 
         :param key: must be a ``/`` separated value. Usually the first
@@ -347,7 +347,7 @@ class LFPlugin:
         assert config.cache is not None
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
         if saved_lastfailed != self.lastfailed:
-            config.cache.set("cache/lastfailed", self.lastfailed)
+            config.cache.save("cache/lastfailed", self.lastfailed)
 
 
 class NFPlugin:
@@ -393,7 +393,7 @@ class NFPlugin:
             return
 
         assert config.cache is not None
-        config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+        config.cache.save("cache/nodeids", sorted(self.cached_nodeids))
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -442,7 +442,9 @@ def pytest_addoption(parser: Parser) -> None:
     cache_dir_default = ".pytest_cache"
     if "TOX_ENV_DIR" in os.environ:
         cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], cache_dir_default)
-    parser.addini("cache_dir", default=cache_dir_default, help="cache directory path.")
+    parser.addini(
+        "cache_dir", default=cache_dir_default, help_text="cache directory path."
+    )
     group.addoption(
         "--lfnf",
         "--last-failed-no-failures",

@@ -228,8 +228,8 @@ class TestTraceback_f_g_h:
 
         excinfo = pytest.raises(RuntimeError, f, 25)
         monkeypatch.delattr(excinfo.traceback.__class__, "recursionindex")
-        repr = excinfo.getrepr()
-        assert "RuntimeError: hello" in str(repr.reprcrash)
+        exec_repr = excinfo.getrepr()
+        assert "RuntimeError: hello" in str(exec_repr.reprcrash)
 
     def test_traceback_no_recursion_index(self) -> None:
         def do_stuff() -> None:
@@ -492,9 +492,9 @@ class TestFormattedExcinfo:
             exec(co)
         except ValueError:
             excinfo = _pytest._code.ExceptionInfo.from_current()
-        repr = pr.repr_excinfo(excinfo)
-        assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
+        exec_repr = pr.repr_excinfo(excinfo)
+        assert exec_repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
+        assert exec_repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_many_line_source_not_existing(self):
         pr = FormattedExcinfo()
@@ -510,9 +510,9 @@ raise ValueError()
             exec(co)
         except ValueError:
             excinfo = _pytest._code.ExceptionInfo.from_current()
-        repr = pr.repr_excinfo(excinfo)
-        assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
+        exec_repr = pr.repr_excinfo(excinfo)
+        assert exec_repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
+        assert exec_repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_source_failing_fullsource(self, monkeypatch) -> None:
         pr = FormattedExcinfo()
@@ -524,10 +524,10 @@ raise ValueError()
 
         with monkeypatch.context() as m:
             m.setattr(_pytest._code.Code, "fullsource", property(lambda self: None))
-            repr = pr.repr_excinfo(excinfo)
+            exec_repr = pr.repr_excinfo(excinfo)
 
-        assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
+        assert exec_repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
+        assert exec_repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
     def test_repr_local(self) -> None:
         p = FormattedExcinfo(showlocals=True)
@@ -779,15 +779,15 @@ raise ValueError()
             assert len(reprtb.reprentries) == 2
             assert reprtb.style == style
             assert not reprtb.extraline
-            repr = p.repr_excinfo(excinfo)
-            assert repr.reprtraceback
-            assert len(repr.reprtraceback.reprentries) == len(reprtb.reprentries)
+            p_repr = p.repr_excinfo(excinfo)
+            assert p_repr.reprtraceback
+            assert len(p_repr.reprtraceback.reprentries) == len(reprtb.reprentries)
 
-            assert repr.chain[0][0]
-            assert len(repr.chain[0][0].reprentries) == len(reprtb.reprentries)
-            assert repr.reprcrash is not None
-            assert repr.reprcrash.path.endswith("mod.py")
-            assert repr.reprcrash.message == "ValueError: 0"
+            assert p_repr.chain[0][0]
+            assert len(p_repr.chain[0][0].reprentries) == len(reprtb.reprentries)
+            assert p_repr.reprcrash is not None
+            assert p_repr.reprcrash.path.endswith("mod.py")
+            assert p_repr.reprcrash.message == "ValueError: 0"
 
     def test_repr_traceback_with_invalid_cwd(self, importasmod, monkeypatch) -> None:
         mod = importasmod(
@@ -848,9 +848,9 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.entry)
-        repr = excinfo.getrepr()
-        repr.addsection("title", "content")
-        repr.toterminal(tw_mock)
+        exec_repr = excinfo.getrepr()
+        exec_repr.addsection("title", "content")
+        exec_repr.toterminal(tw_mock)
         assert tw_mock.lines[-1] == "content"
         assert tw_mock.lines[-2] == ("-", "title")
 
@@ -862,12 +862,12 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.entry)
-        repr = excinfo.getrepr()
-        assert repr.reprcrash is not None
-        assert repr.reprcrash.path.endswith("mod.py")
-        assert repr.reprcrash.lineno == 3
-        assert repr.reprcrash.message == "ValueError"
-        assert str(repr.reprcrash).endswith("mod.py:3: ValueError")
+        exec_repr = excinfo.getrepr()
+        assert exec_repr.reprcrash is not None
+        assert exec_repr.reprcrash.path.endswith("mod.py")
+        assert exec_repr.reprcrash.lineno == 3
+        assert exec_repr.reprcrash.message == "ValueError"
+        assert str(exec_repr.reprcrash).endswith("mod.py:3: ValueError")
 
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(
@@ -902,11 +902,11 @@ raise ValueError()
         styles = ("short", "long", "no")  # type: Tuple[_TracebackStyle, ...]
         for style in styles:
             for showlocals in (True, False):
-                repr = excinfo.getrepr(style=style, showlocals=showlocals)
-                assert repr.reprtraceback.style == style
+                exec_repr = excinfo.getrepr(style=style, showlocals=showlocals)
+                assert exec_repr.reprtraceback.style == style
 
-                assert isinstance(repr, ExceptionChainRepr)
-                for r in repr.chain:
+                assert isinstance(exec_repr, ExceptionChainRepr)
+                for r in exec_repr.chain:
                     assert r[0].style == style
 
     def test_reprexcinfo_unicode(self):
@@ -930,8 +930,8 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.f)
         excinfo.traceback = excinfo.traceback.filter()
-        repr = excinfo.getrepr()
-        repr.toterminal(tw_mock)
+        exc_repr = excinfo.getrepr()
+        exc_repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
         tw_mock.lines.pop(0)
         assert tw_mock.lines[0] == "    def f():"
@@ -962,8 +962,8 @@ raise ValueError()
         excinfo = pytest.raises(ValueError, mod.f)
         tmpdir.join("mod.py").remove()
         excinfo.traceback = excinfo.traceback.filter()
-        repr = excinfo.getrepr()
-        repr.toterminal(tw_mock)
+        exec_repr = excinfo.getrepr()
+        exec_repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
         tw_mock.lines.pop(0)
         assert tw_mock.lines[0] == ">   ???"
@@ -992,8 +992,8 @@ raise ValueError()
         excinfo = pytest.raises(ValueError, mod.f)
         tmpdir.join("mod.py").write("asdf")
         excinfo.traceback = excinfo.traceback.filter()
-        repr = excinfo.getrepr()
-        repr.toterminal(tw_mock)
+        exec_repr = excinfo.getrepr()
+        exec_repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
         tw_mock.lines.pop(0)
         assert tw_mock.lines[0] == ">   ???"
@@ -1021,16 +1021,16 @@ raise ValueError()
         path = py.path.local(mod.__file__)
         old = path.dirpath().chdir()
         try:
-            repr = excinfo.getrepr(abspath=False)
-            repr.toterminal(tw_mock)
+            exec_repr = excinfo.getrepr(abspath=False)
+            exec_repr.toterminal(tw_mock)
             x = py.path.local().bestrelpath(path)
             if len(x) < len(str(path)):
                 msg = tw_mock.get_write_msg(-2)
                 assert msg == "mod.py"
                 assert tw_mock.lines[-1] == ":3: ValueError"
 
-            repr = excinfo.getrepr(abspath=True)
-            repr.toterminal(tw_mock)
+            exec_repr = excinfo.getrepr(abspath=True)
+            exec_repr.toterminal(tw_mock)
             msg = tw_mock.get_write_msg(-2)
             assert msg == path
             line = tw_mock.lines[-1]
@@ -1065,8 +1065,8 @@ raise ValueError()
         excinfo = pytest.raises(ValueError, mod.f)
         file = io.StringIO()
         tw = TerminalWriter(file=file)
-        repr = excinfo.getrepr(**reproptions)
-        repr.toterminal(tw)
+        exec_repr = excinfo.getrepr(**reproptions)
+        exec_repr.toterminal(tw)
         assert file.getvalue()
 
     def test_traceback_repr_style(self, importasmod, tw_mock):
@@ -1244,12 +1244,12 @@ raise ValueError()
             pytest.param(
                 "cause",
                 "The above exception was the direct cause of the following exception:",
-                id="cause",
+                param_id="cause",
             ),
             pytest.param(
                 "context",
                 "During handling of the above exception, another exception occurred:",
-                id="context",
+                param_id="context",
             ),
         ],
     )

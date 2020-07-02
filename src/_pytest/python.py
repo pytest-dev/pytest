@@ -92,28 +92,28 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "python_files",
-        type="args",
+        ini_type="args",
         # NOTE: default is also used in AssertionRewritingHook.
         default=["test_*.py", "*_test.py"],
-        help="glob-style file patterns for Python test module discovery",
+        help_text="glob-style file patterns for Python test module discovery",
     )
     parser.addini(
         "python_classes",
-        type="args",
+        ini_type="args",
         default=["Test"],
-        help="prefixes or glob names for Python test class discovery",
+        help_text="prefixes or glob names for Python test class discovery",
     )
     parser.addini(
         "python_functions",
-        type="args",
+        ini_type="args",
         default=["test"],
-        help="prefixes or glob names for Python test function and method discovery",
+        help_text="prefixes or glob names for Python test function and method discovery",
     )
     parser.addini(
         "disable_test_id_escaping_and_forfeit_all_rights_to_community_support",
-        type="bool",
+        ini_type="bool",
         default=False,
-        help="disable string escape non-ascii characters, might cause unwanted "
+        help_text="disable string escape non-ascii characters, might cause unwanted "
         "side effects(use at your own risk)",
     )
 
@@ -841,8 +841,8 @@ class CallSpec2:
         except KeyError as e:
             raise ValueError(name) from e
 
-    @property
-    def id(self) -> str:
+    @property  # noqa: A003
+    def id(self) -> str:  # noqa: A003
         return "-".join(map(str, self._idlist))
 
     def setmulti2(
@@ -850,7 +850,7 @@ class CallSpec2:
         valtypes: "Mapping[str, Literal['params', 'funcargs']]",
         argnames: typing.Sequence[str],
         valset: Iterable[object],
-        id: str,
+        spec_id: str,
         marks: Iterable[Union[Mark, MarkDecorator]],
         scopenum: int,
         param_index: int,
@@ -866,7 +866,7 @@ class CallSpec2:
                 assert False, "Unhandled valtype for arg: {}".format(valtype_for_arg)
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
-        self._idlist.append(id)
+        self._idlist.append(spec_id)
         self.marks.extend(normalize_mark_list(marks))
 
 
@@ -1268,15 +1268,15 @@ def _idvalset(
 ):
     if parameterset.id is not None:
         return parameterset.id
-    id = None if ids is None or idx >= len(ids) else ids[idx]
-    if id is None:
+    id_at_index = None if ids is None or idx >= len(ids) else ids[idx]
+    if id_at_index is None:
         this_id = [
             _idval(val, argname, idx, idfn, item=item, config=config)
             for val, argname in zip(parameterset.values, argnames)
         ]
         return "-".join(this_id)
     else:
-        return _ascii_escaped_by_config(id, config)
+        return _ascii_escaped_by_config(id_at_index, config)
 
 
 def idmaker(

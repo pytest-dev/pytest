@@ -160,8 +160,8 @@ def color_mapping():
         }
         RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
-        @classmethod
-        def format(cls, lines: List[str]) -> List[str]:
+        @classmethod  # noqa: A003
+        def format(cls, lines: List[str]) -> List[str]:  # noqa: 163
             """Straightforward replacement of color names to their ASCII codes."""
             return [line.format(**cls.COLORS) for line in lines]
 

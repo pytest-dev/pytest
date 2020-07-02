@@ -1077,14 +1077,14 @@ def test_markers_from_parametrize(testdir):
 
 def test_pytest_param_id_requires_string() -> None:
     with pytest.raises(TypeError) as excinfo:
-        pytest.param(id=True)  # type: ignore[arg-type] # noqa: F821
+        pytest.param(param_id=True)  # type: ignore[arg-type] # noqa: F821
     (msg,) = excinfo.value.args
     assert msg == "Expected id to be a string, got <class 'bool'>: True"
 
 
 @pytest.mark.parametrize("s", (None, "hello world"))
 def test_pytest_param_id_allows_none_or_string(s):
-    assert pytest.param(id=s)
+    assert pytest.param(param_id=s)
 
 
 @pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)", "bogus/"))

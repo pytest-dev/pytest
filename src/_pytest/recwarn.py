@@ -169,8 +169,8 @@ class WarningsRecorder(warnings.catch_warnings):
         self._entered = False
         self._list = []  # type: List[warnings.WarningMessage]
 
-    @property
-    def list(self) -> List["warnings.WarningMessage"]:
+    @property  # noqa: A003
+    def list(self) -> List["warnings.WarningMessage"]:  # noqa: A003
         """The list of recorded warnings."""
         return self._list
 

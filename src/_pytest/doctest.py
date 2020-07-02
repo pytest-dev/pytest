@@ -65,7 +65,7 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "doctest_optionflags",
         "option flags for doctests",
-        type="args",
+        ini_type="args",
         default=["ELLIPSIS"],
     )
     parser.addini(

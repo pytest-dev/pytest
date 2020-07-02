@@ -1173,12 +1173,14 @@ class TestRootdir:
     @pytest.mark.parametrize(
         "name, contents",
         [
-            pytest.param("pytest.ini", "[pytest]\nx=10", id="pytest.ini"),
+            pytest.param("pytest.ini", "[pytest]\nx=10", param_id="pytest.ini"),
             pytest.param(
-                "pyproject.toml", "[tool.pytest.ini_options]\nx=10", id="pyproject.toml"
+                "pyproject.toml",
+                "[tool.pytest.ini_options]\nx=10",
+                param_id="pyproject.toml",
             ),
-            pytest.param("tox.ini", "[pytest]\nx=10", id="tox.ini"),
-            pytest.param("setup.cfg", "[tool:pytest]\nx=10", id="setup.cfg"),
+            pytest.param("tox.ini", "[pytest]\nx=10", param_id="tox.ini"),
+            pytest.param("setup.cfg", "[tool:pytest]\nx=10", param_id="setup.cfg"),
         ],
     )
     def test_with_ini(self, tmpdir: py.path.local, name: str, contents: str) -> None:
@@ -1224,12 +1226,14 @@ class TestRootdir:
     @pytest.mark.parametrize(
         "name, contents",
         [
-            # pytest.param("pytest.ini", "[pytest]\nx=10", id="pytest.ini"),
+            # pytest.param("pytest.ini", "[pytest]\nx=10", param_id="pytest.ini"),
             pytest.param(
-                "pyproject.toml", "[tool.pytest.ini_options]\nx=10", id="pyproject.toml"
+                "pyproject.toml",
+                "[tool.pytest.ini_options]\nx=10",
+                param_id="pyproject.toml",
             ),
-            # pytest.param("tox.ini", "[pytest]\nx=10", id="tox.ini"),
-            # pytest.param("setup.cfg", "[tool:pytest]\nx=10", id="setup.cfg"),
+            # pytest.param("tox.ini", "[pytest]\nx=10", param_id="tox.ini"),
+            # pytest.param("setup.cfg", "[tool:pytest]\nx=10", param_id="setup.cfg"),
         ],
     )
     def test_with_specific_inifile(

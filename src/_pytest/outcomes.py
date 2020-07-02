@@ -91,7 +91,7 @@ _ET = TypeVar("_ET", bound="Type[BaseException]")
 
 
 class _WithException(Protocol[_F, _ET]):
-    Exception = None  # type: _ET
+    Exception = None  # type: _ET # noqa: A003
     __call__ = None  # type: _F
 
 
@@ -107,8 +107,8 @@ def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _E
 # exposed helper methods
 
 
-@_with_exception(Exit)
-def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
+@_with_exception(Exit)  # noqa: A001
+def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":  # noqa: A001
     """
     Exit testing process.
 

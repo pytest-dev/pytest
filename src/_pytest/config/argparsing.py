@@ -161,8 +161,8 @@ class Parser:
     def addini(
         self,
         name: str,
-        help: str,
-        type: Optional["Literal['pathlist', 'args', 'linelist', 'bool']"] = None,
+        help_text: str,
+        ini_type: Optional["Literal['pathlist', 'args', 'linelist', 'bool']"] = None,
         default=None,
     ) -> None:
         """ register an ini-file option.
@@ -175,8 +175,8 @@ class Parser:
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <_pytest.config.Config.getini>`.
         """
-        assert type in (None, "pathlist", "args", "linelist", "bool")
-        self._inidict[name] = (help, type, default)
+        assert ini_type in (None, "pathlist", "args", "linelist", "bool")
+        self._inidict[name] = (help_text, ini_type, default)
         self._ininames.append(name)
 
 

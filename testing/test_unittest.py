@@ -322,8 +322,8 @@ def test_setup_class(testdir):
     reprec.assertoutcome(passed=3)
 
 
-@pytest.mark.parametrize("type", ["Error", "Failure"])
-def test_testcase_adderrorandfailure_defers(testdir, type):
+@pytest.mark.parametrize("result_type", ["Error", "Failure"])
+def test_testcase_adderrorandfailure_defers(testdir, result_type):
     testdir.makepyfile(
         """
         from unittest import TestCase
@@ -340,14 +340,14 @@ def test_testcase_adderrorandfailure_defers(testdir, type):
             def test_hello(self):
                 pass
     """
-        % (type, type)
+        % (result_type, result_type)
     )
     result = testdir.runpytest()
     result.stdout.no_fnmatch_line("*should not raise*")
 
 
-@pytest.mark.parametrize("type", ["Error", "Failure"])
-def test_testcase_custom_exception_info(testdir, type):
+@pytest.mark.parametrize("result_type", ["Error", "Failure"])
+def test_testcase_custom_exception_info(testdir, result_type):
     testdir.makepyfile(
         """
         from unittest import TestCase
@@ -365,7 +365,7 @@ def test_testcase_custom_exception_info(testdir, type):
                 mp.setattr(_pytest._code, 'ExceptionInfo', t)
                 try:
                     excinfo = excinfo._excinfo
-                    result.add%(type)s(self, excinfo)
+                    result.add%(result_type)s(self, excinfo)
                 finally:
                     mp.undo()
             def test_hello(self):

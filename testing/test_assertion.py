@@ -399,7 +399,7 @@ class TestAssert_reprcompare:
                 + [0, 1]
                 ?     ^
             """,
-                id="lists",
+                param_id="lists",
             ),
             pytest.param(
                 {0: 1},
@@ -411,7 +411,7 @@ class TestAssert_reprcompare:
                 + {0: 1}
                 ?     ^
             """,
-                id="dicts",
+                param_id="dicts",
             ),
             pytest.param(
                 {0, 1},
@@ -423,7 +423,7 @@ class TestAssert_reprcompare:
                 + {0, 1}
                 ?     ^
             """,
-                id="sets",
+                param_id="sets",
             ),
         ],
     )

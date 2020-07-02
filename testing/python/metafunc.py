@@ -435,8 +435,8 @@ class TestMetafunc:
         result = idmaker(
             ("s",),
             [
-                pytest.param("x00", id="hello \x00"),
-                pytest.param("x05", id="hello \x05"),
+                pytest.param("x00", param_id="hello \x00"),
+                pytest.param("x05", param_id="hello \x05"),
             ],
         )
         assert result == ["hello \\x00", "hello \\x05"]
@@ -619,7 +619,7 @@ class TestMetafunc:
 
         result = idmaker(
             ("a", "b"),
-            [pytest.param(1, 2, id="me"), pytest.param(3, 4, id="you")],
+            [pytest.param(1, 2, param_id="me"), pytest.param(3, 4, param_id="you")],
             ids=["a", None],
         )
         assert result == ["me", "you"]
@@ -1590,7 +1590,7 @@ class TestMetafuncFunctionalAuto:
         """
         )
         result = testdir.runpytest("-s")
-        output = result.stdout.str()
+        output = result.stdout.string()
         assert output.count("preparing foo-2") == 1
         assert output.count("preparing foo-3") == 1
 

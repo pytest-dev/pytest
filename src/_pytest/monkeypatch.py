@@ -147,19 +147,19 @@ class MonkeyPatch:
         finally:
             m.undo()
 
-    @overload
+    @overload  # noqa: A003
     def setattr(
         self, target: str, name: object, value: Notset = ..., raising: bool = ...,
     ) -> None:
         raise NotImplementedError()
 
-    @overload  # noqa: F811
+    @overload  # noqa: A003, F811
     def setattr(  # noqa: F811
         self, target: object, name: str, value: object, raising: bool = ...,
     ) -> None:
         raise NotImplementedError()
 
-    def setattr(  # noqa: F811
+    def setattr(  # noqa: A003, F811
         self,
         target: Union[str, object],
         name: Union[object, str],
@@ -209,7 +209,7 @@ class MonkeyPatch:
         self._setattr.append((target, name, oldval))
         setattr(target, name, value)
 
-    def delattr(
+    def delattr(  # noqa: A003
         self,
         target: Union[object, str],
         name: Union[str, Notset] = notset,

@@ -123,7 +123,7 @@ def test_buggy_builtin_repr():
     # Simulate a case where a repr for a builtin raises.
     # reprlib dispatches by type name, so use "int".
 
-    class int:
+    class int:  # noqa: A001
         def __repr__(self):
             raise ValueError("Buggy repr!")
 

@@ -5,8 +5,8 @@ from _pytest.mark.expression import Expression
 from _pytest.mark.expression import ParseError
 
 
-def evaluate(input: str, matcher: Callable[[str], bool]) -> bool:
-    return Expression.compile(input).evaluate(matcher)
+def evaluate(input_string: str, matcher: Callable[[str], bool]) -> bool:
+    return Expression.compile(input_string).evaluate(matcher)
 
 
 def test_empty_is_false() -> None:
