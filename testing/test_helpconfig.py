@@ -51,14 +51,15 @@ def test_help(testdir):
     """,
     ],
 )
-@pytest.mark.parametrize("output", ["*test_ini*(bool):*"])
+@pytest.mark.parametrize(
+    "output", ["*TypeError: help argument must be provided for test_ini*"]
+)
 def test_empty_or_none_help_param(conftest, output, testdir):
     """Tests an empty/None help param is displayed correctly.
     """
     testdir.makeconftest(conftest)
     result = testdir.runpytest("--help")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([output])
+    result.stderr.fnmatch_lines([output])
 
 
 def test_hookvalidation_unknown(testdir):

@@ -1,1 +1,1 @@
-Fixed an empty/None help param on parser options from throwing an error when executing ``pytest --help``.
+Fixed an empty/None help param on parser options from throwing an unexpected error when executing ``pytest --help``.

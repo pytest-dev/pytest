@@ -170,9 +170,8 @@ def showhelp(config: Config) -> None:
         help, type, default = config._parser._inidict[name]
         if type is None:
             type = "string"
-        # Empty string parseable by textwrap whereas None isn't.
-        if help is None:
-            help = ""
+        if help in (None, ""):
+            raise TypeError(f"help argument must be provided for {name}")
         spec = "{} ({}):".format(name, type)
         tw.write("  %s" % spec)
         spec_len = len(spec)
@@ -194,13 +193,9 @@ def showhelp(config: Config) -> None:
             tw.write(" " * (indent_len - spec_len - 2))
             wrapped = textwrap.wrap(help, columns - indent_len, break_on_hyphens=False)
 
-            # If a help string wasn't specified, just write an empty line.
-            if not wrapped:
-                tw.write(" " * (indent_len - spec_len - 2))
-            else:
-                tw.line(wrapped[0])
-                for line in wrapped[1:]:
-                    tw.line(indent + line)
+            tw.line(wrapped[0])
+            for line in wrapped[1:]:
+                tw.line(indent + line)
 
     tw.line()
     tw.line("environment variables:")
