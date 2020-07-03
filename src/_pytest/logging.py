@@ -34,8 +34,8 @@ from _pytest.terminal import TerminalReporter
 DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
-catch_log_handler_key = StoreKey["LogCaptureHandler"]()
-catch_log_records_key = StoreKey[Dict[str, List[logging.LogRecord]]]()
+caplog_handler_key = StoreKey["LogCaptureHandler"]()
+caplog_records_key = StoreKey[Dict[str, List[logging.LogRecord]]]()
 
 
 def _remove_ansi_escape_sequences(text: str) -> str:
@@ -365,7 +365,7 @@ class LogCaptureFixture:
         """
         :rtype: LogCaptureHandler
         """
-        return self._item._store[catch_log_handler_key]
+        return self._item._store[caplog_handler_key]
 
     def get_records(self, when: str) -> List[logging.LogRecord]:
         """
@@ -379,7 +379,7 @@ class LogCaptureFixture:
 
         .. versionadded:: 3.4
         """
-        return self._item._store[catch_log_records_key].get(when, [])
+        return self._item._store[caplog_records_key].get(when, [])
 
     @property
     def text(self) -> str:
@@ -526,8 +526,10 @@ class LoggingPlugin:
             get_option_ini(config, "log_auto_indent"),
         )
         self.log_level = get_log_level_for_setting(config, "log_level")
-        self.log_handler = LogCaptureHandler()
-        self.log_handler.setFormatter(self.formatter)
+        self.caplog_handler = LogCaptureHandler()
+        self.caplog_handler.setFormatter(self.formatter)
+        self.report_handler = LogCaptureHandler()
+        self.report_handler.setFormatter(self.formatter)
 
         # File logging.
         self.log_file_level = get_log_level_for_setting(config, "log_file_level")
@@ -668,14 +670,19 @@ class LoggingPlugin:
 
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
         """Implements the internals of pytest_runtest_xxx() hook."""
-        with catching_logs(self.log_handler, level=self.log_level) as log_handler:
-            log_handler.reset()
-            item._store[catch_log_records_key][when] = log_handler.records
-            item._store[catch_log_handler_key] = log_handler
+        with catching_logs(
+            self.caplog_handler, level=self.log_level,
+        ) as caplog_handler, catching_logs(
+            self.report_handler, level=self.log_level,
+        ) as report_handler:
+            caplog_handler.reset()
+            report_handler.reset()
+            item._store[caplog_records_key][when] = caplog_handler.records
+            item._store[caplog_handler_key] = caplog_handler
 
             yield
 
-            log = log_handler.stream.getvalue().strip()
+            log = report_handler.stream.getvalue().strip()
             item.add_report_section(when, "log", log)
 
     @pytest.hookimpl(hookwrapper=True)
@@ -683,7 +690,7 @@ class LoggingPlugin:
         self.log_cli_handler.set_when("setup")
 
         empty = {}  # type: Dict[str, List[logging.LogRecord]]
-        item._store[catch_log_records_key] = empty
+        item._store[caplog_records_key] = empty
         yield from self._runtest_for(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
@@ -697,8 +704,8 @@ class LoggingPlugin:
         self.log_cli_handler.set_when("teardown")
 
         yield from self._runtest_for(item, "teardown")
-        del item._store[catch_log_records_key]
-        del item._store[catch_log_handler_key]
+        del item._store[caplog_records_key]
+        del item._store[caplog_handler_key]
 
     @pytest.hookimpl
     def pytest_runtest_logfinish(self) -> None:

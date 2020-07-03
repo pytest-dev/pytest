@@ -1,7 +1,7 @@
 import logging
 
 import pytest
-from _pytest.logging import catch_log_records_key
+from _pytest.logging import caplog_records_key
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
@@ -137,7 +137,7 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
 
     # This reaches into private API, don't use this type of thing in real tests!
-    assert set(caplog._item._store[catch_log_records_key]) == {"setup", "call"}
+    assert set(caplog._item._store[caplog_records_key]) == {"setup", "call"}
 
 
 def test_ini_controls_global_log_level(testdir):
@@ -216,12 +216,10 @@ def test_caplog_captures_despite_exception(testdir):
             plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_level == logging.WARNING
 
-            logger.info("INFO message won't be shown")
-
-            caplog.set_level(logging.INFO, logger.name)
+            logger.error("ERROR message " + "will be shown")
 
             with caplog.at_level(logging.DEBUG, logger.name):
-                logger.debug("DEBUG message will be shown")
+                logger.debug("DEBUG message " + "won't be shown")
                 raise Exception()
     """
     )
@@ -233,5 +231,46 @@ def test_caplog_captures_despite_exception(testdir):
     )
 
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*DEBUG message will be shown*"])
+    result.stdout.fnmatch_lines(["*ERROR message will be shown*"])
+    result.stdout.no_fnmatch_line("*DEBUG message won't be shown*")
+    assert result.ret == 1
+
+
+def test_log_report_captures_according_to_config_option_upon_failure(testdir):
+    """ Test that upon failure:
+    (1) `caplog` succeeded to capture the DEBUG message and assert on it => No `Exception` is raised
+    (2) The `DEBUG` message does NOT appear in the `Captured log call` report
+    (3) The stdout, `INFO`, and `WARNING` messages DO appear in the test reports due to `--log-level=INFO`
+    """
+    testdir.makepyfile(
+        """
+        import pytest
+        import logging
+
+        def function_that_logs():
+            logging.debug('DEBUG log ' + 'message')
+            logging.info('INFO log ' + 'message')
+            logging.warning('WARNING log ' + 'message')
+            print('Print ' + 'message')
+
+        def test_that_fails(request, caplog):
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            assert plugin.log_level == logging.INFO
+
+            with caplog.at_level(logging.DEBUG):
+                function_that_logs()
+
+            if 'DEBUG log ' + 'message' not in caplog.text:
+                raise Exception('caplog failed to ' + 'capture DEBUG')
+
+            assert False
+    """
+    )
+
+    result = testdir.runpytest("--log-level=INFO")
+    result.stdout.no_fnmatch_line("*Exception: caplog failed to capture DEBUG*")
+    result.stdout.no_fnmatch_line("*DEBUG log message*")
+    result.stdout.fnmatch_lines(
+        ["*Print message*", "*INFO log message*", "*WARNING log message*"]
+    )
     assert result.ret == 1

@@ -16,6 +16,7 @@ import sys
 from datetime import datetime
 from typing import Dict
 from typing import List
+from typing import Match
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -70,7 +71,7 @@ _py_ext_re = re.compile(r"\.py$")
 
 
 def bin_xml_escape(arg: str) -> py.xml.raw:
-    def repl(matchobj) -> str:  # FIX IN SEPERATE PR
+    def repl(matchobj: Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
             return "#x%02X" % i
