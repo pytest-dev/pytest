@@ -52,7 +52,7 @@ def test_help(testdir):
     ],
 )
 @pytest.mark.parametrize(
-    "output", ["*TypeError: help argument must be provided for test_ini*"]
+    "output", ["*TypeError: help argument cannot be empty for test_ini*"]
 )
 def test_empty_or_none_help_param(conftest, output, testdir):
     """Tests an empty/None help param is displayed correctly.

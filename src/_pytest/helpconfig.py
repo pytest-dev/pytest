@@ -171,7 +171,7 @@ def showhelp(config: Config) -> None:
         if type is None:
             type = "string"
         if help in (None, ""):
-            raise TypeError("help argument must be provided for {}".format(name))
+            raise TypeError("help argument cannot be empty for {}".format(name))
         spec = "{} ({}):".format(name, type)
         tw.write("  %s" % spec)
         spec_len = len(spec)
