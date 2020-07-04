@@ -131,7 +131,7 @@ class TestTraceback_f_g_h:
             try:
                 raise ValueError
             except somenoname:  # type: ignore[name-defined] # noqa: F821
-                pass
+                pass  # pragma: no cover
 
         try:
             xyz()
@@ -475,7 +475,7 @@ class TestFormattedExcinfo:
         except BaseException:
             excinfo = _pytest._code.ExceptionInfo.from_current()
         else:
-            assert 0, "did not raise"
+            assert False, "did not raise"
 
         pr = FormattedExcinfo()
         source = pr._getentrysource(excinfo.traceback[-1])

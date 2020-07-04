@@ -56,7 +56,7 @@ def test_source_from_lines() -> None:
 
 def test_source_from_inner_function() -> None:
     def f():
-        pass
+        raise NotImplementedError()
 
     source = _pytest._code.Source(f)
     assert str(source).startswith("def f():")
@@ -245,15 +245,15 @@ def test_getline_finally() -> None:
 
 def test_getfuncsource_dynamic() -> None:
     def f():
-        raise ValueError
+        raise NotImplementedError()
 
     def g():
-        pass
+        pass  # pragma: no cover
 
     f_source = _pytest._code.Source(f)
     g_source = _pytest._code.Source(g)
-    assert str(f_source).strip() == "def f():\n    raise ValueError"
-    assert str(g_source).strip() == "def g():\n    pass"
+    assert str(f_source).strip() == "def f():\n    raise NotImplementedError()"
+    assert str(g_source).strip() == "def g():\n    pass  # pragma: no cover"
 
 
 def test_getfuncsource_with_multine_string() -> None:
