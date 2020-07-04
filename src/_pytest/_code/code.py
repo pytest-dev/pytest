@@ -356,7 +356,7 @@ class Traceback(List[TracebackEntry]):
         else:
             return super().__getitem__(key)
 
-    def apply_filter(
+    def filter(  # noqa: A003
         self, fn: Callable[[TracebackEntry], bool] = lambda x: not x.ishidden()
     ) -> "Traceback":
         """ return a Traceback instance with certain items removed
@@ -802,7 +802,7 @@ class FormattedExcinfo:
     def repr_traceback(self, excinfo: ExceptionInfo) -> "ReprTraceback":
         traceback = excinfo.traceback
         if self.tbfilter:
-            traceback = traceback.apply_filter()
+            traceback = traceback.filter()
 
         if excinfo.errisinstance(RecursionError):
             traceback, extraline = self._truncate_recursive_traceback(traceback)

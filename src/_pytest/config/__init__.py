@@ -140,7 +140,7 @@ def main(
             tw.line(
                 "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
             )
-            exc_info.traceback = exc_info.traceback.apply_filter(
+            exc_info.traceback = exc_info.traceback.filter(
                 filter_traceback_for_conftest_import_failure
             )
             exc_repr = (

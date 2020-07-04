@@ -895,7 +895,7 @@ class TestRequestBasic:
     def test_show_fixtures_color_yes(self, testdir):
         testdir.makepyfile("def test_this(): assert 1")
         result = testdir.runpytest("--color=yes", "--fixtures")
-        assert "\x1b[32mtmpdir" in result.stdout.string()
+        assert "\x1b[32mtmpdir" in result.stdout.str()
 
     def test_newstyle_with_request(self, testdir):
         testdir.makepyfile(

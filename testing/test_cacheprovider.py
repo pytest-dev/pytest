@@ -240,7 +240,7 @@ def test_cache_show(testdir):
             "d/mydb/hello*length 0*",
         ]
     )
-    stdout = result.stdout.string()
+    stdout = result.stdout.str()
     assert "other/some" not in stdout
     assert "d/mydb/world" not in stdout
     assert result.ret == 0
@@ -636,7 +636,7 @@ class TestLastFailed:
         if quiet:
             result.stdout.no_fnmatch_line("*run all*")
         else:
-            assert "rerun previous" in result.stdout.string()
+            assert "rerun previous" in result.stdout.str()
 
     def get_cached_last_failed(self, testdir):
         config = testdir.parseconfigure()

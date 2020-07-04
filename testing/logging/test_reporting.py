@@ -71,7 +71,7 @@ def test_root_logger_affected(testdir):
     # The capture log calls in the stdout section only contain the
     # logger.error msg, because of --log-level=ERROR.
     result.stdout.fnmatch_lines(["*error text going to logger*"])
-    stdout = result.stdout.string()
+    stdout = result.stdout.str()
     assert "warning text going to logger" not in stdout
     assert "info text going to logger" not in stdout
 
@@ -200,7 +200,7 @@ def test_log_cli_enabled_disabled(testdir, enabled):
             ]
         )
     else:
-        assert msg not in result.stdout.string()
+        assert msg not in result.stdout.str()
 
 
 def test_log_cli_default_level(testdir):
@@ -471,7 +471,7 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):
     assert (
         re.search(
             r"(.+)live log teardown(.+)\nWARNING(.+)\nWARNING(.+)",
-            result.stdout.string(),
+            result.stdout.str(),
             re.MULTILINE,
         )
         is not None
@@ -479,7 +479,7 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):
     assert (
         re.search(
             r"(.+)live log finish(.+)\nWARNING(.+)\nWARNING(.+)",
-            result.stdout.string(),
+            result.stdout.str(),
             re.MULTILINE,
         )
         is not None
@@ -599,7 +599,7 @@ def test_log_cli_auto_enable(testdir, cli_args):
     )
 
     result = testdir.runpytest(cli_args)
-    stdout = result.stdout.string()
+    stdout = result.stdout.str()
     if cli_args == "--log-cli-level=WARNING":
         result.stdout.fnmatch_lines(
             [

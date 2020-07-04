@@ -730,7 +730,7 @@ def test_unittest_typerror_traceback(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "TypeError" in result.stdout.string()
+    assert "TypeError" in result.stdout.str()
     assert result.ret == 1
 
 
@@ -1063,7 +1063,7 @@ def test_testcase_handles_init_exceptions(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "should raise this exception" in result.stdout.string()
+    assert "should raise this exception" in result.stdout.str()
     result.stdout.no_fnmatch_line("*ERROR at teardown of MyTestCase.test_hello*")
 
 

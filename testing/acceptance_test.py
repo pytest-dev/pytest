@@ -254,7 +254,7 @@ class TestGeneralUsage:
         result = testdir.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.no_fnmatch_line("*should not be seen*")
-        assert "stderr42" not in result.stderr.string()
+        assert "stderr42" not in result.stderr.str()
 
     def test_conftest_printing_shows_if_error(self, testdir):
         testdir.makeconftest(
@@ -265,7 +265,7 @@ class TestGeneralUsage:
         )
         result = testdir.runpytest()
         assert result.ret != 0
-        assert "should be seen" in result.stdout.string()
+        assert "should be seen" in result.stdout.str()
 
     def test_issue109_sibling_conftests_not_loaded(self, testdir):
         sub1 = testdir.mkdir("sub1")
@@ -371,7 +371,7 @@ class TestGeneralUsage:
         result = testdir.runpytest()
         assert result.ret == 3  # internal error
         result.stderr.fnmatch_lines(["INTERNAL*pytest_configure*", "INTERNAL*x*"])
-        assert "sessionstarttime" not in result.stderr.string()
+        assert "sessionstarttime" not in result.stderr.str()
 
     @pytest.mark.parametrize("lookfor", ["test_fun.py::test_a"])
     def test_issue134_report_error_when_collecting_member(self, testdir, lookfor):
@@ -514,7 +514,7 @@ class TestInvocationVariants:
         for name in ("py.test", "pytest"):
             result = testdir.runpython_c("import {};help({})".format(name, name))
             assert result.ret == 0
-            s = result.stdout.string()
+            s = result.stdout.str()
             assert "MarkGenerator" in s
 
     def test_import_star_py_dot_test(self, testdir):
@@ -1187,8 +1187,7 @@ def test_warn_on_async_function(testdir):
     )
     # ensure our warning message appears only once
     assert (
-        result.stdout.string().count("async def functions are not natively supported")
-        == 1
+        result.stdout.str().count("async def functions are not natively supported") == 1
     )
 
 
@@ -1219,8 +1218,7 @@ def test_warn_on_async_gen_function(testdir):
     )
     # ensure our warning message appears only once
     assert (
-        result.stdout.string().count("async def functions are not natively supported")
-        == 1
+        result.stdout.str().count("async def functions are not natively supported") == 1
     )
 
 

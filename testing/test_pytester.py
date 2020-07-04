@@ -644,7 +644,7 @@ def test_run_stdin(testdir) -> None:
         stdin=b"input\n2ndline",
     )
     assert result.stdout.lines == ["input", "2ndline"]
-    assert result.stderr.string() == ""
+    assert result.stderr.str() == ""
     assert result.ret == 0
 
 

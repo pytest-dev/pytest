@@ -281,7 +281,7 @@ class TestCaseFunction(Function):
 
     def _prunetraceback(self, excinfo: _pytest._code.ExceptionInfo) -> None:
         Function._prunetraceback(self, excinfo)
-        traceback = excinfo.traceback.apply_filter(
+        traceback = excinfo.traceback.filter(
             lambda x: not x.frame.f_globals.get("__unittest")
         )
         if traceback:

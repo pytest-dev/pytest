@@ -107,7 +107,7 @@ class TestModule:
         )
         assert result.ret == 2
 
-        stdout = result.stdout.string()
+        stdout = result.stdout.str()
         if verbose == 2:
             assert "_pytest" in stdout
         else:
@@ -946,14 +946,14 @@ class TestTracebackCutting:
         p = testdir.makepyfile("def test(hello): pass")
         result = testdir.runpytest(p)
         assert result.ret != 0
-        out = result.stdout.string()
+        out = result.stdout.str()
         assert "xyz" in out
         assert "conftest.py:5: ValueError" in out
         numentries = out.count("_ _ _")  # separator for traceback entries
         assert numentries == 0
 
         result = testdir.runpytest("--fulltrace", p)
-        out = result.stdout.string()
+        out = result.stdout.str()
         assert "conftest.py:5: ValueError" in out
         numentries = out.count("_ _ _ _")  # separator for traceback entries
         assert numentries > 3
@@ -969,12 +969,12 @@ class TestTracebackCutting:
         )
         result = testdir.runpytest()
         assert result.ret != 0
-        out = result.stdout.string()
+        out = result.stdout.str()
         assert "x = 1" not in out
         assert "x = 2" not in out
         result.stdout.fnmatch_lines([" *asd*", "E*NameError*"])
         result = testdir.runpytest("--fulltrace")
-        out = result.stdout.string()
+        out = result.stdout.str()
         assert "x = 1" in out
         assert "x = 2" in out
         result.stdout.fnmatch_lines([">*asd*", "E*NameError*"])
@@ -1002,7 +1002,7 @@ class TestTracebackCutting:
         )
         result = testdir.runpytest()
         assert result.ret != 0
-        out = result.stdout.string()
+        out = result.stdout.str()
         assert "INTERNALERROR>" not in out
         result.stdout.fnmatch_lines(["*ValueError: fail me*", "* 1 error in *"])
 
@@ -1240,7 +1240,7 @@ def test_class_injection_does_not_break_collection(testdir):
     result = testdir.runpytest()
     assert (
         "RuntimeError: dictionary changed size during iteration"
-        not in result.stdout.string()
+        not in result.stdout.str()
     )
     result.stdout.fnmatch_lines(["*1 passed*"])
 

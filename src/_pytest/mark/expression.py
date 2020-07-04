@@ -51,7 +51,7 @@ class TokenType(enum.Enum):
 
 @attr.s(frozen=True, slots=True)
 class Token:
-    tokenType = attr.ib(type=TokenType)
+    token_type = attr.ib(type=TokenType)
     value = attr.ib(type=str)
     pos = attr.ib(type=int)
 
@@ -109,9 +109,9 @@ class Scanner:
         yield Token(TokenType.EOF, "", pos)
 
     def accept(self, want_type: TokenType, *, reject: bool = False) -> Optional[Token]:
-        if self.current.tokenType is want_type:
+        if self.current.token_type is want_type:
             token = self.current
-            if token.tokenType is not TokenType.EOF:
+            if token.token_type is not TokenType.EOF:
                 self.current = next(self.tokens)
             return token
         if reject:
@@ -123,7 +123,7 @@ class Scanner:
             self.current.pos + 1,
             "expected {}; got {}".format(
                 " OR ".join(expected_type.value for expected_type in expected),
-                self.current.tokenType.value,
+                self.current.token_type.value,
             ),
         )
 

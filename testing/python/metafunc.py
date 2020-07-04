@@ -1570,7 +1570,7 @@ class TestMetafuncFunctionalAuto:
         """
         )
         result = testdir.runpytest("-s")
-        output = result.stdout.string()
+        output = result.stdout.str()
         assert output.count("preparing foo-2") == 1
         assert output.count("preparing foo-3") == 1
 

@@ -119,7 +119,7 @@ class TestCollectFS:
             x.write("def test_hello(): pass")
 
         result = testdir.runpytest("--collect-only")
-        s = result.stdout.string()
+        s = result.stdout.str()
         assert "test_notfound" not in s
         assert "test_found" in s
 
@@ -145,10 +145,10 @@ class TestCollectFS:
         result.stdout.no_fnmatch_line("*test_invenv*")
         # allow test collection if user insists
         result = testdir.runpytest("--collect-in-virtualenv")
-        assert "test_invenv" in result.stdout.string()
+        assert "test_invenv" in result.stdout.str()
         # allow test collection if user directly passes in the directory
         result = testdir.runpytest("virtual")
-        assert "test_invenv" in result.stdout.string()
+        assert "test_invenv" in result.stdout.str()
 
     @pytest.mark.parametrize(
         "fname",
@@ -171,7 +171,7 @@ class TestCollectFS:
         result.stdout.no_fnmatch_line("*test_invenv*")
         # ...unless the virtualenv is explicitly given on the CLI
         result = testdir.runpytest("--collect-in-virtualenv", ".virtual")
-        assert "test_invenv" in result.stdout.string()
+        assert "test_invenv" in result.stdout.str()
 
     @pytest.mark.parametrize(
         "fname",
@@ -371,7 +371,7 @@ class TestCustomConftests:
         result.stdout.no_fnmatch_line("*passed*")
         result = testdir.runpytest("--XX")
         assert result.ret == 0
-        assert "passed" in result.stdout.string()
+        assert "passed" in result.stdout.str()
 
     def test_collectignoreglob_exclude_on_option(self, testdir):
         testdir.makeconftest(

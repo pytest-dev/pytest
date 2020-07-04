@@ -74,7 +74,7 @@ def test_link_resolve(testdir: pytester.Testdir) -> None:
         # i.e.: Make sure that the error is reported as a relative path, not as a
         # resolved path.
         # See: https://github.com/pytest-dev/pytest/issues/5965
-        stdout = result.stdout.string()
+        stdout = result.stdout.str()
         assert "sub1/test_foo.py" not in stdout
 
         # i.e.: Expect drive on windows because we just have drive:filename, whereas

@@ -172,7 +172,7 @@ class TestTraceback_f_g_h:
 
     def test_traceback_filter(self):
         traceback = self.excinfo.traceback
-        ntraceback = traceback.apply_filter()
+        ntraceback = traceback.filter()
         assert len(ntraceback) == len(traceback) - 1
 
     @pytest.mark.parametrize(
@@ -203,7 +203,7 @@ class TestTraceback_f_g_h:
 
         excinfo = pytest.raises(ValueError, h)
         traceback = excinfo.traceback
-        ntraceback = traceback.apply_filter()
+        ntraceback = traceback.filter()
         print("old: {!r}".format(traceback))
         print("new: {!r}".format(ntraceback))
 
@@ -598,7 +598,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1)
-        excinfo.traceback = excinfo.traceback.apply_filter()
+        excinfo.traceback = excinfo.traceback.filter()
         p = FormattedExcinfo()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
 
@@ -631,7 +631,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1, "m" * 90, 5, 13, "z" * 120)
-        excinfo.traceback = excinfo.traceback.apply_filter()
+        excinfo.traceback = excinfo.traceback.filter()
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
         reprfuncargs = p.repr_args(entry)
@@ -658,7 +658,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1, "a", "b", c="d")
-        excinfo.traceback = excinfo.traceback.apply_filter()
+        excinfo.traceback = excinfo.traceback.filter()
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
         reprfuncargs = p.repr_args(entry)
@@ -933,7 +933,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        excinfo.traceback = excinfo.traceback.apply_filter()
+        excinfo.traceback = excinfo.traceback.filter()
         exc_repr = excinfo.getrepr()
         exc_repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -965,7 +965,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.f)
         tmpdir.join("mod.py").remove()
-        excinfo.traceback = excinfo.traceback.apply_filter()
+        excinfo.traceback = excinfo.traceback.filter()
         exec_repr = excinfo.getrepr()
         exec_repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -995,7 +995,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.f)
         tmpdir.join("mod.py").write("asdf")
-        excinfo.traceback = excinfo.traceback.apply_filter()
+        excinfo.traceback = excinfo.traceback.filter()
         exec_repr = excinfo.getrepr()
         exec_repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -1087,7 +1087,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        excinfo.traceback = excinfo.traceback.apply_filter()
+        excinfo.traceback = excinfo.traceback.filter()
         excinfo.traceback[1].set_repr_style("short")
         excinfo.traceback[2].set_repr_style("short")
         r = excinfo.getrepr(style="long")
