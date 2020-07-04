@@ -7,7 +7,6 @@ from .code import getfslineno
 from .code import getrawcode
 from .code import Traceback
 from .code import TracebackEntry
-from .source import compile_ as compile  # noqa: A001
 from .source import Source
 
 __all__ = [
@@ -19,6 +18,5 @@ __all__ = [
     "getrawcode",
     "Traceback",
     "TracebackEntry",
-    "compile",
     "Source",
 ]

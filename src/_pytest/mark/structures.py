@@ -27,9 +27,6 @@ from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
-if TYPE_CHECKING:
-    from _pytest.python import FunctionDefinition
-
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
@@ -159,7 +156,7 @@ class ParameterSet(
         argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
         func,
         config: Config,
-        function_definition: "FunctionDefinition",
+        nodeid: str,
     ) -> Tuple[Union[List[str], Tuple[str, ...]], List["ParameterSet"]]:
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
@@ -177,7 +174,7 @@ class ParameterSet(
                     )
                     fail(
                         msg.format(
-                            nodeid=function_definition.nodeid,
+                            nodeid=nodeid,
                             values=param.values,
                             names=argnames,
                             names_len=len(argnames),

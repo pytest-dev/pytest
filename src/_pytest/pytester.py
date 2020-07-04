@@ -95,21 +95,16 @@ def pytest_configure(config: Config) -> None:
 
 
 class LsofFdLeakChecker:
-    def get_open_files(self):
-        out = self._exec_lsof()
-        open_files = self._parse_lsof_output(out)
-        return open_files
+    def get_open_files(self) -> List[Tuple[str, str]]:
+        out = subprocess.run(
+            ("lsof", "-Ffn0", "-p", str(os.getpid())),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=True,
+            universal_newlines=True,
+        ).stdout
 
-    def _exec_lsof(self):
-        pid = os.getpid()
-        # py3: use subprocess.DEVNULL directly.
-        with open(os.devnull, "wb") as devnull:
-            return subprocess.check_output(
-                ("lsof", "-Ffn0", "-p", str(pid)), stderr=devnull
-            ).decode()
-
-    def _parse_lsof_output(self, out):
-        def isopen(line):
+        def isopen(line: str) -> bool:
             return line.startswith("f") and (
                 "deleted" not in line
                 and "mem" not in line
@@ -131,9 +126,9 @@ class LsofFdLeakChecker:
 
         return open_files
 
-    def matching_platform(self):
+    def matching_platform(self) -> bool:
         try:
-            subprocess.check_output(("lsof", "-v"))
+            subprocess.run(("lsof", "-v"), check=True)
         except (OSError, subprocess.CalledProcessError):
             return False
         else:
@@ -150,16 +145,17 @@ class LsofFdLeakChecker:
         new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
         leaked_files = [t for t in lines2 if t[0] in new_fds]
         if leaked_files:
-            error = []
-            error.append("***** %s FD leakage detected" % len(leaked_files))
-            error.extend([str(f) for f in leaked_files])
-            error.append("*** Before:")
-            error.extend([str(f) for f in lines1])
-            error.append("*** After:")
-            error.extend([str(f) for f in lines2])
-            error.append(error[0])
-            error.append("*** function %s:%s: %s " % item.location)
-            error.append("See issue #2366")
+            error = [
+                "***** %s FD leakage detected" % len(leaked_files),
+                *(str(f) for f in leaked_files),
+                "*** Before:",
+                *(str(f) for f in lines1),
+                "*** After:",
+                *(str(f) for f in lines2),
+                "***** %s FD leakage detected" % len(leaked_files),
+                "*** function %s:%s: %s " % item.location,
+                "See issue #2366",
+            ]
             item.warn(pytest.PytestWarning("\n".join(error)))
 
 

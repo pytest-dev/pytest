@@ -1160,6 +1160,9 @@ def test_usage_error_code(testdir):
 
 @pytest.mark.filterwarnings("default")
 def test_warn_on_async_function(testdir):
+    # In the below we .close() the coroutine only to avoid
+    # "RuntimeWarning: coroutine 'test_2' was never awaited"
+    # which messes with other tests.
     testdir.makepyfile(
         test_async="""
         async def test_1():
@@ -1167,7 +1170,9 @@ def test_warn_on_async_function(testdir):
         async def test_2():
             pass
         def test_3():
-            return test_2()
+            coro = test_2()
+            coro.close()
+            return coro
     """
     )
     result = testdir.runpytest()

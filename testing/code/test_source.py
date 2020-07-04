@@ -3,7 +3,9 @@
 # or redundant on purpose and can't be disable on a line-by-line basis
 import ast
 import inspect
+import linecache
 import sys
+import textwrap
 from types import CodeType
 from typing import Any
 from typing import Dict
@@ -32,14 +34,6 @@ def test_source_str_function() -> None:
     assert str(x) == "\n3"
 
 
-def test_unicode() -> None:
-    x = Source("4")
-    assert str(x) == "4"
-    co = _pytest._code.compile('"å"', mode="eval")
-    val = eval(co)
-    assert isinstance(val, str)
-
-
 def test_source_from_function() -> None:
     source = _pytest._code.Source(test_source_str_function)
     assert str(source).startswith("def test_source_str_function() -> None:")
@@ -62,45 +56,10 @@ def test_source_from_lines() -> None:
 
 def test_source_from_inner_function() -> None:
     def f():
-        pass
+        raise NotImplementedError()
 
-    source = _pytest._code.Source(f, deindent=False)
-    assert str(source).startswith("    def f():")
     source = _pytest._code.Source(f)
     assert str(source).startswith("def f():")
-
-
-def test_source_putaround_simple() -> None:
-    source = Source("raise ValueError")
-    source = source.putaround(
-        "try:",
-        """\
-        except ValueError:
-            x = 42
-        else:
-            x = 23""",
-    )
-    assert (
-        str(source)
-        == """\
-try:
-    raise ValueError
-except ValueError:
-    x = 42
-else:
-    x = 23"""
-    )
-
-
-def test_source_putaround() -> None:
-    source = Source()
-    source = source.putaround(
-        """
-        if 1:
-            x=1
-    """
-    )
-    assert str(source).strip() == "if 1:\n    x=1"
 
 
 def test_source_strips() -> None:
@@ -117,24 +76,6 @@ def test_source_strip_multiline() -> None:
     assert source2.lines == [" hello"]
 
 
-def test_syntaxerror_rerepresentation() -> None:
-    ex = pytest.raises(SyntaxError, _pytest._code.compile, "xyz xyz")
-    assert ex is not None
-    assert ex.value.lineno == 1
-    assert ex.value.offset in {5, 7}  # cpython: 7, pypy3.6 7.1.1: 5
-    assert ex.value.text
-    assert ex.value.text.rstrip("\n") == "xyz xyz"
-
-
-def test_isparseable() -> None:
-    assert Source("hello").isparseable()
-    assert Source("if 1:\n  pass").isparseable()
-    assert Source(" \nif 1:\n  pass").isparseable()
-    assert not Source("if 1:\n").isparseable()
-    assert not Source(" \nif 1:\npass").isparseable()
-    assert not Source(chr(0)).isparseable()
-
-
 class TestAccesses:
     def setup_class(self) -> None:
         self.source = Source(
@@ -148,7 +89,6 @@ class TestAccesses:
 
     def test_getrange(self) -> None:
         x = self.source[0:2]
-        assert x.isparseable()
         assert len(x.lines) == 2
         assert str(x) == "def f(x):\n    pass"
 
@@ -168,7 +108,7 @@ class TestAccesses:
         assert len(values) == 4
 
 
-class TestSourceParsingAndCompiling:
+class TestSourceParsing:
     def setup_class(self) -> None:
         self.source = Source(
             """\
@@ -178,39 +118,6 @@ class TestSourceParsingAndCompiling:
                         4)
         """
         ).strip()
-
-    def test_compile(self) -> None:
-        co = _pytest._code.compile("x=3")
-        d = {}  # type: Dict[str, Any]
-        exec(co, d)
-        assert d["x"] == 3
-
-    def test_compile_and_getsource_simple(self) -> None:
-        co = _pytest._code.compile("x=3")
-        exec(co)
-        source = _pytest._code.Source(co)
-        assert str(source) == "x=3"
-
-    def test_compile_and_getsource_through_same_function(self) -> None:
-        def gensource(source):
-            return _pytest._code.compile(source)
-
-        co1 = gensource(
-            """
-            def f():
-                raise KeyError()
-        """
-        )
-        co2 = gensource(
-            """
-            def f():
-                raise ValueError()
-        """
-        )
-        source1 = inspect.getsource(co1)
-        assert "KeyError" in source1
-        source2 = inspect.getsource(co2)
-        assert "ValueError" in source2
 
     def test_getstatement(self) -> None:
         # print str(self.source)
@@ -228,9 +135,9 @@ class TestSourceParsingAndCompiling:
         ''')"""
         )
         s = source.getstatement(0)
-        assert s == str(source)
+        assert s == source
         s = source.getstatement(1)
-        assert s == str(source)
+        assert s == source
 
     def test_getstatementrange_within_constructs(self) -> None:
         source = Source(
@@ -308,44 +215,6 @@ class TestSourceParsingAndCompiling:
         source = Source(":")
         pytest.raises(SyntaxError, lambda: source.getstatementrange(0))
 
-    def test_compile_to_ast(self) -> None:
-        source = Source("x = 4")
-        mod = source.compile(flag=ast.PyCF_ONLY_AST)
-        assert isinstance(mod, ast.Module)
-        compile(mod, "<filename>", "exec")
-
-    def test_compile_and_getsource(self) -> None:
-        co = self.source.compile()
-        exec(co, globals())
-        f(7)  # type: ignore
-        excinfo = pytest.raises(AssertionError, f, 6)  # type: ignore
-        assert excinfo is not None
-        frame = excinfo.traceback[-1].frame
-        assert isinstance(frame.code.fullsource, Source)
-        stmt = frame.code.fullsource.getstatement(frame.lineno)
-        assert str(stmt).strip().startswith("assert")
-
-    @pytest.mark.parametrize("name", ["", None, "my"])
-    def test_compilefuncs_and_path_sanity(self, name: Optional[str]) -> None:
-        def check(comp, name) -> None:
-            co = comp(self.source, name)
-            if not name:
-                expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 2)  # type: ignore
-            else:
-                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 2)  # type: ignore
-            fn = co.co_filename
-            assert fn.endswith(expected)
-
-        mycode = _pytest._code.Code(self.test_compilefuncs_and_path_sanity)
-        mylineno = mycode.firstlineno
-        mypath = mycode.path
-
-        for comp in _pytest._code.compile, _pytest._code.Source.compile:
-            check(comp, name)
-
-    def test_offsetless_synerr(self):
-        pytest.raises(SyntaxError, _pytest._code.compile, "lambda a,a: 0", mode="eval")
-
 
 def test_getstartingblock_singleline() -> None:
     class A:
@@ -375,18 +244,16 @@ def test_getline_finally() -> None:
 
 
 def test_getfuncsource_dynamic() -> None:
-    source = """
-        def f():
-            raise ValueError
+    def f():
+        raise NotImplementedError()
 
-        def g(): pass
-    """
-    co = _pytest._code.compile(source)
-    exec(co, globals())
-    f_source = _pytest._code.Source(f)  # type: ignore
-    g_source = _pytest._code.Source(g)  # type: ignore
-    assert str(f_source).strip() == "def f():\n    raise ValueError"
-    assert str(g_source).strip() == "def g(): pass"
+    def g():
+        pass  # pragma: no cover
+
+    f_source = _pytest._code.Source(f)
+    g_source = _pytest._code.Source(g)
+    assert str(f_source).strip() == "def f():\n    raise NotImplementedError()"
+    assert str(g_source).strip() == "def g():\n    pass  # pragma: no cover"
 
 
 def test_getfuncsource_with_multine_string() -> None:
@@ -440,30 +307,11 @@ if True:
         pass
 
 
-def test_getsource_fallback() -> None:
-    from _pytest._code.source import getsource
-
+def test_source_fallback() -> None:
+    src = Source(x)
     expected = """def x():
     pass"""
-    src = getsource(x)
-    assert src == expected
-
-
-def test_idem_compile_and_getsource() -> None:
-    from _pytest._code.source import getsource
-
-    expected = "def x(): pass"
-    co = _pytest._code.compile(expected)
-    src = getsource(co)
-    assert src == expected
-
-
-def test_compile_ast() -> None:
-    # We don't necessarily want to support this.
-    # This test was added just for coverage.
-    stmt = ast.parse("def x(): pass")
-    co = _pytest._code.compile(stmt, filename="foo.py")
-    assert isinstance(co, CodeType)
+    assert str(src) == expected
 
 
 def test_findsource_fallback() -> None:
@@ -475,15 +323,15 @@ def test_findsource_fallback() -> None:
     assert src[lineno] == "    def x():"
 
 
-def test_findsource() -> None:
+def test_findsource(monkeypatch) -> None:
     from _pytest._code.source import findsource
 
-    co = _pytest._code.compile(
-        """if 1:
-    def x():
-        pass
-"""
-    )
+    filename = "<pytest-test_findsource>"
+    lines = ["if 1:\n", "    def x():\n", "          pass\n"]
+    co = compile("".join(lines), filename, "exec")
+
+    # Type ignored because linecache.cache is private.
+    monkeypatch.setitem(linecache.cache, filename, (1, None, lines, filename))  # type: ignore[attr-defined]
 
     src, lineno = findsource(co)
     assert src is not None
@@ -557,7 +405,7 @@ def test_code_of_object_instance_with_call() -> None:
 def getstatement(lineno: int, source) -> Source:
     from _pytest._code.source import getstatementrange_ast
 
-    src = _pytest._code.Source(source, deindent=False)
+    src = _pytest._code.Source(source)
     ast, start, end = getstatementrange_ast(lineno, src)
     return src[start:end]
 
@@ -633,7 +481,7 @@ def test_source_with_decorator() -> None:
         assert False
 
     src = inspect.getsource(deco_mark)
-    assert str(Source(deco_mark, deindent=False)) == src
+    assert textwrap.indent(str(Source(deco_mark)), "    ") + "\n" == src
     assert src.startswith("    @pytest.mark.foo")
 
     @pytest.fixture
@@ -646,7 +494,9 @@ def test_source_with_decorator() -> None:
     # existing behavior here for explicitness, but perhaps we should revisit/change this
     # in the future
     assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
-    assert str(Source(get_real_func(deco_fixture), deindent=False)) == src
+    assert (
+        textwrap.indent(str(Source(get_real_func(deco_fixture))), "    ") + "\n" == src
+    )
 
 
 def test_single_line_else() -> None:

@@ -19,6 +19,7 @@ from _pytest import python
 from _pytest.outcomes import fail
 from _pytest.pytester import Testdir
 from _pytest.python import _idval
+from _pytest.python import idmaker
 
 
 class TestMetafunc:
@@ -35,10 +36,11 @@ class TestMetafunc:
         @attr.s
         class DefinitionMock(python.FunctionDefinition):
             obj = attr.ib()
+            _nodeid = attr.ib()
 
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FuncFixtureInfoMock(names)  # type: Any
-        definition = DefinitionMock._create(func)  # type: Any
+        definition = DefinitionMock._create(func, "mock::nodeid")  # type: Any
         return python.Metafunc(definition, fixtureinfo, config)
 
     def test_no_funcargs(self) -> None:
@@ -270,7 +272,7 @@ class TestMetafunc:
         deadline=400.0
     )  # very close to std deadline and CI boxes are not reliable in CPU power
     def test_idval_hypothesis(self, value) -> None:
-        escaped = _idval(value, "a", 6, None, item=None, config=None)
+        escaped = _idval(value, "a", 6, None, nodeid=None, config=None)
         assert isinstance(escaped, str)
         escaped.encode("ascii")
 
@@ -292,7 +294,7 @@ class TestMetafunc:
             ),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, None, item=None, config=None) == expected
+            assert _idval(val, "a", 6, None, nodeid=None, config=None) == expected
 
     def test_unicode_idval_with_config(self) -> None:
         """unittest for expected behavior to obtain ids with
@@ -321,7 +323,7 @@ class TestMetafunc:
             ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]  # type: List[Tuple[str, Any, str]]
         for val, config, expected in values:
-            actual = _idval(val, "a", 6, None, item=None, config=config)
+            actual = _idval(val, "a", 6, None, nodeid=None, config=config)
             assert actual == expected
 
     def test_bytes_idval(self) -> None:
@@ -338,7 +340,7 @@ class TestMetafunc:
             ("αρά".encode(), "\\xce\\xb1\\xcf\\x81\\xce\\xac"),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, idfn=None, item=None, config=None) == expected
+            assert _idval(val, "a", 6, idfn=None, nodeid=None, config=None) == expected
 
     def test_class_or_function_idval(self) -> None:
         """unittest for the expected behavior to obtain ids for parametrized
@@ -353,12 +355,10 @@ class TestMetafunc:
 
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
-            assert _idval(val, "a", 6, None, item=None, config=None) == expected
+            assert _idval(val, "a", 6, None, nodeid=None, config=None) == expected
 
     def test_idmaker_autoname(self) -> None:
         """#250"""
-        from _pytest.python import idmaker
-
         result = idmaker(
             ("a", "b"), [pytest.param("string", 1.0), pytest.param("st-ring", 2.0)]
         )
@@ -373,14 +373,10 @@ class TestMetafunc:
         assert result == ["a0-\\xc3\\xb4"]
 
     def test_idmaker_with_bytes_regex(self) -> None:
-        from _pytest.python import idmaker
-
         result = idmaker(("a"), [pytest.param(re.compile(b"foo"), 1.0)])
         assert result == ["foo"]
 
     def test_idmaker_native_strings(self) -> None:
-        from _pytest.python import idmaker
-
         result = idmaker(
             ("a", "b"),
             [
@@ -414,8 +410,6 @@ class TestMetafunc:
         ]
 
     def test_idmaker_non_printable_characters(self) -> None:
-        from _pytest.python import idmaker
-
         result = idmaker(
             ("s", "n"),
             [
@@ -430,8 +424,6 @@ class TestMetafunc:
         assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4", "\\t-5", "\\t-6"]
 
     def test_idmaker_manual_ids_must_be_printable(self) -> None:
-        from _pytest.python import idmaker
-
         result = idmaker(
             ("s",),
             [
@@ -442,8 +434,6 @@ class TestMetafunc:
         assert result == ["hello \\x00", "hello \\x05"]
 
     def test_idmaker_enum(self) -> None:
-        from _pytest.python import idmaker
-
         enum = pytest.importorskip("enum")
         e = enum.Enum("Foo", "one, two")
         result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
@@ -451,7 +441,6 @@ class TestMetafunc:
 
     def test_idmaker_idfn(self) -> None:
         """#351"""
-        from _pytest.python import idmaker
 
         def ids(val: object) -> Optional[str]:
             if isinstance(val, Exception):
@@ -471,7 +460,6 @@ class TestMetafunc:
 
     def test_idmaker_idfn_unique_names(self) -> None:
         """#351"""
-        from _pytest.python import idmaker
 
         def ids(val: object) -> str:
             return "a"
@@ -492,7 +480,6 @@ class TestMetafunc:
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option. (#5294)
         """
-        from _pytest.python import idmaker
 
         class MockConfig:
             def __init__(self, config):
@@ -525,7 +512,6 @@ class TestMetafunc:
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option. (#5294)
         """
-        from _pytest.python import idmaker
 
         class MockConfig:
             def __init__(self, config):
@@ -607,16 +593,12 @@ class TestMetafunc:
         )
 
     def test_idmaker_with_ids(self) -> None:
-        from _pytest.python import idmaker
-
         result = idmaker(
             ("a", "b"), [pytest.param(1, 2), pytest.param(3, 4)], ids=["a", None]
         )
         assert result == ["a", "3-4"]
 
     def test_idmaker_with_paramset_id(self) -> None:
-        from _pytest.python import idmaker
-
         result = idmaker(
             ("a", "b"),
             [pytest.param(1, 2, id="me"), pytest.param(3, 4, id="you")],
@@ -625,8 +607,6 @@ class TestMetafunc:
         assert result == ["me", "you"]
 
     def test_idmaker_with_ids_unique_names(self) -> None:
-        from _pytest.python import idmaker
-
         result = idmaker(
             ("a"), map(pytest.param, [1, 2, 3, 4, 5]), ids=["a", "a", "b", "c", "b"]
         )
