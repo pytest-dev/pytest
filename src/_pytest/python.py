@@ -564,7 +564,7 @@ class Module(nodes.File, PyCollector):
         except ImportError as e:
             exc_info = ExceptionInfo.from_current()
             if self.config.getoption("verbose") < 2:
-                exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+                exc_info.traceback = exc_info.traceback.apply_filter(filter_traceback)
             exc_repr = (
                 exc_info.getrepr(style="short")
                 if exc_info.traceback
@@ -1576,11 +1576,11 @@ class Function(PyobjMixin, nodes.Item):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    ntraceback = ntraceback.filter(filter_traceback)
+                    ntraceback = ntraceback.apply_filter(filter_traceback)
                     if not ntraceback:
                         ntraceback = traceback
 
-            excinfo.traceback = ntraceback.filter()
+            excinfo.traceback = ntraceback.apply_filter()
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame
             if self.config.getoption("tbstyle", "auto") == "auto":
