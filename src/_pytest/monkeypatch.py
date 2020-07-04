@@ -148,13 +148,13 @@ class MonkeyPatch:
             m.undo()
 
     @overload  # noqa: A003
-    def setattr(
+    def setattr(  # noqa: A003
         self, target: str, name: object, value: Notset = ..., raising: bool = ...,
     ) -> None:
         raise NotImplementedError()
 
     @overload  # noqa: A003, F811
-    def setattr(  # noqa: F811
+    def setattr(  # noqa: A003, F811
         self, target: object, name: str, value: object, raising: bool = ...,
     ) -> None:
         raise NotImplementedError()
