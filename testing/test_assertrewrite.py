@@ -1463,31 +1463,31 @@ class TestAssertionPass:
     ("src", "expected"),
     (
         # fmt: off
-        pytest.param(b"", {}, param_id="trivial"),
+        pytest.param(b"", {}, id="trivial"),
         pytest.param(
             b"def x(): assert 1\n",
             {1: "1"},
-            param_id="assert statement not on own line",
+            id="assert statement not on own line",
         ),
         pytest.param(
             b"def x():\n"
             b"    assert 1\n"
             b"    assert 1+2\n",
             {2: "1", 3: "1+2"},
-            param_id="multiple assertions",
+            id="multiple assertions",
         ),
         pytest.param(
             # changes in encoding cause the byte offsets to be different
             "# -*- coding: latin1\n"
             "def ÀÀÀÀÀ(): assert 1\n".encode("latin1"),
             {2: "1"},
-            param_id="latin1 encoded on first line\n",
+            id="latin1 encoded on first line\n",
         ),
         pytest.param(
             # using the default utf-8 encoding
             "def ÀÀÀÀÀ(): assert 1\n".encode(),
             {1: "1"},
-            param_id="utf-8 encoded on first line",
+            id="utf-8 encoded on first line",
         ),
         pytest.param(
             b"def x():\n"
@@ -1495,7 +1495,7 @@ class TestAssertionPass:
             b"        1 + 2  # comment\n"
             b"    )\n",
             {2: "(\n        1 + 2  # comment\n    )"},
-            param_id="multi-line assertion",
+            id="multi-line assertion",
         ),
         pytest.param(
             b"def x():\n"
@@ -1503,20 +1503,20 @@ class TestAssertionPass:
             b"        1, 2, 3\n"
             b"    ]\n",
             {2: "y == [\n        1, 2, 3\n    ]"},
-            param_id="multi line assert with list continuation",
+            id="multi line assert with list continuation",
         ),
         pytest.param(
             b"def x():\n"
             b"    assert 1 + \\\n"
             b"        2\n",
             {2: "1 + \\\n        2"},
-            param_id="backslash continuation",
+            id="backslash continuation",
         ),
         pytest.param(
             b"def x():\n"
             b"    assert x, y\n",
             {2: "x"},
-            param_id="assertion with message",
+            id="assertion with message",
         ),
         pytest.param(
             b"def x():\n"
@@ -1524,7 +1524,7 @@ class TestAssertionPass:
             b"        f(1, 2, 3)\n"
             b"    ),  'f did not work!'\n",
             {2: "(\n        f(1, 2, 3)\n    )"},
-            param_id="assertion with message, test spanning multiple lines",
+            id="assertion with message, test spanning multiple lines",
         ),
         pytest.param(
             b"def x():\n"
@@ -1532,12 +1532,12 @@ class TestAssertionPass:
             b"        x\\\n"
             b"        , 'failure message'\n",
             {2: "x"},
-            param_id="escaped newlines plus message",
+            id="escaped newlines plus message",
         ),
         pytest.param(
             b"def x(): assert 5",
             {1: "5"},
-            param_id="no newline at end of file",
+            id="no newline at end of file",
         ),
         # fmt: on
     ),

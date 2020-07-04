@@ -1244,12 +1244,12 @@ raise ValueError()
             pytest.param(
                 "cause",
                 "The above exception was the direct cause of the following exception:",
-                param_id="cause",
+                id="cause",
             ),
             pytest.param(
                 "context",
                 "During handling of the above exception, another exception occurred:",
-                param_id="context",
+                id="context",
             ),
         ],
     )

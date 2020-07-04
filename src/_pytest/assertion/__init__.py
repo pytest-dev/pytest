@@ -39,9 +39,9 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "enable_assertion_pass_hook",
-        ini_type="bool",
+        type="bool",
         default=False,
-        help_text="Enables the pytest_assertion_pass hook."
+        help="Enables the pytest_assertion_pass hook."
         "Make sure to delete any previously generated pyc cache files.",
     )
 

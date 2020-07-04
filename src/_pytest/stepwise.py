@@ -116,7 +116,7 @@ class StepwisePlugin:
     def pytest_sessionfinish(self, session: Session) -> None:
         assert self.config.cache is not None
         if self.active:
-            self.config.cache.save("cache/stepwise", self.lastfailed)
+            self.config.cache.set("cache/stepwise", self.lastfailed)
         else:
             # Clear the list of failing tests if the plugin is not active.
-            self.config.cache.save("cache/stepwise", [])
+            self.config.cache.set("cache/stepwise", [])

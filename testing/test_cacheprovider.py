@@ -26,8 +26,8 @@ class TestNewAPI:
         testdir.makeini("[pytest]")
         config = testdir.parseconfigure()
         cache = config.cache
-        pytest.raises(TypeError, lambda: cache.save("key/name", cache))
-        config.cache.save("key/name", 0)
+        pytest.raises(TypeError, lambda: cache.set("key/name", cache))
+        config.cache.set("key/name", 0)
         config.cache._getvaluepath("key/name").write_bytes(b"123invalid")
         val = config.cache.get("key/name", -2)
         assert val == -2
@@ -38,7 +38,7 @@ class TestNewAPI:
         testdir.tmpdir.join(".pytest_cache").write("gone wrong")
         config = testdir.parseconfigure()
         cache = config.cache
-        cache.save("test/broken", [])
+        cache.set("test/broken", [])
 
     @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
     @pytest.mark.filterwarnings(
@@ -52,7 +52,7 @@ class TestNewAPI:
         try:
             config = testdir.parseconfigure()
             cache = config.cache
-            cache.save("test/broken", [])
+            cache.set("test/broken", [])
         finally:
             testdir.tmpdir.ensure_dir(".pytest_cache").chmod(mode)
 
@@ -75,7 +75,7 @@ class TestNewAPI:
                     "*/cacheprovider.py:*",
                     "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
                     "{}/v/cache/nodeids".format(cache_dir),
-                    '    config.cache.save("cache/nodeids", sorted(self.cached_nodeids))',
+                    '    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))',
                     "*1 failed, 3 warnings in*",
                 ]
             )
@@ -107,7 +107,7 @@ class TestNewAPI:
             def test_cachefuncarg(cache):
                 val = cache.get("some/thing", None)
                 assert val is None
-                cache.save("some/thing", [1])
+                cache.set("some/thing", [1])
                 pytest.raises(TypeError, lambda: cache.get("some/thing"))
                 val = cache.get("some/thing", [])
                 assert val == [1]
@@ -201,9 +201,9 @@ def test_cache_show(testdir):
     testdir.makeconftest(
         """
         def pytest_configure(config):
-            config.cache.save("my/name", [1,2,3])
-            config.cache.save("my/hello", "world")
-            config.cache.save("other/some", {1:2})
+            config.cache.set("my/name", [1,2,3])
+            config.cache.set("my/hello", "world")
+            config.cache.set("other/some", {1:2})
             dp = config.cache.makedir("mydb")
             dp.ensure("hello")
             dp.ensure("world")
@@ -1130,14 +1130,14 @@ def test_gitignore(testdir):
 
     config = testdir.parseconfig()
     cache = Cache.for_config(config)
-    cache.save("foo", "bar")
+    cache.set("foo", "bar")
     msg = "# Created by pytest automatically.\n*\n"
     gitignore_path = cache._cachedir.joinpath(".gitignore")
     assert gitignore_path.read_text(encoding="UTF-8") == msg
 
     # Does not overwrite existing/custom one.
     gitignore_path.write_text("custom")
-    cache.save("something", "else")
+    cache.set("something", "else")
     assert gitignore_path.read_text(encoding="UTF-8") == "custom"
 
 
@@ -1152,7 +1152,7 @@ def test_does_not_create_boilerplate_in_existing_dirs(testdir):
     )
     config = testdir.parseconfig()
     cache = Cache.for_config(config)
-    cache.save("foo", "bar")
+    cache.set("foo", "bar")
 
     assert os.path.isdir("v")  # cache contents
     assert not os.path.exists(".gitignore")
@@ -1166,6 +1166,6 @@ def test_cachedir_tag(testdir):
 
     config = testdir.parseconfig()
     cache = Cache.for_config(config)
-    cache.save("foo", "bar")
+    cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
     assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT

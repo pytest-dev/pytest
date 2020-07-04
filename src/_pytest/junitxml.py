@@ -420,7 +420,7 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "junit_log_passing_tests",
         "Capture log information for passing tests to JUnit report: ",
-        ini_type="bool",
+        type="bool",
         default=True,
     )
     parser.addini(

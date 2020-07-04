@@ -77,7 +77,7 @@ def pytest_addoption(parser: Parser) -> None:
 
     parser.addini(
         "pytester_example_dir",
-        help_text="directory to take the pytester example files from",
+        help="directory to take the pytester example files from",
     )
 
 

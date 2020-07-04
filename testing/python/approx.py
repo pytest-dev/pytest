@@ -468,10 +468,10 @@ class TestApprox:
         [
             pytest.param(None),
             pytest.param("string"),
-            pytest.param(["string"], param_id="nested-str"),
-            pytest.param([[1]], param_id="nested-list"),
-            pytest.param({"key": "string"}, param_id="dict-with-string"),
-            pytest.param({"key": {"key": 1}}, param_id="nested-dict"),
+            pytest.param(["string"], id="nested-str"),
+            pytest.param([[1]], id="nested-list"),
+            pytest.param({"key": "string"}, id="dict-with-string"),
+            pytest.param({"key": {"key": 1}}, id="nested-dict"),
         ],
     )
     def test_expected_value_type_error(self, x):
@@ -481,10 +481,10 @@ class TestApprox:
     @pytest.mark.parametrize(
         "op",
         [
-            pytest.param(operator.le, param_id="<="),
-            pytest.param(operator.lt, param_id="<"),
-            pytest.param(operator.ge, param_id=">="),
-            pytest.param(operator.gt, param_id=">"),
+            pytest.param(operator.le, id="<="),
+            pytest.param(operator.lt, id="<"),
+            pytest.param(operator.ge, id=">="),
+            pytest.param(operator.gt, id=">"),
         ],
     )
     def test_comparison_operator_type_error(self, op):

@@ -1015,7 +1015,7 @@ class Config:
         self._parser.addini(
             "required_plugins",
             "plugins that must be present for pytest to run",
-            ini_type="args",
+            type="args",
             default=[],
         )
         self._override_ini = ns.override_ini or ()

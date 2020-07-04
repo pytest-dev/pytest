@@ -92,28 +92,28 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "python_files",
-        ini_type="args",
+        type="args",
         # NOTE: default is also used in AssertionRewritingHook.
         default=["test_*.py", "*_test.py"],
-        help_text="glob-style file patterns for Python test module discovery",
+        help="glob-style file patterns for Python test module discovery",
     )
     parser.addini(
         "python_classes",
-        ini_type="args",
+        type="args",
         default=["Test"],
-        help_text="prefixes or glob names for Python test class discovery",
+        help="prefixes or glob names for Python test class discovery",
     )
     parser.addini(
         "python_functions",
-        ini_type="args",
+        type="args",
         default=["test"],
-        help_text="prefixes or glob names for Python test function and method discovery",
+        help="prefixes or glob names for Python test function and method discovery",
     )
     parser.addini(
         "disable_test_id_escaping_and_forfeit_all_rights_to_community_support",
-        ini_type="bool",
+        type="bool",
         default=False,
-        help_text="disable string escape non-ascii characters, might cause unwanted "
+        help="disable string escape non-ascii characters, might cause unwanted "
         "side effects(use at your own risk)",
     )
 

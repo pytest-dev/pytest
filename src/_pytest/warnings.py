@@ -65,8 +65,8 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "filterwarnings",
-        ini_type="linelist",
-        help_text="Each line specifies a pattern for "
+        type="linelist",
+        help="Each line specifies a pattern for "
         "warnings.filterwarnings. "
         "Processed after -W/--pythonwarnings.",
     )

@@ -200,10 +200,7 @@ def pytest_addoption(parser: Parser) -> None:
 
     def add_option_ini(option, dest, default=None, ini_type=None, **kwargs):
         parser.addini(
-            dest,
-            default=default,
-            ini_type=ini_type,
-            help_text="default value for " + option,
+            dest, default=default, type=ini_type, help="default value for " + option,
         )
         group.addoption(option, dest=dest, **kwargs)
 
@@ -233,8 +230,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "log_cli",
         default=False,
-        ini_type="bool",
-        help_text='enable log display during test run (also known as "live logging").',
+        type="bool",
+        help='enable log display during test run (also known as "live logging").',
     )
     add_option_ini(
         "--log-cli-level", dest="log_cli_level", default=None, help="cli logging level."
