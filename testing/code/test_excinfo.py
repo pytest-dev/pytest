@@ -127,24 +127,28 @@ class TestTraceback_f_g_h:
         assert s.endswith("raise ValueError")
 
     def test_traceback_entry_getsource_in_construct(self):
-        source = _pytest._code.Source(
-            """\
-            def xyz():
-                try:
-                    raise ValueError
-                except somenoname:
-                    pass
-            xyz()
-            """
-        )
+        def xyz():
+            try:
+                raise ValueError
+            except somenoname:  # type: ignore[name-defined] # noqa: F821
+                pass  # pragma: no cover
+
         try:
-            exec(source.compile())
+            xyz()
         except NameError:
-            tb = _pytest._code.ExceptionInfo.from_current().traceback
-            print(tb[-1].getsource())
-            s = str(tb[-1].getsource())
-            assert s.startswith("def xyz():\n    try:")
-            assert s.strip().endswith("except somenoname:")
+            excinfo = _pytest._code.ExceptionInfo.from_current()
+        else:
+            assert False, "did not raise NameError"
+
+        tb = excinfo.traceback
+        source = tb[-1].getsource()
+        assert source is not None
+        assert source.deindent().lines == [
+            "def xyz():",
+            "    try:",
+            "        raise ValueError",
+            "    except somenoname:  # type: ignore[name-defined] # noqa: F821",
+        ]
 
     def test_traceback_cut(self):
         co = _pytest._code.Code(f)
@@ -445,16 +449,6 @@ class TestFormattedExcinfo:
 
         return importasmod
 
-    def excinfo_from_exec(self, source):
-        source = _pytest._code.Source(source).strip()
-        try:
-            exec(source.compile())
-        except KeyboardInterrupt:
-            raise
-        except BaseException:
-            return _pytest._code.ExceptionInfo.from_current()
-        assert 0, "did not raise"
-
     def test_repr_source(self):
         pr = FormattedExcinfo()
         source = _pytest._code.Source(
@@ -471,19 +465,29 @@ class TestFormattedExcinfo:
 
     def test_repr_source_excinfo(self) -> None:
         """ check if indentation is right """
-        pr = FormattedExcinfo()
-        excinfo = self.excinfo_from_exec(
-            """
-                def f():
-                    assert 0
-                f()
-        """
-        )
+        try:
+
+            def f():
+                1 / 0
+
+            f()
+
+        except BaseException:
+            excinfo = _pytest._code.ExceptionInfo.from_current()
+        else:
+            assert False, "did not raise"
+
         pr = FormattedExcinfo()
         source = pr._getentrysource(excinfo.traceback[-1])
         assert source is not None
         lines = pr.get_source(source, 1, excinfo)
-        assert lines == ["    def f():", ">       assert 0", "E       AssertionError"]
+        for line in lines:
+            print(line)
+        assert lines == [
+            "    def f():",
+            ">       1 / 0",
+            "E       ZeroDivisionError: division by zero",
+        ]
 
     def test_repr_source_not_existing(self):
         pr = FormattedExcinfo()
