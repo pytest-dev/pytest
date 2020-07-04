@@ -434,7 +434,7 @@ class RunResult:
         self.stdout = LineMatcher(outlines)
         """:class:`LineMatcher` of stdout.
 
-        Use e.g. :func:`stdout.str() <LineMatcher.str()>` to reconstruct stdout, or the commonly used
+        Use e.g. :func:`stdout.string() <LineMatcher.string()>` to reconstruct stdout, or the commonly used
         :func:`stdout.fnmatch_lines() <LineMatcher.fnmatch_lines()>` method.
         """
         self.stderr = LineMatcher(errlines)

@@ -189,7 +189,7 @@ def color_mapping():
             if sys.version_info < (3, 6):
                 # terminal writer.write accepts keyword arguments, so
                 # py36+ is required so the markup appears in the expected order
-                output = result.stdout.str()
+                output = result.stdout.string()
                 assert "test session starts" in output
                 assert "\x1b[1m" in output
                 pytest.skip(
