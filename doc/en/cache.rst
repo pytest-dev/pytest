@@ -20,7 +20,7 @@ last ``pytest`` invocation:
 For cleanup (usually not needed), a ``--cache-clear`` option allows to remove
 all cross-session cache contents ahead of a test run.
 
-Other plugins may access the `config.cache`_ object to save/get
+Other plugins may access the `config.cache`_ object to set/get
 **json encodable** values between ``pytest`` invocations.
 
 .. note::
@@ -214,7 +214,7 @@ across pytest invocations:
         if val is None:
             expensive_computation()
             val = 42
-            request.config.cache.save("example/value", val)
+            request.config.cache.set("example/value", val)
         return val
 
 

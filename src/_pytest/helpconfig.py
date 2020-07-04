@@ -24,14 +24,16 @@ class HelpAction(Action):
     implemented by raising SystemExit.
     """
 
-    def __init__(self, option_strings, dest=None, default=False, help_text=None):
+    def __init__(
+        self, option_strings, dest=None, default=False, help=None  # noqa: A002
+    ):
         super().__init__(
             option_strings=option_strings,
             dest=dest,
             const=True,
             default=default,
             nargs=0,
-            help=help_text,
+            help=help,
         )
 
     def __call__(self, parser, namespace, values, option_string=None):

@@ -123,7 +123,7 @@ class TestApprox:
             assert a != approx(x, rel=5e-2, abs=0.0)
 
     @pytest.mark.parametrize(
-        ("rel", "abs"),
+        ("rel", "absolute_tolerance"),
         [
             (-1e100, None),
             (None, -1e100),

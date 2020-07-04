@@ -1277,7 +1277,7 @@ def test_assertion_options(testdir):
     """
     )
     result = testdir.runpytest()
-    assert "3 == 4" in result.stdout.str()
+    assert "3 == 4" in result.stdout.string()
     result = testdir.runpytest_subprocess("--assert=plain")
     result.stdout.no_fnmatch_line("*3 == 4*")
 
@@ -1493,7 +1493,7 @@ def test_assert_tuple_warning(testdir):
     """
     )
     result = testdir.runpytest()
-    assert msg not in result.stdout.str()
+    assert msg not in result.stdout.string()
 
 
 def test_assert_indirect_tuple_no_warning(testdir):
@@ -1562,7 +1562,7 @@ def test_issue_1944(testdir):
     result.stdout.fnmatch_lines(["*1 error*"])
     assert (
         "AttributeError: 'Module' object has no attribute '_obj'"
-        not in result.stdout.str()
+        not in result.stdout.string()
     )
 
 

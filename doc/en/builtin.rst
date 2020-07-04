@@ -21,7 +21,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
-        cache.save(key, value)
+        cache.set(key, value)
 
         Keys must be a ``/`` separated value, where the first part is usually the
         name of your plugin or application to avoid clashes with other cache users.

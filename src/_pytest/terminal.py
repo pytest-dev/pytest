@@ -83,7 +83,7 @@ class MoreQuietAction(argparse.Action):
         dest: str,
         default: object = None,
         required: bool = False,
-        help_text: Optional[str] = None,
+        help: Optional[str] = None,  # noqa: A002
     ) -> None:
         super().__init__(
             option_strings=option_strings,
@@ -91,7 +91,7 @@ class MoreQuietAction(argparse.Action):
             nargs=0,
             default=default,
             required=required,
-            help=help_text,
+            help=help,
         )
 
     def __call__(
