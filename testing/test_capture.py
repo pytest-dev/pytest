@@ -203,7 +203,7 @@ class TestPerTestCapturing:
         """
         )
         result = testdir.runpytest(p)
-        s = result.stdout.str()
+        s = result.stdout.string()
         assert "in func1" not in s
         assert "in func2" in s
 
@@ -293,7 +293,7 @@ class TestLoggingInteraction:
             """
         )
         result = testdir.runpytest_subprocess(p)
-        assert result.stderr.str().find("atexit") == -1
+        assert result.stderr.string().find("atexit") == -1
 
     def test_logging_and_immediate_setupteardown(self, testdir):
         p = testdir.makepyfile(
@@ -314,7 +314,7 @@ class TestLoggingInteraction:
         for optargs in (("--capture=sys",), ("--capture=fd",)):
             print(optargs)
             result = testdir.runpytest_subprocess(p, *optargs)
-            s = result.stdout.str()
+            s = result.stdout.string()
             result.stdout.fnmatch_lines(
                 ["*WARN*hello3", "*WARN*hello1", "*WARN*hello2"]  # errors show first!
             )
@@ -340,7 +340,7 @@ class TestLoggingInteraction:
         for optargs in (("--capture=sys",), ("--capture=fd",)):
             print(optargs)
             result = testdir.runpytest_subprocess(p, *optargs)
-            s = result.stdout.str()
+            s = result.stdout.string()
             result.stdout.fnmatch_lines(
                 ["*WARN*hello3", "*WARN*hello1", "*WARN*hello2"]  # errors come first
             )
@@ -359,7 +359,7 @@ class TestLoggingInteraction:
         result = testdir.runpytest_subprocess("-s", "-p", "no:capturelog")
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stderr.fnmatch_lines(["WARNING*hello435*"])
-        assert "operation on closed file" not in result.stderr.str()
+        assert "operation on closed file" not in result.stderr.string()
 
     def test_conftestlogging_and_test_logging(self, testdir):
         testdir.makeconftest(
@@ -380,8 +380,8 @@ class TestLoggingInteraction:
         result = testdir.runpytest_subprocess(p, "-p", "no:capturelog")
         assert result.ret != 0
         result.stdout.fnmatch_lines(["WARNING*hello433*"])
-        assert "something" not in result.stderr.str()
-        assert "operation on closed file" not in result.stderr.str()
+        assert "something" not in result.stderr.string()
+        assert "operation on closed file" not in result.stderr.string()
 
     def test_logging_after_cap_stopped(self, testdir):
         testdir.makeconftest(
@@ -414,7 +414,7 @@ class TestLoggingInteraction:
         )
         assert (
             "AttributeError: 'NoneType' object has no attribute 'resume_capturing'"
-            not in result.stderr.str()
+            not in result.stderr.string()
         )
 
 
@@ -597,7 +597,7 @@ class TestCaptureFixture:
             """
         )
         result = testdir.runpytest_subprocess(p)
-        assert "closed" not in result.stderr.str()
+        assert "closed" not in result.stderr.string()
 
     @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
     @pytest.mark.parametrize("no_capture", [True, False])
@@ -623,7 +623,7 @@ class TestCaptureFixture:
         result.stdout.no_fnmatch_line("*captured before*")
         result.stdout.no_fnmatch_line("*captured after*")
         if no_capture:
-            assert "test_normal executed" in result.stdout.str()
+            assert "test_normal executed" in result.stdout.string()
         else:
             result.stdout.no_fnmatch_line("*test_normal executed*")
 
@@ -753,7 +753,7 @@ def test_capture_early_option_parsing(testdir):
     testdir.makepyfile("def test_func(): pass")
     result = testdir.runpytest("-vs")
     assert result.ret == 0
-    assert "hello19" in result.stdout.str()
+    assert "hello19" in result.stdout.string()
 
 
 def test_capture_binary_output(testdir):
@@ -1333,7 +1333,7 @@ def test_capturing_and_logging_fundamentals(testdir, method: str) -> None:
         WARNING:root:hello2
     """
     )
-    assert "atexit" not in result.stderr.str()
+    assert "atexit" not in result.stderr.string()
 
 
 def test_error_attribute_issue555(testdir):
@@ -1413,7 +1413,7 @@ def test_crash_on_closing_tmpfile_py27(testdir):
     testdir.monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     result = testdir.runpytest_subprocess(str(p))
     assert result.ret == 0
-    assert result.stderr.str() == ""
+    assert result.stderr.string() == ""
     result.stdout.no_fnmatch_line("*OSError*")
 
 
@@ -1522,7 +1522,7 @@ def test_typeerror_encodedfile_write(testdir):
     result_with_capture = testdir.runpytest(str(p))
 
     assert result_with_capture.ret == result_without_capture.ret
-    out = result_with_capture.stdout.str()
+    out = result_with_capture.stdout.string()
     assert ("TypeError: write() argument must be str, not bytes" in out) or (
         "TypeError: unicode argument expected, got 'bytes'" in out
     )

@@ -810,7 +810,7 @@ def test_unicode_in_longrepr(testdir) -> None:
     )
     result = testdir.runpytest()
     assert result.ret == 1
-    assert "UnicodeEncodeError" not in result.stderr.str()
+    assert "UnicodeEncodeError" not in result.stderr.string()
 
 
 def test_failure_in_setup(testdir) -> None:

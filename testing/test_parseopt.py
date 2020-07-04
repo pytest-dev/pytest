@@ -315,10 +315,10 @@ def test_argcomplete(testdir, monkeypatch) -> None:
     if result.ret == 255:
         # argcomplete not found
         pytest.skip("argcomplete not available")
-    elif not result.stdout.str():
+    elif not result.stdout.string():
         pytest.skip(
             "bash provided no output on stdout, argcomplete not available? (stderr={!r})".format(
-                result.stderr.str()
+                result.stderr.string()
             )
         )
     else:

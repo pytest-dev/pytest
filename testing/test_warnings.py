@@ -124,7 +124,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
 
     result = testdir.runpytest(*args, pyfile_with_warnings)
     result.stdout.fnmatch_lines(["* 1 passed in *"])
-    assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+    assert WARNINGS_SUMMARY_HEADER not in result.stdout.string()
 
 
 @pytest.mark.filterwarnings("always")
@@ -342,7 +342,7 @@ def test_mark_regex_escape(testdir):
     """
     )
     result = testdir.runpytest()
-    assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+    assert WARNINGS_SUMMARY_HEADER not in result.stdout.string()
 
 
 @pytest.mark.filterwarnings("default")
@@ -374,7 +374,7 @@ def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
     )
     result = testdir.runpytest(*args)
     if ignore_pytest_warnings != "no":
-        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.string()
     else:
         result.stdout.fnmatch_lines(
             [
@@ -483,7 +483,7 @@ class TestDeprecationWarningsByDefault:
         """
         )
         result = testdir.runpytest_subprocess()
-        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.string()
 
     def test_hidden_by_mark(self, testdir):
         """Should hide the deprecation warning from the function, but the warning during collection should
@@ -510,13 +510,13 @@ class TestDeprecationWarningsByDefault:
             "-W",
             "ignore::PendingDeprecationWarning",
         )
-        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.string()
 
     def test_hidden_by_system(self, testdir, monkeypatch):
         self.create_file(testdir)
         monkeypatch.setenv("PYTHONWARNINGS", "once::UserWarning")
         result = testdir.runpytest_subprocess()
-        assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+        assert WARNINGS_SUMMARY_HEADER not in result.stdout.string()
 
 
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
@@ -655,7 +655,7 @@ def test_pytest_configure_warning(testdir, recwarn):
 
     result = testdir.runpytest()
     assert result.ret == 5
-    assert "INTERNALERROR" not in result.stderr.str()
+    assert "INTERNALERROR" not in result.stderr.string()
     warning = recwarn.pop()
     assert str(warning.message) == "from pytest_configure"
 

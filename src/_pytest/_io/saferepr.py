@@ -109,7 +109,7 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
             return
 
         context[objid] = 1
-        p(self, object, stream, indent, allowance, context, level + 1)
+        p(self, obj, stream, indent, allowance, context, level + 1)
         del context[objid]
 
 

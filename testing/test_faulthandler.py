@@ -82,7 +82,7 @@ def test_timeout(testdir, enabled: bool) -> None:
     if enabled:
         result.stderr.fnmatch_lines(["*%s*" % tb_output])
     else:
-        assert tb_output not in result.stderr.str()
+        assert tb_output not in result.stderr.string()
     result.stdout.fnmatch_lines(["*1 passed*"])
     assert result.ret == 0
 

@@ -649,7 +649,7 @@ class TestTerminalFunctional:
         """
         )
         result = testdir.runpytest()
-        assert result.stdout.str().find("skip test summary") == -1
+        assert result.stdout.string().find("skip test summary") == -1
         assert result.ret == 1
 
     def test_passes(self, testdir):
@@ -867,7 +867,7 @@ class TestTerminalFunctional:
     def test_quiet_reporting(self, testdir):
         p1 = testdir.makepyfile("def test_pass(): pass")
         result = testdir.runpytest(p1, "-q")
-        s = result.stdout.str()
+        s = result.stdout.string()
         assert "test session starts" not in s
         assert p1.basename not in s
         assert "===" not in s
@@ -876,7 +876,7 @@ class TestTerminalFunctional:
     def test_more_quiet_reporting(self, testdir):
         p1 = testdir.makepyfile("def test_pass(): pass")
         result = testdir.runpytest(p1, "-qq")
-        s = result.stdout.str()
+        s = result.stdout.string()
         assert "test session starts" not in s
         assert p1.basename not in s
         assert "===" not in s
@@ -984,7 +984,7 @@ def test_pass_output_reporting(testdir):
     """
     )
     result = testdir.runpytest()
-    s = result.stdout.str()
+    s = result.stdout.string()
     assert "test_pass_has_output" not in s
     assert "Four score and seven years ago..." not in s
     assert "test_pass_no_output" not in s
@@ -1070,7 +1070,7 @@ def test_color_yes(testdir, color_mapping):
 def test_color_no(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest("--color=no")
-    assert "test session starts" in result.stdout.str()
+    assert "test session starts" in result.stdout.string()
     result.stdout.no_fnmatch_line("*\x1b[1m*")
 
 
@@ -1091,12 +1091,12 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     if verbose:
         args.append("-vv")
     result = testdir.runpytest(*args)
-    assert "test session starts" in result.stdout.str()
-    assert "\x1b[1m" in result.stdout.str()
+    assert "test session starts" in result.stdout.string()
+    assert "\x1b[1m" in result.stdout.string()
     result.stdout.no_fnmatch_line("*collecting 10 items*")
     if verbose:
-        assert "collecting ..." in result.stdout.str()
-    assert "collected 10 items" in result.stdout.str()
+        assert "collecting ..." in result.stdout.string()
+    assert "collected 10 items" in result.stdout.string()
 
 
 def test_getreportopt() -> None:
@@ -1191,12 +1191,12 @@ def test_tbstyle_short(testdir):
     """
     )
     result = testdir.runpytest("--tb=short")
-    s = result.stdout.str()
+    s = result.stdout.string()
     assert "arg = 42" not in s
     assert "x = 0" not in s
     result.stdout.fnmatch_lines(["*%s:8*" % p.basename, "    assert x", "E   assert*"])
     result = testdir.runpytest()
-    s = result.stdout.str()
+    s = result.stdout.string()
     assert "x = 0" in s
     assert "assert x" in s
 
@@ -1273,7 +1273,7 @@ class TestGenericReporting:
         for tbopt in ["long", "short", "no"]:
             print("testing --tb=%s..." % tbopt)
             result = testdir.runpytest("-rN", "--tb=%s" % tbopt)
-            s = result.stdout.str()
+            s = result.stdout.string()
             if tbopt == "long":
                 assert "print(6*7)" in s
             else:
@@ -1304,7 +1304,7 @@ class TestGenericReporting:
         result.stdout.fnmatch_lines(
             ["*%s:3: IndexError*" % bn, "*%s:8: AssertionError: hello*" % bn]
         )
-        s = result.stdout.str()
+        s = result.stdout.string()
         assert "def test_func2" not in s
 
     def test_pytest_report_header(self, testdir, option):
@@ -1356,22 +1356,26 @@ def pytest_report_header(config, startdir):
             ]
         )
 
-        stdout = testdir.runpytest("--show-capture=stdout", "--tb=short").stdout.str()
+        stdout = testdir.runpytest(
+            "--show-capture=stdout", "--tb=short"
+        ).stdout.string()
         assert "!This is stderr!" not in stdout
         assert "!This is stdout!" in stdout
         assert "!This is a warning log msg!" not in stdout
 
-        stdout = testdir.runpytest("--show-capture=stderr", "--tb=short").stdout.str()
+        stdout = testdir.runpytest(
+            "--show-capture=stderr", "--tb=short"
+        ).stdout.string()
         assert "!This is stdout!" not in stdout
         assert "!This is stderr!" in stdout
         assert "!This is a warning log msg!" not in stdout
 
-        stdout = testdir.runpytest("--show-capture=log", "--tb=short").stdout.str()
+        stdout = testdir.runpytest("--show-capture=log", "--tb=short").stdout.string()
         assert "!This is stdout!" not in stdout
         assert "!This is stderr!" not in stdout
         assert "!This is a warning log msg!" in stdout
 
-        stdout = testdir.runpytest("--show-capture=no", "--tb=short").stdout.str()
+        stdout = testdir.runpytest("--show-capture=no", "--tb=short").stdout.string()
         assert "!This is stdout!" not in stdout
         assert "!This is stderr!" not in stdout
         assert "!This is a warning log msg!" not in stdout
@@ -1396,22 +1400,26 @@ def pytest_report_header(config, startdir):
         """
         )
 
-        result = testdir.runpytest("--show-capture=stdout", "--tb=short").stdout.str()
+        result = testdir.runpytest(
+            "--show-capture=stdout", "--tb=short"
+        ).stdout.string()
         assert "!stdout!" in result
         assert "!stderr!" not in result
         assert "!log!" not in result
 
-        result = testdir.runpytest("--show-capture=stderr", "--tb=short").stdout.str()
+        result = testdir.runpytest(
+            "--show-capture=stderr", "--tb=short"
+        ).stdout.string()
         assert "!stdout!" not in result
         assert "!stderr!" in result
         assert "!log!" not in result
 
-        result = testdir.runpytest("--show-capture=log", "--tb=short").stdout.str()
+        result = testdir.runpytest("--show-capture=log", "--tb=short").stdout.string()
         assert "!stdout!" not in result
         assert "!stderr!" not in result
         assert "!log!" in result
 
-        result = testdir.runpytest("--show-capture=no", "--tb=short").stdout.str()
+        result = testdir.runpytest("--show-capture=no", "--tb=short").stdout.string()
         assert "!stdout!" not in result
         assert "!stderr!" not in result
         assert "!log!" not in result
@@ -1506,7 +1514,7 @@ def test_terminal_summary_warnings_are_displayed(testdir):
         ]
     )
     result.stdout.no_fnmatch_line("*None*")
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 2
 
@@ -1531,7 +1539,7 @@ def test_terminal_summary_warnings_header_once(testdir):
         ]
     )
     result.stdout.no_fnmatch_line("*None*")
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
     assert stdout.count("warning_from_test") == 1
     assert stdout.count("=== warnings summary ") == 1
 

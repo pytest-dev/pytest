@@ -972,7 +972,7 @@ def test_xfail_test_setup_exception(testdir):
     )
     result = testdir.runpytest(p)
     assert result.ret == 0
-    assert "xfailed" in result.stdout.str()
+    assert "xfailed" in result.stdout.string()
     result.stdout.no_fnmatch_line("*xpassed*")
 
 

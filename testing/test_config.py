@@ -1479,7 +1479,7 @@ class TestOverrideIniArgs:
             }
         )
         result = testdir.runpytest("-o", "foo=1", "-o", "bar=0", "test_foo.py")
-        assert "ERROR:" not in result.stderr.str()
+        assert "ERROR:" not in result.stderr.string()
         result.stdout.fnmatch_lines(["collected 1 item", "*= 1 passed in *="])
 
 
@@ -1718,7 +1718,7 @@ class TestPytestPluginsVariable:
             msg
         ) = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         if use_pyargs:
-            assert msg not in res.stdout.str()
+            assert msg not in res.stdout.string()
         else:
             res.stdout.fnmatch_lines(["*{msg}*".format(msg=msg)])
 
@@ -1768,7 +1768,7 @@ class TestPytestPluginsVariable:
         res = testdir.runpytest_subprocess()
         assert res.ret == 0
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
-        assert msg not in res.stdout.str()
+        assert msg not in res.stdout.string()
 
 
 def test_conftest_import_error_repr(tmpdir):

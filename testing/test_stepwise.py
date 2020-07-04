@@ -100,7 +100,7 @@ def test_fail_and_continue_with_stepwise(stepwise_testdir):
     )
     assert _strip_resource_warnings(result.stderr.lines) == []
 
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
     # Make sure we stop after first failing test.
     assert "test_success_before_fail PASSED" in stdout
     assert "test_fail_on_flag FAILED" in stdout
@@ -110,7 +110,7 @@ def test_fail_and_continue_with_stepwise(stepwise_testdir):
     result = stepwise_testdir.runpytest("-v", "--strict-markers", "--stepwise")
     assert _strip_resource_warnings(result.stderr.lines) == []
 
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
     # Make sure the latest failing test runs and then continues.
     assert "test_success_before_fail" not in stdout
     assert "test_fail_on_flag PASSED" in stdout
@@ -128,7 +128,7 @@ def test_run_with_skip_option(stepwise_testdir):
     )
     assert _strip_resource_warnings(result.stderr.lines) == []
 
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
     # Make sure first fail is ignore and second fail stops the test run.
     assert "test_fail_on_flag FAILED" in stdout
     assert "test_success_after_fail PASSED" in stdout
@@ -140,7 +140,7 @@ def test_fail_on_errors(error_testdir):
     result = error_testdir.runpytest("-v", "--strict-markers", "--stepwise")
 
     assert _strip_resource_warnings(result.stderr.lines) == []
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
 
     assert "test_error ERROR" in stdout
     assert "test_success_after_fail" not in stdout
@@ -152,7 +152,7 @@ def test_change_testfile(stepwise_testdir):
     )
     assert _strip_resource_warnings(result.stderr.lines) == []
 
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
     assert "test_fail_on_flag FAILED" in stdout
 
     # Make sure the second test run starts from the beginning, since the
@@ -162,7 +162,7 @@ def test_change_testfile(stepwise_testdir):
     )
     assert _strip_resource_warnings(result.stderr.lines) == []
 
-    stdout = result.stdout.str()
+    stdout = result.stdout.string()
     assert "test_success PASSED" in stdout
 
 

@@ -645,4 +645,4 @@ def test_required_option_help(testdir):
     )
     result = testdir.runpytest("-h", x)
     result.stdout.no_fnmatch_line("*argument --xyz is required*")
-    assert "general:" in result.stdout.str()
+    assert "general:" in result.stdout.string()
