@@ -562,17 +562,18 @@ class FSCollector(Collector):
     def gethookproxy(self, fspath: py.path.local):
         raise NotImplementedError()
 
-    def _recurse(self, dirpath: py.path.local) -> bool:
-        if dirpath.basename == "__pycache__":
+    def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
+        if direntry.name == "__pycache__":
             return False
-        ihook = self._gethookproxy(dirpath.dirpath())
-        if ihook.pytest_ignore_collect(path=dirpath, config=self.config):
+        path = py.path.local(direntry.path)
+        ihook = self._gethookproxy(path.dirpath())
+        if ihook.pytest_ignore_collect(path=path, config=self.config):
             return False
         for pat in self._norecursepatterns:
-            if dirpath.check(fnmatch=pat):
+            if path.check(fnmatch=pat):
                 return False
-        ihook = self._gethookproxy(dirpath)
-        ihook.pytest_collect_directory(path=dirpath, parent=self)
+        ihook = self._gethookproxy(path)
+        ihook.pytest_collect_directory(path=path, parent=self)
         return True
 
     def isinitpath(self, path: py.path.local) -> bool:

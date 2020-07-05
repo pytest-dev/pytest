@@ -560,14 +560,14 @@ def resolve_package_path(path: Path) -> Optional[Path]:
 
 
 def visit(
-    path: py.path.local, recurse: Callable[[py.path.local], bool],
-) -> Iterator[py.path.local]:
-    """Walk path recursively, in breadth-first order.
+    path: str, recurse: Callable[["os.DirEntry[str]"], bool]
+) -> Iterator["os.DirEntry[str]"]:
+    """Walk a directory recursively, in breadth-first order.
 
     Entries at each directory level are sorted.
     """
-    entries = sorted(path.listdir())
+    entries = sorted(os.scandir(path), key=lambda entry: entry.name)
     yield from entries
     for entry in entries:
-        if entry.check(dir=1) and recurse(entry):
-            yield from visit(entry, recurse)
+        if entry.is_dir(follow_symlinks=False) and recurse(entry):
+            yield from visit(entry.path, recurse)

@@ -618,11 +618,13 @@ class Session(nodes.FSCollector):
             assert not names, "invalid arg {!r}".format((argpath, names))
 
             seen_dirs = set()  # type: Set[py.path.local]
-            for path in visit(argpath, self._recurse):
-                if not path.check(file=1):
+            for direntry in visit(str(argpath), self._recurse):
+                if not direntry.is_file():
                     continue
 
+                path = py.path.local(direntry.path)
                 dirpath = path.dirpath()
+
                 if dirpath not in seen_dirs:
                     # Collect packages first.
                     seen_dirs.add(dirpath)
