@@ -209,16 +209,12 @@ def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
     return mod
 
 
-@hookimpl(hookwrapper=True)
-def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
-    outcome = yield
-    res = outcome.get_result()
-    if res is not None:
-        return
+@hookimpl(trylast=True)
+def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj: object):
     # nothing was collected elsewhere, let's do it here
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
-            outcome.force_result(Class.from_parent(collector, name=name, obj=obj))
+            return Class.from_parent(collector, name=name, obj=obj)
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
@@ -245,7 +241,7 @@ def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj):
                 res.warn(PytestCollectionWarning(reason))
             else:
                 res = list(collector._genfunctions(name, obj))
-            outcome.force_result(res)
+            return res
 
 
 class PyobjMixin:
@@ -980,7 +976,7 @@ class Metafunc:
             argvalues,
             self.function,
             self.config,
-            function_definition=self.definition,
+            nodeid=self.definition.nodeid,
         )
         del argvalues
 
@@ -1003,7 +999,9 @@ class Metafunc:
             if generated_ids is not None:
                 ids = generated_ids
 
-        ids = self._resolve_arg_ids(argnames, ids, parameters, item=self.definition)
+        ids = self._resolve_arg_ids(
+            argnames, ids, parameters, nodeid=self.definition.nodeid
+        )
 
         # Store used (possibly generated) ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
@@ -1042,7 +1040,7 @@ class Metafunc:
             ]
         ],
         parameters: typing.Sequence[ParameterSet],
-        item,
+        nodeid: str,
     ) -> List[str]:
         """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
@@ -1050,7 +1048,7 @@ class Metafunc:
         :param List[str] argnames: list of argument names passed to ``parametrize()``.
         :param ids: the ids parameter of the parametrized call (see docs).
         :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
-        :param Item item: the item that generated this parametrized call.
+        :param str str: the nodeid of the item that generated this parametrized call.
         :rtype: List[str]
         :return: the list of ids for each argname given
         """
@@ -1063,7 +1061,7 @@ class Metafunc:
         else:
             idfn = None
             ids_ = self._validate_ids(ids, parameters, self.function.__name__)
-        return idmaker(argnames, parameters, idfn, ids_, self.config, item=item)
+        return idmaker(argnames, parameters, idfn, ids_, self.config, nodeid=nodeid)
 
     def _validate_ids(
         self,
@@ -1223,7 +1221,7 @@ def _idval(
     argname: str,
     idx: int,
     idfn: Optional[Callable[[object], Optional[object]]],
-    item,
+    nodeid: Optional[str],
     config: Optional[Config],
 ) -> str:
     if idfn:
@@ -1232,8 +1230,9 @@ def _idval(
             if generated_id is not None:
                 val = generated_id
         except Exception as e:
-            msg = "{}: error raised while trying to determine id of parameter '{}' at position {}"
-            msg = msg.format(item.nodeid, argname, idx)
+            prefix = "{}: ".format(nodeid) if nodeid is not None else ""
+            msg = "error raised while trying to determine id of parameter '{}' at position {}"
+            msg = prefix + msg.format(argname, idx)
             raise ValueError(msg) from e
     elif config:
         hook_id = config.hook.pytest_make_parametrize_id(
@@ -1263,7 +1262,7 @@ def _idvalset(
     argnames: Iterable[str],
     idfn: Optional[Callable[[object], Optional[object]]],
     ids: Optional[List[Union[None, str]]],
-    item,
+    nodeid: Optional[str],
     config: Optional[Config],
 ):
     if parameterset.id is not None:
@@ -1271,7 +1270,7 @@ def _idvalset(
     id = None if ids is None or idx >= len(ids) else ids[idx]
     if id is None:
         this_id = [
-            _idval(val, argname, idx, idfn, item=item, config=config)
+            _idval(val, argname, idx, idfn, nodeid=nodeid, config=config)
             for val, argname in zip(parameterset.values, argnames)
         ]
         return "-".join(this_id)
@@ -1285,10 +1284,12 @@ def idmaker(
     idfn: Optional[Callable[[object], Optional[object]]] = None,
     ids: Optional[List[Union[None, str]]] = None,
     config: Optional[Config] = None,
-    item=None,
+    nodeid: Optional[str] = None,
 ) -> List[str]:
     resolved_ids = [
-        _idvalset(valindex, parameterset, argnames, idfn, ids, config=config, item=item)
+        _idvalset(
+            valindex, parameterset, argnames, idfn, ids, config=config, nodeid=nodeid
+        )
         for valindex, parameterset in enumerate(parametersets)
     ]
 
@@ -1589,9 +1590,8 @@ class Function(PyobjMixin, nodes.Item):
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override] # noqa: F821
-        self, excinfo: ExceptionInfo[BaseException], outerr: None = None
+        self, excinfo: ExceptionInfo[BaseException],
     ) -> Union[str, TerminalRepr]:
-        assert outerr is None, "XXX outerr usage is deprecated"
         style = self.config.getoption("tbstyle", "auto")
         if style == "auto":
             style = "long"

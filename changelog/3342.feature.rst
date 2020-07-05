@@ -1,0 +1,10 @@
+pytest now includes inline type annotations and exposes them to user programs.
+Most of the user-facing API is covered, as well as internal code.
+
+If you are running a type checker such as mypy on your tests, you may start
+noticing type errors indicating incorrect usage. If you run into an error that
+you believe to be incorrect, please let us know in an issue.
+
+The types were developed against mypy version 0.780. Older versions may work,
+but we recommend using at least this version. Other type checkers may work as
+well, but they are not officially verified to work by pytest yet.

@@ -6,6 +6,7 @@ import pytest
 from _pytest._code import Code
 from _pytest._code import ExceptionInfo
 from _pytest._code import Frame
+from _pytest._code import Source
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ReprFuncArgs
 
@@ -67,7 +68,7 @@ def test_getstatement_empty_fullsource() -> None:
 
     f = Frame(func())
     with mock.patch.object(f.code.__class__, "fullsource", None):
-        assert f.statement == ""
+        assert f.statement == Source("")
 
 
 def test_code_from_func() -> None:
