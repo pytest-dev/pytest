@@ -65,6 +65,7 @@ from _pytest.outcomes import skip
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
+from _pytest.pathlib import visit
 from _pytest.reports import TerminalRepr
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
@@ -641,7 +642,7 @@ class Package(Module):
         ):
             yield Module.from_parent(self, fspath=init_module)
         pkg_prefixes = set()  # type: Set[py.path.local]
-        for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
+        for path in visit(this_path, recurse=self._recurse):
             # We will visit our own __init__.py file, in which case we skip it.
             is_file = path.isfile()
             if is_file:

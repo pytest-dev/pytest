@@ -16,6 +16,7 @@ from os.path import isabs
 from os.path import sep
 from posixpath import sep as posix_sep
 from types import ModuleType
+from typing import Callable
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
@@ -556,3 +557,17 @@ def resolve_package_path(path: Path) -> Optional[Path]:
                 break
             result = parent
     return result
+
+
+def visit(
+    path: py.path.local, recurse: Callable[[py.path.local], bool],
+) -> Iterator[py.path.local]:
+    """Walk path recursively, in breadth-first order.
+
+    Entries at each directory level are sorted.
+    """
+    entries = sorted(path.listdir())
+    yield from entries
+    for entry in entries:
+        if entry.check(dir=1) and recurse(entry):
+            yield from visit(entry, recurse)

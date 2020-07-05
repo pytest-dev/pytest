@@ -142,14 +142,14 @@ class TestFillFixtures:
         p = testdir.copy_example()
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(next(p.visit("test_*.py")))
+        result = testdir.runpytest(str(next(Path(str(p)).rglob("test_*.py"))))
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_conftest(self, testdir):
         p = testdir.copy_example()
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(next(p.visit("test_*.py")))
+        result = testdir.runpytest(str(next(Path(str(p)).rglob("test_*.py"))))
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_plugin(self, testdir):
