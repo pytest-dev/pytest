@@ -1304,6 +1304,11 @@ class TestAppendIniArgs:
                 "appended_option:['first line', 'second line', 'third line']",
             ),
             ("my_args", "", "appended_option:['foo']"),
+            (
+                "my_default",
+                "appended",
+                "appended_option:['not_in_ini_file', 'appended']",
+            ),
         ],
     )
     def test_append_ini_usage_valid_types(
@@ -1315,7 +1320,8 @@ class TestAppendIniArgs:
                 addini = parser.addini
                 addini("my_paths", "", default="/foo/bar.txt", type="pathlist")
                 addini("my_args", "", default="foo", type="args")
-                addini("my_linelist", "", default="a line", type="linelist")"""
+                addini("my_linelist", "", default="a line", type="linelist")
+                addini("my_default", "", default="not_in_ini_file", type="args")"""
         )
         testdir.makeini(
             """
@@ -1417,13 +1423,13 @@ class TestAppendIniArgs:
             """
             def pytest_addoption(parser):
                 addini = parser.addini
-                addini("my_args", "", default="foo", type="args")"""
+                addini("my_args", "", default="", type="args")"""
         )
         testdir.makepyfile(
-            """
+            r"""
             def test_pass(pytestconfig):
                 ini_val = pytestconfig.getini("my_args")
-                print('\\nappended_option:%s\\n' % ini_val)"""
+                print('\nappended_option:%s\n' % ini_val)"""
         )
 
         error_text = (

@@ -1039,8 +1039,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    pytest -o console_output_style=classic -o cache_dir=/tmp/mycache
 
-Configuration options of type ``args``, ``linelist``, or ``pathlist`` may be appended to in the command-line by
-using ``-a/-append-ini``, which can also be passed multiple times. The expected format is ``name=value``. For example::
+Multi-valued configuration options may be appended to in the command-line by using ``-a/-append-ini``, which can also be passed multiple times.
+The expected format is ``name=value``. For example::
 
    pytest --append-ini addopts="-k should_throw_error" -a addopts=-x
 

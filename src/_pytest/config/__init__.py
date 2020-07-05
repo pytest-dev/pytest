@@ -14,6 +14,7 @@ from functools import lru_cache
 from types import TracebackType
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import IO
 from typing import Iterable
@@ -53,11 +54,13 @@ from _pytest.warning_types import PytestConfigWarning
 
 if TYPE_CHECKING:
     from typing import Type
+    from typing_extensions import Literal
 
     from _pytest._code.code import _TracebackStyle
     from _pytest.terminal import TerminalReporter
     from .argparsing import Argument
 
+    _IniType = Literal[None, "pathlist", "args", "linelist", "bool"]
 
 _PluggyPlugin = object
 """A type to represent plugin objects.
@@ -1248,7 +1251,7 @@ class Config:
             return val
 
     def _coerce_ini_option_based_on_type(
-        self, value: Union[List, str, None], ini_type: Optional[str]
+        self, value: Union[List, str, None], ini_type: "_IniType"
     ) -> Union[List, bool, str, None]:
         # coerce the values based on types
         # note: some coercions are only required if we are reading from .ini files, because
@@ -1290,6 +1293,8 @@ class Config:
             description, type, default = self._parser._inidict[name]
         except KeyError as e:
             raise ValueError("unknown configuration value: {!r}".format(name)) from e
+        type = cast("_IniType", type)
+
         override_value = self._get_override_ini_value(name)
         append_values = self._get_append_ini_values(name, type)
 
@@ -1316,42 +1321,14 @@ class Config:
             values.append(relroot)
         return values
 
-    def _get_append_ini_values(self, name: str, ini_type) -> List[str]:
-        value = []
-        # append_ini is a list of "ini=value" options
-        # append all values if multiple values are set for same ini-name,
-        # e.g. -a foo=bar1 -a foo=bar2 will append 'bar1 bar2' to foo
-        for ini_config in self._append_ini:
-            try:
-                key, append_ini_value = ini_config.split("=", 1)
-            except ValueError:
-                raise UsageError(
-                    "-a/--append-ini expects option=value style (got: {!r}).".format(
-                        ini_config
-                    )
-                )
-            else:
-                if key == name:
-                    if ini_type in ["pathlist", "args"]:
-                        value.append(append_ini_value)
-                    elif ini_type == "linelist":
-                        value.append("\n{}".format(append_ini_value))
-                    else:
-                        self._warn_or_fail_if_strict(
-                            "append_ini option invalid for argument '{}' with type '{}'".format(
-                                name, ini_type
-                            )
-                        )
-        return value
-
     def _resolve_ini_option(
         self,
         name: str,
-        default_value: str,
+        default_value,
         override_value: Optional[str],
-        append_values: List,
+        append_values: List[str],
         ini_type: Optional[str],
-    ) -> Union[List, str, None]:
+    ):
         value = self.inicfg.get(name, None)
         if override_value is None and not append_values:
             if value is None:
@@ -1361,6 +1338,9 @@ class Config:
                     return ""
                 return []
         else:
+            if not value and default_value:
+                value = default_value
+
             if override_value:
                 value = override_value
             if append_values:
@@ -1376,6 +1356,34 @@ class Config:
                         value + append_values
                         if isinstance(value, list)
                         else "{} {}".format(value, " ".join(append_values))
+                    )
+        return value
+
+    def _get_append_ini_values(self, name: str, ini_type) -> List[str]:
+        value = []
+        # append_ini is a list of "ini=value" options
+        # append all values if multiple values are set for same ini-name,
+        # e.g. -a foo=bar1 -a foo=bar2 will append 'bar1 bar2' to foo
+        for ini_config in self._append_ini:
+            try:
+                key, append_ini_value = ini_config.split("=", 1)
+            except ValueError:
+                raise UsageError(
+                    "-a/--append-ini expects option=value style (got: {!r}).".format(
+                        ini_config
+                    )
+                )
+
+            if key == name:
+                if ini_type in ["pathlist", "args"]:
+                    value.append(append_ini_value)
+                elif ini_type == "linelist":
+                    value.append("\n{}".format(append_ini_value))
+                else:
+                    self._warn_or_fail_if_strict(
+                        "append_ini option invalid for argument '{}' with type '{}'".format(
+                            name, ini_type
+                        )
                     )
         return value
 

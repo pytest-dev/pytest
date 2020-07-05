@@ -1,3 +1,3 @@
-New ``--append-ini/-a`` flag allows the user to append an ``args``, ``linelist``, or ``pathlist`` type ini option with ``option=value`` style::
+New ``--append-ini/-a`` flag allows the user to append a value to ``args``, ``linelist``, or ``pathlist`` type ini options with ``option=value`` style, instead of overriding as ``-o/--override-ini`` would::
 
     pytest --append-ini addopts="-k should_throw_error"
