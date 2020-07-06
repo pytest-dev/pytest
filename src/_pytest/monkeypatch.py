@@ -13,10 +13,10 @@ from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
-import pytest
 from _pytest.compat import overload
 from _pytest.fixtures import fixture
 from _pytest.pathlib import Path
+from _pytest.warning_types import PytestWarning
 
 RE_IMPORT_ERROR_NAME = re.compile(r"^No module named (.*)$")
 
@@ -272,7 +272,7 @@ class MonkeyPatch:
         and prepend the ``value`` adjoined with the ``prepend`` character."""
         if not isinstance(value, str):
             warnings.warn(
-                pytest.PytestWarning(
+                PytestWarning(
                     "Value of environment variable {name} type should be str, but got "
                     "{value!r} (type: {type}); converted to str implicitly".format(
                         name=name, value=value, type=type(value).__name__
