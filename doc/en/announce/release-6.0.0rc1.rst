@@ -30,7 +30,6 @@ Thanks to all who contributed to this release, among them:
 * Gleb Nikonorov
 * Hugo van Kemenade
 * Hunter Richards
-* Katarzyna
 * Katarzyna Król
 * Katrin Leinweber
 * Keri Volans
@@ -53,7 +52,6 @@ Thanks to all who contributed to this release, among them:
 * Vlad-Radz
 * Xinbin Huang
 * Zac Hatfield-Dodds
-* Zac-HD
 * earonesty
 * gaurav dhameeja
 * gdhameeja
