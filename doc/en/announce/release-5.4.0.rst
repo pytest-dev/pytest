@@ -9,11 +9,11 @@ against itself, passing on many different interpreters and platforms.
 This release contains a number of bug fixes and improvements, so users are encouraged
 to take a look at the CHANGELOG:
 
-    https://docs.pytest.org/en/latest/changelog.html
+    https://docs.pytest.org/en/stable/changelog.html
 
 For complete documentation, please visit:
 
-    https://docs.pytest.org/en/latest/
+    https://docs.pytest.org/en/stable/
 
 As usual, you can upgrade from PyPI via:
 

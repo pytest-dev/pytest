@@ -294,7 +294,7 @@ Here is a simple overview, with pytest-specific bits:
 Writing Tests
 ~~~~~~~~~~~~~
 
-Writing tests for plugins or for pytest itself is often done using the `testdir fixture <https://docs.pytest.org/en/latest/reference.html#testdir>`_, as a "black-box" test.
+Writing tests for plugins or for pytest itself is often done using the `testdir fixture <https://docs.pytest.org/en/stable/reference.html#testdir>`_, as a "black-box" test.
 
 For example, to ensure a simple test passes you can write:
 

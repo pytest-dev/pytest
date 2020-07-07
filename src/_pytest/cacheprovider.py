@@ -42,7 +42,7 @@ which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 
 **Do not** commit this to version control.
 
-See [the docs](https://docs.pytest.org/en/latest/cache.html) for more information.
+See [the docs](https://docs.pytest.org/en/stable/cache.html) for more information.
 """
 
 CACHEDIR_TAG_CONTENT = b"""\

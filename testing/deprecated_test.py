@@ -23,7 +23,7 @@ def test_resultlog_is_deprecated(testdir):
     result.stdout.fnmatch_lines(
         [
             "*--result-log is deprecated, please try the new pytest-reportlog plugin.",
-            "*See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information*",
+            "*See https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log for more information*",
         ]
     )
 

@@ -1148,8 +1148,8 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
     message = (
         'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
         "but are created automatically when test functions request them as parameters.\n"
-        "See https://docs.pytest.org/en/latest/fixture.html for more information about fixtures, and\n"
-        "https://docs.pytest.org/en/latest/deprecations.html#calling-fixtures-directly about how to update your code."
+        "See https://docs.pytest.org/en/stable/fixture.html for more information about fixtures, and\n"
+        "https://docs.pytest.org/en/stable/deprecations.html#calling-fixtures-directly about how to update your code."
     ).format(name=fixture_marker.name or function.__name__)
 
     @functools.wraps(function)

@@ -13,12 +13,12 @@ re-usable fixture design.
 
 For detailed info and tutorial-style examples, see:
 
-    http://pytest.org/en/latest/fixture.html
+    http://pytest.org/en/stable/fixture.html
 
 Moreover, there is now support for using pytest fixtures/funcargs with
 unittest-style suites, see here for examples:
 
-    http://pytest.org/en/latest/unittest.html
+    http://pytest.org/en/stable/unittest.html
 
 Besides, more unittest-test suites are now expected to "simply work"
 with pytest.
@@ -29,11 +29,11 @@ pytest-2.2.4.
 
 If you are interested in the precise reasoning (including examples) of the
 pytest-2.3 fixture evolution, please consult
-http://pytest.org/en/latest/funcarg_compare.html
+http://pytest.org/en/stable/funcarg_compare.html
 
 For general info on installation and getting started:
 
-    http://pytest.org/en/latest/getting-started.html
+    http://pytest.org/en/stable/getting-started.html
 
 Docs and PDF access as usual at:
 
@@ -94,7 +94,7 @@ Changes between 2.2.4 and 2.3.0
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
 
-- fix issue159: improve http://pytest.org/en/latest/faq.html
+- fix issue159: improve http://pytest.org/en/stable/faq.html
   especially with respect to the "magic" history, also mention
   pytest-django, trial and unittest integration.
 
