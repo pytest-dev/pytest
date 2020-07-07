@@ -115,6 +115,8 @@ Execute the test function with “quiet” reporting mode:
 Group multiple tests in a class
 --------------------------------------------------------------
 
+.. regendoc:wipe
+
 Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test:
 
 .. code-block:: python
@@ -163,8 +165,11 @@ Something to be aware of when grouping tests inside classes is that each test ha
 Having each test share the same class instance would be very detrimental to test isolation and would promote poor test practices.
 This is outlined below:
 
+.. regendoc:wipe
+
 .. code-block:: python
 
+    # content of test_class_demo.py
     class TestClassDemoInstance:
         def test_one(self):
             assert 0
