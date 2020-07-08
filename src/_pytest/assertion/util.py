@@ -169,7 +169,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
 
 
 def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
-    explanation = []  # type: List[str]
+    explanation = []
     if istext(left) and istext(right):
         explanation = _diff_text(left, right, verbose)
     else:
@@ -424,6 +424,7 @@ def _compare_eq_cls(
             field.name for field in all_fields if getattr(field, ATTRS_EQ_FIELD)
         ]
 
+    indent = "  "
     same = []
     diff = []
     for field in fields_to_check:
@@ -433,6 +434,8 @@ def _compare_eq_cls(
             diff.append(field)
 
     explanation = []
+    if same or diff:
+        explanation += [""]
     if same and verbose < 2:
         explanation.append("Omitting %s identical items, use -vv to show" % len(same))
     elif same:
@@ -440,12 +443,18 @@ def _compare_eq_cls(
         explanation += pprint.pformat(same).splitlines()
     if diff:
         explanation += ["Differing attributes:"]
+        explanation += pprint.pformat(diff).splitlines()
         for field in diff:
+            field_left = getattr(left, field)
+            field_right = getattr(right, field)
             explanation += [
-                ("%s: %r != %r") % (field, getattr(left, field), getattr(right, field)),
                 "",
                 "Drill down into differing attribute %s:" % field,
-                *_compare_eq_any(getattr(left, field), getattr(right, field), verbose),
+                ("%s%s: %r != %r") % (indent, field, field_left, field_right),
+            ]
+            explanation += [
+                indent + line
+                for line in _compare_eq_any(field_left, field_right, verbose)
             ]
     return explanation
 
