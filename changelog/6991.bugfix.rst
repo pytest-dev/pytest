@@ -1,1 +1,0 @@
-Fix regressions with `--lf` filtering too much since pytest 5.4.

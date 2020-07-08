@@ -1,3 +1,0 @@
-Expressions given to the ``-m`` and ``-k`` options are no longer evaluated using Python's ``eval()``.
-The format supports ``or``, ``and``, ``not``, parenthesis and general identifiers to match against.
-Python constants, keywords or other operators are no longer evaluated differently.

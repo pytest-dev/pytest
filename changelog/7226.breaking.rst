@@ -1,1 +1,0 @@
-Removed the unused ``args`` parameter from ``pytest.Function.__init__``.

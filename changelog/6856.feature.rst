@@ -1,3 +1,0 @@
-A warning is now shown when an unknown key is read from a config INI file.
-
-The `--strict-config` flag has been added to treat these warnings as errors.

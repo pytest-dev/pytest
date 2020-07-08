@@ -1,1 +1,0 @@
-Add a note about ``--strict`` and ``--strict-markers`` and the preference for the latter one.

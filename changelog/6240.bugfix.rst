@@ -1,2 +1,0 @@
-Fixes an issue where logging during collection step caused duplication of log
-messages to stderr.

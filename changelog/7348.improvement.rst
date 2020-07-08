@@ -1,1 +1,0 @@
-Improve recursive diff report for comparison asserts on dataclasses / attrs.

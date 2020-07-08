@@ -1,3 +1,0 @@
-When the ``caplog`` fixture is used to change the log level for capturing,
-using ``caplog.set_level()`` or ``caplog.at_level()``, it no longer affects
-the level of logs that are shown in the "Captured log report" report section.

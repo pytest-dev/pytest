@@ -1,1 +1,0 @@
-``caplog.set_level()`` will now override any :confval:`log_level` set via the CLI or ``.ini``.

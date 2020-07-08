@@ -1,2 +1,0 @@
-Explicit new-lines in help texts of command-line options are preserved, allowing plugins better control
-of the help displayed to users.

@@ -1,1 +1,0 @@
-``TestReport.longrepr`` is now always an instance of ``ReprExceptionInfo``. Previously it was a ``str`` when a test failed with ``pytest.fail(..., pytrace=False)``.

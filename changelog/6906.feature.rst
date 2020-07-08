@@ -1,1 +1,0 @@
-Added `--code-highlight` command line option to enable/disable code highlighting in terminal output.
