@@ -32,10 +32,7 @@ def should_do_markup(file: TextIO) -> bool:
     if "FORCE_COLOR" in os.environ:
         return True
     return (
-        hasattr(file, "isatty")
-        and file.isatty()
-        and os.environ.get("TERM") != "dumb"
-        and not (sys.platform.startswith("java") and os._name == "nt")
+        hasattr(file, "isatty") and file.isatty() and os.environ.get("TERM") != "dumb"
     )
 
 
