@@ -32,7 +32,7 @@ FILLFUNCARGS = PytestDeprecationWarning(
 
 RESULT_LOG = PytestDeprecationWarning(
     "--result-log is deprecated, please try the new pytest-reportlog plugin.\n"
-    "See https://docs.pytest.org/en/latest/deprecations.html#result-log-result-log for more information."
+    "See https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log for more information."
 )
 
 FIXTURE_POSITIONAL_ARGUMENTS = PytestDeprecationWarning(
@@ -44,13 +44,13 @@ NODE_USE_FROM_PARENT = UnformattedWarning(
     PytestDeprecationWarning,
     "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
     "See "
-    "https://docs.pytest.org/en/latest/deprecations.html#node-construction-changed-to-node-from-parent"
+    "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
     " for more details.",
 )
 
 JUNIT_XML_DEFAULT_FAMILY = PytestDeprecationWarning(
     "The 'junit_family' default value will change to 'xunit2' in pytest 6.0. See:\n"
-    "  https://docs.pytest.org/en/latest/deprecations.html#junit-family-default-value-change-to-xunit2\n"
+    "  https://docs.pytest.org/en/stable/deprecations.html#junit-family-default-value-change-to-xunit2\n"
     "for more information."
 )
 
@@ -68,7 +68,7 @@ PYTEST_COLLECT_MODULE = UnformattedWarning(
 
 TERMINALWRITER_WRITER = PytestDeprecationWarning(
     "The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.\n"
-    "See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information."
+    "See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-writer for more information."
 )
 
 

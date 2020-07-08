@@ -40,7 +40,7 @@ Running pytest now produces this output:
       $REGENDOC_TMPDIR/test_show_warnings.py:5: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
-    -- Docs: https://docs.pytest.org/en/latest/warnings.html
+    -- Docs: https://docs.pytest.org/en/stable/warnings.html
     ======================= 1 passed, 1 warning in 0.12s =======================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
@@ -407,7 +407,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
       $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestCollectionWarning: cannot collect test class 'Test' because it has a __init__ constructor (from: test_pytest_warnings.py)
         class Test:
 
-    -- Docs: https://docs.pytest.org/en/latest/warnings.html
+    -- Docs: https://docs.pytest.org/en/stable/warnings.html
     1 warning in 0.12s
 
 These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.

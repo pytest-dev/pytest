@@ -404,7 +404,7 @@ This should be updated to make use of standard fixture mechanisms:
         session.close()
 
 
-You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/latest/funcarg_compare.html>`_ for
+You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/stable/funcarg_compare.html>`_ for
 more information.
 
 

@@ -444,10 +444,10 @@ additionally it is possible to copy examples for an example folder before runnin
 
     test_example.py::test_plugin
       $PYTHON_PREFIX/lib/python3.8/site-packages/_pytest/compat.py:333: PytestDeprecationWarning: The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.
-      See https://docs.pytest.org/en/latest/deprecations.html#terminalreporter-writer for more information.
+      See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-writer for more information.
         return getattr(object, name, default)
 
-    -- Docs: https://docs.pytest.org/en/latest/warnings.html
+    -- Docs: https://docs.pytest.org/en/stable/warnings.html
     ====================== 2 passed, 2 warnings in 0.12s =======================
 
 For more information about the result object that ``runpytest()`` returns, and

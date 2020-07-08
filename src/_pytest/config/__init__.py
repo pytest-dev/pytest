@@ -589,7 +589,7 @@ class PytestPluginManager(PluginManager):
                 "Please move it to a top level conftest file at the rootdir:\n"
                 "  {}\n"
                 "For more information, visit:\n"
-                "  https://docs.pytest.org/en/latest/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
+                "  https://docs.pytest.org/en/stable/deprecations.html#pytest-plugins-in-non-top-level-conftest-files"
             )
             fail(msg.format(conftestpath, self._confcutdir), pytrace=False)
 

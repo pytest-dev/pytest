@@ -207,7 +207,7 @@ This is outlined below:
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
-``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html>`_ to request arbitrary resources, like a unique temporary directory:
+``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/stable/builtin.html>`_ to request arbitrary resources, like a unique temporary directory:
 
 .. code-block:: python
 

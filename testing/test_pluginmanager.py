@@ -363,7 +363,7 @@ class TestPytestPluginManagerBootstrapming:
         self, pytestpm
     ):
         """ From PR #4304 : The only way to unregister a module is documented at
-        the end of https://docs.pytest.org/en/latest/plugins.html.
+        the end of https://docs.pytest.org/en/stable/plugins.html.
 
         When unregister cacheprovider, then unregister stepwise too
         """
