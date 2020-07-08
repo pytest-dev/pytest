@@ -1,0 +1,1 @@
+Detect if running on GitHub Actions and enable colors by default.
