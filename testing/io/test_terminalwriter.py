@@ -177,6 +177,18 @@ def test_should_do_markup_PY_COLORS_eq_0(monkeypatch: MonkeyPatch) -> None:
     assert s == "hello\n"
 
 
+def test_should_do_markup_GITHUB_ACTIONS_eq_true(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "GITHUB_ACTIONS", "true")
+    file = io.StringIO()
+    tw = terminalwriter.TerminalWriter(file)
+    assert tw.hasmarkup
+    tw.line("hello", bold=True)
+    s = file.getvalue()
+    assert len(s) > len("hello\n")
+    assert "\x1b[1m" in s
+    assert "\x1b[0m" in s
+
+
 class TestTerminalWriterLineWidth:
     def test_init(self) -> None:
         tw = terminalwriter.TerminalWriter()
