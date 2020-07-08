@@ -28,10 +28,7 @@ def should_do_markup(file: TextIO) -> bool:
     if os.environ.get("PY_COLORS") == "0":
         return False
     return (
-        hasattr(file, "isatty")
-        and file.isatty()
-        and os.environ.get("TERM") != "dumb"
-        and not (sys.platform.startswith("java") and os._name == "nt")
+        hasattr(file, "isatty") and file.isatty() and os.environ.get("TERM") != "dumb"
     ) or os.environ.get("GITHUB_ACTIONS") == "true"
 
 
