@@ -27,9 +27,11 @@ def should_do_markup(file: TextIO) -> bool:
         return True
     if os.environ.get("PY_COLORS") == "0":
         return False
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        return True
     return (
         hasattr(file, "isatty") and file.isatty() and os.environ.get("TERM") != "dumb"
-    ) or os.environ.get("GITHUB_ACTIONS") == "true"
+    )
 
 
 class TerminalWriter:
