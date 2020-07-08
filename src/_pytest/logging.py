@@ -531,11 +531,17 @@ class LoggingPlugin:
         # File logging.
         self.log_file_level = get_log_level_for_setting(config, "log_file_level")
         log_file = get_option_ini(config, "log_file") or os.devnull
+        if log_file != os.devnull:
+            directory = os.path.dirname(os.path.abspath(log_file))
+            if not os.path.isdir(directory):
+                os.makedirs(directory)
+
         self.log_file_handler = _FileHandler(log_file, mode="w", encoding="UTF-8")
         log_file_format = get_option_ini(config, "log_file_format", "log_format")
         log_file_date_format = get_option_ini(
             config, "log_file_date_format", "log_date_format"
         )
+
         log_file_formatter = logging.Formatter(
             log_file_format, datefmt=log_file_date_format
         )
