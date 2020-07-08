@@ -1178,6 +1178,7 @@ def test_log_file_marker_subdirectories_are_successfully_created(testdir):
         log_file = sub/logf.log
         """,
     )
+    testdir.makepyfile(""" def test_logger(): pass """)
     expected = os.path.join(os.path.dirname(path), "sub")
     result = testdir.runpytest()
     assert "logf.log" in os.listdir(expected)
