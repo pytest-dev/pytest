@@ -154,8 +154,7 @@ def test_attr_hasmarkup() -> None:
     assert "\x1b[0m" in s
 
 
-def test_should_do_markup_PY_COLORS_eq_1(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setitem(os.environ, "PY_COLORS", "1")
+def assert_color_set():
     file = io.StringIO()
     tw = terminalwriter.TerminalWriter(file)
     assert tw.hasmarkup
@@ -166,8 +165,7 @@ def test_should_do_markup_PY_COLORS_eq_1(monkeypatch: MonkeyPatch) -> None:
     assert "\x1b[0m" in s
 
 
-def test_should_do_markup_PY_COLORS_eq_0(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setitem(os.environ, "PY_COLORS", "0")
+def assert_color_not_set():
     f = io.StringIO()
     f.isatty = lambda: True  # type: ignore
     tw = terminalwriter.TerminalWriter(file=f)
@@ -175,6 +173,34 @@ def test_should_do_markup_PY_COLORS_eq_0(monkeypatch: MonkeyPatch) -> None:
     tw.line("hello", bold=True)
     s = f.getvalue()
     assert s == "hello\n"
+
+
+def test_should_do_markup_PY_COLORS_eq_1(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "PY_COLORS", "1")
+    assert_color_set()
+
+
+def test_should_not_do_markup_PY_COLORS_eq_0(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "PY_COLORS", "0")
+    assert_color_not_set()
+
+
+def test_should_not_do_markup_NO_COLOR(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "NO_COLOR", "1")
+    assert_color_not_set()
+
+
+def test_should_do_markup_FORCE_COLOR(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "FORCE_COLOR", "1")
+    assert_color_set()
+
+
+def test_should_not_do_markup_NO_COLOR_and_FORCE_COLOR(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(os.environ, "NO_COLOR", "1")
+    monkeypatch.setitem(os.environ, "FORCE_COLOR", "1")
+    assert_color_not_set()
 
 
 class TestTerminalWriterLineWidth:

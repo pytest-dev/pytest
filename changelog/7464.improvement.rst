@@ -1,0 +1,1 @@
+Add support for ``NO_COLOR`` and ``FORCE_COLOR``.
