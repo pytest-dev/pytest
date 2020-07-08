@@ -27,7 +27,6 @@ REGENDOC_ARGS := \
 	--normalize "/in \d.\d\ds/in 0.12s/" \
 	--normalize "@/tmp/pytest-of-.*/pytest-\d+@PYTEST_TMPDIR@" \
 	--normalize "@pytest-(\d+)\\.[^ ,]+@pytest-\1.x.y@" \
-	--normalize "@(This is pytest version )(\d+)\\.[^ ,]+@\1\2.x.y@" \
 	--normalize "@py-(\d+)\\.[^ ,]+@py-\1.x.y@" \
 	--normalize "@pluggy-(\d+)\\.[.\d,]+@pluggy-\1.x.y@" \
 	--normalize "@hypothesis-(\d+)\\.[.\d,]+@hypothesis-\1.x.y@" \

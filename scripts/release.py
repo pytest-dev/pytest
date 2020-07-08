@@ -2,6 +2,7 @@
 Invoke development tasks.
 """
 import argparse
+import os
 from pathlib import Path
 from subprocess import call
 from subprocess import check_call
@@ -65,10 +66,13 @@ def announce(version):
     check_call(["git", "add", str(target)])
 
 
-def regen():
+def regen(version):
     """Call regendoc tool to update examples and pytest output in the docs."""
     print(f"{Fore.CYAN}[generate.regen] {Fore.RESET}Updating docs")
-    check_call(["tox", "-e", "regen"])
+    check_call(
+        ["tox", "-e", "regen"],
+        env={**os.environ, "SETUPTOOLS_SCM_PRETEND_VERSION": version},
+    )
 
 
 def fix_formatting():
@@ -88,13 +92,13 @@ def check_links():
 def pre_release(version, *, skip_check_links):
     """Generates new docs, release announcements and creates a local tag."""
     announce(version)
-    regen()
+    regen(version)
     changelog(version, write_out=True)
     fix_formatting()
     if not skip_check_links:
         check_links()
 
-    msg = "Preparing release version {}".format(version)
+    msg = "Prepare release version {}".format(version)
     check_call(["git", "commit", "-a", "-m", msg])
 
     print()
