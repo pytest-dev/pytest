@@ -1012,8 +1012,8 @@ processes can inspect it, see :ref:`pytest current test env` for more informatio
 
 .. envvar:: PY_COLORS
 
-When set to "1", pytest will use color in terminal output.
-When set to "0", pytest will not use color.
+When set to ``1``, pytest will use color in terminal output.
+When set to ``0``, pytest will not use color.
 ``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
 
 .. envvar:: NO_COLOR
