@@ -821,7 +821,7 @@ class CaptureFixture:
 
 
 @pytest.fixture
-def capsys(request: SubRequest):
+def capsys(request: SubRequest) -> Generator[CaptureFixture, None, None]:
     """Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsys.readouterr()`` method
@@ -838,7 +838,7 @@ def capsys(request: SubRequest):
 
 
 @pytest.fixture
-def capsysbinary(request: SubRequest):
+def capsysbinary(request: SubRequest) -> Generator[CaptureFixture, None, None]:
     """Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsysbinary.readouterr()``
@@ -855,7 +855,7 @@ def capsysbinary(request: SubRequest):
 
 
 @pytest.fixture
-def capfd(request: SubRequest):
+def capfd(request: SubRequest) -> Generator[CaptureFixture, None, None]:
     """Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method
@@ -872,7 +872,7 @@ def capfd(request: SubRequest):
 
 
 @pytest.fixture
-def capfdbinary(request: SubRequest):
+def capfdbinary(request: SubRequest) -> Generator[CaptureFixture, None, None]:
     """Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method
