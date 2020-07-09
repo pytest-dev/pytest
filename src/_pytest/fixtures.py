@@ -809,7 +809,9 @@ def scope2index(scope: str, descr: str, where: Optional[str] = None) -> int:
 class FixtureLookupError(LookupError):
     """ could not return a requested Fixture (missing or invalid). """
 
-    def __init__(self, argname, request, msg: Optional[str] = None) -> None:
+    def __init__(
+        self, argname: Optional[str], request: FixtureRequest, msg: Optional[str] = None
+    ) -> None:
         self.argname = argname
         self.request = request
         self.fixturestack = request._get_fixturestack()
@@ -861,7 +863,14 @@ class FixtureLookupError(LookupError):
 
 
 class FixtureLookupErrorRepr(TerminalRepr):
-    def __init__(self, filename, firstlineno, tblines, errorstring, argname):
+    def __init__(
+        self,
+        filename: Union[str, py.path.local],
+        firstlineno: int,
+        tblines: Sequence[str],
+        errorstring: str,
+        argname: Optional[str],
+    ) -> None:
         self.tblines = tblines
         self.errorstring = errorstring
         self.filename = filename
