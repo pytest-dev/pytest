@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.nodes import Collector
     from _pytest.nodes import Item
-    from _pytest.nodes import Node
     from _pytest.outcomes import Exit
     from _pytest.python import Function
     from _pytest.python import Metafunc
@@ -827,7 +826,7 @@ def pytest_keyboard_interrupt(
 
 
 def pytest_exception_interact(
-    node: "Node",
+    node: Union["Item", "Collector"],
     call: "CallInfo[object]",
     report: Union["CollectReport", "TestReport"],
 ) -> None:
