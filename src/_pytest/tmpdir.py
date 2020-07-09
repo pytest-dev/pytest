@@ -46,7 +46,7 @@ class TempPathFactory:
             given_basetemp=config.option.basetemp, trace=config.trace.get("tmpdir")
         )
 
-    def _ensure_relative_to_basetemp(self, basename: str):
+    def _ensure_relative_to_basetemp(self, basename: str) -> str:
         basename = os.path.normpath(basename)
         if (self.getbasetemp() / basename).resolve().parent != self.getbasetemp():
             raise ValueError(
@@ -119,7 +119,7 @@ class TempdirFactory:
         """
         return py.path.local(self._tmppath_factory.mktemp(basename, numbered).resolve())
 
-    def getbasetemp(self):
+    def getbasetemp(self) -> py.path.local:
         """backward compat wrapper for ``_tmppath_factory.getbasetemp``"""
         return py.path.local(self._tmppath_factory.getbasetemp().resolve())
 
@@ -176,7 +176,7 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 
 
 @pytest.fixture
-def tmpdir(tmp_path):
+def tmpdir(tmp_path: Path) -> py.path.local:
     """Return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
