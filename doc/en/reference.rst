@@ -1010,6 +1010,23 @@ loaded.
 This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
 processes can inspect it, see :ref:`pytest current test env` for more information.
 
+.. envvar:: PY_COLORS
+
+When set to "1", pytest will use color in terminal output.
+When set to "0", pytest will not use color.
+``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
+
+.. envvar:: NO_COLOR
+
+When set (regardless of value), pytest will not use color in terminal output.
+``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
+See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
+
+.. envvar:: FORCE_COLOR
+
+When set (regardless of value), pytest will use color in terminal output.
+``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
+
 Exceptions
 ----------
 
