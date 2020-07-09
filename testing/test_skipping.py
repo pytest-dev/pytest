@@ -236,10 +236,16 @@ class TestXFail:
         )
 
     @pytest.mark.parametrize(
-       "test_input,expected",
+        "test_input,expected",
         [
-            (["-rs"], ["SKIPPED [1] test_sample.py:2: unconditional skip", "*1 skipped*"]),
-            (["-rs", "--runxfail"], ["SKIPPED [1] test_sample.py:2: unconditional skip", "*1 skipped*"]),
+            (
+                ["-rs"],
+                ["SKIPPED [1] test_sample.py:2: unconditional skip", "*1 skipped*"],
+            ),
+            (
+                ["-rs", "--runxfail"],
+                ["SKIPPED [1] test_sample.py:2: unconditional skip", "*1 skipped*"],
+            ),
         ],
     )
     def test_xfail_run_with_skip_mark(self, testdir, test_input, expected):
