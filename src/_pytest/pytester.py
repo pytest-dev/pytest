@@ -32,6 +32,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -210,7 +211,7 @@ class HookRecorder:
 
     """
 
-    def __init__(self, pluginmanager) -> None:
+    def __init__(self, pluginmanager: PytestPluginManager) -> None:
         self._pluginmanager = pluginmanager
         self.calls = []  # type: List[ParsedCall]
 
@@ -376,7 +377,7 @@ def LineMatcher_fixture(request: FixtureRequest) -> "Type[LineMatcher]":
 
 
 @pytest.fixture
-def testdir(request: FixtureRequest, tmpdir_factory) -> "Testdir":
+def testdir(request: FixtureRequest, tmpdir_factory: TempdirFactory) -> "Testdir":
     """
     A :class: `TestDir` instance, that can be used to run and test pytest itself.
 
@@ -388,7 +389,7 @@ def testdir(request: FixtureRequest, tmpdir_factory) -> "Testdir":
 
 
 @pytest.fixture
-def _sys_snapshot():
+def _sys_snapshot() -> Generator[None, None, None]:
     snappaths = SysPathsSnapshot()
     snapmods = SysModulesSnapshot()
     yield
@@ -526,7 +527,7 @@ class CwdSnapshot:
 
 
 class SysModulesSnapshot:
-    def __init__(self, preserve: Optional[Callable[[str], bool]] = None):
+    def __init__(self, preserve: Optional[Callable[[str], bool]] = None) -> None:
         self.__preserve = preserve
         self.__saved = dict(sys.modules)
 
@@ -605,13 +606,13 @@ class Testdir:
         # Do not use colors for inner runs by default.
         mp.setenv("PY_COLORS", "0")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Testdir {!r}>".format(self.tmpdir)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.tmpdir)
 
-    def finalize(self):
+    def finalize(self) -> None:
         """Clean up global state artifacts.
 
         Some methods modify the global interpreter state and this tries to
@@ -624,7 +625,7 @@ class Testdir:
         self._cwd_snapshot.restore()
         self.monkeypatch.undo()
 
-    def __take_sys_modules_snapshot(self):
+    def __take_sys_modules_snapshot(self) -> SysModulesSnapshot:
         # some zope modules used by twisted-related tests keep internal state
         # and can't be deleted; we had some trouble in the past with
         # `zope.interface` for example
@@ -633,13 +634,13 @@ class Testdir:
 
         return SysModulesSnapshot(preserve=preserve_module)
 
-    def make_hook_recorder(self, pluginmanager):
+    def make_hook_recorder(self, pluginmanager: PytestPluginManager) -> HookRecorder:
         """Create a new :py:class:`HookRecorder` for a PluginManager."""
         pluginmanager.reprec = reprec = HookRecorder(pluginmanager)
         self.request.addfinalizer(reprec.finish_recording)
         return reprec
 
-    def chdir(self):
+    def chdir(self) -> None:
         """Cd into the temporary directory.
 
         This is done automatically upon instantiation.
@@ -647,7 +648,7 @@ class Testdir:
         """
         self.tmpdir.chdir()
 
-    def _makefile(self, ext, lines, files, encoding="utf-8"):
+    def _makefile(self, ext: str, lines, files, encoding: str = "utf-8"):
         items = list(files.items())
 
         def to_text(s):
@@ -669,7 +670,7 @@ class Testdir:
                 ret = p
         return ret
 
-    def makefile(self, ext, *args, **kwargs):
+    def makefile(self, ext: str, *args: str, **kwargs):
         r"""Create new file(s) in the testdir.
 
         :param str ext: The extension the file(s) should use, including the dot, e.g. `.py`.
@@ -698,7 +699,7 @@ class Testdir:
         """Write a tox.ini file with 'source' as contents."""
         return self.makefile(".ini", tox=source)
 
-    def getinicfg(self, source):
+    def getinicfg(self, source) -> IniConfig:
         """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)
         return IniConfig(p)["pytest"]
@@ -748,7 +749,7 @@ class Testdir:
         """
         return self._makefile(".txt", args, kwargs)
 
-    def syspathinsert(self, path=None):
+    def syspathinsert(self, path=None) -> None:
         """Prepend a directory to sys.path, defaults to :py:attr:`tmpdir`.
 
         This is undone automatically when this object dies at the end of each
@@ -759,11 +760,11 @@ class Testdir:
 
         self.monkeypatch.syspath_prepend(str(path))
 
-    def mkdir(self, name):
+    def mkdir(self, name) -> py.path.local:
         """Create a new (sub)directory."""
         return self.tmpdir.mkdir(name)
 
-    def mkpydir(self, name):
+    def mkpydir(self, name) -> py.path.local:
         """Create a new python package.
 
         This creates a (sub)directory with an empty ``__init__.py`` file so it
@@ -774,7 +775,7 @@ class Testdir:
         p.ensure("__init__.py")
         return p
 
-    def copy_example(self, name=None):
+    def copy_example(self, name=None) -> py.path.local:
         """Copy file from project's directory into the testdir.
 
         :param str name: The name of the file to copy.
@@ -826,7 +827,7 @@ class Testdir:
 
     Session = Session
 
-    def getnode(self, config, arg):
+    def getnode(self, config: Config, arg):
         """Return the collection node of a file.
 
         :param config: :py:class:`_pytest.config.Config` instance, see
@@ -861,7 +862,7 @@ class Testdir:
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
-    def genitems(self, colitems: List[Union[Item, Collector]]) -> List[Item]:
+    def genitems(self, colitems: Sequence[Union[Item, Collector]]) -> List[Item]:
         """Generate all test items from a collection node.
 
         This recurses into the collection node and returns a list of all the
@@ -974,7 +975,7 @@ class Testdir:
                 class reprec:  # type: ignore
                     pass
 
-            reprec.ret = ret
+            reprec.ret = ret  # type: ignore[attr-defined]
 
             # typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing
@@ -1083,7 +1084,7 @@ class Testdir:
         config._do_configure()
         return config
 
-    def getitem(self, source, funcname="test_func"):
+    def getitem(self, source, funcname: str = "test_func") -> Item:
         """Return the test item for a test function.
 
         This writes the source to a python file and runs pytest's collection on
@@ -1104,7 +1105,7 @@ class Testdir:
             funcname, source, items
         )
 
-    def getitems(self, source):
+    def getitems(self, source) -> List[Item]:
         """Return all test items collected from the module.
 
         This writes the source to a python file and runs pytest's collection on
@@ -1114,7 +1115,7 @@ class Testdir:
         modcol = self.getmodulecol(source)
         return self.genitems([modcol])
 
-    def getmodulecol(self, source, configargs=(), withinit=False):
+    def getmodulecol(self, source, configargs=(), withinit: bool = False):
         """Return the module collection node for ``source``.
 
         This writes ``source`` to a file using :py:meth:`makepyfile` and then
@@ -1199,7 +1200,9 @@ class Testdir:
 
         return popen
 
-    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN) -> RunResult:
+    def run(
+        self, *cmdargs, timeout: Optional[float] = None, stdin=CLOSE_STDIN
+    ) -> RunResult:
         """Run a command with arguments.
 
         Run a process using subprocess.Popen saving the stdout and stderr.
@@ -1238,7 +1241,7 @@ class Testdir:
             if isinstance(stdin, bytes):
                 popen.stdin.close()
 
-            def handle_timeout():
+            def handle_timeout() -> None:
                 __tracebackhide__ = True
 
                 timeout_message = (
@@ -1283,7 +1286,7 @@ class Testdir:
         except UnicodeEncodeError:
             print("couldn't print to {} because of encoding".format(fp))
 
-    def _getpytestargs(self):
+    def _getpytestargs(self) -> Tuple[str, ...]:
         return sys.executable, "-mpytest"
 
     def runpython(self, script) -> RunResult:
@@ -1298,7 +1301,7 @@ class Testdir:
         """Run python -c "command", return a :py:class:`RunResult`."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, timeout=None) -> RunResult:
+    def runpytest_subprocess(self, *args, timeout: Optional[float] = None) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the

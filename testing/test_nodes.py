@@ -38,7 +38,7 @@ def test_std_warn_not_pytestwarning(testdir: Testdir) -> None:
     """
     )
     with pytest.raises(ValueError, match=".*instance of PytestWarning.*"):
-        items[0].warn(UserWarning("some warning"))
+        items[0].warn(UserWarning("some warning"))  # type: ignore[arg-type]
 
 
 def test__check_initialpaths_for_relpath() -> None:

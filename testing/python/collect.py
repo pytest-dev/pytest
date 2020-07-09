@@ -675,7 +675,11 @@ class TestFunction:
                 pass
         """
         )
-        assert [x.originalname for x in items] == [
+        originalnames = []
+        for x in items:
+            assert isinstance(x, pytest.Function)
+            originalnames.append(x.originalname)
+        assert originalnames == [
             "test_func",
             "test_func",
             "test_no_param",
