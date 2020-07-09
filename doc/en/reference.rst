@@ -988,9 +988,19 @@ Environment variables that can be used to change pytest's behavior.
 This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
 by the user, see :ref:`adding default options` for more information.
 
+.. envvar:: PYTEST_CURRENT_TEST
+
+This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
+processes can inspect it, see :ref:`pytest current test env` for more information.
+
 .. envvar:: PYTEST_DEBUG
 
 When set, pytest will print tracing and debug information.
+
+.. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
+
+When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
+loaded.
 
 .. envvar:: PYTEST_PLUGINS
 
@@ -999,16 +1009,6 @@ Contains comma-separated list of modules that should be loaded as plugins:
 .. code-block:: bash
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
-
-.. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
-
-When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
-loaded.
-
-.. envvar:: PYTEST_CURRENT_TEST
-
-This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
-processes can inspect it, see :ref:`pytest current test env` for more information.
 
 .. envvar:: PY_COLORS
 
