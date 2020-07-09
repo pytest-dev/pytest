@@ -1,1 +1,1 @@
-Fix the issue not ignoring --runxfail when using skip mark in a test.
+Fix the reported location of tests skipped with ``@pytest.mark.skip`` when ``--runxfail`` is used.
