@@ -4,6 +4,7 @@ import typing
 import warnings
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Iterable
 from typing import List
 from typing import Mapping
@@ -467,12 +468,14 @@ class MarkGenerator:
 
     # See TYPE_CHECKING above.
     if TYPE_CHECKING:
-        skip = None  # type: _SkipMarkDecorator
-        skipif = None  # type: _SkipifMarkDecorator
-        xfail = None  # type: _XfailMarkDecorator
-        parametrize = None  # type: _ParametrizeMarkDecorator
-        usefixtures = None  # type: _UsefixturesMarkDecorator
-        filterwarnings = None  # type: _FilterwarningsMarkDecorator
+        # Using casts instead of type comments intentionally - issue #7473.
+        # TODO(py36): Change to builtin annotation syntax.
+        skip = cast(_SkipMarkDecorator, None)
+        skipif = cast(_SkipifMarkDecorator, None)
+        xfail = cast(_XfailMarkDecorator, None)
+        parametrize = cast(_ParametrizeMarkDecorator, None)
+        usefixtures = cast(_UsefixturesMarkDecorator, None)
+        filterwarnings = cast(_FilterwarningsMarkDecorator, None)
 
     def __getattr__(self, name: str) -> MarkDecorator:
         if name[0] == "_":
