@@ -1,3 +1,0 @@
-When using ``pytest.fixture`` on a function directly, as in ``pytest.fixture(func)``,
-if the ``autouse`` or ``params`` arguments are also passed, the function is no longer
-ignored, but is marked as a fixture.

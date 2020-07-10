@@ -1,6 +1,0 @@
-``-k`` no longer matches against the names of the directories outside the test session root.
-
-Also, ``pytest.Package.name`` is now just the name of the directory containing the package's
-``__init__.py`` file, instead of the full path. This is consistent with how the other nodes
-are named, and also one of the reasons why ``-k`` would match against any directory containing
-the test suite.

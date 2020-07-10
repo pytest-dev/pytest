@@ -1,1 +1,0 @@
-Ensure a ``unittest.IsolatedAsyncioTestCase`` is actually awaited.

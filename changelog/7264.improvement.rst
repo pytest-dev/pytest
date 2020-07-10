@@ -1,1 +1,0 @@
-The dependency on the ``wcwidth`` package has been removed.

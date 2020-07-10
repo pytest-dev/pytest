@@ -1,4 +1,0 @@
-When ``fd`` capturing is used, through ``--capture=fd`` or the ``capfd`` and
-``capfdbinary`` fixtures, and the file descriptor (0, 1, 2) cannot be
-duplicated, FD capturing is still performed. Previously, direct writes to the
-file descriptors would fail or be lost in this case.

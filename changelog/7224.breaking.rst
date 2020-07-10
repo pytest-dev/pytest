@@ -1,4 +1,0 @@
-The `item.catch_log_handler` and `item.catch_log_handlers` attributes, set by the
-logging plugin and never meant to be public , are no longer available.
-
-The deprecated ``--no-print-logs`` option is removed. Use ``--show-capture`` instead.

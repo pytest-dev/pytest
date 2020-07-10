@@ -1,2 +1,0 @@
-Fix a possible race condition when trying to remove lock files used to control access to folders
-created by ``tmp_path`` and ``tmpdir``.

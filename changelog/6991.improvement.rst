@@ -1,1 +1,0 @@
-Collected files are displayed after any reports from hooks, e.g. the status from ``--lf``.

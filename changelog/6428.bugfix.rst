@@ -1,2 +1,0 @@
-Paths appearing in error messages are now correct in case the current working directory has
-changed since the start of the session.

@@ -1,1 +1,0 @@
-Explain indirect parametrization and markers for fixtures

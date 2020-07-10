@@ -147,10 +147,11 @@ The test collection would look like this:
 
     $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
     collected 2 items
+
     <Module check_myapp.py>
       <Class CheckMyApp>
           <Function simple_check>
@@ -208,10 +209,11 @@ You can always peek at the collection tree without running tests like this:
 
     . $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
     collected 3 items
+
     <Module CWD/pythoncollection.py>
       <Function test_function>
       <Class TestClass>
@@ -289,9 +291,9 @@ file will be left out:
 
     $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
     collected 0 items
 
     ========================== no tests ran in 0.12s ===========================

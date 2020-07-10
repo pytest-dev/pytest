@@ -28,7 +28,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    This is pytest version 5.x.y, imported from $PYTHON_PREFIX/lib/python3.8/site-packages/pytest/__init__.py
+    pytest 6.0.0rc1
 
 .. _`simpletest`:
 
@@ -53,7 +53,7 @@ That’s it. You can now execute the test function:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
@@ -115,6 +115,8 @@ Execute the test function with “quiet” reporting mode:
 Group multiple tests in a class
 --------------------------------------------------------------
 
+.. regendoc:wipe
+
 Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test:
 
 .. code-block:: python
@@ -163,8 +165,11 @@ Something to be aware of when grouping tests inside classes is that each test ha
 Having each test share the same class instance would be very detrimental to test isolation and would promote poor test practices.
 This is outlined below:
 
+.. regendoc:wipe
+
 .. code-block:: python
 
+    # content of test_class_demo.py
     class TestClassDemoInstance:
         def test_one(self):
             assert 0
@@ -176,33 +181,30 @@ This is outlined below:
 .. code-block:: pytest
 
     $ pytest -k TestClassDemoInstance -q
+    FF                                                                   [100%]
+    ================================= FAILURES =================================
+    ______________________ TestClassDemoInstance.test_one ______________________
 
-    FF                                                                       [100%]
-    ================================== FAILURES ===================================
-    _______________________ TestClassDemoInstance.test_one ________________________
+    self = <test_class_demo.TestClassDemoInstance object at 0xdeadbeef>
 
-    self = <test_example.TestClassDemoInstance object at 0x0000019BBB9EEDA0>
-    request = <FixtureRequest for <Function test_one>>
-
-        def test_one(self, request):
+        def test_one(self):
     >       assert 0
     E       assert 0
 
-    testing\test_example.py:4: AssertionError
-    _______________________ TestClassDemoInstance.test_two ________________________
+    test_class_demo.py:3: AssertionError
+    ______________________ TestClassDemoInstance.test_two ______________________
 
-    self = <test_example.TestClassDemoInstance object at 0x0000019BBB9F3D68>
-    request = <FixtureRequest for <Function test_two>>
+    self = <test_class_demo.TestClassDemoInstance object at 0xdeadbeef>
 
-        def test_two(self, request):
+        def test_two(self):
     >       assert 0
     E       assert 0
 
-    testing\test_example.py:7: AssertionError
-    =========================== short test summary info ===========================
-    FAILED testing/test_example.py::TestClassDemoInstance::test_one - assert 0
-    FAILED testing/test_example.py::TestClassDemoInstance::test_two - assert 0
-    2 failed in 0.11s
+    test_class_demo.py:6: AssertionError
+    ========================= short test summary info ==========================
+    FAILED test_class_demo.py::TestClassDemoInstance::test_one - assert 0
+    FAILED test_class_demo.py::TestClassDemoInstance::test_two - assert 0
+    2 failed in 0.12s
 
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------

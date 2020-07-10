@@ -430,9 +430,9 @@ additionally it is possible to copy examples for an example folder before runnin
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
     collected 2 items
 
     test_example.py ..                                                   [100%]
@@ -443,7 +443,7 @@ additionally it is possible to copy examples for an example folder before runnin
         testdir.copy_example("test_example.py")
 
     test_example.py::test_plugin
-      $PYTHON_PREFIX/lib/python3.8/site-packages/_pytest/compat.py:333: PytestDeprecationWarning: The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.
+      $PYTHON_PREFIX/lib/python3.7/site-packages/_pytest/compat.py:340: PytestDeprecationWarning: The TerminalReporter.writer attribute is deprecated, use TerminalReporter._tw instead at your own risk.
       See https://docs.pytest.org/en/stable/deprecations.html#terminalreporter-writer for more information.
         return getattr(object, name, default)
 

@@ -1,1 +1,0 @@
-The development guide now links to the contributing section of the docs and 'RELEASING.rst' on GitHub.
