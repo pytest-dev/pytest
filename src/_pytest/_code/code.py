@@ -69,9 +69,6 @@ class Code:
     # Ignore type because of https://github.com/python/mypy/issues/4266.
     __hash__ = None  # type: ignore
 
-    def __ne__(self, other):
-        return not self == other
-
     @property
     def path(self) -> Union[py.path.local, str]:
         """Return a path object pointing to source code (or a str in case
