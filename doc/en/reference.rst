@@ -988,9 +988,19 @@ Environment variables that can be used to change pytest's behavior.
 This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
 by the user, see :ref:`adding default options` for more information.
 
+.. envvar:: PYTEST_CURRENT_TEST
+
+This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
+processes can inspect it, see :ref:`pytest current test env` for more information.
+
 .. envvar:: PYTEST_DEBUG
 
 When set, pytest will print tracing and debug information.
+
+.. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
+
+When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
+loaded.
 
 .. envvar:: PYTEST_PLUGINS
 
@@ -1000,15 +1010,22 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
 
-.. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
+.. envvar:: PY_COLORS
 
-When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
-loaded.
+When set to ``1``, pytest will use color in terminal output.
+When set to ``0``, pytest will not use color.
+``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
 
-.. envvar:: PYTEST_CURRENT_TEST
+.. envvar:: NO_COLOR
 
-This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
-processes can inspect it, see :ref:`pytest current test env` for more information.
+When set (regardless of value), pytest will not use color in terminal output.
+``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
+See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
+
+.. envvar:: FORCE_COLOR
+
+When set (regardless of value), pytest will use color in terminal output.
+``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
 
 Exceptions
 ----------
