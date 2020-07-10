@@ -80,7 +80,7 @@ class Cache:
                 rm_rf(d)
 
     @staticmethod
-    def cache_dir_from_config(config: Config):
+    def cache_dir_from_config(config: Config) -> Path:
         return resolve_from_str(config.getini("cache_dir"), config.rootdir)
 
     def warn(self, fmt: str, **args: object) -> None:
@@ -113,7 +113,7 @@ class Cache:
     def _getvaluepath(self, key: str) -> Path:
         return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
 
-    def get(self, key, default):
+    def get(self, key: str, default):
         """ return cached value for the given key.  If no value
         was yet cached or the value cannot be read, the specified
         default is returned.
@@ -131,7 +131,7 @@ class Cache:
         except (ValueError, OSError):
             return default
 
-    def set(self, key, value) -> None:
+    def set(self, key: str, value: object) -> None:
         """ save value for the given key.
 
         :param key: must be a ``/`` separated value. Usually the first
@@ -522,7 +522,7 @@ def cacheshow(config: Config, session: Session) -> int:
     vdir = basedir / Cache._CACHE_PREFIX_VALUES
     tw.sep("-", "cache values for %r" % glob)
     for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
-        key = valpath.relative_to(vdir)
+        key = str(valpath.relative_to(vdir))
         val = config.cache.get(key, dummy)
         if val is dummy:
             tw.line("%s contains unreadable content, will be ignored" % key)
@@ -539,6 +539,6 @@ def cacheshow(config: Config, session: Session) -> int:
             # if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))
             if p.is_file():
-                key = p.relative_to(basedir)
+                key = str(p.relative_to(basedir))
                 tw.line("{} is a file of length {:d}".format(key, p.stat().st_size))
     return 0

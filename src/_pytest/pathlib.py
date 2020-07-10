@@ -363,15 +363,15 @@ def make_numbered_dir_with_cleanup(
     raise e
 
 
-def resolve_from_str(input: str, root):
+def resolve_from_str(input: str, root: py.path.local) -> Path:
     assert not isinstance(input, Path), "would break on py2"
-    root = Path(root)
+    rootpath = Path(root)
     input = expanduser(input)
     input = expandvars(input)
     if isabs(input):
         return Path(input)
     else:
-        return root.joinpath(input)
+        return rootpath.joinpath(input)
 
 
 def fnmatch_ex(pattern: str, path) -> bool:
