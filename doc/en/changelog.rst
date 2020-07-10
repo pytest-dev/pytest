@@ -2188,7 +2188,7 @@ Features
 
 
 - `#3711 <https://github.com/pytest-dev/pytest/issues/3711>`_: Add the ``--ignore-glob`` parameter to exclude test-modules with Unix shell-style wildcards.
-  Add the ``collect_ignore_glob`` for ``conftest.py`` to exclude test-modules with Unix shell-style wildcards.
+  Add the :globalvar:`collect_ignore_glob` for ``conftest.py`` to exclude test-modules with Unix shell-style wildcards.
 
 
 - `#4698 <https://github.com/pytest-dev/pytest/issues/4698>`_: The warning about Python 2.7 and 3.4 not being supported in pytest 5.0 has been removed.

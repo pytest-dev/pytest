@@ -299,7 +299,7 @@ file will be left out:
     ========================== no tests ran in 0.12s ===========================
 
 It's also possible to ignore files based on Unix shell-style wildcards by adding
-patterns to ``collect_ignore_glob``.
+patterns to :globalvar:`collect_ignore_glob`.
 
 The following example ``conftest.py`` ignores the file ``setup.py`` and in
 addition all files that end with ``*_py2.py`` when executed with a Python 3

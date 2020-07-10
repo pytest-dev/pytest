@@ -1213,15 +1213,12 @@ You can specify multiple fixtures like this:
     def test():
         ...
 
-and you may specify fixture usage at the test module level, using
-a generic feature of the mark mechanism:
+and you may specify fixture usage at the test module level using :globalvar:`pytestmark`:
 
 .. code-block:: python
 
     pytestmark = pytest.mark.usefixtures("cleandir")
 
-Note that the assigned variable *must* be called ``pytestmark``, assigning e.g.
-``foomark`` will not activate the fixtures.
 
 It is also possible to put fixtures required by all tests in your project
 into an ini-file:
