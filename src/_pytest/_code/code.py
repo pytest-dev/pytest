@@ -158,9 +158,6 @@ class Frame:
         """Return a 'safe' (non-recursive, one-line) string repr for 'object'."""
         return saferepr(object)
 
-    def is_true(self, object):
-        return object
-
     def getargs(self, var: bool = False):
         """Return a list of tuples (name, value) for all arguments.
 
@@ -393,12 +390,10 @@ class Traceback(List[TracebackEntry]):
                 f = entry.frame
                 loc = f.f_locals
                 for otherloc in values:
-                    if f.is_true(
-                        f.eval(
-                            co_equal,
-                            __recursioncache_locals_1=loc,
-                            __recursioncache_locals_2=otherloc,
-                        )
+                    if f.eval(
+                        co_equal,
+                        __recursioncache_locals_1=loc,
+                        __recursioncache_locals_2=otherloc,
                     ):
                         return i
             values.append(entry.frame.f_locals)
