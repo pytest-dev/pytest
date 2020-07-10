@@ -390,4 +390,11 @@ def setup(app: "sphinx.application.Sphinx") -> None:
         indextemplate="pair: %s; configuration value",
     )
 
+    app.add_object_type(
+        "globalvar",
+        "globalvar",
+        objname="global variable interpreted by pytest",
+        indextemplate="pair: %s; global variable interpreted by pytest",
+    )
+
     configure_logging(app)

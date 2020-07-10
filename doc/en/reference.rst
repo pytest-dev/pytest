@@ -900,14 +900,14 @@ Result used within :ref:`hook wrappers <hookwrapper>`.
 .. automethod:: pluggy.callers._Result.get_result
 .. automethod:: pluggy.callers._Result.force_result
 
-Special Variables
------------------
+Global Variables
+----------------
 
-pytest treats some global variables in a special manner when defined in a test module.
+pytest treats some global variables in a special manner when defined in a test module or
+``conftest.py`` files.
 
 
-collect_ignore
-~~~~~~~~~~~~~~
+.. globalvar:: collect_ignore
 
 **Tutorial**: :ref:`customizing-test-collection`
 
@@ -919,8 +919,7 @@ Needs to be ``list[str]``.
   collect_ignore = ["setup.py"]
 
 
-collect_ignore_glob
-~~~~~~~~~~~~~~~~~~~
+.. globalvar:: collect_ignore_glob
 
 **Tutorial**: :ref:`customizing-test-collection`
 
@@ -933,8 +932,7 @@ contain glob patterns.
   collect_ignore_glob = ["*_ignore.py"]
 
 
-pytest_plugins
-~~~~~~~~~~~~~~
+.. globalvar:: pytest_plugins
 
 **Tutorial**: :ref:`available installable plugins`
 
@@ -950,13 +948,12 @@ Can be either a ``str`` or ``Sequence[str]``.
     pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
 
 
-pytestmark
-~~~~~~~~~~
+.. globalvar:: pytestmark
 
 **Tutorial**: :ref:`scoped-marking`
 
 Can be declared at the **global** level in *test modules* to apply one or more :ref:`marks <marks ref>` to all
-test functions and methods. Can be either a single mark or a list of marks.
+test functions and methods. Can be either a single mark or a list of marks (applied in left-to-right order).
 
 .. code-block:: python
 
@@ -970,12 +967,6 @@ test functions and methods. Can be either a single mark or a list of marks.
     import pytest
 
     pytestmark = [pytest.mark.integration, pytest.mark.slow]
-
-PYTEST_DONT_REWRITE (module docstring)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The text ``PYTEST_DONT_REWRITE`` can be add to any **module docstring** to disable
-:ref:`assertion rewriting <assert introspection>` for that module.
 
 
 Environment Variables

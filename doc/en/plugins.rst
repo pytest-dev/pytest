@@ -70,7 +70,7 @@ You may also discover more plugins through a `pytest- pypi.org search`_.
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
-You can require plugins in a test module or a conftest file like this:
+You can require plugins in a test module or a conftest file using :globalvar:`pytest_plugins`:
 
 .. code-block:: python
 
@@ -80,6 +80,7 @@ When the test module or conftest plugin is loaded the specified plugins
 will be loaded as well.
 
 .. note::
+
     Requiring plugins using a ``pytest_plugins`` variable in non-root
     ``conftest.py`` files is deprecated. See
     :ref:`full explanation <requiring plugins in non-root conftests>`

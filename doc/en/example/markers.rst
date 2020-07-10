@@ -280,27 +280,7 @@ its test methods:
 This is equivalent to directly applying the decorator to the
 two test functions.
 
-Due to legacy reasons, it is possible to set the ``pytestmark`` attribute on a TestClass like this:
-
-.. code-block:: python
-
-    import pytest
-
-
-    class TestClass:
-        pytestmark = pytest.mark.webtest
-
-or if you need to use multiple markers you can use a list:
-
-.. code-block:: python
-
-    import pytest
-
-
-    class TestClass:
-        pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
-
-You can also set a module level marker::
+To apply marks at the module level, use the :globalvar:`pytestmark` global variable:
 
     import pytest
     pytestmark = pytest.mark.webtest
@@ -309,8 +289,17 @@ or multiple markers::
 
     pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
 
-in which case markers will be applied (in left-to-right order) to
-all functions and methods defined in the module.
+
+Due to legacy reasons, before class decorators were introduced, it is possible to set the
+:globalvar:`pytestmark` attribute on a test class like this:
+
+.. code-block:: python
+
+    import pytest
+
+
+    class TestClass:
+        pytestmark = pytest.mark.webtest
 
 .. _`marking individual tests when using parametrize`:
 

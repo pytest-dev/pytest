@@ -413,7 +413,7 @@ pytest_plugins in non-top-level conftest files
 
 .. versionremoved:: 4.0
 
-Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
+Defining :globalvar:`pytest_plugins` is now deprecated in non-top-level conftest.py
 files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
 features ``conftest.py`` files are only *active* for tests at or below it.
 

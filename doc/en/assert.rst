@@ -294,8 +294,6 @@ Assertion introspection details
 -------------------------------
 
 
-
-
 Reporting details about a failing assertion is achieved by rewriting assert
 statements before they are run.  Rewritten assert statements put introspection
 information into the assertion failure message.  ``pytest`` only rewrites test

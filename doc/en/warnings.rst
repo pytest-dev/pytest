@@ -117,7 +117,7 @@ Filters applied using a mark take precedence over filters passed on the command 
 by the ``filterwarnings`` ini option.
 
 You may apply a filter to all tests of a class by using the ``filterwarnings`` mark as a class
-decorator or to all tests in a module by setting the ``pytestmark`` variable:
+decorator or to all tests in a module by setting the :globalvar:`pytestmark` variable:
 
 .. code-block:: python
 
