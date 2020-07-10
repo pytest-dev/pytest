@@ -165,7 +165,7 @@ class PercentStyleMultiline(logging.PercentStyle):
         if "\n" in record.message:
             if hasattr(record, "auto_indent"):
                 # passed in from the "extra={}" kwarg on the call to logging.log()
-                auto_indent = self._get_auto_indent(record.auto_indent)  # type: ignore[attr-defined] # noqa: F821
+                auto_indent = self._get_auto_indent(record.auto_indent)  # type: ignore[attr-defined]
             else:
                 auto_indent = self._auto_indent
 
@@ -755,7 +755,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         :param _pytest.terminal.TerminalReporter terminal_reporter:
         :param _pytest.capture.CaptureManager capture_manager:
         """
-        logging.StreamHandler.__init__(self, stream=terminal_reporter)  # type: ignore[arg-type] # noqa: F821
+        logging.StreamHandler.__init__(self, stream=terminal_reporter)  # type: ignore[arg-type]
         self.capture_manager = capture_manager
         self.reset()
         self.set_when(None)

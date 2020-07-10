@@ -106,8 +106,8 @@ def runtestprotocol(
     item: Item, log: bool = True, nextitem: Optional[Item] = None
 ) -> List[TestReport]:
     hasrequest = hasattr(item, "_request")
-    if hasrequest and not item._request:  # type: ignore[attr-defined] # noqa: F821
-        item._initrequest()  # type: ignore[attr-defined] # noqa: F821
+    if hasrequest and not item._request:  # type: ignore[attr-defined]
+        item._initrequest()  # type: ignore[attr-defined]
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
@@ -119,8 +119,8 @@ def runtestprotocol(
     # after all teardown hooks have been called
     # want funcargs and request info to go away
     if hasrequest:
-        item._request = False  # type: ignore[attr-defined] # noqa: F821
-        item.funcargs = None  # type: ignore[attr-defined] # noqa: F821
+        item._request = False  # type: ignore[attr-defined]
+        item.funcargs = None  # type: ignore[attr-defined]
     return reports
 
 
@@ -422,7 +422,7 @@ class SetupState:
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
-                exc = col._prepare_exc  # type: ignore[attr-defined] # noqa: F821
+                exc = col._prepare_exc  # type: ignore[attr-defined]
                 raise exc
 
         needed_collectors = colitem.listchain()
@@ -431,7 +431,7 @@ class SetupState:
             try:
                 col.setup()
             except TEST_OUTCOME as e:
-                col._prepare_exc = e  # type: ignore[attr-defined] # noqa: F821
+                col._prepare_exc = e  # type: ignore[attr-defined]
                 raise e
 
 

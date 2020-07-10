@@ -724,10 +724,10 @@ class TestSorting:
         assert fn1 != fn3
 
         for fn in fn1, fn2, fn3:
-            assert fn != 3  # type: ignore[comparison-overlap] # noqa: F821
+            assert fn != 3  # type: ignore[comparison-overlap]
             assert fn != modcol
-            assert fn != [1, 2, 3]  # type: ignore[comparison-overlap] # noqa: F821
-            assert [1, 2, 3] != fn  # type: ignore[comparison-overlap] # noqa: F821
+            assert fn != [1, 2, 3]  # type: ignore[comparison-overlap]
+            assert [1, 2, 3] != fn  # type: ignore[comparison-overlap]
             assert modcol != fn
 
     def test_allow_sane_sorting_for_decorators(self, testdir):

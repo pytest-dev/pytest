@@ -146,7 +146,7 @@ class pytestPDB:
 
         # Type ignored because mypy doesn't support "dynamic"
         # inheritance like this.
-        class PytestPdbWrapper(pdb_cls):  # type: ignore[valid-type,misc] # noqa: F821
+        class PytestPdbWrapper(pdb_cls):  # type: ignore[valid-type,misc]
             _pytest_capman = capman
             _continued = False
 
@@ -349,7 +349,7 @@ def _enter_pdb(
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
     tb = _postmortem_traceback(excinfo)
-    rep._pdbshown = True  # type: ignore[attr-defined] # noqa: F821
+    rep._pdbshown = True  # type: ignore[attr-defined]
     post_mortem(tb)
     return rep
 

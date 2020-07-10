@@ -457,7 +457,7 @@ class Collector(Node):
         raise NotImplementedError("abstract")
 
     # TODO: This omits the style= parameter which breaks Liskov Substitution.
-    def repr_failure(  # type: ignore[override] # noqa: F821
+    def repr_failure(  # type: ignore[override]
         self, excinfo: ExceptionInfo[BaseException]
     ) -> Union[str, TerminalRepr]:
         """
@@ -600,7 +600,7 @@ class FSCollector(Collector):
                 else:
                     duplicate_paths.add(path)
 
-        return ihook.pytest_collect_file(path=path, parent=self)  # type: ignore[no-any-return] # noqa: F723
+        return ihook.pytest_collect_file(path=path, parent=self)  # type: ignore[no-any-return]
 
 
 class File(FSCollector):

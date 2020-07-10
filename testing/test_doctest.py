@@ -1490,7 +1490,7 @@ def test_warning_on_unwrap_of_broken_object(
             pytest.PytestWarning, match="^Got KeyError.* when unwrapping"
         ):
             with pytest.raises(KeyError):
-                inspect.unwrap(bad_instance, stop=stop)  # type: ignore[arg-type] # noqa: F821
+                inspect.unwrap(bad_instance, stop=stop)  # type: ignore[arg-type]
     assert inspect.unwrap.__module__ == "inspect"
 
 

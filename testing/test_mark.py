@@ -20,7 +20,7 @@ class TestMark:
     def test_pytest_mark_notcallable(self) -> None:
         mark = Mark()
         with pytest.raises(TypeError):
-            mark()  # type: ignore[operator] # noqa: F821
+            mark()  # type: ignore[operator]
 
     def test_mark_with_param(self):
         def some_function(abc):
@@ -31,10 +31,10 @@ class TestMark:
 
         assert pytest.mark.foo(some_function) is some_function
         marked_with_args = pytest.mark.foo.with_args(some_function)
-        assert marked_with_args is not some_function  # type: ignore[comparison-overlap] # noqa: F821
+        assert marked_with_args is not some_function  # type: ignore[comparison-overlap]
 
         assert pytest.mark.foo(SomeClass) is SomeClass
-        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap] # noqa: F821
+        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap]
 
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
@@ -1077,7 +1077,7 @@ def test_markers_from_parametrize(testdir):
 
 def test_pytest_param_id_requires_string() -> None:
     with pytest.raises(TypeError) as excinfo:
-        pytest.param(id=True)  # type: ignore[arg-type] # noqa: F821
+        pytest.param(id=True)  # type: ignore[arg-type]
     (msg,) = excinfo.value.args
     assert msg == "Expected id to be a string, got <class 'bool'>: True"
 

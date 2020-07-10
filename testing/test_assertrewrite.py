@@ -51,7 +51,7 @@ def getmsg(
     exec(code, ns)
     func = ns[f.__name__]
     try:
-        func()  # type: ignore[operator] # noqa: F821
+        func()  # type: ignore[operator]
     except AssertionError:
         if must_pass:
             pytest.fail("shouldn't have raised")
@@ -174,7 +174,7 @@ class TestAssertionRewrite:
         assert getmsg(f3, {"a_global": False}) == "assert False"
 
         def f4() -> None:
-            assert sys == 42  # type: ignore[comparison-overlap] # noqa: F821
+            assert sys == 42  # type: ignore[comparison-overlap]
 
         verbose = request.config.getoption("verbose")
         msg = getmsg(f4, {"sys": sys})
@@ -188,7 +188,7 @@ class TestAssertionRewrite:
             assert msg == "assert sys == 42"
 
         def f5() -> None:
-            assert cls == 42  # type: ignore[name-defined] # noqa: F821
+            assert cls == 42  # type: ignore[name-defined]  # noqa: F821
 
         class X:
             pass
@@ -684,7 +684,7 @@ class TestAssertionRewrite:
 
     def test_formatchar(self) -> None:
         def f() -> None:
-            assert "%test" == "test"  # type: ignore[comparison-overlap] # noqa: F821
+            assert "%test" == "test"  # type: ignore[comparison-overlap]
 
         msg = getmsg(f)
         assert msg is not None
@@ -1264,7 +1264,7 @@ class TestEarlyRewriteBailout:
         # use default patterns, otherwise we inherit pytest's testing config
         hook.fnpats[:] = ["test_*.py", "*_test.py"]
         monkeypatch.setattr(hook, "_find_spec", spy_find_spec)
-        hook.set_session(StubSession())  # type: ignore[arg-type] # noqa: F821
+        hook.set_session(StubSession())  # type: ignore[arg-type]
         testdir.syspathinsert()
         return hook
 

@@ -47,7 +47,7 @@ def test_store() -> None:
 
     # Can't accidentally add attributes to store object itself.
     with pytest.raises(AttributeError):
-        store.foo = "nope"  # type: ignore[attr-defined] # noqa: F821
+        store.foo = "nope"  # type: ignore[attr-defined]
 
     # No interaction with anoter store.
     store2 = Store()

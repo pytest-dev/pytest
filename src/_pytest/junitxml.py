@@ -281,7 +281,7 @@ class _NodeReporter:
         self.__dict__.clear()
         # Type ignored becuase mypy doesn't like overriding a method.
         # Also the return value doesn't match...
-        self.to_xml = lambda: py.xml.raw(data)  # type: ignore # noqa: F821
+        self.to_xml = lambda: py.xml.raw(data)  # type: ignore
 
 
 def _warn_incompatibility_with_xunit2(

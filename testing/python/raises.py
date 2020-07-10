@@ -8,7 +8,7 @@ from _pytest.outcomes import Failed
 class TestRaises:
     def test_check_callable(self) -> None:
         with pytest.raises(TypeError, match=r".* must be callable"):
-            pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload] # noqa: F821
+            pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload]
 
     def test_raises(self):
         excinfo = pytest.raises(ValueError, int, "qwe")
@@ -30,7 +30,7 @@ class TestRaises:
 
     def test_raises_falsey_type_error(self) -> None:
         with pytest.raises(TypeError):
-            with pytest.raises(AssertionError, match=0):  # type: ignore[call-overload] # noqa: F821
+            with pytest.raises(AssertionError, match=0):  # type: ignore[call-overload]
                 raise AssertionError("ohai")
 
     def test_raises_repr_inflight(self):
@@ -128,11 +128,11 @@ class TestRaises:
 
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
-            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload] # noqa: F821
+            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload]
 
     def test_invalid_arguments_to_raises(self) -> None:
         with pytest.raises(TypeError, match="unknown"):
-            with pytest.raises(TypeError, unknown="bogus"):  # type: ignore[call-overload] # noqa: F821
+            with pytest.raises(TypeError, unknown="bogus"):  # type: ignore[call-overload]
                 raise ValueError()
 
     def test_tuple(self):
@@ -262,12 +262,12 @@ class TestRaises:
                 assert False, "via __class__"
 
         with pytest.raises(AssertionError) as excinfo:
-            with pytest.raises(CrappyClass()):  # type: ignore[call-overload] # noqa: F821
+            with pytest.raises(CrappyClass()):  # type: ignore[call-overload]
                 pass
         assert "via __class__" in excinfo.value.args[0]
 
     def test_raises_context_manager_with_kwargs(self):
         with pytest.raises(TypeError) as excinfo:
-            with pytest.raises(Exception, foo="bar"):  # type: ignore[call-overload] # noqa: F821
+            with pytest.raises(Exception, foo="bar"):  # type: ignore[call-overload]
                 pass
         assert "Unexpected keyword arguments" in str(excinfo.value)

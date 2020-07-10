@@ -884,7 +884,7 @@ def test_store_except_info_on_error() -> None:
                 raise IndexError("TEST")
 
     try:
-        runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type] # noqa: F821
+        runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type]
     except IndexError:
         pass
     # Check that exception info is stored on sys
@@ -895,7 +895,7 @@ def test_store_except_info_on_error() -> None:
 
     # The next run should clear the exception info stored by the previous run
     ItemMightRaise.raise_error = False
-    runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type] # noqa: F821
+    runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type]
     assert not hasattr(sys, "last_type")
     assert not hasattr(sys, "last_value")
     assert not hasattr(sys, "last_traceback")

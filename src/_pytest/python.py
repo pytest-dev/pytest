@@ -299,7 +299,7 @@ class PyobjMixin:
         """Gets the underlying Python object. May be overwritten by subclasses."""
         # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
         assert self.parent is not None
-        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        obj = self.parent.obj  # type: ignore[attr-defined]
         return getattr(obj, self.name)
 
     def getmodpath(self, stopatmodule: bool = True, includemodule: bool = False) -> str:
@@ -784,7 +784,7 @@ class Instance(PyCollector):
     def _getobj(self):
         # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
         assert self.parent is not None
-        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        obj = self.parent.obj  # type: ignore[attr-defined]
         return obj()
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
@@ -1593,7 +1593,7 @@ class Function(PyobjMixin, nodes.Item):
                         entry.set_repr_style("short")
 
     # TODO: Type ignored -- breaks Liskov Substitution.
-    def repr_failure(  # type: ignore[override] # noqa: F821
+    def repr_failure(  # type: ignore[override]
         self, excinfo: ExceptionInfo[BaseException],
     ) -> Union[str, TerminalRepr]:
         style = self.config.getoption("tbstyle", "auto")

@@ -3850,7 +3850,7 @@ class TestScopeOrdering:
         )
         testdir.runpytest()
         # actual fixture execution differs: dependent fixtures must be created first ("my_tmpdir")
-        FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined] # noqa: F821
+        FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined]
         assert FIXTURE_ORDER == "s1 my_tmpdir_factory p1 m1 my_tmpdir f1 f2".split()
 
     def test_func_closure_module(self, testdir):
@@ -4159,7 +4159,7 @@ def test_fixture_duplicated_arguments() -> None:
     """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
     with pytest.raises(TypeError) as excinfo:
 
-        @pytest.fixture("session", scope="session")  # type: ignore[call-overload] # noqa: F821
+        @pytest.fixture("session", scope="session")  # type: ignore[call-overload]
         def arg(arg):
             pass
 
@@ -4171,7 +4171,7 @@ def test_fixture_duplicated_arguments() -> None:
 
     with pytest.raises(TypeError) as excinfo:
 
-        @pytest.fixture(  # type: ignore[call-overload] # noqa: F821
+        @pytest.fixture(  # type: ignore[call-overload]
             "function",
             ["p1"],
             True,
@@ -4199,7 +4199,7 @@ def test_fixture_with_positionals() -> None:
 
     with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
 
-        @pytest.fixture("function", [0], True)  # type: ignore[call-overload] # noqa: F821
+        @pytest.fixture("function", [0], True)  # type: ignore[call-overload]
         def fixture_with_positionals():
             pass
 
@@ -4213,7 +4213,7 @@ def test_fixture_with_positionals() -> None:
 def test_fixture_with_too_many_positionals() -> None:
     with pytest.raises(TypeError) as excinfo:
 
-        @pytest.fixture("function", [0], True, ["id"], "name", "extra")  # type: ignore[call-overload] # noqa: F821
+        @pytest.fixture("function", [0], True, ["id"], "name", "extra")  # type: ignore[call-overload]
         def fixture_with_positionals():
             pass
 

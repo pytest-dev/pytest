@@ -1602,7 +1602,7 @@ def test_invocation_args(testdir):
 
     # args cannot be None
     with pytest.raises(TypeError):
-        Config.InvocationParams(args=None, plugins=None, dir=Path())  # type: ignore[arg-type] # noqa: F821
+        Config.InvocationParams(args=None, plugins=None, dir=Path())  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(

@@ -34,8 +34,8 @@ def test_exceptions() -> None:
             raise self.ex
 
     class BrokenReprException(Exception):
-        __str__ = None  # type: ignore[assignment] # noqa: F821
-        __repr__ = None  # type: ignore[assignment] # noqa: F821
+        __str__ = None  # type: ignore[assignment]
+        __repr__ = None  # type: ignore[assignment]
 
     assert "Exception" in saferepr(BrokenRepr(Exception("broken")))
     s = saferepr(BrokenReprException("really broken"))
@@ -44,7 +44,7 @@ def test_exceptions() -> None:
 
     none = None
     try:
-        none()  # type: ignore[misc] # noqa: F821
+        none()  # type: ignore[misc]
     except BaseException as exc:
         exp_exc = repr(exc)
     obj = BrokenRepr(BrokenReprException("omg even worse"))
@@ -139,7 +139,7 @@ def test_big_repr():
 def test_repr_on_newstyle() -> None:
     class Function:
         def __repr__(self):
-            return "<%s>" % (self.name)  # type: ignore[attr-defined] # noqa: F821
+            return "<%s>" % (self.name)  # type: ignore[attr-defined]
 
     assert saferepr(Function())
 

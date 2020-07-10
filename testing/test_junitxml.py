@@ -1124,7 +1124,7 @@ def test_unicode_issue368(testdir) -> None:
     node_reporter.append_skipped(test_report)
     test_report.longrepr = "filename", 1, "Skipped: 卡嘣嘣"
     node_reporter.append_skipped(test_report)
-    test_report.wasxfail = ustr  # type: ignore[attr-defined] # noqa: F821
+    test_report.wasxfail = ustr  # type: ignore[attr-defined]
     node_reporter.append_skipped(test_report)
     log.pytest_sessionfinish()
 
