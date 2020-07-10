@@ -1,1 +1,3 @@
-Add support for ``NO_COLOR`` and ``FORCE_COLOR``.
+Added support for ``NO_COLOR`` and ``FORCE_COLOR`` environment variables to control colored output.
+
+For more information, see `the docs <https://docs.pytest.org/en/stable/reference.html#environment-variables>`__.
