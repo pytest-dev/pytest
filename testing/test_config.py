@@ -6,6 +6,7 @@ from typing import Dict
 from typing import List
 from typing import Sequence
 
+import attr
 import py.path
 
 import _pytest._code
@@ -250,107 +251,115 @@ class TestParseIni:
     @pytest.mark.parametrize(
         "ini_file_text, exception_text",
         [
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = fakePlugin1 fakePlugin2
-          """,
-                "Missing required plugins: fakePlugin1, fakePlugin2",
-            ),
-            (
-                """
-          [pytest]
-          required_plugins = a pytest-xdist z
-          """,
+                [pytest]
+                required_plugins = a z
+                """,
                 "Missing required plugins: a, z",
+                id="2-missing",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = a q j b c z
-          """,
-                "Missing required plugins: a, b, c, j, q, z",
+                [pytest]
+                required_plugins = a z myplugin
+                """,
+                "Missing required plugins: a, z",
+                id="2-missing-1-ok",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = pytest-xdist
-          """,
-                "",
+                [pytest]
+                required_plugins = myplugin
+                """,
+                None,
+                id="1-ok",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = pytest-xdist==1.32.0
-          """,
-                "",
+                [pytest]
+                required_plugins = myplugin==1.5
+                """,
+                None,
+                id="1-ok-pin-exact",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = pytest-xdist>1.0.0,<2.0.0
-          """,
-                "",
+                [pytest]
+                required_plugins = myplugin>1.0,<2.0
+                """,
+                None,
+                id="1-ok-pin-loose",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = pytest-xdist~=1.32.0 pytest-xdist==1.32.0 pytest-xdist!=0.0.1 pytest-xdist<=99.99.0
-            pytest-xdist>=1.32.0 pytest-xdist<9.9.9 pytest-xdist>1.30.0 pytest-xdist===1.32.0
-          """,
-                "",
+                [pytest]
+                required_plugins = pyplugin==1.6
+                """,
+                "Missing required plugins: pyplugin==1.6",
+                id="missing-version",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = pytest-xdist>9.9.9 pytest-xdist==1.32.0 pytest-xdist==8.8.8
-          """,
-                "Missing required plugins: pytest-xdist==8.8.8, pytest-xdist>9.9.9",
+                [pytest]
+                required_plugins = pyplugin==1.6 other==1.0
+                """,
+                "Missing required plugins: other==1.0, pyplugin==1.6",
+                id="missing-versions",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          required_plugins = pytest-xdist==aegsrgrsgs pytest-xdist==-1 pytest-xdist>2.1.1,>3.0.0
-          """,
-                "Missing required plugins: pytest-xdist==-1, pytest-xdist==aegsrgrsgs, pytest-xdist>2.1.1,>3.0.0",
-            ),
-            (
-                """
-          [pytest]
-          required_plugins = pytest-xdist== pytest-xdist<=
-          """,
-                "Missing required plugins: pytest-xdist<=, pytest-xdist==",
-            ),
-            (
-                """
-          [pytest]
-          required_plugins = pytest-xdist= pytest-xdist<
-          """,
-                "Missing required plugins: pytest-xdist<, pytest-xdist=",
-            ),
-            (
-                """
-          [some_other_header]
-          required_plugins = wont be triggered
-          [pytest]
-          minversion = 5.0.0
-          """,
-                "",
-            ),
-            (
-                """
-          [pytest]
-          minversion = 5.0.0
-          """,
-                "",
+                [some_other_header]
+                required_plugins = wont be triggered
+                [pytest]
+                """,
+                None,
+                id="invalid-header",
             ),
         ],
     )
-    def test_missing_required_plugins(self, testdir, ini_file_text, exception_text):
-        pytest.importorskip("xdist")
+    def test_missing_required_plugins(
+        self, testdir, monkeypatch, ini_file_text, exception_text
+    ):
+        """Check 'required_plugins' option with various settings.
 
-        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
-        testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        This test installs a mock "myplugin-1.5" which is used in the parametrized test cases.
+        """
+
+        @attr.s
+        class DummyEntryPoint:
+            name = attr.ib()
+            module = attr.ib()
+            group = "pytest11"
+
+            def load(self):
+                __import__(self.module)
+                return sys.modules[self.module]
+
+        entry_points = [
+            DummyEntryPoint("myplugin1", "myplugin1_module"),
+        ]
+
+        @attr.s
+        class DummyDist:
+            entry_points = attr.ib()
+            files = ()
+            version = "1.5"
+
+            @property
+            def metadata(self):
+                return {"name": "myplugin"}
+
+        def my_dists():
+            return [DummyDist(entry_points)]
+
+        testdir.makepyfile(myplugin1_module="# my plugin module")
+        testdir.syspathinsert()
+
+        monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
+        testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+        testdir.makeini(ini_file_text)
 
         if exception_text:
             with pytest.raises(pytest.fail.Exception, match=exception_text):
