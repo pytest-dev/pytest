@@ -145,15 +145,6 @@ class Frame:
         f_locals.update(vars)
         return eval(code, self.f_globals, f_locals)
 
-    def exec_(self, code, **vars) -> None:
-        """Exec 'code' in the frame.
-
-        'vars' are optional; additional local variables.
-        """
-        f_locals = self.f_locals.copy()
-        f_locals.update(vars)
-        exec(code, self.f_globals, f_locals)
-
     def repr(self, object: object) -> str:
         """Return a 'safe' (non-recursive, one-line) string repr for 'object'."""
         return saferepr(object)
