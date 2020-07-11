@@ -149,7 +149,18 @@ class TerminalWriter:
 
             msg = self.markup(msg, **markup)
 
-            self._file.write(msg)
+            try:
+                self._file.write(msg)
+            except UnicodeEncodeError:
+                # Some environments don't support printing general Unicode
+                # strings, due to misconfiguration or otherwise; in that case,
+                # print the string escaped to ASCII.
+                # When the Unicode situation improves we should consider
+                # letting the error propagate instead of masking it (see #7475
+                # for one brief attempt).
+                msg = msg.encode("unicode-escape").decode("ascii")
+                self._file.write(msg)
+
             if flush:
                 self.flush()
 
