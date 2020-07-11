@@ -1,1 +1,1 @@
-``--log-file`` CLI option and ``log_file`` ini marker now creates subdirectories if specified.
+``--log-file`` CLI option and ``log_file`` ini marker now create subdirectories if needed.

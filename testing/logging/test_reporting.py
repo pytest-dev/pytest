@@ -1161,39 +1161,3 @@ def test_log_file_cli_subdirectories_are_successfully_created(testdir):
     result = testdir.runpytest("--log-file=foo/bar/logf.log")
     assert "logf.log" in os.listdir(expected)
     assert result.ret == ExitCode.OK
-
-
-def test_log_file_cli_no_subdirectories_works_ok(testdir):
-    path = testdir.makepyfile(""" def test_logger(): pass """)
-    expected = os.path.join(os.path.dirname(path))
-    result = testdir.runpytest("--log-file=logf.log")
-    assert "logf.log" in os.listdir(expected)
-    assert result.ret == ExitCode.OK
-
-
-def test_log_file_marker_subdirectories_are_successfully_created(testdir):
-    path = testdir.makeini(
-        """
-        [pytest]
-        log_file = sub/logf.log
-        """,
-    )
-    testdir.makepyfile(""" def test_logger(): pass """)
-    expected = os.path.join(os.path.dirname(path), "sub")
-    result = testdir.runpytest()
-    assert "logf.log" in os.listdir(expected)
-    assert result.ret == ExitCode.OK
-
-
-def test_log_file_marker_no_subdirectories_works_ok(testdir):
-    path = testdir.makeini(
-        """
-        [pytest]
-        log_file = logf.log
-        """,
-    )
-    testdir.makepyfile(""" def test_logger(): pass """)
-    expected = os.path.join(os.path.dirname(path))
-    result = testdir.runpytest()
-    assert "logf.log" in os.listdir(expected)
-    assert result.ret == ExitCode.OK
