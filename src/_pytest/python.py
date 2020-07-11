@@ -13,7 +13,9 @@ from collections.abc import Sequence
 from functools import partial
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -196,8 +198,8 @@ def pytest_collect_file(path: py.path.local, parent) -> Optional["Module"]:
     return None
 
 
-def path_matches_patterns(path, patterns):
-    """Returns True if the given py.path.local matches one of the patterns in the list of globs given"""
+def path_matches_patterns(path: py.path.local, patterns: Iterable[str]) -> bool:
+    """Returns True if path matches any of the patterns in the list of globs given."""
     return any(path.fnmatch(pattern) for pattern in patterns)
 
 
@@ -297,10 +299,10 @@ class PyobjMixin:
         """Gets the underlying Python object. May be overwritten by subclasses."""
         # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
         assert self.parent is not None
-        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        obj = self.parent.obj  # type: ignore[attr-defined]
         return getattr(obj, self.name)
 
-    def getmodpath(self, stopatmodule=True, includemodule=False):
+    def getmodpath(self, stopatmodule: bool = True, includemodule: bool = False) -> str:
         """ return python path relative to the containing module. """
         chain = self.listchain()
         chain.reverse()
@@ -338,10 +340,10 @@ class PyobjMixin:
 
 
 class PyCollector(PyobjMixin, nodes.Collector):
-    def funcnamefilter(self, name):
+    def funcnamefilter(self, name: str) -> bool:
         return self._matches_prefix_or_glob_option("python_functions", name)
 
-    def isnosetest(self, obj):
+    def isnosetest(self, obj: object) -> bool:
         """ Look for the __test__ attribute, which is applied by the
         @nose.tools.istest decorator
         """
@@ -350,10 +352,10 @@ class PyCollector(PyobjMixin, nodes.Collector):
         # function) as test classes.
         return safe_getattr(obj, "__test__", False) is True
 
-    def classnamefilter(self, name):
+    def classnamefilter(self, name: str) -> bool:
         return self._matches_prefix_or_glob_option("python_classes", name)
 
-    def istestfunction(self, obj, name):
+    def istestfunction(self, obj: object, name: str) -> bool:
         if self.funcnamefilter(name) or self.isnosetest(obj):
             if isinstance(obj, staticmethod):
                 # static methods need to be unwrapped
@@ -365,10 +367,10 @@ class PyCollector(PyobjMixin, nodes.Collector):
         else:
             return False
 
-    def istestclass(self, obj, name):
+    def istestclass(self, obj: object, name: str) -> bool:
         return self.classnamefilter(name) or self.isnosetest(obj)
 
-    def _matches_prefix_or_glob_option(self, option_name, name):
+    def _matches_prefix_or_glob_option(self, option_name: str, name: str) -> bool:
         """
         checks if the given name matches the prefix or glob-pattern defined
         in ini configuration.
@@ -428,7 +430,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         )  # type: Union[None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]]
         return item
 
-    def _genfunctions(self, name, funcobj):
+    def _genfunctions(self, name: str, funcobj) -> Iterator["Function"]:
         modulecol = self.getparent(Module)
         assert modulecol is not None
         module = modulecol.obj
@@ -486,7 +488,7 @@ class Module(nodes.File, PyCollector):
         self.session._fixturemanager.parsefactories(self)
         return super().collect()
 
-    def _inject_setup_module_fixture(self):
+    def _inject_setup_module_fixture(self) -> None:
         """Injects a hidden autouse, module scoped fixture into the collected module object
         that invokes setUpModule/tearDownModule if either or both are available.
 
@@ -504,7 +506,7 @@ class Module(nodes.File, PyCollector):
             return
 
         @fixtures.fixture(autouse=True, scope="module")
-        def xunit_setup_module_fixture(request):
+        def xunit_setup_module_fixture(request) -> Generator[None, None, None]:
             if setup_module is not None:
                 _call_with_optional_argument(setup_module, request.module)
             yield
@@ -513,7 +515,7 @@ class Module(nodes.File, PyCollector):
 
         self.obj.__pytest_setup_module = xunit_setup_module_fixture
 
-    def _inject_setup_function_fixture(self):
+    def _inject_setup_function_fixture(self) -> None:
         """Injects a hidden autouse, function scoped fixture into the collected module object
         that invokes setup_function/teardown_function if either or both are available.
 
@@ -528,7 +530,7 @@ class Module(nodes.File, PyCollector):
             return
 
         @fixtures.fixture(autouse=True, scope="function")
-        def xunit_setup_function_fixture(request):
+        def xunit_setup_function_fixture(request) -> Generator[None, None, None]:
             if request.instance is not None:
                 # in this case we are bound to an instance, so we need to let
                 # setup_method handle this
@@ -608,7 +610,7 @@ class Package(Module):
         )
         self.name = os.path.basename(str(fspath.dirname))
 
-    def setup(self):
+    def setup(self) -> None:
         # not using fixtures to call setup_module here because autouse fixtures
         # from packages are not called automatically (#4085)
         setup_module = _get_first_non_fixture_func(
@@ -661,7 +663,7 @@ class Package(Module):
                 pkg_prefixes.add(path)
 
 
-def _call_with_optional_argument(func, arg):
+def _call_with_optional_argument(func, arg) -> None:
     """Call the given function with the given argument if func accepts one argument, otherwise
     calls func without arguments"""
     arg_count = func.__code__.co_argcount
@@ -673,7 +675,7 @@ def _call_with_optional_argument(func, arg):
         func()
 
 
-def _get_first_non_fixture_func(obj, names):
+def _get_first_non_fixture_func(obj: object, names: Iterable[str]):
     """Return the attribute from the given object to be used as a setup/teardown
     xunit-style function, but only if not marked as a fixture to
     avoid calling it twice.
@@ -723,7 +725,7 @@ class Class(PyCollector):
 
         return [Instance.from_parent(self, name="()")]
 
-    def _inject_setup_class_fixture(self):
+    def _inject_setup_class_fixture(self) -> None:
         """Injects a hidden autouse, class scoped fixture into the collected class object
         that invokes setup_class/teardown_class if either or both are available.
 
@@ -736,7 +738,7 @@ class Class(PyCollector):
             return
 
         @fixtures.fixture(autouse=True, scope="class")
-        def xunit_setup_class_fixture(cls):
+        def xunit_setup_class_fixture(cls) -> Generator[None, None, None]:
             if setup_class is not None:
                 func = getimfunc(setup_class)
                 _call_with_optional_argument(func, self.obj)
@@ -747,7 +749,7 @@ class Class(PyCollector):
 
         self.obj.__pytest_setup_class = xunit_setup_class_fixture
 
-    def _inject_setup_method_fixture(self):
+    def _inject_setup_method_fixture(self) -> None:
         """Injects a hidden autouse, function scoped fixture into the collected class object
         that invokes setup_method/teardown_method if either or both are available.
 
@@ -760,7 +762,7 @@ class Class(PyCollector):
             return
 
         @fixtures.fixture(autouse=True, scope="function")
-        def xunit_setup_method_fixture(self, request):
+        def xunit_setup_method_fixture(self, request) -> Generator[None, None, None]:
             method = request.function
             if setup_method is not None:
                 func = getattr(self, "setup_method")
@@ -782,7 +784,7 @@ class Instance(PyCollector):
     def _getobj(self):
         # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
         assert self.parent is not None
-        obj = self.parent.obj  # type: ignore[attr-defined] # noqa: F821
+        obj = self.parent.obj  # type: ignore[attr-defined]
         return obj()
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
@@ -794,16 +796,18 @@ class Instance(PyCollector):
         return self.obj
 
 
-def hasinit(obj):
-    init = getattr(obj, "__init__", None)
+def hasinit(obj: object) -> bool:
+    init = getattr(obj, "__init__", None)  # type: object
     if init:
         return init != object.__init__
+    return False
 
 
-def hasnew(obj):
-    new = getattr(obj, "__new__", None)
+def hasnew(obj: object) -> bool:
+    new = getattr(obj, "__new__", None)  # type: object
     if new:
         return new != object.__new__
+    return False
 
 
 class CallSpec2:
@@ -843,7 +847,7 @@ class CallSpec2:
 
     def setmulti2(
         self,
-        valtypes: "Mapping[str, Literal['params', 'funcargs']]",
+        valtypes: Mapping[str, "Literal['params', 'funcargs']"],
         argnames: typing.Sequence[str],
         valset: Iterable[object],
         id: str,
@@ -903,7 +907,7 @@ class Metafunc:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     @property
-    def funcargnames(self):
+    def funcargnames(self) -> List[str]:
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
         warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames
@@ -1170,7 +1174,11 @@ class Metafunc:
                     )
 
 
-def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
+def _find_parametrized_scope(
+    argnames: typing.Sequence[str],
+    arg2fixturedefs: Mapping[str, typing.Sequence[fixtures.FixtureDef]],
+    indirect: Union[bool, typing.Sequence[str]],
+) -> "fixtures._Scope":
     """Find the most appropriate scope for a parametrized call based on its arguments.
 
     When there's at least one direct argument, always use "function" scope.
@@ -1180,9 +1188,7 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
 
     Related to issue #1832, based on code posted by @Kingdread.
     """
-    from _pytest.fixtures import scopes
-
-    if isinstance(indirect, (list, tuple)):
+    if isinstance(indirect, Sequence):
         all_arguments_are_fixtures = len(indirect) == len(argnames)
     else:
         all_arguments_are_fixtures = bool(indirect)
@@ -1196,7 +1202,7 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
         ]
         if used_scopes:
             # Takes the most narrow scope from used fixtures
-            for scope in reversed(scopes):
+            for scope in reversed(fixtures.scopes):
                 if scope in used_scopes:
                     return scope
 
@@ -1264,7 +1270,7 @@ def _idvalset(
     ids: Optional[List[Union[None, str]]],
     nodeid: Optional[str],
     config: Optional[Config],
-):
+) -> str:
     if parameterset.id is not None:
         return parameterset.id
     id = None if ids is None or idx >= len(ids) else ids[idx]
@@ -1318,7 +1324,7 @@ def show_fixtures_per_test(config):
     return wrap_session(config, _show_fixtures_per_test)
 
 
-def _show_fixtures_per_test(config, session):
+def _show_fixtures_per_test(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
@@ -1330,7 +1336,7 @@ def _show_fixtures_per_test(config, session):
         loc = getlocation(func, curdir)
         return curdir.bestrelpath(py.path.local(loc))
 
-    def write_fixture(fixture_def):
+    def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
@@ -1346,18 +1352,16 @@ def _show_fixtures_per_test(config, session):
         else:
             tw.line("    no docstring available", red=True)
 
-    def write_item(item):
-        try:
-            info = item._fixtureinfo
-        except AttributeError:
-            # doctests items have no _fixtureinfo attribute
-            return
-        if not info.name2fixturedefs:
-            # this test item does not use any fixtures
+    def write_item(item: nodes.Item) -> None:
+        # Not all items have _fixtureinfo attribute.
+        info = getattr(item, "_fixtureinfo", None)  # type: Optional[FuncFixtureInfo]
+        if info is None or not info.name2fixturedefs:
+            # This test item does not use any fixtures.
             return
         tw.line()
         tw.sep("-", "fixtures used by {}".format(item.name))
-        tw.sep("-", "({})".format(get_best_relpath(item.function)))
+        # TODO: Fix this type ignore.
+        tw.sep("-", "({})".format(get_best_relpath(item.function)))  # type: ignore[attr-defined]
         # dict key not used in loop but needed for sorting
         for _, fixturedefs in sorted(info.name2fixturedefs.items()):
             assert fixturedefs is not None
@@ -1448,15 +1452,15 @@ class Function(PyobjMixin, nodes.Item):
 
     def __init__(
         self,
-        name,
+        name: str,
         parent,
-        config=None,
+        config: Optional[Config] = None,
         callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
         keywords=None,
-        session=None,
+        session: Optional[Session] = None,
         fixtureinfo: Optional[FuncFixtureInfo] = None,
-        originalname=None,
+        originalname: Optional[str] = None,
     ) -> None:
         """
         param name: the full function name, including any decorations like those
@@ -1533,8 +1537,8 @@ class Function(PyobjMixin, nodes.Item):
         """
         return super().from_parent(parent=parent, **kw)
 
-    def _initrequest(self):
-        self.funcargs = {}
+    def _initrequest(self) -> None:
+        self.funcargs = {}  # type: Dict[str, object]
         self._request = fixtures.FixtureRequest(self)
 
     @property
@@ -1552,7 +1556,7 @@ class Function(PyobjMixin, nodes.Item):
         return self
 
     @property
-    def funcargnames(self):
+    def funcargnames(self) -> List[str]:
         """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
         warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames
@@ -1589,7 +1593,7 @@ class Function(PyobjMixin, nodes.Item):
                         entry.set_repr_style("short")
 
     # TODO: Type ignored -- breaks Liskov Substitution.
-    def repr_failure(  # type: ignore[override] # noqa: F821
+    def repr_failure(  # type: ignore[override]
         self, excinfo: ExceptionInfo[BaseException],
     ) -> Union[str, TerminalRepr]:
         style = self.config.getoption("tbstyle", "auto")

@@ -14,6 +14,7 @@ import platform
 import re
 import sys
 from datetime import datetime
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Match
@@ -70,7 +71,7 @@ del _legal_xml_re
 _py_ext_re = re.compile(r"\.py$")
 
 
-def bin_xml_escape(arg: str) -> py.xml.raw:
+def bin_xml_escape(arg: object) -> py.xml.raw:
     def repl(matchobj: Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
@@ -78,7 +79,7 @@ def bin_xml_escape(arg: str) -> py.xml.raw:
         else:
             return "#x%04X" % i
 
-    return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
+    return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(str(arg))))
 
 
 def merge_family(left, right) -> None:
@@ -118,10 +119,10 @@ class _NodeReporter:
         self.xml.add_stats(type(node).__name__)
         self.nodes.append(node)
 
-    def add_property(self, name: str, value: str) -> None:
+    def add_property(self, name: str, value: object) -> None:
         self.properties.append((str(name), bin_xml_escape(value)))
 
-    def add_attribute(self, name: str, value: str) -> None:
+    def add_attribute(self, name: str, value: object) -> None:
         self.attrs[str(name)] = bin_xml_escape(value)
 
     def make_properties_node(self) -> Union[py.xml.Tag, str]:
@@ -280,7 +281,7 @@ class _NodeReporter:
         self.__dict__.clear()
         # Type ignored becuase mypy doesn't like overriding a method.
         # Also the return value doesn't match...
-        self.to_xml = lambda: py.xml.raw(data)  # type: ignore # noqa: F821
+        self.to_xml = lambda: py.xml.raw(data)  # type: ignore
 
 
 def _warn_incompatibility_with_xunit2(
@@ -301,12 +302,14 @@ def _warn_incompatibility_with_xunit2(
 
 
 @pytest.fixture
-def record_property(request: FixtureRequest):
-    """Add an extra properties the calling test.
+def record_property(request: FixtureRequest) -> Callable[[str, object], None]:
+    """Add extra properties to the calling test.
+
     User properties become part of the test report and are available to the
     configured reporters, like JUnit XML.
-    The fixture is callable with ``(name, value)``, with value being automatically
-    xml-encoded.
+
+    The fixture is callable with ``name, value``. The value is automatically
+    XML-encoded.
 
     Example::
 
@@ -322,10 +325,11 @@ def record_property(request: FixtureRequest):
 
 
 @pytest.fixture
-def record_xml_attribute(request: FixtureRequest):
+def record_xml_attribute(request: FixtureRequest) -> Callable[[str, object], None]:
     """Add extra xml attributes to the tag for the calling test.
-    The fixture is callable with ``(name, value)``, with value being
-    automatically xml-encoded
+
+    The fixture is callable with ``name, value``. The value is
+    automatically XML-encoded.
     """
     from _pytest.warning_types import PytestExperimentalApiWarning
 
@@ -336,7 +340,7 @@ def record_xml_attribute(request: FixtureRequest):
     _warn_incompatibility_with_xunit2(request, "record_xml_attribute")
 
     # Declare noop
-    def add_attr_noop(name: str, value: str) -> None:
+    def add_attr_noop(name: str, value: object) -> None:
         pass
 
     attr_func = add_attr_noop
@@ -359,7 +363,7 @@ def _check_record_param_type(param: str, v: str) -> None:
 
 
 @pytest.fixture(scope="session")
-def record_testsuite_property(request: FixtureRequest):
+def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object], None]:
     """
     Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to
     writing global information regarding the entire test suite, and is compatible with ``xunit2`` JUnit family.
@@ -377,7 +381,7 @@ def record_testsuite_property(request: FixtureRequest):
 
     __tracebackhide__ = True
 
-    def record_func(name: str, value: str):
+    def record_func(name: str, value: object) -> None:
         """noop function in case --junitxml was not passed in the command-line"""
         __tracebackhide__ = True
         _check_record_param_type("name", name)
@@ -693,7 +697,7 @@ class LogXML:
     def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
         terminalreporter.write_sep("-", "generated xml file: {}".format(self.logfile))
 
-    def add_global_property(self, name: str, value: str) -> None:
+    def add_global_property(self, name: str, value: object) -> None:
         __tracebackhide__ = True
         _check_record_param_type("name", name)
         self.global_properties.append((name, bin_xml_escape(value)))

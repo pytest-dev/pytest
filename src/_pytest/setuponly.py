@@ -43,7 +43,7 @@ def pytest_fixture_setup(
                     param = fixturedef.ids[request.param_index]
             else:
                 param = request.param
-            fixturedef.cached_param = param  # type: ignore[attr-defined] # noqa: F821
+            fixturedef.cached_param = param  # type: ignore[attr-defined]
         _show_fixture_action(fixturedef, "SETUP")
 
 
@@ -53,7 +53,7 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef) -> None:
         if config.option.setupshow:
             _show_fixture_action(fixturedef, "TEARDOWN")
             if hasattr(fixturedef, "cached_param"):
-                del fixturedef.cached_param  # type: ignore[attr-defined] # noqa: F821
+                del fixturedef.cached_param  # type: ignore[attr-defined]
 
 
 def _show_fixture_action(fixturedef: FixtureDef, msg: str) -> None:

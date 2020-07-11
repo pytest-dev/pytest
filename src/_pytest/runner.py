@@ -106,8 +106,8 @@ def runtestprotocol(
     item: Item, log: bool = True, nextitem: Optional[Item] = None
 ) -> List[TestReport]:
     hasrequest = hasattr(item, "_request")
-    if hasrequest and not item._request:  # type: ignore[attr-defined] # noqa: F821
-        item._initrequest()  # type: ignore[attr-defined] # noqa: F821
+    if hasrequest and not item._request:  # type: ignore[attr-defined]
+        item._initrequest()  # type: ignore[attr-defined]
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
@@ -119,8 +119,8 @@ def runtestprotocol(
     # after all teardown hooks have been called
     # want funcargs and request info to go away
     if hasrequest:
-        item._request = False  # type: ignore[attr-defined] # noqa: F821
-        item.funcargs = None  # type: ignore[attr-defined] # noqa: F821
+        item._request = False  # type: ignore[attr-defined]
+        item.funcargs = None  # type: ignore[attr-defined]
     return reports
 
 
@@ -215,11 +215,18 @@ def call_and_report(
 
 
 def check_interactive_exception(call: "CallInfo", report: BaseReport) -> bool:
-    return call.excinfo is not None and not (
-        hasattr(report, "wasxfail")
-        or call.excinfo.errisinstance(Skipped)
-        or call.excinfo.errisinstance(bdb.BdbQuit)
-    )
+    """Check whether the call raised an exception that should be reported as
+    interactive."""
+    if call.excinfo is None:
+        # Didn't raise.
+        return False
+    if hasattr(report, "wasxfail"):
+        # Exception was expected.
+        return False
+    if isinstance(call.excinfo.value, (Skipped, bdb.BdbQuit)):
+        # Special control flow exception.
+        return False
+    return True
 
 
 def call_runtest_hook(
@@ -287,7 +294,7 @@ class CallInfo(Generic[_T]):
             result = func()  # type: Optional[_T]
         except BaseException:
             excinfo = ExceptionInfo.from_current()
-            if reraise is not None and excinfo.errisinstance(reraise):
+            if reraise is not None and isinstance(excinfo.value, reraise):
                 raise
             result = None
         # use the perf counter
@@ -325,7 +332,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
         if unittest is not None:
             # Type ignored because unittest is loaded dynamically.
             skip_exceptions.append(unittest.SkipTest)  # type: ignore
-        if call.excinfo.errisinstance(tuple(skip_exceptions)):
+        if isinstance(call.excinfo.value, tuple(skip_exceptions)):
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
             assert isinstance(r_, ExceptionChainRepr), repr(r_)
@@ -415,7 +422,7 @@ class SetupState:
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
-                exc = col._prepare_exc  # type: ignore[attr-defined] # noqa: F821
+                exc = col._prepare_exc  # type: ignore[attr-defined]
                 raise exc
 
         needed_collectors = colitem.listchain()
@@ -424,7 +431,7 @@ class SetupState:
             try:
                 col.setup()
             except TEST_OUTCOME as e:
-                col._prepare_exc = e  # type: ignore[attr-defined] # noqa: F821
+                col._prepare_exc = e  # type: ignore[attr-defined]
                 raise e
 
 

@@ -1219,7 +1219,7 @@ def _get_line_with_reprcrash_message(
 
     try:
         # Type ignored intentionally -- possible AttributeError expected.
-        msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr] # noqa: F821
+        msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
     except AttributeError:
         pass
     else:

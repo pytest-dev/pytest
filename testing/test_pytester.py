@@ -484,20 +484,20 @@ def test_linematcher_with_nonlist() -> None:
 
     lm = LineMatcher([])
     with pytest.raises(TypeError, match="invalid type for lines2: set"):
-        lm.fnmatch_lines(set())  # type: ignore[arg-type]  # noqa: F821
+        lm.fnmatch_lines(set())  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="invalid type for lines2: dict"):
-        lm.fnmatch_lines({})  # type: ignore[arg-type]  # noqa: F821
+        lm.fnmatch_lines({})  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="invalid type for lines2: set"):
-        lm.re_match_lines(set())  # type: ignore[arg-type]  # noqa: F821
+        lm.re_match_lines(set())  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="invalid type for lines2: dict"):
-        lm.re_match_lines({})  # type: ignore[arg-type]  # noqa: F821
+        lm.re_match_lines({})  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="invalid type for lines2: Source"):
-        lm.fnmatch_lines(Source())  # type: ignore[arg-type]  # noqa: F821
+        lm.fnmatch_lines(Source())  # type: ignore[arg-type]
     lm.fnmatch_lines([])
     lm.fnmatch_lines(())
     lm.fnmatch_lines("")
-    assert lm._getlines({}) == {}  # type: ignore[arg-type,comparison-overlap]  # noqa: F821
-    assert lm._getlines(set()) == set()  # type: ignore[arg-type,comparison-overlap]  # noqa: F821
+    assert lm._getlines({}) == {}  # type: ignore[arg-type,comparison-overlap]
+    assert lm._getlines(set()) == set()  # type: ignore[arg-type,comparison-overlap]
     assert lm._getlines(Source()) == []
     assert lm._getlines(Source("pass\npass")) == ["pass", "pass"]
 

@@ -248,7 +248,7 @@ def get_parametrized_fixture_keys(item: "nodes.Item", scopenum: int) -> Iterator
     the specified scope. """
     assert scopenum < scopenum_function  # function
     try:
-        callspec = item.callspec  # type: ignore[attr-defined] # noqa: F821
+        callspec = item.callspec  # type: ignore[attr-defined]
     except AttributeError:
         pass
     else:
@@ -266,7 +266,7 @@ def get_parametrized_fixture_keys(item: "nodes.Item", scopenum: int) -> Iterator
             elif scopenum == 2:  # module
                 key = (argname, param_index, item.fspath)
             elif scopenum == 3:  # class
-                item_cls = item.cls  # type: ignore[attr-defined] # noqa: F821
+                item_cls = item.cls  # type: ignore[attr-defined]
                 key = (argname, param_index, item.fspath, item_cls)
             yield key
 
@@ -477,7 +477,7 @@ class FixtureRequest:
             fixturedefs = self._fixturemanager.getfixturedefs(argname, parentid)
             # TODO: Fix this type ignore. Either add assert or adjust types.
             #       Can this be None here?
-            self._arg2fixturedefs[argname] = fixturedefs  # type: ignore[assignment] # noqa: F821
+            self._arg2fixturedefs[argname] = fixturedefs  # type: ignore[assignment]
         # fixturedefs list is immutable so we maintain a decreasing index
         index = self._arg2index.get(argname, 0) - 1
         if fixturedefs is None or (-index > len(fixturedefs)):
@@ -723,7 +723,7 @@ class FixtureRequest:
         if scope == "package":
             # FIXME: _fixturedef is not defined on FixtureRequest (this class),
             # but on FixtureRequest (a subclass).
-            node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined] # noqa: F821
+            node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
         else:
             node = get_scope_node(self._pyfuncitem, scope)
         if node is None and scope == "class":
@@ -809,7 +809,9 @@ def scope2index(scope: str, descr: str, where: Optional[str] = None) -> int:
 class FixtureLookupError(LookupError):
     """ could not return a requested Fixture (missing or invalid). """
 
-    def __init__(self, argname, request, msg: Optional[str] = None) -> None:
+    def __init__(
+        self, argname: Optional[str], request: FixtureRequest, msg: Optional[str] = None
+    ) -> None:
         self.argname = argname
         self.request = request
         self.fixturestack = request._get_fixturestack()
@@ -861,7 +863,14 @@ class FixtureLookupError(LookupError):
 
 
 class FixtureLookupErrorRepr(TerminalRepr):
-    def __init__(self, filename, firstlineno, tblines, errorstring, argname):
+    def __init__(
+        self,
+        filename: Union[str, py.path.local],
+        firstlineno: int,
+        tblines: Sequence[str],
+        errorstring: str,
+        argname: Optional[str],
+    ) -> None:
         self.tblines = tblines
         self.errorstring = errorstring
         self.filename = filename
@@ -935,7 +944,7 @@ def _eval_scope_callable(
     try:
         # Type ignored because there is no typing mechanism to specify
         # keyword arguments, currently.
-        result = scope_callable(fixture_name=fixture_name, config=config)  # type: ignore[call-arg] # noqa: F821
+        result = scope_callable(fixture_name=fixture_name, config=config)  # type: ignore[call-arg]
     except Exception as e:
         raise TypeError(
             "Error evaluating {} while defining fixture '{}'.\n"
@@ -1072,7 +1081,7 @@ def resolve_fixture_function(
     if fixturedef.unittest:
         if request.instance is not None:
             # bind the unbound method to the TestCase instance
-            fixturefunc = fixturedef.func.__get__(request.instance)  # type: ignore[union-attr] # noqa: F821
+            fixturefunc = fixturedef.func.__get__(request.instance)  # type: ignore[union-attr]
     else:
         # the fixture function needs to be bound to the actual
         # request.instance so that code working with "fixturedef" behaves
@@ -1081,12 +1090,12 @@ def resolve_fixture_function(
             # handle the case where fixture is defined not in a test class, but some other class
             # (for example a plugin class with a fixture), see #2270
             if hasattr(fixturefunc, "__self__") and not isinstance(
-                request.instance, fixturefunc.__self__.__class__  # type: ignore[union-attr] # noqa: F821
+                request.instance, fixturefunc.__self__.__class__  # type: ignore[union-attr]
             ):
                 return fixturefunc
             fixturefunc = getimfunc(fixturedef.func)
             if fixturefunc != fixturedef.func:
-                fixturefunc = fixturefunc.__get__(request.instance)  # type: ignore[union-attr] # noqa: F821
+                fixturefunc = fixturefunc.__get__(request.instance)  # type: ignore[union-attr]
     return fixturefunc
 
 
@@ -1158,7 +1167,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
 
     # keep reference to the original function in our own custom attribute so we don't unwrap
     # further than this point and lose useful wrappings like @mock.patch (#3774)
-    result.__pytest_wrapped__ = _PytestWrapper(function)  # type: ignore[attr-defined] # noqa: F821
+    result.__pytest_wrapped__ = _PytestWrapper(function)  # type: ignore[attr-defined]
 
     return result
 
@@ -1200,7 +1209,7 @@ class FixtureFunctionMarker:
             )
 
         # Type ignored because https://github.com/python/mypy/issues/2087.
-        function._pytestfixturefunction = self  # type: ignore[attr-defined] # noqa: F821
+        function._pytestfixturefunction = self  # type: ignore[attr-defined]
         return function
 
 
@@ -1493,7 +1502,7 @@ class FixtureManager:
     def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         nodeid = None
         try:
-            p = py.path.local(plugin.__file__)  # type: ignore[attr-defined] # noqa: F821
+            p = py.path.local(plugin.__file__)  # type: ignore[attr-defined]
         except AttributeError:
             pass
         else:

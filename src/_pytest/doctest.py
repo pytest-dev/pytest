@@ -284,7 +284,7 @@ class DoctestItem(pytest.Item):
         failures = []  # type: List[doctest.DocTestFailure]
         # Type ignored because we change the type of `out` from what
         # doctest expects.
-        self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type] # noqa: F821
+        self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
         if failures:
             raise MultipleDoctestFailures(failures)
 
@@ -302,7 +302,7 @@ class DoctestItem(pytest.Item):
             sys.stderr.write(err)
 
     # TODO: Type ignored -- breaks Liskov Substitution.
-    def repr_failure(  # type: ignore[override] # noqa: F821
+    def repr_failure(  # type: ignore[override]
         self, excinfo: ExceptionInfo[BaseException],
     ) -> Union[str, TerminalRepr]:
         import doctest
@@ -329,7 +329,7 @@ class DoctestItem(pytest.Item):
                     lineno = test.lineno + example.lineno + 1
                 message = type(failure).__name__
                 # TODO: ReprFileLocation doesn't expect a None lineno.
-                reprlocation = ReprFileLocation(filename, lineno, message)  # type: ignore[arg-type] # noqa: F821
+                reprlocation = ReprFileLocation(filename, lineno, message)  # type: ignore[arg-type]
                 checker = _get_checker()
                 report_choice = _get_report_choice(
                     self.config.getoption("doctestreport")
@@ -567,9 +567,9 @@ def _setup_fixtures(doctest_item: DoctestItem) -> FixtureRequest:
     def func() -> None:
         pass
 
-    doctest_item.funcargs = {}  # type: ignore[attr-defined] # noqa: F821
+    doctest_item.funcargs = {}  # type: ignore[attr-defined]
     fm = doctest_item.session._fixturemanager
-    doctest_item._fixtureinfo = fm.getfixtureinfo(  # type: ignore[attr-defined] # noqa: F821
+    doctest_item._fixtureinfo = fm.getfixtureinfo(  # type: ignore[attr-defined]
         node=doctest_item, func=func, cls=None, funcargs=False
     )
     fixture_request = FixtureRequest(doctest_item)

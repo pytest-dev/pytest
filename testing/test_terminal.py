@@ -1699,7 +1699,7 @@ def test_summary_stats(
     class fake_session:
         testscollected = 0
 
-    tr._session = fake_session  # type: ignore[assignment]  # noqa: F821
+    tr._session = fake_session  # type: ignore[assignment]
     assert tr._is_last_item
 
     # Reset cache.

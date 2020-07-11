@@ -3,9 +3,12 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import cast
+from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -74,7 +77,7 @@ class TestMetafunc:
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
 
         with pytest.raises(TypeError, match="^ids must be a callable or an iterable$"):
-            metafunc.parametrize("y", [5, 6], ids=42)  # type: ignore[arg-type] # noqa: F821
+            metafunc.parametrize("y", [5, 6], ids=42)  # type: ignore[arg-type]
 
     def test_parametrize_error_iterator(self) -> None:
         def func(x):
@@ -92,7 +95,7 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         # When the input is an iterator, only len(args) are taken,
         # so the bad Exc isn't reached.
-        metafunc.parametrize("x", [1, 2], ids=gen())  # type: ignore[arg-type] # noqa: F821
+        metafunc.parametrize("x", [1, 2], ids=gen())  # type: ignore[arg-type]
         assert [(x.funcargs, x.id) for x in metafunc._calls] == [
             ({"x": 1}, "0"),
             ({"x": 2}, "2"),
@@ -104,7 +107,7 @@ class TestMetafunc:
                 r" Exc\(from_gen\) \(type: <class .*Exc'>\) at index 2"
             ),
         ):
-            metafunc.parametrize("x", [1, 2, 3], ids=gen())  # type: ignore[arg-type] # noqa: F821
+            metafunc.parametrize("x", [1, 2, 3], ids=gen())  # type: ignore[arg-type]
 
     def test_parametrize_bad_scope(self) -> None:
         def func(x):
@@ -115,7 +118,7 @@ class TestMetafunc:
             fail.Exception,
             match=r"parametrize\(\) call in func got an unexpected scope value 'doggy'",
         ):
-            metafunc.parametrize("x", [1], scope="doggy")  # type: ignore[arg-type] # noqa: F821
+            metafunc.parametrize("x", [1], scope="doggy")  # type: ignore[arg-type]
 
     def test_parametrize_request_name(self, testdir: Testdir) -> None:
         """Show proper error  when 'request' is used as a parameter name in parametrize (#6183)"""
@@ -138,12 +141,15 @@ class TestMetafunc:
         class DummyFixtureDef:
             scope = attr.ib()
 
-        fixtures_defs = dict(
-            session_fix=[DummyFixtureDef("session")],
-            package_fix=[DummyFixtureDef("package")],
-            module_fix=[DummyFixtureDef("module")],
-            class_fix=[DummyFixtureDef("class")],
-            func_fix=[DummyFixtureDef("function")],
+        fixtures_defs = cast(
+            Dict[str, Sequence[fixtures.FixtureDef]],
+            dict(
+                session_fix=[DummyFixtureDef("session")],
+                package_fix=[DummyFixtureDef("package")],
+                module_fix=[DummyFixtureDef("module")],
+                class_fix=[DummyFixtureDef("class")],
+                func_fix=[DummyFixtureDef("function")],
+            ),
         )
 
         # use arguments to determine narrow scope; the cause of the bug is that it would look on all
@@ -669,7 +675,7 @@ class TestMetafunc:
             fail.Exception,
             match="In func: expected Sequence or boolean for indirect, got dict",
         ):
-            metafunc.parametrize("x, y", [("a", "b")], indirect={})  # type: ignore[arg-type] # noqa: F821
+            metafunc.parametrize("x, y", [("a", "b")], indirect={})  # type: ignore[arg-type]
 
     def test_parametrize_indirect_list_functional(self, testdir: Testdir) -> None:
         """

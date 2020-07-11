@@ -102,13 +102,13 @@ class UnitTestCase(Class):
             cls, "setUpClass", "tearDownClass", scope="class", pass_self=False
         )
         if class_fixture:
-            cls.__pytest_class_setup = class_fixture  # type: ignore[attr-defined] # noqa: F821
+            cls.__pytest_class_setup = class_fixture  # type: ignore[attr-defined]
 
         method_fixture = _make_xunit_fixture(
             cls, "setup_method", "teardown_method", scope="function", pass_self=True
         )
         if method_fixture:
-            cls.__pytest_method_setup = method_fixture  # type: ignore[attr-defined] # noqa: F821
+            cls.__pytest_method_setup = method_fixture  # type: ignore[attr-defined]
 
 
 def _make_xunit_fixture(
@@ -148,7 +148,7 @@ class TestCaseFunction(Function):
         # a bound method to be called during teardown() if set (see 'runtest()')
         self._explicit_tearDown = None  # type: Optional[Callable[[], None]]
         assert self.parent is not None
-        self._testcase = self.parent.obj(self.name)  # type: ignore[attr-defined] # noqa: F821
+        self._testcase = self.parent.obj(self.name)  # type: ignore[attr-defined]
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
@@ -167,7 +167,7 @@ class TestCaseFunction(Function):
         # unwrap potential exception info (see twisted trial support below)
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
-            excinfo = _pytest._code.ExceptionInfo(rawexcinfo)  # type: ignore[arg-type] # noqa: F821
+            excinfo = _pytest._code.ExceptionInfo(rawexcinfo)  # type: ignore[arg-type]
             # invoke the attributes to trigger storing the traceback
             # trial causes some issue there
             excinfo.value
@@ -259,7 +259,7 @@ class TestCaseFunction(Function):
         # let the unittest framework handle async functions
         if is_async_function(self.obj):
             # Type ignored because self acts as the TestResult, but is not actually one.
-            self._testcase(result=self)  # type: ignore[arg-type] # noqa: F821
+            self._testcase(result=self)  # type: ignore[arg-type]
         else:
             # when --pdb is given, we want to postpone calling tearDown() otherwise
             # when entering the pdb prompt, tearDown() would have probably cleaned up
@@ -275,7 +275,7 @@ class TestCaseFunction(Function):
             # wrap_pytest_function_for_tracing replaces self.obj by a wrapper
             setattr(self._testcase, self.name, self.obj)
             try:
-                self._testcase(result=self)  # type: ignore[arg-type] # noqa: F821
+                self._testcase(result=self)  # type: ignore[arg-type]
             finally:
                 delattr(self._testcase, self.name)
 
@@ -302,9 +302,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
     if (
         unittest
         and call.excinfo
-        and call.excinfo.errisinstance(
-            unittest.SkipTest  # type: ignore[attr-defined] # noqa: F821
-        )
+        and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
     ):
         excinfo = call.excinfo
         # let's substitute the excinfo with a pytest.skip one

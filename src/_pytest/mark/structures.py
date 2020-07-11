@@ -125,7 +125,7 @@ class ParameterSet(
             #
             #   @pytest.mark.parametrize(('x', 'y'), [1, 2])
             #   def test_foo(x, y): pass
-            return cls(parameterset, marks=[], id=None)  # type: ignore[arg-type] # noqa: F821
+            return cls(parameterset, marks=[], id=None)  # type: ignore[arg-type]
 
     @staticmethod
     def _parse_parametrize_args(
@@ -321,7 +321,7 @@ class MarkDecorator:
     # return type. Not much we can do about that. Thankfully mypy picks
     # the first match so it works out even if we break the rules.
     @overload
-    def __call__(self, arg: _Markable) -> _Markable:  # type: ignore[misc] # noqa: F821
+    def __call__(self, arg: _Markable) -> _Markable:  # type: ignore[misc]
         raise NotImplementedError()
 
     @overload  # noqa: F811

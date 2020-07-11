@@ -25,9 +25,9 @@ def test_ischildnode(baseid: str, nodeid: str, expected: bool) -> None:
 
 def test_node_from_parent_disallowed_arguments() -> None:
     with pytest.raises(TypeError, match="session is"):
-        nodes.Node.from_parent(None, session=None)  # type: ignore[arg-type] # noqa: F821
+        nodes.Node.from_parent(None, session=None)  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="config is"):
-        nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type] # noqa: F821
+        nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
 
 
 def test_std_warn_not_pytestwarning(testdir: Testdir) -> None:
@@ -38,7 +38,7 @@ def test_std_warn_not_pytestwarning(testdir: Testdir) -> None:
     """
     )
     with pytest.raises(ValueError, match=".*instance of PytestWarning.*"):
-        items[0].warn(UserWarning("some warning"))
+        items[0].warn(UserWarning("some warning"))  # type: ignore[arg-type]
 
 
 def test__check_initialpaths_for_relpath() -> None:

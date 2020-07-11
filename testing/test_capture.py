@@ -1537,7 +1537,7 @@ def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
     ef = capture.EncodedFile(tmpfile, encoding="utf-8")
     with pytest.raises(TypeError):
         ef.writelines([b"line1", b"line2"])
-    assert ef.writelines(["line3", "line4"]) is None  # type: ignore[func-returns-value]  # noqa: F821
+    assert ef.writelines(["line3", "line4"]) is None  # type: ignore[func-returns-value]
     ef.flush()
     tmpfile.seek(0)
     assert tmpfile.read() == b"line3line4"

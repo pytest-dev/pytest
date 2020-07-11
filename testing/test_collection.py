@@ -41,10 +41,10 @@ class TestCollector:
 
         for fn in fn1, fn2, fn3:
             assert isinstance(fn, pytest.Function)
-            assert fn != 3  # type: ignore[comparison-overlap]  # noqa: F821
+            assert fn != 3  # type: ignore[comparison-overlap]
             assert fn != modcol
-            assert fn != [1, 2, 3]  # type: ignore[comparison-overlap]  # noqa: F821
-            assert [1, 2, 3] != fn  # type: ignore[comparison-overlap]  # noqa: F821
+            assert fn != [1, 2, 3]  # type: ignore[comparison-overlap]
+            assert [1, 2, 3] != fn  # type: ignore[comparison-overlap]
             assert modcol != fn
 
         assert testdir.collect_by_name(modcol, "doesnotexist") is None

@@ -98,12 +98,12 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
         level: int,
     ) -> None:
         # Type ignored because _dispatch is private.
-        p = self._dispatch.get(type(object).__repr__, None)  # type: ignore[attr-defined] # noqa: F821
+        p = self._dispatch.get(type(object).__repr__, None)  # type: ignore[attr-defined]
 
         objid = id(object)
         if objid in context or p is None:
             # Type ignored because _format is private.
-            super()._format(  # type: ignore[misc] # noqa: F821
+            super()._format(  # type: ignore[misc]
                 object, stream, indent, allowance, context, level,
             )
             return

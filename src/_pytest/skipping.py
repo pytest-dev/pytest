@@ -56,7 +56,7 @@ def pytest_configure(config: Config) -> None:
         def nop(*args, **kwargs):
             pass
 
-        nop.Exception = xfail.Exception  # type: ignore[attr-defined] # noqa: F821
+        nop.Exception = xfail.Exception  # type: ignore[attr-defined]
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line(
