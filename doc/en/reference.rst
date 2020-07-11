@@ -494,17 +494,19 @@ monkeypatch
     :members:
 
 
-.. fixture:: testdir
+.. fixture:: test_path
 
-testdir
-~~~~~~~
+test_path
+~~~~~~~~~
 
 .. currentmodule:: _pytest.pytester
 
-This fixture provides a :class:`Testdir` instance useful for black-box testing of test files, making it ideal to
-test plugins.
+Provides a :class:`TestPath` instance that can be used to run and test pytest itself.
 
-To use it, include in your top-most ``conftest.py`` file:
+It provides an empty folder where pytest can be executed in isolation, and contains facilities
+to write test, configuration files, and match against expected output.
+
+To use it, include in your topmost ``conftest.py`` file:
 
 .. code-block:: python
 
@@ -512,7 +514,7 @@ To use it, include in your top-most ``conftest.py`` file:
 
 
 
-.. autoclass:: Testdir()
+.. autoclass:: TestPath()
     :members:
 
 .. autoclass:: RunResult()
@@ -521,6 +523,15 @@ To use it, include in your top-most ``conftest.py`` file:
 .. autoclass:: LineMatcher()
     :members:
 
+.. fixture:: testdir
+
+testdir
+~~~~~~~
+
+Identical to :fixture:`test_path`, but provides an instance whose methods return
+legacy ``py.path.local`` objects instead when applicable.
+
+New code should avoid using :fixture:`testdir` in favor of :fixture:`test_path`.
 
 .. fixture:: recwarn
 

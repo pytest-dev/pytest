@@ -612,7 +612,7 @@ def test_pytester_addopts_before_testdir(request, monkeypatch) -> None:
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
     testdir = request.getfixturevalue("testdir")
     assert "PYTEST_ADDOPTS" not in os.environ
-    testdir.finalize()
+    testdir._test_path._finalize()
     assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
     monkeypatch.undo()
     assert os.environ.get("PYTEST_ADDOPTS") == orig

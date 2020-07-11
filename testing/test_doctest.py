@@ -148,10 +148,10 @@ class TestDoctests:
         "   test_string,    encoding",
         [("foo", "ascii"), ("öäü", "latin1"), ("öäü", "utf-8")],
     )
-    def test_encoding(self, testdir, test_string, encoding):
+    def test_encoding(self, test_path, test_string, encoding):
         """Test support for doctest_encoding ini option.
         """
-        testdir.makeini(
+        test_path.makeini(
             """
             [pytest]
             doctest_encoding={}
@@ -165,9 +165,10 @@ class TestDoctests:
         """.format(
             test_string, repr(test_string)
         )
-        testdir._makefile(".txt", [doctest], {}, encoding=encoding)
+        fn = test_path.tmp_path / "test_encoding.txt"
+        fn.write_text(doctest, encoding=encoding)
 
-        result = testdir.runpytest()
+        result = test_path.runpytest()
 
         result.stdout.fnmatch_lines(["*1 passed*"])
 
