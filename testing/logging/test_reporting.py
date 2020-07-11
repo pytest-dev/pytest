@@ -1157,7 +1157,7 @@ def test_logging_emit_error_supressed(testdir: Testdir) -> None:
 
 def test_log_file_cli_subdirectories_are_successfully_created(testdir):
     path = testdir.makepyfile(""" def test_logger(): pass """)
-    expected = os.path.join(os.path.dirname(path), "foo", "bar")
+    expected = os.path.join(os.path.dirname(str(path)), "foo", "bar")
     result = testdir.runpytest("--log-file=foo/bar/logf.log")
     assert "logf.log" in os.listdir(expected)
     assert result.ret == ExitCode.OK
