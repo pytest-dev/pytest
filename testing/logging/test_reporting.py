@@ -5,6 +5,7 @@ from typing import cast
 
 import pytest
 from _pytest.capture import CaptureManager
+from _pytest.config import ExitCode
 from _pytest.pytester import Testdir
 from _pytest.terminal import TerminalReporter
 
@@ -1152,3 +1153,11 @@ def test_logging_emit_error_supressed(testdir: Testdir) -> None:
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_log_file_cli_subdirectories_are_successfully_created(testdir):
+    path = testdir.makepyfile(""" def test_logger(): pass """)
+    expected = os.path.join(os.path.dirname(str(path)), "foo", "bar")
+    result = testdir.runpytest("--log-file=foo/bar/logf.log")
+    assert "logf.log" in os.listdir(expected)
+    assert result.ret == ExitCode.OK
