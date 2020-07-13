@@ -231,11 +231,9 @@ unexpectedsuccess_key = StoreKey[str]()
 
 @hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: Item) -> None:
-    item._store[skipped_by_mark_key] = False
-
     skipped = evaluate_skip_marks(item)
+    item._store[skipped_by_mark_key] = skipped is not None
     if skipped:
-        item._store[skipped_by_mark_key] = True
         skip(skipped.reason)
 
     if not item.config.option.runxfail:
