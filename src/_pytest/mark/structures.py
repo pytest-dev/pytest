@@ -28,6 +28,9 @@ from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
+if TYPE_CHECKING:
+    from typing import Type
+
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
@@ -413,7 +416,9 @@ if TYPE_CHECKING:
             *conditions: Union[str, bool],
             reason: str = ...,
             run: bool = ...,
-            raises: Union[BaseException, Tuple[BaseException, ...]] = ...,
+            raises: Union[
+                "Type[BaseException]", Tuple["Type[BaseException]", ...]
+            ] = ...,
             strict: bool = ...
         ) -> MarkDecorator:
             raise NotImplementedError()
