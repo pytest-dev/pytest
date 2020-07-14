@@ -11,6 +11,7 @@ from collections import Counter
 from collections import defaultdict
 from collections.abc import Sequence
 from functools import partial
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generator
@@ -920,7 +921,7 @@ class Metafunc:
         ids: Optional[
             Union[
                 Iterable[Union[None, str, float, int, bool]],
-                Callable[[object], Optional[object]],
+                Callable[[Any], Optional[object]],
             ]
         ] = None,
         scope: "Optional[_Scope]" = None,
@@ -1040,7 +1041,7 @@ class Metafunc:
         ids: Optional[
             Union[
                 Iterable[Union[None, str, float, int, bool]],
-                Callable[[object], Optional[object]],
+                Callable[[Any], Optional[object]],
             ]
         ],
         parameters: typing.Sequence[ParameterSet],
@@ -1226,7 +1227,7 @@ def _idval(
     val: object,
     argname: str,
     idx: int,
-    idfn: Optional[Callable[[object], Optional[object]]],
+    idfn: Optional[Callable[[Any], Optional[object]]],
     nodeid: Optional[str],
     config: Optional[Config],
 ) -> str:
@@ -1266,7 +1267,7 @@ def _idvalset(
     idx: int,
     parameterset: ParameterSet,
     argnames: Iterable[str],
-    idfn: Optional[Callable[[object], Optional[object]]],
+    idfn: Optional[Callable[[Any], Optional[object]]],
     ids: Optional[List[Union[None, str]]],
     nodeid: Optional[str],
     config: Optional[Config],
@@ -1287,7 +1288,7 @@ def _idvalset(
 def idmaker(
     argnames: Iterable[str],
     parametersets: Iterable[ParameterSet],
-    idfn: Optional[Callable[[object], Optional[object]]] = None,
+    idfn: Optional[Callable[[Any], Optional[object]]] = None,
     ids: Optional[List[Union[None, str]]] = None,
     config: Optional[Config] = None,
     nodeid: Optional[str] = None,

@@ -433,7 +433,7 @@ if TYPE_CHECKING:
             ids: Optional[
                 Union[
                     Iterable[Union[None, str, float, int, bool]],
-                    Callable[[object], Optional[object]],
+                    Callable[[Any], Optional[object]],
                 ]
             ] = ...,
             scope: Optional[_Scope] = ...
