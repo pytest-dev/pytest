@@ -1,0 +1,1 @@
+The :func:`pytest.raises` function has a clearer error message when ``match`` matches the obtained string but is not regex-escaped.
