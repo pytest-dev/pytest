@@ -358,7 +358,7 @@ def test_get_extended_length_path_str():
 
 
 def test_suppress_error_removing_lock(tmp_path):
-    """ensure_deletable should not raise an exception if the lock file cannot be removed (#5456)"""
+    """ensure_deletable should not be resilient if lock file cannot be removed (#5456, #7491)"""
     path = tmp_path / "dir"
     path.mkdir()
     lock = get_lock_path(path)
@@ -366,6 +366,12 @@ def test_suppress_error_removing_lock(tmp_path):
     mtime = lock.stat().st_mtime
 
     with unittest.mock.patch.object(Path, "unlink", side_effect=OSError):
+        assert not ensure_deletable(
+            path, consider_lock_dead_if_created_before=mtime + 30
+        )
+    assert lock.is_file()
+
+    with unittest.mock.patch.object(Path, "is_file", side_effect=OSError):
         assert not ensure_deletable(
             path, consider_lock_dead_if_created_before=mtime + 30
         )

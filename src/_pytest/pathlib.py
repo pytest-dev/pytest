@@ -286,12 +286,17 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
 
 
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
-    """checks if a lock exists and breaks it if its considered dead"""
+    """checks if `path` is deletable based if the lock file is expired"""
     if path.is_symlink():
         return False
     lock = get_lock_path(path)
-    if not lock.exists():
-        return True
+    try:
+        if not lock.is_file():
+            return True
+    except OSError:
+        # we might not have access to the lock file at all, in this case assume
+        # we don't have access to the entire directory (#7491).
+        return False
     try:
         lock_time = lock.stat().st_mtime
     except Exception:
