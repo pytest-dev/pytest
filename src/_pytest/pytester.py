@@ -579,9 +579,6 @@ class TestPath:
 
     :ivar Path tmp_path: temporary directory path used to create files/run tests from, etc.
 
-        For backward compatibility, the read-only property ``tmpdir`` returns
-        a ``py.path.local`` instance.
-
     :ivar plugins: A list of plugins to use with :py:meth:`parseconfig` and
        :py:meth:`runpytest`.  Initially this is an empty list but plugins can
        be added to the list.  The type of items to add to the list depends on
@@ -844,7 +841,7 @@ class TestPath:
         if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
             # TODO: py.path.local.copy can copy files to existing directories,
             # while with shutil.copytree the destination directory cannot exist,
-            # we will need to roll our in order to drop py.path.local completely
+            # we will need to roll our own in order to drop py.path.local completely
             py.path.local(str(example_path)).copy(py.path.local(str(self.tmp_path)))
             return self.tmp_path
         elif example_path.is_file():

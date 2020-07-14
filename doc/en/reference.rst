@@ -499,11 +499,13 @@ monkeypatch
 test_path
 ~~~~~~~~~
 
+.. versionadded:: 6.0
+
 .. currentmodule:: _pytest.pytester
 
 Provides a :class:`TestPath` instance that can be used to run and test pytest itself.
 
-It provides an empty folder where pytest can be executed in isolation, and contains facilities
+It provides an empty directory where pytest can be executed in isolation, and contains facilities
 to write test, configuration files, and match against expected output.
 
 To use it, include in your topmost ``conftest.py`` file:
