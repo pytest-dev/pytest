@@ -49,23 +49,21 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
 
 
 def ensure_reset_dir(path: Path) -> None:
-    """
-    ensures the given path is an empty directory
-    """
+    """Ensure the given path is an empty directory."""
     if path.exists():
         rm_rf(path)
     path.mkdir()
 
 
 def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
-    """Handles known read-only errors during rmtree.
+    """Handle known read-only errors during rmtree.
 
     The returned value is used only by our own tests.
     """
     exctype, excvalue = exc[:2]
 
-    # another process removed the file in the middle of the "rm_rf" (xdist for example)
-    # more context: https://github.com/pytest-dev/pytest/issues/5974#issuecomment-543799018
+    # Another process removed the file in the middle of the "rm_rf" (xdist for example).
+    # More context: https://github.com/pytest-dev/pytest/issues/5974#issuecomment-543799018
     if isinstance(excvalue, FileNotFoundError):
         return False
 
@@ -101,7 +99,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     if p.is_file():
         for parent in p.parents:
             chmod_rw(str(parent))
-            # stop when we reach the original path passed to rm_rf
+            # Stop when we reach the original path passed to rm_rf.
             if parent == start_path:
                 break
     chmod_rw(str(path))
@@ -129,7 +127,7 @@ def ensure_extended_length_path(path: Path) -> Path:
 
 
 def get_extended_length_path_str(path: str) -> str:
-    """Converts to extended length path as a str"""
+    """Convert a path to a Windows extended length path."""
     long_path_prefix = "\\\\?\\"
     unc_long_path_prefix = "\\\\?\\UNC\\"
     if path.startswith((long_path_prefix, unc_long_path_prefix)):
@@ -142,15 +140,14 @@ def get_extended_length_path_str(path: str) -> str:
 
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
-    are read-only.
-    """
+    are read-only."""
     path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
     shutil.rmtree(str(path), onerror=onerror)
 
 
 def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
-    """finds all elements in root that begin with the prefix, case insensitive"""
+    """Find all elements in root that begin with the prefix, case insensitive."""
     l_prefix = prefix.lower()
     for x in root.iterdir():
         if x.name.lower().startswith(l_prefix):
@@ -158,10 +155,10 @@ def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
 
 
 def extract_suffixes(iter: Iterable[PurePath], prefix: str) -> Iterator[str]:
-    """
-    :param iter: iterator over path names
-    :param prefix: expected prefix of the path names
-    :returns: the parts of the paths following the prefix
+    """Return the parts of the paths following the prefix.
+
+    :param iter: Iterator over path names.
+    :param prefix: Expected prefix of the path names.
     """
     p_len = len(prefix)
     for p in iter:
@@ -169,13 +166,12 @@ def extract_suffixes(iter: Iterable[PurePath], prefix: str) -> Iterator[str]:
 
 
 def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
-    """combines find_prefixes and extract_suffixes
-    """
+    """Combine find_prefixes and extract_suffixes."""
     return extract_suffixes(find_prefixed(root, prefix), prefix)
 
 
 def parse_num(maybe_num) -> int:
-    """parses number path suffixes, returns -1 on error"""
+    """Parse number path suffixes, returns -1 on error."""
     try:
         return int(maybe_num)
     except ValueError:
@@ -185,13 +181,13 @@ def parse_num(maybe_num) -> int:
 def _force_symlink(
     root: Path, target: Union[str, PurePath], link_to: Union[str, Path]
 ) -> None:
-    """helper to create the current symlink
+    """Helper to create the current symlink.
 
-    it's full of race conditions that are reasonably ok to ignore
-    for the context of best effort linking to the latest test run
+    It's full of race conditions that are reasonably OK to ignore
+    for the context of best effort linking to the latest test run.
 
-    the presumption being that in case of much parallelism
-    the inaccuracy is going to be acceptable
+    The presumption being that in case of much parallelism
+    the inaccuracy is going to be acceptable.
     """
     current_symlink = root.joinpath(target)
     try:
@@ -205,7 +201,7 @@ def _force_symlink(
 
 
 def make_numbered_dir(root: Path, prefix: str) -> Path:
-    """create a directory with an increased number as suffix for the given prefix"""
+    """Create a directory with an increased number as suffix for the given prefix."""
     for i in range(10):
         # try up to 10 times to create the folder
         max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
@@ -226,7 +222,7 @@ def make_numbered_dir(root: Path, prefix: str) -> Path:
 
 
 def create_cleanup_lock(p: Path) -> Path:
-    """crates a lock to prevent premature folder cleanup"""
+    """Create a lock to prevent premature folder cleanup."""
     lock_path = get_lock_path(p)
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
@@ -243,7 +239,7 @@ def create_cleanup_lock(p: Path) -> Path:
 
 
 def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
-    """registers a cleanup function for removing a lock, by default on atexit"""
+    """Register a cleanup function for removing a lock, by default on atexit."""
     pid = os.getpid()
 
     def cleanup_on_exit(lock_path: Path = lock_path, original_pid: int = pid) -> None:
@@ -260,7 +256,8 @@ def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
 
 
 def maybe_delete_a_numbered_dir(path: Path) -> None:
-    """removes a numbered directory if its lock can be obtained and it does not seem to be in use"""
+    """Remove a numbered directory if its lock can be obtained and it does
+    not seem to be in use."""
     path = ensure_extended_length_path(path)
     lock_path = None
     try:
@@ -277,8 +274,8 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
         #  * process cwd (Windows)
         return
     finally:
-        # if we created the lock, ensure we remove it even if we failed
-        # to properly remove the numbered dir
+        # If we created the lock, ensure we remove it even if we failed
+        # to properly remove the numbered dir.
         if lock_path is not None:
             try:
                 lock_path.unlink()
@@ -287,7 +284,7 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
 
 
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
-    """checks if `path` is deletable based on whether the lock file is expired"""
+    """Check if `path` is deletable based on whether the lock file is expired."""
     if path.is_symlink():
         return False
     lock = get_lock_path(path)
@@ -304,9 +301,9 @@ def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) ->
         return False
     else:
         if lock_time < consider_lock_dead_if_created_before:
-            # wa want to ignore any errors while trying to remove the lock such as:
-            # - PermissionDenied, like the file permissions have changed since the lock creation
-            # - FileNotFoundError, in case another pytest process got here first.
+            # We want to ignore any errors while trying to remove the lock such as:
+            # - PermissionDenied, like the file permissions have changed since the lock creation;
+            # - FileNotFoundError, in case another pytest process got here first;
             # and any other cause of failure.
             with contextlib.suppress(OSError):
                 lock.unlink()
@@ -315,13 +312,13 @@ def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) ->
 
 
 def try_cleanup(path: Path, consider_lock_dead_if_created_before: float) -> None:
-    """tries to cleanup a folder if we can ensure it's deletable"""
+    """Try to cleanup a folder if we can ensure it's deletable."""
     if ensure_deletable(path, consider_lock_dead_if_created_before):
         maybe_delete_a_numbered_dir(path)
 
 
 def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
-    """lists candidates for numbered directories to be removed - follows py.path"""
+    """List candidates for numbered directories to be removed - follows py.path."""
     max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
     max_delete = max_existing - keep
     paths = find_prefixed(root, prefix)
@@ -335,7 +332,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
 def cleanup_numbered_dir(
     root: Path, prefix: str, keep: int, consider_lock_dead_if_created_before: float
 ) -> None:
-    """cleanup for lock driven numbered directories"""
+    """Cleanup for lock driven numbered directories."""
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
@@ -345,7 +342,7 @@ def cleanup_numbered_dir(
 def make_numbered_dir_with_cleanup(
     root: Path, prefix: str, keep: int, lock_timeout: float
 ) -> Path:
-    """creates a numbered dir with a cleanup lock and removes old ones"""
+    """Create a numbered dir with a cleanup lock and remove old ones."""
     e = None
     for i in range(10):
         try:
@@ -381,17 +378,18 @@ def resolve_from_str(input: str, root: py.path.local) -> Path:
 
 
 def fnmatch_ex(pattern: str, path) -> bool:
-    """FNMatcher port from py.path.common which works with PurePath() instances.
+    """A port of FNMatcher from py.path.common which works with PurePath() instances.
 
-    The difference between this algorithm and PurePath.match() is that the latter matches "**" glob expressions
-    for each part of the path, while this algorithm uses the whole path instead.
+    The difference between this algorithm and PurePath.match() is that the
+    latter matches "**" glob expressions for each part of the path, while
+    this algorithm uses the whole path instead.
 
     For example:
-        "tests/foo/bar/doc/test_foo.py" matches pattern "tests/**/doc/test*.py" with this algorithm, but not with
-        PurePath.match().
+        "tests/foo/bar/doc/test_foo.py" matches pattern "tests/**/doc/test*.py"
+        with this algorithm, but not with PurePath.match().
 
-    This algorithm was ported to keep backward-compatibility with existing settings which assume paths match according
-    this logic.
+    This algorithm was ported to keep backward-compatibility with existing
+    settings which assume paths match according this logic.
 
     References:
     * https://bugs.python.org/issue29249
@@ -421,7 +419,7 @@ def parts(s: str) -> Set[str]:
 
 
 def symlink_or_skip(src, dst, **kwargs):
-    """Makes a symlink or skips the test in case symlinks are not supported."""
+    """Make a symlink, or skip the test in case symlinks are not supported."""
     try:
         os.symlink(str(src), str(dst), **kwargs)
     except OSError as e:
@@ -429,7 +427,7 @@ def symlink_or_skip(src, dst, **kwargs):
 
 
 class ImportMode(Enum):
-    """Possible values for `mode` parameter of `import_path`"""
+    """Possible values for `mode` parameter of `import_path`."""
 
     prepend = "prepend"
     append = "append"
@@ -450,8 +448,7 @@ def import_path(
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend
 ) -> ModuleType:
-    """
-    Imports and returns a module from the given path, which can be a file (a module) or
+    """Import and return a module from the given path, which can be a file (a module) or
     a directory (a package).
 
     The import mechanism used is controlled by the `mode` parameter:
@@ -467,7 +464,8 @@ def import_path(
       to import the module, which avoids having to use `__import__` and muck with `sys.path`
       at all. It effectively allows having same-named test modules in different places.
 
-    :raise ImportPathMismatchError: if after importing the given `path` and the module `__file__`
+    :raises ImportPathMismatchError:
+        If after importing the given `path` and the module `__file__`
         are different. Only raised in `prepend` and `append` modes.
     """
     mode = ImportMode(mode)
@@ -506,7 +504,7 @@ def import_path(
         pkg_root = path.parent
         module_name = path.stem
 
-    # change sys.path permanently: restoring it at the end of this function would cause surprising
+    # Change sys.path permanently: restoring it at the end of this function would cause surprising
     # problems because of delayed imports: for example, a conftest.py file imported by this function
     # might have local imports, which would fail at runtime if we restored sys.path.
     if mode is ImportMode.append:
@@ -546,7 +544,8 @@ def import_path(
 def resolve_package_path(path: Path) -> Optional[Path]:
     """Return the Python package path by looking for the last
     directory upwards which still contains an __init__.py.
-    Return None if it can not be determined.
+
+    Returns None if it can not be determined.
     """
     result = None
     for parent in itertools.chain((path,), path.parents):

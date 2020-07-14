@@ -1,4 +1,4 @@
-""" command line options, ini-file and conftest.py processing. """
+"""Command line options, ini-file and conftest.py processing."""
 import argparse
 import collections.abc
 import contextlib
@@ -34,7 +34,7 @@ from pluggy import PluginManager
 
 import _pytest._code
 import _pytest.deprecated
-import _pytest.hookspec  # the extension point definitions
+import _pytest.hookspec
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
@@ -61,9 +61,12 @@ if TYPE_CHECKING:
 
 _PluggyPlugin = object
 """A type to represent plugin objects.
+
 Plugins can be any namespace, so we can't narrow it down much, but we use an
 alias to make the intent clear.
-Ideally this type would be provided by pluggy itself."""
+
+Ideally this type would be provided by pluggy itself.
+"""
 
 
 hookimpl = HookimplMarker("pytest")
@@ -71,25 +74,24 @@ hookspec = HookspecMarker("pytest")
 
 
 class ExitCode(enum.IntEnum):
-    """
-    .. versionadded:: 5.0
-
-    Encodes the valid exit codes by pytest.
+    """Encodes the valid exit codes by pytest.
 
     Currently users and plugins may supply other exit codes as well.
+
+    .. versionadded:: 5.0
     """
 
-    #: tests passed
+    #: Tests passed.
     OK = 0
-    #: tests failed
+    #: Tests failed.
     TESTS_FAILED = 1
-    #: pytest was interrupted
+    #: pytest was interrupted.
     INTERRUPTED = 2
-    #: an internal error got in the way
+    #: An internal error got in the way.
     INTERNAL_ERROR = 3
-    #: pytest was misused
+    #: pytest was misused.
     USAGE_ERROR = 4
-    #: pytest couldn't find tests
+    #: pytest couldn't find tests.
     NO_TESTS_COLLECTED = 5
 
 
@@ -112,7 +114,7 @@ class ConftestImportFailure(Exception):
 def filter_traceback_for_conftest_import_failure(
     entry: _pytest._code.TracebackEntry,
 ) -> bool:
-    """filters tracebacks entries which point to pytest internals or importlib.
+    """Filter tracebacks entries which point to pytest internals or importlib.
 
     Make a special case for importlib because we use it to import test modules and conftest files
     in _pytest.pathlib.import_path.
@@ -124,12 +126,12 @@ def main(
     args: Optional[List[str]] = None,
     plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
 ) -> Union[int, ExitCode]:
-    """ return exit code, after performing an in-process test run.
+    """Perform an in-process test run.
 
-    :arg args: list of command line arguments.
+    :param args: List of command line arguments.
+    :param plugins: List of plugin objects to be auto-registered during initialization.
 
-    :arg plugins: list of plugin objects to be auto-registered during
-                  initialization.
+    :returns: An exit code.
     """
     try:
         try:
@@ -171,7 +173,7 @@ def main(
 
 
 def console_main() -> int:
-    """pytest's CLI entry point.
+    """The CLI entry point of pytest.
 
     This function is not meant for programmable use; use `main()` instead.
     """
@@ -193,10 +195,10 @@ class cmdline:  # compatibility namespace
 
 
 def filename_arg(path: str, optname: str) -> str:
-    """ Argparse type validator for filename arguments.
+    """Argparse type validator for filename arguments.
 
-    :path: path of filename
-    :optname: name of the option
+    :path: Path of filename.
+    :optname: Name of the option.
     """
     if os.path.isdir(path):
         raise UsageError("{} must be a filename, given: {}".format(optname, path))
@@ -206,8 +208,8 @@ def filename_arg(path: str, optname: str) -> str:
 def directory_arg(path: str, optname: str) -> str:
     """Argparse type validator for directory arguments.
 
-    :path: path of directory
-    :optname: name of the option
+    :path: Path of directory.
+    :optname: Name of the option.
     """
     if not os.path.isdir(path):
         raise UsageError("{} must be a directory, given: {}".format(optname, path))
@@ -278,8 +280,7 @@ def get_config(
 
 
 def get_plugin_manager() -> "PytestPluginManager":
-    """
-    Obtain a new instance of the
+    """Obtain a new instance of the
     :py:class:`_pytest.config.PytestPluginManager`, with default plugins
     already loaded.
 
@@ -320,13 +321,12 @@ def _prepareconfig(
 
 
 class PytestPluginManager(PluginManager):
-    """
-    Overwrites :py:class:`pluggy.PluginManager <pluggy.PluginManager>` to add pytest-specific
-    functionality:
+    """A :py:class:`pluggy.PluginManager <pluggy.PluginManager>` with
+    additional pytest-specific functionality:
 
-    * loading plugins from the command line, ``PYTEST_PLUGINS`` env variable and
-      ``pytest_plugins`` global variables found in plugins being loaded;
-    * ``conftest.py`` loading during start-up;
+    * Loading plugins from the command line, ``PYTEST_PLUGINS`` env variable and
+      ``pytest_plugins`` global variables found in plugins being loaded.
+    * ``conftest.py`` loading during start-up.
     """
 
     def __init__(self) -> None:
@@ -359,27 +359,27 @@ class PytestPluginManager(PluginManager):
 
         # Config._consider_importhook will set a real object if required.
         self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
-        # Used to know when we are importing conftests after the pytest_configure stage
+        # Used to know when we are importing conftests after the pytest_configure stage.
         self._configured = False
 
     def parse_hookimpl_opts(self, plugin: _PluggyPlugin, name: str):
-        # pytest hooks are always prefixed with pytest_
+        # pytest hooks are always prefixed with "pytest_",
         # so we avoid accessing possibly non-readable attributes
-        # (see issue #1073)
+        # (see issue #1073).
         if not name.startswith("pytest_"):
             return
-        # ignore names which can not be hooks
+        # Ignore names which can not be hooks.
         if name == "pytest_plugins":
             return
 
         method = getattr(plugin, name)
         opts = super().parse_hookimpl_opts(plugin, name)
 
-        # consider only actual functions for hooks (#3775)
+        # Consider only actual functions for hooks (#3775).
         if not inspect.isroutine(method):
             return
 
-        # collect unmarked hooks as long as they have the `pytest_' prefix
+        # Collect unmarked hooks as long as they have the `pytest_' prefix.
         if opts is None and name.startswith("pytest_"):
             opts = {}
         if opts is not None:
@@ -432,17 +432,18 @@ class PytestPluginManager(PluginManager):
         return ret
 
     def getplugin(self, name: str):
-        # support deprecated naming because plugins (xdist e.g.) use it
+        # Support deprecated naming because plugins (xdist e.g.) use it.
         plugin = self.get_plugin(name)  # type: Optional[_PluggyPlugin]
         return plugin
 
     def hasplugin(self, name: str) -> bool:
-        """Return True if the plugin with the given name is registered."""
+        """Return whether a plugin with the given name is registered."""
         return bool(self.get_plugin(name))
 
     def pytest_configure(self, config: "Config") -> None:
+        """:meta private:"""
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
-        # we should remove tryfirst/trylast as markers
+        # we should remove tryfirst/trylast as markers.
         config.addinivalue_line(
             "markers",
             "tryfirst: mark a hook implementation function such that the "
@@ -456,15 +457,15 @@ class PytestPluginManager(PluginManager):
         self._configured = True
 
     #
-    # internal API for local conftest plugin handling
+    # Internal API for local conftest plugin handling.
     #
     def _set_initial_conftests(self, namespace: argparse.Namespace) -> None:
-        """ load initial conftest files given a preparsed "namespace".
-            As conftest files may add their own command line options
-            which have arguments ('--my-opt somepath') we might get some
-            false positives.  All builtin and 3rd party plugins will have
-            been loaded, however, so common options will not confuse our logic
-            here.
+        """Load initial conftest files given a preparsed "namespace".
+
+        As conftest files may add their own command line options which have
+        arguments ('--my-opt somepath') we might get some false positives.
+        All builtin and 3rd party plugins will have been loaded, however, so
+        common options will not confuse our logic here.
         """
         current = py.path.local()
         self._confcutdir = (
@@ -513,7 +514,7 @@ class PytestPluginManager(PluginManager):
 
         # XXX these days we may rather want to use config.rootdir
         # and allow users to opt into looking into the rootdir parent
-        # directories instead of requiring to specify confcutdir
+        # directories instead of requiring to specify confcutdir.
         clist = []
         for parent in directory.parts():
             if self._confcutdir and self._confcutdir.relto(parent):
@@ -539,8 +540,8 @@ class PytestPluginManager(PluginManager):
     def _importconftest(
         self, conftestpath: py.path.local, importmode: Union[str, ImportMode],
     ) -> types.ModuleType:
-        # Use a resolved Path object as key to avoid loading the same conftest twice
-        # with build systems that create build directories containing
+        # Use a resolved Path object as key to avoid loading the same conftest
+        # twice with build systems that create build directories containing
         # symlinks to actual files.
         # Using Path().resolve() is better than py.path.realpath because
         # it resolves to the correct path/drive in case-insensitive file systems (#5792)
@@ -627,7 +628,7 @@ class PytestPluginManager(PluginManager):
             if name in essential_plugins:
                 raise UsageError("plugin %s cannot be disabled" % name)
 
-            # PR #4304 : remove stepwise if cacheprovider is blocked
+            # PR #4304: remove stepwise if cacheprovider is blocked.
             if name == "cacheprovider":
                 self.set_blocked("stepwise")
                 self.set_blocked("pytest_stepwise")
@@ -663,11 +664,12 @@ class PytestPluginManager(PluginManager):
             self.import_plugin(import_spec)
 
     def import_plugin(self, modname: str, consider_entry_points: bool = False) -> None:
+        """Import a plugin with ``modname``.
+
+        If ``consider_entry_points`` is True, entry point names are also
+        considered to find a plugin.
         """
-        Imports a plugin with ``modname``. If ``consider_entry_points`` is True, entry point
-        names are also considered to find a plugin.
-        """
-        # most often modname refers to builtin modules, e.g. "pytester",
+        # Most often modname refers to builtin modules, e.g. "pytester",
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
@@ -743,10 +745,11 @@ notset = Notset()
 
 
 def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
-    """
-    Given an iterable of file names in a source distribution, return the "names" that should
-    be marked for assertion rewrite (for example the package "pytest_mock/__init__.py" should
-    be added as "pytest_mock" in the assertion rewrite mechanism.
+    """Given an iterable of file names in a source distribution, return the "names" that should
+    be marked for assertion rewrite.
+
+    For example the package "pytest_mock/__init__.py" should be added as "pytest_mock" in
+    the assertion rewrite mechanism.
 
     This function has to deal with dist-info based distributions and egg based distributions
     (which are still very much in use for "editable" installs).
@@ -790,11 +793,11 @@ def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
             yield package_name
 
     if not seen_some:
-        # at this point we did not find any packages or modules suitable for assertion
+        # At this point we did not find any packages or modules suitable for assertion
         # rewriting, so we try again by stripping the first path component (to account for
-        # "src" based source trees for example)
-        # this approach lets us have the common case continue to be fast, as egg-distributions
-        # are rarer
+        # "src" based source trees for example).
+        # This approach lets us have the common case continue to be fast, as egg-distributions
+        # are rarer.
         new_package_files = []
         for fn in package_files:
             parts = fn.split("/")
@@ -810,8 +813,7 @@ def _args_converter(args: Iterable[str]) -> Tuple[str, ...]:
 
 
 class Config:
-    """
-    Access to configuration values, pluginmanager and plugin hooks.
+    """Access to configuration values, pluginmanager and plugin hooks.
 
     :param PytestPluginManager pluginmanager:
 
@@ -837,11 +839,11 @@ class Config:
         """
 
         args = attr.ib(type=Tuple[str, ...], converter=_args_converter)
-        """tuple of command-line arguments as passed to ``pytest.main()``."""
+        """Tuple of command-line arguments as passed to ``pytest.main()``."""
         plugins = attr.ib(type=Optional[Sequence[Union[str, _PluggyPlugin]]])
-        """list of extra plugins, might be `None`."""
+        """List of extra plugins, might be `None`."""
         dir = attr.ib(type=Path)
-        """directory where ``pytest.main()`` was invoked from."""
+        """Directory from which ``pytest.main()`` was invoked."""
 
     def __init__(
         self,
@@ -857,9 +859,10 @@ class Config:
             )
 
         self.option = argparse.Namespace()
-        """access to command line option as attributes.
+        """Access to command line option as attributes.
 
-          :type: argparse.Namespace"""
+        :type: argparse.Namespace
+        """
 
         self.invocation_params = invocation_params
 
@@ -869,9 +872,10 @@ class Config:
             processopt=self._processopt,
         )
         self.pluginmanager = pluginmanager
-        """the plugin manager handles plugin registration and hook invocation.
+        """The plugin manager handles plugin registration and hook invocation.
 
-          :type: PytestPluginManager"""
+        :type: PytestPluginManager.
+        """
 
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
@@ -895,11 +899,11 @@ class Config:
 
     @property
     def invocation_dir(self) -> py.path.local:
-        """Backward compatibility"""
+        """Backward compatibility."""
         return py.path.local(str(self.invocation_params.dir))
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
-        """ Add a function to be called when the config object gets out of
+        """Add a function to be called when the config object gets out of
         use (usually coninciding with pytest_unconfigure)."""
         self._cleanup.append(func)
 
@@ -970,7 +974,7 @@ class Config:
                 sys.stderr.flush()
 
     def cwd_relative_nodeid(self, nodeid: str) -> str:
-        # nodeid's are relative to the rootpath, compute relative to cwd
+        # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_dir != self.rootdir:
             fullpath = self.rootdir.join(nodeid)
             nodeid = self.invocation_dir.bestrelpath(fullpath)
@@ -978,7 +982,7 @@ class Config:
 
     @classmethod
     def fromdictargs(cls, option_dict, args) -> "Config":
-        """ constructor usable for subprocesses. """
+        """Constructor usable for subprocesses."""
         config = get_config(args)
         config.option.__dict__.update(option_dict)
         config.parse(args, addopts=False)
@@ -1041,11 +1045,9 @@ class Config:
         self._warn_about_missing_assertion(mode)
 
     def _mark_plugins_for_rewrite(self, hook) -> None:
-        """
-        Given an importhook, mark for rewrite any top-level
+        """Given an importhook, mark for rewrite any top-level
         modules or packages in the distribution package for
-        all pytest plugins.
-        """
+        all pytest plugins."""
         self.pluginmanager.rewrite_hook = hook
 
         if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
@@ -1194,7 +1196,7 @@ class Config:
         return [name for name in self.inicfg if name not in parser_inicfg]
 
     def parse(self, args: List[str], addopts: bool = True) -> None:
-        # parse given cmdline arguments into this config object.
+        # Parse given cmdline arguments into this config object.
         assert not hasattr(
             self, "args"
         ), "can only parse cmdline args at most once per Config object"
@@ -1219,18 +1221,20 @@ class Config:
             pass
 
     def addinivalue_line(self, name: str, line: str) -> None:
-        """ add a line to an ini-file option. The option must have been
-        declared but might not yet be set in which case the line becomes the
-        the first line in its value. """
+        """Add a line to an ini-file option. The option must have been
+        declared but might not yet be set in which case the line becomes
+        the first line in its value."""
         x = self.getini(name)
         assert isinstance(x, list)
         x.append(line)  # modifies the cached list inline
 
     def getini(self, name: str):
-        """ return configuration value from an :ref:`ini file <configfiles>`. If the
-        specified name hasn't been registered through a prior
+        """Return configuration value from an :ref:`ini file <configfiles>`.
+
+        If the specified name hasn't been registered through a prior
         :py:func:`parser.addini <_pytest.config.argparsing.Parser.addini>`
-        call (usually from a plugin), a ValueError is raised. """
+        call (usually from a plugin), a ValueError is raised.
+        """
         try:
             return self._inicache[name]
         except KeyError:
@@ -1254,19 +1258,20 @@ class Config:
                 return []
         else:
             value = override_value
-        # coerce the values based on types
-        # note: some coercions are only required if we are reading from .ini files, because
+        # Coerce the values based on types.
+        #
+        # Note: some coercions are only required if we are reading from .ini files, because
         # the file format doesn't contain type information, but when reading from toml we will
         # get either str or list of str values (see _parse_ini_config_from_pyproject_toml).
-        # for example:
+        # For example:
         #
         #   ini:
         #     a_line_list = "tests acceptance"
-        #   in this case, we need to split the string to obtain a list of strings
+        #   in this case, we need to split the string to obtain a list of strings.
         #
         #   toml:
         #     a_line_list = ["tests", "acceptance"]
-        #   in this case, we already have a list ready to use
+        #   in this case, we already have a list ready to use.
         #
         if type == "pathlist":
             # TODO: This assert is probably not valid in all cases.
@@ -1307,9 +1312,9 @@ class Config:
 
     def _get_override_ini_value(self, name: str) -> Optional[str]:
         value = None
-        # override_ini is a list of "ini=value" options
-        # always use the last item if multiple values are set for same ini-name,
-        # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
+        # override_ini is a list of "ini=value" options.
+        # Always use the last item if multiple values are set for same ini-name,
+        # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2.
         for ini_config in self._override_ini:
             try:
                 key, user_ini_value = ini_config.split("=", 1)
@@ -1325,12 +1330,12 @@ class Config:
         return value
 
     def getoption(self, name: str, default=notset, skip: bool = False):
-        """ return command line option value.
+        """Return command line option value.
 
-        :arg name: name of the option.  You may also specify
+        :param name: Name of the option.  You may also specify
             the literal ``--OPT`` option instead of the "dest" option name.
-        :arg default: default value if no option of that name exists.
-        :arg skip: if True raise pytest.skip if option does not exists
+        :param default: Default value if no option of that name exists.
+        :param skip: If True, raise pytest.skip if option does not exists
             or has a None value.
         """
         name = self._opt2dest.get(name, name)
@@ -1349,11 +1354,11 @@ class Config:
             raise ValueError("no option named {!r}".format(name)) from e
 
     def getvalue(self, name: str, path=None):
-        """ (deprecated, use getoption()) """
+        """Deprecated, use getoption() instead."""
         return self.getoption(name)
 
     def getvalueorskip(self, name: str, path=None):
-        """ (deprecated, use getoption(skip=True)) """
+        """Deprecated, use getoption(skip=True) instead."""
         return self.getoption(name, skip=True)
 
     def _warn_about_missing_assertion(self, mode: str) -> None:
@@ -1392,10 +1397,13 @@ def create_terminal_writer(
     config: Config, file: Optional[TextIO] = None
 ) -> TerminalWriter:
     """Create a TerminalWriter instance configured according to the options
-    in the config object. Every code which requires a TerminalWriter object
-    and has access to a config object should use this function.
+    in the config object.
+
+    Every code which requires a TerminalWriter object and has access to a
+    config object should use this function.
     """
     tw = TerminalWriter(file=file)
+
     if config.option.color == "yes":
         tw.hasmarkup = True
     elif config.option.color == "no":
@@ -1405,6 +1413,7 @@ def create_terminal_writer(
         tw.code_highlight = True
     elif config.option.code_highlight == "no":
         tw.code_highlight = False
+
     return tw
 
 
@@ -1415,7 +1424,7 @@ def _strtobool(val: str) -> bool:
     are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
     'val' is anything else.
 
-    .. note:: copied from distutils.util
+    .. note:: Copied from distutils.util.
     """
     val = val.lower()
     if val in ("y", "yes", "t", "true", "on", "1"):

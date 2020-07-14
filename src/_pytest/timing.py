@@ -1,5 +1,4 @@
-"""
-Indirection for time functions.
+"""Indirection for time functions.
 
 We intentionally grab some "time" functions internally to avoid tests mocking "time" to affect
 pytest runtime information (issue #185).

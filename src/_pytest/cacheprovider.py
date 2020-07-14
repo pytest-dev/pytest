@@ -1,9 +1,6 @@
-"""
-merged implementation of the cache provider
-
-the name cache was not chosen to ensure pluggy automatically
-ignores the external pytest-cache
-"""
+"""Implementation of the cache provider."""
+# This plugin was not named "cache" to avoid conflicts with the external
+# pytest-cache version.
 import json
 import os
 from typing import Dict
@@ -73,7 +70,7 @@ class Cache:
 
     @classmethod
     def clear_cache(cls, cachedir: Path) -> None:
-        """Clears the sub-directories used to hold cached directories and values."""
+        """Clear the sub-directories used to hold cached directories and values."""
         for prefix in (cls._CACHE_PREFIX_DIRS, cls._CACHE_PREFIX_VALUES):
             d = cachedir / prefix
             if d.is_dir():
@@ -94,14 +91,16 @@ class Cache:
         )
 
     def makedir(self, name: str) -> py.path.local:
-        """ return a directory path object with the given name.  If the
-        directory does not yet exist, it will be created.  You can use it
-        to manage files likes e. g. store/retrieve database
-        dumps across test sessions.
+        """Return a directory path object with the given name.
 
-        :param name: must be a string not containing a ``/`` separator.
-             Make sure the name contains your plugin or application
-             identifiers to prevent clashes with other cache users.
+        If the directory does not yet exist, it will be created. You can use
+        it to manage files to e.g. store/retrieve database dumps across test
+        sessions.
+
+        :param name:
+            Must be a string not containing a ``/`` separator.
+            Make sure the name contains your plugin or application
+            identifiers to prevent clashes with other cache users.
         """
         path = Path(name)
         if len(path.parts) > 1:
@@ -114,15 +113,16 @@ class Cache:
         return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
 
     def get(self, key: str, default):
-        """ return cached value for the given key.  If no value
-        was yet cached or the value cannot be read, the specified
+        """Return the cached value for the given key.
+
+        If no value was yet cached or the value cannot be read, the specified
         default is returned.
 
-        :param key: must be a ``/`` separated value. Usually the first
-             name is the name of your plugin or your application.
-        :param default: must be provided in case of a cache-miss or
-             invalid cache values.
-
+        :param key:
+            Must be a ``/`` separated value. Usually the first
+            name is the name of your plugin or your application.
+        :param default:
+            The value to return in case of a cache-miss or invalid cache value.
         """
         path = self._getvaluepath(key)
         try:
@@ -132,13 +132,14 @@ class Cache:
             return default
 
     def set(self, key: str, value: object) -> None:
-        """ save value for the given key.
+        """Save value for the given key.
 
-        :param key: must be a ``/`` separated value. Usually the first
-             name is the name of your plugin or your application.
-        :param value: must be of any combination of basic
-               python types, including nested types
-               like e. g. lists of dictionaries.
+        :param key:
+            Must be a ``/`` separated value. Usually the first
+            name is the name of your plugin or your application.
+        :param value:
+            Must be of any combination of basic python types,
+            including nested types like lists of dictionaries.
         """
         path = self._getvaluepath(key)
         try:
@@ -241,7 +242,7 @@ class LFPluginCollSkipfiles:
 
 
 class LFPlugin:
-    """ Plugin which implements the --lf (run last-failing) option """
+    """Plugin which implements the --lf (run last-failing) option."""
 
     def __init__(self, config: Config) -> None:
         self.config = config
@@ -262,7 +263,7 @@ class LFPlugin:
             )
 
     def get_last_failed_paths(self) -> Set[Path]:
-        """Returns a set with all Paths()s of the previously failed nodeids."""
+        """Return a set with all Paths()s of the previously failed nodeids."""
         rootpath = Path(str(self.config.rootdir))
         result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
         return {x for x in result if x.exists()}
@@ -351,7 +352,7 @@ class LFPlugin:
 
 
 class NFPlugin:
-    """ Plugin which implements the --nf (run new-first) option """
+    """Plugin which implements the --nf (run new-first) option."""
 
     def __init__(self, config: Config) -> None:
         self.config = config
@@ -471,13 +472,12 @@ def pytest_configure(config: Config) -> None:
 
 @pytest.fixture
 def cache(request: FixtureRequest) -> Cache:
-    """
-    Return a cache object that can persist state between testing sessions.
+    """Return a cache object that can persist state between testing sessions.
 
     cache.get(key, default)
     cache.set(key, value)
 
-    Keys must be a ``/`` separated value, where the first part is usually the
+    Keys must be ``/`` separated strings, where the first part is usually the
     name of your plugin or application to avoid clashes with other cache users.
 
     Values can be any object handled by the json stdlib module.

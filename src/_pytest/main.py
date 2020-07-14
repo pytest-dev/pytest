@@ -1,4 +1,4 @@
-""" core implementation of testing process: init, session, runtest loop. """
+"""Core implementation of the testing process: init, session, runtest loop."""
 import argparse
 import fnmatch
 import functools
@@ -206,7 +206,7 @@ def validate_basetemp(path: str) -> str:
         raise argparse.ArgumentTypeError(msg)
 
     def is_ancestor(base: Path, query: Path) -> bool:
-        """ return True if query is an ancestor of base, else False."""
+        """Return whether query is an ancestor of base."""
         if base == query:
             return True
         for parent in base.parents:
@@ -228,7 +228,7 @@ def validate_basetemp(path: str) -> str:
 def wrap_session(
     config: Config, doit: Callable[[Config, "Session"], Optional[Union[int, ExitCode]]]
 ) -> Union[int, ExitCode]:
-    """Skeleton command line program"""
+    """Skeleton command line program."""
     session = Session.from_config(config)
     session.exitstatus = ExitCode.OK
     initstate = 0
@@ -291,8 +291,8 @@ def pytest_cmdline_main(config: Config) -> Union[int, ExitCode]:
 
 
 def _main(config: Config, session: "Session") -> Optional[Union[int, ExitCode]]:
-    """ default command line protocol for initialization, session,
-    running tests and reporting. """
+    """Default command line protocol for initialization, session,
+    running tests and reporting."""
     config.hook.pytest_collection(session=session)
     config.hook.pytest_runtestloop(session=session)
 
@@ -328,8 +328,8 @@ def pytest_runtestloop(session: "Session") -> bool:
 
 
 def _in_venv(path: py.path.local) -> bool:
-    """Attempts to detect if ``path`` is the root of a Virtual Environment by
-    checking for the existence of the appropriate activate script"""
+    """Attempt to detect if ``path`` is the root of a Virtual Environment by
+    checking for the existence of the appropriate activate script."""
     bindir = path.join("Scripts" if sys.platform.startswith("win") else "bin")
     if not bindir.isdir():
         return False
@@ -390,17 +390,17 @@ def pytest_collection_modifyitems(items: List[nodes.Item], config: Config) -> No
 
 
 class NoMatch(Exception):
-    """ raised if matching cannot locate a matching names. """
+    """Matching cannot locate matching names."""
 
 
 class Interrupted(KeyboardInterrupt):
-    """ signals an interrupted test run. """
+    """Signals that the test run was interrupted."""
 
-    __module__ = "builtins"  # for py3
+    __module__ = "builtins"  # For py3.
 
 
 class Failed(Exception):
-    """ signals a stop as failed test run. """
+    """Signals a stop as failed test run."""
 
 
 @attr.s
@@ -434,7 +434,7 @@ class Session(nodes.FSCollector):
         self.startdir = config.invocation_dir
         self._initialpaths = frozenset()  # type: FrozenSet[py.path.local]
 
-        # Keep track of any collected nodes in here, so we don't duplicate fixtures
+        # Keep track of any collected nodes in here, so we don't duplicate fixtures.
         self._collection_node_cache1 = (
             {}
         )  # type: Dict[py.path.local, Sequence[nodes.Collector]]
@@ -469,7 +469,7 @@ class Session(nodes.FSCollector):
         )
 
     def _node_location_to_relpath(self, node_path: py.path.local) -> str:
-        # bestrelpath is a quite slow function
+        # bestrelpath is a quite slow function.
         return self._bestrelpathcache[node_path]
 
     @hookimpl(tryfirst=True)
@@ -594,7 +594,7 @@ class Session(nodes.FSCollector):
 
         # Start with a Session root, and delve to argpath item (dir or file)
         # and stack all Packages found on the way.
-        # No point in finding packages when collecting doctests
+        # No point in finding packages when collecting doctests.
         if not self.config.getoption("doctestmodules", False):
             pm = self.config.pluginmanager
             for parent in reversed(argpath.parts()):
@@ -609,7 +609,7 @@ class Session(nodes.FSCollector):
                             if col:
                                 if isinstance(col[0], Package):
                                     self._collection_pkg_roots[str(parent)] = col[0]
-                                # always store a list in the cache, matchnodes expects it
+                                # Always store a list in the cache, matchnodes expects it.
                                 self._collection_node_cache1[col[0].fspath] = [col[0]]
 
         # If it's a directory argument, recurse and look for any Subpackages.
@@ -689,7 +689,7 @@ class Session(nodes.FSCollector):
             return spec.origin
 
     def _parsearg(self, arg: str) -> Tuple[py.path.local, List[str]]:
-        """ return (fspath, names) tuple after checking the file exists. """
+        """Return (fspath, names) tuple after checking the file exists."""
         strpath, *parts = str(arg).split("::")
         if self.config.option.pyargs:
             strpath = self._tryconvertpyarg(strpath)
@@ -740,18 +740,18 @@ class Session(nodes.FSCollector):
             if rep.passed:
                 has_matched = False
                 for x in rep.result:
-                    # TODO: remove parametrized workaround once collection structure contains parametrization
+                    # TODO: Remove parametrized workaround once collection structure contains parametrization.
                     if x.name == name or x.name.split("[")[0] == name:
                         resultnodes.extend(self.matchnodes([x], nextnames))
                         has_matched = True
-                # XXX accept IDs that don't have "()" for class instances
+                # XXX Accept IDs that don't have "()" for class instances.
                 if not has_matched and len(rep.result) == 1 and x.name == "()":
                     nextnames.insert(0, name)
                     resultnodes.extend(self.matchnodes([x], nextnames))
             else:
-                # report collection failures here to avoid failing to run some test
+                # Report collection failures here to avoid failing to run some test
                 # specified in the command line because the module could not be
-                # imported (#134)
+                # imported (#134).
                 node.ihook.pytest_collectreport(report=rep)
         return resultnodes
 

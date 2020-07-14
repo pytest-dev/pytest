@@ -1,6 +1,4 @@
-""" log machine-parseable test session result information in a plain
-text file.
-"""
+"""log machine-parseable test session result information to a plain text file."""
 import os
 
 import py
@@ -30,7 +28,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 def pytest_configure(config: Config) -> None:
     resultlog = config.option.resultlog
-    # prevent opening resultlog on worker nodes (xdist)
+    # Prevent opening resultlog on worker nodes (xdist).
     if resultlog and not hasattr(config, "workerinput"):
         dirname = os.path.dirname(os.path.abspath(resultlog))
         if not os.path.isdir(dirname):

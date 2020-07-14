@@ -36,9 +36,8 @@ def _ellipsize(s: str, maxsize: int) -> str:
 
 
 class SafeRepr(reprlib.Repr):
-    """subclass of repr.Repr that limits the resulting size of repr()
-    and includes information on exceptions raised during the call.
-    """
+    """repr.Repr that limits the resulting size of repr() and includes
+    information on exceptions raised during the call."""
 
     def __init__(self, maxsize: int) -> None:
         super().__init__()
@@ -65,7 +64,8 @@ class SafeRepr(reprlib.Repr):
 
 
 def safeformat(obj: object) -> str:
-    """return a pretty printed string for the given object.
+    """Return a pretty printed string for the given object.
+
     Failing __repr__ functions of user instances will be represented
     with a short exception info.
     """
@@ -76,11 +76,14 @@ def safeformat(obj: object) -> str:
 
 
 def saferepr(obj: object, maxsize: int = 240) -> str:
-    """return a size-limited safe repr-string for the given object.
+    """Return a size-limited safe repr-string for the given object.
+
     Failing __repr__ functions of user instances will be represented
     with a short exception info and 'saferepr' generally takes
-    care to never raise exceptions itself.  This function is a wrapper
-    around the Repr/reprlib functionality of the standard 2.6 lib.
+    care to never raise exceptions itself.
+
+    This function is a wrapper around the Repr/reprlib functionality of the
+    standard 2.6 lib.
     """
     return SafeRepr(maxsize).repr(obj)
 

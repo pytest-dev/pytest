@@ -1,4 +1,4 @@
-"""Utilities for assertion debugging"""
+"""Utilities for assertion debugging."""
 import collections.abc
 import pprint
 from typing import AbstractSet
@@ -30,7 +30,7 @@ _assertion_pass = None  # type: Optional[Callable[[int, str, str], None]]
 
 
 def format_explanation(explanation: str) -> str:
-    """This formats an explanation
+    r"""Format an explanation.
 
     Normally all embedded newlines are escaped, however there are
     three exceptions: \n{, \n} and \n~.  The first two are intended
@@ -45,7 +45,7 @@ def format_explanation(explanation: str) -> str:
 
 
 def _split_explanation(explanation: str) -> List[str]:
-    """Return a list of individual lines in the explanation
+    r"""Return a list of individual lines in the explanation.
 
     This will return a list of lines split on '\n{', '\n}' and '\n~'.
     Any other newlines will be escaped and appear in the line as the
@@ -62,11 +62,11 @@ def _split_explanation(explanation: str) -> List[str]:
 
 
 def _format_lines(lines: Sequence[str]) -> List[str]:
-    """Format the individual lines
+    """Format the individual lines.
 
-    This will replace the '{', '}' and '~' characters of our mini
-    formatting language with the proper 'where ...', 'and ...' and ' +
-    ...' text, taking care of indentation along the way.
+    This will replace the '{', '}' and '~' characters of our mini formatting
+    language with the proper 'where ...', 'and ...' and ' + ...' text, taking
+    care of indentation along the way.
 
     Return a list of formatted lines.
     """
@@ -129,7 +129,7 @@ def isiterable(obj: Any) -> bool:
 
 
 def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[str]]:
-    """Return specialised explanations for some operators/operands"""
+    """Return specialised explanations for some operators/operands."""
     verbose = config.getoption("verbose")
     if verbose > 1:
         left_repr = safeformat(left)

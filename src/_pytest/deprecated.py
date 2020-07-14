@@ -1,6 +1,5 @@
-"""
-This module contains deprecation messages and bits of code used elsewhere in the codebase
-that is planned to be removed in the next pytest release.
+"""Deprecation messages and bits of code used elsewhere in the codebase that
+is planned to be removed in the next pytest release.
 
 Keeping it in a central location makes it easy to track what is deprecated and should
 be removed when the time comes.

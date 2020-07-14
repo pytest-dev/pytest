@@ -1,4 +1,4 @@
-""" recording warnings during test function execution. """
+"""Record warnings during test function execution."""
 import re
 import warnings
 from types import TracebackType

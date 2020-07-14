@@ -1,4 +1,4 @@
-""" terminal reporting of the full testing process.
+"""Terminal reporting of the full testing process.
 
 This is a good source for looking at the various reporting hooks.
 """
@@ -69,11 +69,10 @@ _REPORTCHARS_DEFAULT = "fE"
 
 
 class MoreQuietAction(argparse.Action):
-    """
-    a modified copy of the argparse count action which counts down and updates
-    the legacy quiet attribute at the same time
+    """A modified copy of the argparse count action which counts down and updates
+    the legacy quiet attribute at the same time.
 
-    used to unify verbosity handling
+    Used to unify verbosity handling.
     """
 
     def __init__(
@@ -276,13 +275,14 @@ def pytest_report_teststatus(report: BaseReport) -> Tuple[str, str, str]:
 
 @attr.s
 class WarningReport:
-    """
-    Simple structure to hold warnings information captured by ``pytest_warning_recorded``.
+    """Simple structure to hold warnings information captured by ``pytest_warning_recorded``.
 
-    :ivar str message: user friendly message about the warning
-    :ivar str|None nodeid: node id that generated the warning (see ``get_location``).
+    :ivar str message:
+        User friendly message about the warning.
+    :ivar str|None nodeid:
+        nodeid that generated the warning (see ``get_location``).
     :ivar tuple|py.path.local fslocation:
-        file system location of the source of the warning (see ``get_location``).
+        File system location of the source of the warning (see ``get_location``).
     """
 
     message = attr.ib(type=str)
@@ -293,10 +293,7 @@ class WarningReport:
     count_towards_summary = True
 
     def get_location(self, config: Config) -> Optional[str]:
-        """
-        Returns the more user-friendly information about the location
-        of a warning, or None.
-        """
+        """Return the more user-friendly information about the location of a warning, or None."""
         if self.nodeid:
             return self.nodeid
         if self.fslocation:
@@ -349,7 +346,7 @@ class TerminalReporter:
         self._tw = value
 
     def _determine_show_progress_info(self) -> "Literal['progress', 'count', False]":
-        """Return True if we should display progress information based on the current config"""
+        """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038)
         if self.config.getoption("capture", "no") == "no":
             return False
@@ -439,10 +436,10 @@ class TerminalReporter:
         self._tw.line(line, **markup)
 
     def rewrite(self, line: str, **markup: bool) -> None:
-        """
-        Rewinds the terminal cursor to the beginning and writes the given line.
+        """Rewinds the terminal cursor to the beginning and writes the given line.
 
-        :kwarg erase: if True, will also add spaces until the full terminal width to ensure
+        :param erase:
+            If True, will also add spaces until the full terminal width to ensure
             previous lines are properly erased.
 
         The rest of the keyword arguments are markup instructions.
@@ -499,9 +496,9 @@ class TerminalReporter:
     def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         if self.config.option.traceconfig:
             msg = "PLUGIN registered: {}".format(plugin)
-            # XXX this event may happen during setup/teardown time
+            # XXX This event may happen during setup/teardown time
             #     which unfortunately captures our output here
-            #     which garbles our output if we use self.write_line
+            #     which garbles our output if we use self.write_line.
             self.write_line(msg)
 
     def pytest_deselected(self, items: Sequence[Item]) -> None:
@@ -510,8 +507,8 @@ class TerminalReporter:
     def pytest_runtest_logstart(
         self, nodeid: str, location: Tuple[str, Optional[int], str]
     ) -> None:
-        # ensure that the path is printed before the
-        # 1st test of a module starts running
+        # Ensure that the path is printed before the
+        # 1st test of a module starts running.
         if self.showlongtestinfo:
             line = self._locationline(nodeid, *location)
             self.write_ensure_prefix(line, "")
@@ -533,7 +530,7 @@ class TerminalReporter:
             markup = None
         self._add_stats(category, [rep])
         if not letter and not word:
-            # probably passed setup/teardown
+            # Probably passed setup/teardown.
             return
         running_xdist = hasattr(rep, "node")
         if markup is None:
@@ -623,7 +620,7 @@ class TerminalReporter:
 
     @property
     def _width_of_current_line(self) -> int:
-        """Return the width of current line, using the superior implementation of py-1.6 when available"""
+        """Return the width of the current line."""
         return self._tw.width_of_current_line
 
     def pytest_collection(self) -> None:
@@ -761,9 +758,9 @@ class TerminalReporter:
                     rep.toterminal(self._tw)
 
     def _printcollecteditems(self, items: Sequence[Item]) -> None:
-        # to print out items and their parent collectors
+        # To print out items and their parent collectors
         # we take care to leave out Instances aka ()
-        # because later versions are going to get rid of them anyway
+        # because later versions are going to get rid of them anyway.
         if self.config.option.verbose < 0:
             if self.config.option.verbose < -1:
                 counts = {}  # type: Dict[str, int]
@@ -868,7 +865,7 @@ class TerminalReporter:
                 line += "[".join(values)
             return line
 
-        # collect_fspath comes from testid which has a "/"-normalized path
+        # collect_fspath comes from testid which has a "/"-normalized path.
 
         if fspath:
             res = mkrel(nodeid)
@@ -896,7 +893,7 @@ class TerminalReporter:
                 return ""
 
     #
-    # summaries for sessionfinish
+    # Summaries for sessionfinish.
     #
     def getreports(self, name: str):
         values = []
@@ -1255,9 +1252,9 @@ def _folded_skips(
         # For consistency, report all fspaths in relative form.
         fspath = startdir.bestrelpath(py.path.local(fspath))
         keywords = getattr(event, "keywords", {})
-        # folding reports with global pytestmark variable
-        # this is workaround, because for now we cannot identify the scope of a skip marker
-        # TODO: revisit after marks scope would be fixed
+        # Folding reports with global pytestmark variable.
+        # This is a workaround, because for now we cannot identify the scope of a skip marker
+        # TODO: Revisit after marks scope would be fixed.
         if (
             event.when == "setup"
             and "skip" in keywords
@@ -1298,20 +1295,19 @@ def _make_plural(count: int, noun: str) -> Tuple[int, str]:
 def _plugin_nameversions(plugininfo) -> List[str]:
     values = []  # type: List[str]
     for plugin, dist in plugininfo:
-        # gets us name and version!
+        # Gets us name and version!
         name = "{dist.project_name}-{dist.version}".format(dist=dist)
-        # questionable convenience, but it keeps things short
+        # Questionable convenience, but it keeps things short.
         if name.startswith("pytest-"):
             name = name[7:]
-        # we decided to print python package names
-        # they can have more than one plugin
+        # We decided to print python package names they can have more than one plugin.
         if name not in values:
             values.append(name)
     return values
 
 
 def format_session_duration(seconds: float) -> str:
-    """Format the given seconds in a human readable manner to show in the final summary"""
+    """Format the given seconds in a human readable manner to show in the final summary."""
     if seconds < 60:
         return "{:.2f}s".format(seconds)
     else:

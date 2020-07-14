@@ -1,4 +1,4 @@
-""" generic mechanism for marking and selecting python functions. """
+"""Generic mechanism for marking and selecting python functions."""
 import typing
 from typing import AbstractSet
 from typing import List
@@ -58,9 +58,9 @@ def param(
         def test_eval(test_input, expected):
             assert eval(test_input) == expected
 
-    :param values: variable args of the values of the parameter set, in order.
-    :keyword marks: a single mark or a list of marks to be applied to this parameter set.
-    :keyword str id: the id to attribute to this parameter set.
+    :param values: Variable args of the values of the parameter set, in order.
+    :keyword marks: A single mark or a list of marks to be applied to this parameter set.
+    :keyword str id: The id to attribute to this parameter set.
     """
     return ParameterSet.param(*values, marks=marks, id=id)
 
@@ -148,22 +148,22 @@ class KeywordMatcher:
     def from_item(cls, item: "Item") -> "KeywordMatcher":
         mapped_names = set()
 
-        # Add the names of the current item and any parent items
+        # Add the names of the current item and any parent items.
         import pytest
 
         for node in item.listchain():
             if not isinstance(node, (pytest.Instance, pytest.Session)):
                 mapped_names.add(node.name)
 
-        # Add the names added as extra keywords to current or parent items
+        # Add the names added as extra keywords to current or parent items.
         mapped_names.update(item.listextrakeywords())
 
-        # Add the names attached to the current function through direct assignment
+        # Add the names attached to the current function through direct assignment.
         function_obj = getattr(item, "function", None)
         if function_obj:
             mapped_names.update(function_obj.__dict__)
 
-        # add the markers to the keywords as we no longer handle them correctly
+        # Add the markers to the keywords as we no longer handle them correctly.
         mapped_names.update(mark.name for mark in item.iter_markers())
 
         return cls(mapped_names)

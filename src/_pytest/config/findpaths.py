@@ -18,10 +18,10 @@ if TYPE_CHECKING:
 
 
 def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
-    """Parses the given generic '.ini' file using legacy IniConfig parser, returning
+    """Parse the given generic '.ini' file using legacy IniConfig parser, returning
     the parsed object.
 
-    Raises UsageError if the file cannot be parsed.
+    Raise UsageError if the file cannot be parsed.
     """
     try:
         return iniconfig.IniConfig(path)
@@ -32,23 +32,23 @@ def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
 def load_config_dict_from_file(
     filepath: py.path.local,
 ) -> Optional[Dict[str, Union[str, List[str]]]]:
-    """Loads pytest configuration from the given file path, if supported.
+    """Load pytest configuration from the given file path, if supported.
 
     Return None if the file does not contain valid pytest configuration.
     """
 
-    # configuration from ini files are obtained from the [pytest] section, if present.
+    # Configuration from ini files are obtained from the [pytest] section, if present.
     if filepath.ext == ".ini":
         iniconfig = _parse_ini_config(filepath)
 
         if "pytest" in iniconfig:
             return dict(iniconfig["pytest"].items())
         else:
-            # "pytest.ini" files are always the source of configuration, even if empty
+            # "pytest.ini" files are always the source of configuration, even if empty.
             if filepath.basename == "pytest.ini":
                 return {}
 
-    # '.cfg' files are considered if they contain a "[tool:pytest]" section
+    # '.cfg' files are considered if they contain a "[tool:pytest]" section.
     elif filepath.ext == ".cfg":
         iniconfig = _parse_ini_config(filepath)
 
@@ -59,7 +59,7 @@ def load_config_dict_from_file(
             # plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
             fail(CFG_PYTEST_SECTION.format(filename="setup.cfg"), pytrace=False)
 
-    # '.toml' files are considered if they contain a [tool.pytest.ini_options] table
+    # '.toml' files are considered if they contain a [tool.pytest.ini_options] table.
     elif filepath.ext == ".toml":
         import toml
 
@@ -83,10 +83,8 @@ def locate_config(
 ) -> Tuple[
     Optional[py.path.local], Optional[py.path.local], Dict[str, Union[str, List[str]]],
 ]:
-    """
-    Search in the list of arguments for a valid ini-file for pytest,
-    and return a tuple of (rootdir, inifile, cfg-dict).
-    """
+    """Search in the list of arguments for a valid ini-file for pytest,
+    and return a tuple of (rootdir, inifile, cfg-dict)."""
     config_names = [
         "pytest.ini",
         "pyproject.toml",
