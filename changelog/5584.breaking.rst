@@ -8,8 +8,8 @@ instead of warning messages.
 `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__
 section in the docs for directions on how to update existing code.
 
-In the pytest ``6.0.X`` series, it is possible to change the errors back into warnings as a stop
-gap measure by adding this to your ``pytest.ini`` file:
+In the pytest ``6.0.X`` series, it is possible to change the errors back into warnings as a
+stopgap measure by adding this to your ``pytest.ini`` file:
 
 .. code-block:: ini
 
