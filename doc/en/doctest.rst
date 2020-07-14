@@ -206,7 +206,11 @@ It is possible to use fixtures using the ``getfixture`` helper:
     >>> ...
     >>>
 
-Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
+Note that the fixture needs to be defined in a place visible by pytest, for example a `conftest.py`
+file or plugin; normal python files containing docstrings are not normally scanned for fixtures
+unless explicitly configured by :confval:`python_files`.
+
+Also, the :ref:`usefixtures <usefixtures>` mark and fixtures marked as :ref:`autouse <autouse>` are supported
 when executing text doctest files.
 
 
