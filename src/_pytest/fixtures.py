@@ -976,7 +976,7 @@ class FixtureDef(Generic[_FixtureValue]):
         ids: Optional[
             Union[
                 Tuple[Union[None, str, float, int, bool], ...],
-                Callable[[object], Optional[object]],
+                Callable[[Any], Optional[object]],
             ]
         ] = None,
     ) -> None:
@@ -1128,13 +1128,13 @@ def _ensure_immutable_ids(
     ids: Optional[
         Union[
             Iterable[Union[None, str, float, int, bool]],
-            Callable[[object], Optional[object]],
+            Callable[[Any], Optional[object]],
         ]
     ],
 ) -> Optional[
     Union[
         Tuple[Union[None, str, float, int, bool], ...],
-        Callable[[object], Optional[object]],
+        Callable[[Any], Optional[object]],
     ]
 ]:
     if ids is None:
@@ -1180,7 +1180,7 @@ class FixtureFunctionMarker:
     ids = attr.ib(
         type=Union[
             Tuple[Union[None, str, float, int, bool], ...],
-            Callable[[object], Optional[object]],
+            Callable[[Any], Optional[object]],
         ],
         default=None,
         converter=_ensure_immutable_ids,
@@ -1223,7 +1223,7 @@ def fixture(
     ids: Optional[
         Union[
             Iterable[Union[None, str, float, int, bool]],
-            Callable[[object], Optional[object]],
+            Callable[[Any], Optional[object]],
         ]
     ] = ...,
     name: Optional[str] = ...
@@ -1241,7 +1241,7 @@ def fixture(  # noqa: F811
     ids: Optional[
         Union[
             Iterable[Union[None, str, float, int, bool]],
-            Callable[[object], Optional[object]],
+            Callable[[Any], Optional[object]],
         ]
     ] = ...,
     name: Optional[str] = None
@@ -1258,7 +1258,7 @@ def fixture(  # noqa: F811
     ids: Optional[
         Union[
             Iterable[Union[None, str, float, int, bool]],
-            Callable[[object], Optional[object]],
+            Callable[[Any], Optional[object]],
         ]
     ] = None,
     name: Optional[str] = None
