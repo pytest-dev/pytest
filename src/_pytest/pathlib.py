@@ -286,7 +286,7 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
 
 
 def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) -> bool:
-    """checks if `path` is deletable based if the lock file is expired"""
+    """checks if `path` is deletable based on whether the lock file is expired"""
     if path.is_symlink():
         return False
     lock = get_lock_path(path)

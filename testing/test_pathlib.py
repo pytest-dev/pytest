@@ -358,7 +358,7 @@ def test_get_extended_length_path_str():
 
 
 def test_suppress_error_removing_lock(tmp_path):
-    """ensure_deletable should not be resilient if lock file cannot be removed (#5456, #7491)"""
+    """ensure_deletable should be resilient if lock file cannot be removed (#5456, #7491)"""
     path = tmp_path / "dir"
     path.mkdir()
     lock = get_lock_path(path)
