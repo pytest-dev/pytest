@@ -1034,9 +1034,11 @@ class FixtureDef(Generic[_FixtureValue]):
     def execute(self, request: SubRequest) -> _FixtureValue:
         # get required arguments and register our own finish()
         # with their finalization
-        for argname in self.argnames:
+        for argname in self._dependee_fixture_argnames(request):
+            if argname == "request":
+                continue
             fixturedef = request._get_active_fixturedef(argname)
-            if argname != "request":
+            if not self._will_be_finalized_by_fixture(fixturedef):
                 # PseudoFixtureDef is only for "request".
                 assert isinstance(fixturedef, FixtureDef)
                 fixturedef.addfinalizer(functools.partial(self.finish, request=request))
@@ -1061,6 +1063,77 @@ class FixtureDef(Generic[_FixtureValue]):
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         result = hook.pytest_fixture_setup(fixturedef=self, request=request)
         return result
+
+    def _will_be_finalized_by_fixture(
+        self, fixturedef: Union["FixtureDef", PseudoFixtureDef]
+    ) -> bool:
+        """Whether or not this fixture be finalized by the passed fixture.
+        Every ``:class:FixtureDef`` keeps a list of all the finishers (tear downs) of
+        other ``:class:FixtureDef`` instances that it should run before running its own.
+        Finishers are added to this list not by this ``:class:FixtureDef``, but by the
+        other ``:class:FixtureDef`` instances. They tell this instance that it's
+        responsible for tearing them down before it tears itself down.
+        This method allows a ``:class:FixtureDef`` to check if it has already told
+        another ``:class:FixtureDef`` that the latter ``:class:FixtureDef`` is
+        responsible for tearing down this ``:class:FixtureDef``.
+        """
+        for finalizer in getattr(fixturedef, "_finalizers", ()):
+            if "request" in getattr(finalizer, "keywords", {}):
+                request = getattr(finalizer, "keywords")["request"]
+                if self == request._fixturedef:
+                    return True
+        return False
+
+    def _dependee_fixture_argnames(self, request: SubRequest) -> Tuple[str, ...]:
+        """A list of argnames for fixtures that this fixture depends on.
+        Given a request, this looks at the currently known list of fixture argnames, and
+        attempts to determine what slice of the list contains fixtures that it can know
+        should execute before it. This information is necessary so that this fixture can
+        know what fixtures to register its finalizer with to make sure that if they
+        would be torn down, they would tear down this fixture before themselves. It's
+        crucial for fixtures to be torn down in the inverse order that they were set up
+        in so that they don't try to clean up something that another fixture is still
+        depending on.
+        When autouse fixtures are involved, it can be tricky to figure out when fixtures
+        should be torn down. To solve this, this method leverages the ``fixturenames``
+        list provided by the ``request`` object, as this list is at least somewhat
+        sorted (in terms of the order fixtures are set up in) by the time this method is
+        reached. It's sorted enough that the starting point of fixtures that depend on
+        this one can be found using the ``self._parent_request`` stack.
+        If a request in the ``self._parent_request`` stack has a ``:class:FixtureDef``
+        associated with it, then that fixture is dependent on this one, so any fixture
+        names that appear in the list of fixture argnames that come after it can also be
+        ruled out. The argnames of all fixtures associated with a request in the
+        ``self._parent_request`` stack are found, and the lowest index argname is
+        considered the earliest point in the list of fixture argnames where everything
+        from that point onward can be considered to execute after this fixture.
+        Everything before this point can be considered fixtures that this fixture
+        depends on, and so this fixture should register its finalizer with all of them
+        to ensure that if any of them are to be torn down, they will tear this fixture
+        down first.
+        This is the first part of the list of fixture argnames that is returned. The last
+        part of the list is everything in ``self.argnames`` as those are explicit
+        dependees of this fixture, so this fixture should definitely register its
+        finalizer with them.
+        """
+        all_fix_names = request.fixturenames
+        try:
+            current_fix_index = all_fix_names.index(self.argname)
+        except ValueError:
+            current_fix_index = len(request.fixturenames)
+        parent_fixture_indexes = set()
+
+        parent_request = getattr(request, "_parent_request")
+        while hasattr(parent_request, "_parent_request"):
+            if hasattr(parent_request, "_fixturedef"):
+                parent_fix_name = parent_request._fixturedef.argname
+                if parent_fix_name in all_fix_names:
+                    parent_fixture_indexes.add(all_fix_names.index(parent_fix_name))
+            parent_request = parent_request._parent_request
+
+        stack_slice_index = min([current_fix_index, *parent_fixture_indexes])
+        active_fixture_argnames = all_fix_names[:stack_slice_index]
+        return tuple(tuple(active_fixture_argnames) + self.argnames)
 
     def cache_key(self, request: SubRequest) -> object:
         return request.param_index if not hasattr(request, "param") else request.param

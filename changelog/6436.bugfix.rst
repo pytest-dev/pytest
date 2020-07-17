@@ -1,0 +1,3 @@
+:class:`FixtureDef <_pytest.fixtures.FixtureDef>` objects now properly register their finalizers with autouse and
+parameterized fixtures that execute before them in the fixture stack so they are torn
+down at the right times, and in the right order.

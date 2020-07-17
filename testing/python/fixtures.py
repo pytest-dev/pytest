@@ -1748,6 +1748,134 @@ class TestAutouseDiscovery:
         reprec.assertoutcome(passed=3)
 
 
+class TestMultiLevelAutouseAndParameterization:
+    def test_setup_and_teardown_order(self, testdir):
+        """Tests that parameterized fixtures effect subsequent fixtures. (#6436)
+        If a fixture uses a parameterized fixture, or, for any other reason, is executed
+        after the parameterized fixture in the fixture stack, then it should be affected
+        by the parameterization, and as a result, should be torn down before the
+        parameterized fixture, every time the parameterized fixture is torn down. This
+        should be the case even if autouse is involved and/or the linear order of
+        fixture execution isn't deterministic. In other words, before any fixture can be
+        torn down, every fixture that was executed after it must also be torn down.
+        """
+        testdir.makepyfile(
+            test_auto="""
+            import pytest
+            def f(param):
+                return param
+            @pytest.fixture(scope="session", autouse=True)
+            def s_fix(request):
+                yield
+            @pytest.fixture(scope="package", params=["p1", "p2"], ids=f, autouse=True)
+            def p_fix(request):
+                yield
+            @pytest.fixture(scope="module", params=["m1", "m2"], ids=f, autouse=True)
+            def m_fix(request):
+                yield
+            @pytest.fixture(scope="class", autouse=True)
+            def another_c_fix(m_fix):
+                yield
+            @pytest.fixture(scope="class")
+            def c_fix():
+                yield
+            @pytest.fixture(scope="function", params=["f1", "f2"], ids=f, autouse=True)
+            def f_fix(request):
+                yield
+            class TestFixtures:
+                def test_a(self, c_fix):
+                    pass
+                def test_b(self, c_fix):
+                    pass
+        """
+        )
+        result = testdir.runpytest("--setup-plan")
+        test_fixtures_used = (
+            "(fixtures used: another_c_fix, c_fix, f_fix, m_fix, p_fix, request, s_fix)"
+        )
+        expected = (
+            "SETUP    S s_fix\n"
+            "  SETUP    P p_fix['p1']\n"
+            "    SETUP    M m_fix['m1']\n"
+            "      SETUP    C another_c_fix (fixtures used: m_fix)\n"
+            "      SETUP    C c_fix\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_a[p1-m1-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_a[p1-m1-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_b[p1-m1-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_b[p1-m1-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "      TEARDOWN C c_fix\n"
+            "      TEARDOWN C another_c_fix\n"
+            "    TEARDOWN M m_fix['m1']\n"
+            "    SETUP    M m_fix['m2']\n"
+            "      SETUP    C another_c_fix (fixtures used: m_fix)\n"
+            "      SETUP    C c_fix\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_a[p1-m2-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_a[p1-m2-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_b[p1-m2-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_b[p1-m2-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "      TEARDOWN C c_fix\n"
+            "      TEARDOWN C another_c_fix\n"
+            "    TEARDOWN M m_fix['m2']\n"
+            "  TEARDOWN P p_fix['p1']\n"
+            "  SETUP    P p_fix['p2']\n"
+            "    SETUP    M m_fix['m1']\n"
+            "      SETUP    C another_c_fix (fixtures used: m_fix)\n"
+            "      SETUP    C c_fix\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_a[p2-m1-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_a[p2-m1-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_b[p2-m1-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_b[p2-m1-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "      TEARDOWN C c_fix\n"
+            "      TEARDOWN C another_c_fix\n"
+            "    TEARDOWN M m_fix['m1']\n"
+            "    SETUP    M m_fix['m2']\n"
+            "      SETUP    C another_c_fix (fixtures used: m_fix)\n"
+            "      SETUP    C c_fix\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_a[p2-m2-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_a[p2-m2-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "        SETUP    F f_fix['f1']\n"
+            "        test_auto.py::TestFixtures::test_b[p2-m2-f1] {0}\n"
+            "        TEARDOWN F f_fix['f1']\n"
+            "        SETUP    F f_fix['f2']\n"
+            "        test_auto.py::TestFixtures::test_b[p2-m2-f2] {0}\n"
+            "        TEARDOWN F f_fix['f2']\n"
+            "      TEARDOWN C c_fix\n"
+            "      TEARDOWN C another_c_fix\n"
+            "    TEARDOWN M m_fix['m2']\n"
+            "  TEARDOWN P p_fix['p2']\n"
+            "TEARDOWN S s_fix".format(test_fixtures_used).split("\n")
+        )
+        result.stdout.fnmatch_lines(expected, consecutive=True)
+
+
 class TestAutouseManagement:
     def test_autouse_conftest_mid_directory(self, testdir):
         pkgdir = testdir.mkpydir("xyz123")
@@ -4326,6 +4454,25 @@ def test_fixture_arg_ordering(testdir):
     )
     result = testdir.runpytest("-vv", str(p1))
     assert result.ret == 0
+
+
+class TestFinalizerOnlyAddedOnce:
+    @pytest.fixture(scope="class", autouse=True)
+    def a(self):
+        pass
+
+    @pytest.fixture(scope="class", autouse=True)
+    def b(self, a):
+        pass
+
+    def test_a_will_finalize_b(self, request):
+        a = request._get_active_fixturedef("a")
+        b = request._get_active_fixturedef("b")
+        assert b._will_be_finalized_by_fixture(a)
+
+    def test_a_only_finishes_one(self, request):
+        a = request._get_active_fixturedef("a")
+        assert len(a._finalizers)
 
 
 def test_yield_fixture_with_no_value(testdir):
