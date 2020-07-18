@@ -138,7 +138,7 @@ pytest.mark.parametrize
 
 **Tutorial**: :doc:`parametrize`.
 
-.. automethod:: _pytest.python.Metafunc.parametrize
+This mark has the same signature as :py:meth:`_pytest.python.Metafunc.parametrize`; see there.
 
 
 .. _`pytest.mark.skip ref`:
