@@ -29,9 +29,7 @@ class TestImportHookInstallation:
     @pytest.mark.parametrize("initial_conftest", [True, False])
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
     def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
-        """Test that conftest files are using assertion rewrite on import.
-        (#1619)
-        """
+        """Test that conftest files are using assertion rewrite on import (#1619)."""
         testdir.tmpdir.join("foo/tests").ensure(dir=1)
         conftest_path = "conftest.py" if initial_conftest else "foo/conftest.py"
         contents = {
@@ -569,7 +567,7 @@ class TestAssert_reprcompare:
             assert "b" not in line
 
     def test_dict_omitting_with_verbosity_1(self) -> None:
-        """ Ensure differing items are visible for verbosity=1 (#1512) """
+        """Ensure differing items are visible for verbosity=1 (#1512)."""
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1}, verbose=1)
         assert lines is not None
         assert lines[1].startswith("Omitting 1 identical item")
@@ -719,10 +717,7 @@ class TestAssert_reprcompare:
         ]
 
     def test_one_repr_empty(self):
-        """
-        the faulty empty string repr did trigger
-        an unbound local error in _diff_text
-        """
+        """The faulty empty string repr did trigger an unbound local error in _diff_text."""
 
         class A(str):
             def __repr__(self):
@@ -1135,7 +1130,7 @@ class TestTruncateExplanation:
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_full_output_truncated(self, monkeypatch, testdir):
-        """ Test against full runpytest() output. """
+        """Test against full runpytest() output."""
 
         line_count = 7
         line_len = 100
@@ -1370,9 +1365,7 @@ def test_traceback_failure(testdir):
 
 
 def test_exception_handling_no_traceback(testdir):
-    """
-    Handle chain exceptions in tasks submitted by the multiprocess module (#1984).
-    """
+    """Handle chain exceptions in tasks submitted by the multiprocess module (#1984)."""
     p1 = testdir.makepyfile(
         """
         from multiprocessing import Pool

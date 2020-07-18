@@ -188,9 +188,7 @@ class TestXFail:
         assert callreport.wasxfail == "this is an xfail"
 
     def test_xfail_using_platform(self, testdir):
-        """
-        Verify that platform can be used with xfail statements.
-        """
+        """Verify that platform can be used with xfail statements."""
         item = testdir.getitem(
             """
             import pytest
@@ -476,9 +474,8 @@ class TestXFail:
         result.stdout.fnmatch_lines([matchline])
 
     def test_strict_sanity(self, testdir):
-        """sanity check for xfail(strict=True): a failing test should behave
-        exactly like a normal xfail.
-        """
+        """Sanity check for xfail(strict=True): a failing test should behave
+        exactly like a normal xfail."""
         p = testdir.makepyfile(
             """
             import pytest
@@ -1137,9 +1134,7 @@ def test_xfail_item(testdir):
 
 
 def test_module_level_skip_error(testdir):
-    """
-    Verify that using pytest.skip at module level causes a collection error
-    """
+    """Verify that using pytest.skip at module level causes a collection error."""
     testdir.makepyfile(
         """
         import pytest
@@ -1156,9 +1151,7 @@ def test_module_level_skip_error(testdir):
 
 
 def test_module_level_skip_with_allow_module_level(testdir):
-    """
-    Verify that using pytest.skip(allow_module_level=True) is allowed
-    """
+    """Verify that using pytest.skip(allow_module_level=True) is allowed."""
     testdir.makepyfile(
         """
         import pytest
@@ -1173,9 +1166,7 @@ def test_module_level_skip_with_allow_module_level(testdir):
 
 
 def test_invalid_skip_keyword_parameter(testdir):
-    """
-    Verify that using pytest.skip() with unknown parameter raises an error
-    """
+    """Verify that using pytest.skip() with unknown parameter raises an error."""
     testdir.makepyfile(
         """
         import pytest

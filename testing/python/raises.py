@@ -157,9 +157,7 @@ class TestRaises:
 
     @pytest.mark.parametrize("method", ["function", "function_match", "with"])
     def test_raises_cyclic_reference(self, method):
-        """
-        Ensure pytest.raises does not leave a reference cycle (#1965).
-        """
+        """Ensure pytest.raises does not leave a reference cycle (#1965)."""
         import gc
 
         class T:

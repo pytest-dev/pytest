@@ -984,8 +984,7 @@ class TestTracebackCutting:
         result.stdout.fnmatch_lines([">*asd*", "E*NameError*"])
 
     def test_traceback_filter_error_during_fixture_collection(self, testdir):
-        """integration test for issue #995.
-        """
+        """Integration test for issue #995."""
         testdir.makepyfile(
             """
             import pytest
@@ -1011,8 +1010,9 @@ class TestTracebackCutting:
         result.stdout.fnmatch_lines(["*ValueError: fail me*", "* 1 error in *"])
 
     def test_filter_traceback_generated_code(self) -> None:
-        """test that filter_traceback() works with the fact that
+        """Test that filter_traceback() works with the fact that
         _pytest._code.code.Code.path attribute might return an str object.
+
         In this case, one of the entries on the traceback was produced by
         dynamically generated code.
         See: https://bitbucket.org/pytest-dev/py/issues/71
@@ -1033,8 +1033,9 @@ class TestTracebackCutting:
         assert not filter_traceback(traceback[-1])
 
     def test_filter_traceback_path_no_longer_valid(self, testdir) -> None:
-        """test that filter_traceback() works with the fact that
+        """Test that filter_traceback() works with the fact that
         _pytest._code.code.Code.path attribute might return an str object.
+
         In this case, one of the files in the traceback no longer exists.
         This fixes #1133.
         """
@@ -1250,8 +1251,7 @@ def test_class_injection_does_not_break_collection(testdir):
 
 
 def test_syntax_error_with_non_ascii_chars(testdir):
-    """Fix decoding issue while formatting SyntaxErrors during collection (#578)
-    """
+    """Fix decoding issue while formatting SyntaxErrors during collection (#578)."""
     testdir.makepyfile("☃")
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])

@@ -1,6 +1,4 @@
-"""
-Invoke development tasks.
-"""
+"""Invoke development tasks."""
 import argparse
 import os
 from pathlib import Path

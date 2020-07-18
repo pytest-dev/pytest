@@ -13,9 +13,7 @@ WARNINGS_SUMMARY_HEADER = "warnings summary"
 
 @pytest.fixture
 def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
-    """
-    Create a test file which calls a function in a module which generates warnings.
-    """
+    """Create a test file which calls a function in a module which generates warnings."""
     testdir.syspathinsert()
     test_name = request.function.__name__
     module_name = test_name.lstrip("test_") + "_module"
@@ -42,9 +40,7 @@ def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
 
 @pytest.mark.filterwarnings("default")
 def test_normal_flow(testdir, pyfile_with_warnings):
-    """
-    Check that the warnings section is displayed.
-    """
+    """Check that the warnings section is displayed."""
     result = testdir.runpytest(pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
@@ -180,9 +176,8 @@ def test_works_with_filterwarnings(testdir):
 
 @pytest.mark.parametrize("default_config", ["ini", "cmdline"])
 def test_filterwarnings_mark(testdir, default_config):
-    """
-    Test ``filterwarnings`` mark works and takes precedence over command line and ini options.
-    """
+    """Test ``filterwarnings`` mark works and takes precedence over command
+    line and ini options."""
     if default_config == "ini":
         testdir.makeini(
             """
@@ -305,9 +300,7 @@ def test_warning_captured_hook(testdir):
 
 @pytest.mark.filterwarnings("always")
 def test_collection_warnings(testdir):
-    """
-    Check that we also capture warnings issued during test collection (#3251).
-    """
+    """Check that we also capture warnings issued during test collection (#3251)."""
     testdir.makepyfile(
         """
         import warnings
@@ -387,7 +380,7 @@ def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
 
 @pytest.mark.parametrize("ignore_on_cmdline", [True, False])
 def test_option_precedence_cmdline_over_ini(testdir, ignore_on_cmdline):
-    """filters defined in the command-line should take precedence over filters in ini files (#3946)."""
+    """Filters defined in the command-line should take precedence over filters in ini files (#3946)."""
     testdir.makeini(
         """
         [pytest]

@@ -268,10 +268,10 @@ def test_caplog_captures_despite_exception(testdir):
 
 
 def test_log_report_captures_according_to_config_option_upon_failure(testdir):
-    """ Test that upon failure:
-    (1) `caplog` succeeded to capture the DEBUG message and assert on it => No `Exception` is raised
-    (2) The `DEBUG` message does NOT appear in the `Captured log call` report
-    (3) The stdout, `INFO`, and `WARNING` messages DO appear in the test reports due to `--log-level=INFO`
+    """Test that upon failure:
+    (1) `caplog` succeeded to capture the DEBUG message and assert on it => No `Exception` is raised.
+    (2) The `DEBUG` message does NOT appear in the `Captured log call` report.
+    (3) The stdout, `INFO`, and `WARNING` messages DO appear in the test reports due to `--log-level=INFO`.
     """
     testdir.makepyfile(
         """

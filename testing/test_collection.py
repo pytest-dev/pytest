@@ -725,10 +725,8 @@ class Test_genitems:
         print(s)
 
     def test_class_and_functions_discovery_using_glob(self, testdir):
-        """
-        tests that python_classes and python_functions config options work
-        as prefixes and glob-like patterns (issue #600).
-        """
+        """Test that Python_classes and Python_functions config options work
+        as prefixes and glob-like patterns (#600)."""
         testdir.makeini(
             """
             [pytest]

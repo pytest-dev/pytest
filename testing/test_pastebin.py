@@ -87,9 +87,7 @@ class TestPaste:
 
     @pytest.fixture
     def mocked_urlopen_fail(self, monkeypatch):
-        """
-        monkeypatch the actual urlopen call to emulate a HTTP Error 400
-        """
+        """Monkeypatch the actual urlopen call to emulate a HTTP Error 400."""
         calls = []
 
         import urllib.error
@@ -104,11 +102,9 @@ class TestPaste:
 
     @pytest.fixture
     def mocked_urlopen_invalid(self, monkeypatch):
-        """
-        monkeypatch the actual urlopen calls done by the internal plugin
+        """Monkeypatch the actual urlopen calls done by the internal plugin
         function that connects to bpaste service, but return a url in an
-        unexpected format
-        """
+        unexpected format."""
         calls = []
 
         def mocked(url, data):
@@ -128,10 +124,8 @@ class TestPaste:
 
     @pytest.fixture
     def mocked_urlopen(self, monkeypatch):
-        """
-        monkeypatch the actual urlopen calls done by the internal plugin
-        function that connects to bpaste service.
-        """
+        """Monkeypatch the actual urlopen calls done by the internal plugin
+        function that connects to bpaste service."""
         calls = []
 
         def mocked(url, data):

@@ -370,9 +370,8 @@ def test_keyword_option_wrong_arguments(
 
 
 def test_parametrized_collected_from_command_line(testdir):
-    """Parametrized test not collected if test named specified
-       in command line issue#649.
-    """
+    """Parametrized test not collected if test named specified in command
+    line issue#649."""
     py_file = testdir.makepyfile(
         """
         import pytest
@@ -430,7 +429,7 @@ def test_parametrized_with_kwargs(testdir):
 
 
 def test_parametrize_iterator(testdir):
-    """parametrize should work with generators (#5354)."""
+    """`parametrize` should work with generators (#5354)."""
     py_file = testdir.makepyfile(
         """\
         import pytest
@@ -669,13 +668,12 @@ class TestFunctional:
         reprec.assertoutcome(passed=1)
 
     def assert_markers(self, items, **expected):
-        """assert that given items have expected marker names applied to them.
-        expected should be a dict of (item name -> seq of expected marker names)
+        """Assert that given items have expected marker names applied to them.
+        expected should be a dict of (item name -> seq of expected marker names).
 
-        .. note:: this could be moved to ``testdir`` if proven to be useful
+        Note: this could be moved to ``testdir`` if proven to be useful
         to other modules.
         """
-
         items = {x.name: x for x in items}
         for name, expected_markers in expected.items():
             markers = {m.name for m in items[name].iter_markers()}
@@ -866,9 +864,7 @@ class TestKeywordSelection:
         assert len(deselected_tests) == 1
 
     def test_no_match_directories_outside_the_suite(self, testdir):
-        """
-        -k should not match against directories containing the test suite (#7040).
-        """
+        """`-k` should not match against directories containing the test suite (#7040)."""
         test_contents = """
             def test_aaa(): pass
             def test_ddd(): pass

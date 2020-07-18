@@ -39,8 +39,7 @@ def test_help(testdir):
 
 
 def test_none_help_param_raises_exception(testdir):
-    """Tests a None help param raises a TypeError.
-    """
+    """Test that a None help param raises a TypeError."""
     testdir.makeconftest(
         """
         def pytest_addoption(parser):
@@ -54,8 +53,7 @@ def test_none_help_param_raises_exception(testdir):
 
 
 def test_empty_help_param(testdir):
-    """Tests an empty help param is displayed correctly.
-    """
+    """Test that an empty help param is displayed correctly."""
     testdir.makeconftest(
         """
         def pytest_addoption(parser):

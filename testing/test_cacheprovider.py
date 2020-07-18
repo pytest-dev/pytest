@@ -643,9 +643,7 @@ class TestLastFailed:
         return sorted(config.cache.get("cache/lastfailed", {}))
 
     def test_cache_cumulative(self, testdir):
-        """
-        Test workflow where user fixes errors gradually file by file using --lf.
-        """
+        """Test workflow where user fixes errors gradually file by file using --lf."""
         # 1. initial run
         test_bar = testdir.makepyfile(
             test_bar="""

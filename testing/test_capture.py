@@ -635,9 +635,8 @@ class TestCaptureFixture:
 
     @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures(self, testdir, fixture):
-        """
-        Ensure that capsys and capfd can be used by other fixtures during setup and teardown.
-        """
+        """Ensure that capsys and capfd can be used by other fixtures during
+        setup and teardown."""
         testdir.makepyfile(
             """\
             import sys
@@ -1109,8 +1108,8 @@ class TestTeeStdCapture(TestStdCapture):
     captureclass = staticmethod(TeeStdCapture)
 
     def test_capturing_error_recursive(self):
-        """ for TeeStdCapture since we passthrough stderr/stdout, cap1
-        should get all output, while cap2 should only get "cap2\n" """
+        r"""For TeeStdCapture since we passthrough stderr/stdout, cap1
+        should get all output, while cap2 should only get "cap2\n"."""
 
         with self.getcapture() as cap1:
             print("cap1")

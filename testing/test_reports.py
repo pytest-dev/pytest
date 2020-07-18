@@ -9,8 +9,7 @@ from _pytest.reports import TestReport
 
 class TestReportSerialization:
     def test_xdist_longrepr_to_str_issue_241(self, testdir):
-        """
-        Regarding issue pytest-xdist#241
+        """Regarding issue pytest-xdist#241.
 
         This test came originally from test_remote.py in xdist (ca03269).
         """
@@ -133,9 +132,7 @@ class TestReportSerialization:
             assert rep_entries[i].lines == a_entries[i].lines
 
     def test_itemreport_outcomes(self, testdir):
-        """
-        This test came originally from test_remote.py in xdist (ca03269).
-        """
+        # This test came originally from test_remote.py in xdist (ca03269).
         reprec = testdir.inline_runsource(
             """
             import pytest

@@ -488,9 +488,7 @@ class TestApprox:
         ],
     )
     def test_comparison_operator_type_error(self, op):
-        """
-        pytest.approx should raise TypeError for operators other than == and != (#2003).
-        """
+        """pytest.approx should raise TypeError for operators other than == and != (#2003)."""
         with pytest.raises(TypeError):
             op(1, approx(1, rel=1e-6, abs=1e-12))
 

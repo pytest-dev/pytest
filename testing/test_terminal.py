@@ -1,6 +1,4 @@
-"""
-terminal reporting of the full testing process.
-"""
+"""Terminal reporting of the full testing process."""
 import collections
 import os
 import sys
@@ -440,10 +438,8 @@ class TestCollectonly:
         )
 
     def test_collectonly_missing_path(self, testdir):
-        """this checks issue 115,
-            failure in parseargs will cause session
-            not to have the items attribute
-        """
+        """Issue 115: failure in parseargs will cause session not to
+        have the items attribute."""
         result = testdir.runpytest("--collect-only", "uhm_missing_path")
         assert result.ret == 4
         result.stderr.fnmatch_lines(["*ERROR: file not found*"])
@@ -531,7 +527,7 @@ class TestFixtureReporting:
         )
 
     def test_setup_teardown_output_and_test_failure(self, testdir):
-        """ Test for issue #442 """
+        """Test for issue #442."""
         testdir.makepyfile(
             """
             def setup_function(function):
@@ -1076,9 +1072,7 @@ def test_color_no(testdir):
 
 @pytest.mark.parametrize("verbose", [True, False])
 def test_color_yes_collection_on_non_atty(testdir, verbose):
-    """skip collect progress report when working on non-terminals.
-    #1397
-    """
+    """#1397: Skip collect progress report when working on non-terminals."""
     testdir.makepyfile(
         """
         import pytest
@@ -1208,9 +1202,8 @@ def test_traceconfig(testdir):
 
 
 class TestGenericReporting:
-    """ this test class can be subclassed with a different option
-        provider to run e.g. distributed tests.
-    """
+    """Test class which can be subclassed with a different option provider to
+    run e.g. distributed tests."""
 
     def test_collect_fail(self, testdir, option):
         testdir.makepyfile("import xyz\n")

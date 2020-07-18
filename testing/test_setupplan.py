@@ -1,5 +1,5 @@
 def test_show_fixtures_and_test(testdir, dummy_yaml_custom_test):
-    """ Verifies that fixtures are not executed. """
+    """Verify that fixtures are not executed."""
     testdir.makepyfile(
         """
         import pytest
@@ -20,8 +20,7 @@ def test_show_fixtures_and_test(testdir, dummy_yaml_custom_test):
 
 
 def test_show_multi_test_fixture_setup_and_teardown_correctly_simple(testdir):
-    """
-    Verify that when a fixture lives for longer than a single test, --setup-plan
+    """Verify that when a fixture lives for longer than a single test, --setup-plan
     correctly displays the SETUP/TEARDOWN indicators the right number of times.
 
     As reported in https://github.com/pytest-dev/pytest/issues/2049
@@ -68,9 +67,7 @@ def test_show_multi_test_fixture_setup_and_teardown_correctly_simple(testdir):
 
 
 def test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show(testdir):
-    """
-    Verify that SETUP/TEARDOWN messages match what comes out of --setup-show.
-    """
+    """Verify that SETUP/TEARDOWN messages match what comes out of --setup-show."""
     testdir.makepyfile(
         """
         import pytest
