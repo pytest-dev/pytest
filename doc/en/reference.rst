@@ -185,6 +185,11 @@ Mark a test function as using the given fixture names.
     This mark has no effect when applied
     to a **fixture** function.
 
+.. note::
+   When using `usefixtures` in hooks, it can only load fixtures when applied to a **test** before test setup.
+   To modify fixtures after test setup, append the fixture name to item.fixturenames.
+
+
 .. py:function:: pytest.mark.usefixtures(*names)
 
     :param args: the names of the fixture to use, as strings
