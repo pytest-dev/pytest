@@ -1,0 +1,1 @@
+Add a note about ``-q`` option used in getting started guide.

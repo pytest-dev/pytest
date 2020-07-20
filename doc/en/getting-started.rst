@@ -112,6 +112,10 @@ Execute the test function with “quiet” reporting mode:
     .                                                                    [100%]
     1 passed in 0.12s
 
+.. note::
+
+    The ``-q/--quiet`` flag keeps the output brief in this and following examples.
+
 Group multiple tests in a class
 --------------------------------------------------------------
 
