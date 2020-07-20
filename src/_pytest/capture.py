@@ -388,6 +388,7 @@ class FDCaptureBinary:
                 TemporaryFile(buffering=0),  # type: ignore[arg-type]
                 encoding="utf-8",
                 errors="replace",
+                newline="",
                 write_through=True,
             )
             if targetfd in patchsysdict:

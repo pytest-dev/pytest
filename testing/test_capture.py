@@ -514,6 +514,12 @@ class TestCaptureFixture:
         )
         reprec.assertoutcome(passed=1)
 
+    @pytest.mark.parametrize("nl", ("\n", "\r\n", "\r"))
+    def test_cafd_preserves_newlines(self, capfd, nl):
+        print("test", end=nl)
+        out, err = capfd.readouterr()
+        assert out.endswith(nl)
+
     def test_capfdbinary(self, testdir):
         reprec = testdir.inline_runsource(
             """\
