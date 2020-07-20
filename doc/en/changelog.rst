@@ -140,6 +140,8 @@ Deprecations
   The special ``-k 'expr:'`` syntax to ``-k`` is deprecated. Please open an issue
   if you use this and want a replacement.
 
+- `#4049 <https://github.com/pytest-dev/pytest/issues/4049>`_: ``pytest_warning_captured`` is deprecated in favor of the ``pytest_warning_recorded`` hook.
+
 
 Features
 --------
@@ -177,7 +179,7 @@ Features
 
 - `#4049 <https://github.com/pytest-dev/pytest/issues/4049>`_: Introduced a new hook named `pytest_warning_recorded` to convey information about warnings captured by the internal `pytest` warnings plugin.
 
-  This hook is meant to replace `pytest_warning_captured`, which will be removed in a future release.
+  This hook is meant to replace `pytest_warning_captured`, which is deprecated and will be removed in a future release.
 
 
 - `#6471 <https://github.com/pytest-dev/pytest/issues/6471>`_: New command-line flags:
