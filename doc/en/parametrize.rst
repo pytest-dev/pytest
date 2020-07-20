@@ -81,12 +81,8 @@ them in turn:
 
 .. note::
 
-    1. Parameter values are passed as-is to tests, and if you mutate them,
+    1. Parameter values are passed as-is to tests (no copy whatsoever), so if you mutate them,
        the mutations will be reflected in subsequent test case calls.
-
-       Specifically, pytest doesn't do any copying of the values, since that would
-       put constraints on the possible parametrizable values, cause unexpected behaviour
-       due to broken copy/deepcopy, degrade performance, etc.
 
     2. pytest by default escapes any non-ascii characters used in unicode strings
        for the parametrization because it has several downsides.
