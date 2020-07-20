@@ -81,23 +81,25 @@ them in turn:
 
 .. note::
 
-    1. Parameter values are passed as-is to tests (no copy whatsoever), so if you mutate them,
-       the mutations will be reflected in subsequent test case calls.
+    Parameter values are passed as-is to tests (no copy whatsoever), so if you mutate them,
+    the mutations will be reflected in subsequent test case calls.
 
-    2. pytest by default escapes any non-ascii characters used in unicode strings
-       for the parametrization because it has several downsides.
-       If however you would like to use unicode strings in parametrization
-       and see them in the terminal as is (non-escaped), use this option
-       in your ``pytest.ini``:
+.. note::
 
-       .. code-block:: ini
+    pytest by default escapes any non-ascii characters used in unicode strings
+    for the parametrization because it has several downsides.
+    If however you would like to use unicode strings in parametrization
+    and see them in the terminal as is (non-escaped), use this option
+    in your ``pytest.ini``:
 
-           [pytest]
-           disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+    .. code-block:: ini
 
-       Keep in mind however that this might cause unwanted side effects and
-       even bugs depending on the OS used and plugins currently installed,
-       so use it at your own risk.
+        [pytest]
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+
+    Keep in mind however that this might cause unwanted side effects and
+    even bugs depending on the OS used and plugins currently installed,
+    so use it at your own risk.
 
 
 As designed in this example, only one pair of input/output values fails
