@@ -81,7 +81,8 @@ them in turn:
 
 .. note::
 
-    Parameter values are passed as-is to tests (no copy whatsoever), so if you mutate them,
+    Parameter values are passed as-is to tests (no copy whatsoever).
+    For example, if you pass a list or a dict as a parameter value, and mutate it,
     the mutations will be reflected in subsequent test case calls.
 
 .. note::
