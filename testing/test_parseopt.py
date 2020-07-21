@@ -292,10 +292,11 @@ def test_argcomplete(testdir, monkeypatch) -> None:
         bash_version = subprocess.run(
             ["bash", "--version"],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=True,
             universal_newlines=True,
         ).stdout
-    except OSError:
+    except (OSError, subprocess.CalledProcessError):
         pytest.skip("bash is not available")
     if "GNU bash" not in bash_version:
         # See #7518.
