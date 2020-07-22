@@ -180,18 +180,17 @@ pytest.mark.usefixtures
 
 Mark a test function as using the given fixture names.
 
-.. warning::
-
-    This mark has no effect when applied
-    to a **fixture** function.
-
-.. note::
-   When using `usefixtures` in hooks, it can only load fixtures when applied to a **test** before test setup.
-
-
 .. py:function:: pytest.mark.usefixtures(*names)
 
     :param args: the names of the fixture to use, as strings
+
+.. note::
+
+    When using `usefixtures` in hooks, it can only load fixtures when applied to a test function before test setup
+    (for example in the `pytest_collection_modifyitems` hook).
+
+    Also not that his mark has no effect when applied to **fixtures**.
+
 
 
 .. _`pytest.mark.xfail ref`:
