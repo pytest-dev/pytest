@@ -170,9 +170,10 @@ Features
   noticing type errors indicating incorrect usage. If you run into an error that
   you believe to be incorrect, please let us know in an issue.
 
-  The types were developed against mypy version 0.780. Older versions may work,
-  but we recommend using at least this version. Other type checkers may work as
-  well, but they are not officially verified to work by pytest yet.
+  The types were developed against mypy version 0.780. Versions before 0.750
+  are known not to work. We recommend using the latest version. Other type
+  checkers may work as well, but they are not officially verified to work by
+  pytest yet.
 
 
 - `#4049 <https://github.com/pytest-dev/pytest/issues/4049>`_: Introduced a new hook named `pytest_warning_recorded` to convey information about warnings captured by the internal `pytest` warnings plugin.
