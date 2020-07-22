@@ -225,8 +225,15 @@ class TestParseIni:
             ),
         ],
     )
+    @pytest.mark.parametrize("option_name", ["--strict", "--strict-config"])
     def test_invalid_ini_keys(
-        self, testdir, ini_file_text, invalid_keys, warning_output, exception_text
+        self,
+        testdir,
+        ini_file_text,
+        invalid_keys,
+        warning_output,
+        exception_text,
+        option_name,
     ):
         testdir.makeconftest(
             """
@@ -244,9 +251,9 @@ class TestParseIni:
 
         if exception_text:
             with pytest.raises(pytest.fail.Exception, match=exception_text):
-                testdir.runpytest("--strict-config")
+                testdir.runpytest(option_name)
         else:
-            testdir.runpytest("--strict-config")
+            testdir.runpytest(option_name)
 
     @pytest.mark.parametrize(
         "ini_file_text, exception_text",

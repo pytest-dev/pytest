@@ -1463,9 +1463,8 @@ passed multiple times. The expected format is ``name=value``. For example::
             serial
 
     .. note::
-        The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
-        backward compatibility only and may be confusing for others as it only applies to
-        markers and not to other options.
+        The ``--strict`` argument implies both ``--strict-markers`` and
+        ``--strict-config``.
 
 .. confval:: minversion
 

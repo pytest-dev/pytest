@@ -1180,7 +1180,7 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        if self.known_args_namespace.strict_config:
+        if self.known_args_namespace.strict_config or self.known_args_namespace.strict:
             fail(message, pytrace=False)
 
         from _pytest.warnings import _issue_warning_captured
