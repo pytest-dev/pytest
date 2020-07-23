@@ -262,7 +262,7 @@ class TracebackEntry:
             raise
         except BaseException:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" % (
+        return "  File '%s':%d in %s\n  %s\n" % (
             str(self.path),
             self.lineno + 1,
             name,
