@@ -262,7 +262,12 @@ class TracebackEntry:
             raise
         except BaseException:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" % (self.path, self.lineno + 1, name, line)
+        return "  File %r:%d in %s\n  %s\n" % (
+            str(self.path),
+            self.lineno + 1,
+            name,
+            line,
+        )
 
     @property
     def name(self) -> str:
