@@ -323,8 +323,9 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(errors=1, failures=1, tests=1)
         first, second = dom.find_by_tag("testcase")
-        if not first or not second or first == second:
-            assert 0
+        assert first
+        assert second
+        assert first != second
         fnode = first.find_first_by_tag("failure")
         fnode.assert_attr(message="Exception: Call Exception")
         snode = second.find_first_by_tag("error")
@@ -535,7 +536,7 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         fnode = tnode.find_first_by_tag("failure")
-        fnode.assert_attr(message="AssertionError: An error assert 0")
+        fnode.assert_attr(message="AssertionError: An error\nassert 0")
 
     @parametrize_families
     def test_failure_escape(self, testdir, run_and_parse, xunit_family):
@@ -995,14 +996,14 @@ def test_invalid_xml_escape():
     # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
 
     for i in invalid:
-        got = bin_xml_escape(chr(i)).uniobj
+        got = bin_xml_escape(chr(i))
         if i <= 0xFF:
             expected = "#x%02X" % i
         else:
             expected = "#x%04X" % i
         assert got == expected
     for i in valid:
-        assert chr(i) == bin_xml_escape(chr(i)).uniobj
+        assert chr(i) == bin_xml_escape(chr(i))
 
 
 def test_logxml_path_expansion(tmpdir, monkeypatch):

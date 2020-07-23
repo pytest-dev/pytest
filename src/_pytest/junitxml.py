@@ -12,6 +12,7 @@ import functools
 import os
 import platform
 import re
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Callable
 from typing import Dict
@@ -21,14 +22,11 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import py
-
 import pytest
 from _pytest import deprecated
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
@@ -38,19 +36,12 @@ from _pytest.store import StoreKey
 from _pytest.terminal import TerminalReporter
 from _pytest.warnings import _issue_warning_captured
 
-if TYPE_CHECKING:
-    from typing import Type
-
 
 xml_key = StoreKey["LogXML"]()
 
 
-class Junit(py.xml.Namespace):
-    pass
-
-
-def bin_xml_escape(arg: object) -> py.xml.raw:
-    r"""Visually escape an object into valid a XML string.
+def bin_xml_escape(arg: object) -> str:
+    r"""Visually escape invalid XML characters.
 
     For example, transforms
         'hello\aworld\b'
@@ -58,9 +49,6 @@ def bin_xml_escape(arg: object) -> py.xml.raw:
         'hello#x07world#x08'
     Note that the #xABs are *not* XML escapes - missing the ampersand &#xAB.
     The idea is to escape visually for the user rather than for XML itself.
-
-    The result is also entity-escaped and wrapped in py.xml.raw() so it can
-    be embedded directly.
     """
 
     def repl(matchobj: Match[str]) -> str:
@@ -76,7 +64,7 @@ def bin_xml_escape(arg: object) -> py.xml.raw:
     illegal_xml_re = (
         "[^\u0009\u000A\u000D\u0020-\u007E\u0080-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]"
     )
-    return py.xml.raw(re.sub(illegal_xml_re, repl, py.xml.escape(str(arg))))
+    return re.sub(illegal_xml_re, repl, str(arg))
 
 
 def merge_family(left, right) -> None:
@@ -108,12 +96,12 @@ class _NodeReporter:
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
         self.duration = 0
-        self.properties = []  # type: List[Tuple[str, py.xml.raw]]
-        self.nodes = []  # type: List[py.xml.Tag]
-        self.attrs = {}  # type: Dict[str, Union[str, py.xml.raw]]
+        self.properties = []  # type: List[Tuple[str, str]]
+        self.nodes = []  # type: List[ET.Element]
+        self.attrs = {}  # type: Dict[str, str]
 
-    def append(self, node: py.xml.Tag) -> None:
-        self.xml.add_stats(type(node).__name__)
+    def append(self, node: ET.Element) -> None:
+        self.xml.add_stats(node.tag)
         self.nodes.append(node)
 
     def add_property(self, name: str, value: object) -> None:
@@ -122,17 +110,15 @@ class _NodeReporter:
     def add_attribute(self, name: str, value: object) -> None:
         self.attrs[str(name)] = bin_xml_escape(value)
 
-    def make_properties_node(self) -> Union[py.xml.Tag, str]:
+    def make_properties_node(self) -> Optional[ET.Element]:
         """Return a Junit node containing custom properties, if any.
         """
         if self.properties:
-            return Junit.properties(
-                [
-                    Junit.property(name=name, value=value)
-                    for name, value in self.properties
-                ]
-            )
-        return ""
+            properties = ET.Element("properties")
+            for name, value in self.properties:
+                properties.append(ET.Element("property", name=name, value=value))
+            return properties
+        return None
 
     def record_testreport(self, testreport: TestReport) -> None:
         names = mangle_test_address(testreport.nodeid)
@@ -144,7 +130,7 @@ class _NodeReporter:
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
             "file": testreport.location[0],
-        }  # type: Dict[str, Union[str, py.xml.raw]]
+        }  # type: Dict[str, str]
         if testreport.location[1] is not None:
             attrs["line"] = str(testreport.location[1])
         if hasattr(testreport, "url"):
@@ -164,16 +150,17 @@ class _NodeReporter:
                 temp_attrs[key] = self.attrs[key]
         self.attrs = temp_attrs
 
-    def to_xml(self) -> py.xml.Tag:
-        testcase = Junit.testcase(time="%.3f" % self.duration, **self.attrs)
-        testcase.append(self.make_properties_node())
-        for node in self.nodes:
-            testcase.append(node)
+    def to_xml(self) -> ET.Element:
+        testcase = ET.Element("testcase", self.attrs, time="%.3f" % self.duration)
+        properties = self.make_properties_node()
+        if properties is not None:
+            testcase.append(properties)
+        testcase.extend(self.nodes)
         return testcase
 
-    def _add_simple(self, kind: "Type[py.xml.Tag]", message: str, data=None) -> None:
-        data = bin_xml_escape(data)
-        node = kind(data, message=message)
+    def _add_simple(self, tag: str, message: str, data: Optional[str] = None) -> None:
+        node = ET.Element(tag, message=message)
+        node.text = bin_xml_escape(data)
         self.append(node)
 
     def write_captured_output(self, report: TestReport) -> None:
@@ -203,8 +190,9 @@ class _NodeReporter:
         return "\n".join([header.center(80, "-"), content, ""])
 
     def _write_content(self, report: TestReport, content: str, jheader: str) -> None:
-        tag = getattr(Junit, jheader)
-        self.append(tag(bin_xml_escape(content)))
+        tag = ET.Element(jheader)
+        tag.text = bin_xml_escape(content)
+        self.append(tag)
 
     def append_pass(self, report: TestReport) -> None:
         self.add_stats("passed")
@@ -212,7 +200,7 @@ class _NodeReporter:
     def append_failure(self, report: TestReport) -> None:
         # msg = str(report.longrepr.reprtraceback.extraline)
         if hasattr(report, "wasxfail"):
-            self._add_simple(Junit.skipped, "xfail-marked test passes unexpectedly")
+            self._add_simple("skipped", "xfail-marked test passes unexpectedly")
         else:
             assert report.longrepr is not None
             if getattr(report.longrepr, "reprcrash", None) is not None:
@@ -220,19 +208,15 @@ class _NodeReporter:
             else:
                 message = str(report.longrepr)
             message = bin_xml_escape(message)
-            fail = Junit.failure(message=message)
-            fail.append(bin_xml_escape(report.longrepr))
-            self.append(fail)
+            self._add_simple("failure", message, str(report.longrepr))
 
     def append_collect_error(self, report: TestReport) -> None:
         # msg = str(report.longrepr.reprtraceback.extraline)
         assert report.longrepr is not None
-        self.append(
-            Junit.error(bin_xml_escape(report.longrepr), message="collection failure")
-        )
+        self._add_simple("error", "collection failure", str(report.longrepr))
 
     def append_collect_skipped(self, report: TestReport) -> None:
-        self._add_simple(Junit.skipped, "collection skipped", report.longrepr)
+        self._add_simple("skipped", "collection skipped", str(report.longrepr))
 
     def append_error(self, report: TestReport) -> None:
         assert report.longrepr is not None
@@ -245,18 +229,16 @@ class _NodeReporter:
             msg = 'failed on teardown with "{}"'.format(reason)
         else:
             msg = 'failed on setup with "{}"'.format(reason)
-        self._add_simple(Junit.error, msg, report.longrepr)
+        self._add_simple("error", msg, str(report.longrepr))
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
             xfailreason = report.wasxfail
             if xfailreason.startswith("reason: "):
                 xfailreason = xfailreason[8:]
-            self.append(
-                Junit.skipped(
-                    "", type="pytest.xfail", message=bin_xml_escape(xfailreason)
-                )
-            )
+            xfailreason = bin_xml_escape(xfailreason)
+            skipped = ET.Element("skipped", type="pytest.xfail", message=xfailreason)
+            self.append(skipped)
         else:
             assert report.longrepr is not None
             filename, lineno, skipreason = report.longrepr
@@ -264,21 +246,17 @@ class _NodeReporter:
                 skipreason = skipreason[9:]
             details = "{}:{}: {}".format(filename, lineno, skipreason)
 
-            self.append(
-                Junit.skipped(
-                    bin_xml_escape(details),
-                    type="pytest.skip",
-                    message=bin_xml_escape(skipreason),
-                )
-            )
+            skipped = ET.Element("skipped", type="pytest.skip", message=skipreason)
+            skipped.text = bin_xml_escape(details)
+            self.append(skipped)
             self.write_captured_output(report)
 
     def finalize(self) -> None:
-        data = self.to_xml().unicode(indent=0)
+        data = self.to_xml()
         self.__dict__.clear()
         # Type ignored becuase mypy doesn't like overriding a method.
         # Also the return value doesn't match...
-        self.to_xml = lambda: py.xml.raw(data)  # type: ignore
+        self.to_xml = lambda: data  # type: ignore[assignment]
 
 
 def _warn_incompatibility_with_xunit2(
@@ -502,7 +480,7 @@ class LogXML:
             {}
         )  # type: Dict[Tuple[Union[str, TestReport], object], _NodeReporter]
         self.node_reporters_ordered = []  # type: List[_NodeReporter]
-        self.global_properties = []  # type: List[Tuple[str, py.xml.raw]]
+        self.global_properties = []  # type: List[Tuple[str, str]]
 
         # List of reports that failed on call but teardown is pending.
         self.open_reports = []  # type: List[TestReport]
@@ -654,7 +632,7 @@ class LogXML:
     def pytest_internalerror(self, excrepr: ExceptionRepr) -> None:
         reporter = self.node_reporter("internal")
         reporter.attrs.update(classname="pytest", name="internal")
-        reporter._add_simple(Junit.error, "internal error", excrepr)
+        reporter._add_simple("error", "internal error", str(excrepr))
 
     def pytest_sessionstart(self) -> None:
         self.suite_start_time = timing.time()
@@ -676,9 +654,8 @@ class LogXML:
         )
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
 
-        suite_node = Junit.testsuite(
-            self._get_global_properties_node(),
-            [x.to_xml() for x in self.node_reporters_ordered],
+        suite_node = ET.Element(
+            "testsuite",
             name=self.suite_name,
             errors=str(self.stats["error"]),
             failures=str(self.stats["failure"]),
@@ -688,7 +665,14 @@ class LogXML:
             timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
             hostname=platform.node(),
         )
-        logfile.write(Junit.testsuites([suite_node]).unicode(indent=0))
+        global_properties = self._get_global_properties_node()
+        if global_properties is not None:
+            suite_node.append(global_properties)
+        for node_reporter in self.node_reporters_ordered:
+            suite_node.append(node_reporter.to_xml())
+        testsuites = ET.Element("testsuites")
+        testsuites.append(suite_node)
+        logfile.write(ET.tostring(testsuites, encoding="unicode"))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
@@ -699,14 +683,12 @@ class LogXML:
         _check_record_param_type("name", name)
         self.global_properties.append((name, bin_xml_escape(value)))
 
-    def _get_global_properties_node(self) -> Union[py.xml.Tag, str]:
+    def _get_global_properties_node(self) -> Optional[ET.Element]:
         """Return a Junit node containing custom properties, if any.
         """
         if self.global_properties:
-            return Junit.properties(
-                [
-                    Junit.property(name=name, value=value)
-                    for name, value in self.global_properties
-                ]
-            )
-        return ""
+            properties = ET.Element("properties")
+            for name, value in self.global_properties:
+                properties.append(ET.Element("property", name=name, value=value))
+            return properties
+        return None
