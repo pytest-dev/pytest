@@ -12,7 +12,6 @@ import functools
 import os
 import platform
 import re
-import sys
 from datetime import datetime
 from typing import Callable
 from typing import Dict
@@ -50,26 +49,20 @@ class Junit(py.xml.Namespace):
     pass
 
 
-# We need to get the subset of the invalid unicode ranges according to
-# XML 1.0 which are valid in this python build.  Hence we calculate
-# this dynamically instead of hardcoding it.  The spec range of valid
-# chars is: Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
-#                    | [#x10000-#x10FFFF]
-_legal_chars = (0x09, 0x0A, 0x0D)
-_legal_ranges = ((0x20, 0x7E), (0x80, 0xD7FF), (0xE000, 0xFFFD), (0x10000, 0x10FFFF))
-_legal_xml_re = [
-    "{}-{}".format(chr(low), chr(high))
-    for (low, high) in _legal_ranges
-    if low < sys.maxunicode
-]
-_legal_xml_re = [chr(x) for x in _legal_chars] + _legal_xml_re
-illegal_xml_re = re.compile("[^%s]" % "".join(_legal_xml_re))
-del _legal_chars
-del _legal_ranges
-del _legal_xml_re
-
-
 def bin_xml_escape(arg: object) -> py.xml.raw:
+    r"""Visually escape an object into valid a XML string.
+
+    For example, transforms
+        'hello\aworld\b'
+    into
+        'hello#x07world#x08'
+    Note that the #xABs are *not* XML escapes - missing the ampersand &#xAB.
+    The idea is to escape visually for the user rather than for XML itself.
+
+    The result is also entity-escaped and wrapped in py.xml.raw() so it can
+    be embedded directly.
+    """
+
     def repl(matchobj: Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
@@ -77,7 +70,13 @@ def bin_xml_escape(arg: object) -> py.xml.raw:
         else:
             return "#x%04X" % i
 
-    return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(str(arg))))
+    # The spec range of valid chars is:
+    # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+    # For an unknown(?) reason, we disallow #x7F (DEL) as well.
+    illegal_xml_re = (
+        "[^\u0009\u000A\u000D\u0020-\u007E\u0080-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]"
+    )
+    return py.xml.raw(re.sub(illegal_xml_re, repl, py.xml.escape(str(arg))))
 
 
 def merge_family(left, right) -> None:
