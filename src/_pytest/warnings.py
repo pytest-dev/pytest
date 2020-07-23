@@ -105,6 +105,8 @@ def catch_warnings_for_item(
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
+        warnings.filterwarnings("error", category=pytest.PytestDeprecationWarning)
+
         # filters should have this precedence: mark, cmdline options, ini
         # filters should be applied in the inverse order of precedence
         for arg in inifilters:

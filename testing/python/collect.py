@@ -762,7 +762,7 @@ class TestConftestCustomization:
                 pass
             def pytest_pycollect_makemodule(path, parent):
                 if path.basename == "test_xyz.py":
-                    return MyModule(path, parent)
+                    return MyModule.from_parent(fspath=path, parent=parent)
         """
         )
         testdir.makepyfile("def test_some(): pass")
@@ -836,7 +836,7 @@ class TestConftestCustomization:
                 pass
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "some":
-                    return MyFunction(name, collector)
+                    return MyFunction.from_parent(name=name, parent=collector)
         """
         )
         testdir.makepyfile("def some(): pass")
@@ -873,7 +873,7 @@ class TestConftestCustomization:
 
             def pytest_collect_file(path, parent):
                 if path.ext == ".narf":
-                    return Module(path, parent)"""
+                    return Module.from_parent(fspath=path, parent=parent)"""
         )
         testdir.makefile(
             ".narf",

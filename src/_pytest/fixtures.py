@@ -46,7 +46,6 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
-from _pytest.deprecated import FILLFUNCARGS
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.mark import ParameterSet
@@ -361,7 +360,8 @@ def reorder_items_atscope(
 
 def fillfixtures(function: "Function") -> None:
     """ fill missing funcargs for a test function. """
-    warnings.warn(FILLFUNCARGS, stacklevel=2)
+    # Uncomment this after 6.0 release (#7361)
+    # warnings.warn(FILLFUNCARGS, stacklevel=2)
     try:
         request = function._request
     except AttributeError:

@@ -78,7 +78,7 @@ class PytestUnhandledCoroutineWarning(PytestWarning):
 class PytestUnknownMarkWarning(PytestWarning):
     """Warning emitted on use of unknown markers.
 
-    See https://docs.pytest.org/en/stable/mark.html for details.
+    See :ref:`mark` for details.
     """
 
     __module__ = "pytest"

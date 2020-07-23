@@ -1126,7 +1126,7 @@ def test_xfail_item(testdir):
                 pytest.xfail("Expected Failure")
 
         def pytest_collect_file(path, parent):
-            return MyItem("foo", parent)
+            return MyItem.from_parent(name="foo", parent=parent)
     """
     )
     result = testdir.inline_run()
@@ -1206,7 +1206,7 @@ def test_mark_xfail_item(testdir):
                 assert False
 
         def pytest_collect_file(path, parent):
-            return MyItem("foo", parent)
+            return MyItem.from_parent(name="foo", parent=parent)
     """
     )
     result = testdir.inline_run()

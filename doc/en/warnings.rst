@@ -381,8 +381,6 @@ custom error message.
 Internal pytest warnings
 ------------------------
 
-
-
 pytest may generate its own warnings in some situations, such as improper usage or deprecated features.
 
 For example, pytest will emit a warning if it encounters a class that matches :confval:`python_classes` but also
@@ -415,31 +413,4 @@ These warnings might be filtered using the same builtin mechanisms used to filte
 Please read our :ref:`backwards-compatibility` to learn how we proceed about deprecating and eventually removing
 features.
 
-The following warning types are used by pytest and are part of the public API:
-
-.. autoclass:: pytest.PytestWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestAssertRewriteWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestCacheWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestCollectionWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestConfigWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestDeprecationWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestExperimentalApiWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestUnhandledCoroutineWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestUnknownMarkWarning
-   :show-inheritance:
+The full list of warnings is listed in :ref:`the reference documentation <warnings ref>`.

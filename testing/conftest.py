@@ -116,11 +116,11 @@ def dummy_yaml_custom_test(testdir):
 
         def pytest_collect_file(parent, path):
             if path.ext == ".yaml" and path.basename.startswith("test"):
-                return YamlFile(path, parent)
+                return YamlFile.from_parent(fspath=path, parent=parent)
 
         class YamlFile(pytest.File):
             def collect(self):
-                yield YamlItem(self.fspath.basename, self)
+                yield YamlItem.from_parent(name=self.fspath.basename, parent=self)
 
         class YamlItem(pytest.Item):
             def runtest(self):

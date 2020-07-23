@@ -906,11 +906,8 @@ class TestNonPython:
             import pytest
             def pytest_collect_file(path, parent):
                 if path.ext == ".xyz":
-                    return MyItem(path, parent)
+                    return MyItem.from_parent(name=path.basename, parent=parent)
             class MyItem(pytest.Item):
-                def __init__(self, path, parent):
-                    super(MyItem, self).__init__(path.basename, parent)
-                    self.fspath = path
                 def runtest(self):
                     raise ValueError(42)
                 def repr_failure(self, excinfo):
@@ -1336,14 +1333,14 @@ def test_fancy_items_regression(testdir, run_and_parse):
         class FunCollector(pytest.File):
             def collect(self):
                 return [
-                    FunItem('a', self),
-                    NoFunItem('a', self),
-                    NoFunItem('b', self),
+                    FunItem.from_parent(name='a', parent=self),
+                    NoFunItem.from_parent(name='a', parent=self),
+                    NoFunItem.from_parent(name='b', parent=self),
                 ]
 
         def pytest_collect_file(path, parent):
             if path.check(ext='.py'):
-                return FunCollector(path, parent)
+                return FunCollector.from_parent(fspath=path, parent=parent)
     """
     )
 

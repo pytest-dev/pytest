@@ -520,9 +520,6 @@ class TestDeprecationWarningsByDefault:
 
 
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
-@pytest.mark.skip(
-    reason="This test should be enabled again before pytest 6.0 is released"
-)
 def test_deprecation_warning_as_error(testdir, change_default):
     """This ensures that PytestDeprecationWarnings raised by pytest are turned into errors.
 

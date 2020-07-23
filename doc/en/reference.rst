@@ -1024,10 +1024,45 @@ When set (regardless of value), pytest will use color in terminal output.
 Exceptions
 ----------
 
-UsageError
-~~~~~~~~~~
-
 .. autoclass:: _pytest.config.UsageError()
+    :show-inheritance:
+
+.. _`warnings ref`:
+
+Warnings
+--------
+
+Custom warnings generated in some situations such as improper usage or deprecated features.
+
+.. autoclass:: pytest.PytestWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestAssertRewriteWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestCacheWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestCollectionWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestConfigWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestDeprecationWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestExperimentalApiWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestUnhandledCoroutineWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestUnknownMarkWarning
+   :show-inheritance:
+
+
+Consult the :ref:`internal-warnings` section in the documentation for more information.
 
 
 .. _`ini options ref`:

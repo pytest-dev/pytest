@@ -12,7 +12,6 @@ import py.path
 from pluggy import HookspecMarker
 
 from .deprecated import COLLECT_DIRECTORY_HOOK
-from .deprecated import WARNING_CAPTURED_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -737,7 +736,9 @@ def pytest_terminal_summary(
     """
 
 
-@hookspec(historic=True, warn_on_impl=WARNING_CAPTURED_HOOK)
+# Uncomment this after 6.0 release (#7361)
+# @hookspec(historic=True, warn_on_impl=WARNING_CAPTURED_HOOK)
+@hookspec(historic=True)
 def pytest_warning_captured(
     warning_message: "warnings.WarningMessage",
     when: "Literal['config', 'collect', 'runtest']",

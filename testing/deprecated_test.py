@@ -28,6 +28,7 @@ def test_resultlog_is_deprecated(testdir):
     )
 
 
+@pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
 @pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
 # false positive due to dynamic attribute
 def test_pytest_collect_module_deprecated(attribute):
@@ -117,7 +118,8 @@ def test_node_direct_ctor_warning() -> None:
     assert w[0].filename == __file__
 
 
-def test__fillfuncargs_is_deprecated() -> None:
+@pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
+def test_fillfuncargs_is_deprecated() -> None:
     with pytest.warns(
         pytest.PytestDeprecationWarning,
         match="The `_fillfuncargs` function is deprecated",
@@ -125,6 +127,7 @@ def test__fillfuncargs_is_deprecated() -> None:
         pytest._fillfuncargs(mock.Mock())
 
 
+@pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
 def test_minus_k_dash_is_deprecated(testdir) -> None:
     threepass = testdir.makepyfile(
         test_threepass="""
@@ -137,6 +140,7 @@ def test_minus_k_dash_is_deprecated(testdir) -> None:
     result.stdout.fnmatch_lines(["*The `-k '-expr'` syntax*deprecated*"])
 
 
+@pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
 def test_minus_k_colon_is_deprecated(testdir) -> None:
     threepass = testdir.makepyfile(
         test_threepass="""

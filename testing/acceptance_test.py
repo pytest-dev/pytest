@@ -302,10 +302,10 @@ class TestGeneralUsage:
                     pass
             class MyCollector(pytest.File):
                 def collect(self):
-                    return [MyItem(name="xyz", parent=self)]
+                    return [MyItem.from_parent(name="xyz", parent=self)]
             def pytest_collect_file(path, parent):
                 if path.basename.startswith("conftest"):
-                    return MyCollector(path, parent)
+                    return MyCollector.from_parent(fspath=path, parent=parent)
         """
         )
         result = testdir.runpytest(c.basename + "::" + "xyz")
