@@ -68,8 +68,6 @@ del _legal_chars
 del _legal_ranges
 del _legal_xml_re
 
-_py_ext_re = re.compile(r"\.py$")
-
 
 def bin_xml_escape(arg: object) -> py.xml.raw:
     def repl(matchobj: Match[str]) -> str:
@@ -473,7 +471,7 @@ def mangle_test_address(address: str) -> List[str]:
         pass
     # convert file path to dotted path
     names[0] = names[0].replace(nodes.SEP, ".")
-    names[0] = _py_ext_re.sub("", names[0])
+    names[0] = re.sub(r"\.py$", "", names[0])
     # put any params back
     names[-1] += possible_open_bracket + params
     return names
