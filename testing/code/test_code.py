@@ -176,12 +176,9 @@ class TestTracebackEntry:
             assert False
         except AssertionError:
             exci = ExceptionInfo.from_current()
-        entry = exci.traceback[0]
-        s = str(entry)
-        print(repr(s))
-        assert re.match(
-            r"  File '.*test_code.py':\d+ in test_tb_entry_str\n  assert False", s
-        )
+        pattern = r"  File '.*test_code.py':\d+ in test_tb_entry_str\n  assert False"
+        entry = str(exci.traceback[0])
+        assert re.match(pattern, entry)
 
 
 class TestReprFuncArgs:

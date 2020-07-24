@@ -262,7 +262,10 @@ class TracebackEntry:
             raise
         except BaseException:
             line = "???"
-        return "  File '%s':%d in %s\n  %s\n" % (
+        # This output does not quite match Python's repr for traceback entries,
+        # but changing it to do so would break certain plugins.  See
+        # https://github.com/pytest-dev/pytest/pull/7535/ for details.
+        return "  File %r:%d in %s\n  %s\n" % (
             str(self.path),
             self.lineno + 1,
             name,
