@@ -38,28 +38,33 @@ def test_help(testdir):
     )
 
 
-@pytest.mark.parametrize(
-    "conftest",
-    [
-        """
-        def pytest_addoption(parser):
-            parser.addini("test_ini", "", default=True, type="bool")
-    """,
+def test_none_help_param_raises_exception(testdir):
+    """Tests a None help param raises a TypeError.
+    """
+    testdir.makeconftest(
         """
         def pytest_addoption(parser):
             parser.addini("test_ini", None, default=True, type="bool")
-    """,
-    ],
-)
-@pytest.mark.parametrize(
-    "output", ["*TypeError: help argument cannot be empty for test_ini*"]
-)
-def test_empty_or_none_help_param(conftest, output, testdir):
-    """Tests an empty/None help param is displayed correctly.
     """
-    testdir.makeconftest(conftest)
+    )
     result = testdir.runpytest("--help")
-    result.stderr.fnmatch_lines([output])
+    result.stderr.fnmatch_lines(
+        ["*TypeError: help argument cannot be None for test_ini*"]
+    )
+
+
+def test_empty_help_param(testdir):
+    """Tests an empty help param is displayed correctly.
+    """
+    testdir.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("test_ini", "", default=True, type="bool")
+    """
+    )
+    result = testdir.runpytest("--help")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*test_ini*(bool):*"])
 
 
 def test_hookvalidation_unknown(testdir):
