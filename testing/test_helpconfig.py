@@ -68,7 +68,7 @@ def test_empty_help_param(testdir):
         "  required_plugins (args):",
         "                        plugins that must be present for pytest to run*",
         "  test_ini (bool):*",
-        "environment variables:"
+        "environment variables:",
     ]
     result.stdout.fnmatch_lines(lines, consecutive=True)
 
