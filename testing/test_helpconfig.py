@@ -64,7 +64,13 @@ def test_empty_help_param(testdir):
     )
     result = testdir.runpytest("--help")
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*test_ini*(bool):*"])
+    lines = [
+        "  required_plugins (args):",
+        "                        plugins that must be present for pytest to run*",
+        "  test_ini (bool):*",
+        "environment variables:"
+    ]
+    result.stdout.fnmatch_lines(lines, consecutive=True)
 
 
 def test_hookvalidation_unknown(testdir):
