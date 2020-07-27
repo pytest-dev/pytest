@@ -2,7 +2,7 @@
 This script is part of the pytest release process which is triggered by comments
 in issues.
 
-This script is started by the `prepare_release.yml` workflow, which is triggered by two comment
+This script is started by the `release-on-comment.yml` workflow, which is triggered by two comment
 related events:
 
 * https://help.github.com/en/actions/reference/events-that-trigger-workflows#issue-comment-event-issue_comment
@@ -10,12 +10,13 @@ related events:
 
 This script receives the payload and a secrets on the command line.
 
-The payload must contain a comment with a phrase matching this regular expression:
+The payload must contain a comment with a phrase matching this pseudo-regular expression:
 
-    @pytestbot please prepare release from <branch name>
+    @pytestbot please prepare (major )? release from <branch name>
 
 Then the appropriate version will be obtained based on the given branch name:
 
+* a major release from master if "major" appears in the phrase in that position
 * a feature or bug fix release from master (based if there are features in the current changelog
   folder)
 * a bug fix from a maintenance branch
@@ -76,15 +77,15 @@ def get_comment_data(payload: Dict) -> str:
 
 def validate_and_get_issue_comment_payload(
     issue_payload_path: Optional[Path],
-) -> Tuple[str, str]:
+) -> Tuple[str, str, bool]:
     payload = json.loads(issue_payload_path.read_text(encoding="UTF-8"))
     body = get_comment_data(payload)["body"]
-    m = re.match(r"@pytestbot please prepare release from ([\w\-_\.]+)", body)
+    m = re.match(r"@pytestbot please prepare (major )?release from ([\w\-_\.]+)", body)
     if m:
-        base_branch = m.group(1)
+        is_major, base_branch = m.group(1) is not None, m.group(2)
     else:
-        base_branch = None
-    return payload, base_branch
+        is_major, base_branch = False, None
+    return payload, base_branch, is_major
 
 
 def print_and_exit(msg) -> None:
@@ -94,7 +95,9 @@ def print_and_exit(msg) -> None:
 
 def trigger_release(payload_path: Path, token: str) -> None:
     error_contents = ""  # to be used to store error output in case any command fails
-    payload, base_branch = validate_and_get_issue_comment_payload(payload_path)
+    payload, base_branch, is_major = validate_and_get_issue_comment_payload(
+        payload_path
+    )
     if base_branch is None:
         url = get_comment_data(payload)["html_url"]
         print_and_exit(
@@ -109,10 +112,9 @@ def trigger_release(payload_path: Path, token: str) -> None:
     issue = repo.issue(issue_number)
 
     check_call(["git", "checkout", f"origin/{base_branch}"])
-    print("DEBUG:", check_output(["git", "rev-parse", "HEAD"]))
 
     try:
-        version = find_next_version(base_branch)
+        version = find_next_version(base_branch, is_major)
     except InvalidFeatureRelease as e:
         issue.create_comment(str(e))
         print_and_exit(f"{Fore.RED}{e}")
@@ -215,7 +217,7 @@ def trigger_release(payload_path: Path, token: str) -> None:
         print_and_exit(f"{Fore.RED}{error_contents}")
 
 
-def find_next_version(base_branch: str) -> str:
+def find_next_version(base_branch: str, is_major: bool) -> str:
     output = check_output(["git", "tag"], encoding="UTF-8")
     valid_versions = []
     for v in output.splitlines():
@@ -242,7 +244,9 @@ def find_next_version(base_branch: str) -> str:
         msg += "\n".join(f"* `{x.name}`" for x in sorted(features + breaking))
         raise InvalidFeatureRelease(msg)
 
-    if is_feature_release:
+    if is_major:
+        return f"{last_version[0]+1}.0.0"
+    elif is_feature_release:
         return f"{last_version[0]}.{last_version[1] + 1}.0"
     else:
         return f"{last_version[0]}.{last_version[1]}.{last_version[2] + 1}"

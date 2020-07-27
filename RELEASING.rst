@@ -17,6 +17,10 @@ The comment must be in the form::
 
 Where ``BRANCH`` is ``master`` or one of the maintenance branches.
 
+For major releases the comment must be in the form::
+
+    @pytestbot please prepare major release from master
+
 After that, the workflow should publish a PR and notify that it has done so as a comment
 in the original issue.
 
