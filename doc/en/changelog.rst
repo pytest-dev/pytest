@@ -31,6 +31,8 @@ with advance notice in the **Deprecations** section of releases.
 pytest 6.0.0 (2020-07-28)
 =========================
 
+(**Please see the full set of changes for this release also in the 6.0.0rc1 notes below**)
+
 Breaking Changes
 ----------------
 
