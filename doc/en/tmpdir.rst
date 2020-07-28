@@ -192,9 +192,13 @@ You can override the default temporary directory setting like this:
 
     pytest --basetemp=mydir
 
-.. warning:: The contents of ``mydir`` will be deleted.
-When distributing tests on the local machine, ``pytest`` takes care to
-configure a basetemp directory for the sub processes such that all temporary
+.. warning:: 
+    
+    The contents of ``mydir`` will be completely removed, so make sure to use a directory
+    for that purpose only.
+    
+When distributing tests on the local machine using ``pytest-xdist``, care is taken to
+automatically configure a basetemp directory for the sub processes such that all temporary
 data lands below a single per-test run basetemp directory.
 
 .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
