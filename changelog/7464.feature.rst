@@ -1,1 +1,0 @@
-Added support for :envvar:`NO_COLOR` and :envvar:`FORCE_COLOR` environment variables to control colored output.

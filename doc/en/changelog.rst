@@ -28,6 +28,91 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.0.0 (2020-07-28)
+=========================
+
+Breaking Changes
+----------------
+
+- `#5584 <https://github.com/pytest-dev/pytest/issues/5584>`_: **PytestDeprecationWarning are now errors by default.**
+
+  Following our plan to remove deprecated features with as little disruption as
+  possible, all warnings of type ``PytestDeprecationWarning`` now generate errors
+  instead of warning messages.
+
+  **The affected features will be effectively removed in pytest 6.1**, so please consult the
+  `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__
+  section in the docs for directions on how to update existing code.
+
+  In the pytest ``6.0.X`` series, it is possible to change the errors back into warnings as a
+  stopgap measure by adding this to your ``pytest.ini`` file:
+
+  .. code-block:: ini
+
+      [pytest]
+      filterwarnings =
+          ignore::pytest.PytestDeprecationWarning
+
+  But this will stop working when pytest ``6.1`` is released.
+
+  **If you have concerns** about the removal of a specific feature, please add a
+  comment to `#5584 <https://github.com/pytest-dev/pytest/issues/5584>`__.
+
+
+- `#7472 <https://github.com/pytest-dev/pytest/issues/7472>`_: The ``exec_()`` and ``is_true()`` methods of ``_pytest._code.Frame`` have been removed.
+
+
+
+Features
+--------
+
+- `#7464 <https://github.com/pytest-dev/pytest/issues/7464>`_: Added support for :envvar:`NO_COLOR` and :envvar:`FORCE_COLOR` environment variables to control colored output.
+
+
+
+Improvements
+------------
+
+- `#7467 <https://github.com/pytest-dev/pytest/issues/7467>`_: ``--log-file`` CLI option and ``log_file`` ini marker now create subdirectories if needed.
+
+
+- `#7489 <https://github.com/pytest-dev/pytest/issues/7489>`_: The :func:`pytest.raises` function has a clearer error message when ``match`` equals the obtained string but is not a regex match. In this case it is suggested to escape the regex.
+
+
+
+Bug Fixes
+---------
+
+- `#7392 <https://github.com/pytest-dev/pytest/issues/7392>`_: Fix the reported location of tests skipped with ``@pytest.mark.skip`` when ``--runxfail`` is used.
+
+
+- `#7491 <https://github.com/pytest-dev/pytest/issues/7491>`_: :fixture:`tmpdir` and :fixture:`tmp_path` no longer raise an error if the lock to check for
+  stale temporary directories is not accessible.
+
+
+- `#7517 <https://github.com/pytest-dev/pytest/issues/7517>`_: Preserve line endings when captured via ``capfd``.
+
+
+- `#7534 <https://github.com/pytest-dev/pytest/issues/7534>`_: Restored the previous formatting of ``TracebackEntry.__str__`` which was changed by accident.
+
+
+
+Improved Documentation
+----------------------
+
+- `#7422 <https://github.com/pytest-dev/pytest/issues/7422>`_: Clarified when the ``usefixtures`` mark can apply fixtures to test.
+
+
+- `#7441 <https://github.com/pytest-dev/pytest/issues/7441>`_: Add a note about ``-q`` option used in getting started guide.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#7389 <https://github.com/pytest-dev/pytest/issues/7389>`_: Fixture scope ``package`` is no longer considered experimental.
+
+
 pytest 6.0.0rc1 (2020-07-08)
 ============================
 

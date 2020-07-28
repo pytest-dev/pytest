@@ -1,1 +1,0 @@
-The ``exec_()`` and ``is_true()`` methods of ``_pytest._code.Frame`` have been removed.
