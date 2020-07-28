@@ -1,3 +1,4 @@
+import collections
 import sys
 import textwrap
 from typing import Any
@@ -985,6 +986,44 @@ class TestAssert_reprcompare_attrsclass:
 
         lines = callequal(left, right)
         assert lines is None
+
+
+class TestAssert_reprcompare_namedtuple:
+    def test_namedtuple(self) -> None:
+        NT = collections.namedtuple("NT", ["a", "b"])
+
+        left = NT(1, "b")
+        right = NT(1, "c")
+
+        lines = callequal(left, right)
+        assert lines == [
+            "NT(a=1, b='b') == NT(a=1, b='c')",
+            "",
+            "Omitting 1 identical items, use -vv to show",
+            "Differing attributes:",
+            "['b']",
+            "",
+            "Drill down into differing attribute b:",
+            "  b: 'b' != 'c'",
+            "  - c",
+            "  + b",
+            "Use -v to get the full diff",
+        ]
+
+    def test_comparing_two_different_namedtuple(self) -> None:
+        NT1 = collections.namedtuple("NT1", ["a", "b"])
+        NT2 = collections.namedtuple("NT2", ["a", "b"])
+
+        left = NT1(1, "b")
+        right = NT2(2, "b")
+
+        lines = callequal(left, right)
+        # Because the types are different, uses the generic sequence matcher.
+        assert lines == [
+            "NT1(a=1, b='b') == NT2(a=2, b='b')",
+            "At index 0 diff: 1 != 2",
+            "Use -v to get the full diff",
+        ]
 
 
 class TestFormatExplanation:
