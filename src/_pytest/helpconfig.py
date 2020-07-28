@@ -193,9 +193,7 @@ def showhelp(config: Config) -> None:
             tw.write(" " * (indent_len - spec_len - 2))
             wrapped = textwrap.wrap(help, columns - indent_len, break_on_hyphens=False)
 
-            if not wrapped:
-                tw.write(" " * (indent_len - spec_len - 2))
-            else:
+            if wrapped:
                 tw.line(wrapped[0])
                 for line in wrapped[1:]:
                     tw.line(indent + line)
