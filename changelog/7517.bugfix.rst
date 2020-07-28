@@ -1,1 +1,0 @@
-Preserve line endings when captured via ``capfd``.
