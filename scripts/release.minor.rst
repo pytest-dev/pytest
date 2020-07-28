@@ -3,7 +3,7 @@ pytest-{version}
 
 The pytest team is proud to announce the {version} release!
 
-pytest is a mature Python testing tool with more than a 2000 tests
+pytest is a mature Python testing tool with more than 2000 tests
 against itself, passing on many different interpreters and platforms.
 
 This release contains a number of bug fixes and improvements, so users are encouraged
