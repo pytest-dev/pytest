@@ -1,0 +1,2 @@
+Fix pylint ``not-callable`` lint on ``pytest.mark.parametrize()`` and the other builtin marks:
+``skip``, ``skipif``, ``xfail``, ``usefixtures``, ``filterwarnings``.
