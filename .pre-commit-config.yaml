@@ -70,9 +70,11 @@ repos:
                 _code\.|
                 builtin\.|
                 code\.|
-                io\.(BytesIO|saferepr|TerminalWriter)|
+                io\.|
                 path\.local\.sysfind|
                 process\.|
-                std\.
+                std\.|
+                error\.|
+                xml\.
             )
         types: [python]
