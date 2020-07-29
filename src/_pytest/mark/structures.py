@@ -476,9 +476,9 @@ class MarkGenerator:
         skip = _SkipMarkDecorator(Mark("skip", (), {}))
         skipif = _SkipifMarkDecorator(Mark("skipif", (), {}))
         xfail = _XfailMarkDecorator(Mark("xfail", (), {}))
-        parametrize = _ParametrizeMarkDecorator(Mark("parametrize ", (), {}))
-        usefixtures = _UsefixturesMarkDecorator(Mark("usefixtures ", (), {}))
-        filterwarnings = _FilterwarningsMarkDecorator(Mark("filterwarnings ", (), {}))
+        parametrize = _ParametrizeMarkDecorator(Mark("parametrize", (), {}))
+        usefixtures = _UsefixturesMarkDecorator(Mark("usefixtures", (), {}))
+        filterwarnings = _FilterwarningsMarkDecorator(Mark("filterwarnings", (), {}))
 
     def __getattr__(self, name: str) -> MarkDecorator:
         if name[0] == "_":
