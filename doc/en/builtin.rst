@@ -69,11 +69,13 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                     ...
 
     record_property
-        Add an extra properties the calling test.
+        Add extra properties to the calling test.
+
         User properties become part of the test report and are available to the
         configured reporters, like JUnit XML.
-        The fixture is callable with ``(name, value)``, with value being automatically
-        xml-encoded.
+
+        The fixture is callable with ``name, value``. The value is automatically
+        XML-encoded.
 
         Example::
 
@@ -82,8 +84,9 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
     record_xml_attribute
         Add extra xml attributes to the tag for the calling test.
-        The fixture is callable with ``(name, value)``, with value being
-        automatically xml-encoded
+
+        The fixture is callable with ``name, value``. The value is
+        automatically XML-encoded.
 
     record_testsuite_property [session scope]
         Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to
