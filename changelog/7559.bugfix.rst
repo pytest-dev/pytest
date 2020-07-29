@@ -1,0 +1,1 @@
+Fix regression in plugins using ``TestReport.longreprtext`` (such as ``pytest-html``) when ``TestReport.longrepr`` is not a string.
