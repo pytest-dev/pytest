@@ -951,6 +951,33 @@ class TestReportContents:
         rep = reports[1]
         assert rep.longreprtext == ""
 
+    def test_longreprtext_skip(self, testdir) -> None:
+        """TestReport.longreprtext can handle non-str ``longrepr`` attributes (#7559)"""
+        reports = testdir.runitem(
+            """
+            import pytest
+            def test_func():
+                pytest.skip()
+            """
+        )
+        _, call_rep, _ = reports
+        assert isinstance(call_rep.longrepr, tuple)
+        assert "Skipped" in call_rep.longreprtext
+
+    def test_longreprtext_collect_skip(self, testdir) -> None:
+        """CollectReport.longreprtext can handle non-str ``longrepr`` attributes (#7559)"""
+        testdir.makepyfile(
+            """
+            import pytest
+            pytest.skip(allow_module_level=True)
+            """
+        )
+        rec = testdir.inline_run()
+        calls = rec.getcalls("pytest_collectreport")
+        _, call = calls
+        assert isinstance(call.report.longrepr, tuple)
+        assert "Skipped" in call.report.longreprtext
+
     def test_longreprtext_failure(self, testdir) -> None:
         reports = testdir.runitem(
             """

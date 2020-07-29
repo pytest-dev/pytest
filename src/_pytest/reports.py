@@ -82,9 +82,10 @@ class BaseReport:
             longrepr.toterminal(out)
         else:
             try:
-                out.line(longrepr)
+                s = str(longrepr)
             except UnicodeEncodeError:
-                out.line("<unprintable longrepr>")
+                s = "<unprintable longrepr>"
+            out.line(s)
 
     def get_sections(self, prefix: str) -> Iterator[Tuple[str, str]]:
         for name, content in self.sections:
