@@ -280,7 +280,7 @@ its test methods:
 This is equivalent to directly applying the decorator to the
 two test functions.
 
-To apply marks at the module level, use the :globalvar:`pytestmark` global variable:
+To apply marks at the module level, use the :globalvar:`pytestmark` global variable::
 
     import pytest
     pytestmark = pytest.mark.webtest
