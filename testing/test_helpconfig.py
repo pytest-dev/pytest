@@ -38,6 +38,41 @@ def test_help(testdir):
     )
 
 
+def test_none_help_param_raises_exception(testdir):
+    """Tests a None help param raises a TypeError.
+    """
+    testdir.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("test_ini", None, default=True, type="bool")
+    """
+    )
+    result = testdir.runpytest("--help")
+    result.stderr.fnmatch_lines(
+        ["*TypeError: help argument cannot be None for test_ini*"]
+    )
+
+
+def test_empty_help_param(testdir):
+    """Tests an empty help param is displayed correctly.
+    """
+    testdir.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("test_ini", "", default=True, type="bool")
+    """
+    )
+    result = testdir.runpytest("--help")
+    assert result.ret == 0
+    lines = [
+        "  required_plugins (args):",
+        "                        plugins that must be present for pytest to run*",
+        "  test_ini (bool):*",
+        "environment variables:",
+    ]
+    result.stdout.fnmatch_lines(lines, consecutive=True)
+
+
 def test_hookvalidation_unknown(testdir):
     testdir.makeconftest(
         """
