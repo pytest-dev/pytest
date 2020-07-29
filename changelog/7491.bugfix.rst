@@ -1,2 +1,0 @@
-:fixture:`tmpdir` and :fixture:`tmp_path` no longer raise an error if the lock to check for
-stale temporary directories is not accessible.

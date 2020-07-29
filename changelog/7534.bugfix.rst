@@ -1,1 +1,0 @@
-Restored the previous formatting of ``TracebackEntry.__str__`` which was changed by accident.

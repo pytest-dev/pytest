@@ -69,9 +69,9 @@ Both automatic and manual processes described above follow the same steps from t
 
        git fetch --all --prune
        git checkout origin/master -b cherry-pick-release
-       git cherry-pick --no-commit -m1 origin/MAJOR.MINOR.x
-       git checkout origin/master -- changelog
-       git commit  # no arguments
+       git cherry-pick -x -m1 origin/MAJOR.MINOR.x
+
+#. Open a PR for ``cherry-pick-release`` and merge it once CI passes. No need to wait for approvals if there were no conflicts on the previous step.
 
 #. Send an email announcement with the contents from::
 

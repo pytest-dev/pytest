@@ -1,1 +1,0 @@
-Fixture scope ``package`` is no longer considered experimental.
