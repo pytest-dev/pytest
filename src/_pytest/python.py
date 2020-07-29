@@ -65,6 +65,7 @@ from _pytest.outcomes import skip
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
+from _pytest.pathlib import visit
 from _pytest.reports import TerminalRepr
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
@@ -641,23 +642,24 @@ class Package(Module):
         ):
             yield Module.from_parent(self, fspath=init_module)
         pkg_prefixes = set()  # type: Set[py.path.local]
-        for path in this_path.visit(rec=self._recurse, bf=True, sort=True):
+        for direntry in visit(str(this_path), recurse=self._recurse):
+            path = py.path.local(direntry.path)
+
             # We will visit our own __init__.py file, in which case we skip it.
-            is_file = path.isfile()
-            if is_file:
-                if path.basename == "__init__.py" and path.dirpath() == this_path:
+            if direntry.is_file():
+                if direntry.name == "__init__.py" and path.dirpath() == this_path:
                     continue
 
-            parts_ = parts(path.strpath)
+            parts_ = parts(direntry.path)
             if any(
                 str(pkg_prefix) in parts_ and pkg_prefix.join("__init__.py") != path
                 for pkg_prefix in pkg_prefixes
             ):
                 continue
 
-            if is_file:
+            if direntry.is_file():
                 yield from self._collectfile(path)
-            elif not path.isdir():
+            elif not direntry.is_dir():
                 # Broken symlink or invalid/missing file.
                 continue
             elif path.join("__init__.py").check(file=1):

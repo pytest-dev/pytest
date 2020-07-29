@@ -32,6 +32,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.pathlib import Path
+from _pytest.pathlib import visit
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
@@ -617,10 +618,13 @@ class Session(nodes.FSCollector):
             assert not names, "invalid arg {!r}".format((argpath, names))
 
             seen_dirs = set()  # type: Set[py.path.local]
-            for path in argpath.visit(
-                fil=self._visit_filter, rec=self._recurse, bf=True, sort=True
-            ):
+            for direntry in visit(str(argpath), self._recurse):
+                if not direntry.is_file():
+                    continue
+
+                path = py.path.local(direntry.path)
                 dirpath = path.dirpath()
+
                 if dirpath not in seen_dirs:
                     # Collect packages first.
                     seen_dirs.add(dirpath)
@@ -667,11 +671,6 @@ class Session(nodes.FSCollector):
                     pass
                 return
             yield from m
-
-    @staticmethod
-    def _visit_filter(f: py.path.local) -> bool:
-        # TODO: Remove type: ignore once `py` is typed.
-        return f.check(file=1)  # type: ignore
 
     def _tryconvertpyarg(self, x: str) -> str:
         """Convert a dotted module name to path."""

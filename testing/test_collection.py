@@ -7,6 +7,7 @@ import pytest
 from _pytest.config import ExitCode
 from _pytest.main import _in_venv
 from _pytest.main import Session
+from _pytest.pathlib import Path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Testdir
 
@@ -115,8 +116,8 @@ class TestCollectFS:
         tmpdir.ensure(".whatever", "test_notfound.py")
         tmpdir.ensure(".bzr", "test_notfound.py")
         tmpdir.ensure("normal", "test_found.py")
-        for x in tmpdir.visit("test_*.py"):
-            x.write("def test_hello(): pass")
+        for x in Path(str(tmpdir)).rglob("test_*.py"):
+            x.write_text("def test_hello(): pass", "utf-8")
 
         result = testdir.runpytest("--collect-only")
         s = result.stdout.str()

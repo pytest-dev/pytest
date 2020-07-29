@@ -477,8 +477,9 @@ class TestConftestVisibility:
             )
         )
         print("created directory structure:")
-        for x in testdir.tmpdir.visit():
-            print("   " + x.relto(testdir.tmpdir))
+        tmppath = Path(str(testdir.tmpdir))
+        for x in tmppath.rglob(""):
+            print("   " + str(x.relative_to(tmppath)))
 
         return {"runner": runner, "package": package, "swc": swc, "snc": snc}
 
