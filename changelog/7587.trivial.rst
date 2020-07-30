@@ -1,0 +1,1 @@
+The dependency on the ``more-itertools`` package has been removed.

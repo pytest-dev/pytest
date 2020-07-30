@@ -283,3 +283,22 @@ class TestRaises:
             with pytest.raises(Exception, foo="bar"):  # type: ignore[call-overload]
                 pass
         assert "Unexpected keyword arguments" in str(excinfo.value)
+
+    def test_expected_exception_is_not_a_baseexception(self) -> None:
+        with pytest.raises(TypeError) as excinfo:
+            with pytest.raises("hello"):  # type: ignore[call-overload]
+                pass  # pragma: no cover
+        assert "must be a BaseException type, not str" in str(excinfo.value)
+
+        class NotAnException:
+            pass
+
+        with pytest.raises(TypeError) as excinfo:
+            with pytest.raises(NotAnException):  # type: ignore[type-var]
+                pass  # pragma: no cover
+        assert "must be a BaseException type, not NotAnException" in str(excinfo.value)
+
+        with pytest.raises(TypeError) as excinfo:
+            with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
+                pass  # pragma: no cover
+        assert "must be a BaseException type, not str" in str(excinfo.value)
