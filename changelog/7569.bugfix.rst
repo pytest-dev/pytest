@@ -1,0 +1,1 @@
+Fix logging capture handler's level not reset on teardown after a call to ``caplog.set_level()``.
