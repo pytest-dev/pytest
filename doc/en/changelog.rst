@@ -28,6 +28,26 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.0.1 (2020-07-30)
+=========================
+
+Bug Fixes
+---------
+
+- `#7394 <https://github.com/pytest-dev/pytest/issues/7394>`_: Passing an empty ``help`` value to ``Parser.add_option`` is now accepted instead of crashing when running ``pytest --help``.
+  Passing ``None`` raises a more informative ``TypeError``.
+
+
+- `#7558 <https://github.com/pytest-dev/pytest/issues/7558>`_: Fix pylint ``not-callable`` lint on ``pytest.mark.parametrize()`` and the other builtin marks:
+  ``skip``, ``skipif``, ``xfail``, ``usefixtures``, ``filterwarnings``.
+
+
+- `#7559 <https://github.com/pytest-dev/pytest/issues/7559>`_: Fix regression in plugins using ``TestReport.longreprtext`` (such as ``pytest-html``) when ``TestReport.longrepr`` is not a string.
+
+
+- `#7569 <https://github.com/pytest-dev/pytest/issues/7569>`_: Fix logging capture handler's level not reset on teardown after a call to ``caplog.set_level()``.
+
+
 pytest 6.0.0 (2020-07-28)
 =========================
 
