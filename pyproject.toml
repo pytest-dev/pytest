@@ -2,10 +2,13 @@
 requires = [
   # sync with setup.py until we discard non-pep-517/518
   "setuptools>=40.0",
-  "setuptools-scm",
+  "setuptools-scm>=3.4",
   "wheel",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "src/_pytest/_version.py"
 
 [tool.pytest.ini_options]
 minversion = "2.0"
