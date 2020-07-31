@@ -35,8 +35,8 @@ from pluggy import PluginManager
 import _pytest._code
 import _pytest.deprecated
 import _pytest.hookspec  # the extension point definitions
-from .exceptions import PrintHelp
-from .exceptions import UsageError
+from .exceptions import PrintHelp as PrintHelp
+from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback

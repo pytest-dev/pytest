@@ -32,6 +32,7 @@ from _pytest import nodes
 from _pytest._code import filter_traceback
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
@@ -66,7 +67,6 @@ from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.pathlib import visit
-from _pytest.reports import TerminalRepr
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
@@ -581,7 +581,7 @@ class Module(nodes.File, PyCollector):
                 "Traceback:\n"
                 "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
             ) from e
-        except _pytest.runner.Skipped as e:
+        except skip.Exception as e:
             if e.allow_module_level:
                 raise
             raise self.CollectError(

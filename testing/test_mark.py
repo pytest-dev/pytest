@@ -4,8 +4,8 @@ from unittest import mock
 
 import pytest
 from _pytest.config import ExitCode
-from _pytest.mark import EMPTY_PARAMETERSET_OPTION
 from _pytest.mark import MarkGenerator as Mark
+from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 

@@ -14,7 +14,7 @@ from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import Optional
-from typing import overload
+from typing import overload as overload
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
@@ -208,7 +208,7 @@ if sys.version_info < (3, 7):
 
 
 else:
-    from contextlib import nullcontext  # noqa
+    from contextlib import nullcontext as nullcontext  # noqa: F401
 
 
 def get_default_arg_names(function: Callable[..., Any]) -> Tuple[str, ...]:
@@ -363,7 +363,7 @@ else:
 
 
 if sys.version_info >= (3, 8):
-    from functools import cached_property
+    from functools import cached_property as cached_property
 else:
 
     class cached_property(Generic[_S, _T]):

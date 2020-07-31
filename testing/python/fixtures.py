@@ -3,6 +3,7 @@ import textwrap
 
 import pytest
 from _pytest import fixtures
+from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
@@ -15,22 +16,22 @@ def test_getfuncargnames_functions():
     def f():
         raise NotImplementedError()
 
-    assert not fixtures.getfuncargnames(f)
+    assert not getfuncargnames(f)
 
     def g(arg):
         raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(g) == ("arg",)
+    assert getfuncargnames(g) == ("arg",)
 
     def h(arg1, arg2="hello"):
         raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(h) == ("arg1",)
+    assert getfuncargnames(h) == ("arg1",)
 
     def j(arg1, arg2, arg3="hello"):
         raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(j) == ("arg1", "arg2")
+    assert getfuncargnames(j) == ("arg1", "arg2")
 
 
 def test_getfuncargnames_methods():
@@ -40,7 +41,7 @@ def test_getfuncargnames_methods():
         def f(self, arg1, arg2="hello"):
             raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(A().f) == ("arg1",)
+    assert getfuncargnames(A().f) == ("arg1",)
 
 
 def test_getfuncargnames_staticmethod():
@@ -51,7 +52,7 @@ def test_getfuncargnames_staticmethod():
         def static(arg1, arg2, x=1):
             raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
+    assert getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
 
 
 def test_getfuncargnames_partial():
@@ -64,7 +65,7 @@ def test_getfuncargnames_partial():
     class T:
         test_ok = functools.partial(check, i=2)
 
-    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    values = getfuncargnames(T().test_ok, name="test_ok")
     assert values == ("arg1", "arg2")
 
 
@@ -78,7 +79,7 @@ def test_getfuncargnames_staticmethod_partial():
     class T:
         test_ok = staticmethod(functools.partial(check, i=2))
 
-    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    values = getfuncargnames(T().test_ok, name="test_ok")
     assert values == ("arg1", "arg2")
 
 
