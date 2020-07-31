@@ -1,7 +1,7 @@
 [build-system]
 requires = [
   # sync with setup.py until we discard non-pep-517/518
-  "setuptools>=40.0",
+  "setuptools>=42.0",
   "setuptools-scm>=3.4",
   "wheel",
 ]
