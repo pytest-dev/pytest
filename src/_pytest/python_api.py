@@ -1,11 +1,9 @@
-import inspect
 import math
 import pprint
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
 from decimal import Decimal
-from itertools import filterfalse
 from numbers import Number
 from types import TracebackType
 from typing import Any
@@ -18,8 +16,6 @@ from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
-from more_itertools.more import always_iterable
-
 import _pytest._code
 from _pytest.compat import overload
 from _pytest.compat import STRING_TYPES
@@ -28,9 +24,6 @@ from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
     from typing import Type
-
-
-BASE_TYPE = (type, STRING_TYPES)
 
 
 def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
@@ -680,11 +673,16 @@ def raises(  # noqa: F811
         documentation for :ref:`the try statement <python:try>`.
     """
     __tracebackhide__ = True
-    for exc in filterfalse(
-        inspect.isclass, always_iterable(expected_exception, BASE_TYPE)
-    ):
-        msg = "exceptions must be derived from BaseException, not %s"
-        raise TypeError(msg % type(exc))
+
+    if isinstance(expected_exception, type):
+        excepted_exceptions = (expected_exception,)  # type: Tuple[Type[_E], ...]
+    else:
+        excepted_exceptions = expected_exception
+    for exc in excepted_exceptions:
+        if not isinstance(exc, type) or not issubclass(exc, BaseException):
+            msg = "expected exception must be a BaseException type, not {}"
+            not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
+            raise TypeError(msg.format(not_a))
 
     message = "DID NOT RAISE {}".format(expected_exception)
 

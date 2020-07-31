@@ -25,7 +25,6 @@ from typing import Union
 import attr
 import pluggy
 import py
-from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
@@ -715,11 +714,14 @@ class TerminalReporter:
             self._write_report_lines_from_hooks(lines)
 
     def _write_report_lines_from_hooks(
-        self, lines: List[Union[str, List[str]]]
+        self, lines: Sequence[Union[str, Sequence[str]]]
     ) -> None:
-        lines.reverse()
-        for line in collapse(lines):
-            self.write_line(line)
+        for line_or_lines in reversed(lines):
+            if isinstance(line_or_lines, str):
+                self.write_line(line_or_lines)
+            else:
+                for line in line_or_lines:
+                    self.write_line(line)
 
     def pytest_report_header(self, config: Config) -> List[str]:
         line = "rootdir: %s" % config.rootdir
