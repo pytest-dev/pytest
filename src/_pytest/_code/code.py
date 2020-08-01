@@ -613,7 +613,7 @@ class ExceptionInfo(Generic[_E]):
         )
         return fmt.repr_excinfo(self)
 
-    def match(self, regexp: "Union[str, Pattern]") -> "Literal[True]":
+    def match(self, regexp: "Union[str, Pattern[str]]") -> "Literal[True]":
         """Check whether the regular expression `regexp` matches the string
         representation of the exception using :func:`python:re.search`.
 
@@ -678,7 +678,7 @@ class FormattedExcinfo:
         self,
         source: "Source",
         line_index: int = -1,
-        excinfo: Optional[ExceptionInfo] = None,
+        excinfo: Optional[ExceptionInfo[BaseException]] = None,
         short: bool = False,
     ) -> List[str]:
         """Return formatted and marked up source lines."""
@@ -703,7 +703,10 @@ class FormattedExcinfo:
         return lines
 
     def get_exconly(
-        self, excinfo: ExceptionInfo, indent: int = 4, markall: bool = False
+        self,
+        excinfo: ExceptionInfo[BaseException],
+        indent: int = 4,
+        markall: bool = False,
     ) -> List[str]:
         lines = []
         indentstr = " " * indent
@@ -743,7 +746,9 @@ class FormattedExcinfo:
         return None
 
     def repr_traceback_entry(
-        self, entry: TracebackEntry, excinfo: Optional[ExceptionInfo] = None
+        self,
+        entry: TracebackEntry,
+        excinfo: Optional[ExceptionInfo[BaseException]] = None,
     ) -> "ReprEntry":
         lines = []  # type: List[str]
         style = entry._repr_style if entry._repr_style is not None else self.style
@@ -785,7 +790,7 @@ class FormattedExcinfo:
                 path = np
         return path
 
-    def repr_traceback(self, excinfo: ExceptionInfo) -> "ReprTraceback":
+    def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> "ReprTraceback":
         traceback = excinfo.traceback
         if self.tbfilter:
             traceback = traceback.filter()
@@ -850,12 +855,14 @@ class FormattedExcinfo:
 
         return traceback, extraline
 
-    def repr_excinfo(self, excinfo: ExceptionInfo) -> "ExceptionChainRepr":
+    def repr_excinfo(
+        self, excinfo: ExceptionInfo[BaseException]
+    ) -> "ExceptionChainRepr":
         repr_chain = (
             []
         )  # type: List[Tuple[ReprTraceback, Optional[ReprFileLocation], Optional[str]]]
-        e = excinfo.value
-        excinfo_ = excinfo  # type: Optional[ExceptionInfo]
+        e = excinfo.value  # type: Optional[BaseException]
+        excinfo_ = excinfo  # type: Optional[ExceptionInfo[BaseException]]
         descr = None
         seen = set()  # type: Set[int]
         while e is not None and id(e) not in seen:

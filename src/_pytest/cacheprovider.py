@@ -181,7 +181,7 @@ class LFPluginCollWrapper:
         self._collected_at_least_one_failure = False
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_make_collect_report(self, collector: nodes.Collector) -> Generator:
+    def pytest_make_collect_report(self, collector: nodes.Collector):
         if isinstance(collector, Session):
             out = yield
             res = out.get_result()  # type: CollectReport

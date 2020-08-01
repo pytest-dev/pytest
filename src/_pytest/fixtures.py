@@ -94,8 +94,8 @@ _FixtureCachedResult = Union[
 
 
 @attr.s(frozen=True)
-class PseudoFixtureDef:
-    cached_result = attr.ib(type="_FixtureCachedResult")
+class PseudoFixtureDef(Generic[_FixtureValue]):
+    cached_result = attr.ib(type="_FixtureCachedResult[_FixtureValue]")
     scope = attr.ib(type="_Scope")
 
 
@@ -141,7 +141,7 @@ def scopeproperty(name=None, doc=None):
     return decoratescope
 
 
-def get_scope_package(node, fixturedef: "FixtureDef"):
+def get_scope_package(node, fixturedef: "FixtureDef[object]"):
     import pytest
 
     cls = pytest.Package
@@ -397,7 +397,7 @@ class FuncFixtureInfo:
     # definitions.
     initialnames = attr.ib(type=Tuple[str, ...])
     names_closure = attr.ib(type=List[str])
-    name2fixturedefs = attr.ib(type=Dict[str, Sequence["FixtureDef"]])
+    name2fixturedefs = attr.ib(type=Dict[str, Sequence["FixtureDef[Any]"]])
 
     def prune_dependency_tree(self) -> None:
         """Recompute names_closure from initialnames and name2fixturedefs.
@@ -441,7 +441,7 @@ class FixtureRequest:
         self.fixturename = None  # type: Optional[str]
         #: Scope string, one of "function", "class", "module", "session".
         self.scope = "function"  # type: _Scope
-        self._fixture_defs = {}  # type: Dict[str, FixtureDef]
+        self._fixture_defs = {}  # type: Dict[str, FixtureDef[Any]]
         fixtureinfo = pyfuncitem._fixtureinfo  # type: FuncFixtureInfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index = {}  # type: Dict[str, int]
@@ -467,7 +467,7 @@ class FixtureRequest:
         """Underlying collection node (depends on current request scope)."""
         return self._getscopeitem(self.scope)
 
-    def _getnextfixturedef(self, argname: str) -> "FixtureDef":
+    def _getnextfixturedef(self, argname: str) -> "FixtureDef[Any]":
         fixturedefs = self._arg2fixturedefs.get(argname, None)
         if fixturedefs is None:
             # We arrive here because of a dynamic call to
@@ -586,7 +586,7 @@ class FixtureRequest:
 
     def _get_active_fixturedef(
         self, argname: str
-    ) -> Union["FixtureDef", PseudoFixtureDef]:
+    ) -> Union["FixtureDef[object]", PseudoFixtureDef[object]]:
         try:
             return self._fixture_defs[argname]
         except KeyError:
@@ -604,9 +604,9 @@ class FixtureRequest:
         self._fixture_defs[argname] = fixturedef
         return fixturedef
 
-    def _get_fixturestack(self) -> List["FixtureDef"]:
+    def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
         current = self
-        values = []  # type: List[FixtureDef]
+        values = []  # type: List[FixtureDef[Any]]
         while 1:
             fixturedef = getattr(current, "_fixturedef", None)
             if fixturedef is None:
@@ -616,7 +616,7 @@ class FixtureRequest:
             assert isinstance(current, SubRequest)
             current = current._parent_request
 
-    def _compute_fixture_value(self, fixturedef: "FixtureDef") -> None:
+    def _compute_fixture_value(self, fixturedef: "FixtureDef[object]") -> None:
         """Create a SubRequest based on "self" and call the execute method
         of the given FixtureDef object.
 
@@ -689,7 +689,7 @@ class FixtureRequest:
             self._schedule_finalizers(fixturedef, subrequest)
 
     def _schedule_finalizers(
-        self, fixturedef: "FixtureDef", subrequest: "SubRequest"
+        self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
     ) -> None:
         # If fixture function failed it might have registered finalizers.
         self.session._setupstate.addfinalizer(
@@ -751,7 +751,7 @@ class SubRequest(FixtureRequest):
         scope: "_Scope",
         param,
         param_index: int,
-        fixturedef: "FixtureDef",
+        fixturedef: "FixtureDef[object]",
     ) -> None:
         self._parent_request = request
         self.fixturename = fixturedef.argname
@@ -773,7 +773,7 @@ class SubRequest(FixtureRequest):
         self._fixturedef.addfinalizer(finalizer)
 
     def _schedule_finalizers(
-        self, fixturedef: "FixtureDef", subrequest: "SubRequest"
+        self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
     ) -> None:
         # If the executing fixturedef was not explicitly requested in the argument list (via
         # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
@@ -1456,8 +1456,8 @@ class FixtureManager:
     def __init__(self, session: "Session") -> None:
         self.session = session
         self.config = session.config  # type: Config
-        self._arg2fixturedefs = {}  # type: Dict[str, List[FixtureDef]]
-        self._holderobjseen = set()  # type: Set
+        self._arg2fixturedefs = {}  # type: Dict[str, List[FixtureDef[Any]]]
+        self._holderobjseen = set()  # type: Set[object]
         self._nodeid_and_autousenames = [
             ("", self.config.getini("usefixtures"))
         ]  # type: List[Tuple[str, List[str]]]
@@ -1534,7 +1534,7 @@ class FixtureManager:
 
     def getfixtureclosure(
         self, fixturenames: Tuple[str, ...], parentnode, ignore_args: Sequence[str] = ()
-    ) -> Tuple[Tuple[str, ...], List[str], Dict[str, Sequence[FixtureDef]]]:
+    ) -> Tuple[Tuple[str, ...], List[str], Dict[str, Sequence[FixtureDef[Any]]]]:
         # Collect the closure of all fixtures, starting with the given
         # fixturenames as the initial set.  As we have to visit all
         # factory definitions anyway, we also return an arg2fixturedefs
@@ -1557,7 +1557,7 @@ class FixtureManager:
         # need to return it as well, so save this.
         initialnames = tuple(fixturenames_closure)
 
-        arg2fixturedefs = {}  # type: Dict[str, Sequence[FixtureDef]]
+        arg2fixturedefs = {}  # type: Dict[str, Sequence[FixtureDef[Any]]]
         lastlen = -1
         while lastlen != len(fixturenames_closure):
             lastlen = len(fixturenames_closure)
@@ -1677,7 +1677,7 @@ class FixtureManager:
 
     def getfixturedefs(
         self, argname: str, nodeid: str
-    ) -> Optional[Sequence[FixtureDef]]:
+    ) -> Optional[Sequence[FixtureDef[Any]]]:
         """Get a list of fixtures which are applicable to the given node id.
 
         :param str argname: Name of the fixture to search for.
@@ -1691,8 +1691,8 @@ class FixtureManager:
         return tuple(self._matchfactories(fixturedefs, nodeid))
 
     def _matchfactories(
-        self, fixturedefs: Iterable[FixtureDef], nodeid: str
-    ) -> Iterator[FixtureDef]:
+        self, fixturedefs: Iterable[FixtureDef[Any]], nodeid: str
+    ) -> Iterator[FixtureDef[Any]]:
         from _pytest import nodes
 
         for fixturedef in fixturedefs:

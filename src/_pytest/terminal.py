@@ -319,7 +319,7 @@ class TerminalReporter:
 
         self.stats = {}  # type: Dict[str, List[Any]]
         self._main_color = None  # type: Optional[str]
-        self._known_types = None  # type: Optional[List]
+        self._known_types = None  # type: Optional[List[str]]
         self.startdir = config.invocation_dir
         if file is None:
             file = sys.stdout
@@ -469,7 +469,7 @@ class TerminalReporter:
     def line(self, msg: str, **kw: bool) -> None:
         self._tw.line(msg, **kw)
 
-    def _add_stats(self, category: str, items: Sequence) -> None:
+    def _add_stats(self, category: str, items: Sequence[Any]) -> None:
         set_main_color = category not in self.stats
         self.stats.setdefault(category, []).extend(items)
         if set_main_color:

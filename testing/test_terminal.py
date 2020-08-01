@@ -1564,66 +1564,66 @@ def tr() -> TerminalReporter:
         # dict value, not the actual contents, so tuples of anything
         # suffice
         # Important statuses -- the highest priority of these always wins
-        ("red", [("1 failed", {"bold": True, "red": True})], {"failed": (1,)}),
+        ("red", [("1 failed", {"bold": True, "red": True})], {"failed": [1]}),
         (
             "red",
             [
                 ("1 failed", {"bold": True, "red": True}),
                 ("1 passed", {"bold": False, "green": True}),
             ],
-            {"failed": (1,), "passed": (1,)},
+            {"failed": [1], "passed": [1]},
         ),
-        ("red", [("1 error", {"bold": True, "red": True})], {"error": (1,)}),
-        ("red", [("2 errors", {"bold": True, "red": True})], {"error": (1, 2)}),
+        ("red", [("1 error", {"bold": True, "red": True})], {"error": [1]}),
+        ("red", [("2 errors", {"bold": True, "red": True})], {"error": [1, 2]}),
         (
             "red",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 error", {"bold": True, "red": True}),
             ],
-            {"error": (1,), "passed": (1,)},
+            {"error": [1], "passed": [1]},
         ),
         # (a status that's not known to the code)
-        ("yellow", [("1 weird", {"bold": True, "yellow": True})], {"weird": (1,)}),
+        ("yellow", [("1 weird", {"bold": True, "yellow": True})], {"weird": [1]}),
         (
             "yellow",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 weird", {"bold": True, "yellow": True}),
             ],
-            {"weird": (1,), "passed": (1,)},
+            {"weird": [1], "passed": [1]},
         ),
-        ("yellow", [("1 warning", {"bold": True, "yellow": True})], {"warnings": (1,)}),
+        ("yellow", [("1 warning", {"bold": True, "yellow": True})], {"warnings": [1]}),
         (
             "yellow",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 warning", {"bold": True, "yellow": True}),
             ],
-            {"warnings": (1,), "passed": (1,)},
+            {"warnings": [1], "passed": [1]},
         ),
         (
             "green",
             [("5 passed", {"bold": True, "green": True})],
-            {"passed": (1, 2, 3, 4, 5)},
+            {"passed": [1, 2, 3, 4, 5]},
         ),
         # "Boring" statuses.  These have no effect on the color of the summary
         # line.  Thus, if *every* test has a boring status, the summary line stays
         # at its default color, i.e. yellow, to warn the user that the test run
         # produced no useful information
-        ("yellow", [("1 skipped", {"bold": True, "yellow": True})], {"skipped": (1,)}),
+        ("yellow", [("1 skipped", {"bold": True, "yellow": True})], {"skipped": [1]}),
         (
             "green",
             [
                 ("1 passed", {"bold": True, "green": True}),
                 ("1 skipped", {"bold": False, "yellow": True}),
             ],
-            {"skipped": (1,), "passed": (1,)},
+            {"skipped": [1], "passed": [1]},
         ),
         (
             "yellow",
             [("1 deselected", {"bold": True, "yellow": True})],
-            {"deselected": (1,)},
+            {"deselected": [1]},
         ),
         (
             "green",
@@ -1631,34 +1631,34 @@ def tr() -> TerminalReporter:
                 ("1 passed", {"bold": True, "green": True}),
                 ("1 deselected", {"bold": False, "yellow": True}),
             ],
-            {"deselected": (1,), "passed": (1,)},
+            {"deselected": [1], "passed": [1]},
         ),
-        ("yellow", [("1 xfailed", {"bold": True, "yellow": True})], {"xfailed": (1,)}),
+        ("yellow", [("1 xfailed", {"bold": True, "yellow": True})], {"xfailed": [1]}),
         (
             "green",
             [
                 ("1 passed", {"bold": True, "green": True}),
                 ("1 xfailed", {"bold": False, "yellow": True}),
             ],
-            {"xfailed": (1,), "passed": (1,)},
+            {"xfailed": [1], "passed": [1]},
         ),
-        ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": (1,)}),
+        ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": [1]}),
         (
             "yellow",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 xpassed", {"bold": True, "yellow": True}),
             ],
-            {"xpassed": (1,), "passed": (1,)},
+            {"xpassed": [1], "passed": [1]},
         ),
         # Likewise if no tests were found at all
         ("yellow", [("no tests ran", {"yellow": True})], {}),
         # Test the empty-key special case
-        ("yellow", [("no tests ran", {"yellow": True})], {"": (1,)}),
+        ("yellow", [("no tests ran", {"yellow": True})], {"": [1]}),
         (
             "green",
             [("1 passed", {"bold": True, "green": True})],
-            {"": (1,), "passed": (1,)},
+            {"": [1], "passed": [1]},
         ),
         # A couple more complex combinations
         (
@@ -1668,7 +1668,7 @@ def tr() -> TerminalReporter:
                 ("2 passed", {"bold": False, "green": True}),
                 ("3 xfailed", {"bold": False, "yellow": True}),
             ],
-            {"passed": (1, 2), "failed": (1,), "xfailed": (1, 2, 3)},
+            {"passed": [1, 2], "failed": [1], "xfailed": [1, 2, 3]},
         ),
         (
             "green",
@@ -1679,10 +1679,10 @@ def tr() -> TerminalReporter:
                 ("2 xfailed", {"bold": False, "yellow": True}),
             ],
             {
-                "passed": (1,),
-                "skipped": (1, 2),
-                "deselected": (1, 2, 3),
-                "xfailed": (1, 2),
+                "passed": [1],
+                "skipped": [1, 2],
+                "deselected": [1, 2, 3],
+                "xfailed": [1, 2],
             },
         ),
     ],
@@ -1691,7 +1691,7 @@ def test_summary_stats(
     tr: TerminalReporter,
     exp_line: List[Tuple[str, Dict[str, bool]]],
     exp_color: str,
-    stats_arg: Dict[str, List],
+    stats_arg: Dict[str, List[object]],
 ) -> None:
     tr.stats = stats_arg
 

@@ -83,7 +83,7 @@ class Exit(Exception):
 # Elaborate hack to work around https://github.com/python/mypy/issues/2087.
 # Ideally would just be `exit.Exception = Exit` etc.
 
-_F = TypeVar("_F", bound=Callable)
+_F = TypeVar("_F", bound=Callable[..., object])
 _ET = TypeVar("_ET", bound="Type[BaseException]")
 
 

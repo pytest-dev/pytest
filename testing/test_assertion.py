@@ -640,7 +640,8 @@ class TestAssert_reprcompare:
 
     def test_Sequence(self) -> None:
         # Test comparing with a Sequence subclass.
-        class TestSequence(collections.abc.MutableSequence):
+        # TODO(py36): Inherit from typing.MutableSequence[int].
+        class TestSequence(collections.abc.MutableSequence):  # type: ignore[type-arg]
             def __init__(self, iterable):
                 self.elements = list(iterable)
 

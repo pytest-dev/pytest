@@ -404,7 +404,7 @@ class Failed(Exception):
 
 
 @attr.s
-class _bestrelpath_cache(dict):
+class _bestrelpath_cache(Dict[py.path.local, str]):
     path = attr.ib(type=py.path.local)
 
     def __missing__(self, path: py.path.local) -> str:

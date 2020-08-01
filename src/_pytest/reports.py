@@ -514,7 +514,7 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
         ]
         return ReprTraceback(**repr_traceback_dict)
 
-    def deserialize_repr_crash(repr_crash_dict: Optional[dict]):
+    def deserialize_repr_crash(repr_crash_dict: Optional[Dict[str, Any]]):
         if repr_crash_dict is not None:
             return ReprFileLocation(**repr_crash_dict)
         else:

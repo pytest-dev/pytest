@@ -3,7 +3,10 @@ import argparse
 import functools
 import sys
 import types
+from typing import Any
+from typing import Callable
 from typing import Generator
+from typing import List
 from typing import Tuple
 from typing import Union
 
@@ -91,7 +94,7 @@ class pytestPDB:
 
     _pluginmanager = None  # type: PytestPluginManager
     _config = None  # type: Config
-    _saved = []  # type: list
+    _saved = []  # type: List[Tuple[Callable[..., None], PytestPluginManager, Config]]
     _recursive_debug = 0
     _wrapped_pdb_cls = None
 
@@ -274,7 +277,7 @@ class pytestPDB:
 
 class PdbInvoke:
     def pytest_exception_interact(
-        self, node: Node, call: "CallInfo", report: BaseReport
+        self, node: Node, call: "CallInfo[Any]", report: BaseReport
     ) -> None:
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:

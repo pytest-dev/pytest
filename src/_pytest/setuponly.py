@@ -29,7 +29,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(
-    fixturedef: FixtureDef, request: SubRequest
+    fixturedef: FixtureDef[object], request: SubRequest
 ) -> Generator[None, None, None]:
     yield
     if request.config.option.setupshow:
@@ -47,7 +47,7 @@ def pytest_fixture_setup(
         _show_fixture_action(fixturedef, "SETUP")
 
 
-def pytest_fixture_post_finalizer(fixturedef: FixtureDef) -> None:
+def pytest_fixture_post_finalizer(fixturedef: FixtureDef[object]) -> None:
     if fixturedef.cached_result is not None:
         config = fixturedef._fixturemanager.config
         if config.option.setupshow:
@@ -56,7 +56,7 @@ def pytest_fixture_post_finalizer(fixturedef: FixtureDef) -> None:
                 del fixturedef.cached_param  # type: ignore[attr-defined]
 
 
-def _show_fixture_action(fixturedef: FixtureDef, msg: str) -> None:
+def _show_fixture_action(fixturedef: FixtureDef[object], msg: str) -> None:
     config = fixturedef._fixturemanager.config
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:

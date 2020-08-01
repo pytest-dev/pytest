@@ -1,6 +1,7 @@
 import os
 import warnings
 from functools import lru_cache
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
@@ -167,7 +168,7 @@ class Node(metaclass=NodeMeta):
         self.extra_keyword_matches = set()  # type: Set[str]
 
         # Used for storing artificial fixturedefs for direct parametrization.
-        self._name2pseudofixturedef = {}  # type: Dict[str, FixtureDef]
+        self._name2pseudofixturedef = {}  # type: Dict[str, FixtureDef[Any]]
 
         if nodeid is not None:
             assert "::()" not in nodeid
@@ -354,7 +355,7 @@ class Node(metaclass=NodeMeta):
         assert current is None or isinstance(current, cls)
         return current
 
-    def _prunetraceback(self, excinfo):
+    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
         pass
 
     def _repr_failure_py(
@@ -479,7 +480,7 @@ class Collector(Node):
 
         return self._repr_failure_py(excinfo, style=tbstyle)
 
-    def _prunetraceback(self, excinfo):
+    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
         if hasattr(self, "fspath"):
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=self.fspath)

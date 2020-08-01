@@ -144,7 +144,7 @@ class TestMetafunc:
             scope = attr.ib()
 
         fixtures_defs = cast(
-            Dict[str, Sequence[fixtures.FixtureDef]],
+            Dict[str, Sequence[fixtures.FixtureDef[object]]],
             dict(
                 session_fix=[DummyFixtureDef("session")],
                 package_fix=[DummyFixtureDef("package")],

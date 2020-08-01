@@ -213,7 +213,7 @@ def call_and_report(
     return report
 
 
-def check_interactive_exception(call: "CallInfo", report: BaseReport) -> bool:
+def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) -> bool:
     """Check whether the call raised an exception that should be reported as
     interactive."""
     if call.excinfo is None:
@@ -247,11 +247,11 @@ def call_runtest_hook(
     )
 
 
-_T = TypeVar("_T")
+TResult = TypeVar("TResult", covariant=True)
 
 
 @attr.s(repr=False)
-class CallInfo(Generic[_T]):
+class CallInfo(Generic[TResult]):
     """Result/Exception info a function invocation.
 
     :param T result:
@@ -269,7 +269,7 @@ class CallInfo(Generic[_T]):
         The context of invocation: "setup", "call", "teardown", ...
     """
 
-    _result = attr.ib(type="Optional[_T]")
+    _result = attr.ib(type="Optional[TResult]")
     excinfo = attr.ib(type=Optional[ExceptionInfo[BaseException]])
     start = attr.ib(type=float)
     stop = attr.ib(type=float)
@@ -277,26 +277,26 @@ class CallInfo(Generic[_T]):
     when = attr.ib(type="Literal['collect', 'setup', 'call', 'teardown']")
 
     @property
-    def result(self) -> _T:
+    def result(self) -> TResult:
         if self.excinfo is not None:
             raise AttributeError("{!r} has no valid result".format(self))
         # The cast is safe because an exception wasn't raised, hence
         # _result has the expected function return type (which may be
         #  None, that's why a cast and not an assert).
-        return cast(_T, self._result)
+        return cast(TResult, self._result)
 
     @classmethod
     def from_call(
         cls,
-        func: "Callable[[], _T]",
+        func: "Callable[[], TResult]",
         when: "Literal['collect', 'setup', 'call', 'teardown']",
         reraise: "Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]]" = None,
-    ) -> "CallInfo[_T]":
+    ) -> "CallInfo[TResult]":
         excinfo = None
         start = timing.time()
         precise_start = timing.perf_counter()
         try:
-            result = func()  # type: Optional[_T]
+            result = func()  # type: Optional[TResult]
         except BaseException:
             excinfo = ExceptionInfo.from_current()
             if reraise is not None and isinstance(excinfo.value, reraise):

@@ -526,7 +526,7 @@ _E = TypeVar("_E", bound=BaseException)
 def raises(
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     *,
-    match: "Optional[Union[str, Pattern]]" = ...
+    match: "Optional[Union[str, Pattern[str]]]" = ...
 ) -> "RaisesContext[_E]":
     ...  # pragma: no cover
 
@@ -534,7 +534,7 @@ def raises(
 @overload  # noqa: F811
 def raises(  # noqa: F811
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
-    func: Callable,
+    func: Callable[..., Any],
     *args: Any,
     **kwargs: Any
 ) -> _pytest._code.ExceptionInfo[_E]:
@@ -670,7 +670,7 @@ def raises(  # noqa: F811
     message = "DID NOT RAISE {}".format(expected_exception)
 
     if not args:
-        match = kwargs.pop("match", None)
+        match = kwargs.pop("match", None)  # type: Optional[Union[str, Pattern[str]]]
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
@@ -703,7 +703,7 @@ class RaisesContext(Generic[_E]):
         self,
         expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
         message: str,
-        match_expr: Optional[Union[str, "Pattern"]] = None,
+        match_expr: Optional[Union[str, "Pattern[str]"]] = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message

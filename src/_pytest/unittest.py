@@ -141,7 +141,7 @@ def _make_xunit_fixture(
 
 class TestCaseFunction(Function):
     nofuncargs = True
-    _excinfo = None  # type: Optional[List[_pytest._code.ExceptionInfo]]
+    _excinfo = None  # type: Optional[List[_pytest._code.ExceptionInfo[BaseException]]]
     _testcase = None  # type: Optional[unittest.TestCase]
 
     def setup(self) -> None:
@@ -279,7 +279,9 @@ class TestCaseFunction(Function):
             finally:
                 delattr(self._testcase, self.name)
 
-    def _prunetraceback(self, excinfo: _pytest._code.ExceptionInfo) -> None:
+    def _prunetraceback(
+        self, excinfo: _pytest._code.ExceptionInfo[BaseException]
+    ) -> None:
         Function._prunetraceback(self, excinfo)
         traceback = excinfo.traceback.filter(
             lambda x: not x.frame.f_globals.get("__unittest")
