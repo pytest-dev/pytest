@@ -28,7 +28,14 @@ if TYPE_CHECKING:
     from _pytest.nodes import Item
 
 
-__all__ = ["Mark", "MarkDecorator", "MarkGenerator", "get_empty_parameterset_mark"]
+__all__ = [
+    "MARK_GEN",
+    "Mark",
+    "MarkDecorator",
+    "MarkGenerator",
+    "ParameterSet",
+    "get_empty_parameterset_mark",
+]
 
 
 old_mark_config_key = StoreKey[Optional[Config]]()

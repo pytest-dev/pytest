@@ -19,6 +19,8 @@ from hypothesis import strategies
 import pytest
 from _pytest import fixtures
 from _pytest import python
+from _pytest.compat import _format_args
+from _pytest.compat import getfuncargnames
 from _pytest.outcomes import fail
 from _pytest.pytester import Testdir
 from _pytest.python import _idval
@@ -41,7 +43,7 @@ class TestMetafunc:
             obj = attr.ib()
             _nodeid = attr.ib()
 
-        names = fixtures.getfuncargnames(func)
+        names = getfuncargnames(func)
         fixtureinfo = FuncFixtureInfoMock(names)  # type: Any
         definition = DefinitionMock._create(func, "mock::nodeid")  # type: Any
         return python.Metafunc(definition, fixtureinfo, config)
@@ -954,22 +956,22 @@ class TestMetafunc:
         def function1():
             pass
 
-        assert fixtures._format_args(function1) == "()"
+        assert _format_args(function1) == "()"
 
         def function2(arg1):
             pass
 
-        assert fixtures._format_args(function2) == "(arg1)"
+        assert _format_args(function2) == "(arg1)"
 
         def function3(arg1, arg2="qwe"):
             pass
 
-        assert fixtures._format_args(function3) == "(arg1, arg2='qwe')"
+        assert _format_args(function3) == "(arg1, arg2='qwe')"
 
         def function4(arg1, *args, **kwargs):
             pass
 
-        assert fixtures._format_args(function4) == "(arg1, *args, **kwargs)"
+        assert _format_args(function4) == "(arg1, *args, **kwargs)"
 
 
 class TestMetafuncFunctional:

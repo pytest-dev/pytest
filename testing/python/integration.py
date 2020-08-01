@@ -1,8 +1,8 @@
 from typing import Any
 
 import pytest
-from _pytest import python
 from _pytest import runner
+from _pytest._code import getfslineno
 
 
 class TestOEJSKITSpecials:
@@ -87,8 +87,8 @@ def test_wrapped_getfslineno() -> None:
     def wrapped_func(x, y, z):
         pass
 
-    fs, lineno = python.getfslineno(wrapped_func)
-    fs2, lineno2 = python.getfslineno(wrap)
+    fs, lineno = getfslineno(wrapped_func)
+    fs2, lineno2 = getfslineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
 

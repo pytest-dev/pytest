@@ -1018,7 +1018,7 @@ class TestTracebackCutting:
         See: https://bitbucket.org/pytest-dev/py/issues/71
         This fixes #995.
         """
-        from _pytest.python import filter_traceback
+        from _pytest._code import filter_traceback
 
         try:
             ns = {}  # type: Dict[str, Any]
@@ -1038,7 +1038,7 @@ class TestTracebackCutting:
         In this case, one of the files in the traceback no longer exists.
         This fixes #1133.
         """
-        from _pytest.python import filter_traceback
+        from _pytest._code import filter_traceback
 
         testdir.syspathinsert()
         testdir.makepyfile(
