@@ -2,7 +2,6 @@
 import bdb
 import os
 import sys
-from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -22,6 +21,7 @@ from .reports import TestReport
 from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import TerminalRepr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Collector
@@ -327,8 +327,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:
 
 def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
-    # TODO: Better typing for longrepr.
-    longrepr = None  # type: Optional[Any]
+    longrepr = None  # type: Union[None, Tuple[str, int, str], str, TerminalRepr]
     if not call.excinfo:
         outcome = "passed"  # type: Literal["passed", "skipped", "failed"]
     else:
@@ -348,6 +347,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
             outcome = "failed"
             errorinfo = collector.repr_failure(call.excinfo)
             if not hasattr(errorinfo, "toterminal"):
+                assert isinstance(errorinfo, str)
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     result = call.result if not call.excinfo else None

@@ -25,6 +25,7 @@ from _pytest import deprecated
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
+from _pytest._code.code import ReprFileLocation
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
@@ -200,8 +201,11 @@ class _NodeReporter:
             self._add_simple("skipped", "xfail-marked test passes unexpectedly")
         else:
             assert report.longrepr is not None
-            if getattr(report.longrepr, "reprcrash", None) is not None:
-                message = report.longrepr.reprcrash.message
+            reprcrash = getattr(
+                report.longrepr, "reprcrash", None
+            )  # type: Optional[ReprFileLocation]
+            if reprcrash is not None:
+                message = reprcrash.message
             else:
                 message = str(report.longrepr)
             message = bin_xml_escape(message)
@@ -217,8 +221,11 @@ class _NodeReporter:
 
     def append_error(self, report: TestReport) -> None:
         assert report.longrepr is not None
-        if getattr(report.longrepr, "reprcrash", None) is not None:
-            reason = report.longrepr.reprcrash.message
+        reprcrash = getattr(
+            report.longrepr, "reprcrash", None
+        )  # type: Optional[ReprFileLocation]
+        if reprcrash is not None:
+            reason = reprcrash.message
         else:
             reason = str(report.longrepr)
 
@@ -237,7 +244,7 @@ class _NodeReporter:
             skipped = ET.Element("skipped", type="pytest.xfail", message=xfailreason)
             self.append(skipped)
         else:
-            assert report.longrepr is not None
+            assert isinstance(report.longrepr, tuple)
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
                 skipreason = skipreason[9:]

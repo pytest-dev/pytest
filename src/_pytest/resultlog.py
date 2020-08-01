@@ -85,7 +85,7 @@ class ResultLog:
         elif report.passed:
             longrepr = ""
         elif report.skipped:
-            assert report.longrepr is not None
+            assert isinstance(report.longrepr, tuple)
             longrepr = str(report.longrepr[2])
         else:
             longrepr = str(report.longrepr)
