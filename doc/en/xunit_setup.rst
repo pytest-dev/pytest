@@ -12,7 +12,7 @@ fixtures (setup and teardown test state) on a per-module/class/function basis.
 .. note::
 
     While these setup/teardown methods are simple and familiar to those
-    coming from a ``unittest`` or nose ``background``, you may also consider
+    coming from a ``unittest`` or ``nose`` background, you may also consider
     using pytest's more powerful :ref:`fixture mechanism
     <fixture>` which leverages the concept of dependency injection, allowing
     for a more modular and more scalable approach for managing test state,
