@@ -1099,6 +1099,45 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     assert "collected 10 items" in result.stdout.str()
 
 
+def test_unicode_yes(testdir):
+    p1 = testdir.makepyfile(
+        """
+        def fail():
+            assert 0
+
+        def test_this():
+            fail()
+        """
+    )
+    result = testdir.runpytest("--unicode", str(p1))
+    result.stdout.fnmatch_lines(
+        [
+            "\u2550*\u2550 test session starts \u2550*\u2550",
+            "collected 1 item",
+            "",
+            "test_unicode_yes.py F * ?100%?",
+            "",
+            "\u2550*\u2550 FAILURES \u2550*\u2550",
+            "\u2581*\u2581 test_this \u2581*\u2581",
+            "",
+            "    def test_this():",
+            ">       fail()",
+            "",
+            "test_unicode_yes.py:5: ",
+            "_ _ * _ _*",
+            "",
+            "    def fail():",
+            ">       assert 0",
+            "E       assert 0",
+            "",
+            "test_unicode_yes.py:2: AssertionError",
+            "\u2550*\u2550 short test summary info \u2550*\u2550",
+            "FAILED test_unicode_yes.py::test_this - assert 0",
+            "\u2550*\u2550 1 failed in *s \u2550*\u2550",
+        ]
+    )
+
+
 def test_getreportopt() -> None:
     from _pytest.terminal import _REPORTCHARS_DEFAULT
 
