@@ -496,7 +496,7 @@ class TerminalReporter:
         **markup: bool
     ) -> None:
         self.write_sep(
-            "\u2049" if self.config.option.unicode else "?", title, fullwidth, **markup
+            "\u2049" if self.config.option.unicode else "!", title, fullwidth, **markup
         )
 
     def write_hrule_lower(
