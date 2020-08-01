@@ -533,7 +533,7 @@ def pytest_report_from_serializable(
 
 @hookspec(firstresult=True)
 def pytest_fixture_setup(
-    fixturedef: "FixtureDef", request: "SubRequest"
+    fixturedef: "FixtureDef[Any]", request: "SubRequest"
 ) -> Optional[object]:
     """Perform fixture setup execution.
 
@@ -549,7 +549,7 @@ def pytest_fixture_setup(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: "FixtureDef", request: "SubRequest"
+    fixturedef: "FixtureDef[Any]", request: "SubRequest"
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
@@ -826,7 +826,7 @@ def pytest_keyboard_interrupt(
 
 def pytest_exception_interact(
     node: Union["Item", "Collector"],
-    call: "CallInfo[object]",
+    call: "CallInfo[Any]",
     report: Union["CollectReport", "TestReport"],
 ) -> None:
     """Called when an exception was raised which can potentially be

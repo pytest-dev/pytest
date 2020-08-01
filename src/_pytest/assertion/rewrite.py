@@ -710,7 +710,7 @@ class AssertionRewriter(ast.NodeVisitor):
             node = nodes.pop()
             for name, field in ast.iter_fields(node):
                 if isinstance(field, list):
-                    new = []  # type: List
+                    new = []  # type: List[ast.AST]
                     for i, child in enumerate(field):
                         if isinstance(child, ast.Assert):
                             # Transform assert.

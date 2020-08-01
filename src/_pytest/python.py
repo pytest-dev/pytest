@@ -1179,7 +1179,7 @@ class Metafunc:
 
 def _find_parametrized_scope(
     argnames: typing.Sequence[str],
-    arg2fixturedefs: Mapping[str, typing.Sequence[fixtures.FixtureDef]],
+    arg2fixturedefs: Mapping[str, typing.Sequence[fixtures.FixtureDef[object]]],
     indirect: Union[bool, typing.Sequence[str]],
 ) -> "fixtures._Scope":
     """Find the most appropriate scope for a parametrized call based on its arguments.
@@ -1578,7 +1578,7 @@ class Function(PyobjMixin, nodes.Item):
             self.obj = self._getobj()
         self._request._fillfixtures()
 
-    def _prunetraceback(self, excinfo: ExceptionInfo) -> None:
+    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
             code = _pytest._code.Code(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno

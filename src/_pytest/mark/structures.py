@@ -5,6 +5,7 @@ import warnings
 from typing import Any
 from typing import Callable
 from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import NamedTuple
@@ -29,6 +30,8 @@ from _pytest.warning_types import PytestUnknownMarkWarning
 
 if TYPE_CHECKING:
     from typing import Type
+
+    from ..nodes import Node
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
@@ -521,13 +524,14 @@ class MarkGenerator:
 MARK_GEN = MarkGenerator()
 
 
-class NodeKeywords(collections.abc.MutableMapping):
-    def __init__(self, node):
+# TODO(py36): inherit from typing.MutableMapping[str, Any].
+class NodeKeywords(collections.abc.MutableMapping):  # type: ignore[type-arg]
+    def __init__(self, node: "Node") -> None:
         self.node = node
         self.parent = node.parent
         self._markers = {node.name: True}
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         try:
             return self._markers[key]
         except KeyError:
@@ -535,17 +539,17 @@ class NodeKeywords(collections.abc.MutableMapping):
                 raise
             return self.parent.keywords[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         self._markers[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         raise ValueError("cannot delete key in keywords dict")
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         seen = self._seen()
         return iter(seen)
 
-    def _seen(self):
+    def _seen(self) -> Set[str]:
         seen = set(self._markers)
         if self.parent is not None:
             seen.update(self.parent.keywords)
