@@ -1,4 +1,4 @@
-""" Python test discovery, setup and run of test functions. """
+"""Python test discovery, setup and run of test functions."""
 import enum
 import fnmatch
 import inspect
@@ -201,7 +201,7 @@ def pytest_collect_file(path: py.path.local, parent) -> Optional["Module"]:
 
 
 def path_matches_patterns(path: py.path.local, patterns: Iterable[str]) -> bool:
-    """Returns True if path matches any of the patterns in the list of globs given."""
+    """Return whether path matches any of the patterns in the list of globs given."""
     return any(path.fnmatch(pattern) for pattern in patterns)
 
 
@@ -215,16 +215,16 @@ def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
 
 @hookimpl(trylast=True)
 def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj: object):
-    # nothing was collected elsewhere, let's do it here
+    # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
             return Class.from_parent(collector, name=name, obj=obj)
     elif collector.istestfunction(obj, name):
-        # mock seems to store unbound methods (issue473), normalize it
+        # mock seems to store unbound methods (issue473), normalize it.
         obj = getattr(obj, "__func__", obj)
         # We need to try and unwrap the function if it's a functools.partial
         # or a functools.wrapped.
-        # We mustn't if it's been wrapped with mock.patch (python 2 only)
+        # We mustn't if it's been wrapped with mock.patch (python 2 only).
         if not (inspect.isfunction(obj) or inspect.isfunction(get_real_func(obj))):
             filename, lineno = getfslineno(obj)
             warnings.warn_explicit(
@@ -298,14 +298,14 @@ class PyobjMixin:
         self._obj = value
 
     def _getobj(self):
-        """Gets the underlying Python object. May be overwritten by subclasses."""
+        """Get the underlying Python object. May be overwritten by subclasses."""
         # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
         assert self.parent is not None
         obj = self.parent.obj  # type: ignore[attr-defined]
         return getattr(obj, self.name)
 
     def getmodpath(self, stopatmodule: bool = True, includemodule: bool = False) -> str:
-        """ return python path relative to the containing module. """
+        """Return Python path relative to the containing module."""
         chain = self.listchain()
         chain.reverse()
         parts = []
@@ -346,8 +346,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
         return self._matches_prefix_or_glob_option("python_functions", name)
 
     def isnosetest(self, obj: object) -> bool:
-        """ Look for the __test__ attribute, which is applied by the
-        @nose.tools.istest decorator
+        """Look for the __test__ attribute, which is applied by the
+        @nose.tools.istest decorator.
         """
         # We explicitly check for "is True" here to not mistakenly treat
         # classes with a custom __getattr__ returning something truthy (like a
@@ -360,7 +360,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
     def istestfunction(self, obj: object, name: str) -> bool:
         if self.funcnamefilter(name) or self.isnosetest(obj):
             if isinstance(obj, staticmethod):
-                # static methods need to be unwrapped
+                # staticmethods need to be unwrapped.
                 obj = safe_getattr(obj, "__func__", False)
             return (
                 safe_getattr(obj, "__call__", False)
@@ -373,16 +373,14 @@ class PyCollector(PyobjMixin, nodes.Collector):
         return self.classnamefilter(name) or self.isnosetest(obj)
 
     def _matches_prefix_or_glob_option(self, option_name: str, name: str) -> bool:
-        """
-        checks if the given name matches the prefix or glob-pattern defined
-        in ini configuration.
-        """
+        """Check if the given name matches the prefix or glob-pattern defined
+        in ini configuration."""
         for option in self.config.getini(option_name):
             if name.startswith(option):
                 return True
-            # check that name looks like a glob-string before calling fnmatch
+            # Check that name looks like a glob-string before calling fnmatch
             # because this is called for every name in each collected module,
-            # and fnmatch is somewhat expensive to call
+            # and fnmatch is somewhat expensive to call.
             elif ("*" in option or "?" in option or "[" in option) and fnmatch.fnmatch(
                 name, option
             ):
@@ -457,10 +455,10 @@ class PyCollector(PyobjMixin, nodes.Collector):
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
-            # add funcargs() as fixturedefs to fixtureinfo.arg2fixturedefs
+            # Add funcargs() as fixturedefs to fixtureinfo.arg2fixturedefs.
             fixtures.add_funcarg_pseudo_fixture_def(self, metafunc, fm)
 
-            # add_funcarg_pseudo_fixture_def may have shadowed some fixtures
+            # Add_funcarg_pseudo_fixture_def may have shadowed some fixtures
             # with direct parametrization, so make sure we update what the
             # function really needs.
             fixtureinfo.prune_dependency_tree()
@@ -479,7 +477,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
 
 class Module(nodes.File, PyCollector):
-    """ Collector for test classes and functions. """
+    """Collector for test classes and functions."""
 
     def _getobj(self):
         return self._importtestmodule()
@@ -491,7 +489,7 @@ class Module(nodes.File, PyCollector):
         return super().collect()
 
     def _inject_setup_module_fixture(self) -> None:
-        """Injects a hidden autouse, module scoped fixture into the collected module object
+        """Inject a hidden autouse, module scoped fixture into the collected module object
         that invokes setUpModule/tearDownModule if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -518,7 +516,7 @@ class Module(nodes.File, PyCollector):
         self.obj.__pytest_setup_module = xunit_setup_module_fixture
 
     def _inject_setup_function_fixture(self) -> None:
-        """Injects a hidden autouse, function scoped fixture into the collected module object
+        """Inject a hidden autouse, function scoped fixture into the collected module object
         that invokes setup_function/teardown_function if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -547,7 +545,7 @@ class Module(nodes.File, PyCollector):
         self.obj.__pytest_setup_function = xunit_setup_function_fixture
 
     def _importtestmodule(self):
-        # we assume we are only called once per module
+        # We assume we are only called once per module.
         importmode = self.config.getoption("--import-mode")
         try:
             mod = import_path(self.fspath, mode=importmode)
@@ -604,7 +602,7 @@ class Package(Module):
         session=None,
         nodeid=None,
     ) -> None:
-        # NOTE: could be just the following, but kept as-is for compat.
+        # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
         session = parent.session
         nodes.FSCollector.__init__(
@@ -613,8 +611,8 @@ class Package(Module):
         self.name = os.path.basename(str(fspath.dirname))
 
     def setup(self) -> None:
-        # not using fixtures to call setup_module here because autouse fixtures
-        # from packages are not called automatically (#4085)
+        # Not using fixtures to call setup_module here because autouse fixtures
+        # from packages are not called automatically (#4085).
         setup_module = _get_first_non_fixture_func(
             self.obj, ("setUpModule", "setup_module")
         )
@@ -668,7 +666,7 @@ class Package(Module):
 
 def _call_with_optional_argument(func, arg) -> None:
     """Call the given function with the given argument if func accepts one argument, otherwise
-    calls func without arguments"""
+    calls func without arguments."""
     arg_count = func.__code__.co_argcount
     if inspect.ismethod(func):
         arg_count -= 1
@@ -680,9 +678,7 @@ def _call_with_optional_argument(func, arg) -> None:
 
 def _get_first_non_fixture_func(obj: object, names: Iterable[str]):
     """Return the attribute from the given object to be used as a setup/teardown
-    xunit-style function, but only if not marked as a fixture to
-    avoid calling it twice.
-    """
+    xunit-style function, but only if not marked as a fixture to avoid calling it twice."""
     for name in names:
         meth = getattr(obj, name, None)
         if meth is not None and fixtures.getfixturemarker(meth) is None:
@@ -690,13 +686,11 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]):
 
 
 class Class(PyCollector):
-    """ Collector for test methods. """
+    """Collector for test methods."""
 
     @classmethod
     def from_parent(cls, parent, *, name, obj=None):
-        """
-        The public constructor
-        """
+        """The public constructor."""
         return super().from_parent(name=name, parent=parent)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
@@ -729,7 +723,7 @@ class Class(PyCollector):
         return [Instance.from_parent(self, name="()")]
 
     def _inject_setup_class_fixture(self) -> None:
-        """Injects a hidden autouse, class scoped fixture into the collected class object
+        """Inject a hidden autouse, class scoped fixture into the collected class object
         that invokes setup_class/teardown_class if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -753,7 +747,7 @@ class Class(PyCollector):
         self.obj.__pytest_setup_class = xunit_setup_class_fixture
 
     def _inject_setup_method_fixture(self) -> None:
-        """Injects a hidden autouse, function scoped fixture into the collected class object
+        """Inject a hidden autouse, function scoped fixture into the collected class object
         that invokes setup_method/teardown_method if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -780,9 +774,9 @@ class Class(PyCollector):
 
 class Instance(PyCollector):
     _ALLOW_MARKERS = False  # hack, destroy later
-    # instances share the object with their parents in a way
+    # Instances share the object with their parents in a way
     # that duplicates markers instances if not taken out
-    # can be removed at node structure reorganization time
+    # can be removed at node structure reorganization time.
 
     def _getobj(self):
         # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
@@ -874,8 +868,8 @@ class CallSpec2:
 
 
 class Metafunc:
-    """
-    Metafunc objects are passed to the :func:`pytest_generate_tests <_pytest.hookspec.pytest_generate_tests>` hook.
+    """Objects passed to the :func:`pytest_generate_tests <_pytest.hookspec.pytest_generate_tests>` hook.
+
     They help to inspect a test function and to generate tests according to
     test configuration or values specified in the class or module where a
     test function is defined.
@@ -891,19 +885,19 @@ class Metafunc:
     ) -> None:
         self.definition = definition
 
-        #: access to the :class:`_pytest.config.Config` object for the test session
+        #: Access to the :class:`_pytest.config.Config` object for the test session.
         self.config = config
 
-        #: the module object where the test function is defined in.
+        #: The module object where the test function is defined in.
         self.module = module
 
-        #: underlying python test function
+        #: Underlying Python test function.
         self.function = definition.obj
 
-        #: set of fixture names required by the test function
+        #: Set of fixture names required by the test function.
         self.fixturenames = fixtureinfo.names_closure
 
-        #: class object where the test function is defined in or ``None``.
+        #: Class object where the test function is defined in or ``None``.
         self.cls = cls
 
         self._calls = []  # type: List[CallSpec2]
@@ -911,7 +905,7 @@ class Metafunc:
 
     @property
     def funcargnames(self) -> List[str]:
-        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        """Alias attribute for ``fixturenames`` for pre-2.3 compatibility."""
         warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames
 
@@ -930,30 +924,35 @@ class Metafunc:
         *,
         _param_mark: Optional[Mark] = None
     ) -> None:
-        """ Add new invocations to the underlying test function using the list
+        """Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
         see about setting indirect to do it rather at test setup time.
 
-        :arg argnames: a comma-separated string denoting one or more argument
-                       names, or a list/tuple of argument strings.
+        :param argnames:
+            A comma-separated string denoting one or more argument names, or
+            a list/tuple of argument strings.
 
-        :arg argvalues: The list of argvalues determines how often a
-            test is invoked with different argument values.  If only one
-            argname was specified argvalues is a list of values.  If N
-            argnames were specified, argvalues must be a list of N-tuples,
-            where each tuple-element specifies a value for its respective
-            argname.
+        :param argvalues:
+            The list of argvalues determines how often a test is invoked with
+            different argument values.
 
-        :arg indirect: The list of argnames or boolean. A list of arguments'
-            names (subset of argnames). If True the list contains all names from
-            the argnames. Each argvalue corresponding to an argname in this list will
+            If only one argname was specified argvalues is a list of values.
+            If N argnames were specified, argvalues must be a list of
+            N-tuples, where each tuple-element specifies a value for its
+            respective argname.
+
+        :param indirect:
+            A list of arguments' names (subset of argnames) or a boolean.
+            If True the list contains all names from the argnames. Each
+            argvalue corresponding to an argname in this list will
             be passed as request.param to its respective argname fixture
             function so that it can perform more expensive setups during the
             setup phase of a test rather than at collection time.
 
-        :arg ids: sequence of (or generator for) ids for ``argvalues``,
-              or a callable to return part of the id for each argvalue.
+        :param ids:
+            Sequence of (or generator for) ids for ``argvalues``,
+            or a callable to return part of the id for each argvalue.
 
             With sequences (and generators like ``itertools.count()``) the
             returned ids should be of type ``string``, ``int``, ``float``,
@@ -971,7 +970,8 @@ class Metafunc:
             If no ids are provided they will be generated automatically from
             the argvalues.
 
-        :arg scope: if specified it denotes the scope of the parameters.
+        :param scope:
+            If specified it denotes the scope of the parameters.
             The scope is used for grouping tests by parameter instances.
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
@@ -1018,9 +1018,9 @@ class Metafunc:
             scope, descr="parametrize() call in {}".format(self.function.__name__)
         )
 
-        # create the new calls: if we are parametrize() multiple times (by applying the decorator
+        # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
-        # of all calls
+        # of all calls.
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
             for param_index, (param_id, param_set) in enumerate(zip(ids, parameters)):
@@ -1049,15 +1049,15 @@ class Metafunc:
         parameters: typing.Sequence[ParameterSet],
         nodeid: str,
     ) -> List[str]:
-        """Resolves the actual ids for the given argnames, based on the ``ids`` parameter given
+        """Resolve the actual ids for the given argnames, based on the ``ids`` parameter given
         to ``parametrize``.
 
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param ids: the ids parameter of the parametrized call (see docs).
-        :param List[ParameterSet] parameters: the list of parameter values, same size as ``argnames``.
-        :param str str: the nodeid of the item that generated this parametrized call.
+        :param List[str] argnames: List of argument names passed to ``parametrize()``.
+        :param ids: The ids parameter of the parametrized call (see docs).
+        :param List[ParameterSet] parameters: The list of parameter values, same size as ``argnames``.
+        :param str str: The nodeid of the item that generated this parametrized call.
         :rtype: List[str]
-        :return: the list of ids for each argname given
+        :returns: The list of ids for each argname given.
         """
         if ids is None:
             idfn = None
@@ -1109,11 +1109,12 @@ class Metafunc:
         argnames: typing.Sequence[str],
         indirect: Union[bool, typing.Sequence[str]],
     ) -> Dict[str, "Literal['params', 'funcargs']"]:
-        """Resolves if each parametrized argument must be considered a parameter to a fixture or a "funcarg"
-        to the function, based on the ``indirect`` parameter of the parametrized() call.
+        """Resolve if each parametrized argument must be considered a
+        parameter to a fixture or a "funcarg" to the function, based on the
+        ``indirect`` parameter of the parametrized() call.
 
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param indirect: same ``indirect`` parameter of ``parametrize()``.
+        :param List[str] argnames: List of argument names passed to ``parametrize()``.
+        :param indirect: Same as the ``indirect`` parameter of ``parametrize()``.
         :rtype: Dict[str, str]
             A dict mapping each arg name to either:
             * "params" if the argname should be the parameter of a fixture of the same name.
@@ -1148,12 +1149,11 @@ class Metafunc:
         argnames: typing.Sequence[str],
         indirect: Union[bool, typing.Sequence[str]],
     ) -> None:
-        """
-        Check if all argnames are being used, by default values, or directly/indirectly.
+        """Check if all argnames are being used, by default values, or directly/indirectly.
 
-        :param List[str] argnames: list of argument names passed to ``parametrize()``.
-        :param indirect: same ``indirect`` parameter of ``parametrize()``.
-        :raise ValueError: if validation fails.
+        :param List[str] argnames: List of argument names passed to ``parametrize()``.
+        :param indirect: Same as the ``indirect`` parameter of ``parametrize()``.
+        :raises ValueError: If validation fails.
         """
         default_arg_names = set(get_default_arg_names(self.function))
         func_name = self.function.__name__
@@ -1204,7 +1204,7 @@ def _find_parametrized_scope(
             if name in argnames
         ]
         if used_scopes:
-            # Takes the most narrow scope from used fixtures
+            # Takes the most narrow scope from used fixtures.
             for scope in reversed(fixtures.scopes):
                 if scope in used_scopes:
                     return scope
@@ -1259,7 +1259,7 @@ def _idval(
     elif isinstance(val, enum.Enum):
         return str(val)
     elif isinstance(getattr(val, "__name__", None), str):
-        # name of a class, function, module, etc.
+        # Name of a class, function, module, etc.
         name = getattr(val, "__name__")  # type: str
         return name
     return str(argname) + str(idx)
@@ -1306,13 +1306,13 @@ def idmaker(
     unique_ids = set(resolved_ids)
     if len(unique_ids) != len(resolved_ids):
 
-        # Record the number of occurrences of each test ID
+        # Record the number of occurrences of each test ID.
         test_id_counts = Counter(resolved_ids)
 
-        # Map the test ID to its next suffix
+        # Map the test ID to its next suffix.
         test_id_suffixes = defaultdict(int)  # type: Dict[str, int]
 
-        # Suffix non-unique IDs to make them unique
+        # Suffix non-unique IDs to make them unique.
         for index, test_id in enumerate(resolved_ids):
             if test_id_counts[test_id] > 1:
                 resolved_ids[index] = "{}{}".format(test_id, test_id_suffixes[test_id])
@@ -1365,12 +1365,12 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         tw.sep("-", "fixtures used by {}".format(item.name))
         # TODO: Fix this type ignore.
         tw.sep("-", "({})".format(get_best_relpath(item.function)))  # type: ignore[attr-defined]
-        # dict key not used in loop but needed for sorting
+        # dict key not used in loop but needed for sorting.
         for _, fixturedefs in sorted(info.name2fixturedefs.items()):
             assert fixturedefs is not None
             if not fixturedefs:
                 continue
-            # last item is expected to be the one used by the test item
+            # Last item is expected to be the one used by the test item.
             write_fixture(fixturedefs[-1])
 
     for session_item in session.items:
@@ -1446,11 +1446,35 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
 
 
 class Function(PyobjMixin, nodes.Item):
-    """ a Function Item is responsible for setting up and executing a
-    Python test function.
+    """An Item responsible for setting up and executing a Python test function.
+
+    param name:
+        The full function name, including any decorations like those
+        added by parametrization (``my_func[my_param]``).
+    param parent:
+        The parent Node.
+    param config:
+        The pytest Config object.
+    param callspec:
+        If given, this is function has been parametrized and the callspec contains
+        meta information about the parametrization.
+    param callobj:
+        If given, the object which will be called when the Function is invoked,
+        otherwise the callobj will be obtained from ``parent`` using ``originalname``.
+    param keywords:
+        Keywords bound to the function object for "-k" matching.
+    param session:
+        The pytest Session object.
+    param fixtureinfo:
+        Fixture information already resolved at this fixture node..
+    param originalname:
+        The attribute name to use for accessing the underlying function object.
+        Defaults to ``name``. Set this if name is different from the original name,
+        for example when it contains decorations like those added by parametrization
+        (``my_func[my_param]``).
     """
 
-    # disable since functions handle it themselves
+    # Disable since functions handle it themselves.
     _ALLOW_MARKERS = False
 
     def __init__(
@@ -1465,24 +1489,6 @@ class Function(PyobjMixin, nodes.Item):
         fixtureinfo: Optional[FuncFixtureInfo] = None,
         originalname: Optional[str] = None,
     ) -> None:
-        """
-        param name: the full function name, including any decorations like those
-            added by parametrization (``my_func[my_param]``).
-        param parent: the parent Node.
-        param config: the pytest Config object
-        param callspec: if given, this is function has been parametrized and the callspec contains
-            meta information about the parametrization.
-        param callobj: if given, the object which will be called when the Function is invoked,
-            otherwise the callobj will be obtained from ``parent`` using ``originalname``
-        param keywords: keywords bound to the function object for "-k" matching.
-        param session: the pytest Session object
-        param fixtureinfo: fixture information already resolved at this fixture node.
-        param originalname:
-            The attribute name to use for accessing the underlying function object.
-            Defaults to ``name``. Set this if name is different from the original name,
-            for example when it contains decorations like those added by parametrization
-            (``my_func[my_param]``).
-        """
         super().__init__(name, parent, config=config, session=session)
 
         if callobj is not NOTSET:
@@ -1496,8 +1502,8 @@ class Function(PyobjMixin, nodes.Item):
         #: .. versionadded:: 3.0
         self.originalname = originalname or name
 
-        # note: when FunctionDefinition is introduced, we should change ``originalname``
-        # to a readonly property that returns FunctionDefinition.name
+        # Note: when FunctionDefinition is introduced, we should change ``originalname``
+        # to a readonly property that returns FunctionDefinition.name.
 
         self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))
@@ -1535,9 +1541,7 @@ class Function(PyobjMixin, nodes.Item):
 
     @classmethod
     def from_parent(cls, parent, **kw):  # todo: determine sound type limitations
-        """
-        The public  constructor
-        """
+        """The public constructor."""
         return super().from_parent(parent=parent, **kw)
 
     def _initrequest(self) -> None:
@@ -1546,7 +1550,7 @@ class Function(PyobjMixin, nodes.Item):
 
     @property
     def function(self):
-        "underlying python 'function' object"
+        """Underlying python 'function' object."""
         return getimfunc(self.obj)
 
     def _getobj(self):
@@ -1555,17 +1559,17 @@ class Function(PyobjMixin, nodes.Item):
 
     @property
     def _pyfuncitem(self):
-        "(compatonly) for code expecting pytest-2.2 style request objects"
+        """(compatonly) for code expecting pytest-2.2 style request objects."""
         return self
 
     @property
     def funcargnames(self) -> List[str]:
-        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        """Alias attribute for ``fixturenames`` for pre-2.3 compatibility."""
         warnings.warn(FUNCARGNAMES, stacklevel=2)
         return self.fixturenames
 
     def runtest(self) -> None:
-        """ execute the underlying test function. """
+        """Execute the underlying test function."""
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self) -> None:
@@ -1589,7 +1593,7 @@ class Function(PyobjMixin, nodes.Item):
 
             excinfo.traceback = ntraceback.filter()
             # issue364: mark all but first and last frames to
-            # only show a single-line message for each frame
+            # only show a single-line message for each frame.
             if self.config.getoption("tbstyle", "auto") == "auto":
                 if len(excinfo.traceback) > 2:
                     for entry in excinfo.traceback[1:-1]:
@@ -1606,10 +1610,8 @@ class Function(PyobjMixin, nodes.Item):
 
 
 class FunctionDefinition(Function):
-    """
-    internal hack until we get actual definition nodes instead of the
-    crappy metafunc hack
-    """
+    """Internal hack until we get actual definition nodes instead of the
+    crappy metafunc hack."""
 
     def runtest(self) -> None:
         raise RuntimeError("function definitions are not supposed to be used")

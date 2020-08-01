@@ -107,14 +107,15 @@ class ParameterSet(
         parameterset: Union["ParameterSet", Sequence[object], object],
         force_tuple: bool = False,
     ) -> "ParameterSet":
-        """
+        """Extract from an object or objects.
+
         :param parameterset:
-            a legacy style parameterset that may or may not be a tuple,
-            and may or may not be wrapped into a mess of mark objects
+            A legacy style parameterset that may or may not be a tuple,
+            and may or may not be wrapped into a mess of mark objects.
 
         :param force_tuple:
-            enforce tuple wrapping so single argument tuple values
-            don't get decomposed and break tests
+            Enforce tuple wrapping so single argument tuple values
+            don't get decomposed and break tests.
         """
 
         if isinstance(parameterset, cls):
@@ -166,7 +167,7 @@ class ParameterSet(
         del argvalues
 
         if parameters:
-            # check all parameter sets have the correct number of values
+            # Check all parameter sets have the correct number of values.
             for param in parameters:
                 if len(param.values) != len(argnames):
                     msg = (
@@ -186,8 +187,8 @@ class ParameterSet(
                         pytrace=False,
                     )
         else:
-            # empty parameter set (likely computed at runtime): create a single
-            # parameter set with NOTSET values, with the "empty parameter set" mark applied to it
+            # Empty parameter set (likely computed at runtime): create a single
+            # parameter set with NOTSET values, with the "empty parameter set" mark applied to it.
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
                 ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
@@ -220,8 +221,7 @@ class Mark:
 
         Combines by appending args and merging kwargs.
 
-        :param other: The mark to combine with.
-        :type other: Mark
+        :param Mark other: The mark to combine with.
         :rtype: Mark
         """
         assert self.name == other.name
@@ -314,7 +314,7 @@ class MarkDecorator:
         Unlike calling the MarkDecorator, with_args() can be used even
         if the sole argument is a callable/class.
 
-        :return: MarkDecorator
+        :rtype: MarkDecorator
         """
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
@@ -344,9 +344,7 @@ class MarkDecorator:
 
 
 def get_unpacked_marks(obj) -> List[Mark]:
-    """
-    obtain the unpacked marks that are stored on an object
-    """
+    """Obtain the unpacked marks that are stored on an object."""
     mark_list = getattr(obj, "pytestmark", [])
     if not isinstance(mark_list, list):
         mark_list = [mark_list]
@@ -354,10 +352,9 @@ def get_unpacked_marks(obj) -> List[Mark]:
 
 
 def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List[Mark]:
-    """
-    normalizes marker decorating helpers to mark objects
+    """Normalize marker decorating helpers to mark objects.
 
-    :type mark_list: List[Union[Mark, Markdecorator]]
+    :type List[Union[Mark, Markdecorator]] mark_list:
     :rtype: List[Mark]
     """
     extracted = [

@@ -1,7 +1,5 @@
-"""
-Provides a function to report all internal modules for using freezing tools
-pytest
-"""
+"""Provides a function to report all internal modules for using freezing
+tools."""
 import types
 from typing import Iterator
 from typing import List
@@ -9,10 +7,8 @@ from typing import Union
 
 
 def freeze_includes() -> List[str]:
-    """
-    Returns a list of module names used by pytest that should be
-    included by cx_freeze.
-    """
+    """Return a list of module names used by pytest that should be
+    included by cx_freeze."""
     import py
     import _pytest
 
@@ -24,8 +20,7 @@ def freeze_includes() -> List[str]:
 def _iter_all_modules(
     package: Union[str, types.ModuleType], prefix: str = "",
 ) -> Iterator[str]:
-    """
-    Iterates over the names of all modules that can be found in the given
+    """Iterate over the names of all modules that can be found in the given
     package, recursively.
 
         >>> import _pytest

@@ -1,7 +1,4 @@
-"""
-per-test stdout/stderr capturing mechanism.
-
-"""
+"""Per-test stdout/stderr capturing mechanism."""
 import collections
 import contextlib
 import io
@@ -49,8 +46,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def _colorama_workaround() -> None:
-    """
-    Ensure colorama is imported so that it attaches to the correct stdio
+    """Ensure colorama is imported so that it attaches to the correct stdio
     handles on Windows.
 
     colorama uses the terminal on import time. So if something does the
@@ -65,8 +61,7 @@ def _colorama_workaround() -> None:
 
 
 def _readline_workaround() -> None:
-    """
-    Ensure readline is imported so that it attaches to the correct stdio
+    """Ensure readline is imported so that it attaches to the correct stdio
     handles on Windows.
 
     Pdb uses readline support where available--when not running from the Python
@@ -80,7 +75,7 @@ def _readline_workaround() -> None:
     workaround ensures that readline is imported before I/O capture is setup so
     that it can attach to the actual stdin/out for the console.
 
-    See https://github.com/pytest-dev/pytest/pull/1281
+    See https://github.com/pytest-dev/pytest/pull/1281.
     """
     if sys.platform.startswith("win32"):
         try:
@@ -90,8 +85,9 @@ def _readline_workaround() -> None:
 
 
 def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
-    """
-    Python 3.6 implemented unicode console handling for Windows. This works
+    """Workaround for Windows Unicode console handling on Python>=3.6.
+
+    Python 3.6 implemented Unicode console handling for Windows. This works
     by reading/writing to the raw console handle using
     ``{Read,Write}ConsoleW``.
 
@@ -106,10 +102,11 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
     also means a different handle by replicating the logic in
     "Py_lifecycle.c:initstdio/create_stdio".
 
-    :param stream: in practice ``sys.stdout`` or ``sys.stderr``, but given
+    :param stream:
+        In practice ``sys.stdout`` or ``sys.stderr``, but given
         here as parameter for unittesting purposes.
 
-    See https://github.com/pytest-dev/py/issues/103
+    See https://github.com/pytest-dev/py/issues/103.
     """
     if (
         not sys.platform.startswith("win32")
@@ -118,7 +115,7 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
     ):
         return
 
-    # bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666)
+    # Bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666).
     if not hasattr(stream, "buffer"):
         return
 
@@ -158,10 +155,10 @@ def pytest_load_initial_conftests(early_config: Config):
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
 
-    # make sure that capturemanager is properly reset at final shutdown
+    # Make sure that capturemanager is properly reset at final shutdown.
     early_config.add_cleanup(capman.stop_global_capturing)
 
-    # finally trigger conftest loading but while capturing (issue93)
+    # Finally trigger conftest loading but while capturing (issue #93).
     capman.start_global_capturing()
     outcome = yield
     capman.suspend_global_capture()
@@ -347,9 +344,9 @@ class SysCapture(SysCaptureBinary):
 
 
 class FDCaptureBinary:
-    """Capture IO to/from a given os-level filedescriptor.
+    """Capture IO to/from a given OS-level file descriptor.
 
-    snap() produces `bytes`
+    snap() produces `bytes`.
     """
 
     EMPTY_BUFFER = b""
@@ -415,7 +412,7 @@ class FDCaptureBinary:
         )
 
     def start(self) -> None:
-        """ Start capturing on targetfd using memorized tmpfile. """
+        """Start capturing on targetfd using memorized tmpfile."""
         self._assert_state("start", ("initialized",))
         os.dup2(self.tmpfile.fileno(), self.targetfd)
         self.syscapture.start()
@@ -430,8 +427,8 @@ class FDCaptureBinary:
         return res
 
     def done(self) -> None:
-        """ stop capturing, restore streams, return original capture file,
-        seeked to position zero. """
+        """Stop capturing, restore streams, return original capture file,
+        seeked to position zero."""
         self._assert_state("done", ("initialized", "started", "suspended", "done"))
         if self._state == "done":
             return
@@ -462,15 +459,15 @@ class FDCaptureBinary:
         self._state = "started"
 
     def writeorg(self, data):
-        """ write to original file descriptor. """
+        """Write to original file descriptor."""
         self._assert_state("writeorg", ("started", "suspended"))
         os.write(self.targetfd_save, data)
 
 
 class FDCapture(FDCaptureBinary):
-    """Capture IO to/from a given os-level filedescriptor.
+    """Capture IO to/from a given OS-level file descriptor.
 
-    snap() produces text
+    snap() produces text.
     """
 
     # Ignore type because it doesn't match the type in the superclass (bytes).
@@ -485,7 +482,7 @@ class FDCapture(FDCaptureBinary):
         return res
 
     def writeorg(self, data):
-        """ write to original file descriptor. """
+        """Write to original file descriptor."""
         super().writeorg(data.encode("utf-8"))  # XXX use encoding of original stream
 
 
@@ -518,7 +515,7 @@ class MultiCapture:
             self.err.start()
 
     def pop_outerr_to_orig(self):
-        """ pop current snapshot out/err capture and flush to orig streams. """
+        """Pop current snapshot out/err capture and flush to orig streams."""
         out, err = self.readouterr()
         if out:
             self.out.writeorg(out)
@@ -547,7 +544,7 @@ class MultiCapture:
             self._in_suspended = False
 
     def stop_capturing(self) -> None:
-        """ stop capturing and reset capturing streams """
+        """Stop capturing and reset capturing streams."""
         if self._state == "stopped":
             raise ValueError("was already stopped")
         self._state = "stopped"
@@ -588,16 +585,22 @@ def _get_multicapture(method: "_CaptureMethod") -> MultiCapture:
 
 
 class CaptureManager:
-    """
-    Capture plugin, manages that the appropriate capture method is enabled/disabled during collection and each
-    test phase (setup, call, teardown). After each of those points, the captured output is obtained and
-    attached to the collection/runtest report.
+    """The capture plugin.
+
+    Manages that the appropriate capture method is enabled/disabled during
+    collection and each test phase (setup, call, teardown). After each of
+    those points, the captured output is obtained and attached to the
+    collection/runtest report.
 
     There are two levels of capture:
-    * global: which is enabled by default and can be suppressed by the ``-s`` option. This is always enabled/disabled
-      during collection and each test phase.
-    * fixture: when a test function or one of its fixture depend on the ``capsys`` or ``capfd`` fixtures. In this
-      case special handling is needed to ensure the fixtures take precedence over the global capture.
+
+    * global: enabled by default and can be suppressed by the ``-s``
+      option. This is always enabled/disabled during collection and each test
+      phase.
+
+    * fixture: when a test function or one of its fixture depend on the
+      ``capsys`` or ``capfd`` fixtures. In this case special handling is
+      needed to ensure the fixtures take precedence over the global capture.
     """
 
     def __init__(self, method: "_CaptureMethod") -> None:
@@ -673,14 +676,13 @@ class CaptureManager:
         self._capture_fixture = None
 
     def activate_fixture(self) -> None:
-        """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
-        the global capture.
-        """
+        """If the current item is using ``capsys`` or ``capfd``, activate
+        them so they take precedence over the global capture."""
         if self._capture_fixture:
             self._capture_fixture._start()
 
     def deactivate_fixture(self) -> None:
-        """Deactivates the ``capsys`` or ``capfd`` fixture of this item, if any."""
+        """Deactivate the ``capsys`` or ``capfd`` fixture of this item, if any."""
         if self._capture_fixture:
             self._capture_fixture.close()
 
@@ -759,10 +761,8 @@ class CaptureManager:
 
 
 class CaptureFixture:
-    """
-    Object returned by :py:func:`capsys`, :py:func:`capsysbinary`, :py:func:`capfd` and :py:func:`capfdbinary`
-    fixtures.
-    """
+    """Object returned by the :py:func:`capsys`, :py:func:`capsysbinary`,
+    :py:func:`capfd` and :py:func:`capfdbinary` fixtures."""
 
     def __init__(self, captureclass, request: SubRequest) -> None:
         self.captureclass = captureclass
@@ -787,9 +787,12 @@ class CaptureFixture:
             self._capture = None
 
     def readouterr(self):
-        """Read and return the captured output so far, resetting the internal buffer.
+        """Read and return the captured output so far, resetting the internal
+        buffer.
 
-        :return: captured content as a namedtuple with ``out`` and ``err`` string attributes
+        :returns:
+            The captured content as a namedtuple with ``out`` and ``err``
+            string attributes.
         """
         captured_out, captured_err = self._captured_out, self._captured_err
         if self._capture is not None:
@@ -801,18 +804,18 @@ class CaptureFixture:
         return CaptureResult(captured_out, captured_err)
 
     def _suspend(self) -> None:
-        """Suspends this fixture's own capturing temporarily."""
+        """Suspend this fixture's own capturing temporarily."""
         if self._capture is not None:
             self._capture.suspend_capturing()
 
     def _resume(self) -> None:
-        """Resumes this fixture's own capturing temporarily."""
+        """Resume this fixture's own capturing temporarily."""
         if self._capture is not None:
             self._capture.resume_capturing()
 
     @contextlib.contextmanager
     def disabled(self) -> Generator[None, None, None]:
-        """Temporarily disables capture while inside the 'with' block."""
+        """Temporarily disable capturing while inside the ``with`` block."""
         capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
         with capmanager.global_and_fixture_disabled():
             yield

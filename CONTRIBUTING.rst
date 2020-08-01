@@ -89,6 +89,38 @@ without using a local copy.  This can be convenient for small fixes.
     The built documentation should be available in ``doc/en/_build/html``,
     where 'en' refers to the documentation language.
 
+Pytest has an API reference which in large part is
+`generated automatically <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_
+from the docstrings of the documented items. Pytest uses the
+`Sphinx docstring format <https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html>`_.
+For example:
+
+.. code-block:: python
+
+    def my_function(arg: ArgType) -> Foo:
+        """Do important stuff.
+
+        More detailed info here, in separate paragraphs from the subject line.
+        Use proper sentences -- start sentences with capital letters and end
+        with periods.
+
+        Can include annotated documentation:
+
+        :param short_arg: An argument which determines stuff.
+        :param long_arg:
+            A long explanation which spans multiple lines, overflows
+            like this.
+        :returns: The result.
+        :raises ValueError:
+            Detailed information when this can happen.
+
+        .. versionadded:: 6.0
+
+        Including types into the annotations above is not necessary when
+        type-hinting is being used (as in this example).
+        """
+
+
 .. _submitplugin:
 
 Submitting Plugins to pytest-dev

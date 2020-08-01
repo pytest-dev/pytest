@@ -1,4 +1,4 @@
-"""Rewrite assertion AST to produce nice error messages"""
+"""Rewrite assertion AST to produce nice error messages."""
 import ast
 import errno
 import functools
@@ -170,7 +170,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         exec(co, module.__dict__)
 
     def _early_rewrite_bailout(self, name: str, state: "AssertionState") -> bool:
-        """This is a fast way to get out of rewriting modules.
+        """A fast way to get out of rewriting modules.
 
         Profiling has shown that the call to PathFinder.find_spec (inside of
         the find_spec from this class) is a major slowdown, so, this method
@@ -350,7 +350,7 @@ else:
 
 
 def _rewrite_test(fn: Path, config: Config) -> Tuple[os.stat_result, types.CodeType]:
-    """read and rewrite *fn* and return the code object."""
+    """Read and rewrite *fn* and return the code object."""
     fn_ = fspath(fn)
     stat = os.stat(fn_)
     with open(fn_, "rb") as f:
@@ -411,7 +411,7 @@ def rewrite_asserts(
 
 
 def _saferepr(obj: object) -> str:
-    """Get a safe repr of an object for assertion error messages.
+    r"""Get a safe repr of an object for assertion error messages.
 
     The assertion formatting (util.format_explanation()) requires
     newlines to be escaped since they are a special character for it.
@@ -419,18 +419,16 @@ def _saferepr(obj: object) -> str:
     custom repr it is possible to contain one of the special escape
     sequences, especially '\n{' and '\n}' are likely to be present in
     JSON reprs.
-
     """
     return saferepr(obj).replace("\n", "\\n")
 
 
 def _format_assertmsg(obj: object) -> str:
-    """Format the custom assertion message given.
+    r"""Format the custom assertion message given.
 
     For strings this simply replaces newlines with '\n~' so that
     util.format_explanation() will preserve them instead of escaping
     newlines.  For other objects saferepr() is used first.
-
     """
     # reprlib appears to have a bug which means that if a string
     # contains a newline it gets escaped, however if an object has a
@@ -491,8 +489,8 @@ def _call_assertion_pass(lineno: int, orig: str, expl: str) -> None:
 
 
 def _check_if_assertion_pass_impl() -> bool:
-    """Checks if any plugins implement the pytest_assertion_pass hook
-    in order not to generate explanation unecessarily (might be expensive)"""
+    """Check if any plugins implement the pytest_assertion_pass hook
+    in order not to generate explanation unecessarily (might be expensive)."""
     return True if util._assertion_pass else False
 
 
@@ -541,7 +539,7 @@ def set_location(node, lineno, col_offset):
 
 
 def _get_assertion_exprs(src: bytes) -> Dict[int, str]:
-    """Returns a mapping from {lineno: "assertion test expression"}"""
+    """Return a mapping from {lineno: "assertion test expression"}."""
     ret = {}  # type: Dict[int, str]
 
     depth = 0
@@ -645,7 +643,6 @@ class AssertionRewriter(ast.NodeVisitor):
 
     This state is reset on every new assert statement visited and used
     by the other visitors.
-
     """
 
     def __init__(
@@ -770,7 +767,6 @@ class AssertionRewriter(ast.NodeVisitor):
         current formatting context, e.g. ``%(py0)s``.  The placeholder
         and expr are placed in the current format context so that it
         can be used on the next call to .pop_format_context().
-
         """
         specifier = "py" + str(next(self.variable_counter))
         self.explanation_specifiers[specifier] = expr
@@ -785,7 +781,6 @@ class AssertionRewriter(ast.NodeVisitor):
         .explanation_param().  Finally .pop_format_context() is used
         to format a string of %-formatted values as added by
         .explanation_param().
-
         """
         self.explanation_specifiers = {}  # type: Dict[str, ast.expr]
         self.stack.append(self.explanation_specifiers)
@@ -797,7 +792,6 @@ class AssertionRewriter(ast.NodeVisitor):
         the %-placeholders created by .explanation_param().  This will
         add the required code to format said string to .expl_stmts and
         return the ast.Name instance of the formatted string.
-
         """
         current = self.stack.pop()
         if self.stack:
@@ -824,7 +818,6 @@ class AssertionRewriter(ast.NodeVisitor):
         intermediate values and replace it with an if statement which
         raises an assertion error with a detailed explanation in case
         the expression is false.
-
         """
         if isinstance(assert_.test, ast.Tuple) and len(assert_.test.elts) >= 1:
             from _pytest.warning_types import PytestAssertRewriteWarning
@@ -994,9 +987,6 @@ class AssertionRewriter(ast.NodeVisitor):
         return res, explanation
 
     def visit_Call(self, call: ast.Call) -> Tuple[ast.Name, str]:
-        """
-        visit `ast.Call` nodes
-        """
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
         new_args = []
@@ -1021,7 +1011,7 @@ class AssertionRewriter(ast.NodeVisitor):
         return res, outer_expl
 
     def visit_Starred(self, starred: ast.Starred) -> Tuple[ast.Starred, str]:
-        # From Python 3.5, a Starred node can appear in a function call
+        # From Python 3.5, a Starred node can appear in a function call.
         res, expl = self.visit(starred.value)
         new_starred = ast.Starred(res, starred.ctx)
         return new_starred, "*" + expl
@@ -1076,8 +1066,10 @@ class AssertionRewriter(ast.NodeVisitor):
 
 
 def try_makedirs(cache_dir: Path) -> bool:
-    """Attempts to create the given directory and sub-directories exist, returns True if
-    successful or it already exists"""
+    """Attempt to create the given directory and sub-directories exist.
+
+    Returns True if successful or if it already exists.
+    """
     try:
         os.makedirs(fspath(cache_dir), exist_ok=True)
     except (FileNotFoundError, NotADirectoryError, FileExistsError):
@@ -1096,7 +1088,7 @@ def try_makedirs(cache_dir: Path) -> bool:
 
 
 def get_cache_dir(file_path: Path) -> Path:
-    """Returns the cache directory to write .pyc files for the given .py file path"""
+    """Return the cache directory to write .pyc files for the given .py file path."""
     if sys.version_info >= (3, 8) and sys.pycache_prefix:
         # given:
         #   prefix = '/tmp/pycs'

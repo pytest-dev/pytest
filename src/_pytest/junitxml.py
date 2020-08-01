@@ -1,12 +1,10 @@
-"""
-    report test results in JUnit-XML format,
-    for use with Jenkins and build integration servers.
-
+"""Report test results in JUnit-XML format, for use with Jenkins and build
+integration servers.
 
 Based on initial code from Ross Lawley.
 
-Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
-src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
+Output conforms to
+https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
 import functools
 import os
@@ -81,11 +79,11 @@ families = {}
 families["_base"] = {"testcase": ["classname", "name"]}
 families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
 
-# xUnit 1.x inherits legacy attributes
+# xUnit 1.x inherits legacy attributes.
 families["xunit1"] = families["_base"].copy()
 merge_family(families["xunit1"], families["_base_legacy"])
 
-# xUnit 2.x uses strict base attributes
+# xUnit 2.x uses strict base attributes.
 families["xunit2"] = families["_base"]
 
 
@@ -111,8 +109,7 @@ class _NodeReporter:
         self.attrs[str(name)] = bin_xml_escape(value)
 
     def make_properties_node(self) -> Optional[ET.Element]:
-        """Return a Junit node containing custom properties, if any.
-        """
+        """Return a Junit node containing custom properties, if any."""
         if self.properties:
             properties = ET.Element("properties")
             for name, value in self.properties:
@@ -136,9 +133,9 @@ class _NodeReporter:
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
-        self.attrs.update(existing_attrs)  # restore any user-defined attributes
+        self.attrs.update(existing_attrs)  # Restore any user-defined attributes.
 
-        # Preserve legacy testcase behavior
+        # Preserve legacy testcase behavior.
         if self.family == "xunit1":
             return
 
@@ -262,7 +259,7 @@ class _NodeReporter:
 def _warn_incompatibility_with_xunit2(
     request: FixtureRequest, fixture_name: str
 ) -> None:
-    """Emits a PytestWarning about the given fixture being incompatible with newer xunit revisions"""
+    """Emit a PytestWarning about the given fixture being incompatible with newer xunit revisions."""
     from _pytest.warning_types import PytestWarning
 
     xml = request.config._store.get(xml_key, None)
@@ -330,7 +327,7 @@ def record_xml_attribute(request: FixtureRequest) -> Callable[[str, object], Non
 
 def _check_record_param_type(param: str, v: str) -> None:
     """Used by record_testsuite_property to check that the given parameter name is of the proper
-    type"""
+    type."""
     __tracebackhide__ = True
     if not isinstance(v, str):
         msg = "{param} parameter needs to be a string, but {g} given"
@@ -339,9 +336,10 @@ def _check_record_param_type(param: str, v: str) -> None:
 
 @pytest.fixture(scope="session")
 def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object], None]:
-    """
-    Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to
-    writing global information regarding the entire test suite, and is compatible with ``xunit2`` JUnit family.
+    """Record a new ``<property>`` tag as child of the root ``<testsuite>``.
+
+    This is suitable to writing global information regarding the entire test
+    suite, and is compatible with ``xunit2`` JUnit family.
 
     This is a ``session``-scoped fixture which is called with ``(name, value)``. Example:
 
@@ -357,7 +355,7 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
     __tracebackhide__ = True
 
     def record_func(name: str, value: object) -> None:
-        """noop function in case --junitxml was not passed in the command-line"""
+        """No-op function in case --junitxml was not passed in the command-line."""
         __tracebackhide__ = True
         _check_record_param_type("name", name)
 
@@ -414,7 +412,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 def pytest_configure(config: Config) -> None:
     xmlpath = config.option.xmlpath
-    # prevent opening xmllog on worker nodes (xdist)
+    # Prevent opening xmllog on worker nodes (xdist).
     if xmlpath and not hasattr(config, "workerinput"):
         junit_family = config.getini("junit_family")
         if not junit_family:
@@ -446,10 +444,10 @@ def mangle_test_address(address: str) -> List[str]:
         names.remove("()")
     except ValueError:
         pass
-    # convert file path to dotted path
+    # Convert file path to dotted path.
     names[0] = names[0].replace(nodes.SEP, ".")
     names[0] = re.sub(r"\.py$", "", names[0])
-    # put any params back
+    # Put any params back.
     names[-1] += possible_open_bracket + params
     return names
 
@@ -486,13 +484,13 @@ class LogXML:
         self.open_reports = []  # type: List[TestReport]
         self.cnt_double_fail_tests = 0
 
-        # Replaces convenience family with real family
+        # Replaces convenience family with real family.
         if self.family == "legacy":
             self.family = "xunit1"
 
     def finalize(self, report: TestReport) -> None:
         nodeid = getattr(report, "nodeid", report)
-        # local hack to handle xdist report order
+        # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
         reporter = self.node_reporters.pop((nodeid, workernode))
         if reporter is not None:
@@ -500,7 +498,7 @@ class LogXML:
 
     def node_reporter(self, report: Union[TestReport, str]) -> _NodeReporter:
         nodeid = getattr(report, "nodeid", report)  # type: Union[str, TestReport]
-        # local hack to handle xdist report order
+        # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 
         key = nodeid, workernode
@@ -526,13 +524,13 @@ class LogXML:
         return reporter
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        """handle a setup/call/teardown report, generating the appropriate
-        xml tags as necessary.
+        """Handle a setup/call/teardown report, generating the appropriate
+        XML tags as necessary.
 
-        note: due to plugins like xdist, this hook may be called in interlaced
-        order with reports from other nodes. for example:
+        Note: due to plugins like xdist, this hook may be called in interlaced
+        order with reports from other nodes. For example:
 
-        usual call order:
+        Usual call order:
             -> setup node1
             -> call node1
             -> teardown node1
@@ -540,7 +538,7 @@ class LogXML:
             -> call node2
             -> teardown node2
 
-        possible call order in xdist:
+        Possible call order in xdist:
             -> setup node1
             -> call node1
             -> setup node2
@@ -555,7 +553,7 @@ class LogXML:
                 reporter.append_pass(report)
         elif report.failed:
             if report.when == "teardown":
-                # The following vars are needed when xdist plugin is used
+                # The following vars are needed when xdist plugin is used.
                 report_wid = getattr(report, "worker_id", None)
                 report_ii = getattr(report, "item_index", None)
                 close_report = next(
@@ -573,7 +571,7 @@ class LogXML:
                 if close_report:
                     # We need to open new testcase in case we have failure in
                     # call and error in teardown in order to follow junit
-                    # schema
+                    # schema.
                     self.finalize(close_report)
                     self.cnt_double_fail_tests += 1
             reporter = self._opentestcase(report)
@@ -614,9 +612,8 @@ class LogXML:
                 self.open_reports.remove(close_report)
 
     def update_testcase_duration(self, report: TestReport) -> None:
-        """accumulates total duration for nodeid from given report and updates
-        the Junit.testcase with the new total if already created.
-        """
+        """Accumulate total duration for nodeid from given report and update
+        the Junit.testcase with the new total if already created."""
         if self.report_duration == "total" or report.when == self.report_duration:
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
@@ -684,8 +681,7 @@ class LogXML:
         self.global_properties.append((name, bin_xml_escape(value)))
 
     def _get_global_properties_node(self) -> Optional[ET.Element]:
-        """Return a Junit node containing custom properties, if any.
-        """
+        """Return a Junit node containing custom properties, if any."""
         if self.global_properties:
             properties = ET.Element("properties")
             for name, value in self.global_properties:

@@ -182,7 +182,7 @@ Mark a test function as using the given fixture names.
 
 .. py:function:: pytest.mark.usefixtures(*names)
 
-    :param args: the names of the fixture to use, as strings
+    :param args: The names of the fixture to use, as strings.
 
 .. note::
 
@@ -209,8 +209,10 @@ Marks a test function as *expected to fail*.
         Condition for marking the test function as xfail (``True/False`` or a
         :ref:`condition string <string conditions>`). If a bool, you also have
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
-    :keyword str reason: Reason why the test function is marked as xfail.
-    :keyword Exception raises: Exception subclass expected to be raised by the test function; other exceptions will fail the test.
+    :keyword str reason:
+        Reason why the test function is marked as xfail.
+    :keyword Type[Exception] raises:
+        Exception subclass expected to be raised by the test function; other exceptions will fail the test.
     :keyword bool run:
         If the test function should actually be executed. If ``False``, the function will always xfail and will
         not be executed (useful if a function is segfaulting).
@@ -224,7 +226,7 @@ Marks a test function as *expected to fail*.
           a new release of a library fixes a known bug).
 
 
-custom marks
+Custom marks
 ~~~~~~~~~~~~
 
 Marks are created dynamically using the factory object ``pytest.mark`` and applied as a decorator.
@@ -473,7 +475,7 @@ caplog
 .. autofunction:: _pytest.logging.caplog()
     :no-auto-options:
 
-    This returns a :class:`_pytest.logging.LogCaptureFixture` instance.
+    Returns a :class:`_pytest.logging.LogCaptureFixture` instance.
 
 .. autoclass:: _pytest.logging.LogCaptureFixture
     :members:
@@ -491,7 +493,7 @@ monkeypatch
 .. autofunction:: _pytest.monkeypatch.monkeypatch()
     :no-auto-options:
 
-    This returns a :class:`MonkeyPatch` instance.
+    Returns a :class:`MonkeyPatch` instance.
 
 .. autoclass:: _pytest.monkeypatch.MonkeyPatch
     :members:

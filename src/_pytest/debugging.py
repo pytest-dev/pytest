@@ -1,4 +1,4 @@
-""" interactive debugging with PDB, the Python Debugger. """
+"""Interactive debugging with PDB, the Python Debugger."""
 import argparse
 import functools
 import sys
@@ -87,7 +87,7 @@ def pytest_configure(config: Config) -> None:
 
 
 class pytestPDB:
-    """ Pseudo PDB that defers to the real pdb. """
+    """Pseudo PDB that defers to the real pdb."""
 
     _pluginmanager = None  # type: PytestPluginManager
     _config = None  # type: Config
@@ -226,7 +226,7 @@ class pytestPDB:
 
     @classmethod
     def _init_pdb(cls, method, *args, **kwargs):
-        """ Initialize PDB debugging, dropping any IO capturing. """
+        """Initialize PDB debugging, dropping any IO capturing."""
         import _pytest.config
 
         if cls._pluginmanager is not None:
@@ -298,16 +298,16 @@ class PdbTrace:
 
 
 def wrap_pytest_function_for_tracing(pyfuncitem):
-    """Changes the python function object of the given Function item by a wrapper which actually
-    enters pdb before calling the python function itself, effectively leaving the user
-    in the pdb prompt in the first statement of the function.
-    """
+    """Change the Python function object of the given Function item by a
+    wrapper which actually enters pdb before calling the python function
+    itself, effectively leaving the user in the pdb prompt in the first
+    statement of the function."""
     _pdb = pytestPDB._init_pdb("runcall")
     testfunction = pyfuncitem.obj
 
     # we can't just return `partial(pdb.runcall, testfunction)` because (on
     # python < 3.7.4) runcall's first param is `func`, which means we'd get
-    # an exception if one of the kwargs to testfunction was called `func`
+    # an exception if one of the kwargs to testfunction was called `func`.
     @functools.wraps(testfunction)
     def wrapper(*args, **kwargs):
         func = functools.partial(testfunction, *args, **kwargs)
@@ -318,7 +318,7 @@ def wrap_pytest_function_for_tracing(pyfuncitem):
 
 def maybe_wrap_pytest_function_for_tracing(pyfuncitem):
     """Wrap the given pytestfunct item for tracing support if --trace was given in
-    the command line"""
+    the command line."""
     if pyfuncitem.config.getvalue("trace"):
         wrap_pytest_function_for_tracing(pyfuncitem)
 

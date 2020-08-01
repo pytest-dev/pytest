@@ -87,8 +87,7 @@ def catch_warnings_for_item(
     when: "Literal['config', 'collect', 'runtest']",
     item: Optional[Item],
 ) -> Generator[None, None, None]:
-    """
-    Context manager that catches warnings generated in the contained execution block.
+    """Context manager that catches warnings generated in the contained execution block.
 
     ``item`` can be None if we are not in the context of an item execution.
 
@@ -101,14 +100,14 @@ def catch_warnings_for_item(
         assert log is not None
 
         if not sys.warnoptions:
-            # if user is not explicitly configuring warning filters, show deprecation warnings by default (#2908)
+            # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
         warnings.filterwarnings("error", category=pytest.PytestDeprecationWarning)
 
-        # filters should have this precedence: mark, cmdline options, ini
-        # filters should be applied in the inverse order of precedence
+        # Filters should have this precedence: mark, cmdline options, ini.
+        # Filters should be applied in the inverse order of precedence.
         for arg in inifilters:
             warnings.filterwarnings(*_parse_filter(arg, escape=False))
 
@@ -193,14 +192,16 @@ def pytest_sessionfinish(session: Session) -> Generator[None, None, None]:
 
 
 def _issue_warning_captured(warning: Warning, hook, stacklevel: int) -> None:
-    """
-    This function should be used instead of calling ``warnings.warn`` directly when we are in the "configure" stage:
-    at this point the actual options might not have been set, so we manually trigger the pytest_warning_recorded
-    hook so we can display these warnings in the terminal. This is a hack until we can sort out #2891.
+    """A function that should be used instead of calling ``warnings.warn``
+    directly when we are in the "configure" stage.
 
-    :param warning: the warning instance.
-    :param hook: the hook caller
-    :param stacklevel: stacklevel forwarded to warnings.warn
+    At this point the actual options might not have been set, so we manually
+    trigger the pytest_warning_recorded hook so we can display these warnings
+    in the terminal. This is a hack until we can sort out #2891.
+
+    :param warning: The warning instance.
+    :param hook: The hook caller.
+    :param stacklevel: stacklevel forwarded to warnings.warn.
     """
     with warnings.catch_warnings(record=True) as records:
         warnings.simplefilter("always", type(warning))

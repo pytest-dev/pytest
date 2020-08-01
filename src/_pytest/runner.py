@@ -1,4 +1,4 @@
-""" basic collect and runtest protocol implementations """
+"""Basic collect and runtest protocol implementations."""
 import bdb
 import os
 import sys
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from _pytest.terminal import TerminalReporter
 
 #
-# pytest plugin hooks
+# pytest plugin hooks.
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -116,8 +116,8 @@ def runtestprotocol(
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-    # after all teardown hooks have been called
-    # want funcargs and request info to go away
+    # After all teardown hooks have been called
+    # want funcargs and request info to go away.
     if hasrequest:
         item._request = False  # type: ignore[attr-defined]
         item.funcargs = None  # type: ignore[attr-defined]
@@ -170,8 +170,7 @@ def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
 def _update_current_test_var(
     item: Item, when: Optional["Literal['setup', 'call', 'teardown']"]
 ) -> None:
-    """
-    Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
+    """Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
 
     If ``when`` is None, delete ``PYTEST_CURRENT_TEST`` from the environment.
     """
@@ -253,15 +252,21 @@ _T = TypeVar("_T")
 
 @attr.s(repr=False)
 class CallInfo(Generic[_T]):
-    """ Result/Exception info a function invocation.
+    """Result/Exception info a function invocation.
 
-    :param T result: The return value of the call, if it didn't raise. Can only be accessed
-        if excinfo is None.
-    :param Optional[ExceptionInfo] excinfo: The captured exception of the call, if it raised.
-    :param float start: The system time when the call started, in seconds since the epoch.
-    :param float stop: The system time when the call ended, in seconds since the epoch.
-    :param float duration: The call duration, in seconds.
-    :param str when: The context of invocation: "setup", "call", "teardown", ...
+    :param T result:
+        The return value of the call, if it didn't raise. Can only be
+        accessed if excinfo is None.
+    :param Optional[ExceptionInfo] excinfo:
+        The captured exception of the call, if it raised.
+    :param float start:
+        The system time when the call started, in seconds since the epoch.
+    :param float stop:
+        The system time when the call ended, in seconds since the epoch.
+    :param float duration:
+        The call duration, in seconds.
+    :param str when:
+        The context of invocation: "setup", "call", "teardown", ...
     """
 
     _result = attr.ib(type="Optional[_T]")
@@ -352,14 +357,14 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
 
 
 class SetupState:
-    """ shared state for setting up/tearing down test items or collectors. """
+    """Shared state for setting up/tearing down test items or collectors."""
 
     def __init__(self):
         self.stack = []  # type: List[Node]
         self._finalizers = {}  # type: Dict[Node, List[Callable[[], object]]]
 
     def addfinalizer(self, finalizer: Callable[[], object], colitem) -> None:
-        """ attach a finalizer to the given colitem. """
+        """Attach a finalizer to the given colitem."""
         assert colitem and not isinstance(colitem, tuple)
         assert callable(finalizer)
         # assert colitem in self.stack  # some unit tests don't setup stack :/
@@ -419,7 +424,7 @@ class SetupState:
     def prepare(self, colitem) -> None:
         """Setup objects along the collector chain to the test-method."""
 
-        # check if the last collection node has raised an error
+        # Check if the last collection node has raised an error.
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
                 exc = col._prepare_exc  # type: ignore[attr-defined]

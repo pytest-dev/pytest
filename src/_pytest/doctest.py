@@ -1,4 +1,4 @@
-""" discover and run doctests in modules and test files."""
+"""Discover and run doctests in modules and test files."""
 import bdb
 import inspect
 import platform
@@ -171,9 +171,10 @@ def _init_runner_class() -> "Type[doctest.DocTestRunner]":
     import doctest
 
     class PytestDoctestRunner(doctest.DebugRunner):
-        """
-        Runner to collect failures.  Note that the out variable in this case is
-        a list instead of a stdout-like object
+        """Runner to collect failures.
+
+        Note that the out variable in this case is a list instead of a
+        stdout-like object.
         """
 
         def __init__(
@@ -261,9 +262,7 @@ class DoctestItem(pytest.Item):
         dtest: "doctest.DocTest"
     ):
         # incompatible signature due to to imposed limits on sublcass
-        """
-        the public named constructor
-        """
+        """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
 
     def setup(self) -> None:
@@ -289,9 +288,7 @@ class DoctestItem(pytest.Item):
             raise MultipleDoctestFailures(failures)
 
     def _disable_output_capturing_for_darwin(self) -> None:
-        """
-        Disable output capturing. Otherwise, stdout is lost to doctest (#985)
-        """
+        """Disable output capturing. Otherwise, stdout is lost to doctest (#985)."""
         if platform.system() != "Darwin":
             return
         capman = self.config.pluginmanager.getplugin("capturemanager")
@@ -403,7 +400,7 @@ def _get_continue_on_failure(config):
     continue_on_failure = config.getvalue("doctest_continue_on_failure")
     if continue_on_failure:
         # We need to turn off this if we use pdb since we should stop at
-        # the first failure
+        # the first failure.
         if config.getvalue("usepdb"):
             continue_on_failure = False
     return continue_on_failure
@@ -415,8 +412,8 @@ class DoctestTextfile(pytest.Module):
     def collect(self) -> Iterable[DoctestItem]:
         import doctest
 
-        # inspired by doctest.testfile; ideally we would use it directly,
-        # but it doesn't support passing a custom checker
+        # Inspired by doctest.testfile; ideally we would use it directly,
+        # but it doesn't support passing a custom checker.
         encoding = self.config.getini("doctest_encoding")
         text = self.fspath.read_text(encoding)
         filename = str(self.fspath)
@@ -441,9 +438,8 @@ class DoctestTextfile(pytest.Module):
 
 
 def _check_all_skipped(test: "doctest.DocTest") -> None:
-    """raises pytest.skip() if all examples in the given DocTest have the SKIP
-    option set.
-    """
+    """Raise pytest.skip() if all examples in the given DocTest have the SKIP
+    option set."""
     import doctest
 
     all_skipped = all(x.options.get(doctest.SKIP, False) for x in test.examples)
@@ -452,9 +448,8 @@ def _check_all_skipped(test: "doctest.DocTest") -> None:
 
 
 def _is_mocked(obj: object) -> bool:
-    """
-    returns if a object is possibly a mock object by checking the existence of a highly improbable attribute
-    """
+    """Return if an object is possibly a mock object by checking the
+    existence of a highly improbable attribute."""
     return (
         safe_getattr(obj, "pytest_mock_example_attribute_that_shouldnt_exist", None)
         is not None
@@ -463,10 +458,8 @@ def _is_mocked(obj: object) -> bool:
 
 @contextmanager
 def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
-    """
-    contextmanager which replaces ``inspect.unwrap`` with a version
-    that's aware of mock objects and doesn't recurse on them
-    """
+    """Context manager which replaces ``inspect.unwrap`` with a version
+    that's aware of mock objects and doesn't recurse into them."""
     real_unwrap = inspect.unwrap
 
     def _mock_aware_unwrap(
@@ -498,16 +491,15 @@ class DoctestModule(pytest.Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
-            """
-            a hackish doctest finder that overrides stdlib internals to fix a stdlib bug
+            """A hackish doctest finder that overrides stdlib internals to fix a stdlib bug.
 
             https://github.com/pytest-dev/pytest/issues/3456
             https://bugs.python.org/issue25532
             """
 
             def _find_lineno(self, obj, source_lines):
-                """
-                Doctest code does not take into account `@property`, this is a hackish way to fix it.
+                """Doctest code does not take into account `@property`, this
+                is a hackish way to fix it.
 
                 https://bugs.python.org/issue17446
                 """
@@ -542,7 +534,7 @@ class DoctestModule(pytest.Module):
                     pytest.skip("unable to import module %r" % self.fspath)
                 else:
                     raise
-        # uses internal doctest module parsing mechanism
+        # Uses internal doctest module parsing mechanism.
         finder = MockAwareDocTestFinder()
         optionflags = get_optionflags(self)
         runner = _get_runner(
@@ -560,9 +552,7 @@ class DoctestModule(pytest.Module):
 
 
 def _setup_fixtures(doctest_item: DoctestItem) -> FixtureRequest:
-    """
-    Used by DoctestTextfile and DoctestItem to setup fixture information.
-    """
+    """Used by DoctestTextfile and DoctestItem to setup fixture information."""
 
     def func() -> None:
         pass
@@ -582,11 +572,9 @@ def _init_checker_class() -> "Type[doctest.OutputChecker]":
     import re
 
     class LiteralsOutputChecker(doctest.OutputChecker):
-        """
-        Based on doctest_nose_plugin.py from the nltk project
-        (https://github.com/nltk/nltk) and on the "numtest" doctest extension
-        by Sebastien Boisgerault (https://github.com/boisgera/numtest).
-        """
+        # Based on doctest_nose_plugin.py from the nltk project
+        # (https://github.com/nltk/nltk) and on the "numtest" doctest extension
+        # by Sebastien Boisgerault (https://github.com/boisgera/numtest).
 
         _unicode_literal_re = re.compile(r"(\W|^)[uU]([rR]?[\'\"])", re.UNICODE)
         _bytes_literal_re = re.compile(r"(\W|^)[bB]([rR]?[\'\"])", re.UNICODE)
@@ -671,8 +659,7 @@ def _init_checker_class() -> "Type[doctest.OutputChecker]":
 
 
 def _get_checker() -> "doctest.OutputChecker":
-    """
-    Returns a doctest.OutputChecker subclass that supports some
+    """Return a doctest.OutputChecker subclass that supports some
     additional options:
 
     * ALLOW_UNICODE and ALLOW_BYTES options to ignore u'' and b''
@@ -692,36 +679,31 @@ def _get_checker() -> "doctest.OutputChecker":
 
 
 def _get_allow_unicode_flag() -> int:
-    """
-    Registers and returns the ALLOW_UNICODE flag.
-    """
+    """Register and return the ALLOW_UNICODE flag."""
     import doctest
 
     return doctest.register_optionflag("ALLOW_UNICODE")
 
 
 def _get_allow_bytes_flag() -> int:
-    """
-    Registers and returns the ALLOW_BYTES flag.
-    """
+    """Register and return the ALLOW_BYTES flag."""
     import doctest
 
     return doctest.register_optionflag("ALLOW_BYTES")
 
 
 def _get_number_flag() -> int:
-    """
-    Registers and returns the NUMBER flag.
-    """
+    """Register and return the NUMBER flag."""
     import doctest
 
     return doctest.register_optionflag("NUMBER")
 
 
 def _get_report_choice(key: str) -> int:
-    """
-    This function returns the actual `doctest` module flag value, we want to do it as late as possible to avoid
-    importing `doctest` and all its dependencies when parsing options, as it adds overhead and breaks tests.
+    """Return the actual `doctest` module flag value.
+
+    We want to do it as late as possible to avoid importing `doctest` and all
+    its dependencies when parsing options, as it adds overhead and breaks tests.
     """
     import doctest
 
@@ -736,7 +718,6 @@ def _get_report_choice(key: str) -> int:
 
 @pytest.fixture(scope="session")
 def doctest_namespace() -> Dict[str, Any]:
-    """
-    Fixture that returns a :py:class:`dict` that will be injected into the namespace of doctests.
-    """
+    """Fixture that returns a :py:class:`dict` that will be injected into the
+    namespace of doctests."""
     return dict()

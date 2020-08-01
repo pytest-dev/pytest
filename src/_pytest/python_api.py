@@ -39,10 +39,8 @@ def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
 
 
 class ApproxBase:
-    """
-    Provide shared utilities for making approximate comparisons between numbers
-    or sequences of numbers.
-    """
+    """Provide shared utilities for making approximate comparisons between
+    numbers or sequences of numbers."""
 
     # Tell numpy to use our `__eq__` operator instead of its.
     __array_ufunc__ = None
@@ -74,16 +72,14 @@ class ApproxBase:
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
     def _yield_comparisons(self, actual):
-        """
-        Yield all the pairs of numbers to be compared.  This is used to
-        implement the `__eq__` method.
+        """Yield all the pairs of numbers to be compared.
+
+        This is used to implement the `__eq__` method.
         """
         raise NotImplementedError
 
     def _check_type(self) -> None:
-        """
-        Raise a TypeError if the expected value is not a valid type.
-        """
+        """Raise a TypeError if the expected value is not a valid type."""
         # This is only a concern if the expected value is a sequence.  In every
         # other case, the approx() function ensures that the expected value has
         # a numeric type.  For this reason, the default is to do nothing.  The
@@ -100,9 +96,7 @@ def _recursive_list_map(f, x):
 
 
 class ApproxNumpy(ApproxBase):
-    """
-    Perform approximate comparisons where the expected value is numpy array.
-    """
+    """Perform approximate comparisons where the expected value is numpy array."""
 
     def __repr__(self) -> str:
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
@@ -111,7 +105,7 @@ class ApproxNumpy(ApproxBase):
     def __eq__(self, actual) -> bool:
         import numpy as np
 
-        # self.expected is supposed to always be an array here
+        # self.expected is supposed to always be an array here.
 
         if not np.isscalar(actual):
             try:
@@ -142,10 +136,8 @@ class ApproxNumpy(ApproxBase):
 
 
 class ApproxMapping(ApproxBase):
-    """
-    Perform approximate comparisons where the expected value is a mapping with
-    numeric values (the keys can be anything).
-    """
+    """Perform approximate comparisons where the expected value is a mapping
+    with numeric values (the keys can be anything)."""
 
     def __repr__(self) -> str:
         return "approx({!r})".format(
@@ -173,10 +165,7 @@ class ApproxMapping(ApproxBase):
 
 
 class ApproxSequencelike(ApproxBase):
-    """
-    Perform approximate comparisons where the expected value is a sequence of
-    numbers.
-    """
+    """Perform approximate comparisons where the expected value is a sequence of numbers."""
 
     def __repr__(self) -> str:
         seq_type = type(self.expected)
@@ -207,9 +196,7 @@ class ApproxSequencelike(ApproxBase):
 
 
 class ApproxScalar(ApproxBase):
-    """
-    Perform approximate comparisons where the expected value is a single number.
-    """
+    """Perform approximate comparisons where the expected value is a single number."""
 
     # Using Real should be better than this Union, but not possible yet:
     # https://github.com/python/typeshed/pull/3108
@@ -217,13 +204,14 @@ class ApproxScalar(ApproxBase):
     DEFAULT_RELATIVE_TOLERANCE = 1e-6  # type: Union[float, Decimal]
 
     def __repr__(self) -> str:
-        """
-        Return a string communicating both the expected value and the tolerance
-        for the comparison being made, e.g. '1.0 ± 1e-6', '(3+4j) ± 5e-6 ∠ ±180°'.
+        """Return a string communicating both the expected value and the
+        tolerance for the comparison being made.
+
+        For example, ``1.0 ± 1e-6``, ``(3+4j) ± 5e-6 ∠ ±180°``.
         """
 
         # Infinities aren't compared using tolerances, so don't show a
-        # tolerance. Need to call abs to handle complex numbers, e.g. (inf + 1j)
+        # tolerance. Need to call abs to handle complex numbers, e.g. (inf + 1j).
         if math.isinf(abs(self.expected)):
             return str(self.expected)
 
@@ -239,10 +227,8 @@ class ApproxScalar(ApproxBase):
         return "{} ± {}".format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual) -> bool:
-        """
-        Return true if the given value is equal to the expected value within
-        the pre-specified tolerance.
-        """
+        """Return whether the given value is equal to the expected value
+        within the pre-specified tolerance."""
         if _is_numpy_array(actual):
             # Call ``__eq__()`` manually to prevent infinite-recursion with
             # numpy<1.13.  See #3748.
@@ -276,10 +262,10 @@ class ApproxScalar(ApproxBase):
 
     @property
     def tolerance(self):
-        """
-        Return the tolerance for the comparison.  This could be either an
-        absolute tolerance or a relative tolerance, depending on what the user
-        specified or which would be larger.
+        """Return the tolerance for the comparison.
+
+        This could be either an absolute tolerance or a relative tolerance,
+        depending on what the user specified or which would be larger.
         """
 
         def set_default(x, default):
@@ -323,17 +309,14 @@ class ApproxScalar(ApproxBase):
 
 
 class ApproxDecimal(ApproxScalar):
-    """
-    Perform approximate comparisons where the expected value is a decimal.
-    """
+    """Perform approximate comparisons where the expected value is a Decimal."""
 
     DEFAULT_ABSOLUTE_TOLERANCE = Decimal("1e-12")
     DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
 
 
 def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
-    """
-    Assert that two numbers (or two sets of numbers) are equal to each other
+    """Assert that two numbers (or two sets of numbers) are equal to each other
     within some tolerance.
 
     Due to the `intricacies of floating-point arithmetic`__, numbers that we
@@ -522,9 +505,9 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
 
 def _is_numpy_array(obj: object) -> bool:
-    """
-    Return true if the given object is a numpy array.  Make a special effort to
-    avoid importing numpy unless it's really necessary.
+    """Return true if the given object is a numpy array.
+
+    A special effort is made to avoid importing numpy unless it's really necessary.
     """
     import sys
 
@@ -563,11 +546,11 @@ def raises(  # noqa: F811
     *args: Any,
     **kwargs: Any
 ) -> Union["RaisesContext[_E]", _pytest._code.ExceptionInfo[_E]]:
-    r"""
-    Assert that a code block/function call raises ``expected_exception``
+    r"""Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
 
-    :kwparam match: if specified, a string containing a regular expression,
+    :kwparam match:
+        If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
         representation of the exception using ``re.search``. To match a literal
         string that may contain `special characters`__, the pattern can

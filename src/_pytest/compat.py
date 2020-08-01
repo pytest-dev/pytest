@@ -1,6 +1,4 @@
-"""
-python version compatibility code
-"""
+"""Python version compatibility code."""
 import enum
 import functools
 import inspect
@@ -73,8 +71,7 @@ if sys.version_info < (3, 6):
 
     def fspath(p):
         """os.fspath replacement, useful to point out when we should replace it by the
-        real function once we drop py35.
-        """
+        real function once we drop py35."""
         return str(p)
 
 
@@ -88,8 +85,7 @@ def is_generator(func: object) -> bool:
 
 
 def iscoroutinefunction(func: object) -> bool:
-    """
-    Return True if func is a coroutine function (a function defined with async
+    """Return True if func is a coroutine function (a function defined with async
     def syntax, and doesn't contain yield), or a function decorated with
     @asyncio.coroutine.
 
@@ -101,7 +97,8 @@ def iscoroutinefunction(func: object) -> bool:
 
 
 def is_async_function(func: object) -> bool:
-    """Return True if the given function seems to be an async function or async generator"""
+    """Return True if the given function seems to be an async function or
+    an async generator."""
     return iscoroutinefunction(func) or (
         sys.version_info >= (3, 6) and inspect.isasyncgenfunction(func)
     )
@@ -119,7 +116,7 @@ def getlocation(function, curdir=None) -> str:
 
 
 def num_mock_patch_args(function) -> int:
-    """ return number of arguments used up by mock arguments (if any) """
+    """Return number of arguments used up by mock arguments (if any)."""
     patchings = getattr(function, "patchings", None)
     if not patchings:
         return 0
@@ -144,13 +141,13 @@ def getfuncargnames(
     is_method: bool = False,
     cls: Optional[type] = None
 ) -> Tuple[str, ...]:
-    """Returns the names of a function's mandatory arguments.
+    """Return the names of a function's mandatory arguments.
 
-    This should return the names of all function arguments that:
-        * Aren't bound to an instance or type as in instance or class methods.
-        * Don't have default values.
-        * Aren't bound with functools.partial.
-        * Aren't replaced with mocks.
+    Should return the names of all function arguments that:
+    * Aren't bound to an instance or type as in instance or class methods.
+    * Don't have default values.
+    * Aren't bound with functools.partial.
+    * Aren't replaced with mocks.
 
     The is_method and cls arguments indicate that the function should
     be treated as a bound method even though it's not unless, only in
@@ -212,8 +209,9 @@ else:
 
 
 def get_default_arg_names(function: Callable[..., Any]) -> Tuple[str, ...]:
-    # Note: this code intentionally mirrors the code at the beginning of getfuncargnames,
-    # to get the arguments which were excluded from its result because they had default values
+    # Note: this code intentionally mirrors the code at the beginning of
+    # getfuncargnames, to get the arguments which were excluded from its result
+    # because they had default values.
     return tuple(
         p.name
         for p in signature(function).parameters.values()
@@ -242,22 +240,21 @@ def _bytes_to_ascii(val: bytes) -> str:
 
 
 def ascii_escaped(val: Union[bytes, str]) -> str:
-    """If val is pure ascii, returns it as a str().  Otherwise, escapes
+    r"""If val is pure ASCII, return it as an str, otherwise, escape
     bytes objects into a sequence of escaped bytes:
 
-    b'\xc3\xb4\xc5\xd6' -> '\\xc3\\xb4\\xc5\\xd6'
+    b'\xc3\xb4\xc5\xd6' -> r'\xc3\xb4\xc5\xd6'
 
     and escapes unicode objects into a sequence of escaped unicode
     ids, e.g.:
 
-    '4\\nV\\U00043efa\\x0eMXWB\\x1e\\u3028\\u15fd\\xcd\\U0007d944'
+    r'4\nV\U00043efa\x0eMXWB\x1e\u3028\u15fd\xcd\U0007d944'
 
-    note:
-       the obvious "v.decode('unicode-escape')" will return
-       valid utf-8 unicode if it finds them in bytes, but we
+    Note:
+       The obvious "v.decode('unicode-escape')" will return
+       valid UTF-8 unicode if it finds them in bytes, but we
        want to return escaped bytes for any byte, even if they match
-       a utf-8 string.
-
+       a UTF-8 string.
     """
     if isinstance(val, bytes):
         ret = _bytes_to_ascii(val)
@@ -270,18 +267,17 @@ def ascii_escaped(val: Union[bytes, str]) -> str:
 class _PytestWrapper:
     """Dummy wrapper around a function object for internal use only.
 
-    Used to correctly unwrap the underlying function object
-    when we are creating fixtures, because we wrap the function object ourselves with a decorator
-    to issue warnings when the fixture function is called directly.
+    Used to correctly unwrap the underlying function object when we are
+    creating fixtures, because we wrap the function object ourselves with a
+    decorator to issue warnings when the fixture function is called directly.
     """
 
     obj = attr.ib()
 
 
 def get_real_func(obj):
-    """ gets the real function object of the (possibly) wrapped object by
-    functools.wraps or functools.partial.
-    """
+    """Get the real function object of the (possibly) wrapped object by
+    functools.wraps or functools.partial."""
     start_obj = obj
     for i in range(100):
         # __pytest_wrapped__ is set by @pytest.fixture when wrapping the fixture function
@@ -307,10 +303,9 @@ def get_real_func(obj):
 
 
 def get_real_method(obj, holder):
-    """
-    Attempts to obtain the real function object that might be wrapping ``obj``, while at the same time
-    returning a bound method to ``holder`` if the original object was a bound method.
-    """
+    """Attempt to obtain the real function object that might be wrapping
+    ``obj``, while at the same time returning a bound method to ``holder`` if
+    the original object was a bound method."""
     try:
         is_method = hasattr(obj, "__func__")
         obj = get_real_func(obj)
@@ -329,12 +324,13 @@ def getimfunc(func):
 
 
 def safe_getattr(object: Any, name: str, default: Any) -> Any:
-    """ Like getattr but return default upon any Exception or any OutcomeException.
+    """Like getattr but return default upon any Exception or any OutcomeException.
 
     Attribute access can potentially fail for 'evil' Python objects.
     See issue #214.
-    It catches OutcomeException because of #2490 (issue #580), new outcomes are derived from BaseException
-    instead of Exception (for more details check #2707)
+    It catches OutcomeException because of #2490 (issue #580), new outcomes
+    are derived from BaseException instead of Exception (for more details
+    check #2707).
     """
     try:
         return getattr(object, name, default)
@@ -427,7 +423,7 @@ else:
 #
 # With `assert_never` we can do better:
 #
-#     // throw new Error('unreachable');
+#     // raise Exception('unreachable')
 #     return assert_never(x)
 #
 # Now, if we forget to handle the new variant, the type-checker will emit a

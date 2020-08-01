@@ -94,9 +94,8 @@ class BaseReport:
 
     @property
     def longreprtext(self) -> str:
-        """
-        Read-only property that returns the full string representation
-        of ``longrepr``.
+        """Read-only property that returns the full string representation of
+        ``longrepr``.
 
         .. versionadded:: 3.0
         """
@@ -109,7 +108,7 @@ class BaseReport:
 
     @property
     def caplog(self) -> str:
-        """Return captured log lines, if log capturing is enabled
+        """Return captured log lines, if log capturing is enabled.
 
         .. versionadded:: 3.5
         """
@@ -119,7 +118,7 @@ class BaseReport:
 
     @property
     def capstdout(self) -> str:
-        """Return captured text from stdout, if capturing is enabled
+        """Return captured text from stdout, if capturing is enabled.
 
         .. versionadded:: 3.0
         """
@@ -129,7 +128,7 @@ class BaseReport:
 
     @property
     def capstderr(self) -> str:
-        """Return captured text from stderr, if capturing is enabled
+        """Return captured text from stderr, if capturing is enabled.
 
         .. versionadded:: 3.0
         """
@@ -147,11 +146,8 @@ class BaseReport:
 
     @property
     def count_towards_summary(self) -> bool:
-        """
-        **Experimental**
-
-        ``True`` if this report should be counted towards the totals shown at the end of the
-        test session: "1 passed, 1 failure, etc".
+        """**Experimental** Whether this report should be counted towards the
+        totals shown at the end of the test session: "1 passed, 1 failure, etc".
 
         .. note::
 
@@ -162,11 +158,9 @@ class BaseReport:
 
     @property
     def head_line(self) -> Optional[str]:
-        """
-        **Experimental**
-
-        Returns the head line shown with longrepr output for this report, more commonly during
-        traceback representation during failures::
+        """**Experimental** The head line shown with longrepr output for this
+        report, more commonly during traceback representation during
+        failures::
 
             ________ Test.foo ________
 
@@ -190,11 +184,10 @@ class BaseReport:
         return verbose
 
     def _to_json(self) -> Dict[str, Any]:
-        """
-        This was originally the serialize_report() function from xdist (ca03269).
+        """Return the contents of this report as a dict of builtin entries,
+        suitable for serialization.
 
-        Returns the contents of this report as a dict of builtin entries, suitable for
-        serialization.
+        This was originally the serialize_report() function from xdist (ca03269).
 
         Experimental method.
         """
@@ -202,11 +195,11 @@ class BaseReport:
 
     @classmethod
     def _from_json(cls: "Type[_R]", reportdict: Dict[str, object]) -> _R:
-        """
-        This was originally the serialize_report() function from xdist (ca03269).
+        """Create either a TestReport or CollectReport, depending on the calling class.
 
-        Factory method that returns either a TestReport or CollectReport, depending on the calling
-        class. It's the callers responsibility to know which class to pass here.
+        It is the callers responsibility to know which class to pass here.
+
+        This was originally the serialize_report() function from xdist (ca03269).
 
         Experimental method.
         """
@@ -229,9 +222,8 @@ def _report_unserialization_failure(
 
 
 class TestReport(BaseReport):
-    """ Basic test report object (also used for setup and teardown calls if
-    they fail).
-    """
+    """Basic test report object (also used for setup and teardown calls if
+    they fail)."""
 
     __test__ = False
 
@@ -248,38 +240,38 @@ class TestReport(BaseReport):
         user_properties: Optional[Iterable[Tuple[str, object]]] = None,
         **extra
     ) -> None:
-        #: normalized collection node id
+        #: Normalized collection nodeid.
         self.nodeid = nodeid
 
-        #: a (filesystempath, lineno, domaininfo) tuple indicating the
+        #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
         #: collected one e.g. if a method is inherited from a different module.
         self.location = location  # type: Tuple[str, Optional[int], str]
 
-        #: a name -> value dictionary containing all keywords and
+        #: A name -> value dictionary containing all keywords and
         #: markers associated with a test invocation.
         self.keywords = keywords
 
-        #: test outcome, always one of "passed", "failed", "skipped".
+        #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
 
         #: None or a failure representation.
         self.longrepr = longrepr
 
-        #: one of 'setup', 'call', 'teardown' to indicate runtest phase.
+        #: One of 'setup', 'call', 'teardown' to indicate runtest phase.
         self.when = when
 
-        #: user properties is a list of tuples (name, value) that holds user
-        #: defined properties of the test
+        #: User properties is a list of tuples (name, value) that holds user
+        #: defined properties of the test.
         self.user_properties = list(user_properties or [])
 
-        #: list of pairs ``(str, str)`` of extra information which needs to
+        #: List of pairs ``(str, str)`` of extra information which needs to
         #: marshallable. Used by pytest to add captured text
         #: from ``stdout`` and ``stderr``, but may be used by other plugins
         #: to add arbitrary information to reports.
         self.sections = list(sections)
 
-        #: time it took to run just the test
+        #: Time it took to run just the test.
         self.duration = duration
 
         self.__dict__.update(extra)
@@ -291,9 +283,7 @@ class TestReport(BaseReport):
 
     @classmethod
     def from_item_and_call(cls, item: Item, call: "CallInfo[None]") -> "TestReport":
-        """
-        Factory method to create and fill a TestReport with standard item and call info.
-        """
+        """Create and fill a TestReport with standard item and call info."""
         when = call.when
         # Remove "collect" from the Literal type -- only for collection calls.
         assert when != "collect"
@@ -350,10 +340,10 @@ class CollectReport(BaseReport):
         sections: Iterable[Tuple[str, str]] = (),
         **extra
     ) -> None:
-        #: normalized collection node id
+        #: Normalized collection nodeid.
         self.nodeid = nodeid
 
-        #: test outcome, always one of "passed", "failed", "skipped".
+        #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
 
         #: None or a failure representation.
@@ -362,10 +352,11 @@ class CollectReport(BaseReport):
         #: The collected items and collection nodes.
         self.result = result or []
 
-        #: list of pairs ``(str, str)`` of extra information which needs to
-        #: marshallable. Used by pytest to add captured text
-        #: from ``stdout`` and ``stderr``, but may be used by other plugins
-        #: to add arbitrary information to reports.
+        #: List of pairs ``(str, str)`` of extra information which needs to
+        #: marshallable.
+        # Used by pytest to add captured text : from ``stdout`` and ``stderr``,
+        # but may be used by other plugins : to add arbitrary information to
+        # reports.
         self.sections = list(sections)
 
         self.__dict__.update(extra)
@@ -413,11 +404,10 @@ def pytest_report_from_serializable(
 
 
 def _report_to_json(report: BaseReport) -> Dict[str, Any]:
-    """
-    This was originally the serialize_report() function from xdist (ca03269).
+    """Return the contents of this report as a dict of builtin entries,
+    suitable for serialization.
 
-    Returns the contents of this report as a dict of builtin entries, suitable for
-    serialization.
+    This was originally the serialize_report() function from xdist (ca03269).
     """
 
     def serialize_repr_entry(
@@ -485,10 +475,10 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
 
 
 def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    This was originally the serialize_report() function from xdist (ca03269).
+    """Return **kwargs that can be used to construct a TestReport or
+    CollectReport instance.
 
-    Returns **kwargs that can be used to construct a TestReport or CollectReport instance.
+    This was originally the serialize_report() function from xdist (ca03269).
     """
 
     def deserialize_repr_entry(entry_data):
