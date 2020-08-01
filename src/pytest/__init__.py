@@ -2,6 +2,7 @@
 """pytest: unit and functional testing with Python."""
 from . import collect
 from _pytest import __version__
+from _pytest import version_tuple
 from _pytest.assertion import register_assert_rewrite
 from _pytest.config import cmdline
 from _pytest.config import console_main
@@ -50,6 +51,7 @@ set_trace = __pytestPDB.set_trace
 
 __all__ = [
     "__version__",
+    "version_tuple",
     "_fillfuncargs",
     "approx",
     "Class",

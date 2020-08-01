@@ -33,3 +33,21 @@ def test_no_warnings(module: str) -> None:
         "-c", "__import__({!r})".format(module),
     ))
     # fmt: on
+
+
+def test_version_tuple():
+    fields = pytest.__version__.split(".")
+    assert pytest.version_tuple()[:2] == (int(fields[0]), int(fields[1]))
+
+
+@pytest.mark.parametrize(
+    "v, expected",
+    [
+        ("6.0.0", (6, 0, 0, "", "")),
+        ("6.0.0rc1", (6, 0, 0, "rc1", "")),
+        ("6.23.1.dev39+ga", (6, 23, 1, "", "dev39+ga")),
+        ("6.23.1rc2.dev39+ga", (6, 23, 1, "rc2", "dev39+ga")),
+    ],
+)
+def test_passe_version_tuple(v, expected):
+    assert _pytest.parse_version(v) == expected
