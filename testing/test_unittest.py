@@ -1243,3 +1243,19 @@ def test_asynctest_support(testdir):
     testdir.copy_example("unittest/test_unittest_asynctest.py")
     reprec = testdir.inline_run()
     reprec.assertoutcome(failed=1, passed=2)
+
+
+def test_plain_unittest_does_not_support_async(testdir):
+    """
+    Async functions in plain unittest.TestCase subclasses are not supported without plugins.
+
+    This test exists here to avoid introducing this support by accident, leading users
+    to expect that it works, rather than doing so intentionally as a feature.
+
+    See https://github.com/pytest-dev/pytest-asyncio/issues/180 for more context.
+    """
+    testdir.copy_example("unittest/test_unittest_plain_async.py")
+    result = testdir.runpytest_subprocess()
+    result.stdout.fnmatch_lines(
+        ["*RuntimeWarning: coroutine * was never awaited", "*1 passed*"]
+    )
