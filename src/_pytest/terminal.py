@@ -475,7 +475,9 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep("\u2500" if self.config.option.unicode else "-", title, fullwidth, **markup)
+        self.write_sep(
+            "\u2500" if self.config.option.unicode else "-", title, fullwidth, **markup
+        )
 
     def write_hrule_double(
         self,
@@ -483,7 +485,9 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep("\u2550" if self.config.option.unicode else "=", title, fullwidth, **markup)
+        self.write_sep(
+            "\u2550" if self.config.option.unicode else "=", title, fullwidth, **markup
+        )
 
     def write_hrule_error(
         self,
@@ -491,7 +495,9 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep("\u2049" if self.config.option.unicode else "?", title, fullwidth, **markup)
+        self.write_sep(
+            "\u2049" if self.config.option.unicode else "?", title, fullwidth, **markup
+        )
 
     def write_hrule_lower(
         self,
@@ -499,7 +505,9 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep("\u2581" if self.config.option.unicode else "_", title, fullwidth, **markup)
+        self.write_sep(
+            "\u2581" if self.config.option.unicode else "_", title, fullwidth, **markup
+        )
 
     def section(self, title: str, sep: str = "=", **kw: bool) -> None:
         self._tw.sep(sep, title, **kw)
