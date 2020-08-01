@@ -1,0 +1,2 @@
+Added option ``--unicode`` for using unicode box drawing characters to print
+horizontal rules.
