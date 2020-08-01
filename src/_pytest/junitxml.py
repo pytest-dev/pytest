@@ -673,7 +673,7 @@ class LogXML:
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
-        terminalreporter.write_sep("-", "generated xml file: {}".format(self.logfile))
+        terminalreporter.write_hrule_single("generated xml file: {}".format(self.logfile))
 
     def add_global_property(self, name: str, value: object) -> None:
         __tracebackhide__ = True

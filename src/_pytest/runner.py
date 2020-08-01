@@ -70,9 +70,9 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
     dlist.sort(key=lambda x: x.duration)
     dlist.reverse()
     if not durations:
-        tr.write_sep("=", "slowest durations")
+        tr_hrule_double("slowest durations")
     else:
-        tr.write_sep("=", "slowest %s durations" % durations)
+        tr_hrule_double("slowest %s durations" % durations)
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):

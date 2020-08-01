@@ -212,6 +212,12 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["yes", "no"],
         help="Whether code should be highlighted (only if --color is also enabled)",
     )
+    group._addoption(
+        "--unicode",
+        action="store_true",
+        default=False,
+        help="Use unicode characters for horizontal rules.",
+    )
 
     parser.addini(
         "console_output_style",
@@ -463,6 +469,38 @@ class TerminalReporter:
         self.ensure_newline()
         self._tw.sep(sep, title, fullwidth, **markup)
 
+    def write_hrule_single(
+        self,
+        title: Optional[str] = None,
+        fullwidth: Optional[int] = None,
+        **markup: bool
+    ) -> None:
+        self.write_sep("\u2500" if self.config.option.unicode else "-", title, fullwidth, **markup)
+
+    def write_hrule_double(
+        self,
+        title: Optional[str] = None,
+        fullwidth: Optional[int] = None,
+        **markup: bool
+    ) -> None:
+        self.write_sep("\u2550" if self.config.option.unicode else "=", title, fullwidth, **markup)
+
+    def write_hrule_error(
+        self,
+        title: Optional[str] = None,
+        fullwidth: Optional[int] = None,
+        **markup: bool
+    ) -> None:
+        self.write_sep("\u2049" if self.config.option.unicode else "?", title, fullwidth, **markup)
+
+    def write_hrule_lower(
+        self,
+        title: Optional[str] = None,
+        fullwidth: Optional[int] = None,
+        **markup: bool
+    ) -> None:
+        self.write_sep("\u2581" if self.config.option.unicode else "_", title, fullwidth, **markup)
+
     def section(self, title: str, sep: str = "=", **kw: bool) -> None:
         self._tw.sep(sep, title, **kw)
 
@@ -687,7 +725,7 @@ class TerminalReporter:
         self._sessionstarttime = timing.time()
         if not self.showheader:
             return
-        self.write_sep("=", "test session starts", bold=True)
+        self.write_hrule_double("test session starts", bold=True)
         verinfo = platform.python_version()
         if not self.no_header:
             msg = "platform {} -- Python {}".format(sys.platform, verinfo)
@@ -813,12 +851,12 @@ class TerminalReporter:
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
         if session.shouldfail:
-            self.write_sep("!", str(session.shouldfail), red=True)
+            self.write_hrule_error(str(session.shouldfail), red=True)
         if exitstatus == ExitCode.INTERRUPTED:
             self._report_keyboardinterrupt()
             self._keyboardinterrupt_memo = None
         elif session.shouldstop:
-            self.write_sep("!", str(session.shouldstop), red=True)
+            self.write_hrule_error(str(session.shouldstop), red=True)
         self.summary_stats()
 
     @pytest.hookimpl(hookwrapper=True)
@@ -844,7 +882,7 @@ class TerminalReporter:
         assert excrepr is not None
         assert excrepr.reprcrash is not None
         msg = excrepr.reprcrash.message
-        self.write_sep("!", msg)
+        self.write_hrule_error(msg)
         if "KeyboardInterrupt" in msg:
             if self.config.option.fulltrace:
                 excrepr.toterminal(self._tw)
@@ -945,7 +983,7 @@ class TerminalReporter:
                 )
 
             title = "warnings summary (final)" if final else "warnings summary"
-            self.write_sep("=", title, yellow=True, bold=False)
+            self.write_hrule_double(title, yellow=True, bold=False)
             for message, message_reports in reports_grouped_by_message.items():
                 maybe_location = collapsed_location_report(message_reports)
                 if maybe_location:
@@ -965,11 +1003,11 @@ class TerminalReporter:
                 reports = self.getreports("passed")  # type: List[TestReport]
                 if not reports:
                     return
-                self.write_sep("=", "PASSES")
+                self.write_hrule_double("PASSES")
                 for rep in reports:
                     if rep.sections:
                         msg = self._getfailureheadline(rep)
-                        self.write_sep("_", msg, green=True, bold=True)
+                        self.write_hrule_lower(msg, green=True, bold=True)
                         self._outrep_summary(rep)
                     self._handle_teardown_sections(rep.nodeid)
 
@@ -1003,7 +1041,7 @@ class TerminalReporter:
             reports = self.getreports("failed")  # type: List[BaseReport]
             if not reports:
                 return
-            self.write_sep("=", "FAILURES")
+            self.write_hrule_double("FAILURES")
             if self.config.option.tbstyle == "line":
                 for rep in reports:
                     line = self._getcrashline(rep)
@@ -1011,7 +1049,7 @@ class TerminalReporter:
             else:
                 for rep in reports:
                     msg = self._getfailureheadline(rep)
-                    self.write_sep("_", msg, red=True, bold=True)
+                    self.write_hrule_lower(msg, red=True, bold=True)
                     self._outrep_summary(rep)
                     self._handle_teardown_sections(rep.nodeid)
 
@@ -1020,14 +1058,14 @@ class TerminalReporter:
             reports = self.getreports("error")  # type: List[BaseReport]
             if not reports:
                 return
-            self.write_sep("=", "ERRORS")
+            self.write_hrule_double("ERRORS")
             for rep in self.stats["error"]:
                 msg = self._getfailureheadline(rep)
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
                 else:
                     msg = "ERROR at {} of {}".format(rep.when, msg)
-                self.write_sep("_", msg, red=True, bold=True)
+                self.write_hrule_lower(msg, red=True, bold=True)
                 self._outrep_summary(rep)
 
     def _outrep_summary(self, rep: BaseReport) -> None:
@@ -1076,7 +1114,7 @@ class TerminalReporter:
             msg += markup_for_end_sep
 
         if display_sep:
-            self.write_sep("=", msg, fullwidth=fullwidth, **main_markup)
+            self.write_hrule_double(msg, fullwidth=fullwidth, **main_markup)
         else:
             self.write_line(msg, **main_markup)
 
@@ -1145,7 +1183,7 @@ class TerminalReporter:
                 action(lines)
 
         if lines:
-            self.write_sep("=", "short test summary info")
+            self.write_hrule_double("short test summary info")
             for line in lines:
                 self.write_line(line)
 

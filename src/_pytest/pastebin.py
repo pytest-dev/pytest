@@ -61,7 +61,7 @@ def pytest_unconfigure(config: Config) -> None:
         tr = config.pluginmanager.getplugin("terminalreporter")
         del tr._tw.__dict__["write"]
         # Write summary.
-        tr.write_sep("=", "Sending information to Paste Service")
+        tr.write_hrule_double("Sending information to Paste Service")
         pastebinurl = create_new_paste(sessionlog)
         tr.write_line("pastebin session-log: %s\n" % pastebinurl)
 
@@ -95,7 +95,7 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
     if terminalreporter.config.option.pastebin != "failed":
         return
     if "failed" in terminalreporter.stats:
-        terminalreporter.write_sep("=", "Sending information to Paste Service")
+        terminalreporter.write_hrule_double("Sending information to Paste Service")
         for rep in terminalreporter.stats["failed"]:
             try:
                 msg = rep.longrepr.reprtraceback.reprentries[-1].reprfileloc
