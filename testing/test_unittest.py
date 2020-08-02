@@ -1246,8 +1246,7 @@ def test_asynctest_support(testdir):
 
 
 def test_plain_unittest_does_not_support_async(testdir):
-    """
-    Async functions in plain unittest.TestCase subclasses are not supported without plugins.
+    """Async functions in plain unittest.TestCase subclasses are not supported without plugins.
 
     This test exists here to avoid introducing this support by accident, leading users
     to expect that it works, rather than doing so intentionally as a feature.
