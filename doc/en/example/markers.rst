@@ -202,7 +202,7 @@ You can use ``and``, ``or``, ``not`` and parentheses.
 
 .. note::
     ``-k`` option will match not only function names but also `function attributes <https://www.python.org/dev/peps/pep-0232/>`_ .
-    For example, every function has attributes such as ``__call__`` by default, 
+    For example, every function has attributes such as ``__call__`` by default,
     and some libraries like `hypothesis <https://github.com/HypothesisWorks/hypothesis>`_ attach additional attributes to functions.
     So if you specify such a keyword, let's say ``-k "__call__"``, then ``-k`` will match all functions in the scope, because all functions have ``__call__`` attributes.
     Unfortunetelly you can't controll this behavior in current version, so please keep it in your mind.
