@@ -68,16 +68,30 @@ them into errors:
     FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use ...
     1 failed in 0.12s
 
-The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
-For example, the configuration below will ignore all user warnings, but will transform
+The same option can be set in the ``pytest.ini`` or ``pyproject.toml`` file using the
+``filterwarnings`` ini option. For example, the configuration below will ignore all
+user warnings and specific deprecation warnings matching a regex, but will transform
 all other warnings into errors.
 
 .. code-block:: ini
 
+    # pytest.ini
     [pytest]
     filterwarnings =
         error
         ignore::UserWarning
+        ignore:function ham\(\) is deprecated:DeprecationWarning
+
+.. code-block:: toml
+
+    # pyproject.toml
+    [tool.pytest.ini_options]
+    filterwarnings = [
+        "error",
+        "ignore::UserWarning",
+        # note the use of single quote below to denote "raw" strings in TOML
+        'ignore:function ham\(\) is deprecated:DeprecationWarning',
+    ]
 
 
 When a warning matches more than one option in the list, the action for the last matching option
