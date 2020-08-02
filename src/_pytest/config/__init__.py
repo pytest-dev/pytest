@@ -123,7 +123,7 @@ def filter_traceback_for_conftest_import_failure(
 
 
 def main(
-    args: Optional[List[str]] = None,
+    args: Optional[Union[List[str], py.path.local]] = None,
     plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
 ) -> Union[int, ExitCode]:
     """Perform an in-process test run.
@@ -1308,7 +1308,7 @@ class Config:
         values = []  # type: List[py.path.local]
         for relroot in relroots:
             if not isinstance(relroot, py.path.local):
-                relroot = relroot.replace("/", py.path.local.sep)
+                relroot = relroot.replace("/", os.sep)
                 relroot = modpath.join(relroot, abs=True)
             values.append(relroot)
         return values

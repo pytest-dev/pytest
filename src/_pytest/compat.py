@@ -18,7 +18,6 @@ from typing import TypeVar
 from typing import Union
 
 import attr
-import py
 
 from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
@@ -104,13 +103,18 @@ def is_async_function(func: object) -> bool:
     )
 
 
-def getlocation(function, curdir=None) -> str:
+def getlocation(function, curdir: Optional[str] = None) -> str:
+    from _pytest.pathlib import Path
+
     function = get_real_func(function)
-    fn = py.path.local(inspect.getfile(function))
+    fn = Path(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno
     if curdir is not None:
-        relfn = fn.relto(curdir)
-        if relfn:
+        try:
+            relfn = fn.relative_to(curdir)
+        except ValueError:
+            pass
+        else:
             return "%s:%d" % (relfn, lineno + 1)
     return "%s:%d" % (fn, lineno + 1)
 

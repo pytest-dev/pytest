@@ -41,6 +41,7 @@ from _pytest.compat import ATTRS_EQ_FIELD
 from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
+from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
     from typing import Type
@@ -1190,12 +1191,12 @@ def getfslineno(obj: object) -> Tuple[Union[str, py.path.local], int]:
 # note: if we need to add more paths than what we have now we should probably use a list
 # for better maintenance.
 
-_PLUGGY_DIR = py.path.local(pluggy.__file__.rstrip("oc"))
+_PLUGGY_DIR = Path(pluggy.__file__.rstrip("oc"))
 # pluggy is either a package or a single module depending on the version
-if _PLUGGY_DIR.basename == "__init__.py":
-    _PLUGGY_DIR = _PLUGGY_DIR.dirpath()
-_PYTEST_DIR = py.path.local(_pytest.__file__).dirpath()
-_PY_DIR = py.path.local(py.__file__).dirpath()
+if _PLUGGY_DIR.name == "__init__.py":
+    _PLUGGY_DIR = _PLUGGY_DIR.parent
+_PYTEST_DIR = Path(_pytest.__file__).parent
+_PY_DIR = Path(py.__file__).parent
 
 
 def filter_traceback(entry: TracebackEntry) -> bool:
@@ -1213,9 +1214,17 @@ def filter_traceback(entry: TracebackEntry) -> bool:
     is_generated = "<" in raw_filename and ">" in raw_filename
     if is_generated:
         return False
+
     # entry.path might point to a non-existing file, in which case it will
     # also return a str object. See #1133.
-    p = py.path.local(entry.path)
-    return (
-        not p.relto(_PLUGGY_DIR) and not p.relto(_PYTEST_DIR) and not p.relto(_PY_DIR)
-    )
+    p = Path(entry.path)
+
+    parents = p.parents
+    if _PLUGGY_DIR in parents:
+        return False
+    if _PYTEST_DIR in parents:
+        return False
+    if _PY_DIR in parents:
+        return False
+
+    return True

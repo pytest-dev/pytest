@@ -1,5 +1,6 @@
 import functools
 import inspect
+import os
 import sys
 import warnings
 from collections import defaultdict
@@ -1515,8 +1516,8 @@ class FixtureManager:
             # by their test id).
             if p.basename.startswith("conftest.py"):
                 nodeid = p.dirpath().relto(self.config.rootdir)
-                if p.sep != nodes.SEP:
-                    nodeid = nodeid.replace(p.sep, nodes.SEP)
+                if os.sep != nodes.SEP:
+                    nodeid = nodeid.replace(os.sep, nodes.SEP)
 
         self.parsefactories(plugin, nodeid)
 
