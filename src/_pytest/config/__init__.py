@@ -1006,12 +1006,15 @@ class Config:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
-        self.rootdir, self.inifile, self.inicfg = determine_setup(
+        rootpath, inipath, inicfg = determine_setup(
             ns.inifilename,
             ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             config=self,
         )
+        self.rootdir = py.path.local(str(rootpath))
+        self.inifile = py.path.local(str(inipath)) if inipath else None
+        self.inicfg = inicfg
         self._parser.extra_info["rootdir"] = self.rootdir
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")

@@ -1,23 +1,28 @@
+import itertools
 import os
+import sys
 from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
 import iniconfig
-import py
 
 from .exceptions import UsageError
 from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
+from _pytest.pathlib import absolutepath
+from _pytest.pathlib import commonpath
+from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
     from . import Config
 
 
-def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
+def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
     """Parse the given generic '.ini' file using legacy IniConfig parser, returning
     the parsed object.
 
@@ -30,7 +35,7 @@ def _parse_ini_config(path: py.path.local) -> iniconfig.IniConfig:
 
 
 def load_config_dict_from_file(
-    filepath: py.path.local,
+    filepath: Path,
 ) -> Optional[Dict[str, Union[str, List[str]]]]:
     """Load pytest configuration from the given file path, if supported.
 
@@ -38,18 +43,18 @@ def load_config_dict_from_file(
     """
 
     # Configuration from ini files are obtained from the [pytest] section, if present.
-    if filepath.ext == ".ini":
+    if filepath.suffix == ".ini":
         iniconfig = _parse_ini_config(filepath)
 
         if "pytest" in iniconfig:
             return dict(iniconfig["pytest"].items())
         else:
             # "pytest.ini" files are always the source of configuration, even if empty.
-            if filepath.basename == "pytest.ini":
+            if filepath.name == "pytest.ini":
                 return {}
 
     # '.cfg' files are considered if they contain a "[tool:pytest]" section.
-    elif filepath.ext == ".cfg":
+    elif filepath.suffix == ".cfg":
         iniconfig = _parse_ini_config(filepath)
 
         if "tool:pytest" in iniconfig.sections:
@@ -60,7 +65,7 @@ def load_config_dict_from_file(
             fail(CFG_PYTEST_SECTION.format(filename="setup.cfg"), pytrace=False)
 
     # '.toml' files are considered if they contain a [tool.pytest.ini_options] table.
-    elif filepath.ext == ".toml":
+    elif filepath.suffix == ".toml":
         import toml
 
         config = toml.load(str(filepath))
@@ -79,9 +84,9 @@ def load_config_dict_from_file(
 
 
 def locate_config(
-    args: Iterable[Union[str, py.path.local]]
+    args: Iterable[Path],
 ) -> Tuple[
-    Optional[py.path.local], Optional[py.path.local], Dict[str, Union[str, List[str]]],
+    Optional[Path], Optional[Path], Dict[str, Union[str, List[str]]],
 ]:
     """Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict)."""
@@ -93,62 +98,77 @@ def locate_config(
     ]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
-        args = [py.path.local()]
+        args = [Path.cwd()]
     for arg in args:
-        arg = py.path.local(arg)
-        for base in arg.parts(reverse=True):
+        argpath = absolutepath(arg)
+        for base in itertools.chain((argpath,), reversed(argpath.parents)):
             for config_name in config_names:
-                p = base.join(config_name)
-                if p.isfile():
+                p = base / config_name
+                if p.is_file():
                     ini_config = load_config_dict_from_file(p)
                     if ini_config is not None:
                         return base, p, ini_config
     return None, None, {}
 
 
-def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
-    common_ancestor = None  # type: Optional[py.path.local]
+def get_common_ancestor(paths: Iterable[Path]) -> Path:
+    common_ancestor = None  # type: Optional[Path]
     for path in paths:
         if not path.exists():
             continue
         if common_ancestor is None:
             common_ancestor = path
         else:
-            if path.relto(common_ancestor) or path == common_ancestor:
+            if common_ancestor in path.parents or path == common_ancestor:
                 continue
-            elif common_ancestor.relto(path):
+            elif path in common_ancestor.parents:
                 common_ancestor = path
             else:
-                shared = path.common(common_ancestor)
+                shared = commonpath(path, common_ancestor)
                 if shared is not None:
                     common_ancestor = shared
     if common_ancestor is None:
-        common_ancestor = py.path.local()
-    elif common_ancestor.isfile():
-        common_ancestor = common_ancestor.dirpath()
+        common_ancestor = Path.cwd()
+    elif common_ancestor.is_file():
+        common_ancestor = common_ancestor.parent
     return common_ancestor
 
 
-def get_dirs_from_args(args: Iterable[str]) -> List[py.path.local]:
+def get_dirs_from_args(args: Iterable[str]) -> List[Path]:
     def is_option(x: str) -> bool:
         return x.startswith("-")
 
     def get_file_part_from_node_id(x: str) -> str:
         return x.split("::")[0]
 
-    def get_dir_from_path(path: py.path.local) -> py.path.local:
-        if path.isdir():
+    def get_dir_from_path(path: Path) -> Path:
+        if path.is_dir():
             return path
-        return py.path.local(path.dirname)
+        return path.parent
+
+    if sys.version_info < (3, 8):
+
+        def safe_exists(path: Path) -> bool:
+            # On Python<3.8, this can throw on paths that contain characters
+            # unrepresentable at the OS level.
+            try:
+                return path.exists()
+            except OSError:
+                return False
+
+    else:
+
+        def safe_exists(path: Path) -> bool:
+            return path.exists()
 
     # These look like paths but may not exist
     possible_paths = (
-        py.path.local(get_file_part_from_node_id(arg))
+        absolutepath(get_file_part_from_node_id(arg))
         for arg in args
         if not is_option(arg)
     )
 
-    return [get_dir_from_path(path) for path in possible_paths if path.exists()]
+    return [get_dir_from_path(path) for path in possible_paths if safe_exists(path)]
 
 
 CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
@@ -156,15 +176,15 @@ CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supporte
 
 def determine_setup(
     inifile: Optional[str],
-    args: List[str],
+    args: Sequence[str],
     rootdir_cmd_arg: Optional[str] = None,
     config: Optional["Config"] = None,
-) -> Tuple[py.path.local, Optional[py.path.local], Dict[str, Union[str, List[str]]]]:
+) -> Tuple[Path, Optional[Path], Dict[str, Union[str, List[str]]]]:
     rootdir = None
     dirs = get_dirs_from_args(args)
     if inifile:
-        inipath_ = py.path.local(inifile)
-        inipath = inipath_  # type: Optional[py.path.local]
+        inipath_ = absolutepath(inifile)
+        inipath = inipath_  # type: Optional[Path]
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
             rootdir = get_common_ancestor(dirs)
@@ -172,8 +192,10 @@ def determine_setup(
         ancestor = get_common_ancestor(dirs)
         rootdir, inipath, inicfg = locate_config([ancestor])
         if rootdir is None and rootdir_cmd_arg is None:
-            for possible_rootdir in ancestor.parts(reverse=True):
-                if possible_rootdir.join("setup.py").exists():
+            for possible_rootdir in itertools.chain(
+                (ancestor,), reversed(ancestor.parents)
+            ):
+                if (possible_rootdir / "setup.py").is_file():
                     rootdir = possible_rootdir
                     break
             else:
@@ -181,16 +203,16 @@ def determine_setup(
                     rootdir, inipath, inicfg = locate_config(dirs)
                 if rootdir is None:
                     if config is not None:
-                        cwd = config.invocation_dir
+                        cwd = config.invocation_params.dir
                     else:
-                        cwd = py.path.local()
+                        cwd = Path.cwd()
                     rootdir = get_common_ancestor([cwd, ancestor])
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == "/"
                     if is_fs_root:
                         rootdir = ancestor
     if rootdir_cmd_arg:
-        rootdir = py.path.local(os.path.expandvars(rootdir_cmd_arg))
-        if not rootdir.isdir():
+        rootdir = absolutepath(os.path.expandvars(rootdir_cmd_arg))
+        if not rootdir.is_dir():
             raise UsageError(
                 "Directory '{}' not found. Check your '--rootdir' option.".format(
                     rootdir
