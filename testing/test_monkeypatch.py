@@ -360,7 +360,7 @@ def test_issue156_undo_staticmethod(Sample: "Type[Sample]") -> None:
     monkeypatch.setattr(Sample, "hello", None)
     assert Sample.hello is None
 
-    monkeypatch.undo()
+    monkeypatch.undo()  # type: ignore[unreachable]
     assert Sample.hello()
 
 

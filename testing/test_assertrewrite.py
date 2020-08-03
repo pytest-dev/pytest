@@ -381,7 +381,7 @@ class TestAssertionRewrite:
         )
 
         def f7() -> None:
-            assert False or x()
+            assert False or x()  # type: ignore[unreachable]
 
         assert (
             getmsg(f7, {"x": x})
@@ -416,7 +416,7 @@ class TestAssertionRewrite:
 
     def test_short_circuit_evaluation(self) -> None:
         def f1() -> None:
-            assert True or explode  # type: ignore[name-defined] # noqa: F821
+            assert True or explode  # type: ignore[name-defined,unreachable] # noqa: F821
 
         getmsg(f1, must_pass=True)
 
@@ -471,7 +471,7 @@ class TestAssertionRewrite:
         assert getmsg(f1) == "assert ((3 % 2) and False)"
 
         def f2() -> None:
-            assert False or 4 % 2
+            assert False or 4 % 2  # type: ignore[unreachable]
 
         assert getmsg(f2) == "assert (False or (4 % 2))"
 

@@ -16,6 +16,7 @@ import types
 from typing import Callable
 from typing import Dict
 from typing import IO
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -455,12 +456,9 @@ def _should_repr_global_name(obj: object) -> bool:
         return True
 
 
-def _format_boolop(explanations, is_or: bool):
+def _format_boolop(explanations: Iterable[str], is_or: bool) -> str:
     explanation = "(" + (is_or and " or " or " and ").join(explanations) + ")"
-    if isinstance(explanation, str):
-        return explanation.replace("%", "%%")
-    else:
-        return explanation.replace(b"%", b"%%")
+    return explanation.replace("%", "%%")
 
 
 def _call_reprcompare(

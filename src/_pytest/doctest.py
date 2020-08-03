@@ -635,8 +635,8 @@ def _init_checker_class() -> "Type[doctest.OutputChecker]":
                 return got
             offset = 0
             for w, g in zip(wants, gots):
-                fraction = w.group("fraction")
-                exponent = w.group("exponent1")
+                fraction = w.group("fraction")  # type: Optional[str]
+                exponent = w.group("exponent1")  # type: Optional[str]
                 if exponent is None:
                     exponent = w.group("exponent2")
                 if fraction is None:

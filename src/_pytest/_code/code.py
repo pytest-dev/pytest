@@ -676,7 +676,7 @@ class FormattedExcinfo:
 
     def get_source(
         self,
-        source: "Source",
+        source: Optional["Source"],
         line_index: int = -1,
         excinfo: Optional[ExceptionInfo[BaseException]] = None,
         short: bool = False,

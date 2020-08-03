@@ -386,7 +386,8 @@ def pytest_report_to_serializable(
         data = report._to_json()
         data["$report_type"] = report.__class__.__name__
         return data
-    return None
+    # TODO: Check if this is actually reachable.
+    return None  # type: ignore[unreachable]
 
 
 def pytest_report_from_serializable(

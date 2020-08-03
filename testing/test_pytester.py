@@ -23,7 +23,9 @@ def test_make_hook_recorder(testdir) -> None:
     recorder = testdir.make_hook_recorder(item.config.pluginmanager)
     assert not recorder.getfailures()
 
-    pytest.xfail("internal reportrecorder tests need refactoring")
+    # (The silly condition is to fool mypy that the code below this is reachable)
+    if 1 + 1 == 2:
+        pytest.xfail("internal reportrecorder tests need refactoring")
 
     class rep:
         excinfo = None

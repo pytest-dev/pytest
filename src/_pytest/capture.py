@@ -116,7 +116,7 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
         return
 
     # Bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666).
-    if not hasattr(stream, "buffer"):
+    if not hasattr(stream, "buffer"):  # type: ignore[unreachable]
         return
 
     buffered = hasattr(stream.buffer, "raw")

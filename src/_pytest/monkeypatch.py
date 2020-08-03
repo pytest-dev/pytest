@@ -91,7 +91,7 @@ def annotated_getattr(obj: object, name: str, ann: str) -> object:
 
 
 def derive_importpath(import_path: str, raising: bool) -> Tuple[str, object]:
-    if not isinstance(import_path, str) or "." not in import_path:
+    if not isinstance(import_path, str) or "." not in import_path:  # type: ignore[unreachable]
         raise TypeError(
             "must be absolute import path string, not {!r}".format(import_path)
         )
@@ -272,7 +272,7 @@ class MonkeyPatch:
         character.
         """
         if not isinstance(value, str):
-            warnings.warn(
+            warnings.warn(  # type: ignore[unreachable]
                 pytest.PytestWarning(
                     "Value of environment variable {name} type should be str, but got "
                     "{value!r} (type: {type}); converted to str implicitly".format(
