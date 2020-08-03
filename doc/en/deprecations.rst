@@ -51,9 +51,10 @@ a public API and may break in the future.
 .. versionremoved:: 6.0
 
 
-Option ``--no-print-logs`` is removed. If you used ``--no-print-logs``, please use ``--show-capture`` instead.
+The ``--no-print-logs`` option and ``log_print`` ini setting are removed. If
+you used them, please use ``--show-capture`` instead.
 
-``--show-capture`` command-line option was added in ``pytest 3.5.0`` and allows to specify how to
+A ``--show-capture`` command-line option was added in ``pytest 3.5.0`` which allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
 
 
