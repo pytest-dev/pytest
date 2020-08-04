@@ -212,9 +212,9 @@ Breaking Changes
 
 
 - `#7224 <https://github.com/pytest-dev/pytest/issues/7224>`_: The `item.catch_log_handler` and `item.catch_log_handlers` attributes, set by the
-  logging plugin and never meant to be public , are no longer available.
+  logging plugin and never meant to be public, are no longer available.
 
-  The deprecated ``--no-print-logs`` option is removed. Use ``--show-capture`` instead.
+  The deprecated ``--no-print-logs`` option and ``log_print`` ini option are removed. Use ``--show-capture`` instead.
 
 
 - `#7226 <https://github.com/pytest-dev/pytest/issues/7226>`_: Removed the unused ``args`` parameter from ``pytest.Function.__init__``.

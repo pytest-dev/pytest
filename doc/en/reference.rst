@@ -1466,20 +1466,6 @@ passed multiple times. The expected format is ``name=value``. For example::
     For more information, see :ref:`logging`.
 
 
-.. confval:: log_print
-
-
-
-    If set to ``False``, will disable displaying captured logging messages for failed tests.
-
-    .. code-block:: ini
-
-        [pytest]
-        log_print = False
-
-    For more information, see :ref:`logging`.
-
-
 .. confval:: markers
 
     When the ``--strict-markers`` or ``--strict`` command-line arguments are used,
