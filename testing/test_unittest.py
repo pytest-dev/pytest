@@ -1127,7 +1127,9 @@ def test_exit_outcome(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*Exit: pytest_exit called*", "*= no tests ran in *"])
+    result.stdout.fnmatch_lines(
+        ["*Exit: pytest_exit called*", "*[\u2550=] no tests ran in *"]
+    )
 
 
 def test_trace(testdir, monkeypatch):

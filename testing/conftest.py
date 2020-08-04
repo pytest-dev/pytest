@@ -159,6 +159,7 @@ def color_mapping():
             "print": "\x1b[96m",
         }
         RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
+        FN_COLORS = {k: v.replace("[", "[[]") for k, v in COLORS.items()}
 
         @classmethod
         def format(cls, lines: List[str]) -> List[str]:
@@ -169,6 +170,11 @@ def color_mapping():
         def format_for_fnmatch(cls, lines: List[str]) -> List[str]:
             """Replace color names for use with LineMatcher.fnmatch_lines"""
             return [line.format(**cls.COLORS).replace("[", "[[]") for line in lines]
+
+        @classmethod
+        def format_for_fnmatch_plain(cls, lines: List[str]) -> List[str]:
+            """Replace color names for use with LineMatcher.fnmatch_lines"""
+            return [line.format(**cls.FN_COLORS) for line in lines]
 
         @classmethod
         def format_for_rematch(cls, lines: List[str]) -> List[str]:

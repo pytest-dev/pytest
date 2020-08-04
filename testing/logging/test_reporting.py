@@ -111,7 +111,7 @@ def test_log_cli_level_log_level_interaction(testdir):
             "*INFO*info text going to logger",
             "*WARNING*warning text going to logger",
             "*ERROR*error text going to logger",
-            "=* 1 failed in *=",
+            "[\u2550=]* 1 failed in *[\u2550=]",
         ]
     )
     result.stdout.no_re_match_line("DEBUG")
@@ -268,7 +268,7 @@ def test_log_cli_default_level_multiple_tests(testdir, request):
             "{}::test_log_2 ".format(filename),
             "*WARNING*log message from test_log_2*",
             "PASSED *100%*",
-            "=* 2 passed in *=",
+            "[\u2550=]* 2 passed in *[\u2550=]",
         ]
     )
 
@@ -342,7 +342,7 @@ def test_log_cli_default_level_sections(testdir, request):
             "*WARNING*log message from teardown of test_log_2*",
             "*-- live log finish --*",
             "*WARNING* <<<<< END <<<<<<<*",
-            "=* 2 passed in *=",
+            "[\u2550=]* 2 passed in *[\u2550=]",
         ]
     )
 
@@ -404,7 +404,7 @@ def test_live_logs_unknown_sections(testdir, request):
             "*-- live log teardown --*",
             "*WARNING*log message from teardown of test_log_1*",
             "*WARNING* <<<<< END <<<<<<<*",
-            "=* 1 passed in *=",
+            "[\u2550=]* 1 passed in *[\u2550=]",
         ]
     )
 
@@ -454,19 +454,19 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):
     result.stdout.fnmatch_lines(
         [
             "{}::test_log_1 ".format(filename),
-            "*-- live log start --*",
+            "*[\u2500-][\u2500-] live log start [\u2500-][\u2500-]*",
             "*WARNING* >>>>> START >>>>>*",
-            "*-- live log setup --*",
+            "*[\u2500-][\u2500-] live log setup [\u2500-][\u2500-]*",
             "*WARNING*log message from setup of test_log_1*",
-            "*-- live log call --*",
+            "*[\u2500-][\u2500-] live log call [\u2500-][\u2500-]*",
             "*WARNING*log message from test_log_1*",
             "PASSED *100%*",
-            "*-- live log teardown --*",
+            "*[\u2500-][\u2500-] live log teardown [\u2500-][\u2500-]*",
             "*WARNING*log message from teardown of test_log_1*",
-            "*-- live log finish --*",
+            "*[\u2500-][\u2500-] live log finish [\u2500-][\u2500-]*",
             "*WARNING* <<<<< END <<<<<<<*",
             "*WARNING* <<<<< END <<<<<<<*",
-            "=* 1 passed in *=",
+            "[\u2550=]* 1 passed in *[\u2550=]",
         ]
     )
     assert (
@@ -605,16 +605,16 @@ def test_log_cli_auto_enable(testdir, cli_args):
         result.stdout.fnmatch_lines(
             [
                 "*::test_log_1 ",
-                "*-- live log call --*",
+                "*[\u2500-][\u2500-] live log call [\u2500-][\u2500-]*",
                 "*WARNING*log message from test_log_1*",
                 "PASSED *100%*",
-                "=* 1 passed in *=",
+                "[\u2550=]* 1 passed in *[\u2550=]",
             ]
         )
         assert "INFO" not in stdout
     else:
         result.stdout.fnmatch_lines(
-            ["*test_log_cli_auto_enable*100%*", "=* 1 passed in *="]
+            ["*test_log_cli_auto_enable*100%*", "[\u2550=]* 1 passed in *[\u2550=]"]
         )
         assert "INFO" not in stdout
         assert "WARNING" not in stdout
@@ -1131,7 +1131,7 @@ def test_logging_emit_error(testdir: Testdir) -> None:
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         [
-            "====* FAILURES *====",
+            "[\u2550=][\u2550=][\u2550=][\u2550=]* FAILURES *[\u2550=][\u2550=][\u2550=][\u2550=]",
             "*not all arguments converted during string formatting*",
         ]
     )

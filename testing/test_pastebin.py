@@ -54,7 +54,7 @@ class TestPasteCapture:
                 "*test_pass PASSED*",
                 "*test_fail FAILED*",
                 "*test_skip SKIPPED*",
-                "*== 1 failed, 1 passed, 1 skipped in *",
+                "*[\u2550=][\u2550=] 1 failed, 1 passed, 1 skipped in *",
             ]
         )
 
@@ -73,7 +73,7 @@ class TestPasteCapture:
         result.stdout.fnmatch_lines(
             [
                 expected_msg,
-                "*== 1 failed in *",
+                "*[\u2550=][\u2550=] 1 failed in *",
                 "*Sending information to Paste Service*",
             ]
         )

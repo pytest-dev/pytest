@@ -1,2 +1,4 @@
-Added option ``--unicode`` for using unicode box drawing characters to print
-horizontal rules.
+Use Unicode box drawing characters to print horizontal rules.
+
+(But fall back to ASCII characters when the terminal encoding doesn't support
+those Unicode characters.)

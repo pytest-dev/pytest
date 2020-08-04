@@ -212,12 +212,6 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["yes", "no"],
         help="Whether code should be highlighted (only if --color is also enabled)",
     )
-    group._addoption(
-        "--unicode",
-        action="store_true",
-        default=False,
-        help="Use unicode characters for horizontal rules.",
-    )
 
     parser.addini(
         "console_output_style",
@@ -475,9 +469,8 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep(
-            "\u2500" if self.config.option.unicode else "-", title, fullwidth, **markup
-        )
+        # This uses U+2500 (BOX DRAWINGS LIGHT HORIZONTAL)
+        self.write_sep("─", title, fullwidth, **markup)
 
     def write_hrule_double(
         self,
@@ -485,9 +478,8 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep(
-            "\u2550" if self.config.option.unicode else "=", title, fullwidth, **markup
-        )
+        # This uses U+2550 (BOX DRAWINGS DOUBLE HORIZONTAL)
+        self.write_sep("═", title, fullwidth, **markup)
 
     def write_hrule_error(
         self,
@@ -503,9 +495,8 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep(
-            "\u2581" if self.config.option.unicode else "_", title, fullwidth, **markup
-        )
+        # This uses U+2581 (LOWER ONE EIGHTH BLOCK)
+        self.write_sep("▁", title, fullwidth, **markup)
 
     def section(self, title: str, sep: str = "=", **kw: bool) -> None:
         self._tw.sep(sep, title, **kw)

@@ -696,7 +696,7 @@ class TestFunction:
         result.stdout.fnmatch_lines(
             [
                 "test_function_with_square_brackets.py::test_foo[[]name[]] PASSED *",
-                "*= 1 passed in *",
+                "*[\u2550=] 1 passed in *",
             ]
         )
 
@@ -1264,8 +1264,8 @@ def test_collect_error_with_fulltrace(testdir):
         [
             "collected 0 items / 1 error",
             "",
-            "*= ERRORS =*",
-            "*_ ERROR collecting test_collect_error_with_fulltrace.py _*",
+            "*[\u2550=] ERRORS [\u2550=]*",
+            "*[\u2581_] ERROR collecting test_collect_error_with_fulltrace.py [\u2581_]*",
             "",
             ">   assert 0",
             "E   assert 0",

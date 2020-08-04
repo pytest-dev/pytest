@@ -171,7 +171,9 @@ class TestTerminal:
         child.expect(r"collecting 2 items")
         child.expect(r"collected 2 items")
         rest = child.read().decode("utf8")
-        assert "= \x1b[32m\x1b[1m2 passed\x1b[0m\x1b[32m in" in rest
+        assert ("= \x1b[32m\x1b[1m2 passed\x1b[0m\x1b[32m in" in rest) or (
+            "\u2550 \x1b[32m\x1b[1m2 passed\x1b[0m\x1b[32m in" in rest
+        )
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         testdir.makepyfile(
@@ -198,13 +200,13 @@ class TestTerminal:
             }
         )
         result = testdir.runpytest("tests/test_p2.py", "--rootdir=tests")
-        result.stdout.fnmatch_lines(["tests/test_p2.py .*", "=* 1 passed in *"])
+        result.stdout.fnmatch_lines(["tests/test_p2.py .*", "[\u2550=]* 1 passed in *"])
 
         result = testdir.runpytest("-vv", "-rA", "tests/test_p2.py", "--rootdir=tests")
         result.stdout.fnmatch_lines(
             [
                 "tests/test_p2.py::TestMore::test_p1 <- test_p1.py PASSED *",
-                "*= short test summary info =*",
+                "*[\u2550=] short test summary info [\u2550=]*",
                 "PASSED tests/test_p2.py::TestMore::test_p1",
             ]
         )
@@ -212,15 +214,15 @@ class TestTerminal:
         result.stdout.fnmatch_lines(
             [
                 "tests/test_p3.py::TestMore::test_p1 <- test_p1.py FAILED *",
-                "*_ TestMore.test_p1 _*",
+                "*[\u2581_] TestMore.test_p1 [\u2581_]*",
                 "    def test_p1(self):",
                 ">       if self.fail: assert 0",
                 "E       assert 0",
                 "",
                 "tests/test_p1.py:5: AssertionError",
-                "*= short test summary info =*",
+                "*[\u2550=] short test summary info [\u2550=]*",
                 "FAILED tests/test_p3.py::TestMore::test_p1 - assert 0",
-                "*= 1 failed in *",
+                "*[\u2550=] 1 failed in *",
             ]
         )
 
@@ -603,7 +605,7 @@ class TestTerminalFunctional:
         result.stdout.fnmatch_lines(
             [
                 "collected 3 items / 1 deselected / 2 selected",
-                "*= 2 passed, 1 deselected in*",
+                "*[\u2550=] 2 passed, 1 deselected in*",
             ]
         )
         assert result.ret == 0
@@ -630,7 +632,7 @@ class TestTerminalFunctional:
             [
                 "collected 3 items / 1 deselected / 2 selected",
                 "*test_show_deselected.py ..*",
-                "*= 2 passed, 1 deselected in * =*",
+                "*[\u2550=] 2 passed, 1 deselected in * [\u2550=]*",
             ]
         )
         result.stdout.no_fnmatch_line("*= 1 deselected =*")
@@ -682,7 +684,7 @@ class TestTerminalFunctional:
         verinfo = ".".join(map(str, sys.version_info[:3]))
         result.stdout.fnmatch_lines(
             [
-                "*===== test session starts ====*",
+                "*[\u2550=][\u2550=] test session starts [\u2550=][\u2550=]*",
                 "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s"
                 % (
                     sys.platform,
@@ -692,7 +694,7 @@ class TestTerminalFunctional:
                     pluggy.__version__,
                 ),
                 "*test_header_trailer_info.py .*",
-                "=* 1 passed*in *.[0-9][0-9]s *=",
+                "[\u2550=]* 1 passed*in *.[0-9][0-9]s *[\u2550=]",
             ]
         )
         if request.config.pluginmanager.list_plugin_distinfo():
@@ -991,18 +993,18 @@ def test_pass_output_reporting(testdir):
     result = testdir.runpytest("-rPp")
     result.stdout.fnmatch_lines(
         [
-            "*= PASSES =*",
-            "*_ test_pass_has_output _*",
-            "*- Captured stdout setup -*",
+            "*[\u2550=] PASSES [\u2550=]*",
+            "*[\u2581_] test_pass_has_output [\u2581_]*",
+            "*[\u2500-] Captured stdout setup [\u2500-]*",
             "setup_module",
-            "*- Captured stdout call -*",
+            "*[\u2500-] Captured stdout call [\u2500-]*",
             "Four score and seven years ago...",
-            "*- Captured stdout teardown -*",
+            "*[\u2500-] Captured stdout teardown [\u2500-]*",
             "teardown_module",
-            "*= short test summary info =*",
+            "*[\u2550=] short test summary info [\u2550=]*",
             "PASSED test_pass_output_reporting.py::test_pass_has_output",
             "PASSED test_pass_output_reporting.py::test_pass_no_output",
-            "*= 2 passed in *",
+            "*[\u2550=] 2 passed in *",
         ]
     )
 
@@ -1020,15 +1022,15 @@ def test_color_yes(testdir, color_mapping):
     result = testdir.runpytest("--color=yes", str(p1))
     color_mapping.requires_ordered_markup(result)
     result.stdout.fnmatch_lines(
-        color_mapping.format_for_fnmatch(
+        color_mapping.format_for_fnmatch_plain(
             [
-                "{bold}=*= test session starts =*={reset}",
+                "{bold}[\u2550=]*[\u2550=] test session starts [\u2550=]*[\u2550=]{reset}",
                 "collected 1 item",
                 "",
-                "test_color_yes.py {red}F{reset}{red} * [100%]{reset}",
+                "test_color_yes.py {red}F{reset}{red} * [[]100%]{reset}",
                 "",
-                "=*= FAILURES =*=",
-                "{red}{bold}_*_ test_this _*_{reset}",
+                "[\u2550=]*[\u2550=] FAILURES [\u2550=]*[\u2550=]",
+                "{red}{bold}[\u2581_]*[\u2581_] test_this [\u2581_]*[\u2581_]{reset}",
                 "",
                 "    {kw}def{hl-reset} {function}test_this{hl-reset}():",
                 ">       fail()",
@@ -1041,28 +1043,28 @@ def test_color_yes(testdir, color_mapping):
                 "{bold}{red}E       assert 0{reset}",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:2: AssertionError",
-                "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
-            ]
+                "{red}[\u2550=]*[\u2550=] {red}{bold}1 failed{reset}{red} in *s{reset}{red} [\u2550=]*[\u2550=]{reset}",
+            ],
         )
     )
     result = testdir.runpytest("--color=yes", "--tb=short", str(p1))
     result.stdout.fnmatch_lines(
-        color_mapping.format_for_fnmatch(
+        color_mapping.format_for_fnmatch_plain(
             [
-                "{bold}=*= test session starts =*={reset}",
+                "{bold}[\u2550=]*[\u2550=] test session starts [\u2550=]*[\u2550=]{reset}",
                 "collected 1 item",
                 "",
-                "test_color_yes.py {red}F{reset}{red} * [100%]{reset}",
+                "test_color_yes.py {red}F{reset}{red} * [[]100%]{reset}",
                 "",
-                "=*= FAILURES =*=",
-                "{red}{bold}_*_ test_this _*_{reset}",
+                "[\u2550=]*[\u2550=] FAILURES [\u2550=]*[\u2550=]",
+                "{red}{bold}[\u2581_]*[\u2581_] test_this [\u2581_]*[\u2581_]{reset}",
                 "{bold}{red}test_color_yes.py{reset}:5: in test_this",
                 "    fail()",
                 "{bold}{red}test_color_yes.py{reset}:2: in fail",
                 "    {kw}assert{hl-reset} {number}0{hl-reset}",
                 "{bold}{red}E   assert 0{reset}",
-                "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
-            ]
+                "{red}[\u2550=]*[\u2550=] {red}{bold}1 failed{reset}{red} in *s{reset}{red} [\u2550=]*[\u2550=]{reset}",
+            ],
         )
     )
 
@@ -1097,45 +1099,6 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
     if verbose:
         assert "collecting ..." in result.stdout.str()
     assert "collected 10 items" in result.stdout.str()
-
-
-def test_unicode_yes(testdir):
-    p1 = testdir.makepyfile(
-        """
-        def fail():
-            assert 0
-
-        def test_this():
-            fail()
-        """
-    )
-    result = testdir.runpytest("--unicode", str(p1))
-    result.stdout.fnmatch_lines(
-        [
-            "\u2550*\u2550 test session starts \u2550*\u2550",
-            "collected 1 item",
-            "",
-            "test_unicode_yes.py F * ?100%?",
-            "",
-            "\u2550*\u2550 FAILURES \u2550*\u2550",
-            "\u2581*\u2581 test_this \u2581*\u2581",
-            "",
-            "    def test_this():",
-            ">       fail()",
-            "",
-            "test_unicode_yes.py:5: ",
-            "_ _ * _ _*",
-            "",
-            "    def fail():",
-            ">       assert 0",
-            "E       assert 0",
-            "",
-            "test_unicode_yes.py:2: AssertionError",
-            "\u2550*\u2550 short test summary info \u2550*\u2550",
-            "FAILED test_unicode_yes.py::test_this - assert 0",
-            "\u2550*\u2550 1 failed in *s \u2550*\u2550",
-        ]
-    )
 
 
 def test_getreportopt() -> None:
@@ -1290,11 +1253,11 @@ class TestGenericReporting:
         result = testdir.runpytest("--maxfail=1", "-ra")
         result.stdout.fnmatch_lines(
             [
-                "*= short test summary info =*",
+                "*[\u2550=] short test summary info [\u2550=]*",
                 "FAILED *",
                 "*! stopping after 1 failures !*",
                 "*! session_interrupted !*",
-                "*= 1 failed in*",
+                "*[\u2550=] 1 failed in*",
             ]
         )
 
@@ -1536,18 +1499,20 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     result = testdir.runpytest("-ra")
     result.stdout.fnmatch_lines(
         [
-            "*= warnings summary =*",
+            "*[\u2550=] warnings summary [\u2550=]*",
             "*warning_from_test*",
-            "*= short test summary info =*",
-            "*= warnings summary (final) =*",
+            "*[\u2550=] short test summary info [\u2550=]*",
+            "*[\u2550=] warnings summary (final) [\u2550=]*",
             "*conftest.py:3:*internal warning",
-            "*== 1 failed, 2 warnings in *",
+            "*[\u2550=][\u2550=] 1 failed, 2 warnings in *",
         ]
     )
     result.stdout.no_fnmatch_line("*None*")
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
-    assert stdout.count("=== warnings summary ") == 2
+    assert (stdout.count("=== warnings summary ") == 2) or (
+        stdout.count("\u2550\u2550\u2550 warnings summary ") == 2
+    )
 
 
 @pytest.mark.filterwarnings("default")
@@ -1563,16 +1528,18 @@ def test_terminal_summary_warnings_header_once(testdir):
     result = testdir.runpytest("-ra")
     result.stdout.fnmatch_lines(
         [
-            "*= warnings summary =*",
+            "*[\u2550=] warnings summary [\u2550=]*",
             "*warning_from_test*",
-            "*= short test summary info =*",
-            "*== 1 failed, 1 warning in *",
+            "*[\u2550=] short test summary info [\u2550=]*",
+            "*[\u2550=][\u2550=] 1 failed, 1 warning in *",
         ]
     )
     result.stdout.no_fnmatch_line("*None*")
     stdout = result.stdout.str()
     assert stdout.count("warning_from_test") == 1
-    assert stdout.count("=== warnings summary ") == 1
+    assert (stdout.count("=== warnings summary ") == 1) or (
+        stdout.count("\u2550\u2550\u2550 warnings summary ") == 1
+    )
 
 
 @pytest.mark.filterwarnings("default")
@@ -1853,7 +1820,7 @@ class TestProgressOutputStyle:
         )
         output = testdir.runpytest()
         output.stdout.no_fnmatch_line("*ZeroDivisionError*")
-        output.stdout.fnmatch_lines(["=* 2 passed in *="])
+        output.stdout.fnmatch_lines(["[\u2550=]* 2 passed in *[\u2550=]"])
 
     def test_normal(self, many_tests_files, testdir):
         output = testdir.runpytest()
@@ -1910,7 +1877,7 @@ class TestProgressOutputStyle:
             color_mapping.format_for_rematch(
                 [
                     r"test_axfail.py {yellow}x{reset}{yellow} \s+ \[100%\]{reset}",
-                    r"^{yellow}=+ ({yellow}{bold}|{bold}{yellow})1 xfailed{reset}{yellow} in ",
+                    r"^{yellow}[\u2550=]+ ({yellow}{bold}|{bold}{yellow})1 xfailed{reset}{yellow} in ",
                 ]
             )
         )
@@ -2085,16 +2052,14 @@ class TestProgressWithTeardown:
     ) -> None:
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines(
-            color_mapping.format_for_fnmatch(
-                [
-                    "test_bar.py::test_bar[0] PASSED  * [  5%]",
-                    "test_bar.py::test_bar[0] ERROR   * [  5%]",
-                    "test_bar.py::test_bar[4] PASSED  * [ 25%]",
-                    "test_foo.py::test_foo[14] PASSED * [100%]",
-                    "test_foo.py::test_foo[14] ERROR  * [100%]",
-                    "=* 20 passed, 20 errors in *",
-                ]
-            )
+            [
+                "test_bar.py::test_bar[[]0] PASSED  * [[]  5%]",
+                "test_bar.py::test_bar[[]0] ERROR   * [[]  5%]",
+                "test_bar.py::test_bar[[]4] PASSED  * [[] 25%]",
+                "test_foo.py::test_foo[[]14] PASSED * [[]100%]",
+                "test_foo.py::test_foo[[]14] ERROR  * [[]100%]",
+                "[\u2550=]* 20 passed, 20 errors in *",
+            ]
         )
 
     def test_xdist_normal(self, many_files, testdir, monkeypatch):
@@ -2226,13 +2191,13 @@ def test_collecterror(testdir):
     result.stdout.fnmatch_lines(
         [
             "collected 0 items / 1 error",
-            "*= ERRORS =*",
-            "*_ ERROR collecting test_collecterror.py _*",
+            "*[\u2550=] ERRORS [\u2550=]*",
+            "*[\u2581_] ERROR collecting test_collecterror.py [\u2581_]*",
             "E   SyntaxError: *",
-            "*= short test summary info =*",
+            "*[\u2550=] short test summary info [\u2550=]*",
             "ERROR test_collecterror.py",
             "*! Interrupted: 1 error during collection !*",
-            "*= 1 error in *",
+            "*[\u2550=] 1 error in *",
         ]
     )
 
@@ -2247,7 +2212,10 @@ def test_via_exec(testdir: Testdir) -> None:
     p1 = testdir.makepyfile("exec('def test_via_exec(): pass')")
     result = testdir.runpytest(str(p1), "-vv")
     result.stdout.fnmatch_lines(
-        ["test_via_exec.py::test_via_exec <- <string> PASSED*", "*= 1 passed in *"]
+        [
+            "test_via_exec.py::test_via_exec <- <string> PASSED*",
+            "*[\u2550=] 1 passed in *",
+        ]
     )
 
 

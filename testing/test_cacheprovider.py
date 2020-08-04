@@ -71,7 +71,7 @@ class TestNewAPI:
             result.stdout.fnmatch_lines(
                 [
                     # Validate location/stacklevel of warning from cacheprovider.
-                    "*= warnings summary =*",
+                    "*[\u2550=] warnings summary [\u2550=]*",
                     "*/cacheprovider.py:*",
                     "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
                     "{}/v/cache/nodeids".format(cache_dir),
@@ -270,7 +270,7 @@ class TestLastFailed:
             [
                 "collected 3 items / 1 deselected / 2 selected",
                 "run-last-failure: rerun previous 2 failures",
-                "*= 2 passed, 1 deselected in *",
+                "*[\u2550=] 2 passed, 1 deselected in *",
             ]
         )
         result = testdir.runpytest(str(p), "--lf")
@@ -350,7 +350,7 @@ class TestLastFailed:
             [
                 "collected 2 items / 1 deselected / 1 selected",
                 "run-last-failure: rerun previous 1 failure",
-                "*= 1 failed, 1 deselected in *",
+                "*[\u2550=] 1 failed, 1 deselected in *",
             ]
         )
 
@@ -682,7 +682,7 @@ class TestLastFailed:
             [
                 "collected 1 item",
                 "run-last-failure: rerun previous 1 failure (skipped 1 file)",
-                "*= 1 failed in *",
+                "*[\u2550=] 1 failed in *",
             ]
         )
         assert self.get_cached_last_failed(testdir) == ["test_foo.py::test_foo_4"]
@@ -699,7 +699,7 @@ class TestLastFailed:
             [
                 "collected 2 items / 1 deselected / 1 selected",
                 "run-last-failure: rerun previous 1 failure",
-                "*= 1 passed, 1 deselected in *",
+                "*[\u2550=] 1 passed, 1 deselected in *",
             ]
         )
         assert self.get_cached_last_failed(testdir) == []
@@ -793,7 +793,7 @@ class TestLastFailed:
             [
                 "collected 2 items",
                 "run-last-failure: rerun previous 2 failures (skipped 1 file)",
-                "*= 2 failed in *",
+                "*[\u2550=] 2 failed in *",
             ]
         )
 
@@ -810,7 +810,7 @@ class TestLastFailed:
             [
                 "collected 2 items",
                 "run-last-failure: rerun previous 2 failures (skipped 2 files)",
-                "*= 2 failed in *",
+                "*[\u2550=] 2 failed in *",
             ]
         )
 
@@ -912,7 +912,7 @@ class TestLastFailed:
                 "",
                 "<Module pkg1/test_1.py>",
                 "  <Function test_fail>",
-                "*= 1 deselected in *",
+                "*[\u2550=] 1 deselected in *",
             ],
         )
 
@@ -945,7 +945,7 @@ class TestLastFailed:
                 "      <Function test_fail>",
                 "  <Function test_other>",
                 "",
-                "*= 1 deselected in *",
+                "*[\u2550=] 1 deselected in *",
             ],
             consecutive=True,
         )
@@ -980,7 +980,7 @@ class TestLastFailed:
                 "<Module pkg1/test_1.py>",
                 "  <Function test_pass>",
                 "",
-                "*= no tests ran in*",
+                "*[\u2550=] no tests ran in*",
             ],
             consecutive=True,
         )

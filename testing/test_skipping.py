@@ -1228,8 +1228,8 @@ def test_summary_list_after_errors(testdir):
     result = testdir.runpytest("-ra")
     result.stdout.fnmatch_lines(
         [
-            "=* FAILURES *=",
-            "*= short test summary info =*",
+            "[\u2550=]* FAILURES *[\u2550=]",
+            "[\u2550=]* short test summary info [\u2550=]*",
             "FAILED test_summary_list_after_errors.py::test_fail - assert 0",
         ]
     )

@@ -1408,13 +1408,13 @@ class TestMetafuncFunctional:
             [
                 "collected 0 items / 1 error",
                 "",
-                "*= ERRORS =*",
-                "*_ ERROR collecting test_parametrize_misspelling.py _*",
+                "*[\u2550=] ERRORS [\u2550=]*",
+                "*[\u2581_] ERROR collecting test_parametrize_misspelling.py [\u2581_]*",
                 "test_parametrize_misspelling.py:3: in <module>",
                 '    @pytest.mark.parametrise("x", range(2))',
                 "E   Failed: Unknown 'parametrise' mark, did you mean 'parametrize'?",
                 "*! Interrupted: 1 error during collection !*",
-                "*= 1 error in *",
+                "*[\u2550=] 1 error in *",
             ]
         )
 
@@ -1884,6 +1884,6 @@ class TestMarkersWithParametrization:
                 "test_parametrize_iterator.py::test2[param1] PASSED",
                 "test_parametrize_iterator.py::test_converted_to_str[0] PASSED",
                 "test_parametrize_iterator.py::test_converted_to_str[1] PASSED",
-                "*= 6 passed in *",
+                "*[\u2550=] 6 passed in *",
             ]
         )

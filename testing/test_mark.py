@@ -978,7 +978,7 @@ def test_parameterset_for_fail_at_collect(testdir):
             "collected 0 items / 1 error",
             "* ERROR collecting test_parameterset_for_fail_at_collect.py *",
             "Empty parameter set in 'test' at line 3",
-            "*= 1 error in *",
+            "*[\u2550=] 1 error in *",
         ]
     )
     assert result.ret == ExitCode.INTERRUPTED

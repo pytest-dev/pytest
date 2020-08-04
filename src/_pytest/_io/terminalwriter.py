@@ -1,4 +1,5 @@
 """Helper functions for writing to terminals and files."""
+import codecs
 import os
 import shutil
 import sys
@@ -7,6 +8,29 @@ from typing import Sequence
 from typing import TextIO
 
 from .wcwidth import wcswidth
+
+
+# This codec error handling callback replaces the Unicode box drawing
+# characters will the proper ASCII characters, and any other unecodable
+# characters with backslash escapes.
+
+
+def simplify(exc):
+    if not isinstance(exc, UnicodeEncodeError):
+        raise TypeError(f"can't handle {exc}")
+    replacements = [
+        ("\u2500", "-"),
+        ("\u2550", "="),
+        ("\u2581", "_"),
+    ]
+    object = exc.object[exc.start : exc.end]
+    for (u, a) in replacements:
+        object = object.replace(u, a)
+    object = object.encode("ascii", "backslashreplace").decode("ascii")
+    return (object, exc.end)
+
+
+codecs.register_error("simplify", simplify)
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
@@ -154,11 +178,13 @@ class TerminalWriter:
             except UnicodeEncodeError:
                 # Some environments don't support printing general Unicode
                 # strings, due to misconfiguration or otherwise; in that case,
-                # print the string escaped to ASCII.
+                # escape any un-encodable character via our codec error handling
+                # callback registered at the top of this module.
                 # When the Unicode situation improves we should consider
                 # letting the error propagate instead of masking it (see #7475
                 # for one brief attempt).
-                msg = msg.encode("unicode-escape").decode("ascii")
+                encoding = self._file.encoding or "ascii"
+                msg = msg.encode(encoding, "simplify").decode(encoding)
                 self._file.write(msg)
 
             if flush:

@@ -460,7 +460,10 @@ class TestApprox:
         expected = "4.0e-06"
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            ["*At index 0 diff: 3 != 4 ± {}".format(expected), "=* 1 failed in *="]
+            [
+                "*At index 0 diff: 3 != 4 ± {}".format(expected),
+                "[\u2550=]* 1 failed in *[\u2550=]",
+            ]
         )
 
     @pytest.mark.parametrize(

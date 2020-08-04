@@ -292,7 +292,7 @@ def test_setup_show_with_KeyboardInterrupt_in_test(testdir):
             "*test_arg (fixtures used: arg)*",
             "*TEARDOWN F arg*",
             "*! KeyboardInterrupt !*",
-            "*= no tests ran in *",
+            "*[\u2550=] no tests ran in *",
         ]
     )
     assert result.ret == ExitCode.INTERRUPTED

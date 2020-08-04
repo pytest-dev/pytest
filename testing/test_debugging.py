@@ -193,7 +193,7 @@ class TestPDB:
         )
         child = testdir.spawn_pytest("-rs --pdb %s" % p1)
         child.expect("Skipping also with pdb active")
-        child.expect_exact("= 1 skipped in")
+        child.expect_exact("1 skipped in")
         child.sendeof()
         self.flush(child)
 
@@ -221,7 +221,7 @@ class TestPDB:
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "Exit: Quitting debugger" in rest
-        assert "= 1 failed in" in rest
+        assert ("= 1 failed in" in rest) or ("\u2550 1 failed in" in rest)
         assert "def test_1" not in rest
         assert "get rekt" not in rest
         self.flush(child)
@@ -515,7 +515,7 @@ class TestPDB:
         rest = child.read().decode("utf8")
 
         assert "! _pytest.outcomes.Exit: Quitting debugger !" in rest
-        assert "= no tests ran in" in rest
+        assert ("= no tests ran in" in rest) or ("\u2550 no tests ran in" in rest)
         assert "BdbQuit" not in rest
         assert "UNEXPECTED EXCEPTION" not in rest
 
@@ -545,7 +545,7 @@ class TestPDB:
         child.expect("x = 4")
         child.expect("Pdb")
         child.sendline("c")
-        child.expect("_ test_1 _")
+        child.expect(" test_1 ")
         child.expect("def test_1")
         rest = child.read().decode("utf8")
         assert "Captured stdout call" in rest
@@ -734,7 +734,7 @@ class TestPDB:
             assert "> PDB continue (IO-capturing resumed) >" in rest
         else:
             assert "> PDB continue >" in rest
-        assert "= 1 passed in" in rest
+        assert ("= 1 passed in" in rest) or ("\u2550 1 passed in" in rest)
 
     def test_pdb_used_outside_test(self, testdir):
         p1 = testdir.makepyfile(
@@ -1050,7 +1050,7 @@ class TestTraceOption:
         child.sendline("q")
         child.expect_exact("Exit: Quitting debugger")
         rest = child.read().decode("utf8")
-        assert "= 2 passed in" in rest
+        assert ("= 2 passed in" in rest) or ("\u2550 2 passed in" in rest)
         assert "reading from stdin while output" not in rest
         # Only printed once - not on stderr.
         assert "Exit: Quitting debugger" not in child.before.decode("utf8")
@@ -1095,7 +1095,7 @@ class TestTraceOption:
             child.sendline("c")
             child.expect_exact("> PDB continue (IO-capturing resumed) >")
         rest = child.read().decode("utf8")
-        assert "= 6 passed in" in rest
+        assert ("= 6 passed in" in rest) or ("\u2550 6 passed in" in rest)
         assert "reading from stdin while output" not in rest
         # Only printed once - not on stderr.
         assert "Exit: Quitting debugger" not in child.before.decode("utf8")
@@ -1206,7 +1206,7 @@ def test_pdb_suspends_fixture_capturing(testdir, fixture):
 
     TestPDB.flush(child)
     assert child.exitstatus == 0
-    assert "= 1 passed in" in rest
+    assert ("= 1 passed in" in rest) or ("\u2550 1 passed in" in rest)
     assert "> PDB continue (IO-capturing resumed for fixture %s) >" % (fixture) in rest
 
 
@@ -1233,7 +1233,7 @@ def test_pdbcls_via_local_module(testdir):
     )
     result.stdout.fnmatch_lines(
         [
-            "*= FAILURES =*",
+            "*[\u2550=] FAILURES [\u2550=]*",
             "E * --pdbcls: could not import 'really.invalid:Value': No module named *really*",
         ]
     )
@@ -1268,7 +1268,7 @@ def test_raises_bdbquit_with_eoferror(testdir):
         """
     )
     result = testdir.runpytest(str(p1))
-    result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])
+    result.stdout.fnmatch_lines(["E *BdbQuit", "*[\u2550=] 1 failed in*"])
     assert result.ret == 1
 
 

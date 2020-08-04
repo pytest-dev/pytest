@@ -1235,7 +1235,7 @@ def test_pytest_assertrepr_compare_integration(testdir):
             "*assert x == y*",
             "*E*Extra items*left*",
             "*E*50*",
-            "*= 1 failed in*",
+            "*[\u2550=] 1 failed in*",
         ]
     )
 
@@ -1328,8 +1328,8 @@ def test_traceback_failure(testdir):
     result.stdout.fnmatch_lines(
         [
             "*test_traceback_failure.py F*",
-            "====* FAILURES *====",
-            "____*____",
+            "[\u2550=][\u2550=][\u2550=][\u2550=]* FAILURES *[\u2550=][\u2550=][\u2550=][\u2550=]",
+            "[\u2581_][\u2581_][\u2581_][\u2581_]*[\u2581_][\u2581_][\u2581_][\u2581_]",
             "",
             "    def test_onefails():",
             ">       f(3)",
@@ -1350,8 +1350,8 @@ def test_traceback_failure(testdir):
     result.stdout.fnmatch_lines(
         [
             "*test_traceback_failure.py F*",
-            "====* FAILURES *====",
-            "____*____",
+            "[\u2550=][\u2550=][\u2550=][\u2550=]* FAILURES *[\u2550=][\u2550=][\u2550=][\u2550=]",
+            "[\u2581_][\u2581_][\u2581_][\u2581_]*[\u2581_][\u2581_][\u2581_][\u2581_]",
             "",
             "    def test_onefails():",
             ">       f(3)",
@@ -1392,7 +1392,7 @@ def test_exception_handling_no_traceback(testdir):
     result = testdir.runpytest(p1, "--tb=long")
     result.stdout.fnmatch_lines(
         [
-            "====* FAILURES *====",
+            "[\u2550=][\u2550=][\u2550=][\u2550=]* FAILURES *[\u2550=][\u2550=][\u2550=][\u2550=]",
             "*multiprocessing.pool.RemoteTraceback:*",
             "Traceback (most recent call last):",
             "*assert n == 10",
@@ -1413,14 +1413,14 @@ def test_exception_handling_no_traceback(testdir):
         (
             ["-OO", "-m", "pytest"],
             [
-                "=*= warnings summary =*=",
+                "[\u2550=]*[\u2550=] warnings summary [\u2550=]*[\u2550=]",
                 "*PytestConfigWarning:*assert statements are not executed*",
             ],
         ),
         (
             ["-OO", "-m", "pytest", "--assert=plain"],
             [
-                "=*= warnings summary =*=",
+                "[\u2550=]*[\u2550=] warnings summary [\u2550=]*[\u2550=]",
                 "*PytestConfigWarning: ASSERTIONS ARE NOT EXECUTED and FAILING TESTS WILL PASS.  "
                 "Are you using python -O?",
             ],
@@ -1610,6 +1610,6 @@ def test_assertion_location_with_coverage(testdir):
             ">       assert False, 1",
             "E       AssertionError: 1",
             "E       assert False",
-            "*= 1 failed in*",
+            "*[\u2550=] 1 failed in*",
         ]
     )
