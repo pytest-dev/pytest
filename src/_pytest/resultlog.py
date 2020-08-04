@@ -1,5 +1,7 @@
 """log machine-parseable test session result information to a plain text file."""
 import os
+from typing import IO
+from typing import Union
 
 import py
 
@@ -52,16 +54,18 @@ def pytest_unconfigure(config: Config) -> None:
 
 
 class ResultLog:
-    def __init__(self, config, logfile):
+    def __init__(self, config: Config, logfile: IO[str]) -> None:
         self.config = config
         self.logfile = logfile  # preferably line buffered
 
-    def write_log_entry(self, testpath, lettercode, longrepr):
+    def write_log_entry(self, testpath: str, lettercode: str, longrepr: str) -> None:
         print("{} {}".format(lettercode, testpath), file=self.logfile)
         for line in longrepr.splitlines():
             print(" %s" % line, file=self.logfile)
 
-    def log_outcome(self, report, lettercode, longrepr):
+    def log_outcome(
+        self, report: Union[TestReport, CollectReport], lettercode: str, longrepr: str
+    ) -> None:
         testpath = getattr(report, "nodeid", None)
         if testpath is None:
             testpath = report.fspath
@@ -73,7 +77,7 @@ class ResultLog:
         res = self.config.hook.pytest_report_teststatus(
             report=report, config=self.config
         )
-        code = res[1]
+        code = res[1]  # type: str
         if code == "x":
             longrepr = str(report.longrepr)
         elif code == "X":
@@ -81,7 +85,7 @@ class ResultLog:
         elif report.passed:
             longrepr = ""
         elif report.skipped:
-            assert report.longrepr is not None
+            assert isinstance(report.longrepr, tuple)
             longrepr = str(report.longrepr[2])
         else:
             longrepr = str(report.longrepr)

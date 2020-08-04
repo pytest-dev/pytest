@@ -1247,6 +1247,7 @@ def _folded_skips(
     d = {}  # type: Dict[Tuple[str, Optional[int], str], List[CollectReport]]
     for event in skipped:
         assert event.longrepr is not None
+        assert isinstance(event.longrepr, tuple), (event, event.longrepr)
         assert len(event.longrepr) == 3, (event, event.longrepr)
         fspath, lineno, reason = event.longrepr
         # For consistency, report all fspaths in relative form.

@@ -1,6 +1,7 @@
 from io import StringIO
 from pprint import pprint
 from typing import Any
+from typing import cast
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
@@ -15,6 +16,7 @@ import py
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprEntry
 from _pytest._code.code import ReprEntryNative
 from _pytest._code.code import ReprExceptionInfo
@@ -57,8 +59,9 @@ _R = TypeVar("_R", bound="BaseReport")
 class BaseReport:
     when = None  # type: Optional[str]
     location = None  # type: Optional[Tuple[str, Optional[int], str]]
-    # TODO: Improve this Any.
-    longrepr = None  # type: Optional[Any]
+    longrepr = (
+        None
+    )  # type: Union[None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr]
     sections = []  # type: List[Tuple[str, str]]
     nodeid = None  # type: str
 
@@ -79,7 +82,8 @@ class BaseReport:
             return
 
         if hasattr(longrepr, "toterminal"):
-            longrepr.toterminal(out)
+            longrepr_terminal = cast(TerminalRepr, longrepr)
+            longrepr_terminal.toterminal(out)
         else:
             try:
                 s = str(longrepr)
@@ -233,7 +237,9 @@ class TestReport(BaseReport):
         location: Tuple[str, Optional[int], str],
         keywords,
         outcome: "Literal['passed', 'failed', 'skipped']",
-        longrepr,
+        longrepr: Union[
+            None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr
+        ],
         when: "Literal['setup', 'call', 'teardown']",
         sections: Iterable[Tuple[str, str]] = (),
         duration: float = 0,
@@ -293,8 +299,9 @@ class TestReport(BaseReport):
         sections = []
         if not call.excinfo:
             outcome = "passed"  # type: Literal["passed", "failed", "skipped"]
-            # TODO: Improve this Any.
-            longrepr = None  # type: Optional[Any]
+            longrepr = (
+                None
+            )  # type: Union[None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr]
         else:
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
@@ -372,7 +379,7 @@ class CollectReport(BaseReport):
 
 
 class CollectErrorRepr(TerminalRepr):
-    def __init__(self, msg) -> None:
+    def __init__(self, msg: str) -> None:
         self.longrepr = msg
 
     def toterminal(self, out: TerminalWriter) -> None:
@@ -436,16 +443,18 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
         else:
             return None
 
-    def serialize_longrepr(rep: BaseReport) -> Dict[str, Any]:
+    def serialize_exception_longrepr(rep: BaseReport) -> Dict[str, Any]:
         assert rep.longrepr is not None
+        # TODO: Investigate whether the duck typing is really necessary here.
+        longrepr = cast(ExceptionRepr, rep.longrepr)
         result = {
-            "reprcrash": serialize_repr_crash(rep.longrepr.reprcrash),
-            "reprtraceback": serialize_repr_traceback(rep.longrepr.reprtraceback),
-            "sections": rep.longrepr.sections,
+            "reprcrash": serialize_repr_crash(longrepr.reprcrash),
+            "reprtraceback": serialize_repr_traceback(longrepr.reprtraceback),
+            "sections": longrepr.sections,
         }  # type: Dict[str, Any]
-        if isinstance(rep.longrepr, ExceptionChainRepr):
+        if isinstance(longrepr, ExceptionChainRepr):
             result["chain"] = []
-            for repr_traceback, repr_crash, description in rep.longrepr.chain:
+            for repr_traceback, repr_crash, description in longrepr.chain:
                 result["chain"].append(
                     (
                         serialize_repr_traceback(repr_traceback),
@@ -462,7 +471,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
         if hasattr(report.longrepr, "reprtraceback") and hasattr(
             report.longrepr, "reprcrash"
         ):
-            d["longrepr"] = serialize_longrepr(report)
+            d["longrepr"] = serialize_exception_longrepr(report)
         else:
             d["longrepr"] = str(report.longrepr)
     else:

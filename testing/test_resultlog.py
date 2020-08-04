@@ -1,18 +1,21 @@
 import os
 from io import StringIO
+from typing import List
 
 import _pytest._code
 import pytest
+from _pytest.pytester import Testdir
 from _pytest.resultlog import pytest_configure
 from _pytest.resultlog import pytest_unconfigure
 from _pytest.resultlog import ResultLog
 from _pytest.resultlog import resultlog_key
 
+
 pytestmark = pytest.mark.filterwarnings("ignore:--result-log is deprecated")
 
 
-def test_write_log_entry():
-    reslog = ResultLog(None, None)
+def test_write_log_entry() -> None:
+    reslog = ResultLog(None, None)  # type: ignore[arg-type]
     reslog.logfile = StringIO()
     reslog.write_log_entry("name", ".", "")
     entry = reslog.logfile.getvalue()
@@ -54,14 +57,14 @@ class TestWithFunctionIntegration:
     # XXX (hpk) i think that the resultlog plugin should
     # provide a Parser object so that one can remain
     # ignorant regarding formatting details.
-    def getresultlog(self, testdir, arg):
+    def getresultlog(self, testdir: Testdir, arg: str) -> List[str]:
         resultlog = testdir.tmpdir.join("resultlog")
         testdir.plugins.append("resultlog")
         args = ["--resultlog=%s" % resultlog] + [arg]
         testdir.runpytest(*args)
         return [x for x in resultlog.readlines(cr=0) if x]
 
-    def test_collection_report(self, testdir):
+    def test_collection_report(self, testdir: Testdir) -> None:
         ok = testdir.makepyfile(test_collection_ok="")
         fail = testdir.makepyfile(test_collection_fail="XXX")
         lines = self.getresultlog(testdir, ok)
@@ -75,7 +78,7 @@ class TestWithFunctionIntegration:
             assert x.startswith(" ")
         assert "XXX" in "".join(lines[1:])
 
-    def test_log_test_outcomes(self, testdir):
+    def test_log_test_outcomes(self, testdir: Testdir) -> None:
         mod = testdir.makepyfile(
             test_mod="""
             import pytest
@@ -111,16 +114,17 @@ class TestWithFunctionIntegration:
         assert len(lines) == 15
 
     @pytest.mark.parametrize("style", ("native", "long", "short"))
-    def test_internal_exception(self, style):
+    def test_internal_exception(self, style) -> None:
         # they are produced for example by a teardown failing
         # at the end of the run or a failing hook invocation
         try:
             raise ValueError
         except ValueError:
             excinfo = _pytest._code.ExceptionInfo.from_current()
-        reslog = ResultLog(None, StringIO())
+        file = StringIO()
+        reslog = ResultLog(None, file)  # type: ignore[arg-type]
         reslog.pytest_internalerror(excinfo.getrepr(style=style))
-        entry = reslog.logfile.getvalue()
+        entry = file.getvalue()
         entry_lines = entry.splitlines()
 
         assert entry_lines[0].startswith("! ")
@@ -130,7 +134,7 @@ class TestWithFunctionIntegration:
         assert "ValueError" in entry
 
 
-def test_generic(testdir, LineMatcher):
+def test_generic(testdir: Testdir, LineMatcher) -> None:
     testdir.plugins.append("resultlog")
     testdir.makepyfile(
         """
@@ -162,7 +166,7 @@ def test_generic(testdir, LineMatcher):
     )
 
 
-def test_makedir_for_resultlog(testdir, LineMatcher):
+def test_makedir_for_resultlog(testdir: Testdir, LineMatcher) -> None:
     """--resultlog should automatically create directories for the log file"""
     testdir.plugins.append("resultlog")
     testdir.makepyfile(
@@ -177,7 +181,7 @@ def test_makedir_for_resultlog(testdir, LineMatcher):
     LineMatcher(lines).fnmatch_lines([". *:test_pass"])
 
 
-def test_no_resultlog_on_workers(testdir):
+def test_no_resultlog_on_workers(testdir: Testdir) -> None:
     config = testdir.parseconfig("-p", "resultlog", "--resultlog=resultlog")
 
     assert resultlog_key not in config._store
@@ -186,14 +190,14 @@ def test_no_resultlog_on_workers(testdir):
     pytest_unconfigure(config)
     assert resultlog_key not in config._store
 
-    config.workerinput = {}
+    config.workerinput = {}  # type: ignore[attr-defined]
     pytest_configure(config)
     assert resultlog_key not in config._store
     pytest_unconfigure(config)
     assert resultlog_key not in config._store
 
 
-def test_unknown_teststatus(testdir):
+def test_unknown_teststatus(testdir: Testdir) -> None:
     """Ensure resultlog correctly handles unknown status from pytest_report_teststatus
 
     Inspired on pytest-rerunfailures.
@@ -229,7 +233,7 @@ def test_unknown_teststatus(testdir):
     assert lines[0] == "r test_unknown_teststatus.py::test"
 
 
-def test_failure_issue380(testdir):
+def test_failure_issue380(testdir: Testdir) -> None:
     testdir.makeconftest(
         """
         import pytest

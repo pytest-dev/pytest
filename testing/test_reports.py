@@ -1,14 +1,19 @@
 import sys
+from typing import Sequence
+from typing import Union
 
 import pytest
 from _pytest._code.code import ExceptionChainRepr
+from _pytest._code.code import ExceptionRepr
+from _pytest.config import Config
 from _pytest.pathlib import Path
+from _pytest.pytester import Testdir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 
 
 class TestReportSerialization:
-    def test_xdist_longrepr_to_str_issue_241(self, testdir):
+    def test_xdist_longrepr_to_str_issue_241(self, testdir: Testdir) -> None:
         """Regarding issue pytest-xdist#241.
 
         This test came originally from test_remote.py in xdist (ca03269).
@@ -31,7 +36,7 @@ class TestReportSerialization:
         assert test_b_call.outcome == "passed"
         assert test_b_call._to_json()["longrepr"] is None
 
-    def test_xdist_report_longrepr_reprcrash_130(self, testdir) -> None:
+    def test_xdist_report_longrepr_reprcrash_130(self, testdir: Testdir) -> None:
         """Regarding issue pytest-xdist#130
 
         This test came originally from test_remote.py in xdist (ca03269).
@@ -46,15 +51,18 @@ class TestReportSerialization:
         assert len(reports) == 3
         rep = reports[1]
         added_section = ("Failure Metadata", "metadata metadata", "*")
+        assert isinstance(rep.longrepr, ExceptionRepr)
         rep.longrepr.sections.append(added_section)
         d = rep._to_json()
         a = TestReport._from_json(d)
-        assert a.longrepr is not None
+        assert isinstance(a.longrepr, ExceptionRepr)
         # Check assembled == rep
         assert a.__dict__.keys() == rep.__dict__.keys()
         for key in rep.__dict__.keys():
             if key != "longrepr":
                 assert getattr(a, key) == getattr(rep, key)
+        assert rep.longrepr.reprcrash is not None
+        assert a.longrepr.reprcrash is not None
         assert rep.longrepr.reprcrash.lineno == a.longrepr.reprcrash.lineno
         assert rep.longrepr.reprcrash.message == a.longrepr.reprcrash.message
         assert rep.longrepr.reprcrash.path == a.longrepr.reprcrash.path
@@ -67,7 +75,7 @@ class TestReportSerialization:
         # Missing section attribute PR171
         assert added_section in a.longrepr.sections
 
-    def test_reprentries_serialization_170(self, testdir) -> None:
+    def test_reprentries_serialization_170(self, testdir: Testdir) -> None:
         """Regarding issue pytest-xdist#170
 
         This test came originally from test_remote.py in xdist (ca03269).
@@ -85,25 +93,35 @@ class TestReportSerialization:
         reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 3
         rep = reports[1]
+        assert isinstance(rep.longrepr, ExceptionRepr)
         d = rep._to_json()
         a = TestReport._from_json(d)
-        assert a.longrepr is not None
+        assert isinstance(a.longrepr, ExceptionRepr)
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
         for i in range(len(a_entries)):
-            assert isinstance(rep_entries[i], ReprEntry)
-            assert rep_entries[i].lines == a_entries[i].lines
-            assert rep_entries[i].reprfileloc.lineno == a_entries[i].reprfileloc.lineno
-            assert (
-                rep_entries[i].reprfileloc.message == a_entries[i].reprfileloc.message
-            )
-            assert rep_entries[i].reprfileloc.path == a_entries[i].reprfileloc.path
-            assert rep_entries[i].reprfuncargs.args == a_entries[i].reprfuncargs.args
-            assert rep_entries[i].reprlocals.lines == a_entries[i].reprlocals.lines
-            assert rep_entries[i].style == a_entries[i].style
+            rep_entry = rep_entries[i]
+            assert isinstance(rep_entry, ReprEntry)
+            assert rep_entry.reprfileloc is not None
+            assert rep_entry.reprfuncargs is not None
+            assert rep_entry.reprlocals is not None
 
-    def test_reprentries_serialization_196(self, testdir) -> None:
+            a_entry = a_entries[i]
+            assert isinstance(a_entry, ReprEntry)
+            assert a_entry.reprfileloc is not None
+            assert a_entry.reprfuncargs is not None
+            assert a_entry.reprlocals is not None
+
+            assert rep_entry.lines == a_entry.lines
+            assert rep_entry.reprfileloc.lineno == a_entry.reprfileloc.lineno
+            assert rep_entry.reprfileloc.message == a_entry.reprfileloc.message
+            assert rep_entry.reprfileloc.path == a_entry.reprfileloc.path
+            assert rep_entry.reprfuncargs.args == a_entry.reprfuncargs.args
+            assert rep_entry.reprlocals.lines == a_entry.reprlocals.lines
+            assert rep_entry.style == a_entry.style
+
+    def test_reprentries_serialization_196(self, testdir: Testdir) -> None:
         """Regarding issue pytest-xdist#196
 
         This test came originally from test_remote.py in xdist (ca03269).
@@ -121,9 +139,10 @@ class TestReportSerialization:
         reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 3
         rep = reports[1]
+        assert isinstance(rep.longrepr, ExceptionRepr)
         d = rep._to_json()
         a = TestReport._from_json(d)
-        assert a.longrepr is not None
+        assert isinstance(a.longrepr, ExceptionRepr)
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
@@ -131,7 +150,7 @@ class TestReportSerialization:
             assert isinstance(rep_entries[i], ReprEntryNative)
             assert rep_entries[i].lines == a_entries[i].lines
 
-    def test_itemreport_outcomes(self, testdir):
+    def test_itemreport_outcomes(self, testdir: Testdir) -> None:
         # This test came originally from test_remote.py in xdist (ca03269).
         reprec = testdir.inline_runsource(
             """
@@ -157,7 +176,7 @@ class TestReportSerialization:
             assert newrep.failed == rep.failed
             assert newrep.skipped == rep.skipped
             if newrep.skipped and not hasattr(newrep, "wasxfail"):
-                assert newrep.longrepr is not None
+                assert isinstance(newrep.longrepr, tuple)
                 assert len(newrep.longrepr) == 3
             assert newrep.outcome == rep.outcome
             assert newrep.when == rep.when
@@ -165,7 +184,7 @@ class TestReportSerialization:
             if rep.failed:
                 assert newrep.longreprtext == rep.longreprtext
 
-    def test_collectreport_passed(self, testdir):
+    def test_collectreport_passed(self, testdir: Testdir) -> None:
         """This test came originally from test_remote.py in xdist (ca03269)."""
         reprec = testdir.inline_runsource("def test_func(): pass")
         reports = reprec.getreports("pytest_collectreport")
@@ -176,7 +195,7 @@ class TestReportSerialization:
             assert newrep.failed == rep.failed
             assert newrep.skipped == rep.skipped
 
-    def test_collectreport_fail(self, testdir):
+    def test_collectreport_fail(self, testdir: Testdir) -> None:
         """This test came originally from test_remote.py in xdist (ca03269)."""
         reprec = testdir.inline_runsource("qwe abc")
         reports = reprec.getreports("pytest_collectreport")
@@ -190,13 +209,13 @@ class TestReportSerialization:
             if rep.failed:
                 assert newrep.longrepr == str(rep.longrepr)
 
-    def test_extended_report_deserialization(self, testdir):
+    def test_extended_report_deserialization(self, testdir: Testdir) -> None:
         """This test came originally from test_remote.py in xdist (ca03269)."""
         reprec = testdir.inline_runsource("qwe abc")
         reports = reprec.getreports("pytest_collectreport")
         assert reports
         for rep in reports:
-            rep.extra = True
+            rep.extra = True  # type: ignore[attr-defined]
             d = rep._to_json()
             newrep = CollectReport._from_json(d)
             assert newrep.extra
@@ -206,7 +225,7 @@ class TestReportSerialization:
             if rep.failed:
                 assert newrep.longrepr == str(rep.longrepr)
 
-    def test_paths_support(self, testdir):
+    def test_paths_support(self, testdir: Testdir) -> None:
         """Report attributes which are py.path or pathlib objects should become strings."""
         testdir.makepyfile(
             """
@@ -218,13 +237,13 @@ class TestReportSerialization:
         reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 3
         test_a_call = reports[1]
-        test_a_call.path1 = testdir.tmpdir
-        test_a_call.path2 = Path(testdir.tmpdir)
+        test_a_call.path1 = testdir.tmpdir  # type: ignore[attr-defined]
+        test_a_call.path2 = Path(testdir.tmpdir)  # type: ignore[attr-defined]
         data = test_a_call._to_json()
         assert data["path1"] == str(testdir.tmpdir)
         assert data["path2"] == str(testdir.tmpdir)
 
-    def test_deserialization_failure(self, testdir):
+    def test_deserialization_failure(self, testdir: Testdir) -> None:
         """Check handling of failure during deserialization of report types."""
         testdir.makepyfile(
             """
@@ -247,7 +266,7 @@ class TestReportSerialization:
             TestReport._from_json(data)
 
     @pytest.mark.parametrize("report_class", [TestReport, CollectReport])
-    def test_chained_exceptions(self, testdir, tw_mock, report_class):
+    def test_chained_exceptions(self, testdir: Testdir, tw_mock, report_class) -> None:
         """Check serialization/deserialization of report objects containing chained exceptions (#5786)"""
         testdir.makepyfile(
             """
@@ -267,7 +286,9 @@ class TestReportSerialization:
 
         reprec = testdir.inline_run()
         if report_class is TestReport:
-            reports = reprec.getreports("pytest_runtest_logreport")
+            reports = reprec.getreports(
+                "pytest_runtest_logreport"
+            )  # type: Union[Sequence[TestReport], Sequence[CollectReport]]
             # we have 3 reports: setup/call/teardown
             assert len(reports) == 3
             # get the call report
@@ -279,7 +300,7 @@ class TestReportSerialization:
             assert len(reports) == 2
             report = reports[1]
 
-        def check_longrepr(longrepr):
+        def check_longrepr(longrepr: ExceptionChainRepr) -> None:
             """Check the attributes of the given longrepr object according to the test file.
 
             We can get away with testing both CollectReport and TestReport with this function because
@@ -303,6 +324,7 @@ class TestReportSerialization:
 
         assert report.failed
         assert len(report.sections) == 0
+        assert isinstance(report.longrepr, ExceptionChainRepr)
         report.longrepr.addsection("title", "contents", "=")
         check_longrepr(report.longrepr)
 
@@ -317,7 +339,7 @@ class TestReportSerialization:
         # elsewhere and we do check the contents of the longrepr object after loading it.
         loaded_report.longrepr.toterminal(tw_mock)
 
-    def test_chained_exceptions_no_reprcrash(self, testdir, tw_mock) -> None:
+    def test_chained_exceptions_no_reprcrash(self, testdir: Testdir, tw_mock) -> None:
         """Regression test for tracebacks without a reprcrash (#5971)
 
         This happens notably on exceptions raised by multiprocess.pool: the exception transfer
@@ -368,7 +390,7 @@ class TestReportSerialization:
 
         reports = reprec.getreports("pytest_runtest_logreport")
 
-        def check_longrepr(longrepr) -> None:
+        def check_longrepr(longrepr: object) -> None:
             assert isinstance(longrepr, ExceptionChainRepr)
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
@@ -397,9 +419,12 @@ class TestReportSerialization:
 
         # for same reasons as previous test, ensure we don't blow up here
         assert loaded_report.longrepr is not None
+        assert isinstance(loaded_report.longrepr, ExceptionChainRepr)
         loaded_report.longrepr.toterminal(tw_mock)
 
-    def test_report_prevent_ConftestImportFailure_hiding_exception(self, testdir):
+    def test_report_prevent_ConftestImportFailure_hiding_exception(
+        self, testdir: Testdir
+    ) -> None:
         sub_dir = testdir.tmpdir.join("ns").ensure_dir()
         sub_dir.join("conftest").new(ext=".py").write("import unknown")
 
@@ -411,7 +436,7 @@ class TestReportSerialization:
 class TestHooks:
     """Test that the hooks are working correctly for plugins"""
 
-    def test_test_report(self, testdir, pytestconfig):
+    def test_test_report(self, testdir: Testdir, pytestconfig: Config) -> None:
         testdir.makepyfile(
             """
             def test_a(): assert False
@@ -433,7 +458,7 @@ class TestHooks:
             assert new_rep.when == rep.when
             assert new_rep.outcome == rep.outcome
 
-    def test_collect_report(self, testdir, pytestconfig):
+    def test_collect_report(self, testdir: Testdir, pytestconfig: Config) -> None:
         testdir.makepyfile(
             """
             def test_a(): assert False
@@ -458,7 +483,9 @@ class TestHooks:
     @pytest.mark.parametrize(
         "hook_name", ["pytest_runtest_logreport", "pytest_collectreport"]
     )
-    def test_invalid_report_types(self, testdir, pytestconfig, hook_name):
+    def test_invalid_report_types(
+        self, testdir: Testdir, pytestconfig: Config, hook_name: str
+    ) -> None:
         testdir.makepyfile(
             """
             def test_a(): pass
