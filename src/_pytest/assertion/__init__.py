@@ -57,7 +57,7 @@ def register_assert_rewrite(*names: str) -> None:
     """
     for name in names:
         if not isinstance(name, str):
-            msg = "expected module names as *args, got {0} instead"
+            msg = "expected module names as *args, got {0} instead"  # type: ignore[unreachable]
             raise TypeError(msg.format(repr(names)))
     for hook in sys.meta_path:
         if isinstance(hook, rewrite.AssertionRewritingHook):

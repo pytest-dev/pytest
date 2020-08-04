@@ -1097,7 +1097,10 @@ class Metafunc:
             elif isinstance(id_value, (float, int, bool)):
                 new_ids.append(str(id_value))
             else:
-                msg = "In {}: ids must be list of string/float/int/bool, found: {} (type: {!r}) at index {}"
+                msg = (  # type: ignore[unreachable]
+                    "In {}: ids must be list of string/float/int/bool, "
+                    "found: {} (type: {!r}) at index {}"
+                )
                 fail(
                     msg.format(func_name, saferepr(id_value), type(id_value), idx),
                     pytrace=False,

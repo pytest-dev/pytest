@@ -522,12 +522,12 @@ class TerminalReporter:
         rep = report
         res = self.config.hook.pytest_report_teststatus(
             report=rep, config=self.config
-        )  # type: Tuple[str, str, str]
+        )  # type: Tuple[str, str, Union[str, Tuple[str, Mapping[str, bool]]]]
         category, letter, word = res
-        if isinstance(word, tuple):
-            word, markup = word
-        else:
+        if not isinstance(word, tuple):
             markup = None
+        else:
+            word, markup = word
         self._add_stats(category, [rep])
         if not letter and not word:
             # Probably passed setup/teardown.

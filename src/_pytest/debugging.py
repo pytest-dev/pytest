@@ -7,6 +7,7 @@ from typing import Any
 from typing import Callable
 from typing import Generator
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -23,6 +24,8 @@ from _pytest.nodes import Node
 from _pytest.reports import BaseReport
 
 if TYPE_CHECKING:
+    from typing import Type
+
     from _pytest.capture import CaptureManager
     from _pytest.runner import CallInfo
 
@@ -92,20 +95,22 @@ def pytest_configure(config: Config) -> None:
 class pytestPDB:
     """Pseudo PDB that defers to the real pdb."""
 
-    _pluginmanager = None  # type: PytestPluginManager
+    _pluginmanager = None  # type: Optional[PytestPluginManager]
     _config = None  # type: Config
-    _saved = []  # type: List[Tuple[Callable[..., None], PytestPluginManager, Config]]
+    _saved = (
+        []
+    )  # type: List[Tuple[Callable[..., None], Optional[PytestPluginManager], Config]]
     _recursive_debug = 0
-    _wrapped_pdb_cls = None
+    _wrapped_pdb_cls = None  # type: Optional[Tuple[Type[Any], Type[Any]]]
 
     @classmethod
-    def _is_capturing(cls, capman: "CaptureManager") -> Union[str, bool]:
+    def _is_capturing(cls, capman: Optional["CaptureManager"]) -> Union[str, bool]:
         if capman:
             return capman.is_capturing()
         return False
 
     @classmethod
-    def _import_pdb_cls(cls, capman: "CaptureManager"):
+    def _import_pdb_cls(cls, capman: Optional["CaptureManager"]):
         if not cls._config:
             import pdb
 
@@ -144,7 +149,7 @@ class pytestPDB:
         return wrapped_cls
 
     @classmethod
-    def _get_pdb_wrapper_class(cls, pdb_cls, capman: "CaptureManager"):
+    def _get_pdb_wrapper_class(cls, pdb_cls, capman: Optional["CaptureManager"]):
         import _pytest.config
 
         # Type ignored because mypy doesn't support "dynamic"
@@ -176,9 +181,11 @@ class pytestPDB:
                                 "PDB continue (IO-capturing resumed for %s)"
                                 % capturing,
                             )
+                        assert capman is not None
                         capman.resume()
                     else:
                         tw.sep(">", "PDB continue")
+                assert cls._pluginmanager is not None
                 cls._pluginmanager.hook.pytest_leave_pdb(config=cls._config, pdb=self)
                 self._continued = True
                 return ret
@@ -232,10 +239,10 @@ class pytestPDB:
         """Initialize PDB debugging, dropping any IO capturing."""
         import _pytest.config
 
-        if cls._pluginmanager is not None:
-            capman = cls._pluginmanager.getplugin("capturemanager")
+        if cls._pluginmanager is None:
+            capman = None  # type: Optional[CaptureManager]
         else:
-            capman = None
+            capman = cls._pluginmanager.getplugin("capturemanager")
         if capman:
             capman.suspend(in_=True)
 

@@ -1390,7 +1390,7 @@ def _assertion_supported() -> bool:
     except AssertionError:
         return True
     else:
-        return False
+        return False  # type: ignore[unreachable]
 
 
 def create_terminal_writer(

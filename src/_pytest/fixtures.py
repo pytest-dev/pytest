@@ -993,7 +993,8 @@ class FixtureDef(Generic[_FixtureValue]):
         else:
             scope_ = scope
         self.scopenum = scope2index(
-            scope_ or "function",
+            # TODO: Check if the `or` here is really necessary.
+            scope_ or "function",  # type: ignore[unreachable]
             descr="Fixture '{}'".format(func.__name__),
             where=baseid,
         )
@@ -1319,7 +1320,7 @@ def fixture(  # noqa: F811
     # **kwargs and check `in`, but that obfuscates the function signature.
     if isinstance(fixture_function, str):
         # It's actually the first positional argument, scope.
-        args = (fixture_function, *args)
+        args = (fixture_function, *args)  # type: ignore[unreachable]
         fixture_function = None
     duplicated_args = []
     if len(args) > 0:

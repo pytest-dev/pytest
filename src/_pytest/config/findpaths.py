@@ -107,7 +107,7 @@ def locate_config(
 
 
 def get_common_ancestor(paths: Iterable[py.path.local]) -> py.path.local:
-    common_ancestor = None
+    common_ancestor = None  # type: Optional[py.path.local]
     for path in paths:
         if not path.exists():
             continue
