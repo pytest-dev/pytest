@@ -201,6 +201,11 @@ Or to select "http" and "quick" tests:
 You can use ``and``, ``or``, ``not`` and parentheses.
 
 
+In addition to the test's name, ``-k`` also matches the names of the test's parents (usually, the name of the file and class it's in),
+attributes set on the test function, markers applied to it or its parents and any :attr:`extra keywords <_pytest.nodes.Node.extra_keyword_matches>`
+explicitly added to it or its parents.
+
+
 Registering markers
 -------------------------------------
 
