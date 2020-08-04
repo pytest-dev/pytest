@@ -17,7 +17,7 @@ from .wcwidth import wcswidth
 
 def simplify(exc):
     if not isinstance(exc, UnicodeEncodeError):
-        raise TypeError(f"can't handle {exc}")
+        raise TypeError("can't handle {}".format(exc))
     replacements = [
         ("\u2500", "-"),
         ("\u2550", "="),
