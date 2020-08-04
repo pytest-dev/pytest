@@ -1,5 +1,4 @@
-"""
-Test importing of all internal packages and modules.
+"""Test importing of all internal packages and modules.
 
 This ensures all internal packages can be imported without needing the pytest
 namespace being set, which is critical for the initialization of xdist.

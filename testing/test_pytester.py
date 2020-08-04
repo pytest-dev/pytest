@@ -166,18 +166,18 @@ def test_xpassed_with_strict_is_considered_a_failure(testdir) -> None:
 def make_holder():
     class apiclass:
         def pytest_xyz(self, arg):
-            "x"
+            """X"""
 
         def pytest_xyz_noarg(self):
-            "x"
+            """X"""
 
     apimod = type(os)("api")
 
     def pytest_xyz(arg):
-        "x"
+        """X"""
 
     def pytest_xyz_noarg():
-        "x"
+        """X"""
 
     apimod.pytest_xyz = pytest_xyz  # type: ignore
     apimod.pytest_xyz_noarg = pytest_xyz_noarg  # type: ignore

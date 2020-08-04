@@ -1196,9 +1196,7 @@ def test_pdb_teardown_called(testdir, monkeypatch) -> None:
 
 @pytest.mark.parametrize("mark", ["@unittest.skip", "@pytest.mark.skip"])
 def test_pdb_teardown_skipped(testdir, monkeypatch, mark: str) -> None:
-    """
-    With --pdb, setUp and tearDown should not be called for skipped tests.
-    """
+    """With --pdb, setUp and tearDown should not be called for skipped tests."""
     tracked = []  # type: List[str]
     monkeypatch.setattr(pytest, "test_pdb_teardown_skipped", tracked, raising=False)
 

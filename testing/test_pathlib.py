@@ -18,9 +18,8 @@ from _pytest.pathlib import resolve_package_path
 
 
 class TestFNMatcherPort:
-    """Test that our port of py.common.FNMatcher (fnmatch_ex) produces the same results as the
-    original py.path.local.fnmatch method.
-    """
+    """Test that our port of py.common.FNMatcher (fnmatch_ex) produces the
+    same results as the original py.path.local.fnmatch method."""
 
     @pytest.fixture(params=["pathlib", "py.path"])
     def match(self, request):
@@ -268,19 +267,19 @@ class TestImportPath:
         return fn
 
     def test_importmode_importlib(self, simple_module):
-        """importlib mode does not change sys.path"""
+        """`importlib` mode does not change sys.path."""
         module = import_path(simple_module, mode="importlib")
         assert module.foo(2) == 42  # type: ignore[attr-defined]
         assert simple_module.dirname not in sys.path
 
     def test_importmode_twice_is_different_module(self, simple_module):
-        """importlib mode always returns a new module"""
+        """`importlib` mode always returns a new module."""
         module1 = import_path(simple_module, mode="importlib")
         module2 = import_path(simple_module, mode="importlib")
         assert module1 is not module2
 
     def test_no_meta_path_found(self, simple_module, monkeypatch):
-        """Even without any meta_path should still import module"""
+        """Even without any meta_path should still import module."""
         monkeypatch.setattr(sys, "meta_path", [])
         module = import_path(simple_module, mode="importlib")
         assert module.foo(2) == 42  # type: ignore[attr-defined]

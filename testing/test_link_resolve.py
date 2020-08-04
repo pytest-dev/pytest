@@ -50,9 +50,7 @@ def subst_path_linux(filename):
 
 
 def test_link_resolve(testdir: pytester.Testdir) -> None:
-    """
-    See: https://github.com/pytest-dev/pytest/issues/5965
-    """
+    """See: https://github.com/pytest-dev/pytest/issues/5965."""
     sub1 = testdir.mkpydir("sub1")
     p = sub1.join("test_foo.py")
     p.write(

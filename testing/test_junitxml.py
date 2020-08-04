@@ -22,7 +22,7 @@ from _pytest.store import Store
 
 @pytest.fixture(scope="session")
 def schema():
-    """Returns a xmlschema.XMLSchema object for the junit-10.xsd file"""
+    """Return an xmlschema.XMLSchema object for the junit-10.xsd file."""
     fn = Path(__file__).parent / "example_scripts/junit-10.xsd"
     with fn.open() as f:
         return xmlschema.XMLSchema(f)
@@ -30,9 +30,8 @@ def schema():
 
 @pytest.fixture
 def run_and_parse(testdir, schema):
-    """
-    Fixture that returns a function that can be used to execute pytest and return
-    the parsed ``DomNode`` of the root xml node.
+    """Fixture that returns a function that can be used to execute pytest and
+    return the parsed ``DomNode`` of the root xml node.
 
     The ``family`` parameter is used to configure the ``junit_family`` of the written report.
     "xunit2" is also automatically validated against the schema.
@@ -720,7 +719,7 @@ class TestPython:
         assert "hx" in fnode.toxml()
 
     def test_assertion_binchars(self, testdir, run_and_parse):
-        """this test did fail when the escaping wasnt strict"""
+        """This test did fail when the escaping wasn't strict."""
         testdir.makepyfile(
             """
 
@@ -1212,8 +1211,7 @@ def test_record_attribute(testdir, run_and_parse):
 @pytest.mark.filterwarnings("default")
 @pytest.mark.parametrize("fixture_name", ["record_xml_attribute", "record_property"])
 def test_record_fixtures_xunit2(testdir, fixture_name, run_and_parse):
-    """Ensure record_xml_attribute and record_property drop values when outside of legacy family
-    """
+    """Ensure record_xml_attribute and record_property drop values when outside of legacy family."""
     testdir.makeini(
         """
         [pytest]
@@ -1250,10 +1248,9 @@ def test_record_fixtures_xunit2(testdir, fixture_name, run_and_parse):
 
 
 def test_random_report_log_xdist(testdir, monkeypatch, run_and_parse):
-    """xdist calls pytest_runtest_logreport as they are executed by the workers,
+    """`xdist` calls pytest_runtest_logreport as they are executed by the workers,
     with nodes from several nodes overlapping, so junitxml must cope with that
-    to produce correct reports. #1064
-    """
+    to produce correct reports (#1064)."""
     pytest.importorskip("xdist")
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
     testdir.makepyfile(

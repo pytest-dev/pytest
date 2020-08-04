@@ -47,7 +47,7 @@ class TestParseIni:
         assert config.inicfg["name"] == "value"
 
     def test_getcfg_empty_path(self):
-        """correctly handle zero length arguments (a la pytest '')"""
+        """Correctly handle zero length arguments (a la pytest '')."""
         locate_config([""])
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, testdir):
@@ -1006,8 +1006,8 @@ def test_cmdline_processargs_simple(testdir):
 
 
 def test_invalid_options_show_extra_information(testdir):
-    """display extra information when pytest exits due to unrecognized
-    options in the command-line"""
+    """Display extra information when pytest exits due to unrecognized
+    options in the command-line."""
     testdir.makeini(
         """
         [pytest]
@@ -1441,7 +1441,7 @@ class TestOverrideIniArgs:
         )
 
     def test_addopts_from_ini_not_concatenated(self, testdir):
-        """addopts from ini should not take values from normal args (#4265)."""
+        """`addopts` from ini should not take values from normal args (#4265)."""
         testdir.makeini(
             """
             [pytest]
@@ -1777,10 +1777,8 @@ class TestPytestPluginsVariable:
 
 
 def test_conftest_import_error_repr(tmpdir):
-    """
-    ConftestImportFailure should use a short error message and readable path to the failed
-    conftest.py file
-    """
+    """`ConftestImportFailure` should use a short error message and readable
+    path to the failed conftest.py file."""
     path = tmpdir.join("foo/conftest.py")
     with pytest.raises(
         ConftestImportFailure,

@@ -464,7 +464,7 @@ class TestFormattedExcinfo:
         assert lines[1] == "        pass"
 
     def test_repr_source_excinfo(self) -> None:
-        """ check if indentation is right """
+        """Check if indentation is right."""
         try:
 
             def f():

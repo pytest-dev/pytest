@@ -1684,10 +1684,8 @@ class TestAutouseDiscovery:
         reprec.assertoutcome(passed=2)
 
     def test_callables_nocode(self, testdir):
-        """
-        an imported mock.call would break setup/factory discovery
-        due to it being callable and __code__ not being a code object
-        """
+        """An imported mock.call would break setup/factory discovery due to
+        it being callable and __code__ not being a code object."""
         testdir.makepyfile(
             """
            class _call(tuple):
@@ -3333,9 +3331,7 @@ class TestShowFixtures:
         )
 
     def test_show_fixtures_different_files(self, testdir):
-        """
-        #833: --fixtures only shows fixtures from first file
-        """
+        """`--fixtures` only shows fixtures from first file (#833)."""
         testdir.makepyfile(
             test_a='''
             import pytest

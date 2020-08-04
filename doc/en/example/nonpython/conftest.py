@@ -9,7 +9,8 @@ def pytest_collect_file(parent, path):
 
 class YamlFile(pytest.File):
     def collect(self):
-        import yaml  # we need a yaml parser, e.g. PyYAML
+        # We need a yaml parser, e.g. PyYAML.
+        import yaml
 
         raw = yaml.safe_load(self.fspath.open())
         for name, spec in sorted(raw.items()):
@@ -23,12 +24,12 @@ class YamlItem(pytest.Item):
 
     def runtest(self):
         for name, value in sorted(self.spec.items()):
-            # some custom test execution (dumb example follows)
+            # Some custom test execution (dumb example follows).
             if name != value:
                 raise YamlException(self, name, value)
 
     def repr_failure(self, excinfo):
-        """ called when self.runtest() raises an exception. """
+        """Called when self.runtest() raises an exception."""
         if isinstance(excinfo.value, YamlException):
             return "\n".join(
                 [
@@ -43,4 +44,4 @@ class YamlItem(pytest.Item):
 
 
 class YamlException(Exception):
-    """ custom exception for error reporting. """
+    """Custom exception for error reporting."""

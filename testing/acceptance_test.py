@@ -403,15 +403,12 @@ class TestGeneralUsage:
         result.stdout.fnmatch_lines(["pytest_sessionfinish_called"])
         assert result.ret == ExitCode.USAGE_ERROR
 
-    @pytest.mark.usefixtures("recwarn")
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
-        """
-        Ref #383. Python 3.3's namespace package messed with our import hooks
+        """Ref #383.
+
+        Python 3.3's namespace package messed with our import hooks.
         Importing a module that didn't exist, even if the ImportError was
         gracefully handled, would make our test crash.
-
-        Use recwarn here to silence this warning in Python 2.7:
-            ImportWarning: Not importing directory '...\not_a_package': missing __init__.py
         """
         testdir.mkdir("not_a_package")
         p = testdir.makepyfile(
@@ -457,10 +454,8 @@ class TestGeneralUsage:
         )
 
     def test_plugins_given_as_strings(self, tmpdir, monkeypatch, _sys_snapshot):
-        """test that str values passed to main() as `plugins` arg
-        are interpreted as module names to be imported and registered.
-        #855.
-        """
+        """Test that str values passed to main() as `plugins` arg are
+        interpreted as module names to be imported and registered (#855)."""
         with pytest.raises(ImportError) as excinfo:
             pytest.main([str(tmpdir)], plugins=["invalid.module"])
         assert "invalid" in str(excinfo.value)
@@ -664,8 +659,7 @@ class TestInvocationVariants:
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
 
     def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
-        """
-        test --pyargs option with namespace packages (#1567)
+        """Test --pyargs option with namespace packages (#1567).
 
         Ref: https://packaging.python.org/guides/packaging-namespace-packages/
         """
@@ -1011,9 +1005,7 @@ def test_pytest_plugins_as_module(testdir):
 
 
 def test_deferred_hook_checking(testdir):
-    """
-    Check hooks as late as possible (#1821).
-    """
+    """Check hooks as late as possible (#1821)."""
     testdir.syspathinsert()
     testdir.makepyfile(
         **{
@@ -1089,8 +1081,7 @@ def test_fixture_values_leak(testdir):
 
 
 def test_fixture_order_respects_scope(testdir):
-    """Ensure that fixtures are created according to scope order, regression test for #2405
-    """
+    """Ensure that fixtures are created according to scope order (#2405)."""
     testdir.makepyfile(
         """
         import pytest
@@ -1115,7 +1106,8 @@ def test_fixture_order_respects_scope(testdir):
 
 
 def test_frame_leak_on_failing_test(testdir):
-    """pytest would leak garbage referencing the frames of tests that failed that could never be reclaimed (#2798)
+    """Pytest would leak garbage referencing the frames of tests that failed
+    that could never be reclaimed (#2798).
 
     Unfortunately it was not possible to remove the actual circles because most of them
     are made of traceback objects which cannot be weakly referenced. Those objects at least

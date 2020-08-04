@@ -362,10 +362,10 @@ class TestPytestPluginManagerBootstrapming:
     def test_plugin_prevent_register_stepwise_on_cacheprovider_unregister(
         self, pytestpm
     ):
-        """ From PR #4304 : The only way to unregister a module is documented at
+        """From PR #4304: The only way to unregister a module is documented at
         the end of https://docs.pytest.org/en/stable/plugins.html.
 
-        When unregister cacheprovider, then unregister stepwise too
+        When unregister cacheprovider, then unregister stepwise too.
         """
         pytestpm.register(42, name="cacheprovider")
         pytestpm.register(43, name="stepwise")

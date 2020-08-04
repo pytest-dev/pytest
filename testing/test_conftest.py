@@ -196,9 +196,7 @@ def test_conftest_confcutdir(testdir):
 
 
 def test_conftest_symlink(testdir):
-    """
-    conftest.py discovery follows normal path resolution and does not resolve symlinks.
-    """
+    """`conftest.py` discovery follows normal path resolution and does not resolve symlinks."""
     # Structure:
     # /real
     # /real/conftest.py

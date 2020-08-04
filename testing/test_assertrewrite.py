@@ -233,7 +233,7 @@ class TestAssertionRewrite:
 
     def test_dont_rewrite_if_hasattr_fails(self, request) -> None:
         class Y:
-            """ A class whos getattr fails, but not with `AttributeError` """
+            """A class whose getattr fails, but not with `AttributeError`."""
 
             def __getattr__(self, attribute_name):
                 raise KeyError()
@@ -911,10 +911,8 @@ def test_rewritten():
         assert testdir.runpytest_subprocess().ret == 0
 
     def test_remember_rewritten_modules(self, pytestconfig, testdir, monkeypatch):
-        """
-        AssertionRewriteHook should remember rewritten modules so it
-        doesn't give false positives (#2005).
-        """
+        """`AssertionRewriteHook` should remember rewritten modules so it
+        doesn't give false positives (#2005)."""
         monkeypatch.syspath_prepend(testdir.tmpdir)
         testdir.makepyfile(test_remember_rewritten_modules="")
         warnings = []
@@ -1091,8 +1089,7 @@ class TestAssertionRewriteHookDetails:
         result.stdout.fnmatch_lines(["* 1 passed*"])
 
     def test_get_data_support(self, testdir):
-        """Implement optional PEP302 api (#808).
-        """
+        """Implement optional PEP302 api (#808)."""
         path = testdir.mkpydir("foo")
         path.join("test_foo.py").write(
             textwrap.dedent(
