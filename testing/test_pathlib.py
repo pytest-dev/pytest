@@ -6,6 +6,8 @@ from textwrap import dedent
 import py
 
 import pytest
+from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import commonpath
 from _pytest.pathlib import ensure_deletable
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_extended_length_path_str
@@ -381,3 +383,21 @@ def test_suppress_error_removing_lock(tmp_path):
     # check now that we can remove the lock file in normal circumstances
     assert ensure_deletable(path, consider_lock_dead_if_created_before=mtime + 30)
     assert not lock.is_file()
+
+
+def test_bestrelpath() -> None:
+    curdir = Path("/foo/bar/baz/path")
+    assert bestrelpath(curdir, curdir) == "."
+    assert bestrelpath(curdir, curdir / "hello" / "world") == "hello" + os.sep + "world"
+    assert bestrelpath(curdir, curdir.parent / "sister") == ".." + os.sep + "sister"
+    assert bestrelpath(curdir, curdir.parent) == ".."
+    assert bestrelpath(curdir, Path("hello")) == "hello"
+
+
+def test_commonpath() -> None:
+    path = Path("/foo/bar/baz/path")
+    subpath = path / "sampledir"
+    assert commonpath(path, subpath) == path
+    assert commonpath(subpath, path) == path
+    assert commonpath(Path(str(path) + "suffix"), path) == path.parent
+    assert commonpath(path, path.parent.parent) == path.parent.parent
