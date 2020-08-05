@@ -571,6 +571,15 @@ def visit(
             yield from visit(entry.path, recurse)
 
 
+def absolutepath(path: Union[Path, str]) -> Path:
+    """Convert a path to an absolute path using os.path.abspath.
+
+    Prefer this over Path.resolve() (see #6523).
+    Prefer this over Path.absolute() (not public, doesn't normalize).
+    """
+    return Path(os.path.abspath(str(path)))
+
+
 def commonpath(path1: Path, path2: Path) -> Optional[Path]:
     """Return the common part shared with the other path, or None if there is
     no common part."""
