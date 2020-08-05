@@ -34,7 +34,19 @@ See :ref:`mark examples` for examples which also serve as documentation.
 Registering marks
 -----------------
 
-You can register custom marks in your ``pytest.ini`` file like this:
+You can register custom marks in your ``pyproject.toml`` file like this:
+
+
+.. code-block:: toml
+
+    [tool.pytest.ini_options]
+    markers = [
+        "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+        "serial",
+    ]
+
+or in your ``pytest.ini`` file like this:
+
 
 .. code-block:: ini
 
