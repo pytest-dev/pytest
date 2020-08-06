@@ -916,11 +916,52 @@ class Config:
     def invocation_dir(self) -> py.path.local:
         """The directory from which pytest was invoked.
 
-        Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`.
+        Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`,
+        which is a :class:`pathlib.Path`.
 
         :type: py.path.local
         """
         return py.path.local(str(self.invocation_params.dir))
+
+    @property
+    def rootpath(self) -> Path:
+        """The path to the :ref:`rootdir <rootdir>`.
+
+        :type: pathlib.Path
+
+        .. versionadded:: 6.1
+        """
+        return self._rootpath
+
+    @property
+    def rootdir(self) -> py.path.local:
+        """The path to the :ref:`rootdir <rootdir>`.
+
+        Prefer to use :attr:`rootpath`, which is a :class:`pathlib.Path`.
+
+        :type: py.path.local
+        """
+        return py.path.local(str(self.rootpath))
+
+    @property
+    def inipath(self) -> Optional[Path]:
+        """The path to the :ref:`configfile <configfiles>`.
+
+        :type: Optional[pathlib.Path]
+
+        .. versionadded:: 6.1
+        """
+        return self._inipath
+
+    @property
+    def inifile(self) -> Optional[py.path.local]:
+        """The path to the :ref:`configfile <configfiles>`.
+
+        Prefer to use :attr:`inipath`, which is a :class:`pathlib.Path`.
+
+        :type: Optional[py.path.local]
+        """
+        return py.path.local(str(self.inipath)) if self.inipath else None
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
@@ -1032,8 +1073,8 @@ class Config:
             rootdir_cmd_arg=ns.rootdir or None,
             config=self,
         )
-        self.rootdir = py.path.local(str(rootpath))
-        self.inifile = py.path.local(str(inipath)) if inipath else None
+        self._rootpath = rootpath
+        self._inipath = inipath
         self.inicfg = inicfg
         self._parser.extra_info["rootdir"] = self.rootdir
         self._parser.extra_info["inifile"] = self.inifile

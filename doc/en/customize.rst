@@ -180,10 +180,15 @@ are never merged - the first match wins.
 The internal :class:`Config <_pytest.config.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
 will subsequently carry these attributes:
 
-- ``config.rootdir``: the determined root directory, guaranteed to exist.
+- :attr:`config.rootpath <_pytest.config.Config.rootpath>`: the determined root directory, guaranteed to exist.
 
-- ``config.inifile``: the determined ``configfile``, may be ``None`` (it is named ``inifile``
-  for historical reasons).
+- :attr:`config.inipath <_pytest.config.Config.inipath>`: the determined ``configfile``, may be ``None``
+  (it is named ``inipath`` for historical reasons).
+
+.. versionadded:: 6.1
+    The ``config.rootpath`` and ``config.inipath`` properties. They are :class:`pathlib.Path`
+    versions of the older ``config.rootdir`` and ``config.inifile``, which have type
+    ``py.path.local``, and still exist for backward compatibility.
 
 The ``rootdir`` is used as a reference directory for constructing test
 addresses ("nodeids") and can be used also by plugins for storing
