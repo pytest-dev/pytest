@@ -1,4 +1,5 @@
 import gc
+import sys
 from typing import List
 
 import pytest
@@ -1253,6 +1254,14 @@ def test_plain_unittest_does_not_support_async(testdir):
     """
     testdir.copy_example("unittest/test_unittest_plain_async.py")
     result = testdir.runpytest_subprocess()
-    result.stdout.fnmatch_lines(
-        ["*RuntimeWarning: coroutine * was never awaited", "*1 passed*"]
-    )
+    if hasattr(sys, "pypy_version_info"):
+        # in PyPy we can't reliable get the warning about the coroutine not being awaited,
+        # because it depends on the coroutine being garbage collected; given that
+        # we are running in a subprocess, that's difficult to enforce
+        expected_lines = ["*1 passed*"]
+    else:
+        expected_lines = [
+            "*RuntimeWarning: coroutine * was never awaited",
+            "*1 passed*",
+        ]
+    result.stdout.fnmatch_lines(expected_lines)
