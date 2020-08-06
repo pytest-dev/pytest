@@ -33,6 +33,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
+from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import Path
 from _pytest.pathlib import visit
 from _pytest.reports import CollectReport
@@ -425,11 +426,11 @@ class Failed(Exception):
 
 
 @attr.s
-class _bestrelpath_cache(Dict[py.path.local, str]):
-    path = attr.ib(type=py.path.local)
+class _bestrelpath_cache(Dict[Path, str]):
+    path = attr.ib(type=Path)
 
-    def __missing__(self, path: py.path.local) -> str:
-        r = self.path.bestrelpath(path)  # type: str
+    def __missing__(self, path: Path) -> str:
+        r = bestrelpath(self.path, path)
         self[path] = r
         return r
 
@@ -444,8 +445,8 @@ class Session(nodes.FSCollector):
     exitstatus = None  # type: Union[int, ExitCode]
 
     def __init__(self, config: Config) -> None:
-        nodes.FSCollector.__init__(
-            self, config.rootdir, parent=None, config=config, session=self, nodeid=""
+        super().__init__(
+            config.rootdir, parent=None, config=config, session=self, nodeid=""
         )
         self.testsfailed = 0
         self.testscollected = 0
@@ -456,8 +457,8 @@ class Session(nodes.FSCollector):
         self._initialpaths = frozenset()  # type: FrozenSet[py.path.local]
 
         self._bestrelpathcache = _bestrelpath_cache(
-            config.rootdir
-        )  # type: Dict[py.path.local, str]
+            config.rootpath
+        )  # type: Dict[Path, str]
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -475,7 +476,7 @@ class Session(nodes.FSCollector):
             self.testscollected,
         )
 
-    def _node_location_to_relpath(self, node_path: py.path.local) -> str:
+    def _node_location_to_relpath(self, node_path: Path) -> str:
         # bestrelpath is a quite slow function.
         return self._bestrelpathcache[node_path]
 
@@ -599,7 +600,9 @@ class Session(nodes.FSCollector):
             initialpaths = []  # type: List[py.path.local]
             for arg in args:
                 fspath, parts = resolve_collection_argument(
-                    self.config.invocation_dir, arg, as_pypath=self.config.option.pyargs
+                    self.config.invocation_params.dir,
+                    arg,
+                    as_pypath=self.config.option.pyargs,
                 )
                 self._initial_parts.append((fspath, parts))
                 initialpaths.append(fspath)
@@ -817,7 +820,7 @@ def search_pypath(module_name: str) -> str:
 
 
 def resolve_collection_argument(
-    invocation_dir: py.path.local, arg: str, *, as_pypath: bool = False
+    invocation_path: Path, arg: str, *, as_pypath: bool = False
 ) -> Tuple[py.path.local, List[str]]:
     """Parse path arguments optionally containing selection parts and return (fspath, names).
 
@@ -844,7 +847,7 @@ def resolve_collection_argument(
     strpath, *parts = str(arg).split("::")
     if as_pypath:
         strpath = search_pypath(strpath)
-    fspath = Path(str(invocation_dir), strpath)
+    fspath = invocation_path / strpath
     fspath = absolutepath(fspath)
     if not fspath.exists():
         msg = (

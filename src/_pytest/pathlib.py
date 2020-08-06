@@ -366,8 +366,7 @@ def make_numbered_dir_with_cleanup(
     raise e
 
 
-def resolve_from_str(input: str, root: py.path.local) -> Path:
-    rootpath = Path(root)
+def resolve_from_str(input: str, rootpath: Path) -> Path:
     input = expanduser(input)
     input = expandvars(input)
     if isabs(input):
