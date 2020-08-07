@@ -21,17 +21,27 @@ from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import locate_config
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
+from _pytest.pytester import Testdir
 
 
 class TestParseIni:
     @pytest.mark.parametrize(
         "section, filename", [("pytest", "pytest.ini"), ("tool:pytest", "setup.cfg")]
     )
-    def test_getcfg_and_config(self, testdir, tmpdir, section, filename):
-        sub = tmpdir.mkdir("sub")
-        sub.chdir()
-        tmpdir.join(filename).write(
+    def test_getcfg_and_config(
+        self,
+        testdir: Testdir,
+        tmp_path: Path,
+        section: str,
+        filename: str,
+        monkeypatch: MonkeyPatch,
+    ) -> None:
+        sub = tmp_path / "sub"
+        sub.mkdir()
+        monkeypatch.chdir(sub)
+        (tmp_path / filename).write_text(
             textwrap.dedent(
                 """\
                 [{section}]
@@ -39,16 +49,13 @@ class TestParseIni:
                 """.format(
                     section=section
                 )
-            )
+            ),
+            encoding="utf-8",
         )
         _, _, cfg = locate_config([sub])
         assert cfg["name"] == "value"
-        config = testdir.parseconfigure(sub)
+        config = testdir.parseconfigure(str(sub))
         assert config.inicfg["name"] == "value"
-
-    def test_getcfg_empty_path(self):
-        """Correctly handle zero length arguments (a la pytest '')."""
-        locate_config([""])
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, testdir):
         p1 = testdir.makepyfile("def test(): pass")
@@ -1168,16 +1175,17 @@ def test_collect_pytest_prefix_bug(pytestconfig):
 
 
 class TestRootdir:
-    def test_simple_noini(self, tmpdir):
-        assert get_common_ancestor([tmpdir]) == tmpdir
-        a = tmpdir.mkdir("a")
-        assert get_common_ancestor([a, tmpdir]) == tmpdir
-        assert get_common_ancestor([tmpdir, a]) == tmpdir
-        with tmpdir.as_cwd():
-            assert get_common_ancestor([]) == tmpdir
-            no_path = tmpdir.join("does-not-exist")
-            assert get_common_ancestor([no_path]) == tmpdir
-            assert get_common_ancestor([no_path.join("a")]) == tmpdir
+    def test_simple_noini(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+        assert get_common_ancestor([tmp_path]) == tmp_path
+        a = tmp_path / "a"
+        a.mkdir()
+        assert get_common_ancestor([a, tmp_path]) == tmp_path
+        assert get_common_ancestor([tmp_path, a]) == tmp_path
+        monkeypatch.chdir(tmp_path)
+        assert get_common_ancestor([]) == tmp_path
+        no_path = tmp_path / "does-not-exist"
+        assert get_common_ancestor([no_path]) == tmp_path
+        assert get_common_ancestor([no_path / "a"]) == tmp_path
 
     @pytest.mark.parametrize(
         "name, contents",
@@ -1190,44 +1198,49 @@ class TestRootdir:
             pytest.param("setup.cfg", "[tool:pytest]\nx=10", id="setup.cfg"),
         ],
     )
-    def test_with_ini(self, tmpdir: py.path.local, name: str, contents: str) -> None:
-        inifile = tmpdir.join(name)
-        inifile.write(contents)
+    def test_with_ini(self, tmp_path: Path, name: str, contents: str) -> None:
+        inipath = tmp_path / name
+        inipath.write_text(contents, "utf-8")
 
-        a = tmpdir.mkdir("a")
-        b = a.mkdir("b")
-        for args in ([str(tmpdir)], [str(a)], [str(b)]):
-            rootdir, parsed_inifile, _ = determine_setup(None, args)
-            assert rootdir == tmpdir
-            assert parsed_inifile == inifile
-        rootdir, parsed_inifile, ini_config = determine_setup(None, [str(b), str(a)])
-        assert rootdir == tmpdir
-        assert parsed_inifile == inifile
+        a = tmp_path / "a"
+        a.mkdir()
+        b = a / "b"
+        b.mkdir()
+        for args in ([str(tmp_path)], [str(a)], [str(b)]):
+            rootpath, parsed_inipath, _ = determine_setup(None, args)
+            assert rootpath == tmp_path
+            assert parsed_inipath == inipath
+        rootpath, parsed_inipath, ini_config = determine_setup(None, [str(b), str(a)])
+        assert rootpath == tmp_path
+        assert parsed_inipath == inipath
         assert ini_config == {"x": "10"}
 
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
-    def test_pytestini_overrides_empty_other(self, tmpdir: py.path.local, name) -> None:
-        inifile = tmpdir.ensure("pytest.ini")
-        a = tmpdir.mkdir("a")
-        a.ensure(name)
-        rootdir, parsed_inifile, _ = determine_setup(None, [str(a)])
-        assert rootdir == tmpdir
-        assert parsed_inifile == inifile
+    @pytest.mark.parametrize("name", ["setup.cfg", "tox.ini"])
+    def test_pytestini_overrides_empty_other(self, tmp_path: Path, name: str) -> None:
+        inipath = tmp_path / "pytest.ini"
+        inipath.touch()
+        a = tmp_path / "a"
+        a.mkdir()
+        (a / name).touch()
+        rootpath, parsed_inipath, _ = determine_setup(None, [str(a)])
+        assert rootpath == tmp_path
+        assert parsed_inipath == inipath
 
-    def test_setuppy_fallback(self, tmpdir: py.path.local) -> None:
-        a = tmpdir.mkdir("a")
-        a.ensure("setup.cfg")
-        tmpdir.ensure("setup.py")
-        rootdir, inifile, inicfg = determine_setup(None, [str(a)])
-        assert rootdir == tmpdir
-        assert inifile is None
+    def test_setuppy_fallback(self, tmp_path: Path) -> None:
+        a = tmp_path / "a"
+        a.mkdir()
+        (a / "setup.cfg").touch()
+        (tmp_path / "setup.py").touch()
+        rootpath, inipath, inicfg = determine_setup(None, [str(a)])
+        assert rootpath == tmp_path
+        assert inipath is None
         assert inicfg == {}
 
-    def test_nothing(self, tmpdir: py.path.local, monkeypatch) -> None:
-        monkeypatch.chdir(str(tmpdir))
-        rootdir, inifile, inicfg = determine_setup(None, [str(tmpdir)])
-        assert rootdir == tmpdir
-        assert inifile is None
+    def test_nothing(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        rootpath, inipath, inicfg = determine_setup(None, [str(tmp_path)])
+        assert rootpath == tmp_path
+        assert inipath is None
         assert inicfg == {}
 
     @pytest.mark.parametrize(
@@ -1242,45 +1255,58 @@ class TestRootdir:
         ],
     )
     def test_with_specific_inifile(
-        self, tmpdir: py.path.local, name: str, contents: str
+        self, tmp_path: Path, name: str, contents: str
     ) -> None:
-        p = tmpdir.ensure(name)
-        p.write(contents)
-        rootdir, inifile, ini_config = determine_setup(str(p), [str(tmpdir)])
-        assert rootdir == tmpdir
-        assert inifile == p
+        p = tmp_path / name
+        p.touch()
+        p.write_text(contents, "utf-8")
+        rootpath, inipath, ini_config = determine_setup(str(p), [str(tmp_path)])
+        assert rootpath == tmp_path
+        assert inipath == p
         assert ini_config == {"x": "10"}
 
-    def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch) -> None:
-        monkeypatch.chdir(str(tmpdir))
-        a = tmpdir.mkdir("a")
-        b = tmpdir.mkdir("b")
-        rootdir, inifile, _ = determine_setup(None, [str(a), str(b)])
-        assert rootdir == tmpdir
+    def test_with_arg_outside_cwd_without_inifile(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        a = tmp_path / "a"
+        a.mkdir()
+        b = tmp_path / "b"
+        b.mkdir()
+        rootpath, inifile, _ = determine_setup(None, [str(a), str(b)])
+        assert rootpath == tmp_path
         assert inifile is None
 
-    def test_with_arg_outside_cwd_with_inifile(self, tmpdir) -> None:
-        a = tmpdir.mkdir("a")
-        b = tmpdir.mkdir("b")
-        inifile = a.ensure("pytest.ini")
-        rootdir, parsed_inifile, _ = determine_setup(None, [str(a), str(b)])
-        assert rootdir == a
-        assert inifile == parsed_inifile
+    def test_with_arg_outside_cwd_with_inifile(self, tmp_path: Path) -> None:
+        a = tmp_path / "a"
+        a.mkdir()
+        b = tmp_path / "b"
+        b.mkdir()
+        inipath = a / "pytest.ini"
+        inipath.touch()
+        rootpath, parsed_inipath, _ = determine_setup(None, [str(a), str(b)])
+        assert rootpath == a
+        assert inipath == parsed_inipath
 
     @pytest.mark.parametrize("dirs", ([], ["does-not-exist"], ["a/does-not-exist"]))
-    def test_with_non_dir_arg(self, dirs, tmpdir) -> None:
-        with tmpdir.ensure(dir=True).as_cwd():
-            rootdir, inifile, _ = determine_setup(None, dirs)
-            assert rootdir == tmpdir
-            assert inifile is None
+    def test_with_non_dir_arg(
+        self, dirs: Sequence[str], tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        rootpath, inipath, _ = determine_setup(None, dirs)
+        assert rootpath == tmp_path
+        assert inipath is None
 
-    def test_with_existing_file_in_subdir(self, tmpdir) -> None:
-        a = tmpdir.mkdir("a")
-        a.ensure("exist")
-        with tmpdir.as_cwd():
-            rootdir, inifile, _ = determine_setup(None, ["a/exist"])
-            assert rootdir == tmpdir
-            assert inifile is None
+    def test_with_existing_file_in_subdir(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        a = tmp_path / "a"
+        a.mkdir()
+        (a / "exists").touch()
+        monkeypatch.chdir(tmp_path)
+        rootpath, inipath, _ = determine_setup(None, ["a/exist"])
+        assert rootpath == tmp_path
+        assert inipath is None
 
 
 class TestOverrideIniArgs:

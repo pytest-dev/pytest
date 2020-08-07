@@ -586,7 +586,7 @@ class TestInvocationVariants:
         ):
             pytest.main("-h")  # type: ignore[arg-type]
 
-    def test_invoke_with_path(self, tmpdir, capsys):
+    def test_invoke_with_path(self, tmpdir: py.path.local, capsys) -> None:
         retcode = pytest.main(tmpdir)
         assert retcode == ExitCode.NO_TESTS_COLLECTED
         out, err = capsys.readouterr()

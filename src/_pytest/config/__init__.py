@@ -123,7 +123,7 @@ def filter_traceback_for_conftest_import_failure(
 
 
 def main(
-    args: Optional[List[str]] = None,
+    args: Optional[Union[List[str], py.path.local]] = None,
     plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
 ) -> Union[int, ExitCode]:
     """Perform an in-process test run.
@@ -1006,12 +1006,15 @@ class Config:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
-        self.rootdir, self.inifile, self.inicfg = determine_setup(
+        rootpath, inipath, inicfg = determine_setup(
             ns.inifilename,
             ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             config=self,
         )
+        self.rootdir = py.path.local(str(rootpath))
+        self.inifile = py.path.local(str(inipath)) if inipath else None
+        self.inicfg = inicfg
         self._parser.extra_info["rootdir"] = self.rootdir
         self._parser.extra_info["inifile"] = self.inifile
         self._parser.addini("addopts", "extra command line options", "args")
@@ -1305,7 +1308,7 @@ class Config:
         values = []  # type: List[py.path.local]
         for relroot in relroots:
             if not isinstance(relroot, py.path.local):
-                relroot = relroot.replace("/", py.path.local.sep)
+                relroot = relroot.replace("/", os.sep)
                 relroot = modpath.join(relroot, abs=True)
             values.append(relroot)
         return values

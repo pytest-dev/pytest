@@ -3,8 +3,6 @@ import os
 from typing import IO
 from typing import Union
 
-import py
-
 from _pytest._code.code import ExceptionRepr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -106,5 +104,5 @@ class ResultLog:
         if excrepr.reprcrash is not None:
             path = excrepr.reprcrash.path
         else:
-            path = "cwd:%s" % py.path.local()
+            path = "cwd:%s" % os.getcwd()
         self.write_log_entry(path, "!", str(excrepr))

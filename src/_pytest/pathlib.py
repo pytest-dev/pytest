@@ -569,3 +569,44 @@ def visit(
     for entry in entries:
         if entry.is_dir(follow_symlinks=False) and recurse(entry):
             yield from visit(entry.path, recurse)
+
+
+def absolutepath(path: Union[Path, str]) -> Path:
+    """Convert a path to an absolute path using os.path.abspath.
+
+    Prefer this over Path.resolve() (see #6523).
+    Prefer this over Path.absolute() (not public, doesn't normalize).
+    """
+    return Path(os.path.abspath(str(path)))
+
+
+def commonpath(path1: Path, path2: Path) -> Optional[Path]:
+    """Return the common part shared with the other path, or None if there is
+    no common part."""
+    try:
+        return Path(os.path.commonpath((str(path1), str(path2))))
+    except ValueError:
+        return None
+
+
+def bestrelpath(directory: Path, dest: Path) -> str:
+    """Return a string which is a relative path from directory to dest such
+    that directory/bestrelpath == dest.
+
+    If no such path can be determined, returns dest.
+    """
+    if dest == directory:
+        return os.curdir
+    # Find the longest common directory.
+    base = commonpath(directory, dest)
+    # Can be the case on Windows.
+    if not base:
+        return str(dest)
+    reldirectory = directory.relative_to(base)
+    reldest = dest.relative_to(base)
+    return os.path.join(
+        # Back from directory to base.
+        *([os.pardir] * len(reldirectory.parts)),
+        # Forward from base to dest.
+        *reldest.parts,
+    )

@@ -1339,7 +1339,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     verbose = config.getvalue("verbose")
 
     def get_best_relpath(func):
-        loc = getlocation(func, curdir)
+        loc = getlocation(func, str(curdir))
         return curdir.bestrelpath(py.path.local(loc))
 
     def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
@@ -1404,7 +1404,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if not fixturedefs:
             continue
         for fixturedef in fixturedefs:
-            loc = getlocation(fixturedef.func, curdir)
+            loc = getlocation(fixturedef.func, str(curdir))
             if (fixturedef.argname, loc) in seen:
                 continue
             seen.add((fixturedef.argname, loc))
@@ -1434,7 +1434,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if verbose > 0:
             tw.write(" -- %s" % bestrel, yellow=True)
         tw.write("\n")
-        loc = getlocation(fixturedef.func, curdir)
+        loc = getlocation(fixturedef.func, str(curdir))
         doc = inspect.getdoc(fixturedef.func)
         if doc:
             write_docstring(tw, doc)

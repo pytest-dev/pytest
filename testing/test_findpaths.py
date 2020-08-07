@@ -1,74 +1,74 @@
 from textwrap import dedent
 
-import py
-
 import pytest
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import load_config_dict_from_file
+from _pytest.pathlib import Path
 
 
 class TestLoadConfigDictFromFile:
-    def test_empty_pytest_ini(self, tmpdir):
+    def test_empty_pytest_ini(self, tmp_path: Path) -> None:
         """pytest.ini files are always considered for configuration, even if empty"""
-        fn = tmpdir.join("pytest.ini")
-        fn.write("")
+        fn = tmp_path / "pytest.ini"
+        fn.write_text("", encoding="utf-8")
         assert load_config_dict_from_file(fn) == {}
 
-    def test_pytest_ini(self, tmpdir):
+    def test_pytest_ini(self, tmp_path: Path) -> None:
         """[pytest] section in pytest.ini files is read correctly"""
-        fn = tmpdir.join("pytest.ini")
-        fn.write("[pytest]\nx=1")
+        fn = tmp_path / "pytest.ini"
+        fn.write_text("[pytest]\nx=1", encoding="utf-8")
         assert load_config_dict_from_file(fn) == {"x": "1"}
 
-    def test_custom_ini(self, tmpdir):
+    def test_custom_ini(self, tmp_path: Path) -> None:
         """[pytest] section in any .ini file is read correctly"""
-        fn = tmpdir.join("custom.ini")
-        fn.write("[pytest]\nx=1")
+        fn = tmp_path / "custom.ini"
+        fn.write_text("[pytest]\nx=1", encoding="utf-8")
         assert load_config_dict_from_file(fn) == {"x": "1"}
 
-    def test_custom_ini_without_section(self, tmpdir):
+    def test_custom_ini_without_section(self, tmp_path: Path) -> None:
         """Custom .ini files without [pytest] section are not considered for configuration"""
-        fn = tmpdir.join("custom.ini")
-        fn.write("[custom]")
+        fn = tmp_path / "custom.ini"
+        fn.write_text("[custom]", encoding="utf-8")
         assert load_config_dict_from_file(fn) is None
 
-    def test_custom_cfg_file(self, tmpdir):
+    def test_custom_cfg_file(self, tmp_path: Path) -> None:
         """Custom .cfg files without [tool:pytest] section are not considered for configuration"""
-        fn = tmpdir.join("custom.cfg")
-        fn.write("[custom]")
+        fn = tmp_path / "custom.cfg"
+        fn.write_text("[custom]", encoding="utf-8")
         assert load_config_dict_from_file(fn) is None
 
-    def test_valid_cfg_file(self, tmpdir):
+    def test_valid_cfg_file(self, tmp_path: Path) -> None:
         """Custom .cfg files with [tool:pytest] section are read correctly"""
-        fn = tmpdir.join("custom.cfg")
-        fn.write("[tool:pytest]\nx=1")
+        fn = tmp_path / "custom.cfg"
+        fn.write_text("[tool:pytest]\nx=1", encoding="utf-8")
         assert load_config_dict_from_file(fn) == {"x": "1"}
 
-    def test_unsupported_pytest_section_in_cfg_file(self, tmpdir):
+    def test_unsupported_pytest_section_in_cfg_file(self, tmp_path: Path) -> None:
         """.cfg files with [pytest] section are no longer supported and should fail to alert users"""
-        fn = tmpdir.join("custom.cfg")
-        fn.write("[pytest]")
+        fn = tmp_path / "custom.cfg"
+        fn.write_text("[pytest]", encoding="utf-8")
         with pytest.raises(pytest.fail.Exception):
             load_config_dict_from_file(fn)
 
-    def test_invalid_toml_file(self, tmpdir):
+    def test_invalid_toml_file(self, tmp_path: Path) -> None:
         """.toml files without [tool.pytest.ini_options] are not considered for configuration."""
-        fn = tmpdir.join("myconfig.toml")
-        fn.write(
+        fn = tmp_path / "myconfig.toml"
+        fn.write_text(
             dedent(
                 """
             [build_system]
             x = 1
             """
-            )
+            ),
+            encoding="utf-8",
         )
         assert load_config_dict_from_file(fn) is None
 
-    def test_valid_toml_file(self, tmpdir):
+    def test_valid_toml_file(self, tmp_path: Path) -> None:
         """.toml files with [tool.pytest.ini_options] are read correctly, including changing
         data types to str/list for compatibility with other configuration options."""
-        fn = tmpdir.join("myconfig.toml")
-        fn.write(
+        fn = tmp_path / "myconfig.toml"
+        fn.write_text(
             dedent(
                 """
             [tool.pytest.ini_options]
@@ -77,7 +77,8 @@ class TestLoadConfigDictFromFile:
             values = ["tests", "integration"]
             name = "foo"
             """
-            )
+            ),
+            encoding="utf-8",
         )
         assert load_config_dict_from_file(fn) == {
             "x": "1",
@@ -88,23 +89,22 @@ class TestLoadConfigDictFromFile:
 
 
 class TestCommonAncestor:
-    def test_has_ancestor(self, tmpdir):
-        fn1 = tmpdir.join("foo/bar/test_1.py").ensure(file=1)
-        fn2 = tmpdir.join("foo/zaz/test_2.py").ensure(file=1)
-        assert get_common_ancestor([fn1, fn2]) == tmpdir.join("foo")
-        assert get_common_ancestor([py.path.local(fn1.dirname), fn2]) == tmpdir.join(
-            "foo"
-        )
-        assert get_common_ancestor(
-            [py.path.local(fn1.dirname), py.path.local(fn2.dirname)]
-        ) == tmpdir.join("foo")
-        assert get_common_ancestor([fn1, py.path.local(fn2.dirname)]) == tmpdir.join(
-            "foo"
-        )
+    def test_has_ancestor(self, tmp_path: Path) -> None:
+        fn1 = tmp_path / "foo" / "bar" / "test_1.py"
+        fn1.parent.mkdir(parents=True)
+        fn1.touch()
+        fn2 = tmp_path / "foo" / "zaz" / "test_2.py"
+        fn2.parent.mkdir(parents=True)
+        fn2.touch()
+        assert get_common_ancestor([fn1, fn2]) == tmp_path / "foo"
+        assert get_common_ancestor([fn1.parent, fn2]) == tmp_path / "foo"
+        assert get_common_ancestor([fn1.parent, fn2.parent]) == tmp_path / "foo"
+        assert get_common_ancestor([fn1, fn2.parent]) == tmp_path / "foo"
 
-    def test_single_dir(self, tmpdir):
-        assert get_common_ancestor([tmpdir]) == tmpdir
+    def test_single_dir(self, tmp_path: Path) -> None:
+        assert get_common_ancestor([tmp_path]) == tmp_path
 
-    def test_single_file(self, tmpdir):
-        fn = tmpdir.join("foo.py").ensure(file=1)
-        assert get_common_ancestor([fn]) == tmpdir
+    def test_single_file(self, tmp_path: Path) -> None:
+        fn = tmp_path / "foo.py"
+        fn.touch()
+        assert get_common_ancestor([fn]) == tmp_path
