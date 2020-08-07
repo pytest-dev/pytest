@@ -1254,80 +1254,71 @@ class Testdir:
             The period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`.
         :param stdin:
-            Optional standard input.  Bytes are being send, closing
+            Optional standard input.  If `bytes`, they are sent, closing
             the pipe, otherwise it is passed through to ``popen``.
             Defaults to ``CLOSE_STDIN``, which translates to using a pipe
             (``subprocess.PIPE``) that gets closed.
-
-        :rtype: RunResult
         """
         __tracebackhide__ = True
 
         cmdargs = tuple(
             str(arg) if isinstance(arg, py.path.local) else arg for arg in cmdargs
         )
-        p1 = self.tmpdir.join("stdout")
-        p2 = self.tmpdir.join("stderr")
+        stdout_path = str(self.tmpdir.join("stdout"))
+        stderr_path = str(self.tmpdir.join("stderr"))
+
         print("running:", *cmdargs)
         print("     in:", py.path.local())
-        f1 = open(str(p1), "w", encoding="utf8")
-        f2 = open(str(p2), "w", encoding="utf8")
-        try:
-            now = timing.time()
+
+        with open(stdout_path, "wb") as stdout, open(stderr_path, "wb") as stderr:
+            start = timing.perf_counter()
+
             popen = self.popen(
                 cmdargs,
                 stdin=stdin,
-                stdout=f1,
-                stderr=f2,
+                stdout=stdout,
+                stderr=stderr,
                 close_fds=(sys.platform != "win32"),
             )
             if isinstance(stdin, bytes):
                 popen.stdin.close()
 
-            def handle_timeout() -> None:
-                __tracebackhide__ = True
-
-                timeout_message = (
+            try:
+                ret = popen.wait(timeout)
+            except subprocess.TimeoutExpired:
+                popen.kill()
+                popen.wait()
+                message = (
                     "{seconds} second timeout expired running:"
                     " {command}".format(seconds=timeout, command=cmdargs)
                 )
+                raise self.TimeoutExpired(message)
 
-                popen.kill()
-                popen.wait()
-                raise self.TimeoutExpired(timeout_message)
+            duration = timing.perf_counter() - start
 
-            if timeout is None:
-                ret = popen.wait()
-            else:
-                try:
-                    ret = popen.wait(timeout)
-                except subprocess.TimeoutExpired:
-                    handle_timeout()
-        finally:
-            f1.close()
-            f2.close()
-        f1 = open(str(p1), encoding="utf8")
-        f2 = open(str(p2), encoding="utf8")
+        with open(stdout_path, encoding="utf8") as stdout_text, open(
+            stderr_path, encoding="utf8"
+        ) as stderr_text:
+            out = stdout_text.read().splitlines()
+            err = stderr_text.read().splitlines()
+
         try:
-            out = f1.read().splitlines()
-            err = f2.read().splitlines()
-        finally:
-            f1.close()
-            f2.close()
-        self._dump_lines(out, sys.stdout)
-        self._dump_lines(err, sys.stderr)
+            for line in out:
+                print(line, file=sys.stdout)
+        except UnicodeEncodeError:
+            print("couldn't print to stdout because of encoding")
+        try:
+            for line in err:
+                print(line, file=sys.stderr)
+        except UnicodeEncodeError:
+            print("couldn't print to stderr because of encoding")
+
         try:
             ret = ExitCode(ret)
         except ValueError:
             pass
-        return RunResult(ret, out, err, timing.time() - now)
 
-    def _dump_lines(self, lines, fp):
-        try:
-            for line in lines:
-                print(line, file=fp)
-        except UnicodeEncodeError:
-            print("couldn't print to {} because of encoding".format(fp))
+        return RunResult(ret, out, err, duration)
 
     def _getpytestargs(self) -> Tuple[str, ...]:
         return sys.executable, "-mpytest"
