@@ -1218,7 +1218,10 @@ class Testdir:
 
         You probably want to use :py:meth:`run` instead.
         """
-        env = os.environ.copy()
+        if kw.get("env") is not None:
+            env = kw["env"].copy()
+        else:
+            env = os.environ.copy()
         env["PYTHONPATH"] = os.pathsep.join(
             filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
         )
