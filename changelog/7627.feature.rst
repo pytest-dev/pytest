@@ -1,0 +1,3 @@
+The :func:`_pytest.pytester.Testdir.run()` function has new optional arguments:
+``encoding`` and ``errors`` to control how the ``stdout`` and ``stderr`` output of the launched process is decoded,
+and ``env`` to control the environment of the process.
