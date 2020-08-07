@@ -1345,14 +1345,26 @@ class Testdir:
 
         :rtype: RunResult
         """
-        return self.run(sys.executable, script)
+        # Use a consistent encoding, isolated from the host system.
+        encoding = "utf-8"
+        env = {
+            **os.environ.copy(),
+            "PYTHONIOENCODING": encoding,
+        }
+        return self.run(sys.executable, script, encoding=encoding, env=env)
 
-    def runpython_c(self, command):
+    def runpython_c(self, command) -> RunResult:
         """Run python -c "command".
 
         :rtype: RunResult
         """
-        return self.run(sys.executable, "-c", command)
+        # Use a consistent encoding, isolated from the host system.
+        encoding = "utf-8"
+        env = {
+            **os.environ.copy(),
+            "PYTHONIOENCODING": encoding,
+        }
+        return self.run(sys.executable, "-c", command, encoding=encoding, env=env)
 
     def runpytest_subprocess(self, *args, timeout: Optional[float] = None) -> RunResult:
         """Run pytest as a subprocess with given arguments.
@@ -1378,7 +1390,13 @@ class Testdir:
         if plugins:
             args = ("-p", plugins[0]) + args
         args = self._getpytestargs() + args
-        return self.run(*args, timeout=timeout)
+        # Use a consistent encoding, isolated from the host system.
+        encoding = "utf-8"
+        env = {
+            **os.environ.copy(),
+            "PYTHONIOENCODING": encoding,
+        }
+        return self.run(*args, timeout=timeout, encoding=encoding, env=env)
 
     def spawn_pytest(
         self, string: str, expect_timeout: float = 10.0

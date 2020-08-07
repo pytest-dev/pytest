@@ -1,0 +1,7 @@
+The :class:`_pytest.pytester.Testdir` functions
+:func:`_pytest.pytester.Testdir.runpytest_subprocess()`,
+:func:`_pytest.pytester.Testdir.runpython()` and
+:func:`_pytest.pytester.Testdir.runpython_c()`
+now launch Python with a UTF-8 IO encoding. Previously, if the subprocess
+emitted non-UTF-8 bytes and the host's IO encoding was not UTF-8, the function
+would raise a ``UnicodeDecodeError``.
