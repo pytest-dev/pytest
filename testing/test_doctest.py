@@ -376,7 +376,7 @@ class TestDoctests:
         result.stdout.fnmatch_lines(
             [
                 "*= FAILURES =*",
-                "*_ [[]doctest] test_doctest_no_linedata_on_overriden_property.Sample.some_property _*",
+                "*_ [[]doctest[]] test_doctest_no_linedata_on_overriden_property.Sample.some_property _*",
                 "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example",
                 "[?][?][?] >>> Sample().some_property",
                 "Expected:",

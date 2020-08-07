@@ -1042,7 +1042,7 @@ def test_color_yes(testdir, color_mapping):
                 "",
                 "{bold}{red}test_color_yes.py{reset}:2: AssertionError",
                 "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
-            ],
+            ]
         )
     )
     result = testdir.runpytest("--color=yes", "--tb=short", str(p1))
@@ -1062,7 +1062,7 @@ def test_color_yes(testdir, color_mapping):
                 "    {kw}assert{hl-reset} {number}0{hl-reset}",
                 "{bold}{red}E   assert 0{reset}",
                 "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
-            ],
+            ]
         )
     )
 
@@ -2048,11 +2048,11 @@ class TestProgressWithTeardown:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "test_bar.py::test_bar[[]0] PASSED  * [  5%]",
-                    "test_bar.py::test_bar[[]0] ERROR   * [  5%]",
-                    "test_bar.py::test_bar[[]4] PASSED  * [ 25%]",
-                    "test_foo.py::test_foo[[]14] PASSED * [100%]",
-                    "test_foo.py::test_foo[[]14] ERROR  * [100%]",
+                    "test_bar.py::test_bar[0] PASSED  * [  5%]",
+                    "test_bar.py::test_bar[0] ERROR   * [  5%]",
+                    "test_bar.py::test_bar[4] PASSED  * [ 25%]",
+                    "test_foo.py::test_foo[14] PASSED * [100%]",
+                    "test_foo.py::test_foo[14] ERROR  * [100%]",
                     "=* 20 passed, 20 errors in *",
                 ]
             )

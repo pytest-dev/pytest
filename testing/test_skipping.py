@@ -1229,7 +1229,7 @@ def test_summary_list_after_errors(testdir):
     result.stdout.fnmatch_lines(
         [
             "=* FAILURES *=",
-            "=* short test summary info =*",
+            "*= short test summary info =*",
             "FAILED test_summary_list_after_errors.py::test_fail - assert 0",
         ]
     )

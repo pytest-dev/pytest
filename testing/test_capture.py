@@ -269,12 +269,12 @@ class TestPerTestCapturing:
         result.stdout.fnmatch_lines(
             [
                 "*test_capturing_outerr.py .F*",
-                "==* FAILURES *==",
-                "__*__",
+                "====* FAILURES *=++=",
+                "____*____",
                 "*test_capturing_outerr.py:8: ValueError",
-                "*-- Captured stdout *call*",
+                "*--- Captured stdout *call*",
                 "1",
-                "*-- Captured stderr *call*",
+                "*--- Captured stderr *call*",
                 "2",
             ]
         )
