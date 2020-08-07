@@ -1007,18 +1007,8 @@ class Testdir:
         finally:
             out, err = capture.readouterr()
             capture.stop_capturing()
-            try:
-                sys.stdout.write(out)
-            except UnicodeEncodeError:
-                encoding = getattr(sys.stdout, "encoding", None) or "ascii"
-                out = out.encode(encoding, "simplify").decode(encoding)
-                sys.stdout.write(out)
-            try:
-                sys.stderr.write(err)
-            except UnicodeEncodeError:
-                encoding = getattr(sys.stderr, "encoding", None) or "ascii"
-                err = err.encode(encoding, "simplify").decode(encoding)
-                sys.stdout.write(err)
+            sys.stdout.write(out)
+            sys.stderr.write(err)
 
         res = RunResult(
             reprec.ret, out.splitlines(), err.splitlines(), timing.time() - now

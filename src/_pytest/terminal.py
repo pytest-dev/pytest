@@ -309,6 +309,11 @@ class WarningReport:
 
 
 class TerminalReporter:
+    hrule_single = "-"
+    hrule_double = "="
+    hrule_error = "!"
+    hrule_lower = "_"
+
     def __init__(self, config: Config, file: Optional[TextIO] = None) -> None:
         import _pytest.config
 
@@ -469,8 +474,7 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        # This uses U+2500 (BOX DRAWINGS LIGHT HORIZONTAL)
-        self.write_sep("─", title, fullwidth, **markup)
+        self.write_sep(self.hrule_single, title, fullwidth, **markup)
 
     def write_hrule_double(
         self,
@@ -478,8 +482,7 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        # This uses U+2550 (BOX DRAWINGS DOUBLE HORIZONTAL)
-        self.write_sep("═", title, fullwidth, **markup)
+        self.write_sep(self.hrule_double, title, fullwidth, **markup)
 
     def write_hrule_error(
         self,
@@ -487,7 +490,7 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        self.write_sep("!", title, fullwidth, **markup)
+        self.write_sep(self.hrule_error, title, fullwidth, **markup)
 
     def write_hrule_lower(
         self,
@@ -495,8 +498,7 @@ class TerminalReporter:
         fullwidth: Optional[int] = None,
         **markup: bool
     ) -> None:
-        # This uses U+2581 (LOWER ONE EIGHTH BLOCK)
-        self.write_sep("▁", title, fullwidth, **markup)
+        self.write_sep(self.hrule_lower, title, fullwidth, **markup)
 
     def section(self, title: str, sep: str = "=", **kw: bool) -> None:
         self._tw.sep(sep, title, **kw)

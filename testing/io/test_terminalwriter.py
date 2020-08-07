@@ -50,12 +50,12 @@ def test_terminalwriter_dumb_term_no_markup(monkeypatch: MonkeyPatch) -> None:
 
 
 def test_terminalwriter_not_unicode() -> None:
-    """If the file doesn't support Unicode, un-encodable chars are replaced (#7609)."""
+    """If the file doesn't support Unicode, the string is unicode-escaped (#7475)."""
     buffer = io.BytesIO()
     file = io.TextIOWrapper(buffer, encoding="cp1252")
     tw = terminalwriter.TerminalWriter(file)
     tw.write("hello 🌀 wôrld אבג", flush=True)
-    assert buffer.getvalue() == b"hello \\U0001f300 w\xf4rld \\u05d0\\u05d1\\u05d2"
+    assert buffer.getvalue() == br"hello \U0001f300 w\xf4rld \u05d0\u05d1\u05d2"
 
 
 win32 = int(sys.platform == "win32")

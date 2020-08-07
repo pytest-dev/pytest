@@ -826,10 +826,10 @@ class TestInvocationVariants:
         )
         testid = "test_doctest_id.txt::test_doctest_id.txt"
         expected_lines = [
-            "*[\u2550=] FAILURES [\u2550=]*",
-            "*[\u2581_] ?doctest? test_doctest_id.txt [\u2581_]*",
+            "*= FAILURES =*",
+            "*_ ?doctest? test_doctest_id.txt _*",
             "FAILED test_doctest_id.txt::test_doctest_id.txt",
-            "*[\u2550=] 1 failed in*",
+            "*= 1 failed in*",
         ]
         result = testdir.runpytest(testid, "-rf", "--tb=short")
         result.stdout.fnmatch_lines(expected_lines)
@@ -1253,7 +1253,7 @@ def test_pdb_can_be_rewritten(testdir):
             "E         -2",
             "",
             "pdb.py:2: AssertionError",
-            "*[\u2550=] 1 failed in *",
+            "*= 1 failed in *",
         ]
     )
     assert result.ret == 1

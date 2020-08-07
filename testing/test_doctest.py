@@ -184,8 +184,8 @@ class TestDoctests:
             [
                 "test_doctest_unexpected_exception.txt F *",
                 "",
-                "*[\u2550=] FAILURES [\u2550=]*",
-                "*[\u2581_] [[]doctest[]] test_doctest_unexpected_exception.txt [\u2581_]*",
+                "*= FAILURES =*",
+                "*_ [[]doctest[]] test_doctest_unexpected_exception.txt _*",
                 "001 >>> i = 0",
                 "002 >>> 0 / i",
                 "UNEXPECTED EXCEPTION: ZeroDivisionError*",
@@ -231,7 +231,7 @@ class TestDoctests:
                 "test_skip.txt s *",
                 "test_xfail.txt x *",
                 "",
-                "*[\u2550=] 2 skipped, 1 xfailed in *",
+                "*= 2 skipped, 1 xfailed in *",
             ]
         )
 
@@ -344,8 +344,8 @@ class TestDoctests:
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
-                "*[\u2550=] FAILURES [\u2550=]*",
-                "*[\u2581_] [[]doctest[]] test_doctest_linedata_on_property.Sample.some_property [\u2581_]*",
+                "*= FAILURES =*",
+                "*_ [[]doctest[]] test_doctest_linedata_on_property.Sample.some_property _*",
                 "004 ",
                 "005         >>> Sample().some_property",
                 "Expected:",
@@ -354,7 +354,7 @@ class TestDoctests:
                 "    'something'",
                 "",
                 "*/test_doctest_linedata_on_property.py:5: DocTestFailure",
-                "*[\u2550=] 1 failed in *",
+                "*= 1 failed in *",
             ]
         )
 
@@ -375,8 +375,8 @@ class TestDoctests:
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
             [
-                "*[\u2550=] FAILURES [\u2550=]*",
-                "*[\u2581_] [[]doctest] test_doctest_no_linedata_on_overriden_property.Sample.some_property [\u2581_]*",
+                "*= FAILURES =*",
+                "*_ [[]doctest] test_doctest_no_linedata_on_overriden_property.Sample.some_property _*",
                 "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example",
                 "[?][?][?] >>> Sample().some_property",
                 "Expected:",
@@ -385,7 +385,7 @@ class TestDoctests:
                 "    'something'",
                 "",
                 "*/test_doctest_no_linedata_on_overriden_property.py:None: DocTestFailure",
-                "*[\u2550=] 1 failed in *",
+                "*= 1 failed in *",
             ]
         )
 
@@ -1233,9 +1233,7 @@ class TestDoctestAutoUseFixtures:
         params = ("--doctest-modules",) if enable_doctest else ()
         passes = 3 if enable_doctest else 2
         result = testdir.runpytest(*params)
-        result.stdout.fnmatch_lines(
-            ["*[\u2550=][\u2550=][\u2550=] %d passed in *" % passes]
-        )
+        result.stdout.fnmatch_lines(["*=== %d passed in *" % passes])
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("autouse", [True, False])
@@ -1273,7 +1271,7 @@ class TestDoctestAutoUseFixtures:
             )
         result = testdir.runpytest("--doctest-modules")
         result.stdout.no_fnmatch_line("*FAILURES*")
-        result.stdout.fnmatch_lines(["*[\u2550=][\u2550=][\u2550=] 1 passed in *"])
+        result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
     @pytest.mark.parametrize("scope", SCOPES)
     def test_auto_use_request_attributes(self, testdir, scope):
@@ -1305,7 +1303,7 @@ class TestDoctestAutoUseFixtures:
         )
         result = testdir.runpytest("--doctest-modules")
         str(result.stdout.no_fnmatch_line("*FAILURES*"))
-        result.stdout.fnmatch_lines(["*[\u2550=][\u2550=][\u2550=] 1 passed in *"])
+        result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
 
 class TestDoctestNamespaceFixture:

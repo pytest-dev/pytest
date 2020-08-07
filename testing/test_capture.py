@@ -269,12 +269,12 @@ class TestPerTestCapturing:
         result.stdout.fnmatch_lines(
             [
                 "*test_capturing_outerr.py .F*",
-                "[\u2550=][\u2550=]* FAILURES *[\u2550=][\u2550=]",
-                "[\u2581_][\u2581_]*[\u2581_][\u2581_]",
+                "==* FAILURES *==",
+                "__*__",
                 "*test_capturing_outerr.py:8: ValueError",
-                "*[\u2500-][\u2500-] Captured stdout *call*",
+                "*-- Captured stdout *call*",
                 "1",
-                "*[\u2500-][\u2500-] Captured stderr *call*",
+                "*-- Captured stderr *call*",
                 "2",
             ]
         )
@@ -562,11 +562,11 @@ class TestCaptureFixture:
         result = testdir.runpytest(str(p1), "-rA")
         result.stdout.fnmatch_lines(
             [
-                "*[\u2500-] Captured stdout call [\u2500-]*",
+                "*- Captured stdout call -*",
                 "stdout after",
-                "*[\u2500-] Captured stderr call [\u2500-]*",
+                "*- Captured stderr call -*",
                 "stderr after",
-                "*[\u2550=] 1 passed in *",
+                "*= 1 passed in *",
             ]
         )
 
@@ -625,9 +625,7 @@ class TestCaptureFixture:
         )
         args = ("-s",) if no_capture else ()
         result = testdir.runpytest_subprocess(*args)
-        result.stdout.fnmatch_lines(
-            ["*while capture is disabled*", "*[\u2550=] 2 passed in *"]
-        )
+        result.stdout.fnmatch_lines(["*while capture is disabled*", "*= 2 passed in *"])
         result.stdout.no_fnmatch_line("*captured before*")
         result.stdout.no_fnmatch_line("*captured after*")
         if no_capture:
@@ -1579,9 +1577,9 @@ def test_logging_while_collecting(testdir):
     result.stdout.fnmatch_lines(
         [
             "*test_*.py F*",
-            "[\u2550=][\u2550=][\u2550=][\u2550=]* FAILURES *[\u2550=][\u2550=][\u2550=][\u2550=]",
-            "[\u2581_][\u2581_][\u2581_][\u2581_]*[\u2581_][\u2581_][\u2581_][\u2581_]",
-            "*[\u2500-][\u2500-][\u2500-] Captured log call*",
+            "====* FAILURES *====",
+            "____*____",
+            "*--- Captured log call*",
             "WARNING * during call",
             "*1 failed*",
         ]

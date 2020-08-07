@@ -175,7 +175,7 @@ class TestParseIni:
           """,
                 ["unknown_ini", "another_unknown_ini"],
                 [
-                    "[\u2550=]*[\u2550=] warnings summary [\u2550=]*[\u2550=]",
+                    "=*= warnings summary =*=",
                     "*PytestConfigWarning:*Unknown config ini key: another_unknown_ini",
                     "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
                 ],
@@ -189,7 +189,7 @@ class TestParseIni:
           """,
                 ["unknown_ini"],
                 [
-                    "[\u2550=]*[\u2550=] warnings summary [\u2550=]*[\u2550=]",
+                    "=*= warnings summary =*=",
                     "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
                 ],
                 "Unknown config ini key: unknown_ini",
@@ -1485,9 +1485,7 @@ class TestOverrideIniArgs:
         )
         result = testdir.runpytest("-o", "foo=1", "-o", "bar=0", "test_foo.py")
         assert "ERROR:" not in result.stderr.str()
-        result.stdout.fnmatch_lines(
-            ["collected 1 item", "*[\u2550=] 1 passed in *[\u2550=]"]
-        )
+        result.stdout.fnmatch_lines(["collected 1 item", "*= 1 passed in *="])
 
 
 def test_help_via_addopts(testdir):

@@ -1,4 +1,5 @@
-Use Unicode box drawing characters to print horizontal rules.
+Move characters used for drawing horizontal rules into class attributes of
+TerminalReporter.
 
-(But fall back to ASCII characters when the terminal encoding doesn't support
-those Unicode characters.)
+This allows those characters to be replaced by plugins (i.e. with Unicode
+box drawing characters) and documents which characters are used.

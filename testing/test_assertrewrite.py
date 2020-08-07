@@ -942,7 +942,7 @@ def test_rewritten():
         )
         testdir.chdir()
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines(["*[\u2550=] 1 passed in *[\u2550=]*"])
+        result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
         result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
     def test_rewrite_warning_using_pytest_plugins_env_var(self, testdir, monkeypatch):
@@ -960,7 +960,7 @@ def test_rewritten():
         )
         testdir.chdir()
         result = testdir.runpytest_subprocess()
-        result.stdout.fnmatch_lines(["*[\u2550=] 1 passed in *[\u2550=]*"])
+        result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
         result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
 

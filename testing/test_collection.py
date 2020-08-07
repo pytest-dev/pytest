@@ -913,7 +913,7 @@ def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
             "*ERROR collecting test_02_import_error.py*",
             "*No module named *asdfa*",
             "*! stopping after 1 failures !*",
-            "*[\u2550=] 1 error in *",
+            "*= 1 error in *",
         ]
     )
     res.stdout.no_fnmatch_line("*test_03*")
@@ -936,7 +936,7 @@ def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
             "*ERROR collecting test_03_import_error.py*",
             "*No module named *asdfa*",
             "*! Interrupted: 2 errors during collection !*",
-            "*[\u2550=] 2 errors in *",
+            "*= 2 errors in *",
         ]
     )
 
@@ -1297,13 +1297,13 @@ def test_collector_respects_tbstyle(testdir):
     assert result.ret == ExitCode.INTERRUPTED
     result.stdout.fnmatch_lines(
         [
-            "*[\u2581_] ERROR collecting test_collector_respects_tbstyle.py [\u2581_]*",
+            "*_ ERROR collecting test_collector_respects_tbstyle.py _*",
             "Traceback (most recent call last):",
             '  File "*/test_collector_respects_tbstyle.py", line 1, in <module>',
             "    assert 0",
             "AssertionError: assert 0",
             "*! Interrupted: 1 error during collection !*",
-            "*[\u2550=] 1 error in *",
+            "*= 1 error in *",
         ]
     )
 
