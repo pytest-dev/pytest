@@ -309,6 +309,7 @@ class WarningReport:
 
 
 class TerminalReporter:
+    # Characters use for printing horizontal rules
     hrule_single = "-"
     hrule_double = "="
     hrule_error = "!"
