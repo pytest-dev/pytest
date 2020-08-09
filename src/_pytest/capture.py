@@ -1,6 +1,6 @@
 """Per-test stdout/stderr capturing mechanism."""
-import collections
 import contextlib
+import functools
 import io
 import os
 import sys
@@ -488,7 +488,59 @@ class FDCapture(FDCaptureBinary):
 
 # MultiCapture
 
-CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
+
+# This class was a namedtuple, but due to mypy limitation[0] it could not be
+# made generic, so was replaced by a regular class which tries to emulate the
+# pertinent parts of a namedtuple. If the mypy limitation is ever lifted, can
+# make it a namedtuple again.
+# [0]: https://github.com/python/mypy/issues/685
+@functools.total_ordering
+class CaptureResult:
+    """The result of :method:`CaptureFixture.readouterr`."""
+
+    # Can't use slots in Python<3.5.3 due to https://bugs.python.org/issue31272
+    if sys.version_info >= (3, 5, 3):
+        __slots__ = ("out", "err")
+
+    def __init__(self, out, err) -> None:
+        self.out = out
+        self.err = err
+
+    def __len__(self) -> int:
+        return 2
+
+    def __iter__(self):
+        return iter((self.out, self.err))
+
+    def __getitem__(self, item: int):
+        return tuple(self)[item]
+
+    def _replace(self, out=None, err=None) -> "CaptureResult":
+        return CaptureResult(
+            out=self.out if out is None else out, err=self.err if err is None else err
+        )
+
+    def count(self, value) -> int:
+        return tuple(self).count(value)
+
+    def index(self, value) -> int:
+        return tuple(self).index(value)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, (CaptureResult, tuple)):
+            return NotImplemented
+        return tuple(self) == tuple(other)
+
+    def __hash__(self) -> int:
+        return hash(tuple(self))
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, (CaptureResult, tuple)):
+            return NotImplemented
+        return tuple(self) < tuple(other)
+
+    def __repr__(self) -> str:
+        return "CaptureResult(out={!r}, err={!r})".format(self.out, self.err)
 
 
 class MultiCapture:
