@@ -22,7 +22,9 @@ from _pytest.config import ExitCode
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 
 
-def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def StdCaptureFD(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.FDCapture(0) if in_ else None,
         out=capture.FDCapture(1) if out else None,
@@ -30,7 +32,9 @@ def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiC
     )
 
 
-def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def StdCapture(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.SysCapture(0) if in_ else None,
         out=capture.SysCapture(1) if out else None,
@@ -38,7 +42,9 @@ def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCap
     )
 
 
-def TeeStdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def TeeStdCapture(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.SysCapture(0, tee=True) if in_ else None,
         out=capture.SysCapture(1, tee=True) if out else None,
