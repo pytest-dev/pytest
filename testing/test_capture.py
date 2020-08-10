@@ -14,6 +14,7 @@ import pytest
 from _pytest import capture
 from _pytest.capture import _get_multicapture
 from _pytest.capture import CaptureManager
+from _pytest.capture import CaptureResult
 from _pytest.capture import MultiCapture
 from _pytest.config import ExitCode
 
@@ -21,7 +22,9 @@ from _pytest.config import ExitCode
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 
 
-def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def StdCaptureFD(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.FDCapture(0) if in_ else None,
         out=capture.FDCapture(1) if out else None,
@@ -29,7 +32,9 @@ def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiC
     )
 
 
-def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def StdCapture(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.SysCapture(0) if in_ else None,
         out=capture.SysCapture(1) if out else None,
@@ -37,7 +42,9 @@ def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCap
     )
 
 
-def TeeStdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def TeeStdCapture(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.SysCapture(0, tee=True) if in_ else None,
         out=capture.SysCapture(1, tee=True) if out else None,
@@ -854,6 +861,36 @@ def test_dontreadfrominput():
     pytest.raises(OSError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
     f.close()  # just for completeness
+
+
+def test_captureresult() -> None:
+    cr = CaptureResult("out", "err")
+    assert len(cr) == 2
+    assert cr.out == "out"
+    assert cr.err == "err"
+    out, err = cr
+    assert out == "out"
+    assert err == "err"
+    assert cr[0] == "out"
+    assert cr[1] == "err"
+    assert cr == cr
+    assert cr == CaptureResult("out", "err")
+    assert cr != CaptureResult("wrong", "err")
+    assert cr == ("out", "err")
+    assert cr != ("out", "wrong")
+    assert hash(cr) == hash(CaptureResult("out", "err"))
+    assert hash(cr) == hash(("out", "err"))
+    assert hash(cr) != hash(("out", "wrong"))
+    assert cr < ("z",)
+    assert cr < ("z", "b")
+    assert cr < ("z", "b", "c")
+    assert cr.count("err") == 1
+    assert cr.count("wrong") == 0
+    assert cr.index("err") == 1
+    with pytest.raises(ValueError):
+        assert cr.index("wrong") == 0
+    assert next(iter(cr)) == "out"
+    assert cr._replace(err="replaced") == ("out", "replaced")
 
 
 @pytest.fixture
