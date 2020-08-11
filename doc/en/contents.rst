@@ -38,7 +38,6 @@ Full pytest documentation
    customize
    example/index
    bash-completion
-   faq
 
    backwards-compatibility
    deprecations
