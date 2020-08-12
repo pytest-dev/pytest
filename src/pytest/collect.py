@@ -1,10 +1,11 @@
 import sys
+import warnings
 from types import ModuleType
 from typing import Any
 from typing import List
 
 import pytest
-
+from _pytest.deprecated import PYTEST_COLLECT_MODULE
 
 COLLECT_FAKEMODULE_ATTRIBUTES = [
     "Collector",
@@ -31,8 +32,7 @@ class FakeCollectModule(ModuleType):
     def __getattr__(self, name: str) -> Any:
         if name not in self.__all__:
             raise AttributeError(name)
-        # Uncomment this after 6.0 release (#7361)
-        # warnings.warn(PYTEST_COLLECT_MODULE.format(name=name), stacklevel=2)
+        warnings.warn(PYTEST_COLLECT_MODULE.format(name=name), stacklevel=2)
         return getattr(pytest, name)
 
 
