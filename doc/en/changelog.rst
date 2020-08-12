@@ -7403,7 +7403,7 @@ Bug fixes:
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
 
-- fix issue159: improve http://pytest.org/en/stable/faq.html
+- fix issue159: improve https://docs.pytest.org/en/6.0.1/faq.html
   especially with respect to the "magic" history, also mention
   pytest-django, trial and unittest integration.
 
