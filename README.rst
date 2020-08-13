@@ -22,8 +22,8 @@
 .. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest
 
-.. image:: https://dev.azure.com/pytest-dev/pytest/_apis/build/status/pytest-CI?branchName=master
-    :target: https://dev.azure.com/pytest-dev/pytest
+.. image:: https://github.com/pytest-dev/pytest/workflows/main/badge.svg
+    :target: https://github.com/pytest-dev/pytest/actions?query=workflow%3Amain
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
