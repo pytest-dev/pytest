@@ -1230,7 +1230,7 @@ def fixture(
     ] = ...,
     name: Optional[str] = ...
 ) -> _FixtureFunction:
-    raise NotImplementedError()
+    ...
 
 
 @overload  # noqa: F811
@@ -1248,7 +1248,7 @@ def fixture(  # noqa: F811
     ] = ...,
     name: Optional[str] = None
 ) -> FixtureFunctionMarker:
-    raise NotImplementedError()
+    ...
 
 
 def fixture(  # noqa: F811

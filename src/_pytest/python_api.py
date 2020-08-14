@@ -529,7 +529,7 @@ def raises(
     *,
     match: "Optional[Union[str, Pattern[str]]]" = ...
 ) -> "RaisesContext[_E]":
-    ...  # pragma: no cover
+    ...
 
 
 @overload  # noqa: F811
@@ -539,7 +539,7 @@ def raises(  # noqa: F811
     *args: Any,
     **kwargs: Any
 ) -> _pytest._code.ExceptionInfo[_E]:
-    ...  # pragma: no cover
+    ...
 
 
 def raises(  # noqa: F811

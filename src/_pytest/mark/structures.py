@@ -327,13 +327,13 @@ class MarkDecorator:
     # the first match so it works out even if we break the rules.
     @overload
     def __call__(self, arg: _Markable) -> _Markable:  # type: ignore[misc]
-        raise NotImplementedError()
+        pass
 
     @overload  # noqa: F811
     def __call__(  # noqa: F811
         self, *args: object, **kwargs: object
     ) -> "MarkDecorator":
-        raise NotImplementedError()
+        pass
 
     def __call__(self, *args: object, **kwargs: object):  # noqa: F811
         """Call the MarkDecorator."""
@@ -388,11 +388,11 @@ if TYPE_CHECKING:
     class _SkipMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc]
         def __call__(self, arg: _Markable) -> _Markable:
-            raise NotImplementedError()
+            ...
 
         @overload  # noqa: F811
         def __call__(self, reason: str = ...) -> "MarkDecorator":  # noqa: F811
-            raise NotImplementedError()
+            ...
 
     class _SkipifMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -401,12 +401,12 @@ if TYPE_CHECKING:
             *conditions: Union[str, bool],
             reason: str = ...
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _XfailMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc]
         def __call__(self, arg: _Markable) -> _Markable:
-            raise NotImplementedError()
+            ...
 
         @overload  # noqa: F811
         def __call__(  # noqa: F811
@@ -420,7 +420,7 @@ if TYPE_CHECKING:
             ] = ...,
             strict: bool = ...
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -437,19 +437,19 @@ if TYPE_CHECKING:
             ] = ...,
             scope: Optional[_Scope] = ...
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self, *fixtures: str
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _FilterwarningsMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self, *filters: str
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
 
 class MarkGenerator:

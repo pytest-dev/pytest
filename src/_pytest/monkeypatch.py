@@ -152,13 +152,13 @@ class MonkeyPatch:
     def setattr(
         self, target: str, name: object, value: Notset = ..., raising: bool = ...,
     ) -> None:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def setattr(  # noqa: F811
         self, target: object, name: str, value: object, raising: bool = ...,
     ) -> None:
-        raise NotImplementedError()
+        ...
 
     def setattr(  # noqa: F811
         self,

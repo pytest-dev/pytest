@@ -201,7 +201,7 @@ class ParsedCall:
     if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
         def __getattr__(self, key: str):
-            raise NotImplementedError()
+            ...
 
 
 class HookRecorder:
@@ -274,13 +274,13 @@ class HookRecorder:
     def getreports(
         self, names: "Literal['pytest_collectreport']",
     ) -> Sequence[CollectReport]:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def getreports(  # noqa: F811
         self, names: "Literal['pytest_runtest_logreport']",
     ) -> Sequence[TestReport]:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def getreports(  # noqa: F811
@@ -290,7 +290,7 @@ class HookRecorder:
             "pytest_runtest_logreport",
         ),
     ) -> Sequence[Union[CollectReport, TestReport]]:
-        raise NotImplementedError()
+        ...
 
     def getreports(  # noqa: F811
         self,
@@ -337,13 +337,13 @@ class HookRecorder:
     def getfailures(
         self, names: "Literal['pytest_collectreport']",
     ) -> Sequence[CollectReport]:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def getfailures(  # noqa: F811
         self, names: "Literal['pytest_runtest_logreport']",
     ) -> Sequence[TestReport]:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def getfailures(  # noqa: F811
@@ -353,7 +353,7 @@ class HookRecorder:
             "pytest_runtest_logreport",
         ),
     ) -> Sequence[Union[CollectReport, TestReport]]:
-        raise NotImplementedError()
+        ...
 
     def getfailures(  # noqa: F811
         self,

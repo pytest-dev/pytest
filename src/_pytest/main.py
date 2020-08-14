@@ -501,13 +501,13 @@ class Session(nodes.FSCollector):
     def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: "Literal[True]" = ...
     ) -> Sequence[nodes.Item]:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
-        raise NotImplementedError()
+        ...
 
     def perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]] = None, genitems: bool = True
@@ -528,13 +528,13 @@ class Session(nodes.FSCollector):
     def _perform_collect(
         self, args: Optional[Sequence[str]], genitems: "Literal[True]"
     ) -> List[nodes.Item]:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def _perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]], genitems: bool
     ) -> Union[List[Union[nodes.Item]], List[Union[nodes.Item, nodes.Collector]]]:
-        raise NotImplementedError()
+        ...
 
     def _perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]], genitems: bool
