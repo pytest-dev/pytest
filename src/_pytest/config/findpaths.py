@@ -147,7 +147,7 @@ def get_dirs_from_args(args: Iterable[str]) -> List[Path]:
 
     def safe_exists(path: Path) -> bool:
         # This can throw on paths that contain characters unrepresentable at the OS level,
-        # or with invalid syntax on Windows
+        # or with invalid syntax on Windows (https://bugs.python.org/issue35306)
         try:
             return path.exists()
         except OSError:
