@@ -31,6 +31,7 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
+from _pytest.pathlib import absolutepath
 from _pytest.pathlib import Path
 from _pytest.pathlib import visit
 from _pytest.reports import CollectReport
@@ -693,15 +694,15 @@ class Session(nodes.FSCollector):
         strpath, *parts = str(arg).split("::")
         if self.config.option.pyargs:
             strpath = self._tryconvertpyarg(strpath)
-        relpath = strpath.replace("/", os.sep)
-        fspath = self.config.invocation_dir.join(relpath, abs=True)
-        if not fspath.check():
+        fspath = Path(str(self.config.invocation_dir), strpath)
+        fspath = absolutepath(fspath)
+        if not fspath.exists():
             if self.config.option.pyargs:
                 raise UsageError(
                     "file or package not found: " + arg + " (missing __init__.py?)"
                 )
             raise UsageError("file not found: " + arg)
-        return (fspath, parts)
+        return py.path.local(str(fspath)), parts
 
     def matchnodes(
         self, matching: Sequence[Union[nodes.Item, nodes.Collector]], names: List[str],
