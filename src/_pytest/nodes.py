@@ -311,11 +311,11 @@ class Node(metaclass=NodeMeta):
 
     @overload
     def get_closest_marker(self, name: str) -> Optional[Mark]:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def get_closest_marker(self, name: str, default: Mark) -> Mark:  # noqa: F811
-        raise NotImplementedError()
+        ...
 
     def get_closest_marker(  # noqa: F811
         self, name: str, default: Optional[Mark] = None

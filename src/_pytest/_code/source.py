@@ -44,11 +44,11 @@ class Source:
 
     @overload
     def __getitem__(self, key: int) -> str:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def __getitem__(self, key: slice) -> "Source":  # noqa: F811
-        raise NotImplementedError()
+        ...
 
     def __getitem__(self, key: Union[int, slice]) -> Union[str, "Source"]:  # noqa: F811
         if isinstance(key, int):

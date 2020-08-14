@@ -334,11 +334,11 @@ class Traceback(List[TracebackEntry]):
 
     @overload
     def __getitem__(self, key: int) -> TracebackEntry:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def __getitem__(self, key: slice) -> "Traceback":  # noqa: F811
-        raise NotImplementedError()
+        ...
 
     def __getitem__(  # noqa: F811
         self, key: Union[int, slice]

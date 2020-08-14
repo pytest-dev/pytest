@@ -378,13 +378,13 @@ else:
         def __get__(
             self, instance: None, owner: Optional["Type[_S]"] = ...
         ) -> "cached_property[_S, _T]":
-            raise NotImplementedError()
+            ...
 
         @overload  # noqa: F811
         def __get__(  # noqa: F811
             self, instance: _S, owner: Optional["Type[_S]"] = ...
         ) -> _T:
-            raise NotImplementedError()
+            ...
 
         def __get__(self, instance, owner=None):  # noqa: F811
             if instance is None:

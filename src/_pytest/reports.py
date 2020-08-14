@@ -71,7 +71,7 @@ class BaseReport:
     if TYPE_CHECKING:
         # Can have arbitrary fields given to __init__().
         def __getattr__(self, key: str) -> Any:
-            raise NotImplementedError()
+            ...
 
     def toterminal(self, out: TerminalWriter) -> None:
         if hasattr(self, "node"):

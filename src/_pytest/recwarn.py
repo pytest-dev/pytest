@@ -42,14 +42,14 @@ def recwarn() -> Generator["WarningsRecorder", None, None]:
 def deprecated_call(
     *, match: Optional[Union[str, "Pattern[str]"]] = ...
 ) -> "WarningsRecorder":
-    raise NotImplementedError()
+    ...
 
 
 @overload  # noqa: F811
 def deprecated_call(  # noqa: F811
     func: Callable[..., T], *args: Any, **kwargs: Any
 ) -> T:
-    raise NotImplementedError()
+    ...
 
 
 def deprecated_call(  # noqa: F811
@@ -89,7 +89,7 @@ def warns(
     *,
     match: "Optional[Union[str, Pattern[str]]]" = ...
 ) -> "WarningsChecker":
-    raise NotImplementedError()
+    ...
 
 
 @overload  # noqa: F811
@@ -99,7 +99,7 @@ def warns(  # noqa: F811
     *args: Any,
     **kwargs: Any
 ) -> T:
-    raise NotImplementedError()
+    ...
 
 
 def warns(  # noqa: F811
