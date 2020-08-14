@@ -1,0 +1,5 @@
+Move characters used for drawing horizontal rules into class attributes of
+TerminalReporter.
+
+This allows those characters to be replaced by plugins (i.e. with Unicode
+box drawing characters) and documents which characters are used.
