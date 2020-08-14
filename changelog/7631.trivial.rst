@@ -1,0 +1,2 @@
+The result type of :meth:`capfd.readouterr() <_pytest.capture.CaptureFixture.readouterr>` (and similar) is no longer a namedtuple,
+but should behave like one in all respects. This was done for technical reasons.
