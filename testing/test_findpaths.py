@@ -2,6 +2,7 @@ from textwrap import dedent
 
 import pytest
 from _pytest.config.findpaths import get_common_ancestor
+from _pytest.config.findpaths import get_dirs_from_args
 from _pytest.config.findpaths import load_config_dict_from_file
 from _pytest.pathlib import Path
 
@@ -108,3 +109,17 @@ class TestCommonAncestor:
         fn = tmp_path / "foo.py"
         fn.touch()
         assert get_common_ancestor([fn]) == tmp_path
+
+
+def test_get_dirs_from_args(tmp_path):
+    """get_dirs_from_args() skips over non-existing directories and files"""
+    fn = tmp_path / "foo.py"
+    fn.touch()
+    d = tmp_path / "tests"
+    d.mkdir()
+    option = "--foobar=/foo.txt"
+    # xdist uses options in this format for its rsync feature (#7638)
+    xdist_rsync_option = "popen=c:/dest"
+    assert get_dirs_from_args(
+        [str(fn), str(tmp_path / "does_not_exist"), str(d), option, xdist_rsync_option]
+    ) == [fn.parent, d]

@@ -1,6 +1,5 @@
 import itertools
 import os
-import sys
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -146,20 +145,13 @@ def get_dirs_from_args(args: Iterable[str]) -> List[Path]:
             return path
         return path.parent
 
-    if sys.version_info < (3, 8):
-
-        def safe_exists(path: Path) -> bool:
-            # On Python<3.8, this can throw on paths that contain characters
-            # unrepresentable at the OS level.
-            try:
-                return path.exists()
-            except OSError:
-                return False
-
-    else:
-
-        def safe_exists(path: Path) -> bool:
+    def safe_exists(path: Path) -> bool:
+        # This can throw on paths that contain characters unrepresentable at the OS level,
+        # or with invalid syntax on Windows (https://bugs.python.org/issue35306)
+        try:
             return path.exists()
+        except OSError:
+            return False
 
     # These look like paths but may not exist
     possible_paths = (
