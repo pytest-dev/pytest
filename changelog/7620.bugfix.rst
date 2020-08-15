@@ -1,0 +1,1 @@
+It is now possible to silence :class:`pytest.PytestConfigWarning` messages about unknown configuration keys by using :confval:`filterwarnings`.

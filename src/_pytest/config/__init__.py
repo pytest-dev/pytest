@@ -1127,7 +1127,12 @@ class Config:
                 )
             else:
                 raise
-        self._validate_keys()
+
+    @hookimpl(hookwrapper=True)
+    def pytest_collection(self):
+        """Validate invalid ini keys after collection is done."""
+        yield
+        self._validate_config_keys()
 
     def _checkversion(self) -> None:
         import pytest
@@ -1148,7 +1153,7 @@ class Config:
                     % (self.inifile, minver, pytest.__version__,)
                 )
 
-    def _validate_keys(self) -> None:
+    def _validate_config_keys(self) -> None:
         for key in sorted(self._get_unknown_ini_keys()):
             self._warn_or_fail_if_strict("Unknown config ini key: {}\n".format(key))
 
@@ -1185,14 +1190,11 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
+        """Issue a PytestConfigWarning or fail if --strict-config was given"""
         if self.known_args_namespace.strict_config:
             fail(message, pytrace=False)
 
-        from _pytest.warnings import _issue_warning_captured
-
-        _issue_warning_captured(
-            PytestConfigWarning(message), self.hook, stacklevel=3,
-        )
+        warnings.warn(PytestConfigWarning(message))
 
     def _get_unknown_ini_keys(self) -> List[str]:
         parser_inicfg = self._parser._inidict

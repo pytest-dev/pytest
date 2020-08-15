@@ -232,6 +232,7 @@ class TestParseIni:
             ),
         ],
     )
+    @pytest.mark.filterwarnings("default")
     def test_invalid_ini_keys(
         self, testdir, ini_file_text, invalid_keys, warning_output, exception_text
     ):
@@ -250,10 +251,21 @@ class TestParseIni:
         result.stdout.fnmatch_lines(warning_output)
 
         if exception_text:
-            with pytest.raises(pytest.fail.Exception, match=exception_text):
-                testdir.runpytest("--strict-config")
-        else:
-            testdir.runpytest("--strict-config")
+            result = testdir.runpytest("--strict-config")
+            result.stdout.fnmatch_lines("INTERNALERROR>*" + exception_text)
+
+    @pytest.mark.filterwarnings("default")
+    def test_silence_unknown_key_warning(self, testdir):
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore:Unknown config ini key:pytest.PytestConfigWarning
+            foobar=1
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.no_fnmatch_line("*PytestConfigWarning*")
 
     @pytest.mark.parametrize(
         "ini_file_text, exception_text",
