@@ -552,64 +552,54 @@ class Session(nodes.FSCollector):
         in which case the return value contains these collectors unexpanded,
         and ``session.items`` is empty.
         """
+        if args is None:
+            args = self.config.args
+
+        self.trace("perform_collect", self, args)
+        self.trace.root.indent += 1
+
+        self._notfound = []  # type: List[Tuple[str, NoMatch]]
+        self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
+        self.items = items = []  # type: List[nodes.Item]
+
         hook = self.config.hook
+
         try:
-            items = self._perform_collect(args, genitems)
+            initialpaths = []  # type: List[py.path.local]
+            for arg in args:
+                fspath, parts = resolve_collection_argument(
+                    self.config.invocation_dir, arg, as_pypath=self.config.option.pyargs
+                )
+                self._initial_parts.append((fspath, parts))
+                initialpaths.append(fspath)
+            self._initialpaths = frozenset(initialpaths)
+            rep = collect_one_node(self)
+            self.ihook.pytest_collectreport(report=rep)
+            self.trace.root.indent -= 1
+            if self._notfound:
+                errors = []
+                for arg, exc in self._notfound:
+                    line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
+                    errors.append("not found: {}\n{}".format(arg, line))
+                raise UsageError(*errors)
+            if not genitems:
+                # Type ignored because genitems=False is only used by tests. We don't
+                # want to change the type of `session.items` for this case.
+                items = rep.result  # type: ignore[assignment]
+            else:
+                if rep.passed:
+                    for node in rep.result:
+                        self.items.extend(self.genitems(node))
+
             self.config.pluginmanager.check_pending()
             hook.pytest_collection_modifyitems(
                 session=self, config=self.config, items=items
             )
         finally:
             hook.pytest_collection_finish(session=self)
+
         self.testscollected = len(items)
         return items
-
-    @overload
-    def _perform_collect(
-        self, args: Optional[Sequence[str]], genitems: "Literal[True]"
-    ) -> List[nodes.Item]:
-        ...
-
-    @overload  # noqa: F811
-    def _perform_collect(  # noqa: F811
-        self, args: Optional[Sequence[str]], genitems: bool
-    ) -> Union[List[Union[nodes.Item]], List[Union[nodes.Item, nodes.Collector]]]:
-        ...
-
-    def _perform_collect(  # noqa: F811
-        self, args: Optional[Sequence[str]], genitems: bool
-    ) -> Union[List[Union[nodes.Item]], List[Union[nodes.Item, nodes.Collector]]]:
-        if args is None:
-            args = self.config.args
-        self.trace("perform_collect", self, args)
-        self.trace.root.indent += 1
-        self._notfound = []  # type: List[Tuple[str, NoMatch]]
-        initialpaths = []  # type: List[py.path.local]
-        self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
-        self.items = items = []  # type: List[nodes.Item]
-        for arg in args:
-            fspath, parts = resolve_collection_argument(
-                self.config.invocation_dir, arg, as_pypath=self.config.option.pyargs
-            )
-            self._initial_parts.append((fspath, parts))
-            initialpaths.append(fspath)
-        self._initialpaths = frozenset(initialpaths)
-        rep = collect_one_node(self)
-        self.ihook.pytest_collectreport(report=rep)
-        self.trace.root.indent -= 1
-        if self._notfound:
-            errors = []
-            for arg, exc in self._notfound:
-                line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
-                errors.append("not found: {}\n{}".format(arg, line))
-            raise UsageError(*errors)
-        if not genitems:
-            return rep.result
-        else:
-            if rep.passed:
-                for node in rep.result:
-                    self.items.extend(self.genitems(node))
-            return items
 
     def collect(self) -> Iterator[Union[nodes.Item, nodes.Collector]]:
         for fspath, parts in self._initial_parts:
