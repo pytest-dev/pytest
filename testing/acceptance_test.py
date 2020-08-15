@@ -70,7 +70,7 @@ class TestGeneralUsage:
     def test_file_not_found(self, testdir):
         result = testdir.runpytest("asd")
         assert result.ret != 0
-        result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
+        result.stderr.fnmatch_lines(["ERROR: file or directory not found: asd"])
 
     def test_file_not_found_unconfigure_issue143(self, testdir):
         testdir.makeconftest(
@@ -83,7 +83,7 @@ class TestGeneralUsage:
         )
         result = testdir.runpytest("-s", "asd")
         assert result.ret == ExitCode.USAGE_ERROR
-        result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
+        result.stderr.fnmatch_lines(["ERROR: file or directory not found: asd"])
         result.stdout.fnmatch_lines(["*---configure", "*---unconfigure"])
 
     def test_config_preparse_plugin_option(self, testdir):
@@ -791,7 +791,7 @@ class TestInvocationVariants:
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
         assert result.ret
-        result.stderr.fnmatch_lines(["ERROR*file*or*package*not*found*"])
+        result.stderr.fnmatch_lines(["ERROR*module*or*package*not*found*"])
 
     @pytest.mark.xfail(reason="decide: feature or bug")
     def test_noclass_discovery_if_not_testcase(self, testdir):

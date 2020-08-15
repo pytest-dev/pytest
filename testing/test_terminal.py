@@ -442,7 +442,9 @@ class TestCollectonly:
         have the items attribute."""
         result = testdir.runpytest("--collect-only", "uhm_missing_path")
         assert result.ret == 4
-        result.stderr.fnmatch_lines(["*ERROR: file not found*"])
+        result.stderr.fnmatch_lines(
+            ["*ERROR: file or directory not found: uhm_missing_path"]
+        )
 
     def test_collectonly_quiet(self, testdir):
         testdir.makepyfile("def test_foo(): pass")

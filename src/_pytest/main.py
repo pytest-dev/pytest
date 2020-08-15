@@ -549,7 +549,9 @@ class Session(nodes.FSCollector):
         self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
         self.items = items = []  # type: List[nodes.Item]
         for arg in args:
-            fspath, parts = self._parsearg(arg)
+            fspath, parts = resolve_collection_argument(
+                self.config.invocation_dir, arg, as_pypath=self.config.option.pyargs
+            )
             self._initial_parts.append((fspath, parts))
             initialpaths.append(fspath)
         self._initialpaths = frozenset(initialpaths)
@@ -673,37 +675,6 @@ class Session(nodes.FSCollector):
                 return
             yield from m
 
-    def _tryconvertpyarg(self, x: str) -> str:
-        """Convert a dotted module name to path."""
-        try:
-            spec = importlib.util.find_spec(x)
-        # AttributeError: looks like package module, but actually filename
-        # ImportError: module does not exist
-        # ValueError: not a module name
-        except (AttributeError, ImportError, ValueError):
-            return x
-        if spec is None or spec.origin is None or spec.origin == "namespace":
-            return x
-        elif spec.submodule_search_locations:
-            return os.path.dirname(spec.origin)
-        else:
-            return spec.origin
-
-    def _parsearg(self, arg: str) -> Tuple[py.path.local, List[str]]:
-        """Return (fspath, names) tuple after checking the file exists."""
-        strpath, *parts = str(arg).split("::")
-        if self.config.option.pyargs:
-            strpath = self._tryconvertpyarg(strpath)
-        fspath = Path(str(self.config.invocation_dir), strpath)
-        fspath = absolutepath(fspath)
-        if not fspath.exists():
-            if self.config.option.pyargs:
-                raise UsageError(
-                    "file or package not found: " + arg + " (missing __init__.py?)"
-                )
-            raise UsageError("file not found: " + arg)
-        return py.path.local(str(fspath)), parts
-
     def matchnodes(
         self, matching: Sequence[Union[nodes.Item, nodes.Collector]], names: List[str],
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
@@ -770,3 +741,59 @@ class Session(nodes.FSCollector):
                 for subnode in rep.result:
                     yield from self.genitems(subnode)
             node.ihook.pytest_collectreport(report=rep)
+
+
+def search_pypath(module_name: str) -> str:
+    """Search sys.path for the given a dotted module name, and return its file system path."""
+    try:
+        spec = importlib.util.find_spec(module_name)
+    # AttributeError: looks like package module, but actually filename
+    # ImportError: module does not exist
+    # ValueError: not a module name
+    except (AttributeError, ImportError, ValueError):
+        return module_name
+    if spec is None or spec.origin is None or spec.origin == "namespace":
+        return module_name
+    elif spec.submodule_search_locations:
+        return os.path.dirname(spec.origin)
+    else:
+        return spec.origin
+
+
+def resolve_collection_argument(
+    invocation_dir: py.path.local, arg: str, *, as_pypath: bool = False
+) -> Tuple[py.path.local, List[str]]:
+    """Parse path arguments optionally containing selection parts and return (fspath, names).
+
+    Command-line arguments can point to files and/or directories, and optionally contain
+    parts for specific tests selection, for example:
+
+        "pkg/tests/test_foo.py::TestClass::test_foo"
+
+    This function ensures the path exists, and returns a tuple:
+
+        (py.path.path("/full/path/to/pkg/tests/test_foo.py"), ["TestClass", "test_foo"])
+
+    When as_pypath is True, expects that the command-line argument actually contains
+    module paths instead of file-system paths:
+
+        "pkg.tests.test_foo::TestClass::test_foo"
+
+    In which case we search sys.path for a matching module, and then return the *path* to the
+    found module.
+
+    If the path doesn't exist, raise UsageError.
+    """
+    strpath, *parts = str(arg).split("::")
+    if as_pypath:
+        strpath = search_pypath(strpath)
+    fspath = Path(str(invocation_dir), strpath)
+    fspath = absolutepath(fspath)
+    if not fspath.exists():
+        msg = (
+            "module or package not found: {arg} (missing __init__.py?)"
+            if as_pypath
+            else "file or directory not found: {arg}"
+        )
+        raise UsageError(msg.format(arg=arg))
+    return py.path.local(str(fspath)), parts

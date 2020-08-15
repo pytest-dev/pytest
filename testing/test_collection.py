@@ -443,25 +443,6 @@ class TestCustomConftests:
 
 
 class TestSession:
-    def test_parsearg(self, testdir) -> None:
-        p = testdir.makepyfile("def test_func(): pass")
-        subdir = testdir.mkdir("sub")
-        subdir.ensure("__init__.py")
-        target = subdir.join(p.basename)
-        p.move(target)
-        subdir.chdir()
-        config = testdir.parseconfig(p.basename)
-        rcol = Session.from_config(config)
-        assert rcol.fspath == subdir
-        fspath, parts = rcol._parsearg(p.basename)
-
-        assert fspath == target
-        assert len(parts) == 0
-        fspath, parts = rcol._parsearg(p.basename + "::test_func")
-        assert fspath == target
-        assert parts[0] == "test_func"
-        assert len(parts) == 1
-
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
@@ -1426,42 +1407,3 @@ class TestImportModeImportlib:
                 "* 1 failed in *",
             ]
         )
-
-
-def test_module_full_path_without_drive(testdir):
-    """Collect and run test using full path except for the drive letter (#7628)
-
-    Passing a full path without a drive letter would trigger a bug in py.path.local
-    where it would keep the full path without the drive letter around, instead of resolving
-    to the full path, resulting in fixtures node ids not matching against test node ids correctly.
-    """
-    testdir.makepyfile(
-        **{
-            "project/conftest.py": """
-                import pytest
-                @pytest.fixture
-                def fix(): return 1
-            """,
-        }
-    )
-
-    testdir.makepyfile(
-        **{
-            "project/tests/dummy_test.py": """
-                def test(fix):
-                    assert fix == 1
-            """
-        }
-    )
-    fn = testdir.tmpdir.join("project/tests/dummy_test.py")
-    assert fn.isfile()
-
-    drive, path = os.path.splitdrive(str(fn))
-
-    result = testdir.runpytest(path, "-v")
-    result.stdout.fnmatch_lines(
-        [
-            os.path.join("project", "tests", "dummy_test.py") + "::test PASSED *",
-            "* 1 passed in *",
-        ]
-    )
