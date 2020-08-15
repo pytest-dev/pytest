@@ -1,11 +1,13 @@
 import copy
 import inspect
+import warnings
 from unittest import mock
 
 import pytest
 from _pytest import deprecated
 from _pytest import nodes
 from _pytest.config import Config
+from _pytest.pytester import Testdir
 
 
 @pytest.mark.filterwarnings("default")
@@ -151,3 +153,28 @@ def test_minus_k_colon_is_deprecated(testdir) -> None:
     )
     result = testdir.runpytest("-k", "test_two:", threepass)
     result.stdout.fnmatch_lines(["*The `-k 'expr:'` syntax*deprecated*"])
+
+
+def test_fscollector_gethookproxy_isinitpath(testdir: Testdir) -> None:
+    module = testdir.getmodulecol(
+        """
+        def test_foo(): pass
+        """,
+        withinit=True,
+    )
+    assert isinstance(module, pytest.Module)
+    package = module.parent
+    assert isinstance(package, pytest.Package)
+
+    with pytest.warns(pytest.PytestDeprecationWarning, match="gethookproxy"):
+        package.gethookproxy(testdir.tmpdir)
+
+    with pytest.warns(pytest.PytestDeprecationWarning, match="isinitpath"):
+        package.isinitpath(testdir.tmpdir)
+
+    # The methods on Session are *not* deprecated.
+    session = module.session
+    with warnings.catch_warnings(record=True) as rec:
+        session.gethookproxy(testdir.tmpdir)
+        session.isinitpath(testdir.tmpdir)
+    assert len(rec) == 0
