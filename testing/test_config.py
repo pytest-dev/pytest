@@ -183,10 +183,9 @@ class TestParseIni:
                 ["unknown_ini", "another_unknown_ini"],
                 [
                     "=*= warnings summary =*=",
-                    "*PytestConfigWarning:*Unknown config ini key: another_unknown_ini",
-                    "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
+                    "*PytestConfigWarning:*Unknown config keys: another_unknown_ini, unknown_ini",
                 ],
-                "Unknown config ini key: another_unknown_ini",
+                "Unknown config keys: another_unknown_ini, unknown_ini",
             ),
             (
                 """
@@ -197,9 +196,9 @@ class TestParseIni:
                 ["unknown_ini"],
                 [
                     "=*= warnings summary =*=",
-                    "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
+                    "*PytestConfigWarning:*Unknown config key: unknown_ini",
                 ],
-                "Unknown config ini key: unknown_ini",
+                "Unknown config key: unknown_ini",
             ),
             (
                 """
@@ -260,7 +259,7 @@ class TestParseIni:
             """
             [pytest]
             filterwarnings =
-                ignore:Unknown config ini key:pytest.PytestConfigWarning
+                ignore:Unknown config key:pytest.PytestConfigWarning
             foobar=1
         """
         )

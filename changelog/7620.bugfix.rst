@@ -1,1 +1,3 @@
 It is now possible to silence :class:`pytest.PytestConfigWarning` messages about unknown configuration keys by using :confval:`filterwarnings`.
+
+Also, multiple keys are combined in a single warning, instead of showing a separate warning per key.

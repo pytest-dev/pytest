@@ -1154,8 +1154,12 @@ class Config:
                 )
 
     def _validate_config_keys(self) -> None:
-        for key in sorted(self._get_unknown_ini_keys()):
-            self._warn_or_fail_if_strict("Unknown config ini key: {}\n".format(key))
+        keys = sorted(self._get_unknown_ini_keys())
+        if keys:
+            noun = "key" if len(keys) == 1 else "keys"
+            self._warn_or_fail_if_strict(
+                "Unknown config {}: {}".format(noun, ", ".join(keys))
+            )
 
     def _validate_plugins(self) -> None:
         required_plugins = sorted(self.getini("required_plugins"))
