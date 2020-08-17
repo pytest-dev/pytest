@@ -30,11 +30,19 @@ This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``
 Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
 by a ``nodeid`` parameter.
 
+The ``pytest.collect`` module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.0
+
+The ``pytest.collect`` module is no longer part of the public API, all its names
+should now be imported from ``pytest`` directly instead.
+
 
 The ``pytest._fillfuncargs`` function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 5.5
+.. deprecated:: 6.0
 
 This function was kept for backward compatibility with an older plugin.
 
