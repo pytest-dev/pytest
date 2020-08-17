@@ -1,0 +1,4 @@
+As per our policy, the following features have been deprecated in the 5.X series and are now
+removed:
+
+* The ``funcargnames`` read-only property of ``FixtureRequest``, ``Metafunc``, and ``Function`` classes. Use ``fixturenames`` attribute.

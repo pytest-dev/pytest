@@ -53,7 +53,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
-from _pytest.deprecated import FUNCARGNAMES
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
@@ -906,12 +905,6 @@ class Metafunc:
         self._calls = []  # type: List[CallSpec2]
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
-    @property
-    def funcargnames(self) -> List[str]:
-        """Alias attribute for ``fixturenames`` for pre-2.3 compatibility."""
-        warnings.warn(FUNCARGNAMES, stacklevel=2)
-        return self.fixturenames
-
     def parametrize(
         self,
         argnames: Union[str, List[str], Tuple[str, ...]],
@@ -1567,12 +1560,6 @@ class Function(PyobjMixin, nodes.Item):
     def _pyfuncitem(self):
         """(compatonly) for code expecting pytest-2.2 style request objects."""
         return self
-
-    @property
-    def funcargnames(self) -> List[str]:
-        """Alias attribute for ``fixturenames`` for pre-2.3 compatibility."""
-        warnings.warn(FUNCARGNAMES, stacklevel=2)
-        return self.fixturenames
 
     def runtest(self) -> None:
         """Execute the underlying test function."""

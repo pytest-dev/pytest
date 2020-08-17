@@ -47,7 +47,6 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
-from _pytest.deprecated import FUNCARGNAMES
 from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
@@ -456,12 +455,6 @@ class FixtureRequest:
         result = list(self._pyfuncitem._fixtureinfo.names_closure)
         result.extend(set(self._fixture_defs).difference(result))
         return result
-
-    @property
-    def funcargnames(self) -> List[str]:
-        """Alias attribute for ``fixturenames`` for pre-2.3 compatibility."""
-        warnings.warn(FUNCARGNAMES, stacklevel=2)
-        return self.fixturenames
 
     @property
     def node(self):

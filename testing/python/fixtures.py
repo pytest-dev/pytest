@@ -815,28 +815,6 @@ class TestRequestBasic:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_funcargnames_compatattr(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-            def pytest_generate_tests(metafunc):
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    assert metafunc.funcargnames == metafunc.fixturenames
-            @pytest.fixture
-            def fn(request):
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    assert request._pyfuncitem.funcargnames == \
-                           request._pyfuncitem.fixturenames
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    return request.funcargnames, request.fixturenames
-
-            def test_hello(fn):
-                assert fn[0] == fn[1]
-        """
-        )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
-
     def test_setupdecorator_and_xunit(self, testdir):
         testdir.makepyfile(
             """

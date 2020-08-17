@@ -19,10 +19,6 @@ DEPRECATED_EXTERNAL_PLUGINS = {
     "pytest_faulthandler",
 }
 
-FUNCARGNAMES = PytestDeprecationWarning(
-    "The `funcargnames` attribute was an alias for `fixturenames`, "
-    "since pytest 2.3 - use the newer attribute instead."
-)
 
 FILLFUNCARGS = PytestDeprecationWarning(
     "The `_fillfuncargs` function is deprecated, use "
