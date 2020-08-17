@@ -1,10 +1,8 @@
-import copy
 import warnings
 from unittest import mock
 
 import pytest
 from _pytest import deprecated
-from _pytest.config import Config
 from _pytest.pytester import Testdir
 
 
@@ -34,35 +32,6 @@ def test_resultlog_is_deprecated(testdir):
 def test_pytest_collect_module_deprecated(attribute):
     with pytest.warns(DeprecationWarning, match=attribute):
         getattr(pytest.collect, attribute)
-
-
-def test_terminal_reporter_writer_attr(pytestconfig: Config) -> None:
-    """Check that TerminalReporter._tw is also available as 'writer' (#2984)
-    This attribute has been deprecated in 5.4.
-    """
-    try:
-        import xdist  # noqa
-
-        pytest.skip("xdist workers disable the terminal reporter plugin")
-    except ImportError:
-        pass
-    terminal_reporter = pytestconfig.pluginmanager.get_plugin("terminalreporter")
-    original_tw = terminal_reporter._tw
-
-    with pytest.warns(pytest.PytestDeprecationWarning) as cw:
-        assert terminal_reporter.writer is original_tw
-    assert len(cw) == 1
-    assert cw[0].filename == __file__
-
-    new_tw = copy.copy(original_tw)
-    with pytest.warns(pytest.PytestDeprecationWarning) as cw:
-        terminal_reporter.writer = new_tw
-        try:
-            assert terminal_reporter._tw is new_tw
-        finally:
-            terminal_reporter.writer = original_tw
-    assert len(cw) == 2
-    assert cw[0].filename == cw[1].filename == __file__
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))

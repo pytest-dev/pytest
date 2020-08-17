@@ -82,10 +82,17 @@ The plan is remove the ``--result-log`` option in pytest 6.0 if ``pytest-reportl
 to all users and is deemed stable. The ``pytest-reportlog`` plugin might even be merged into the core
 at some point, depending on the plans for the plugins and number of users using it.
 
+
+Removed Features
+----------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
+
 TerminalReporter.writer
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 5.4
+.. versionremoved:: 6.0
 
 The ``TerminalReporter.writer`` attribute has been deprecated and should no longer be used. This
 was inadvertently exposed as part of the public API of that plugin and ties it too much
@@ -93,13 +100,6 @@ with ``py.io.TerminalWriter``.
 
 Plugins that used ``TerminalReporter.writer`` directly should instead use ``TerminalReporter``
 methods that provide the same functionality.
-
-
-Removed Features
-----------------
-
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
 
 ``junit_family`` default value change to "xunit2"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
