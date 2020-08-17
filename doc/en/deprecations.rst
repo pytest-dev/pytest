@@ -57,45 +57,6 @@ A ``--show-capture`` command-line option was added in ``pytest 3.5.0`` which all
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
 
 
-``junit_family`` default value change to "xunit2"
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 5.2
-
-The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, which
-is an update of the old ``xunit1`` format and is supported by default in modern tools
-that manipulate this type of file (for example, Jenkins, Azure Pipelines, etc.).
-
-Users are recommended to try the new ``xunit2`` format and see if their tooling that consumes the JUnit
-XML file supports it.
-
-To use the new format, update your ``pytest.ini``:
-
-.. code-block:: ini
-
-    [pytest]
-    junit_family=xunit2
-
-If you discover that your tooling does not support the new format, and want to keep using the
-legacy version, set the option to ``legacy`` instead:
-
-.. code-block:: ini
-
-    [pytest]
-    junit_family=legacy
-
-By using ``legacy`` you will keep using the legacy/xunit1 format when upgrading to
-pytest 6.0, where the default format will be ``xunit2``.
-
-In order to let users know about the transition, pytest will issue a warning in case
-the ``--junitxml`` option is given in the command line but ``junit_family`` is not explicitly
-configured in ``pytest.ini``.
-
-Services known to support the ``xunit2`` format:
-
-* `Jenkins <https://www.jenkins.io/>`__ with the `JUnit <https://plugins.jenkins.io/junit>`__ plugin.
-* `Azure Pipelines <https://azure.microsoft.com/en-us/services/devops/pipelines>`__.
-
 
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,10 +93,49 @@ Removed Features
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
 
+``junit_family`` default value change to "xunit2"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionchanged:: 6.0
+
+The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, which
+is an update of the old ``xunit1`` format and is supported by default in modern tools
+that manipulate this type of file (for example, Jenkins, Azure Pipelines, etc.).
+
+Users are recommended to try the new ``xunit2`` format and see if their tooling that consumes the JUnit
+XML file supports it.
+
+To use the new format, update your ``pytest.ini``:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_family=xunit2
+
+If you discover that your tooling does not support the new format, and want to keep using the
+legacy version, set the option to ``legacy`` instead:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_family=legacy
+
+By using ``legacy`` you will keep using the legacy/xunit1 format when upgrading to
+pytest 6.0, where the default format will be ``xunit2``.
+
+In order to let users know about the transition, pytest will issue a warning in case
+the ``--junitxml`` option is given in the command line but ``junit_family`` is not explicitly
+configured in ``pytest.ini``.
+
+Services known to support the ``xunit2`` format:
+
+* `Jenkins <https://www.jenkins.io/>`__ with the `JUnit <https://plugins.jenkins.io/junit>`__ plugin.
+* `Azure Pipelines <https://azure.microsoft.com/en-us/services/devops/pipelines>`__.
+
 Node Construction changed to ``Node.from_parent``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.0
+.. versionchanged:: 6.0
 
 The construction of nodes now should use the named constructor ``from_parent``.
 This limitation in api surface intends to enable better/simpler refactoring of the collection tree.

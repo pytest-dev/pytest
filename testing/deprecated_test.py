@@ -75,35 +75,6 @@ def test_external_plugins_integrated(testdir, plugin):
         testdir.parseconfig("-p", plugin)
 
 
-@pytest.mark.parametrize("junit_family", [None, "legacy", "xunit2"])
-def test_warn_about_imminent_junit_family_default_change(testdir, junit_family):
-    """Show a warning if junit_family is not defined and --junitxml is used (#6179)"""
-    testdir.makepyfile(
-        """
-        def test_foo():
-            pass
-    """
-    )
-    if junit_family:
-        testdir.makeini(
-            """
-            [pytest]
-            junit_family={junit_family}
-        """.format(
-                junit_family=junit_family
-            )
-        )
-
-    result = testdir.runpytest("--junit-xml=foo.xml")
-    warning_msg = (
-        "*PytestDeprecationWarning: The 'junit_family' default value will change*"
-    )
-    if junit_family:
-        result.stdout.no_fnmatch_line(warning_msg)
-    else:
-        result.stdout.fnmatch_lines([warning_msg])
-
-
 @pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
 def test_fillfuncargs_is_deprecated() -> None:
     with pytest.warns(

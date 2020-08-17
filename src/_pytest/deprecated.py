@@ -30,13 +30,6 @@ RESULT_LOG = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log for more information."
 )
 
-
-JUNIT_XML_DEFAULT_FAMILY = PytestDeprecationWarning(
-    "The 'junit_family' default value will change to 'xunit2' in pytest 6.0. See:\n"
-    "  https://docs.pytest.org/en/stable/deprecations.html#junit-family-default-value-change-to-xunit2\n"
-    "for more information."
-)
-
 COLLECT_DIRECTORY_HOOK = PytestDeprecationWarning(
     "The pytest_collect_directory hook is not working.\n"
     "Please use collect_ignore in conftests or pytest_collection_modifyitems."

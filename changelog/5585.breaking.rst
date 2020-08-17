@@ -6,3 +6,5 @@ removed:
 * ``@pytest.fixture`` no longer supports positional arguments, pass all arguments by keyword instead.
 
 * Direct construction of ``Node`` subclasses now raise an error, use ``from_parent`` instead.
+
+* The default value for ``junit_family`` has changed to ``xunit2``. If you require the old format, add ``junit_family=xunit1`` to your configuration file.

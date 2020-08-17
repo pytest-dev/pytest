@@ -21,7 +21,6 @@ from typing import Tuple
 from typing import Union
 
 import pytest
-from _pytest import deprecated
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
@@ -33,7 +32,6 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
 from _pytest.store import StoreKey
 from _pytest.terminal import TerminalReporter
-from _pytest.warnings import _issue_warning_captured
 
 
 xml_key = StoreKey["LogXML"]()
@@ -413,7 +411,9 @@ def pytest_addoption(parser: Parser) -> None:
         default="total",
     )  # choices=['total', 'call'])
     parser.addini(
-        "junit_family", "Emit XML for schema: one of legacy|xunit1|xunit2", default=None
+        "junit_family",
+        "Emit XML for schema: one of legacy|xunit1|xunit2",
+        default="xunit2",
     )
 
 
@@ -422,9 +422,6 @@ def pytest_configure(config: Config) -> None:
     # Prevent opening xmllog on worker nodes (xdist).
     if xmlpath and not hasattr(config, "workerinput"):
         junit_family = config.getini("junit_family")
-        if not junit_family:
-            _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
-            junit_family = "xunit1"
         config._store[xml_key] = LogXML(
             xmlpath,
             config.option.junitprefix,
