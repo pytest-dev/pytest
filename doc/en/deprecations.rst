@@ -89,6 +89,15 @@ Removed Features
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
 
+
+``pytest_collect_directory`` hook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 6.0
+
+The ``pytest_collect_directory`` has not worked properly for years (it was called
+but the results were ignored). Users may consider using :func:`pytest_collection_modifyitems <_pytest.hookspec.pytest_collection_modifyitems>` instead.
+
 TerminalReporter.writer
 ~~~~~~~~~~~~~~~~~~~~~~~
 

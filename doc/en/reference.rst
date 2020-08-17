@@ -656,7 +656,6 @@ Collection hooks
 
 .. autofunction:: pytest_collection
 .. autofunction:: pytest_ignore_collect
-.. autofunction:: pytest_collect_directory
 .. autofunction:: pytest_collect_file
 .. autofunction:: pytest_pycollect_makemodule
 

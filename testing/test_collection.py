@@ -257,20 +257,6 @@ class TestCollectPluginHookRelay:
         assert len(wascalled) == 1
         assert wascalled[0].ext == ".abc"
 
-    @pytest.mark.filterwarnings("ignore:.*pytest_collect_directory.*")
-    def test_pytest_collect_directory(self, testdir):
-        wascalled = []
-
-        class Plugin:
-            def pytest_collect_directory(self, path):
-                wascalled.append(path.basename)
-
-        testdir.mkdir("hello")
-        testdir.mkdir("world")
-        pytest.main(testdir.tmpdir, plugins=[Plugin()])
-        assert "hello" in wascalled
-        assert "world" in wascalled
-
 
 class TestPrunetraceback:
     def test_custom_repr_failure(self, testdir):

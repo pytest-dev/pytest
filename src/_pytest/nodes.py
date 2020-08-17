@@ -553,8 +553,6 @@ class FSCollector(Collector):
         for pat in self._norecursepatterns:
             if path.check(fnmatch=pat):
                 return False
-        ihook = self.session.gethookproxy(path)
-        ihook.pytest_collect_directory(path=path, parent=self)
         return True
 
     def _collectfile(

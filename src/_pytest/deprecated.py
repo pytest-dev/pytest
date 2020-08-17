@@ -30,10 +30,6 @@ RESULT_LOG = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log for more information."
 )
 
-COLLECT_DIRECTORY_HOOK = PytestDeprecationWarning(
-    "The pytest_collect_directory hook is not working.\n"
-    "Please use collect_ignore in conftests or pytest_collection_modifyitems."
-)
 
 PYTEST_COLLECT_MODULE = UnformattedWarning(
     PytestDeprecationWarning,
