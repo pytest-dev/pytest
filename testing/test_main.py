@@ -1,8 +1,14 @@
 import argparse
+import os
+import re
 from typing import Optional
+
+import py.path
 
 import pytest
 from _pytest.config import ExitCode
+from _pytest.config import UsageError
+from _pytest.main import resolve_collection_argument
 from _pytest.main import validate_basetemp
 from _pytest.pytester import Testdir
 
@@ -98,3 +104,138 @@ def test_validate_basetemp_fails(tmp_path, basetemp, monkeypatch):
 def test_validate_basetemp_integration(testdir):
     result = testdir.runpytest("--basetemp=.")
     result.stderr.fnmatch_lines("*basetemp must not be*")
+
+
+class TestResolveCollectionArgument:
+    @pytest.fixture
+    def root(self, testdir):
+        testdir.syspathinsert(str(testdir.tmpdir / "src"))
+        testdir.chdir()
+
+        pkg = testdir.tmpdir.join("src/pkg").ensure_dir()
+        pkg.join("__init__.py").ensure(file=True)
+        pkg.join("test.py").ensure(file=True)
+        return testdir.tmpdir
+
+    def test_file(self, root):
+        """File and parts."""
+        assert resolve_collection_argument(root, "src/pkg/test.py") == (
+            root / "src/pkg/test.py",
+            [],
+        )
+        assert resolve_collection_argument(root, "src/pkg/test.py::") == (
+            root / "src/pkg/test.py",
+            [""],
+        )
+        assert resolve_collection_argument(root, "src/pkg/test.py::foo::bar") == (
+            root / "src/pkg/test.py",
+            ["foo", "bar"],
+        )
+        assert resolve_collection_argument(root, "src/pkg/test.py::foo::bar::") == (
+            root / "src/pkg/test.py",
+            ["foo", "bar", ""],
+        )
+
+    def test_dir(self, root):
+        """Directory and parts."""
+        assert resolve_collection_argument(root, "src/pkg") == (root / "src/pkg", [])
+        assert resolve_collection_argument(root, "src/pkg::") == (
+            root / "src/pkg",
+            [""],
+        )
+        assert resolve_collection_argument(root, "src/pkg::foo::bar") == (
+            root / "src/pkg",
+            ["foo", "bar"],
+        )
+        assert resolve_collection_argument(root, "src/pkg::foo::bar::") == (
+            root / "src/pkg",
+            ["foo", "bar", ""],
+        )
+
+    def test_pypath(self, root):
+        """Dotted name and parts."""
+        assert resolve_collection_argument(root, "pkg.test", as_pypath=True) == (
+            root / "src/pkg/test.py",
+            [],
+        )
+        assert resolve_collection_argument(
+            root, "pkg.test::foo::bar", as_pypath=True
+        ) == (root / "src/pkg/test.py", ["foo", "bar"],)
+        assert resolve_collection_argument(root, "pkg", as_pypath=True) == (
+            root / "src/pkg",
+            [],
+        )
+        assert resolve_collection_argument(root, "pkg::foo::bar", as_pypath=True) == (
+            root / "src/pkg",
+            ["foo", "bar"],
+        )
+
+    def test_does_not_exist(self, root):
+        """Given a file/module that does not exist raises UsageError."""
+        with pytest.raises(
+            UsageError, match=re.escape("file or directory not found: foobar")
+        ):
+            resolve_collection_argument(root, "foobar")
+
+        with pytest.raises(
+            UsageError,
+            match=re.escape(
+                "module or package not found: foobar (missing __init__.py?)"
+            ),
+        ):
+            resolve_collection_argument(root, "foobar", as_pypath=True)
+
+    def test_absolute_paths_are_resolved_correctly(self, root):
+        """Absolute paths resolve back to absolute paths."""
+        full_path = str(root / "src")
+        assert resolve_collection_argument(root, full_path) == (
+            py.path.local(os.path.abspath("src")),
+            [],
+        )
+
+        # ensure full paths given in the command-line without the drive letter resolve
+        # to the full path correctly (#7628)
+        drive, full_path_without_drive = os.path.splitdrive(full_path)
+        assert resolve_collection_argument(root, full_path_without_drive) == (
+            py.path.local(os.path.abspath("src")),
+            [],
+        )
+
+
+def test_module_full_path_without_drive(testdir):
+    """Collect and run test using full path except for the drive letter (#7628).
+
+    Passing a full path without a drive letter would trigger a bug in py.path.local
+    where it would keep the full path without the drive letter around, instead of resolving
+    to the full path, resulting in fixtures node ids not matching against test node ids correctly.
+    """
+    testdir.makepyfile(
+        **{
+            "project/conftest.py": """
+                import pytest
+                @pytest.fixture
+                def fix(): return 1
+            """,
+        }
+    )
+
+    testdir.makepyfile(
+        **{
+            "project/tests/dummy_test.py": """
+                def test(fix):
+                    assert fix == 1
+            """
+        }
+    )
+    fn = testdir.tmpdir.join("project/tests/dummy_test.py")
+    assert fn.isfile()
+
+    drive, path = os.path.splitdrive(str(fn))
+
+    result = testdir.runpytest(path, "-v")
+    result.stdout.fnmatch_lines(
+        [
+            os.path.join("project", "tests", "dummy_test.py") + "::test PASSED *",
+            "* 1 passed in *",
+        ]
+    )

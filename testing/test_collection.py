@@ -443,25 +443,6 @@ class TestCustomConftests:
 
 
 class TestSession:
-    def test_parsearg(self, testdir) -> None:
-        p = testdir.makepyfile("def test_func(): pass")
-        subdir = testdir.mkdir("sub")
-        subdir.ensure("__init__.py")
-        target = subdir.join(p.basename)
-        p.move(target)
-        subdir.chdir()
-        config = testdir.parseconfig(p.basename)
-        rcol = Session.from_config(config)
-        assert rcol.fspath == subdir
-        fspath, parts = rcol._parsearg(p.basename)
-
-        assert fspath == target
-        assert len(parts) == 0
-        fspath, parts = rcol._parsearg(p.basename + "::test_func")
-        assert fspath == target
-        assert parts[0] == "test_func"
-        assert len(parts) == 1
-
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
