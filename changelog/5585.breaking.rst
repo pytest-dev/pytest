@@ -10,3 +10,7 @@ removed:
 * The default value for ``junit_family`` has changed to ``xunit2``. If you require the old format, add ``junit_family=xunit1`` to your configuration file.
 
 * The ``TerminalReporter`` no longer has a ``writer`` attribute. Plugin authors may use the public functions of the ``TerminalReporter`` instead of accessing the ``TerminalWriter`` object directly.
+
+
+For more information consult
+`Deprecations and Removals <https://docs.pytest.org/en/stable/deprecations.html>`__ in the docs.
