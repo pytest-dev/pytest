@@ -43,7 +43,6 @@ it, use `function._request._fillfixtures()` instead, though note this is not
 a public API and may break in the future.
 
 
-
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -56,35 +55,6 @@ you used them, please use ``--show-capture`` instead.
 
 A ``--show-capture`` command-line option was added in ``pytest 3.5.0`` which allows to specify how to
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
-
-
-
-Node Construction changed to ``Node.from_parent``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 5.4
-
-The construction of nodes now should use the named constructor ``from_parent``.
-This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
-
-This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
-one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
-
-Plugins that wish to support older versions of pytest and suppress the warning can use
-`hasattr` to check if `from_parent` exists in that version:
-
-.. code-block:: python
-
-    def pytest_pycollect_makeitem(collector, name, obj):
-        if hasattr(MyItem, "from_parent"):
-            item = MyItem.from_parent(collector, name="foo")
-            item.obj = 42
-            return item
-        else:
-            return MyItem(name="foo", parent=collector, obj=42)
-
-Note that ``from_parent`` should only be called with keyword arguments for the parameters.
-
 
 
 ``junit_family`` default value change to "xunit2"
@@ -161,6 +131,33 @@ Removed Features
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+Node Construction changed to ``Node.from_parent``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.0
+
+The construction of nodes now should use the named constructor ``from_parent``.
+This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+
+This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
+one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
+
+Plugins that wish to support older versions of pytest and suppress the warning can use
+`hasattr` to check if `from_parent` exists in that version:
+
+.. code-block:: python
+
+    def pytest_pycollect_makeitem(collector, name, obj):
+        if hasattr(MyItem, "from_parent"):
+            item = MyItem.from_parent(collector, name="foo")
+            item.obj = 42
+            return item
+        else:
+            return MyItem(name="foo", parent=collector, obj=42)
+
+Note that ``from_parent`` should only be called with keyword arguments for the parameters.
+
 
 ``pytest.fixture`` arguments are keyword only
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
