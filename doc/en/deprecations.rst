@@ -66,10 +66,17 @@ display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log``
 
 
 
+Removed Features
+----------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
+
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 4.0
+.. versionremoved:: 6.0
 
 The ``--result-log`` option produces a stream of test reports which can be
 analysed at runtime, but it uses a custom format which requires users to implement their own
@@ -78,17 +85,8 @@ parser.
 The  `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
 one JSON object per-line, and should cover the same use cases. Please try it out and provide feedback.
 
-The plan is remove the ``--result-log`` option in pytest 6.0 if ``pytest-reportlog`` proves satisfactory
-to all users and is deemed stable. The ``pytest-reportlog`` plugin might even be merged into the core
+The ``pytest-reportlog`` plugin might even be merged into the core
 at some point, depending on the plans for the plugins and number of users using it.
-
-
-Removed Features
-----------------
-
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
-
 
 ``pytest_collect_directory`` hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

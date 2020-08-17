@@ -6,26 +6,6 @@ from _pytest import deprecated
 from _pytest.pytester import Testdir
 
 
-@pytest.mark.filterwarnings("default")
-def test_resultlog_is_deprecated(testdir):
-    result = testdir.runpytest("--help")
-    result.stdout.fnmatch_lines(["*DEPRECATED path for machine-readable result log*"])
-
-    testdir.makepyfile(
-        """
-        def test():
-            pass
-    """
-    )
-    result = testdir.runpytest("--result-log=%s" % testdir.tmpdir.join("result.log"))
-    result.stdout.fnmatch_lines(
-        [
-            "*--result-log is deprecated, please try the new pytest-reportlog plugin.",
-            "*See https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log for more information*",
-        ]
-    )
-
-
 @pytest.mark.skip(reason="should be reintroduced in 6.1: #7361")
 @pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
 # false positive due to dynamic attribute

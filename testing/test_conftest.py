@@ -306,21 +306,6 @@ def test_no_conftest(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_conftest_existing_resultlog(testdir):
-    x = testdir.mkdir("tests")
-    x.join("conftest.py").write(
-        textwrap.dedent(
-            """\
-            def pytest_addoption(parser):
-                parser.addoption("--xyz", action="store_true")
-            """
-        )
-    )
-    testdir.makefile(ext=".log", result="")  # Writes result.log
-    result = testdir.runpytest("-h", "--resultlog", "result.log")
-    result.stdout.fnmatch_lines(["*--xyz*"])
-
-
 def test_conftest_existing_junitxml(testdir):
     x = testdir.mkdir("tests")
     x.join("conftest.py").write(

@@ -737,31 +737,6 @@ class TestStackLevel:
         assert "config{sep}__init__.py".format(sep=os.sep) in file
         assert func == "import_plugin"
 
-    def test_issue4445_resultlog(self, testdir, capwarn):
-        """#4445: Make sure the warning points to a reasonable location
-        See origin of _issue_warning_captured at: _pytest.resultlog.py:35
-        """
-        testdir.makepyfile(
-            """
-            def test_dummy():
-                pass
-        """
-        )
-        # Use parseconfigure() because the warning in resultlog.py is triggered in
-        # the pytest_configure hook
-        testdir.parseconfigure(
-            "--result-log={dir}".format(dir=testdir.tmpdir.join("result.log"))
-        )
-
-        # with stacklevel=2 the warning originates from resultlog.pytest_configure
-        # and is thrown when --result-log is used
-        warning, location = capwarn.captured.pop()
-        file, _, func = location
-
-        assert "--result-log is deprecated" in str(warning.message)
-        assert "resultlog.py" in file
-        assert func == "pytest_configure"
-
     def test_issue4445_issue5928_mark_generator(self, testdir):
         """#4445 and #5928: Make sure the warning from an unknown mark points to
         the test file where this mark is used.
