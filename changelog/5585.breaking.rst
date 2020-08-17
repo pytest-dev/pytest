@@ -2,3 +2,5 @@ As per our policy, the following features have been deprecated in the 5.X series
 removed:
 
 * The ``funcargnames`` read-only property of ``FixtureRequest``, ``Metafunc``, and ``Function`` classes. Use ``fixturenames`` attribute.
+
+* ``@pytest.fixture`` no longer supports positional arguments, pass all arguments by keyword instead.

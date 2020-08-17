@@ -30,11 +30,6 @@ RESULT_LOG = PytestDeprecationWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log for more information."
 )
 
-FIXTURE_POSITIONAL_ARGUMENTS = PytestDeprecationWarning(
-    "Passing arguments to pytest.fixture() as positional arguments is deprecated - pass them "
-    "as a keyword argument instead."
-)
-
 NODE_USE_FROM_PARENT = UnformattedWarning(
     PytestDeprecationWarning,
     "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"

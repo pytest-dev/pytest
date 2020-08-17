@@ -2,7 +2,6 @@ import functools
 import inspect
 import os
 import sys
-import warnings
 from collections import defaultdict
 from collections import deque
 from types import TracebackType
@@ -46,7 +45,6 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
-from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
 from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
@@ -1246,7 +1244,7 @@ def fixture(  # noqa: F811
 
 def fixture(  # noqa: F811
     fixture_function: Optional[_FixtureFunction] = None,
-    *args: Any,
+    *,
     scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = "function",
     params: Optional[Iterable[object]] = None,
     autouse: bool = False,
@@ -1308,53 +1306,6 @@ def fixture(  # noqa: F811
         name the decorated function ``fixture_<fixturename>`` and then use
         ``@pytest.fixture(name='<fixturename>')``.
     """
-    # Positional arguments backward compatibility.
-    # If a kwarg is equal to its default, assume it was not explicitly
-    # passed, i.e. not duplicated. The more correct way is to use a
-    # **kwargs and check `in`, but that obfuscates the function signature.
-    if isinstance(fixture_function, str):
-        # It's actually the first positional argument, scope.
-        args = (fixture_function, *args)  # type: ignore[unreachable]
-        fixture_function = None
-    duplicated_args = []
-    if len(args) > 0:
-        if scope == "function":
-            scope = args[0]
-        else:
-            duplicated_args.append("scope")
-    if len(args) > 1:
-        if params is None:
-            params = args[1]
-        else:
-            duplicated_args.append("params")
-    if len(args) > 2:
-        if autouse is False:
-            autouse = args[2]
-        else:
-            duplicated_args.append("autouse")
-    if len(args) > 3:
-        if ids is None:
-            ids = args[3]
-        else:
-            duplicated_args.append("ids")
-    if len(args) > 4:
-        if name is None:
-            name = args[4]
-        else:
-            duplicated_args.append("name")
-    if len(args) > 5:
-        raise TypeError(
-            "fixture() takes 5 positional arguments but {} were given".format(len(args))
-        )
-    if duplicated_args:
-        raise TypeError(
-            "The fixture arguments are defined as positional and keyword: {}. "
-            "Use only keyword arguments.".format(", ".join(duplicated_args))
-        )
-    if args:
-        warnings.warn(FIXTURE_POSITIONAL_ARGUMENTS, stacklevel=2)
-    # End backward compatiblity.
-
     fixture_marker = FixtureFunctionMarker(
         scope=scope, params=params, autouse=autouse, ids=ids, name=name,
     )

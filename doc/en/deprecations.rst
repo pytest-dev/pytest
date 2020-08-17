@@ -162,6 +162,13 @@ Removed Features
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
 
+``pytest.fixture`` arguments are keyword only
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 6.0
+
+Passing arguments to pytest.fixture() as positional arguments has been removed - pass them by keyword instead.
+
 ``funcargnames`` alias for ``fixturenames``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
