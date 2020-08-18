@@ -1,0 +1,1 @@
+pylint shouldn't complain anymore about unimplemented abstract methods when inheriting from :ref:`File <non-python tests>`.

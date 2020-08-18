@@ -52,6 +52,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import FUNCARGNAMES
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.main import Session
@@ -627,10 +628,12 @@ class Package(Module):
             self.addfinalizer(func)
 
     def gethookproxy(self, fspath: py.path.local):
-        return super()._gethookproxy(fspath)
+        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
+        return self.session.gethookproxy(fspath)
 
     def isinitpath(self, path: py.path.local) -> bool:
-        return path in self.session._initialpaths
+        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
+        return self.session.isinitpath(path)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.fspath.dirpath()

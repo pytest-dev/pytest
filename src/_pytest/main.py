@@ -27,6 +27,7 @@ from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureManager
@@ -390,6 +391,17 @@ def pytest_collection_modifyitems(items: List[nodes.Item], config: Config) -> No
         items[:] = remaining
 
 
+class FSHookProxy:
+    def __init__(self, pm: PytestPluginManager, remove_mods) -> None:
+        self.pm = pm
+        self.remove_mods = remove_mods
+
+    def __getattr__(self, name: str):
+        x = self.pm.subset_hook_caller(name, remove_plugins=self.remove_mods)
+        self.__dict__[name] = x
+        return x
+
+
 class NoMatch(Exception):
     """Matching cannot locate matching names."""
 
@@ -496,7 +508,20 @@ class Session(nodes.FSCollector):
         return path in self._initialpaths
 
     def gethookproxy(self, fspath: py.path.local):
-        return super()._gethookproxy(fspath)
+        # Check if we have the common case of running
+        # hooks with all conftest.py files.
+        pm = self.config.pluginmanager
+        my_conftestmodules = pm._getconftestmodules(
+            fspath, self.config.getoption("importmode")
+        )
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        if remove_mods:
+            # One or more conftests are not in use at this fspath.
+            proxy = FSHookProxy(pm, remove_mods)
+        else:
+            # All plugins are active for this fspath.
+            proxy = self.config.hook
+        return proxy
 
     @overload
     def perform_collect(

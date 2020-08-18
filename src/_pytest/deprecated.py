@@ -84,3 +84,8 @@ WARNING_CAPTURED_HOOK = PytestDeprecationWarning(
     "The pytest_warning_captured is deprecated and will be removed in a future release.\n"
     "Please use pytest_warning_recorded instead."
 )
+
+FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestDeprecationWarning(
+    "The gethookproxy() and isinitpath() methods of FSCollector and Package are deprecated; "
+    "use self.session.gethookproxy() and self.session.isinitpath() instead. "
+)
