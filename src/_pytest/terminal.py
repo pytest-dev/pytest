@@ -31,7 +31,6 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
-from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import order_preserving_dict
 from _pytest.compat import TYPE_CHECKING
@@ -39,7 +38,6 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
-from _pytest.deprecated import TERMINALWRITER_WRITER
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.reports import BaseReport
@@ -334,16 +332,6 @@ class TerminalReporter:
         self._collect_report_last_write = None  # type: Optional[float]
         self._already_displayed_warnings = None  # type: Optional[int]
         self._keyboardinterrupt_memo = None  # type: Optional[ExceptionRepr]
-
-    @property
-    def writer(self) -> TerminalWriter:
-        warnings.warn(TERMINALWRITER_WRITER, stacklevel=2)
-        return self._tw
-
-    @writer.setter
-    def writer(self, value: TerminalWriter) -> None:
-        warnings.warn(TERMINALWRITER_WRITER, stacklevel=2)
-        self._tw = value
 
     def _determine_show_progress_info(self) -> "Literal['progress', 'count', False]":
         """Return whether we should display progress information based on the current config."""

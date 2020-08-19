@@ -815,28 +815,6 @@ class TestRequestBasic:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_funcargnames_compatattr(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-            def pytest_generate_tests(metafunc):
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    assert metafunc.funcargnames == metafunc.fixturenames
-            @pytest.fixture
-            def fn(request):
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    assert request._pyfuncitem.funcargnames == \
-                           request._pyfuncitem.fixturenames
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    return request.funcargnames, request.fixturenames
-
-            def test_hello(fn):
-                assert fn[0] == fn[1]
-        """
-        )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
-
     def test_setupdecorator_and_xunit(self, testdir):
         testdir.makepyfile(
             """
@@ -4149,73 +4127,6 @@ def test_fixture_named_request(testdir):
             "*'request' is a reserved word for fixtures, use another name:",
             "  *test_fixture_named_request.py:5",
         ]
-    )
-
-
-def test_fixture_duplicated_arguments() -> None:
-    """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
-    with pytest.raises(TypeError) as excinfo:
-
-        @pytest.fixture("session", scope="session")  # type: ignore[call-overload]
-        def arg(arg):
-            pass
-
-    assert (
-        str(excinfo.value)
-        == "The fixture arguments are defined as positional and keyword: scope. "
-        "Use only keyword arguments."
-    )
-
-    with pytest.raises(TypeError) as excinfo:
-
-        @pytest.fixture(  # type: ignore[call-overload]
-            "function",
-            ["p1"],
-            True,
-            ["id1"],
-            "name",
-            scope="session",
-            params=["p1"],
-            autouse=True,
-            ids=["id1"],
-            name="name",
-        )
-        def arg2(request):
-            pass
-
-    assert (
-        str(excinfo.value)
-        == "The fixture arguments are defined as positional and keyword: scope, params, autouse, ids, name. "
-        "Use only keyword arguments."
-    )
-
-
-def test_fixture_with_positionals() -> None:
-    """Raise warning, but the positionals should still works (#1682)."""
-    from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
-
-    with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
-
-        @pytest.fixture("function", [0], True)  # type: ignore[call-overload]
-        def fixture_with_positionals():
-            pass
-
-    assert str(warnings[0].message) == str(FIXTURE_POSITIONAL_ARGUMENTS)
-
-    assert fixture_with_positionals._pytestfixturefunction.scope == "function"
-    assert fixture_with_positionals._pytestfixturefunction.params == (0,)
-    assert fixture_with_positionals._pytestfixturefunction.autouse
-
-
-def test_fixture_with_too_many_positionals() -> None:
-    with pytest.raises(TypeError) as excinfo:
-
-        @pytest.fixture("function", [0], True, ["id"], "name", "extra")  # type: ignore[call-overload]
-        def fixture_with_positionals():
-            pass
-
-    assert (
-        str(excinfo.value) == "fixture() takes 5 positional arguments but 6 were given"
     )
 
 

@@ -30,11 +30,19 @@ This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``
 Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
 by a ``nodeid`` parameter.
 
+The ``pytest.collect`` module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.0
+
+The ``pytest.collect`` module is no longer part of the public API, all its names
+should now be imported from ``pytest`` directly instead.
+
 
 The ``pytest._fillfuncargs`` function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 5.5
+.. deprecated:: 6.0
 
 This function was kept for backward compatibility with an older plugin.
 
@@ -43,6 +51,11 @@ it, use `function._request._fillfixtures()` instead, though note this is not
 a public API and may break in the future.
 
 
+Removed Features
+----------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
 
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,38 +72,46 @@ display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log``
 
 
 
-Node Construction changed to ``Node.from_parent``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Result log (``--result-log``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 5.4
+.. deprecated:: 4.0
+.. versionremoved:: 6.0
 
-The construction of nodes now should use the named constructor ``from_parent``.
-This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+The ``--result-log`` option produces a stream of test reports which can be
+analysed at runtime, but it uses a custom format which requires users to implement their own
+parser.
 
-This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
-one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
+The  `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
+one JSON object per-line, and should cover the same use cases. Please try it out and provide feedback.
 
-Plugins that wish to support older versions of pytest and suppress the warning can use
-`hasattr` to check if `from_parent` exists in that version:
+The ``pytest-reportlog`` plugin might even be merged into the core
+at some point, depending on the plans for the plugins and number of users using it.
 
-.. code-block:: python
+``pytest_collect_directory`` hook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def pytest_pycollect_makeitem(collector, name, obj):
-        if hasattr(MyItem, "from_parent"):
-            item = MyItem.from_parent(collector, name="foo")
-            item.obj = 42
-            return item
-        else:
-            return MyItem(name="foo", parent=collector, obj=42)
+.. versionremoved:: 6.0
 
-Note that ``from_parent`` should only be called with keyword arguments for the parameters.
+The ``pytest_collect_directory`` has not worked properly for years (it was called
+but the results were ignored). Users may consider using :func:`pytest_collection_modifyitems <_pytest.hookspec.pytest_collection_modifyitems>` instead.
 
+TerminalReporter.writer
+~~~~~~~~~~~~~~~~~~~~~~~
 
+.. versionremoved:: 6.0
+
+The ``TerminalReporter.writer`` attribute has been deprecated and should no longer be used. This
+was inadvertently exposed as part of the public API of that plugin and ties it too much
+with ``py.io.TerminalWriter``.
+
+Plugins that used ``TerminalReporter.writer`` directly should instead use ``TerminalReporter``
+methods that provide the same functionality.
 
 ``junit_family`` default value change to "xunit2"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 5.2
+.. versionchanged:: 6.0
 
 The default value of ``junit_family`` option will change to ``xunit2`` in pytest 6.0, which
 is an update of the old ``xunit1`` format and is supported by default in modern tools
@@ -126,11 +147,44 @@ Services known to support the ``xunit2`` format:
 * `Jenkins <https://www.jenkins.io/>`__ with the `JUnit <https://plugins.jenkins.io/junit>`__ plugin.
 * `Azure Pipelines <https://azure.microsoft.com/en-us/services/devops/pipelines>`__.
 
+Node Construction changed to ``Node.from_parent``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionchanged:: 6.0
+
+The construction of nodes now should use the named constructor ``from_parent``.
+This limitation in api surface intends to enable better/simpler refactoring of the collection tree.
+
+This means that instead of :code:`MyItem(name="foo", parent=collector, obj=42)`
+one now has to invoke :code:`MyItem.from_parent(collector, name="foo")`.
+
+Plugins that wish to support older versions of pytest and suppress the warning can use
+`hasattr` to check if `from_parent` exists in that version:
+
+.. code-block:: python
+
+    def pytest_pycollect_makeitem(collector, name, obj):
+        if hasattr(MyItem, "from_parent"):
+            item = MyItem.from_parent(collector, name="foo")
+            item.obj = 42
+            return item
+        else:
+            return MyItem(name="foo", parent=collector, obj=42)
+
+Note that ``from_parent`` should only be called with keyword arguments for the parameters.
+
+
+``pytest.fixture`` arguments are keyword only
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 6.0
+
+Passing arguments to pytest.fixture() as positional arguments has been removed - pass them by keyword instead.
 
 ``funcargnames`` alias for ``fixturenames``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 5.0
+.. versionremoved:: 6.0
 
 The ``FixtureRequest``, ``Metafunc``, and ``Function`` classes track the names of
 their associated fixtures, with the aptly-named ``fixturenames`` attribute.
@@ -139,42 +193,6 @@ Prior to pytest 2.3, this attribute was named ``funcargnames``, and we have kept
 that as an alias since.  It is finally due for removal, as it is often confusing
 in places where we or plugin authors must distinguish between fixture names and
 names supplied by non-fixture things such as ``pytest.mark.parametrize``.
-
-
-Result log (``--result-log``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 4.0
-
-The ``--result-log`` option produces a stream of test reports which can be
-analysed at runtime, but it uses a custom format which requires users to implement their own
-parser.
-
-The  `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
-one JSON object per-line, and should cover the same use cases. Please try it out and provide feedback.
-
-The plan is remove the ``--result-log`` option in pytest 6.0 if ``pytest-reportlog`` proves satisfactory
-to all users and is deemed stable. The ``pytest-reportlog`` plugin might even be merged into the core
-at some point, depending on the plans for the plugins and number of users using it.
-
-TerminalReporter.writer
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 5.4
-
-The ``TerminalReporter.writer`` attribute has been deprecated and should no longer be used. This
-was inadvertently exposed as part of the public API of that plugin and ties it too much
-with ``py.io.TerminalWriter``.
-
-Plugins that used ``TerminalReporter.writer`` directly should instead use ``TerminalReporter``
-methods that provide the same functionality.
-
-
-Removed Features
-----------------
-
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
 
 
 ``pytest.config`` global

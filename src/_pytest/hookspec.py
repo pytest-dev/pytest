@@ -12,7 +12,6 @@ from typing import Union
 import py.path
 from pluggy import HookspecMarker
 
-from .deprecated import COLLECT_DIRECTORY_HOOK
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -259,16 +258,6 @@ def pytest_ignore_collect(path: py.path.local, config: "Config") -> Optional[boo
 
     :param py.path.local path: The path to analyze.
     :param _pytest.config.Config config: The pytest config object.
-    """
-
-
-@hookspec(firstresult=True, warn_on_impl=COLLECT_DIRECTORY_HOOK)
-def pytest_collect_directory(path: py.path.local, parent) -> Optional[object]:
-    """Called before traversing a directory for collection files.
-
-    Stops at first non-None result, see :ref:`firstresult`.
-
-    :param py.path.local path: The path to analyze.
     """
 
 

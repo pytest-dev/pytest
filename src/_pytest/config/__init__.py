@@ -239,7 +239,6 @@ default_plugins = essential_plugins + (
     "nose",
     "assertion",
     "junitxml",
-    "resultlog",
     "doctest",
     "cacheprovider",
     "freeze_support",

@@ -26,7 +26,6 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
-from _pytest.deprecated import NODE_USE_FROM_PARENT
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.mark.structures import Mark
@@ -97,8 +96,13 @@ _NodeType = TypeVar("_NodeType", bound="Node")
 
 class NodeMeta(type):
     def __call__(self, *k, **kw):
-        warnings.warn(NODE_USE_FROM_PARENT.format(name=self.__name__), stacklevel=2)
-        return super().__call__(*k, **kw)
+        msg = (
+            "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
+            "See "
+            "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
+            " for more details."
+        ).format(name=self.__name__)
+        fail(msg, pytrace=False)
 
     def _create(self, *k, **kw):
         return super().__call__(*k, **kw)
@@ -549,8 +553,6 @@ class FSCollector(Collector):
         for pat in self._norecursepatterns:
             if path.check(fnmatch=pat):
                 return False
-        ihook = self.session.gethookproxy(path)
-        ihook.pytest_collect_directory(path=path, parent=self)
         return True
 
     def _collectfile(
