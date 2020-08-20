@@ -538,6 +538,20 @@ class Session(nodes.FSCollector):
     def perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]] = None, genitems: bool = True
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
+        """Perform the collection phase for this session.
+
+        This is called by the default
+        :func:`pytest_collection <_pytest.hookspec.pytest_collection>` hook
+        implementation; see the documentation of this hook for more details.
+        For testing purposes, it may also be called directly on a fresh
+        ``Session``.
+
+        This function normally recursively expands any collectors collected
+        from the session to their items, and only items are returned. For
+        testing purposes, this may be suppressed by passing ``genitems=False``,
+        in which case the return value contains these collectors unexpanded,
+        and ``session.items`` is empty.
+        """
         hook = self.config.hook
         try:
             items = self._perform_collect(args, genitems)
