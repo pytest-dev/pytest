@@ -184,7 +184,9 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     return True
 
 
-def pytest_collect_file(path: py.path.local, parent) -> Optional["Module"]:
+def pytest_collect_file(
+    path: py.path.local, parent: nodes.Collector
+) -> Optional["Module"]:
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
