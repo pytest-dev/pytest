@@ -402,10 +402,6 @@ class FSHookProxy:
         return x
 
 
-class NoMatch(Exception):
-    """Matching cannot locate matching names."""
-
-
 class Interrupted(KeyboardInterrupt):
     """Signals that the test run was interrupted."""
 
@@ -598,7 +594,7 @@ class Session(nodes.FSCollector):
         self.trace("perform_collect", self, args)
         self.trace.root.indent += 1
 
-        self._notfound = []  # type: List[Tuple[str, NoMatch]]
+        self._notfound = []  # type: List[Tuple[str, Sequence[nodes.Collector]]]
         self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
         self.items = []  # type: List[nodes.Item]
 
@@ -619,8 +615,8 @@ class Session(nodes.FSCollector):
             self.trace.root.indent -= 1
             if self._notfound:
                 errors = []
-                for arg, exc in self._notfound:
-                    line = "(no name {!r} in any of {!r})".format(arg, exc.args[0])
+                for arg, cols in self._notfound:
+                    line = "(no name {!r} in any of {!r})".format(arg, cols)
                     errors.append("not found: {}\n{}".format(arg, line))
                 raise UsageError(*errors)
             if not genitems:
@@ -644,14 +640,7 @@ class Session(nodes.FSCollector):
         for fspath, parts in self._initial_parts:
             self.trace("processing argument", (fspath, parts))
             self.trace.root.indent += 1
-            try:
-                yield from self._collect(fspath, parts)
-            except NoMatch as exc:
-                report_arg = "::".join((str(fspath), *parts))
-                # we are inside a make_report hook so
-                # we cannot directly pass through the exception
-                self._notfound.append((report_arg, exc))
-
+            yield from self._collect(fspath, parts)
             self.trace.root.indent -= 1
         self._collection_node_cache1.clear()
         self._collection_node_cache2.clear()
@@ -727,7 +716,10 @@ class Session(nodes.FSCollector):
                     self._collection_node_cache1[argpath] = col
             m = self.matchnodes(col, names)
             if not m:
-                raise NoMatch(col)
+                report_arg = "::".join((str(argpath), *names))
+                self._notfound.append((report_arg, col))
+                return
+
             # If __init__.py was the only file requested, then the matched node will be
             # the corresponding Package, and the first yielded item will be the __init__
             # Module itself, so just use that. If this special case isn't taken, then all
