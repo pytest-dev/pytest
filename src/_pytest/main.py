@@ -724,6 +724,8 @@ class Session(nodes.FSCollector):
                 if col:
                     self._collection_node_cache1[argpath] = col
             m = self.matchnodes(col, names)
+            if not m:
+                raise NoMatch(col)
             # If __init__.py was the only file requested, then the matched node will be
             # the corresponding Package, and the first yielded item will be the __init__
             # Module itself, so just use that. If this special case isn't taken, then all
@@ -780,10 +782,7 @@ class Session(nodes.FSCollector):
         self.trace("matchnodes finished -> ", len(result), "nodes")
         self.trace.root.indent -= 1
 
-        if not result:
-            raise NoMatch(matching, names[:1])
-        else:
-            return result
+        return result
 
     def genitems(
         self, node: Union[nodes.Item, nodes.Collector]
