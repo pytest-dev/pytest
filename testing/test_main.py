@@ -136,23 +136,21 @@ class TestResolveCollectionArgument:
             ["foo", "bar", ""],
         )
 
-    def test_dir(self, root):
+    def test_dir(self, root: py.path.local) -> None:
         """Directory and parts."""
         assert resolve_collection_argument(root, "src/pkg") == (root / "src/pkg", [])
-        assert resolve_collection_argument(root, "src/pkg::") == (
-            root / "src/pkg",
-            [""],
-        )
-        assert resolve_collection_argument(root, "src/pkg::foo::bar") == (
-            root / "src/pkg",
-            ["foo", "bar"],
-        )
-        assert resolve_collection_argument(root, "src/pkg::foo::bar::") == (
-            root / "src/pkg",
-            ["foo", "bar", ""],
-        )
 
-    def test_pypath(self, root):
+        with pytest.raises(
+            UsageError, match=r"directory argument cannot contain :: selection parts"
+        ):
+            resolve_collection_argument(root, "src/pkg::")
+
+        with pytest.raises(
+            UsageError, match=r"directory argument cannot contain :: selection parts"
+        ):
+            resolve_collection_argument(root, "src/pkg::foo::bar")
+
+    def test_pypath(self, root: py.path.local) -> None:
         """Dotted name and parts."""
         assert resolve_collection_argument(root, "pkg.test", as_pypath=True) == (
             root / "src/pkg/test.py",
@@ -165,10 +163,11 @@ class TestResolveCollectionArgument:
             root / "src/pkg",
             [],
         )
-        assert resolve_collection_argument(root, "pkg::foo::bar", as_pypath=True) == (
-            root / "src/pkg",
-            ["foo", "bar"],
-        )
+
+        with pytest.raises(
+            UsageError, match=r"package argument cannot contain :: selection parts"
+        ):
+            resolve_collection_argument(root, "pkg::foo::bar", as_pypath=True)
 
     def test_does_not_exist(self, root):
         """Given a file/module that does not exist raises UsageError."""
