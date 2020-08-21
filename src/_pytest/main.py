@@ -748,38 +748,34 @@ class Session(nodes.FSCollector):
         self.trace("matchnodes", matching, names)
         self.trace.root.indent += 1
 
-        if not names:
-            result = matching
-        else:
-            name = names[0]
-            assert name
-            resultnodes = []  # type: List[Union[nodes.Item, nodes.Collector]]
-            for node in matching:
-                if isinstance(node, nodes.Item):
-                    continue
-                assert isinstance(node, nodes.Collector)
-                key = (type(node), node.nodeid)
-                if key in self._collection_node_cache3:
-                    rep = self._collection_node_cache3[key]
-                else:
-                    rep = collect_one_node(node)
-                    self._collection_node_cache3[key] = rep
-                if rep.passed:
-                    has_matched = False
-                    for x in rep.result:
-                        # TODO: Remove parametrized workaround once collection structure contains parametrization.
-                        if x.name == name or x.name.split("[")[0] == name:
-                            resultnodes.extend(self.matchnodes([x], names[1:]))
-                            has_matched = True
-                    # XXX Accept IDs that don't have "()" for class instances.
-                    if not has_matched and len(rep.result) == 1 and x.name == "()":
-                        resultnodes.extend(self.matchnodes([x], names))
-                else:
-                    # Report collection failures here to avoid failing to run some test
-                    # specified in the command line because the module could not be
-                    # imported (#134).
-                    node.ihook.pytest_collectreport(report=rep)
-            result = resultnodes
+        result = []
+        for node in matching:
+            if not names:
+                result.append(node)
+                continue
+            if not isinstance(node, nodes.Collector):
+                continue
+            key = (type(node), node.nodeid)
+            if key in self._collection_node_cache3:
+                rep = self._collection_node_cache3[key]
+            else:
+                rep = collect_one_node(node)
+                self._collection_node_cache3[key] = rep
+            if rep.passed:
+                has_matched = False
+                for x in rep.result:
+                    # TODO: Remove parametrized workaround once collection structure contains parametrization.
+                    if x.name == names[0] or x.name.split("[")[0] == names[0]:
+                        result.extend(self.matchnodes([x], names[1:]))
+                        has_matched = True
+                # XXX Accept IDs that don't have "()" for class instances.
+                if not has_matched and len(rep.result) == 1 and x.name == "()":
+                    result.extend(self.matchnodes([x], names))
+            else:
+                # Report collection failures here to avoid failing to run some test
+                # specified in the command line because the module could not be
+                # imported (#134).
+                node.ihook.pytest_collectreport(report=rep)
 
         self.trace("matchnodes finished -> ", len(result), "nodes")
         self.trace.root.indent -= 1
