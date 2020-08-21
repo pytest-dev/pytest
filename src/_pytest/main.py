@@ -748,7 +748,7 @@ class Session(nodes.FSCollector):
         self.trace("matchnodes", matching, names)
         self.trace.root.indent += 1
 
-        if not matching or not names:
+        if not names:
             result = matching
         else:
             name = names[0]
