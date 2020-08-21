@@ -756,8 +756,6 @@ class Session(nodes.FSCollector):
             resultnodes = []  # type: List[Union[nodes.Item, nodes.Collector]]
             for node in matching:
                 if isinstance(node, nodes.Item):
-                    if not names:
-                        resultnodes.append(node)
                     continue
                 assert isinstance(node, nodes.Collector)
                 key = (type(node), node.nodeid)
