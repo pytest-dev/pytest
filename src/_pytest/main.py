@@ -747,42 +747,44 @@ class Session(nodes.FSCollector):
         matching: Sequence[Union[nodes.Item, nodes.Collector]],
         names: Sequence[str],
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
-        self.trace("matchnodes", matching, names)
-        self.trace.root.indent += 1
-
         result = []
-        for node in matching:
-            if not names:
-                result.append(node)
-                continue
-            if not isinstance(node, nodes.Collector):
-                continue
-            key = (type(node), node.nodeid)
-            if key in self._collection_node_cache3:
-                rep = self._collection_node_cache3[key]
-            else:
-                rep = collect_one_node(node)
-                self._collection_node_cache3[key] = rep
-            if rep.passed:
-                submatching = []
-                for x in rep.result:
-                    # TODO: Remove parametrized workaround once collection structure contains parametrization.
-                    if x.name == names[0] or x.name.split("[")[0] == names[0]:
-                        submatching.append(x)
-                if submatching:
-                    result.extend(self.matchnodes(submatching, names[1:]))
-                # XXX Accept IDs that don't have "()" for class instances.
-                elif len(rep.result) == 1 and rep.result[0].name == "()":
-                    result.extend(self.matchnodes(rep.result, names))
-            else:
-                # Report collection failures here to avoid failing to run some test
-                # specified in the command line because the module could not be
-                # imported (#134).
-                node.ihook.pytest_collectreport(report=rep)
+        work = [(matching, names)]
+        while work:
+            self.trace("matchnodes", matching, names)
+            self.trace.root.indent += 1
 
-        self.trace("matchnodes finished -> ", len(result), "nodes")
-        self.trace.root.indent -= 1
+            matching, names = work.pop()
+            for node in matching:
+                if not names:
+                    result.append(node)
+                    continue
+                if not isinstance(node, nodes.Collector):
+                    continue
+                key = (type(node), node.nodeid)
+                if key in self._collection_node_cache3:
+                    rep = self._collection_node_cache3[key]
+                else:
+                    rep = collect_one_node(node)
+                    self._collection_node_cache3[key] = rep
+                if rep.passed:
+                    submatching = []
+                    for x in rep.result:
+                        # TODO: Remove parametrized workaround once collection structure contains parametrization.
+                        if x.name == names[0] or x.name.split("[")[0] == names[0]:
+                            submatching.append(x)
+                    if submatching:
+                        work.append((submatching, names[1:]))
+                    # XXX Accept IDs that don't have "()" for class instances.
+                    elif len(rep.result) == 1 and rep.result[0].name == "()":
+                        work.append((rep.result, names))
+                else:
+                    # Report collection failures here to avoid failing to run some test
+                    # specified in the command line because the module could not be
+                    # imported (#134).
+                    node.ihook.pytest_collectreport(report=rep)
 
+            self.trace("matchnodes finished -> ", len(result), "nodes")
+            self.trace.root.indent -= 1
         return result
 
     def genitems(
