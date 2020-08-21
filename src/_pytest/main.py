@@ -454,7 +454,10 @@ class Session(nodes.FSCollector):
         self._collection_node_cache2 = (
             {}
         )  # type: Dict[Tuple[Type[nodes.Collector], py.path.local], nodes.Collector]
-        self._collection_node_cache3 = (
+
+        # Keep track of any collected collectors in matchnodes paths, so they
+        # are not collected more than once.
+        self._collection_matchnodes_cache = (
             {}
         )  # type: Dict[Tuple[Type[nodes.Collector], str], CollectReport]
 
@@ -652,7 +655,7 @@ class Session(nodes.FSCollector):
             self.trace.root.indent -= 1
         self._collection_node_cache1.clear()
         self._collection_node_cache2.clear()
-        self._collection_node_cache3.clear()
+        self._collection_matchnodes_cache.clear()
         self._collection_pkg_roots.clear()
 
     def _collect(
@@ -677,7 +680,6 @@ class Session(nodes.FSCollector):
                             if col:
                                 if isinstance(col[0], Package):
                                     self._collection_pkg_roots[str(parent)] = col[0]
-                                # Always store a list in the cache, matchnodes expects it.
                                 self._collection_node_cache1[col[0].fspath] = [col[0]]
 
         # If it's a directory argument, recurse and look for any Subpackages.
@@ -761,11 +763,11 @@ class Session(nodes.FSCollector):
                 if not isinstance(node, nodes.Collector):
                     continue
                 key = (type(node), node.nodeid)
-                if key in self._collection_node_cache3:
-                    rep = self._collection_node_cache3[key]
+                if key in self._collection_matchnodes_cache:
+                    rep = self._collection_matchnodes_cache[key]
                 else:
                     rep = collect_one_node(node)
-                    self._collection_node_cache3[key] = rep
+                    self._collection_matchnodes_cache[key] = rep
                 if rep.passed:
                     submatching = []
                     for x in rep.result:
