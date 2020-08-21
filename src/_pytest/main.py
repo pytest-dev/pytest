@@ -656,7 +656,7 @@ class Session(nodes.FSCollector):
         self._collection_pkg_roots.clear()
 
     def _collect(
-        self, argpath: py.path.local, names: List[str]
+        self, argpath: py.path.local, names: Sequence[str]
     ) -> Iterator[Union[nodes.Item, nodes.Collector]]:
         from _pytest.python import Package
 
@@ -741,7 +741,9 @@ class Session(nodes.FSCollector):
             yield from m
 
     def matchnodes(
-        self, matching: Sequence[Union[nodes.Item, nodes.Collector]], names: List[str],
+        self,
+        matching: Sequence[Union[nodes.Item, nodes.Collector]],
+        names: Sequence[str],
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         self.trace("matchnodes", matching, names)
         self.trace.root.indent += 1
@@ -751,7 +753,6 @@ class Session(nodes.FSCollector):
         else:
             name = names[0]
             assert name
-            nextnames = names[1:]
             resultnodes = []  # type: List[Union[nodes.Item, nodes.Collector]]
             for node in matching:
                 if isinstance(node, nodes.Item):
@@ -770,12 +771,11 @@ class Session(nodes.FSCollector):
                     for x in rep.result:
                         # TODO: Remove parametrized workaround once collection structure contains parametrization.
                         if x.name == name or x.name.split("[")[0] == name:
-                            resultnodes.extend(self.matchnodes([x], nextnames))
+                            resultnodes.extend(self.matchnodes([x], names[1:]))
                             has_matched = True
                     # XXX Accept IDs that don't have "()" for class instances.
                     if not has_matched and len(rep.result) == 1 and x.name == "()":
-                        nextnames.insert(0, name)
-                        resultnodes.extend(self.matchnodes([x], nextnames))
+                        resultnodes.extend(self.matchnodes([x], names))
                 else:
                     # Report collection failures here to avoid failing to run some test
                     # specified in the command line because the module could not be
