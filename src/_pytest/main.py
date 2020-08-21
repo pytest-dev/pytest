@@ -597,10 +597,11 @@ class Session(nodes.FSCollector):
 
         self._notfound = []  # type: List[Tuple[str, NoMatch]]
         self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
-        self.items = items = []  # type: List[nodes.Item]
+        self.items = []  # type: List[nodes.Item]
 
         hook = self.config.hook
 
+        items = self.items  # type: Sequence[Union[nodes.Item, nodes.Collector]]
         try:
             initialpaths = []  # type: List[py.path.local]
             for arg in args:
@@ -620,9 +621,7 @@ class Session(nodes.FSCollector):
                     errors.append("not found: {}\n{}".format(arg, line))
                 raise UsageError(*errors)
             if not genitems:
-                # Type ignored because genitems=False is only used by tests. We don't
-                # want to change the type of `session.items` for this case.
-                items = rep.result  # type: ignore[assignment]
+                items = rep.result
             else:
                 if rep.passed:
                     for node in rep.result:
