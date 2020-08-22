@@ -45,8 +45,6 @@ if TYPE_CHECKING:
     from typing import Type
     from typing_extensions import Literal
 
-    from _pytest.python import Package
-
 
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
@@ -443,23 +441,6 @@ class Session(nodes.FSCollector):
         self.startdir = config.invocation_dir
         self._initialpaths = frozenset()  # type: FrozenSet[py.path.local]
 
-        # Keep track of any collected nodes in here, so we don't duplicate fixtures.
-        self._collection_node_cache1 = (
-            {}
-        )  # type: Dict[py.path.local, Sequence[nodes.Collector]]
-        self._collection_node_cache2 = (
-            {}
-        )  # type: Dict[Tuple[Type[nodes.Collector], py.path.local], nodes.Collector]
-
-        # Keep track of any collected collectors in matchnodes paths, so they
-        # are not collected more than once.
-        self._collection_matchnodes_cache = (
-            {}
-        )  # type: Dict[Tuple[Type[nodes.Collector], str], CollectReport]
-
-        # Dirnames of pkgs with dunder-init files.
-        self._collection_pkg_roots = {}  # type: Dict[str, Package]
-
         self._bestrelpathcache = _bestrelpath_cache(
             config.rootdir
         )  # type: Dict[py.path.local, str]
@@ -639,6 +620,21 @@ class Session(nodes.FSCollector):
     def collect(self) -> Iterator[Union[nodes.Item, nodes.Collector]]:
         from _pytest.python import Package
 
+        # Keep track of any collected nodes in here, so we don't duplicate fixtures.
+        node_cache1 = {}  # type: Dict[py.path.local, Sequence[nodes.Collector]]
+        node_cache2 = (
+            {}
+        )  # type: Dict[Tuple[Type[nodes.Collector], py.path.local], nodes.Collector]
+
+        # Keep track of any collected collectors in matchnodes paths, so they
+        # are not collected more than once.
+        matchnodes_cache = (
+            {}
+        )  # type: Dict[Tuple[Type[nodes.Collector], str], CollectReport]
+
+        # Dirnames of pkgs with dunder-init files.
+        pkg_roots = {}  # type: Dict[str, Package]
+
         for argpath, names in self._initial_parts:
             self.trace("processing argument", (argpath, names))
             self.trace.root.indent += 1
@@ -655,14 +651,12 @@ class Session(nodes.FSCollector):
                     if parent.isdir():
                         pkginit = parent.join("__init__.py")
                         if pkginit.isfile():
-                            if pkginit not in self._collection_node_cache1:
+                            if pkginit not in node_cache1:
                                 col = self._collectfile(pkginit, handle_dupes=False)
                                 if col:
                                     if isinstance(col[0], Package):
-                                        self._collection_pkg_roots[str(parent)] = col[0]
-                                    self._collection_node_cache1[col[0].fspath] = [
-                                        col[0]
-                                    ]
+                                        pkg_roots[str(parent)] = col[0]
+                                    node_cache1[col[0].fspath] = [col[0]]
 
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
@@ -685,28 +679,28 @@ class Session(nodes.FSCollector):
                             for x in self._collectfile(pkginit):
                                 yield x
                                 if isinstance(x, Package):
-                                    self._collection_pkg_roots[str(dirpath)] = x
-                    if str(dirpath) in self._collection_pkg_roots:
+                                    pkg_roots[str(dirpath)] = x
+                    if str(dirpath) in pkg_roots:
                         # Do not collect packages here.
                         continue
 
                     for x in self._collectfile(path):
                         key = (type(x), x.fspath)
-                        if key in self._collection_node_cache2:
-                            yield self._collection_node_cache2[key]
+                        if key in node_cache2:
+                            yield node_cache2[key]
                         else:
-                            self._collection_node_cache2[key] = x
+                            node_cache2[key] = x
                             yield x
             else:
                 assert argpath.check(file=1)
 
-                if argpath in self._collection_node_cache1:
-                    col = self._collection_node_cache1[argpath]
+                if argpath in node_cache1:
+                    col = node_cache1[argpath]
                 else:
-                    collect_root = self._collection_pkg_roots.get(argpath.dirname, self)
+                    collect_root = pkg_roots.get(argpath.dirname, self)
                     col = collect_root._collectfile(argpath, handle_dupes=False)
                     if col:
-                        self._collection_node_cache1[argpath] = col
+                        node_cache1[argpath] = col
 
                 matching = []
                 work = [
@@ -724,11 +718,11 @@ class Session(nodes.FSCollector):
                         if not isinstance(node, nodes.Collector):
                             continue
                         key = (type(node), node.nodeid)
-                        if key in self._collection_matchnodes_cache:
-                            rep = self._collection_matchnodes_cache[key]
+                        if key in matchnodes_cache:
+                            rep = matchnodes_cache[key]
                         else:
                             rep = collect_one_node(node)
-                            self._collection_matchnodes_cache[key] = rep
+                            matchnodes_cache[key] = rep
                         if rep.passed:
                             submatchnodes = []
                             for r in rep.result:
@@ -776,10 +770,6 @@ class Session(nodes.FSCollector):
                 yield from matching
 
             self.trace.root.indent -= 1
-        self._collection_node_cache1.clear()
-        self._collection_node_cache2.clear()
-        self._collection_matchnodes_cache.clear()
-        self._collection_pkg_roots.clear()
 
     def genitems(
         self, node: Union[nodes.Item, nodes.Collector]
