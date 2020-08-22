@@ -65,6 +65,7 @@ def test_change_level_undos_handler_level(testdir: Testdir) -> None:
 
         def test1(caplog):
             assert caplog.handler.level == 0
+            caplog.set_level(9999)
             caplog.set_level(41)
             assert caplog.handler.level == 41
 
