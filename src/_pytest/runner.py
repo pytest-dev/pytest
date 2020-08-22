@@ -52,10 +52,19 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="N",
         help="show N slowest setup/test durations (N=0 for all).",
     )
+    group.addoption(
+        "--durations-min",
+        action="store",
+        type=float,
+        default=0.005,
+        metavar="N",
+        help="Minimal duration in seconds for inclusion in slowest list. Default 0.005",
+    )
 
 
 def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
     durations = terminalreporter.config.option.durations
+    durations_min = terminalreporter.config.option.durations_min
     verbose = terminalreporter.config.getvalue("verbose")
     if durations is None:
         return
@@ -76,11 +85,11 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
-        if verbose < 2 and rep.duration < 0.005:
+        if verbose < 2 and rep.duration < durations_min:
             tr.write_line("")
             tr.write_line(
-                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)"
-                % (len(dlist) - i)
+                "(%s durations < %gs hidden.  Use -vv to show these durations.)"
+                % (len(dlist) - i, durations_min)
             )
             break
         tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
