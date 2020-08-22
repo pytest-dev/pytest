@@ -1,0 +1,5 @@
+The special ``-k '-expr'`` syntax to ``-k`` is deprecated. Use ``-k 'not expr'``
+instead.
+
+The special ``-k 'expr:'`` syntax to ``-k`` is deprecated. Please open an issue
+if you use this and want a replacement.
