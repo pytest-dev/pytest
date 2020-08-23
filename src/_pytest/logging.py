@@ -437,7 +437,8 @@ class LogCaptureFixture:
         # save the original log-level to restore it during teardown
         self._initial_logger_levels.setdefault(logger, logger_obj.level)
         logger_obj.setLevel(level)
-        self._initial_handler_level = self.handler.level
+        if self._initial_handler_level is None:
+            self._initial_handler_level = self.handler.level
         self.handler.setLevel(level)
 
     @contextmanager
