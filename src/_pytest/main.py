@@ -511,9 +511,8 @@ class Session(nodes.FSCollector):
         if ihook.pytest_ignore_collect(path=path, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
-        for pat in norecursepatterns:
-            if path.check(fnmatch=pat):
-                return False
+        if any(path.check(fnmatch=pat) for pat in norecursepatterns):
+            return False
         return True
 
     def _collectfile(
@@ -650,13 +649,12 @@ class Session(nodes.FSCollector):
 
                     if parent.isdir():
                         pkginit = parent.join("__init__.py")
-                        if pkginit.isfile():
-                            if pkginit not in node_cache1:
-                                col = self._collectfile(pkginit, handle_dupes=False)
-                                if col:
-                                    if isinstance(col[0], Package):
-                                        pkg_roots[str(parent)] = col[0]
-                                    node_cache1[col[0].fspath] = [col[0]]
+                        if pkginit.isfile() and pkginit not in node_cache1:
+                            col = self._collectfile(pkginit, handle_dupes=False)
+                            if col:
+                                if isinstance(col[0], Package):
+                                    pkg_roots[str(parent)] = col[0]
+                                node_cache1[col[0].fspath] = [col[0]]
 
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.

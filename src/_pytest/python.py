@@ -644,9 +644,8 @@ class Package(Module):
         if ihook.pytest_ignore_collect(path=path, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
-        for pat in norecursepatterns:
-            if path.check(fnmatch=pat):
-                return False
+        if any(path.check(fnmatch=pat) for pat in norecursepatterns):
+            return False
         return True
 
     def _collectfile(
