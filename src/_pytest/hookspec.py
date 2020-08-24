@@ -206,20 +206,32 @@ def pytest_load_initial_conftests(
 
 @hookspec(firstresult=True)
 def pytest_collection(session: "Session") -> Optional[object]:
-    """Perform the collection protocol for the given session.
+    """Perform the collection phase for the given session.
 
     Stops at first non-None result, see :ref:`firstresult`.
     The return value is not used, but only stops further processing.
 
-    The hook is meant to set `session.items` to a sequence of items at least,
-    but normally should follow this procedure:
+    The default collection phase is this (see individual hooks for full details):
 
-      1. Call the pytest_collectstart hook.
-      2. Call the pytest_collectreport hook.
-      3. Call the pytest_collection_modifyitems hook.
-      4. Call the pytest_collection_finish hook.
-      5. Set session.testscollected to the amount of collect items.
-      6. Set `session.items` to a list of items.
+    1. Starting from ``session`` as the initial collector:
+
+      1. ``pytest_collectstart(collector)``
+      2. ``report = pytest_make_collect_report(collector)``
+      3. ``pytest_exception_interact(collector, call, report)`` if an interactive exception occurred
+      4. For each collected node:
+
+        1. If an item, ``pytest_itemcollected(item)``
+        2. If a collector, recurse into it.
+
+      5. ``pytest_collectreport(report)``
+
+    2. ``pytest_collection_modifyitems(session, config, items)``
+
+      1. ``pytest_deselected(items)`` for any deselected items (may be called multiple times)
+
+    3. ``pytest_collection_finish(session)``
+    4. Set ``session.items`` to the list of collected items
+    5. Set ``session.testscollected`` to the number of collected items
 
     You can implement this hook to only perform some action before collection,
     for example the terminal plugin uses it to start displaying the collection
@@ -287,7 +299,10 @@ def pytest_collectreport(report: "CollectReport") -> None:
 
 
 def pytest_deselected(items: Sequence["Item"]) -> None:
-    """Called for deselected test items, e.g. by keyword."""
+    """Called for deselected test items, e.g. by keyword.
+
+    May be called multiple times.
+    """
 
 
 @hookspec(firstresult=True)
