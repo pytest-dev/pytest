@@ -537,7 +537,7 @@ class MultiCapture:
             self._in_suspended = True
 
     def resume_capturing(self) -> None:
-        self._state = "resumed"
+        self._state = "started"
         if self.out:
             self.out.resume()
         if self.err:
@@ -557,6 +557,10 @@ class MultiCapture:
             self.err.done()
         if self.in_:
             self.in_.done()
+
+    def is_started(self) -> bool:
+        """Whether actively capturing -- not suspended or stopped."""
+        return self._state == "started"
 
     def readouterr(self) -> CaptureResult:
         if self.out:
@@ -697,11 +701,19 @@ class CaptureManager:
     @contextlib.contextmanager
     def global_and_fixture_disabled(self) -> Generator[None, None, None]:
         """Context manager to temporarily disable global and current fixture capturing."""
-        self.suspend()
+        do_fixture = self._capture_fixture and self._capture_fixture._is_started()
+        if do_fixture:
+            self.suspend_fixture()
+        do_global = self._global_capturing and self._global_capturing.is_started()
+        if do_global:
+            self.suspend_global_capture()
         try:
             yield
         finally:
-            self.resume()
+            if do_global:
+                self.resume_global_capture()
+            if do_fixture:
+                self.resume_fixture()
 
     @contextlib.contextmanager
     def item_capture(self, when: str, item: Item) -> Generator[None, None, None]:
@@ -809,6 +821,12 @@ class CaptureFixture:
         """Resumes this fixture's own capturing temporarily."""
         if self._capture is not None:
             self._capture.resume_capturing()
+
+    def _is_started(self) -> bool:
+        """Whether actively capturing -- not disabled or closed."""
+        if self._capture is not None:
+            return self._capture.is_started()
+        return False
 
     @contextlib.contextmanager
     def disabled(self) -> Generator[None, None, None]:
