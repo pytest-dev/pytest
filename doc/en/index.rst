@@ -1,5 +1,12 @@
 :orphan:
 
+.. sidebar:: Next Open Trainings
+
+   - `pytest: Test Driven Development (nicht nur) für Python <https://workshoptage.ch/workshops/2020/pytest-test-driven-development-nicht-nur-fuer-python/>`_ (German) at the `CH Open Workshoptage <https://workshoptage.ch/>`_, September 8 2020, HSLU Campus Rotkreuz (ZG), Switzerland.
+   - `Professional testing with Python <https://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, via Python Academy, February 1-3 2021, Leipzig (Germany) and remote.
+
+   Also see `previous talks and blogposts <talks.html>`_.
+
 .. _features:
 
 pytest: helps you write better programs
