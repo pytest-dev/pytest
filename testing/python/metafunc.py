@@ -19,6 +19,7 @@ from hypothesis import strategies
 import pytest
 from _pytest import fixtures
 from _pytest import python
+from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.pytester import Testdir
 from _pytest.python import _idval
@@ -362,6 +363,14 @@ class TestMetafunc:
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
             assert _idval(val, "a", 6, None, nodeid=None, config=None) == expected
+
+    def test_notset_idval(self) -> None:
+        """Test that a NOTSET value (used by an empty parameterset) generates
+        a proper ID.
+
+        Regression test for #7686.
+        """
+        assert _idval(NOTSET, "a", 0, None, nodeid=None, config=None) == "a0"
 
     def test_idmaker_autoname(self) -> None:
         """#250"""
