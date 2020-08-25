@@ -820,13 +820,13 @@ class Config:
     :param PytestPluginManager pluginmanager:
 
     :param InvocationParams invocation_params:
-        Object containing the parameters regarding the ``pytest.main``
+        Object containing parameters regarding the :func:`pytest.main`
         invocation.
     """
 
     @attr.s(frozen=True)
     class InvocationParams:
-        """Holds parameters passed during ``pytest.main()``
+        """Holds parameters passed during :func:`pytest.main`.
 
         The object attributes are read-only.
 
@@ -841,11 +841,20 @@ class Config:
         """
 
         args = attr.ib(type=Tuple[str, ...], converter=_args_converter)
-        """Tuple of command-line arguments as passed to ``pytest.main()``."""
+        """The command-line arguments as passed to :func:`pytest.main`.
+
+        :type: Tuple[str, ...]
+        """
         plugins = attr.ib(type=Optional[Sequence[Union[str, _PluggyPlugin]]])
-        """List of extra plugins, might be `None`."""
+        """Extra plugins, might be `None`.
+
+        :type: Optional[Sequence[Union[str, plugin]]]
+        """
         dir = attr.ib(type=Path)
-        """Directory from which ``pytest.main()`` was invoked."""
+        """The directory from which :func:`pytest.main` was invoked.
+
+        :type: pathlib.Path
+        """
 
     def __init__(
         self,
@@ -867,6 +876,10 @@ class Config:
         """
 
         self.invocation_params = invocation_params
+        """The parameters with which pytest was invoked.
+
+        :type: InvocationParams
+        """
 
         _a = FILE_OR_DIR
         self._parser = Parser(
@@ -876,7 +889,7 @@ class Config:
         self.pluginmanager = pluginmanager
         """The plugin manager handles plugin registration and hook invocation.
 
-        :type: PytestPluginManager.
+        :type: PytestPluginManager
         """
 
         self.trace = self.pluginmanager.trace.root.get("config")
@@ -901,7 +914,12 @@ class Config:
 
     @property
     def invocation_dir(self) -> py.path.local:
-        """Backward compatibility."""
+        """The directory from which pytest was invoked.
+
+        Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`.
+
+        :type: py.path.local
+        """
         return py.path.local(str(self.invocation_params.dir))
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
