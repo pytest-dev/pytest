@@ -274,10 +274,12 @@ def pytest_ignore_collect(path: py.path.local, config: "Config") -> Optional[boo
     """
 
 
-def pytest_collect_file(path: py.path.local, parent) -> "Optional[Collector]":
-    """Return collection Node or None for the given path.
+def pytest_collect_file(
+    path: py.path.local, parent: "Collector"
+) -> "Optional[Collector]":
+    """Create a Collector for the given path, or None if not relevant.
 
-    Any new node needs to have the specified ``parent`` as a parent.
+    The new node needs to have the specified ``parent`` as a parent.
 
     :param py.path.local path: The path to collect.
     """

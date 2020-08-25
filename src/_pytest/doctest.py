@@ -32,6 +32,7 @@ from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
+from _pytest.nodes import Collector
 from _pytest.outcomes import OutcomeException
 from _pytest.pathlib import import_path
 from _pytest.python_api import approx
@@ -118,7 +119,7 @@ def pytest_unconfigure() -> None:
 
 
 def pytest_collect_file(
-    path: py.path.local, parent
+    path: py.path.local, parent: Collector,
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
     if path.ext == ".py":

@@ -8,7 +8,6 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import TypeVar
@@ -528,8 +527,6 @@ class FSCollector(Collector):
 
         super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
 
-        self._norecursepatterns = self.config.getini("norecursedirs")
-
     @classmethod
     def from_parent(cls, parent, *, fspath, **kw):
         """The public constructor."""
@@ -542,42 +539,6 @@ class FSCollector(Collector):
     def isinitpath(self, path: py.path.local) -> bool:
         warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
         return self.session.isinitpath(path)
-
-    def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
-        if direntry.name == "__pycache__":
-            return False
-        path = py.path.local(direntry.path)
-        ihook = self.session.gethookproxy(path.dirpath())
-        if ihook.pytest_ignore_collect(path=path, config=self.config):
-            return False
-        for pat in self._norecursepatterns:
-            if path.check(fnmatch=pat):
-                return False
-        return True
-
-    def _collectfile(
-        self, path: py.path.local, handle_dupes: bool = True
-    ) -> Sequence[Collector]:
-        assert (
-            path.isfile()
-        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path, path.isdir(), path.exists(), path.islink()
-        )
-        ihook = self.session.gethookproxy(path)
-        if not self.session.isinitpath(path):
-            if ihook.pytest_ignore_collect(path=path, config=self.config):
-                return ()
-
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if path in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(path)
-
-        return ihook.pytest_collect_file(path=path, parent=self)  # type: ignore[no-any-return]
 
 
 class File(FSCollector):
