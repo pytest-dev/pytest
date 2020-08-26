@@ -421,6 +421,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
             dicts.append(basecls.__dict__)
         seen = set()  # type: Set[str]
         values = []  # type: List[Union[nodes.Item, nodes.Collector]]
+        ihook = self.ihook
         for dic in dicts:
             # Note: seems like the dict can change during iteration -
             # be careful not to remove the list() without consideration.
@@ -430,12 +431,15 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 if name in seen:
                     continue
                 seen.add(name)
-                res = self._makeitem(name, obj)
+                res = ihook.pytest_pycollect_makeitem(
+                    collector=self, name=name, obj=obj
+                )
                 if res is None:
                     continue
-                if not isinstance(res, list):
-                    res = [res]
-                values.extend(res)
+                elif isinstance(res, list):
+                    values.extend(res)
+                else:
+                    values.append(res)
 
         def sort_key(item):
             fspath, lineno, _ = item.reportinfo()
@@ -443,17 +447,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
         values.sort(key=sort_key)
         return values
-
-    def _makeitem(
-        self, name: str, obj: object
-    ) -> Union[
-        None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]
-    ]:
-        # assert self.ihook.fspath == self.fspath, self
-        item = self.ihook.pytest_pycollect_makeitem(
-            collector=self, name=name, obj=obj
-        )  # type: Union[None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]]
-        return item
 
     def _genfunctions(self, name: str, funcobj) -> Iterator["Function"]:
         modulecol = self.getparent(Module)
