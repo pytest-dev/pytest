@@ -1254,6 +1254,9 @@ def _idval(
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return ascii_escaped(val.pattern)
+    elif val is NOTSET:
+        # Fallback to default. Note that NOTSET is an enum.Enum.
+        pass
     elif isinstance(val, enum.Enum):
         return str(val)
     elif isinstance(getattr(val, "__name__", None), str):
