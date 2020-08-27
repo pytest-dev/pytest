@@ -1,4 +1,5 @@
 import sys
+import textwrap
 
 import pytest
 from _pytest.pytester import Testdir
@@ -152,6 +153,134 @@ class TestEvaluation:
         skipped = evaluate_skip_marks(item)
         assert skipped
         assert skipped.reason == "condition: config._hackxyz"
+
+    def test_skipif_markeval_namespace(self, testdir):
+        testdir.makeconftest(
+            """
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"color": "green"}
+            """
+        )
+        p = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skipif("color == 'green'")
+            def test_1():
+                assert True
+
+            @pytest.mark.skipif("color == 'red'")
+            def test_2():
+                assert True
+        """
+        )
+        res = testdir.runpytest(p)
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 skipped*"])
+        res.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_skipif_markeval_namespace_multiple(self, testdir):
+        """Keys defined by ``pytest_markeval_namespace()`` in nested plugins override top-level ones."""
+        root = testdir.mkdir("root")
+        root.ensure("__init__.py")
+        root.join("conftest.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"arg": "root"}
+            """
+            )
+        )
+        root.join("test_root.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            @pytest.mark.skipif("arg == 'root'")
+            def test_root():
+                assert False
+            """
+            )
+        )
+        foo = root.mkdir("foo")
+        foo.ensure("__init__.py")
+        foo.join("conftest.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"arg": "foo"}
+            """
+            )
+        )
+        foo.join("test_foo.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            @pytest.mark.skipif("arg == 'foo'")
+            def test_foo():
+                assert False
+            """
+            )
+        )
+        bar = root.mkdir("bar")
+        bar.ensure("__init__.py")
+        bar.join("conftest.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"arg": "bar"}
+            """
+            )
+        )
+        bar.join("test_bar.py").write(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            @pytest.mark.skipif("arg == 'bar'")
+            def test_bar():
+                assert False
+            """
+            )
+        )
+
+        reprec = testdir.inline_run("-vs", "--capture=no")
+        reprec.assertoutcome(skipped=3)
+
+    def test_skipif_markeval_namespace_ValueError(self, testdir):
+        testdir.makeconftest(
+            """
+            import pytest
+
+            def pytest_markeval_namespace():
+                return True
+            """
+        )
+        p = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skipif("color == 'green'")
+            def test_1():
+                assert True
+        """
+        )
+        res = testdir.runpytest(p)
+        assert res.ret == 1
+        res.stdout.fnmatch_lines(
+            [
+                "*ValueError: pytest_markeval_namespace() needs to return a dict, got True*"
+            ]
+        )
 
 
 class TestXFail:
@@ -568,6 +697,33 @@ class TestXFail:
         strict = strict_val == "true"
         result.stdout.fnmatch_lines(["*1 failed*" if strict else "*1 xpassed*"])
         assert result.ret == (1 if strict else 0)
+
+    def test_xfail_markeval_namespace(self, testdir):
+        testdir.makeconftest(
+            """
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"color": "green"}
+            """
+        )
+        p = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.xfail("color == 'green'")
+            def test_1():
+                assert False
+
+            @pytest.mark.xfail("color == 'red'")
+            def test_2():
+                assert False
+        """
+        )
+        res = testdir.runpytest(p)
+        assert res.ret == 1
+        res.stdout.fnmatch_lines(["*1 failed*"])
+        res.stdout.fnmatch_lines(["*1 xfailed*"])
 
 
 class TestXFailwithSetupTeardown:
