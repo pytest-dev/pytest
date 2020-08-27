@@ -542,7 +542,10 @@ class FSCollector(Collector):
 
 
 class File(FSCollector):
-    """Base class for collecting tests from a file."""
+    """Base class for collecting tests from a file.
+
+    :ref:`non-python tests`.
+    """
 
 
 class Item(Node):
