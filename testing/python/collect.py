@@ -885,6 +885,34 @@ class TestConftestCustomization:
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_early_ignored_attributes(self, testdir: Testdir) -> None:
+        """Builtin attributes should be ignored early on, even if
+        configuration would otherwise allow them.
+
+        This tests a performance optimization, not correctness, really,
+        although it tests PytestCollectionWarning is not raised, while
+        it would have been raised otherwise.
+        """
+        testdir.makeini(
+            """
+            [pytest]
+            python_classes=*
+            python_functions=*
+        """
+        )
+        testdir.makepyfile(
+            """
+            class TestEmpty:
+                pass
+            test_empty = TestEmpty()
+            def test_real():
+                pass
+        """
+        )
+        items, rec = testdir.inline_genitems()
+        assert rec.ret == 0
+        assert len(items) == 1
+
 
 def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")

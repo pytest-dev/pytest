@@ -5,6 +5,7 @@ import inspect
 import itertools
 import os
 import sys
+import types
 import typing
 import warnings
 from collections import Counter
@@ -343,6 +344,26 @@ class PyobjMixin:
         return fspath, lineno, modpath
 
 
+# As an optimization, these builtin attribute names are pre-ignored when
+# iterating over an object during collection -- the pytest_pycollect_makeitem
+# hook is not called for them.
+# fmt: off
+class _EmptyClass: pass  # noqa: E701
+IGNORED_ATTRIBUTES = frozenset.union(  # noqa: E305
+    frozenset(),
+    # Module.
+    dir(types.ModuleType("empty_module")),
+    # Some extra module attributes the above doesn't catch.
+    {"__builtins__", "__file__", "__cached__"},
+    # Class.
+    dir(_EmptyClass),
+    # Instance.
+    dir(_EmptyClass()),
+)
+del _EmptyClass
+# fmt: on
+
+
 class PyCollector(PyobjMixin, nodes.Collector):
     def funcnamefilter(self, name: str) -> bool:
         return self._matches_prefix_or_glob_option("python_functions", name)
@@ -404,6 +425,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
             # Note: seems like the dict can change during iteration -
             # be careful not to remove the list() without consideration.
             for name, obj in list(dic.items()):
+                if name in IGNORED_ATTRIBUTES:
+                    continue
                 if name in seen:
                     continue
                 seen.add(name)
