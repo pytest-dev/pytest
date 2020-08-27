@@ -284,27 +284,29 @@ def get_real_func(obj):
     """Get the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial."""
     start_obj = obj
+    found_obj = None
     for i in range(100):
         # __pytest_wrapped__ is set by @pytest.fixture when wrapping the fixture function
         # to trigger a warning if it gets called directly instead of by pytest: we don't
         # want to unwrap further than this otherwise we lose useful wrappings like @mock.patch (#3774)
         new_obj = getattr(obj, "__pytest_wrapped__", None)
         if isinstance(new_obj, _PytestWrapper):
-            obj = new_obj.obj
+            found_obj = new_obj.obj
             break
         new_obj = getattr(obj, "__wrapped__", None)
         if new_obj is None:
+            found_obj = obj
             break
         obj = new_obj
-    else:
+    if found_obj is None:
         raise ValueError(
             ("could not find real function of {start}\nstopped at {current}").format(
                 start=saferepr(start_obj), current=saferepr(obj)
             )
         )
-    if isinstance(obj, functools.partial):
-        obj = obj.func
-    return obj
+    if isinstance(found_obj, functools.partial):
+        found_obj = found_obj.func
+    return found_obj
 
 
 def get_real_method(obj, holder):
