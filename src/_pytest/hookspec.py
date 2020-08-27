@@ -809,6 +809,27 @@ def pytest_warning_recorded(
 
 
 # -------------------------------------------------------------------------
+# Hooks for influencing skipping
+# -------------------------------------------------------------------------
+
+
+def pytest_markeval_namespace(config: "Config") -> Dict[str, Any]:
+    """Called when constructing the globals dictionary used for
+    evaluating string conditions in xfail/skipif markers.
+
+    This is useful when the condition for a marker requires
+    objects that are expensive or impossible to obtain during
+    collection time, which is required by normal boolean
+    conditions.
+
+    .. versionadded:: 6.2
+
+    :param _pytest.config.Config config: The pytest config object.
+    :returns: A dictionary of additional globals to add.
+    """
+
+
+# -------------------------------------------------------------------------
 # error handling and internal debugging hooks
 # -------------------------------------------------------------------------
 
