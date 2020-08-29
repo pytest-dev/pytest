@@ -183,10 +183,10 @@ class TestParseIni:
                 ["unknown_ini", "another_unknown_ini"],
                 [
                     "=*= warnings summary =*=",
-                    "*PytestConfigWarning:*Unknown config ini key: another_unknown_ini",
-                    "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
+                    "*PytestConfigWarning:*Unknown config option: another_unknown_ini",
+                    "*PytestConfigWarning:*Unknown config option: unknown_ini",
                 ],
-                "Unknown config ini key: another_unknown_ini",
+                "Unknown config option: another_unknown_ini",
             ),
             (
                 """
@@ -197,9 +197,9 @@ class TestParseIni:
                 ["unknown_ini"],
                 [
                     "=*= warnings summary =*=",
-                    "*PytestConfigWarning:*Unknown config ini key: unknown_ini",
+                    "*PytestConfigWarning:*Unknown config option: unknown_ini",
                 ],
-                "Unknown config ini key: unknown_ini",
+                "Unknown config option: unknown_ini",
             ),
             (
                 """
@@ -232,7 +232,8 @@ class TestParseIni:
             ),
         ],
     )
-    def test_invalid_ini_keys(
+    @pytest.mark.filterwarnings("default")
+    def test_invalid_config_options(
         self, testdir, ini_file_text, invalid_keys, warning_output, exception_text
     ):
         testdir.makeconftest(
@@ -250,10 +251,22 @@ class TestParseIni:
         result.stdout.fnmatch_lines(warning_output)
 
         if exception_text:
-            with pytest.raises(pytest.fail.Exception, match=exception_text):
-                testdir.runpytest("--strict-config")
-        else:
-            testdir.runpytest("--strict-config")
+            result = testdir.runpytest("--strict-config")
+            result.stdout.fnmatch_lines("INTERNALERROR>*" + exception_text)
+
+    @pytest.mark.filterwarnings("default")
+    def test_silence_unknown_key_warning(self, testdir: Testdir) -> None:
+        """Unknown config key warnings can be silenced using filterwarnings (#7620)"""
+        testdir.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore:Unknown config option:pytest.PytestConfigWarning
+            foobar=1
+        """
+        )
+        result = testdir.runpytest()
+        result.stdout.no_fnmatch_line("*PytestConfigWarning*")
 
     @pytest.mark.parametrize(
         "ini_file_text, exception_text",
@@ -1132,7 +1145,7 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
     values = hc._nonwrappers + hc._wrappers
-    expected = ["_pytest.config", m.__module__, "_pytest.capture"]
+    expected = ["_pytest.config", m.__module__, "_pytest.capture", "_pytest.warnings"]
     assert [x.function.__module__ for x in values] == expected
 
 

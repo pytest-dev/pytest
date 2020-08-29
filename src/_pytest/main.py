@@ -69,6 +69,20 @@ def pytest_addoption(parser: Parser) -> None:
         const=1,
         help="exit instantly on first error or failed test.",
     )
+    group = parser.getgroup("pytest-warnings")
+    group.addoption(
+        "-W",
+        "--pythonwarnings",
+        action="append",
+        help="set which warnings to report, see -W option of python itself.",
+    )
+    parser.addini(
+        "filterwarnings",
+        type="linelist",
+        help="Each line specifies a pattern for "
+        "warnings.filterwarnings. "
+        "Processed after -W/--pythonwarnings.",
+    )
     group._addoption(
         "--maxfail",
         metavar="num",
