@@ -117,29 +117,6 @@ def pytest_sessionstart(session: "Session") -> None:
 
 scopename2class = {}  # type: Dict[str, Type[nodes.Node]]
 
-scope2props = dict(session=())  # type: Dict[str, Tuple[str, ...]]
-scope2props["package"] = ("fspath",)
-scope2props["module"] = ("fspath", "module")
-scope2props["class"] = scope2props["module"] + ("cls",)
-scope2props["instance"] = scope2props["class"] + ("instance",)
-scope2props["function"] = scope2props["instance"] + ("function", "keywords")
-
-
-def scopeproperty(name=None, doc=None):
-    def decoratescope(func):
-        scopename = name or func.__name__
-
-        def provide(self):
-            if func.__name__ in scope2props[self.scope]:
-                return func(self)
-            raise AttributeError(
-                "{} not available in {}-scoped context".format(scopename, self.scope)
-            )
-
-        return property(provide, None, None, func.__doc__)
-
-    return decoratescope
-
 
 def get_scope_package(node, fixturedef: "FixtureDef[object]"):
     import pytest
@@ -484,14 +461,22 @@ class FixtureRequest:
         """The pytest config object associated with this request."""
         return self._pyfuncitem.config  # type: ignore[no-any-return] # noqa: F723
 
-    @scopeproperty()
+    @property
     def function(self):
         """Test function object if the request has a per-function scope."""
+        if self.scope != "function":
+            raise AttributeError(
+                "function not available in {}-scoped context".format(self.scope)
+            )
         return self._pyfuncitem.obj
 
-    @scopeproperty("class")
+    @property
     def cls(self):
         """Class (can be None) where the test function was collected."""
+        if self.scope not in ("class", "function"):
+            raise AttributeError(
+                "cls not available in {}-scoped context".format(self.scope)
+            )
         clscol = self._pyfuncitem.getparent(_pytest.python.Class)
         if clscol:
             return clscol.obj
@@ -506,14 +491,22 @@ class FixtureRequest:
             function = getattr(self, "function", None)
             return getattr(function, "__self__", None)
 
-    @scopeproperty()
+    @property
     def module(self):
         """Python module object where the test function was collected."""
+        if self.scope not in ("function", "class", "module"):
+            raise AttributeError(
+                "module not available in {}-scoped context".format(self.scope)
+            )
         return self._pyfuncitem.getparent(_pytest.python.Module).obj
 
-    @scopeproperty()
+    @property
     def fspath(self) -> py.path.local:
         """The file system path of the test module which collected this test."""
+        if self.scope not in ("function", "class", "module", "package"):
+            raise AttributeError(
+                "module not available in {}-scoped context".format(self.scope)
+            )
         # TODO: Remove ignore once _pyfuncitem is properly typed.
         return self._pyfuncitem.fspath  # type: ignore
 
