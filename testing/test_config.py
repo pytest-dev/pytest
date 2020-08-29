@@ -5,6 +5,7 @@ import textwrap
 from typing import Dict
 from typing import List
 from typing import Sequence
+from typing import Tuple
 
 import attr
 import py.path
@@ -12,11 +13,14 @@ import py.path
 import _pytest._code
 import pytest
 from _pytest.compat import importlib_metadata
+from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
+from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
+from _pytest.config import parse_warning_filter
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
@@ -24,6 +28,9 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
+
+if TYPE_CHECKING:
+    from typing import Type
 
 
 class TestParseIni:
@@ -1829,3 +1836,52 @@ def test_conftest_import_error_repr(tmpdir):
             assert exc.__traceback__ is not None
             exc_info = (type(exc), exc, exc.__traceback__)
             raise ConftestImportFailure(path, exc_info) from exc
+
+
+def test_strtobooL():
+    assert _strtobool("YES")
+    assert not _strtobool("NO")
+    with pytest.raises(ValueError):
+        _strtobool("unknown")
+
+
+@pytest.mark.parametrize(
+    "arg, escape, expected",
+    [
+        ("ignore", False, ("ignore", "", Warning, "", 0)),
+        (
+            "ignore::DeprecationWarning",
+            False,
+            ("ignore", "", DeprecationWarning, "", 0),
+        ),
+        (
+            "ignore:some msg:DeprecationWarning",
+            False,
+            ("ignore", "some msg", DeprecationWarning, "", 0),
+        ),
+        (
+            "ignore::DeprecationWarning:mod",
+            False,
+            ("ignore", "", DeprecationWarning, "mod", 0),
+        ),
+        (
+            "ignore::DeprecationWarning:mod:42",
+            False,
+            ("ignore", "", DeprecationWarning, "mod", 42),
+        ),
+        ("error:some\\msg:::", True, ("error", "some\\\\msg", Warning, "", 0)),
+        ("error:::mod\\foo:", True, ("error", "", Warning, "mod\\\\foo\\Z", 0)),
+    ],
+)
+def test_parse_warning_filter(
+    arg: str, escape: bool, expected: "Tuple[str, str, Type[Warning], str, int]"
+) -> None:
+    assert parse_warning_filter(arg, escape=escape) == expected
+
+
+@pytest.mark.parametrize("arg", [":" * 5, "::::-1", "::::not-a-number"])
+def test_parse_warning_filter_failure(arg: str) -> None:
+    import warnings
+
+    with pytest.raises(warnings._OptionError):
+        parse_warning_filter(arg, escape=True)
