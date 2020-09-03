@@ -1235,6 +1235,8 @@ class Config:
         :param warning: The warning instance.
         :param stacklevel: stacklevel forwarded to warnings.warn.
         """
+        if self.pluginmanager.is_blocked("warnings"):
+            return
 
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
         config_filters = self.getini("filterwarnings")

@@ -275,6 +275,24 @@ class TestParseIni:
         result = testdir.runpytest()
         result.stdout.no_fnmatch_line("*PytestConfigWarning*")
 
+    @pytest.mark.filterwarnings("default")
+    def test_disable_warnings_plugin_disables_config_warnings(
+        self, testdir: Testdir
+    ) -> None:
+        """Disabling 'warnings' plugin also disables config time warnings"""
+        testdir.makeconftest(
+            """
+            import pytest
+            def pytest_configure(config):
+                config.issue_config_time_warning(
+                    pytest.PytestConfigWarning("custom config warning"),
+                    stacklevel=2,
+                )
+        """
+        )
+        result = testdir.runpytest("-pno:warnings")
+        result.stdout.no_fnmatch_line("*PytestConfigWarning*")
+
     @pytest.mark.parametrize(
         "ini_file_text, exception_text",
         [
