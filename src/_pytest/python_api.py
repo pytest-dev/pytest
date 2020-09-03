@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
 from decimal import Decimal
-from numbers import Number
+from numbers import Complex
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -145,7 +145,10 @@ class ApproxMapping(ApproxBase):
         )
 
     def __eq__(self, actual) -> bool:
-        if set(actual.keys()) != set(self.expected.keys()):
+        try:
+            if set(actual.keys()) != set(self.expected.keys()):
+                return False
+        except AttributeError:
             return False
 
         return ApproxBase.__eq__(self, actual)
@@ -160,8 +163,6 @@ class ApproxMapping(ApproxBase):
             if isinstance(value, type(self.expected)):
                 msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
                 raise TypeError(msg.format(key, value, pprint.pformat(self.expected)))
-            elif not isinstance(value, Number):
-                raise _non_numeric_type_error(self.expected, at="key={!r}".format(key))
 
 
 class ApproxSequencelike(ApproxBase):
@@ -176,7 +177,10 @@ class ApproxSequencelike(ApproxBase):
         )
 
     def __eq__(self, actual) -> bool:
-        if len(actual) != len(self.expected):
+        try:
+            if len(actual) != len(self.expected):
+                return False
+        except TypeError:
             return False
         return ApproxBase.__eq__(self, actual)
 
@@ -189,10 +193,6 @@ class ApproxSequencelike(ApproxBase):
             if isinstance(x, type(self.expected)):
                 msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
                 raise TypeError(msg.format(x, index, pprint.pformat(self.expected)))
-            elif not isinstance(x, Number):
-                raise _non_numeric_type_error(
-                    self.expected, at="index {}".format(index)
-                )
 
 
 class ApproxScalar(ApproxBase):
@@ -237,6 +237,15 @@ class ApproxScalar(ApproxBase):
         # Short-circuit exact equality.
         if actual == self.expected:
             return True
+
+        # If either type is non-numeric, fall back to strict equality.
+        # NB: we need Complex, rather than just Number, to ensure that __abs__,
+        # __sub__, and __float__ are defined.
+        if not (
+            isinstance(self.expected, (Complex, Decimal))
+            and isinstance(actual, (Complex, Decimal))
+        ):
+            return False
 
         # Allow the user to control whether NaNs are considered equal to each
         # other or not.  The abs() calls are for compatibility with complex
@@ -486,8 +495,6 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
     if isinstance(expected, Decimal):
         cls = ApproxDecimal  # type: Type[ApproxBase]
-    elif isinstance(expected, Number):
-        cls = ApproxScalar
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
     elif _is_numpy_array(expected):
@@ -500,7 +507,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     ):
         cls = ApproxSequencelike
     else:
-        raise _non_numeric_type_error(expected, at=None)
+        cls = ApproxScalar
 
     return cls(expected, rel, abs, nan_ok)
 

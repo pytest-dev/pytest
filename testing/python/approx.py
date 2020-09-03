@@ -329,6 +329,9 @@ class TestApprox:
         assert (1, 2) != approx((1,))
         assert (1, 2) != approx((1, 2, 3))
 
+    def test_tuple_vs_other(self):
+        assert 1 != approx((1,))
+
     def test_dict(self):
         actual = {"a": 1 + 1e-7, "b": 2 + 1e-8}
         # Dictionaries became ordered in python3.6, so switch up the order here
@@ -345,6 +348,13 @@ class TestApprox:
         assert {"a": 1, "b": 2} != approx({"a": 1})
         assert {"a": 1, "b": 2} != approx({"a": 1, "c": 2})
         assert {"a": 1, "b": 2} != approx({"a": 1, "b": 2, "c": 3})
+
+    def test_dict_nonnumeric(self):
+        assert {"a": 1.0, "b": None} == pytest.approx({"a": 1.0, "b": None})
+        assert {"a": 1.0, "b": 1} != pytest.approx({"a": 1.0, "b": None})
+
+    def test_dict_vs_other(self):
+        assert 1 != approx({"a": 0})
 
     def test_numpy_array(self):
         np = pytest.importorskip("numpy")
@@ -466,17 +476,47 @@ class TestApprox:
     @pytest.mark.parametrize(
         "x",
         [
-            pytest.param(None),
-            pytest.param("string"),
-            pytest.param(["string"], id="nested-str"),
             pytest.param([[1]], id="nested-list"),
-            pytest.param({"key": "string"}, id="dict-with-string"),
             pytest.param({"key": {"key": 1}}, id="nested-dict"),
         ],
     )
     def test_expected_value_type_error(self, x):
         with pytest.raises(TypeError):
             approx(x)
+
+    @pytest.mark.parametrize(
+        "x",
+        [
+            pytest.param(None),
+            pytest.param("string"),
+            pytest.param(["string"], id="nested-str"),
+            pytest.param({"key": "string"}, id="dict-with-string"),
+        ],
+    )
+    def test_nonnumeric_okay_if_equal(self, x):
+        assert x == approx(x)
+
+    @pytest.mark.parametrize(
+        "x",
+        [
+            pytest.param("string"),
+            pytest.param(["string"], id="nested-str"),
+            pytest.param({"key": "string"}, id="dict-with-string"),
+        ],
+    )
+    def test_nonnumeric_false_if_unequal(self, x):
+        """For nonnumeric types, x != pytest.approx(y) reduces to x != y"""
+        assert "ab" != approx("abc")
+        assert ["ab"] != approx(["abc"])
+        # in particular, both of these should return False
+        assert {"a": 1.0} != approx({"a": None})
+        assert {"a": None} != approx({"a": 1.0})
+
+        assert 1.0 != approx(None)
+        assert None != approx(1.0)  # noqa: E711
+
+        assert 1.0 != approx([None])
+        assert None != approx([1.0])  # noqa: E711
 
     @pytest.mark.parametrize(
         "op",
