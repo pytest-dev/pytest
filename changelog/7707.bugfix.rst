@@ -1,0 +1,1 @@
+Fix internal error when handling some exceptions that contain multiple lines or the style uses multiple lines (``--tb=line`` for example).
