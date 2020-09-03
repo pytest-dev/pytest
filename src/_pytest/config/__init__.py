@@ -1232,6 +1232,9 @@ class Config:
         During ``pytest_configure`` we can't capture warnings using the ``catch_warnings_for_item``
         function because it is not possible to have hookwrappers around ``pytest_configure``.
 
+        This function is mainly intended for plugins that need to issue warnings during
+        ``pytest_configure`` (or similar stages).
+
         :param warning: The warning instance.
         :param stacklevel: stacklevel forwarded to warnings.warn.
         """
