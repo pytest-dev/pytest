@@ -872,12 +872,6 @@ Parser
 .. autoclass:: _pytest.config.argparsing.Parser()
     :members:
 
-PluginManager
-~~~~~~~~~~~~~
-
-.. autoclass:: pluggy.PluginManager()
-    :members:
-
 
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~
@@ -885,6 +879,7 @@ PytestPluginManager
 .. autoclass:: _pytest.config.PytestPluginManager()
     :members:
     :undoc-members:
+    :inherited-members:
     :show-inheritance:
 
 Session
