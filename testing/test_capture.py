@@ -16,6 +16,7 @@ from _pytest.capture import _get_multicapture
 from _pytest.capture import CaptureManager
 from _pytest.capture import MultiCapture
 from _pytest.config import ExitCode
+from _pytest.pytester import Testdir
 
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
@@ -632,6 +633,34 @@ class TestCaptureFixture:
             assert "test_normal executed" in result.stdout.str()
         else:
             result.stdout.no_fnmatch_line("*test_normal executed*")
+
+    def test_disabled_capture_fixture_twice(self, testdir: Testdir) -> None:
+        """Test that an inner disabled() exit doesn't undo an outer disabled().
+
+        Issue #7148.
+        """
+        testdir.makepyfile(
+            """
+            def test_disabled(capfd):
+                print('captured before')
+                with capfd.disabled():
+                    print('while capture is disabled 1')
+                    with capfd.disabled():
+                        print('while capture is disabled 2')
+                    print('while capture is disabled 1 after')
+                print('captured after')
+                assert capfd.readouterr() == ('captured before\\ncaptured after\\n', '')
+        """
+        )
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(
+            [
+                "*while capture is disabled 1",
+                "*while capture is disabled 2",
+                "*while capture is disabled 1 after",
+            ],
+            consecutive=True,
+        )
 
     @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures(self, testdir, fixture):
