@@ -237,7 +237,7 @@ def pytest_collection(session: "Session") -> Optional[object]:
     for example the terminal plugin uses it to start displaying the collection
     counter (and returns `None`).
 
-    :param _pytest.main.Session session: The pytest session object.
+    :param pytest.Session session: The pytest session object.
     """
 
 
@@ -247,16 +247,16 @@ def pytest_collection_modifyitems(
     """Called after collection has been performed. May filter or re-order
     the items in-place.
 
-    :param _pytest.main.Session session: The pytest session object.
+    :param pytest.Session session: The pytest session object.
     :param _pytest.config.Config config: The pytest config object.
-    :param List[_pytest.nodes.Item] items: List of item objects.
+    :param List[pytest.Item] items: List of item objects.
     """
 
 
 def pytest_collection_finish(session: "Session") -> None:
     """Called after collection has been performed and modified.
 
-    :param _pytest.main.Session session: The pytest session object.
+    :param pytest.Session session: The pytest session object.
     """
 
 
@@ -393,7 +393,7 @@ def pytest_runtestloop(session: "Session") -> Optional[object]:
     If at any point ``session.shouldfail`` or ``session.shouldstop`` are set, the
     loop is terminated after the runtest protocol for the current item is finished.
 
-    :param _pytest.main.Session session: The pytest session object.
+    :param pytest.Session session: The pytest session object.
 
     Stops at first non-None result, see :ref:`firstresult`.
     The return value is not used, but only stops further processing.
@@ -572,7 +572,7 @@ def pytest_sessionstart(session: "Session") -> None:
     """Called after the ``Session`` object has been created and before performing collection
     and entering the run test loop.
 
-    :param _pytest.main.Session session: The pytest session object.
+    :param pytest.Session session: The pytest session object.
     """
 
 
@@ -581,7 +581,7 @@ def pytest_sessionfinish(
 ) -> None:
     """Called after whole test run finished, right before returning the exit status to the system.
 
-    :param _pytest.main.Session session: The pytest session object.
+    :param pytest.Session session: The pytest session object.
     :param int exitstatus: The status which pytest will return to the system.
     """
 
@@ -633,7 +633,7 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
     You need to **clean the .pyc** files in your project directory and interpreter libraries
     when enabling this option, as assertions will require to be re-written.
 
-    :param _pytest.nodes.Item item: pytest item object of current test.
+    :param pytest.Item item: pytest item object of current test.
     :param int lineno: Line number of the assert statement.
     :param str orig: String with the original assertion.
     :param str expl: String with the assert explanation.
