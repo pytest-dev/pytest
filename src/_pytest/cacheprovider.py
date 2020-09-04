@@ -78,7 +78,7 @@ class Cache:
 
     @staticmethod
     def cache_dir_from_config(config: Config) -> Path:
-        return resolve_from_str(config.getini("cache_dir"), config.rootdir)
+        return resolve_from_str(config.getini("cache_dir"), config.rootpath)
 
     def warn(self, fmt: str, **args: object) -> None:
         import warnings
@@ -264,7 +264,7 @@ class LFPlugin:
 
     def get_last_failed_paths(self) -> Set[Path]:
         """Return a set with all Paths()s of the previously failed nodeids."""
-        rootpath = Path(str(self.config.rootdir))
+        rootpath = self.config.rootpath
         result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
         return {x for x in result if x.exists()}
 
@@ -495,7 +495,7 @@ def pytest_report_header(config: Config) -> Optional[str]:
         # starting with .., ../.. if sensible
 
         try:
-            displaypath = cachedir.relative_to(str(config.rootdir))
+            displaypath = cachedir.relative_to(config.rootpath)
         except ValueError:
             displaypath = cachedir
         return "cachedir: {}".format(displaypath)

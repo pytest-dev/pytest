@@ -31,6 +31,7 @@ from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
+from _pytest.pathlib import absolutepath
 from _pytest.pathlib import Path
 from _pytest.store import Store
 
@@ -401,7 +402,7 @@ class Node(metaclass=NodeMeta):
         # It will be better to just always display paths relative to invocation_dir, but
         # this requires a lot of plumbing (#6428).
         try:
-            abspath = Path(os.getcwd()) != Path(str(self.config.invocation_dir))
+            abspath = Path(os.getcwd()) != self.config.invocation_params.dir
         except OSError:
             abspath = True
 
@@ -597,10 +598,7 @@ class Item(Node):
     @cached_property
     def location(self) -> Tuple[str, Optional[int], str]:
         location = self.reportinfo()
-        if isinstance(location[0], py.path.local):
-            fspath = location[0]
-        else:
-            fspath = py.path.local(location[0])
+        fspath = absolutepath(str(location[0]))
         relfspath = self.session._node_location_to_relpath(fspath)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])

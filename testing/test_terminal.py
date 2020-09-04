@@ -18,6 +18,7 @@ import pytest
 from _pytest._io.wcwidth import wcswidth
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
@@ -2085,7 +2086,7 @@ def test_skip_reasons_folding() -> None:
     ev3.longrepr = longrepr
     ev3.skipped = True
 
-    values = _folded_skips(py.path.local(), [ev1, ev2, ev3])
+    values = _folded_skips(Path.cwd(), [ev1, ev2, ev3])
     assert len(values) == 1
     num, fspath, lineno_, reason = values[0]
     assert num == 3

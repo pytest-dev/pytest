@@ -50,6 +50,7 @@ from _pytest.deprecated import FILLFUNCARGS
 from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
+from _pytest.pathlib import absolutepath
 
 if TYPE_CHECKING:
     from typing import Deque
@@ -1443,7 +1444,7 @@ class FixtureManager:
     def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         nodeid = None
         try:
-            p = py.path.local(plugin.__file__)  # type: ignore[attr-defined]
+            p = absolutepath(plugin.__file__)  # type: ignore[attr-defined]
         except AttributeError:
             pass
         else:
@@ -1452,8 +1453,13 @@ class FixtureManager:
             # Construct the base nodeid which is later used to check
             # what fixtures are visible for particular tests (as denoted
             # by their test id).
-            if p.basename.startswith("conftest.py"):
-                nodeid = p.dirpath().relto(self.config.rootdir)
+            if p.name.startswith("conftest.py"):
+                try:
+                    nodeid = str(p.parent.relative_to(self.config.rootpath))
+                except ValueError:
+                    nodeid = ""
+                if nodeid == ".":
+                    nodeid = ""
                 if os.sep != nodes.SEP:
                     nodeid = nodeid.replace(os.sep, nodes.SEP)
 

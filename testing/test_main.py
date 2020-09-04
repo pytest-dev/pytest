@@ -10,6 +10,7 @@ from _pytest.config import ExitCode
 from _pytest.config import UsageError
 from _pytest.main import resolve_collection_argument
 from _pytest.main import validate_basetemp
+from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 
 
@@ -108,73 +109,79 @@ def test_validate_basetemp_integration(testdir):
 
 class TestResolveCollectionArgument:
     @pytest.fixture
-    def root(self, testdir):
+    def invocation_dir(self, testdir: Testdir) -> py.path.local:
         testdir.syspathinsert(str(testdir.tmpdir / "src"))
         testdir.chdir()
 
         pkg = testdir.tmpdir.join("src/pkg").ensure_dir()
-        pkg.join("__init__.py").ensure(file=True)
-        pkg.join("test.py").ensure(file=True)
+        pkg.join("__init__.py").ensure()
+        pkg.join("test.py").ensure()
         return testdir.tmpdir
 
-    def test_file(self, root):
+    @pytest.fixture
+    def invocation_path(self, invocation_dir: py.path.local) -> Path:
+        return Path(str(invocation_dir))
+
+    def test_file(self, invocation_dir: py.path.local, invocation_path: Path) -> None:
         """File and parts."""
-        assert resolve_collection_argument(root, "src/pkg/test.py") == (
-            root / "src/pkg/test.py",
+        assert resolve_collection_argument(invocation_path, "src/pkg/test.py") == (
+            invocation_dir / "src/pkg/test.py",
             [],
         )
-        assert resolve_collection_argument(root, "src/pkg/test.py::") == (
-            root / "src/pkg/test.py",
+        assert resolve_collection_argument(invocation_path, "src/pkg/test.py::") == (
+            invocation_dir / "src/pkg/test.py",
             [""],
         )
-        assert resolve_collection_argument(root, "src/pkg/test.py::foo::bar") == (
-            root / "src/pkg/test.py",
-            ["foo", "bar"],
-        )
-        assert resolve_collection_argument(root, "src/pkg/test.py::foo::bar::") == (
-            root / "src/pkg/test.py",
-            ["foo", "bar", ""],
-        )
+        assert resolve_collection_argument(
+            invocation_path, "src/pkg/test.py::foo::bar"
+        ) == (invocation_dir / "src/pkg/test.py", ["foo", "bar"])
+        assert resolve_collection_argument(
+            invocation_path, "src/pkg/test.py::foo::bar::"
+        ) == (invocation_dir / "src/pkg/test.py", ["foo", "bar", ""])
 
-    def test_dir(self, root: py.path.local) -> None:
+    def test_dir(self, invocation_dir: py.path.local, invocation_path: Path) -> None:
         """Directory and parts."""
-        assert resolve_collection_argument(root, "src/pkg") == (root / "src/pkg", [])
-
-        with pytest.raises(
-            UsageError, match=r"directory argument cannot contain :: selection parts"
-        ):
-            resolve_collection_argument(root, "src/pkg::")
-
-        with pytest.raises(
-            UsageError, match=r"directory argument cannot contain :: selection parts"
-        ):
-            resolve_collection_argument(root, "src/pkg::foo::bar")
-
-    def test_pypath(self, root: py.path.local) -> None:
-        """Dotted name and parts."""
-        assert resolve_collection_argument(root, "pkg.test", as_pypath=True) == (
-            root / "src/pkg/test.py",
+        assert resolve_collection_argument(invocation_path, "src/pkg") == (
+            invocation_dir / "src/pkg",
             [],
         )
+
+        with pytest.raises(
+            UsageError, match=r"directory argument cannot contain :: selection parts"
+        ):
+            resolve_collection_argument(invocation_path, "src/pkg::")
+
+        with pytest.raises(
+            UsageError, match=r"directory argument cannot contain :: selection parts"
+        ):
+            resolve_collection_argument(invocation_path, "src/pkg::foo::bar")
+
+    def test_pypath(self, invocation_dir: py.path.local, invocation_path: Path) -> None:
+        """Dotted name and parts."""
         assert resolve_collection_argument(
-            root, "pkg.test::foo::bar", as_pypath=True
-        ) == (root / "src/pkg/test.py", ["foo", "bar"],)
-        assert resolve_collection_argument(root, "pkg", as_pypath=True) == (
-            root / "src/pkg",
+            invocation_path, "pkg.test", as_pypath=True
+        ) == (invocation_dir / "src/pkg/test.py", [])
+        assert resolve_collection_argument(
+            invocation_path, "pkg.test::foo::bar", as_pypath=True
+        ) == (invocation_dir / "src/pkg/test.py", ["foo", "bar"])
+        assert resolve_collection_argument(invocation_path, "pkg", as_pypath=True) == (
+            invocation_dir / "src/pkg",
             [],
         )
 
         with pytest.raises(
             UsageError, match=r"package argument cannot contain :: selection parts"
         ):
-            resolve_collection_argument(root, "pkg::foo::bar", as_pypath=True)
+            resolve_collection_argument(
+                invocation_path, "pkg::foo::bar", as_pypath=True
+            )
 
-    def test_does_not_exist(self, root):
+    def test_does_not_exist(self, invocation_path: Path) -> None:
         """Given a file/module that does not exist raises UsageError."""
         with pytest.raises(
             UsageError, match=re.escape("file or directory not found: foobar")
         ):
-            resolve_collection_argument(root, "foobar")
+            resolve_collection_argument(invocation_path, "foobar")
 
         with pytest.raises(
             UsageError,
@@ -182,12 +189,14 @@ class TestResolveCollectionArgument:
                 "module or package not found: foobar (missing __init__.py?)"
             ),
         ):
-            resolve_collection_argument(root, "foobar", as_pypath=True)
+            resolve_collection_argument(invocation_path, "foobar", as_pypath=True)
 
-    def test_absolute_paths_are_resolved_correctly(self, root):
+    def test_absolute_paths_are_resolved_correctly(
+        self, invocation_dir: py.path.local, invocation_path: Path
+    ) -> None:
         """Absolute paths resolve back to absolute paths."""
-        full_path = str(root / "src")
-        assert resolve_collection_argument(root, full_path) == (
+        full_path = str(invocation_dir / "src")
+        assert resolve_collection_argument(invocation_path, full_path) == (
             py.path.local(os.path.abspath("src")),
             [],
         )
@@ -195,10 +204,9 @@ class TestResolveCollectionArgument:
         # ensure full paths given in the command-line without the drive letter resolve
         # to the full path correctly (#7628)
         drive, full_path_without_drive = os.path.splitdrive(full_path)
-        assert resolve_collection_argument(root, full_path_without_drive) == (
-            py.path.local(os.path.abspath("src")),
-            [],
-        )
+        assert resolve_collection_argument(
+            invocation_path, full_path_without_drive
+        ) == (py.path.local(os.path.abspath("src")), [])
 
 
 def test_module_full_path_without_drive(testdir):

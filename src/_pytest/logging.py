@@ -603,7 +603,7 @@ class LoggingPlugin:
         fpath = Path(fname)
 
         if not fpath.is_absolute():
-            fpath = Path(str(self._config.rootdir), fpath)
+            fpath = self._config.rootpath / fpath
 
         if not fpath.parent.exists():
             fpath.parent.mkdir(exist_ok=True, parents=True)

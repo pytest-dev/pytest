@@ -40,6 +40,9 @@ from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 from _pytest.nodes import Node
+from _pytest.pathlib import absolutepath
+from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -297,9 +300,9 @@ class WarningReport:
         if self.fslocation:
             if isinstance(self.fslocation, tuple) and len(self.fslocation) >= 2:
                 filename, linenum = self.fslocation[:2]
-                relpath = py.path.local(filename).relto(config.invocation_dir)
-                if not relpath:
-                    relpath = str(filename)
+                relpath = bestrelpath(
+                    config.invocation_params.dir, absolutepath(filename)
+                )
                 return "{}:{}".format(relpath, linenum)
             else:
                 return str(self.fslocation)
@@ -319,11 +322,12 @@ class TerminalReporter:
         self._main_color = None  # type: Optional[str]
         self._known_types = None  # type: Optional[List[str]]
         self.startdir = config.invocation_dir
+        self.startpath = config.invocation_params.dir
         if file is None:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
-        self.currentfspath = None  # type: Any
+        self.currentfspath = None  # type: Union[None, Path, str, int]
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
@@ -385,19 +389,17 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res, **markup: bool) -> None:
-        fspath = self.config.rootdir.join(nodeid.split("::")[0])
-        # NOTE: explicitly check for None to work around py bug, and for less
-        # overhead in general (https://github.com/pytest-dev/py/pull/207).
+        fspath = self.config.rootpath / nodeid.split("::")[0]
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
             self.currentfspath = fspath
-            relfspath = self.startdir.bestrelpath(fspath)
+            relfspath = bestrelpath(self.startpath, fspath)
             self._tw.line()
             self._tw.write(relfspath + " ")
         self._tw.write(res, flush=True, **markup)
 
-    def write_ensure_prefix(self, prefix, extra: str = "", **kwargs) -> None:
+    def write_ensure_prefix(self, prefix: str, extra: str = "", **kwargs) -> None:
         if self.currentfspath != prefix:
             self._tw.line()
             self.currentfspath = prefix
@@ -709,14 +711,14 @@ class TerminalReporter:
                     self.write_line(line)
 
     def pytest_report_header(self, config: Config) -> List[str]:
-        line = "rootdir: %s" % config.rootdir
+        line = "rootdir: %s" % config.rootpath
 
-        if config.inifile:
-            line += ", configfile: " + config.rootdir.bestrelpath(config.inifile)
+        if config.inipath:
+            line += ", configfile: " + bestrelpath(config.rootpath, config.inipath)
 
         testpaths = config.getini("testpaths")
         if testpaths and config.args == testpaths:
-            rel_paths = [config.rootdir.bestrelpath(x) for x in testpaths]
+            rel_paths = [bestrelpath(config.rootpath, x) for x in testpaths]
             line += ", testpaths: {}".format(", ".join(rel_paths))
         result = [line]
 
@@ -860,7 +862,7 @@ class TerminalReporter:
             if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
                 "\\", nodes.SEP
             ):
-                res += " <- " + self.startdir.bestrelpath(fspath)
+                res += " <- " + bestrelpath(self.startpath, fspath)
         else:
             res = "[location]"
         return res + " "
@@ -1102,7 +1104,7 @@ class TerminalReporter:
 
         def show_skipped(lines: List[str]) -> None:
             skipped = self.stats.get("skipped", [])  # type: List[CollectReport]
-            fskips = _folded_skips(self.startdir, skipped) if skipped else []
+            fskips = _folded_skips(self.startpath, skipped) if skipped else []
             if not fskips:
                 return
             verbose_word = skipped[0]._get_verbose_word(self.config)
@@ -1230,7 +1232,7 @@ def _get_line_with_reprcrash_message(
 
 
 def _folded_skips(
-    startdir: py.path.local, skipped: Sequence[CollectReport],
+    startpath: Path, skipped: Sequence[CollectReport],
 ) -> List[Tuple[int, str, Optional[int], str]]:
     d = {}  # type: Dict[Tuple[str, Optional[int], str], List[CollectReport]]
     for event in skipped:
@@ -1239,7 +1241,7 @@ def _folded_skips(
         assert len(event.longrepr) == 3, (event, event.longrepr)
         fspath, lineno, reason = event.longrepr
         # For consistency, report all fspaths in relative form.
-        fspath = startdir.bestrelpath(py.path.local(fspath))
+        fspath = bestrelpath(startpath, Path(fspath))
         keywords = getattr(event, "keywords", {})
         # Folding reports with global pytestmark variable.
         # This is a workaround, because for now we cannot identify the scope of a skip marker

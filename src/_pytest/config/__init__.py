@@ -47,6 +47,7 @@ from _pytest.compat import importlib_metadata
 from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
+from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportMode
 from _pytest.pathlib import Path
@@ -520,7 +521,7 @@ class PytestPluginManager(PluginManager):
         else:
             directory = path
 
-        # XXX these days we may rather want to use config.rootdir
+        # XXX these days we may rather want to use config.rootpath
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir.
         clist = []
@@ -820,13 +821,13 @@ class Config:
     :param PytestPluginManager pluginmanager:
 
     :param InvocationParams invocation_params:
-        Object containing the parameters regarding the ``pytest.main``
+        Object containing parameters regarding the :func:`pytest.main`
         invocation.
     """
 
     @attr.s(frozen=True)
     class InvocationParams:
-        """Holds parameters passed during ``pytest.main()``
+        """Holds parameters passed during :func:`pytest.main`.
 
         The object attributes are read-only.
 
@@ -841,11 +842,20 @@ class Config:
         """
 
         args = attr.ib(type=Tuple[str, ...], converter=_args_converter)
-        """Tuple of command-line arguments as passed to ``pytest.main()``."""
+        """The command-line arguments as passed to :func:`pytest.main`.
+
+        :type: Tuple[str, ...]
+        """
         plugins = attr.ib(type=Optional[Sequence[Union[str, _PluggyPlugin]]])
-        """List of extra plugins, might be `None`."""
+        """Extra plugins, might be `None`.
+
+        :type: Optional[Sequence[Union[str, plugin]]]
+        """
         dir = attr.ib(type=Path)
-        """Directory from which ``pytest.main()`` was invoked."""
+        """The directory from which :func:`pytest.main` was invoked.
+
+        :type: pathlib.Path
+        """
 
     def __init__(
         self,
@@ -867,6 +877,10 @@ class Config:
         """
 
         self.invocation_params = invocation_params
+        """The parameters with which pytest was invoked.
+
+        :type: InvocationParams
+        """
 
         _a = FILE_OR_DIR
         self._parser = Parser(
@@ -876,7 +890,7 @@ class Config:
         self.pluginmanager = pluginmanager
         """The plugin manager handles plugin registration and hook invocation.
 
-        :type: PytestPluginManager.
+        :type: PytestPluginManager
         """
 
         self.trace = self.pluginmanager.trace.root.get("config")
@@ -901,8 +915,54 @@ class Config:
 
     @property
     def invocation_dir(self) -> py.path.local:
-        """Backward compatibility."""
+        """The directory from which pytest was invoked.
+
+        Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`,
+        which is a :class:`pathlib.Path`.
+
+        :type: py.path.local
+        """
         return py.path.local(str(self.invocation_params.dir))
+
+    @property
+    def rootpath(self) -> Path:
+        """The path to the :ref:`rootdir <rootdir>`.
+
+        :type: pathlib.Path
+
+        .. versionadded:: 6.1
+        """
+        return self._rootpath
+
+    @property
+    def rootdir(self) -> py.path.local:
+        """The path to the :ref:`rootdir <rootdir>`.
+
+        Prefer to use :attr:`rootpath`, which is a :class:`pathlib.Path`.
+
+        :type: py.path.local
+        """
+        return py.path.local(str(self.rootpath))
+
+    @property
+    def inipath(self) -> Optional[Path]:
+        """The path to the :ref:`configfile <configfiles>`.
+
+        :type: Optional[pathlib.Path]
+
+        .. versionadded:: 6.1
+        """
+        return self._inipath
+
+    @property
+    def inifile(self) -> Optional[py.path.local]:
+        """The path to the :ref:`configfile <configfiles>`.
+
+        Prefer to use :attr:`inipath`, which is a :class:`pathlib.Path`.
+
+        :type: Optional[py.path.local]
+        """
+        return py.path.local(str(self.inipath)) if self.inipath else None
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
@@ -977,9 +1037,9 @@ class Config:
 
     def cwd_relative_nodeid(self, nodeid: str) -> str:
         # nodeid's are relative to the rootpath, compute relative to cwd.
-        if self.invocation_dir != self.rootdir:
-            fullpath = self.rootdir.join(nodeid)
-            nodeid = self.invocation_dir.bestrelpath(fullpath)
+        if self.invocation_params.dir != self.rootpath:
+            fullpath = self.rootpath / nodeid
+            nodeid = bestrelpath(self.invocation_params.dir, fullpath)
         return nodeid
 
     @classmethod
@@ -1014,11 +1074,11 @@ class Config:
             rootdir_cmd_arg=ns.rootdir or None,
             config=self,
         )
-        self.rootdir = py.path.local(str(rootpath))
-        self.inifile = py.path.local(str(inipath)) if inipath else None
+        self._rootpath = rootpath
+        self._inipath = inipath
         self.inicfg = inicfg
-        self._parser.extra_info["rootdir"] = self.rootdir
-        self._parser.extra_info["inifile"] = self.inifile
+        self._parser.extra_info["rootdir"] = str(self.rootpath)
+        self._parser.extra_info["inifile"] = str(self.inipath)
         self._parser.addini("addopts", "extra command line options", "args")
         self._parser.addini("minversion", "minimally required pytest version")
         self._parser.addini(
@@ -1110,8 +1170,8 @@ class Config:
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 
-        if self.known_args_namespace.confcutdir is None and self.inifile:
-            confcutdir = py.path.local(self.inifile).dirname
+        if self.known_args_namespace.confcutdir is None and self.inipath is not None:
+            confcutdir = str(self.inipath.parent)
             self.known_args_namespace.confcutdir = confcutdir
         try:
             self.hook.pytest_load_initial_conftests(
@@ -1147,13 +1207,13 @@ class Config:
 
             if not isinstance(minver, str):
                 raise pytest.UsageError(
-                    "%s: 'minversion' must be a single value" % self.inifile
+                    "%s: 'minversion' must be a single value" % self.inipath
                 )
 
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
                     "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
-                    % (self.inifile, minver, pytest.__version__,)
+                    % (self.inipath, minver, pytest.__version__,)
                 )
 
     def _validate_config_options(self) -> None:
@@ -1218,10 +1278,10 @@ class Config:
                 args, self.option, namespace=self.option
             )
             if not args:
-                if self.invocation_dir == self.rootdir:
+                if self.invocation_params.dir == self.rootpath:
                     args = self.getini("testpaths")
                 if not args:
-                    args = [str(self.invocation_dir)]
+                    args = [str(self.invocation_params.dir)]
             self.args = args
         except PrintHelp:
             pass
@@ -1324,10 +1384,10 @@ class Config:
         #
         if type == "pathlist":
             # TODO: This assert is probably not valid in all cases.
-            assert self.inifile is not None
-            dp = py.path.local(self.inifile).dirpath()
+            assert self.inipath is not None
+            dp = self.inipath.parent
             input_values = shlex.split(value) if isinstance(value, str) else value
-            return [dp.join(x, abs=True) for x in input_values]
+            return [py.path.local(str(dp / x)) for x in input_values]
         elif type == "args":
             return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":
