@@ -51,6 +51,7 @@ def catch_warnings_for_item(
 
         apply_warning_filters(config_filters, cmdline_filters)
 
+        # apply filters from "filterwarnings" marks
         nodeid = "" if item is None else item.nodeid
         if item is not None:
             for mark in item.iter_markers(name="filterwarnings"):

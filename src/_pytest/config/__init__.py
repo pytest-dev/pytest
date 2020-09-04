@@ -1528,7 +1528,7 @@ def apply_warning_filters(
     config_filters: Iterable[str], cmdline_filters: Iterable[str]
 ) -> None:
     """Applies pytest-configured filters to the warnings module"""
-    # Filters should have this precedence: mark, cmdline options, config.
+    # Filters should have this precedence: cmdline options, config.
     # Filters should be applied in the inverse order of precedence.
     for arg in config_filters:
         warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
