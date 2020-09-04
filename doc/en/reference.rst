@@ -783,11 +783,18 @@ ExceptionInfo
     :members:
 
 
-pytest.ExitCode
-~~~~~~~~~~~~~~~
+ExitCode
+~~~~~~~~
 
 .. autoclass:: _pytest.config.ExitCode
     :members:
+
+File
+~~~~
+
+.. autoclass:: _pytest.nodes.File()
+    :members:
+    :show-inheritance:
 
 
 FixtureDef
