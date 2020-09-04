@@ -240,7 +240,7 @@ For example:
         ...
 
 Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to the collected
-:class:`Item <_pytest.nodes.Item>`, which can then be accessed by fixtures or hooks with
+:class:`Item <pytest.Item>`, which can then be accessed by fixtures or hooks with
 :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>`. The ``mark`` object will have the following attributes:
 
 .. code-block:: python
@@ -676,7 +676,7 @@ items, delete or otherwise amend the test items:
 Test running (runtest) hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
+All runtest related hooks receive a :py:class:`pytest.Item <pytest.Item>` object.
 
 .. autofunction:: pytest_runtestloop
 .. autofunction:: pytest_runtest_protocol
@@ -752,14 +752,14 @@ CallInfo
 Class
 ~~~~~
 
-.. autoclass:: _pytest.python.Class()
+.. autoclass:: pytest.Class()
     :members:
     :show-inheritance:
 
 Collector
 ~~~~~~~~~
 
-.. autoclass:: _pytest.nodes.Collector()
+.. autoclass:: pytest.Collector()
     :members:
     :show-inheritance:
 
@@ -787,13 +787,13 @@ ExceptionInfo
 ExitCode
 ~~~~~~~~
 
-.. autoclass:: _pytest.config.ExitCode
+.. autoclass:: pytest.ExitCode
     :members:
 
 File
 ~~~~
 
-.. autoclass:: _pytest.nodes.File()
+.. autoclass:: pytest.File()
     :members:
     :show-inheritance:
 
@@ -815,14 +815,14 @@ FSCollector
 Function
 ~~~~~~~~
 
-.. autoclass:: _pytest.python.Function()
+.. autoclass:: pytest.Function()
     :members:
     :show-inheritance:
 
 Item
 ~~~~
 
-.. autoclass:: _pytest.nodes.Item()
+.. autoclass:: pytest.Item()
     :members:
     :show-inheritance:
 
@@ -856,7 +856,7 @@ Metafunc
 Module
 ~~~~~~
 
-.. autoclass:: _pytest.python.Module()
+.. autoclass:: pytest.Module()
     :members:
     :show-inheritance:
 
@@ -885,7 +885,7 @@ PytestPluginManager
 Session
 ~~~~~~~
 
-.. autoclass:: _pytest.main.Session()
+.. autoclass:: pytest.Session()
     :members:
     :show-inheritance:
 
@@ -1027,7 +1027,7 @@ When set (regardless of value), pytest will use color in terminal output.
 Exceptions
 ----------
 
-.. autoclass:: _pytest.config.UsageError()
+.. autoclass:: pytest.UsageError()
     :show-inheritance:
 
 .. _`warnings ref`:
