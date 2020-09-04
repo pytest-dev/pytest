@@ -1038,25 +1038,21 @@ class ReprEntry(TerminalRepr):
         # such as ">   assert 0"
         fail_marker = "{}   ".format(FormattedExcinfo.fail_marker)
         indent_size = len(fail_marker)
-        indents = []
-        source_lines = []
-        failure_lines = []
-        seeing_failures = False
-        for line in self.lines:
-            is_source_line = not line.startswith(fail_marker)
-            if is_source_line:
-                assert not seeing_failures, (
-                    "Unexpected failure lines between source lines:\n"
-                    + "\n".join(self.lines)
-                )
+        indents = []  # type: List[str]
+        source_lines = []  # type: List[str]
+        failure_lines = []  # type: List[str]
+        for index, line in enumerate(self.lines):
+            is_failure_line = line.startswith(fail_marker)
+            if is_failure_line:
+                # from this point on all lines are considered part of the failure
+                failure_lines.extend(self.lines[index:])
+                break
+            else:
                 if self.style == "value":
                     source_lines.append(line)
                 else:
                     indents.append(line[:indent_size])
                     source_lines.append(line[indent_size:])
-            else:
-                seeing_failures = True
-                failure_lines.append(line)
 
         tw._write_source(source_lines, indents)
 
