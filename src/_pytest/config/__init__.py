@@ -6,6 +6,7 @@ import copy
 import enum
 import inspect
 import os
+import re
 import shlex
 import sys
 import types
@@ -15,6 +16,7 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Generator
 from typing import IO
 from typing import Iterable
 from typing import Iterator
@@ -341,6 +343,13 @@ class PytestPluginManager(PluginManager):
         self._confcutdir = None  # type: Optional[py.path.local]
         self._noconftest = False
         self._duplicatepaths = set()  # type: Set[py.path.local]
+
+        # plugins that were explicitly skipped with pytest.skip
+        # list of (module name, skip reason)
+        # previously we would issue a warning when a plugin was skipped, but
+        # since we refactored warnings as first citizens of Config, they are
+        # just stored here to be used later.
+        self.skipped_plugins = []  # type: List[Tuple[str, str]]
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
@@ -694,13 +703,7 @@ class PytestPluginManager(PluginManager):
             ).with_traceback(e.__traceback__) from e
 
         except Skipped as e:
-            from _pytest.warnings import _issue_warning_captured
-
-            _issue_warning_captured(
-                PytestConfigWarning("skipped plugin {!r}: {}".format(modname, e.msg)),
-                self.hook,
-                stacklevel=2,
-            )
+            self.skipped_plugins.append((modname, e.msg or ""))
         else:
             mod = sys.modules[importspec]
             self.register(mod, modname)
@@ -1092,6 +1095,9 @@ class Config:
                 self._validate_args(self.getini("addopts"), "via addopts config") + args
             )
 
+        self.known_args_namespace = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.option)
+        )
         self._checkversion()
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args, exclude_only=False)
@@ -1100,10 +1106,10 @@ class Config:
             # plugins are going to be loaded.
             self.pluginmanager.load_setuptools_entrypoints("pytest11")
         self.pluginmanager.consider_env()
-        self.known_args_namespace = ns = self._parser.parse_known_args(
-            args, namespace=copy.copy(self.option)
-        )
+
         self._validate_plugins()
+        self._warn_about_skipped_plugins()
+
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1112,21 +1118,24 @@ class Config:
                 early_config=self, args=args, parser=self._parser
             )
         except ConftestImportFailure as e:
-            if ns.help or ns.version:
+            if self.known_args_namespace.help or self.known_args_namespace.version:
                 # we don't want to prevent --help/--version to work
                 # so just let is pass and print a warning at the end
-                from _pytest.warnings import _issue_warning_captured
-
-                _issue_warning_captured(
+                self.issue_config_time_warning(
                     PytestConfigWarning(
                         "could not load initial conftests: {}".format(e.path)
                     ),
-                    self.hook,
                     stacklevel=2,
                 )
             else:
                 raise
-        self._validate_keys()
+
+    @hookimpl(hookwrapper=True)
+    def pytest_collection(self) -> Generator[None, None, None]:
+        """Validate invalid ini keys after collection is done so we take in account
+        options added by late-loading conftest files."""
+        yield
+        self._validate_config_options()
 
     def _checkversion(self) -> None:
         import pytest
@@ -1147,9 +1156,9 @@ class Config:
                     % (self.inifile, minver, pytest.__version__,)
                 )
 
-    def _validate_keys(self) -> None:
+    def _validate_config_options(self) -> None:
         for key in sorted(self._get_unknown_ini_keys()):
-            self._warn_or_fail_if_strict("Unknown config ini key: {}\n".format(key))
+            self._warn_or_fail_if_strict("Unknown config option: {}\n".format(key))
 
     def _validate_plugins(self) -> None:
         required_plugins = sorted(self.getini("required_plugins"))
@@ -1165,7 +1174,6 @@ class Config:
 
         missing_plugins = []
         for required_plugin in required_plugins:
-            spec = None
             try:
                 spec = Requirement(required_plugin)
             except InvalidRequirement:
@@ -1187,11 +1195,7 @@ class Config:
         if self.known_args_namespace.strict_config:
             fail(message, pytrace=False)
 
-        from _pytest.warnings import _issue_warning_captured
-
-        _issue_warning_captured(
-            PytestConfigWarning(message), self.hook, stacklevel=3,
-        )
+        self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
 
     def _get_unknown_ini_keys(self) -> List[str]:
         parser_inicfg = self._parser._inidict
@@ -1221,6 +1225,49 @@ class Config:
             self.args = args
         except PrintHelp:
             pass
+
+    def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
+        """Issue and handle a warning during the "configure" stage.
+
+        During ``pytest_configure`` we can't capture warnings using the ``catch_warnings_for_item``
+        function because it is not possible to have hookwrappers around ``pytest_configure``.
+
+        This function is mainly intended for plugins that need to issue warnings during
+        ``pytest_configure`` (or similar stages).
+
+        :param warning: The warning instance.
+        :param stacklevel: stacklevel forwarded to warnings.warn.
+        """
+        if self.pluginmanager.is_blocked("warnings"):
+            return
+
+        cmdline_filters = self.known_args_namespace.pythonwarnings or []
+        config_filters = self.getini("filterwarnings")
+
+        with warnings.catch_warnings(record=True) as records:
+            warnings.simplefilter("always", type(warning))
+            apply_warning_filters(config_filters, cmdline_filters)
+            warnings.warn(warning, stacklevel=stacklevel)
+
+        if records:
+            frame = sys._getframe(stacklevel - 1)
+            location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
+            self.hook.pytest_warning_captured.call_historic(
+                kwargs=dict(
+                    warning_message=records[0],
+                    when="config",
+                    item=None,
+                    location=location,
+                )
+            )
+            self.hook.pytest_warning_recorded.call_historic(
+                kwargs=dict(
+                    warning_message=records[0],
+                    when="config",
+                    nodeid="",
+                    location=location,
+                )
+            )
 
     def addinivalue_line(self, name: str, line: str) -> None:
         """Add a line to an ini-file option. The option must have been
@@ -1365,8 +1412,6 @@ class Config:
 
     def _warn_about_missing_assertion(self, mode: str) -> None:
         if not _assertion_supported():
-            from _pytest.warnings import _issue_warning_captured
-
             if mode == "plain":
                 warning_text = (
                     "ASSERTIONS ARE NOT EXECUTED"
@@ -1381,8 +1426,15 @@ class Config:
                     "by the underlying Python interpreter "
                     "(are you using python -O?)\n"
                 )
-            _issue_warning_captured(
-                PytestConfigWarning(warning_text), self.hook, stacklevel=3,
+            self.issue_config_time_warning(
+                PytestConfigWarning(warning_text), stacklevel=3,
+            )
+
+    def _warn_about_skipped_plugins(self) -> None:
+        for module_name, msg in self.pluginmanager.skipped_plugins:
+            self.issue_config_time_warning(
+                PytestConfigWarning("skipped plugin {!r}: {}".format(module_name, msg)),
+                stacklevel=2,
             )
 
 
@@ -1435,3 +1487,51 @@ def _strtobool(val: str) -> bool:
         return False
     else:
         raise ValueError("invalid truth value {!r}".format(val))
+
+
+@lru_cache(maxsize=50)
+def parse_warning_filter(
+    arg: str, *, escape: bool
+) -> "Tuple[str, str, Type[Warning], str, int]":
+    """Parse a warnings filter string.
+
+    This is copied from warnings._setoption, but does not apply the filter,
+    only parses it, and makes the escaping optional.
+    """
+    parts = arg.split(":")
+    if len(parts) > 5:
+        raise warnings._OptionError("too many fields (max 5): {!r}".format(arg))
+    while len(parts) < 5:
+        parts.append("")
+    action_, message, category_, module, lineno_ = [s.strip() for s in parts]
+    action = warnings._getaction(action_)  # type: str # type: ignore[attr-defined]
+    category = warnings._getcategory(
+        category_
+    )  # type: Type[Warning] # type: ignore[attr-defined]
+    if message and escape:
+        message = re.escape(message)
+    if module and escape:
+        module = re.escape(module) + r"\Z"
+    if lineno_:
+        try:
+            lineno = int(lineno_)
+            if lineno < 0:
+                raise ValueError
+        except (ValueError, OverflowError) as e:
+            raise warnings._OptionError("invalid lineno {!r}".format(lineno_)) from e
+    else:
+        lineno = 0
+    return action, message, category, module, lineno
+
+
+def apply_warning_filters(
+    config_filters: Iterable[str], cmdline_filters: Iterable[str]
+) -> None:
+    """Applies pytest-configured filters to the warnings module"""
+    # Filters should have this precedence: cmdline options, config.
+    # Filters should be applied in the inverse order of precedence.
+    for arg in config_filters:
+        warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
+
+    for arg in cmdline_filters:
+        warnings.filterwarnings(*parse_warning_filter(arg, escape=True))

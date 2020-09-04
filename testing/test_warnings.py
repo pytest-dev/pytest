@@ -240,9 +240,8 @@ def test_filterwarnings_mark_registration(testdir):
 def test_warning_captured_hook(testdir):
     testdir.makeconftest(
         """
-        from _pytest.warnings import _issue_warning_captured
         def pytest_configure(config):
-            _issue_warning_captured(UserWarning("config warning"), config.hook, stacklevel=2)
+            config.issue_config_time_warning(UserWarning("config warning"), stacklevel=2)
     """
     )
     testdir.makepyfile(
@@ -716,10 +715,22 @@ class TestStackLevel:
         assert "config{sep}__init__.py".format(sep=os.sep) in file
         assert func == "_preparse"
 
+    @pytest.mark.filterwarnings("default")
+    def test_conftest_warning_captured(self, testdir: Testdir) -> None:
+        """Warnings raised during importing of conftest.py files is captured (#2891)."""
+        testdir.makeconftest(
+            """
+            import warnings
+            warnings.warn(UserWarning("my custom warning"))
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["conftest.py:2", "*UserWarning: my custom warning*"]
+        )
+
     def test_issue4445_import_plugin(self, testdir, capwarn):
-        """#4445: Make sure the warning points to a reasonable location
-        See origin of _issue_warning_captured at: _pytest.config.__init__.py:585
-        """
+        """#4445: Make sure the warning points to a reasonable location"""
         testdir.makepyfile(
             some_plugin="""
             import pytest
@@ -738,7 +749,7 @@ class TestStackLevel:
 
         assert "skipped plugin 'some_plugin': thing" in str(warning.message)
         assert "config{sep}__init__.py".format(sep=os.sep) in file
-        assert func == "import_plugin"
+        assert func == "_warn_about_skipped_plugins"
 
     def test_issue4445_issue5928_mark_generator(self, testdir):
         """#4445 and #5928: Make sure the warning from an unknown mark points to
