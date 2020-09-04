@@ -1856,7 +1856,7 @@ def test_conftest_import_error_repr(tmpdir):
             raise ConftestImportFailure(path, exc_info) from exc
 
 
-def test_strtobooL():
+def test_strtobool():
     assert _strtobool("YES")
     assert not _strtobool("NO")
     with pytest.raises(ValueError):
