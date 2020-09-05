@@ -426,14 +426,15 @@ Pytest supports the use of ``breakpoint()`` with the following behaviours:
 Profiling test execution duration
 -------------------------------------
 
+.. versionchanged:: 6.0
 
-To get a list of the slowest 10 test durations:
+To get a list of the slowest 10 test durations over 1.0s long:
 
 .. code-block:: bash
 
-    pytest --durations=10
+    pytest --durations=10 --durations-min=1.0
 
-By default, pytest will not show test durations that are too small (<0.01s) unless ``-vv`` is passed on the command-line.
+By default, pytest will not show test durations that are too small (<0.005s) unless ``-vv`` is passed on the command-line.
 
 
 .. _faulthandler:

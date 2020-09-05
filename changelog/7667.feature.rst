@@ -1,0 +1,1 @@
+New ``--durations-min`` command-line flag controls the minimal duration for inclusion in the slowest list of tests shown by ``--durations``. Previously this was hard-coded to ``0.005s``.
