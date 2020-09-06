@@ -111,7 +111,7 @@ class TempdirFactory:
     _tmppath_factory = attr.ib(type=TempPathFactory)
 
     def mktemp(self, basename: str, numbered: bool = True) -> py.path.local:
-        """Same as :meth:`TempPathFactory.mkdir`, but returns a ``py.path.local`` object."""
+        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``py.path.local`` object."""
         return py.path.local(self._tmppath_factory.mktemp(basename, numbered).resolve())
 
     def getbasetemp(self) -> py.path.local:

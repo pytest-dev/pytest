@@ -264,7 +264,7 @@ the cache and nothing will be printed:
     FAILED test_caching.py::test_function - assert 42 == 23
     1 failed in 0.12s
 
-See the :fixture:`config.cache fixture <config.cache>` for more details.
+See the :fixture:`config.cache fixture <cache>` for more details.
 
 
 Inspecting Cache content
