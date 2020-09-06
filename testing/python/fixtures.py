@@ -3,6 +3,7 @@ import textwrap
 
 import pytest
 from _pytest import fixtures
+from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pathlib import Path
@@ -15,22 +16,22 @@ def test_getfuncargnames_functions():
     def f():
         raise NotImplementedError()
 
-    assert not fixtures.getfuncargnames(f)
+    assert not getfuncargnames(f)
 
     def g(arg):
         raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(g) == ("arg",)
+    assert getfuncargnames(g) == ("arg",)
 
     def h(arg1, arg2="hello"):
         raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(h) == ("arg1",)
+    assert getfuncargnames(h) == ("arg1",)
 
     def j(arg1, arg2, arg3="hello"):
         raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(j) == ("arg1", "arg2")
+    assert getfuncargnames(j) == ("arg1", "arg2")
 
 
 def test_getfuncargnames_methods():
@@ -40,7 +41,7 @@ def test_getfuncargnames_methods():
         def f(self, arg1, arg2="hello"):
             raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(A().f) == ("arg1",)
+    assert getfuncargnames(A().f) == ("arg1",)
 
 
 def test_getfuncargnames_staticmethod():
@@ -51,7 +52,7 @@ def test_getfuncargnames_staticmethod():
         def static(arg1, arg2, x=1):
             raise NotImplementedError()
 
-    assert fixtures.getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
+    assert getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
 
 
 def test_getfuncargnames_partial():
@@ -64,7 +65,7 @@ def test_getfuncargnames_partial():
     class T:
         test_ok = functools.partial(check, i=2)
 
-    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    values = getfuncargnames(T().test_ok, name="test_ok")
     assert values == ("arg1", "arg2")
 
 
@@ -78,7 +79,7 @@ def test_getfuncargnames_staticmethod_partial():
     class T:
         test_ok = staticmethod(functools.partial(check, i=2))
 
-    values = fixtures.getfuncargnames(T().test_ok, name="test_ok")
+    values = getfuncargnames(T().test_ok, name="test_ok")
     assert values == ("arg1", "arg2")
 
 
@@ -142,14 +143,14 @@ class TestFillFixtures:
         p = testdir.copy_example()
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(next(p.visit("test_*.py")))
+        result = testdir.runpytest(str(next(Path(str(p)).rglob("test_*.py"))))
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_conftest(self, testdir):
         p = testdir.copy_example()
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(next(p.visit("test_*.py")))
+        result = testdir.runpytest(str(next(Path(str(p)).rglob("test_*.py"))))
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_plugin(self, testdir):
@@ -813,28 +814,6 @@ class TestRequestBasic:
         testdir.copy_example("fixtures/test_getfixturevalue_dynamic.py")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_funcargnames_compatattr(self, testdir):
-        testdir.makepyfile(
-            """
-            import pytest
-            def pytest_generate_tests(metafunc):
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    assert metafunc.funcargnames == metafunc.fixturenames
-            @pytest.fixture
-            def fn(request):
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    assert request._pyfuncitem.funcargnames == \
-                           request._pyfuncitem.fixturenames
-                with pytest.warns(pytest.PytestDeprecationWarning):
-                    return request.funcargnames, request.fixturenames
-
-            def test_hello(fn):
-                assert fn[0] == fn[1]
-        """
-        )
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
 
     def test_setupdecorator_and_xunit(self, testdir):
         testdir.makepyfile(
@@ -1683,10 +1662,8 @@ class TestAutouseDiscovery:
         reprec.assertoutcome(passed=2)
 
     def test_callables_nocode(self, testdir):
-        """
-        an imported mock.call would break setup/factory discovery
-        due to it being callable and __code__ not being a code object
-        """
+        """An imported mock.call would break setup/factory discovery due to
+        it being callable and __code__ not being a code object."""
         testdir.makepyfile(
             """
            class _call(tuple):
@@ -3460,9 +3437,7 @@ class TestShowFixtures:
         )
 
     def test_show_fixtures_different_files(self, testdir):
-        """
-        #833: --fixtures only shows fixtures from first file
-        """
+        """`--fixtures` only shows fixtures from first file (#833)."""
         testdir.makepyfile(
             test_a='''
             import pytest
@@ -4280,73 +4255,6 @@ def test_fixture_named_request(testdir):
             "*'request' is a reserved word for fixtures, use another name:",
             "  *test_fixture_named_request.py:5",
         ]
-    )
-
-
-def test_fixture_duplicated_arguments() -> None:
-    """Raise error if there are positional and keyword arguments for the same parameter (#1682)."""
-    with pytest.raises(TypeError) as excinfo:
-
-        @pytest.fixture("session", scope="session")  # type: ignore[call-overload]
-        def arg(arg):
-            pass
-
-    assert (
-        str(excinfo.value)
-        == "The fixture arguments are defined as positional and keyword: scope. "
-        "Use only keyword arguments."
-    )
-
-    with pytest.raises(TypeError) as excinfo:
-
-        @pytest.fixture(  # type: ignore[call-overload]
-            "function",
-            ["p1"],
-            True,
-            ["id1"],
-            "name",
-            scope="session",
-            params=["p1"],
-            autouse=True,
-            ids=["id1"],
-            name="name",
-        )
-        def arg2(request):
-            pass
-
-    assert (
-        str(excinfo.value)
-        == "The fixture arguments are defined as positional and keyword: scope, params, autouse, ids, name. "
-        "Use only keyword arguments."
-    )
-
-
-def test_fixture_with_positionals() -> None:
-    """Raise warning, but the positionals should still works (#1682)."""
-    from _pytest.deprecated import FIXTURE_POSITIONAL_ARGUMENTS
-
-    with pytest.warns(pytest.PytestDeprecationWarning) as warnings:
-
-        @pytest.fixture("function", [0], True)  # type: ignore[call-overload]
-        def fixture_with_positionals():
-            pass
-
-    assert str(warnings[0].message) == str(FIXTURE_POSITIONAL_ARGUMENTS)
-
-    assert fixture_with_positionals._pytestfixturefunction.scope == "function"
-    assert fixture_with_positionals._pytestfixturefunction.params == (0,)
-    assert fixture_with_positionals._pytestfixturefunction.autouse
-
-
-def test_fixture_with_too_many_positionals() -> None:
-    with pytest.raises(TypeError) as excinfo:
-
-        @pytest.fixture("function", [0], True, ["id"], "name", "extra")  # type: ignore[call-overload]
-        def fixture_with_positionals():
-            pass
-
-    assert (
-        str(excinfo.value) == "fixture() takes 5 positional arguments but 6 were given"
     )
 
 

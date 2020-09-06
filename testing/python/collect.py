@@ -762,7 +762,7 @@ class TestConftestCustomization:
                 pass
             def pytest_pycollect_makemodule(path, parent):
                 if path.basename == "test_xyz.py":
-                    return MyModule(path, parent)
+                    return MyModule.from_parent(fspath=path, parent=parent)
         """
         )
         testdir.makepyfile("def test_some(): pass")
@@ -836,21 +836,12 @@ class TestConftestCustomization:
                 pass
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "some":
-                    return MyFunction(name, collector)
+                    return MyFunction.from_parent(name=name, parent=collector)
         """
         )
         testdir.makepyfile("def some(): pass")
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines(["*MyFunction*some*"])
-
-    def test_makeitem_non_underscore(self, testdir, monkeypatch):
-        modcol = testdir.getmodulecol("def _hello(): pass")
-        values = []
-        monkeypatch.setattr(
-            pytest.Module, "_makeitem", lambda self, name, obj: values.append(name)
-        )
-        values = modcol.collect()
-        assert "_hello" not in values
 
     def test_issue2369_collect_module_fileext(self, testdir):
         """Ensure we can collect files with weird file extensions as Python
@@ -873,7 +864,7 @@ class TestConftestCustomization:
 
             def pytest_collect_file(path, parent):
                 if path.ext == ".narf":
-                    return Module(path, parent)"""
+                    return Module.from_parent(fspath=path, parent=parent)"""
         )
         testdir.makefile(
             ".narf",
@@ -884,6 +875,34 @@ class TestConftestCustomization:
         # Use runpytest_subprocess, since we're futzing with sys.meta_path.
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_early_ignored_attributes(self, testdir: Testdir) -> None:
+        """Builtin attributes should be ignored early on, even if
+        configuration would otherwise allow them.
+
+        This tests a performance optimization, not correctness, really,
+        although it tests PytestCollectionWarning is not raised, while
+        it would have been raised otherwise.
+        """
+        testdir.makeini(
+            """
+            [pytest]
+            python_classes=*
+            python_functions=*
+        """
+        )
+        testdir.makepyfile(
+            """
+            class TestEmpty:
+                pass
+            test_empty = TestEmpty()
+            def test_real():
+                pass
+        """
+        )
+        items, rec = testdir.inline_genitems()
+        assert rec.ret == 0
+        assert len(items) == 1
 
 
 def test_setup_only_available_in_subdir(testdir):
@@ -984,8 +1003,7 @@ class TestTracebackCutting:
         result.stdout.fnmatch_lines([">*asd*", "E*NameError*"])
 
     def test_traceback_filter_error_during_fixture_collection(self, testdir):
-        """integration test for issue #995.
-        """
+        """Integration test for issue #995."""
         testdir.makepyfile(
             """
             import pytest
@@ -1011,14 +1029,15 @@ class TestTracebackCutting:
         result.stdout.fnmatch_lines(["*ValueError: fail me*", "* 1 error in *"])
 
     def test_filter_traceback_generated_code(self) -> None:
-        """test that filter_traceback() works with the fact that
+        """Test that filter_traceback() works with the fact that
         _pytest._code.code.Code.path attribute might return an str object.
+
         In this case, one of the entries on the traceback was produced by
         dynamically generated code.
         See: https://bitbucket.org/pytest-dev/py/issues/71
         This fixes #995.
         """
-        from _pytest.python import filter_traceback
+        from _pytest._code import filter_traceback
 
         try:
             ns = {}  # type: Dict[str, Any]
@@ -1033,12 +1052,13 @@ class TestTracebackCutting:
         assert not filter_traceback(traceback[-1])
 
     def test_filter_traceback_path_no_longer_valid(self, testdir) -> None:
-        """test that filter_traceback() works with the fact that
+        """Test that filter_traceback() works with the fact that
         _pytest._code.code.Code.path attribute might return an str object.
+
         In this case, one of the files in the traceback no longer exists.
         This fixes #1133.
         """
-        from _pytest.python import filter_traceback
+        from _pytest._code import filter_traceback
 
         testdir.syspathinsert()
         testdir.makepyfile(
@@ -1250,8 +1270,7 @@ def test_class_injection_does_not_break_collection(testdir):
 
 
 def test_syntax_error_with_non_ascii_chars(testdir):
-    """Fix decoding issue while formatting SyntaxErrors during collection (#578)
-    """
+    """Fix decoding issue while formatting SyntaxErrors during collection (#578)."""
     testdir.makepyfile("☃")
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])

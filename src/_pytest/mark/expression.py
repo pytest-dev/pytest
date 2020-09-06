@@ -1,5 +1,4 @@
-r"""
-Evaluate match expressions, as used by `-k` and `-m`.
+r"""Evaluate match expressions, as used by `-k` and `-m`.
 
 The grammar is:
 
@@ -213,10 +212,11 @@ class Expression:
     def evaluate(self, matcher: Callable[[str], bool]) -> bool:
         """Evaluate the match expression.
 
-        :param matcher: Given an identifier, should return whether it matches or not.
-                        Should be prepared to handle arbitrary strings as input.
+        :param matcher:
+            Given an identifier, should return whether it matches or not.
+            Should be prepared to handle arbitrary strings as input.
 
-        Returns whether the expression matches or not.
+        :returns: Whether the expression matches or not.
         """
         ret = eval(
             self.code, {"__builtins__": {}}, MatcherAdapter(matcher)

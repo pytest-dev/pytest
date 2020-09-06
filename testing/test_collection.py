@@ -7,6 +7,7 @@ import pytest
 from _pytest.config import ExitCode
 from _pytest.main import _in_venv
 from _pytest.main import Session
+from _pytest.pathlib import Path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Testdir
 
@@ -115,8 +116,8 @@ class TestCollectFS:
         tmpdir.ensure(".whatever", "test_notfound.py")
         tmpdir.ensure(".bzr", "test_notfound.py")
         tmpdir.ensure("normal", "test_found.py")
-        for x in tmpdir.visit("test_*.py"):
-            x.write("def test_hello(): pass")
+        for x in Path(str(tmpdir)).rglob("test_*.py"):
+            x.write_text("def test_hello(): pass", "utf-8")
 
         result = testdir.runpytest("--collect-only")
         s = result.stdout.str()
@@ -256,20 +257,6 @@ class TestCollectPluginHookRelay:
         assert len(wascalled) == 1
         assert wascalled[0].ext == ".abc"
 
-    @pytest.mark.filterwarnings("ignore:.*pytest_collect_directory.*")
-    def test_pytest_collect_directory(self, testdir):
-        wascalled = []
-
-        class Plugin:
-            def pytest_collect_directory(self, path):
-                wascalled.append(path.basename)
-
-        testdir.mkdir("hello")
-        testdir.mkdir("world")
-        pytest.main(testdir.tmpdir, plugins=[Plugin()])
-        assert "hello" in wascalled
-        assert "world" in wascalled
-
 
 class TestPrunetraceback:
     def test_custom_repr_failure(self, testdir):
@@ -282,7 +269,7 @@ class TestPrunetraceback:
             """
             import pytest
             def pytest_collect_file(path, parent):
-                return MyFile(path, parent)
+                return MyFile.from_parent(fspath=path, parent=parent)
             class MyError(Exception):
                 pass
             class MyFile(pytest.File):
@@ -401,7 +388,7 @@ class TestCustomConftests:
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".py":
-                    return MyModule(path, parent)
+                    return MyModule.from_parent(fspath=path, parent=parent)
         """
         )
         testdir.mkdir("sub")
@@ -419,7 +406,7 @@ class TestCustomConftests:
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".py":
-                    return MyModule1(path, parent)
+                    return MyModule1.from_parent(fspath=path, parent=parent)
         """
         )
         conf1.move(sub1.join(conf1.basename))
@@ -430,7 +417,7 @@ class TestCustomConftests:
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".py":
-                    return MyModule2(path, parent)
+                    return MyModule2.from_parent(fspath=path, parent=parent)
         """
         )
         conf2.move(sub2.join(conf2.basename))
@@ -442,25 +429,6 @@ class TestCustomConftests:
 
 
 class TestSession:
-    def test_parsearg(self, testdir) -> None:
-        p = testdir.makepyfile("def test_func(): pass")
-        subdir = testdir.mkdir("sub")
-        subdir.ensure("__init__.py")
-        target = subdir.join(p.basename)
-        p.move(target)
-        subdir.chdir()
-        config = testdir.parseconfig(p.basename)
-        rcol = Session.from_config(config)
-        assert rcol.fspath == subdir
-        fspath, parts = rcol._parsearg(p.basename)
-
-        assert fspath == target
-        assert len(parts) == 0
-        fspath, parts = rcol._parsearg(p.basename + "::test_func")
-        assert fspath == target
-        assert parts[0] == "test_func"
-        assert len(parts) == 1
-
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
@@ -537,10 +505,10 @@ class TestSession:
                     return # ok
             class SpecialFile(pytest.File):
                 def collect(self):
-                    return [SpecialItem(name="check", parent=self)]
+                    return [SpecialItem.from_parent(name="check", parent=self)]
             def pytest_collect_file(path, parent):
                 if path.basename == %r:
-                    return SpecialFile(fspath=path, parent=parent)
+                    return SpecialFile.from_parent(fspath=path, parent=parent)
         """
             % p.basename
         )
@@ -724,10 +692,8 @@ class Test_genitems:
         print(s)
 
     def test_class_and_functions_discovery_using_glob(self, testdir):
-        """
-        tests that python_classes and python_functions config options work
-        as prefixes and glob-like patterns (issue #600).
-        """
+        """Test that Python_classes and Python_functions config options work
+        as prefixes and glob-like patterns (#600)."""
         testdir.makeini(
             """
             [pytest]
@@ -761,18 +727,23 @@ def test_matchnodes_two_collections_same_file(testdir):
         class Plugin2(object):
             def pytest_collect_file(self, path, parent):
                 if path.ext == ".abc":
-                    return MyFile2(path, parent)
+                    return MyFile2.from_parent(fspath=path, parent=parent)
 
         def pytest_collect_file(path, parent):
             if path.ext == ".abc":
-                return MyFile1(path, parent)
+                return MyFile1.from_parent(fspath=path, parent=parent)
 
-        class MyFile1(pytest.Item, pytest.File):
-            def runtest(self):
-                pass
+        class MyFile1(pytest.File):
+            def collect(self):
+                yield Item1.from_parent(name="item1", parent=self)
+
         class MyFile2(pytest.File):
             def collect(self):
-                return [Item2("hello", parent=self)]
+                yield Item2.from_parent(name="item2", parent=self)
+
+        class Item1(pytest.Item):
+            def runtest(self):
+                pass
 
         class Item2(pytest.Item):
             def runtest(self):
@@ -783,7 +754,7 @@ def test_matchnodes_two_collections_same_file(testdir):
     result = testdir.runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*2 passed*"])
-    res = testdir.runpytest("%s::hello" % p.basename)
+    res = testdir.runpytest("%s::item2" % p.basename)
     res.stdout.fnmatch_lines(["*1 passed*"])
 
 

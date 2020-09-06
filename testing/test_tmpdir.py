@@ -2,12 +2,14 @@ import os
 import stat
 import sys
 from typing import Callable
+from typing import cast
 from typing import List
 
 import attr
 
 import pytest
 from _pytest import pathlib
+from _pytest.config import Config
 from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import create_cleanup_lock
 from _pytest.pathlib import make_numbered_dir
@@ -45,7 +47,7 @@ class FakeConfig:
 
 class TestTempdirHandler:
     def test_mktemp(self, tmp_path):
-        config = FakeConfig(tmp_path)
+        config = cast(Config, FakeConfig(tmp_path))
         t = TempdirFactory(TempPathFactory.from_config(config))
         tmp = t.mktemp("world")
         assert tmp.relto(t.getbasetemp()) == "world0"
@@ -58,7 +60,7 @@ class TestTempdirHandler:
     def test_tmppath_relative_basetemp_absolute(self, tmp_path, monkeypatch):
         """#4425"""
         monkeypatch.chdir(tmp_path)
-        config = FakeConfig("hello")
+        config = cast(Config, FakeConfig("hello"))
         t = TempPathFactory.from_config(config)
         assert t.getbasetemp().resolve() == (tmp_path / "hello").resolve()
 

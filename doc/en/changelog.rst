@@ -28,6 +28,113 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.0.1 (2020-07-30)
+=========================
+
+Bug Fixes
+---------
+
+- `#7394 <https://github.com/pytest-dev/pytest/issues/7394>`_: Passing an empty ``help`` value to ``Parser.add_option`` is now accepted instead of crashing when running ``pytest --help``.
+  Passing ``None`` raises a more informative ``TypeError``.
+
+
+- `#7558 <https://github.com/pytest-dev/pytest/issues/7558>`_: Fix pylint ``not-callable`` lint on ``pytest.mark.parametrize()`` and the other builtin marks:
+  ``skip``, ``skipif``, ``xfail``, ``usefixtures``, ``filterwarnings``.
+
+
+- `#7559 <https://github.com/pytest-dev/pytest/issues/7559>`_: Fix regression in plugins using ``TestReport.longreprtext`` (such as ``pytest-html``) when ``TestReport.longrepr`` is not a string.
+
+
+- `#7569 <https://github.com/pytest-dev/pytest/issues/7569>`_: Fix logging capture handler's level not reset on teardown after a call to ``caplog.set_level()``.
+
+
+pytest 6.0.0 (2020-07-28)
+=========================
+
+(**Please see the full set of changes for this release also in the 6.0.0rc1 notes below**)
+
+Breaking Changes
+----------------
+
+- `#5584 <https://github.com/pytest-dev/pytest/issues/5584>`_: **PytestDeprecationWarning are now errors by default.**
+
+  Following our plan to remove deprecated features with as little disruption as
+  possible, all warnings of type ``PytestDeprecationWarning`` now generate errors
+  instead of warning messages.
+
+  **The affected features will be effectively removed in pytest 6.1**, so please consult the
+  `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__
+  section in the docs for directions on how to update existing code.
+
+  In the pytest ``6.0.X`` series, it is possible to change the errors back into warnings as a
+  stopgap measure by adding this to your ``pytest.ini`` file:
+
+  .. code-block:: ini
+
+      [pytest]
+      filterwarnings =
+          ignore::pytest.PytestDeprecationWarning
+
+  But this will stop working when pytest ``6.1`` is released.
+
+  **If you have concerns** about the removal of a specific feature, please add a
+  comment to `#5584 <https://github.com/pytest-dev/pytest/issues/5584>`__.
+
+
+- `#7472 <https://github.com/pytest-dev/pytest/issues/7472>`_: The ``exec_()`` and ``is_true()`` methods of ``_pytest._code.Frame`` have been removed.
+
+
+
+Features
+--------
+
+- `#7464 <https://github.com/pytest-dev/pytest/issues/7464>`_: Added support for :envvar:`NO_COLOR` and :envvar:`FORCE_COLOR` environment variables to control colored output.
+
+
+
+Improvements
+------------
+
+- `#7467 <https://github.com/pytest-dev/pytest/issues/7467>`_: ``--log-file`` CLI option and ``log_file`` ini marker now create subdirectories if needed.
+
+
+- `#7489 <https://github.com/pytest-dev/pytest/issues/7489>`_: The :func:`pytest.raises` function has a clearer error message when ``match`` equals the obtained string but is not a regex match. In this case it is suggested to escape the regex.
+
+
+
+Bug Fixes
+---------
+
+- `#7392 <https://github.com/pytest-dev/pytest/issues/7392>`_: Fix the reported location of tests skipped with ``@pytest.mark.skip`` when ``--runxfail`` is used.
+
+
+- `#7491 <https://github.com/pytest-dev/pytest/issues/7491>`_: :fixture:`tmpdir` and :fixture:`tmp_path` no longer raise an error if the lock to check for
+  stale temporary directories is not accessible.
+
+
+- `#7517 <https://github.com/pytest-dev/pytest/issues/7517>`_: Preserve line endings when captured via ``capfd``.
+
+
+- `#7534 <https://github.com/pytest-dev/pytest/issues/7534>`_: Restored the previous formatting of ``TracebackEntry.__str__`` which was changed by accident.
+
+
+
+Improved Documentation
+----------------------
+
+- `#7422 <https://github.com/pytest-dev/pytest/issues/7422>`_: Clarified when the ``usefixtures`` mark can apply fixtures to test.
+
+
+- `#7441 <https://github.com/pytest-dev/pytest/issues/7441>`_: Add a note about ``-q`` option used in getting started guide.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#7389 <https://github.com/pytest-dev/pytest/issues/7389>`_: Fixture scope ``package`` is no longer considered experimental.
+
+
 pytest 6.0.0rc1 (2020-07-08)
 ============================
 
@@ -105,9 +212,9 @@ Breaking Changes
 
 
 - `#7224 <https://github.com/pytest-dev/pytest/issues/7224>`_: The `item.catch_log_handler` and `item.catch_log_handlers` attributes, set by the
-  logging plugin and never meant to be public , are no longer available.
+  logging plugin and never meant to be public, are no longer available.
 
-  The deprecated ``--no-print-logs`` option is removed. Use ``--show-capture`` instead.
+  The deprecated ``--no-print-logs`` option and ``log_print`` ini option are removed. Use ``--show-capture`` instead.
 
 
 - `#7226 <https://github.com/pytest-dev/pytest/issues/7226>`_: Removed the unused ``args`` parameter from ``pytest.Function.__init__``.
@@ -140,6 +247,8 @@ Deprecations
   The special ``-k 'expr:'`` syntax to ``-k`` is deprecated. Please open an issue
   if you use this and want a replacement.
 
+- `#4049 <https://github.com/pytest-dev/pytest/issues/4049>`_: ``pytest_warning_captured`` is deprecated in favor of the ``pytest_warning_recorded`` hook.
+
 
 Features
 --------
@@ -170,14 +279,15 @@ Features
   noticing type errors indicating incorrect usage. If you run into an error that
   you believe to be incorrect, please let us know in an issue.
 
-  The types were developed against mypy version 0.780. Older versions may work,
-  but we recommend using at least this version. Other type checkers may work as
-  well, but they are not officially verified to work by pytest yet.
+  The types were developed against mypy version 0.780. Versions before 0.750
+  are known not to work. We recommend using the latest version. Other type
+  checkers may work as well, but they are not officially verified to work by
+  pytest yet.
 
 
 - `#4049 <https://github.com/pytest-dev/pytest/issues/4049>`_: Introduced a new hook named `pytest_warning_recorded` to convey information about warnings captured by the internal `pytest` warnings plugin.
 
-  This hook is meant to replace `pytest_warning_captured`, which will be removed in a future release.
+  This hook is meant to replace `pytest_warning_captured`, which is deprecated and will be removed in a future release.
 
 
 - `#6471 <https://github.com/pytest-dev/pytest/issues/6471>`_: New command-line flags:
@@ -7293,7 +7403,7 @@ Bug fixes:
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
 
-- fix issue159: improve http://pytest.org/en/stable/faq.html
+- fix issue159: improve https://docs.pytest.org/en/6.0.1/faq.html
   especially with respect to the "magic" history, also mention
   pytest-django, trial and unittest integration.
 

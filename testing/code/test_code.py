@@ -1,3 +1,4 @@
+import re
 import sys
 from types import FrameType
 from unittest import mock
@@ -169,6 +170,15 @@ class TestTracebackEntry:
         assert source is not None
         assert len(source) == 6
         assert "assert False" in source[5]
+
+    def test_tb_entry_str(self):
+        try:
+            assert False
+        except AssertionError:
+            exci = ExceptionInfo.from_current()
+        pattern = r"  File '.*test_code.py':\d+ in test_tb_entry_str\n  assert False"
+        entry = str(exci.traceback[0])
+        assert re.match(pattern, entry)
 
 
 class TestReprFuncArgs:

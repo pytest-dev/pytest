@@ -238,7 +238,7 @@ def test_getline_finally() -> None:
             c(1)  # type: ignore
         finally:
             if teardown:
-                teardown()
+                teardown()  # type: ignore[unreachable]
     source = excinfo.traceback[-1].statement
     assert str(source).strip() == "c(1)  # type: ignore"
 

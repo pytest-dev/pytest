@@ -1,6 +1,4 @@
-"""
-terminal reporting of the full testing process.
-"""
+"""Terminal reporting of the full testing process."""
 import collections
 import os
 import sys
@@ -20,6 +18,7 @@ import pytest
 from _pytest._io.wcwidth import wcswidth
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
@@ -440,13 +439,13 @@ class TestCollectonly:
         )
 
     def test_collectonly_missing_path(self, testdir):
-        """this checks issue 115,
-            failure in parseargs will cause session
-            not to have the items attribute
-        """
+        """Issue 115: failure in parseargs will cause session not to
+        have the items attribute."""
         result = testdir.runpytest("--collect-only", "uhm_missing_path")
         assert result.ret == 4
-        result.stderr.fnmatch_lines(["*ERROR: file not found*"])
+        result.stderr.fnmatch_lines(
+            ["*ERROR: file or directory not found: uhm_missing_path"]
+        )
 
     def test_collectonly_quiet(self, testdir):
         testdir.makepyfile("def test_foo(): pass")
@@ -531,7 +530,7 @@ class TestFixtureReporting:
         )
 
     def test_setup_teardown_output_and_test_failure(self, testdir):
-        """ Test for issue #442 """
+        """Test for issue #442."""
         testdir.makepyfile(
             """
             def setup_function(function):
@@ -1076,9 +1075,7 @@ def test_color_no(testdir):
 
 @pytest.mark.parametrize("verbose", [True, False])
 def test_color_yes_collection_on_non_atty(testdir, verbose):
-    """skip collect progress report when working on non-terminals.
-    #1397
-    """
+    """#1397: Skip collect progress report when working on non-terminals."""
     testdir.makepyfile(
         """
         import pytest
@@ -1208,9 +1205,8 @@ def test_traceconfig(testdir):
 
 
 class TestGenericReporting:
-    """ this test class can be subclassed with a different option
-        provider to run e.g. distributed tests.
-    """
+    """Test class which can be subclassed with a different option provider to
+    run e.g. distributed tests."""
 
     def test_collect_fail(self, testdir, option):
         testdir.makepyfile("import xyz\n")
@@ -1564,66 +1560,66 @@ def tr() -> TerminalReporter:
         # dict value, not the actual contents, so tuples of anything
         # suffice
         # Important statuses -- the highest priority of these always wins
-        ("red", [("1 failed", {"bold": True, "red": True})], {"failed": (1,)}),
+        ("red", [("1 failed", {"bold": True, "red": True})], {"failed": [1]}),
         (
             "red",
             [
                 ("1 failed", {"bold": True, "red": True}),
                 ("1 passed", {"bold": False, "green": True}),
             ],
-            {"failed": (1,), "passed": (1,)},
+            {"failed": [1], "passed": [1]},
         ),
-        ("red", [("1 error", {"bold": True, "red": True})], {"error": (1,)}),
-        ("red", [("2 errors", {"bold": True, "red": True})], {"error": (1, 2)}),
+        ("red", [("1 error", {"bold": True, "red": True})], {"error": [1]}),
+        ("red", [("2 errors", {"bold": True, "red": True})], {"error": [1, 2]}),
         (
             "red",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 error", {"bold": True, "red": True}),
             ],
-            {"error": (1,), "passed": (1,)},
+            {"error": [1], "passed": [1]},
         ),
         # (a status that's not known to the code)
-        ("yellow", [("1 weird", {"bold": True, "yellow": True})], {"weird": (1,)}),
+        ("yellow", [("1 weird", {"bold": True, "yellow": True})], {"weird": [1]}),
         (
             "yellow",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 weird", {"bold": True, "yellow": True}),
             ],
-            {"weird": (1,), "passed": (1,)},
+            {"weird": [1], "passed": [1]},
         ),
-        ("yellow", [("1 warning", {"bold": True, "yellow": True})], {"warnings": (1,)}),
+        ("yellow", [("1 warning", {"bold": True, "yellow": True})], {"warnings": [1]}),
         (
             "yellow",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 warning", {"bold": True, "yellow": True}),
             ],
-            {"warnings": (1,), "passed": (1,)},
+            {"warnings": [1], "passed": [1]},
         ),
         (
             "green",
             [("5 passed", {"bold": True, "green": True})],
-            {"passed": (1, 2, 3, 4, 5)},
+            {"passed": [1, 2, 3, 4, 5]},
         ),
         # "Boring" statuses.  These have no effect on the color of the summary
         # line.  Thus, if *every* test has a boring status, the summary line stays
         # at its default color, i.e. yellow, to warn the user that the test run
         # produced no useful information
-        ("yellow", [("1 skipped", {"bold": True, "yellow": True})], {"skipped": (1,)}),
+        ("yellow", [("1 skipped", {"bold": True, "yellow": True})], {"skipped": [1]}),
         (
             "green",
             [
                 ("1 passed", {"bold": True, "green": True}),
                 ("1 skipped", {"bold": False, "yellow": True}),
             ],
-            {"skipped": (1,), "passed": (1,)},
+            {"skipped": [1], "passed": [1]},
         ),
         (
             "yellow",
             [("1 deselected", {"bold": True, "yellow": True})],
-            {"deselected": (1,)},
+            {"deselected": [1]},
         ),
         (
             "green",
@@ -1631,34 +1627,34 @@ def tr() -> TerminalReporter:
                 ("1 passed", {"bold": True, "green": True}),
                 ("1 deselected", {"bold": False, "yellow": True}),
             ],
-            {"deselected": (1,), "passed": (1,)},
+            {"deselected": [1], "passed": [1]},
         ),
-        ("yellow", [("1 xfailed", {"bold": True, "yellow": True})], {"xfailed": (1,)}),
+        ("yellow", [("1 xfailed", {"bold": True, "yellow": True})], {"xfailed": [1]}),
         (
             "green",
             [
                 ("1 passed", {"bold": True, "green": True}),
                 ("1 xfailed", {"bold": False, "yellow": True}),
             ],
-            {"xfailed": (1,), "passed": (1,)},
+            {"xfailed": [1], "passed": [1]},
         ),
-        ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": (1,)}),
+        ("yellow", [("1 xpassed", {"bold": True, "yellow": True})], {"xpassed": [1]}),
         (
             "yellow",
             [
                 ("1 passed", {"bold": False, "green": True}),
                 ("1 xpassed", {"bold": True, "yellow": True}),
             ],
-            {"xpassed": (1,), "passed": (1,)},
+            {"xpassed": [1], "passed": [1]},
         ),
         # Likewise if no tests were found at all
         ("yellow", [("no tests ran", {"yellow": True})], {}),
         # Test the empty-key special case
-        ("yellow", [("no tests ran", {"yellow": True})], {"": (1,)}),
+        ("yellow", [("no tests ran", {"yellow": True})], {"": [1]}),
         (
             "green",
             [("1 passed", {"bold": True, "green": True})],
-            {"": (1,), "passed": (1,)},
+            {"": [1], "passed": [1]},
         ),
         # A couple more complex combinations
         (
@@ -1668,7 +1664,7 @@ def tr() -> TerminalReporter:
                 ("2 passed", {"bold": False, "green": True}),
                 ("3 xfailed", {"bold": False, "yellow": True}),
             ],
-            {"passed": (1, 2), "failed": (1,), "xfailed": (1, 2, 3)},
+            {"passed": [1, 2], "failed": [1], "xfailed": [1, 2, 3]},
         ),
         (
             "green",
@@ -1679,10 +1675,10 @@ def tr() -> TerminalReporter:
                 ("2 xfailed", {"bold": False, "yellow": True}),
             ],
             {
-                "passed": (1,),
-                "skipped": (1, 2),
-                "deselected": (1, 2, 3),
-                "xfailed": (1, 2),
+                "passed": [1],
+                "skipped": [1, 2],
+                "deselected": [1, 2, 3],
+                "xfailed": [1, 2],
             },
         ),
     ],
@@ -1691,7 +1687,7 @@ def test_summary_stats(
     tr: TerminalReporter,
     exp_line: List[Tuple[str, Dict[str, bool]]],
     exp_color: str,
-    stats_arg: Dict[str, List],
+    stats_arg: Dict[str, List[object]],
 ) -> None:
     tr.stats = stats_arg
 
@@ -2090,7 +2086,7 @@ def test_skip_reasons_folding() -> None:
     ev3.longrepr = longrepr
     ev3.skipped = True
 
-    values = _folded_skips(py.path.local(), [ev1, ev2, ev3])
+    values = _folded_skips(Path.cwd(), [ev1, ev2, ev3])
     assert len(values) == 1
     num, fspath, lineno_, reason = values[0]
     assert num == 3

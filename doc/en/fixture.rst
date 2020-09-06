@@ -121,7 +121,7 @@ Fixtures as Function arguments
 Test functions can receive fixture objects by naming them as an input
 argument. For each argument name, a fixture function with that name provides
 the fixture object.  Fixture functions are registered by marking them with
-:py:func:`@pytest.fixture <_pytest.python.fixture>`.  Let's look at a simple
+:py:func:`@pytest.fixture <pytest.fixture>`.  Let's look at a simple
 self-contained test module containing a fixture and a test function
 using it:
 
@@ -144,7 +144,7 @@ using it:
         assert 0  # for demo purposes
 
 Here, the ``test_ehlo`` needs the ``smtp_connection`` fixture value.  pytest
-will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
+will discover and call the :py:func:`@pytest.fixture <pytest.fixture>`
 marked ``smtp_connection`` fixture function.  Running the test looks like this:
 
 .. code-block:: pytest
@@ -252,7 +252,7 @@ Scope: sharing fixtures across classes, modules, packages or session
 Fixtures requiring network access depend on connectivity and are
 usually time-expensive to create.  Extending the previous example, we
 can add a ``scope="module"`` parameter to the
-:py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
+:py:func:`@pytest.fixture <pytest.fixture>` invocation
 to cause the decorated ``smtp_connection`` fixture function to only be invoked
 once per test *module* (the default is to invoke once per test *function*).
 Multiple test functions in a test module will thus
@@ -775,7 +775,7 @@ through the special :py:class:`request <FixtureRequest>` object:
         smtp_connection.close()
 
 The main change is the declaration of ``params`` with
-:py:func:`@pytest.fixture <_pytest.python.fixture>`, a list of values
+:py:func:`@pytest.fixture <pytest.fixture>`, a list of values
 for each of which the fixture function will execute and can access
 a value via ``request.param``.  No test function code needs to change.
 So let's just do another run:

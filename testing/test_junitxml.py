@@ -22,7 +22,7 @@ from _pytest.store import Store
 
 @pytest.fixture(scope="session")
 def schema():
-    """Returns a xmlschema.XMLSchema object for the junit-10.xsd file"""
+    """Return an xmlschema.XMLSchema object for the junit-10.xsd file."""
     fn = Path(__file__).parent / "example_scripts/junit-10.xsd"
     with fn.open() as f:
         return xmlschema.XMLSchema(f)
@@ -30,9 +30,8 @@ def schema():
 
 @pytest.fixture
 def run_and_parse(testdir, schema):
-    """
-    Fixture that returns a function that can be used to execute pytest and return
-    the parsed ``DomNode`` of the root xml node.
+    """Fixture that returns a function that can be used to execute pytest and
+    return the parsed ``DomNode`` of the root xml node.
 
     The ``family`` parameter is used to configure the ``junit_family`` of the written report.
     "xunit2" is also automatically validated against the schema.
@@ -323,8 +322,9 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(errors=1, failures=1, tests=1)
         first, second = dom.find_by_tag("testcase")
-        if not first or not second or first == second:
-            assert 0
+        assert first
+        assert second
+        assert first != second
         fnode = first.find_first_by_tag("failure")
         fnode.assert_attr(message="Exception: Call Exception")
         snode = second.find_first_by_tag("error")
@@ -535,7 +535,7 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         fnode = tnode.find_first_by_tag("failure")
-        fnode.assert_attr(message="AssertionError: An error assert 0")
+        fnode.assert_attr(message="AssertionError: An error\nassert 0")
 
     @parametrize_families
     def test_failure_escape(self, testdir, run_and_parse, xunit_family):
@@ -719,7 +719,7 @@ class TestPython:
         assert "hx" in fnode.toxml()
 
     def test_assertion_binchars(self, testdir, run_and_parse):
-        """this test did fail when the escaping wasnt strict"""
+        """This test did fail when the escaping wasn't strict."""
         testdir.makepyfile(
             """
 
@@ -906,11 +906,8 @@ class TestNonPython:
             import pytest
             def pytest_collect_file(path, parent):
                 if path.ext == ".xyz":
-                    return MyItem(path, parent)
+                    return MyItem.from_parent(name=path.basename, parent=parent)
             class MyItem(pytest.Item):
-                def __init__(self, path, parent):
-                    super(MyItem, self).__init__(path.basename, parent)
-                    self.fspath = path
                 def runtest(self):
                     raise ValueError(42)
                 def repr_failure(self, excinfo):
@@ -998,14 +995,14 @@ def test_invalid_xml_escape():
     # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
 
     for i in invalid:
-        got = bin_xml_escape(chr(i)).uniobj
+        got = bin_xml_escape(chr(i))
         if i <= 0xFF:
             expected = "#x%02X" % i
         else:
             expected = "#x%04X" % i
         assert got == expected
     for i in valid:
-        assert chr(i) == bin_xml_escape(chr(i)).uniobj
+        assert chr(i) == bin_xml_escape(chr(i))
 
 
 def test_logxml_path_expansion(tmpdir, monkeypatch):
@@ -1214,8 +1211,7 @@ def test_record_attribute(testdir, run_and_parse):
 @pytest.mark.filterwarnings("default")
 @pytest.mark.parametrize("fixture_name", ["record_xml_attribute", "record_property"])
 def test_record_fixtures_xunit2(testdir, fixture_name, run_and_parse):
-    """Ensure record_xml_attribute and record_property drop values when outside of legacy family
-    """
+    """Ensure record_xml_attribute and record_property drop values when outside of legacy family."""
     testdir.makeini(
         """
         [pytest]
@@ -1252,10 +1248,9 @@ def test_record_fixtures_xunit2(testdir, fixture_name, run_and_parse):
 
 
 def test_random_report_log_xdist(testdir, monkeypatch, run_and_parse):
-    """xdist calls pytest_runtest_logreport as they are executed by the workers,
+    """`xdist` calls pytest_runtest_logreport as they are executed by the workers,
     with nodes from several nodes overlapping, so junitxml must cope with that
-    to produce correct reports. #1064
-    """
+    to produce correct reports (#1064)."""
     pytest.importorskip("xdist")
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
     testdir.makepyfile(
@@ -1336,14 +1331,14 @@ def test_fancy_items_regression(testdir, run_and_parse):
         class FunCollector(pytest.File):
             def collect(self):
                 return [
-                    FunItem('a', self),
-                    NoFunItem('a', self),
-                    NoFunItem('b', self),
+                    FunItem.from_parent(name='a', parent=self),
+                    NoFunItem.from_parent(name='a', parent=self),
+                    NoFunItem.from_parent(name='b', parent=self),
                 ]
 
         def pytest_collect_file(path, parent):
             if path.check(ext='.py'):
-                return FunCollector(path, parent)
+                return FunCollector.from_parent(fspath=path, parent=parent)
     """
     )
 

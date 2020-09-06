@@ -7,7 +7,6 @@ from typing import List
 import pytest
 from _pytest.deprecated import PYTEST_COLLECT_MODULE
 
-
 COLLECT_FAKEMODULE_ATTRIBUTES = [
     "Collector",
     "Module",

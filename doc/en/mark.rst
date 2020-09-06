@@ -43,7 +43,17 @@ You can register custom marks in your ``pytest.ini`` file like this:
         slow: marks tests as slow (deselect with '-m "not slow"')
         serial
 
-Note that everything after the ``:`` is an optional description.
+or in your ``pyproject.toml`` file like this:
+
+.. code-block:: toml
+
+    [tool.pytest.ini_options]
+    markers = [
+        "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+        "serial",
+    ]
+
+Note that everything past the ``:`` after the mark name is an optional description.
 
 Alternatively, you can register new markers programmatically in a
 :ref:`pytest_configure <initialization-hooks>` hook:

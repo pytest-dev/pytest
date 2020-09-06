@@ -1,4 +1,4 @@
-""" submit failure or test session information to a pastebin service. """
+"""Submit failure or test session information to a pastebin service."""
 import tempfile
 from io import StringIO
 from typing import IO
@@ -32,11 +32,11 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin("terminalreporter")
-        # if no terminal reporter plugin is present, nothing we can do here;
+        # If no terminal reporter plugin is present, nothing we can do here;
         # this can happen when this function executes in a worker node
-        # when using pytest-xdist, for example
+        # when using pytest-xdist, for example.
         if tr is not None:
-            # pastebin file will be utf-8 encoded binary file
+            # pastebin file will be UTF-8 encoded binary file.
             config._store[pastebinfile_key] = tempfile.TemporaryFile("w+b")
             oldwrite = tr._tw.write
 
@@ -52,26 +52,25 @@ def pytest_configure(config: Config) -> None:
 def pytest_unconfigure(config: Config) -> None:
     if pastebinfile_key in config._store:
         pastebinfile = config._store[pastebinfile_key]
-        # get terminal contents and delete file
+        # Get terminal contents and delete file.
         pastebinfile.seek(0)
         sessionlog = pastebinfile.read()
         pastebinfile.close()
         del config._store[pastebinfile_key]
-        # undo our patching in the terminal reporter
+        # Undo our patching in the terminal reporter.
         tr = config.pluginmanager.getplugin("terminalreporter")
         del tr._tw.__dict__["write"]
-        # write summary
+        # Write summary.
         tr.write_sep("=", "Sending information to Paste Service")
         pastebinurl = create_new_paste(sessionlog)
         tr.write_line("pastebin session-log: %s\n" % pastebinurl)
 
 
 def create_new_paste(contents: Union[str, bytes]) -> str:
-    """
-    Creates a new paste using bpaste.net service.
+    """Create a new paste using the bpaste.net service.
 
-    :contents: paste contents string
-    :returns: url to the pasted contents or error message
+    :contents: Paste contents string.
+    :returns: URL to the pasted contents, or an error message.
     """
     import re
     from urllib.request import urlopen

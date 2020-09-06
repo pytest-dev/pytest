@@ -33,7 +33,7 @@ Running ``pytest`` can result in six different exit codes:
 :Exit code 4: pytest command line usage error
 :Exit code 5: No tests were collected
 
-They are represented by the :class:`_pytest.config.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
+They are represented by the :class:`pytest.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
 
 .. code-block:: python
 
@@ -426,14 +426,15 @@ Pytest supports the use of ``breakpoint()`` with the following behaviours:
 Profiling test execution duration
 -------------------------------------
 
+.. versionchanged:: 6.0
 
-To get a list of the slowest 10 test durations:
+To get a list of the slowest 10 test durations over 1.0s long:
 
 .. code-block:: bash
 
-    pytest --durations=10
+    pytest --durations=10 --durations-min=1.0
 
-By default, pytest will not show test durations that are too small (<0.01s) unless ``-vv`` is passed on the command-line.
+By default, pytest will not show test durations that are too small (<0.005s) unless ``-vv`` is passed on the command-line.
 
 
 .. _faulthandler:

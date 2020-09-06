@@ -14,14 +14,18 @@ import pytest
 from _pytest import capture
 from _pytest.capture import _get_multicapture
 from _pytest.capture import CaptureManager
+from _pytest.capture import CaptureResult
 from _pytest.capture import MultiCapture
 from _pytest.config import ExitCode
+from _pytest.pytester import Testdir
 
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 
 
-def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def StdCaptureFD(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.FDCapture(0) if in_ else None,
         out=capture.FDCapture(1) if out else None,
@@ -29,7 +33,9 @@ def StdCaptureFD(out: bool = True, err: bool = True, in_: bool = True) -> MultiC
     )
 
 
-def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def StdCapture(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.SysCapture(0) if in_ else None,
         out=capture.SysCapture(1) if out else None,
@@ -37,7 +43,9 @@ def StdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCap
     )
 
 
-def TeeStdCapture(out: bool = True, err: bool = True, in_: bool = True) -> MultiCapture:
+def TeeStdCapture(
+    out: bool = True, err: bool = True, in_: bool = True
+) -> MultiCapture[str]:
     return capture.MultiCapture(
         in_=capture.SysCapture(0, tee=True) if in_ else None,
         out=capture.SysCapture(1, tee=True) if out else None,
@@ -514,6 +522,12 @@ class TestCaptureFixture:
         )
         reprec.assertoutcome(passed=1)
 
+    @pytest.mark.parametrize("nl", ("\n", "\r\n", "\r"))
+    def test_cafd_preserves_newlines(self, capfd, nl):
+        print("test", end=nl)
+        out, err = capfd.readouterr()
+        assert out.endswith(nl)
+
     def test_capfdbinary(self, testdir):
         reprec = testdir.inline_runsource(
             """\
@@ -627,11 +641,38 @@ class TestCaptureFixture:
         else:
             result.stdout.no_fnmatch_line("*test_normal executed*")
 
+    def test_disabled_capture_fixture_twice(self, testdir: Testdir) -> None:
+        """Test that an inner disabled() exit doesn't undo an outer disabled().
+
+        Issue #7148.
+        """
+        testdir.makepyfile(
+            """
+            def test_disabled(capfd):
+                print('captured before')
+                with capfd.disabled():
+                    print('while capture is disabled 1')
+                    with capfd.disabled():
+                        print('while capture is disabled 2')
+                    print('while capture is disabled 1 after')
+                print('captured after')
+                assert capfd.readouterr() == ('captured before\\ncaptured after\\n', '')
+        """
+        )
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(
+            [
+                "*while capture is disabled 1",
+                "*while capture is disabled 2",
+                "*while capture is disabled 1 after",
+            ],
+            consecutive=True,
+        )
+
     @pytest.mark.parametrize("fixture", ["capsys", "capfd"])
     def test_fixture_use_by_other_fixtures(self, testdir, fixture):
-        """
-        Ensure that capsys and capfd can be used by other fixtures during setup and teardown.
-        """
+        """Ensure that capsys and capfd can be used by other fixtures during
+        setup and teardown."""
         testdir.makepyfile(
             """\
             import sys
@@ -849,6 +890,36 @@ def test_dontreadfrominput():
     pytest.raises(OSError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
     f.close()  # just for completeness
+
+
+def test_captureresult() -> None:
+    cr = CaptureResult("out", "err")
+    assert len(cr) == 2
+    assert cr.out == "out"
+    assert cr.err == "err"
+    out, err = cr
+    assert out == "out"
+    assert err == "err"
+    assert cr[0] == "out"
+    assert cr[1] == "err"
+    assert cr == cr
+    assert cr == CaptureResult("out", "err")
+    assert cr != CaptureResult("wrong", "err")
+    assert cr == ("out", "err")
+    assert cr != ("out", "wrong")
+    assert hash(cr) == hash(CaptureResult("out", "err"))
+    assert hash(cr) == hash(("out", "err"))
+    assert hash(cr) != hash(("out", "wrong"))
+    assert cr < ("z",)
+    assert cr < ("z", "b")
+    assert cr < ("z", "b", "c")
+    assert cr.count("err") == 1
+    assert cr.count("wrong") == 0
+    assert cr.index("err") == 1
+    with pytest.raises(ValueError):
+        assert cr.index("wrong") == 0
+    assert next(iter(cr)) == "out"
+    assert cr._replace(err="replaced") == ("out", "replaced")
 
 
 @pytest.fixture
@@ -1103,8 +1174,8 @@ class TestTeeStdCapture(TestStdCapture):
     captureclass = staticmethod(TeeStdCapture)
 
     def test_capturing_error_recursive(self):
-        """ for TeeStdCapture since we passthrough stderr/stdout, cap1
-        should get all output, while cap2 should only get "cap2\n" """
+        r"""For TeeStdCapture since we passthrough stderr/stdout, cap1
+        should get all output, while cap2 should only get "cap2\n"."""
 
         with self.getcapture() as cap1:
             print("cap1")

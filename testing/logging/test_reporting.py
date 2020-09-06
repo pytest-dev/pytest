@@ -899,7 +899,7 @@ def test_collection_collect_only_live_logging(testdir, verbose):
         expected_lines.extend(
             [
                 "*test_collection_collect_only_live_logging.py::test_simple*",
-                "no tests ran in [0-1].[0-9][0-9]s",
+                "no tests ran in [0-9].[0-9][0-9]s",
             ]
         )
     elif verbose == "-qq":
@@ -1066,10 +1066,8 @@ def test_log_set_path(testdir):
 
 
 def test_colored_captured_log(testdir):
-    """
-    Test that the level names of captured log messages of a failing test are
-    colored.
-    """
+    """Test that the level names of captured log messages of a failing test
+    are colored."""
     testdir.makepyfile(
         """
         import logging
@@ -1092,9 +1090,7 @@ def test_colored_captured_log(testdir):
 
 
 def test_colored_ansi_esc_caplogtext(testdir):
-    """
-    Make sure that caplog.text does not contain ANSI escape sequences.
-    """
+    """Make sure that caplog.text does not contain ANSI escape sequences."""
     testdir.makepyfile(
         """
         import logging
@@ -1111,8 +1107,7 @@ def test_colored_ansi_esc_caplogtext(testdir):
 
 
 def test_logging_emit_error(testdir: Testdir) -> None:
-    """
-    An exception raised during emit() should fail the test.
+    """An exception raised during emit() should fail the test.
 
     The default behavior of logging is to print "Logging error"
     to stderr with the call stack and some extra details.
@@ -1138,10 +1133,8 @@ def test_logging_emit_error(testdir: Testdir) -> None:
 
 
 def test_logging_emit_error_supressed(testdir: Testdir) -> None:
-    """
-    If logging is configured to silently ignore errors, pytest
-    doesn't propagate errors either.
-    """
+    """If logging is configured to silently ignore errors, pytest
+    doesn't propagate errors either."""
     testdir.makepyfile(
         """
         import logging

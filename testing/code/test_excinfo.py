@@ -4,6 +4,8 @@ import os
 import queue
 import sys
 import textwrap
+from typing import Any
+from typing import Dict
 from typing import Tuple
 from typing import Union
 
@@ -464,7 +466,7 @@ class TestFormattedExcinfo:
         assert lines[1] == "        pass"
 
     def test_repr_source_excinfo(self) -> None:
-        """ check if indentation is right """
+        """Check if indentation is right."""
         try:
 
             def f():
@@ -1045,28 +1047,34 @@ raise ValueError()
     @pytest.mark.parametrize(
         "reproptions",
         [
-            {
-                "style": style,
-                "showlocals": showlocals,
-                "funcargs": funcargs,
-                "tbfilter": tbfilter,
-            }
-            for style in ("long", "short", "no")
+            pytest.param(
+                {
+                    "style": style,
+                    "showlocals": showlocals,
+                    "funcargs": funcargs,
+                    "tbfilter": tbfilter,
+                },
+                id="style={},showlocals={},funcargs={},tbfilter={}".format(
+                    style, showlocals, funcargs, tbfilter
+                ),
+            )
+            for style in ["long", "short", "line", "no", "native", "value", "auto"]
             for showlocals in (True, False)
             for tbfilter in (True, False)
             for funcargs in (True, False)
         ],
     )
-    def test_format_excinfo(self, importasmod, reproptions):
-        mod = importasmod(
-            """
-            def g(x):
-                raise ValueError(x)
-            def f():
-                g(3)
-        """
-        )
-        excinfo = pytest.raises(ValueError, mod.f)
+    def test_format_excinfo(self, reproptions: Dict[str, Any]) -> None:
+        def bar():
+            assert False, "some error"
+
+        def foo():
+            bar()
+
+        # using inline functions as opposed to importasmod so we get source code lines
+        # in the tracebacks (otherwise getinspect doesn't find the source code).
+        with pytest.raises(AssertionError) as excinfo:
+            foo()
         file = io.StringIO()
         tw = TerminalWriter(file=file)
         repr = excinfo.getrepr(**reproptions)

@@ -19,8 +19,7 @@ def test_enabled(testdir):
 
 def test_crash_near_exit(testdir):
     """Test that fault handler displays crashes that happen even after
-    pytest is exiting (for example, when the interpreter is shutting down).
-    """
+    pytest is exiting (for example, when the interpreter is shutting down)."""
     testdir.makepyfile(
         """
     import faulthandler
@@ -35,8 +34,7 @@ def test_crash_near_exit(testdir):
 
 
 def test_disabled(testdir):
-    """Test option to disable fault handler in the command line.
-    """
+    """Test option to disable fault handler in the command line."""
     testdir.makepyfile(
         """
     import faulthandler
@@ -60,6 +58,7 @@ def test_disabled(testdir):
 )
 def test_timeout(testdir, enabled: bool) -> None:
     """Test option to dump tracebacks after a certain timeout.
+
     If faulthandler is disabled, no traceback will be dumped.
     """
     testdir.makepyfile(
@@ -90,9 +89,8 @@ def test_timeout(testdir, enabled: bool) -> None:
 @pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])
 def test_cancel_timeout_on_hook(monkeypatch, hook_name):
     """Make sure that we are cancelling any scheduled traceback dumping due
-    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any other interactive
-    exception (pytest-dev/pytest-faulthandler#14).
-    """
+    to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
+    other interactive exception (pytest-dev/pytest-faulthandler#14)."""
     import faulthandler
     from _pytest.faulthandler import FaultHandlerHooks
 
@@ -111,7 +109,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name):
 
 @pytest.mark.parametrize("faulthandler_timeout", [0, 2])
 def test_already_initialized(faulthandler_timeout, testdir):
-    """Test for faulthandler being initialized earlier than pytest (#6575)"""
+    """Test for faulthandler being initialized earlier than pytest (#6575)."""
     testdir.makepyfile(
         """
         def test():

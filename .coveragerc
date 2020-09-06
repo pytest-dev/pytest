@@ -27,3 +27,4 @@ exclude_lines =
     ^\s*assert False(,|$)
 
     ^\s*if TYPE_CHECKING:
+    ^\s*@overload( |$)

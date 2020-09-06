@@ -115,8 +115,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_multiple_patterns(self, testdir):
-        """Test support for multiple --doctest-glob arguments (#1255).
-        """
+        """Test support for multiple --doctest-glob arguments (#1255)."""
         testdir.maketxtfile(
             xdoc="""
             >>> 1
@@ -149,8 +148,7 @@ class TestDoctests:
         [("foo", "ascii"), ("öäü", "latin1"), ("öäü", "utf-8")],
     )
     def test_encoding(self, testdir, test_string, encoding):
-        """Test support for doctest_encoding ini option.
-        """
+        """Test support for doctest_encoding ini option."""
         testdir.makeini(
             """
             [pytest]
@@ -667,8 +665,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1, passed=0)
 
     def test_contains_unicode(self, testdir):
-        """Fix internal error with docstrings containing non-ascii characters.
-        """
+        """Fix internal error with docstrings containing non-ascii characters."""
         testdir.makepyfile(
             '''\
             def foo():
@@ -701,9 +698,7 @@ class TestDoctests:
         reprec.assertoutcome(skipped=1, failed=1, passed=0)
 
     def test_junit_report_for_doctest(self, testdir):
-        """
-        #713: Fix --junit-xml option when used with --doctest-modules.
-        """
+        """#713: Fix --junit-xml option when used with --doctest-modules."""
         p = testdir.makepyfile(
             """
             def foo():
@@ -775,9 +770,7 @@ class TestDoctests:
         result.stdout.fnmatch_lines(["* 1 passed *"])
 
     def test_reportinfo(self, testdir):
-        """
-        Test case to make sure that DoctestItem.reportinfo() returns lineno.
-        """
+        """Make sure that DoctestItem.reportinfo() returns lineno."""
         p = testdir.makepyfile(
             test_reportinfo="""
             def foo(x):
@@ -1167,8 +1160,7 @@ class TestDoctestAutoUseFixtures:
     SCOPES = ["module", "session", "class", "function"]
 
     def test_doctest_module_session_fixture(self, testdir):
-        """Test that session fixtures are initialized for doctest modules (#768)
-        """
+        """Test that session fixtures are initialized for doctest modules (#768)."""
         # session fixture which changes some global data, which will
         # be accessed by doctests in a module
         testdir.makeconftest(

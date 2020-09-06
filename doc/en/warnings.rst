@@ -68,16 +68,30 @@ them into errors:
     FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use ...
     1 failed in 0.12s
 
-The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
-For example, the configuration below will ignore all user warnings, but will transform
+The same option can be set in the ``pytest.ini`` or ``pyproject.toml`` file using the
+``filterwarnings`` ini option. For example, the configuration below will ignore all
+user warnings and specific deprecation warnings matching a regex, but will transform
 all other warnings into errors.
 
 .. code-block:: ini
 
+    # pytest.ini
     [pytest]
     filterwarnings =
         error
         ignore::UserWarning
+        ignore:function ham\(\) is deprecated:DeprecationWarning
+
+.. code-block:: toml
+
+    # pyproject.toml
+    [tool.pytest.ini_options]
+    filterwarnings = [
+        "error",
+        "ignore::UserWarning",
+        # note the use of single quote below to denote "raw" strings in TOML
+        'ignore:function ham\(\) is deprecated:DeprecationWarning',
+    ]
 
 
 When a warning matches more than one option in the list, the action for the last matching option
@@ -381,8 +395,6 @@ custom error message.
 Internal pytest warnings
 ------------------------
 
-
-
 pytest may generate its own warnings in some situations, such as improper usage or deprecated features.
 
 For example, pytest will emit a warning if it encounters a class that matches :confval:`python_classes` but also
@@ -415,31 +427,4 @@ These warnings might be filtered using the same builtin mechanisms used to filte
 Please read our :ref:`backwards-compatibility` to learn how we proceed about deprecating and eventually removing
 features.
 
-The following warning types are used by pytest and are part of the public API:
-
-.. autoclass:: pytest.PytestWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestAssertRewriteWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestCacheWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestCollectionWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestConfigWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestDeprecationWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestExperimentalApiWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestUnhandledCoroutineWarning
-   :show-inheritance:
-
-.. autoclass:: pytest.PytestUnknownMarkWarning
-   :show-inheritance:
+The full list of warnings is listed in :ref:`the reference documentation <warnings ref>`.

@@ -1,0 +1,1 @@
+Fixed log-capturing level restored incorrectly if ``caplog.set_level`` is called more than once.

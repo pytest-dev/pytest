@@ -1,8 +1,7 @@
-""" basic collect and runtest protocol implementations """
+"""Basic collect and runtest protocol implementations."""
 import bdb
 import os
 import sys
-from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -22,6 +21,7 @@ from .reports import TestReport
 from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import TerminalRepr
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Collector
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from _pytest.terminal import TerminalReporter
 
 #
-# pytest plugin hooks
+# pytest plugin hooks.
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -52,10 +52,19 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="N",
         help="show N slowest setup/test durations (N=0 for all).",
     )
+    group.addoption(
+        "--durations-min",
+        action="store",
+        type=float,
+        default=0.005,
+        metavar="N",
+        help="Minimal duration in seconds for inclusion in slowest list. Default 0.005",
+    )
 
 
 def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
     durations = terminalreporter.config.option.durations
+    durations_min = terminalreporter.config.option.durations_min
     verbose = terminalreporter.config.getvalue("verbose")
     if durations is None:
         return
@@ -76,11 +85,11 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
-        if verbose < 2 and rep.duration < 0.005:
+        if verbose < 2 and rep.duration < durations_min:
             tr.write_line("")
             tr.write_line(
-                "(%s durations < 0.005s hidden.  Use -vv to show these durations.)"
-                % (len(dlist) - i)
+                "(%s durations < %gs hidden.  Use -vv to show these durations.)"
+                % (len(dlist) - i, durations_min)
             )
             break
         tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
@@ -116,8 +125,8 @@ def runtestprotocol(
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-    # after all teardown hooks have been called
-    # want funcargs and request info to go away
+    # After all teardown hooks have been called
+    # want funcargs and request info to go away.
     if hasrequest:
         item._request = False  # type: ignore[attr-defined]
         item.funcargs = None  # type: ignore[attr-defined]
@@ -170,8 +179,7 @@ def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
 def _update_current_test_var(
     item: Item, when: Optional["Literal['setup', 'call', 'teardown']"]
 ) -> None:
-    """
-    Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
+    """Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
 
     If ``when`` is None, delete ``PYTEST_CURRENT_TEST`` from the environment.
     """
@@ -214,7 +222,7 @@ def call_and_report(
     return report
 
 
-def check_interactive_exception(call: "CallInfo", report: BaseReport) -> bool:
+def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) -> bool:
     """Check whether the call raised an exception that should be reported as
     interactive."""
     if call.excinfo is None:
@@ -248,23 +256,29 @@ def call_runtest_hook(
     )
 
 
-_T = TypeVar("_T")
+TResult = TypeVar("TResult", covariant=True)
 
 
 @attr.s(repr=False)
-class CallInfo(Generic[_T]):
-    """ Result/Exception info a function invocation.
+class CallInfo(Generic[TResult]):
+    """Result/Exception info a function invocation.
 
-    :param T result: The return value of the call, if it didn't raise. Can only be accessed
-        if excinfo is None.
-    :param Optional[ExceptionInfo] excinfo: The captured exception of the call, if it raised.
-    :param float start: The system time when the call started, in seconds since the epoch.
-    :param float stop: The system time when the call ended, in seconds since the epoch.
-    :param float duration: The call duration, in seconds.
-    :param str when: The context of invocation: "setup", "call", "teardown", ...
+    :param T result:
+        The return value of the call, if it didn't raise. Can only be
+        accessed if excinfo is None.
+    :param Optional[ExceptionInfo] excinfo:
+        The captured exception of the call, if it raised.
+    :param float start:
+        The system time when the call started, in seconds since the epoch.
+    :param float stop:
+        The system time when the call ended, in seconds since the epoch.
+    :param float duration:
+        The call duration, in seconds.
+    :param str when:
+        The context of invocation: "setup", "call", "teardown", ...
     """
 
-    _result = attr.ib(type="Optional[_T]")
+    _result = attr.ib(type="Optional[TResult]")
     excinfo = attr.ib(type=Optional[ExceptionInfo[BaseException]])
     start = attr.ib(type=float)
     stop = attr.ib(type=float)
@@ -272,26 +286,26 @@ class CallInfo(Generic[_T]):
     when = attr.ib(type="Literal['collect', 'setup', 'call', 'teardown']")
 
     @property
-    def result(self) -> _T:
+    def result(self) -> TResult:
         if self.excinfo is not None:
             raise AttributeError("{!r} has no valid result".format(self))
         # The cast is safe because an exception wasn't raised, hence
         # _result has the expected function return type (which may be
         #  None, that's why a cast and not an assert).
-        return cast(_T, self._result)
+        return cast(TResult, self._result)
 
     @classmethod
     def from_call(
         cls,
-        func: "Callable[[], _T]",
+        func: "Callable[[], TResult]",
         when: "Literal['collect', 'setup', 'call', 'teardown']",
         reraise: "Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]]" = None,
-    ) -> "CallInfo[_T]":
+    ) -> "CallInfo[TResult]":
         excinfo = None
         start = timing.time()
         precise_start = timing.perf_counter()
         try:
-            result = func()  # type: Optional[_T]
+            result = func()  # type: Optional[TResult]
         except BaseException:
             excinfo = ExceptionInfo.from_current()
             if reraise is not None and isinstance(excinfo.value, reraise):
@@ -322,8 +336,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:
 
 def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
-    # TODO: Better typing for longrepr.
-    longrepr = None  # type: Optional[Any]
+    longrepr = None  # type: Union[None, Tuple[str, int, str], str, TerminalRepr]
     if not call.excinfo:
         outcome = "passed"  # type: Literal["passed", "skipped", "failed"]
     else:
@@ -343,6 +356,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
             outcome = "failed"
             errorinfo = collector.repr_failure(call.excinfo)
             if not hasattr(errorinfo, "toterminal"):
+                assert isinstance(errorinfo, str)
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     result = call.result if not call.excinfo else None
@@ -352,14 +366,14 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
 
 
 class SetupState:
-    """ shared state for setting up/tearing down test items or collectors. """
+    """Shared state for setting up/tearing down test items or collectors."""
 
     def __init__(self):
         self.stack = []  # type: List[Node]
         self._finalizers = {}  # type: Dict[Node, List[Callable[[], object]]]
 
     def addfinalizer(self, finalizer: Callable[[], object], colitem) -> None:
-        """ attach a finalizer to the given colitem. """
+        """Attach a finalizer to the given colitem."""
         assert colitem and not isinstance(colitem, tuple)
         assert callable(finalizer)
         # assert colitem in self.stack  # some unit tests don't setup stack :/
@@ -419,7 +433,7 @@ class SetupState:
     def prepare(self, colitem) -> None:
         """Setup objects along the collector chain to the test-method."""
 
-        # check if the last collection node has raised an error
+        # Check if the last collection node has raised an error.
         for col in self.stack:
             if hasattr(col, "_prepare_exc"):
                 exc = col._prepare_exc  # type: ignore[attr-defined]

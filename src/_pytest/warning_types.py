@@ -78,7 +78,7 @@ class PytestUnhandledCoroutineWarning(PytestWarning):
 class PytestUnknownMarkWarning(PytestWarning):
     """Warning emitted on use of unknown markers.
 
-    See https://docs.pytest.org/en/stable/mark.html for details.
+    See :ref:`mark` for details.
     """
 
     __module__ = "pytest"
@@ -99,7 +99,7 @@ class UnformattedWarning(Generic[_W]):
     template = attr.ib(type=str)
 
     def format(self, **kwargs: Any) -> _W:
-        """Returns an instance of the warning category, formatted with given kwargs"""
+        """Return an instance of the warning category, formatted with given kwargs."""
         return self.category(self.template.format(**kwargs))
 
 

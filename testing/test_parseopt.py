@@ -1,7 +1,7 @@
 import argparse
 import os
 import shlex
-import shutil
+import subprocess
 import sys
 
 import py
@@ -288,8 +288,20 @@ class TestParser:
 
 
 def test_argcomplete(testdir, monkeypatch) -> None:
-    if not shutil.which("bash"):
-        pytest.skip("bash not available")
+    try:
+        bash_version = subprocess.run(
+            ["bash", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=True,
+            universal_newlines=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        pytest.skip("bash is not available")
+    if "GNU bash" not in bash_version:
+        # See #7518.
+        pytest.skip("not a real bash")
+
     script = str(testdir.tmpdir.join("test_argcomplete"))
 
     with open(str(script), "w") as fp:

@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-# test for _argcomplete but not specific for any application
+# Test for _argcomplete but not specific for any application.
 
 
 def equal_with_bash(prefix, ffc, fc, out=None):
@@ -18,9 +18,9 @@ def equal_with_bash(prefix, ffc, fc, out=None):
     return retval
 
 
-# copied from argcomplete.completers as import from there
-# also pulls in argcomplete.__init__ which opens filedescriptor 9
-# this gives an OSError at the end of testrun
+# Copied from argcomplete.completers as import from there.
+# Also pulls in argcomplete.__init__ which opens filedescriptor 9.
+# This gives an OSError at the end of testrun.
 
 
 def _wrapcall(*args, **kargs):
@@ -31,7 +31,7 @@ def _wrapcall(*args, **kargs):
 
 
 class FilesCompleter:
-    "File completer class, optionally takes a list of allowed extensions"
+    """File completer class, optionally takes a list of allowed extensions."""
 
     def __init__(self, allowednames=(), directories=True):
         # Fix if someone passes in a string instead of a list
@@ -91,9 +91,7 @@ class TestArgComplete:
 
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
     def test_remove_dir_prefix(self):
-        """this is not compatible with compgen but it is with bash itself:
-        ls /usr/<TAB>
-        """
+        """This is not compatible with compgen but it is with bash itself: ls /usr/<TAB>."""
         from _pytest._argcomplete import FastFilesCompleter
 
         ffc = FastFilesCompleter()

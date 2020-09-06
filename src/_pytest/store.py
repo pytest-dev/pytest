@@ -92,7 +92,7 @@ class Store:
     def __getitem__(self, key: StoreKey[T]) -> T:
         """Get the value for key.
 
-        Raises KeyError if the key wasn't set before.
+        Raises ``KeyError`` if the key wasn't set before.
         """
         return cast(T, self._store[key])
 
@@ -116,10 +116,10 @@ class Store:
     def __delitem__(self, key: StoreKey[T]) -> None:
         """Delete the value for key.
 
-        Raises KeyError if the key wasn't set before.
+        Raises ``KeyError`` if the key wasn't set before.
         """
         del self._store[key]
 
     def __contains__(self, key: StoreKey[T]) -> bool:
-        """Returns whether key was set."""
+        """Return whether key was set."""
         return key in self._store

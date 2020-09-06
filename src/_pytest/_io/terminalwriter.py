@@ -111,13 +111,13 @@ class TerminalWriter:
     ) -> None:
         if fullwidth is None:
             fullwidth = self.fullwidth
-        # the goal is to have the line be as long as possible
-        # under the condition that len(line) <= fullwidth
+        # The goal is to have the line be as long as possible
+        # under the condition that len(line) <= fullwidth.
         if sys.platform == "win32":
-            # if we print in the last column on windows we are on a
+            # If we print in the last column on windows we are on a
             # new line but there is no way to verify/neutralize this
-            # (we may not know the exact line width)
-            # so let's be defensive to avoid empty lines in the output
+            # (we may not know the exact line width).
+            # So let's be defensive to avoid empty lines in the output.
             fullwidth -= 1
         if title is not None:
             # we want 2 + 2*len(fill) + len(title) <= fullwidth
@@ -131,9 +131,9 @@ class TerminalWriter:
             # we want len(sepchar)*N <= fullwidth
             # i.e.    N <= fullwidth // len(sepchar)
             line = sepchar * (fullwidth // len(sepchar))
-        # in some situations there is room for an extra sepchar at the right,
+        # In some situations there is room for an extra sepchar at the right,
         # in particular if we consider that with a sepchar like "_ " the
-        # trailing space is not important at the end of the line
+        # trailing space is not important at the end of the line.
         if len(line) + len(sepchar.rstrip()) <= fullwidth:
             line += sepchar.rstrip()
 

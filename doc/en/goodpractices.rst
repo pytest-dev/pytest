@@ -1,4 +1,4 @@
-.. highlightlang:: python
+.. highlight:: python
 .. _`goodpractices`:
 
 Good Integration Practices

@@ -1,0 +1,3 @@
+Added two new attributes :attr:`rootpath <_pytest.config.Config.rootpath>` and :attr:`inipath <_pytest.config.Config.inipath>` to :class:`Config <_pytest.config.Config>`.
+These attributes are :class:`pathlib.Path` versions of the existing :attr:`rootdir <_pytest.config.Config.rootdir>` and :attr:`inifile <_pytest.config.Config.inifile>` attributes,
+and should be preferred over them when possible.

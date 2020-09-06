@@ -30,18 +30,15 @@ def pytest_configure(config: Config) -> None:
         # of enabling faulthandler before each test executes.
         config.pluginmanager.register(FaultHandlerHooks(), "faulthandler-hooks")
     else:
-        from _pytest.warnings import _issue_warning_captured
-
         # Do not handle dumping to stderr if faulthandler is already enabled, so warn
         # users that the option is being ignored.
         timeout = FaultHandlerHooks.get_timeout_config_value(config)
         if timeout > 0:
-            _issue_warning_captured(
+            config.issue_config_time_warning(
                 pytest.PytestConfigWarning(
                     "faulthandler module enabled before pytest configuration step, "
                     "'faulthandler_timeout' option ignored"
                 ),
-                config.hook,
                 stacklevel=2,
             )
 
@@ -100,8 +97,7 @@ class FaultHandlerHooks:
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_enter_pdb(self) -> None:
-        """Cancel any traceback dumping due to timeout before entering pdb.
-        """
+        """Cancel any traceback dumping due to timeout before entering pdb."""
         import faulthandler
 
         faulthandler.cancel_dump_traceback_later()
@@ -109,8 +105,7 @@ class FaultHandlerHooks:
     @pytest.hookimpl(tryfirst=True)
     def pytest_exception_interact(self) -> None:
         """Cancel any traceback dumping due to an interactive exception being
-        raised.
-        """
+        raised."""
         import faulthandler
 
         faulthandler.cancel_dump_traceback_later()

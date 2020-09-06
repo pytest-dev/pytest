@@ -310,7 +310,7 @@ class BaseFunctionalTests:
         assert reps[5].failed
 
     def test_exact_teardown_issue1206(self, testdir) -> None:
-        """issue shadowing error with wrong number of arguments on teardown_method."""
+        """Issue shadowing error with wrong number of arguments on teardown_method."""
         rec = testdir.inline_runsource(
             """
             import pytest
@@ -742,7 +742,7 @@ def test_importorskip_dev_module(monkeypatch) -> None:
 
 
 def test_importorskip_module_level(testdir) -> None:
-    """importorskip must be able to skip entire modules when used at module level"""
+    """`importorskip` must be able to skip entire modules when used at module level."""
     testdir.makepyfile(
         """
         import pytest
@@ -757,7 +757,7 @@ def test_importorskip_module_level(testdir) -> None:
 
 
 def test_importorskip_custom_reason(testdir) -> None:
-    """make sure custom reasons are used"""
+    """Make sure custom reasons are used."""
     testdir.makepyfile(
         """
         import pytest
@@ -871,9 +871,8 @@ def test_makereport_getsource_dynamic_code(testdir, monkeypatch) -> None:
 
 
 def test_store_except_info_on_error() -> None:
-    """ Test that upon test failure, the exception info is stored on
-    sys.last_traceback and friends.
-    """
+    """Test that upon test failure, the exception info is stored on
+    sys.last_traceback and friends."""
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
     class ItemMightRaise:
         nodeid = "item_that_raises"
@@ -934,9 +933,7 @@ def test_current_test_env_var(testdir, monkeypatch) -> None:
 
 
 class TestReportContents:
-    """
-    Test user-level API of ``TestReport`` objects.
-    """
+    """Test user-level API of ``TestReport`` objects."""
 
     def getrunner(self):
         return lambda item: runner.runtestprotocol(item, log=False)
@@ -950,6 +947,33 @@ class TestReportContents:
         )
         rep = reports[1]
         assert rep.longreprtext == ""
+
+    def test_longreprtext_skip(self, testdir) -> None:
+        """TestReport.longreprtext can handle non-str ``longrepr`` attributes (#7559)"""
+        reports = testdir.runitem(
+            """
+            import pytest
+            def test_func():
+                pytest.skip()
+            """
+        )
+        _, call_rep, _ = reports
+        assert isinstance(call_rep.longrepr, tuple)
+        assert "Skipped" in call_rep.longreprtext
+
+    def test_longreprtext_collect_skip(self, testdir) -> None:
+        """CollectReport.longreprtext can handle non-str ``longrepr`` attributes (#7559)"""
+        testdir.makepyfile(
+            """
+            import pytest
+            pytest.skip(allow_module_level=True)
+            """
+        )
+        rec = testdir.inline_run()
+        calls = rec.getcalls("pytest_collectreport")
+        _, call = calls
+        assert isinstance(call.report.longrepr, tuple)
+        assert "Skipped" in call.report.longreprtext
 
     def test_longreprtext_failure(self, testdir) -> None:
         reports = testdir.runitem(

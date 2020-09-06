@@ -4,8 +4,8 @@ import typing
 import warnings
 from typing import Any
 from typing import Callable
-from typing import cast
 from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import NamedTuple
@@ -30,6 +30,8 @@ from _pytest.warning_types import PytestUnknownMarkWarning
 
 if TYPE_CHECKING:
     from typing import Type
+
+    from ..nodes import Node
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
@@ -108,14 +110,15 @@ class ParameterSet(
         parameterset: Union["ParameterSet", Sequence[object], object],
         force_tuple: bool = False,
     ) -> "ParameterSet":
-        """
+        """Extract from an object or objects.
+
         :param parameterset:
-            a legacy style parameterset that may or may not be a tuple,
-            and may or may not be wrapped into a mess of mark objects
+            A legacy style parameterset that may or may not be a tuple,
+            and may or may not be wrapped into a mess of mark objects.
 
         :param force_tuple:
-            enforce tuple wrapping so single argument tuple values
-            don't get decomposed and break tests
+            Enforce tuple wrapping so single argument tuple values
+            don't get decomposed and break tests.
         """
 
         if isinstance(parameterset, cls):
@@ -167,7 +170,7 @@ class ParameterSet(
         del argvalues
 
         if parameters:
-            # check all parameter sets have the correct number of values
+            # Check all parameter sets have the correct number of values.
             for param in parameters:
                 if len(param.values) != len(argnames):
                     msg = (
@@ -187,8 +190,8 @@ class ParameterSet(
                         pytrace=False,
                     )
         else:
-            # empty parameter set (likely computed at runtime): create a single
-            # parameter set with NOTSET values, with the "empty parameter set" mark applied to it
+            # Empty parameter set (likely computed at runtime): create a single
+            # parameter set with NOTSET values, with the "empty parameter set" mark applied to it.
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
                 ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
@@ -221,8 +224,7 @@ class Mark:
 
         Combines by appending args and merging kwargs.
 
-        :param other: The mark to combine with.
-        :type other: Mark
+        :param Mark other: The mark to combine with.
         :rtype: Mark
         """
         assert self.name == other.name
@@ -315,7 +317,7 @@ class MarkDecorator:
         Unlike calling the MarkDecorator, with_args() can be used even
         if the sole argument is a callable/class.
 
-        :return: MarkDecorator
+        :rtype: MarkDecorator
         """
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
@@ -325,13 +327,13 @@ class MarkDecorator:
     # the first match so it works out even if we break the rules.
     @overload
     def __call__(self, arg: _Markable) -> _Markable:  # type: ignore[misc]
-        raise NotImplementedError()
+        pass
 
     @overload  # noqa: F811
     def __call__(  # noqa: F811
         self, *args: object, **kwargs: object
     ) -> "MarkDecorator":
-        raise NotImplementedError()
+        pass
 
     def __call__(self, *args: object, **kwargs: object):  # noqa: F811
         """Call the MarkDecorator."""
@@ -345,9 +347,7 @@ class MarkDecorator:
 
 
 def get_unpacked_marks(obj) -> List[Mark]:
-    """
-    obtain the unpacked marks that are stored on an object
-    """
+    """Obtain the unpacked marks that are stored on an object."""
     mark_list = getattr(obj, "pytestmark", [])
     if not isinstance(mark_list, list):
         mark_list = [mark_list]
@@ -355,10 +355,9 @@ def get_unpacked_marks(obj) -> List[Mark]:
 
 
 def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List[Mark]:
-    """
-    normalizes marker decorating helpers to mark objects
+    """Normalize marker decorating helpers to mark objects.
 
-    :type mark_list: List[Union[Mark, Markdecorator]]
+    :type List[Union[Mark, Markdecorator]] mark_list:
     :rtype: List[Mark]
     """
     extracted = [
@@ -389,11 +388,11 @@ if TYPE_CHECKING:
     class _SkipMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc]
         def __call__(self, arg: _Markable) -> _Markable:
-            raise NotImplementedError()
+            ...
 
         @overload  # noqa: F811
         def __call__(self, reason: str = ...) -> "MarkDecorator":  # noqa: F811
-            raise NotImplementedError()
+            ...
 
     class _SkipifMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -402,12 +401,12 @@ if TYPE_CHECKING:
             *conditions: Union[str, bool],
             reason: str = ...
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _XfailMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc]
         def __call__(self, arg: _Markable) -> _Markable:
-            raise NotImplementedError()
+            ...
 
         @overload  # noqa: F811
         def __call__(  # noqa: F811
@@ -421,7 +420,7 @@ if TYPE_CHECKING:
             ] = ...,
             strict: bool = ...
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -438,19 +437,19 @@ if TYPE_CHECKING:
             ] = ...,
             scope: Optional[_Scope] = ...
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self, *fixtures: str
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
     class _FilterwarningsMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self, *filters: str
         ) -> MarkDecorator:
-            raise NotImplementedError()
+            ...
 
 
 class MarkGenerator:
@@ -473,14 +472,13 @@ class MarkGenerator:
 
     # See TYPE_CHECKING above.
     if TYPE_CHECKING:
-        # Using casts instead of type comments intentionally - issue #7473.
         # TODO(py36): Change to builtin annotation syntax.
-        skip = cast(_SkipMarkDecorator, None)
-        skipif = cast(_SkipifMarkDecorator, None)
-        xfail = cast(_XfailMarkDecorator, None)
-        parametrize = cast(_ParametrizeMarkDecorator, None)
-        usefixtures = cast(_UsefixturesMarkDecorator, None)
-        filterwarnings = cast(_FilterwarningsMarkDecorator, None)
+        skip = _SkipMarkDecorator(Mark("skip", (), {}))
+        skipif = _SkipifMarkDecorator(Mark("skipif", (), {}))
+        xfail = _XfailMarkDecorator(Mark("xfail", (), {}))
+        parametrize = _ParametrizeMarkDecorator(Mark("parametrize", (), {}))
+        usefixtures = _UsefixturesMarkDecorator(Mark("usefixtures", (), {}))
+        filterwarnings = _FilterwarningsMarkDecorator(Mark("filterwarnings", (), {}))
 
     def __getattr__(self, name: str) -> MarkDecorator:
         if name[0] == "_":
@@ -526,13 +524,14 @@ class MarkGenerator:
 MARK_GEN = MarkGenerator()
 
 
-class NodeKeywords(collections.abc.MutableMapping):
-    def __init__(self, node):
+# TODO(py36): inherit from typing.MutableMapping[str, Any].
+class NodeKeywords(collections.abc.MutableMapping):  # type: ignore[type-arg]
+    def __init__(self, node: "Node") -> None:
         self.node = node
         self.parent = node.parent
         self._markers = {node.name: True}
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         try:
             return self._markers[key]
         except KeyError:
@@ -540,17 +539,17 @@ class NodeKeywords(collections.abc.MutableMapping):
                 raise
             return self.parent.keywords[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         self._markers[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         raise ValueError("cannot delete key in keywords dict")
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         seen = self._seen()
         return iter(seen)
 
-    def _seen(self):
+    def _seen(self) -> Set[str]:
         seen = set(self._markers)
         if self.parent is not None:
             seen.update(self.parent.keywords)

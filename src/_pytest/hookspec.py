@@ -1,4 +1,5 @@
-""" hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
+"""Hook specifications for pytest plugins which are invoked by pytest itself
+and by builtin plugins."""
 from typing import Any
 from typing import Dict
 from typing import List
@@ -11,9 +12,8 @@ from typing import Union
 import py.path
 from pluggy import HookspecMarker
 
-from .deprecated import COLLECT_DIRECTORY_HOOK
-from .deprecated import WARNING_CAPTURED_HOOK
 from _pytest.compat import TYPE_CHECKING
+from _pytest.deprecated import WARNING_CAPTURED_HOOK
 
 if TYPE_CHECKING:
     import pdb
@@ -52,11 +52,10 @@ hookspec = HookspecMarker("pytest")
 
 @hookspec(historic=True)
 def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
-    """called at plugin registration time to allow adding new hooks via a call to
+    """Called at plugin registration time to allow adding new hooks via a call to
     ``pluginmanager.add_hookspecs(module_or_class, prefix)``.
 
-
-    :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
+    :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager.
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
@@ -67,10 +66,10 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
 def pytest_plugin_registered(
     plugin: "_PluggyPlugin", manager: "PytestPluginManager"
 ) -> None:
-    """ a new pytest plugin got registered.
+    """A new pytest plugin got registered.
 
-    :param plugin: the plugin module or instance
-    :param _pytest.config.PytestPluginManager manager: pytest plugin manager
+    :param plugin: The plugin module or instance.
+    :param _pytest.config.PytestPluginManager manager: pytest plugin manager.
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
@@ -79,7 +78,7 @@ def pytest_plugin_registered(
 
 @hookspec(historic=True)
 def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> None:
-    """register argparse-style options and ini-style config values,
+    """Register argparse-style options and ini-style config values,
     called once at the beginning of a test run.
 
     .. note::
@@ -88,15 +87,16 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
-    :arg _pytest.config.argparsing.Parser parser: To add command line options, call
+    :param _pytest.config.argparsing.Parser parser:
+        To add command line options, call
         :py:func:`parser.addoption(...) <_pytest.config.argparsing.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
         <_pytest.config.argparsing.Parser.addini>`.
 
-    :arg _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager,
-        which can be used to install :py:func:`hookspec`'s or :py:func:`hookimpl`'s
-        and allow one plugin to call another plugin's hooks to change how
-        command line options are added.
+    :param _pytest.config.PytestPluginManager pluginmanager:
+        pytest plugin manager, which can be used to install :py:func:`hookspec`'s
+        or :py:func:`hookimpl`'s and allow one plugin to call another plugin's hooks
+        to change how command line options are added.
 
     Options can later be accessed through the
     :py:class:`config <_pytest.config.Config>` object, respectively:
@@ -117,8 +117,7 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
 
 @hookspec(historic=True)
 def pytest_configure(config: "Config") -> None:
-    """
-    Allows plugins and conftest files to perform initial configuration.
+    """Allow plugins and conftest files to perform initial configuration.
 
     This hook is called for every plugin and initial conftest file
     after command line options have been parsed.
@@ -129,7 +128,7 @@ def pytest_configure(config: "Config") -> None:
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
 
-    :arg _pytest.config.Config config: pytest config object
+    :param _pytest.config.Config config: The pytest config object.
     """
 
 
@@ -143,16 +142,17 @@ def pytest_configure(config: "Config") -> None:
 def pytest_cmdline_parse(
     pluginmanager: "PytestPluginManager", args: List[str]
 ) -> Optional["Config"]:
-    """return initialized config object, parsing the specified args.
+    """Return an initialized config object, parsing the specified args.
 
-    Stops at first non-None result, see :ref:`firstresult`
+    Stops at first non-None result, see :ref:`firstresult`.
 
     .. note::
-        This hook will only be called for plugin classes passed to the ``plugins`` arg when using `pytest.main`_ to
-        perform an in-process test run.
+        This hook will only be called for plugin classes passed to the
+        ``plugins`` arg when using `pytest.main`_ to perform an in-process
+        test run.
 
-    :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
-    :param list[str] args: list of arguments passed on the command line
+    :param _pytest.config.PytestPluginManager pluginmanager: Pytest plugin manager.
+    :param List[str] args: List of arguments passed on the command line.
     """
 
 
@@ -165,37 +165,37 @@ def pytest_cmdline_preparse(config: "Config", args: List[str]) -> None:
     .. note::
         This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
-    :param _pytest.config.Config config: pytest config object
-    :param list[str] args: list of arguments passed on the command line
+    :param _pytest.config.Config config: The pytest config object.
+    :param List[str] args: Arguments passed on the command line.
     """
 
 
 @hookspec(firstresult=True)
 def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
-    """ called for performing the main command line action. The default
+    """Called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop.
 
     .. note::
         This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
-    Stops at first non-None result, see :ref:`firstresult`
+    Stops at first non-None result, see :ref:`firstresult`.
 
-    :param _pytest.config.Config config: pytest config object
+    :param _pytest.config.Config config: The pytest config object.
     """
 
 
 def pytest_load_initial_conftests(
     early_config: "Config", parser: "Parser", args: List[str]
 ) -> None:
-    """ implements the loading of initial conftest files ahead
+    """Called to implement the loading of initial conftest files ahead
     of command line option parsing.
 
     .. note::
         This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
-    :param _pytest.config.Config early_config: pytest config object
-    :param list[str] args: list of arguments passed on the command line
-    :param _pytest.config.argparsing.Parser parser: to add command line options
+    :param _pytest.config.Config early_config: The pytest config object.
+    :param List[str] args: Arguments passed on the command line.
+    :param _pytest.config.argparsing.Parser parser: To add command line options.
     """
 
 
@@ -206,45 +206,57 @@ def pytest_load_initial_conftests(
 
 @hookspec(firstresult=True)
 def pytest_collection(session: "Session") -> Optional[object]:
-    """Perform the collection protocol for the given session.
+    """Perform the collection phase for the given session.
 
     Stops at first non-None result, see :ref:`firstresult`.
     The return value is not used, but only stops further processing.
 
-    The hook is meant to set `session.items` to a sequence of items at least,
-    but normally should follow this procedure:
+    The default collection phase is this (see individual hooks for full details):
 
-      1. Call the pytest_collectstart hook.
-      2. Call the pytest_collectreport hook.
-      3. Call the pytest_collection_modifyitems hook.
-      4. Call the pytest_collection_finish hook.
-      5. Set session.testscollected to the amount of collect items.
-      6. Set `session.items` to a list of items.
+    1. Starting from ``session`` as the initial collector:
+
+      1. ``pytest_collectstart(collector)``
+      2. ``report = pytest_make_collect_report(collector)``
+      3. ``pytest_exception_interact(collector, call, report)`` if an interactive exception occurred
+      4. For each collected node:
+
+        1. If an item, ``pytest_itemcollected(item)``
+        2. If a collector, recurse into it.
+
+      5. ``pytest_collectreport(report)``
+
+    2. ``pytest_collection_modifyitems(session, config, items)``
+
+      1. ``pytest_deselected(items)`` for any deselected items (may be called multiple times)
+
+    3. ``pytest_collection_finish(session)``
+    4. Set ``session.items`` to the list of collected items
+    5. Set ``session.testscollected`` to the number of collected items
 
     You can implement this hook to only perform some action before collection,
     for example the terminal plugin uses it to start displaying the collection
     counter (and returns `None`).
 
-    :param _pytest.main.Session session: the pytest session object
+    :param pytest.Session session: The pytest session object.
     """
 
 
 def pytest_collection_modifyitems(
     session: "Session", config: "Config", items: List["Item"]
 ) -> None:
-    """ called after collection has been performed, may filter or re-order
+    """Called after collection has been performed. May filter or re-order
     the items in-place.
 
-    :param _pytest.main.Session session: the pytest session object
-    :param _pytest.config.Config config: pytest config object
-    :param List[_pytest.nodes.Item] items: list of item objects
+    :param pytest.Session session: The pytest session object.
+    :param _pytest.config.Config config: The pytest config object.
+    :param List[pytest.Item] items: List of item objects.
     """
 
 
 def pytest_collection_finish(session: "Session") -> None:
     """Called after collection has been performed and modified.
 
-    :param _pytest.main.Session session: the pytest session object
+    :param pytest.Session session: The pytest session object.
     """
 
 
@@ -257,27 +269,19 @@ def pytest_ignore_collect(path: py.path.local, config: "Config") -> Optional[boo
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param path: a :py:class:`py.path.local` - the path to analyze
-    :param _pytest.config.Config config: pytest config object
+    :param py.path.local path: The path to analyze.
+    :param _pytest.config.Config config: The pytest config object.
     """
 
 
-@hookspec(firstresult=True, warn_on_impl=COLLECT_DIRECTORY_HOOK)
-def pytest_collect_directory(path: py.path.local, parent) -> Optional[object]:
-    """Called before traversing a directory for collection files.
+def pytest_collect_file(
+    path: py.path.local, parent: "Collector"
+) -> "Optional[Collector]":
+    """Create a Collector for the given path, or None if not relevant.
 
-    Stops at first non-None result, see :ref:`firstresult`.
+    The new node needs to have the specified ``parent`` as a parent.
 
-    :param path: a :py:class:`py.path.local` - the path to analyze
-    """
-
-
-def pytest_collect_file(path: py.path.local, parent) -> "Optional[Collector]":
-    """Return collection Node or None for the given path.
-
-    Any new node needs to have the specified ``parent`` as a parent.
-
-    :param path: a :py:class:`py.path.local` - the path to collect
+    :param py.path.local path: The path to collect.
     """
 
 
@@ -285,7 +289,7 @@ def pytest_collect_file(path: py.path.local, parent) -> "Optional[Collector]":
 
 
 def pytest_collectstart(collector: "Collector") -> None:
-    """ collector starts collecting. """
+    """Collector starts collecting."""
 
 
 def pytest_itemcollected(item: "Item") -> None:
@@ -293,18 +297,22 @@ def pytest_itemcollected(item: "Item") -> None:
 
 
 def pytest_collectreport(report: "CollectReport") -> None:
-    """ collector finished collecting. """
+    """Collector finished collecting."""
 
 
 def pytest_deselected(items: Sequence["Item"]) -> None:
-    """Called for deselected test items, e.g. by keyword."""
+    """Called for deselected test items, e.g. by keyword.
+
+    May be called multiple times.
+    """
 
 
 @hookspec(firstresult=True)
 def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectReport]":
-    """ perform ``collector.collect()`` and return a CollectReport.
+    """Perform ``collector.collect()`` and return a CollectReport.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`.
+    """
 
 
 # -------------------------------------------------------------------------
@@ -322,7 +330,7 @@ def pytest_pycollect_makemodule(path: py.path.local, parent) -> Optional["Module
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param path: a :py:class:`py.path.local` - the path of module to collect
+    :param py.path.local path: The path of module to collect.
     """
 
 
@@ -338,28 +346,31 @@ def pytest_pycollect_makeitem(
 
 @hookspec(firstresult=True)
 def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
-    """ call underlying test function.
+    """Call underlying test function.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`.
+    """
 
 
 def pytest_generate_tests(metafunc: "Metafunc") -> None:
-    """ generate (multiple) parametrized calls to a test function."""
+    """Generate (multiple) parametrized calls to a test function."""
 
 
 @hookspec(firstresult=True)
 def pytest_make_parametrize_id(
     config: "Config", val: object, argname: str
 ) -> Optional[str]:
-    """Return a user-friendly string representation of the given ``val`` that will be used
-    by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
+    """Return a user-friendly string representation of the given ``val``
+    that will be used by @pytest.mark.parametrize calls, or None if the hook
+    doesn't know about ``val``.
+
     The parameter name is available as ``argname``, if required.
 
-    Stops at first non-None result, see :ref:`firstresult`
+    Stops at first non-None result, see :ref:`firstresult`.
 
-    :param _pytest.config.Config config: pytest config object
-    :param val: the parametrized value
-    :param str argname: the automatic parameter name produced by pytest
+    :param _pytest.config.Config config: The pytest config object.
+    :param val: The parametrized value.
+    :param str argname: The automatic parameter name produced by pytest.
     """
 
 
@@ -370,7 +381,7 @@ def pytest_make_parametrize_id(
 
 @hookspec(firstresult=True)
 def pytest_runtestloop(session: "Session") -> Optional[object]:
-    """Performs the main runtest loop (after collection finished).
+    """Perform the main runtest loop (after collection finished).
 
     The default hook implementation performs the runtest protocol for all items
     collected in the session (``session.items``), unless the collection failed
@@ -382,7 +393,7 @@ def pytest_runtestloop(session: "Session") -> Optional[object]:
     If at any point ``session.shouldfail`` or ``session.shouldstop`` are set, the
     loop is terminated after the runtest protocol for the current item is finished.
 
-    :param _pytest.main.Session session: The pytest session object.
+    :param pytest.Session session: The pytest session object.
 
     Stops at first non-None result, see :ref:`firstresult`.
     The return value is not used, but only stops further processing.
@@ -393,7 +404,7 @@ def pytest_runtestloop(session: "Session") -> Optional[object]:
 def pytest_runtest_protocol(
     item: "Item", nextitem: "Optional[Item]"
 ) -> Optional[object]:
-    """Performs the runtest protocol for a single test item.
+    """Perform the runtest protocol for a single test item.
 
     The default runtest protocol is this (see individual hooks for full details):
 
@@ -419,9 +430,8 @@ def pytest_runtest_protocol(
 
     - ``pytest_runtest_logfinish(nodeid, location)``
 
-    :arg item: Test item for which the runtest protocol is performed.
-
-    :arg nextitem: The scheduled-to-be-next test item (or None if this is the end my friend).
+    :param item: Test item for which the runtest protocol is performed.
+    :param nextitem: The scheduled-to-be-next test item (or None if this is the end my friend).
 
     Stops at first non-None result, see :ref:`firstresult`.
     The return value is not used, but only stops further processing.
@@ -477,10 +487,11 @@ def pytest_runtest_teardown(item: "Item", nextitem: Optional["Item"]) -> None:
     includes running the teardown phase of fixtures required by the item (if
     they go out of scope).
 
-    :arg nextitem: The scheduled-to-be-next test item (None if no further
-                   test item is scheduled).  This argument can be used to
-                   perform exact teardowns, i.e. calling just enough finalizers
-                   so that nextitem only needs to call setup-functions.
+    :param nextitem:
+        The scheduled-to-be-next test item (None if no further test item is
+        scheduled). This argument can be used to perform exact teardowns,
+        i.e. calling just enough finalizers so that nextitem only needs to
+        call setup-functions.
     """
 
 
@@ -511,19 +522,15 @@ def pytest_runtest_logreport(report: "TestReport") -> None:
 def pytest_report_to_serializable(
     config: "Config", report: Union["CollectReport", "TestReport"],
 ) -> Optional[Dict[str, Any]]:
-    """
-    Serializes the given report object into a data structure suitable for sending
-    over the wire, e.g. converted to JSON.
-    """
+    """Serialize the given report object into a data structure suitable for
+    sending over the wire, e.g. converted to JSON."""
 
 
 @hookspec(firstresult=True)
 def pytest_report_from_serializable(
     config: "Config", data: Dict[str, Any],
 ) -> Optional[Union["CollectReport", "TestReport"]]:
-    """
-    Restores a report object previously serialized with pytest_report_to_serializable().
-    """
+    """Restore a report object previously serialized with pytest_report_to_serializable()."""
 
 
 # -------------------------------------------------------------------------
@@ -533,11 +540,11 @@ def pytest_report_from_serializable(
 
 @hookspec(firstresult=True)
 def pytest_fixture_setup(
-    fixturedef: "FixtureDef", request: "SubRequest"
+    fixturedef: "FixtureDef[Any]", request: "SubRequest"
 ) -> Optional[object]:
-    """Performs fixture setup execution.
+    """Perform fixture setup execution.
 
-    :return: The return value of the call to the fixture function.
+    :returns: The return value of the call to the fixture function.
 
     Stops at first non-None result, see :ref:`firstresult`.
 
@@ -549,7 +556,7 @@ def pytest_fixture_setup(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: "FixtureDef", request: "SubRequest"
+    fixturedef: "FixtureDef[Any]", request: "SubRequest"
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
@@ -565,7 +572,7 @@ def pytest_sessionstart(session: "Session") -> None:
     """Called after the ``Session`` object has been created and before performing collection
     and entering the run test loop.
 
-    :param _pytest.main.Session session: the pytest session object
+    :param pytest.Session session: The pytest session object.
     """
 
 
@@ -574,15 +581,15 @@ def pytest_sessionfinish(
 ) -> None:
     """Called after whole test run finished, right before returning the exit status to the system.
 
-    :param _pytest.main.Session session: the pytest session object
-    :param int exitstatus: the status which pytest will return to the system
+    :param pytest.Session session: The pytest session object.
+    :param int exitstatus: The status which pytest will return to the system.
     """
 
 
 def pytest_unconfigure(config: "Config") -> None:
     """Called before test process is exited.
 
-    :param _pytest.config.Config config: pytest config object
+    :param _pytest.config.Config config: The pytest config object.
     """
 
 
@@ -597,21 +604,18 @@ def pytest_assertrepr_compare(
     """Return explanation for comparisons in failing assert expressions.
 
     Return None for no custom explanation, otherwise return a list
-    of strings.  The strings will be joined by newlines but any newlines
-    *in* a string will be escaped.  Note that all but the first line will
+    of strings. The strings will be joined by newlines but any newlines
+    *in* a string will be escaped. Note that all but the first line will
     be indented slightly, the intention is for the first line to be a summary.
 
-    :param _pytest.config.Config config: pytest config object
+    :param _pytest.config.Config config: The pytest config object.
     """
 
 
 def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> None:
-    """
-    **(Experimental)**
+    """**(Experimental)** Called whenever an assertion passes.
 
     .. versionadded:: 5.0
-
-    Hook called whenever an assertion *passes*.
 
     Use this hook to do some processing after a passing assertion.
     The original assertion information is available in the `orig` string
@@ -629,32 +633,32 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
     You need to **clean the .pyc** files in your project directory and interpreter libraries
     when enabling this option, as assertions will require to be re-written.
 
-    :param _pytest.nodes.Item item: pytest item object of current test
-    :param int lineno: line number of the assert statement
-    :param string orig: string with original assertion
-    :param string expl: string with assert explanation
+    :param pytest.Item item: pytest item object of current test.
+    :param int lineno: Line number of the assert statement.
+    :param str orig: String with the original assertion.
+    :param str expl: String with the assert explanation.
 
     .. note::
 
         This hook is **experimental**, so its parameters or even the hook itself might
         be changed/removed without warning in any future pytest release.
 
-        If you find this hook useful, please share your feedback opening an issue.
+        If you find this hook useful, please share your feedback in an issue.
     """
 
 
 # -------------------------------------------------------------------------
-# hooks for influencing reporting (invoked from _pytest_terminal)
+# Hooks for influencing reporting (invoked from _pytest_terminal).
 # -------------------------------------------------------------------------
 
 
 def pytest_report_header(
     config: "Config", startdir: py.path.local
 ) -> Union[str, List[str]]:
-    """ return a string or list of strings to be displayed as header info for terminal reporting.
+    """Return a string or list of strings to be displayed as header info for terminal reporting.
 
-    :param _pytest.config.Config config: pytest config object
-    :param startdir: py.path object with the starting dir
+    :param _pytest.config.Config config: The pytest config object.
+    :param py.path.local startdir: The starting dir.
 
     .. note::
 
@@ -674,16 +678,16 @@ def pytest_report_header(
 def pytest_report_collectionfinish(
     config: "Config", startdir: py.path.local, items: Sequence["Item"],
 ) -> Union[str, List[str]]:
-    """
-    .. versionadded:: 3.2
-
-    Return a string or list of strings to be displayed after collection has finished successfully.
+    """Return a string or list of strings to be displayed after collection
+    has finished successfully.
 
     These strings will be displayed after the standard "collected X items" message.
 
-    :param _pytest.config.Config config: pytest config object
-    :param startdir: py.path object with the starting dir
-    :param items: list of pytest items that are going to be executed; this list should not be modified.
+    .. versionadded:: 3.2
+
+    :param _pytest.config.Config config: The pytest config object.
+    :param py.path.local startdir: The starting dir.
+    :param items: List of pytest items that are going to be executed; this list should not be modified.
 
     .. note::
 
@@ -728,9 +732,9 @@ def pytest_terminal_summary(
 ) -> None:
     """Add a section to terminal summary reporting.
 
-    :param _pytest.terminal.TerminalReporter terminalreporter: the internal terminal reporter object
-    :param int exitstatus: the exit status that will be reported back to the OS
-    :param _pytest.config.Config config: pytest config object
+    :param _pytest.terminal.TerminalReporter terminalreporter: The internal terminal reporter object.
+    :param int exitstatus: The exit status that will be reported back to the OS.
+    :param _pytest.config.Config config: The pytest config object.
 
     .. versionadded:: 4.2
         The ``config`` parameter.
@@ -779,8 +783,7 @@ def pytest_warning_recorded(
     nodeid: str,
     location: Optional[Tuple[str, int, str]],
 ) -> None:
-    """
-    Process a warning captured by the internal pytest warnings plugin.
+    """Process a warning captured by the internal pytest warnings plugin.
 
     :param warnings.WarningMessage warning_message:
         The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
@@ -793,7 +796,8 @@ def pytest_warning_recorded(
         * ``"collect"``: during test collection.
         * ``"runtest"``: during test execution.
 
-    :param str nodeid: full id of the item
+    :param str nodeid:
+        Full id of the item.
 
     :param tuple|None location:
         When available, holds information about the execution context of the captured
@@ -822,12 +826,12 @@ def pytest_internalerror(
 def pytest_keyboard_interrupt(
     excinfo: "ExceptionInfo[Union[KeyboardInterrupt, Exit]]",
 ) -> None:
-    """ called for keyboard interrupt. """
+    """Called for keyboard interrupt."""
 
 
 def pytest_exception_interact(
     node: Union["Item", "Collector"],
-    call: "CallInfo[object]",
+    call: "CallInfo[Any]",
     report: Union["CollectReport", "TestReport"],
 ) -> None:
     """Called when an exception was raised which can potentially be
@@ -845,20 +849,22 @@ def pytest_exception_interact(
 
 
 def pytest_enter_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
-    """ called upon pdb.set_trace(), can be used by plugins to take special
-    action just before the python debugger enters in interactive mode.
+    """Called upon pdb.set_trace().
 
-    :param _pytest.config.Config config: pytest config object
-    :param pdb.Pdb pdb: Pdb instance
+    Can be used by plugins to take special action just before the python
+    debugger enters interactive mode.
+
+    :param _pytest.config.Config config: The pytest config object.
+    :param pdb.Pdb pdb: The Pdb instance.
     """
 
 
 def pytest_leave_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
-    """ called when leaving pdb (e.g. with continue after pdb.set_trace()).
+    """Called when leaving pdb (e.g. with continue after pdb.set_trace()).
 
     Can be used by plugins to take special action just after the python
     debugger leaves interactive mode.
 
-    :param _pytest.config.Config config: pytest config object
-    :param pdb.Pdb pdb: Pdb instance
+    :param _pytest.config.Config config: The pytest config object.
+    :param pdb.Pdb pdb: The Pdb instance.
     """

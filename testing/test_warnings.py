@@ -13,9 +13,7 @@ WARNINGS_SUMMARY_HEADER = "warnings summary"
 
 @pytest.fixture
 def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
-    """
-    Create a test file which calls a function in a module which generates warnings.
-    """
+    """Create a test file which calls a function in a module which generates warnings."""
     testdir.syspathinsert()
     test_name = request.function.__name__
     module_name = test_name.lstrip("test_") + "_module"
@@ -42,9 +40,7 @@ def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
 
 @pytest.mark.filterwarnings("default")
 def test_normal_flow(testdir, pyfile_with_warnings):
-    """
-    Check that the warnings section is displayed.
-    """
+    """Check that the warnings section is displayed."""
     result = testdir.runpytest(pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
@@ -180,9 +176,8 @@ def test_works_with_filterwarnings(testdir):
 
 @pytest.mark.parametrize("default_config", ["ini", "cmdline"])
 def test_filterwarnings_mark(testdir, default_config):
-    """
-    Test ``filterwarnings`` mark works and takes precedence over command line and ini options.
-    """
+    """Test ``filterwarnings`` mark works and takes precedence over command
+    line and ini options."""
     if default_config == "ini":
         testdir.makeini(
             """
@@ -245,9 +240,8 @@ def test_filterwarnings_mark_registration(testdir):
 def test_warning_captured_hook(testdir):
     testdir.makeconftest(
         """
-        from _pytest.warnings import _issue_warning_captured
         def pytest_configure(config):
-            _issue_warning_captured(UserWarning("config warning"), config.hook, stacklevel=2)
+            config.issue_config_time_warning(UserWarning("config warning"), stacklevel=2)
     """
     )
     testdir.makepyfile(
@@ -305,9 +299,7 @@ def test_warning_captured_hook(testdir):
 
 @pytest.mark.filterwarnings("always")
 def test_collection_warnings(testdir):
-    """
-    Check that we also capture warnings issued during test collection (#3251).
-    """
+    """Check that we also capture warnings issued during test collection (#3251)."""
     testdir.makepyfile(
         """
         import warnings
@@ -387,7 +379,7 @@ def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
 
 @pytest.mark.parametrize("ignore_on_cmdline", [True, False])
 def test_option_precedence_cmdline_over_ini(testdir, ignore_on_cmdline):
-    """filters defined in the command-line should take precedence over filters in ini files (#3946)."""
+    """Filters defined in the command-line should take precedence over filters in ini files (#3946)."""
     testdir.makeini(
         """
         [pytest]
@@ -521,7 +513,7 @@ class TestDeprecationWarningsByDefault:
 
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 @pytest.mark.skip(
-    reason="This test should be enabled again before pytest 6.0 is released"
+    reason="This test should be enabled again before pytest 7.0 is released"
 )
 def test_deprecation_warning_as_error(testdir, change_default):
     """This ensures that PytestDeprecationWarnings raised by pytest are turned into errors.
@@ -723,10 +715,22 @@ class TestStackLevel:
         assert "config{sep}__init__.py".format(sep=os.sep) in file
         assert func == "_preparse"
 
+    @pytest.mark.filterwarnings("default")
+    def test_conftest_warning_captured(self, testdir: Testdir) -> None:
+        """Warnings raised during importing of conftest.py files is captured (#2891)."""
+        testdir.makeconftest(
+            """
+            import warnings
+            warnings.warn(UserWarning("my custom warning"))
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["conftest.py:2", "*UserWarning: my custom warning*"]
+        )
+
     def test_issue4445_import_plugin(self, testdir, capwarn):
-        """#4445: Make sure the warning points to a reasonable location
-        See origin of _issue_warning_captured at: _pytest.config.__init__.py:585
-        """
+        """#4445: Make sure the warning points to a reasonable location"""
         testdir.makepyfile(
             some_plugin="""
             import pytest
@@ -745,32 +749,7 @@ class TestStackLevel:
 
         assert "skipped plugin 'some_plugin': thing" in str(warning.message)
         assert "config{sep}__init__.py".format(sep=os.sep) in file
-        assert func == "import_plugin"
-
-    def test_issue4445_resultlog(self, testdir, capwarn):
-        """#4445: Make sure the warning points to a reasonable location
-        See origin of _issue_warning_captured at: _pytest.resultlog.py:35
-        """
-        testdir.makepyfile(
-            """
-            def test_dummy():
-                pass
-        """
-        )
-        # Use parseconfigure() because the warning in resultlog.py is triggered in
-        # the pytest_configure hook
-        testdir.parseconfigure(
-            "--result-log={dir}".format(dir=testdir.tmpdir.join("result.log"))
-        )
-
-        # with stacklevel=2 the warning originates from resultlog.pytest_configure
-        # and is thrown when --result-log is used
-        warning, location = capwarn.captured.pop()
-        file, _, func = location
-
-        assert "--result-log is deprecated" in str(warning.message)
-        assert "resultlog.py" in file
-        assert func == "pytest_configure"
+        assert func == "_warn_about_skipped_plugins"
 
     def test_issue4445_issue5928_mark_generator(self, testdir):
         """#4445 and #5928: Make sure the warning from an unknown mark points to

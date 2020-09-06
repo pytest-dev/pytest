@@ -41,6 +41,7 @@ from _pytest.compat import ATTRS_EQ_FIELD
 from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
+from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
     from typing import Type
@@ -71,9 +72,8 @@ class Code:
 
     @property
     def path(self) -> Union[py.path.local, str]:
-        """Return a path object pointing to source code (or a str in case
-        of OSError / non-existing file).
-        """
+        """Return a path object pointing to source code, or an ``str`` in
+        case of ``OSError`` / non-existing file."""
         if not self.raw.co_filename:
             return ""
         try:
@@ -262,7 +262,15 @@ class TracebackEntry:
             raise
         except BaseException:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" % (self.path, self.lineno + 1, name, line)
+        # This output does not quite match Python's repr for traceback entries,
+        # but changing it to do so would break certain plugins.  See
+        # https://github.com/pytest-dev/pytest/pull/7535/ for details.
+        return "  File %r:%d in %s\n  %s\n" % (
+            str(self.path),
+            self.lineno + 1,
+            name,
+            line,
+        )
 
     @property
     def name(self) -> str:
@@ -326,11 +334,11 @@ class Traceback(List[TracebackEntry]):
 
     @overload
     def __getitem__(self, key: int) -> TracebackEntry:
-        raise NotImplementedError()
+        ...
 
     @overload  # noqa: F811
     def __getitem__(self, key: slice) -> "Traceback":  # noqa: F811
-        raise NotImplementedError()
+        ...
 
     def __getitem__(  # noqa: F811
         self, key: Union[int, slice]
@@ -412,15 +420,16 @@ class ExceptionInfo(Generic[_E]):
         exc_info: Tuple["Type[_E]", "_E", TracebackType],
         exprinfo: Optional[str] = None,
     ) -> "ExceptionInfo[_E]":
-        """Returns an ExceptionInfo for an existing exc_info tuple.
+        """Return an ExceptionInfo for an existing exc_info tuple.
 
         .. warning::
 
             Experimental API
 
-        :param exprinfo: a text string helping to determine if we should
-                         strip ``AssertionError`` from the output, defaults
-                         to the exception message/``__str__()``
+        :param exprinfo:
+            A text string helping to determine if we should strip
+            ``AssertionError`` from the output. Defaults to the exception
+            message/``__str__()``.
         """
         _striptext = ""
         if exprinfo is None and isinstance(exc_info[1], AssertionError):
@@ -436,15 +445,16 @@ class ExceptionInfo(Generic[_E]):
     def from_current(
         cls, exprinfo: Optional[str] = None
     ) -> "ExceptionInfo[BaseException]":
-        """Returns an ExceptionInfo matching the current traceback.
+        """Return an ExceptionInfo matching the current traceback.
 
         .. warning::
 
             Experimental API
 
-        :param exprinfo: a text string helping to determine if we should
-                         strip ``AssertionError`` from the output, defaults
-                         to the exception message/``__str__()``
+        :param exprinfo:
+            A text string helping to determine if we should strip
+            ``AssertionError`` from the output. Defaults to the exception
+            message/``__str__()``.
         """
         tup = sys.exc_info()
         assert tup[0] is not None, "no current exception"
@@ -459,7 +469,7 @@ class ExceptionInfo(Generic[_E]):
         return cls(None)
 
     def fill_unfilled(self, exc_info: Tuple["Type[_E]", _E, TracebackType]) -> None:
-        """fill an unfilled ExceptionInfo created with for_later()"""
+        """Fill an unfilled ExceptionInfo created with ``for_later()``."""
         assert self._excinfo is None, "ExceptionInfo was already filled"
         self._excinfo = exc_info
 
@@ -560,7 +570,8 @@ class ExceptionInfo(Generic[_E]):
             Show locals per traceback entry.
             Ignored if ``style=="native"``.
 
-        :param str style: long|short|no|native|value traceback style
+        :param str style:
+            long|short|no|native|value traceback style.
 
         :param bool abspath:
             If paths should be changed to absolute or left unchanged.
@@ -575,7 +586,8 @@ class ExceptionInfo(Generic[_E]):
         :param bool truncate_locals:
             With ``showlocals==True``, make sure locals can be safely represented as strings.
 
-        :param bool chain: if chained exceptions in Python 3 should be shown.
+        :param bool chain:
+            If chained exceptions in Python 3 should be shown.
 
         .. versionchanged:: 3.9
 
@@ -602,7 +614,7 @@ class ExceptionInfo(Generic[_E]):
         )
         return fmt.repr_excinfo(self)
 
-    def match(self, regexp: "Union[str, Pattern]") -> "Literal[True]":
+    def match(self, regexp: "Union[str, Pattern[str]]") -> "Literal[True]":
         """Check whether the regular expression `regexp` matches the string
         representation of the exception using :func:`python:re.search`.
 
@@ -635,7 +647,7 @@ class FormattedExcinfo:
     astcache = attr.ib(default=attr.Factory(dict), init=False, repr=False)
 
     def _getindent(self, source: "Source") -> int:
-        # figure out indent for given source
+        # Figure out indent for the given source.
         try:
             s = str(source.getstatement(len(source) - 1))
         except KeyboardInterrupt:
@@ -665,9 +677,9 @@ class FormattedExcinfo:
 
     def get_source(
         self,
-        source: "Source",
+        source: Optional["Source"],
         line_index: int = -1,
-        excinfo: Optional[ExceptionInfo] = None,
+        excinfo: Optional[ExceptionInfo[BaseException]] = None,
         short: bool = False,
     ) -> List[str]:
         """Return formatted and marked up source lines."""
@@ -692,11 +704,14 @@ class FormattedExcinfo:
         return lines
 
     def get_exconly(
-        self, excinfo: ExceptionInfo, indent: int = 4, markall: bool = False
+        self,
+        excinfo: ExceptionInfo[BaseException],
+        indent: int = 4,
+        markall: bool = False,
     ) -> List[str]:
         lines = []
         indentstr = " " * indent
-        # get the real exception information out
+        # Get the real exception information out.
         exlines = excinfo.exconly(tryshort=True).split("\n")
         failindent = self.fail_marker + indentstr[1:]
         for line in exlines:
@@ -722,8 +737,7 @@ class FormattedExcinfo:
                         str_repr = saferepr(value)
                     else:
                         str_repr = safeformat(value)
-                    # if len(str_repr) < 70 or not isinstance(value,
-                    #                            (list, tuple, dict)):
+                    # if len(str_repr) < 70 or not isinstance(value, (list, tuple, dict)):
                     lines.append("{:<10} = {}".format(name, str_repr))
                     # else:
                     #    self._line("%-10s =\\" % (name,))
@@ -733,7 +747,9 @@ class FormattedExcinfo:
         return None
 
     def repr_traceback_entry(
-        self, entry: TracebackEntry, excinfo: Optional[ExceptionInfo] = None
+        self,
+        entry: TracebackEntry,
+        excinfo: Optional[ExceptionInfo[BaseException]] = None,
     ) -> "ReprEntry":
         lines = []  # type: List[str]
         style = entry._repr_style if entry._repr_style is not None else self.style
@@ -775,7 +791,7 @@ class FormattedExcinfo:
                 path = np
         return path
 
-    def repr_traceback(self, excinfo: ExceptionInfo) -> "ReprTraceback":
+    def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> "ReprTraceback":
         traceback = excinfo.traceback
         if self.tbfilter:
             traceback = traceback.filter()
@@ -801,16 +817,17 @@ class FormattedExcinfo:
     def _truncate_recursive_traceback(
         self, traceback: Traceback
     ) -> Tuple[Traceback, Optional[str]]:
-        """
-        Truncate the given recursive traceback trying to find the starting point
-        of the recursion.
+        """Truncate the given recursive traceback trying to find the starting
+        point of the recursion.
 
-        The detection is done by going through each traceback entry and finding the
-        point in which the locals of the frame are equal to the locals of a previous frame (see ``recursionindex()``.
+        The detection is done by going through each traceback entry and
+        finding the point in which the locals of the frame are equal to the
+        locals of a previous frame (see ``recursionindex()``).
 
-        Handle the situation where the recursion process might raise an exception (for example
-        comparing numpy arrays using equality raises a TypeError), in which case we do our best to
-        warn the user of the error and show a limited traceback.
+        Handle the situation where the recursion process might raise an
+        exception (for example comparing numpy arrays using equality raises a
+        TypeError), in which case we do our best to warn the user of the
+        error and show a limited traceback.
         """
         try:
             recursionindex = traceback.recursionindex()
@@ -839,12 +856,14 @@ class FormattedExcinfo:
 
         return traceback, extraline
 
-    def repr_excinfo(self, excinfo: ExceptionInfo) -> "ExceptionChainRepr":
+    def repr_excinfo(
+        self, excinfo: ExceptionInfo[BaseException]
+    ) -> "ExceptionChainRepr":
         repr_chain = (
             []
         )  # type: List[Tuple[ReprTraceback, Optional[ReprFileLocation], Optional[str]]]
-        e = excinfo.value
-        excinfo_ = excinfo  # type: Optional[ExceptionInfo]
+        e = excinfo.value  # type: Optional[BaseException]
+        excinfo_ = excinfo  # type: Optional[ExceptionInfo[BaseException]]
         descr = None
         seen = set()  # type: Set[int]
         while e is not None and id(e) not in seen:
@@ -855,8 +874,8 @@ class FormattedExcinfo:
                     excinfo_._getreprcrash() if self.style != "value" else None
                 )  # type: Optional[ReprFileLocation]
             else:
-                # fallback to native repr if the exception doesn't have a traceback:
-                # ExceptionInfo objects require a full traceback to work
+                # Fallback to native repr if the exception doesn't have a traceback:
+                # ExceptionInfo objects require a full traceback to work.
                 reprtraceback = ReprTracebackNative(
                     traceback.format_exception(type(e), e, None)
                 )
@@ -907,7 +926,7 @@ class TerminalRepr:
 # This class is abstract -- only subclasses are instantiated.
 @attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
 class ExceptionRepr(TerminalRepr):
-    # Provided by in subclasses.
+    # Provided by subclasses.
     reprcrash = None  # type: Optional[ReprFileLocation]
     reprtraceback = None  # type: ReprTraceback
 
@@ -934,7 +953,7 @@ class ExceptionChainRepr(ExceptionRepr):
     def __attrs_post_init__(self) -> None:
         super().__attrs_post_init__()
         # reprcrash and reprtraceback of the outermost (the newest) exception
-        # in the chain
+        # in the chain.
         self.reprtraceback = self.chain[-1][0]
         self.reprcrash = self.chain[-1][1]
 
@@ -966,7 +985,7 @@ class ReprTraceback(TerminalRepr):
     entrysep = "_ "
 
     def toterminal(self, tw: TerminalWriter) -> None:
-        # the entries might have different styles
+        # The entries might have different styles.
         for i, entry in enumerate(self.reprentries):
             if entry.style == "long":
                 tw.line("")
@@ -1009,7 +1028,7 @@ class ReprEntry(TerminalRepr):
     style = attr.ib(type="_TracebackStyle")
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
-        """Writes the source code portions of a list of traceback entries with syntax highlighting.
+        """Write the source code portions of a list of traceback entries with syntax highlighting.
 
         Usually entries are lines like these:
 
@@ -1030,25 +1049,21 @@ class ReprEntry(TerminalRepr):
         # such as ">   assert 0"
         fail_marker = "{}   ".format(FormattedExcinfo.fail_marker)
         indent_size = len(fail_marker)
-        indents = []
-        source_lines = []
-        failure_lines = []
-        seeing_failures = False
-        for line in self.lines:
-            is_source_line = not line.startswith(fail_marker)
-            if is_source_line:
-                assert not seeing_failures, (
-                    "Unexpected failure lines between source lines:\n"
-                    + "\n".join(self.lines)
-                )
+        indents = []  # type: List[str]
+        source_lines = []  # type: List[str]
+        failure_lines = []  # type: List[str]
+        for index, line in enumerate(self.lines):
+            is_failure_line = line.startswith(fail_marker)
+            if is_failure_line:
+                # from this point on all lines are considered part of the failure
+                failure_lines.extend(self.lines[index:])
+                break
+            else:
                 if self.style == "value":
                     source_lines.append(line)
                 else:
                     indents.append(line[:indent_size])
                     source_lines.append(line[indent_size:])
-            else:
-                seeing_failures = True
-                failure_lines.append(line)
 
         tw._write_source(source_lines, indents)
 
@@ -1091,8 +1106,8 @@ class ReprFileLocation(TerminalRepr):
     message = attr.ib(type=str)
 
     def toterminal(self, tw: TerminalWriter) -> None:
-        # filename and lineno output for each entry,
-        # using an output format that most editors understand
+        # Filename and lineno output for each entry, using an output format
+        # that most editors understand.
         msg = self.message
         i = msg.find("\n")
         if i != -1:
@@ -1167,17 +1182,17 @@ def getfslineno(obj: object) -> Tuple[Union[str, py.path.local], int]:
     return code.path, code.firstlineno
 
 
-# relative paths that we use to filter traceback entries from appearing to the user;
-# see filter_traceback
+# Relative paths that we use to filter traceback entries from appearing to the user;
+# see filter_traceback.
 # note: if we need to add more paths than what we have now we should probably use a list
-# for better maintenance
+# for better maintenance.
 
-_PLUGGY_DIR = py.path.local(pluggy.__file__.rstrip("oc"))
+_PLUGGY_DIR = Path(pluggy.__file__.rstrip("oc"))
 # pluggy is either a package or a single module depending on the version
-if _PLUGGY_DIR.basename == "__init__.py":
-    _PLUGGY_DIR = _PLUGGY_DIR.dirpath()
-_PYTEST_DIR = py.path.local(_pytest.__file__).dirpath()
-_PY_DIR = py.path.local(py.__file__).dirpath()
+if _PLUGGY_DIR.name == "__init__.py":
+    _PLUGGY_DIR = _PLUGGY_DIR.parent
+_PYTEST_DIR = Path(_pytest.__file__).parent
+_PY_DIR = Path(py.__file__).parent
 
 
 def filter_traceback(entry: TracebackEntry) -> bool:
@@ -1189,15 +1204,23 @@ def filter_traceback(entry: TracebackEntry) -> bool:
     * internal traceback from pytest or its internal libraries, py and pluggy.
     """
     # entry.path might sometimes return a str object when the entry
-    # points to dynamically generated code
-    # see https://bitbucket.org/pytest-dev/py/issues/71
+    # points to dynamically generated code.
+    # See https://bitbucket.org/pytest-dev/py/issues/71.
     raw_filename = entry.frame.code.raw.co_filename
     is_generated = "<" in raw_filename and ">" in raw_filename
     if is_generated:
         return False
+
     # entry.path might point to a non-existing file, in which case it will
-    # also return a str object. see #1133
-    p = py.path.local(entry.path)
-    return (
-        not p.relto(_PLUGGY_DIR) and not p.relto(_PYTEST_DIR) and not p.relto(_PY_DIR)
-    )
+    # also return a str object. See #1133.
+    p = Path(entry.path)
+
+    parents = p.parents
+    if _PLUGGY_DIR in parents:
+        return False
+    if _PYTEST_DIR in parents:
+        return False
+    if _PY_DIR in parents:
+        return False
+
+    return True

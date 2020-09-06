@@ -1,1 +1,0 @@
-``--log-file`` CLI option and ``log_file`` ini marker now create subdirectories if needed.

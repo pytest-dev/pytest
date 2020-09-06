@@ -1,6 +1,4 @@
-"""
-support for presenting detailed information in failing assertions.
-"""
+"""Support for presenting detailed information in failing assertions."""
 import sys
 from typing import Any
 from typing import Generator
@@ -55,11 +53,11 @@ def register_assert_rewrite(*names: str) -> None:
     actually imported, usually in your __init__.py if you are a plugin
     using a package.
 
-    :raise TypeError: if the given module names are not strings.
+    :raises TypeError: If the given module names are not strings.
     """
     for name in names:
         if not isinstance(name, str):
-            msg = "expected module names as *args, got {0} instead"
+            msg = "expected module names as *args, got {0} instead"  # type: ignore[unreachable]
             raise TypeError(msg.format(repr(names)))
     for hook in sys.meta_path:
         if isinstance(hook, rewrite.AssertionRewritingHook):
@@ -105,9 +103,9 @@ def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
 
 
 def pytest_collection(session: "Session") -> None:
-    # this hook is only called when test modules are collected
+    # This hook is only called when test modules are collected
     # so for example not in the master process of pytest-xdist
-    # (which does not collect test modules)
+    # (which does not collect test modules).
     assertstate = session.config._store.get(assertstate_key, None)
     if assertstate:
         if assertstate.hook is not None:
@@ -116,18 +114,17 @@ def pytest_collection(session: "Session") -> None:
 
 @hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
-    """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks
+    """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks.
 
-    The rewrite module will use util._reprcompare if
-    it exists to use custom reporting via the
-    pytest_assertrepr_compare hook.  This sets up this custom
+    The rewrite module will use util._reprcompare if it exists to use custom
+    reporting via the pytest_assertrepr_compare hook.  This sets up this custom
     comparison for the test.
     """
 
     ihook = item.ihook
 
     def callbinrepr(op, left: object, right: object) -> Optional[str]:
-        """Call the pytest_assertrepr_compare hook and prepare the result
+        """Call the pytest_assertrepr_compare hook and prepare the result.
 
         This uses the first result from the hook and then ensures the
         following:

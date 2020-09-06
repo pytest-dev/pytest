@@ -1,7 +1,7 @@
 pytest-2.6.1: fixes and new xfail feature
 ===========================================================================
 
-pytest is a mature Python testing tool with more than a 1100 tests
+pytest is a mature Python testing tool with more than 1100 tests
 against itself, passing on many different interpreters and platforms.
 The 2.6.1 release is drop-in compatible to 2.5.2 and actually fixes some
 regressions introduced with 2.6.0.  It also brings a little feature

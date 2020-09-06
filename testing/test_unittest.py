@@ -1,4 +1,5 @@
 import gc
+import sys
 from typing import List
 
 import pytest
@@ -1196,9 +1197,7 @@ def test_pdb_teardown_called(testdir, monkeypatch) -> None:
 
 @pytest.mark.parametrize("mark", ["@unittest.skip", "@pytest.mark.skip"])
 def test_pdb_teardown_skipped(testdir, monkeypatch, mark: str) -> None:
-    """
-    With --pdb, setUp and tearDown should not be called for skipped tests.
-    """
+    """With --pdb, setUp and tearDown should not be called for skipped tests."""
     tracked = []  # type: List[str]
     monkeypatch.setattr(pytest, "test_pdb_teardown_skipped", tracked, raising=False)
 
@@ -1243,3 +1242,26 @@ def test_asynctest_support(testdir):
     testdir.copy_example("unittest/test_unittest_asynctest.py")
     reprec = testdir.inline_run()
     reprec.assertoutcome(failed=1, passed=2)
+
+
+def test_plain_unittest_does_not_support_async(testdir):
+    """Async functions in plain unittest.TestCase subclasses are not supported without plugins.
+
+    This test exists here to avoid introducing this support by accident, leading users
+    to expect that it works, rather than doing so intentionally as a feature.
+
+    See https://github.com/pytest-dev/pytest-asyncio/issues/180 for more context.
+    """
+    testdir.copy_example("unittest/test_unittest_plain_async.py")
+    result = testdir.runpytest_subprocess()
+    if hasattr(sys, "pypy_version_info"):
+        # in PyPy we can't reliable get the warning about the coroutine not being awaited,
+        # because it depends on the coroutine being garbage collected; given that
+        # we are running in a subprocess, that's difficult to enforce
+        expected_lines = ["*1 passed*"]
+    else:
+        expected_lines = [
+            "*RuntimeWarning: coroutine * was never awaited",
+            "*1 passed*",
+        ]
+    result.stdout.fnmatch_lines(expected_lines)

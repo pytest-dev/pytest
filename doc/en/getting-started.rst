@@ -28,7 +28,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 6.0.0rc1
+    pytest 6.0.1
 
 .. _`simpletest`:
 
@@ -111,6 +111,10 @@ Execute the test function with “quiet” reporting mode:
     $ pytest -q test_sysexit.py
     .                                                                    [100%]
     1 passed in 0.12s
+
+.. note::
+
+    The ``-q/--quiet`` flag keeps the output brief in this and following examples.
 
 Group multiple tests in a class
 --------------------------------------------------------------

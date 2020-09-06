@@ -5,33 +5,82 @@ Our current policy for releasing is to aim for a bug-fix release every few weeks
 is to get fixes and new features out instead of trying to cram a ton of features into a release and by consequence
 taking a lot of time to make a new one.
 
+The git commands assume the following remotes are setup:
+
+* ``origin``: your own fork of the repository.
+* ``upstream``: the ``pytest-dev/pytest`` official repository.
+
 Preparing: Automatic Method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We have developed an automated workflow for releases, that uses GitHub workflows and is triggered
-by opening an issue or issuing a comment one.
+by opening an issue.
 
-The comment must be in the form::
+Bug-fix releases
+^^^^^^^^^^^^^^^^
 
-    @pytestbot please prepare release from BRANCH
+A bug-fix release is always done from a maintenance branch, so for example to release bug-fix
+``5.1.2``, open a new issue and add this comment to the body::
 
-Where ``BRANCH`` is ``master`` or one of the maintenance branches.
+    @pytestbot please prepare release from 5.1.x
 
-After that, the workflow should publish a PR and notify that it has done so as a comment
-in the original issue.
+Where ``5.1.x`` is the maintenance branch for the ``5.1`` series.
+
+The automated workflow will publish a PR and notify it as a comment in the issue.
+
+Minor releases
+^^^^^^^^^^^^^^
+
+1. Create a new maintenance branch from ``master``::
+
+        git fetch --all
+        git branch 5.2.x upstream/master
+        git push upstream 5.2.x
+
+2. Open a new issue and add this comment to the body::
+
+    @pytestbot please prepare release from 5.2.x
+
+The automated workflow will publish a PR and notify it as a comment in the issue.
+
+Major and release candidates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Create a new maintenance branch from ``master``::
+
+        git fetch --all
+        git branch 6.0.x upstream/master
+        git push upstream 6.0.x
+
+2. For a **major release**, open a new issue and add this comment in the body::
+
+        @pytestbot please prepare major release from 6.0.x
+
+   For a **release candidate**, the comment must be (TODO: `#7551 <https://github.com/pytest-dev/pytest/issues/7551>`__)::
+
+        @pytestbot please prepare release candidate from 6.0.x
+
+The automated workflow will publish a PR and notify it as a comment in the issue.
+
+At this point on, this follows the same workflow as other maintenance branches: bug-fixes are merged
+into ``master`` and ported back to the maintenance branch, even for release candidates.
+
+**A note about release candidates**
+
+During release candidates we can merge small improvements into
+the maintenance branch before releasing the final major version, however we must take care
+to avoid introducing big changes at this stage.
 
 Preparing: Manual Method
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. important::
-
-    pytest releases must be prepared on **Linux** because the docs and examples expect
-    to be executed on that platform.
+**Important**: pytest releases must be prepared on **Linux** because the docs and examples expect
+to be executed on that platform.
 
 To release a version ``MAJOR.MINOR.PATCH``, follow these steps:
 
-#. For major and minor releases, create a new branch ``MAJOR.MINOR.x`` from the
-   latest ``master`` and push it to the ``pytest-dev/pytest`` repo.
+#. For major and minor releases, create a new branch ``MAJOR.MINOR.x`` from
+   ``upstream/master`` and push it to ``upstream``.
 
 #. Create a branch ``release-MAJOR.MINOR.PATCH`` from the ``MAJOR.MINOR.x`` branch.
 
@@ -65,9 +114,9 @@ Both automatic and manual processes described above follow the same steps from t
 
        git fetch --all --prune
        git checkout origin/master -b cherry-pick-release
-       git cherry-pick --no-commit -m1 origin/MAJOR.MINOR.x
-       git checkout origin/master -- changelog
-       git commit  # no arguments
+       git cherry-pick -x -m1 upstream/MAJOR.MINOR.x
+
+#. Open a PR for ``cherry-pick-release`` and merge it once CI passes. No need to wait for approvals if there were no conflicts on the previous step.
 
 #. Send an email announcement with the contents from::
 

@@ -1,7 +1,5 @@
 # PYTHON_ARGCOMPLETE_OK
-"""
-pytest: unit and functional testing with Python.
-"""
+"""pytest: unit and functional testing with Python."""
 from . import collect
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite

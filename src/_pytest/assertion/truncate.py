@@ -1,5 +1,4 @@
-"""
-Utilities for truncating assertion output.
+"""Utilities for truncating assertion output.
 
 Current default behaviour is to truncate assertion explanations at
 ~8 terminal lines, unless running in "-vv" mode or running on CI.
@@ -19,18 +18,14 @@ USAGE_MSG = "use '-vv' to show"
 def truncate_if_required(
     explanation: List[str], item: Item, max_length: Optional[int] = None
 ) -> List[str]:
-    """
-    Truncate this assertion explanation if the given test item is eligible.
-    """
+    """Truncate this assertion explanation if the given test item is eligible."""
     if _should_truncate_item(item):
         return _truncate_explanation(explanation)
     return explanation
 
 
 def _should_truncate_item(item: Item) -> bool:
-    """
-    Whether or not this test item is eligible for truncation.
-    """
+    """Whether or not this test item is eligible for truncation."""
     verbose = item.config.option.verbose
     return verbose < 2 and not _running_on_ci()
 
@@ -46,8 +41,7 @@ def _truncate_explanation(
     max_lines: Optional[int] = None,
     max_chars: Optional[int] = None,
 ) -> List[str]:
-    """
-    Truncate given list of strings that makes up the assertion explanation.
+    """Truncate given list of strings that makes up the assertion explanation.
 
     Truncates to either 8 lines, or 640 characters - whichever the input reaches
     first. The remaining lines will be replaced by a usage message.

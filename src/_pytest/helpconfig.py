@@ -1,4 +1,4 @@
-""" version info, help messages, tracing configuration.  """
+"""Version info, help messages, tracing configuration."""
 import os
 import sys
 from argparse import Action
@@ -16,8 +16,9 @@ from _pytest.config.argparsing import Parser
 
 
 class HelpAction(Action):
-    """This is an argparse Action that will raise an exception in
-    order to skip the rest of the argument parsing when --help is passed.
+    """An argparse Action that will raise an exception in order to skip the
+    rest of the argument parsing when --help is passed.
+
     This prevents argparse from quitting due to missing required arguments
     when any are defined, for example by ``pytest_addoption``.
     This is similar to the way that the builtin argparse --help option is
@@ -37,7 +38,7 @@ class HelpAction(Action):
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, self.const)
 
-        # We should only skip the rest of the parsing after preparse is done
+        # We should only skip the rest of the parsing after preparse is done.
         if getattr(parser._parser, "after_preparse", False):
             raise PrintHelp
 
@@ -170,6 +171,8 @@ def showhelp(config: Config) -> None:
         help, type, default = config._parser._inidict[name]
         if type is None:
             type = "string"
+        if help is None:
+            raise TypeError("help argument cannot be None for {}".format(name))
         spec = "{} ({}):".format(name, type)
         tw.write("  %s" % spec)
         spec_len = len(spec)
@@ -191,9 +194,10 @@ def showhelp(config: Config) -> None:
             tw.write(" " * (indent_len - spec_len - 2))
             wrapped = textwrap.wrap(help, columns - indent_len, break_on_hyphens=False)
 
-            tw.line(wrapped[0])
-            for line in wrapped[1:]:
-                tw.line(indent + line)
+            if wrapped:
+                tw.line(wrapped[0])
+                for line in wrapped[1:]:
+                    tw.line(indent + line)
 
     tw.line()
     tw.line("environment variables:")

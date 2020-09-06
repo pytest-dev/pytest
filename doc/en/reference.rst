@@ -138,7 +138,7 @@ pytest.mark.parametrize
 
 **Tutorial**: :doc:`parametrize`.
 
-.. automethod:: _pytest.python.Metafunc.parametrize
+This mark has the same signature as :py:meth:`_pytest.python.Metafunc.parametrize`; see there.
 
 
 .. _`pytest.mark.skip ref`:
@@ -180,14 +180,17 @@ pytest.mark.usefixtures
 
 Mark a test function as using the given fixture names.
 
-.. warning::
-
-    This mark has no effect when applied
-    to a **fixture** function.
-
 .. py:function:: pytest.mark.usefixtures(*names)
 
-    :param args: the names of the fixture to use, as strings
+    :param args: The names of the fixture to use, as strings.
+
+.. note::
+
+    When using `usefixtures` in hooks, it can only load fixtures when applied to a test function before test setup
+    (for example in the `pytest_collection_modifyitems` hook).
+
+    Also not that his mark has no effect when applied to **fixtures**.
+
 
 
 .. _`pytest.mark.xfail ref`:
@@ -206,8 +209,10 @@ Marks a test function as *expected to fail*.
         Condition for marking the test function as xfail (``True/False`` or a
         :ref:`condition string <string conditions>`). If a bool, you also have
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
-    :keyword str reason: Reason why the test function is marked as xfail.
-    :keyword Exception raises: Exception subclass expected to be raised by the test function; other exceptions will fail the test.
+    :keyword str reason:
+        Reason why the test function is marked as xfail.
+    :keyword Type[Exception] raises:
+        Exception subclass expected to be raised by the test function; other exceptions will fail the test.
     :keyword bool run:
         If the test function should actually be executed. If ``False``, the function will always xfail and will
         not be executed (useful if a function is segfaulting).
@@ -221,7 +226,7 @@ Marks a test function as *expected to fail*.
           a new release of a library fixes a known bug).
 
 
-custom marks
+Custom marks
 ~~~~~~~~~~~~
 
 Marks are created dynamically using the factory object ``pytest.mark`` and applied as a decorator.
@@ -235,7 +240,7 @@ For example:
         ...
 
 Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to the collected
-:class:`Item <_pytest.nodes.Item>`, which can then be accessed by fixtures or hooks with
+:class:`Item <pytest.Item>`, which can then be accessed by fixtures or hooks with
 :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>`. The ``mark`` object will have the following attributes:
 
 .. code-block:: python
@@ -470,7 +475,7 @@ caplog
 .. autofunction:: _pytest.logging.caplog()
     :no-auto-options:
 
-    This returns a :class:`_pytest.logging.LogCaptureFixture` instance.
+    Returns a :class:`_pytest.logging.LogCaptureFixture` instance.
 
 .. autoclass:: _pytest.logging.LogCaptureFixture
     :members:
@@ -488,7 +493,7 @@ monkeypatch
 .. autofunction:: _pytest.monkeypatch.monkeypatch()
     :no-auto-options:
 
-    This returns a :class:`MonkeyPatch` instance.
+    Returns a :class:`MonkeyPatch` instance.
 
 .. autoclass:: _pytest.monkeypatch.MonkeyPatch
     :members:
@@ -651,7 +656,6 @@ Collection hooks
 
 .. autofunction:: pytest_collection
 .. autofunction:: pytest_ignore_collect
-.. autofunction:: pytest_collect_directory
 .. autofunction:: pytest_collect_file
 .. autofunction:: pytest_pycollect_makemodule
 
@@ -672,7 +676,7 @@ items, delete or otherwise amend the test items:
 Test running (runtest) hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
+All runtest related hooks receive a :py:class:`pytest.Item <pytest.Item>` object.
 
 .. autofunction:: pytest_runtestloop
 .. autofunction:: pytest_runtest_protocol
@@ -748,14 +752,14 @@ CallInfo
 Class
 ~~~~~
 
-.. autoclass:: _pytest.python.Class()
+.. autoclass:: pytest.Class()
     :members:
     :show-inheritance:
 
 Collector
 ~~~~~~~~~
 
-.. autoclass:: _pytest.nodes.Collector()
+.. autoclass:: pytest.Collector()
     :members:
     :show-inheritance:
 
@@ -780,11 +784,18 @@ ExceptionInfo
     :members:
 
 
-pytest.ExitCode
-~~~~~~~~~~~~~~~
+ExitCode
+~~~~~~~~
 
-.. autoclass:: _pytest.config.ExitCode
+.. autoclass:: pytest.ExitCode
     :members:
+
+File
+~~~~
+
+.. autoclass:: pytest.File()
+    :members:
+    :show-inheritance:
 
 
 FixtureDef
@@ -804,14 +815,14 @@ FSCollector
 Function
 ~~~~~~~~
 
-.. autoclass:: _pytest.python.Function()
+.. autoclass:: pytest.Function()
     :members:
     :show-inheritance:
 
 Item
 ~~~~
 
-.. autoclass:: _pytest.nodes.Item()
+.. autoclass:: pytest.Item()
     :members:
     :show-inheritance:
 
@@ -845,7 +856,7 @@ Metafunc
 Module
 ~~~~~~
 
-.. autoclass:: _pytest.python.Module()
+.. autoclass:: pytest.Module()
     :members:
     :show-inheritance:
 
@@ -861,12 +872,6 @@ Parser
 .. autoclass:: _pytest.config.argparsing.Parser()
     :members:
 
-PluginManager
-~~~~~~~~~~~~~
-
-.. autoclass:: pluggy.PluginManager()
-    :members:
-
 
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~
@@ -874,12 +879,13 @@ PytestPluginManager
 .. autoclass:: _pytest.config.PytestPluginManager()
     :members:
     :undoc-members:
+    :inherited-members:
     :show-inheritance:
 
 Session
 ~~~~~~~
 
-.. autoclass:: _pytest.main.Session()
+.. autoclass:: pytest.Session()
     :members:
     :show-inheritance:
 
@@ -1021,10 +1027,45 @@ When set (regardless of value), pytest will use color in terminal output.
 Exceptions
 ----------
 
-UsageError
-~~~~~~~~~~
+.. autoclass:: pytest.UsageError()
+    :show-inheritance:
 
-.. autoclass:: _pytest.config.UsageError()
+.. _`warnings ref`:
+
+Warnings
+--------
+
+Custom warnings generated in some situations such as improper usage or deprecated features.
+
+.. autoclass:: pytest.PytestWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestAssertRewriteWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestCacheWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestCollectionWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestConfigWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestDeprecationWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestExperimentalApiWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestUnhandledCoroutineWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestUnknownMarkWarning
+   :show-inheritance:
+
+
+Consult the :ref:`internal-warnings` section in the documentation for more information.
 
 
 .. _`ini options ref`:
@@ -1424,20 +1465,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         [pytest]
         log_level = INFO
-
-    For more information, see :ref:`logging`.
-
-
-.. confval:: log_print
-
-
-
-    If set to ``False``, will disable displaying captured logging messages for failed tests.
-
-    .. code-block:: ini
-
-        [pytest]
-        log_print = False
 
     For more information, see :ref:`logging`.
 

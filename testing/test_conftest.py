@@ -196,9 +196,7 @@ def test_conftest_confcutdir(testdir):
 
 
 def test_conftest_symlink(testdir):
-    """
-    conftest.py discovery follows normal path resolution and does not resolve symlinks.
-    """
+    """`conftest.py` discovery follows normal path resolution and does not resolve symlinks."""
     # Structure:
     # /real
     # /real/conftest.py
@@ -306,21 +304,6 @@ def test_no_conftest(testdir):
 
     result = testdir.runpytest()
     assert result.ret == ExitCode.USAGE_ERROR
-
-
-def test_conftest_existing_resultlog(testdir):
-    x = testdir.mkdir("tests")
-    x.join("conftest.py").write(
-        textwrap.dedent(
-            """\
-            def pytest_addoption(parser):
-                parser.addoption("--xyz", action="store_true")
-            """
-        )
-    )
-    testdir.makefile(ext=".log", result="")  # Writes result.log
-    result = testdir.runpytest("-h", "--resultlog", "result.log")
-    result.stdout.fnmatch_lines(["*--xyz*"])
 
 
 def test_conftest_existing_junitxml(testdir):
@@ -477,8 +460,9 @@ class TestConftestVisibility:
             )
         )
         print("created directory structure:")
-        for x in testdir.tmpdir.visit():
-            print("   " + x.relto(testdir.tmpdir))
+        tmppath = Path(str(testdir.tmpdir))
+        for x in tmppath.rglob(""):
+            print("   " + str(x.relative_to(tmppath)))
 
         return {"runner": runner, "package": package, "swc": swc, "snc": snc}
 

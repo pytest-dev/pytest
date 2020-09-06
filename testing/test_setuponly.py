@@ -254,7 +254,7 @@ def test_capturing(testdir):
 
 
 def test_show_fixtures_and_execute_test(testdir):
-    """ Verifies that setups are shown and tests are executed. """
+    """Verify that setups are shown and tests are executed."""
     p = testdir.makepyfile(
         """
         import pytest
