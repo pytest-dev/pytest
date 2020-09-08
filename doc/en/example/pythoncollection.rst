@@ -314,7 +314,9 @@ interpreter:
     if sys.version_info[0] > 2:
         collect_ignore_glob = ["*_py2.py"]
 
-User modules with names matching ``test*.py`` may be discovered as tests. Since Pytest 2.6, users can prevent this test discovery by setting a boolean ``__test__`` attribute.
+User modules with names matching ``test*.py`` may be discovered as tests. Since 
+Pytest 2.6, users can prevent this test discovery by setting a boolean 
+``__test__`` attribute.
 
 .. code-block:: python
 
