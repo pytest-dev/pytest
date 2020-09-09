@@ -314,7 +314,7 @@ interpreter:
     if sys.version_info[0] > 2:
         collect_ignore_glob = ["*_py2.py"]
 
-Since Pytest 2.6, users can prevent pytest from discovering classes that start 
+Since Pytest 2.6, users can prevent pytest from discovering classes that start
 with ``Test`` by setting a boolean ``__test__`` attribute to ``False``.
 
 .. code-block:: python
