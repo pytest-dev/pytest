@@ -47,6 +47,7 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FILLFUNCARGS
+from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
@@ -1529,34 +1530,56 @@ class FixtureManager:
         return initialnames, fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc: "Metafunc") -> None:
-        for argname in metafunc.fixturenames:
-            faclist = metafunc._arg2fixturedefs.get(argname)
-            if faclist:
-                fixturedef = faclist[-1]
-                if fixturedef.params is not None:
-                    markers = list(metafunc.definition.iter_markers("parametrize"))
-                    for parametrize_mark in markers:
-                        if "argnames" in parametrize_mark.kwargs:
-                            argnames = parametrize_mark.kwargs["argnames"]
-                        else:
-                            argnames = parametrize_mark.args[0]
+        """Generate new tests based on parametrized fixtures used by the given metafunc"""
 
-                        if not isinstance(argnames, (tuple, list)):
-                            argnames = [
-                                x.strip() for x in argnames.split(",") if x.strip()
-                            ]
-                        if argname in argnames:
-                            break
-                    else:
-                        metafunc.parametrize(
-                            argname,
-                            fixturedef.params,
-                            indirect=True,
-                            scope=fixturedef.scope,
-                            ids=fixturedef.ids,
-                        )
+        def get_parametrize_mark_argnames(mark: Mark) -> Sequence[str]:
+            if "argnames" in mark.kwargs:
+                argnames = mark.kwargs[
+                    "argnames"
+                ]  # type: Union[str, Tuple[str, ...], List[str]]
             else:
-                continue  # Will raise FixtureLookupError at setup time.
+                argnames = mark.args[0]
+            if not isinstance(argnames, (tuple, list)):
+                argnames = [x.strip() for x in argnames.split(",") if x.strip()]
+            return argnames
+
+        for argname in metafunc.fixturenames:
+            # Get the FixtureDefs for the argname.
+            fixture_defs = metafunc._arg2fixturedefs.get(argname)
+            if not fixture_defs:
+                # Will raise FixtureLookupError at setup time if not parametrized somewhere
+                # else (e.g @pytest.mark.parametrize)
+                continue
+
+            # If the test itself parametrizes using this argname, give it
+            # precedence.
+            if any(
+                argname in get_parametrize_mark_argnames(mark)
+                for mark in metafunc.definition.iter_markers("parametrize")
+            ):
+                continue
+
+            # In the common case we only look at the fixture def with the
+            # closest scope (last in the list). But if the fixture overrides
+            # another fixture, while requesting the super fixture, keep going
+            # in case the super fixture is parametrized (#1953).
+            for fixturedef in reversed(fixture_defs):
+                # Fixture is parametrized, apply it and stop.
+                if fixturedef.params is not None:
+                    metafunc.parametrize(
+                        argname,
+                        fixturedef.params,
+                        indirect=True,
+                        scope=fixturedef.scope,
+                        ids=fixturedef.ids,
+                    )
+                    break
+
+                # Not requesting the overridden super fixture, stop.
+                if argname not in fixturedef.argnames:
+                    break
+
+                # Try next super fixture, if any.
 
     def pytest_collection_modifyitems(self, items: "List[nodes.Item]") -> None:
         # Separate parametrized setups.

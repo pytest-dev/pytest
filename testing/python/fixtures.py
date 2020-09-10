@@ -396,6 +396,132 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
+    def test_override_fixture_reusing_super_fixture_parametrization(self, testdir):
+        """Override a fixture at a lower level, reusing the higher-level fixture that
+        is parametrized (#1953).
+        """
+        testdir.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(params=[1, 2])
+            def foo(request):
+                return request.param
+            """
+        )
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def foo(foo):
+                return foo * 2
+
+            def test_spam(foo):
+                assert foo in (2, 4)
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*2 passed*"])
+
+    def test_override_parametrize_fixture_and_indirect(self, testdir):
+        """Override a fixture at a lower level, reusing the higher-level fixture that
+        is parametrized, while also using indirect parametrization.
+        """
+        testdir.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(params=[1, 2])
+            def foo(request):
+                return request.param
+            """
+        )
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def foo(foo):
+                return foo * 2
+
+            @pytest.fixture
+            def bar(request):
+                return request.param * 100
+
+            @pytest.mark.parametrize("bar", [42], indirect=True)
+            def test_spam(bar, foo):
+                assert bar == 4200
+                assert foo in (2, 4)
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*2 passed*"])
+
+    def test_override_top_level_fixture_reusing_super_fixture_parametrization(
+        self, testdir
+    ):
+        """Same as the above test, but with another level of overwriting."""
+        testdir.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(params=['unused', 'unused'])
+            def foo(request):
+                return request.param
+            """
+        )
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=[1, 2])
+            def foo(request):
+                return request.param
+
+            class Test:
+
+                @pytest.fixture
+                def foo(self, foo):
+                    return foo * 2
+
+                def test_spam(self, foo):
+                    assert foo in (2, 4)
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*2 passed*"])
+
+    def test_override_parametrized_fixture_with_new_parametrized_fixture(self, testdir):
+        """Overriding a parametrized fixture, while also parametrizing the new fixture and
+        simultaneously requesting the overwritten fixture as parameter, yields the same value
+        as ``request.param``.
+        """
+        testdir.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(params=['ignored', 'ignored'])
+            def foo(request):
+                return request.param
+            """
+        )
+        testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=[10, 20])
+            def foo(foo, request):
+                assert request.param == foo
+                return foo * 2
+
+            def test_spam(foo):
+                assert foo in (20, 40)
+            """
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*2 passed*"])
+
     def test_autouse_fixture_plugin(self, testdir):
         # A fixture from a plugin has no baseid set, which screwed up
         # the autouse fixture handling.
