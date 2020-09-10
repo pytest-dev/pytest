@@ -1578,6 +1578,11 @@ class FixtureManager:
         for name in dir(holderobj):
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getatt() ignores such exceptions.
+            # additionally properties are ignored by default to avoid triggering warnings
+            if not isinstance(holderobj, type) and isinstance(
+                safe_getattr(holderobj.__class__, name, None), property
+            ):
+                continue
             obj = safe_getattr(holderobj, name, None)
             marker = getfixturemarker(obj)
             if not isinstance(marker, FixtureFunctionMarker):

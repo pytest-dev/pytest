@@ -1328,8 +1328,7 @@ class TestFixtureUsages:
 
 class TestFixtureManagerParseFactories:
     @pytest.fixture
-    def testdir(self, request):
-        testdir = request.getfixturevalue("testdir")
+    def testdir(self, testdir):
         testdir.makeconftest(
             """
             import pytest
@@ -1548,6 +1547,11 @@ class TestFixtureManagerParseFactories:
     def test_collect_custom_items(self, testdir):
         testdir.copy_example("fixtures/custom_item")
         result = testdir.runpytest("foo")
+        result.stdout.fnmatch_lines(["*passed*"])
+
+    def test_plugin_properties_are_skipped(self, testdir):
+        testdir.copy_example("fixtures/plugin_properties")
+        result = testdir.runpytest("-s", "-k", "fun")
         result.stdout.fnmatch_lines(["*passed*"])
 
 
