@@ -1533,15 +1533,8 @@ class FixtureManager:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""
 
         def get_parametrize_mark_argnames(mark: Mark) -> Sequence[str]:
-            if "argnames" in mark.kwargs:
-                argnames = mark.kwargs[
-                    "argnames"
-                ]  # type: Union[str, Tuple[str, ...], List[str]]
-            else:
-                argnames = mark.args[0]
-            if not isinstance(argnames, (tuple, list)):
-                argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            return argnames
+            args, _ = ParameterSet._parse_parametrize_args(*mark.args, **mark.kwargs)
+            return args
 
         for argname in metafunc.fixturenames:
             # Get the FixtureDefs for the argname.
