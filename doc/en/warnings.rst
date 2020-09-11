@@ -367,7 +367,7 @@ warnings, or index into it to get a particular recorded warning.
 
 .. currentmodule:: _pytest.warnings
 
-Full API: :class:`WarningsRecorder`.
+Full API: :class:`~_pytest.recwarn.WarningsRecorder`.
 
 .. _custom_failure_messages:
 

@@ -33,25 +33,25 @@ Consider the following scenarios:
 
 1. Modifying the behavior of a function or the property of a class for a test e.g.
 there is an API call or database connection you will not make for a test but you know
-what the expected output should be. Use :py:meth:`monkeypatch.setattr` to patch the
+what the expected output should be. Use :py:meth:`monkeypatch.setattr <MonkeyPatch.setattr>` to patch the
 function or property with your desired testing behavior. This can include your own functions.
-Use :py:meth:`monkeypatch.delattr` to remove the function or property for the test.
+Use :py:meth:`monkeypatch.delattr <MonkeyPatch.delattr>` to remove the function or property for the test.
 
 2. Modifying the values of dictionaries e.g. you have a global configuration that
-you want to modify for certain test cases. Use :py:meth:`monkeypatch.setitem` to patch the
-dictionary for the test. :py:meth:`monkeypatch.delitem` can be used to remove items.
+you want to modify for certain test cases. Use :py:meth:`monkeypatch.setitem <MonkeyPatch.setitem>` to patch the
+dictionary for the test. :py:meth:`monkeypatch.delitem <MonkeyPatch.delitem>` can be used to remove items.
 
 3. Modifying environment variables for a test e.g. to test program behavior if an
 environment variable is missing, or to set multiple values to a known variable.
-:py:meth:`monkeypatch.setenv` and :py:meth:`monkeypatch.delenv` can be used for
+:py:meth:`monkeypatch.setenv <MonkeyPatch.setenv>` and :py:meth:`monkeypatch.delenv <MonkeyPatch.delenv>` can be used for
 these patches.
 
 4. Use ``monkeypatch.setenv("PATH", value, prepend=os.pathsep)`` to modify ``$PATH``, and
-:py:meth:`monkeypatch.chdir` to change the context of the current working directory
+:py:meth:`monkeypatch.chdir <MonkeyPatch.chdir>` to change the context of the current working directory
 during a test.
 
-5. Use :py:meth:`monkeypatch.syspath_prepend` to modify ``sys.path`` which will also
-call :py:meth:`pkg_resources.fixup_namespace_packages` and :py:meth:`importlib.invalidate_caches`.
+5. Use :py:meth:`monkeypatch.syspath_prepend <MonkeyPatch.syspath_prepend>` to modify ``sys.path`` which will also
+call ``pkg_resources.fixup_namespace_packages`` and :py:func:`importlib.invalidate_caches`.
 
 See the `monkeypatch blog post`_ for some introduction material
 and a discussion of its motivation.
@@ -66,10 +66,10 @@ testing, you do not want your test to depend on the running user. ``monkeypatch`
 can be used to patch functions dependent on the user to always return a
 specific value.
 
-In this example, :py:meth:`monkeypatch.setattr` is used to patch ``Path.home``
+In this example, :py:meth:`monkeypatch.setattr <MonkeyPatch.setattr>` is used to patch ``Path.home``
 so that the known testing path ``Path("/abc")`` is always used when the test is run.
 This removes any dependency on the running user for testing purposes.
-:py:meth:`monkeypatch.setattr` must be called before the function which will use
+:py:meth:`monkeypatch.setattr <MonkeyPatch.setattr>` must be called before the function which will use
 the patched function is called.
 After the test function finishes the ``Path.home`` modification will be undone.
 
@@ -102,7 +102,7 @@ After the test function finishes the ``Path.home`` modification will be undone.
 Monkeypatching returned objects: building mock classes
 ------------------------------------------------------
 
-:py:meth:`monkeypatch.setattr` can be used in conjunction with classes to mock returned
+:py:meth:`monkeypatch.setattr <MonkeyPatch.setattr>` can be used in conjunction with classes to mock returned
 objects from functions instead of values.
 Imagine a simple function to take an API url and return the json response.
 
@@ -330,7 +330,7 @@ This behavior can be moved into ``fixture`` structures and shared across tests:
 Monkeypatching dictionaries
 ---------------------------
 
-:py:meth:`monkeypatch.setitem` can be used to safely set the values of dictionaries
+:py:meth:`monkeypatch.setitem <MonkeyPatch.setitem>` can be used to safely set the values of dictionaries
 to specific values during tests. Take this simplified connection string example:
 
 .. code-block:: python
@@ -367,7 +367,7 @@ For testing purposes we can patch the ``DEFAULT_CONFIG`` dictionary to specific 
         result = app.create_connection_string()
         assert result == expected
 
-You can use the :py:meth:`monkeypatch.delitem` to remove values.
+You can use the :py:meth:`monkeypatch.delitem <MonkeyPatch.delitem>` to remove values.
 
 .. code-block:: python
 

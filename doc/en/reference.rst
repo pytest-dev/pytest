@@ -539,13 +539,10 @@ recwarn
 .. autofunction:: recwarn()
     :no-auto-options:
 
-.. autoclass:: _pytest.recwarn.WarningsRecorder()
+.. autoclass:: WarningsRecorder()
     :members:
 
 Each recorded warning is an instance of :class:`warnings.WarningMessage`.
-
-.. note::
-    :class:`RecordedWarning` was changed from a plain class to a namedtuple in pytest 3.1
 
 .. note::
     ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
@@ -688,8 +685,8 @@ All runtest related hooks receive a :py:class:`pytest.Item <pytest.Item>` object
 .. autofunction:: pytest_runtest_makereport
 
 For deeper understanding you may look at the default implementation of
-these hooks in :py:mod:`_pytest.runner` and maybe also
-in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
+these hooks in ``_pytest.runner`` and maybe also
+in ``_pytest.pdb`` which interacts with ``_pytest.capture``
 and its input/output capturing in order to immediately drop
 into interactive debugging when a test failure occurs.
 

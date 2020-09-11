@@ -592,7 +592,7 @@ will not be executed.
 Fixtures can introspect the requesting test context
 -------------------------------------------------------------
 
-Fixture functions can accept the :py:class:`request <FixtureRequest>` object
+Fixture functions can accept the :py:class:`request <_pytest.fixtures.FixtureRequest>` object
 to introspect the "requesting" test function, class or module context.
 Further extending the previous ``smtp_connection`` fixture example, let's
 read an optional server URL from the test module which uses our fixture:
@@ -664,7 +664,7 @@ from the module namespace.
 Using markers to pass data to fixtures
 -------------------------------------------------------------
 
-Using the :py:class:`request <FixtureRequest>` object, a fixture can also access
+Using the :py:class:`request <_pytest.fixtures.FixtureRequest>` object, a fixture can also access
 markers which are applied to a test function. This can be useful to pass data
 into a fixture from a test:
 

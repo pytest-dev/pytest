@@ -16,8 +16,7 @@ Deprecated Features
 -------------------
 
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
-:class:`_pytest.warning_types.PytestWarning` or subclasses, which can be filtered using
-:ref:`standard warning filters <warnings>`.
+:class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
 The ``pytest_warning_captured`` hook
@@ -376,7 +375,7 @@ Metafunc.addcall
 
 .. versionremoved:: 4.0
 
-:meth:`_pytest.python.Metafunc.addcall` was a precursor to the current parametrized mechanism. Users should use
+``_pytest.python.Metafunc.addcall`` was a precursor to the current parametrized mechanism. Users should use
 :meth:`_pytest.python.Metafunc.parametrize` instead.
 
 Example:
@@ -611,7 +610,7 @@ This has been documented as deprecated for years, but only now we are actually e
 
 .. versionremoved:: 4.0
 
-As part of a large :ref:`marker-revamp`, :meth:`_pytest.nodes.Node.get_marker` is deprecated. See
+As part of a large :ref:`marker-revamp`, ``_pytest.nodes.Node.get_marker`` is removed. See
 :ref:`the documentation <update marker code>` on tips on how to update your code.
 
 

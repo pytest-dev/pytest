@@ -51,7 +51,7 @@ There are several limitations and difficulties with this approach:
    performs parametrization at the places where the resource
    is used.  Moreover, you need to modify the factory to use an
    ``extrakey`` parameter containing ``request.param`` to the
-   :py:func:`~python.Request.cached_setup` call.
+   ``Request.cached_setup`` call.
 
 3. Multiple parametrized session-scoped resources will be active
    at the same time, making it hard for them to affect global state
@@ -113,7 +113,7 @@ This new way of parametrizing funcarg factories should in many cases
 allow to re-use already written factories because effectively
 ``request.param`` was already used when test functions/classes were
 parametrized via
-:py:func:`~_pytest.python.Metafunc.parametrize(indirect=True)` calls.
+:py:func:`metafunc.parametrize(indirect=True) <_pytest.python.Metafunc.parametrize>` calls.
 
 Of course it's perfectly fine to combine parametrization and scoping:
 
