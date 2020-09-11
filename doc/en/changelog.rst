@@ -28,6 +28,25 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.0.2 (2020-09-04)
+=========================
+
+Bug Fixes
+---------
+
+- `#7148 <https://github.com/pytest-dev/pytest/issues/7148>`_: Fixed ``--log-cli`` potentially causing unrelated ``print`` output to be swallowed.
+
+
+- `#7672 <https://github.com/pytest-dev/pytest/issues/7672>`_: Fixed log-capturing level restored incorrectly if ``caplog.set_level`` is called more than once.
+
+
+- `#7686 <https://github.com/pytest-dev/pytest/issues/7686>`_: Fixed `NotSetType.token` being used as the parameter ID when the parametrization list is empty.
+  Regressed in pytest 6.0.0.
+
+
+- `#7707 <https://github.com/pytest-dev/pytest/issues/7707>`_: Fix internal error when handling some exceptions that contain multiple lines or the style uses multiple lines (``--tb=line`` for example).
+
+
 pytest 6.0.1 (2020-07-30)
 =========================
 

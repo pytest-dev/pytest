@@ -1,2 +1,0 @@
-Fixed `NotSetType.token` being used as the parameter ID when the parametrization list is empty.
-Regressed in pytest 6.0.0.
