@@ -1,1 +1,0 @@
-Fixed ``--log-cli`` potentially causing unrelated ``print`` output to be swallowed.
