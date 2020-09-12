@@ -1,0 +1,3 @@
+Fixed an internal error crash with ``IndexError: list index out of range`` when
+collecting a module which starts with a decorated function, the decorator
+raises, and assertion rewriting is enabled.

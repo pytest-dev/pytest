@@ -695,7 +695,12 @@ class AssertionRewriter(ast.NodeVisitor):
             else:
                 break
             pos += 1
-        lineno = item.lineno
+        # Special case: for a decorated function, set the lineno to that of the
+        # first decorator, not the `def`. Issue #4984.
+        if isinstance(item, ast.FunctionDef) and item.decorator_list:
+            lineno = item.decorator_list[0].lineno
+        else:
+            lineno = item.lineno
         imports = [
             ast.Import([alias], lineno=lineno, col_offset=0) for alias in aliases
         ]
