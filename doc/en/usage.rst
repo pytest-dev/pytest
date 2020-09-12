@@ -57,6 +57,8 @@ Getting help on version, option names, environment variables
     pytest -h | --help # show help on command line and config file options
 
 
+The full command-line flags can be found in the :ref:`reference <command-line-flags>`.
+
 .. _maxfail:
 
 Stopping after the first (or N) failures
