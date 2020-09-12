@@ -687,15 +687,15 @@ class AssertionRewriter(ast.NodeVisitor):
                     return
                 expect_docstring = False
             elif (
-                not isinstance(item, ast.ImportFrom)
-                or item.level > 0
-                or item.module != "__future__"
+                isinstance(item, ast.ImportFrom)
+                and item.level == 0
+                and item.module == "__future__"
             ):
-                lineno = item.lineno
+                pass
+            else:
                 break
             pos += 1
-        else:
-            lineno = item.lineno
+        lineno = item.lineno
         imports = [
             ast.Import([alias], lineno=lineno, col_offset=0) for alias in aliases
         ]
