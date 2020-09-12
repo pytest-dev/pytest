@@ -1,0 +1,20 @@
+Fix error when overwriting a parametrized fixture, while also reusing the super fixture value.
+
+.. code-block:: python
+
+    # conftest.py
+    import pytest
+
+
+    @pytest.fixture(params=[1, 2])
+    def foo(request):
+        return request.param
+
+
+    # test_foo.py
+    import pytest
+
+
+    @pytest.fixture
+    def foo(foo):
+        return foo * 2
