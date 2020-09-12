@@ -246,10 +246,20 @@ class TracebackEntry:
 
         Mostly for internal use.
         """
-        f = self.frame
-        tbh = f.f_locals.get(
-            "__tracebackhide__", f.f_globals.get("__tracebackhide__", False)
+        tbh = (
+            False
         )  # type: Union[bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]]
+        for maybe_ns_dct in (self.frame.f_locals, self.frame.f_globals):
+            # in normal cases, f_locals and f_globals are dictionaries
+            # however via `exec(...)` / `eval(...)` they can be other types
+            # (even incorrect types!).
+            # as such, we suppress all exceptions while accessing __tracebackhide__
+            try:
+                tbh = maybe_ns_dct["__tracebackhide__"]
+            except Exception:
+                pass
+            else:
+                break
         if tbh and callable(tbh):
             return tbh(None if self._excinfo is None else self._excinfo())
         return tbh
