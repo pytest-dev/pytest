@@ -1352,6 +1352,19 @@ raise ValueError()
         )
         assert out == expected_out
 
+    def test_exec_type_error_filter(self, importasmod):
+        """See #7742"""
+        mod = importasmod(
+            """\
+            def f():
+                exec("a = 1", {}, [])
+            """
+        )
+        with pytest.raises(TypeError) as excinfo:
+            mod.f()
+        # previously crashed with `AttributeError: list has no attribute get`
+        excinfo.traceback.filter()
+
 
 @pytest.mark.parametrize("style", ["short", "long"])
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
