@@ -518,6 +518,14 @@ class TestApprox:
         assert 1.0 != approx([None])
         assert None != approx([1.0])  # noqa: E711
 
+    def test_nonnumeric_repr(self):
+        """Non-numerics and infinites have no tolerances"""
+        x1 = {"foo": 1.0000005, "bar": None, "foobar": inf}
+        assert (
+            repr(approx(x1))
+            == "approx({'foo': 1.0000005 ± 1.0e-06, 'bar': None, 'foobar': inf})"
+        )
+
     @pytest.mark.parametrize(
         "op",
         [

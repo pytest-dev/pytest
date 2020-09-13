@@ -210,16 +210,23 @@ class ApproxScalar(ApproxBase):
         For example, ``1.0 ± 1e-6``, ``(3+4j) ± 5e-6 ∠ ±180°``.
         """
 
-        # Infinities aren't compared using tolerances, so don't show a
-        # tolerance. Need to call abs to handle complex numbers, e.g. (inf + 1j).
-        if math.isinf(abs(self.expected)):
+        # Don't show a tolerance for values that aren't compared using
+        # tolerances, i.e. non-numerics and infinities. Need to call abs to
+        # handle complex numbers, e.g. (inf + 1j).
+        if (not isinstance(self.expected, (Complex, Decimal))) or math.isinf(
+            abs(self.expected)
+        ):
             return str(self.expected)
 
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
             vetted_tolerance = "{:.1e}".format(self.tolerance)
-            if isinstance(self.expected, complex) and not math.isinf(self.tolerance):
+            if (
+                isinstance(self.expected, Complex)
+                and self.expected.imag
+                and not math.isinf(self.tolerance)
+            ):
                 vetted_tolerance += " ∠ ±180°"
         except ValueError:
             vetted_tolerance = "???"
