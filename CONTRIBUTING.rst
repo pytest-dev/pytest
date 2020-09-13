@@ -149,7 +149,8 @@ the following:
 - PyPI presence with packaging metadata that contains a ``pytest-``
   prefixed name, version number, authors, short and long description.
 
-- a ``tox.ini`` for running tests using `tox <https://tox.readthedocs.io>`_.
+- a  `tox configuration <https://tox.readthedocs.io/en/latest/config.html#configuration-discovery>`_
+  for running tests using `tox <https://tox.readthedocs.io>`_.
 
 - a ``README`` describing how to use the plugin and on which
   platforms it runs.
