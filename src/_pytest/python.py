@@ -164,9 +164,10 @@ def async_warn_and_skip(nodeid: str) -> None:
     msg += (
         "You need to install a suitable plugin for your async framework, for example:\n"
     )
+    msg += "  - anyio\n"
     msg += "  - pytest-asyncio\n"
-    msg += "  - pytest-trio\n"
     msg += "  - pytest-tornasync\n"
+    msg += "  - pytest-trio\n"
     msg += "  - pytest-twisted"
     warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
     skip(msg="async def function and no async plugin installed (see warnings)")
