@@ -1,0 +1,3 @@
+Use strict equality comparison for nonnumeric types in ``approx`` instead of
+raising ``TypeError``.
+Regressed in pytest 3.7.1.
