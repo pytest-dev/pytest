@@ -1,4 +1,5 @@
 import operator
+import sys
 from decimal import Decimal
 from fractions import Fraction
 from operator import eq
@@ -518,12 +519,13 @@ class TestApprox:
         assert 1.0 != approx([None])
         assert None != approx([1.0])  # noqa: E711
 
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires ordered dicts")
     def test_nonnumeric_repr(self):
         """Non-numerics and infinites have no tolerances"""
-        x1 = {"bar": None, "foobar": inf, "foo": 1.0000005}
+        x1 = {"foo": 1.0000005, "bar": None, "foobar": inf}
         assert (
             repr(approx(x1))
-            == "approx({'bar': None, 'foobar': inf, 'foo': 1.0000005 ± 1.0e-06})"
+            == "approx({'foo': 1.0000005 ± 1.0e-06, 'bar': None, 'foobar': inf})"
         )
 
     @pytest.mark.parametrize(
