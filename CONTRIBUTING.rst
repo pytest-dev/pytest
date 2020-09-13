@@ -131,8 +131,6 @@ in repositories living under the ``pytest-dev`` organisations:
 
 - `pytest-dev on GitHub <https://github.com/pytest-dev>`_
 
-- `pytest-dev on Bitbucket <https://bitbucket.org/pytest-dev>`_
-
 All pytest-dev Contributors team members have write access to all contained
 repositories.  Pytest core and plugins are generally developed
 using `pull requests`_ to respective repositories.
