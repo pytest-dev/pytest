@@ -258,8 +258,10 @@ class TestParseIni:
         result.stdout.fnmatch_lines(warning_output)
 
         if exception_text:
-            result = testdir.runpytest("--strict-config")
-            result.stdout.fnmatch_lines("INTERNALERROR>*" + exception_text)
+            with pytest.raises(pytest.UsageError, match=exception_text):
+                testdir.runpytest("--strict-config")
+        else:
+            testdir.runpytest("--strict-config")
 
     @pytest.mark.filterwarnings("default")
     def test_silence_unknown_key_warning(self, testdir: Testdir) -> None:

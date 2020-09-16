@@ -1,1 +1,1 @@
-When a plugin listed in ``required_plugins`` is missing, a simple error message is now shown instead of a stacktrace.
+When a plugin listed in ``required_plugins`` is missing or an unknown config key is used with ``--strict-config``, a simple error message is now shown instead of a stacktrace.

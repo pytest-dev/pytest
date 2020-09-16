@@ -1252,7 +1252,7 @@ class Config:
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
         if self.known_args_namespace.strict_config:
-            fail(message, pytrace=False)
+            raise UsageError(message)
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
 
