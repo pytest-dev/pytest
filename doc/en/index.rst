@@ -61,17 +61,17 @@ See :ref:`Getting Started <getstarted>` for more examples.
 Features
 --------
 
-- Detailed info on failing :ref:`assert statements <assert>` (no need to remember ``self.assert*`` names);
+- Detailed info on failing :ref:`assert statements <assert>` (no need to remember ``self.assert*`` names)
 
-- :ref:`Auto-discovery <test discovery>` of test modules and functions;
+- :ref:`Auto-discovery <test discovery>` of test modules and functions
 
-- :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources;
+- :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources
 
-- Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
+- Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box
 
-- Python 3.5+ and PyPy 3;
+- Python 3.5+ and PyPy 3
 
-- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
+- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community
 
 
 Documentation
