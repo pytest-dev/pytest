@@ -1174,9 +1174,8 @@ class Config:
                 missing_plugins.append(required_plugin)
 
         if missing_plugins:
-            fail(
+            raise UsageError(
                 "Missing required plugins: {}".format(", ".join(missing_plugins)),
-                pytrace=False,
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
