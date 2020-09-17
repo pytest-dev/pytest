@@ -660,6 +660,8 @@ class Session(nodes.FSCollector):
                 assert isinstance(m[0], nodes.Collector)
                 try:
                     yield next(iter(m[0].collect()))
+                except NotImplementedError:
+                    yield m[0]
                 except StopIteration:
                     # The package collects nothing with only an __init__.py
                     # file in it, which gets ignored by the default
