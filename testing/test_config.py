@@ -362,7 +362,7 @@ class TestParseIni:
         testdir.makeini(ini_file_text)
 
         if exception_text:
-            with pytest.raises(pytest.fail.Exception, match=exception_text):
+            with pytest.raises(pytest.UsageError, match=exception_text):
                 testdir.parseconfig()
         else:
             testdir.parseconfig()
