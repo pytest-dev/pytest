@@ -181,12 +181,12 @@ class TestParseIni:
     @pytest.mark.parametrize(
         "ini_file_text, invalid_keys, warning_output, exception_text",
         [
-            (
+            pytest.param(
                 """
-          [pytest]
-          unknown_ini = value1
-          another_unknown_ini = value2
-          """,
+                [pytest]
+                unknown_ini = value1
+                another_unknown_ini = value2
+                """,
                 ["unknown_ini", "another_unknown_ini"],
                 [
                     "=*= warnings summary =*=",
@@ -194,48 +194,53 @@ class TestParseIni:
                     "*PytestConfigWarning:*Unknown config option: unknown_ini",
                 ],
                 "Unknown config option: another_unknown_ini",
+                id="2-unknowns",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          unknown_ini = value1
-          minversion = 5.0.0
-          """,
+                [pytest]
+                unknown_ini = value1
+                minversion = 5.0.0
+                """,
                 ["unknown_ini"],
                 [
                     "=*= warnings summary =*=",
                     "*PytestConfigWarning:*Unknown config option: unknown_ini",
                 ],
                 "Unknown config option: unknown_ini",
+                id="1-unknown",
             ),
-            (
+            pytest.param(
                 """
-          [some_other_header]
-          unknown_ini = value1
-          [pytest]
-          minversion = 5.0.0
-          """,
+                [some_other_header]
+                unknown_ini = value1
+                [pytest]
+                minversion = 5.0.0
+                """,
                 [],
                 [],
                 "",
+                id="unknown-in-other-header",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          minversion = 5.0.0
-          """,
+                [pytest]
+                minversion = 5.0.0
+                """,
                 [],
                 [],
                 "",
+                id="no-unknowns",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          conftest_ini_key = 1
-          """,
+                [pytest]
+                conftest_ini_key = 1
+                """,
                 [],
                 [],
                 "",
+                id="1-known",
             ),
         ],
     )
