@@ -252,9 +252,10 @@ class TestParseIni:
             """
             def pytest_addoption(parser):
                 parser.addini("conftest_ini_key", "")
-        """
+            """
         )
-        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
+        testdir.makepyfile("def test(): pass")
+        testdir.makeini(ini_file_text)
 
         config = testdir.parseconfig()
         assert sorted(config._get_unknown_ini_keys()) == sorted(invalid_keys)
@@ -262,11 +263,13 @@ class TestParseIni:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(warning_output)
 
+        result = testdir.runpytest("--strict-config")
         if exception_text:
-            with pytest.raises(pytest.UsageError, match=exception_text):
-                testdir.runpytest("--strict-config")
+            result.stderr.fnmatch_lines("ERROR: " + exception_text)
+            assert result.ret == pytest.ExitCode.USAGE_ERROR
         else:
-            testdir.runpytest("--strict-config")
+            result.stderr.no_fnmatch_line(exception_text)
+            assert result.ret == pytest.ExitCode.OK
 
     @pytest.mark.filterwarnings("default")
     def test_silence_unknown_key_warning(self, testdir: Testdir) -> None:
