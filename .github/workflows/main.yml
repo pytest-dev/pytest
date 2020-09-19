@@ -41,6 +41,7 @@ jobs:
 
           "docs",
           "doctesting",
+          "plugins",
         ]
 
         include:
@@ -110,6 +111,11 @@ jobs:
             os: macos-latest
             tox_env: "py38-xdist"
             use_coverage: true
+
+          - name: "plugins"
+            python: "3.7"
+            os: ubuntu-latest
+            tox_env: "plugins"
 
           - name: "docs"
             python: "3.7"

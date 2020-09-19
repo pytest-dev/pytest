@@ -1167,6 +1167,10 @@ class Config:
             self.pluginmanager.load_setuptools_entrypoints("pytest11")
         self.pluginmanager.consider_env()
 
+        self.known_args_namespace = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.known_args_namespace)
+        )
+
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 
