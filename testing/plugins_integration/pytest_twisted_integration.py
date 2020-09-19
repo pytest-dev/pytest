@@ -1,21 +1,18 @@
 import pytest_twisted
-import twisted.internet.task
+from twisted.internet.task import deferLater
 
 
-def sleep(seconds):
+def sleep():
     import twisted.internet.reactor
 
-    return twisted.internet.task.deferLater(
-        clock=twisted.internet.reactor,
-        delay=0,
-    )
+    return deferLater(clock=twisted.internet.reactor, delay=0)
 
 
 @pytest_twisted.inlineCallbacks
 def test_inlineCallbacks():
-    yield sleep(0)
+    yield sleep()
 
 
 @pytest_twisted.ensureDeferred
-async def test_inlineCallbacks():
-    await sleep(0)
+async def test_inlineCallbacks_async():
+    await sleep()
