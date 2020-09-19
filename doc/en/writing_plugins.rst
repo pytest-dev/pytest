@@ -49,7 +49,7 @@ Plugin discovery order at tool startup
 6. by loading all :file:`conftest.py` files as inferred by the command line
    invocation:
 
-   - if no test paths are specified use current dir as a test path
+   - if no test paths are specified, use the current dir as a test path
    - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative
      to the directory part of the first test path. After the ``conftest.py``
      file is loaded, load all plugins specified in its
