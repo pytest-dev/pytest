@@ -377,6 +377,12 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
             record_testsuite_property("STORAGE_TYPE", "CEPH")
 
     ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.
+
+    .. warning::
+
+        Currently this fixture **does not work** with the
+        `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See issue
+        `#7767 <https://github.com/pytest-dev/pytest/issues/7767>`__ for details.
     """
 
     __tracebackhide__ = True
