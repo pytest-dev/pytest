@@ -497,7 +497,8 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     .. versionchanged:: 3.7.1
        ``approx`` raises ``TypeError`` when it encounters a dict value or
        sequence element of nonnumeric type.
-    .. versionchanged:: 6.0.3
+
+    .. versionchanged:: 6.1.0
        ``approx`` falls back to strict equality for nonnumeric types instead
        of raising ``TypeError``.
     """

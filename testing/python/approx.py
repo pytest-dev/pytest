@@ -475,14 +475,17 @@ class TestApprox:
         )
 
     @pytest.mark.parametrize(
-        "x",
+        "x, name",
         [
-            pytest.param([[1]], id="nested-list"),
-            pytest.param({"key": {"key": 1}}, id="nested-dict"),
+            pytest.param([[1]], "data structures", id="nested-list"),
+            pytest.param({"key": {"key": 1}}, "dictionaries", id="nested-dict"),
         ],
     )
-    def test_expected_value_type_error(self, x):
-        with pytest.raises(TypeError):
+    def test_expected_value_type_error(self, x, name):
+        with pytest.raises(
+            TypeError,
+            match=r"pytest.approx\(\) does not support nested {}:".format(name),
+        ):
             approx(x)
 
     @pytest.mark.parametrize(
@@ -520,13 +523,18 @@ class TestApprox:
         assert None != approx([1.0])  # noqa: E711
 
     @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires ordered dicts")
-    def test_nonnumeric_repr(self):
-        """Non-numerics and infinites have no tolerances"""
+    def test_nonnumeric_dict_repr(self):
+        """Dicts with non-numerics and infinites have no tolerances"""
         x1 = {"foo": 1.0000005, "bar": None, "foobar": inf}
         assert (
             repr(approx(x1))
             == "approx({'foo': 1.0000005 ± 1.0e-06, 'bar': None, 'foobar': inf})"
         )
+
+    def test_nonnumeric_list_repr(self):
+        """Lists with non-numerics and infinites have no tolerances"""
+        x1 = [1.0000005, None, inf]
+        assert repr(approx(x1)) == "approx([1.0000005 ± 1.0e-06, None, inf])"
 
     @pytest.mark.parametrize(
         "op",
