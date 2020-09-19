@@ -26,7 +26,8 @@ A bug-fix release is always done from a maintenance branch, so for example to re
 
 Where ``5.1.x`` is the maintenance branch for the ``5.1`` series.
 
-The automated workflow will publish a PR and notify it as a comment in the issue.
+The automated workflow will publish a PR for a branch ``release-5.1.2``
+and notify it as a comment in the issue.
 
 Minor releases
 ^^^^^^^^^^^^^^
@@ -41,7 +42,8 @@ Minor releases
 
     @pytestbot please prepare release from 5.2.x
 
-The automated workflow will publish a PR and notify it as a comment in the issue.
+The automated workflow will publish a PR for a branch ``release-5.2.0`` and
+notify it as a comment in the issue.
 
 Major and release candidates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -60,7 +62,8 @@ Major and release candidates
 
         @pytestbot please prepare release candidate from 6.0.x
 
-The automated workflow will publish a PR and notify it as a comment in the issue.
+The automated workflow will publish a PR for a branch ``release-6.0.0`` and
+notify it as a comment in the issue.
 
 At this point on, this follows the same workflow as other maintenance branches: bug-fixes are merged
 into ``master`` and ported back to the maintenance branch, even for release candidates.
@@ -101,9 +104,10 @@ Releasing
 Both automatic and manual processes described above follow the same steps from this point onward.
 
 #. After all tests pass and the PR has been approved, tag the release commit
-   in the ``MAJOR.MINOR.x`` branch and push it. This will publish to PyPI::
+   in the ``release-MAJOR.MINOR.PATCH`` branch and push it. This will publish to PyPI::
 
-     git tag MAJOR.MINOR.PATCH
+     git fetch --all
+     git tag MAJOR.MINOR.PATCH upstream/release-MAJOR.MINOR.PATCH
      git push git@github.com:pytest-dev/pytest.git MAJOR.MINOR.PATCH
 
    Wait for the deploy to complete, then make sure it is `available on PyPI <https://pypi.org/project/pytest>`_.
