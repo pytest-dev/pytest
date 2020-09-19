@@ -1537,7 +1537,7 @@ Using fixtures from other projects
 ----------------------------------
 
 Usually projects that provide pytest support will use :ref:`entry points <setuptools entry points>`,
-so just by installing those projects into an environment will make those fixtures available for use.
+so just installing those projects into an environment will make those fixtures available for use.
 
 In case you want to use fixtures from a project that does not use entry points, you can
 define :globalvar:`pytest_plugins` in your top ``conftest.py`` file to register that module
