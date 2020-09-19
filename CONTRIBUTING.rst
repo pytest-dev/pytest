@@ -406,6 +406,27 @@ actual latest release). The procedure for this is:
    * Delete the PR body, it usually contains a duplicate commit message.
 
 
+Who does the backporting
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+As mentioned above, bugs should first be fixed on ``master`` (except in rare occasions
+that a bug only happens in a previous release). So who should do the backport procedure described
+above?
+
+1. If the bug was fixed by a core developer, it is the main responsibility of that core developer
+   to do the backport.
+2. However, often the merge is done by another maintainer, in which case it is nice of them to
+   do the backport procedure if they have the time.
+3. For bugs submitted by non-maintainers, it is expected that a core developer will to do
+   the backport, normally the one that merged the PR on ``master``.
+4. If a non-maintainers notices a bug which is fixed on ``master`` but has not been backported
+   (due to maintainers forgetting to apply the *needs backport* label, or just plain missing it),
+   they are also welcome to open a PR with the backport. The procedure is simple and really
+   helps with the maintenance of the project.
+
+All the above are not rules, but merely some guidelines/suggestions on what we should expect
+about backports.
+
 Handling stale issues/PRs
 -------------------------
 
