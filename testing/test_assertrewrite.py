@@ -992,7 +992,7 @@ class TestAssertionRewriteHookDetails:
                 e = OSError()
                 e.errno = 10
                 raise e
-                yield
+                yield  # type:ignore[unreachable]
 
             monkeypatch.setattr(
                 _pytest.assertion.rewrite, "atomic_write", atomic_write_failed
@@ -1600,7 +1600,7 @@ class TestPyCacheDir:
         if prefix:
             if sys.version_info < (3, 8):
                 pytest.skip("pycache_prefix not available in py<38")
-            monkeypatch.setattr(sys, "pycache_prefix", prefix)
+            monkeypatch.setattr(sys, "pycache_prefix", prefix)  # type:ignore
 
         assert get_cache_dir(Path(source)) == Path(expected)
 

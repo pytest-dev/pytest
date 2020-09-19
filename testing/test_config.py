@@ -367,6 +367,25 @@ class TestParseIni:
         else:
             testdir.parseconfig()
 
+    def test_early_config_cmdline(self, testdir, monkeypatch):
+        """early_config contains options registered by third-party plugins.
+
+        This is a regression involving pytest-cov (and possibly others) introduced in #7700.
+        """
+        testdir.makepyfile(
+            myplugin="""
+            def pytest_addoption(parser):
+                parser.addoption('--foo', default=None, dest='foo')
+
+            def pytest_load_initial_conftests(early_config, parser, args):
+                assert early_config.known_args_namespace.foo == "1"
+            """
+        )
+        monkeypatch.setenv("PYTEST_PLUGINS", "myplugin")
+        testdir.syspathinsert()
+        result = testdir.runpytest("--foo=1")
+        result.stdout.fnmatch_lines("* no tests ran in *")
+
 
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
