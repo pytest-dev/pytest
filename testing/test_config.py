@@ -181,12 +181,12 @@ class TestParseIni:
     @pytest.mark.parametrize(
         "ini_file_text, invalid_keys, warning_output, exception_text",
         [
-            (
+            pytest.param(
                 """
-          [pytest]
-          unknown_ini = value1
-          another_unknown_ini = value2
-          """,
+                [pytest]
+                unknown_ini = value1
+                another_unknown_ini = value2
+                """,
                 ["unknown_ini", "another_unknown_ini"],
                 [
                     "=*= warnings summary =*=",
@@ -194,48 +194,53 @@ class TestParseIni:
                     "*PytestConfigWarning:*Unknown config option: unknown_ini",
                 ],
                 "Unknown config option: another_unknown_ini",
+                id="2-unknowns",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          unknown_ini = value1
-          minversion = 5.0.0
-          """,
+                [pytest]
+                unknown_ini = value1
+                minversion = 5.0.0
+                """,
                 ["unknown_ini"],
                 [
                     "=*= warnings summary =*=",
                     "*PytestConfigWarning:*Unknown config option: unknown_ini",
                 ],
                 "Unknown config option: unknown_ini",
+                id="1-unknown",
             ),
-            (
+            pytest.param(
                 """
-          [some_other_header]
-          unknown_ini = value1
-          [pytest]
-          minversion = 5.0.0
-          """,
+                [some_other_header]
+                unknown_ini = value1
+                [pytest]
+                minversion = 5.0.0
+                """,
                 [],
                 [],
                 "",
+                id="unknown-in-other-header",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          minversion = 5.0.0
-          """,
+                [pytest]
+                minversion = 5.0.0
+                """,
                 [],
                 [],
                 "",
+                id="no-unknowns",
             ),
-            (
+            pytest.param(
                 """
-          [pytest]
-          conftest_ini_key = 1
-          """,
+                [pytest]
+                conftest_ini_key = 1
+                """,
                 [],
                 [],
                 "",
+                id="1-known",
             ),
         ],
     )
@@ -247,9 +252,10 @@ class TestParseIni:
             """
             def pytest_addoption(parser):
                 parser.addini("conftest_ini_key", "")
-        """
+            """
         )
-        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent(ini_file_text))
+        testdir.makepyfile("def test(): pass")
+        testdir.makeini(ini_file_text)
 
         config = testdir.parseconfig()
         assert sorted(config._get_unknown_ini_keys()) == sorted(invalid_keys)
@@ -257,9 +263,13 @@ class TestParseIni:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(warning_output)
 
+        result = testdir.runpytest("--strict-config")
         if exception_text:
-            result = testdir.runpytest("--strict-config")
-            result.stdout.fnmatch_lines("INTERNALERROR>*" + exception_text)
+            result.stderr.fnmatch_lines("ERROR: " + exception_text)
+            assert result.ret == pytest.ExitCode.USAGE_ERROR
+        else:
+            result.stderr.no_fnmatch_line(exception_text)
+            assert result.ret == pytest.ExitCode.OK
 
     @pytest.mark.filterwarnings("default")
     def test_silence_unknown_key_warning(self, testdir: Testdir) -> None:
