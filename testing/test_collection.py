@@ -1427,3 +1427,17 @@ class TestImportModeImportlib:
                 "* 1 failed in *",
             ]
         )
+
+
+def test_does_not_crash_on_error_from_decorated_function(testdir: Testdir) -> None:
+    """Regression test for an issue around bad exception formatting due to
+    assertion rewriting mangling lineno's (#4984)."""
+    testdir.makepyfile(
+        """
+        @pytest.fixture
+        def a(): return 4
+        """
+    )
+    result = testdir.runpytest()
+    # Not INTERNAL_ERROR
+    assert result.ret == ExitCode.INTERRUPTED
