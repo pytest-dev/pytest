@@ -1136,8 +1136,8 @@ and teared down after every test that used it.
 
 .. _`usefixtures`:
 
-Use fixtures implicitly with @pytest.mark.usefixtures
------------------------------------------------------
+Use fixtures in classes and modules with ``usefixtures``
+--------------------------------------------------------
 
 .. regendoc:wipe
 
