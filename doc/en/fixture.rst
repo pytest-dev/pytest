@@ -1136,8 +1136,8 @@ and teared down after every test that used it.
 
 .. _`usefixtures`:
 
-Using fixtures from classes, modules or projects
-----------------------------------------------------------------------
+Use fixtures implicitly with @pytest.mark.usefixtures
+-----------------------------------------------------
 
 .. regendoc:wipe
 
@@ -1531,3 +1531,37 @@ Given the tests file structure is:
 In the example above, a parametrized fixture is overridden with a non-parametrized version, and
 a non-parametrized fixture is overridden with a parametrized version for certain test module.
 The same applies for the test folder level obviously.
+
+
+Using fixtures from other projects
+----------------------------------
+
+Usually projects that provide pytest support will use :ref:`entry points <setuptools entry points>`,
+so just by installing those projects into an environment will make those fixtures available for use.
+
+In case you want to use fixtures from a project that does not use entry points, you can
+define :globalvar:`pytest_plugins` in your top ``conftest.py`` file to register that module
+as a plugin.
+
+Suppose you have some fixtures in ``mylibrary.fixtures`` and you want to reuse them into your
+``app/tests`` directory.
+
+All you need to do is to define :globalvar:`pytest_plugins` in ``app/tests/conftest.py``
+pointing to that module.
+
+.. code-block:: python
+
+    pytest_plugins = "mylibrary.fixtures"
+
+This effectively registers ``mylibrary.fixtures`` as a plugin, making all its fixtures and
+hooks available to tests in ``app/tests``.
+
+.. note::
+
+    Sometimes users will *import* fixtures from other projects for use, however this is not
+    recommended: importing fixtures into a module will register them in pytest
+    as *defined* in that module.
+
+    This has minor consequences, such as appearing multiple times in ``pytest --help``,
+    but it is not **recommended** because this behavior might change/stop working
+    in future versions.
