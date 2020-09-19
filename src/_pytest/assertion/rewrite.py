@@ -687,13 +687,18 @@ class AssertionRewriter(ast.NodeVisitor):
                     return
                 expect_docstring = False
             elif (
-                not isinstance(item, ast.ImportFrom)
-                or item.level > 0
-                or item.module != "__future__"
+                isinstance(item, ast.ImportFrom)
+                and item.level == 0
+                and item.module == "__future__"
             ):
-                lineno = item.lineno
+                pass
+            else:
                 break
             pos += 1
+        # Special case: for a decorated function, set the lineno to that of the
+        # first decorator, not the `def`. Issue #4984.
+        if isinstance(item, ast.FunctionDef) and item.decorator_list:
+            lineno = item.decorator_list[0].lineno
         else:
             lineno = item.lineno
         imports = [
