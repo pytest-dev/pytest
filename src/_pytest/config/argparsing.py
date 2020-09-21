@@ -16,6 +16,7 @@ from typing import Union
 import py
 
 import _pytest._io
+from _pytest.compat import final
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config.exceptions import UsageError
 
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
 FILE_OR_DIR = "file_or_dir"
 
 
+@final
 class Parser:
     """Parser for command line arguments and ini-file values.
 

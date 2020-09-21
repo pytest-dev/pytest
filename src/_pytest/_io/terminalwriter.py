@@ -7,6 +7,7 @@ from typing import Sequence
 from typing import TextIO
 
 from .wcwidth import wcswidth
+from _pytest.compat import final
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
@@ -36,6 +37,7 @@ def should_do_markup(file: TextIO) -> bool:
     )
 
 
+@final
 class TerminalWriter:
     _esctable = dict(
         black=30,

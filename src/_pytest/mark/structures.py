@@ -20,6 +20,7 @@ import attr
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
+from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
 from ..compat import overload
@@ -199,6 +200,7 @@ class ParameterSet(
         return argnames, parameters
 
 
+@final
 @attr.s(frozen=True)
 class Mark:
     #: Name of the mark.
@@ -452,6 +454,7 @@ if TYPE_CHECKING:
             ...
 
 
+@final
 class MarkGenerator:
     """Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.
@@ -525,6 +528,7 @@ MARK_GEN = MarkGenerator()
 
 
 # TODO(py36): inherit from typing.MutableMapping[str, Any].
+@final
 class NodeKeywords(collections.abc.MutableMapping):  # type: ignore[type-arg]
     def __init__(self, node: "Node") -> None:
         self.node = node

@@ -19,7 +19,6 @@ from typing import Union
 
 import attr
 
-from _pytest._io.saferepr import saferepr
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 
@@ -297,6 +296,8 @@ def get_real_func(obj):
             break
         obj = new_obj
     else:
+        from _pytest._io.saferepr import saferepr
+
         raise ValueError(
             ("could not find real function of {start}\nstopped at {current}").format(
                 start=saferepr(start_obj), current=saferepr(obj)
@@ -354,6 +355,19 @@ def safe_isclass(obj: object) -> bool:
 if sys.version_info < (3, 5, 2):
 
     def overload(f):  # noqa: F811
+        return f
+
+
+if TYPE_CHECKING:
+    if sys.version_info >= (3, 8):
+        from typing import final as final
+    else:
+        from typing_extensions import final as final
+elif sys.version_info >= (3, 8):
+    from typing import final as final
+else:
+
+    def final(f):  # noqa: F811
         return f
 
 

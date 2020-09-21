@@ -14,6 +14,7 @@ from typing import TypeVar
 from typing import Union
 
 import pytest
+from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.fixtures import fixture
 from _pytest.pathlib import Path
@@ -110,6 +111,7 @@ class Notset:
 notset = Notset()
 
 
+@final
 class MonkeyPatch:
     """Object returned by the ``monkeypatch`` fixture keeping a record of
     setattr/item/env/syspath changes."""

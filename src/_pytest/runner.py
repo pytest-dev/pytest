@@ -22,6 +22,7 @@ from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest.compat import final
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Collector
@@ -259,6 +260,7 @@ def call_runtest_hook(
 TResult = TypeVar("TResult", covariant=True)
 
 
+@final
 @attr.s(repr=False)
 class CallInfo(Generic[TResult]):
     """Result/Exception info a function invocation.

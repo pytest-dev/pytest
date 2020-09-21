@@ -28,6 +28,7 @@ import pytest
 from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
+from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
@@ -597,6 +598,7 @@ class SysPathsSnapshot:
         sys.path[:], sys.meta_path[:] = self.__saved
 
 
+@final
 class Testdir:
     """Temporary test directory with tools to test/run pytest itself.
 

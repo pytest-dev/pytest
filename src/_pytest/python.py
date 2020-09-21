@@ -37,6 +37,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
+from _pytest.compat import final
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
@@ -864,6 +865,7 @@ def hasnew(obj: object) -> bool:
     return False
 
 
+@final
 class CallSpec2:
     def __init__(self, metafunc: "Metafunc") -> None:
         self.metafunc = metafunc
@@ -924,6 +926,7 @@ class CallSpec2:
         self.marks.extend(normalize_mark_list(marks))
 
 
+@final
 class Metafunc:
     """Objects passed to the :func:`pytest_generate_tests <_pytest.hookspec.pytest_generate_tests>` hook.
 

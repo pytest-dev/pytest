@@ -26,6 +26,7 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest.compat import final
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.nodes import Collector
@@ -225,6 +226,7 @@ def _report_unserialization_failure(
     raise RuntimeError(stream.getvalue())
 
 
+@final
 class TestReport(BaseReport):
     """Basic test report object (also used for setup and teardown calls if
     they fail)."""
@@ -333,6 +335,7 @@ class TestReport(BaseReport):
         )
 
 
+@final
 class CollectReport(BaseReport):
     """Collection report object."""
 

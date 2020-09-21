@@ -32,6 +32,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
+from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
 from _pytest.compat import getfuncargnames
@@ -730,6 +731,7 @@ class FixtureRequest:
         return "<FixtureRequest for %r>" % (self.node)
 
 
+@final
 class SubRequest(FixtureRequest):
     """A sub request for handling getting a fixture from a test function/fixture."""
 
@@ -796,6 +798,7 @@ def scope2index(scope: str, descr: str, where: Optional[str] = None) -> int:
         )
 
 
+@final
 class FixtureLookupError(LookupError):
     """Could not return a requested fixture (missing or invalid)."""
 
@@ -952,6 +955,7 @@ def _eval_scope_callable(
     return result
 
 
+@final
 class FixtureDef(Generic[_FixtureValue]):
     """A container for a factory definition."""
 
@@ -1161,6 +1165,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
     return result
 
 
+@final
 @attr.s(frozen=True)
 class FixtureFunctionMarker:
     scope = attr.ib(type="Union[_Scope, Callable[[str, Config], _Scope]]")

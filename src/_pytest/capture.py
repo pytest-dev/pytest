@@ -17,6 +17,7 @@ from typing import Tuple
 from typing import Union
 
 import pytest
+from _pytest.compat import final
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -498,6 +499,7 @@ class FDCapture(FDCaptureBinary):
 # pertinent parts of a namedtuple. If the mypy limitation is ever lifted, can
 # make it a namedtuple again.
 # [0]: https://github.com/python/mypy/issues/685
+@final
 @functools.total_ordering
 class CaptureResult(Generic[AnyStr]):
     """The result of :method:`CaptureFixture.readouterr`."""

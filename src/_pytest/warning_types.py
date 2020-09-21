@@ -4,6 +4,7 @@ from typing import TypeVar
 
 import attr
 
+from _pytest.compat import final
 from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,36 +17,42 @@ class PytestWarning(UserWarning):
     __module__ = "pytest"
 
 
+@final
 class PytestAssertRewriteWarning(PytestWarning):
     """Warning emitted by the pytest assert rewrite module."""
 
     __module__ = "pytest"
 
 
+@final
 class PytestCacheWarning(PytestWarning):
     """Warning emitted by the cache plugin in various situations."""
 
     __module__ = "pytest"
 
 
+@final
 class PytestConfigWarning(PytestWarning):
     """Warning emitted for configuration issues."""
 
     __module__ = "pytest"
 
 
+@final
 class PytestCollectionWarning(PytestWarning):
     """Warning emitted when pytest is not able to collect a file or symbol in a module."""
 
     __module__ = "pytest"
 
 
+@final
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """Warning class for features that will be removed in a future version."""
 
     __module__ = "pytest"
 
 
+@final
 class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     """Warning category used to denote experiments in pytest.
 
@@ -64,6 +71,7 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
         )
 
 
+@final
 class PytestUnhandledCoroutineWarning(PytestWarning):
     """Warning emitted for an unhandled coroutine.
 
@@ -75,6 +83,7 @@ class PytestUnhandledCoroutineWarning(PytestWarning):
     __module__ = "pytest"
 
 
+@final
 class PytestUnknownMarkWarning(PytestWarning):
     """Warning emitted on use of unknown markers.
 
@@ -87,6 +96,7 @@ class PytestUnknownMarkWarning(PytestWarning):
 _W = TypeVar("_W", bound=PytestWarning)
 
 
+@final
 @attr.s
 class UnformattedWarning(Generic[_W]):
     """A warning meant to be formatted during runtime.

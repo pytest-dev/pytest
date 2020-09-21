@@ -21,6 +21,7 @@ import py
 
 import _pytest._code
 from _pytest import nodes
+from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
@@ -435,6 +436,7 @@ class _bestrelpath_cache(Dict[Path, str]):
         return r
 
 
+@final
 class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
