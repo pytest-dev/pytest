@@ -1,10 +1,16 @@
+---
+name: 🐛 Bug Report
+about: Report errors and problems
+
+---
+
 <!--
 Thanks for submitting an issue!
 
-Here's a quick checklist for what to provide:
+Quick check-list while reporting bugs:
 -->
 
-- [ ] a detailed description of the bug or suggestion
+- [ ] a detailed description of the bug or problem you are having
 - [ ] output of `pip list` from the virtual environment you are using
 - [ ] pytest and operating system versions
 - [ ] minimal example if possible
