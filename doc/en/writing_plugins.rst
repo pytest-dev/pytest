@@ -630,7 +630,7 @@ are expected. The names of the functions must start with `pytest_` otherwise pyt
 Here's an example. Let's assume this code is in the ``sample_hook.py`` module.
 
 .. code-block:: python
-    @hookimpl
+
     def pytest_my_hook(config):
         """
         Receives the pytest config and does things with it
@@ -641,7 +641,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
 (which itself is a hook exposed by pytest).
 
 .. code-block:: python
-    @hookimpl
+
     def pytest_addhooks(pluginmanager):
         """ This example assumes the hooks are grouped in the 'sample_hook' module. """
         from my_app.tests import sample_hook
