@@ -100,7 +100,7 @@ def pytest_cmdline_parse():
     config = outcome.get_result()  # type: Config
     if config.option.debug:
         path = os.path.abspath("pytestdebug.log")
-        debugfile = open(path, "w")
+        debugfile = open(path, "w", encoding="UTF-8")
         debugfile.write(
             "versions pytest-%s, py-%s, "
             "python-%s\ncwd=%s\nargs=%s\n\n"

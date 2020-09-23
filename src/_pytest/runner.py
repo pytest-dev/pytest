@@ -189,7 +189,13 @@ def _update_current_test_var(
         value = "{} ({})".format(item.nodeid, when)
         # don't allow null bytes on environment variables (see #2644, #2957)
         value = value.replace("\x00", "(null)")
-        os.environ[var_name] = value
+        # if we are running with a locale that cannot encode the test name
+        # and we're on a system where os.environb is supported, explicitly
+        # encode using UTF-8 (otherwise we get an EncodeError)
+        if os.supports_bytes_environ:
+            os.environb[var_name.encode()] = value.encode()
+        else:
+            os.environ[var_name] = value
     else:
         os.environ.pop(var_name)
 

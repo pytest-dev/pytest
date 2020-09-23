@@ -1,0 +1,1 @@
+Fix setting of ``PYTEST_CURRENT_TEST`` when the current locale cannot encode the test name.

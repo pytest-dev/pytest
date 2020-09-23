@@ -108,6 +108,21 @@ def test_debug(testdir):
     assert "pytest_sessionstart" in p.read()
 
 
+def test_debug_with_non_ascii_test_name(testdir, monkeypatch):
+    testdir.makepyfile(
+        """\
+        def test4_чћшђ_čćšđ():
+            pass
+        """
+    )
+    # force ASCII default io encoding (PYTHONIOENCODING didn't seem to work?)
+    monkeypatch.setenv("LANG", "C")
+    result = testdir.runpytest_subprocess("--debug")
+    assert result.ret == ExitCode.OK
+    log_contents = testdir.tmpdir.join("pytestdebug.log").read_binary()
+    assert b"pytest_sessionstart" in log_contents
+
+
 def test_PYTEST_DEBUG(testdir, monkeypatch):
     monkeypatch.setenv("PYTEST_DEBUG", "1")
     result = testdir.runpytest_subprocess()
