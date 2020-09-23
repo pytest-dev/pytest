@@ -37,7 +37,6 @@ from _pytest._code.source import Source
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
-from _pytest.compat import ATTRS_EQ_FIELD
 from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.compat import overload
@@ -918,7 +917,7 @@ class FormattedExcinfo:
         return ExceptionChainRepr(repr_chain)
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class TerminalRepr:
     def __str__(self) -> str:
         # FYI this is called from pytest-xdist's serialization of exception
@@ -936,7 +935,7 @@ class TerminalRepr:
 
 
 # This class is abstract -- only subclasses are instantiated.
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ExceptionRepr(TerminalRepr):
     # Provided by subclasses.
     reprcrash = None  # type: Optional[ReprFileLocation]
@@ -954,7 +953,7 @@ class ExceptionRepr(TerminalRepr):
             tw.line(content)
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ExceptionChainRepr(ExceptionRepr):
     chain = attr.ib(
         type=Sequence[
@@ -978,7 +977,7 @@ class ExceptionChainRepr(ExceptionRepr):
         super().toterminal(tw)
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ReprExceptionInfo(ExceptionRepr):
     reprtraceback = attr.ib(type="ReprTraceback")
     reprcrash = attr.ib(type="ReprFileLocation")
@@ -988,7 +987,7 @@ class ReprExceptionInfo(ExceptionRepr):
         super().toterminal(tw)
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ReprTraceback(TerminalRepr):
     reprentries = attr.ib(type=Sequence[Union["ReprEntry", "ReprEntryNative"]])
     extraline = attr.ib(type=Optional[str])
@@ -1022,7 +1021,7 @@ class ReprTracebackNative(ReprTraceback):
         self.extraline = None
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ReprEntryNative(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
     style = "native"  # type: _TracebackStyle
@@ -1031,7 +1030,7 @@ class ReprEntryNative(TerminalRepr):
         tw.write("".join(self.lines))
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ReprEntry(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
     reprfuncargs = attr.ib(type=Optional["ReprFuncArgs"])
@@ -1111,7 +1110,7 @@ class ReprEntry(TerminalRepr):
         )
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ReprFileLocation(TerminalRepr):
     path = attr.ib(type=str, converter=str)
     lineno = attr.ib(type=int)
@@ -1128,7 +1127,7 @@ class ReprFileLocation(TerminalRepr):
         tw.line(":{}: {}".format(self.lineno, msg))
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ReprLocals(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
 
@@ -1137,7 +1136,7 @@ class ReprLocals(TerminalRepr):
             tw.line(indent + line)
 
 
-@attr.s(**{ATTRS_EQ_FIELD: False})  # type: ignore
+@attr.s(eq=False)
 class ReprFuncArgs(TerminalRepr):
     args = attr.ib(type=Sequence[Tuple[str, object]])
 

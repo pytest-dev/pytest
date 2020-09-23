@@ -27,8 +27,6 @@ def test_no_warnings(module: str) -> None:
     subprocess.check_call((
         sys.executable,
         "-W", "error",
-        # https://github.com/pytest-dev/pytest/issues/5901
-        "-W", "ignore:The usage of `cmp` is deprecated and will be removed on or after 2021-06-01.  Please use `eq` and `order` instead.:DeprecationWarning",  # noqa: E501
         "-c", "__import__({!r})".format(module),
     ))
     # fmt: on

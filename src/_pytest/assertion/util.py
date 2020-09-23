@@ -16,7 +16,6 @@ from _pytest import outcomes
 from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
-from _pytest.compat import ATTRS_EQ_FIELD
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -420,9 +419,7 @@ def _compare_eq_cls(
         fields_to_check = [field for field, info in all_fields.items() if info.compare]
     elif isattrs(left):
         all_fields = left.__attrs_attrs__
-        fields_to_check = [
-            field.name for field in all_fields if getattr(field, ATTRS_EQ_FIELD)
-        ]
+        fields_to_check = [field.name for field in all_fields if getattr(field, "eq")]
 
     indent = "  "
     same = []

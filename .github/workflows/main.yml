@@ -79,7 +79,7 @@ jobs:
           - name: "ubuntu-py37"
             python: "3.7"
             os: ubuntu-latest
-            tox_env: "py37-lsof-numpy-oldattrs-pexpect"
+            tox_env: "py37-lsof-numpy-pexpect"
             use_coverage: true
           - name: "ubuntu-py37-pluggy"
             python: "3.7"

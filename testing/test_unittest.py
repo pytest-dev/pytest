@@ -532,11 +532,7 @@ class TestTrialUnittest:
                 # will crash both at test time and at teardown
         """
         )
-        # Ignore DeprecationWarning (for `cmp`) from attrs through twisted,
-        # for stable test results.
-        result = testdir.runpytest(
-            "-vv", "-oconsole_output_style=classic", "-W", "ignore::DeprecationWarning"
-        )
+        result = testdir.runpytest("-vv", "-oconsole_output_style=classic")
         result.stdout.fnmatch_lines(
             [
                 "test_trial_error.py::TC::test_four FAILED",
