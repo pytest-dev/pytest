@@ -614,6 +614,11 @@ among each other.
 Declaring new hooks
 ------------------------
 
+.. note::
+
+    This is a quick overview on how to add new hooks and how they work in general, but a more complete
+    overview can be found in `the pluggy documentation <https://pluggy.readthedocs.io/en/latest/>`__.
+
 .. currentmodule:: _pytest.hookspec
 
 Plugins and ``conftest.py`` files may declare new hooks that can then be
@@ -627,7 +632,7 @@ Hooks are usually declared as do-nothing functions that contain only
 documentation describing when the hook will be called and what return values
 are expected. The names of the functions must start with `pytest_` otherwise pytest won't recognize them.
 
-Here's an example. Let's assume this code is in the ``hooks.py`` module.
+Here's an example. Let's assume this code is in the ``sample_hook.py`` module.
 
 .. code-block:: python
 
@@ -643,10 +648,10 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
 .. code-block:: python
 
     def pytest_addhooks(pluginmanager):
-        """ This example assumes the hooks are grouped in the 'hooks' module. """
-        from my_app.tests import hooks
+        """ This example assumes the hooks are grouped in the 'sample_hook' module. """
+        from my_app.tests import sample_hook
 
-        pluginmanager.add_hookspecs(hooks)
+        pluginmanager.add_hookspecs(sample_hook)
 
 For a real world example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
 
