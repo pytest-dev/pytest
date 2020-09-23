@@ -32,6 +32,7 @@ from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
+from _pytest.compat import final
 from _pytest.compat import order_preserving_dict
 from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
@@ -309,6 +310,7 @@ class WarningReport:
         return None
 
 
+@final
 class TerminalReporter:
     def __init__(self, config: Config, file: Optional[TextIO] = None) -> None:
         import _pytest.config

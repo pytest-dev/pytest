@@ -43,6 +43,7 @@ from .findpaths import determine_setup
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
+from _pytest.compat import final
 from _pytest.compat import importlib_metadata
 from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
@@ -76,6 +77,7 @@ hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
 
+@final
 class ExitCode(enum.IntEnum):
     """Encodes the valid exit codes by pytest.
 
@@ -322,6 +324,7 @@ def _prepareconfig(
         raise
 
 
+@final
 class PytestPluginManager(PluginManager):
     """A :py:class:`pluggy.PluginManager <pluggy.PluginManager>` with
     additional pytest-specific functionality:
@@ -815,6 +818,7 @@ def _args_converter(args: Iterable[str]) -> Tuple[str, ...]:
     return tuple(args)
 
 
+@final
 class Config:
     """Access to configuration values, pluginmanager and plugin hooks.
 
@@ -825,6 +829,7 @@ class Config:
         invocation.
     """
 
+    @final
     @attr.s(frozen=True)
     class InvocationParams:
         """Holds parameters passed during :func:`pytest.main`.

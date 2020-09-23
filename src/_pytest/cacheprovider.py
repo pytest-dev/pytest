@@ -21,6 +21,7 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest.compat import final
 from _pytest.compat import order_preserving_dict
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -50,6 +51,7 @@ Signature: 8a477f597d28d172789f06886806bc55
 """
 
 
+@final
 @attr.s
 class Cache:
     _cachedir = attr.ib(type=Path, repr=False)

@@ -13,6 +13,7 @@ from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
+from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
 from _pytest.fixtures import fixture
@@ -228,6 +229,7 @@ class WarningsRecorder(warnings.catch_warnings):
         self._entered = False
 
 
+@final
 class WarningsChecker(WarningsRecorder):
     def __init__(
         self,

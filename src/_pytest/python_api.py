@@ -17,6 +17,7 @@ from typing import TypeVar
 from typing import Union
 
 import _pytest._code
+from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.compat import STRING_TYPES
 from _pytest.compat import TYPE_CHECKING
@@ -699,6 +700,7 @@ def raises(  # noqa: F811
 raises.Exception = fail.Exception  # type: ignore
 
 
+@final
 class RaisesContext(Generic[_E]):
     def __init__(
         self,

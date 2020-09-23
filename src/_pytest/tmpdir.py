@@ -13,11 +13,13 @@ from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import Path
+from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
 
 
+@final
 @attr.s
 class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
@@ -103,6 +105,7 @@ class TempPathFactory:
         return t
 
 
+@final
 @attr.s
 class TempdirFactory:
     """Backward comptibility wrapper that implements :class:``py.path.local``

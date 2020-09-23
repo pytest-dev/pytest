@@ -19,6 +19,7 @@ import pytest
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
+from _pytest.compat import final
 from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
 from _pytest.config import Config
@@ -339,6 +340,7 @@ class LogCaptureHandler(logging.StreamHandler):
             raise
 
 
+@final
 class LogCaptureFixture:
     """Provides access and control of log capturing."""
 

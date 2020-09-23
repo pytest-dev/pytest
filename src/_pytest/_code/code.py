@@ -38,6 +38,7 @@ from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ATTRS_EQ_FIELD
+from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.compat import overload
 from _pytest.compat import TYPE_CHECKING
@@ -414,6 +415,7 @@ co_equal = compile(
 _E = TypeVar("_E", bound=BaseException, covariant=True)
 
 
+@final
 @attr.s(repr=False)
 class ExceptionInfo(Generic[_E]):
     """Wraps sys.exc_info() objects and offers help for navigating the traceback."""
