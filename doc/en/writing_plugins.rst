@@ -646,7 +646,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
         """ This example assumes the hooks are grouped in the 'sample_hook' module. """
         from my_app.tests import sample_hook
 
-        pluginmanager.add_hookspecs(hooks)
+        pluginmanager.add_hookspecs(sample_hook)
 
 For a real world example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
 
