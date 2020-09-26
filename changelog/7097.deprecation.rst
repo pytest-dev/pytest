@@ -1,4 +1,4 @@
-The ``pytest._fillfuncargs`` function is now deprecated. This function was kept
+The ``pytest._fillfuncargs`` function is deprecated. This function was kept
 for backward compatibility with an older plugin.
 
 It's functionality is not meant to be used directly, but if you must replace
