@@ -227,7 +227,7 @@ def find_next_version(base_branch: str, is_major: bool) -> str:
         msg = dedent(
             f"""
             Found features or breaking changes in `{base_branch}`, and feature releases can only be
-            created from `master`.":
+            created from `master`:
         """
         )
         msg += "\n".join(f"* `{x.name}`" for x in sorted(features + breaking))
