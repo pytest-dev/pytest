@@ -1,6 +1,0 @@
-When collecting tests, pytest finds test classes and functions by examining the
-attributes of python objects (modules, classes and instances). To speed up this
-process, pytest now ignores builtin attributes (like ``__class__``,
-``__delattr__`` and ``__new__``) without consulting the :confval:`python_classes` and
-:confval:`python_functions` configuration options and without passing them to plugins
-using the :func:`pytest_pycollect_makeitem <_pytest.hookspec.pytest_pycollect_makeitem>` hook.

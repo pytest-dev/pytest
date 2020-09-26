@@ -1,1 +1,0 @@
-Fix handling of command-line options that appear as paths but trigger an OS-level syntax error on Windows, such as the options used internally by ``pytest-xdist``.
