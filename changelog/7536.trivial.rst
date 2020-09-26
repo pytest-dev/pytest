@@ -1,3 +1,0 @@
-The internal ``junitxml`` plugin has rewritten to use ``xml.etree.ElementTree``.
-The order of attributes in XML elements might differ. Some unneeded escaping is
-no longer performed.

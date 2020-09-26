@@ -1,2 +1,0 @@
-The :func:`pytest_warning_captured <_pytest.hookspec.pytest_warning_captured>` hook is deprecated in favor
-of :func:`pytest_warning_recorded <_pytest.hookspec.pytest_warning_recorded>`, and will be removed in a future version.

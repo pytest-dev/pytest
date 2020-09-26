@@ -1,1 +1,0 @@
-Fixed test collection when a full path without a drive letter was passed to pytest on Windows (for example ``\projects\tests\test.py`` instead of ``c:\projects\tests\pytest.py``).

@@ -1,1 +1,0 @@
-Removed faq.rst and its reference in contents.rst.
