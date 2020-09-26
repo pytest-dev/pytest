@@ -28,6 +28,166 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.1.0 (2020-09-26)
+=========================
+
+Breaking Changes
+----------------
+
+- `#5585 <https://github.com/pytest-dev/pytest/issues/5585>`_: As per our policy, the following features which have been deprecated in the 5.X series are now
+  removed:
+
+  * The ``funcargnames`` read-only property of ``FixtureRequest``, ``Metafunc``, and ``Function`` classes. Use ``fixturenames`` attribute.
+
+  * ``@pytest.fixture`` no longer supports positional arguments, pass all arguments by keyword instead.
+
+  * Direct construction of ``Node`` subclasses now raise an error, use ``from_parent`` instead.
+
+  * The default value for ``junit_family`` has changed to ``xunit2``. If you require the old format, add ``junit_family=xunit1`` to your configuration file.
+
+  * The ``TerminalReporter`` no longer has a ``writer`` attribute. Plugin authors may use the public functions of the ``TerminalReporter`` instead of accessing the ``TerminalWriter`` object directly.
+
+  * The ``--result-log`` option has been removed. Users are recommended to use the `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
+
+
+  For more information consult
+  `Deprecations and Removals <https://docs.pytest.org/en/stable/deprecations.html>`__ in the docs.
+
+
+
+Deprecations
+------------
+
+- `#6981 <https://github.com/pytest-dev/pytest/issues/6981>`_: The ``pytest.collect`` module is deprecated: all its names can be imported from ``pytest`` directly.
+
+
+- `#7097 <https://github.com/pytest-dev/pytest/issues/7097>`_: The ``pytest._fillfuncargs`` function is deprecated. This function was kept
+  for backward compatibility with an older plugin.
+
+  It's functionality is not meant to be used directly, but if you must replace
+  it, use `function._request._fillfixtures()` instead, though note this is not
+  a public API and may break in the future.
+
+
+- `#7210 <https://github.com/pytest-dev/pytest/issues/7210>`_: The special ``-k '-expr'`` syntax to ``-k`` is deprecated. Use ``-k 'not expr'``
+  instead.
+
+  The special ``-k 'expr:'`` syntax to ``-k`` is deprecated. Please open an issue
+  if you use this and want a replacement.
+
+
+- `#7255 <https://github.com/pytest-dev/pytest/issues/7255>`_: The :func:`pytest_warning_captured <_pytest.hookspec.pytest_warning_captured>` hook is deprecated in favor
+  of :func:`pytest_warning_recorded <_pytest.hookspec.pytest_warning_recorded>`, and will be removed in a future version.
+
+
+- `#7648 <https://github.com/pytest-dev/pytest/issues/7648>`_: The ``gethookproxy()`` and ``isinitpath()`` methods of ``FSCollector`` and ``Package`` are deprecated;
+  use ``self.session.gethookproxy()`` and ``self.session.isinitpath()`` instead.
+  This should work on all pytest versions.
+
+
+
+Features
+--------
+
+- `#7667 <https://github.com/pytest-dev/pytest/issues/7667>`_: New ``--durations-min`` command-line flag controls the minimal duration for inclusion in the slowest list of tests shown by ``--durations``. Previously this was hard-coded to ``0.005s``.
+
+
+
+Improvements
+------------
+
+- `#6681 <https://github.com/pytest-dev/pytest/issues/6681>`_: Internal pytest warnings issued during the early stages of initialization are now properly handled and can filtered through :confval:`filterwarnings` or ``--pythonwarnings/-W``.
+
+  This also fixes a number of long standing issues: `#2891 <https://github.com/pytest-dev/pytest/issues/2891>`__, `#7620 <https://github.com/pytest-dev/pytest/issues/7620>`__, `#7426 <https://github.com/pytest-dev/pytest/issues/7426>`__.
+
+
+- `#7572 <https://github.com/pytest-dev/pytest/issues/7572>`_: When a plugin listed in ``required_plugins`` is missing or an unknown config key is used with ``--strict-config``, a simple error message is now shown instead of a stacktrace.
+
+
+- `#7685 <https://github.com/pytest-dev/pytest/issues/7685>`_: Added two new attributes :attr:`rootpath <_pytest.config.Config.rootpath>` and :attr:`inipath <_pytest.config.Config.inipath>` to :class:`Config <_pytest.config.Config>`.
+  These attributes are :class:`pathlib.Path` versions of the existing :attr:`rootdir <_pytest.config.Config.rootdir>` and :attr:`inifile <_pytest.config.Config.inifile>` attributes,
+  and should be preferred over them when possible.
+
+
+- `#7780 <https://github.com/pytest-dev/pytest/issues/7780>`_: Public classes which are not designed to be inherited from are now marked `@final <https://docs.python.org/3/library/typing.html#typing.final>`_.
+  Code which inherits from these classes will trigger a type-checking (e.g. mypy) error, but will still work in runtime.
+  Currently the ``final`` designation does not appear in the API Reference but hopefully will in the future.
+
+
+
+Bug Fixes
+---------
+
+- `#1953 <https://github.com/pytest-dev/pytest/issues/1953>`_: Fixed error when overwriting a parametrized fixture, while also reusing the super fixture value.
+
+  .. code-block:: python
+
+      # conftest.py
+      import pytest
+
+
+      @pytest.fixture(params=[1, 2])
+      def foo(request):
+          return request.param
+
+
+      # test_foo.py
+      import pytest
+
+
+      @pytest.fixture
+      def foo(foo):
+          return foo * 2
+
+
+- `#4984 <https://github.com/pytest-dev/pytest/issues/4984>`_: Fixed an internal error crash with ``IndexError: list index out of range`` when
+  collecting a module which starts with a decorated function, the decorator
+  raises, and assertion rewriting is enabled.
+
+
+- `#7591 <https://github.com/pytest-dev/pytest/issues/7591>`_: pylint shouldn't complain anymore about unimplemented abstract methods when inheriting from :ref:`File <non-python tests>`.
+
+
+- `#7628 <https://github.com/pytest-dev/pytest/issues/7628>`_: Fixed test collection when a full path without a drive letter was passed to pytest on Windows (for example ``\projects\tests\test.py`` instead of ``c:\projects\tests\pytest.py``).
+
+
+- `#7638 <https://github.com/pytest-dev/pytest/issues/7638>`_: Fix handling of command-line options that appear as paths but trigger an OS-level syntax error on Windows, such as the options used internally by ``pytest-xdist``.
+
+
+- `#7742 <https://github.com/pytest-dev/pytest/issues/7742>`_: Fixed INTERNALERROR when accessing locals / globals with faulty ``exec``.
+
+
+
+Improved Documentation
+----------------------
+
+- `#1477 <https://github.com/pytest-dev/pytest/issues/1477>`_: Removed faq.rst and its reference in contents.rst.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#7536 <https://github.com/pytest-dev/pytest/issues/7536>`_: The internal ``junitxml`` plugin has rewritten to use ``xml.etree.ElementTree``.
+  The order of attributes in XML elements might differ. Some unneeded escaping is
+  no longer performed.
+
+
+- `#7587 <https://github.com/pytest-dev/pytest/issues/7587>`_: The dependency on the ``more-itertools`` package has been removed.
+
+
+- `#7631 <https://github.com/pytest-dev/pytest/issues/7631>`_: The result type of :meth:`capfd.readouterr() <_pytest.capture.CaptureFixture.readouterr>` (and similar) is no longer a namedtuple,
+  but should behave like one in all respects. This was done for technical reasons.
+
+
+- `#7671 <https://github.com/pytest-dev/pytest/issues/7671>`_: When collecting tests, pytest finds test classes and functions by examining the
+  attributes of python objects (modules, classes and instances). To speed up this
+  process, pytest now ignores builtin attributes (like ``__class__``,
+  ``__delattr__`` and ``__new__``) without consulting the :confval:`python_classes` and
+  :confval:`python_functions` configuration options and without passing them to plugins
+  using the :func:`pytest_pycollect_makeitem <_pytest.hookspec.pytest_pycollect_makeitem>` hook.
+
+
 pytest 6.0.2 (2020-09-04)
 =========================
 
