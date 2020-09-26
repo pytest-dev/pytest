@@ -1,1 +1,1 @@
-Deprecate the ``pytest.collect`` module: all its names can be imported from ``pytest`` directly.
+The ``pytest.collect`` module is deprecated: all its names can be imported from ``pytest`` directly.

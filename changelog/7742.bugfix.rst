@@ -1,1 +1,1 @@
-Fix INTERNALERROR when accessing locals / globals with faulty ``exec``.
+Fixed INTERNALERROR when accessing locals / globals with faulty ``exec``.

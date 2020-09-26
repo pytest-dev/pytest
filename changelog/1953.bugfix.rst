@@ -1,4 +1,4 @@
-Fix error when overwriting a parametrized fixture, while also reusing the super fixture value.
+Fixed error when overwriting a parametrized fixture, while also reusing the super fixture value.
 
 .. code-block:: python
 
