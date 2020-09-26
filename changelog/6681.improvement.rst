@@ -1,3 +1,0 @@
-Internal pytest warnings issued during the early stages of initialization are now properly handled and can filtered through :confval:`filterwarnings` or ``--pythonwarnings/-W``.
-
-This also fixes a number of long standing issues: `#2891 <https://github.com/pytest-dev/pytest/issues/2891>`__, `#7620 <https://github.com/pytest-dev/pytest/issues/7620>`__, `#7426 <https://github.com/pytest-dev/pytest/issues/7426>`__.

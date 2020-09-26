@@ -1,3 +1,0 @@
-The ``gethookproxy()`` and ``isinitpath()`` methods of ``FSCollector`` and ``Package`` are deprecated;
-use ``self.session.gethookproxy()`` and ``self.session.isinitpath()`` instead.
-This should work on all pytest versions.

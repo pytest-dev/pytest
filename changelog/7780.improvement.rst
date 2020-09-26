@@ -1,3 +1,0 @@
-Public classes which are not designed to be inherited from are now marked `@final <https://docs.python.org/3/library/typing.html#typing.final>`_.
-Code which inherits from these classes will trigger a type-checking (e.g. mypy) error, but will still work in runtime.
-Currently the ``final`` designation does not appear in the API Reference but hopefully will in the future.
