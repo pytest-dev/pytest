@@ -33,26 +33,34 @@ Plugin discovery order at tool startup
 
 ``pytest`` loads plugin modules at tool startup in the following way:
 
-* by loading all builtin plugins
+1. by scanning the command line for the ``-p no:name`` option
+   and *blocking* that plugin from being loaded (even builtin plugins can
+   be blocked this way). This happens before normal command-line parsing.
 
-* by loading all plugins registered through `setuptools entry points`_.
+2. by loading all builtin plugins.
 
-* by pre-scanning the command line for the ``-p name`` option
-  and loading the specified plugin before actual command line parsing.
+3. by scanning the command line for the ``-p name`` option
+   and loading the specified plugin. This happens before normal command-line parsing.
 
-* by loading all :file:`conftest.py` files as inferred by the command line
-  invocation:
+4. by loading all plugins registered through `setuptools entry points`_.
 
-  - if no test paths are specified use current dir as a test path
-  - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative
-    to the directory part of the first test path.
+5. by loading all plugins specified through the :envvar:`PYTEST_PLUGINS` environment variable.
 
-  Note that pytest does not find ``conftest.py`` files in deeper nested
-  sub directories at tool startup.  It is usually a good idea to keep
-  your ``conftest.py`` file in the top level test or project root directory.
+6. by loading all :file:`conftest.py` files as inferred by the command line
+   invocation:
 
-* by recursively loading all plugins specified by the
-  :globalvar:`pytest_plugins` variable in ``conftest.py`` files
+   - if no test paths are specified, use the current dir as a test path
+   - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative
+     to the directory part of the first test path. After the ``conftest.py``
+     file is loaded, load all plugins specified in its
+     :globalvar:`pytest_plugins` variable if present.
+
+   Note that pytest does not find ``conftest.py`` files in deeper nested
+   sub directories at tool startup.  It is usually a good idea to keep
+   your ``conftest.py`` file in the top level test or project root directory.
+
+7. by recursively loading all plugins specified by the
+   :globalvar:`pytest_plugins` variable in ``conftest.py`` files.
 
 
 .. _`pytest/plugin`: http://bitbucket.org/pytest-dev/pytest/src/tip/pytest/plugin/
