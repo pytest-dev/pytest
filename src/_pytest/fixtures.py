@@ -49,6 +49,7 @@ from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FILLFUNCARGS
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.mark import Mark
@@ -367,7 +368,7 @@ def _fill_fixtures_impl(function: "Function") -> None:
         assert function.parent is not None
         fi = fm.getfixtureinfo(function.parent, function.obj, None)
         function._fixtureinfo = fi
-        request = function._request = FixtureRequest(function)
+        request = function._request = FixtureRequest(function, _ispytest=True)
         request._fillfixtures()
         # Prune out funcargs for jstests.
         newfuncargs = {}
@@ -429,7 +430,8 @@ class FixtureRequest:
     indirectly.
     """
 
-    def __init__(self, pyfuncitem) -> None:
+    def __init__(self, pyfuncitem, *, _ispytest: bool = False) -> None:
+        check_ispytest(_ispytest)
         self._pyfuncitem = pyfuncitem
         #: Fixture for which this request is being performed.
         self.fixturename: Optional[str] = None
@@ -674,7 +676,9 @@ class FixtureRequest:
             if paramscopenum is not None:
                 scope = scopes[paramscopenum]
 
-        subrequest = SubRequest(self, scope, param, param_index, fixturedef)
+        subrequest = SubRequest(
+            self, scope, param, param_index, fixturedef, _ispytest=True
+        )
 
         # Check if a higher-level scoped fixture accesses a lower level one.
         subrequest._check_scope(argname, self.scope, scope)
@@ -751,7 +755,10 @@ class SubRequest(FixtureRequest):
         param,
         param_index: int,
         fixturedef: "FixtureDef[object]",
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self._parent_request = request
         self.fixturename = fixturedef.argname
         if param is not NOTSET:
@@ -769,6 +776,8 @@ class SubRequest(FixtureRequest):
         return f"<SubRequest {self.fixturename!r} for {self._pyfuncitem!r}>"
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
+        """Add finalizer/teardown function to be called after the last test
+        within the requesting test context finished execution."""
         self._fixturedef.addfinalizer(finalizer)
 
     def _schedule_finalizers(

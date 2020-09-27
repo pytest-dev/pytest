@@ -16,6 +16,7 @@ from typing import TypeVar
 from typing import Union
 
 from _pytest.compat import final
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 
@@ -30,7 +31,7 @@ def recwarn() -> Generator["WarningsRecorder", None, None]:
     See http://docs.python.org/library/warnings.html for information
     on warning categories.
     """
-    wrec = WarningsRecorder()
+    wrec = WarningsRecorder(_ispytest=True)
     with wrec:
         warnings.simplefilter("default")
         yield wrec
@@ -142,14 +143,14 @@ def warns(
             msg += ", ".join(sorted(kwargs))
             msg += "\nUse context-manager form instead?"
             raise TypeError(msg)
-        return WarningsChecker(expected_warning, match_expr=match)
+        return WarningsChecker(expected_warning, match_expr=match, _ispytest=True)
     else:
         func = args[0]
         if not callable(func):
             raise TypeError(
                 "{!r} object (type: {}) must be callable".format(func, type(func))
             )
-        with WarningsChecker(expected_warning):
+        with WarningsChecker(expected_warning, _ispytest=True):
             return func(*args[1:], **kwargs)
 
 
@@ -159,7 +160,8 @@ class WarningsRecorder(warnings.catch_warnings):
     Adapted from `warnings.catch_warnings`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, _ispytest: bool = False) -> None:
+        check_ispytest(_ispytest)
         # Type ignored due to the way typeshed handles warnings.catch_warnings.
         super().__init__(record=True)  # type: ignore[call-arg]
         self._entered = False
@@ -232,8 +234,11 @@ class WarningsChecker(WarningsRecorder):
             Union[Type[Warning], Tuple[Type[Warning], ...]]
         ] = None,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
+        *,
+        _ispytest: bool = False,
     ) -> None:
-        super().__init__()
+        check_ispytest(_ispytest)
+        super().__init__(_ispytest=True)
 
         msg = "exceptions must be derived from Warning, not %s"
         if expected_warning is None:

@@ -14,37 +14,56 @@ from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from _pytest.compat import final
 from _pytest.config import Config
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
 
 
 @final
-@attr.s
+@attr.s(init=False)
 class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option.
     """
 
-    _given_basetemp = attr.ib(
-        type=Optional[Path],
-        # Use os.path.abspath() to get absolute path instead of resolve() as it
-        # does not work the same in all platforms (see #4427).
-        # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012).
-        # Ignore type because of https://github.com/python/mypy/issues/6172.
-        converter=attr.converters.optional(
-            lambda p: Path(os.path.abspath(str(p)))  # type: ignore
-        ),
-    )
+    _given_basetemp = attr.ib(type=Optional[Path])
     _trace = attr.ib()
-    _basetemp = attr.ib(type=Optional[Path], default=None)
+    _basetemp = attr.ib(type=Optional[Path])
+
+    def __init__(
+        self,
+        given_basetemp: Optional[Path],
+        trace,
+        basetemp: Optional[Path] = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        if given_basetemp is None:
+            self._given_basetemp = None
+        else:
+            # Use os.path.abspath() to get absolute path instead of resolve() as it
+            # does not work the same in all platforms (see #4427).
+            # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012).
+            self._given_basetemp = Path(os.path.abspath(str(given_basetemp)))
+        self._trace = trace
+        self._basetemp = basetemp
 
     @classmethod
-    def from_config(cls, config: Config) -> "TempPathFactory":
-        """Create a factory according to pytest configuration."""
+    def from_config(
+        cls, config: Config, *, _ispytest: bool = False,
+    ) -> "TempPathFactory":
+        """Create a factory according to pytest configuration.
+
+        :meta private:
+        """
+        check_ispytest(_ispytest)
         return cls(
-            given_basetemp=config.option.basetemp, trace=config.trace.get("tmpdir")
+            given_basetemp=config.option.basetemp,
+            trace=config.trace.get("tmpdir"),
+            _ispytest=True,
         )
 
     def _ensure_relative_to_basetemp(self, basename: str) -> str:
@@ -104,12 +123,18 @@ class TempPathFactory:
 
 
 @final
-@attr.s
+@attr.s(init=False)
 class TempdirFactory:
     """Backward comptibility wrapper that implements :class:``py.path.local``
     for :class:``TempPathFactory``."""
 
     _tmppath_factory = attr.ib(type=TempPathFactory)
+
+    def __init__(
+        self, tmppath_factory: TempPathFactory, *, _ispytest: bool = False
+    ) -> None:
+        check_ispytest(_ispytest)
+        self._tmppath_factory = tmppath_factory
 
     def mktemp(self, basename: str, numbered: bool = True) -> py.path.local:
         """Same as :meth:`TempPathFactory.mktemp`, but returns a ``py.path.local`` object."""
@@ -139,8 +164,8 @@ def pytest_configure(config: Config) -> None:
     to the tmpdir_factory session fixture.
     """
     mp = MonkeyPatch()
-    tmppath_handler = TempPathFactory.from_config(config)
-    t = TempdirFactory(tmppath_handler)
+    tmppath_handler = TempPathFactory.from_config(config, _ispytest=True)
+    t = TempdirFactory(tmppath_handler, _ispytest=True)
     config._cleanup.append(mp.undo)
     mp.setattr(config, "_tmp_path_factory", tmppath_handler, raising=False)
     mp.setattr(config, "_tmpdirhandler", t, raising=False)

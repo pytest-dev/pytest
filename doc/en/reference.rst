@@ -304,11 +304,10 @@ request ``pytestconfig`` into your fixture and get it with ``pytestconfig.cache`
 Under the hood, the cache plugin uses the simple
 ``dumps``/``loads`` API of the :py:mod:`json` stdlib module.
 
-.. currentmodule:: _pytest.cacheprovider
+``config.cache`` is an instance of :class:`pytest.Cache`:
 
-.. automethod:: Cache.get
-.. automethod:: Cache.set
-.. automethod:: Cache.makedir
+.. autoclass:: pytest.Cache()
+   :members:
 
 
 .. fixture:: capsys
@@ -318,12 +317,10 @@ capsys
 
 **Tutorial**: :doc:`capture`.
 
-.. currentmodule:: _pytest.capture
-
-.. autofunction:: capsys()
+.. autofunction:: _pytest.capture.capsys()
     :no-auto-options:
 
-    Returns an instance of :py:class:`CaptureFixture`.
+    Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
     Example:
 
@@ -334,7 +331,7 @@ capsys
             captured = capsys.readouterr()
             assert captured.out == "hello\n"
 
-.. autoclass:: CaptureFixture()
+.. autoclass:: pytest.CaptureFixture()
     :members:
 
 
@@ -345,10 +342,10 @@ capsysbinary
 
 **Tutorial**: :doc:`capture`.
 
-.. autofunction:: capsysbinary()
+.. autofunction:: _pytest.capture.capsysbinary()
     :no-auto-options:
 
-    Returns an instance of :py:class:`CaptureFixture`.
+    Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
     Example:
 
@@ -367,10 +364,10 @@ capfd
 
 **Tutorial**: :doc:`capture`.
 
-.. autofunction:: capfd()
+.. autofunction:: _pytest.capture.capfd()
     :no-auto-options:
 
-    Returns an instance of :py:class:`CaptureFixture`.
+    Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
     Example:
 
@@ -389,10 +386,10 @@ capfdbinary
 
 **Tutorial**: :doc:`capture`.
 
-.. autofunction:: capfdbinary()
+.. autofunction:: _pytest.capture.capfdbinary()
     :no-auto-options:
 
-    Returns an instance of :py:class:`CaptureFixture`.
+    Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
     Example:
 
@@ -433,7 +430,7 @@ request
 
 The ``request`` fixture is a special fixture providing information of the requesting test function.
 
-.. autoclass:: _pytest.fixtures.FixtureRequest()
+.. autoclass:: pytest.FixtureRequest()
     :members:
 
 
@@ -475,9 +472,9 @@ caplog
 .. autofunction:: _pytest.logging.caplog()
     :no-auto-options:
 
-    Returns a :class:`_pytest.logging.LogCaptureFixture` instance.
+    Returns a :class:`pytest.LogCaptureFixture` instance.
 
-.. autoclass:: _pytest.logging.LogCaptureFixture
+.. autoclass:: pytest.LogCaptureFixture()
     :members:
 
 
@@ -504,9 +501,7 @@ pytester
 
 .. versionadded:: 6.2
 
-.. currentmodule:: _pytest.pytester
-
-Provides a :class:`Pytester` instance that can be used to run and test pytest itself.
+Provides a :class:`~pytest.Pytester` instance that can be used to run and test pytest itself.
 
 It provides an empty directory where pytest can be executed in isolation, and contains facilities
 to write tests, configuration files, and match against expected output.
@@ -519,16 +514,16 @@ To use it, include in your topmost ``conftest.py`` file:
 
 
 
-.. autoclass:: Pytester()
+.. autoclass:: pytest.Pytester()
     :members:
 
-.. autoclass:: RunResult()
+.. autoclass:: _pytest.pytester.RunResult()
     :members:
 
-.. autoclass:: LineMatcher()
+.. autoclass:: _pytest.pytester.LineMatcher()
     :members:
 
-.. autoclass:: HookRecorder()
+.. autoclass:: _pytest.pytester.HookRecorder()
     :members:
 
 .. fixture:: testdir
@@ -541,7 +536,7 @@ legacy ``py.path.local`` objects instead when applicable.
 
 New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
 
-.. autoclass:: Testdir()
+.. autoclass:: pytest.Testdir()
     :members:
 
 
@@ -552,12 +547,10 @@ recwarn
 
 **Tutorial**: :ref:`assertwarnings`
 
-.. currentmodule:: _pytest.recwarn
-
-.. autofunction:: recwarn()
+.. autofunction:: _pytest.recwarn.recwarn()
     :no-auto-options:
 
-.. autoclass:: WarningsRecorder()
+.. autoclass:: pytest.WarningsRecorder()
     :members:
 
 Each recorded warning is an instance of :class:`warnings.WarningMessage`.
@@ -574,13 +567,11 @@ tmp_path
 
 **Tutorial**: :doc:`tmpdir`
 
-.. currentmodule:: _pytest.tmpdir
-
-.. autofunction:: tmp_path()
+.. autofunction:: _pytest.tmpdir.tmp_path()
     :no-auto-options:
 
 
-.. fixture:: tmp_path_factory
+.. fixture:: _pytest.tmpdir.tmp_path_factory
 
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
@@ -589,12 +580,9 @@ tmp_path_factory
 
 .. _`tmp_path_factory factory api`:
 
-``tmp_path_factory`` instances have the following methods:
+``tmp_path_factory`` is an instance of :class:`~pytest.TempPathFactory`:
 
-.. currentmodule:: _pytest.tmpdir
-
-.. automethod:: TempPathFactory.mktemp
-.. automethod:: TempPathFactory.getbasetemp
+.. autoclass:: pytest.TempPathFactory()
 
 
 .. fixture:: tmpdir
@@ -604,9 +592,7 @@ tmpdir
 
 **Tutorial**: :doc:`tmpdir`
 
-.. currentmodule:: _pytest.tmpdir
-
-.. autofunction:: tmpdir()
+.. autofunction:: _pytest.tmpdir.tmpdir()
     :no-auto-options:
 
 
@@ -619,12 +605,9 @@ tmpdir_factory
 
 .. _`tmpdir factory api`:
 
-``tmpdir_factory`` instances have the following methods:
+``tmp_path_factory`` is an instance of :class:`~pytest.TempdirFactory`:
 
-.. currentmodule:: _pytest.tmpdir
-
-.. automethod:: TempdirFactory.mktemp
-.. automethod:: TempdirFactory.getbasetemp
+.. autoclass:: pytest.TempdirFactory()
 
 
 .. _`hook-reference`:

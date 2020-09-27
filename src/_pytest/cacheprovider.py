@@ -25,6 +25,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -53,7 +54,7 @@ Signature: 8a477f597d28d172789f06886806bc55
 
 
 @final
-@attr.s
+@attr.s(init=False)
 class Cache:
     _cachedir = attr.ib(type=Path, repr=False)
     _config = attr.ib(type=Config, repr=False)
@@ -64,26 +65,52 @@ class Cache:
     # sub-directory under cache-dir for values created by "set"
     _CACHE_PREFIX_VALUES = "v"
 
-    @classmethod
-    def for_config(cls, config: Config) -> "Cache":
-        cachedir = cls.cache_dir_from_config(config)
-        if config.getoption("cacheclear") and cachedir.is_dir():
-            cls.clear_cache(cachedir)
-        return cls(cachedir, config)
+    def __init__(
+        self, cachedir: Path, config: Config, *, _ispytest: bool = False
+    ) -> None:
+        check_ispytest(_ispytest)
+        self._cachedir = cachedir
+        self._config = config
 
     @classmethod
-    def clear_cache(cls, cachedir: Path) -> None:
-        """Clear the sub-directories used to hold cached directories and values."""
+    def for_config(cls, config: Config, *, _ispytest: bool = False) -> "Cache":
+        """Create the Cache instance for a Config.
+
+        :meta private:
+        """
+        check_ispytest(_ispytest)
+        cachedir = cls.cache_dir_from_config(config, _ispytest=True)
+        if config.getoption("cacheclear") and cachedir.is_dir():
+            cls.clear_cache(cachedir, _ispytest=True)
+        return cls(cachedir, config, _ispytest=True)
+
+    @classmethod
+    def clear_cache(cls, cachedir: Path, _ispytest: bool = False) -> None:
+        """Clear the sub-directories used to hold cached directories and values.
+
+        :meta private:
+        """
+        check_ispytest(_ispytest)
         for prefix in (cls._CACHE_PREFIX_DIRS, cls._CACHE_PREFIX_VALUES):
             d = cachedir / prefix
             if d.is_dir():
                 rm_rf(d)
 
     @staticmethod
-    def cache_dir_from_config(config: Config) -> Path:
+    def cache_dir_from_config(config: Config, *, _ispytest: bool = False) -> Path:
+        """Get the path to the cache directory for a Config.
+
+        :meta private:
+        """
+        check_ispytest(_ispytest)
         return resolve_from_str(config.getini("cache_dir"), config.rootpath)
 
-    def warn(self, fmt: str, **args: object) -> None:
+    def warn(self, fmt: str, *, _ispytest: bool = False, **args: object) -> None:
+        """Issue a cache warning.
+
+        :meta private:
+        """
+        check_ispytest(_ispytest)
         import warnings
         from _pytest.warning_types import PytestCacheWarning
 
@@ -152,7 +179,7 @@ class Cache:
                 cache_dir_exists_already = self._cachedir.exists()
                 path.parent.mkdir(exist_ok=True, parents=True)
         except OSError:
-            self.warn("could not create cache path {path}", path=path)
+            self.warn("could not create cache path {path}", path=path, _ispytest=True)
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
@@ -160,7 +187,7 @@ class Cache:
         try:
             f = path.open("w")
         except OSError:
-            self.warn("cache could not write path {path}", path=path)
+            self.warn("cache could not write path {path}", path=path, _ispytest=True)
         else:
             with f:
                 f.write(data)
@@ -469,7 +496,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
 
 @hookimpl(tryfirst=True)
 def pytest_configure(config: Config) -> None:
-    config.cache = Cache.for_config(config)
+    config.cache = Cache.for_config(config, _ispytest=True)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 

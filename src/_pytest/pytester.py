@@ -48,6 +48,7 @@ from _pytest.config import hookimpl
 from _pytest.config import main
 from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -454,7 +455,7 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
     It is particularly useful for testing plugins. It is similar to the :fixture:`tmp_path`
     fixture but provides methods which aid in testing pytest itself.
     """
-    return Pytester(request, tmp_path_factory)
+    return Pytester(request, tmp_path_factory, _ispytest=True)
 
 
 @fixture
@@ -465,7 +466,7 @@ def testdir(pytester: "Pytester") -> "Testdir":
 
     New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
     """
-    return Testdir(pytester)
+    return Testdir(pytester, _ispytest=True)
 
 
 @fixture
@@ -648,8 +649,13 @@ class Pytester:
         pass
 
     def __init__(
-        self, request: FixtureRequest, tmp_path_factory: TempPathFactory
+        self,
+        request: FixtureRequest,
+        tmp_path_factory: TempPathFactory,
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self._request = request
         self._mod_collections: WeakKeyDictionary[
             Collector, List[Union[Item, Collector]]
@@ -1480,7 +1486,7 @@ class LineComp:
 
 
 @final
-@attr.s(repr=False, str=False)
+@attr.s(repr=False, str=False, init=False)
 class Testdir:
     """
     Similar to :class:`Pytester`, but this class works with legacy py.path.local objects instead.
@@ -1495,7 +1501,9 @@ class Testdir:
     TimeoutExpired = Pytester.TimeoutExpired
     Session = Pytester.Session
 
-    _pytester: Pytester = attr.ib()
+    def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
+        check_ispytest(_ispytest)
+        self._pytester = pytester
 
     @property
     def tmpdir(self) -> py.path.local:

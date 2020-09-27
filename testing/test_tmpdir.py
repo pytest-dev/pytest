@@ -48,7 +48,9 @@ class FakeConfig:
 class TestTempdirHandler:
     def test_mktemp(self, tmp_path):
         config = cast(Config, FakeConfig(tmp_path))
-        t = TempdirFactory(TempPathFactory.from_config(config))
+        t = TempdirFactory(
+            TempPathFactory.from_config(config, _ispytest=True), _ispytest=True
+        )
         tmp = t.mktemp("world")
         assert tmp.relto(t.getbasetemp()) == "world0"
         tmp = t.mktemp("this")
@@ -61,7 +63,7 @@ class TestTempdirHandler:
         """#4425"""
         monkeypatch.chdir(tmp_path)
         config = cast(Config, FakeConfig("hello"))
-        t = TempPathFactory.from_config(config)
+        t = TempPathFactory.from_config(config, _ispytest=True)
         assert t.getbasetemp().resolve() == (tmp_path / "hello").resolve()
 
 
