@@ -1,1 +1,1 @@
-pytest now supports python3.6+ only.
+pytest now supports python3.6.1+ only.
