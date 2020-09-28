@@ -1,4 +1,3 @@
-import itertools
 import os
 from typing import Dict
 from typing import Iterable
@@ -100,7 +99,7 @@ def locate_config(
         args = [Path.cwd()]
     for arg in args:
         argpath = absolutepath(arg)
-        for base in itertools.chain((argpath,), reversed(argpath.parents)):
+        for base in (argpath, *argpath.parents):
             for config_name in config_names:
                 p = base / config_name
                 if p.is_file():
@@ -184,9 +183,7 @@ def determine_setup(
         ancestor = get_common_ancestor(dirs)
         rootdir, inipath, inicfg = locate_config([ancestor])
         if rootdir is None and rootdir_cmd_arg is None:
-            for possible_rootdir in itertools.chain(
-                (ancestor,), reversed(ancestor.parents)
-            ):
+            for possible_rootdir in (ancestor, *ancestor.parents):
                 if (possible_rootdir / "setup.py").is_file():
                     rootdir = possible_rootdir
                     break
