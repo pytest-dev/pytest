@@ -371,12 +371,6 @@ else:
         return f
 
 
-if getattr(attr, "__version_info__", ()) >= (19, 2):
-    ATTRS_EQ_FIELD = "eq"
-else:
-    ATTRS_EQ_FIELD = "cmp"
-
-
 if sys.version_info >= (3, 8):
     from functools import cached_property as cached_property
 else:
