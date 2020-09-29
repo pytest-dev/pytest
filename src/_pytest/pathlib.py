@@ -581,7 +581,10 @@ def absolutepath(path: Union[Path, str]) -> Path:
 
 def commonpath(path1: Path, path2: Path) -> Optional[Path]:
     """Return the common part shared with the other path, or None if there is
-    no common part."""
+    no common part.
+
+    If one path is relative and one is absolute, returns None.
+    """
     try:
         return Path(os.path.commonpath((str(path1), str(path2))))
     except ValueError:
@@ -592,13 +595,17 @@ def bestrelpath(directory: Path, dest: Path) -> str:
     """Return a string which is a relative path from directory to dest such
     that directory/bestrelpath == dest.
 
+    The paths must be either both absolute or both relative.
+
     If no such path can be determined, returns dest.
     """
     if dest == directory:
         return os.curdir
     # Find the longest common directory.
     base = commonpath(directory, dest)
-    # Can be the case on Windows.
+    # Can be the case on Windows for two absolute paths on different drives.
+    # Can be the case for two relative paths without common prefix.
+    # Can be the case for a relative path and an absolute path.
     if not base:
         return str(dest)
     reldirectory = directory.relative_to(base)
