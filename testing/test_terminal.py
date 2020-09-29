@@ -18,6 +18,7 @@ import pytest
 from _pytest._io.wcwidth import wcswidth
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
@@ -748,6 +749,24 @@ class TestTerminalFunctional:
         # with testpaths option, passing directory in command-line: do not show testpaths then
         result = testdir.runpytest("tests")
         result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
+
+    def test_header_testpaths_are_relative(
+        self, testdir: Testdir, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Regresstion test for #7814."""
+        testdir.tmpdir.join("tests").ensure_dir()
+        testdir.makeini(
+            """
+            [pytest]
+            testpaths = {}/tests
+        """.format(
+                testdir.tmpdir
+            )
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            ["rootdir: *are_relative0, configfile: tox.ini, testpaths: tests"]
+        )
 
     def test_no_header(self, testdir):
         testdir.tmpdir.join("tests").ensure_dir()

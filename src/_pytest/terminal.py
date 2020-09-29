@@ -718,9 +718,11 @@ class TerminalReporter:
         if config.inipath:
             line += ", configfile: " + bestrelpath(config.rootpath, config.inipath)
 
-        testpaths = config.getini("testpaths")
+        testpaths = config.getini("testpaths")  # type: List[str]
         if testpaths and config.args == testpaths:
-            rel_paths = [bestrelpath(config.rootpath, x) for x in testpaths]
+            rel_paths = [
+                bestrelpath(config.rootpath, Path(absolutepath(x))) for x in testpaths
+            ]
             line += ", testpaths: {}".format(", ".join(rel_paths))
         result = [line]
 

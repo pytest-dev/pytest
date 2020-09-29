@@ -1,0 +1,1 @@
+Fixed crash in header reporting when :confval:`testpaths` is used without CLI arguments (regression in 6.1.0).
