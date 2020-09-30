@@ -1375,6 +1375,21 @@ class TestRootdir:
         assert rootpath == tmp_path
         assert inipath is None
 
+    def test_with_config_also_in_parent_directory(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Regression test for #7807."""
+        (tmp_path / "setup.cfg").write_text("[tool:pytest]\n", "utf-8")
+        (tmp_path / "myproject").mkdir()
+        (tmp_path / "myproject" / "setup.cfg").write_text("[tool:pytest]\n", "utf-8")
+        (tmp_path / "myproject" / "tests").mkdir()
+        monkeypatch.chdir(tmp_path / "myproject")
+
+        rootpath, inipath, _ = determine_setup(None, ["tests/"])
+
+        assert rootpath == tmp_path / "myproject"
+        assert inipath == tmp_path / "myproject" / "setup.cfg"
+
 
 class TestOverrideIniArgs:
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
