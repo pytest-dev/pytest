@@ -1,7 +1,7 @@
 """Generic mechanism for marking and selecting python functions."""
-import typing
 import warnings
 from typing import AbstractSet
+from typing import Collection
 from typing import List
 from typing import Optional
 from typing import Union
@@ -46,7 +46,7 @@ old_mark_config_key = StoreKey[Optional[Config]]()
 
 def param(
     *values: object,
-    marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
+    marks: Union[MarkDecorator, Collection[Union[MarkDecorator, Mark]]] = (),
     id: Optional[str] = None
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or

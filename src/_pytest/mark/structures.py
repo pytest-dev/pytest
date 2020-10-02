@@ -1,9 +1,9 @@
 import collections.abc
 import inspect
-import typing
 import warnings
 from typing import Any
 from typing import Callable
+from typing import Collection
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -79,7 +79,7 @@ class ParameterSet(
         "ParameterSet",
         [
             ("values", Sequence[Union[object, NotSetType]]),
-            ("marks", "typing.Collection[Union[MarkDecorator, Mark]]"),
+            ("marks", Collection[Union["MarkDecorator", "Mark"]]),
             ("id", Optional[str]),
         ],
     )
@@ -88,7 +88,7 @@ class ParameterSet(
     def param(
         cls,
         *values: object,
-        marks: "Union[MarkDecorator, typing.Collection[Union[MarkDecorator, Mark]]]" = (),
+        marks: Union["MarkDecorator", Collection[Union["MarkDecorator", "Mark"]]] = (),
         id: Optional[str] = None
     ) -> "ParameterSet":
         if isinstance(marks, MarkDecorator):

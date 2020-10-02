@@ -6,11 +6,9 @@ import itertools
 import os
 import sys
 import types
-import typing
 import warnings
 from collections import Counter
 from collections import defaultdict
-from collections.abc import Sequence
 from functools import partial
 from typing import Any
 from typing import Callable
@@ -21,6 +19,7 @@ from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -668,7 +667,7 @@ class Package(Module):
 
     def _collectfile(
         self, path: py.path.local, handle_dupes: bool = True
-    ) -> typing.Sequence[nodes.Collector]:
+    ) -> Sequence[nodes.Collector]:
         assert (
             path.isfile()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -904,7 +903,7 @@ class CallSpec2:
     def setmulti2(
         self,
         valtypes: Mapping[str, "Literal['params', 'funcargs']"],
-        argnames: typing.Sequence[str],
+        argnames: Sequence[str],
         valset: Iterable[object],
         id: str,
         marks: Iterable[Union[Mark, MarkDecorator]],
@@ -966,8 +965,8 @@ class Metafunc:
     def parametrize(
         self,
         argnames: Union[str, List[str], Tuple[str, ...]],
-        argvalues: Iterable[Union[ParameterSet, typing.Sequence[object], object]],
-        indirect: Union[bool, typing.Sequence[str]] = False,
+        argvalues: Iterable[Union[ParameterSet, Sequence[object], object]],
+        indirect: Union[bool, Sequence[str]] = False,
         ids: Optional[
             Union[
                 Iterable[Union[None, str, float, int, bool]],
@@ -1093,14 +1092,14 @@ class Metafunc:
 
     def _resolve_arg_ids(
         self,
-        argnames: typing.Sequence[str],
+        argnames: Sequence[str],
         ids: Optional[
             Union[
                 Iterable[Union[None, str, float, int, bool]],
                 Callable[[Any], Optional[object]],
             ]
         ],
-        parameters: typing.Sequence[ParameterSet],
+        parameters: Sequence[ParameterSet],
         nodeid: str,
     ) -> List[str]:
         """Resolve the actual ids for the given argnames, based on the ``ids`` parameter given
@@ -1127,7 +1126,7 @@ class Metafunc:
     def _validate_ids(
         self,
         ids: Iterable[Union[None, str, float, int, bool]],
-        parameters: typing.Sequence[ParameterSet],
+        parameters: Sequence[ParameterSet],
         func_name: str,
     ) -> List[Union[None, str]]:
         try:
@@ -1162,9 +1161,7 @@ class Metafunc:
         return new_ids
 
     def _resolve_arg_value_types(
-        self,
-        argnames: typing.Sequence[str],
-        indirect: Union[bool, typing.Sequence[str]],
+        self, argnames: Sequence[str], indirect: Union[bool, Sequence[str]],
     ) -> Dict[str, "Literal['params', 'funcargs']"]:
         """Resolve if each parametrized argument must be considered a
         parameter to a fixture or a "funcarg" to the function, based on the
@@ -1202,9 +1199,7 @@ class Metafunc:
         return valtypes
 
     def _validate_if_using_arg_names(
-        self,
-        argnames: typing.Sequence[str],
-        indirect: Union[bool, typing.Sequence[str]],
+        self, argnames: Sequence[str], indirect: Union[bool, Sequence[str]],
     ) -> None:
         """Check if all argnames are being used, by default values, or directly/indirectly.
 
@@ -1235,9 +1230,9 @@ class Metafunc:
 
 
 def _find_parametrized_scope(
-    argnames: typing.Sequence[str],
-    arg2fixturedefs: Mapping[str, typing.Sequence[fixtures.FixtureDef[object]]],
-    indirect: Union[bool, typing.Sequence[str]],
+    argnames: Sequence[str],
+    arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
+    indirect: Union[bool, Sequence[str]],
 ) -> "fixtures._Scope":
     """Find the most appropriate scope for a parametrized call based on its arguments.
 
