@@ -46,11 +46,6 @@ class NotSetType(enum.Enum):
 NOTSET = NotSetType.token  # type: Final # noqa: E305
 # fmt: on
 
-MODULE_NOT_FOUND_ERROR = (
-    "ModuleNotFoundError" if sys.version_info[:2] >= (3, 6) else "ImportError"
-)
-
-
 if sys.version_info >= (3, 8):
     from importlib import metadata as importlib_metadata
 else:

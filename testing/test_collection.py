@@ -1383,13 +1383,10 @@ class TestImportModeImportlib:
         """
         self.setup_conftest_and_foo(testdir)
         result = testdir.runpytest("-v", "--import-mode=importlib")
-        exc_name = (
-            "ModuleNotFoundError" if sys.version_info[:2] > (3, 5) else "ImportError"
-        )
         result.stdout.fnmatch_lines(
             [
-                "*{}: No module named 'foo'".format(exc_name),
-                "tests?test_foo.py:2: {}".format(exc_name),
+                "*ModuleNotFoundError: No module named 'foo'",
+                "tests?test_foo.py:2: ModuleNotFoundError",
                 "* 1 failed in *",
             ]
         )

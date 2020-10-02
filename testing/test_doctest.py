@@ -4,7 +4,6 @@ from typing import Callable
 from typing import Optional
 
 import pytest
-from _pytest.compat import MODULE_NOT_FOUND_ERROR
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_mocked
 from _pytest.doctest import _is_setup_py
@@ -399,8 +398,8 @@ class TestDoctests:
         result.stdout.fnmatch_lines(
             [
                 "*>>> import asdals*",
-                "*UNEXPECTED*{e}*".format(e=MODULE_NOT_FOUND_ERROR),
-                "{e}: No module named *asdal*".format(e=MODULE_NOT_FOUND_ERROR),
+                "*UNEXPECTED*ModuleNotFoundError*",
+                "ModuleNotFoundError: No module named *asdal*",
             ]
         )
 
@@ -423,7 +422,7 @@ class TestDoctests:
         result.stdout.fnmatch_lines(
             [
                 "*ERROR collecting hello.py*",
-                "*{e}: No module named *asdals*".format(e=MODULE_NOT_FOUND_ERROR),
+                "*ModuleNotFoundError: No module named *asdals*",
                 "*Interrupted: 1 error during collection*",
             ]
         )
