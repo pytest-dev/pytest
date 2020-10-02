@@ -26,7 +26,8 @@ def test_external_plugins_integrated(testdir, plugin):
 def test_fillfuncargs_is_deprecated() -> None:
     with pytest.warns(
         pytest.PytestDeprecationWarning,
-        match="The `_fillfuncargs` function is deprecated",
+        match="The `_fillfuncargs` function (public alias of _pytest.fixtures.fillfixtures function) is deprecated, use "
+              "function._request._fillfixtures() instead if you cannot avoid reaching into internals.",
     ):
         pytest._fillfuncargs(mock.Mock())
 
