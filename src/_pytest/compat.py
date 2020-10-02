@@ -2,7 +2,6 @@
 import enum
 import functools
 import inspect
-import os
 import re
 import sys
 from contextlib import contextmanager
@@ -53,18 +52,6 @@ def _format_args(func: Callable[..., Any]) -> str:
 
 # The type of re.compile objects is not exposed in Python.
 REGEX_TYPE = type(re.compile(""))
-
-
-if sys.version_info < (3, 6):
-
-    def fspath(p):
-        """os.fspath replacement, useful to point out when we should replace it by the
-        real function once we drop py35."""
-        return str(p)
-
-
-else:
-    fspath = os.fspath
 
 
 def is_generator(func: object) -> bool:
