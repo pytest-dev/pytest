@@ -89,7 +89,7 @@ class ParameterSet(
         cls,
         *values: object,
         marks: Union["MarkDecorator", Collection[Union["MarkDecorator", "Mark"]]] = (),
-        id: Optional[str] = None
+        id: Optional[str] = None,
     ) -> "ParameterSet":
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
@@ -138,7 +138,7 @@ class ParameterSet(
         argnames: Union[str, List[str], Tuple[str, ...]],
         argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
         *args,
-        **kwargs
+        **kwargs,
     ) -> Tuple[Union[List[str], Tuple[str, ...]], bool]:
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
@@ -400,7 +400,7 @@ if TYPE_CHECKING:
             self,
             condition: Union[str, bool] = ...,
             *conditions: Union[str, bool],
-            reason: str = ...
+            reason: str = ...,
         ) -> MarkDecorator:
             ...
 
@@ -417,7 +417,7 @@ if TYPE_CHECKING:
             reason: str = ...,
             run: bool = ...,
             raises: Union[Type[BaseException], Tuple[Type[BaseException], ...]] = ...,
-            strict: bool = ...
+            strict: bool = ...,
         ) -> MarkDecorator:
             ...
 
@@ -434,7 +434,7 @@ if TYPE_CHECKING:
                     Callable[[Any], Optional[object]],
                 ]
             ] = ...,
-            scope: Optional[_Scope] = ...
+            scope: Optional[_Scope] = ...,
         ) -> MarkDecorator:
             ...
 

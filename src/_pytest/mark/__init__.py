@@ -47,7 +47,7 @@ old_mark_config_key = StoreKey[Optional[Config]]()
 def param(
     *values: object,
     marks: Union[MarkDecorator, Collection[Union[MarkDecorator, Mark]]] = (),
-    id: Optional[str] = None
+    id: Optional[str] = None,
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.

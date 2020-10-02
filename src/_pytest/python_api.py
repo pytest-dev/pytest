@@ -559,7 +559,7 @@ _E = TypeVar("_E", bound=BaseException)
 def raises(
     expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
     *,
-    match: Optional[Union[str, Pattern[str]]] = ...
+    match: Optional[Union[str, Pattern[str]]] = ...,
 ) -> "RaisesContext[_E]":
     ...
 
@@ -569,7 +569,7 @@ def raises(  # noqa: F811
     expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
     func: Callable[..., Any],
     *args: Any,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> _pytest._code.ExceptionInfo[_E]:
     ...
 

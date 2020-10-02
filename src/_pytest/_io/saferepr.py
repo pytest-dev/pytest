@@ -122,7 +122,7 @@ def _pformat_dispatch(
     width: int = 80,
     depth: Optional[int] = None,
     *,
-    compact: bool = False
+    compact: bool = False,
 ) -> str:
     return AlwaysDispatchingPrettyPrinter(
         indent=indent, width=width, depth=depth, compact=compact

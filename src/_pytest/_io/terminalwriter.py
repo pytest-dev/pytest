@@ -109,7 +109,7 @@ class TerminalWriter:
         sepchar: str,
         title: Optional[str] = None,
         fullwidth: Optional[int] = None,
-        **markup: bool
+        **markup: bool,
     ) -> None:
         if fullwidth is None:
             fullwidth = self.fullwidth

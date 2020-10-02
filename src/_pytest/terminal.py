@@ -450,7 +450,7 @@ class TerminalReporter:
         sep: str,
         title: Optional[str] = None,
         fullwidth: Optional[int] = None,
-        **markup: bool
+        **markup: bool,
     ) -> None:
         self.ensure_newline()
         self._tw.sep(sep, title, fullwidth, **markup)
