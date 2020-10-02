@@ -16,6 +16,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -43,7 +44,6 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import order_preserving_dict
-from _pytest.compat import overload
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -462,7 +462,7 @@ class FixtureRequest:
     @property
     def config(self) -> Config:
         """The pytest config object associated with this request."""
-        return self._pyfuncitem.config  # type: ignore[no-any-return] # noqa: F723
+        return self._pyfuncitem.config  # type: ignore[no-any-return]
 
     @property
     def function(self):
@@ -1225,8 +1225,8 @@ def fixture(
     ...
 
 
-@overload  # noqa: F811
-def fixture(  # noqa: F811
+@overload
+def fixture(
     fixture_function: None = ...,
     *,
     scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = ...,
@@ -1243,7 +1243,7 @@ def fixture(  # noqa: F811
     ...
 
 
-def fixture(  # noqa: F811
+def fixture(
     fixture_function: Optional[_FixtureFunction] = None,
     *,
     scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = "function",

@@ -17,6 +17,7 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import Set
@@ -41,7 +42,6 @@ from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import final
 from _pytest.compat import get_real_func
-from _pytest.compat import overload
 from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
@@ -346,13 +346,11 @@ class Traceback(List[TracebackEntry]):
     def __getitem__(self, key: int) -> TracebackEntry:
         ...
 
-    @overload  # noqa: F811
-    def __getitem__(self, key: slice) -> "Traceback":  # noqa: F811
+    @overload
+    def __getitem__(self, key: slice) -> "Traceback":
         ...
 
-    def __getitem__(  # noqa: F811
-        self, key: Union[int, slice]
-    ) -> Union[TracebackEntry, "Traceback"]:
+    def __getitem__(self, key: Union[int, slice]) -> Union[TracebackEntry, "Traceback"]:
         if isinstance(key, slice):
             return self.__class__(super().__getitem__(key))
         else:

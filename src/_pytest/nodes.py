@@ -8,6 +8,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Set
 from typing import Tuple
 from typing import Type
@@ -22,7 +23,6 @@ from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import cached_property
-from _pytest.compat import overload
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
@@ -316,11 +316,11 @@ class Node(metaclass=NodeMeta):
     def get_closest_marker(self, name: str) -> Optional[Mark]:
         ...
 
-    @overload  # noqa: F811
-    def get_closest_marker(self, name: str, default: Mark) -> Mark:  # noqa: F811
+    @overload
+    def get_closest_marker(self, name: str, default: Mark) -> Mark:
         ...
 
-    def get_closest_marker(  # noqa: F811
+    def get_closest_marker(
         self, name: str, default: Optional[Mark] = None
     ) -> Optional[Mark]:
         """Return the first marker matching the name, from closest (for

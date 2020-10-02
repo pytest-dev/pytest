@@ -41,7 +41,7 @@ from _pytest.pathlib import PurePath
 from _pytest.store import StoreKey
 
 if TYPE_CHECKING:
-    from _pytest.assertion import AssertionState  # noqa: F401
+    from _pytest.assertion import AssertionState
 
 
 assertstate_key = StoreKey["AssertionState"]()

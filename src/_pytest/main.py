@@ -11,6 +11,7 @@ from typing import FrozenSet
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -24,7 +25,6 @@ import py
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
-from _pytest.compat import overload
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -562,13 +562,13 @@ class Session(nodes.FSCollector):
     ) -> Sequence[nodes.Item]:
         ...
 
-    @overload  # noqa: F811
-    def perform_collect(  # noqa: F811
+    @overload
+    def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         ...
 
-    def perform_collect(  # noqa: F811
+    def perform_collect(
         self, args: Optional[Sequence[str]] = None, genitems: bool = True
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         """Perform the collection phase for this session.

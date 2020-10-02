@@ -11,6 +11,7 @@ from typing import Mapping
 from typing import MutableMapping
 from typing import NamedTuple
 from typing import Optional
+from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -26,7 +27,6 @@ from ..compat import ascii_escaped
 from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
-from ..compat import overload
 from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
@@ -330,13 +330,11 @@ class MarkDecorator:
     def __call__(self, arg: _Markable) -> _Markable:  # type: ignore[misc]
         pass
 
-    @overload  # noqa: F811
-    def __call__(  # noqa: F811
-        self, *args: object, **kwargs: object
-    ) -> "MarkDecorator":
+    @overload
+    def __call__(self, *args: object, **kwargs: object) -> "MarkDecorator":
         pass
 
-    def __call__(self, *args: object, **kwargs: object):  # noqa: F811
+    def __call__(self, *args: object, **kwargs: object):
         """Call the MarkDecorator."""
         if args and not kwargs:
             func = args[0]
@@ -391,8 +389,8 @@ if TYPE_CHECKING:
         def __call__(self, arg: _Markable) -> _Markable:
             ...
 
-        @overload  # noqa: F811
-        def __call__(self, reason: str = ...) -> "MarkDecorator":  # noqa: F811
+        @overload
+        def __call__(self, reason: str = ...) -> "MarkDecorator":
             ...
 
     class _SkipifMarkDecorator(MarkDecorator):
@@ -409,8 +407,8 @@ if TYPE_CHECKING:
         def __call__(self, arg: _Markable) -> _Markable:
             ...
 
-        @overload  # noqa: F811
-        def __call__(  # noqa: F811
+        @overload
+        def __call__(
             self,
             condition: Union[str, bool] = ...,
             *conditions: Union[str, bool],
