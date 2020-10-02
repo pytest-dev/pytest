@@ -6,7 +6,7 @@ import traceback
 from typing import Generator
 from typing import Optional
 from typing import Tuple
-from typing import TYPE_CHECKING
+from typing import Type
 
 import attr
 
@@ -21,9 +21,6 @@ from _pytest.outcomes import xfail
 from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
 from _pytest.store import StoreKey
-
-if TYPE_CHECKING:
-    from typing import Type
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -194,7 +191,7 @@ class Xfail:
     reason = attr.ib(type=str)
     run = attr.ib(type=bool)
     strict = attr.ib(type=bool)
-    raises = attr.ib(type=Optional[Tuple["Type[BaseException]", ...]])
+    raises = attr.ib(type=Optional[Tuple[Type[BaseException], ...]])
 
 
 def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:

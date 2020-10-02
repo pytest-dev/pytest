@@ -10,6 +10,7 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -36,8 +37,6 @@ from _pytest.pathlib import Path
 from _pytest.store import Store
 
 if TYPE_CHECKING:
-    from typing import Type
-
     # Imported here due to circular import.
     from _pytest.main import Session
     from _pytest.warning_types import PytestWarning
@@ -350,7 +349,7 @@ class Node(metaclass=NodeMeta):
         """
         self.session._setupstate.addfinalizer(fin, self)
 
-    def getparent(self, cls: "Type[_NodeType]") -> Optional[_NodeType]:
+    def getparent(self, cls: Type[_NodeType]) -> Optional[_NodeType]:
         """Get the next parent node (including self) which is an instance of
         the given class."""
         current = self  # type: Optional[Node]

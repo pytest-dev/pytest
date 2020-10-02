@@ -13,6 +13,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -30,8 +31,6 @@ from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 if TYPE_CHECKING:
-    from typing import Type
-
     from ..nodes import Node
 
 
@@ -417,9 +416,7 @@ if TYPE_CHECKING:
             *conditions: Union[str, bool],
             reason: str = ...,
             run: bool = ...,
-            raises: Union[
-                "Type[BaseException]", Tuple["Type[BaseException]", ...]
-            ] = ...,
+            raises: Union[Type[BaseException], Tuple[Type[BaseException], ...]] = ...,
             strict: bool = ...
         ) -> MarkDecorator:
             ...

@@ -4,16 +4,13 @@ import sys
 import textwrap
 from typing import Dict
 from typing import Generator
-from typing import TYPE_CHECKING
+from typing import Type
 
 import py
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Testdir
-
-if TYPE_CHECKING:
-    from typing import Type
 
 
 @pytest.fixture
@@ -354,7 +351,7 @@ class SampleInherit(Sample):
 @pytest.mark.parametrize(
     "Sample", [Sample, SampleInherit], ids=["new", "new-inherit"],
 )
-def test_issue156_undo_staticmethod(Sample: "Type[Sample]") -> None:
+def test_issue156_undo_staticmethod(Sample: Type[Sample]) -> None:
     monkeypatch = MonkeyPatch()
 
     monkeypatch.setattr(Sample, "hello", None)

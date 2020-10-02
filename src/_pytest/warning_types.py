@@ -1,14 +1,11 @@
 from typing import Any
 from typing import Generic
-from typing import TYPE_CHECKING
+from typing import Type
 from typing import TypeVar
 
 import attr
 
 from _pytest.compat import final
-
-if TYPE_CHECKING:
-    from typing import Type  # noqa: F401 (used in type string)
 
 
 class PytestWarning(UserWarning):
@@ -105,7 +102,7 @@ class UnformattedWarning(Generic[_W]):
     as opposed to a direct message.
     """
 
-    category = attr.ib(type="Type[_W]")
+    category = attr.ib(type=Type["_W"])
     template = attr.ib(type=str)
 
     def format(self, **kwargs: Any) -> _W:

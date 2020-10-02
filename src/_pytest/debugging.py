@@ -9,6 +9,7 @@ from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -24,8 +25,6 @@ from _pytest.nodes import Node
 from _pytest.reports import BaseReport
 
 if TYPE_CHECKING:
-    from typing import Type
-
     from _pytest.capture import CaptureManager
     from _pytest.runner import CallInfo
 

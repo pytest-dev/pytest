@@ -21,6 +21,7 @@ from typing import Pattern
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -44,7 +45,6 @@ from _pytest.compat import overload
 from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
-    from typing import Type
     from typing_extensions import Literal
     from weakref import ReferenceType
 
@@ -421,14 +421,14 @@ class ExceptionInfo(Generic[_E]):
 
     _assert_start_repr = "AssertionError('assert "
 
-    _excinfo = attr.ib(type=Optional[Tuple["Type[_E]", "_E", TracebackType]])
+    _excinfo = attr.ib(type=Optional[Tuple[Type["_E"], "_E", TracebackType]])
     _striptext = attr.ib(type=str, default="")
     _traceback = attr.ib(type=Optional[Traceback], default=None)
 
     @classmethod
     def from_exc_info(
         cls,
-        exc_info: Tuple["Type[_E]", "_E", TracebackType],
+        exc_info: Tuple[Type[_E], _E, TracebackType],
         exprinfo: Optional[str] = None,
     ) -> "ExceptionInfo[_E]":
         """Return an ExceptionInfo for an existing exc_info tuple.
@@ -479,13 +479,13 @@ class ExceptionInfo(Generic[_E]):
         """Return an unfilled ExceptionInfo."""
         return cls(None)
 
-    def fill_unfilled(self, exc_info: Tuple["Type[_E]", _E, TracebackType]) -> None:
+    def fill_unfilled(self, exc_info: Tuple[Type[_E], _E, TracebackType]) -> None:
         """Fill an unfilled ExceptionInfo created with ``for_later()``."""
         assert self._excinfo is None, "ExceptionInfo was already filled"
         self._excinfo = exc_info
 
     @property
-    def type(self) -> "Type[_E]":
+    def type(self) -> Type[_E]:
         """The exception class."""
         assert (
             self._excinfo is not None
@@ -551,7 +551,7 @@ class ExceptionInfo(Generic[_E]):
         return text
 
     def errisinstance(
-        self, exc: Union["Type[BaseException]", Tuple["Type[BaseException]", ...]]
+        self, exc: Union[Type[BaseException], Tuple[Type[BaseException], ...]]
     ) -> bool:
         """Return True if the exception is an instance of exc.
 

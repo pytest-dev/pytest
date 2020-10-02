@@ -19,6 +19,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -57,7 +58,6 @@ from _pytest.pathlib import absolutepath
 if TYPE_CHECKING:
     from typing import Deque
     from typing import NoReturn
-    from typing import Type
     from typing_extensions import Literal
 
     from _pytest import nodes
@@ -91,7 +91,7 @@ _FixtureCachedResult = Union[
         # Cache key.
         object,
         # Exc info if raised.
-        Tuple["Type[BaseException]", BaseException, TracebackType],
+        Tuple[Type[BaseException], BaseException, TracebackType],
     ],
 ]
 

@@ -26,6 +26,7 @@ from typing import Sequence
 from typing import Set
 from typing import TextIO
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -56,7 +57,6 @@ from _pytest.store import Store
 from _pytest.warning_types import PytestConfigWarning
 
 if TYPE_CHECKING:
-    from typing import Type
 
     from _pytest._code.code import _TracebackStyle
     from _pytest.terminal import TerminalReporter
@@ -104,7 +104,7 @@ class ConftestImportFailure(Exception):
     def __init__(
         self,
         path: py.path.local,
-        excinfo: Tuple["Type[Exception]", Exception, TracebackType],
+        excinfo: Tuple[Type[Exception], Exception, TracebackType],
     ) -> None:
         super().__init__(path, excinfo)
         self.path = path
@@ -1560,7 +1560,7 @@ def _strtobool(val: str) -> bool:
 @lru_cache(maxsize=50)
 def parse_warning_filter(
     arg: str, *, escape: bool
-) -> "Tuple[str, str, Type[Warning], str, int]":
+) -> Tuple[str, str, Type[Warning], str, int]:
     """Parse a warnings filter string.
 
     This is copied from warnings._setoption, but does not apply the filter,
@@ -1573,9 +1573,7 @@ def parse_warning_filter(
         parts.append("")
     action_, message, category_, module, lineno_ = [s.strip() for s in parts]
     action = warnings._getaction(action_)  # type: str # type: ignore[attr-defined]
-    category = warnings._getcategory(
-        category_
-    )  # type: Type[Warning] # type: ignore[attr-defined]
+    category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined]
     if message and escape:
         message = re.escape(message)
     if module and escape:

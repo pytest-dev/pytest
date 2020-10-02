@@ -8,6 +8,7 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -36,7 +37,6 @@ from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from typing_extensions import Type
     from typing_extensions import Literal
 
     from _pytest.runner import CallInfo
@@ -199,7 +199,7 @@ class BaseReport:
         return _report_to_json(self)
 
     @classmethod
-    def _from_json(cls: "Type[_R]", reportdict: Dict[str, object]) -> _R:
+    def _from_json(cls: Type[_R], reportdict: Dict[str, object]) -> _R:
         """Create either a TestReport or CollectReport, depending on the calling class.
 
         It is the callers responsibility to know which class to pass here.
@@ -213,7 +213,7 @@ class BaseReport:
 
 
 def _report_unserialization_failure(
-    type_name: str, report_class: "Type[BaseReport]", reportdict
+    type_name: str, report_class: Type[BaseReport], reportdict
 ) -> "NoReturn":
     url = "https://github.com/pytest-dev/pytest/issues"
     stream = StringIO()

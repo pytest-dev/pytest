@@ -22,6 +22,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -72,7 +73,6 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 if TYPE_CHECKING:
-    from typing import Type
     from typing_extensions import Literal
     from _pytest.fixtures import _Scope
 

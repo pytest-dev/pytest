@@ -10,7 +10,7 @@ from typing import List
 from typing import Optional
 from typing import Pattern
 from typing import Tuple
-from typing import TYPE_CHECKING
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -18,9 +18,6 @@ from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
-
-if TYPE_CHECKING:
-    from typing import Type
 
 
 T = TypeVar("T")
@@ -86,7 +83,7 @@ def deprecated_call(  # noqa: F811
 
 @overload
 def warns(
-    expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     *,
     match: Optional[Union[str, Pattern[str]]] = ...
 ) -> "WarningsChecker":
@@ -95,7 +92,7 @@ def warns(
 
 @overload  # noqa: F811
 def warns(  # noqa: F811
-    expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any
@@ -104,7 +101,7 @@ def warns(  # noqa: F811
 
 
 def warns(  # noqa: F811
-    expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
     **kwargs: Any
@@ -187,7 +184,7 @@ class WarningsRecorder(warnings.catch_warnings):
         """The number of recorded warnings."""
         return len(self._list)
 
-    def pop(self, cls: "Type[Warning]" = Warning) -> "warnings.WarningMessage":
+    def pop(self, cls: Type[Warning] = Warning) -> "warnings.WarningMessage":
         """Pop the first recorded warning, raise exception if not exists."""
         for i, w in enumerate(self._list):
             if issubclass(w.category, cls):
@@ -214,7 +211,7 @@ class WarningsRecorder(warnings.catch_warnings):
 
     def __exit__(
         self,
-        exc_type: Optional["Type[BaseException]"],
+        exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
@@ -234,7 +231,7 @@ class WarningsChecker(WarningsRecorder):
     def __init__(
         self,
         expected_warning: Optional[
-            Union["Type[Warning]", Tuple["Type[Warning]", ...]]
+            Union[Type[Warning], Tuple[Type[Warning], ...]]
         ] = None,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
     ) -> None:
@@ -258,7 +255,7 @@ class WarningsChecker(WarningsRecorder):
 
     def __exit__(
         self,
-        exc_type: Optional["Type[BaseException]"],
+        exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
