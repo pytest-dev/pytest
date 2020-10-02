@@ -169,10 +169,6 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         The returned object is a :class:`pathlib.Path` object.
 
-        .. note::
-
-            In python < 3.6 this is a pathlib2.Path.
-
 
     no tests ran in 0.12s
 

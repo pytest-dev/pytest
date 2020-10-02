@@ -15,7 +15,7 @@ You can use the ``tmp_path`` fixture which will
 provide a temporary directory unique to the test invocation,
 created in the `base temporary directory`_.
 
-``tmp_path`` is a ``pathlib/pathlib2.Path`` object. Here is an example test usage:
+``tmp_path`` is a ``pathlib.Path`` object. Here is an example test usage:
 
 .. code-block:: python
 

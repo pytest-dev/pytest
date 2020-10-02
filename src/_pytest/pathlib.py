@@ -14,6 +14,8 @@ from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
 from os.path import sep
+from pathlib import Path
+from pathlib import PurePath
 from posixpath import sep as posix_sep
 from types import ModuleType
 from typing import Callable
@@ -29,11 +31,6 @@ import py
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
-
-if sys.version_info[:2] >= (3, 6):
-    from pathlib import Path, PurePath
-else:
-    from pathlib2 import Path, PurePath
 
 __all__ = ["Path", "PurePath"]
 

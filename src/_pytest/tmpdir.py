@@ -190,10 +190,6 @@ def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path
     directory.
 
     The returned object is a :class:`pathlib.Path` object.
-
-    .. note::
-
-        In python < 3.6 this is a pathlib2.Path.
     """
 
     return _mk_tmp(request, tmp_path_factory)
