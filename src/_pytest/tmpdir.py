@@ -50,9 +50,7 @@ class TempPathFactory:
     def _ensure_relative_to_basetemp(self, basename: str) -> str:
         basename = os.path.normpath(basename)
         if (self.getbasetemp() / basename).resolve().parent != self.getbasetemp():
-            raise ValueError(
-                "{} is not a normalized and relative path".format(basename)
-            )
+            raise ValueError(f"{basename} is not a normalized and relative path")
         return basename
 
     def mktemp(self, basename: str, numbered: bool = True) -> Path:
@@ -94,7 +92,7 @@ class TempPathFactory:
             user = get_user() or "unknown"
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
-            rootdir = temproot.joinpath("pytest-of-{}".format(user))
+            rootdir = temproot.joinpath(f"pytest-of-{user}")
             rootdir.mkdir(exist_ok=True)
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT

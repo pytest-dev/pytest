@@ -500,7 +500,7 @@ def pytest_report_header(config: Config) -> Optional[str]:
             displaypath = cachedir.relative_to(config.rootpath)
         except ValueError:
             displaypath = cachedir
-        return "cachedir: {}".format(displaypath)
+        return f"cachedir: {displaypath}"
     return None
 
 
@@ -542,5 +542,5 @@ def cacheshow(config: Config, session: Session) -> int:
             #    print("%s/" % p.relto(basedir))
             if p.is_file():
                 key = str(p.relative_to(basedir))
-                tw.line("{} is a file of length {:d}".format(key, p.stat().st_size))
+                tw.line(f"{key} is a file of length {p.stat().st_size:d}")
     return 0

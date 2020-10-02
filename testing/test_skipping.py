@@ -758,10 +758,7 @@ class TestSkipif:
         )
         result = testdir.runpytest("-s", "-rsxX")
         result.stdout.fnmatch_lines(
-            [
-                "*{msg1}*test_foo.py*second_condition*".format(msg1=msg1),
-                "*1 {msg2}*".format(msg2=msg2),
-            ]
+            [f"*{msg1}*test_foo.py*second_condition*", f"*1 {msg2}*"]
         )
         assert result.ret == 0
 

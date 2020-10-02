@@ -156,7 +156,7 @@ class TestGeneralUsage:
                 assert x
         """
         )
-        result = testdir.runpytest(p, "--import-mode={}".format(import_mode))
+        result = testdir.runpytest(p, f"--import-mode={import_mode}")
         result.stdout.fnmatch_lines([">       assert x", "E       assert 0"])
         assert result.ret == 1
 
@@ -185,7 +185,7 @@ class TestGeneralUsage:
         assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(
             [
-                "ERROR: not found: {}".format(p2),
+                f"ERROR: not found: {p2}",
                 "(no name {!r} in any of [[][]])".format(str(p2)),
                 "",
             ]
@@ -212,7 +212,7 @@ class TestGeneralUsage:
         result = testdir.runpytest()
         assert result.stdout.lines == []
         assert result.stderr.lines == [
-            "ImportError while loading conftest '{}'.".format(conftest),
+            f"ImportError while loading conftest '{conftest}'.",
             "conftest.py:3: in <module>",
             "    foo()",
             "conftest.py:2: in foo",
@@ -503,7 +503,7 @@ class TestInvocationVariants:
 
     def test_pydoc(self, testdir):
         for name in ("py.test", "pytest"):
-            result = testdir.runpython_c("import {};help({})".format(name, name))
+            result = testdir.runpython_c(f"import {name};help({name})")
             assert result.ret == 0
             s = result.stdout.str()
             assert "MarkGenerator" in s
@@ -671,8 +671,8 @@ class TestInvocationVariants:
             )
             lib = ns.mkdir(dirname)
             lib.ensure("__init__.py")
-            lib.join("test_{}.py".format(dirname)).write(
-                "def test_{}(): pass\ndef test_other():pass".format(dirname)
+            lib.join(f"test_{dirname}.py").write(
+                f"def test_{dirname}(): pass\ndef test_other():pass"
             )
 
         # The structure of the test directory is now:
@@ -891,7 +891,7 @@ class TestDurations:
                     if ("test_%s" % x) in line and y in line:
                         break
                 else:
-                    raise AssertionError("not found {} {}".format(x, y))
+                    raise AssertionError(f"not found {x} {y}")
 
     def test_calls_showall_verbose(self, testdir, mock_timing):
         testdir.makepyfile(self.source)
@@ -904,7 +904,7 @@ class TestDurations:
                     if ("test_%s" % x) in line and y in line:
                         break
                 else:
-                    raise AssertionError("not found {} {}".format(x, y))
+                    raise AssertionError(f"not found {x} {y}")
 
     def test_with_deselected(self, testdir, mock_timing):
         testdir.makepyfile(self.source)

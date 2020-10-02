@@ -93,7 +93,7 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
                 % (len(dlist) - i, durations_min)
             )
             break
-        tr.write_line("{:02.2f}s {:<8} {}".format(rep.duration, rep.when, rep.nodeid))
+        tr.write_line(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}")
 
 
 def pytest_sessionstart(session: "Session") -> None:
@@ -186,7 +186,7 @@ def _update_current_test_var(
     """
     var_name = "PYTEST_CURRENT_TEST"
     if when:
-        value = "{} ({})".format(item.nodeid, when)
+        value = f"{item.nodeid} ({when})"
         # don't allow null bytes on environment variables (see #2644, #2957)
         value = value.replace("\x00", "(null)")
         os.environ[var_name] = value
@@ -248,7 +248,7 @@ def call_runtest_hook(
     elif when == "teardown":
         ihook = item.ihook.pytest_runtest_teardown
     else:
-        assert False, "Unhandled runtest hook case: {}".format(when)
+        assert False, f"Unhandled runtest hook case: {when}"
     reraise = (Exit,)  # type: Tuple[Type[BaseException], ...]
     if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
@@ -290,7 +290,7 @@ class CallInfo(Generic[TResult]):
     @property
     def result(self) -> TResult:
         if self.excinfo is not None:
-            raise AttributeError("{!r} has no valid result".format(self))
+            raise AttributeError(f"{self!r} has no valid result")
         # The cast is safe because an exception wasn't raised, hence
         # _result has the expected function return type (which may be
         #  None, that's why a cast and not an assert).
@@ -330,8 +330,8 @@ class CallInfo(Generic[TResult]):
 
     def __repr__(self) -> str:
         if self.excinfo is None:
-            return "<CallInfo when={!r} result: {!r}>".format(self.when, self._result)
-        return "<CallInfo when={!r} excinfo={!r}>".format(self.when, self.excinfo)
+            return f"<CallInfo when={self.when!r} result: {self._result!r}>"
+        return f"<CallInfo when={self.when!r} excinfo={self.excinfo!r}>"
 
 
 def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:

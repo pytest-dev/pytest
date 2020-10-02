@@ -544,7 +544,7 @@ class CaptureResult(Generic[AnyStr]):
         return tuple(self) < tuple(other)
 
     def __repr__(self) -> str:
-        return "CaptureResult(out={!r}, err={!r})".format(self.out, self.err)
+        return f"CaptureResult(out={self.out!r}, err={self.err!r})"
 
 
 class MultiCapture(Generic[AnyStr]):
@@ -638,7 +638,7 @@ def _get_multicapture(method: "_CaptureMethod") -> MultiCapture[str]:
         return MultiCapture(
             in_=None, out=SysCapture(1, tee=True), err=SysCapture(2, tee=True)
         )
-    raise ValueError("unknown capturing method: {!r}".format(method))
+    raise ValueError(f"unknown capturing method: {method!r}")
 
 
 # CaptureManager and CaptureFixture

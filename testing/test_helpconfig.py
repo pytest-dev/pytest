@@ -6,9 +6,7 @@ def test_version_verbose(testdir, pytestconfig):
     testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = testdir.runpytest("--version", "--version")
     assert result.ret == 0
-    result.stderr.fnmatch_lines(
-        ["*pytest*{}*imported from*".format(pytest.__version__)]
-    )
+    result.stderr.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
     if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
 
@@ -18,7 +16,7 @@ def test_version_less_verbose(testdir, pytestconfig):
     result = testdir.runpytest("--version")
     assert result.ret == 0
     # p = py.path.local(py.__file__).dirpath()
-    result.stderr.fnmatch_lines(["pytest {}".format(pytest.__version__)])
+    result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
 
 
 def test_help(testdir):

@@ -142,7 +142,7 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
         left_repr = saferepr(left, maxsize=maxsize)
         right_repr = saferepr(right, maxsize=maxsize)
 
-    summary = "{} {} {}".format(left_repr, op, right_repr)
+    summary = f"{left_repr} {op} {right_repr}"
 
     explanation = None
     try:
@@ -316,9 +316,7 @@ def _compare_eq_sequence(
                 left_value = left[i]
                 right_value = right[i]
 
-            explanation += [
-                "At index {} diff: {!r} != {!r}".format(i, left_value, right_value)
-            ]
+            explanation += [f"At index {i} diff: {left_value!r} != {right_value!r}"]
             break
 
     if comparing_bytes:
@@ -338,9 +336,7 @@ def _compare_eq_sequence(
             extra = saferepr(right[len_left])
 
         if len_diff == 1:
-            explanation += [
-                "{} contains one more item: {}".format(dir_with_more, extra)
-            ]
+            explanation += [f"{dir_with_more} contains one more item: {extra}"]
         else:
             explanation += [
                 "%s contains %d more items, first extra item: %s"

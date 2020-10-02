@@ -1094,7 +1094,7 @@ def test_marker_expr_eval_failure_handling(testdir, expr):
             pass
         """
     )
-    expected = "ERROR: Wrong expression passed to '-m': {}: *".format(expr)
+    expected = f"ERROR: Wrong expression passed to '-m': {expr}: *"
     result = testdir.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR

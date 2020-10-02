@@ -197,7 +197,7 @@ class ParsedCall:
     def __repr__(self) -> str:
         d = self.__dict__.copy()
         del d["_name"]
-        return "<ParsedCall {!r}(**{!r})>".format(self._name, d)
+        return f"<ParsedCall {self._name!r}(**{d!r})>"
 
     if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
@@ -252,7 +252,7 @@ class HookRecorder:
                     break
                 print("NONAMEMATCH", name, "with", call)
             else:
-                pytest.fail("could not find {!r} check {!r}".format(name, check))
+                pytest.fail(f"could not find {name!r} check {check!r}")
 
     def popcall(self, name: str) -> ParsedCall:
         __tracebackhide__ = True
@@ -260,7 +260,7 @@ class HookRecorder:
             if call._name == name:
                 del self.calls[i]
                 return call
-        lines = ["could not find call {!r}, in:".format(name)]
+        lines = [f"could not find call {name!r}, in:"]
         lines.extend(["  %s" % x for x in self.calls])
         pytest.fail("\n".join(lines))
 
@@ -388,7 +388,7 @@ class HookRecorder:
             elif rep.skipped:
                 skipped.append(rep)
             else:
-                assert rep.failed, "Unexpected outcome: {!r}".format(rep)
+                assert rep.failed, f"Unexpected outcome: {rep!r}"
                 failed.append(rep)
         return passed, skipped, failed
 
@@ -658,7 +658,7 @@ class Testdir:
         mp.setenv("PY_COLORS", "0")
 
     def __repr__(self) -> str:
-        return "<Testdir {!r}>".format(self.tmpdir)
+        return f"<Testdir {self.tmpdir!r}>"
 
     def __str__(self) -> str:
         return str(self.tmpdir)
@@ -874,7 +874,7 @@ class Testdir:
             return result
         else:
             raise LookupError(
-                'example "{}" is not found as a file or directory'.format(example_path)
+                f'example "{example_path}" is not found as a file or directory'
             )
 
     Session = Session
@@ -1087,7 +1087,7 @@ class Testdir:
             return self.runpytest_inprocess(*args, **kwargs)
         elif self._method == "subprocess":
             return self.runpytest_subprocess(*args, **kwargs)
-        raise RuntimeError("Unrecognized runpytest option: {}".format(self._method))
+        raise RuntimeError(f"Unrecognized runpytest option: {self._method}")
 
     def _ensure_basetemp(self, args):
         args = list(args)
@@ -1329,7 +1329,7 @@ class Testdir:
             for line in lines:
                 print(line, file=fp)
         except UnicodeEncodeError:
-            print("couldn't print to {} because of encoding".format(fp))
+            print(f"couldn't print to {fp} because of encoding")
 
     def _getpytestargs(self) -> Tuple[str, ...]:
         return sys.executable, "-mpytest"
@@ -1386,7 +1386,7 @@ class Testdir:
         """
         basetemp = self.tmpdir.mkdir("temp-pexpect")
         invoke = " ".join(map(str, self._getpytestargs()))
-        cmd = "{} --basetemp={} {}".format(invoke, basetemp, string)
+        cmd = f"{invoke} --basetemp={basetemp} {string}"
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
     def spawn(self, cmd: str, expect_timeout: float = 10.0) -> "pexpect.spawn":
@@ -1573,7 +1573,7 @@ class LineMatcher:
                     break
                 else:
                     if consecutive and started:
-                        msg = "no consecutive match: {!r}".format(line)
+                        msg = f"no consecutive match: {line!r}"
                         self._log(msg)
                         self._log(
                             "{:>{width}}".format("with:", width=wnick), repr(nextline)
@@ -1587,7 +1587,7 @@ class LineMatcher:
                     self._log("{:>{width}}".format("and:", width=wnick), repr(nextline))
                 extralines.append(nextline)
             else:
-                msg = "remains unmatched: {!r}".format(line)
+                msg = f"remains unmatched: {line!r}"
                 self._log(msg)
                 self._fail(msg)
         self._log_output = []
@@ -1622,7 +1622,7 @@ class LineMatcher:
         wnick = len(match_nickname) + 1
         for line in self.lines:
             if match_func(line, pat):
-                msg = "{}: {!r}".format(match_nickname, pat)
+                msg = f"{match_nickname}: {pat!r}"
                 self._log(msg)
                 self._log("{:>{width}}".format("with:", width=wnick), repr(line))
                 self._fail(msg)

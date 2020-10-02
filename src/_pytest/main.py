@@ -267,9 +267,7 @@ def wrap_session(
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
                 if initstate < 2:
-                    sys.stderr.write(
-                        "{}: {}\n".format(excinfo.typename, excinfo.value.msg)
-                    )
+                    sys.stderr.write(f"{excinfo.typename}: {excinfo.value.msg}\n")
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
         except BaseException:
@@ -615,8 +613,8 @@ class Session(nodes.FSCollector):
             if self._notfound:
                 errors = []
                 for arg, cols in self._notfound:
-                    line = "(no name {!r} in any of {!r})".format(arg, cols)
-                    errors.append("not found: {}\n{}".format(arg, line))
+                    line = f"(no name {arg!r} in any of {cols!r})"
+                    errors.append(f"not found: {arg}\n{line}")
                 raise UsageError(*errors)
             if not genitems:
                 items = rep.result

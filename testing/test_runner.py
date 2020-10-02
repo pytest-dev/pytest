@@ -472,7 +472,7 @@ def test_callinfo() -> None:
     ci2 = runner.CallInfo.from_call(lambda: 0 / 0, "collect")
     assert ci2.when == "collect"
     assert not hasattr(ci2, "result")
-    assert repr(ci2) == "<CallInfo when='collect' excinfo={!r}>".format(ci2.excinfo)
+    assert repr(ci2) == f"<CallInfo when='collect' excinfo={ci2.excinfo!r}>"
     assert str(ci2) == repr(ci2)
     assert ci2.excinfo
 
@@ -481,7 +481,7 @@ def test_callinfo() -> None:
         assert 0, "assert_msg"
 
     ci3 = runner.CallInfo.from_call(raise_assertion, "call")
-    assert repr(ci3) == "<CallInfo when='call' excinfo={!r}>".format(ci3.excinfo)
+    assert repr(ci3) == f"<CallInfo when='call' excinfo={ci3.excinfo!r}>"
     assert "\n" not in repr(ci3)
 
 

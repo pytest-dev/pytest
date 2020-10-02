@@ -35,7 +35,7 @@ def test_real_func_loop_limit():
             self.left = 1000
 
         def __repr__(self):
-            return "<Evil left={left}>".format(left=self.left)
+            return f"<Evil left={self.left}>"
 
         def __getattr__(self, attr):
             if not self.left:

@@ -40,7 +40,7 @@ class OutcomeException(BaseException):
     def __repr__(self) -> str:
         if self.msg:
             return self.msg
-        return "<{} instance>".format(self.__class__.__name__)
+        return f"<{self.__class__.__name__} instance>"
 
     __str__ = __repr__
 
@@ -208,7 +208,7 @@ def importorskip(
             __import__(modname)
         except ImportError as exc:
             if reason is None:
-                reason = "could not import {!r}: {}".format(modname, exc)
+                reason = f"could not import {modname!r}: {exc}"
             raise Skipped(reason, allow_module_level=True) from None
     mod = sys.modules[modname]
     if minversion is None:

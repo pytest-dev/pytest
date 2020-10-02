@@ -262,10 +262,10 @@ def test_log_cli_default_level_multiple_tests(testdir, request):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "{}::test_log_1 ".format(filename),
+            f"{filename}::test_log_1 ",
             "*WARNING*log message from test_log_1*",
             "PASSED *50%*",
-            "{}::test_log_2 ".format(filename),
+            f"{filename}::test_log_2 ",
             "*WARNING*log message from test_log_2*",
             "PASSED *100%*",
             "=* 2 passed in *=",
@@ -318,7 +318,7 @@ def test_log_cli_default_level_sections(testdir, request):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "{}::test_log_1 ".format(filename),
+            f"{filename}::test_log_1 ",
             "*-- live log start --*",
             "*WARNING* >>>>> START >>>>>*",
             "*-- live log setup --*",
@@ -330,7 +330,7 @@ def test_log_cli_default_level_sections(testdir, request):
             "*WARNING*log message from teardown of test_log_1*",
             "*-- live log finish --*",
             "*WARNING* <<<<< END <<<<<<<*",
-            "{}::test_log_2 ".format(filename),
+            f"{filename}::test_log_2 ",
             "*-- live log start --*",
             "*WARNING* >>>>> START >>>>>*",
             "*-- live log setup --*",
@@ -394,7 +394,7 @@ def test_live_logs_unknown_sections(testdir, request):
     result.stdout.fnmatch_lines(
         [
             "*WARNING*Unknown Section*",
-            "{}::test_log_1 ".format(filename),
+            f"{filename}::test_log_1 ",
             "*WARNING* >>>>> START >>>>>*",
             "*-- live log setup --*",
             "*WARNING*log message from setup of test_log_1*",
@@ -453,7 +453,7 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "{}::test_log_1 ".format(filename),
+            f"{filename}::test_log_1 ",
             "*-- live log start --*",
             "*WARNING* >>>>> START >>>>>*",
             "*-- live log setup --*",
@@ -638,7 +638,7 @@ def test_log_file_cli(testdir):
     log_file = testdir.tmpdir.join("pytest.log").strpath
 
     result = testdir.runpytest(
-        "-s", "--log-file={}".format(log_file), "--log-file-level=WARNING"
+        "-s", f"--log-file={log_file}", "--log-file-level=WARNING"
     )
 
     # fnmatch_lines does an assertion internally
@@ -670,9 +670,7 @@ def test_log_file_cli_level(testdir):
 
     log_file = testdir.tmpdir.join("pytest.log").strpath
 
-    result = testdir.runpytest(
-        "-s", "--log-file={}".format(log_file), "--log-file-level=INFO"
-    )
+    result = testdir.runpytest("-s", f"--log-file={log_file}", "--log-file-level=INFO")
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(["test_log_file_cli_level.py PASSED"])

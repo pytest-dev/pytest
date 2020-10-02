@@ -712,7 +712,7 @@ class TestStackLevel:
         file, _, func = location
 
         assert "could not load initial conftests" in str(warning.message)
-        assert "config{sep}__init__.py".format(sep=os.sep) in file
+        assert f"config{os.sep}__init__.py" in file
         assert func == "_preparse"
 
     @pytest.mark.filterwarnings("default")
@@ -748,7 +748,7 @@ class TestStackLevel:
         file, _, func = location
 
         assert "skipped plugin 'some_plugin': thing" in str(warning.message)
-        assert "config{sep}__init__.py".format(sep=os.sep) in file
+        assert f"config{os.sep}__init__.py" in file
         assert func == "_warn_about_skipped_plugins"
 
     def test_issue4445_issue5928_mark_generator(self, testdir):

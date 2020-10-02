@@ -471,7 +471,7 @@ class TestApprox:
         expected = "4.0e-06"
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(
-            ["*At index 0 diff: 3 != 4 ± {}".format(expected), "=* 1 failed in *="]
+            [f"*At index 0 diff: 3 != 4 ± {expected}", "=* 1 failed in *="]
         )
 
     @pytest.mark.parametrize(
@@ -483,8 +483,7 @@ class TestApprox:
     )
     def test_expected_value_type_error(self, x, name):
         with pytest.raises(
-            TypeError,
-            match=r"pytest.approx\(\) does not support nested {}:".format(name),
+            TypeError, match=fr"pytest.approx\(\) does not support nested {name}:",
         ):
             approx(x)
 

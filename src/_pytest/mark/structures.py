@@ -310,7 +310,7 @@ class MarkDecorator:
         return self.name  # for backward-compat (2.4.1 had this attr)
 
     def __repr__(self) -> str:
-        return "<MarkDecorator {!r}>".format(self.mark)
+        return f"<MarkDecorator {self.mark!r}>"
 
     def with_args(self, *args: object, **kwargs: object) -> "MarkDecorator":
         """Return a MarkDecorator with extra arguments added.
@@ -364,7 +364,7 @@ def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List
     ]  # unpack MarkDecorator
     for mark in extracted:
         if not isinstance(mark, Mark):
-            raise TypeError("got {!r} instead of Mark".format(mark))
+            raise TypeError(f"got {mark!r} instead of Mark")
     return [x for x in extracted if isinstance(x, Mark)]
 
 
@@ -498,14 +498,14 @@ class MarkGenerator:
             if name not in self._markers:
                 if self._config.option.strict_markers:
                     fail(
-                        "{!r} not found in `markers` configuration option".format(name),
+                        f"{name!r} not found in `markers` configuration option",
                         pytrace=False,
                     )
 
                 # Raise a specific error for common misspellings of "parametrize".
                 if name in ["parameterize", "parametrise", "parameterise"]:
                     __tracebackhide__ = True
-                    fail("Unknown '{}' mark, did you mean 'parametrize'?".format(name))
+                    fail(f"Unknown '{name}' mark, did you mean 'parametrize'?")
 
                 warnings.warn(
                     "Unknown pytest.mark.%s - is this a typo?  You can register "
@@ -556,4 +556,4 @@ class NodeKeywords(MutableMapping[str, Any]):
         return len(self._seen())
 
     def __repr__(self) -> str:
-        return "<NodeKeywords for node {}>".format(self.node)
+        return f"<NodeKeywords for node {self.node}>"
