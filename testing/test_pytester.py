@@ -580,20 +580,20 @@ def test_linematcher_no_matching(function) -> None:
         obtained = str(e.value).splitlines()
         if function == "no_fnmatch_line":
             assert obtained == [
-                "nomatch: '{}'".format(good_pattern),
+                f"nomatch: '{good_pattern}'",
                 "    and: 'cachedir: .pytest_cache'",
                 "    and: 'collecting ... collected 1 item'",
                 "    and: ''",
-                "fnmatch: '{}'".format(good_pattern),
+                f"fnmatch: '{good_pattern}'",
                 "   with: 'show_fixtures_per_test.py OK'",
             ]
         else:
             assert obtained == [
-                " nomatch: '{}'".format(good_pattern),
+                f" nomatch: '{good_pattern}'",
                 "     and: 'cachedir: .pytest_cache'",
                 "     and: 'collecting ... collected 1 item'",
                 "     and: ''",
-                "re.match: '{}'".format(good_pattern),
+                f"re.match: '{good_pattern}'",
                 "    with: 'show_fixtures_per_test.py OK'",
             ]
 

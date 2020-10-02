@@ -11,7 +11,7 @@ def equal_with_bash(prefix, ffc, fc, out=None):
     res_bash = set(fc(prefix))
     retval = set(res) == res_bash
     if out:
-        out.write("equal_with_bash({}) {} {}\n".format(prefix, retval, res))
+        out.write(f"equal_with_bash({prefix}) {retval} {res}\n")
         if not retval:
             out.write(" python - bash: %s\n" % (set(res) - res_bash))
             out.write(" bash - python: %s\n" % (res_bash - set(res)))
@@ -45,26 +45,16 @@ class FilesCompleter:
         completion = []
         if self.allowednames:
             if self.directories:
-                files = _wrapcall(
-                    ["bash", "-c", "compgen -A directory -- '{p}'".format(p=prefix)]
-                )
+                files = _wrapcall(["bash", "-c", f"compgen -A directory -- '{prefix}'"])
                 completion += [f + "/" for f in files]
             for x in self.allowednames:
                 completion += _wrapcall(
-                    [
-                        "bash",
-                        "-c",
-                        "compgen -A file -X '!*.{0}' -- '{p}'".format(x, p=prefix),
-                    ]
+                    ["bash", "-c", f"compgen -A file -X '!*.{x}' -- '{prefix}'"]
                 )
         else:
-            completion += _wrapcall(
-                ["bash", "-c", "compgen -A file -- '{p}'".format(p=prefix)]
-            )
+            completion += _wrapcall(["bash", "-c", f"compgen -A file -- '{prefix}'"])
 
-            anticomp = _wrapcall(
-                ["bash", "-c", "compgen -A directory -- '{p}'".format(p=prefix)]
-            )
+            anticomp = _wrapcall(["bash", "-c", f"compgen -A directory -- '{prefix}'"])
 
             completion = list(set(completion) - set(anticomp))
 

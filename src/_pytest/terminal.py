@@ -304,7 +304,7 @@ class WarningReport:
                 relpath = bestrelpath(
                     config.invocation_params.dir, absolutepath(filename)
                 )
-                return "{}:{}".format(relpath, linenum)
+                return f"{relpath}:{linenum}"
             else:
                 return str(self.fslocation)
         return None
@@ -487,7 +487,7 @@ class TerminalReporter:
 
     def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         if self.config.option.traceconfig:
-            msg = "PLUGIN registered: {}".format(plugin)
+            msg = f"PLUGIN registered: {plugin}"
             # XXX This event may happen during setup/teardown time
             #     which unfortunately captures our output here
             #     which garbles our output if we use self.write_line.
@@ -593,9 +593,9 @@ class TerminalReporter:
             if collected:
                 progress = self._progress_nodeids_reported
                 counter_format = "{{:{}d}}".format(len(str(collected)))
-                format_string = " [{}/{{}}]".format(counter_format)
+                format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(len(progress), collected)
-            return " [ {} / {} ]".format(collected, collected)
+            return f" [ {collected} / {collected} ]"
         else:
             if collected:
                 return " [{:3d}%]".format(
@@ -682,7 +682,7 @@ class TerminalReporter:
         self.write_sep("=", "test session starts", bold=True)
         verinfo = platform.python_version()
         if not self.no_header:
-            msg = "platform {} -- Python {}".format(sys.platform, verinfo)
+            msg = f"platform {sys.platform} -- Python {verinfo}"
             pypy_version_info = getattr(sys, "pypy_version_info", None)
             if pypy_version_info:
                 verinfo = ".".join(map(str, pypy_version_info[:3]))
@@ -778,7 +778,7 @@ class TerminalReporter:
                 if col.name == "()":  # Skip Instances.
                     continue
                 indent = (len(stack) - 1) * "  "
-                self._tw.line("{}{}".format(indent, col))
+                self._tw.line(f"{indent}{col}")
                 if self.config.option.verbose >= 1:
                     obj = getattr(col, "obj", None)
                     doc = inspect.getdoc(obj) if obj else None
@@ -1018,7 +1018,7 @@ class TerminalReporter:
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
                 else:
-                    msg = "ERROR at {} of {}".format(rep.when, msg)
+                    msg = f"ERROR at {rep.when} of {msg}"
                 self.write_sep("_", msg, red=True, bold=True)
                 self._outrep_summary(rep)
 
@@ -1091,7 +1091,7 @@ class TerminalReporter:
             for rep in xfailed:
                 verbose_word = rep._get_verbose_word(self.config)
                 pos = _get_pos(self.config, rep)
-                lines.append("{} {}".format(verbose_word, pos))
+                lines.append(f"{verbose_word} {pos}")
                 reason = rep.wasxfail
                 if reason:
                     lines.append("  " + str(reason))
@@ -1102,7 +1102,7 @@ class TerminalReporter:
                 verbose_word = rep._get_verbose_word(self.config)
                 pos = _get_pos(self.config, rep)
                 reason = rep.wasxfail
-                lines.append("{} {} {}".format(verbose_word, pos, reason))
+                lines.append(f"{verbose_word} {pos} {reason}")
 
         def show_skipped(lines: List[str]) -> None:
             skipped = self.stats.get("skipped", [])  # type: List[CollectReport]
@@ -1201,7 +1201,7 @@ def _get_line_with_reprcrash_message(
     verbose_word = rep._get_verbose_word(config)
     pos = _get_pos(config, rep)
 
-    line = "{} {}".format(verbose_word, pos)
+    line = f"{verbose_word} {pos}"
     len_line = wcswidth(line)
     ellipsis, len_ellipsis = "...", 3
     if len_line > termwidth - len_ellipsis:
@@ -1302,7 +1302,7 @@ def _plugin_nameversions(plugininfo) -> List[str]:
 def format_session_duration(seconds: float) -> str:
     """Format the given seconds in a human readable manner to show in the final summary."""
     if seconds < 60:
-        return "{:.2f}s".format(seconds)
+        return f"{seconds:.2f}s"
     else:
         dt = datetime.timedelta(seconds=int(seconds))
-        return "{:.2f}s ({})".format(seconds, dt)
+        return f"{seconds:.2f}s ({dt})"

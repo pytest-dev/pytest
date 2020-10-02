@@ -201,7 +201,7 @@ def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
         expression = Expression.compile(keywordexpr)
     except ParseError as e:
         raise UsageError(
-            "Wrong expression passed to '-k': {}: {}".format(keywordexpr, e)
+            f"Wrong expression passed to '-k': {keywordexpr}: {e}"
         ) from None
 
     remaining = []
@@ -245,9 +245,7 @@ def deselect_by_mark(items: "List[Item]", config: Config) -> None:
     try:
         expression = Expression.compile(matchexpr)
     except ParseError as e:
-        raise UsageError(
-            "Wrong expression passed to '-m': {}: {}".format(matchexpr, e)
-        ) from None
+        raise UsageError(f"Wrong expression passed to '-m': {matchexpr}: {e}") from None
 
     remaining = []
     deselected = []

@@ -189,9 +189,7 @@ def test_cache_reportheader_external_abspath(testdir, tmpdir_factory):
         )
     )
     result = testdir.runpytest("-v")
-    result.stdout.fnmatch_lines(
-        ["cachedir: {abscache}".format(abscache=external_cache)]
-    )
+    result.stdout.fnmatch_lines([f"cachedir: {external_cache}"])
 
 
 def test_cache_show(testdir):

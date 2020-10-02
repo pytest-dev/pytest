@@ -198,14 +198,14 @@ class TestAssertionRewrite:
         lines = msg.splitlines()
         if verbose > 1:
             assert lines == [
-                "assert {!r} == 42".format(X),
-                "  +{!r}".format(X),
+                f"assert {X!r} == 42",
+                f"  +{X!r}",
                 "  -42",
             ]
         elif verbose > 0:
             assert lines == [
                 "assert <class 'test_...e.<locals>.X'> == 42",
-                "  +{!r}".format(X),
+                f"  +{X!r}",
                 "  -42",
             ]
         else:
@@ -652,7 +652,7 @@ class TestAssertionRewrite:
         assert getmsg(f1) == "assert 42"
 
         def my_reprcompare2(op, left, right) -> str:
-            return "{} {} {}".format(left, op, right)
+            return f"{left} {op} {right}"
 
         monkeypatch.setattr(util, "_reprcompare", my_reprcompare2)
 
@@ -834,9 +834,7 @@ def test_rewritten():
         )
         result = testdir.runpytest_subprocess()
         assert result.ret == 0
-        found_names = glob.glob(
-            "__pycache__/*-pytest-{}.pyc".format(pytest.__version__)
-        )
+        found_names = glob.glob(f"__pycache__/*-pytest-{pytest.__version__}.pyc")
         assert found_names, "pyc with expected tag not found in names: {}".format(
             glob.glob("__pycache__/*.pyc")
         )

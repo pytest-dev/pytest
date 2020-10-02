@@ -77,7 +77,5 @@ def test_link_resolve(testdir: pytester.Testdir) -> None:
 
         # i.e.: Expect drive on windows because we just have drive:filename, whereas
         # we expect a relative path on Linux.
-        expect = (
-            "*{}*".format(subst_p) if sys.platform == "win32" else "*sub2/test_foo.py*"
-        )
+        expect = f"*{subst_p}*" if sys.platform == "win32" else "*sub2/test_foo.py*"
         result.stdout.fnmatch_lines([expect])

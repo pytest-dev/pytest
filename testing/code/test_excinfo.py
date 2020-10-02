@@ -206,8 +206,8 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, h)
         traceback = excinfo.traceback
         ntraceback = traceback.filter()
-        print("old: {!r}".format(traceback))
-        print("new: {!r}".format(ntraceback))
+        print(f"old: {traceback!r}")
+        print(f"new: {ntraceback!r}")
 
         if matching:
             assert len(ntraceback) == len(traceback) - 2
@@ -265,7 +265,7 @@ class TestTraceback_f_g_h:
         decorator = pytest.importorskip("decorator").decorator
 
         def log(f, *k, **kw):
-            print("{} {}".format(k, kw))
+            print(f"{k} {kw}")
             f(*k, **kw)
 
         log = decorator(log)
@@ -426,13 +426,13 @@ def test_match_raises_error(testdir):
     assert result.ret != 0
 
     exc_msg = "Regex pattern '[[]123[]]+' does not match 'division by zero'."
-    result.stdout.fnmatch_lines(["E * AssertionError: {}".format(exc_msg)])
+    result.stdout.fnmatch_lines([f"E * AssertionError: {exc_msg}"])
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
 
     result = testdir.runpytest("--fulltrace")
     assert result.ret != 0
     result.stdout.fnmatch_lines(
-        ["*__tracebackhide__ = True*", "E * AssertionError: {}".format(exc_msg)]
+        ["*__tracebackhide__ = True*", f"E * AssertionError: {exc_msg}"]
     )
 
 
@@ -834,14 +834,14 @@ raise ValueError()
                 "def entry():",
                 ">       f(0)",
                 "",
-                "{}:5: ".format(mod.__file__),
+                f"{mod.__file__}:5: ",
                 "_ _ *",
                 "",
                 "    def f(x):",
                 ">       raise ValueError(x)",
                 "E       ValueError: 0",
                 "",
-                "{}:3: ValueError".format(mod.__file__),
+                f"{mod.__file__}:3: ValueError",
             ]
         )
         assert raised == 3

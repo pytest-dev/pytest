@@ -1993,7 +1993,7 @@ class TestAutouseManagement:
                     pass
         """
         )
-        confcut = "--confcutdir={}".format(testdir.tmpdir)
+        confcut = f"--confcutdir={testdir.tmpdir}"
         reprec = testdir.inline_run("-v", "-s", confcut)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
@@ -3796,7 +3796,7 @@ class TestParameterizedSubRequest:
                 "    test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                "{}:4".format(fixfile),
+                f"{fixfile}:4",
                 "Requested here:",
                 "test_foos.py:4",
                 "*1 failed*",
@@ -3813,9 +3813,9 @@ class TestParameterizedSubRequest:
                 "    test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                "{}:4".format(fixfile),
+                f"{fixfile}:4",
                 "Requested here:",
-                "{}:4".format(testfile),
+                f"{testfile}:4",
                 "*1 failed*",
             ]
         )

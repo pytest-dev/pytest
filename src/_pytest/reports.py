@@ -321,7 +321,7 @@ class TestReport(BaseReport):
                         excinfo, style=item.config.getoption("tbstyle", "auto")
                     )
         for rwhen, key, content in item._report_sections:
-            sections.append(("Captured {} {}".format(key, rwhen), content))
+            sections.append((f"Captured {key} {rwhen}", content))
         return cls(
             item.nodeid,
             item.location,

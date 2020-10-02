@@ -58,7 +58,7 @@ class Code:
         if not hasattr(rawcode, "co_filename"):
             rawcode = getrawcode(rawcode)
         if not isinstance(rawcode, CodeType):
-            raise TypeError("not a code object: {!r}".format(rawcode))
+            raise TypeError(f"not a code object: {rawcode!r}")
         self.filename = rawcode.co_filename
         self.firstlineno = rawcode.co_firstlineno - 1
         self.name = rawcode.co_name
@@ -747,7 +747,7 @@ class FormattedExcinfo:
                     else:
                         str_repr = safeformat(value)
                     # if len(str_repr) < 70 or not isinstance(value, (list, tuple, dict)):
-                    lines.append("{:<10} = {}".format(name, str_repr))
+                    lines.append(f"{name:<10} = {str_repr}")
                     # else:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
@@ -1056,7 +1056,7 @@ class ReprEntry(TerminalRepr):
         # separate indents and source lines that are not failures: we want to
         # highlight the code but not the indentation, which may contain markers
         # such as ">   assert 0"
-        fail_marker = "{}   ".format(FormattedExcinfo.fail_marker)
+        fail_marker = f"{FormattedExcinfo.fail_marker}   "
         indent_size = len(fail_marker)
         indents = []  # type: List[str]
         source_lines = []  # type: List[str]
@@ -1122,7 +1122,7 @@ class ReprFileLocation(TerminalRepr):
         if i != -1:
             msg = msg[:i]
         tw.write(self.path, bold=True, red=True)
-        tw.line(":{}: {}".format(self.lineno, msg))
+        tw.line(f":{self.lineno}: {msg}")
 
 
 @attr.s(eq=False)
@@ -1142,7 +1142,7 @@ class ReprFuncArgs(TerminalRepr):
         if self.args:
             linesofar = ""
             for name, value in self.args:
-                ns = "{} = {}".format(name, value)
+                ns = f"{name} = {value}"
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)

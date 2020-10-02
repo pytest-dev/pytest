@@ -1494,7 +1494,7 @@ def test_assert_tuple_warning(testdir):
     """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*test_assert_tuple_warning.py:2:*{}*".format(msg)])
+    result.stdout.fnmatch_lines([f"*test_assert_tuple_warning.py:2:*{msg}*"])
 
     # tuples with size != 2 should not trigger the warning
     testdir.makepyfile(

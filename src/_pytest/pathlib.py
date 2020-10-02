@@ -63,9 +63,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
 
     if not isinstance(excvalue, PermissionError):
         warnings.warn(
-            PytestWarning(
-                "(rm_rf) error removing {}\n{}: {}".format(path, exctype, excvalue)
-            )
+            PytestWarning(f"(rm_rf) error removing {path}\n{exctype}: {excvalue}")
         )
         return False
 
@@ -200,7 +198,7 @@ def make_numbered_dir(root: Path, prefix: str) -> Path:
         # try up to 10 times to create the folder
         max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
         new_number = max_existing + 1
-        new_path = root.joinpath("{}{}".format(prefix, new_number))
+        new_path = root.joinpath(f"{prefix}{new_number}")
         try:
             new_path.mkdir()
         except Exception:
@@ -221,7 +219,7 @@ def create_cleanup_lock(p: Path) -> Path:
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     except FileExistsError as e:
-        raise OSError("cannot create lockfile in {path}".format(path=p)) from e
+        raise OSError(f"cannot create lockfile in {p}") from e
     else:
         pid = os.getpid()
         spid = str(pid).encode()
@@ -258,7 +256,7 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
         lock_path = create_cleanup_lock(path)
         parent = path.parent
 
-        garbage = parent.joinpath("garbage-{}".format(uuid.uuid4()))
+        garbage = parent.joinpath(f"garbage-{uuid.uuid4()}")
         path.rename(garbage)
         rm_rf(garbage)
     except OSError:
@@ -401,7 +399,7 @@ def fnmatch_ex(pattern: str, path) -> bool:
     else:
         name = str(path)
         if path.is_absolute() and not os.path.isabs(pattern):
-            pattern = "*{}{}".format(os.sep, pattern)
+            pattern = f"*{os.sep}{pattern}"
     return fnmatch.fnmatch(name, pattern)
 
 
@@ -415,7 +413,7 @@ def symlink_or_skip(src, dst, **kwargs):
     try:
         os.symlink(str(src), str(dst), **kwargs)
     except OSError as e:
-        skip("symlinks not supported: {}".format(e))
+        skip(f"symlinks not supported: {e}")
 
 
 class ImportMode(Enum):

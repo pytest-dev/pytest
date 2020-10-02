@@ -17,9 +17,7 @@ def announce(version):
     stdout = stdout.decode("utf-8")
     last_version = stdout.strip()
 
-    stdout = check_output(
-        ["git", "log", "{}..HEAD".format(last_version), "--format=%aN"]
-    )
+    stdout = check_output(["git", "log", f"{last_version}..HEAD", "--format=%aN"])
     stdout = stdout.decode("utf-8")
 
     contributors = set(stdout.splitlines())
@@ -31,14 +29,10 @@ def announce(version):
         Path(__file__).parent.joinpath(template_name).read_text(encoding="UTF-8")
     )
 
-    contributors_text = (
-        "\n".join("* {}".format(name) for name in sorted(contributors)) + "\n"
-    )
+    contributors_text = "\n".join(f"* {name}" for name in sorted(contributors)) + "\n"
     text = template_text.format(version=version, contributors=contributors_text)
 
-    target = Path(__file__).parent.joinpath(
-        "../doc/en/announce/release-{}.rst".format(version)
-    )
+    target = Path(__file__).parent.joinpath(f"../doc/en/announce/release-{version}.rst")
     target.write_text(text, encoding="UTF-8")
     print(f"{Fore.CYAN}[generate.announce] {Fore.RESET}Generated {target.name}")
 
@@ -47,7 +41,7 @@ def announce(version):
     lines = index_path.read_text(encoding="UTF-8").splitlines()
     indent = "   "
     for index, line in enumerate(lines):
-        if line.startswith("{}release-".format(indent)):
+        if line.startswith(f"{indent}release-"):
             new_line = indent + target.stem
             if line != new_line:
                 lines.insert(index, new_line)
@@ -96,7 +90,7 @@ def pre_release(version, *, skip_check_links):
     if not skip_check_links:
         check_links()
 
-    msg = "Prepare release version {}".format(version)
+    msg = f"Prepare release version {version}"
     check_call(["git", "commit", "-a", "-m", msg])
 
     print()

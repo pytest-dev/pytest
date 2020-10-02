@@ -74,7 +74,7 @@ def resolve(name: str) -> object:
             if expected == used:
                 raise
             else:
-                raise ImportError("import error in {}: {}".format(used, ex)) from ex
+                raise ImportError(f"import error in {used}: {ex}") from ex
         found = annotated_getattr(found, part, used)
     return found
 
@@ -93,9 +93,7 @@ def annotated_getattr(obj: object, name: str, ann: str) -> object:
 
 def derive_importpath(import_path: str, raising: bool) -> Tuple[str, object]:
     if not isinstance(import_path, str) or "." not in import_path:  # type: ignore[unreachable]
-        raise TypeError(
-            "must be absolute import path string, not {!r}".format(import_path)
-        )
+        raise TypeError(f"must be absolute import path string, not {import_path!r}")
     module, attr = import_path.rsplit(".", 1)
     target = resolve(module)
     if raising:
@@ -202,7 +200,7 @@ class MonkeyPatch:
 
         oldval = getattr(target, name, notset)
         if raising and oldval is notset:
-            raise AttributeError("{!r} has no attribute {!r}".format(target, name))
+            raise AttributeError(f"{target!r} has no attribute {name!r}")
 
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
