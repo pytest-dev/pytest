@@ -246,7 +246,7 @@ class TestReport(BaseReport):
         sections: Iterable[Tuple[str, str]] = (),
         duration: float = 0,
         user_properties: Optional[Iterable[Tuple[str, object]]] = None,
-        **extra
+        **extra,
     ) -> None:
         #: Normalized collection nodeid.
         self.nodeid = nodeid
@@ -348,7 +348,7 @@ class CollectReport(BaseReport):
         longrepr,
         result: Optional[List[Union[Item, Collector]]],
         sections: Iterable[Tuple[str, str]] = (),
-        **extra
+        **extra,
     ) -> None:
         #: Normalized collection nodeid.
         self.nodeid = nodeid

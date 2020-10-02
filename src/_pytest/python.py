@@ -975,7 +975,7 @@ class Metafunc:
         ] = None,
         scope: "Optional[_Scope]" = None,
         *,
-        _param_mark: Optional[Mark] = None
+        _param_mark: Optional[Mark] = None,
     ) -> None:
         """Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed

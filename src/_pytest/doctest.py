@@ -260,7 +260,7 @@ class DoctestItem(pytest.Item):
         *,
         name: str,
         runner: "doctest.DocTestRunner",
-        dtest: "doctest.DocTest"
+        dtest: "doctest.DocTest",
     ):
         # incompatible signature due to to imposed limits on sublcass
         """The public named constructor."""

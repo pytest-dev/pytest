@@ -83,7 +83,7 @@ def deprecated_call(
 def warns(
     expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     *,
-    match: Optional[Union[str, Pattern[str]]] = ...
+    match: Optional[Union[str, Pattern[str]]] = ...,
 ) -> "WarningsChecker":
     ...
 
@@ -93,7 +93,7 @@ def warns(
     expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     func: Callable[..., T],
     *args: Any,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> T:
     ...
 
@@ -102,7 +102,7 @@ def warns(
     expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
 
