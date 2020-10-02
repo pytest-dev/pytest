@@ -21,13 +21,11 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py35",
           "windows-py36",
           "windows-py37",
           "windows-py37-pluggy",
           "windows-py38",
 
-          "ubuntu-py35",
           "ubuntu-py36",
           "ubuntu-py37",
           "ubuntu-py37-pluggy",
@@ -45,11 +43,6 @@ jobs:
         ]
 
         include:
-          - name: "windows-py35"
-            python: "3.5"
-            os: windows-latest
-            tox_env: "py35-xdist"
-            use_coverage: true
           - name: "windows-py36"
             python: "3.6"
             os: windows-latest
@@ -68,10 +61,6 @@ jobs:
             tox_env: "py38-unittestextras"
             use_coverage: true
 
-          - name: "ubuntu-py35"
-            python: "3.5"
-            os: ubuntu-latest
-            tox_env: "py35-xdist"
           - name: "ubuntu-py36"
             python: "3.6"
             os: ubuntu-latest
