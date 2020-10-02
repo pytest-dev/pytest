@@ -2,7 +2,7 @@
 Doctest integration for modules and test files
 =========================================================
 
-By default all files matching the ``test*.txt`` pattern will
+By default, all files matching the ``test*.txt`` pattern will
 be run through the python standard ``doctest`` module.  You
 can change the pattern by issuing:
 
@@ -206,7 +206,7 @@ It is possible to use fixtures using the ``getfixture`` helper:
     >>> ...
     >>>
 
-Note that the fixture needs to be defined in a place visible by pytest, for example a `conftest.py`
+Note that the fixture needs to be defined in a place visible by pytest, for example, a `conftest.py`
 file or plugin; normal python files containing docstrings are not normally scanned for fixtures
 unless explicitly configured by :confval:`python_files`.
 
