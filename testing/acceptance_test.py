@@ -1183,9 +1183,6 @@ def test_warn_on_async_function(testdir):
 
 
 @pytest.mark.filterwarnings("default")
-@pytest.mark.skipif(
-    sys.version_info < (3, 6), reason="async gen syntax available in Python 3.6+"
-)
 def test_warn_on_async_gen_function(testdir):
     testdir.makepyfile(
         test_async="""

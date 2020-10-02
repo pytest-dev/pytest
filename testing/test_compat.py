@@ -1,5 +1,4 @@
 import enum
-import sys
 from functools import partial
 from functools import wraps
 from typing import Union
@@ -129,9 +128,6 @@ def test_is_generator_async_syntax(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 6), reason="async gen syntax available in Python 3.6+"
-)
 def test_is_generator_async_gen_syntax(testdir):
     testdir.makepyfile(
         """

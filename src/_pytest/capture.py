@@ -113,11 +113,7 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
 
     See https://github.com/pytest-dev/py/issues/103.
     """
-    if (
-        not sys.platform.startswith("win32")
-        or sys.version_info[:2] < (3, 6)
-        or hasattr(sys, "pypy_version_info")
-    ):
+    if not sys.platform.startswith("win32") or hasattr(sys, "pypy_version_info"):
         return
 
     # Bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666).
