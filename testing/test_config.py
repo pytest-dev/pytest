@@ -6,6 +6,7 @@ from typing import Dict
 from typing import List
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 
 import attr
 import py.path
@@ -13,7 +14,6 @@ import py.path
 import _pytest._code
 import pytest
 from _pytest.compat import importlib_metadata
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool

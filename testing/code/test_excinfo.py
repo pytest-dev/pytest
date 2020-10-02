@@ -7,6 +7,7 @@ import textwrap
 from typing import Any
 from typing import Dict
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import py
@@ -17,7 +18,6 @@ from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
 from _pytest._io import TerminalWriter
-from _pytest.compat import TYPE_CHECKING
 from _pytest.pytester import LineMatcher
 
 try:

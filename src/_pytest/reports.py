@@ -8,6 +8,7 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
@@ -27,7 +28,6 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item

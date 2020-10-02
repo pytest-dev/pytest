@@ -21,6 +21,7 @@ from typing import Pattern
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 from weakref import ref
@@ -40,7 +41,6 @@ from _pytest._io.saferepr import saferepr
 from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.compat import overload
-from _pytest.compat import TYPE_CHECKING
 from _pytest.pathlib import Path
 
 if TYPE_CHECKING:

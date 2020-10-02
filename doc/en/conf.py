@@ -17,9 +17,9 @@
 # The short X.Y version.
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from _pytest import __version__ as version
-from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import sphinx.application

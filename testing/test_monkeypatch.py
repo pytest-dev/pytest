@@ -4,11 +4,11 @@ import sys
 import textwrap
 from typing import Dict
 from typing import Generator
+from typing import TYPE_CHECKING
 
 import py
 
 import pytest
-from _pytest.compat import TYPE_CHECKING
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Testdir
 

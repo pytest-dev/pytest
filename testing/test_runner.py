@@ -5,6 +5,7 @@ import types
 from typing import Dict
 from typing import List
 from typing import Tuple
+from typing import TYPE_CHECKING
 
 import py
 
@@ -13,7 +14,6 @@ import pytest
 from _pytest import outcomes
 from _pytest import reports
 from _pytest import runner
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import ExitCode
 from _pytest.outcomes import OutcomeException
 

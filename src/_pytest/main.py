@@ -14,6 +14,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import attr
@@ -23,7 +24,6 @@ import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
 from _pytest.compat import overload
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode

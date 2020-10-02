@@ -22,6 +22,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import py
@@ -33,7 +34,6 @@ from _pytest.assertion.util import (  # noqa: F401
     format_explanation as _format_explanation,
 )
 from _pytest.compat import fspath
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.main import Session
 from _pytest.pathlib import fnmatch_ex

@@ -18,6 +18,7 @@ from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 from weakref import WeakKeyDictionary
 
@@ -30,7 +31,6 @@ from _pytest._code import Source
 from _pytest.capture import _get_multicapture
 from _pytest.compat import final
 from _pytest.compat import overload
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
