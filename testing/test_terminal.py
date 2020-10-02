@@ -1017,7 +1017,6 @@ def test_color_yes(testdir, color_mapping):
         """
     )
     result = testdir.runpytest("--color=yes", str(p1))
-    color_mapping.requires_ordered_markup(result)
     result.stdout.fnmatch_lines(
         color_mapping.format_for_fnmatch(
             [
@@ -2217,7 +2216,6 @@ class TestCodeHighlight:
         """
         )
         result = testdir.runpytest("--color=yes")
-        color_mapping.requires_ordered_markup(result)
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
@@ -2237,7 +2235,6 @@ class TestCodeHighlight:
         """
         )
         result = testdir.runpytest("--color=yes")
-        color_mapping.requires_ordered_markup(result)
 
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
