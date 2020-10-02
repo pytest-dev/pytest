@@ -16,6 +16,7 @@ from typing import Generator
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Sequence
 from typing import Tuple
 from typing import Type
@@ -31,7 +32,6 @@ from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
 from _pytest.compat import final
-from _pytest.compat import overload
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -277,14 +277,14 @@ class HookRecorder:
     ) -> Sequence[CollectReport]:
         ...
 
-    @overload  # noqa: F811
-    def getreports(  # noqa: F811
+    @overload
+    def getreports(
         self, names: "Literal['pytest_runtest_logreport']",
     ) -> Sequence[TestReport]:
         ...
 
-    @overload  # noqa: F811
-    def getreports(  # noqa: F811
+    @overload
+    def getreports(
         self,
         names: Union[str, Iterable[str]] = (
             "pytest_collectreport",
@@ -293,7 +293,7 @@ class HookRecorder:
     ) -> Sequence[Union[CollectReport, TestReport]]:
         ...
 
-    def getreports(  # noqa: F811
+    def getreports(
         self,
         names: Union[str, Iterable[str]] = (
             "pytest_collectreport",
@@ -340,14 +340,14 @@ class HookRecorder:
     ) -> Sequence[CollectReport]:
         ...
 
-    @overload  # noqa: F811
-    def getfailures(  # noqa: F811
+    @overload
+    def getfailures(
         self, names: "Literal['pytest_runtest_logreport']",
     ) -> Sequence[TestReport]:
         ...
 
-    @overload  # noqa: F811
-    def getfailures(  # noqa: F811
+    @overload
+    def getfailures(
         self,
         names: Union[str, Iterable[str]] = (
             "pytest_collectreport",
@@ -356,7 +356,7 @@ class HookRecorder:
     ) -> Sequence[Union[CollectReport, TestReport]]:
         ...
 
-    def getfailures(  # noqa: F811
+    def getfailures(
         self,
         names: Union[str, Iterable[str]] = (
             "pytest_collectreport",
