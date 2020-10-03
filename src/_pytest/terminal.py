@@ -718,10 +718,10 @@ class TerminalReporter:
         if config.inipath:
             line += ", configfile: " + bestrelpath(config.rootpath, config.inipath)
 
-        testpaths = config.getini("testpaths")
-        if testpaths and config.args == testpaths:
-            rel_paths = [bestrelpath(config.rootpath, x) for x in testpaths]
-            line += ", testpaths: {}".format(", ".join(rel_paths))
+        testpaths = config.getini("testpaths")  # type: List[str]
+        if config.invocation_params.dir == config.rootpath and config.args == testpaths:
+            line += ", testpaths: {}".format(", ".join(testpaths))
+
         result = [line]
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()

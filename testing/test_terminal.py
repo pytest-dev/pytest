@@ -18,6 +18,7 @@ import pytest
 from _pytest._io.wcwidth import wcswidth
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
@@ -748,6 +749,29 @@ class TestTerminalFunctional:
         # with testpaths option, passing directory in command-line: do not show testpaths then
         result = testdir.runpytest("tests")
         result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
+
+    def test_header_absolute_testpath(
+        self, testdir: Testdir, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Regresstion test for #7814."""
+        tests = testdir.tmpdir.join("tests")
+        tests.ensure_dir()
+        testdir.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            testpaths = ['{}']
+        """.format(
+                tests
+            )
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "rootdir: *absolute_testpath0, configfile: pyproject.toml, testpaths: {}".format(
+                    tests
+                )
+            ]
+        )
 
     def test_no_header(self, testdir):
         testdir.tmpdir.join("tests").ensure_dir()
