@@ -11,13 +11,13 @@ from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import py
 
 import _pytest._io
 from _pytest.compat import final
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config.exceptions import UsageError
 
 if TYPE_CHECKING:

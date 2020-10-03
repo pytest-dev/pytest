@@ -2,6 +2,7 @@ import enum
 import sys
 from functools import partial
 from functools import wraps
+from typing import TYPE_CHECKING
 from typing import Union
 
 import pytest
@@ -12,7 +13,6 @@ from _pytest.compat import get_real_func
 from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
-from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import OutcomeException
 
 if TYPE_CHECKING:

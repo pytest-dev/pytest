@@ -3,9 +3,9 @@ import warnings
 from contextlib import contextmanager
 from typing import Generator
 from typing import Optional
+from typing import TYPE_CHECKING
 
 import pytest
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import apply_warning_filters
 from _pytest.config import Config
 from _pytest.config import parse_warning_filter

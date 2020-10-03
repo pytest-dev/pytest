@@ -7,12 +7,12 @@ from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import py.path
 from pluggy import HookspecMarker
 
-from _pytest.compat import TYPE_CHECKING
 from _pytest.deprecated import WARNING_CAPTURED_HOOK
 
 if TYPE_CHECKING:

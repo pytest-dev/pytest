@@ -26,6 +26,7 @@ from typing import Sequence
 from typing import Set
 from typing import TextIO
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import attr
@@ -45,7 +46,6 @@ from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
 from _pytest.compat import importlib_metadata
-from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import bestrelpath

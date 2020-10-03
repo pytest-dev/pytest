@@ -1,11 +1,11 @@
 from typing import Any
 from typing import Generic
+from typing import TYPE_CHECKING
 from typing import TypeVar
 
 import attr
 
 from _pytest.compat import final
-from _pytest.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Type  # noqa: F401 (used in type string)

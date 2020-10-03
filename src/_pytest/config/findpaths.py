@@ -5,12 +5,12 @@ from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import iniconfig
 
 from .exceptions import UsageError
-from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath

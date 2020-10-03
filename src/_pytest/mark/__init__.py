@@ -4,6 +4,7 @@ import warnings
 from typing import AbstractSet
 from typing import List
 from typing import Optional
+from typing import TYPE_CHECKING
 from typing import Union
 
 import attr
@@ -17,7 +18,6 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl

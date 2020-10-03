@@ -6,10 +6,10 @@ import traceback
 from typing import Generator
 from typing import Optional
 from typing import Tuple
+from typing import TYPE_CHECKING
 
 import attr
 
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser

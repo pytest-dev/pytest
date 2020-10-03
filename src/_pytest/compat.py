@@ -14,6 +14,7 @@ from typing import Generic
 from typing import Optional
 from typing import overload as overload
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
@@ -21,12 +22,6 @@ import attr
 
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
-
-if sys.version_info < (3, 5, 2):
-    TYPE_CHECKING = False  # type: bool
-else:
-    from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from typing import NoReturn

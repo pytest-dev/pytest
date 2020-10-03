@@ -20,6 +20,7 @@ from typing import Sequence
 from typing import Set
 from typing import TextIO
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import attr
@@ -34,7 +35,6 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
 from _pytest.compat import order_preserving_dict
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode

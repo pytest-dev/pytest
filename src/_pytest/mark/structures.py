@@ -13,6 +13,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
@@ -24,7 +25,6 @@ from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
 from ..compat import overload
-from ..compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning

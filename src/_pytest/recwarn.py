@@ -10,12 +10,12 @@ from typing import List
 from typing import Optional
 from typing import Pattern
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
 from _pytest.compat import final
 from _pytest.compat import overload
-from _pytest.compat import TYPE_CHECKING
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 

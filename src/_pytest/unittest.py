@@ -9,13 +9,13 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._code
 import pytest
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import hookimpl
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodes import Collector

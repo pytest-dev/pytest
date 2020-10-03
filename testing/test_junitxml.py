@@ -4,13 +4,13 @@ from datetime import datetime
 from typing import cast
 from typing import List
 from typing import Tuple
+from typing import TYPE_CHECKING
 from xml.dom import minidom
 
 import py
 import xmlschema
 
 import pytest
-from _pytest.compat import TYPE_CHECKING
 from _pytest.config import Config
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML

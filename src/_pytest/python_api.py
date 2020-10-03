@@ -13,6 +13,7 @@ from typing import Generic
 from typing import Optional
 from typing import Pattern
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
@@ -20,7 +21,6 @@ import _pytest._code
 from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.compat import STRING_TYPES
-from _pytest.compat import TYPE_CHECKING
 from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
