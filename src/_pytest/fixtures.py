@@ -1220,7 +1220,7 @@ def fixture(
             Callable[[Any], Optional[object]],
         ]
     ] = ...,
-    name: Optional[str] = ...
+    name: Optional[str] = ...,
 ) -> _FixtureFunction:
     ...
 
@@ -1238,7 +1238,7 @@ def fixture(
             Callable[[Any], Optional[object]],
         ]
     ] = ...,
-    name: Optional[str] = None
+    name: Optional[str] = None,
 ) -> FixtureFunctionMarker:
     ...
 
@@ -1255,7 +1255,7 @@ def fixture(
             Callable[[Any], Optional[object]],
         ]
     ] = None,
-    name: Optional[str] = None
+    name: Optional[str] = None,
 ) -> Union[FixtureFunctionMarker, _FixtureFunction]:
     """Decorator to mark a fixture factory function.
 
@@ -1325,7 +1325,7 @@ def yield_fixture(
     params=None,
     autouse=False,
     ids=None,
-    name=None
+    name=None,
 ):
     """(Return a) decorator to mark a yield-fixture factory function.
 

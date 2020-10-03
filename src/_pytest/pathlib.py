@@ -441,7 +441,7 @@ class ImportPathMismatchError(ImportError):
 def import_path(
     p: Union[str, py.path.local, Path],
     *,
-    mode: Union[str, ImportMode] = ImportMode.prepend
+    mode: Union[str, ImportMode] = ImportMode.prepend,
 ) -> ModuleType:
     """Import and return a module from the given path, which can be a file (a module) or
     a directory (a package).

@@ -115,7 +115,7 @@ def getfuncargnames(
     *,
     name: str = "",
     is_method: bool = False,
-    cls: Optional[type] = None
+    cls: Optional[type] = None,
 ) -> Tuple[str, ...]:
     """Return the names of a function's mandatory arguments.
 

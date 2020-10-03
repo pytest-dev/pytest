@@ -1211,7 +1211,7 @@ class Testdir:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         stdin=CLOSE_STDIN,
-        **kw
+        **kw,
     ):
         """Invoke subprocess.Popen.
 
@@ -1530,7 +1530,7 @@ class LineMatcher:
         match_func: Callable[[str, str], bool],
         match_nickname: str,
         *,
-        consecutive: bool = False
+        consecutive: bool = False,
     ) -> None:
         """Underlying implementation of ``fnmatch_lines`` and ``re_match_lines``.
 
