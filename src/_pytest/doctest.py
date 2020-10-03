@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Pattern
 from typing import Sequence
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -40,7 +41,6 @@ from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     import doctest
-    from typing import Type
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -168,7 +168,7 @@ class MultipleDoctestFailures(Exception):
         self.failures = failures
 
 
-def _init_runner_class() -> "Type[doctest.DocTestRunner]":
+def _init_runner_class() -> Type["doctest.DocTestRunner"]:
     import doctest
 
     class PytestDoctestRunner(doctest.DebugRunner):
@@ -204,7 +204,7 @@ def _init_runner_class() -> "Type[doctest.DocTestRunner]":
             out,
             test: "doctest.DocTest",
             example: "doctest.Example",
-            exc_info: "Tuple[Type[BaseException], BaseException, types.TracebackType]",
+            exc_info: Tuple[Type[BaseException], BaseException, types.TracebackType],
         ) -> None:
             if isinstance(exc_info[1], OutcomeException):
                 raise exc_info[1]
@@ -568,7 +568,7 @@ def _setup_fixtures(doctest_item: DoctestItem) -> FixtureRequest:
     return fixture_request
 
 
-def _init_checker_class() -> "Type[doctest.OutputChecker]":
+def _init_checker_class() -> Type["doctest.OutputChecker"]:
     import doctest
     import re
 

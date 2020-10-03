@@ -18,6 +18,7 @@ from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 from weakref import WeakKeyDictionary
@@ -49,7 +50,6 @@ from _pytest.reports import TestReport
 from _pytest.tmpdir import TempdirFactory
 
 if TYPE_CHECKING:
-    from typing import Type
     from typing_extensions import Literal
 
     import pexpect
@@ -420,7 +420,7 @@ def linecomp() -> "LineComp":
 
 
 @pytest.fixture(name="LineMatcher")
-def LineMatcher_fixture(request: FixtureRequest) -> "Type[LineMatcher]":
+def LineMatcher_fixture(request: FixtureRequest) -> Type["LineMatcher"]:
     """A reference to the :class: `LineMatcher`.
 
     This is instantiable with a list of lines (without their trailing newlines).

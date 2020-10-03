@@ -14,6 +14,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -44,7 +45,6 @@ from _pytest.runner import SetupState
 
 
 if TYPE_CHECKING:
-    from typing import Type
     from typing_extensions import Literal
 
 

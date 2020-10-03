@@ -9,6 +9,7 @@ from typing import Generic
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -33,7 +34,6 @@ from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
 if TYPE_CHECKING:
-    from typing import Type
     from typing_extensions import Literal
 
     from _pytest.main import Session
@@ -301,7 +301,9 @@ class CallInfo(Generic[TResult]):
         cls,
         func: "Callable[[], TResult]",
         when: "Literal['collect', 'setup', 'call', 'teardown']",
-        reraise: "Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]]" = None,
+        reraise: Optional[
+            Union[Type[BaseException], Tuple[Type[BaseException], ...]]
+        ] = None,
     ) -> "CallInfo[TResult]":
         excinfo = None
         start = timing.time()

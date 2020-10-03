@@ -13,7 +13,7 @@ from typing import Generic
 from typing import Optional
 from typing import Pattern
 from typing import Tuple
-from typing import TYPE_CHECKING
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -22,9 +22,6 @@ from _pytest.compat import final
 from _pytest.compat import overload
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
-
-if TYPE_CHECKING:
-    from typing import Type
 
 
 def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
@@ -560,7 +557,7 @@ _E = TypeVar("_E", bound=BaseException)
 
 @overload
 def raises(
-    expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
+    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
     *,
     match: Optional[Union[str, Pattern[str]]] = ...
 ) -> "RaisesContext[_E]":
@@ -569,7 +566,7 @@ def raises(
 
 @overload  # noqa: F811
 def raises(  # noqa: F811
-    expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
+    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
     func: Callable[..., Any],
     *args: Any,
     **kwargs: Any
@@ -578,9 +575,7 @@ def raises(  # noqa: F811
 
 
 def raises(  # noqa: F811
-    expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
-    *args: Any,
-    **kwargs: Any
+    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]], *args: Any, **kwargs: Any
 ) -> Union["RaisesContext[_E]", _pytest._code.ExceptionInfo[_E]]:
     r"""Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
@@ -738,7 +733,7 @@ raises.Exception = fail.Exception  # type: ignore
 class RaisesContext(Generic[_E]):
     def __init__(
         self,
-        expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
+        expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
         message: str,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
     ) -> None:
@@ -753,7 +748,7 @@ class RaisesContext(Generic[_E]):
 
     def __exit__(
         self,
-        exc_type: Optional["Type[BaseException]"],
+        exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> bool:
@@ -764,9 +759,7 @@ class RaisesContext(Generic[_E]):
         if not issubclass(exc_type, self.expected_exception):
             return False
         # Cast to narrow the exception type now that it's verified.
-        exc_info = cast(
-            Tuple["Type[_E]", _E, TracebackType], (exc_type, exc_val, exc_tb)
-        )
+        exc_info = cast(Tuple[Type[_E], _E, TracebackType], (exc_type, exc_val, exc_tb))
         self.excinfo.fill_unfilled(exc_info)
         if self.match_expr is not None:
             self.excinfo.match(self.match_expr)

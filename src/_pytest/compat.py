@@ -24,7 +24,6 @@ from _pytest.outcomes import TEST_OUTCOME
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from typing import Type
     from typing_extensions import Final
 
 
@@ -349,6 +348,7 @@ else:
 if sys.version_info >= (3, 8):
     from functools import cached_property as cached_property
 else:
+    from typing import Type
 
     class cached_property(Generic[_S, _T]):
         __slots__ = ("func", "__doc__")
@@ -359,13 +359,13 @@ else:
 
         @overload
         def __get__(
-            self, instance: None, owner: Optional["Type[_S]"] = ...
+            self, instance: None, owner: Optional[Type[_S]] = ...
         ) -> "cached_property[_S, _T]":
             ...
 
         @overload  # noqa: F811
         def __get__(  # noqa: F811
-            self, instance: _S, owner: Optional["Type[_S]"] = ...
+            self, instance: _S, owner: Optional[Type[_S]] = ...
         ) -> _T:
             ...
 

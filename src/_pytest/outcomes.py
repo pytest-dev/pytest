@@ -5,13 +5,13 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Optional
+from typing import Type
 from typing import TypeVar
 
 TYPE_CHECKING = False  # Avoid circular import through compat.
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from typing import Type  # noqa: F401 (used in type string)
     from typing_extensions import Protocol
 else:
     # typing.Protocol is only available starting from Python 3.8. It is also
@@ -84,7 +84,7 @@ class Exit(Exception):
 # Ideally would just be `exit.Exception = Exit` etc.
 
 _F = TypeVar("_F", bound=Callable[..., object])
-_ET = TypeVar("_ET", bound="Type[BaseException]")
+_ET = TypeVar("_ET", bound=Type[BaseException])
 
 
 class _WithException(Protocol[_F, _ET]):

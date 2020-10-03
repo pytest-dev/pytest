@@ -9,6 +9,7 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -33,7 +34,6 @@ from _pytest.skipping import unexpectedsuccess_key
 
 if TYPE_CHECKING:
     import unittest
-    from typing import Type
 
     from _pytest.fixtures import _Scope
 

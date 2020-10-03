@@ -5,7 +5,7 @@ import types
 from typing import Dict
 from typing import List
 from typing import Tuple
-from typing import TYPE_CHECKING
+from typing import Type
 
 import py
 
@@ -16,9 +16,6 @@ from _pytest import reports
 from _pytest import runner
 from _pytest.config import ExitCode
 from _pytest.outcomes import OutcomeException
-
-if TYPE_CHECKING:
-    from typing import Type
 
 
 class TestSetupState:
@@ -457,7 +454,7 @@ reporttypes = [
 @pytest.mark.parametrize(
     "reporttype", reporttypes, ids=[x.__name__ for x in reporttypes]
 )
-def test_report_extra_parameters(reporttype: "Type[reports.BaseReport]") -> None:
+def test_report_extra_parameters(reporttype: Type[reports.BaseReport]) -> None:
     args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
     basekw = dict.fromkeys(args, [])  # type: Dict[str, List[object]]
     report = reporttype(newthing=1, **basekw)

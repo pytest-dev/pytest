@@ -6,7 +6,7 @@ from typing import Dict
 from typing import List
 from typing import Sequence
 from typing import Tuple
-from typing import TYPE_CHECKING
+from typing import Type
 
 import attr
 import py.path
@@ -28,9 +28,6 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
-
-if TYPE_CHECKING:
-    from typing import Type
 
 
 class TestParseIni:
@@ -1936,7 +1933,7 @@ def test_strtobool():
     ],
 )
 def test_parse_warning_filter(
-    arg: str, escape: bool, expected: "Tuple[str, str, Type[Warning], str, int]"
+    arg: str, escape: bool, expected: Tuple[str, str, Type[Warning], str, int]
 ) -> None:
     assert parse_warning_filter(arg, escape=escape) == expected
 
