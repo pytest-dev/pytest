@@ -1,1 +1,0 @@
-Fixed crash in header reporting when :confval:`testpaths` is used and contains absolute paths (regression in 6.1.0).
