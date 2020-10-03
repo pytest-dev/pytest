@@ -210,9 +210,6 @@ class TestGeneralUsage:
         """
         )
         result = testdir.runpytest()
-        exc_name = (
-            "ModuleNotFoundError" if sys.version_info >= (3, 6) else "ImportError"
-        )
         assert result.stdout.lines == []
         assert result.stderr.lines == [
             "ImportError while loading conftest '{}'.".format(conftest),
@@ -220,7 +217,7 @@ class TestGeneralUsage:
             "    foo()",
             "conftest.py:2: in foo",
             "    import qwerty",
-            "E   {}: No module named 'qwerty'".format(exc_name),
+            "E   ModuleNotFoundError: No module named 'qwerty'",
         ]
 
     def test_early_skip(self, testdir):
