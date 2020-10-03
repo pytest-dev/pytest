@@ -677,15 +677,15 @@ class Test_genitems:
         assert len(items) == 4
         assert items[0].name == "testone"
         assert items[1].name == "testmethod_one"
-        assert items[2].name == "testmethod_one"
-        assert items[3].name == "testmethod_two[.[]"
+        assert items[2].name == "testmethod_two[.[]"
+        assert items[3].name == "testmethod_one"
 
         # let's also test getmodpath here
         assert items[0].getmodpath() == "testone"
         assert items[1].getmodpath() == "TestX.testmethod_one"
-        assert items[2].getmodpath() == "TestY.testmethod_one"
         # PR #6202: Fix incorrect result of getmodpath method. (Resolves issue #6189)
-        assert items[3].getmodpath() == "TestY.testmethod_two[.[]"
+        assert items[2].getmodpath() == "TestY.testmethod_two[.[]"
+        assert items[3].getmodpath() == "TestY.testmethod_one"
 
         s = items[0].getmodpath(stopatmodule=False)
         assert s.endswith("test_example_items1.testone")

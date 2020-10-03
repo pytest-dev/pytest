@@ -752,6 +752,30 @@ class TestSorting:
         assert len(colitems) == 2
         assert [item.name for item in colitems] == ["test_b", "test_a"]
 
+    def test_ordered_by_definition_order(self, testdir):
+        testdir.makepyfile(
+            """\
+            class Test1:
+                def test_foo(): pass
+                def test_bar(): pass
+            class Test2:
+                def test_foo(): pass
+                test_bar = Test1.test_bar
+            """
+        )
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines(
+            [
+                "*Class Test1*",
+                "*Function test_foo*",
+                "*Function test_bar*",
+                "*Class Test2*",
+                # previously the order was flipped due to Test1.test_bar reference
+                "*Function test_foo*",
+                "*Function test_bar*",
+            ]
+        )
+
 
 class TestConftestCustomization:
     def test_pytest_pycollect_module(self, testdir):

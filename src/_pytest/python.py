@@ -442,11 +442,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 else:
                     values.append(res)
 
-        def sort_key(item):
-            fspath, lineno, _ = item.reportinfo()
-            return (str(fspath), lineno)
-
-        values.sort(key=sort_key)
         return values
 
     def _genfunctions(self, name: str, funcobj) -> Iterator["Function"]:
