@@ -3,7 +3,6 @@ import sys
 from typing import List
 
 import pytest
-from _pytest.pytester import RunResult
 from _pytest.pytester import Testdir
 
 if sys.gettrace():
@@ -174,27 +173,6 @@ def color_mapping():
         def format_for_rematch(cls, lines: List[str]) -> List[str]:
             """Replace color names for use with LineMatcher.re_match_lines"""
             return [line.format(**cls.RE_COLORS) for line in lines]
-
-        @classmethod
-        def requires_ordered_markup(cls, result: RunResult):
-            """Should be called if a test expects markup to appear in the output
-            in the order they were passed, for example:
-
-                tw.write(line, bold=True, red=True)
-
-            In Python 3.5 there's no guarantee that the generated markup will appear
-            in the order called, so we do some limited color testing and skip the rest of
-            the test.
-            """
-            if sys.version_info < (3, 6):
-                # terminal writer.write accepts keyword arguments, so
-                # py36+ is required so the markup appears in the expected order
-                output = result.stdout.str()
-                assert "test session starts" in output
-                assert "\x1b[1m" in output
-                pytest.skip(
-                    "doing limited testing because lacking ordered markup on py35"
-                )
 
     return ColorMapping
 
