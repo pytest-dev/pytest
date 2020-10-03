@@ -9,6 +9,7 @@ import platform
 import sys
 import warnings
 from functools import partial
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -43,7 +44,6 @@ from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
-from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport

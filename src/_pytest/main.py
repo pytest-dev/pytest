@@ -5,6 +5,7 @@ import functools
 import importlib
 import os
 import sys
+from pathlib import Path
 from typing import Callable
 from typing import Dict
 from typing import FrozenSet
@@ -36,7 +37,6 @@ from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
-from _pytest.pathlib import Path
 from _pytest.pathlib import visit
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport

@@ -7,6 +7,7 @@ import sys
 from contextlib import contextmanager
 from inspect import Parameter
 from inspect import signature
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Generic
@@ -76,8 +77,6 @@ def is_async_function(func: object) -> bool:
 
 
 def getlocation(function, curdir: Optional[str] = None) -> str:
-    from _pytest.pathlib import Path
-
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno

@@ -1,6 +1,7 @@
 import os
 import stat
 import sys
+from pathlib import Path
 from typing import Callable
 from typing import cast
 from typing import List
@@ -15,7 +16,6 @@ from _pytest.pathlib import create_cleanup_lock
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import on_rm_rf_error
-from _pytest.pathlib import Path
 from _pytest.pathlib import register_cleanup_lock_removal
 from _pytest.pathlib import rm_rf
 from _pytest.tmpdir import get_user

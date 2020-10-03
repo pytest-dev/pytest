@@ -1,12 +1,12 @@
 import os
 import textwrap
+from pathlib import Path
 
 import py
 
 import pytest
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
-from _pytest.pathlib import Path
 from _pytest.pathlib import symlink_or_skip
 
 

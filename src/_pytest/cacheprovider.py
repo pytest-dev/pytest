@@ -3,6 +3,7 @@
 # pytest-cache version.
 import json
 import os
+from pathlib import Path
 from typing import Dict
 from typing import Generator
 from typing import Iterable
@@ -15,7 +16,6 @@ import attr
 import py
 
 import pytest
-from .pathlib import Path
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
 from .reports import CollectReport

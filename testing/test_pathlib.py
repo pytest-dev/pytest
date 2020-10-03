@@ -1,6 +1,7 @@
 import os.path
 import sys
 import unittest.mock
+from pathlib import Path
 from textwrap import dedent
 
 import py
@@ -15,7 +16,6 @@ from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import maybe_delete_a_numbered_dir
-from _pytest.pathlib import Path
 from _pytest.pathlib import resolve_package_path
 
 

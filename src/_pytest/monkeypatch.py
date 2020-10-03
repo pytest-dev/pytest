@@ -4,6 +4,7 @@ import re
 import sys
 import warnings
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 from typing import Generator
 from typing import List
@@ -17,7 +18,6 @@ from typing import Union
 import pytest
 from _pytest.compat import final
 from _pytest.fixtures import fixture
-from _pytest.pathlib import Path
 
 RE_IMPORT_ERROR_NAME = re.compile(r"^No module named (.*)$")
 

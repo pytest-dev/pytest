@@ -1,4 +1,5 @@
 from io import StringIO
+from pathlib import Path
 from pprint import pprint
 from typing import Any
 from typing import cast
@@ -33,7 +34,6 @@ from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import skip
-from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
     from typing import NoReturn

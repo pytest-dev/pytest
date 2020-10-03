@@ -1,6 +1,7 @@
 import os
 import platform
 from datetime import datetime
+from pathlib import Path
 from typing import cast
 from typing import List
 from typing import Tuple
@@ -14,7 +15,6 @@ import pytest
 from _pytest.config import Config
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
-from _pytest.pathlib import Path
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.store import Store
