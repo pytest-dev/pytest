@@ -11,7 +11,6 @@ from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import Optional
-from typing import overload as overload
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
@@ -326,12 +325,6 @@ def safe_isclass(obj: object) -> bool:
         return False
 
 
-if sys.version_info < (3, 5, 2):
-
-    def overload(f):  # noqa: F811
-        return f
-
-
 if TYPE_CHECKING:
     if sys.version_info >= (3, 8):
         from typing import final as final
@@ -341,13 +334,14 @@ elif sys.version_info >= (3, 8):
     from typing import final as final
 else:
 
-    def final(f):  # noqa: F811
+    def final(f):
         return f
 
 
 if sys.version_info >= (3, 8):
     from functools import cached_property as cached_property
 else:
+    from typing import overload
     from typing import Type
 
     class cached_property(Generic[_S, _T]):
@@ -363,13 +357,11 @@ else:
         ) -> "cached_property[_S, _T]":
             ...
 
-        @overload  # noqa: F811
-        def __get__(  # noqa: F811
-            self, instance: _S, owner: Optional[Type[_S]] = ...
-        ) -> _T:
+        @overload
+        def __get__(self, instance: _S, owner: Optional[Type[_S]] = ...) -> _T:
             ...
 
-        def __get__(self, instance, owner=None):  # noqa: F811
+        def __get__(self, instance, owner=None):
             if instance is None:
                 return self
             value = instance.__dict__[self.func.__name__] = self.func(instance)

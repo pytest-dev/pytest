@@ -8,10 +8,9 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Tuple
 from typing import Union
-
-from _pytest.compat import overload
 
 
 class Source:
@@ -46,11 +45,11 @@ class Source:
     def __getitem__(self, key: int) -> str:
         ...
 
-    @overload  # noqa: F811
-    def __getitem__(self, key: slice) -> "Source":  # noqa: F811
+    @overload
+    def __getitem__(self, key: slice) -> "Source":
         ...
 
-    def __getitem__(self, key: Union[int, slice]) -> Union[str, "Source"]:  # noqa: F811
+    def __getitem__(self, key: Union[int, slice]) -> Union[str, "Source"]:
         if isinstance(key, int):
             return self.lines[key]
         else:

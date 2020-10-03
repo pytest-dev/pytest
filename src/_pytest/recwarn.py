@@ -8,6 +8,7 @@ from typing import Generator
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import Type
@@ -15,7 +16,6 @@ from typing import TypeVar
 from typing import Union
 
 from _pytest.compat import final
-from _pytest.compat import overload
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 
@@ -43,14 +43,12 @@ def deprecated_call(
     ...
 
 
-@overload  # noqa: F811
-def deprecated_call(  # noqa: F811
-    func: Callable[..., T], *args: Any, **kwargs: Any
-) -> T:
+@overload
+def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     ...
 
 
-def deprecated_call(  # noqa: F811
+def deprecated_call(
     func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
 ) -> Union["WarningsRecorder", Any]:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning``.
@@ -90,8 +88,8 @@ def warns(
     ...
 
 
-@overload  # noqa: F811
-def warns(  # noqa: F811
+@overload
+def warns(
     expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     func: Callable[..., T],
     *args: Any,
@@ -100,7 +98,7 @@ def warns(  # noqa: F811
     ...
 
 
-def warns(  # noqa: F811
+def warns(
     expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,

@@ -9,13 +9,13 @@ from typing import Generator
 from typing import List
 from typing import MutableMapping
 from typing import Optional
+from typing import overload
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
 import pytest
 from _pytest.compat import final
-from _pytest.compat import overload
 from _pytest.fixtures import fixture
 from _pytest.pathlib import Path
 
@@ -156,13 +156,13 @@ class MonkeyPatch:
     ) -> None:
         ...
 
-    @overload  # noqa: F811
-    def setattr(  # noqa: F811
+    @overload
+    def setattr(
         self, target: object, name: str, value: object, raising: bool = ...,
     ) -> None:
         ...
 
-    def setattr(  # noqa: F811
+    def setattr(
         self,
         target: Union[str, object],
         name: Union[object, str],
