@@ -28,6 +28,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.1.1 (2020-10-03)
+=========================
+
+Bug Fixes
+---------
+
+- `#7807 <https://github.com/pytest-dev/pytest/issues/7807>`_: Fixed regression in pytest 6.1.0 causing incorrect rootdir to be determined in some non-trivial cases where parent directories have config files as well.
+
+
+- `#7814 <https://github.com/pytest-dev/pytest/issues/7814>`_: Fixed crash in header reporting when :confval:`testpaths` is used and contains absolute paths (regression in 6.1.0).
+
+
 pytest 6.1.0 (2020-09-26)
 =========================
 
