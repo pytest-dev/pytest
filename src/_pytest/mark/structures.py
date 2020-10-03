@@ -8,6 +8,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Mapping
+from typing import MutableMapping
 from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
@@ -94,8 +95,7 @@ class ParameterSet(
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
-            # TODO(py36): Change to collections.abc.Collection.
-            assert isinstance(marks, (collections.abc.Sequence, set))
+            assert isinstance(marks, collections.abc.Collection)
 
         if id is not None:
             if not isinstance(id, str):
@@ -475,13 +475,12 @@ class MarkGenerator:
 
     # See TYPE_CHECKING above.
     if TYPE_CHECKING:
-        # TODO(py36): Change to builtin annotation syntax.
-        skip = _SkipMarkDecorator(Mark("skip", (), {}))
-        skipif = _SkipifMarkDecorator(Mark("skipif", (), {}))
-        xfail = _XfailMarkDecorator(Mark("xfail", (), {}))
-        parametrize = _ParametrizeMarkDecorator(Mark("parametrize", (), {}))
-        usefixtures = _UsefixturesMarkDecorator(Mark("usefixtures", (), {}))
-        filterwarnings = _FilterwarningsMarkDecorator(Mark("filterwarnings", (), {}))
+        skip: _SkipMarkDecorator
+        skipif: _SkipifMarkDecorator
+        xfail: _XfailMarkDecorator
+        parametrize: _ParametrizeMarkDecorator
+        usefixtures: _UsefixturesMarkDecorator
+        filterwarnings: _FilterwarningsMarkDecorator
 
     def __getattr__(self, name: str) -> MarkDecorator:
         if name[0] == "_":
@@ -527,9 +526,8 @@ class MarkGenerator:
 MARK_GEN = MarkGenerator()
 
 
-# TODO(py36): inherit from typing.MutableMapping[str, Any].
 @final
-class NodeKeywords(collections.abc.MutableMapping):  # type: ignore[type-arg]
+class NodeKeywords(MutableMapping[str, Any]):
     def __init__(self, node: "Node") -> None:
         self.node = node
         self.parent = node.parent

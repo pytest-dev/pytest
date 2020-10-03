@@ -1,8 +1,8 @@
-import collections.abc
 import sys
 import textwrap
 from typing import Any
 from typing import List
+from typing import MutableSequence
 from typing import Optional
 
 import attr
@@ -637,8 +637,7 @@ class TestAssert_reprcompare:
 
     def test_Sequence(self) -> None:
         # Test comparing with a Sequence subclass.
-        # TODO(py36): Inherit from typing.MutableSequence[int].
-        class TestSequence(collections.abc.MutableSequence):  # type: ignore[type-arg]
+        class TestSequence(MutableSequence[int]):
             def __init__(self, iterable):
                 self.elements = list(iterable)
 
