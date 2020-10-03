@@ -1421,8 +1421,7 @@ def test_error_attribute_issue555(testdir):
 
 
 @pytest.mark.skipif(
-    not sys.platform.startswith("win") and sys.version_info[:2] >= (3, 6),
-    reason="only py3.6+ on windows",
+    not sys.platform.startswith("win"), reason="only on windows",
 )
 def test_py36_windowsconsoleio_workaround_non_standard_streams() -> None:
     """

@@ -87,9 +87,7 @@ def iscoroutinefunction(func: object) -> bool:
 def is_async_function(func: object) -> bool:
     """Return True if the given function seems to be an async function or
     an async generator."""
-    return iscoroutinefunction(func) or (
-        sys.version_info >= (3, 6) and inspect.isasyncgenfunction(func)
-    )
+    return iscoroutinefunction(func) or inspect.isasyncgenfunction(func)
 
 
 def getlocation(function, curdir: Optional[str] = None) -> str:
