@@ -2,6 +2,7 @@
 import os
 import re
 import tempfile
+from pathlib import Path
 from typing import Optional
 
 import attr
@@ -12,7 +13,6 @@ from .pathlib import ensure_reset_dir
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
-from .pathlib import Path
 from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest

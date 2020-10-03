@@ -12,6 +12,7 @@ import sys
 import types
 import warnings
 from functools import lru_cache
+from pathlib import Path
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -52,7 +53,6 @@ from _pytest.outcomes import Skipped
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportMode
-from _pytest.pathlib import Path
 from _pytest.store import Store
 from _pytest.warning_types import PytestConfigWarning
 

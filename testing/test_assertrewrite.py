@@ -9,6 +9,7 @@ import sys
 import textwrap
 import zipfile
 from functools import partial
+from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Mapping
@@ -28,7 +29,6 @@ from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
-from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 
 

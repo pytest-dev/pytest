@@ -10,6 +10,7 @@ import sys
 import traceback
 from fnmatch import fnmatch
 from io import StringIO
+from pathlib import Path
 from typing import Callable
 from typing import Dict
 from typing import Generator
@@ -43,7 +44,6 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.pathlib import make_numbered_dir
-from _pytest.pathlib import Path
 from _pytest.python import Module
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport

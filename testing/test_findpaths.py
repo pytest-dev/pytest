@@ -1,10 +1,10 @@
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import get_dirs_from_args
 from _pytest.config.findpaths import load_config_dict_from_file
-from _pytest.pathlib import Path
 
 
 class TestLoadConfigDictFromFile:

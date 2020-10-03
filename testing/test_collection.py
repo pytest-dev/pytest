@@ -2,12 +2,12 @@ import os
 import pprint
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
 from _pytest.config import ExitCode
 from _pytest.main import _in_venv
 from _pytest.main import Session
-from _pytest.pathlib import Path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Testdir
 

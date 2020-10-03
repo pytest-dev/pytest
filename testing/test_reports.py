@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 from typing import Sequence
 from typing import Union
 
@@ -6,7 +7,6 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
 from _pytest.config import Config
-from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport

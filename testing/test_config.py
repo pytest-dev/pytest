@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import textwrap
+from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Sequence
@@ -26,7 +27,6 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 
 

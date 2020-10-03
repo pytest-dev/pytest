@@ -13,6 +13,8 @@ import struct
 import sys
 import tokenize
 import types
+from pathlib import Path
+from pathlib import PurePath
 from typing import Callable
 from typing import Dict
 from typing import IO
@@ -36,8 +38,6 @@ from _pytest.assertion.util import (  # noqa: F401
 from _pytest.config import Config
 from _pytest.main import Session
 from _pytest.pathlib import fnmatch_ex
-from _pytest.pathlib import Path
-from _pytest.pathlib import PurePath
 from _pytest.store import StoreKey
 
 if TYPE_CHECKING:

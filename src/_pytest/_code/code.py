@@ -5,6 +5,7 @@ import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
 from io import StringIO
+from pathlib import Path
 from traceback import format_exception_only
 from types import CodeType
 from types import FrameType
@@ -42,7 +43,6 @@ from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import final
 from _pytest.compat import get_real_func
-from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
