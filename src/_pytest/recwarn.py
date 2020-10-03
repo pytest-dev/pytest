@@ -41,7 +41,7 @@ def recwarn() -> Generator["WarningsRecorder", None, None]:
 
 @overload
 def deprecated_call(
-    *, match: Optional[Union[str, "Pattern[str]"]] = ...
+    *, match: Optional[Union[str, Pattern[str]]] = ...
 ) -> "WarningsRecorder":
     ...
 
@@ -88,7 +88,7 @@ def deprecated_call(  # noqa: F811
 def warns(
     expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
     *,
-    match: "Optional[Union[str, Pattern[str]]]" = ...
+    match: Optional[Union[str, Pattern[str]]] = ...
 ) -> "WarningsChecker":
     ...
 
@@ -106,7 +106,7 @@ def warns(  # noqa: F811
 def warns(  # noqa: F811
     expected_warning: Optional[Union["Type[Warning]", Tuple["Type[Warning]", ...]]],
     *args: Any,
-    match: Optional[Union[str, "Pattern[str]"]] = None,
+    match: Optional[Union[str, Pattern[str]]] = None,
     **kwargs: Any
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
@@ -236,7 +236,7 @@ class WarningsChecker(WarningsRecorder):
         expected_warning: Optional[
             Union["Type[Warning]", Tuple["Type[Warning]", ...]]
         ] = None,
-        match_expr: Optional[Union[str, "Pattern[str]"]] = None,
+        match_expr: Optional[Union[str, Pattern[str]]] = None,
     ) -> None:
         super().__init__()
 

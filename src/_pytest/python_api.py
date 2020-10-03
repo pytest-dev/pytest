@@ -562,7 +562,7 @@ _E = TypeVar("_E", bound=BaseException)
 def raises(
     expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
     *,
-    match: "Optional[Union[str, Pattern[str]]]" = ...
+    match: Optional[Union[str, Pattern[str]]] = ...
 ) -> "RaisesContext[_E]":
     ...
 
@@ -740,7 +740,7 @@ class RaisesContext(Generic[_E]):
         self,
         expected_exception: Union["Type[_E]", Tuple["Type[_E]", ...]],
         message: str,
-        match_expr: Optional[Union[str, "Pattern[str]"]] = None,
+        match_expr: Optional[Union[str, Pattern[str]]] = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message
