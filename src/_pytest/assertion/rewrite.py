@@ -33,7 +33,6 @@ from _pytest.assertion import util
 from _pytest.assertion.util import (  # noqa: F401
     format_explanation as _format_explanation,
 )
-from _pytest.compat import fspath
 from _pytest.config import Config
 from _pytest.main import Session
 from _pytest.pathlib import fnmatch_ex
@@ -306,7 +305,7 @@ if sys.platform == "win32":
         pyc: Path,
     ) -> bool:
         try:
-            with atomic_write(fspath(pyc), mode="wb", overwrite=True) as fp:
+            with atomic_write(os.fspath(pyc), mode="wb", overwrite=True) as fp:
                 _write_pyc_fp(fp, source_stat, co)
         except OSError as e:
             state.trace("error writing pyc file at {}: {}".format(pyc, e))
@@ -336,7 +335,7 @@ else:
 
         try:
             _write_pyc_fp(fp, source_stat, co)
-            os.rename(proc_pyc, fspath(pyc))
+            os.rename(proc_pyc, os.fspath(pyc))
         except OSError as e:
             state.trace("error writing pyc file at {}: {}".format(pyc, e))
             # we ignore any failure to write the cache file
@@ -350,7 +349,7 @@ else:
 
 def _rewrite_test(fn: Path, config: Config) -> Tuple[os.stat_result, types.CodeType]:
     """Read and rewrite *fn* and return the code object."""
-    fn_ = fspath(fn)
+    fn_ = os.fspath(fn)
     stat = os.stat(fn_)
     with open(fn_, "rb") as f:
         source = f.read()
@@ -368,12 +367,12 @@ def _read_pyc(
     Return rewritten code if successful or None if not.
     """
     try:
-        fp = open(fspath(pyc), "rb")
+        fp = open(os.fspath(pyc), "rb")
     except OSError:
         return None
     with fp:
         try:
-            stat_result = os.stat(fspath(source))
+            stat_result = os.stat(os.fspath(source))
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
             data = fp.read(12)
@@ -831,7 +830,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     "assertion is always true, perhaps remove parentheses?"
                 ),
                 category=None,
-                filename=fspath(self.module_path),
+                filename=os.fspath(self.module_path),
                 lineno=assert_.lineno,
             )
 
@@ -1072,7 +1071,7 @@ def try_makedirs(cache_dir: Path) -> bool:
     Returns True if successful or if it already exists.
     """
     try:
-        os.makedirs(fspath(cache_dir), exist_ok=True)
+        os.makedirs(os.fspath(cache_dir), exist_ok=True)
     except (FileNotFoundError, NotADirectoryError, FileExistsError):
         # One of the path components was not a directory:
         # - we're in a zip file
