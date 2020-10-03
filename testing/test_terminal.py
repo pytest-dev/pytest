@@ -4,6 +4,7 @@ import os
 import sys
 import textwrap
 from io import StringIO
+from pathlib import Path
 from typing import cast
 from typing import Dict
 from typing import List
@@ -19,7 +20,6 @@ from _pytest._io.wcwidth import wcswidth
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport

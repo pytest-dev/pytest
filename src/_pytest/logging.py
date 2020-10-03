@@ -5,6 +5,7 @@ import re
 import sys
 from contextlib import contextmanager
 from io import StringIO
+from pathlib import Path
 from typing import AbstractSet
 from typing import Dict
 from typing import Generator
@@ -27,7 +28,6 @@ from _pytest.config import create_terminal_writer
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
-from _pytest.pathlib import Path
 from _pytest.store import StoreKey
 from _pytest.terminal import TerminalReporter
 

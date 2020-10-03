@@ -1,6 +1,7 @@
 import os
 import warnings
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -33,7 +34,6 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
-from _pytest.pathlib import Path
 from _pytest.store import Store
 
 if TYPE_CHECKING:

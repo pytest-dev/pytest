@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -14,7 +15,6 @@ from .exceptions import UsageError
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath
-from _pytest.pathlib import Path
 
 if TYPE_CHECKING:
     from . import Config

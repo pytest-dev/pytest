@@ -1,12 +1,12 @@
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
 from _pytest import fixtures
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
-from _pytest.pathlib import Path
 from _pytest.pytester import get_public_names
 
 

@@ -32,9 +32,6 @@ from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
-__all__ = ["Path", "PurePath"]
-
-
 LOCK_TIMEOUT = 60 * 60 * 3
 
 

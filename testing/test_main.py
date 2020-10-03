@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+from pathlib import Path
 from typing import Optional
 
 import py.path
@@ -10,7 +11,6 @@ from _pytest.config import ExitCode
 from _pytest.config import UsageError
 from _pytest.main import resolve_collection_argument
 from _pytest.main import validate_basetemp
-from _pytest.pathlib import Path
 from _pytest.pytester import Testdir
 
 
