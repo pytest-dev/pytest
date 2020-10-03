@@ -35,6 +35,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
+from _pytest.compat import assert_never
 from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
@@ -51,6 +52,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FILLFUNCARGS
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
+from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
@@ -103,22 +105,7 @@ class PseudoFixtureDef(Generic[_FixtureValue]):
 
 
 def pytest_sessionstart(session: "Session") -> None:
-    import _pytest.python
-    import _pytest.nodes
-
-    scopename2class.update(
-        {
-            "package": _pytest.python.Package,
-            "class": _pytest.python.Class,
-            "module": _pytest.python.Module,
-            "function": _pytest.nodes.Item,
-            "session": _pytest.main.Session,
-        }
-    )
     session._fixturemanager = FixtureManager(session)
-
-
-scopename2class = {}  # type: Dict[str, Type[nodes.Node]]
 
 
 def get_scope_package(node, fixturedef: "FixtureDef[object]"):
@@ -136,11 +123,24 @@ def get_scope_package(node, fixturedef: "FixtureDef[object]"):
     return current
 
 
-def get_scope_node(node, scope):
-    cls = scopename2class.get(scope)
-    if cls is None:
-        raise ValueError("unknown scope")
-    return node.getparent(cls)
+def get_scope_node(
+    node: "nodes.Node", scope: "_Scope"
+) -> Optional[Union["nodes.Item", "nodes.Collector"]]:
+    import _pytest.python
+    import _pytest.nodes
+
+    if scope == "function":
+        return node.getparent(_pytest.nodes.Item)
+    elif scope == "class":
+        return node.getparent(_pytest.python.Class)
+    elif scope == "module":
+        return node.getparent(_pytest.python.Module)
+    elif scope == "package":
+        return node.getparent(_pytest.python.Package)
+    elif scope == "session":
+        return node.getparent(_pytest.main.Session)
+    else:
+        assert_never(scope)
 
 
 def add_funcarg_pseudo_fixture_def(
@@ -519,9 +519,9 @@ class FixtureRequest:
         return self.node.keywords
 
     @property
-    def session(self):
+    def session(self) -> "Session":
         """Pytest session object."""
-        return self._pyfuncitem.session
+        return self._pyfuncitem.session  # type: ignore[no-any-return]
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         """Add finalizer/teardown function to be called after the last test
@@ -535,7 +535,7 @@ class FixtureRequest:
             finalizer=finalizer, colitem=colitem
         )
 
-    def applymarker(self, marker) -> None:
+    def applymarker(self, marker: Union[str, MarkDecorator]) -> None:
         """Apply a marker to a single test function invocation.
 
         This method is useful if you don't want to have a keyword/marker
@@ -685,7 +685,9 @@ class FixtureRequest:
             functools.partial(fixturedef.finish, request=subrequest), subrequest.node
         )
 
-    def _check_scope(self, argname, invoking_scope: "_Scope", requested_scope) -> None:
+    def _check_scope(
+        self, argname: str, invoking_scope: "_Scope", requested_scope: "_Scope",
+    ) -> None:
         if argname == "request":
             return
         if scopemismatch(invoking_scope, requested_scope):
@@ -709,11 +711,11 @@ class FixtureRequest:
             lines.append("%s:%d:  def %s%s" % (p, lineno + 1, factory.__name__, args))
         return lines
 
-    def _getscopeitem(self, scope):
+    def _getscopeitem(self, scope: "_Scope") -> Union["nodes.Item", "nodes.Collector"]:
         if scope == "function":
             # This might also be a non-function Item despite its attribute name.
-            return self._pyfuncitem
-        if scope == "package":
+            node: Optional[Union["nodes.Item", "nodes.Collector"]] = self._pyfuncitem
+        elif scope == "package":
             # FIXME: _fixturedef is not defined on FixtureRequest (this class),
             # but on FixtureRequest (a subclass).
             node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
@@ -962,7 +964,7 @@ class FixtureDef(Generic[_FixtureValue]):
     def __init__(
         self,
         fixturemanager: "FixtureManager",
-        baseid,
+        baseid: Optional[str],
         argname: str,
         func: "_FixtureFunc[_FixtureValue]",
         scope: "Union[_Scope, Callable[[str, Config], _Scope]]",
@@ -1144,7 +1146,9 @@ def _params_converter(
     return tuple(params) if params is not None else None
 
 
-def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
+def wrap_function_to_error_out_if_called_directly(
+    function: _FixtureFunction, fixture_marker: "FixtureFunctionMarker",
+) -> _FixtureFunction:
     """Wrap the given fixture function so we can raise an error about it being called directly,
     instead of used as an argument in a test function."""
     message = (
@@ -1162,7 +1166,7 @@ def wrap_function_to_error_out_if_called_directly(function, fixture_marker):
     # further than this point and lose useful wrappings like @mock.patch (#3774).
     result.__pytest_wrapped__ = _PytestWrapper(function)  # type: ignore[attr-defined]
 
-    return result
+    return cast(_FixtureFunction, result)
 
 
 @final
@@ -1485,7 +1489,10 @@ class FixtureManager:
         return autousenames
 
     def getfixtureclosure(
-        self, fixturenames: Tuple[str, ...], parentnode, ignore_args: Sequence[str] = ()
+        self,
+        fixturenames: Tuple[str, ...],
+        parentnode: "nodes.Node",
+        ignore_args: Sequence[str] = (),
     ) -> Tuple[Tuple[str, ...], List[str], Dict[str, Sequence[FixtureDef[Any]]]]:
         # Collect the closure of all fixtures, starting with the given
         # fixturenames as the initial set.  As we have to visit all
