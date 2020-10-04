@@ -339,9 +339,14 @@ def reorder_items_atscope(
     return items_done
 
 
-def fillfixtures(function: "Function") -> None:
-    """Fill missing funcargs for a test function."""
+def _fillfuncargs(function: "Function") -> None:
+    """Fill missing fixtures for a test function (deprecated)."""
     warnings.warn(FILLFUNCARGS, stacklevel=2)
+    fillfixtures(function)
+
+
+def fillfixtures(function: "Function") -> None:
+    """Fill missing fixtures for a test function."""
     try:
         request = function._request
     except AttributeError:

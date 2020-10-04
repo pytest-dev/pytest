@@ -11,7 +11,7 @@ from _pytest.config import hookspec
 from _pytest.config import main
 from _pytest.config import UsageError
 from _pytest.debugging import pytestPDB as __pytestPDB
-from _pytest.fixtures import fillfixtures as _fillfuncargs
+from _pytest.fixtures import _fillfuncargs
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import yield_fixture
