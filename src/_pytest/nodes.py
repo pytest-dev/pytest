@@ -2,9 +2,7 @@ import os
 import warnings
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 from typing import Callable
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -27,8 +25,6 @@ from _pytest.compat import cached_property
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
-from _pytest.fixtures import FixtureDef
-from _pytest.fixtures import FixtureLookupError
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -169,9 +165,6 @@ class Node(metaclass=NodeMeta):
 
         #: Allow adding of extra keywords to use for matching.
         self.extra_keyword_matches = set()  # type: Set[str]
-
-        # Used for storing artificial fixturedefs for direct parametrization.
-        self._name2pseudofixturedef = {}  # type: Dict[str, FixtureDef[Any]]
 
         if nodeid is not None:
             assert "::()" not in nodeid
@@ -366,6 +359,8 @@ class Node(metaclass=NodeMeta):
         excinfo: ExceptionInfo[BaseException],
         style: "Optional[_TracebackStyle]" = None,
     ) -> TerminalRepr:
+        from _pytest.fixtures import FixtureLookupError
+
         if isinstance(excinfo.value, ConftestImportFailure):
             excinfo = ExceptionInfo(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
