@@ -456,7 +456,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       think of ``b`` as the reference value.  Support for comparing sequences
       is provided by ``numpy.allclose``.  `More information...`__
 
-      __ http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.isclose.html
+      __ https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
 
     - ``unittest.TestCase.assertAlmostEqual(a, b)``: True if ``a`` and ``b``
       are within an absolute tolerance of ``1e-7``.  No relative tolerance is
