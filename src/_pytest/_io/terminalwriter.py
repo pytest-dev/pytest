@@ -97,7 +97,7 @@ class TerminalWriter:
     def markup(self, text: str, **markup: bool) -> str:
         for name in markup:
             if name not in self._esctable:
-                raise ValueError("unknown markup: {!r}".format(name))
+                raise ValueError(f"unknown markup: {name!r}")
         if self.hasmarkup:
             esc = [self._esctable[name] for name, on in markup.items() if on]
             if esc:
@@ -128,7 +128,7 @@ class TerminalWriter:
             #         N <= (fullwidth - len(title) - 2) // (2*len(sepchar))
             N = max((fullwidth - len(title) - 2) // (2 * len(sepchar)), 1)
             fill = sepchar * N
-            line = "{} {} {}".format(fill, title, fill)
+            line = f"{fill} {title} {fill}"
         else:
             # we want len(sepchar)*N <= fullwidth
             # i.e.    N <= fullwidth // len(sepchar)

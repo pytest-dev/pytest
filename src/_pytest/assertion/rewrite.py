@@ -48,7 +48,7 @@ assertstate_key = StoreKey["AssertionState"]()
 
 
 # pytest caches rewritten pycs in pycache dirs
-PYTEST_TAG = "{}-pytest-{}".format(sys.implementation.cache_tag, version)
+PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
@@ -149,7 +149,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             ok = try_makedirs(cache_dir)
             if not ok:
                 write = False
-                state.trace("read only directory: {}".format(cache_dir))
+                state.trace(f"read only directory: {cache_dir}")
 
         cache_name = fn.name[:-3] + PYC_TAIL
         pyc = cache_dir / cache_name
@@ -157,7 +157,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         # to check for a cached pyc. This may not be optimal...
         co = _read_pyc(fn, pyc, state.trace)
         if co is None:
-            state.trace("rewriting {!r}".format(fn))
+            state.trace(f"rewriting {fn!r}")
             source_stat, co = _rewrite_test(fn, self.config)
             if write:
                 self._writing_pyc = True
@@ -166,7 +166,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                 finally:
                     self._writing_pyc = False
         else:
-            state.trace("found cached rewritten pyc for {}".format(fn))
+            state.trace(f"found cached rewritten pyc for {fn}")
         exec(co, module.__dict__)
 
     def _early_rewrite_bailout(self, name: str, state: "AssertionState") -> bool:
@@ -205,20 +205,18 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         if self._is_marked_for_rewrite(name, state):
             return False
 
-        state.trace("early skip of rewriting module: {}".format(name))
+        state.trace(f"early skip of rewriting module: {name}")
         return True
 
     def _should_rewrite(self, name: str, fn: str, state: "AssertionState") -> bool:
         # always rewrite conftest files
         if os.path.basename(fn) == "conftest.py":
-            state.trace("rewriting conftest file: {!r}".format(fn))
+            state.trace(f"rewriting conftest file: {fn!r}")
             return True
 
         if self.session is not None:
             if self.session.isinitpath(py.path.local(fn)):
-                state.trace(
-                    "matched test file (was specified on cmdline): {!r}".format(fn)
-                )
+                state.trace(f"matched test file (was specified on cmdline): {fn!r}")
                 return True
 
         # modules not passed explicitly on the command line are only
@@ -226,7 +224,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         fn_path = PurePath(fn)
         for pat in self.fnpats:
             if fnmatch_ex(pat, fn_path):
-                state.trace("matched test file {!r}".format(fn))
+                state.trace(f"matched test file {fn!r}")
                 return True
 
         return self._is_marked_for_rewrite(name, state)
@@ -237,9 +235,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         except KeyError:
             for marked in self._must_rewrite:
                 if name == marked or name.startswith(marked + "."):
-                    state.trace(
-                        "matched marked file {!r} (from {!r})".format(name, marked)
-                    )
+                    state.trace(f"matched marked file {name!r} (from {marked!r})")
                     self._marked_for_rewrite_cache[name] = True
                     return True
 
@@ -308,7 +304,7 @@ if sys.platform == "win32":
             with atomic_write(os.fspath(pyc), mode="wb", overwrite=True) as fp:
                 _write_pyc_fp(fp, source_stat, co)
         except OSError as e:
-            state.trace("error writing pyc file at {}: {}".format(pyc, e))
+            state.trace(f"error writing pyc file at {pyc}: {e}")
             # we ignore any failure to write the cache file
             # there are many reasons, permission-denied, pycache dir being a
             # file etc.
@@ -324,20 +320,18 @@ else:
         source_stat: os.stat_result,
         pyc: Path,
     ) -> bool:
-        proc_pyc = "{}.{}".format(pyc, os.getpid())
+        proc_pyc = f"{pyc}.{os.getpid()}"
         try:
             fp = open(proc_pyc, "wb")
         except OSError as e:
-            state.trace(
-                "error writing pyc file at {}: errno={}".format(proc_pyc, e.errno)
-            )
+            state.trace(f"error writing pyc file at {proc_pyc}: errno={e.errno}")
             return False
 
         try:
             _write_pyc_fp(fp, source_stat, co)
             os.rename(proc_pyc, os.fspath(pyc))
         except OSError as e:
-            state.trace("error writing pyc file at {}: {}".format(pyc, e))
+            state.trace(f"error writing pyc file at {pyc}: {e}")
             # we ignore any failure to write the cache file
             # there are many reasons, permission-denied, pycache dir being a
             # file etc.
@@ -377,7 +371,7 @@ def _read_pyc(
             size = stat_result.st_size
             data = fp.read(12)
         except OSError as e:
-            trace("_read_pyc({}): OSError {}".format(source, e))
+            trace(f"_read_pyc({source}): OSError {e}")
             return None
         # Check for invalid or out of date pyc file.
         if (
@@ -390,7 +384,7 @@ def _read_pyc(
         try:
             co = marshal.load(fp)
         except Exception as e:
-            trace("_read_pyc({}): marshal.load error {}".format(source, e))
+            trace(f"_read_pyc({source}): marshal.load error {e}")
             return None
         if not isinstance(co, types.CodeType):
             trace("_read_pyc(%s): not a code object" % source)
@@ -982,7 +976,7 @@ class AssertionRewriter(ast.NodeVisitor):
         symbol = BINOP_MAP[binop.op.__class__]
         left_expr, left_expl = self.visit(binop.left)
         right_expr, right_expl = self.visit(binop.right)
-        explanation = "({} {} {})".format(left_expl, symbol, right_expl)
+        explanation = f"({left_expl} {symbol} {right_expl})"
         res = self.assign(ast.BinOp(left_expr, binop.op, right_expr))
         return res, explanation
 
@@ -1007,7 +1001,7 @@ class AssertionRewriter(ast.NodeVisitor):
         new_call = ast.Call(new_func, new_args, new_kwargs)
         res = self.assign(new_call)
         res_expl = self.explanation_param(self.display(res))
-        outer_expl = "{}\n{{{} = {}\n}}".format(res_expl, res_expl, expl)
+        outer_expl = f"{res_expl}\n{{{res_expl} = {expl}\n}}"
         return res, outer_expl
 
     def visit_Starred(self, starred: ast.Starred) -> Tuple[ast.Starred, str]:
@@ -1030,7 +1024,7 @@ class AssertionRewriter(ast.NodeVisitor):
         self.push_format_context()
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
-            left_expl = "({})".format(left_expl)
+            left_expl = f"({left_expl})"
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
@@ -1041,11 +1035,11 @@ class AssertionRewriter(ast.NodeVisitor):
         for i, op, next_operand in it:
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
-                next_expl = "({})".format(next_expl)
+                next_expl = f"({next_expl})"
             results.append(next_res)
             sym = BINOP_MAP[op.__class__]
             syms.append(ast.Str(sym))
-            expl = "{} {} {}".format(left_expl, sym, next_expl)
+            expl = f"{left_expl} {sym} {next_expl}"
             expls.append(ast.Str(expl))
             res_expr = ast.Compare(left_res, [op], [next_res])
             self.statements.append(ast.Assign([store_names[i]], res_expr))

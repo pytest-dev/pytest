@@ -483,7 +483,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
             fixtureinfo.prune_dependency_tree()
 
             for callspec in metafunc._calls:
-                subname = "{}[{}]".format(name, callspec.id)
+                subname = f"{name}[{callspec.id}]"
                 yield Function.from_parent(
                     self,
                     name=subname,
@@ -888,7 +888,7 @@ class CallSpec2:
 
     def _checkargnotcontained(self, arg: str) -> None:
         if arg in self.params or arg in self.funcargs:
-            raise ValueError("duplicate {!r}".format(arg))
+            raise ValueError(f"duplicate {arg!r}")
 
     def getparam(self, name: str) -> object:
         try:
@@ -918,7 +918,7 @@ class CallSpec2:
             elif valtype_for_arg == "funcargs":
                 self.funcargs[arg] = val
             else:  # pragma: no cover
-                assert False, "Unhandled valtype for arg: {}".format(valtype_for_arg)
+                assert False, f"Unhandled valtype for arg: {valtype_for_arg}"
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
@@ -1068,7 +1068,7 @@ class Metafunc:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
         scopenum = scope2index(
-            scope, descr="parametrize() call in {}".format(self.function.__name__)
+            scope, descr=f"parametrize() call in {self.function.__name__}"
         )
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
@@ -1224,7 +1224,7 @@ class Metafunc:
                     else:
                         name = "fixture" if indirect else "argument"
                     fail(
-                        "In {}: function uses no {} '{}'".format(func_name, name, arg),
+                        f"In {func_name}: function uses no {name} '{arg}'",
                         pytrace=False,
                     )
 
@@ -1291,7 +1291,7 @@ def _idval(
             if generated_id is not None:
                 val = generated_id
         except Exception as e:
-            prefix = "{}: ".format(nodeid) if nodeid is not None else ""
+            prefix = f"{nodeid}: " if nodeid is not None else ""
             msg = "error raised while trying to determine id of parameter '{}' at position {}"
             msg = prefix + msg.format(argname, idx)
             raise ValueError(msg) from e
@@ -1400,7 +1400,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             return
         if verbose > 0:
             bestrel = get_best_relpath(fixture_def.func)
-            funcargspec = "{} -- {}".format(argname, bestrel)
+            funcargspec = f"{argname} -- {bestrel}"
         else:
             funcargspec = argname
         tw.line(funcargspec, green=True)
@@ -1417,7 +1417,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             # This test item does not use any fixtures.
             return
         tw.line()
-        tw.sep("-", "fixtures used by {}".format(item.name))
+        tw.sep("-", f"fixtures used by {item.name}")
         # TODO: Fix this type ignore.
         tw.sep("-", "({})".format(get_best_relpath(item.function)))  # type: ignore[attr-defined]
         # dict key not used in loop but needed for sorting.
@@ -1476,7 +1476,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if currentmodule != module:
             if not module.startswith("_pytest."):
                 tw.line()
-                tw.sep("-", "fixtures defined from {}".format(module))
+                tw.sep("-", f"fixtures defined from {module}")
                 currentmodule = module
         if verbose <= 0 and argname[0] == "_":
             continue
@@ -1491,7 +1491,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if doc:
             write_docstring(tw, doc)
         else:
-            tw.line("    {}: no docstring available".format(loc), red=True)
+            tw.line(f"    {loc}: no docstring available", red=True)
         tw.line()
 
 

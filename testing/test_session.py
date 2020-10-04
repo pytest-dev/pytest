@@ -348,10 +348,10 @@ def test_rootdir_option_arg(testdir, monkeypatch, path):
     """
     )
 
-    result = testdir.runpytest("--rootdir={}".format(path))
+    result = testdir.runpytest(f"--rootdir={path}")
     result.stdout.fnmatch_lines(
         [
-            "*rootdir: {}/root".format(testdir.tmpdir),
+            f"*rootdir: {testdir.tmpdir}/root",
             "root/test_rootdir_option_arg.py *",
             "*1 passed*",
         ]

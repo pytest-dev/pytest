@@ -228,9 +228,9 @@ class _NodeReporter:
             reason = str(report.longrepr)
 
         if report.when == "teardown":
-            msg = 'failed on teardown with "{}"'.format(reason)
+            msg = f'failed on teardown with "{reason}"'
         else:
-            msg = 'failed on setup with "{}"'.format(reason)
+            msg = f'failed on setup with "{reason}"'
         self._add_simple("error", msg, str(report.longrepr))
 
     def append_skipped(self, report: TestReport) -> None:
@@ -246,7 +246,7 @@ class _NodeReporter:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
                 skipreason = skipreason[9:]
-            details = "{}:{}: {}".format(filename, lineno, skipreason)
+            details = f"{filename}:{lineno}: {skipreason}"
 
             skipped = ET.Element("skipped", type="pytest.skip", message=skipreason)
             skipped.text = bin_xml_escape(details)
@@ -683,7 +683,7 @@ class LogXML:
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
-        terminalreporter.write_sep("-", "generated xml file: {}".format(self.logfile))
+        terminalreporter.write_sep("-", f"generated xml file: {self.logfile}")
 
     def add_global_property(self, name: str, value: object) -> None:
         __tracebackhide__ = True

@@ -25,7 +25,7 @@ from _pytest.outcomes import fail
 
 
 def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
-    at_str = " at {}".format(at) if at else ""
+    at_str = f" at {at}" if at else ""
     return TypeError(
         "cannot make approximate comparisons to non-numeric values: {!r} {}".format(
             value, at_str
@@ -98,7 +98,7 @@ class ApproxNumpy(ApproxBase):
 
     def __repr__(self) -> str:
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
-        return "approx({!r})".format(list_scalars)
+        return f"approx({list_scalars!r})"
 
     def __eq__(self, actual) -> bool:
         import numpy as np
@@ -109,9 +109,7 @@ class ApproxNumpy(ApproxBase):
             try:
                 actual = np.asarray(actual)
             except Exception as e:
-                raise TypeError(
-                    "cannot compare '{}' to numpy.ndarray".format(actual)
-                ) from e
+                raise TypeError(f"cannot compare '{actual}' to numpy.ndarray") from e
 
         if not np.isscalar(actual) and actual.shape != self.expected.shape:
             return False
@@ -219,7 +217,7 @@ class ApproxScalar(ApproxBase):
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
-            vetted_tolerance = "{:.1e}".format(self.tolerance)
+            vetted_tolerance = f"{self.tolerance:.1e}"
             if (
                 isinstance(self.expected, Complex)
                 and self.expected.imag
@@ -229,7 +227,7 @@ class ApproxScalar(ApproxBase):
         except ValueError:
             vetted_tolerance = "???"
 
-        return "{} ± {}".format(self.expected, vetted_tolerance)
+        return f"{self.expected} ± {vetted_tolerance}"
 
     def __eq__(self, actual) -> bool:
         """Return whether the given value is equal to the expected value
@@ -291,7 +289,7 @@ class ApproxScalar(ApproxBase):
 
         if absolute_tolerance < 0:
             raise ValueError(
-                "absolute tolerance can't be negative: {}".format(absolute_tolerance)
+                f"absolute tolerance can't be negative: {absolute_tolerance}"
             )
         if math.isnan(absolute_tolerance):
             raise ValueError("absolute tolerance can't be NaN.")
@@ -313,7 +311,7 @@ class ApproxScalar(ApproxBase):
 
         if relative_tolerance < 0:
             raise ValueError(
-                "relative tolerance can't be negative: {}".format(absolute_tolerance)
+                f"relative tolerance can't be negative: {absolute_tolerance}"
             )
         if math.isnan(relative_tolerance):
             raise ValueError("relative tolerance can't be NaN.")
@@ -698,7 +696,7 @@ def raises(
             not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
             raise TypeError(msg.format(not_a))
 
-    message = "DID NOT RAISE {}".format(expected_exception)
+    message = f"DID NOT RAISE {expected_exception}"
 
     if not args:
         match = kwargs.pop("match", None)  # type: Optional[Union[str, Pattern[str]]]

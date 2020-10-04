@@ -144,9 +144,7 @@ def main(
         except ConftestImportFailure as e:
             exc_info = ExceptionInfo(e.excinfo)
             tw = TerminalWriter(sys.stderr)
-            tw.line(
-                "ImportError while loading conftest '{e.path}'.".format(e=e), red=True
-            )
+            tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
             exc_info.traceback = exc_info.traceback.filter(
                 filter_traceback_for_conftest_import_failure
             )
@@ -173,7 +171,7 @@ def main(
     except UsageError as e:
         tw = TerminalWriter(sys.stderr)
         for msg in e.args:
-            tw.line("ERROR: {}\n".format(msg), red=True)
+            tw.line(f"ERROR: {msg}\n", red=True)
         return ExitCode.USAGE_ERROR
 
 
@@ -206,7 +204,7 @@ def filename_arg(path: str, optname: str) -> str:
     :optname: Name of the option.
     """
     if os.path.isdir(path):
-        raise UsageError("{} must be a filename, given: {}".format(optname, path))
+        raise UsageError(f"{optname} must be a filename, given: {path}")
     return path
 
 
@@ -217,7 +215,7 @@ def directory_arg(path: str, optname: str) -> str:
     :optname: Name of the option.
     """
     if not os.path.isdir(path):
-        raise UsageError("{} must be a directory, given: {}".format(optname, path))
+        raise UsageError(f"{optname} must be a directory, given: {path}")
     return path
 
 
@@ -583,7 +581,7 @@ class PytestPluginManager(PluginManager):
                 if path and path.relto(dirpath) or path == dirpath:
                     assert mod not in mods
                     mods.append(mod)
-        self.trace("loading conftestmodule {!r}".format(mod))
+        self.trace(f"loading conftestmodule {mod!r}")
         self.consider_conftest(mod)
         return mod
 
@@ -889,7 +887,7 @@ class Config:
 
         _a = FILE_OR_DIR
         self._parser = Parser(
-            usage="%(prog)s [options] [{}] [{}] [...]".format(_a, _a),
+            usage=f"%(prog)s [options] [{_a}] [{_a}] [...]",
             processopt=self._processopt,
         )
         self.pluginmanager = pluginmanager
@@ -1191,9 +1189,7 @@ class Config:
                 # we don't want to prevent --help/--version to work
                 # so just let is pass and print a warning at the end
                 self.issue_config_time_warning(
-                    PytestConfigWarning(
-                        "could not load initial conftests: {}".format(e.path)
-                    ),
+                    PytestConfigWarning(f"could not load initial conftests: {e.path}"),
                     stacklevel=2,
                 )
             else:
@@ -1227,7 +1223,7 @@ class Config:
 
     def _validate_config_options(self) -> None:
         for key in sorted(self._get_unknown_ini_keys()):
-            self._warn_or_fail_if_strict("Unknown config option: {}\n".format(key))
+            self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
 
     def _validate_plugins(self) -> None:
         required_plugins = sorted(self.getini("required_plugins"))
@@ -1362,7 +1358,7 @@ class Config:
         try:
             description, type, default = self._parser._inidict[name]
         except KeyError as e:
-            raise ValueError("unknown configuration value: {!r}".format(name)) from e
+            raise ValueError(f"unknown configuration value: {name!r}") from e
         override_value = self._get_override_ini_value(name)
         if override_value is None:
             try:
@@ -1467,8 +1463,8 @@ class Config:
             if skip:
                 import pytest
 
-                pytest.skip("no {!r} option found".format(name))
-            raise ValueError("no option named {!r}".format(name)) from e
+                pytest.skip(f"no {name!r} option found")
+            raise ValueError(f"no option named {name!r}") from e
 
     def getvalue(self, name: str, path=None):
         """Deprecated, use getoption() instead."""
@@ -1501,7 +1497,7 @@ class Config:
     def _warn_about_skipped_plugins(self) -> None:
         for module_name, msg in self.pluginmanager.skipped_plugins:
             self.issue_config_time_warning(
-                PytestConfigWarning("skipped plugin {!r}: {}".format(module_name, msg)),
+                PytestConfigWarning(f"skipped plugin {module_name!r}: {msg}"),
                 stacklevel=2,
             )
 
@@ -1554,7 +1550,7 @@ def _strtobool(val: str) -> bool:
     elif val in ("n", "no", "f", "false", "off", "0"):
         return False
     else:
-        raise ValueError("invalid truth value {!r}".format(val))
+        raise ValueError(f"invalid truth value {val!r}")
 
 
 @lru_cache(maxsize=50)
@@ -1568,7 +1564,7 @@ def parse_warning_filter(
     """
     parts = arg.split(":")
     if len(parts) > 5:
-        raise warnings._OptionError("too many fields (max 5): {!r}".format(arg))
+        raise warnings._OptionError(f"too many fields (max 5): {arg!r}")
     while len(parts) < 5:
         parts.append("")
     action_, message, category_, module, lineno_ = [s.strip() for s in parts]
@@ -1584,7 +1580,7 @@ def parse_warning_filter(
             if lineno < 0:
                 raise ValueError
         except (ValueError, OverflowError) as e:
-            raise warnings._OptionError("invalid lineno {!r}".format(lineno_)) from e
+            raise warnings._OptionError(f"invalid lineno {lineno_!r}") from e
     else:
         lineno = 0
     return action, message, category, module, lineno

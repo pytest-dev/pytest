@@ -40,7 +40,7 @@ class YamlItem(pytest.Item):
             )
 
     def reportinfo(self):
-        return self.fspath, 0, "usecase: {}".format(self.name)
+        return self.fspath, 0, f"usecase: {self.name}"
 
 
 class YamlException(Exception):

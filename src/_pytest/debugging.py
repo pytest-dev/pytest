@@ -35,7 +35,7 @@ def _validate_usepdb_cls(value: str) -> Tuple[str, str]:
         modname, classname = value.split(":")
     except ValueError as e:
         raise argparse.ArgumentTypeError(
-            "{!r} is not in the format 'modname:classname'".format(value)
+            f"{value!r} is not in the format 'modname:classname'"
         ) from e
     return (modname, classname)
 
@@ -136,7 +136,7 @@ class pytestPDB:
             except Exception as exc:
                 value = ":".join((modname, classname))
                 raise UsageError(
-                    "--pdbcls: could not import {!r}: {}".format(value, exc)
+                    f"--pdbcls: could not import {value!r}: {exc}"
                 ) from exc
         else:
             import pdb
@@ -257,7 +257,7 @@ class pytestPDB:
                 else:
                     capturing = cls._is_capturing(capman)
                     if capturing == "global":
-                        tw.sep(">", "PDB {} (IO-capturing turned off)".format(method))
+                        tw.sep(">", f"PDB {method} (IO-capturing turned off)")
                     elif capturing:
                         tw.sep(
                             ">",
@@ -265,7 +265,7 @@ class pytestPDB:
                             % (method, capturing),
                         )
                     else:
-                        tw.sep(">", "PDB {}".format(method))
+                        tw.sep(">", f"PDB {method}")
 
         _pdb = cls._import_pdb_cls(capman)(**kwargs)
 

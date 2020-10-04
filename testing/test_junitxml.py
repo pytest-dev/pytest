@@ -245,9 +245,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse(
-            "-o", "junit_duration_report={}".format(duration_report)
-        )
+        result, dom = run_and_parse("-o", f"junit_duration_report={duration_report}")
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         val = float(tnode["time"])

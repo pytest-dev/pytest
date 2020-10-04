@@ -124,7 +124,7 @@ def test_already_initialized(faulthandler_timeout, testdir):
         "-mpytest",
         testdir.tmpdir,
         "-o",
-        "faulthandler_timeout={}".format(faulthandler_timeout),
+        f"faulthandler_timeout={faulthandler_timeout}",
     )
     # ensure warning is emitted if faulthandler_timeout is configured
     warning_line = "*faulthandler.py*faulthandler module enabled before*"

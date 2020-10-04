@@ -143,8 +143,7 @@ def getfuncargnames(
         parameters = signature(function).parameters
     except (ValueError, TypeError) as e:
         fail(
-            "Could not determine arguments of {!r}: {}".format(function, e),
-            pytrace=False,
+            f"Could not determine arguments of {function!r}: {e}", pytrace=False,
         )
 
     arg_names = tuple(
@@ -197,7 +196,7 @@ def get_default_arg_names(function: Callable[..., Any]) -> Tuple[str, ...]:
 
 
 _non_printable_ascii_translate_table = {
-    i: "\\x{:02x}".format(i) for i in range(128) if i not in range(32, 127)
+    i: f"\\x{i:02x}" for i in range(128) if i not in range(32, 127)
 }
 _non_printable_ascii_translate_table.update(
     {ord("\t"): "\\t", ord("\r"): "\\r", ord("\n"): "\\n"}

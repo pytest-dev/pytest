@@ -1725,9 +1725,9 @@ def test_summary_stats(
     tr._main_color = None
 
     print("Based on stats: %s" % stats_arg)
-    print('Expect summary: "{}"; with color "{}"'.format(exp_line, exp_color))
+    print(f'Expect summary: "{exp_line}"; with color "{exp_color}"')
     (line, color) = tr.build_summary_stats_line()
-    print('Actually got:   "{}"; with color "{}"'.format(line, color))
+    print(f'Actually got:   "{line}"; with color "{color}"')
     assert line == exp_line
     assert color == exp_color
 
@@ -1773,7 +1773,7 @@ class TestClassicOutputStyle:
             [
                 "test_one.py .",
                 "test_two.py F",
-                "sub{}test_three.py .F.".format(os.sep),
+                f"sub{os.sep}test_three.py .F.",
                 "*2 failed, 3 passed in*",
             ]
         )
@@ -1784,9 +1784,9 @@ class TestClassicOutputStyle:
             [
                 "test_one.py::test_one PASSED",
                 "test_two.py::test_two FAILED",
-                "sub{}test_three.py::test_three_1 PASSED".format(os.sep),
-                "sub{}test_three.py::test_three_2 FAILED".format(os.sep),
-                "sub{}test_three.py::test_three_3 PASSED".format(os.sep),
+                f"sub{os.sep}test_three.py::test_three_1 PASSED",
+                f"sub{os.sep}test_three.py::test_three_2 FAILED",
+                f"sub{os.sep}test_three.py::test_three_3 PASSED",
                 "*2 failed, 3 passed in*",
             ]
         )
@@ -2146,7 +2146,7 @@ def test_line_with_reprcrash(monkeypatch):
         actual = _get_line_with_reprcrash_message(config, rep(), width)  # type: ignore
 
         assert actual == expected
-        if actual != "{} {}".format(mocked_verbose_word, mocked_pos):
+        if actual != f"{mocked_verbose_word} {mocked_pos}":
             assert len(actual) <= width
             assert wcswidth(actual) <= width
 

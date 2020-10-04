@@ -26,7 +26,7 @@ class Python:
     def __init__(self, version, picklefile):
         self.pythonpath = shutil.which(version)
         if not self.pythonpath:
-            pytest.skip("{!r} not found".format(version))
+            pytest.skip(f"{version!r} not found")
         self.picklefile = picklefile
 
     def dumps(self, obj):
@@ -69,4 +69,4 @@ class Python:
 @pytest.mark.parametrize("obj", [42, {}, {1: 3}])
 def test_basic_objects(python1, python2, obj):
     python1.dumps(obj)
-    python2.load_and_is_true("obj == {}".format(obj))
+    python2.load_and_is_true(f"obj == {obj}")

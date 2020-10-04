@@ -1652,7 +1652,7 @@ def test_help_and_version_after_argument_error(testdir):
     assert result.ret == ExitCode.USAGE_ERROR
 
     result = testdir.runpytest("--version")
-    result.stderr.fnmatch_lines(["pytest {}".format(pytest.__version__)])
+    result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
     assert result.ret == ExitCode.USAGE_ERROR
 
 
@@ -1797,12 +1797,7 @@ class TestPytestPluginsVariable:
         res = testdir.runpytest()
         assert res.ret == 2
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
-        res.stdout.fnmatch_lines(
-            [
-                "*{msg}*".format(msg=msg),
-                "*subdirectory{sep}conftest.py*".format(sep=os.sep),
-            ]
-        )
+        res.stdout.fnmatch_lines([f"*{msg}*", f"*subdirectory{os.sep}conftest.py*"])
 
     @pytest.mark.parametrize("use_pyargs", [True, False])
     def test_pytest_plugins_in_non_top_level_conftest_unsupported_pyargs(
@@ -1830,7 +1825,7 @@ class TestPytestPluginsVariable:
         if use_pyargs:
             assert msg not in res.stdout.str()
         else:
-            res.stdout.fnmatch_lines(["*{msg}*".format(msg=msg)])
+            res.stdout.fnmatch_lines([f"*{msg}*"])
 
     def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_top_level_conftest(
         self, testdir
@@ -1854,12 +1849,7 @@ class TestPytestPluginsVariable:
         res = testdir.runpytest_subprocess()
         assert res.ret == 2
         msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
-        res.stdout.fnmatch_lines(
-            [
-                "*{msg}*".format(msg=msg),
-                "*subdirectory{sep}conftest.py*".format(sep=os.sep),
-            ]
-        )
+        res.stdout.fnmatch_lines([f"*{msg}*", f"*subdirectory{os.sep}conftest.py*"])
 
     def test_pytest_plugins_in_non_top_level_conftest_unsupported_no_false_positives(
         self, testdir
@@ -1887,7 +1877,7 @@ def test_conftest_import_error_repr(tmpdir):
     path = tmpdir.join("foo/conftest.py")
     with pytest.raises(
         ConftestImportFailure,
-        match=re.escape("RuntimeError: some error (from {})".format(path)),
+        match=re.escape(f"RuntimeError: some error (from {path})"),
     ):
         try:
             raise RuntimeError("some error")

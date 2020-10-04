@@ -27,6 +27,6 @@ def test_no_warnings(module: str) -> None:
     subprocess.check_call((
         sys.executable,
         "-W", "error",
-        "-c", "__import__({!r})".format(module),
+        "-c", f"__import__({module!r})",
     ))
     # fmt: on

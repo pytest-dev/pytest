@@ -48,20 +48,20 @@ def test_wrap_session_notify_exception(ret_exc, testdir):
 
     if exc == SystemExit:
         assert result.stdout.lines[-3:] == [
-            'INTERNALERROR>   File "{}", line 4, in pytest_sessionstart'.format(c1),
+            f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise SystemExit("boom")',
             "INTERNALERROR> SystemExit: boom",
         ]
     else:
         assert result.stdout.lines[-3:] == [
-            'INTERNALERROR>   File "{}", line 4, in pytest_sessionstart'.format(c1),
+            f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise ValueError("boom")',
             "INTERNALERROR> ValueError: boom",
         ]
     if returncode is False:
         assert result.stderr.lines == ["mainloop: caught unexpected SystemExit!"]
     else:
-        assert result.stderr.lines == ["Exit: exiting after {}...".format(exc.__name__)]
+        assert result.stderr.lines == [f"Exit: exiting after {exc.__name__}..."]
 
 
 @pytest.mark.parametrize("returncode", (None, 42))

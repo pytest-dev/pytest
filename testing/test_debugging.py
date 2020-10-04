@@ -251,9 +251,7 @@ class TestPDB:
                 assert False
         """
         )
-        child = testdir.spawn_pytest(
-            "--show-capture={} --pdb {}".format(showcapture, p1)
-        )
+        child = testdir.spawn_pytest(f"--show-capture={showcapture} --pdb {p1}")
         if showcapture in ("all", "log"):
             child.expect("captured log")
             child.expect("get rekt")
@@ -706,7 +704,7 @@ class TestPDB:
                 set_trace()
         """
         )
-        child = testdir.spawn_pytest("--tb=short {} {}".format(p1, capture_arg))
+        child = testdir.spawn_pytest(f"--tb=short {p1} {capture_arg}")
         child.expect("=== SET_TRACE ===")
         before = child.before.decode("utf8")
         if not capture_arg:
@@ -744,7 +742,7 @@ class TestPDB:
             x = 5
         """
         )
-        child = testdir.spawn("{} {}".format(sys.executable, p1))
+        child = testdir.spawn(f"{sys.executable} {p1}")
         child.expect("x = 5")
         child.expect("Pdb")
         child.sendeof()
@@ -1085,12 +1083,12 @@ class TestTraceOption:
             child.expect_exact(func)
             child.expect_exact("Pdb")
             child.sendline("args")
-            child.expect_exact("{} = 1\r\n".format(argname))
+            child.expect_exact(f"{argname} = 1\r\n")
             child.expect_exact("Pdb")
             child.sendline("c")
             child.expect_exact("Pdb")
             child.sendline("args")
-            child.expect_exact("{} = 2\r\n".format(argname))
+            child.expect_exact(f"{argname} = 2\r\n")
             child.expect_exact("Pdb")
             child.sendline("c")
             child.expect_exact("> PDB continue (IO-capturing resumed) >")

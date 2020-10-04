@@ -480,7 +480,7 @@ class FixtureRequest:
         """Test function object if the request has a per-function scope."""
         if self.scope != "function":
             raise AttributeError(
-                "function not available in {}-scoped context".format(self.scope)
+                f"function not available in {self.scope}-scoped context"
             )
         return self._pyfuncitem.obj
 
@@ -488,9 +488,7 @@ class FixtureRequest:
     def cls(self):
         """Class (can be None) where the test function was collected."""
         if self.scope not in ("class", "function"):
-            raise AttributeError(
-                "cls not available in {}-scoped context".format(self.scope)
-            )
+            raise AttributeError(f"cls not available in {self.scope}-scoped context")
         clscol = self._pyfuncitem.getparent(_pytest.python.Class)
         if clscol:
             return clscol.obj
@@ -509,18 +507,14 @@ class FixtureRequest:
     def module(self):
         """Python module object where the test function was collected."""
         if self.scope not in ("function", "class", "module"):
-            raise AttributeError(
-                "module not available in {}-scoped context".format(self.scope)
-            )
+            raise AttributeError(f"module not available in {self.scope}-scoped context")
         return self._pyfuncitem.getparent(_pytest.python.Module).obj
 
     @property
     def fspath(self) -> py.path.local:
         """The file system path of the test module which collected this test."""
         if self.scope not in ("function", "class", "module", "package"):
-            raise AttributeError(
-                "module not available in {}-scoped context".format(self.scope)
-            )
+            raise AttributeError(f"module not available in {self.scope}-scoped context")
         # TODO: Remove ignore once _pyfuncitem is properly typed.
         return self._pyfuncitem.fspath  # type: ignore
 
@@ -770,7 +764,7 @@ class SubRequest(FixtureRequest):
         self._fixturemanager = request._fixturemanager
 
     def __repr__(self) -> str:
-        return "<SubRequest {!r} for {!r}>".format(self.fixturename, self._pyfuncitem)
+        return f"<SubRequest {self.fixturename!r} for {self._pyfuncitem!r}>"
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._fixturedef.addfinalizer(finalizer)
@@ -805,7 +799,7 @@ def scope2index(scope: str, descr: str, where: Optional[str] = None) -> int:
     except ValueError:
         fail(
             "{} {}got an unexpected scope value '{}'".format(
-                descr, "from {} ".format(where) if where else "", scope
+                descr, f"from {where} " if where else "", scope
             ),
             pytrace=False,
         )
@@ -861,7 +855,7 @@ class FixtureLookupError(LookupError):
                     self.argname
                 )
             else:
-                msg = "fixture '{}' not found".format(self.argname)
+                msg = f"fixture '{self.argname}' not found"
             msg += "\n available fixtures: {}".format(", ".join(sorted(available)))
             msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
@@ -895,8 +889,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
             )
             for line in lines[1:]:
                 tw.line(
-                    "{}       {}".format(FormattedExcinfo.flow_marker, line.strip()),
-                    red=True,
+                    f"{FormattedExcinfo.flow_marker}       {line.strip()}", red=True,
                 )
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno + 1))
@@ -920,9 +913,7 @@ def call_fixture_func(
         try:
             fixture_result = next(generator)
         except StopIteration:
-            raise ValueError(
-                "{} did not yield a value".format(request.fixturename)
-            ) from None
+            raise ValueError(f"{request.fixturename} did not yield a value") from None
         finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
         request.addfinalizer(finalizer)
     else:
@@ -1000,7 +991,7 @@ class FixtureDef(Generic[_FixtureValue]):
         self.scopenum = scope2index(
             # TODO: Check if the `or` here is really necessary.
             scope_ or "function",  # type: ignore[unreachable]
-            descr="Fixture '{}'".format(func.__name__),
+            descr=f"Fixture '{func.__name__}'",
             where=baseid,
         )
         self.scope = scope_

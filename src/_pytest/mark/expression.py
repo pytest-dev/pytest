@@ -66,7 +66,7 @@ class ParseError(Exception):
         self.message = message
 
     def __str__(self) -> str:
-        return "at column {}: {}".format(self.column, self.message)
+        return f"at column {self.column}: {self.message}"
 
 
 class Scanner:

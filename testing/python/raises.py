@@ -211,7 +211,7 @@ class TestRaises:
         pytest.raises(TypeError, int, match="invalid")
 
         def tfunc(match):
-            raise ValueError("match={}".format(match))
+            raise ValueError(f"match={match}")
 
         pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
         pytest.raises(ValueError, tfunc, match="").match("match=")

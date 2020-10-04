@@ -101,7 +101,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
         if hasattr(item, "obj"):
             globals_.update(item.obj.__globals__)  # type: ignore[attr-defined]
         try:
-            filename = "<{} condition>".format(mark.name)
+            filename = f"<{mark.name} condition>"
             condition_code = compile(condition, filename, "eval")
             result = eval(condition_code, globals_)
         except SyntaxError as exc:
@@ -264,7 +264,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
     if unexpectedsuccess_key in item._store and rep.when == "call":
         reason = item._store[unexpectedsuccess_key]
         if reason:
-            rep.longrepr = "Unexpected success: {}".format(reason)
+            rep.longrepr = f"Unexpected success: {reason}"
         else:
             rep.longrepr = "Unexpected success"
         rep.outcome = "failed"

@@ -1494,7 +1494,7 @@ def test_is_setup_py_not_named_setup_py(tmpdir):
 @pytest.mark.parametrize("mod", ("setuptools", "distutils.core"))
 def test_is_setup_py_is_a_setup_py(tmpdir, mod):
     setup_py = tmpdir.join("setup.py")
-    setup_py.write('from {} import setup; setup(name="foo")'.format(mod))
+    setup_py.write(f'from {mod} import setup; setup(name="foo")')
     assert _is_setup_py(setup_py)
 
 
