@@ -1236,12 +1236,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: junit_family
 
     .. versionadded:: 4.2
+    .. versionchanged:: 6.1
+        Default changed to ``xunit2``.
 
     Configures the format of the generated JUnit XML file. The possible options are:
 
-    * ``xunit1`` (or ``legacy``): produces old style output, compatible with the xunit 1.0 format. **This is the default**.
-    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__,
-        which should be more compatible with latest Jenkins versions.
+    * ``xunit1`` (or ``legacy``): produces old style output, compatible with the xunit 1.0 format.
+    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__, which should be more compatible with latest Jenkins versions.  **This is the default**.
 
     .. code-block:: ini
 
