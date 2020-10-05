@@ -1236,6 +1236,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: junit_family
 
     .. versionadded:: 4.2
+    .. versionchanged:: 6.1
+        Default changed to ``xunit2``.
 
     Configures the format of the generated JUnit XML file. The possible options are:
 
