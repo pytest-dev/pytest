@@ -340,13 +340,21 @@ def reorder_items_atscope(
 
 
 def _fillfuncargs(function: "Function") -> None:
-    """Fill missing fixtures for a test function (deprecated)."""
-    warnings.warn(FILLFUNCARGS, stacklevel=2)
-    fillfixtures(function)
+    """Fill missing fixtures for a test function, old public API (deprecated)."""
+    warnings.warn(FILLFUNCARGS.format(name="pytest._fillfuncargs()"), stacklevel=2)
+    _fill_fixtures_impl(function)
 
 
 def fillfixtures(function: "Function") -> None:
-    """Fill missing fixtures for a test function."""
+    """Fill missing fixtures for a test function (deprecated)."""
+    warnings.warn(
+        FILLFUNCARGS.format(name="_pytest.fixtures.fillfixtures()"), stacklevel=2
+    )
+    _fill_fixtures_impl(function)
+
+
+def _fill_fixtures_impl(function: "Function") -> None:
+    """Internal implementation to fill fixtures on the given function object."""
     try:
         request = function._request
     except AttributeError:
