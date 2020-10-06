@@ -366,18 +366,6 @@ else:
             return value
 
 
-# Sometimes an algorithm needs a dict which yields items in the order in which
-# they were inserted when iterated. Since Python 3.7, `dict` preserves
-# insertion order. Since `dict` is faster and uses less memory than
-# `OrderedDict`, prefer to use it if possible.
-if sys.version_info >= (3, 7):
-    order_preserving_dict = dict
-else:
-    from collections import OrderedDict
-
-    order_preserving_dict = OrderedDict
-
-
 # Perform exhaustiveness checking.
 #
 # Consider this example:
