@@ -33,7 +33,7 @@ class TestOEJSKITSpecials:
         # this hook finds funcarg factories
         rep = runner.collect_one_node(collector=modcol)
         # TODO: Don't treat as Any.
-        clscol = rep.result[0]  # type: Any
+        clscol: Any = rep.result[0]
         clscol.obj = lambda arg1: None
         clscol.funcargs = {}
         pytest._fillfuncargs(clscol)
@@ -67,7 +67,7 @@ class TestOEJSKITSpecials:
         # this hook finds funcarg factories
         rep = runner.collect_one_node(modcol)
         # TODO: Don't treat as Any.
-        clscol = rep.result[0]  # type: Any
+        clscol: Any = rep.result[0]
         clscol.obj = lambda: None
         clscol.funcargs = {}
         pytest._fillfuncargs(clscol)

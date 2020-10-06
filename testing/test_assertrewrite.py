@@ -45,7 +45,7 @@ def getmsg(
     src = "\n".join(_pytest._code.Code(f).source().lines)
     mod = rewrite(src)
     code = compile(mod, "<test>", "exec")
-    ns = {}  # type: Dict[str, object]
+    ns: Dict[str, object] = {}
     if extra_ns is not None:
         ns.update(extra_ns)
     exec(code, ns)
@@ -1242,8 +1242,8 @@ class TestEarlyRewriteBailout:
         """
         import importlib.machinery
 
-        self.find_spec_calls = []  # type: List[str]
-        self.initial_paths = set()  # type: Set[py.path.local]
+        self.find_spec_calls: List[str] = []
+        self.initial_paths: Set[py.path.local] = set()
 
         class StubSession:
             _initialpaths = self.initial_paths

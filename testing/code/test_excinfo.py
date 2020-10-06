@@ -778,7 +778,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles = ("long", "short")  # type: Tuple[_TracebackStyle, ...]
+        styles: Tuple[_TracebackStyle, ...] = ("long", "short")
         for style in styles:
             p = FormattedExcinfo(style=style)
             reprtb = p.repr_traceback(excinfo)
@@ -905,7 +905,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles = ("short", "long", "no")  # type: Tuple[_TracebackStyle, ...]
+        styles: Tuple[_TracebackStyle, ...] = ("short", "long", "no")
         for style in styles:
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
@@ -1370,7 +1370,7 @@ raise ValueError()
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
 def test_repr_traceback_with_unicode(style, encoding):
     if encoding is None:
-        msg = "☹"  # type: Union[str, bytes]
+        msg: Union[str, bytes] = "☹"
     else:
         msg = "☹".encode(encoding)
     try:

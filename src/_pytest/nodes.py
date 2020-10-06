@@ -140,7 +140,7 @@ class Node(metaclass=NodeMeta):
 
         #: The pytest config object.
         if config:
-            self.config = config  # type: Config
+            self.config: Config = config
         else:
             if not parent:
                 raise TypeError("config or parent must be provided")
@@ -161,10 +161,10 @@ class Node(metaclass=NodeMeta):
         self.keywords = NodeKeywords(self)
 
         #: The marker objects belonging to this node.
-        self.own_markers = []  # type: List[Mark]
+        self.own_markers: List[Mark] = []
 
         #: Allow adding of extra keywords to use for matching.
-        self.extra_keyword_matches = set()  # type: Set[str]
+        self.extra_keyword_matches: Set[str] = set()
 
         if nodeid is not None:
             assert "::()" not in nodeid
@@ -256,7 +256,7 @@ class Node(metaclass=NodeMeta):
         """Return list of all parent collectors up to self, starting from
         the root of collection tree."""
         chain = []
-        item = self  # type: Optional[Node]
+        item: Optional[Node] = self
         while item is not None:
             chain.append(item)
             item = item.parent
@@ -326,7 +326,7 @@ class Node(metaclass=NodeMeta):
 
     def listextrakeywords(self) -> Set[str]:
         """Return a set of all extra keywords in self and any parents."""
-        extra_keywords = set()  # type: Set[str]
+        extra_keywords: Set[str] = set()
         for item in self.listchain():
             extra_keywords.update(item.extra_keyword_matches)
         return extra_keywords
@@ -345,7 +345,7 @@ class Node(metaclass=NodeMeta):
     def getparent(self, cls: Type[_NodeType]) -> Optional[_NodeType]:
         """Get the next parent node (including self) which is an instance of
         the given class."""
-        current = self  # type: Optional[Node]
+        current: Optional[Node] = self
         while current and not isinstance(current, cls):
             current = current.parent
         assert current is None or isinstance(current, cls)
@@ -433,9 +433,7 @@ def get_fslocation_from_item(
     :rtype: A tuple of (str|py.path.local, int) with filename and line number.
     """
     # See Item.location.
-    location = getattr(
-        node, "location", None
-    )  # type: Optional[Tuple[str, Optional[int], str]]
+    location: Optional[Tuple[str, Optional[int], str]] = getattr(node, "location", None)
     if location is not None:
         return location[:2]
     obj = getattr(node, "obj", None)
@@ -560,11 +558,11 @@ class Item(Node):
         nodeid: Optional[str] = None,
     ) -> None:
         super().__init__(name, parent, config, session, nodeid=nodeid)
-        self._report_sections = []  # type: List[Tuple[str, str, str]]
+        self._report_sections: List[Tuple[str, str, str]] = []
 
         #: A list of tuples (name, value) that holds user defined properties
         #: for this test.
-        self.user_properties = []  # type: List[Tuple[str, object]]
+        self.user_properties: List[Tuple[str, object]] = []
 
     def runtest(self) -> None:
         raise NotImplementedError("runtest must be implemented by Item subclass")

@@ -235,7 +235,7 @@ def pytest_configure(config: Config) -> None:
 
 
 def getreportopt(config: Config) -> str:
-    reportchars = config.option.reportchars  # type: str
+    reportchars: str = config.option.reportchars
 
     old_aliases = {"F", "S"}
     reportopts = ""
@@ -267,7 +267,7 @@ def pytest_report_teststatus(report: BaseReport) -> Tuple[str, str, str]:
     elif report.skipped:
         letter = "s"
 
-    outcome = report.outcome  # type: str
+    outcome: str = report.outcome
     if report.when in ("collect", "setup", "teardown") and outcome == "failed":
         outcome = "error"
         letter = "E"
@@ -317,27 +317,27 @@ class TerminalReporter:
 
         self.config = config
         self._numcollected = 0
-        self._session = None  # type: Optional[Session]
-        self._showfspath = None  # type: Optional[bool]
+        self._session: Optional[Session] = None
+        self._showfspath: Optional[bool] = None
 
-        self.stats = {}  # type: Dict[str, List[Any]]
-        self._main_color = None  # type: Optional[str]
-        self._known_types = None  # type: Optional[List[str]]
+        self.stats: Dict[str, List[Any]] = {}
+        self._main_color: Optional[str] = None
+        self._known_types: Optional[List[str]] = None
         self.startdir = config.invocation_dir
         self.startpath = config.invocation_params.dir
         if file is None:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
-        self.currentfspath = None  # type: Union[None, Path, str, int]
+        self.currentfspath: Union[None, Path, str, int] = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
-        self._progress_nodeids_reported = set()  # type: Set[str]
+        self._progress_nodeids_reported: Set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
-        self._collect_report_last_write = None  # type: Optional[float]
-        self._already_displayed_warnings = None  # type: Optional[int]
-        self._keyboardinterrupt_memo = None  # type: Optional[ExceptionRepr]
+        self._collect_report_last_write: Optional[float] = None
+        self._already_displayed_warnings: Optional[int] = None
+        self._keyboardinterrupt_memo: Optional[ExceptionRepr] = None
 
     def _determine_show_progress_info(self) -> "Literal['progress', 'count', False]":
         """Return whether we should display progress information based on the current config."""
@@ -347,7 +347,7 @@ class TerminalReporter:
         # do not show progress if we are showing fixture setup/teardown
         if self.config.getoption("setupshow", False):
             return False
-        cfg = self.config.getini("console_output_style")  # type: str
+        cfg: str = self.config.getini("console_output_style")
         if cfg == "progress":
             return "progress"
         elif cfg == "count":
@@ -357,7 +357,7 @@ class TerminalReporter:
 
     @property
     def verbosity(self) -> int:
-        verbosity = self.config.option.verbose  # type: int
+        verbosity: int = self.config.option.verbose
         return verbosity
 
     @property
@@ -512,9 +512,9 @@ class TerminalReporter:
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
-        res = self.config.hook.pytest_report_teststatus(
-            report=rep, config=self.config
-        )  # type: Tuple[str, str, Union[str, Tuple[str, Mapping[str, bool]]]]
+        res: Tuple[
+            str, str, Union[str, Tuple[str, Mapping[str, bool]]]
+        ] = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         category, letter, word = res
         if not isinstance(word, tuple):
             markup = None
@@ -718,7 +718,7 @@ class TerminalReporter:
         if config.inipath:
             line += ", configfile: " + bestrelpath(config.rootpath, config.inipath)
 
-        testpaths = config.getini("testpaths")  # type: List[str]
+        testpaths: List[str] = config.getini("testpaths")
         if config.invocation_params.dir == config.rootpath and config.args == testpaths:
             line += ", testpaths: {}".format(", ".join(testpaths))
 
@@ -755,7 +755,7 @@ class TerminalReporter:
         # because later versions are going to get rid of them anyway.
         if self.config.option.verbose < 0:
             if self.config.option.verbose < -1:
-                counts = {}  # type: Dict[str, int]
+                counts: Dict[str, int] = {}
                 for item in items:
                     name = item.nodeid.split("::", 1)[0]
                     counts[name] = counts.get(name, 0) + 1
@@ -765,7 +765,7 @@ class TerminalReporter:
                 for item in items:
                     self._tw.line(item.nodeid)
             return
-        stack = []  # type: List[Node]
+        stack: List[Node] = []
         indent = ""
         for item in items:
             needed_collectors = item.listchain()[1:]  # strip root node
@@ -896,9 +896,7 @@ class TerminalReporter:
 
     def summary_warnings(self) -> None:
         if self.hasopt("w"):
-            all_warnings = self.stats.get(
-                "warnings"
-            )  # type: Optional[List[WarningReport]]
+            all_warnings: Optional[List[WarningReport]] = self.stats.get("warnings")
             if not all_warnings:
                 return
 
@@ -911,9 +909,9 @@ class TerminalReporter:
             if not warning_reports:
                 return
 
-            reports_grouped_by_message = (
+            reports_grouped_by_message: Dict[str, List[WarningReport]] = (
                 order_preserving_dict()
-            )  # type: Dict[str, List[WarningReport]]
+            )
             for wr in warning_reports:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
@@ -927,7 +925,7 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename = order_preserving_dict()  # type: Dict[str, int]
+                counts_by_filename: Dict[str, int] = order_preserving_dict()
                 for loc in locations:
                     key = str(loc).split("::", 1)[0]
                     counts_by_filename[key] = counts_by_filename.get(key, 0) + 1
@@ -954,7 +952,7 @@ class TerminalReporter:
     def summary_passes(self) -> None:
         if self.config.option.tbstyle != "no":
             if self.hasopt("P"):
-                reports = self.getreports("passed")  # type: List[TestReport]
+                reports: List[TestReport] = self.getreports("passed")
                 if not reports:
                     return
                 self.write_sep("=", "PASSES")
@@ -992,7 +990,7 @@ class TerminalReporter:
 
     def summary_failures(self) -> None:
         if self.config.option.tbstyle != "no":
-            reports = self.getreports("failed")  # type: List[BaseReport]
+            reports: List[BaseReport] = self.getreports("failed")
             if not reports:
                 return
             self.write_sep("=", "FAILURES")
@@ -1009,7 +1007,7 @@ class TerminalReporter:
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
-            reports = self.getreports("error")  # type: List[BaseReport]
+            reports: List[BaseReport] = self.getreports("error")
             if not reports:
                 return
             self.write_sep("=", "ERRORS")
@@ -1105,7 +1103,7 @@ class TerminalReporter:
                 lines.append(f"{verbose_word} {pos} {reason}")
 
         def show_skipped(lines: List[str]) -> None:
-            skipped = self.stats.get("skipped", [])  # type: List[CollectReport]
+            skipped: List[CollectReport] = self.stats.get("skipped", [])
             fskips = _folded_skips(self.startpath, skipped) if skipped else []
             if not fskips:
                 return
@@ -1121,16 +1119,16 @@ class TerminalReporter:
                 else:
                     lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
 
-        REPORTCHAR_ACTIONS = {
+        REPORTCHAR_ACTIONS: Mapping[str, Callable[[List[str]], None]] = {
             "x": show_xfailed,
             "X": show_xpassed,
             "f": partial(show_simple, "failed"),
             "s": show_skipped,
             "p": partial(show_simple, "passed"),
             "E": partial(show_simple, "error"),
-        }  # type: Mapping[str, Callable[[List[str]], None]]
+        }
 
-        lines = []  # type: List[str]
+        lines: List[str] = []
         for char in self.reportchars:
             action = REPORTCHAR_ACTIONS.get(char)
             if action:  # skipping e.g. "P" (passed with output) here.
@@ -1161,7 +1159,7 @@ class TerminalReporter:
         return main_color
 
     def _set_main_color(self) -> None:
-        unknown_types = []  # type: List[str]
+        unknown_types: List[str] = []
         for found_type in self.stats.keys():
             if found_type:  # setup/teardown reports have an empty key, ignore them
                 if found_type not in KNOWN_TYPES and found_type not in unknown_types:
@@ -1236,7 +1234,7 @@ def _get_line_with_reprcrash_message(
 def _folded_skips(
     startpath: Path, skipped: Sequence[CollectReport],
 ) -> List[Tuple[int, str, Optional[int], str]]:
-    d = {}  # type: Dict[Tuple[str, Optional[int], str], List[CollectReport]]
+    d: Dict[Tuple[str, Optional[int], str], List[CollectReport]] = {}
     for event in skipped:
         assert event.longrepr is not None
         assert isinstance(event.longrepr, tuple), (event, event.longrepr)
@@ -1253,11 +1251,11 @@ def _folded_skips(
             and "skip" in keywords
             and "pytestmark" not in keywords
         ):
-            key = (fspath, None, reason)  # type: Tuple[str, Optional[int], str]
+            key: Tuple[str, Optional[int], str] = (fspath, None, reason)
         else:
             key = (fspath, lineno, reason)
         d.setdefault(key, []).append(event)
-    values = []  # type: List[Tuple[int, str, Optional[int], str]]
+    values: List[Tuple[int, str, Optional[int], str]] = []
     for key, events in d.items():
         values.append((len(events), *key))
     return values
@@ -1286,7 +1284,7 @@ def _make_plural(count: int, noun: str) -> Tuple[int, str]:
 
 
 def _plugin_nameversions(plugininfo) -> List[str]:
-    values = []  # type: List[str]
+    values: List[str] = []
     for plugin, dist in plugininfo:
         # Gets us name and version!
         name = "{dist.project_name}-{dist.version}".format(dist=dist)

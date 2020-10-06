@@ -103,7 +103,7 @@ if os.environ.get("_ARGCOMPLETE"):
         import argcomplete.completers
     except ImportError:
         sys.exit(-1)
-    filescompleter = FastFilesCompleter()  # type: Optional[FastFilesCompleter]
+    filescompleter: Optional[FastFilesCompleter] = FastFilesCompleter()
 
     def try_argcomplete(parser: argparse.ArgumentParser) -> None:
         argcomplete.autocomplete(parser, always_complete_options=False)

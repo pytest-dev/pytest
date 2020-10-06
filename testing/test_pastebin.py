@@ -7,7 +7,7 @@ import pytest
 class TestPasteCapture:
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request) -> List[Union[str, bytes]]:
-        pastebinlist = []  # type: List[Union[str, bytes]]
+        pastebinlist: List[Union[str, bytes]] = []
         plugin = request.config.pluginmanager.getplugin("pastebin")
         monkeypatch.setattr(plugin, "create_new_paste", pastebinlist.append)
         return pastebinlist

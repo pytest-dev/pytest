@@ -1068,7 +1068,7 @@ class TestTruncateExplanation:
     LINES_IN_TRUNCATION_MSG = 2
 
     def test_doesnt_truncate_when_input_is_empty_list(self) -> None:
-        expl = []  # type: List[str]
+        expl: List[str] = []
         result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
         assert result == expl
 

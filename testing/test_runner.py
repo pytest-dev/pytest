@@ -444,11 +444,11 @@ class TestSessionReports:
         assert res[1].name == "TestClass"
 
 
-reporttypes = [
+reporttypes: List[Type[reports.BaseReport]] = [
     reports.BaseReport,
     reports.TestReport,
     reports.CollectReport,
-]  # type: List[Type[reports.BaseReport]]
+]
 
 
 @pytest.mark.parametrize(
@@ -456,7 +456,7 @@ reporttypes = [
 )
 def test_report_extra_parameters(reporttype: Type[reports.BaseReport]) -> None:
     args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
-    basekw = dict.fromkeys(args, [])  # type: Dict[str, List[object]]
+    basekw: Dict[str, List[object]] = dict.fromkeys(args, [])
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1
 
@@ -898,7 +898,7 @@ def test_store_except_info_on_error() -> None:
 
 
 def test_current_test_env_var(testdir, monkeypatch) -> None:
-    pytest_current_test_vars = []  # type: List[Tuple[str, str]]
+    pytest_current_test_vars: List[Tuple[str, str]] = []
     monkeypatch.setattr(
         sys, "pytest_current_test_vars", pytest_current_test_vars, raising=False
     )

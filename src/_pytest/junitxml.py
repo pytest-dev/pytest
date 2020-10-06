@@ -93,9 +93,9 @@ class _NodeReporter:
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
         self.duration = 0
-        self.properties = []  # type: List[Tuple[str, str]]
-        self.nodes = []  # type: List[ET.Element]
-        self.attrs = {}  # type: Dict[str, str]
+        self.properties: List[Tuple[str, str]] = []
+        self.nodes: List[ET.Element] = []
+        self.attrs: Dict[str, str] = {}
 
     def append(self, node: ET.Element) -> None:
         self.xml.add_stats(node.tag)
@@ -122,11 +122,11 @@ class _NodeReporter:
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
-        attrs = {
+        attrs: Dict[str, str] = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
             "file": testreport.location[0],
-        }  # type: Dict[str, str]
+        }
         if testreport.location[1] is not None:
             attrs["line"] = str(testreport.location[1])
         if hasattr(testreport, "url"):
@@ -199,9 +199,9 @@ class _NodeReporter:
             self._add_simple("skipped", "xfail-marked test passes unexpectedly")
         else:
             assert report.longrepr is not None
-            reprcrash = getattr(
+            reprcrash: Optional[ReprFileLocation] = getattr(
                 report.longrepr, "reprcrash", None
-            )  # type: Optional[ReprFileLocation]
+            )
             if reprcrash is not None:
                 message = reprcrash.message
             else:
@@ -219,9 +219,9 @@ class _NodeReporter:
 
     def append_error(self, report: TestReport) -> None:
         assert report.longrepr is not None
-        reprcrash = getattr(
+        reprcrash: Optional[ReprFileLocation] = getattr(
             report.longrepr, "reprcrash", None
-        )  # type: Optional[ReprFileLocation]
+        )
         if reprcrash is not None:
             reason = reprcrash.message
         else:
@@ -481,17 +481,17 @@ class LogXML:
         self.log_passing_tests = log_passing_tests
         self.report_duration = report_duration
         self.family = family
-        self.stats = dict.fromkeys(
+        self.stats: Dict[str, int] = dict.fromkeys(
             ["error", "passed", "failure", "skipped"], 0
-        )  # type: Dict[str, int]
-        self.node_reporters = (
-            {}
-        )  # type: Dict[Tuple[Union[str, TestReport], object], _NodeReporter]
-        self.node_reporters_ordered = []  # type: List[_NodeReporter]
-        self.global_properties = []  # type: List[Tuple[str, str]]
+        )
+        self.node_reporters: Dict[
+            Tuple[Union[str, TestReport], object], _NodeReporter
+        ] = ({})
+        self.node_reporters_ordered: List[_NodeReporter] = []
+        self.global_properties: List[Tuple[str, str]] = []
 
         # List of reports that failed on call but teardown is pending.
-        self.open_reports = []  # type: List[TestReport]
+        self.open_reports: List[TestReport] = []
         self.cnt_double_fail_tests = 0
 
         # Replaces convenience family with real family.
@@ -507,7 +507,7 @@ class LogXML:
             reporter.finalize()
 
     def node_reporter(self, report: Union[TestReport, str]) -> _NodeReporter:
-        nodeid = getattr(report, "nodeid", report)  # type: Union[str, TestReport]
+        nodeid: Union[str, TestReport] = getattr(report, "nodeid", report)
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 

@@ -160,8 +160,8 @@ def add_funcarg_pseudo_fixture_def(
         # This function call does not have direct parametrization.
         return
     # Collect funcargs of all callspecs into a list of values.
-    arg2params = {}  # type: Dict[str, List[object]]
-    arg2scope = {}  # type: Dict[str, _Scope]
+    arg2params: Dict[str, List[object]] = {}
+    arg2scope: Dict[str, _Scope] = {}
     for callspec in metafunc._calls:
         for argname, argvalue in callspec.funcargs.items():
             assert argname not in callspec.params
@@ -219,9 +219,9 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
     """Return fixturemarker or None if it doesn't exist or raised
     exceptions."""
     try:
-        fixturemarker = getattr(
+        fixturemarker: Optional[FixtureFunctionMarker] = getattr(
             obj, "_pytestfixturefunction", None
-        )  # type: Optional[FixtureFunctionMarker]
+        )
     except TEST_OUTCOME:
         # some objects raise errors like request (from flask import request)
         # we don't expect them to be fixture functions
@@ -242,7 +242,7 @@ def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_
     except AttributeError:
         pass
     else:
-        cs = callspec  # type: CallSpec2
+        cs: CallSpec2 = callspec
         # cs.indices.items() is random order of argnames.  Need to
         # sort this so that different calls to
         # get_parametrized_fixture_keys will be deterministic.
@@ -250,7 +250,7 @@ def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_
             if cs._arg2scopenum[argname] != scopenum:
                 continue
             if scopenum == 0:  # session
-                key = (argname, param_index)  # type: _Key
+                key: _Key = (argname, param_index)
             elif scopenum == 1:  # package
                 key = (argname, param_index, item.fspath.dirpath())
             elif scopenum == 2:  # module
@@ -268,12 +268,12 @@ def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_
 
 
 def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
-    argkeys_cache = {}  # type: Dict[int, Dict[nodes.Item, Dict[_Key, None]]]
-    items_by_argkey = {}  # type: Dict[int, Dict[_Key, Deque[nodes.Item]]]
+    argkeys_cache: Dict[int, Dict[nodes.Item, Dict[_Key, None]]] = {}
+    items_by_argkey: Dict[int, Dict[_Key, Deque[nodes.Item]]] = {}
     for scopenum in range(0, scopenum_function):
-        d = {}  # type: Dict[nodes.Item, Dict[_Key, None]]
+        d: Dict[nodes.Item, Dict[_Key, None]] = {}
         argkeys_cache[scopenum] = d
-        item_d = defaultdict(deque)  # type: Dict[_Key, Deque[nodes.Item]]
+        item_d: Dict[_Key, Deque[nodes.Item]] = defaultdict(deque)
         items_by_argkey[scopenum] = item_d
         for item in items:
             # cast is a workaround for https://github.com/python/typeshed/issues/3800.
@@ -312,13 +312,13 @@ def reorder_items_atscope(
 ) -> Dict[nodes.Item, None]:
     if scopenum >= scopenum_function or len(items) < 3:
         return items
-    ignore = set()  # type: Set[Optional[_Key]]
+    ignore: Set[Optional[_Key]] = set()
     items_deque = deque(items)
-    items_done = order_preserving_dict()  # type: Dict[nodes.Item, None]
+    items_done: Dict[nodes.Item, None] = order_preserving_dict()
     scoped_items_by_argkey = items_by_argkey[scopenum]
     scoped_argkeys_cache = argkeys_cache[scopenum]
     while items_deque:
-        no_argkey_group = order_preserving_dict()  # type: Dict[nodes.Item, None]
+        no_argkey_group: Dict[nodes.Item, None] = order_preserving_dict()
         slicing_argkey = None
         while items_deque:
             item = items_deque.popleft()
@@ -400,7 +400,7 @@ class FuncFixtureInfo:
         tree. In this way the dependency tree can get pruned, and the closure
         of argnames may get reduced.
         """
-        closure = set()  # type: Set[str]
+        closure: Set[str] = set()
         working_set = set(self.initialnames)
         while working_set:
             argname = working_set.pop()
@@ -428,16 +428,14 @@ class FixtureRequest:
     def __init__(self, pyfuncitem) -> None:
         self._pyfuncitem = pyfuncitem
         #: Fixture for which this request is being performed.
-        self.fixturename = None  # type: Optional[str]
+        self.fixturename: Optional[str] = None
         #: Scope string, one of "function", "class", "module", "session".
-        self.scope = "function"  # type: _Scope
-        self._fixture_defs = {}  # type: Dict[str, FixtureDef[Any]]
-        fixtureinfo = pyfuncitem._fixtureinfo  # type: FuncFixtureInfo
+        self.scope: _Scope = "function"
+        self._fixture_defs: Dict[str, FixtureDef[Any]] = {}
+        fixtureinfo: FuncFixtureInfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
-        self._arg2index = {}  # type: Dict[str, int]
-        self._fixturemanager = (
-            pyfuncitem.session._fixturemanager
-        )  # type: FixtureManager
+        self._arg2index: Dict[str, int] = {}
+        self._fixturemanager: FixtureManager = (pyfuncitem.session._fixturemanager)
 
     @property
     def fixturenames(self) -> List[str]:
@@ -589,7 +587,7 @@ class FixtureRequest:
             except FixtureLookupError:
                 if argname == "request":
                     cached_result = (self, [0], None)
-                    scope = "function"  # type: _Scope
+                    scope: _Scope = "function"
                     return PseudoFixtureDef(cached_result, scope)
                 raise
         # Remove indent to prevent the python3 exception
@@ -600,7 +598,7 @@ class FixtureRequest:
 
     def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
         current = self
-        values = []  # type: List[FixtureDef[Any]]
+        values: List[FixtureDef[Any]] = []
         while 1:
             fixturedef = getattr(current, "_fixturedef", None)
             if fixturedef is None:
@@ -782,7 +780,7 @@ class SubRequest(FixtureRequest):
         super()._schedule_finalizers(fixturedef, subrequest)
 
 
-scopes = ["session", "package", "module", "class", "function"]  # type: List[_Scope]
+scopes: List["_Scope"] = ["session", "package", "module", "class", "function"]
 scopenum_function = scopes.index("function")
 
 
@@ -793,7 +791,7 @@ def scopemismatch(currentscope: "_Scope", newscope: "_Scope") -> bool:
 def scope2index(scope: str, descr: str, where: Optional[str] = None) -> int:
     """Look up the index of ``scope`` and raise a descriptive value error
     if not defined."""
-    strscopes = scopes  # type: Sequence[str]
+    strscopes: Sequence[str] = scopes
     try:
         return strscopes.index(scope)
     except ValueError:
@@ -818,7 +816,7 @@ class FixtureLookupError(LookupError):
         self.msg = msg
 
     def formatrepr(self) -> "FixtureLookupErrorRepr":
-        tblines = []  # type: List[str]
+        tblines: List[str] = []
         addline = tblines.append
         stack = [self.request._pyfuncitem.obj]
         stack.extend(map(lambda x: x.func, self.fixturestack))
@@ -995,14 +993,14 @@ class FixtureDef(Generic[_FixtureValue]):
             where=baseid,
         )
         self.scope = scope_
-        self.params = params  # type: Optional[Sequence[object]]
-        self.argnames = getfuncargnames(
+        self.params: Optional[Sequence[object]] = params
+        self.argnames: Tuple[str, ...] = getfuncargnames(
             func, name=argname, is_method=unittest
-        )  # type: Tuple[str, ...]
+        )
         self.unittest = unittest
         self.ids = ids
-        self.cached_result = None  # type: Optional[_FixtureCachedResult[_FixtureValue]]
-        self._finalizers = []  # type: List[Callable[[], object]]
+        self.cached_result: Optional[_FixtureCachedResult[_FixtureValue]] = None
+        self._finalizers: List[Callable[[], object]] = []
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._finalizers.append(finalizer)
@@ -1408,12 +1406,12 @@ class FixtureManager:
 
     def __init__(self, session: "Session") -> None:
         self.session = session
-        self.config = session.config  # type: Config
-        self._arg2fixturedefs = {}  # type: Dict[str, List[FixtureDef[Any]]]
-        self._holderobjseen = set()  # type: Set[object]
-        self._nodeid_and_autousenames = [
+        self.config: Config = session.config
+        self._arg2fixturedefs: Dict[str, List[FixtureDef[Any]]] = {}
+        self._holderobjseen: Set[object] = set()
+        self._nodeid_and_autousenames: List[Tuple[str, List[str]]] = [
             ("", self.config.getini("usefixtures"))
-        ]  # type: List[Tuple[str, List[str]]]
+        ]
         session.config.pluginmanager.register(self, "funcmanage")
 
     def _get_direct_parametrize_args(self, node: nodes.Node) -> List[str]:
@@ -1425,7 +1423,7 @@ class FixtureManager:
         These things are done later as well when dealing with parametrization
         so this could be improved.
         """
-        parametrize_argnames = []  # type: List[str]
+        parametrize_argnames: List[str] = []
         for marker in node.iter_markers(name="parametrize"):
             if not marker.kwargs.get("indirect", False):
                 p_argnames, _ = ParameterSet._parse_parametrize_args(
@@ -1477,7 +1475,7 @@ class FixtureManager:
 
     def _getautousenames(self, nodeid: str) -> List[str]:
         """Return a list of fixture names to be used."""
-        autousenames = []  # type: List[str]
+        autousenames: List[str] = []
         for baseid, basenames in self._nodeid_and_autousenames:
             if nodeid.startswith(baseid):
                 if baseid:
@@ -1516,7 +1514,7 @@ class FixtureManager:
         # need to return it as well, so save this.
         initialnames = tuple(fixturenames_closure)
 
-        arg2fixturedefs = {}  # type: Dict[str, Sequence[FixtureDef[Any]]]
+        arg2fixturedefs: Dict[str, Sequence[FixtureDef[Any]]] = {}
         lastlen = -1
         while lastlen != len(fixturenames_closure):
             lastlen = len(fixturenames_closure)

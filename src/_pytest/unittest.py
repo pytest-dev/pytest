@@ -55,7 +55,7 @@ def pytest_pycollect_makeitem(
     except Exception:
         return None
     # Yes, so let's collect it.
-    item = UnitTestCase.from_parent(collector, name=name, obj=obj)  # type: UnitTestCase
+    item: UnitTestCase = UnitTestCase.from_parent(collector, name=name, obj=obj)
     return item
 
 
@@ -141,12 +141,12 @@ def _make_xunit_fixture(
 
 class TestCaseFunction(Function):
     nofuncargs = True
-    _excinfo = None  # type: Optional[List[_pytest._code.ExceptionInfo[BaseException]]]
-    _testcase = None  # type: Optional[unittest.TestCase]
+    _excinfo: Optional[List[_pytest._code.ExceptionInfo[BaseException]]] = None
+    _testcase: Optional["unittest.TestCase"] = None
 
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
-        self._explicit_tearDown = None  # type: Optional[Callable[[], None]]
+        self._explicit_tearDown: Optional[Callable[[], None]] = None
         assert self.parent is not None
         self._testcase = self.parent.obj(self.name)  # type: ignore[attr-defined]
         self._obj = getattr(self._testcase, self.name)
@@ -320,7 +320,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
 @hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     if isinstance(item, TestCaseFunction) and "twisted.trial.unittest" in sys.modules:
-        ut = sys.modules["twisted.python.failure"]  # type: Any
+        ut: Any = sys.modules["twisted.python.failure"]
         Failure__init__ = ut.Failure.__init__
         check_testcase_implements_trial_reporter()
 

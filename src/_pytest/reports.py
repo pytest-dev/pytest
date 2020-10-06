@@ -58,13 +58,13 @@ _R = TypeVar("_R", bound="BaseReport")
 
 
 class BaseReport:
-    when = None  # type: Optional[str]
-    location = None  # type: Optional[Tuple[str, Optional[int], str]]
-    longrepr = (
-        None
-    )  # type: Union[None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr]
-    sections = []  # type: List[Tuple[str, str]]
-    nodeid = None  # type: str
+    when: Optional[str]
+    location: Optional[Tuple[str, Optional[int], str]]
+    longrepr: Union[
+        None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr
+    ]
+    sections: List[Tuple[str, str]]
+    nodeid: str
 
     def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
@@ -254,7 +254,7 @@ class TestReport(BaseReport):
         #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
         #: collected one e.g. if a method is inherited from a different module.
-        self.location = location  # type: Tuple[str, Optional[int], str]
+        self.location: Tuple[str, Optional[int], str] = location
 
         #: A name -> value dictionary containing all keywords and
         #: markers associated with a test invocation.
@@ -300,10 +300,14 @@ class TestReport(BaseReport):
         excinfo = call.excinfo
         sections = []
         if not call.excinfo:
-            outcome = "passed"  # type: Literal["passed", "failed", "skipped"]
-            longrepr = (
-                None
-            )  # type: Union[None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr]
+            outcome: Literal["passed", "failed", "skipped"] = "passed"
+            longrepr: Union[
+                None,
+                ExceptionInfo[BaseException],
+                Tuple[str, int, str],
+                str,
+                TerminalRepr,
+            ] = (None)
         else:
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
@@ -450,11 +454,11 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
         assert rep.longrepr is not None
         # TODO: Investigate whether the duck typing is really necessary here.
         longrepr = cast(ExceptionRepr, rep.longrepr)
-        result = {
+        result: Dict[str, Any] = {
             "reprcrash": serialize_repr_crash(longrepr.reprcrash),
             "reprtraceback": serialize_repr_traceback(longrepr.reprtraceback),
             "sections": longrepr.sections,
-        }  # type: Dict[str, Any]
+        }
         if isinstance(longrepr, ExceptionChainRepr):
             result["chain"] = []
             for repr_traceback, repr_crash, description in longrepr.chain:
@@ -508,13 +512,13 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
             if data["reprlocals"]:
                 reprlocals = ReprLocals(data["reprlocals"]["lines"])
 
-            reprentry = ReprEntry(
+            reprentry: Union[ReprEntry, ReprEntryNative] = ReprEntry(
                 lines=data["lines"],
                 reprfuncargs=reprfuncargs,
                 reprlocals=reprlocals,
                 reprfileloc=reprfileloc,
                 style=data["style"],
-            )  # type: Union[ReprEntry, ReprEntryNative]
+            )
         elif entry_type == "ReprEntryNative":
             reprentry = ReprEntryNative(data["lines"])
         else:
@@ -555,9 +559,9 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
                         description,
                     )
                 )
-            exception_info = ExceptionChainRepr(
-                chain
-            )  # type: Union[ExceptionChainRepr,ReprExceptionInfo]
+            exception_info: Union[
+                ExceptionChainRepr, ReprExceptionInfo
+            ] = ExceptionChainRepr(chain)
         else:
             exception_info = ReprExceptionInfo(reprtraceback, reprcrash)
 

@@ -164,7 +164,7 @@ class Frame:
 class TracebackEntry:
     """A single entry in a Traceback."""
 
-    _repr_style = None  # type: Optional[Literal["short", "long"]]
+    _repr_style: Optional['Literal["short", "long"]'] = None
     exprinfo = None
 
     def __init__(
@@ -246,9 +246,9 @@ class TracebackEntry:
 
         Mostly for internal use.
         """
-        tbh = (
+        tbh: Union[bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]] = (
             False
-        )  # type: Union[bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]]
+        )
         for maybe_ns_dct in (self.frame.f_locals, self.frame.f_globals):
             # in normal cases, f_locals and f_globals are dictionaries
             # however via `exec(...)` / `eval(...)` they can be other types
@@ -301,7 +301,7 @@ class Traceback(List[TracebackEntry]):
         if isinstance(tb, TracebackType):
 
             def f(cur: TracebackType) -> Iterable[TracebackEntry]:
-                cur_ = cur  # type: Optional[TracebackType]
+                cur_: Optional[TracebackType] = cur
                 while cur_ is not None:
                     yield TracebackEntry(cur_, excinfo=excinfo)
                     cur_ = cur_.tb_next
@@ -381,7 +381,7 @@ class Traceback(List[TracebackEntry]):
     def recursionindex(self) -> Optional[int]:
         """Return the index of the frame/TracebackEntry where recursion originates if
         appropriate, None if no recursion occurred."""
-        cache = {}  # type: Dict[Tuple[Any, int, int], List[Dict[str, Any]]]
+        cache: Dict[Tuple[Any, int, int], List[Dict[str, Any]]] = {}
         for i, entry in enumerate(self):
             # id for the code.raw is needed to work around
             # the strange metaprogramming in the decorator lib from pypi
@@ -760,7 +760,7 @@ class FormattedExcinfo:
         entry: TracebackEntry,
         excinfo: Optional[ExceptionInfo[BaseException]] = None,
     ) -> "ReprEntry":
-        lines = []  # type: List[str]
+        lines: List[str] = []
         style = entry._repr_style if entry._repr_style is not None else self.style
         if style in ("short", "long"):
             source = self._getentrysource(entry)
@@ -842,7 +842,7 @@ class FormattedExcinfo:
             recursionindex = traceback.recursionindex()
         except Exception as e:
             max_frames = 10
-            extraline = (
+            extraline: Optional[str] = (
                 "!!! Recursion error detected, but an error occurred locating the origin of recursion.\n"
                 "  The following exception happened when comparing locals in the stack frame:\n"
                 "    {exc_type}: {exc_msg}\n"
@@ -852,7 +852,7 @@ class FormattedExcinfo:
                 exc_msg=str(e),
                 max_frames=max_frames,
                 total=len(traceback),
-            )  # type: Optional[str]
+            )
             # Type ignored because adding two instaces of a List subtype
             # currently incorrectly has type List instead of the subtype.
             traceback = traceback[:max_frames] + traceback[-max_frames:]  # type: ignore
@@ -868,20 +868,20 @@ class FormattedExcinfo:
     def repr_excinfo(
         self, excinfo: ExceptionInfo[BaseException]
     ) -> "ExceptionChainRepr":
-        repr_chain = (
-            []
-        )  # type: List[Tuple[ReprTraceback, Optional[ReprFileLocation], Optional[str]]]
-        e = excinfo.value  # type: Optional[BaseException]
-        excinfo_ = excinfo  # type: Optional[ExceptionInfo[BaseException]]
+        repr_chain: List[
+            Tuple[ReprTraceback, Optional[ReprFileLocation], Optional[str]]
+        ] = []
+        e: Optional[BaseException] = excinfo.value
+        excinfo_: Optional[ExceptionInfo[BaseException]] = excinfo
         descr = None
-        seen = set()  # type: Set[int]
+        seen: Set[int] = set()
         while e is not None and id(e) not in seen:
             seen.add(id(e))
             if excinfo_:
                 reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash = (
+                reprcrash: Optional[ReprFileLocation] = (
                     excinfo_._getreprcrash() if self.style != "value" else None
-                )  # type: Optional[ReprFileLocation]
+                )
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
@@ -936,11 +936,11 @@ class TerminalRepr:
 @attr.s(eq=False)
 class ExceptionRepr(TerminalRepr):
     # Provided by subclasses.
-    reprcrash = None  # type: Optional[ReprFileLocation]
-    reprtraceback = None  # type: ReprTraceback
+    reprcrash: Optional["ReprFileLocation"]
+    reprtraceback: "ReprTraceback"
 
     def __attrs_post_init__(self) -> None:
-        self.sections = []  # type: List[Tuple[str, str, str]]
+        self.sections: List[Tuple[str, str, str]] = []
 
     def addsection(self, name: str, content: str, sep: str = "-") -> None:
         self.sections.append((name, content, sep))
@@ -1022,7 +1022,7 @@ class ReprTracebackNative(ReprTraceback):
 @attr.s(eq=False)
 class ReprEntryNative(TerminalRepr):
     lines = attr.ib(type=Sequence[str])
-    style = "native"  # type: _TracebackStyle
+    style: "_TracebackStyle" = "native"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
@@ -1058,9 +1058,9 @@ class ReprEntry(TerminalRepr):
         # such as ">   assert 0"
         fail_marker = f"{FormattedExcinfo.fail_marker}   "
         indent_size = len(fail_marker)
-        indents = []  # type: List[str]
-        source_lines = []  # type: List[str]
-        failure_lines = []  # type: List[str]
+        indents: List[str] = []
+        source_lines: List[str] = []
+        failure_lines: List[str] = []
         for index, line in enumerate(self.lines):
             is_failure_line = line.startswith(fail_marker)
             if is_failure_line:

@@ -47,7 +47,7 @@ class ColoredLevelFormatter(logging.Formatter):
     """A logging formatter which colorizes the %(levelname)..s part of the
     log format passed to __init__."""
 
-    LOGLEVEL_COLOROPTS = {
+    LOGLEVEL_COLOROPTS: Mapping[int, AbstractSet[str]] = {
         logging.CRITICAL: {"red"},
         logging.ERROR: {"red", "bold"},
         logging.WARNING: {"yellow"},
@@ -55,13 +55,13 @@ class ColoredLevelFormatter(logging.Formatter):
         logging.INFO: {"green"},
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
-    }  # type: Mapping[int, AbstractSet[str]]
+    }
     LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
 
     def __init__(self, terminalwriter: TerminalWriter, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._original_fmt = self._style._fmt
-        self._level_to_fmt_mapping = {}  # type: Dict[int, str]
+        self._level_to_fmt_mapping: Dict[int, str] = {}
 
         assert self._fmt is not None
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
@@ -315,12 +315,12 @@ class catching_logs:
 class LogCaptureHandler(logging.StreamHandler):
     """A logging handler that stores log records and the log text."""
 
-    stream = None  # type: StringIO
+    stream: StringIO
 
     def __init__(self) -> None:
         """Create a new log handler."""
         super().__init__(StringIO())
-        self.records = []  # type: List[logging.LogRecord]
+        self.records: List[logging.LogRecord] = []
 
     def emit(self, record: logging.LogRecord) -> None:
         """Keep the log records in a list in addition to the log text."""
@@ -346,9 +346,9 @@ class LogCaptureFixture:
 
     def __init__(self, item: nodes.Node) -> None:
         self._item = item
-        self._initial_handler_level = None  # type: Optional[int]
+        self._initial_handler_level: Optional[int] = None
         # Dict of log name -> log level.
-        self._initial_logger_levels = {}  # type: Dict[Optional[str], int]
+        self._initial_logger_levels: Dict[Optional[str], int] = {}
 
     def _finalize(self) -> None:
         """Finalize the fixture.
@@ -564,9 +564,9 @@ class LoggingPlugin:
             terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
             capture_manager = config.pluginmanager.get_plugin("capturemanager")
             # if capturemanager plugin is disabled, live logging still works.
-            self.log_cli_handler = _LiveLoggingStreamHandler(
-                terminal_reporter, capture_manager
-            )  # type: Union[_LiveLoggingStreamHandler, _LiveLoggingNullHandler]
+            self.log_cli_handler: Union[
+                _LiveLoggingStreamHandler, _LiveLoggingNullHandler
+            ] = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
         else:
             self.log_cli_handler = _LiveLoggingNullHandler()
         log_cli_formatter = self._create_formatter(
@@ -582,9 +582,9 @@ class LoggingPlugin:
         if color != "no" and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(
             log_format
         ):
-            formatter = ColoredLevelFormatter(
+            formatter: logging.Formatter = ColoredLevelFormatter(
                 create_terminal_writer(self._config), log_format, log_date_format
-            )  # type: logging.Formatter
+            )
         else:
             formatter = logging.Formatter(log_format, log_date_format)
 
@@ -699,7 +699,7 @@ class LoggingPlugin:
     def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("setup")
 
-        empty = {}  # type: Dict[str, List[logging.LogRecord]]
+        empty: Dict[str, List[logging.LogRecord]] = {}
         item._store[caplog_records_key] = empty
         yield from self._runtest_for(item, "setup")
 
@@ -755,7 +755,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
 
     # Officially stream needs to be a IO[str], but TerminalReporter
     # isn't. So force it.
-    stream = None  # type: TerminalReporter # type: ignore
+    stream: TerminalReporter = None  # type: ignore
 
     def __init__(
         self,

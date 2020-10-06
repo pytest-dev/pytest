@@ -656,9 +656,9 @@ class TestStackLevel:
     @pytest.fixture
     def capwarn(self, testdir):
         class CapturedWarnings:
-            captured = (
-                []
-            )  # type: List[Tuple[warnings.WarningMessage, Optional[Tuple[str, int, str]]]]
+            captured: List[
+                Tuple[warnings.WarningMessage, Optional[Tuple[str, int, str]]]
+            ] = ([])
 
             @classmethod
             def pytest_warning_recorded(cls, warning_message, when, nodeid, location):

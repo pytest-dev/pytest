@@ -507,7 +507,7 @@ class TestConfigCmdlineParsing:
 class TestConfigAPI:
     def test_config_trace(self, testdir) -> None:
         config = testdir.parseconfig()
-        values = []  # type: List[str]
+        values: List[str] = []
         config.trace.root.setwriter(values.append)
         config.trace("hello")
         assert len(values) == 1
@@ -809,7 +809,7 @@ class TestConfigFromdictargs:
 
     def test_invocation_params_args(self, _sys_snapshot) -> None:
         """Show that fromdictargs can handle args in their "orig" format"""
-        option_dict = {}  # type: Dict[str, object]
+        option_dict: Dict[str, object] = {}
         args = ["-vvvv", "-s", "a", "b"]
 
         config = Config.fromdictargs(option_dict, args)

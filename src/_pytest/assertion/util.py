@@ -21,11 +21,11 @@ from _pytest._io.saferepr import saferepr
 # interpretation code and assertion rewriter to detect this plugin was
 # loaded and in turn call the hooks defined here as part of the
 # DebugInterpreter.
-_reprcompare = None  # type: Optional[Callable[[str, object, object], Optional[str]]]
+_reprcompare: Optional[Callable[[str, object, object], Optional[str]]] = None
 
 # Works similarly as _reprcompare attribute. Is populated with the hook call
 # when pytest_runtest_setup is called.
-_assertion_pass = None  # type: Optional[Callable[[int, str, str], None]]
+_assertion_pass: Optional[Callable[[int, str, str], None]] = None
 
 
 def format_explanation(explanation: str) -> str:
@@ -197,7 +197,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     """
     from difflib import ndiff
 
-    explanation = []  # type: List[str]
+    explanation: List[str] = []
 
     if verbose < 1:
         i = 0  # just in case left or right has zero length
@@ -242,7 +242,7 @@ def _compare_eq_verbose(left: Any, right: Any) -> List[str]:
     left_lines = repr(left).splitlines(keepends)
     right_lines = repr(right).splitlines(keepends)
 
-    explanation = []  # type: List[str]
+    explanation: List[str] = []
     explanation += ["+" + line for line in left_lines]
     explanation += ["-" + line for line in right_lines]
 
@@ -296,7 +296,7 @@ def _compare_eq_sequence(
     left: Sequence[Any], right: Sequence[Any], verbose: int = 0
 ) -> List[str]:
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
-    explanation = []  # type: List[str]
+    explanation: List[str] = []
     len_left = len(left)
     len_right = len(right)
     for i in range(min(len_left, len_right)):
@@ -365,7 +365,7 @@ def _compare_eq_set(
 def _compare_eq_dict(
     left: Mapping[Any, Any], right: Mapping[Any, Any], verbose: int = 0
 ) -> List[str]:
-    explanation = []  # type: List[str]
+    explanation: List[str] = []
     set_left = set(left)
     set_right = set(right)
     common = set_left.intersection(set_right)

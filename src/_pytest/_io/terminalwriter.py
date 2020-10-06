@@ -76,7 +76,7 @@ class TerminalWriter:
         self._file = file
         self.hasmarkup = should_do_markup(file)
         self._current_line = ""
-        self._terminal_width = None  # type: Optional[int]
+        self._terminal_width: Optional[int] = None
         self.code_highlight = True
 
     @property
@@ -204,7 +204,7 @@ class TerminalWriter:
         except ImportError:
             return source
         else:
-            highlighted = highlight(
+            highlighted: str = highlight(
                 source, PythonLexer(), TerminalFormatter(bg="dark")
-            )  # type: str
+            )
             return highlighted

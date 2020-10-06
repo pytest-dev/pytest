@@ -83,7 +83,7 @@ class Store:
     __slots__ = ("_store",)
 
     def __init__(self) -> None:
-        self._store = {}  # type: Dict[StoreKey[Any], object]
+        self._store: Dict[StoreKey[Any], object] = {}
 
     def __setitem__(self, key: StoreKey[T], value: T) -> None:
         """Set a value for key."""

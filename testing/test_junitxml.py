@@ -867,7 +867,7 @@ def test_mangle_test_address():
 
 
 def test_dont_configure_on_workers(tmpdir) -> None:
-    gotten = []  # type: List[object]
+    gotten: List[object] = []
 
     class FakeConfig:
         if TYPE_CHECKING:
@@ -1102,9 +1102,10 @@ def test_unicode_issue368(testdir) -> None:
 
     class Report(BaseReport):
         longrepr = ustr
-        sections = []  # type: List[Tuple[str, str]]
+        sections: List[Tuple[str, str]] = []
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
+        when = "teardown"
 
     test_report = cast(TestReport, Report())
 
@@ -1372,7 +1373,7 @@ def test_global_properties(testdir, xunit_family) -> None:
     log = LogXML(str(path), None, family=xunit_family)
 
     class Report(BaseReport):
-        sections = []  # type: List[Tuple[str, str]]
+        sections: List[Tuple[str, str]] = []
         nodeid = "test_node_id"
 
     log.pytest_sessionstart()
@@ -1408,7 +1409,7 @@ def test_url_property(testdir) -> None:
 
     class Report(BaseReport):
         longrepr = "FooBarBaz"
-        sections = []  # type: List[Tuple[str, str]]
+        sections: List[Tuple[str, str]] = []
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
         url = test_url

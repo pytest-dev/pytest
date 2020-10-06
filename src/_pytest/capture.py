@@ -369,9 +369,7 @@ class FDCaptureBinary:
             # Further complications are the need to support suspend() and the
             # possibility of FD reuse (e.g. the tmpfile getting the very same
             # target FD). The following approach is robust, I believe.
-            self.targetfd_invalid = os.open(
-                os.devnull, os.O_RDWR
-            )  # type: Optional[int]
+            self.targetfd_invalid: Optional[int] = os.open(os.devnull, os.O_RDWR)
             os.dup2(self.targetfd_invalid, targetfd)
         else:
             self.targetfd_invalid = None
@@ -505,8 +503,8 @@ class CaptureResult(Generic[AnyStr]):
         __slots__ = ("out", "err")
 
     def __init__(self, out: AnyStr, err: AnyStr) -> None:
-        self.out = out  # type: AnyStr
-        self.err = err  # type: AnyStr
+        self.out: AnyStr = out
+        self.err: AnyStr = err
 
     def __len__(self) -> int:
         return 2
@@ -665,8 +663,8 @@ class CaptureManager:
 
     def __init__(self, method: "_CaptureMethod") -> None:
         self._method = method
-        self._global_capturing = None  # type: Optional[MultiCapture[str]]
-        self._capture_fixture = None  # type: Optional[CaptureFixture[Any]]
+        self._global_capturing: Optional[MultiCapture[str]] = None
+        self._capture_fixture: Optional[CaptureFixture[Any]] = None
 
     def __repr__(self) -> str:
         return "<CaptureManager _method={!r} _global_capturing={!r} _capture_fixture={!r}>".format(
@@ -835,7 +833,7 @@ class CaptureFixture(Generic[AnyStr]):
     def __init__(self, captureclass, request: SubRequest) -> None:
         self.captureclass = captureclass
         self.request = request
-        self._capture = None  # type: Optional[MultiCapture[AnyStr]]
+        self._capture: Optional[MultiCapture[AnyStr]] = None
         self._captured_out = self.captureclass.EMPTY_BUFFER
         self._captured_err = self.captureclass.EMPTY_BUFFER
 

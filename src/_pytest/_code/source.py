@@ -21,7 +21,7 @@ class Source:
 
     def __init__(self, obj: object = None) -> None:
         if not obj:
-            self.lines = []  # type: List[str]
+            self.lines: List[str] = []
         elif isinstance(obj, Source):
             self.lines = obj.lines
         elif isinstance(obj, (tuple, list)):
@@ -144,12 +144,12 @@ def deindent(lines: Iterable[str]) -> List[str]:
 def get_statement_startend2(lineno: int, node: ast.AST) -> Tuple[int, Optional[int]]:
     # Flatten all statements and except handlers into one lineno-list.
     # AST's line numbers start indexing at 1.
-    values = []  # type: List[int]
+    values: List[int] = []
     for x in ast.walk(node):
         if isinstance(x, (ast.stmt, ast.ExceptHandler)):
             values.append(x.lineno - 1)
             for name in ("finalbody", "orelse"):
-                val = getattr(x, name, None)  # type: Optional[List[ast.stmt]]
+                val: Optional[List[ast.stmt]] = getattr(x, name, None)
                 if val:
                     # Treat the finally/orelse part as its own statement.
                     values.append(val[0].lineno - 1 - 1)

@@ -227,7 +227,7 @@ class TestInlineRunModulesCleanup:
 
     def spy_factory(self):
         class SysModulesSnapshotSpy:
-            instances = []  # type: List[SysModulesSnapshotSpy]
+            instances: List["SysModulesSnapshotSpy"] = []  # noqa: F821
 
             def __init__(self, preserve=None) -> None:
                 SysModulesSnapshotSpy.instances.append(self)
@@ -408,7 +408,7 @@ class TestSysPathsSnapshot:
         original_data = list(getattr(sys, path_type))
         original_other = getattr(sys, other_path_type)
         original_other_data = list(original_other)
-        new = []  # type: List[object]
+        new: List[object] = []
         snapshot = SysPathsSnapshot()
         monkeypatch.setattr(sys, path_type, new)
         snapshot.restore()

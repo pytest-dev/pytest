@@ -337,7 +337,7 @@ def test_findsource(monkeypatch) -> None:
     assert src is not None
     assert "if 1:" in str(src)
 
-    d = {}  # type: Dict[str, Any]
+    d: Dict[str, Any] = {}
     eval(co, d)
     src, lineno = findsource(d["x"])
     assert src is not None

@@ -262,7 +262,7 @@ def wrap_session(
             session.exitstatus = ExitCode.TESTS_FAILED
         except (KeyboardInterrupt, exit.Exception):
             excinfo = _pytest._code.ExceptionInfo.from_current()
-            exitstatus = ExitCode.INTERRUPTED  # type: Union[int, ExitCode]
+            exitstatus: Union[int, ExitCode] = ExitCode.INTERRUPTED
             if isinstance(excinfo.value, exit.Exception):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
@@ -439,10 +439,10 @@ class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
     # Set on the session by runner.pytest_sessionstart.
-    _setupstate = None  # type: SetupState
+    _setupstate: SetupState
     # Set on the session by fixtures.pytest_sessionstart.
-    _fixturemanager = None  # type: FixtureManager
-    exitstatus = None  # type: Union[int, ExitCode]
+    _fixturemanager: FixtureManager
+    exitstatus: Union[int, ExitCode]
 
     def __init__(self, config: Config) -> None:
         super().__init__(
@@ -450,21 +450,19 @@ class Session(nodes.FSCollector):
         )
         self.testsfailed = 0
         self.testscollected = 0
-        self.shouldstop = False  # type: Union[bool, str]
-        self.shouldfail = False  # type: Union[bool, str]
+        self.shouldstop: Union[bool, str] = False
+        self.shouldfail: Union[bool, str] = False
         self.trace = config.trace.root.get("collection")
         self.startdir = config.invocation_dir
-        self._initialpaths = frozenset()  # type: FrozenSet[py.path.local]
+        self._initialpaths: FrozenSet[py.path.local] = frozenset()
 
-        self._bestrelpathcache = _bestrelpath_cache(
-            config.rootpath
-        )  # type: Dict[Path, str]
+        self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
         self.config.pluginmanager.register(self, name="session")
 
     @classmethod
     def from_config(cls, config: Config) -> "Session":
-        session = cls._create(config)  # type: Session
+        session: Session = cls._create(config)
         return session
 
     def __repr__(self) -> str:
@@ -589,15 +587,15 @@ class Session(nodes.FSCollector):
         self.trace("perform_collect", self, args)
         self.trace.root.indent += 1
 
-        self._notfound = []  # type: List[Tuple[str, Sequence[nodes.Collector]]]
-        self._initial_parts = []  # type: List[Tuple[py.path.local, List[str]]]
-        self.items = []  # type: List[nodes.Item]
+        self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
+        self._initial_parts: List[Tuple[py.path.local, List[str]]] = []
+        self.items: List[nodes.Item] = []
 
         hook = self.config.hook
 
-        items = self.items  # type: Sequence[Union[nodes.Item, nodes.Collector]]
+        items: Sequence[Union[nodes.Item, nodes.Collector]] = self.items
         try:
-            initialpaths = []  # type: List[py.path.local]
+            initialpaths: List[py.path.local] = []
             for arg in args:
                 fspath, parts = resolve_collection_argument(
                     self.config.invocation_params.dir,
@@ -637,19 +635,17 @@ class Session(nodes.FSCollector):
         from _pytest.python import Package
 
         # Keep track of any collected nodes in here, so we don't duplicate fixtures.
-        node_cache1 = {}  # type: Dict[py.path.local, Sequence[nodes.Collector]]
-        node_cache2 = (
-            {}
-        )  # type: Dict[Tuple[Type[nodes.Collector], py.path.local], nodes.Collector]
+        node_cache1: Dict[py.path.local, Sequence[nodes.Collector]] = {}
+        node_cache2: Dict[
+            Tuple[Type[nodes.Collector], py.path.local], nodes.Collector
+        ] = ({})
 
         # Keep track of any collected collectors in matchnodes paths, so they
         # are not collected more than once.
-        matchnodes_cache = (
-            {}
-        )  # type: Dict[Tuple[Type[nodes.Collector], str], CollectReport]
+        matchnodes_cache: Dict[Tuple[Type[nodes.Collector], str], CollectReport] = ({})
 
         # Dirnames of pkgs with dunder-init files.
-        pkg_roots = {}  # type: Dict[str, Package]
+        pkg_roots: Dict[str, Package] = {}
 
         for argpath, names in self._initial_parts:
             self.trace("processing argument", (argpath, names))
@@ -678,7 +674,7 @@ class Session(nodes.FSCollector):
             if argpath.check(dir=1):
                 assert not names, "invalid arg {!r}".format((argpath, names))
 
-                seen_dirs = set()  # type: Set[py.path.local]
+                seen_dirs: Set[py.path.local] = set()
                 for direntry in visit(str(argpath), self._recurse):
                     if not direntry.is_file():
                         continue
@@ -718,9 +714,9 @@ class Session(nodes.FSCollector):
                         node_cache1[argpath] = col
 
                 matching = []
-                work = [
-                    (col, names)
-                ]  # type: List[Tuple[Sequence[Union[nodes.Item, nodes.Collector]], Sequence[str]]]
+                work: List[
+                    Tuple[Sequence[Union[nodes.Item, nodes.Collector]], Sequence[str]]
+                ] = [(col, names)]
                 while work:
                     self.trace("matchnodes", col, names)
                     self.trace.root.indent += 1

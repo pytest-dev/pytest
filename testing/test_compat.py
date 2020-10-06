@@ -211,7 +211,7 @@ def test_cached_property() -> None:
 
 
 def test_assert_never_union() -> None:
-    x = 10  # type: Union[int, str]
+    x: Union[int, str] = 10
 
     if isinstance(x, int):
         pass
@@ -229,7 +229,7 @@ def test_assert_never_union() -> None:
 
 def test_assert_never_enum() -> None:
     E = enum.Enum("E", "a b")
-    x = E.a  # type: E
+    x: E = E.a
 
     if x is E.a:
         pass
@@ -246,7 +246,7 @@ def test_assert_never_enum() -> None:
 
 
 def test_assert_never_literal() -> None:
-    x = "a"  # type: Literal["a", "b"]
+    x: Literal["a", "b"] = "a"
 
     if x == "a":
         pass
