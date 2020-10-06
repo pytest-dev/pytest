@@ -45,7 +45,6 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
-from _pytest.compat import order_preserving_dict
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -276,21 +275,12 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
         item_d: Dict[_Key, Deque[nodes.Item]] = defaultdict(deque)
         items_by_argkey[scopenum] = item_d
         for item in items:
-            # cast is a workaround for https://github.com/python/typeshed/issues/3800.
-            keys = cast(
-                "Dict[_Key, None]",
-                order_preserving_dict.fromkeys(
-                    get_parametrized_fixture_keys(item, scopenum), None
-                ),
-            )
+            keys = dict.fromkeys(get_parametrized_fixture_keys(item, scopenum), None)
             if keys:
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
-    # cast is a workaround for https://github.com/python/typeshed/issues/3800.
-    items_dict = cast(
-        Dict[nodes.Item, None], order_preserving_dict.fromkeys(items, None)
-    )
+    items_dict = dict.fromkeys(items, None)
     return list(reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, 0))
 
 
@@ -314,17 +304,17 @@ def reorder_items_atscope(
         return items
     ignore: Set[Optional[_Key]] = set()
     items_deque = deque(items)
-    items_done: Dict[nodes.Item, None] = order_preserving_dict()
+    items_done: Dict[nodes.Item, None] = {}
     scoped_items_by_argkey = items_by_argkey[scopenum]
     scoped_argkeys_cache = argkeys_cache[scopenum]
     while items_deque:
-        no_argkey_group: Dict[nodes.Item, None] = order_preserving_dict()
+        no_argkey_group: Dict[nodes.Item, None] = {}
         slicing_argkey = None
         while items_deque:
             item = items_deque.popleft()
             if item in items_done or item in no_argkey_group:
                 continue
-            argkeys = order_preserving_dict.fromkeys(
+            argkeys = dict.fromkeys(
                 (k for k in scoped_argkeys_cache.get(item, []) if k not in ignore), None
             )
             if not argkeys:

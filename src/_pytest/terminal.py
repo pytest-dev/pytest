@@ -35,7 +35,6 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
-from _pytest.compat import order_preserving_dict
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -909,9 +908,7 @@ class TerminalReporter:
             if not warning_reports:
                 return
 
-            reports_grouped_by_message: Dict[str, List[WarningReport]] = (
-                order_preserving_dict()
-            )
+            reports_grouped_by_message: Dict[str, List[WarningReport]] = {}
             for wr in warning_reports:
                 reports_grouped_by_message.setdefault(wr.message, []).append(wr)
 
@@ -925,7 +922,7 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename: Dict[str, int] = order_preserving_dict()
+                counts_by_filename: Dict[str, int] = {}
                 for loc in locations:
                     key = str(loc).split("::", 1)[0]
                     counts_by_filename[key] = counts_by_filename.get(key, 0) + 1
