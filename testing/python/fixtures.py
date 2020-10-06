@@ -87,7 +87,7 @@ def test_getfuncargnames_staticmethod_partial():
 class TestFillFixtures:
     def test_fillfuncargs_exposed(self):
         # used by oejskit, kept for compatibility
-        assert pytest._fillfuncargs == fixtures.fillfixtures
+        assert pytest._fillfuncargs == fixtures._fillfuncargs
 
     def test_funcarg_lookupfails(self, testdir):
         testdir.copy_example()

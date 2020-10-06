@@ -20,9 +20,10 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 }
 
 
-FILLFUNCARGS = PytestDeprecationWarning(
-    "The `_fillfuncargs` function is deprecated, use "
-    "function._request._fillfixtures() instead if you cannot avoid reaching into internals."
+FILLFUNCARGS = UnformattedWarning(
+    PytestDeprecationWarning,
+    "{name} is deprecated, use "
+    "function._request._fillfixtures() instead if you cannot avoid reaching into internals.",
 )
 
 PYTEST_COLLECT_MODULE = UnformattedWarning(
