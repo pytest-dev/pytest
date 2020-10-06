@@ -110,7 +110,7 @@ def locate_config(
 
 
 def get_common_ancestor(paths: Iterable[Path]) -> Path:
-    common_ancestor = None  # type: Optional[Path]
+    common_ancestor: Optional[Path] = None
     for path in paths:
         if not path.exists():
             continue
@@ -175,7 +175,7 @@ def determine_setup(
     dirs = get_dirs_from_args(args)
     if inifile:
         inipath_ = absolutepath(inifile)
-        inipath = inipath_  # type: Optional[Path]
+        inipath: Optional[Path] = inipath_
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
             rootdir = get_common_ancestor(dirs)

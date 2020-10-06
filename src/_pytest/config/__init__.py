@@ -159,9 +159,9 @@ def main(
             return ExitCode.USAGE_ERROR
         else:
             try:
-                ret = config.hook.pytest_cmdline_main(
+                ret: Union[ExitCode, int] = config.hook.pytest_cmdline_main(
                     config=config
-                )  # type: Union[ExitCode, int]
+                )
                 try:
                     return ExitCode(ret)
                 except ValueError:
@@ -337,27 +337,27 @@ class PytestPluginManager(PluginManager):
 
         super().__init__("pytest")
         # The objects are module objects, only used generically.
-        self._conftest_plugins = set()  # type: Set[types.ModuleType]
+        self._conftest_plugins: Set[types.ModuleType] = set()
 
         # State related to local conftest plugins.
-        self._dirpath2confmods = {}  # type: Dict[py.path.local, List[types.ModuleType]]
-        self._conftestpath2mod = {}  # type: Dict[Path, types.ModuleType]
-        self._confcutdir = None  # type: Optional[py.path.local]
+        self._dirpath2confmods: Dict[py.path.local, List[types.ModuleType]] = {}
+        self._conftestpath2mod: Dict[Path, types.ModuleType] = {}
+        self._confcutdir: Optional[py.path.local] = None
         self._noconftest = False
-        self._duplicatepaths = set()  # type: Set[py.path.local]
+        self._duplicatepaths: Set[py.path.local] = set()
 
         # plugins that were explicitly skipped with pytest.skip
         # list of (module name, skip reason)
         # previously we would issue a warning when a plugin was skipped, but
         # since we refactored warnings as first citizens of Config, they are
         # just stored here to be used later.
-        self.skipped_plugins = []  # type: List[Tuple[str, str]]
+        self.skipped_plugins: List[Tuple[str, str]] = []
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
         if os.environ.get("PYTEST_DEBUG"):
-            err = sys.stderr  # type: IO[str]
-            encoding = getattr(err, "encoding", "utf8")  # type: str
+            err: IO[str] = sys.stderr
+            encoding: str = getattr(err, "encoding", "utf8")
             try:
                 err = open(
                     os.dup(err.fileno()), mode=err.mode, buffering=1, encoding=encoding,
@@ -431,7 +431,7 @@ class PytestPluginManager(PluginManager):
                 )
             )
             return None
-        ret = super().register(plugin, name)  # type: Optional[str]
+        ret: Optional[str] = super().register(plugin, name)
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
                 kwargs=dict(plugin=plugin, manager=self)
@@ -443,7 +443,7 @@ class PytestPluginManager(PluginManager):
 
     def getplugin(self, name: str):
         # Support deprecated naming because plugins (xdist e.g.) use it.
-        plugin = self.get_plugin(name)  # type: Optional[_PluggyPlugin]
+        plugin: Optional[_PluggyPlugin] = self.get_plugin(name)
         return plugin
 
     def hasplugin(self, name: str) -> bool:
@@ -898,10 +898,10 @@ class Config:
 
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
-        self._inicache = {}  # type: Dict[str, Any]
-        self._override_ini = ()  # type: Sequence[str]
-        self._opt2dest = {}  # type: Dict[str, str]
-        self._cleanup = []  # type: List[Callable[[], None]]
+        self._inicache: Dict[str, Any] = {}
+        self._override_ini: Sequence[str] = ()
+        self._opt2dest: Dict[str, str] = {}
+        self._cleanup: List[Callable[[], None]] = []
         # A place where plugins can store information on the config for their
         # own use. Currently only intended for internal plugins.
         self._store = Store()
@@ -914,7 +914,7 @@ class Config:
         if TYPE_CHECKING:
             from _pytest.cacheprovider import Cache
 
-            self.cache = None  # type: Optional[Cache]
+            self.cache: Optional[Cache] = None
 
     @property
     def invocation_dir(self) -> py.path.local:
@@ -989,9 +989,9 @@ class Config:
             fin()
 
     def get_terminal_writer(self) -> TerminalWriter:
-        terminalreporter = self.pluginmanager.get_plugin(
+        terminalreporter: TerminalReporter = self.pluginmanager.get_plugin(
             "terminalreporter"
-        )  # type: TerminalReporter
+        )
         return terminalreporter._tw
 
     def pytest_cmdline_parse(
@@ -1026,7 +1026,7 @@ class Config:
         option: Optional[argparse.Namespace] = None,
     ) -> None:
         if option and getattr(option, "fulltrace", False):
-            style = "long"  # type: _TracebackStyle
+            style: _TracebackStyle = "long"
         else:
             style = "native"
         excrepr = excinfo.getrepr(
@@ -1415,7 +1415,7 @@ class Config:
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()
-        values = []  # type: List[py.path.local]
+        values: List[py.path.local] = []
         for relroot in relroots:
             if not isinstance(relroot, py.path.local):
                 relroot = relroot.replace("/", os.sep)
@@ -1568,7 +1568,7 @@ def parse_warning_filter(
     while len(parts) < 5:
         parts.append("")
     action_, message, category_, module, lineno_ = [s.strip() for s in parts]
-    action = warnings._getaction(action_)  # type: str # type: ignore[attr-defined]
+    action: str = warnings._getaction(action_)  # type: ignore[attr-defined]
     category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined]
     if message and escape:
         message = re.escape(message)

@@ -1040,7 +1040,7 @@ class TestTracebackCutting:
         from _pytest._code import filter_traceback
 
         try:
-            ns = {}  # type: Dict[str, Any]
+            ns: Dict[str, Any] = {}
             exec("def foo(): raise ValueError", ns)
             ns["foo"]()
         except ValueError:

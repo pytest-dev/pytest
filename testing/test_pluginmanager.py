@@ -100,7 +100,7 @@ class TestPytestPluginInteractions:
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
 
-        values = []  # type: List[str]
+        values: List[str] = []
         pytestpm.trace.root.setwriter(values.append)
         undo = pytestpm.enable_tracing()
         try:

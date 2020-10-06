@@ -41,7 +41,7 @@ def test_multiline_message() -> None:
 
     logfmt = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
 
-    record = logging.LogRecord(
+    record: Any = logging.LogRecord(
         name="dummy",
         level=logging.INFO,
         pathname="dummypath",
@@ -49,7 +49,7 @@ def test_multiline_message() -> None:
         msg="Test Message line1\nline2",
         args=(),
         exc_info=None,
-    )  # type: Any
+    )
     # this is called by logging.Formatter.format
     record.message = record.getMessage()
 

@@ -130,7 +130,7 @@ def test_setitem() -> None:
 
 
 def test_setitem_deleted_meanwhile() -> None:
-    d = {}  # type: Dict[str, object]
+    d: Dict[str, object] = {}
     monkeypatch = MonkeyPatch()
     monkeypatch.setitem(d, "x", 2)
     del d["x"]
@@ -155,7 +155,7 @@ def test_setenv_deleted_meanwhile(before: bool) -> None:
 
 
 def test_delitem() -> None:
-    d = {"x": 1}  # type: Dict[str, object]
+    d: Dict[str, object] = {"x": 1}
     monkeypatch = MonkeyPatch()
     monkeypatch.delitem(d, "x")
     assert "x" not in d

@@ -15,7 +15,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="session")
 def checked_order():
-    order = []  # type: List[Tuple[str, str, str]]
+    order: List[Tuple[str, str, str]] = []
 
     yield order
     pprint.pprint(order)

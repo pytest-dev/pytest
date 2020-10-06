@@ -197,9 +197,7 @@ def pytest_collect_file(
             ):
                 return None
         ihook = parent.session.gethookproxy(path)
-        module = ihook.pytest_pycollect_makemodule(
-            path=path, parent=parent
-        )  # type: Module
+        module: Module = ihook.pytest_pycollect_makemodule(path=path, parent=parent)
         return module
     return None
 
@@ -211,9 +209,9 @@ def path_matches_patterns(path: py.path.local, patterns: Iterable[str]) -> bool:
 
 def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
     if path.basename == "__init__.py":
-        pkg = Package.from_parent(parent, fspath=path)  # type: Package
+        pkg: Package = Package.from_parent(parent, fspath=path)
         return pkg
-    mod = Module.from_parent(parent, fspath=path)  # type: Module
+    mod: Module = Module.from_parent(parent, fspath=path)
     return mod
 
 
@@ -257,9 +255,9 @@ class PyobjMixin:
 
     # Function and attributes that the mixin needs (for type-checking only).
     if TYPE_CHECKING:
-        name = ""  # type: str
-        parent = None  # type: Optional[nodes.Node]
-        own_markers = []  # type: List[Mark]
+        name: str = ""
+        parent: Optional[nodes.Node] = None
+        own_markers: List[Mark] = []
 
         def getparent(self, cls: Type[nodes._NodeType]) -> Optional[nodes._NodeType]:
             ...
@@ -336,7 +334,7 @@ class PyobjMixin:
             file_path = sys.modules[obj.__module__].__file__
             if file_path.endswith(".pyc"):
                 file_path = file_path[:-1]
-            fspath = file_path  # type: Union[py.path.local, str]
+            fspath: Union[py.path.local, str] = file_path
             lineno = compat_co_firstlineno
         else:
             fspath, lineno = getfslineno(obj)
@@ -420,8 +418,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
         dicts = [getattr(self.obj, "__dict__", {})]
         for basecls in self.obj.__class__.__mro__:
             dicts.append(basecls.__dict__)
-        seen = set()  # type: Set[str]
-        values = []  # type: List[Union[nodes.Item, nodes.Collector]]
+        seen: Set[str] = set()
+        values: List[Union[nodes.Item, nodes.Collector]] = []
         ihook = self.ihook
         for dic in dicts:
             # Note: seems like the dict can change during iteration -
@@ -696,7 +694,7 @@ class Package(Module):
             init_module, self.config.getini("python_files")
         ):
             yield Module.from_parent(self, fspath=init_module)
-        pkg_prefixes = set()  # type: Set[py.path.local]
+        pkg_prefixes: Set[py.path.local] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
             path = py.path.local(direntry.path)
 
@@ -851,14 +849,14 @@ class Instance(PyCollector):
 
 
 def hasinit(obj: object) -> bool:
-    init = getattr(obj, "__init__", None)  # type: object
+    init: object = getattr(obj, "__init__", None)
     if init:
         return init != object.__init__
     return False
 
 
 def hasnew(obj: object) -> bool:
-    new = getattr(obj, "__new__", None)  # type: object
+    new: object = getattr(obj, "__new__", None)
     if new:
         return new != object.__new__
     return False
@@ -868,13 +866,13 @@ def hasnew(obj: object) -> bool:
 class CallSpec2:
     def __init__(self, metafunc: "Metafunc") -> None:
         self.metafunc = metafunc
-        self.funcargs = {}  # type: Dict[str, object]
-        self._idlist = []  # type: List[str]
-        self.params = {}  # type: Dict[str, object]
+        self.funcargs: Dict[str, object] = {}
+        self._idlist: List[str] = []
+        self.params: Dict[str, object] = {}
         # Used for sorting parametrized resources.
-        self._arg2scopenum = {}  # type: Dict[str, int]
-        self.marks = []  # type: List[Mark]
-        self.indices = {}  # type: Dict[str, int]
+        self._arg2scopenum: Dict[str, int] = {}
+        self.marks: List[Mark] = []
+        self.indices: Dict[str, int] = {}
 
     def copy(self) -> "CallSpec2":
         cs = CallSpec2(self.metafunc)
@@ -959,7 +957,7 @@ class Metafunc:
         #: Class object where the test function is defined in or ``None``.
         self.cls = cls
 
-        self._calls = []  # type: List[CallSpec2]
+        self._calls: List[CallSpec2] = []
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     def parametrize(
@@ -1175,9 +1173,9 @@ class Metafunc:
             * "funcargs" if the argname should be a parameter to the parametrized test function.
         """
         if isinstance(indirect, bool):
-            valtypes = dict.fromkeys(
+            valtypes: Dict[str, Literal["params", "funcargs"]] = dict.fromkeys(
                 argnames, "params" if indirect else "funcargs"
-            )  # type: Dict[str, Literal["params", "funcargs"]]
+            )
         elif isinstance(indirect, Sequence):
             valtypes = dict.fromkeys(argnames, "funcargs")
             for arg in indirect:
@@ -1296,9 +1294,9 @@ def _idval(
             msg = prefix + msg.format(argname, idx)
             raise ValueError(msg) from e
     elif config:
-        hook_id = config.hook.pytest_make_parametrize_id(
+        hook_id: Optional[str] = config.hook.pytest_make_parametrize_id(
             config=config, val=val, argname=argname
-        )  # type: Optional[str]
+        )
         if hook_id:
             return hook_id
 
@@ -1315,7 +1313,7 @@ def _idval(
         return str(val)
     elif isinstance(getattr(val, "__name__", None), str):
         # Name of a class, function, module, etc.
-        name = getattr(val, "__name__")  # type: str
+        name: str = getattr(val, "__name__")
         return name
     return str(argname) + str(idx)
 
@@ -1365,7 +1363,7 @@ def idmaker(
         test_id_counts = Counter(resolved_ids)
 
         # Map the test ID to its next suffix.
-        test_id_suffixes = defaultdict(int)  # type: Dict[str, int]
+        test_id_suffixes: Dict[str, int] = defaultdict(int)
 
         # Suffix non-unique IDs to make them unique.
         for index, test_id in enumerate(resolved_ids):
@@ -1412,7 +1410,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
 
     def write_item(item: nodes.Item) -> None:
         # Not all items have _fixtureinfo attribute.
-        info = getattr(item, "_fixtureinfo", None)  # type: Optional[FuncFixtureInfo]
+        info: Optional[FuncFixtureInfo] = getattr(item, "_fixtureinfo", None)
         if info is None or not info.name2fixturedefs:
             # This test item does not use any fixtures.
             return
@@ -1449,7 +1447,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     fm = session._fixturemanager
 
     available = []
-    seen = set()  # type: Set[Tuple[str, str]]
+    seen: Set[Tuple[str, str]] = set()
 
     for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None
@@ -1590,7 +1588,7 @@ class Function(PyobjMixin, nodes.Item):
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(
                 self, self.obj, self.cls, funcargs=True
             )
-        self._fixtureinfo = fixtureinfo  # type: FuncFixtureInfo
+        self._fixtureinfo: FuncFixtureInfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
@@ -1600,7 +1598,7 @@ class Function(PyobjMixin, nodes.Item):
         return super().from_parent(parent=parent, **kw)
 
     def _initrequest(self) -> None:
-        self.funcargs = {}  # type: Dict[str, object]
+        self.funcargs: Dict[str, object] = {}
         self._request = fixtures.FixtureRequest(self)
 
     @property

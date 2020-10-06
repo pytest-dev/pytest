@@ -45,8 +45,8 @@ class TestMetafunc:
             _nodeid = attr.ib()
 
         names = getfuncargnames(func)
-        fixtureinfo = FuncFixtureInfoMock(names)  # type: Any
-        definition = DefinitionMock._create(func, "mock::nodeid")  # type: Any
+        fixtureinfo: Any = FuncFixtureInfoMock(names)
+        definition: Any = DefinitionMock._create(func, "mock::nodeid")
         return python.Metafunc(definition, fixtureinfo, config)
 
     def test_no_funcargs(self) -> None:
@@ -326,10 +326,10 @@ class TestMetafunc:
 
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
-        values = [
+        values: List[Tuple[str, Any, str]] = [
             ("ação", MockConfig({option: True}), "ação"),
             ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
-        ]  # type: List[Tuple[str, Any, str]]
+        ]
         for val, config, expected in values:
             actual = _idval(val, "a", 6, None, nodeid=None, config=config)
             assert actual == expected
@@ -508,10 +508,10 @@ class TestMetafunc:
 
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
-        values = [
+        values: List[Tuple[Any, str]] = [
             (MockConfig({option: True}), "ação"),
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
-        ]  # type: List[Tuple[Any, str]]
+        ]
         for config, expected in values:
             result = idmaker(
                 ("a",), [pytest.param("string")], idfn=lambda _: "ação", config=config,
@@ -540,10 +540,10 @@ class TestMetafunc:
 
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
-        values = [
+        values: List[Tuple[Any, str]] = [
             (MockConfig({option: True}), "ação"),
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
-        ]  # type: List[Tuple[Any, str]]
+        ]
         for config, expected in values:
             result = idmaker(
                 ("a",), [pytest.param("string")], ids=["ação"], config=config,
@@ -1519,9 +1519,9 @@ class TestMetafuncFunctionalAuto:
         self, testdir: Testdir, monkeypatch
     ) -> None:
         """Integration test for (#3941)"""
-        class_fix_setup = []  # type: List[object]
+        class_fix_setup: List[object] = []
         monkeypatch.setattr(sys, "class_fix_setup", class_fix_setup, raising=False)
-        func_fix_setup = []  # type: List[object]
+        func_fix_setup: List[object] = []
         monkeypatch.setattr(sys, "func_fix_setup", func_fix_setup, raising=False)
 
         testdir.makepyfile(

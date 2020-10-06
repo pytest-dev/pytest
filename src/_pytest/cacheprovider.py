@@ -186,7 +186,7 @@ class LFPluginCollWrapper:
     def pytest_make_collect_report(self, collector: nodes.Collector):
         if isinstance(collector, Session):
             out = yield
-            res = out.get_result()  # type: CollectReport
+            res: CollectReport = out.get_result()
 
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
@@ -251,11 +251,9 @@ class LFPlugin:
         active_keys = "lf", "failedfirst"
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
-        self.lastfailed = config.cache.get(
-            "cache/lastfailed", {}
-        )  # type: Dict[str, bool]
-        self._previously_failed_count = None  # type: Optional[int]
-        self._report_status = None  # type: Optional[str]
+        self.lastfailed: Dict[str, bool] = config.cache.get("cache/lastfailed", {})
+        self._previously_failed_count: Optional[int] = None
+        self._report_status: Optional[str] = None
         self._skipped_files = 0  # count skipped files during collection due to --lf
 
         if config.getoption("lf"):
@@ -369,8 +367,8 @@ class NFPlugin:
         yield
 
         if self.active:
-            new_items = order_preserving_dict()  # type: Dict[str, nodes.Item]
-            other_items = order_preserving_dict()  # type: Dict[str, nodes.Item]
+            new_items: Dict[str, nodes.Item] = order_preserving_dict()
+            other_items: Dict[str, nodes.Item] = order_preserving_dict()
             for item in items:
                 if item.nodeid not in self.cached_nodeids:
                     new_items[item.nodeid] = item

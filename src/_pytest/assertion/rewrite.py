@@ -62,14 +62,14 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             self.fnpats = config.getini("python_files")
         except ValueError:
             self.fnpats = ["test_*.py", "*_test.py"]
-        self.session = None  # type: Optional[Session]
-        self._rewritten_names = set()  # type: Set[str]
-        self._must_rewrite = set()  # type: Set[str]
+        self.session: Optional[Session] = None
+        self._rewritten_names: Set[str] = set()
+        self._must_rewrite: Set[str] = set()
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
         # which might result in infinite recursion (#3506)
         self._writing_pyc = False
         self._basenames_to_check_rewrite = {"conftest"}
-        self._marked_for_rewrite_cache = {}  # type: Dict[str, bool]
+        self._marked_for_rewrite_cache: Dict[str, bool] = {}
         self._session_paths_checked = False
 
     def set_session(self, session: Optional[Session]) -> None:
@@ -529,12 +529,12 @@ def set_location(node, lineno, col_offset):
 
 def _get_assertion_exprs(src: bytes) -> Dict[int, str]:
     """Return a mapping from {lineno: "assertion test expression"}."""
-    ret = {}  # type: Dict[int, str]
+    ret: Dict[int, str] = {}
 
     depth = 0
-    lines = []  # type: List[str]
-    assert_lineno = None  # type: Optional[int]
-    seen_lines = set()  # type: Set[int]
+    lines: List[str] = []
+    assert_lineno: Optional[int] = None
+    seen_lines: Set[int] = set()
 
     def _write_and_reset() -> None:
         nonlocal depth, lines, assert_lineno, seen_lines
@@ -699,12 +699,12 @@ class AssertionRewriter(ast.NodeVisitor):
         ]
         mod.body[pos:pos] = imports
         # Collect asserts.
-        nodes = [mod]  # type: List[ast.AST]
+        nodes: List[ast.AST] = [mod]
         while nodes:
             node = nodes.pop()
             for name, field in ast.iter_fields(node):
                 if isinstance(field, list):
-                    new = []  # type: List[ast.AST]
+                    new: List[ast.AST] = []
                     for i, child in enumerate(field):
                         if isinstance(child, ast.Assert):
                             # Transform assert.
@@ -776,7 +776,7 @@ class AssertionRewriter(ast.NodeVisitor):
         to format a string of %-formatted values as added by
         .explanation_param().
         """
-        self.explanation_specifiers = {}  # type: Dict[str, ast.expr]
+        self.explanation_specifiers: Dict[str, ast.expr] = {}
         self.stack.append(self.explanation_specifiers)
 
     def pop_format_context(self, expl_expr: ast.expr) -> ast.Name:
@@ -828,15 +828,15 @@ class AssertionRewriter(ast.NodeVisitor):
                 lineno=assert_.lineno,
             )
 
-        self.statements = []  # type: List[ast.stmt]
-        self.variables = []  # type: List[str]
+        self.statements: List[ast.stmt] = []
+        self.variables: List[str] = []
         self.variable_counter = itertools.count()
 
         if self.enable_assertion_pass_hook:
-            self.format_variables = []  # type: List[str]
+            self.format_variables: List[str] = []
 
-        self.stack = []  # type: List[Dict[str, ast.expr]]
-        self.expl_stmts = []  # type: List[ast.stmt]
+        self.stack: List[Dict[str, ast.expr]] = []
+        self.expl_stmts: List[ast.stmt] = []
         self.push_format_context()
         # Rewrite assert into a bunch of statements.
         top_condition, explanation = self.visit(assert_.test)
@@ -943,7 +943,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # Process each operand, short-circuiting if needed.
         for i, v in enumerate(boolop.values):
             if i:
-                fail_inner = []  # type: List[ast.stmt]
+                fail_inner: List[ast.stmt] = []
                 # cond is set in a prior loop iteration below
                 self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
                 self.expl_stmts = fail_inner
@@ -954,10 +954,10 @@ class AssertionRewriter(ast.NodeVisitor):
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
             if i < levels:
-                cond = res  # type: ast.expr
+                cond: ast.expr = res
                 if is_or:
                     cond = ast.UnaryOp(ast.Not(), cond)
-                inner = []  # type: List[ast.stmt]
+                inner: List[ast.stmt] = []
                 self.statements.append(ast.If(cond, inner, []))
                 self.statements = body = inner
         self.statements = save
@@ -1053,7 +1053,7 @@ class AssertionRewriter(ast.NodeVisitor):
             ast.Tuple(results, ast.Load()),
         )
         if len(comp.ops) > 1:
-            res = ast.BoolOp(ast.And(), load_names)  # type: ast.expr
+            res: ast.expr = ast.BoolOp(ast.And(), load_names)
         else:
             res = load_names[0]
         return res, self.explanation_param(self.pop_format_context(expl_call))

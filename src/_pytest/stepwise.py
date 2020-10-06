@@ -35,7 +35,7 @@ class StepwisePlugin:
     def __init__(self, config: Config) -> None:
         self.config = config
         self.active = config.getvalue("stepwise")
-        self.session = None  # type: Optional[Session]
+        self.session: Optional[Session] = None
         self.report_status = ""
 
         if self.active:

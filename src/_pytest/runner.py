@@ -215,7 +215,7 @@ def call_and_report(
 ) -> TestReport:
     call = call_runtest_hook(item, when, **kwds)
     hook = item.ihook
-    report = hook.pytest_runtest_makereport(item=item, call=call)  # type: TestReport
+    report: TestReport = hook.pytest_runtest_makereport(item=item, call=call)
     if log:
         hook.pytest_runtest_logreport(report=report)
     if check_interactive_exception(call, report):
@@ -242,14 +242,14 @@ def call_runtest_hook(
     item: Item, when: "Literal['setup', 'call', 'teardown']", **kwds
 ) -> "CallInfo[None]":
     if when == "setup":
-        ihook = item.ihook.pytest_runtest_setup  # type: Callable[..., None]
+        ihook: Callable[..., None] = item.ihook.pytest_runtest_setup
     elif when == "call":
         ihook = item.ihook.pytest_runtest_call
     elif when == "teardown":
         ihook = item.ihook.pytest_runtest_teardown
     else:
         assert False, f"Unhandled runtest hook case: {when}"
-    reraise = (Exit,)  # type: Tuple[Type[BaseException], ...]
+    reraise: Tuple[Type[BaseException], ...] = (Exit,)
     if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
     return CallInfo.from_call(
@@ -309,7 +309,7 @@ class CallInfo(Generic[TResult]):
         start = timing.time()
         precise_start = timing.perf_counter()
         try:
-            result = func()  # type: Optional[TResult]
+            result: Optional[TResult] = func()
         except BaseException:
             excinfo = ExceptionInfo.from_current()
             if reraise is not None and isinstance(excinfo.value, reraise):
@@ -340,9 +340,9 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:
 
 def pytest_make_collect_report(collector: Collector) -> CollectReport:
     call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
-    longrepr = None  # type: Union[None, Tuple[str, int, str], str, TerminalRepr]
+    longrepr: Union[None, Tuple[str, int, str], str, TerminalRepr] = None
     if not call.excinfo:
-        outcome = "passed"  # type: Literal["passed", "skipped", "failed"]
+        outcome: Literal["passed", "skipped", "failed"] = "passed"
     else:
         skip_exceptions = [Skipped]
         unittest = sys.modules.get("unittest")
@@ -373,8 +373,8 @@ class SetupState:
     """Shared state for setting up/tearing down test items or collectors."""
 
     def __init__(self):
-        self.stack = []  # type: List[Node]
-        self._finalizers = {}  # type: Dict[Node, List[Callable[[], object]]]
+        self.stack: List[Node] = []
+        self._finalizers: Dict[Node, List[Callable[[], object]]] = {}
 
     def addfinalizer(self, finalizer: Callable[[], object], colitem) -> None:
         """Attach a finalizer to the given colitem."""
@@ -456,7 +456,7 @@ class SetupState:
 def collect_one_node(collector: Collector) -> CollectReport:
     ihook = collector.ihook
     ihook.pytest_collectstart(collector=collector)
-    rep = ihook.pytest_make_collect_report(collector=collector)  # type: CollectReport
+    rep: CollectReport = ihook.pytest_make_collect_report(collector=collector)
     call = rep.__dict__.pop("call", None)
     if call and check_interactive_exception(call, rep):
         ihook.pytest_exception_interact(node=collector, call=call, report=rep)

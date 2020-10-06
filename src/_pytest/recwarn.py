@@ -163,7 +163,7 @@ class WarningsRecorder(warnings.catch_warnings):
         # Type ignored due to the way typeshed handles warnings.catch_warnings.
         super().__init__(record=True)  # type: ignore[call-arg]
         self._entered = False
-        self._list = []  # type: List[warnings.WarningMessage]
+        self._list: List[warnings.WarningMessage] = []
 
     @property
     def list(self) -> List["warnings.WarningMessage"]:

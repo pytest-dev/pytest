@@ -88,8 +88,8 @@ _ET = TypeVar("_ET", bound=Type[BaseException])
 
 
 class _WithException(Protocol[_F, _ET]):
-    Exception = None  # type: _ET
-    __call__ = None  # type: _F
+    Exception: _ET
+    __call__: _F
 
 
 def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _ET]]:

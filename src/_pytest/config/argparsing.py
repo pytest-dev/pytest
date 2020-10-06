@@ -35,7 +35,7 @@ class Parser:
         there's an error processing the command line arguments.
     """
 
-    prog = None  # type: Optional[str]
+    prog: Optional[str] = None
 
     def __init__(
         self,
@@ -43,12 +43,12 @@ class Parser:
         processopt: Optional[Callable[["Argument"], None]] = None,
     ) -> None:
         self._anonymous = OptionGroup("custom options", parser=self)
-        self._groups = []  # type: List[OptionGroup]
+        self._groups: List[OptionGroup] = []
         self._processopt = processopt
         self._usage = usage
-        self._inidict = {}  # type: Dict[str, Tuple[str, Optional[str], Any]]
-        self._ininames = []  # type: List[str]
-        self.extra_info = {}  # type: Dict[str, Any]
+        self._inidict: Dict[str, Tuple[str, Optional[str], Any]] = {}
+        self._ininames: List[str] = []
+        self.extra_info: Dict[str, Any] = {}
 
     def processoption(self, option: "Argument") -> None:
         if self._processopt:
@@ -207,8 +207,8 @@ class Argument:
     def __init__(self, *names: str, **attrs: Any) -> None:
         """Store parms in private vars for use in add_argument."""
         self._attrs = attrs
-        self._short_opts = []  # type: List[str]
-        self._long_opts = []  # type: List[str]
+        self._short_opts: List[str] = []
+        self._long_opts: List[str] = []
         if "%default" in (attrs.get("help") or ""):
             warnings.warn(
                 'pytest now uses argparse. "%default" should be'
@@ -254,7 +254,7 @@ class Argument:
         except KeyError:
             pass
         self._set_opt_strings(names)
-        dest = attrs.get("dest")  # type: Optional[str]
+        dest: Optional[str] = attrs.get("dest")
         if dest:
             self.dest = dest
         elif self._long_opts:
@@ -315,7 +315,7 @@ class Argument:
                 self._long_opts.append(opt)
 
     def __repr__(self) -> str:
-        args = []  # type: List[str]
+        args: List[str] = []
         if self._short_opts:
             args += ["_short_opts: " + repr(self._short_opts)]
         if self._long_opts:
@@ -334,7 +334,7 @@ class OptionGroup:
     ) -> None:
         self.name = name
         self.description = description
-        self.options = []  # type: List[Argument]
+        self.options: List[Argument] = []
         self.parser = parser
 
     def addoption(self, *optnames: str, **attrs: Any) -> None:
@@ -472,9 +472,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         orgstr = argparse.HelpFormatter._format_action_invocation(self, action)
         if orgstr and orgstr[0] != "-":  # only optional arguments
             return orgstr
-        res = getattr(
-            action, "_formatted_action_invocation", None
-        )  # type: Optional[str]
+        res: Optional[str] = getattr(action, "_formatted_action_invocation", None)
         if res:
             return res
         options = orgstr.split(", ")
@@ -483,7 +481,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
             action._formatted_action_invocation = orgstr  # type: ignore
             return orgstr
         return_list = []
-        short_long = {}  # type: Dict[str, str]
+        short_long: Dict[str, str] = {}
         for option in options:
             if len(option) == 2 or option[2] == " ":
                 continue

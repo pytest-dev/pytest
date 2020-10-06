@@ -214,8 +214,8 @@ class HookRecorder:
 
     def __init__(self, pluginmanager: PytestPluginManager) -> None:
         self._pluginmanager = pluginmanager
-        self.calls = []  # type: List[ParsedCall]
-        self.ret = None  # type: Optional[Union[int, ExitCode]]
+        self.calls: List[ParsedCall] = []
+        self.ret: Optional[Union[int, ExitCode]] = None
 
         def before(hook_name: str, hook_impls, kwargs) -> None:
             self.calls.append(ParsedCall(hook_name, kwargs))
@@ -474,7 +474,7 @@ class RunResult:
         duration: float,
     ) -> None:
         try:
-            self.ret = pytest.ExitCode(ret)  # type: Union[int, ExitCode]
+            self.ret: Union[int, ExitCode] = pytest.ExitCode(ret)
             """The return value."""
         except ValueError:
             self.ret = ret
@@ -626,17 +626,17 @@ class Testdir:
 
     def __init__(self, request: FixtureRequest, tmpdir_factory: TempdirFactory) -> None:
         self.request = request
-        self._mod_collections = (
-            WeakKeyDictionary()
-        )  # type: WeakKeyDictionary[Module, List[Union[Item, Collector]]]
+        self._mod_collections: WeakKeyDictionary[
+            Module, List[Union[Item, Collector]]
+        ] = (WeakKeyDictionary())
         if request.function:
-            name = request.function.__name__  # type: str
+            name: str = request.function.__name__
         else:
             name = request.node.name
         self._name = name
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.test_tmproot = tmpdir_factory.mktemp("tmp-" + name, numbered=True)
-        self.plugins = []  # type: List[Union[str, _PluggyPlugin]]
+        self.plugins: List[Union[str, _PluggyPlugin]] = []
         self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
@@ -919,7 +919,7 @@ class Testdir:
         test items contained within.
         """
         session = colitems[0].session
-        result = []  # type: List[Item]
+        result: List[Item] = []
         for colitem in colitems:
             result.extend(session.genitems(colitem))
         return result
@@ -1437,7 +1437,7 @@ class LineMatcher:
 
     def __init__(self, lines: List[str]) -> None:
         self.lines = lines
-        self._log_output = []  # type: List[str]
+        self._log_output: List[str] = []
 
     def _getlines(self, lines2: Union[str, Sequence[str], Source]) -> Sequence[str]:
         if isinstance(lines2, str):

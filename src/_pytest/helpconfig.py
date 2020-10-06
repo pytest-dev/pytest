@@ -97,7 +97,7 @@ def pytest_addoption(parser: Parser) -> None:
 @pytest.hookimpl(hookwrapper=True)
 def pytest_cmdline_parse():
     outcome = yield
-    config = outcome.get_result()  # type: Config
+    config: Config = outcome.get_result()
     if config.option.debug:
         path = os.path.abspath("pytestdebug.log")
         debugfile = open(path, "w")

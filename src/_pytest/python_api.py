@@ -196,8 +196,8 @@ class ApproxScalar(ApproxBase):
 
     # Using Real should be better than this Union, but not possible yet:
     # https://github.com/python/typeshed/pull/3108
-    DEFAULT_ABSOLUTE_TOLERANCE = 1e-12  # type: Union[float, Decimal]
-    DEFAULT_RELATIVE_TOLERANCE = 1e-6  # type: Union[float, Decimal]
+    DEFAULT_ABSOLUTE_TOLERANCE: Union[float, Decimal] = 1e-12
+    DEFAULT_RELATIVE_TOLERANCE: Union[float, Decimal] = 1e-6
 
     def __repr__(self) -> str:
         """Return a string communicating both the expected value and the
@@ -266,7 +266,7 @@ class ApproxScalar(ApproxBase):
             return False
 
         # Return true if the two numbers are within the tolerance.
-        result = abs(self.expected - actual) <= self.tolerance  # type: bool
+        result: bool = abs(self.expected - actual) <= self.tolerance
         return result
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.
@@ -517,7 +517,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     __tracebackhide__ = True
 
     if isinstance(expected, Decimal):
-        cls = ApproxDecimal  # type: Type[ApproxBase]
+        cls: Type[ApproxBase] = ApproxDecimal
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
     elif _is_numpy_array(expected):
@@ -542,7 +542,7 @@ def _is_numpy_array(obj: object) -> bool:
     """
     import sys
 
-    np = sys.modules.get("numpy")  # type: Any
+    np: Any = sys.modules.get("numpy")
     if np is not None:
         return isinstance(obj, np.ndarray)
     return False
@@ -687,7 +687,7 @@ def raises(
     __tracebackhide__ = True
 
     if isinstance(expected_exception, type):
-        excepted_exceptions = (expected_exception,)  # type: Tuple[Type[_E], ...]
+        excepted_exceptions: Tuple[Type[_E], ...] = (expected_exception,)
     else:
         excepted_exceptions = expected_exception
     for exc in excepted_exceptions:
@@ -699,7 +699,7 @@ def raises(
     message = f"DID NOT RAISE {expected_exception}"
 
     if not args:
-        match = kwargs.pop("match", None)  # type: Optional[Union[str, Pattern[str]]]
+        match: Optional[Union[str, Pattern[str]]] = kwargs.pop("match", None)
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
@@ -738,7 +738,7 @@ class RaisesContext(Generic[_E]):
         self.expected_exception = expected_exception
         self.message = message
         self.match_expr = match_expr
-        self.excinfo = None  # type: Optional[_pytest._code.ExceptionInfo[_E]]
+        self.excinfo: Optional[_pytest._code.ExceptionInfo[_E]] = None
 
     def __enter__(self) -> _pytest._code.ExceptionInfo[_E]:
         self.excinfo = _pytest._code.ExceptionInfo.for_later()

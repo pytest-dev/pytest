@@ -246,7 +246,7 @@ def test_setup_teardown_function_level_with_optional_argument(
     """Parameter to setup/teardown xunit-style functions parameter is now optional (#1728)."""
     import sys
 
-    trace_setups_teardowns = []  # type: List[str]
+    trace_setups_teardowns: List[str] = []
     monkeypatch.setattr(
         sys, "trace_setups_teardowns", trace_setups_teardowns, raising=False
     )

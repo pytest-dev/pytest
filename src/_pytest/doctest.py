@@ -59,7 +59,7 @@ DOCTEST_REPORT_CHOICES = (
 # Lazy definition of runner class
 RUNNER_CLASS = None
 # Lazy definition of output checker class
-CHECKER_CLASS = None  # type: Optional[Type[doctest.OutputChecker]]
+CHECKER_CLASS: Optional[Type["doctest.OutputChecker"]] = None
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -124,10 +124,10 @@ def pytest_collect_file(
     config = parent.config
     if path.ext == ".py":
         if config.option.doctestmodules and not _is_setup_py(path):
-            mod = DoctestModule.from_parent(parent, fspath=path)  # type: DoctestModule
+            mod: DoctestModule = DoctestModule.from_parent(parent, fspath=path)
             return mod
     elif _is_doctest(config, path, parent):
-        txt = DoctestTextfile.from_parent(parent, fspath=path)  # type: DoctestTextfile
+        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, fspath=path)
         return txt
     return None
 
@@ -163,7 +163,7 @@ class ReprFailDoctest(TerminalRepr):
 
 
 class MultipleDoctestFailures(Exception):
-    def __init__(self, failures: "Sequence[doctest.DocTestFailure]") -> None:
+    def __init__(self, failures: Sequence["doctest.DocTestFailure"]) -> None:
         super().__init__()
         self.failures = failures
 
@@ -180,7 +180,7 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
 
         def __init__(
             self,
-            checker: Optional[doctest.OutputChecker] = None,
+            checker: Optional["doctest.OutputChecker"] = None,
             verbose: Optional[bool] = None,
             optionflags: int = 0,
             continue_on_failure: bool = True,
@@ -251,7 +251,7 @@ class DoctestItem(pytest.Item):
         self.runner = runner
         self.dtest = dtest
         self.obj = None
-        self.fixture_request = None  # type: Optional[FixtureRequest]
+        self.fixture_request: Optional[FixtureRequest] = None
 
     @classmethod
     def from_parent(  # type: ignore
@@ -281,7 +281,7 @@ class DoctestItem(pytest.Item):
         assert self.runner is not None
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
-        failures = []  # type: List[doctest.DocTestFailure]
+        failures: List["doctest.DocTestFailure"] = []
         # Type ignored because we change the type of `out` from what
         # doctest expects.
         self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
@@ -305,9 +305,9 @@ class DoctestItem(pytest.Item):
     ) -> Union[str, TerminalRepr]:
         import doctest
 
-        failures = (
-            None
-        )  # type: Optional[Sequence[Union[doctest.DocTestFailure, doctest.UnexpectedException]]]
+        failures: Optional[
+            Sequence[Union[doctest.DocTestFailure, doctest.UnexpectedException]]
+        ] = (None)
         if isinstance(
             excinfo.value, (doctest.DocTestFailure, doctest.UnexpectedException)
         ):
@@ -636,8 +636,8 @@ def _init_checker_class() -> Type["doctest.OutputChecker"]:
                 return got
             offset = 0
             for w, g in zip(wants, gots):
-                fraction = w.group("fraction")  # type: Optional[str]
-                exponent = w.group("exponent1")  # type: Optional[str]
+                fraction: Optional[str] = w.group("fraction")
+                exponent: Optional[str] = w.group("exponent1")
                 if exponent is None:
                     exponent = w.group("exponent2")
                 if fraction is None:

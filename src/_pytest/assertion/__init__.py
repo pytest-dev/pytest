@@ -83,7 +83,7 @@ class AssertionState:
     def __init__(self, config: Config, mode) -> None:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
-        self.hook = None  # type: Optional[rewrite.AssertionRewritingHook]
+        self.hook: Optional[rewrite.AssertionRewritingHook] = None
 
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:

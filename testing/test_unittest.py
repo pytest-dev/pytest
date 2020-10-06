@@ -1162,7 +1162,7 @@ def test_pdb_teardown_called(testdir, monkeypatch) -> None:
     We delay the normal tearDown() calls when --pdb is given, so this ensures we are calling
     tearDown() eventually to avoid memory leaks when using --pdb.
     """
-    teardowns = []  # type: List[str]
+    teardowns: List[str] = []
     monkeypatch.setattr(
         pytest, "test_pdb_teardown_called_teardowns", teardowns, raising=False
     )
@@ -1194,7 +1194,7 @@ def test_pdb_teardown_called(testdir, monkeypatch) -> None:
 @pytest.mark.parametrize("mark", ["@unittest.skip", "@pytest.mark.skip"])
 def test_pdb_teardown_skipped(testdir, monkeypatch, mark: str) -> None:
     """With --pdb, setUp and tearDown should not be called for skipped tests."""
-    tracked = []  # type: List[str]
+    tracked: List[str] = []
     monkeypatch.setattr(pytest, "test_pdb_teardown_skipped", tracked, raising=False)
 
     testdir.makepyfile(

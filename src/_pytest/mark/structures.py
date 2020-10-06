@@ -127,7 +127,7 @@ class ParameterSet(
             return cls.param(parameterset)
         else:
             # TODO: Refactor to fix this type-ignore. Currently the following
-            # type-checks but crashes:
+            # passes type-checking but crashes:
             #
             #   @pytest.mark.parametrize(('x', 'y'), [1, 2])
             #   def test_foo(x, y): pass
@@ -231,7 +231,7 @@ class Mark:
         assert self.name == other.name
 
         # Remember source of ids with parametrize Marks.
-        param_ids_from = None  # type: Optional[Mark]
+        param_ids_from: Optional[Mark] = None
         if self.name == "parametrize":
             if other._has_param_ids():
                 param_ids_from = other
@@ -465,8 +465,8 @@ class MarkGenerator:
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """
 
-    _config = None  # type: Optional[Config]
-    _markers = set()  # type: Set[str]
+    _config: Optional[Config] = None
+    _markers: Set[str] = set()
 
     # See TYPE_CHECKING above.
     if TYPE_CHECKING:

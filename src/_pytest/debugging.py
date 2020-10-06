@@ -94,13 +94,13 @@ def pytest_configure(config: Config) -> None:
 class pytestPDB:
     """Pseudo PDB that defers to the real pdb."""
 
-    _pluginmanager = None  # type: Optional[PytestPluginManager]
-    _config = None  # type: Config
-    _saved = (
-        []
-    )  # type: List[Tuple[Callable[..., None], Optional[PytestPluginManager], Config]]
+    _pluginmanager: Optional[PytestPluginManager] = None
+    _config: Optional[Config] = None
+    _saved: List[
+        Tuple[Callable[..., None], Optional[PytestPluginManager], Optional[Config]]
+    ] = []
     _recursive_debug = 0
-    _wrapped_pdb_cls = None  # type: Optional[Tuple[Type[Any], Type[Any]]]
+    _wrapped_pdb_cls: Optional[Tuple[Type[Any], Type[Any]]] = None
 
     @classmethod
     def _is_capturing(cls, capman: Optional["CaptureManager"]) -> Union[str, bool]:
@@ -166,6 +166,7 @@ class pytestPDB:
             def do_continue(self, arg):
                 ret = super().do_continue(arg)
                 if cls._recursive_debug == 0:
+                    assert cls._config is not None
                     tw = _pytest.config.create_terminal_writer(cls._config)
                     tw.line()
 
@@ -239,7 +240,7 @@ class pytestPDB:
         import _pytest.config
 
         if cls._pluginmanager is None:
-            capman = None  # type: Optional[CaptureManager]
+            capman: Optional[CaptureManager] = None
         else:
             capman = cls._pluginmanager.getplugin("capturemanager")
         if capman:

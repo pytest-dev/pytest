@@ -270,7 +270,7 @@ class TestNumberedDir:
     def test_lock_register_cleanup_removal(self, tmp_path: Path) -> None:
         lock = create_cleanup_lock(tmp_path)
 
-        registry = []  # type: List[Callable[..., None]]
+        registry: List[Callable[..., None]] = []
         register_cleanup_lock_removal(lock, register=registry.append)
 
         (cleanup_func,) = registry

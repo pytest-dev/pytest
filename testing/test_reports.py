@@ -286,9 +286,9 @@ class TestReportSerialization:
 
         reprec = testdir.inline_run()
         if report_class is TestReport:
-            reports = reprec.getreports(
-                "pytest_runtest_logreport"
-            )  # type: Union[Sequence[TestReport], Sequence[CollectReport]]
+            reports: Union[
+                Sequence[TestReport], Sequence[CollectReport]
+            ] = reprec.getreports("pytest_runtest_logreport")
             # we have 3 reports: setup/call/teardown
             assert len(reports) == 3
             # get the call report

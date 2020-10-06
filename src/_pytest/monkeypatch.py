@@ -115,12 +115,10 @@ class MonkeyPatch:
     setattr/item/env/syspath changes."""
 
     def __init__(self) -> None:
-        self._setattr = []  # type: List[Tuple[object, str, object]]
-        self._setitem = (
-            []
-        )  # type: List[Tuple[MutableMapping[Any, Any], object, object]]
-        self._cwd = None  # type: Optional[str]
-        self._savesyspath = None  # type: Optional[List[str]]
+        self._setattr: List[Tuple[object, str, object]] = []
+        self._setitem: List[Tuple[MutableMapping[Any, Any], object, object]] = ([])
+        self._cwd: Optional[str] = None
+        self._savesyspath: Optional[List[str]] = None
 
     @contextmanager
     def context(self) -> Generator["MonkeyPatch", None, None]:
@@ -292,7 +290,7 @@ class MonkeyPatch:
         Raises ``KeyError`` if it does not exist, unless ``raising`` is set to
         False.
         """
-        environ = os.environ  # type: MutableMapping[str, str]
+        environ: MutableMapping[str, str] = os.environ
         self.delitem(environ, name, raising=raising)
 
     def syspath_prepend(self, path) -> None:
