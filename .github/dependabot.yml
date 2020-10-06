@@ -3,7 +3,7 @@ updates:
 - package-ecosystem: pip
   directory: "/testing/plugins_integration"
   schedule:
-    interval: monthly
+    interval: weekly
     time: "03:00"
   open-pull-requests-limit: 10
   allow:
