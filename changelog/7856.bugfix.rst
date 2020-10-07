@@ -1,0 +1,1 @@
+An error with ``--import-mode=importlib`` used with modules containing dataclasses or pickle was fixed.

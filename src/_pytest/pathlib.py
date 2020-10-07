@@ -500,6 +500,7 @@ def import_path(
                 "Can't find module {} at location {}".format(module_name, str(path))
             )
         mod = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         return mod
 

@@ -443,3 +443,57 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
         mp.setattr(os.path, "samefile", lambda x, y: False)
         module = import_path(module_path)
     assert getattr(module, "foo")() == 42
+
+
+@pytest.fixture
+def module_with_dataclass(tmpdir):
+    fn = tmpdir.join("test_dataclass.py")
+    fn.write(
+        dedent(
+            f"""
+            {'from __future__ import annotations' if (3, 7) <= sys.version_info < (3, 10) else ''}
+
+            from dataclasses import dataclass
+
+            @dataclass
+            class DataClass:
+                value: str
+
+            def test_dataclass():
+                assert DataClass(value='test').value == 'test'
+            """
+        )
+    )
+    return fn
+
+
+@pytest.fixture
+def module_with_pickle(tmpdir):
+    fn = tmpdir.join("test_dataclass.py")
+    fn.write(
+        dedent(
+            """
+            import pickle
+
+            def do_action():
+                pass
+
+            def test_pickle():
+                pickle.dumps(do_action)
+            """
+        )
+    )
+    return fn
+
+
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+def test_importmode_importlib_with_dataclass(module_with_dataclass):
+    """Ensure that importlib mode works with a module containing dataclasses"""
+    module = import_path(module_with_dataclass, mode="importlib")
+    module.test_dataclass()  # type: ignore[attr-defined]
+
+
+def test_importmode_importlib_with_pickle(module_with_pickle):
+    """Ensure that importlib mode works with pickle"""
+    module = import_path(module_with_pickle, mode="importlib")
+    module.test_pickle()  # type: ignore[attr-defined]
