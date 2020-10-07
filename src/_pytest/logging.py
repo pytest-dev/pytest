@@ -583,11 +583,10 @@ class LoggingPlugin:
         )
         self.log_cli_handler.setFormatter(log_cli_formatter)
         if config.option.suppress_logger:
-            self._suppress_loggers(config)
+            self._suppress_loggers()
 
-    @staticmethod
-    def _suppress_loggers(config: Config) -> None:
-        logger_names = set(config.option.suppress_logger)
+    def _suppress_loggers(self) -> None:
+        logger_names = set(self._config.option.suppress_logger)
         for name in logger_names:
             # disable propagation for the given logger preventing of event passing to ancestor handlers
             # adding a NullHandler to prevent logging.LastResort handler from logging warnings to stderr
