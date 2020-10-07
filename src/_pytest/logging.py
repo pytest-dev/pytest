@@ -280,12 +280,12 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
     )
-    add_option_ini(
-        "--log-disable",
+    group.addoption(
+        "--suppress-logger",
         action="append",
         default=[],
-        dest="log_disable",
-        help="Disable propagation of these loggers"
+        dest="suppress_logger",
+        help="Suppress logging output for the logger, this can be provided multiple times to suppress many loggers",
     )
 
 
@@ -582,14 +582,14 @@ class LoggingPlugin:
             get_option_ini(config, "log_auto_indent"),
         )
         self.log_cli_handler.setFormatter(log_cli_formatter)
-        if config.option.log_disable:
-            self._disable_log_propagation(config)
+        if config.option.suppress_logger:
+            self._suppress_loggers(config)
 
     @staticmethod
-    def _disable_log_propagation(config: Config) -> None:
-        logger_names = set(config.option.log_disable)
+    def _suppress_loggers(config: Config) -> None:
+        logger_names = set(config.option.suppress_logger)
         for name in logger_names:
-            # disable propagation for the given logger to preventing of event passing to ancestor handlers
+            # disable propagation for the given logger preventing of event passing to ancestor handlers
             # adding a NullHandler to prevent logging.LastResort handler from logging warnings to stderr
             logger = logging.getLogger(name)
             logger.addHandler(logging.NullHandler())

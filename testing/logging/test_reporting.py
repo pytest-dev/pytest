@@ -1154,21 +1154,39 @@ def test_log_file_cli_subdirectories_are_successfully_created(testdir):
     assert result.ret == ExitCode.OK
 
 
-def test_log_disabling_propagation(testdir):
+def test_suppress_loggers(testdir):
     testdir.makepyfile(
-        """ 
+        """
         import logging
         import os
         disable_log = logging.getLogger('disable')
         second_log = logging.getLogger('second')
-        def test_logger_propagation(caplog): 
-            disable_log.warning("no log; not stderr")
+        normal_log = logging.getLogger('normal')
+        def test_logger_propagation(caplog):
+            caplog.set_level(logging.DEBUG)
+            disable_log.warning("no log; no stderr")
             second_log.info("no log")
+            normal_log.debug("Unsuppressed!")
             print(os.linesep)
             print(caplog.records)
-         """)
-    result = testdir.runpytest("--log-disable=disable", "--log-disable=second", "-s")
+         """
+    )
+    result = testdir.runpytest(
+        "--suppress-logger=disable", "--suppress-logger=second", "-s"
+    )
     assert result.ret == ExitCode.OK
     result.stdout.no_fnmatch_line("*[<LogRecord: disable*")
     result.stdout.no_fnmatch_line("*[<LogRecord: second*")
+    result.stdout.fnmatch_lines(["*[<LogRecord: normal*"])
     assert len(result.stderr.lines) == 0
+
+
+def test_suppress_loggers_help(testdir):
+    result = testdir.runpytest("-h")
+    result.stdout.fnmatch_lines(
+        [
+            "*--suppress-logger=SUPPRESS_LOGGER*",
+            "*Suppress logging output for the logger, this can be*",
+            "*provided multiple times to suppress many loggers",
+        ]
+    )
