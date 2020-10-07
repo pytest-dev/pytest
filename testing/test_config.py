@@ -570,11 +570,17 @@ class TestConfigAPI:
         assert pl[0] == tmpdir
         assert pl[1] == somepath
 
-    def test_addini(self, testdir):
+    @pytest.mark.parametrize("maybe_type", ["not passed", "None", '"string"'])
+    def test_addini(self, testdir, maybe_type):
+        if maybe_type == "not passed":
+            type_string = ""
+        else:
+            type_string = f", {maybe_type}"
+
         testdir.makeconftest(
-            """
+            f"""
             def pytest_addoption(parser):
-                parser.addini("myname", "my new ini value")
+                parser.addini("myname", "my new ini value"{type_string})
         """
         )
         testdir.makeini(
