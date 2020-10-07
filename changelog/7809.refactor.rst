@@ -1,0 +1,1 @@
+Add Pythonic style to validate a couple of boolean conditions

@@ -225,7 +225,7 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, "terminalreporter")
-    if config.option.debug or config.option.traceconfig:
+    if any([config.option.debug, config.option.traceconfig]):
 
         def mywriter(tags, args):
             msg = " ".join(map(str, args))

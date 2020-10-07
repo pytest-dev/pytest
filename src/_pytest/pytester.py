@@ -1463,7 +1463,7 @@ class LineMatcher:
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
-                if line == x or match_func(x, line):
+                if any([line == x, match_func(x, line)]):
                     self._log("matched: ", repr(line))
                     break
             else:
@@ -1477,8 +1477,8 @@ class LineMatcher:
         The given line can contain glob wildcards.
         """
         for i, line in enumerate(self.lines):
-            if fnline == line or fnmatch(line, fnline):
-                return self.lines[i + 1 :]
+            if any([fnline == line, fnmatch(line, fnline)]):
+                return self.lines[i + 1:]
         raise ValueError("line %r not found in output" % fnline)
 
     def _log(self, *args) -> None:
