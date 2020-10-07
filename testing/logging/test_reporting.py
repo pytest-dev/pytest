@@ -1152,3 +1152,23 @@ def test_log_file_cli_subdirectories_are_successfully_created(testdir):
     result = testdir.runpytest("--log-file=foo/bar/logf.log")
     assert "logf.log" in os.listdir(expected)
     assert result.ret == ExitCode.OK
+
+
+def test_log_disabling_propagation(testdir):
+    testdir.makepyfile(
+        """ 
+        import logging
+        import os
+        disable_log = logging.getLogger('disable')
+        second_log = logging.getLogger('second')
+        def test_logger_propagation(caplog): 
+            disable_log.warning("no log; not stderr")
+            second_log.info("no log")
+            print(os.linesep)
+            print(caplog.records)
+         """)
+    result = testdir.runpytest("--log-disable=disable", "--log-disable=second", "-s")
+    assert result.ret == ExitCode.OK
+    result.stdout.no_fnmatch_line("*[<LogRecord: disable*")
+    result.stdout.no_fnmatch_line("*[<LogRecord: second*")
+    assert len(result.stderr.lines) == 0
