@@ -1402,7 +1402,7 @@ class Config:
         elif type == "bool":
             return _strtobool(str(value).strip())
         else:
-            assert type is None
+            assert type in [None, "string"]
             return value
 
     def _getconftest_pathlist(
