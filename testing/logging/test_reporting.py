@@ -1159,25 +1159,22 @@ def test_suppress_loggers(testdir):
         """
         import logging
         import os
-        disable_log = logging.getLogger('disable')
-        second_log = logging.getLogger('second')
+        suppressed_log = logging.getLogger('suppressed')
+        other_log = logging.getLogger('other')
         normal_log = logging.getLogger('normal')
         def test_logger_propagation(caplog):
-            caplog.set_level(logging.DEBUG)
-            disable_log.warning("no log; no stderr")
-            second_log.info("no log")
-            normal_log.debug("Unsuppressed!")
-            print(os.linesep)
-            print(caplog.records)
+            with caplog.at_level(logging.DEBUG):
+                suppressed_log.warning("no log; no stderr")
+                other_log.info("no log")
+                normal_log.debug("Unsuppressed!")
+                print(os.linesep)
+                assert caplog.record_tuples == [('normal', 10, 'Unsuppressed!')]
          """
     )
     result = testdir.runpytest(
-        "--suppress-logger=disable", "--suppress-logger=second", "-s"
+        "--suppress-logger=suppressed", "--suppress-logger=other", "-s"
     )
     assert result.ret == ExitCode.OK
-    result.stdout.no_fnmatch_line("*[<LogRecord: disable*")
-    result.stdout.no_fnmatch_line("*[<LogRecord: second*")
-    result.stdout.fnmatch_lines(["*[<LogRecord: normal*"])
     assert len(result.stderr.lines) == 0
 
 
