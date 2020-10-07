@@ -1175,15 +1175,37 @@ def test_suppress_loggers(testdir):
         "--suppress-logger=suppressed", "--suppress-logger=other", "-s"
     )
     assert result.ret == ExitCode.OK
-    assert len(result.stderr.lines) == 0
+    assert not result.stderr.lines
 
 
 def test_suppress_loggers_help(testdir):
     result = testdir.runpytest("-h")
     result.stdout.fnmatch_lines(
-        [
-            "*--suppress-logger=SUPPRESS_LOGGER*",
-            "*Suppress logging output for the logger, this can be*",
-            "*provided multiple times to suppress many loggers",
-        ]
+        ["  --suppress-logger=SUPPRESS_LOGGER", "*Suppress loggers by name*"]
     )
+
+
+def test_log_suppressing_works_with_log_cli(testdir):
+    testdir.makepyfile(
+        """
+    import logging
+    log = logging.getLogger('mylog')
+    suppressed_log = logging.getLogger('suppressed')
+    def test_log_cli_works(caplog):
+        log.info("hello world")
+        suppressed_log.warning("Hello World")
+    """
+    )
+    result = testdir.runpytest(
+        "--log-cli-level=DEBUG",
+        "--suppress-logger=suppressed",
+        "--suppress-logger=mylog",
+    )
+    assert result.ret == ExitCode.OK
+    result.stdout.no_fnmatch_line(
+        "INFO     mylog:test_log_suppressing_works_with_log_cli.py:5 hello world"
+    )
+    result.stdout.no_fnmatch_line(
+        "WARNING  suppressed:test_log_suppressing_works_with_log_cli.py:6 Hello World"
+    )
+    assert not result.stderr.lines

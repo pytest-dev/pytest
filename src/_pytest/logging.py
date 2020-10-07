@@ -285,7 +285,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         default=[],
         dest="suppress_logger",
-        help="Suppress logging output for the logger, this can be provided multiple times to suppress many loggers",
+        help="Suppress loggers by name",
     )
 
 

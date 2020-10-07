@@ -1,0 +1,1 @@
+``--suppress-logger`` CLI option added to suppress output from individual loggers
