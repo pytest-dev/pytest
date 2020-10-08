@@ -1166,8 +1166,9 @@ class TerminalReporter:
 
     def build_summary_stats_line(self) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
         main_color, known_types = self._get_main_color()
-
         parts = []
+        selected = self._numcollected
+
         for key in known_types:
             reports = self.stats.get(key, None)
             if reports:
@@ -1178,8 +1179,20 @@ class TerminalReporter:
                 markup = {color: True, "bold": color == main_color}
                 parts.append(("%d %s" % _make_plural(count, key), markup))
 
+                if key in ["error", "skipped", "deselected"]:
+                    selected -= count
+
         if not parts:
             parts = [("no tests ran", {_color_for_type_default: True})]
+
+        if self.config.getoption("collectonly"):
+            # Prepend total number of collected items with "--collect-only".
+            color = _color_for_type.get("selected", _color_for_type_default)
+            markup = {color: True, "bold": color == main_color}
+            parts.insert(0, ("%d %s" % _make_plural(selected, "selected"), markup))
+
+            # Always display "no tests ran" message with "--collect-only".
+            parts.append(("no tests ran", {_color_for_type_default: True}))
 
         return parts, main_color
 
