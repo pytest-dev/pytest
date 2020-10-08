@@ -8,6 +8,7 @@ import inspect
 import platform
 import sys
 import warnings
+from collections import Counter
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -754,10 +755,7 @@ class TerminalReporter:
         # because later versions are going to get rid of them anyway.
         if self.config.option.verbose < 0:
             if self.config.option.verbose < -1:
-                counts: Dict[str, int] = {}
-                for item in items:
-                    name = item.nodeid.split("::", 1)[0]
-                    counts[name] = counts.get(name, 0) + 1
+                counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
                 for name, count in sorted(counts.items()):
                     self._tw.line("%s: %d" % (name, count))
             else:
@@ -922,10 +920,9 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename: Dict[str, int] = {}
-                for loc in locations:
-                    key = str(loc).split("::", 1)[0]
-                    counts_by_filename[key] = counts_by_filename.get(key, 0) + 1
+                counts_by_filename = Counter(
+                    str(loc).split("::", 1)[0] for loc in locations
+                )
                 return "\n".join(
                     "{}: {} warning{}".format(k, v, "s" if v > 1 else "")
                     for k, v in counts_by_filename.items()
