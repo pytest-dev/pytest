@@ -1190,7 +1190,7 @@ class TerminalReporter:
             if parts[-1][0] != "no tests ran":
                 parts.append(("no tests ran", {_color_for_type_default: True}))
 
-            # Prepend total number of collected items with "--collect-only".
+            # Prepend total number of selected items with "--collect-only".
             color = _color_for_type.get("selected", _color_for_type_default)
             markup = {color: True, "bold": color == main_color}
             parts.insert(0, ("%d %s" % _make_plural(selected, "selected"), markup))
