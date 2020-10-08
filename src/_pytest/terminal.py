@@ -920,7 +920,9 @@ class TerminalReporter:
                 if len(locations) < 10:
                     return "\n".join(map(str, locations))
 
-                counts_by_filename = Counter(str(loc).split("::", 1)[0] for loc in locations)
+                counts_by_filename = Counter(
+                    str(loc).split("::", 1)[0] for loc in locations
+                )
                 return "\n".join(
                     "{}: {} warning{}".format(k, v, "s" if v > 1 else "")
                     for k, v in counts_by_filename.items()
