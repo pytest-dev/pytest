@@ -77,6 +77,10 @@ hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
 
+class WarningFilterException(Exception):
+    pass
+
+
 @final
 class ExitCode(enum.IntEnum):
     """Encodes the valid exit codes by pytest.
@@ -1572,7 +1576,7 @@ def parse_warning_filter(
     try:
         category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined] # noqa: E501
     except Exception as e:
-        raise Exception(
+        raise WarningFilterException(
             "Error while processing warning rules. Please make sure importing "
             "the warning classes defined in filterwarning doesn't trigger an "
             "exception."

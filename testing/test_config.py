@@ -22,6 +22,7 @@ from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
+from _pytest.config import WarningFilterException
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
@@ -1932,6 +1933,11 @@ def test_parse_warning_filter(
     arg: str, escape: bool, expected: Tuple[str, str, Type[Warning], str, int]
 ) -> None:
     assert parse_warning_filter(arg, escape=escape) == expected
+
+
+def test_parse_warning_filter_with_error() -> None:
+    with pytest.raises(WarningFilterException):
+        parse_warning_filter("ignore::missing_category::", escape=False)
 
 
 @pytest.mark.parametrize("arg", [":" * 5, "::::-1", "::::not-a-number"])
