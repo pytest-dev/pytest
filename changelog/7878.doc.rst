@@ -1,0 +1,1 @@
+In pull request section, ask to commit after editing changelog and authors file.

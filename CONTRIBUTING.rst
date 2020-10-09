@@ -299,12 +299,6 @@ Here is a simple overview, with pytest-specific bits:
 
        $ pytest testing/test_config.py
 
-
-#. Commit and push once your tests pass and you are happy with your change(s)::
-
-    $ git commit -a -m "<commit message>"
-    $ git push -u
-
 #. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>.rst``,
    where *issueid* is the number of the issue related to the change and *type* is one of
    ``feature``, ``improvement``, ``bugfix``, ``doc``, ``deprecation``, ``breaking``, ``vendor``
@@ -312,6 +306,11 @@ Here is a simple overview, with pytest-specific bits:
    documented behaviour of pytest.
 
 #. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
+
+#. Commit and push once your tests pass and you are happy with your change(s)::
+
+    $ git commit -a -m "<commit message>"
+    $ git push -u
 
 #. Finally, submit a pull request through the GitHub website using this data::
 
