@@ -1569,7 +1569,14 @@ def parse_warning_filter(
         parts.append("")
     action_, message, category_, module, lineno_ = [s.strip() for s in parts]
     action: str = warnings._getaction(action_)  # type: ignore[attr-defined]
-    category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined]
+    try:
+        category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined] # noqa: E501
+    except Exception as e:
+        raise Exception(
+            "Error while processing warning rules. Please make sure importing "
+            "the warning classes defined in filterwarning doesn't trigger an "
+            "exception."
+        ) from e
     if message and escape:
         message = re.escape(message)
     if module and escape:
