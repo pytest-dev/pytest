@@ -444,7 +444,7 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
     against expected output, perfect for black-box testing of pytest plugins.
 
     It attempts to isolate the test run from external factors as much as possible, modifying
-    the current  working directory to ``path`` and environment variables during initialization.
+    the current working directory to ``path`` and environment variables during initialization.
 
     It is particularly useful for testing plugins. It is similar to the :fixture:`tmp_path`
     fixture but provides methods which aid in testing pytest itself.
@@ -455,10 +455,10 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
 @pytest.fixture
 def testdir(pytester: "Pytester") -> "Testdir":
     """
-    Identical to :fixture:`test_path`, and provides an instance whose methods return
+    Identical to :fixture:`pytester`, and provides an instance whose methods return
     legacy ``py.path.local`` objects instead when applicable.
 
-    New code should avoid using :fixture:`testdir` in favor of :fixture:`test_path`.
+    New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
     """
     return Testdir(pytester)
 
