@@ -508,7 +508,7 @@ pytester
 
 .. currentmodule:: _pytest.pytester
 
-Provides a :class:`PyTester` instance that can be used to run and test pytest itself.
+Provides a :class:`Pytester` instance that can be used to run and test pytest itself.
 
 It provides an empty directory where pytest can be executed in isolation, and contains facilities
 to write test, configuration files, and match against expected output.
@@ -521,7 +521,7 @@ To use it, include in your topmost ``conftest.py`` file:
 
 
 
-.. autoclass:: PyTester()
+.. autoclass:: Pytester()
     :members:
 
 .. autoclass:: RunResult()

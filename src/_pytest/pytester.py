@@ -58,6 +58,10 @@ if TYPE_CHECKING:
 
     import pexpect
 
+    PathLike = os.PathLike[str]
+else:
+    PathLike = os.PathLike
+
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     "/var/lib/sss/mc/passwd"
@@ -434,7 +438,7 @@ def LineMatcher_fixture(request: FixtureRequest) -> Type["LineMatcher"]:
 
 
 @pytest.fixture
-def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "PyTester":
+def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pytester":
     """
     Facilities to write tests/configuration files, execute pytest in isolation, and match
     against expected output, perfect for black-box testing of pytest plugins.
@@ -442,14 +446,14 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "PyT
     It attempts to isolate the test run from external factors as much as possible, modifying
     the current  working directory to ``path`` and environment variables during initialization.
 
-    It attempts to isolate the test run from external factors as much as possible, modifying
-    the current  working directory to ``tmp_path`` and environment variables during initialization.
+    It is particularly useful for testing plugins. It is similar to the :fixture:`tmp_path`
+    fixture but provides methods which aid in testing pytest itself.
     """
-    return PyTester(request, tmp_path_factory)
+    return Pytester(request, tmp_path_factory)
 
 
 @pytest.fixture
-def testdir(pytester: "PyTester") -> "Testdir":
+def testdir(pytester: "Pytester") -> "Testdir":
     """
     Identical to :fixture:`test_path`, and provides an instance whose methods return
     legacy ``py.path.local`` objects instead when applicable.
@@ -619,7 +623,7 @@ class SysPathsSnapshot:
 
 
 @final
-class PyTester:
+class Pytester:
     """
     Facilities to write tests/configuration files, execute pytest in isolation, and match
     against expected output, perfect for black-box testing of pytest plugins.
@@ -685,7 +689,7 @@ class PyTester:
         return self._path
 
     def __repr__(self) -> str:
-        return f"<PyTester {self.path!r}>"
+        return f"<Pytester {self.path!r}>"
 
     def _finalize(self) -> None:
         """
@@ -888,9 +892,7 @@ class PyTester:
                 example_path = maybe_file
             else:
                 raise LookupError(
-                    "{} cant be found as module or package in {}".format(
-                        func_name, example_dir.bestrelpath(self._request.config.rootdir)
-                    )
+                    f"{func_name} cant be found as module or package in {example_dir}"
                 )
         else:
             example_path = example_dir.joinpath(name)
@@ -912,7 +914,9 @@ class PyTester:
 
     Session = Session
 
-    def getnode(self, config: Config, arg) -> Optional[Union[Collector, Item]]:
+    def getnode(
+        self, config: Config, arg: Union[PathLike, str]
+    ) -> Optional[Union[Collector, Item]]:
         """Return the collection node of a file.
 
         :param _pytest.config.Config config:
@@ -929,7 +933,7 @@ class PyTester:
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
-    def getpathnode(self, path):
+    def getpathnode(self, path: Union[PathLike, str]):
         """Return the collection node of a file.
 
         This is like :py:meth:`getnode` but uses :py:meth:`parseconfigure` to
@@ -937,6 +941,7 @@ class PyTester:
 
         :param py.path.local path: Path to the file.
         """
+        path = py.path.local(path)
         config = self.parseconfigure(path)
         session = Session.from_config(config)
         x = session.fspath.bestrelpath(path)
@@ -1279,7 +1284,7 @@ class PyTester:
 
     def run(
         self,
-        *cmdargs: Union[str, py.path.local, Path],
+        *cmdargs: Union[str, PathLike],
         timeout: Optional[float] = None,
         stdin=CLOSE_STDIN,
     ) -> RunResult:
@@ -1290,10 +1295,10 @@ class PyTester:
         :param cmdargs:
             The sequence of arguments to pass to `subprocess.Popen()`, with ``Path``
             and ``py.path.local`` objects being converted to ``str`` automatically.
-        :kwarg timeout:
+        :param timeout:
             The period in seconds after which to timeout and raise
             :py:class:`Testdir.TimeoutExpired`
-        :kwarg stdin:
+        :param stdin:
             Optional standard input.  Bytes are being send, closing
             the pipe, otherwise it is passed through to ``popen``.
             Defaults to ``CLOSE_STDIN``, which translates to using a pipe
@@ -1461,19 +1466,19 @@ class LineComp:
 @attr.s(repr=False, str=False)
 class Testdir:
     """
-    Similar to :class:`PyTester`, but this class works with legacy py.path.local objects instead.
+    Similar to :class:`Pytester`, but this class works with legacy py.path.local objects instead.
 
-    All methods just forward to an internal :class:`PyTester` instance, converting results
+    All methods just forward to an internal :class:`Pytester` instance, converting results
     to `py.path.local` objects as necessary.
     """
 
     __test__ = False
 
-    CLOSE_STDIN = PyTester.CLOSE_STDIN
-    TimeoutExpired = PyTester.TimeoutExpired
-    Session = PyTester.Session
+    CLOSE_STDIN = Pytester.CLOSE_STDIN
+    TimeoutExpired = Pytester.TimeoutExpired
+    Session = Pytester.Session
 
-    _pytester = attr.ib(type=PyTester)
+    _pytester = attr.ib(type=Pytester)
 
     @property
     def tmpdir(self) -> py.path.local:
