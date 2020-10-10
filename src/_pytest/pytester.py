@@ -661,7 +661,6 @@ class Pytester:
         else:
             name = request.node.name
         self._name = name
-        self._tmp_path_factory = tmp_path_factory
         self._path: Path = tmp_path_factory.mktemp(name, numbered=True)
         self.plugins: List[Union[str, _PluggyPlugin]] = []
         self._cwd_snapshot = CwdSnapshot()
@@ -670,9 +669,10 @@ class Pytester:
         self.chdir()
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
+        self.test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
 
         self._monkeypatch = mp = MonkeyPatch()
-        mp.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path_factory.mktemp("tmproot")))
+        mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
         # Ensure no unexpected caching via tox.
         mp.delenv("TOX_ENV_DIR", raising=False)
         # Discard outer pytest options.
@@ -1475,18 +1475,15 @@ class Testdir:
     TimeoutExpired = Pytester.TimeoutExpired
     Session = Pytester.Session
 
-    _pytester = attr.ib(type=Pytester)
-
-    def __attrs_post_init__(self):
-        self.test_tmproot = py.path.local(
-            self._pytester._tmp_path_factory.mktemp(
-                "tmp-" + self._pytester._name, numbered=True
-            )
-        )
+    _pytester: Pytester = attr.ib()
 
     @property
     def tmpdir(self) -> py.path.local:
         return py.path.local(self._pytester.path)
+
+    @property
+    def test_tmproot(self) -> py.path.local:
+        return py.path.local(self._pytester.test_tmproot)
 
     @property
     def request(self):
