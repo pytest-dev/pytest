@@ -108,6 +108,3 @@ class UnformattedWarning(Generic[_W]):
     def format(self, **kwargs: Any) -> _W:
         """Return an instance of the warning category, formatted with given kwargs."""
         return self.category(self.template.format(**kwargs))
-
-
-PYTESTER_COPY_EXAMPLE = PytestExperimentalApiWarning.simple("testdir.copy_example")

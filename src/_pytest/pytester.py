@@ -661,6 +661,7 @@ class Pytester:
         else:
             name = request.node.name
         self._name = name
+        self._tmp_path_factory = tmp_path_factory
         self._path: Path = tmp_path_factory.mktemp(name, numbered=True)
         self.plugins: List[Union[str, _PluggyPlugin]] = []
         self._cwd_snapshot = CwdSnapshot()
@@ -868,10 +869,6 @@ class Pytester:
         :return: path to the copied directory (inside ``self.path``).
 
         """
-        import warnings
-        from _pytest.warning_types import PYTESTER_COPY_EXAMPLE
-
-        warnings.warn(PYTESTER_COPY_EXAMPLE, stacklevel=2)
         example_dir = self._request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")
@@ -1479,6 +1476,13 @@ class Testdir:
     Session = Pytester.Session
 
     _pytester = attr.ib(type=Pytester)
+
+    def __attrs_post_init__(self):
+        self.test_tmproot = py.path.local(
+            self._pytester._tmp_path_factory.mktemp(
+                "tmp-" + self._pytester._name, numbered=True
+            )
+        )
 
     @property
     def tmpdir(self) -> py.path.local:
