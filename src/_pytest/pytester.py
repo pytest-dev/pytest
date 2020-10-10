@@ -669,10 +669,10 @@ class Pytester:
         self.chdir()
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
-        self.test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
+        self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
 
         self._monkeypatch = mp = MonkeyPatch()
-        mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self.test_tmproot))
+        mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self._test_tmproot))
         # Ensure no unexpected caching via tox.
         mp.delenv("TOX_ENV_DIR", raising=False)
         # Discard outer pytest options.
@@ -1483,7 +1483,7 @@ class Testdir:
 
     @property
     def test_tmproot(self) -> py.path.local:
-        return py.path.local(self._pytester.test_tmproot)
+        return py.path.local(self._pytester._test_tmproot)
 
     @property
     def request(self):
