@@ -13,6 +13,7 @@ import traceback
 from fnmatch import fnmatch
 from io import StringIO
 from pathlib import Path
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generator
@@ -57,10 +58,6 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
     import pexpect
-
-    PathLike = os.PathLike[str]
-else:
-    PathLike = os.PathLike
 
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
@@ -727,10 +724,16 @@ class Pytester:
         """
         os.chdir(self.path)
 
-    def _makefile(self, ext: str, lines, files, encoding: str = "utf-8") -> Path:
+    def _makefile(
+        self,
+        ext: str,
+        lines: Sequence[Union[Any, bytes]],
+        files: Dict[str, str],
+        encoding: str = "utf-8",
+    ) -> Path:
         items = list(files.items())
 
-        def to_text(s):
+        def to_text(s: Union[Any, bytes]) -> str:
             return s.decode(encoding) if isinstance(s, bytes) else str(s)
 
         if lines:
@@ -750,7 +753,7 @@ class Pytester:
         assert ret is not None
         return ret
 
-    def makefile(self, ext: str, *args: str, **kwargs) -> Path:
+    def makefile(self, ext: str, *args: str, **kwargs: str) -> Path:
         r"""Create new file(s) in the test directory.
 
         :param str ext:
@@ -774,20 +777,20 @@ class Pytester:
         """
         return self._makefile(ext, args, kwargs)
 
-    def makeconftest(self, source) -> Path:
+    def makeconftest(self, source: str) -> Path:
         """Write a contest.py file with 'source' as contents."""
         return self.makepyfile(conftest=source)
 
-    def makeini(self, source) -> Path:
+    def makeini(self, source: str) -> Path:
         """Write a tox.ini file with 'source' as contents."""
         return self.makefile(".ini", tox=source)
 
-    def getinicfg(self, source) -> IniConfig:
+    def getinicfg(self, source: str) -> IniConfig:
         """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)
         return IniConfig(p)["pytest"]
 
-    def makepyprojecttoml(self, source) -> Path:
+    def makepyprojecttoml(self, source: str) -> Path:
         """Write a pyproject.toml file with 'source' as contents.
 
         .. versionadded:: 6.0
@@ -834,7 +837,9 @@ class Pytester:
         """
         return self._makefile(".txt", args, kwargs)
 
-    def syspathinsert(self, path=None) -> None:
+    def syspathinsert(
+        self, path: Optional[Union[str, "os.PathLike[str]"]] = None
+    ) -> None:
         """Prepend a directory to sys.path, defaults to :py:attr:`tmpdir`.
 
         This is undone automatically when this object dies at the end of each
@@ -862,7 +867,7 @@ class Pytester:
         p.joinpath("__init__.py").touch()
         return p
 
-    def copy_example(self, name=None) -> Path:
+    def copy_example(self, name: Optional[str] = None) -> Path:
         """Copy file from project's directory into the testdir.
 
         :param str name: The name of the file to copy.
@@ -889,7 +894,7 @@ class Pytester:
                 example_path = maybe_file
             else:
                 raise LookupError(
-                    f"{func_name} cant be found as module or package in {example_dir}"
+                    f"{func_name} can't be found as module or package in {example_dir}"
                 )
         else:
             example_path = example_dir.joinpath(name)
@@ -912,7 +917,7 @@ class Pytester:
     Session = Session
 
     def getnode(
-        self, config: Config, arg: Union[PathLike, str]
+        self, config: Config, arg: Union[str, "os.PathLike[str]"]
     ) -> Optional[Union[Collector, Item]]:
         """Return the collection node of a file.
 
@@ -930,7 +935,7 @@ class Pytester:
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
         return res
 
-    def getpathnode(self, path: Union[PathLike, str]):
+    def getpathnode(self, path: Union[str, "os.PathLike[str]"]):
         """Return the collection node of a file.
 
         This is like :py:meth:`getnode` but uses :py:meth:`parseconfigure` to
@@ -959,7 +964,7 @@ class Pytester:
             result.extend(session.genitems(colitem))
         return result
 
-    def runitem(self, source):
+    def runitem(self, source: str) -> Any:
         """Run the "test_func" Item.
 
         The calling test instance (class containing the test method) must
@@ -974,7 +979,7 @@ class Pytester:
         runner = testclassinstance.getrunner()
         return runner(item)
 
-    def inline_runsource(self, source, *cmdlineargs) -> HookRecorder:
+    def inline_runsource(self, source: str, *cmdlineargs) -> HookRecorder:
         """Run a test module in process using ``pytest.main()``.
 
         This run writes "source" into a temporary file and runs
@@ -1003,7 +1008,10 @@ class Pytester:
         return items, rec
 
     def inline_run(
-        self, *args, plugins=(), no_reraise_ctrlc: bool = False
+        self,
+        *args: Union[str, "os.PathLike[str]"],
+        plugins=(),
+        no_reraise_ctrlc: bool = False,
     ) -> HookRecorder:
         """Run ``pytest.main()`` in-process, returning a HookRecorder.
 
@@ -1072,7 +1080,9 @@ class Pytester:
             for finalizer in finalizers:
                 finalizer()
 
-    def runpytest_inprocess(self, *args, **kwargs) -> RunResult:
+    def runpytest_inprocess(
+        self, *args: Union[str, "os.PathLike[str]"], **kwargs: Any
+    ) -> RunResult:
         """Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides."""
         syspathinsert = kwargs.pop("syspathinsert", False)
@@ -1114,26 +1124,30 @@ class Pytester:
         res.reprec = reprec  # type: ignore
         return res
 
-    def runpytest(self, *args, **kwargs) -> RunResult:
+    def runpytest(
+        self, *args: Union[str, "os.PathLike[str]"], **kwargs: Any
+    ) -> RunResult:
         """Run pytest inline or in a subprocess, depending on the command line
         option "--runpytest" and return a :py:class:`RunResult`."""
-        args = self._ensure_basetemp(args)
+        new_args = self._ensure_basetemp(args)
         if self._method == "inprocess":
-            return self.runpytest_inprocess(*args, **kwargs)
+            return self.runpytest_inprocess(*new_args, **kwargs)
         elif self._method == "subprocess":
-            return self.runpytest_subprocess(*args, **kwargs)
+            return self.runpytest_subprocess(*new_args, **kwargs)
         raise RuntimeError(f"Unrecognized runpytest option: {self._method}")
 
-    def _ensure_basetemp(self, args):
-        args = list(args)
-        for x in args:
+    def _ensure_basetemp(
+        self, args: Sequence[Union[str, "os.PathLike[str]"]]
+    ) -> List[Union[str, "os.PathLike[str]"]]:
+        new_args = list(args)
+        for x in new_args:
             if str(x).startswith("--basetemp"):
                 break
         else:
-            args.append("--basetemp=%s" % self.path.parent.joinpath("basetemp"))
-        return args
+            new_args.append("--basetemp=%s" % self.path.parent.joinpath("basetemp"))
+        return new_args
 
-    def parseconfig(self, *args) -> Config:
+    def parseconfig(self, *args: Union[str, "os.PathLike[str]"]) -> Config:
         """Return a new pytest Config instance from given commandline args.
 
         This invokes the pytest bootstrapping code in _pytest.config to create
@@ -1156,7 +1170,7 @@ class Pytester:
         self._request.addfinalizer(config._ensure_unconfigure)
         return config
 
-    def parseconfigure(self, *args) -> Config:
+    def parseconfigure(self, *args: Union[str, "os.PathLike[str]"]) -> Config:
         """Return a new pytest configured Config instance.
 
         Returns a new :py:class:`_pytest.config.Config` instance like
@@ -1166,7 +1180,7 @@ class Pytester:
         config._do_configure()
         return config
 
-    def getitem(self, source, funcname: str = "test_func") -> Item:
+    def getitem(self, source: str, funcname: str = "test_func") -> Item:
         """Return the test item for a test function.
 
         Writes the source to a python file and runs pytest's collection on
@@ -1186,7 +1200,7 @@ class Pytester:
             funcname, source, items
         )
 
-    def getitems(self, source) -> List[Item]:
+    def getitems(self, source: str) -> List[Item]:
         """Return all test items collected from the module.
 
         Writes the source to a Python file and runs pytest's collection on
@@ -1195,7 +1209,9 @@ class Pytester:
         modcol = self.getmodulecol(source)
         return self.genitems([modcol])
 
-    def getmodulecol(self, source, configargs=(), withinit: bool = False):
+    def getmodulecol(
+        self, source: Union[str, Path], configargs=(), *, withinit: bool = False
+    ):
         """Return the module collection node for ``source``.
 
         Writes ``source`` to a file using :py:meth:`makepyfile` and then
@@ -1281,7 +1297,7 @@ class Pytester:
 
     def run(
         self,
-        *cmdargs: Union[str, PathLike],
+        *cmdargs: Union[str, "os.PathLike[str]"],
         timeout: Optional[float] = None,
         stdin=CLOSE_STDIN,
     ) -> RunResult:
@@ -1290,11 +1306,11 @@ class Pytester:
         Run a process using subprocess.Popen saving the stdout and stderr.
 
         :param cmdargs:
-            The sequence of arguments to pass to `subprocess.Popen()`, with ``Path``
-            and ``py.path.local`` objects being converted to ``str`` automatically.
+            The sequence of arguments to pass to `subprocess.Popen()`, with path-like objects
+            being converted to ``str`` automatically.
         :param timeout:
             The period in seconds after which to timeout and raise
-            :py:class:`Testdir.TimeoutExpired`
+            :py:class:`Testdir.TimeoutExpired`.
         :param stdin:
             Optional standard input.  Bytes are being send, closing
             the pipe, otherwise it is passed through to ``popen``.
@@ -1306,8 +1322,7 @@ class Pytester:
         __tracebackhide__ = True
 
         cmdargs = tuple(
-            str(arg) if isinstance(arg, (py.path.local, Path)) else arg
-            for arg in cmdargs
+            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs
         )
         p1 = self.path.joinpath("stdout")
         p2 = self.path.joinpath("stderr")
