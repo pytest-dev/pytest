@@ -57,6 +57,8 @@ Created automatically from {comment_url}.
 
 Once all builds pass and it has been **approved** by one or more maintainers, the build
 can be released by pushing a tag `{version}` to this repository.
+
+Closes #{issue_number}.
 """
 
 
@@ -164,7 +166,9 @@ def trigger_release(payload_path: Path, token: str) -> None:
         print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} pushed.")
 
         body = PR_BODY.format(
-            comment_url=get_comment_data(payload)["html_url"], version=version
+            comment_url=get_comment_data(payload)["html_url"],
+            version=version,
+            issue_number=issue_number,
         )
         pr = repo.create_pull(
             f"Prepare release {version}",
