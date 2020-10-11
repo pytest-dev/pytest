@@ -71,7 +71,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Inspect
         self._basenames_to_check_rewrite = {"conftest"}
         self._marked_for_rewrite_cache: Dict[str, bool] = {}
         self._session_paths_checked = False
-        self._fullname_to_path: Dict[str, str] = {}
+        self._fullname_to_info: Dict[str, Tuple[str, bool]] = {}
 
     def set_session(self, session: Optional[Session]) -> None:
         self.session = session
@@ -116,7 +116,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Inspect
         if not self._should_rewrite(name, fn, state):
             return None
 
-        self._fullname_to_path[name] = fn
+        self._fullname_to_info[name] = (fn, spec.loader.is_package(name))
 
         return importlib.util.spec_from_file_location(
             name,
@@ -142,7 +142,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Inspect
         # in importlib.abc.InspectLoader
 
         try:
-            fn = Path(self._fullname_to_path[fullname])
+            fn = Path(self._fullname_to_info[fullname][0])
         except KeyError:
             raise ImportError(fullname)
 
@@ -185,8 +185,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Inspect
         return co
 
     def is_package(self, fullname: str) -> bool:
-        fn = self._fullname_to_path[fullname]
-        return fn.endswith(os.sep + "__init__" + PYC_TAIL)
+        return self._fullname_to_info[fullname][1]
 
     def get_source(self, fullname: str) -> Optional[str]:
         """
