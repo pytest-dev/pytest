@@ -511,7 +511,7 @@ pytester
 Provides a :class:`Pytester` instance that can be used to run and test pytest itself.
 
 It provides an empty directory where pytest can be executed in isolation, and contains facilities
-to write test, configuration files, and match against expected output.
+to write tests, configuration files, and match against expected output.
 
 To use it, include in your topmost ``conftest.py`` file:
 

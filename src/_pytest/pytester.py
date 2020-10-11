@@ -626,7 +626,7 @@ class Pytester:
     against expected output, perfect for black-box testing of pytest plugins.
 
     It attempts to isolate the test run from external factors as much as possible, modifying
-    the current  working directory to ``path`` and environment variables during initialization.
+    the current working directory to ``path`` and environment variables during initialization.
 
     Attributes:
 
