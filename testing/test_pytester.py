@@ -801,9 +801,10 @@ def test_parse_summary_line_always_plural():
 
 def test_makefile_joins_absolute_path(testdir: Testdir) -> None:
     absfile = testdir.tmpdir / "absfile"
-    if sys.platform == "win32":
-        with pytest.raises(OSError):
-            testdir.makepyfile(**{str(absfile): ""})
-    else:
-        p1 = testdir.makepyfile(**{str(absfile): ""})
-        assert str(p1) == (testdir.tmpdir / absfile) + ".py"
+    p1 = testdir.makepyfile(**{str(absfile): ""})
+    assert str(p1) == str(testdir.tmpdir / "absfile.py")
+
+
+def test_testtmproot(testdir):
+    """Check test_tmproot is a py.path attribute for backward compatibility."""
+    assert testdir.test_tmproot.check(dir=1)

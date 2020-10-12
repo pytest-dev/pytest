@@ -9,7 +9,7 @@ import pytest
 from _pytest.compat import importlib_metadata
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
-from _pytest.pytester import Testdir
+from _pytest.pytester import Pytester
 
 
 def prepend_pythonpath(*dirs):
@@ -1276,14 +1276,14 @@ def test_tee_stdio_captures_and_live_prints(testdir):
     sys.platform == "win32",
     reason="Windows raises `OSError: [Errno 22] Invalid argument` instead",
 )
-def test_no_brokenpipeerror_message(testdir: Testdir) -> None:
+def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     """Ensure that the broken pipe error message is supressed.
 
     In some Python versions, it reaches sys.unraisablehook, in others
     a BrokenPipeError exception is propagated, but either way it prints
     to stderr on shutdown, so checking nothing is printed is enough.
     """
-    popen = testdir.popen((*testdir._getpytestargs(), "--help"))
+    popen = pytester.popen((*pytester._getpytestargs(), "--help"))
     popen.stdout.close()
     ret = popen.wait()
     assert popen.stderr.read() == b""
