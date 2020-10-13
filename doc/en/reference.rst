@@ -530,6 +530,9 @@ To use it, include in your topmost ``conftest.py`` file:
 .. autoclass:: LineMatcher()
     :members:
 
+.. autoclass:: HookRecorder()
+    :members:
+
 .. fixture:: testdir
 
 testdir
@@ -539,6 +542,10 @@ Identical to :fixture:`pytester`, but provides an instance whose methods return
 legacy ``py.path.local`` objects instead when applicable.
 
 New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
+
+.. autoclass:: Testdir()
+    :members:
+
 
 .. fixture:: recwarn
 
