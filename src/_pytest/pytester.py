@@ -1494,6 +1494,7 @@ class Testdir:
 
     @property
     def tmpdir(self) -> py.path.local:
+        """Temporary directory where tests are executed."""
         return py.path.local(self._pytester.path)
 
     @property
@@ -1517,89 +1518,117 @@ class Testdir:
         return self._pytester._monkeypatch
 
     def make_hook_recorder(self, pluginmanager) -> HookRecorder:
+        """See :meth:`Pytester.make_hook_recorder`."""
         return self._pytester.make_hook_recorder(pluginmanager)
 
     def chdir(self) -> None:
+        """See :meth:`Pytester.chdir`."""
         return self._pytester.chdir()
 
     def finalize(self) -> None:
+        """See :meth:`Pytester._finalize`."""
         return self._pytester._finalize()
 
     def makefile(self, ext, *args, **kwargs) -> py.path.local:
+        """See :meth:`Pytester.makefile`."""
         return py.path.local(str(self._pytester.makefile(ext, *args, **kwargs)))
 
     def makeconftest(self, source) -> py.path.local:
+        """See :meth:`Pytester.makeconftest`."""
         return py.path.local(str(self._pytester.makeconftest(source)))
 
     def makeini(self, source) -> py.path.local:
+        """See :meth:`Pytester.makeini`."""
         return py.path.local(str(self._pytester.makeini(source)))
 
     def getinicfg(self, source) -> py.path.local:
+        """See :meth:`Pytester.getinicfg`."""
         return py.path.local(str(self._pytester.getinicfg(source)))
 
     def makepyprojecttoml(self, source) -> py.path.local:
+        """See :meth:`Pytester.makepyprojecttoml`."""
         return py.path.local(str(self._pytester.makepyprojecttoml(source)))
 
     def makepyfile(self, *args, **kwargs) -> py.path.local:
+        """See :meth:`Pytester.makepyfile`."""
         return py.path.local(str(self._pytester.makepyfile(*args, **kwargs)))
 
     def maketxtfile(self, *args, **kwargs) -> py.path.local:
+        """See :meth:`Pytester.maketxtfile`."""
         return py.path.local(str(self._pytester.maketxtfile(*args, **kwargs)))
 
     def syspathinsert(self, path=None) -> None:
+        """See :meth:`Pytester.syspathinsert`."""
         return self._pytester.syspathinsert(path)
 
     def mkdir(self, name) -> py.path.local:
+        """See :meth:`Pytester.mkdir`."""
         return py.path.local(str(self._pytester.mkdir(name)))
 
     def mkpydir(self, name) -> py.path.local:
+        """See :meth:`Pytester.mkpydir`."""
         return py.path.local(str(self._pytester.mkpydir(name)))
 
     def copy_example(self, name=None) -> py.path.local:
+        """See :meth:`Pytester.copy_example`."""
         return py.path.local(str(self._pytester.copy_example(name)))
 
     def getnode(self, config: Config, arg) -> Optional[Union[Item, Collector]]:
+        """See :meth:`Pytester.getnode`."""
         return self._pytester.getnode(config, arg)
 
     def getpathnode(self, path):
+        """See :meth:`Pytester.getpathnode`."""
         return self._pytester.getpathnode(path)
 
     def genitems(self, colitems: List[Union[Item, Collector]]) -> List[Item]:
+        """See :meth:`Pytester.genitems`."""
         return self._pytester.genitems(colitems)
 
     def runitem(self, source):
+        """See :meth:`Pytester.runitem`."""
         return self._pytester.runitem(source)
 
     def inline_runsource(self, source, *cmdlineargs):
+        """See :meth:`Pytester.inline_runsource`."""
         return self._pytester.inline_runsource(source, *cmdlineargs)
 
     def inline_genitems(self, *args):
+        """See :meth:`Pytester.inline_genitems`."""
         return self._pytester.inline_genitems(*args)
 
     def inline_run(self, *args, plugins=(), no_reraise_ctrlc: bool = False):
+        """See :meth:`Pytester.inline_run`."""
         return self._pytester.inline_run(
             *args, plugins=plugins, no_reraise_ctrlc=no_reraise_ctrlc
         )
 
     def runpytest_inprocess(self, *args, **kwargs) -> RunResult:
+        """See :meth:`Pytester.runpytest_inprocess`."""
         return self._pytester.runpytest_inprocess(*args, **kwargs)
 
     def runpytest(self, *args, **kwargs) -> RunResult:
+        """See :meth:`Pytester.runpytest`."""
         return self._pytester.runpytest(*args, **kwargs)
 
     def parseconfig(self, *args) -> Config:
+        """See :meth:`Pytester.parseconfig`."""
         return self._pytester.parseconfig(*args)
 
     def parseconfigure(self, *args) -> Config:
+        """See :meth:`Pytester.parseconfigure`."""
         return self._pytester.parseconfigure(*args)
 
     def getitem(self, source, funcname="test_func"):
+        """See :meth:`Pytester.getitem`."""
         return self._pytester.getitem(source, funcname)
 
     def getitems(self, source):
+        """See :meth:`Pytester.getitems`."""
         return self._pytester.getitems(source)
 
     def getmodulecol(self, source, configargs=(), withinit=False):
+        """See :meth:`Pytester.getmodulecol`."""
         return self._pytester.getmodulecol(
             source, configargs=configargs, withinit=withinit
         )
@@ -1607,6 +1636,7 @@ class Testdir:
     def collect_by_name(
         self, modcol: Module, name: str
     ) -> Optional[Union[Item, Collector]]:
+        """See :meth:`Pytester.collect_by_name`."""
         return self._pytester.collect_by_name(modcol, name)
 
     def popen(
@@ -1617,26 +1647,33 @@ class Testdir:
         stdin=CLOSE_STDIN,
         **kw,
     ):
+        """See :meth:`Pytester.popen`."""
         return self._pytester.popen(cmdargs, stdout, stderr, stdin, **kw)
 
     def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN) -> RunResult:
+        """See :meth:`Pytester.run`."""
         return self._pytester.run(*cmdargs, timeout=timeout, stdin=stdin)
 
     def runpython(self, script) -> RunResult:
+        """See :meth:`Pytester.runpython`."""
         return self._pytester.runpython(script)
 
     def runpython_c(self, command):
+        """See :meth:`Pytester.runpython_c`."""
         return self._pytester.runpython_c(command)
 
     def runpytest_subprocess(self, *args, timeout=None) -> RunResult:
+        """See :meth:`Pytester.runpytest_subprocess`."""
         return self._pytester.runpytest_subprocess(*args, timeout=timeout)
 
     def spawn_pytest(
         self, string: str, expect_timeout: float = 10.0
     ) -> "pexpect.spawn":
+        """See :meth:`Pytester.spawn_pytest`."""
         return self._pytester.spawn_pytest(string, expect_timeout=expect_timeout)
 
     def spawn(self, cmd: str, expect_timeout: float = 10.0) -> "pexpect.spawn":
+        """See :meth:`Pytester.spawn`."""
         return self._pytester.spawn(cmd, expect_timeout=expect_timeout)
 
     def __repr__(self) -> str:
