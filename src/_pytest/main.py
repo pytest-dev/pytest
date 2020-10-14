@@ -38,6 +38,7 @@ from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import visit
+from _pytest.parser import PytestParser
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
@@ -597,6 +598,7 @@ class Session(nodes.FSCollector):
         try:
             initialpaths: List[py.path.local] = []
             for arg in args:
+
                 fspath, parts = resolve_collection_argument(
                     self.config.invocation_params.dir,
                     arg,
@@ -818,12 +820,19 @@ def search_pypath(module_name: str) -> str:
 def resolve_collection_argument(
     invocation_path: Path, arg: str, *, as_pypath: bool = False
 ) -> Tuple[py.path.local, List[str]]:
-    """Parse path arguments optionally containing selection parts and return (fspath, names).
+    """Parse path arguments optionally containing selection parts or a line number,
+    and return (fspath, names).
 
-    Command-line arguments can point to files and/or directories, and optionally contain
-    parts for specific tests selection, for example:
+    Command-line arguments can point to files and/or directories.
+
+    Optionally contain parts for specific tests selection, for example:
 
         "pkg/tests/test_foo.py::TestClass::test_foo"
+
+    or directly indicate a line number, in wich case it will select the test that contains
+    that line (if any).
+
+        "pkg/tests/test_foo.py:32"
 
     This function ensures the path exists, and returns a tuple:
 
@@ -841,6 +850,15 @@ def resolve_collection_argument(
     If the path is a directory and selection parts are present, raise UsageError.
     """
     strpath, *parts = str(arg).split("::")
+    strpath, line_no = strpath.split(":")
+    if parts and line_no:
+        msg = (
+            "package argument cannot contain both selection parts and line number: {arg}"
+            if as_pypath
+            else "directory argument cannot both selection parts and line number: {arg}"
+        )
+        raise UsageError(msg.format(arg=arg))
+
     if as_pypath:
         strpath = search_pypath(strpath)
     fspath = invocation_path / strpath
@@ -852,11 +870,15 @@ def resolve_collection_argument(
             else "file or directory not found: {arg}"
         )
         raise UsageError(msg.format(arg=arg))
-    if parts and fspath.is_dir():
+    if fspath.is_dir() and (parts or line_no):
         msg = (
-            "package argument cannot contain :: selection parts: {arg}"
+            "package argument cannot contain :: selection parts or line number : {arg}"
             if as_pypath
-            else "directory argument cannot contain :: selection parts: {arg}"
+            else "directory argument cannot contain :: selection parts or line number: {arg}"
         )
         raise UsageError(msg.format(arg=arg))
+
+    if line_no:
+        parts = PytestParser(fspath.read_text()).find(int(line_no))
+
     return py.path.local(str(fspath)), parts
