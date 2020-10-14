@@ -221,13 +221,18 @@ Registering markers for your test suite is simple:
     [pytest]
     markers =
         webtest: mark a test as a webtest.
+        slow: mark test as slow.
 
-You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers:
+Multiple custom markers can be registered, by defining each one in its own line, as shown in above example.
+
+You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` and ``slow`` markers:
 
 .. code-block:: pytest
 
     $ pytest --markers
     @pytest.mark.webtest: mark a test as a webtest.
+
+    @pytest.mark.slow: mark test as slow.
 
     @pytest.mark.filterwarnings(warning): add a warning filter to the given test. see https://docs.pytest.org/en/stable/warnings.html#pytest-mark-filterwarnings
 
