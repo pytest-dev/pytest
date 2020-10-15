@@ -108,7 +108,7 @@ Here is how you might run it::
     See also: :ref:`pythonpath`.
 
 .. note::
-    Some functions should be implemented only in plugins or conftest.py files situated at the
+    Some hooks should be implemented only in plugins or conftest.py files situated at the
     tests root directory due to how pytest discovers plugins during startup.
 
 Writing your own plugin
