@@ -850,7 +850,7 @@ def resolve_collection_argument(
     If the path is a directory and selection parts are present, raise UsageError.
     """
     strpath, *parts = str(arg).split("::")
-    strpath, line_no = strpath.split(":")
+    strpath, _, line_no = strpath.partition(":")
     if parts and line_no:
         msg = (
             "package argument cannot contain both selection parts and line number: {arg}"
