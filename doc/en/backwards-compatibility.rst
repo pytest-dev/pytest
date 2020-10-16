@@ -10,7 +10,7 @@ we keep learning about new and better structures to express different details ab
 
 While we implement those modifications we try to ensure an easy transition and don't want to impose unnecessary churn on our users and community/plugin authors.
 
-As of now, pytest considers multipe types of backward compatibility transitions:
+As of now, pytest considers multiple types of backward compatibility transitions:
 
 a) trivial: APIs which trivially translate to the new mechanism,
    and do not cause problematic changes.
@@ -25,7 +25,7 @@ b) transitional: the old and new API don't conflict
    When the deprecation expires (e.g. 4.0 is released), we won't remove the deprecated functionality immediately, but will use the standard warning filters to turn them into **errors** by default. This approach makes it explicit that removal is imminent, and still gives you time to turn the deprecated feature into a warning instead of an error so it can be dealt with in your own time. In the next minor release (e.g. 4.1), the feature will be effectively removed.
 
 
-c) true breakage: should only to be considered when normal transition is unreasonably unsustainable and would offset important development/features by years.
+c) true breakage: should only be considered when normal transition is unreasonably unsustainable and would offset important development/features by years.
    In addition, they should be limited to APIs where the number of actual users is very small (for example only impacting some plugins), and can be coordinated with the community in advance.
 
    Examples for such upcoming changes:
@@ -42,7 +42,7 @@ c) true breakage: should only to be considered when normal transition is unreaso
 
    After there's no hard *-1* on the issue it should be followed up by an initial proof-of-concept Pull Request.
 
-   This POC serves as both a coordination point to assess impact and potential inspriation to come up with a transitional solution after all.
+   This POC serves as both a coordination point to assess impact and potential inspiration to come up with a transitional solution after all.
 
    After a reasonable amount of time the PR can be merged to base a new major release.
 
