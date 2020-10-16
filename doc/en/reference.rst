@@ -689,7 +689,7 @@ items, delete or otherwise amend the test items:
 .. autofunction:: pytest_collection_modifyitems
 
 .. note::
-    If this hook is implemented in conftest.py files, it always receives all collected items, not only those 
+    If this hook is implemented in conftest.py files, it always receives all collected items, not only those
     under the conftest.py.
    
 .. autofunction:: pytest_collection_finish
