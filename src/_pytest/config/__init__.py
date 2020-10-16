@@ -1577,9 +1577,9 @@ def parse_warning_filter(
         category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined] # noqa: E501
     except Exception as e:
         raise WarningFilterException(
-            "Error while processing warning rules. Please make sure importing "
-            "the warning classes defined in filterwarning doesn't trigger an "
-            "exception."
+            f"Error while processing warning rule '{category_}'. Please make "
+            "sure importing the warning classes defined in filterwarning "
+            "doesn't trigger an exception."
         ) from e
     if message and escape:
         message = re.escape(message)
