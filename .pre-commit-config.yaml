@@ -54,6 +54,8 @@ repos:
     -   id: mypy
         files: ^(src/|testing/)
         args: []
+        additional_dependencies:
+          - iniconfig>=1.1.0
 -   repo: local
     hooks:
     -   id: rst

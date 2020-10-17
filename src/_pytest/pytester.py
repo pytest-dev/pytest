@@ -32,6 +32,7 @@ from weakref import WeakKeyDictionary
 import attr
 import py
 from iniconfig import IniConfig
+from iniconfig import SectionWrapper
 
 import pytest
 from _pytest import timing
@@ -785,10 +786,10 @@ class Pytester:
         """Write a tox.ini file with 'source' as contents."""
         return self.makefile(".ini", tox=source)
 
-    def getinicfg(self, source: str) -> IniConfig:
+    def getinicfg(self, source: str) -> SectionWrapper:
         """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)
-        return IniConfig(p)["pytest"]
+        return IniConfig(str(p))["pytest"]
 
     def makepyprojecttoml(self, source: str) -> Path:
         """Write a pyproject.toml file with 'source' as contents.
@@ -1541,9 +1542,9 @@ class Testdir:
         """See :meth:`Pytester.makeini`."""
         return py.path.local(str(self._pytester.makeini(source)))
 
-    def getinicfg(self, source) -> py.path.local:
+    def getinicfg(self, source: str) -> SectionWrapper:
         """See :meth:`Pytester.getinicfg`."""
-        return py.path.local(str(self._pytester.getinicfg(source)))
+        return self._pytester.getinicfg(source)
 
     def makepyprojecttoml(self, source) -> py.path.local:
         """See :meth:`Pytester.makepyprojecttoml`."""
