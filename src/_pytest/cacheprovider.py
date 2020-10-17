@@ -382,7 +382,7 @@ class NFPlugin:
             self.cached_nodeids.update(item.nodeid for item in items)
 
     def _get_increasing_order(self, items: Iterable[nodes.Item]) -> List[nodes.Item]:
-        return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
+        return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)  # type: ignore[no-any-return]
 
     def pytest_sessionfinish(self) -> None:
         config = self.config

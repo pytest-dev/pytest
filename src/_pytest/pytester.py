@@ -1322,8 +1322,10 @@ class Pytester:
         """
         __tracebackhide__ = True
 
+        # TODO: Remove type ignore in next mypy release.
+        #       https://github.com/python/typeshed/pull/4582
         cmdargs = tuple(
-            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs
+            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs  # type: ignore[misc]
         )
         p1 = self.path.joinpath("stdout")
         p2 = self.path.joinpath("stderr")

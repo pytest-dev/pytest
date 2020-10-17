@@ -1,3 +1,4 @@
+import io
 from typing import List
 from typing import Union
 
@@ -95,7 +96,7 @@ class TestPaste:
 
         def mocked(url, data):
             calls.append((url, data))
-            raise urllib.error.HTTPError(url, 400, "Bad request", None, None)
+            raise urllib.error.HTTPError(url, 400, "Bad request", {}, io.BytesIO())
 
         monkeypatch.setattr(urllib.request, "urlopen", mocked)
         return calls

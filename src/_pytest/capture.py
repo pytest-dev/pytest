@@ -380,8 +380,7 @@ class FDCaptureBinary:
             self.syscapture = SysCapture(targetfd)
         else:
             self.tmpfile = EncodedFile(
-                # TODO: Remove type ignore, fixed in next mypy release.
-                TemporaryFile(buffering=0),  # type: ignore[arg-type]
+                TemporaryFile(buffering=0),
                 encoding="utf-8",
                 errors="replace",
                 newline="",

@@ -77,7 +77,7 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
                 dlist.append(rep)
     if not dlist:
         return
-    dlist.sort(key=lambda x: x.duration)
+    dlist.sort(key=lambda x: x.duration)  # type: ignore[no-any-return]
     dlist.reverse()
     if not durations:
         tr.write_sep("=", "slowest durations")
