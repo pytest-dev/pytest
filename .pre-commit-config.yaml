@@ -49,11 +49,13 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.782  # NOTE: keep this in sync with setup.cfg.
+    rev: v0.790  # NOTE: keep this in sync with setup.cfg.
     hooks:
     -   id: mypy
         files: ^(src/|testing/)
         args: []
+        additional_dependencies:
+          - iniconfig>=1.1.0
 -   repo: local
     hooks:
     -   id: rst

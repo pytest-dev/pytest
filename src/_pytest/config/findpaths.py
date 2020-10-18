@@ -27,7 +27,7 @@ def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
     Raise UsageError if the file cannot be parsed.
     """
     try:
-        return iniconfig.IniConfig(path)
+        return iniconfig.IniConfig(str(path))
     except iniconfig.ParseError as exc:
         raise UsageError(str(exc)) from exc
 

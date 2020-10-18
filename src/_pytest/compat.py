@@ -150,9 +150,8 @@ def getfuncargnames(
         p.name
         for p in parameters.values()
         if (
-            # TODO: Remove type ignore after https://github.com/python/typeshed/pull/4383
-            p.kind is Parameter.POSITIONAL_OR_KEYWORD  # type: ignore[unreachable]
-            or p.kind is Parameter.KEYWORD_ONLY  # type: ignore[unreachable]
+            p.kind is Parameter.POSITIONAL_OR_KEYWORD
+            or p.kind is Parameter.KEYWORD_ONLY
         )
         and p.default is Parameter.empty
     )

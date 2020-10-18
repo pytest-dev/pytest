@@ -1606,7 +1606,7 @@ def test_stderr_write_returns_len(capsys):
 def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
     ef = capture.EncodedFile(tmpfile, encoding="utf-8")
     with pytest.raises(TypeError):
-        ef.writelines([b"line1", b"line2"])
+        ef.writelines([b"line1", b"line2"])  # type: ignore[list-item]
     assert ef.writelines(["line3", "line4"]) is None  # type: ignore[func-returns-value]
     ef.flush()
     tmpfile.seek(0)

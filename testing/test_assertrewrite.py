@@ -1595,7 +1595,7 @@ class TestPyCacheDir:
         if prefix:
             if sys.version_info < (3, 8):
                 pytest.skip("pycache_prefix not available in py<38")
-            monkeypatch.setattr(sys, "pycache_prefix", prefix)  # type:ignore
+            monkeypatch.setattr(sys, "pycache_prefix", prefix)
 
         assert get_cache_dir(Path(source)) == Path(expected)
 
