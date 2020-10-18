@@ -9,10 +9,8 @@ import tabulate
 FILE_HEAD = r"""Plugins List
 ============
 
-The plugins are listed automatically from PyPI.
-Only PyPI projects that match "pytest-\*" are considered plugins.
-Packages classified as inactive are also excluded.
-
+PyPI projects that match "pytest-\*" are considered plugins and are listed
+automatically. Packages classified as inactive are excluded.
 """
 DEVELOPMENT_STATUS_CLASSIFIERS = (
     "Development Status :: 1 - Planning",
@@ -73,10 +71,12 @@ def iter_plugins():
 
 
 def main():
-    plugin_table = tabulate.tabulate(iter_plugins(), headers="keys", tablefmt="rst")
+    plugins = list(iter_plugins())
+    plugin_table = tabulate.tabulate(plugins, headers="keys", tablefmt="rst")
     plugin_list = pathlib.Path("doc", "en", "plugin_list.rst")
     with plugin_list.open("w") as f:
         f.write(FILE_HEAD)
+        f.write(f"This list contains {len(plugins)} plugins.\n\n")
         f.write(plugin_table)
         f.write("\n")
 

@@ -1,9 +1,9 @@
 Plugins List
 ============
 
-The plugins are listed automatically from PyPI.
-Only PyPI projects that match "pytest-\*" are considered plugins.
-Packages classified as inactive are also excluded.
+PyPI projects that match "pytest-\*" are considered plugins and are listed
+automatically. Packages classified as inactive are excluded.
+This list contains 780 plugins.
 
 ==============================================================================================================  ========================================================================================================================================================================  =========================================================================================  ==============  =====================  ============================================
 name                                                                                                            summary                                                                                                                                                                   pyversions                                                                                 last release    status                 requires
