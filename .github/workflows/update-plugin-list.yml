@@ -20,7 +20,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install packaging requests tabulate[widechars]
       - name: Update Plugin List
-        run: python scripts/plugin_list.py
+        run: python scripts/update-plugin-list.py
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
