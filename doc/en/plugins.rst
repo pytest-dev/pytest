@@ -58,7 +58,7 @@ Here is a little annotated list for some popular plugins:
 
 To see a complete list of all plugins with their latest testing
 status against different pytest and Python versions, please visit
-:doc:`<plugin_list>`.
+:doc:`plugin_list`.
 
 You may also discover more plugins through a `pytest- pypi.org search`_.
 
