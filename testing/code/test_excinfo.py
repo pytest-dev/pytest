@@ -1,3 +1,4 @@
+import importlib
 import io
 import operator
 import os
@@ -19,13 +20,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
 from _pytest._io import TerminalWriter
 from _pytest.pytester import LineMatcher
-
-try:
-    import importlib
-except ImportError:
-    invalidate_import_caches = None
-else:
-    invalidate_import_caches = getattr(importlib, "invalidate_caches", None)
 
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
@@ -445,8 +439,7 @@ class TestFormattedExcinfo:
             modpath = tmpdir.join("mod.py")
             tmpdir.ensure("__init__.py")
             modpath.write(source)
-            if invalidate_import_caches is not None:
-                invalidate_import_caches()
+            importlib.invalidate_caches()
             return modpath.pyimport()
 
         return importasmod
