@@ -443,7 +443,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       both ``a`` and ``b``, this test is symmetric (i.e.  neither ``a`` nor
       ``b`` is a "reference value").  You have to specify an absolute tolerance
       if you want to compare to ``0.0`` because there is no tolerance by
-      default.  Only available in python>=3.5.  `More information...`__
+      default.  `More information...`__
 
       __ https://docs.python.org/3/library/math.html#math.isclose
 

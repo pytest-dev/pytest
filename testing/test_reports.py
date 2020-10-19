@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 from typing import Sequence
 from typing import Union
@@ -346,44 +345,18 @@ class TestReportSerialization:
         from subprocess to main process creates an artificial exception, which ExceptionInfo
         can't obtain the ReprFileLocation from.
         """
-        # somehow in Python 3.5 on Windows this test fails with:
-        #   File "c:\...\3.5.4\x64\Lib\multiprocessing\connection.py", line 302, in _recv_bytes
-        #     overlapped=True)
-        # OSError: [WinError 6] The handle is invalid
-        #
-        # so in this platform we opted to use a mock traceback which is identical to the
-        # one produced by the multiprocessing module
-        if sys.version_info[:2] <= (3, 5) and sys.platform.startswith("win"):
-            testdir.makepyfile(
-                """
-                # equivalent of multiprocessing.pool.RemoteTraceback
-                class RemoteTraceback(Exception):
-                    def __init__(self, tb):
-                        self.tb = tb
-                    def __str__(self):
-                        return self.tb
-                def test_a():
-                    try:
-                        raise ValueError('value error')
-                    except ValueError as e:
-                        # equivalent to how multiprocessing.pool.rebuild_exc does it
-                        e.__cause__ = RemoteTraceback('runtime error')
-                        raise e
+        testdir.makepyfile(
             """
-            )
-        else:
-            testdir.makepyfile(
-                """
-                from concurrent.futures import ProcessPoolExecutor
+            from concurrent.futures import ProcessPoolExecutor
 
-                def func():
-                    raise ValueError('value error')
+            def func():
+                raise ValueError('value error')
 
-                def test_a():
-                    with ProcessPoolExecutor() as p:
-                        p.submit(func).result()
-            """
-            )
+            def test_a():
+                with ProcessPoolExecutor() as p:
+                    p.submit(func).result()
+        """
+        )
 
         testdir.syspathinsert()
         reprec = testdir.inline_run()

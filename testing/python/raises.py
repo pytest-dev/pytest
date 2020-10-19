@@ -162,11 +162,6 @@ class TestRaises:
 
         class T:
             def __call__(self):
-                # Early versions of Python 3.5 have some bug causing the
-                # __call__ frame to still refer to t even after everything
-                # is done. This makes the test pass for them.
-                if sys.version_info < (3, 5, 2):
-                    del self
                 raise ValueError
 
         t = T()

@@ -89,7 +89,7 @@ Features
 - Can run `unittest <https://docs.pytest.org/en/stable/unittest.html>`_ (or trial),
   `nose <https://docs.pytest.org/en/stable/nose.html>`_ test suites out of the box
 
-- Python 3.5+ and PyPy3
+- Python 3.6+ and PyPy3
 
 - Rich plugin architecture, with over 850+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community
 
