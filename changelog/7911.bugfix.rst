@@ -1,1 +1,1 @@
-Change `LOCK_TIMEOUT` constant to 3 days (previous value 3 hours) to avoid temporary dir deletion.
+Directories created by `tmpdir` are now considered stale after 3 days without modification (previous value was 3 hours) to avoid deleting directories still in use in long running test suites.
