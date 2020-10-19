@@ -1,0 +1,1 @@
+Change `LOCK_TIMEOUT` constant to 3 days (previous value 3 hours) to avoid temporary dir deletion.
