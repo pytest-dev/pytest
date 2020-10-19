@@ -497,9 +497,7 @@ class FDCapture(FDCaptureBinary):
 class CaptureResult(Generic[AnyStr]):
     """The result of :method:`CaptureFixture.readouterr`."""
 
-    # Can't use slots in Python<3.5.3 due to https://bugs.python.org/issue31272
-    if sys.version_info >= (3, 5, 3):
-        __slots__ = ("out", "err")
+    __slots__ = ("out", "err")
 
     def __init__(self, out: AnyStr, err: AnyStr) -> None:
         self.out: AnyStr = out

@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 3.5, 3.6, 3.7, 3.8, 3.9, PyPy3
+**Pythons**: Python 3.6, 3.7, 3.8, 3.9, PyPy3
 
 **Platforms**: Linux and Windows
 

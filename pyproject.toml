@@ -29,7 +29,7 @@ filterwarnings = [
     "ignore:.*U.*mode is deprecated:DeprecationWarning:(?!(pytest|_pytest))",
     # produced by pytest-xdist
     "ignore:.*type argument to addoption.*:DeprecationWarning",
-    # produced by python >=3.5 on execnet (pytest-xdist)
+    # produced on execnet (pytest-xdist)
     "ignore:.*inspect.getargspec.*deprecated, use inspect.signature.*:DeprecationWarning",
     # pytest's own futurewarnings
     "ignore::pytest.PytestExperimentalApiWarning",

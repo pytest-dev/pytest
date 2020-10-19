@@ -99,7 +99,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             spec is None
             # this is a namespace package (without `__init__.py`)
             # there's nothing to rewrite there
-            # python3.5 - python3.6: `namespace`
+            # python3.6: `namespace`
             # python3.7+: `None`
             or spec.origin == "namespace"
             or spec.origin is None
@@ -1005,7 +1005,7 @@ class AssertionRewriter(ast.NodeVisitor):
         return res, outer_expl
 
     def visit_Starred(self, starred: ast.Starred) -> Tuple[ast.Starred, str]:
-        # From Python 3.5, a Starred node can appear in a function call.
+        # A Starred node can appear in a function call.
         res, expl = self.visit(starred.value)
         new_starred = ast.Starred(res, starred.ctx)
         return new_starred, "*" + expl

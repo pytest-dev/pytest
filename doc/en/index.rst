@@ -69,7 +69,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box
 
-- Python 3.5+ and PyPy 3
+- Python 3.6+ and PyPy 3
 
 - Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community
 
