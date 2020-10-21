@@ -160,6 +160,7 @@ class TestPDB:
             child.wait()
         assert not child.isalive()
 
+    @pytest.mark.skip(reason="getting stuck in CI: #7913")
     def test_pdb_unittest_postmortem(self, testdir):
         p1 = testdir.makepyfile(
             """
