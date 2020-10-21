@@ -16,6 +16,7 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -176,6 +177,7 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'pytest-dev/pytest'
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     needs: [build]
 
