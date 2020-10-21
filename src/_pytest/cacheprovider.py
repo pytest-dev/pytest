@@ -29,6 +29,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.python import Module
+from _pytest.python import Package
 from _pytest.reports import TestReport
 
 
@@ -233,7 +234,10 @@ class LFPluginCollSkipfiles:
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Optional[CollectReport]:
-        if isinstance(collector, Module):
+        # Packages are Modules, but _last_failed_paths only contains
+        # test-bearing paths and doesn't try to include the paths of their
+        # packages, so don't filter them.
+        if isinstance(collector, Module) and not isinstance(collector, Package):
             if Path(str(collector.fspath)) not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 

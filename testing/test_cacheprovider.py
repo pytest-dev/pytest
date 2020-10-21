@@ -984,6 +984,36 @@ class TestLastFailed:
         )
         assert result.ret == 0
 
+    def test_packages(self, testdir: Testdir) -> None:
+        """Regression test for #7758.
+
+        The particular issue here was that Package nodes were included in the
+        filtering, being themselves Modules for the __init__.py, even if they
+        had failed Modules in them.
+
+        The tests includes a test in an __init__.py file just to make sure the
+        fix doesn't somehow regress that, it is not critical for the issue.
+        """
+        testdir.makepyfile(
+            **{
+                "__init__.py": "",
+                "a/__init__.py": "def test_a_init(): assert False",
+                "a/test_one.py": "def test_1(): assert False",
+                "b/__init__.py": "",
+                "b/test_two.py": "def test_2(): assert False",
+            },
+        )
+        testdir.makeini(
+            """
+            [pytest]
+            python_files = *.py
+            """
+        )
+        result = testdir.runpytest()
+        result.assert_outcomes(failed=3)
+        result = testdir.runpytest("--lf")
+        result.assert_outcomes(failed=3)
+
 
 class TestNewFirst:
     def test_newfirst_usecase(self, testdir):
