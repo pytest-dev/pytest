@@ -20,7 +20,6 @@ created in the `base temporary directory`_.
 .. code-block:: python
 
     # content of test_tmp_path.py
-    import os
 
     CONTENT = "content"
 
@@ -97,7 +96,6 @@ and more.  Here is an example test usage:
 .. code-block:: python
 
     # content of test_tmpdir.py
-    import os
 
 
     def test_create_file(tmpdir):
