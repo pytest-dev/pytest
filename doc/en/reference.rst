@@ -189,7 +189,7 @@ Mark a test function as using the given fixture names.
     When using `usefixtures` in hooks, it can only load fixtures when applied to a test function before test setup
     (for example in the `pytest_collection_modifyitems` hook).
 
-    Also not that his mark has no effect when applied to **fixtures**.
+    Also note that this mark has no effect when applied to **fixtures**.
 
 
 
