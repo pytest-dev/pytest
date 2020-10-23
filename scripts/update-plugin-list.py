@@ -41,15 +41,15 @@ def iter_plugins():
                 status = classifier[22:]
                 break
         else:
-            status = "NA"
-        requires = "NA"
+            status = "N/A"
+        requires = "N/A"
         if info["requires_dist"]:
             for requirement in info["requires_dist"]:
                 if requirement == "pytest" or "pytest " in requirement:
                     requires = requirement
                     break
         releases = response.json()["releases"]
-        for release in sorted(releases, key=packaging.version.parse, reverse=True,):
+        for release in sorted(releases, key=packaging.version.parse, reverse=True):
             if releases[release]:
                 release_date = datetime.date.fromisoformat(
                     releases[release][-1]["upload_time_iso_8601"].split("T")[0]
