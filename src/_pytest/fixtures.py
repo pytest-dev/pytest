@@ -1478,14 +1478,10 @@ class FixtureManager:
 
     def _getautousenames(self, nodeid: str) -> List[str]:
         """Return a list of fixture names to be used."""
+        parentnodeids = set(nodes.iterparentnodeids(nodeid))
         autousenames: List[str] = []
         for baseid, basenames in self._nodeid_and_autousenames:
-            if nodeid.startswith(baseid):
-                if baseid:
-                    i = len(baseid)
-                    nextchar = nodeid[i : i + 1]
-                    if nextchar and nextchar not in ":/":
-                        continue
+            if baseid in parentnodeids:
                 autousenames.extend(basenames)
         return autousenames
 
@@ -1668,6 +1664,7 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], nodeid: str
     ) -> Iterator[FixtureDef[Any]]:
+        parentnodeids = set(nodes.iterparentnodeids(nodeid))
         for fixturedef in fixturedefs:
-            if nodes.ischildnode(fixturedef.baseid, nodeid):
+            if fixturedef.baseid in parentnodeids:
                 yield fixturedef
