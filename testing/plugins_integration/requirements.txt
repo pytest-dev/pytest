@@ -9,7 +9,7 @@ pytest-html==2.1.1
 pytest-mock==3.3.1
 pytest-rerunfailures==9.1.1
 pytest-sugar==0.9.4
-pytest-trio==0.6.0
+pytest-trio==0.7.0
 pytest-twisted==1.13.2
 twisted==20.3.0
 pytest-xvfb==2.0.0
