@@ -95,8 +95,6 @@ and more.  Here is an example test usage:
 .. code-block:: python
 
     # content of test_tmpdir.py
-
-
     def test_create_file(tmpdir):
         p = tmpdir.mkdir("sub").join("hello.txt")
         p.write("content")
