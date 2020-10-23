@@ -1710,7 +1710,7 @@ class TestAutouseDiscovery:
             """
             from _pytest.pytester import get_public_names
             def test_check_setup(item, fm):
-                autousenames = fm._getautousenames(item.nodeid)
+                autousenames = list(fm._getautousenames(item.nodeid))
                 assert len(get_public_names(autousenames)) == 2
                 assert "perfunction2" in autousenames
                 assert "perfunction" in autousenames

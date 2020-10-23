@@ -1476,14 +1476,12 @@ class FixtureManager:
 
         self.parsefactories(plugin, nodeid)
 
-    def _getautousenames(self, nodeid: str) -> List[str]:
-        """Return a list of fixture names to be used."""
+    def _getautousenames(self, nodeid: str) -> Iterator[str]:
+        """Return the names of autouse fixtures applicable to nodeid."""
         parentnodeids = set(nodes.iterparentnodeids(nodeid))
-        autousenames: List[str] = []
         for baseid, basenames in self._nodeid_and_autousenames:
             if baseid in parentnodeids:
-                autousenames.extend(basenames)
-        return autousenames
+                yield from basenames
 
     def getfixtureclosure(
         self,
@@ -1499,7 +1497,7 @@ class FixtureManager:
         # (discovering matching fixtures for a given name/node is expensive).
 
         parentid = parentnode.nodeid
-        fixturenames_closure = self._getautousenames(parentid)
+        fixturenames_closure = list(self._getautousenames(parentid))
 
         def merge(otherlist: Iterable[str]) -> None:
             for arg in otherlist:
