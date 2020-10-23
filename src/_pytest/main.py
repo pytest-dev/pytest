@@ -358,6 +358,13 @@ def _in_venv(path: py.path.local) -> bool:
     return any([fname.basename in activates for fname in bindir.listdir()])
 
 
+def contains_ignorefile(path: Path) -> bool:
+    try:
+        return path.is_dir() and path.joinpath(".pytestignore").exists()
+    except PermissionError:
+        return False
+
+
 def pytest_ignore_collect(path: py.path.local, config: Config) -> Optional[bool]:
     ignore_paths = config._getconftest_pathlist("collect_ignore", path=path.dirpath())
     ignore_paths = ignore_paths or []
@@ -365,7 +372,7 @@ def pytest_ignore_collect(path: py.path.local, config: Config) -> Optional[bool]
     if excludeopt:
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
 
-    if py.path.local(path) in ignore_paths:
+    if py.path.local(path) in ignore_paths or contains_ignorefile(Path(path)):
         return True
 
     ignore_globs = config._getconftest_pathlist(

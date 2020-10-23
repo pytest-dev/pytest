@@ -46,6 +46,36 @@ you will see that ``pytest`` only collects test-modules, which do not match the 
 The ``--ignore-glob`` option allows to ignore test file paths based on Unix shell-style wildcards.
 If you want to exclude test-modules that end with ``_01.py``, execute ``pytest`` with ``--ignore-glob='*_01.py'``.
 
+Another option for ignoring a directory is via the inclusion of a ``.pytestignore`` file.
+
+.. code-block:: text
+
+    tests/
+    |-- foo
+    |   |-- .pytestignore
+    |   |-- test_foo_01.py
+    |   |-- test_foo_02.py
+    |   '-- test_foo_03.py
+    '-- bar
+        |-- test_bar_01.py
+        |-- test_bar_02.py
+        '-- test_bar_03.py
+
+Because of its inclusion of a ``.pytestignore`` file, the ``foo`` directory will not be collected.
+
+.. code-block:: pytest
+
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-5.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 5 items
+
+    tests/bar/test_bar_01.py .                                           [ 33%]
+    tests/bar/test_bar_02.py .                                           [ 66%]
+    tests/bar/test_bar_03.py .                                           [100%]
+
+    ========================= 3 passed in 0.02 seconds =========================
+
 Deselect tests during test collection
 -------------------------------------
 

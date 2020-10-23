@@ -241,6 +241,19 @@ class TestCollectFS:
             items, reprec = testdir.inline_genitems()
             assert [x.name for x in items] == ["test_%s" % dirname]
 
+    def test_ignore_pytestignore_file(self, testdir):
+        tmpdir = testdir.tmpdir
+        tmpdir.ensure("sub1", "test_notfound.py")
+        tmpdir.ensure("sub1", ".pytestignore")
+        tmpdir.ensure("sub2", "test_found.py")
+        for x in Path(str(tmpdir)).rglob("test_*.py"):
+            x.write_text("def test_hello(): pass", "utf-8")
+
+        result = testdir.runpytest("--collect-only")
+        s = result.stdout.str()
+        assert "test_notfound" not in s
+        assert "test_found" in s
+
 
 class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, testdir):

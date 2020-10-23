@@ -1,0 +1,1 @@
+Support for ignoring collection of directories containing a ``.pytestignore`` file.
