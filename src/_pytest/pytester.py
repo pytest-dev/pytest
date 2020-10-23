@@ -771,9 +771,9 @@ class Pytester:
 
         .. code-block:: python
 
-            testdir.makefile(".txt", "line1", "line2")
+            pytester.makefile(".txt", "line1", "line2")
 
-            testdir.makefile(".ini", pytest="[pytest]\naddopts=-rs\n")
+            pytester.makefile(".ini", pytest="[pytest]\naddopts=-rs\n")
 
         """
         return self._makefile(ext, args, kwargs)
@@ -808,11 +808,11 @@ class Pytester:
 
         .. code-block:: python
 
-            def test_something(testdir):
+            def test_something(pytester):
                 # Initial file is created test_something.py.
-                testdir.makepyfile("foobar")
+                pytester.makepyfile("foobar")
                 # To create multiple files, pass kwargs accordingly.
-                testdir.makepyfile(custom="foobar")
+                pytester.makepyfile(custom="foobar")
                 # At this point, both 'test_something.py' & 'custom.py' exist in the test directory.
 
         """
@@ -828,11 +828,11 @@ class Pytester:
 
         .. code-block:: python
 
-            def test_something(testdir):
+            def test_something(pytester):
                 # Initial file is created test_something.txt.
-                testdir.maketxtfile("foobar")
+                pytester.maketxtfile("foobar")
                 # To create multiple files, pass kwargs accordingly.
-                testdir.maketxtfile(custom="foobar")
+                pytester.maketxtfile(custom="foobar")
                 # At this point, both 'test_something.txt' & 'custom.txt' exist in the test directory.
 
         """
@@ -1279,7 +1279,7 @@ class Pytester:
         )
         kw["env"] = env
 
-        if stdin is Testdir.CLOSE_STDIN:
+        if stdin is self.CLOSE_STDIN:
             kw["stdin"] = subprocess.PIPE
         elif isinstance(stdin, bytes):
             kw["stdin"] = subprocess.PIPE
@@ -1287,7 +1287,7 @@ class Pytester:
             kw["stdin"] = stdin
 
         popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
-        if stdin is Testdir.CLOSE_STDIN:
+        if stdin is self.CLOSE_STDIN:
             assert popen.stdin is not None
             popen.stdin.close()
         elif isinstance(stdin, bytes):
@@ -1311,7 +1311,7 @@ class Pytester:
             being converted to ``str`` automatically.
         :param timeout:
             The period in seconds after which to timeout and raise
-            :py:class:`Testdir.TimeoutExpired`.
+            :py:class:`Pytester.TimeoutExpired`.
         :param stdin:
             Optional standard input.  Bytes are being send, closing
             the pipe, otherwise it is passed through to ``popen``.
@@ -1412,7 +1412,7 @@ class Pytester:
             The sequence of arguments to pass to the pytest subprocess.
         :param timeout:
             The period in seconds after which to timeout and raise
-            :py:class:`Testdir.TimeoutExpired`.
+            :py:class:`Pytester.TimeoutExpired`.
 
         :rtype: RunResult
         """
@@ -1453,9 +1453,8 @@ class Pytester:
             pytest.skip("pexpect.spawn not available")
         logfile = self.path.joinpath("spawn.out").open("wb")
 
-        child = pexpect.spawn(cmd, logfile=logfile)
+        child = pexpect.spawn(cmd, logfile=logfile, timeout=expect_timeout)
         self._request.addfinalizer(logfile.close)
-        child.timeout = expect_timeout
         return child
 
 
