@@ -1,0 +1,1 @@
+Fixed quadratic behavior and improved performance of collection of items using autouse fixtures and xunit fixtures.

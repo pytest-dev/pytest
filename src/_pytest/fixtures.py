@@ -1412,9 +1412,10 @@ class FixtureManager:
         self.config: Config = session.config
         self._arg2fixturedefs: Dict[str, List[FixtureDef[Any]]] = {}
         self._holderobjseen: Set[object] = set()
-        self._nodeid_and_autousenames: List[Tuple[str, List[str]]] = [
-            ("", self.config.getini("usefixtures"))
-        ]
+        # A mapping from a nodeid to a list of autouse fixtures it defines.
+        self._nodeid_autousenames: Dict[str, List[str]] = {
+            "": self.config.getini("usefixtures"),
+        }
         session.config.pluginmanager.register(self, "funcmanage")
 
     def _get_direct_parametrize_args(self, node: nodes.Node) -> List[str]:
@@ -1478,9 +1479,9 @@ class FixtureManager:
 
     def _getautousenames(self, nodeid: str) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to nodeid."""
-        parentnodeids = set(nodes.iterparentnodeids(nodeid))
-        for baseid, basenames in self._nodeid_and_autousenames:
-            if baseid in parentnodeids:
+        for parentnodeid in nodes.iterparentnodeids(nodeid):
+            basenames = self._nodeid_autousenames.get(parentnodeid)
+            if basenames:
                 yield from basenames
 
     def getfixtureclosure(
@@ -1642,7 +1643,7 @@ class FixtureManager:
                 autousenames.append(name)
 
         if autousenames:
-            self._nodeid_and_autousenames.append((nodeid or "", autousenames))
+            self._nodeid_autousenames.setdefault(nodeid or "", []).extend(autousenames)
 
     def getfixturedefs(
         self, argname: str, nodeid: str
