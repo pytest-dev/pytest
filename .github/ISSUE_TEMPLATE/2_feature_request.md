@@ -5,7 +5,7 @@ about: Ideas for new features and improvements
 ---
 
 <!--
-Thanks for submitting an issue!
+Thanks for suggesting a feature!
 
 Quick check-list while suggesting features:
 -->
