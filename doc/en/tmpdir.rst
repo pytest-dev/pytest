@@ -20,7 +20,6 @@ created in the `base temporary directory`_.
 .. code-block:: python
 
     # content of test_tmp_path.py
-
     CONTENT = "content"
 
 
