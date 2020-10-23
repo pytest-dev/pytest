@@ -522,7 +522,12 @@ class Module(nodes.File, PyCollector):
         if setup_module is None and teardown_module is None:
             return
 
-        @fixtures.fixture(autouse=True, scope="module")
+        @fixtures.fixture(
+            autouse=True,
+            scope="module",
+            # Use a unique name to speed up lookup.
+            name=f"xunit_setup_module_fixture_{self.obj.__name__}",
+        )
         def xunit_setup_module_fixture(request) -> Generator[None, None, None]:
             if setup_module is not None:
                 _call_with_optional_argument(setup_module, request.module)
@@ -546,7 +551,12 @@ class Module(nodes.File, PyCollector):
         if setup_function is None and teardown_function is None:
             return
 
-        @fixtures.fixture(autouse=True, scope="function")
+        @fixtures.fixture(
+            autouse=True,
+            scope="function",
+            # Use a unique name to speed up lookup.
+            name=f"xunit_setup_function_fixture_{self.obj.__name__}",
+        )
         def xunit_setup_function_fixture(request) -> Generator[None, None, None]:
             if request.instance is not None:
                 # in this case we are bound to an instance, so we need to let
@@ -789,7 +799,12 @@ class Class(PyCollector):
         if setup_class is None and teardown_class is None:
             return
 
-        @fixtures.fixture(autouse=True, scope="class")
+        @fixtures.fixture(
+            autouse=True,
+            scope="class",
+            # Use a unique name to speed up lookup.
+            name=f"xunit_setup_class_fixture_{self.obj.__qualname__}",
+        )
         def xunit_setup_class_fixture(cls) -> Generator[None, None, None]:
             if setup_class is not None:
                 func = getimfunc(setup_class)
@@ -813,7 +828,12 @@ class Class(PyCollector):
         if setup_method is None and teardown_method is None:
             return
 
-        @fixtures.fixture(autouse=True, scope="function")
+        @fixtures.fixture(
+            autouse=True,
+            scope="function",
+            # Use a unique name to speed up lookup.
+            name=f"xunit_setup_method_fixture_{self.obj.__qualname__}",
+        )
         def xunit_setup_method_fixture(self, request) -> Generator[None, None, None]:
             method = request.function
             if setup_method is not None:
