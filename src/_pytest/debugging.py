@@ -173,14 +173,11 @@ class pytestPDB:
                     capman = self._pytest_capman
                     capturing = pytestPDB._is_capturing(capman)
                     if capturing:
-                        if capturing == "global":
-                            tw.sep(">", "PDB continue (IO-capturing resumed)")
-                        else:
-                            tw.sep(
-                                ">",
-                                "PDB continue (IO-capturing resumed for %s)"
-                                % capturing,
-                            )
+                        tw.sep(
+                            ">",
+                            "PDB continue (IO-capturing resumed%s)"
+                            % (" for %s" % capturing if capturing != "global" else ""),
+                        )
                         assert capman is not None
                         capman.resume()
                     else:
@@ -254,19 +251,15 @@ class pytestPDB:
                 # Handle header similar to pdb.set_trace in py37+.
                 header = kwargs.pop("header", None)
                 if header is not None:
-                    tw.sep(">", header)
+                    print_header = header
                 else:
                     capturing = cls._is_capturing(capman)
-                    if capturing == "global":
-                        tw.sep(">", f"PDB {method} (IO-capturing turned off)")
-                    elif capturing:
-                        tw.sep(
-                            ">",
-                            "PDB %s (IO-capturing turned off for %s)"
-                            % (method, capturing),
+                    print_header = f"PDB {method}"
+                    if capturing:
+                        print_header += " (IO-capturing turned off%s)" % (
+                            " for %s" % capturing if capturing != "global" else ""
                         )
-                    else:
-                        tw.sep(">", f"PDB {method}")
+                tw.sep(">", print_header)
 
         _pdb = cls._import_pdb_cls(capman)(**kwargs)
 
