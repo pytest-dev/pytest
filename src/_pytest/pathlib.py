@@ -55,6 +55,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     The returned value is used only by our own tests.
     """
     exctype, excvalue = exc[:2]
+
     # Another process removed the file in the middle of the "rm_rf" (xdist for example).
     # More context: https://github.com/pytest-dev/pytest/issues/5974#issuecomment-543799018
     if isinstance(excvalue, FileNotFoundError):

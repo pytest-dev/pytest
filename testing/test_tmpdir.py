@@ -445,15 +445,11 @@ def test_basetemp_with_read_only_files(testdir):
 
 
 def test_basetemp_with_not_executable_dirs(testdir):
-    """Integration test for #5524"""
+    """Integration test for #7933"""
     testdir.makepyfile(
         """
-        import os
-        import stat
-
         def test(tmp_path):
-            fn = tmp_path / "foo"
-            fn.mkdir(mode=0)
+            (tmp_path / "foo").mkdir(mode=0)
         """
     )
     assert testdir.runpytest("--basetemp=tmp").ret == 0
