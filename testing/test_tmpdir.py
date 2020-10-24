@@ -435,10 +435,27 @@ def test_basetemp_with_read_only_files(testdir):
             fn.write_text('hello')
             mode = os.stat(str(fn)).st_mode
             os.chmod(str(fn), mode & ~stat.S_IREAD)
-    """
+        """
     )
     result = testdir.runpytest("--basetemp=tmp")
     assert result.ret == 0
     # running a second time and ensure we don't crash
     result = testdir.runpytest("--basetemp=tmp")
     assert result.ret == 0
+
+
+def test_basetemp_with_not_executable_dirs(testdir):
+    """Integration test for #5524"""
+    testdir.makepyfile(
+        """
+        import os
+        import stat
+
+        def test(tmp_path):
+            fn = tmp_path / "foo"
+            fn.mkdir(mode=0)
+        """
+    )
+    assert testdir.runpytest("--basetemp=tmp").ret == 0
+    # running a second time and ensure we don't crash
+    assert testdir.runpytest("--basetemp=tmp").ret == 0

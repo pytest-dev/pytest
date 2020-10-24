@@ -55,7 +55,6 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     The returned value is used only by our own tests.
     """
     exctype, excvalue = exc[:2]
-
     # Another process removed the file in the middle of the "rm_rf" (xdist for example).
     # More context: https://github.com/pytest-dev/pytest/issues/5974#issuecomment-543799018
     if isinstance(excvalue, FileNotFoundError):
@@ -67,34 +66,43 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
         )
         return False
 
-    if func not in (os.rmdir, os.remove, os.unlink):
-        if func not in (os.open,):
-            warnings.warn(
-                PytestWarning(
-                    "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
-                        func, path, exctype, excvalue
-                    )
+    if func not in (os.rmdir, os.remove, os.unlink, os.open):
+        warnings.warn(
+            PytestWarning(
+                "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
+                    func, path, exctype, excvalue
                 )
             )
+        )
         return False
 
     # Chmod + retry.
     import stat
 
-    def chmod_rw(p: str) -> None:
-        mode = os.stat(p).st_mode
-        os.chmod(p, mode | stat.S_IRUSR | stat.S_IWUSR)
+    def chmod_rw(p: Path) -> None:
+        p.chmod(p.stat().st_mode | stat.S_IRUSR | stat.S_IWUSR)
+
+    def chmod_rwx(p: Path) -> None:
+        p.chmod(p.stat().st_mode | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     # For files, we need to recursively go upwards in the directories to
     # ensure they all are also writable.
     p = Path(path)
     if p.is_file():
         for parent in p.parents:
-            chmod_rw(str(parent))
+            chmod_rwx(parent)
             # Stop when we reach the original path passed to rm_rf.
             if parent == start_path:
                 break
-    chmod_rw(str(path))
+        chmod_rw(p)
+    if func == os.open and p.is_dir():
+        chmod_rwx(p)
+        # simply retrying os.open is fruitless because the on_rm_rf_error
+        # return value is discarded by shutil.rmtree.
+        shutil.rmtree(str(p))
+        return True
+    else:
+        chmod_rw(p)
 
     func(path)
     return True
