@@ -295,6 +295,37 @@ class TestImportPath:
         with pytest.raises(ImportError):
             import_path(simple_module, mode="importlib")
 
+    @pytest.fixture
+    def implicit_namespace_module(self, tmpdir):
+        # Implicit namespace with a child package which clashes with
+        # the name of the builtin "csv" package.
+        p2 = tmpdir.mkdir("namespace").mkdir("csv")
+        p2.join("__init__.py")
+        fn = p2.join("tests.py")
+        fn.write(
+            dedent(
+                """
+            # If __package__ is not set during import, this relative
+            # import will fail
+            from . import *
+
+            def foo(x): return 40 + x
+            """
+            )
+        )
+        return fn
+
+    def test_importmode_importlib_implicit_namespace(
+        self, tmpdir, implicit_namespace_module
+    ):
+        """`importlib` mode can infer package from sys.path, which
+        works even for PEP 420 namespace modules."""
+        sys.path.insert(1, str(tmpdir))
+        module = import_path(implicit_namespace_module, mode="importlib")
+        sys.path.pop(1)
+        assert module.foo(2) == 42  # type: ignore[attr-defined]
+        assert module.__package__ == "namespace.csv"
+
 
 def test_resolve_package_path(tmp_path):
     pkg = tmp_path / "pkg1"

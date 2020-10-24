@@ -468,13 +468,16 @@ def import_path(
     if mode is ImportMode.importlib:
         module_name = path.stem
 
+        resolved_name = resolve_sys_path_module_name(path)
+        if resolved_name is not None:
+            return importlib.import_module(resolved_name)
+
         for meta_importer in sys.meta_path:
             spec = meta_importer.find_spec(module_name, [str(path.parent)])
             if spec is not None:
                 break
         else:
             spec = importlib.util.spec_from_file_location(module_name, str(path))
-
         if spec is None:
             raise ImportError(
                 "Can't find module {} at location {}".format(module_name, str(path))
@@ -486,10 +489,7 @@ def import_path(
     pkg_path = resolve_package_path(path)
     if pkg_path is not None:
         pkg_root = pkg_path.parent
-        names = list(path.with_suffix("").relative_to(pkg_root).parts)
-        if names[-1] == "__init__":
-            names.pop()
-        module_name = ".".join(names)
+        module_name = module_name_from_relative_path(pkg_root, path)
     else:
         pkg_root = path.parent
         module_name = path.stem
@@ -529,6 +529,34 @@ def import_path(
             raise ImportPathMismatchError(module_name, module_file, path)
 
     return mod
+
+
+def resolve_sys_path_module_name(path: Path) -> Optional[str]:
+    """Return the Python module name of path by looking in sys.path
+    for the first base path encompassing the target.
+
+    Returns None if it can not be determined.
+    """
+    path = path.absolute()
+    for entry in sys.path:
+        try:
+            return module_name_from_relative_path(Path(entry).absolute(), path)
+        except ValueError:
+            pass
+    return None
+
+
+def module_name_from_relative_path(base: Path, path: Path) -> str:
+    """Return the Python module name of path as it would be imported
+    from base.
+
+    :raises ValueError:
+        If path is not a subpath of base.
+    """
+    names = list(path.with_suffix("").relative_to(base).parts)
+    if names[-1] == "__init__":
+        names.pop()
+    return ".".join(names)
 
 
 def resolve_package_path(path: Path) -> Optional[Path]:
