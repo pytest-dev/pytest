@@ -91,7 +91,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     p = Path(path)
     if p.is_file():
         for parent in p.parents:
-            chmod_rwx(parent)
+            chmod_rw(parent)
             # Stop when we reach the original path passed to rm_rf.
             if parent == start_path:
                 break
