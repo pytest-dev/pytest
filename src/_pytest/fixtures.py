@@ -1412,9 +1412,10 @@ class FixtureManager:
         self.config: Config = session.config
         self._arg2fixturedefs: Dict[str, List[FixtureDef[Any]]] = {}
         self._holderobjseen: Set[object] = set()
-        self._nodeid_and_autousenames: List[Tuple[str, List[str]]] = [
-            ("", self.config.getini("usefixtures"))
-        ]
+        # A mapping from a nodeid to a list of autouse fixtures it defines.
+        self._nodeid_autousenames: Dict[str, List[str]] = {
+            "": self.config.getini("usefixtures"),
+        }
         session.config.pluginmanager.register(self, "funcmanage")
 
     def _get_direct_parametrize_args(self, node: nodes.Node) -> List[str]:
@@ -1476,18 +1477,12 @@ class FixtureManager:
 
         self.parsefactories(plugin, nodeid)
 
-    def _getautousenames(self, nodeid: str) -> List[str]:
-        """Return a list of fixture names to be used."""
-        autousenames: List[str] = []
-        for baseid, basenames in self._nodeid_and_autousenames:
-            if nodeid.startswith(baseid):
-                if baseid:
-                    i = len(baseid)
-                    nextchar = nodeid[i : i + 1]
-                    if nextchar and nextchar not in ":/":
-                        continue
-                autousenames.extend(basenames)
-        return autousenames
+    def _getautousenames(self, nodeid: str) -> Iterator[str]:
+        """Return the names of autouse fixtures applicable to nodeid."""
+        for parentnodeid in nodes.iterparentnodeids(nodeid):
+            basenames = self._nodeid_autousenames.get(parentnodeid)
+            if basenames:
+                yield from basenames
 
     def getfixtureclosure(
         self,
@@ -1503,7 +1498,7 @@ class FixtureManager:
         # (discovering matching fixtures for a given name/node is expensive).
 
         parentid = parentnode.nodeid
-        fixturenames_closure = self._getautousenames(parentid)
+        fixturenames_closure = list(self._getautousenames(parentid))
 
         def merge(otherlist: Iterable[str]) -> None:
             for arg in otherlist:
@@ -1648,7 +1643,7 @@ class FixtureManager:
                 autousenames.append(name)
 
         if autousenames:
-            self._nodeid_and_autousenames.append((nodeid or "", autousenames))
+            self._nodeid_autousenames.setdefault(nodeid or "", []).extend(autousenames)
 
     def getfixturedefs(
         self, argname: str, nodeid: str
@@ -1668,6 +1663,7 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], nodeid: str
     ) -> Iterator[FixtureDef[Any]]:
+        parentnodeids = set(nodes.iterparentnodeids(nodeid))
         for fixturedef in fixturedefs:
-            if nodes.ischildnode(fixturedef.baseid, nodeid):
+            if fixturedef.baseid in parentnodeids:
                 yield fixturedef

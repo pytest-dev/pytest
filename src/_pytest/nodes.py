@@ -1,6 +1,5 @@
 import os
 import warnings
-from functools import lru_cache
 from pathlib import Path
 from typing import Callable
 from typing import Iterable
@@ -44,46 +43,39 @@ SEP = "/"
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
 
-@lru_cache(maxsize=None)
-def _splitnode(nodeid: str) -> Tuple[str, ...]:
-    """Split a nodeid into constituent 'parts'.
+def iterparentnodeids(nodeid: str) -> Iterator[str]:
+    """Return the parent node IDs of a given node ID, inclusive.
 
-    Node IDs are strings, and can be things like:
-        ''
-        'testing/code'
-        'testing/code/test_excinfo.py'
-        'testing/code/test_excinfo.py::TestFormattedExcinfo'
+    For the node ID
 
-    Return values are lists e.g.
-        []
-        ['testing', 'code']
-        ['testing', 'code', 'test_excinfo.py']
-        ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo']
+        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
+
+    the result would be
+
+        ""
+        "testing"
+        "testing/code"
+        "testing/code/test_excinfo.py"
+        "testing/code/test_excinfo.py::TestFormattedExcinfo"
+        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
+
+    Note that :: parts are only considered at the last / component.
     """
-    if nodeid == "":
-        # If there is no root node at all, return an empty list so the caller's
-        # logic can remain sane.
-        return ()
-    parts = nodeid.split(SEP)
-    # Replace single last element 'test_foo.py::Bar' with multiple elements
-    # 'test_foo.py', 'Bar'.
-    parts[-1:] = parts[-1].split("::")
-    # Convert parts into a tuple to avoid possible errors with caching of a
-    # mutable type.
-    return tuple(parts)
-
-
-def ischildnode(baseid: str, nodeid: str) -> bool:
-    """Return True if the nodeid is a child node of the baseid.
-
-    E.g. 'foo/bar::Baz' is a child of 'foo', 'foo/bar' and 'foo/bar::Baz',
-    but not of 'foo/blorp'.
-    """
-    base_parts = _splitnode(baseid)
-    node_parts = _splitnode(nodeid)
-    if len(node_parts) < len(base_parts):
-        return False
-    return node_parts[: len(base_parts)] == base_parts
+    pos = 0
+    sep = SEP
+    yield ""
+    while True:
+        at = nodeid.find(sep, pos)
+        if at == -1 and sep == SEP:
+            sep = "::"
+        elif at == -1:
+            if nodeid:
+                yield nodeid
+            break
+        else:
+            if at:
+                yield nodeid[:at]
+            pos = at + len(sep)
 
 
 _NodeType = TypeVar("_NodeType", bound="Node")

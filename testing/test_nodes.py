@@ -1,3 +1,5 @@
+from typing import List
+
 import py
 
 import pytest
@@ -6,21 +8,24 @@ from _pytest.pytester import Testdir
 
 
 @pytest.mark.parametrize(
-    "baseid, nodeid, expected",
+    ("nodeid", "expected"),
     (
-        ("", "", True),
-        ("", "foo", True),
-        ("", "foo/bar", True),
-        ("", "foo/bar::TestBaz", True),
-        ("foo", "food", False),
-        ("foo/bar::TestBaz", "foo/bar", False),
-        ("foo/bar::TestBaz", "foo/bar::TestBop", False),
-        ("foo/bar", "foo/bar::TestBop", True),
+        ("", [""]),
+        ("a", ["", "a"]),
+        ("aa/b", ["", "aa", "aa/b"]),
+        ("a/b/c", ["", "a", "a/b", "a/b/c"]),
+        ("a/bbb/c::D", ["", "a", "a/bbb", "a/bbb/c", "a/bbb/c::D"]),
+        ("a/b/c::D::eee", ["", "a", "a/b", "a/b/c", "a/b/c::D", "a/b/c::D::eee"]),
+        # :: considered only at the last component.
+        ("::xx", ["", "::xx"]),
+        ("a/b/c::D/d::e", ["", "a", "a/b", "a/b/c::D", "a/b/c::D/d", "a/b/c::D/d::e"]),
+        # : alone is not a separator.
+        ("a/b::D:e:f::g", ["", "a", "a/b", "a/b::D:e:f", "a/b::D:e:f::g"]),
     ),
 )
-def test_ischildnode(baseid: str, nodeid: str, expected: bool) -> None:
-    result = nodes.ischildnode(baseid, nodeid)
-    assert result is expected
+def test_iterparentnodeids(nodeid: str, expected: List[str]) -> None:
+    result = list(nodes.iterparentnodeids(nodeid))
+    assert result == expected
 
 
 def test_node_from_parent_disallowed_arguments() -> None:
