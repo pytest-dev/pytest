@@ -786,6 +786,8 @@ def test_rewritten():
             sub.chmod(old_mode)
 
     def test_dont_write_bytecode(self, testdir, monkeypatch):
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+
         testdir.makepyfile(
             """
             import os
@@ -797,7 +799,10 @@ def test_rewritten():
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert testdir.runpytest_subprocess().ret == 0
 
-    def test_orphaned_pyc_file(self, testdir):
+    def test_orphaned_pyc_file(self, testdir, monkeypatch):
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+        monkeypatch.setattr(sys, "pycache_prefix", None, raising=False)
+
         testdir.makepyfile(
             """
             import orphan
@@ -826,6 +831,7 @@ def test_rewritten():
     def test_cached_pyc_includes_pytest_version(self, testdir, monkeypatch):
         """Avoid stale caches (#1671)"""
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
         testdir.makepyfile(
             test_foo="""
             def test_foo():
@@ -852,11 +858,13 @@ def test_rewritten():
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
         assert testdir.runpytest_subprocess(tmp).ret == 0
         tagged = "test_pyc_vs_pyo." + PYTEST_TAG
         assert tagged + ".pyo" in os.listdir("__pycache__")
         monkeypatch.undo()
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
         assert testdir.runpytest_subprocess(tmp).ret == 1
         assert tagged + ".pyc" in os.listdir("__pycache__")
 
@@ -1592,10 +1600,11 @@ class TestPyCacheDir:
         ],
     )
     def test_get_cache_dir(self, monkeypatch, prefix, source, expected):
-        if prefix:
-            if sys.version_info < (3, 8):
-                pytest.skip("pycache_prefix not available in py<38")
-            monkeypatch.setattr(sys, "pycache_prefix", prefix)
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+
+        if prefix is not None and sys.version_info < (3, 8):
+            pytest.skip("pycache_prefix not available in py<38")
+        monkeypatch.setattr(sys, "pycache_prefix", prefix, raising=False)
 
         assert get_cache_dir(Path(source)) == Path(expected)
 
