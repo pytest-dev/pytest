@@ -446,7 +446,7 @@ def pytest_runtest_logstart(
     See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
 
     :param str nodeid: Full node ID of the item.
-    :param location: A triple of ``(filename, lineno, testname)``.
+    :param location: A tuple of ``(filename, lineno, testname)``.
     """
 
 
@@ -458,7 +458,7 @@ def pytest_runtest_logfinish(
     See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
 
     :param str nodeid: Full node ID of the item.
-    :param location: A triple of ``(filename, lineno, testname)``.
+    :param location: A tuple of ``(filename, lineno, testname)``.
     """
 
 
