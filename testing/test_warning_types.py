@@ -1,7 +1,7 @@
 import inspect
 
-import _pytest.warning_types
 import pytest
+from _pytest import warning_types
 from _pytest.pytester import Pytester
 
 
@@ -9,11 +9,11 @@ from _pytest.pytester import Pytester
     "warning_class",
     [
         w
-        for n, w in vars(_pytest.warning_types).items()
+        for n, w in vars(warning_types).items()
         if inspect.isclass(w) and issubclass(w, Warning)
     ],
 )
-def test_warning_types(warning_class) -> None:
+def test_warning_types(warning_class: UserWarning) -> None:
     """Make sure all warnings declared in _pytest.warning_types are displayed as coming
     from 'pytest' instead of the internal module (#5452).
     """
