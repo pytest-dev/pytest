@@ -9,6 +9,9 @@ from _pytest.main import Session
 from _pytest.reports import TestReport
 
 
+STEPWISE_CACHE_DIR = "cache/stepwise"
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
@@ -31,20 +34,23 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl
 def pytest_configure(config: Config) -> None:
-    config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
+    if config.option.stepwise:
+        config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
+    else:
+        # clear the stepwise cache if the user is not running with stepwise enabled.
+        # cacheprovider plugin is tryfirst=True on pytest_configure
+        assert config.cache is not None
+        config.cache.set(STEPWISE_CACHE_DIR, [])
 
 
 class StepwisePlugin:
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.active = config.getvalue("stepwise")
         self.session: Optional[Session] = None
         self.report_status = ""
-
-        if self.active:
-            assert config.cache is not None
-            self.lastfailed = config.cache.get("cache/stepwise", None)
-            self.skip = config.getvalue("stepwise_skip")
+        assert config.cache is not None
+        self.lastfailed = config.cache.get(STEPWISE_CACHE_DIR, None)
+        self.skip = config.option.stepwise_skip
 
     def pytest_sessionstart(self, session: Session) -> None:
         self.session = session
@@ -52,8 +58,6 @@ class StepwisePlugin:
     def pytest_collection_modifyitems(
         self, session: Session, config: Config, items: List[nodes.Item]
     ) -> None:
-        if not self.active:
-            return
         if not self.lastfailed:
             self.report_status = "no previously failed tests, not skipping."
             return
@@ -85,9 +89,6 @@ class StepwisePlugin:
         config.hook.pytest_deselected(items=already_passed)
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        if not self.active:
-            return
-
         if report.failed:
             if self.skip:
                 # Remove test from the failed ones (if it exists) and unset the skip option
@@ -112,14 +113,10 @@ class StepwisePlugin:
                     self.lastfailed = None
 
     def pytest_report_collectionfinish(self) -> Optional[str]:
-        if self.active and self.config.getoption("verbose") >= 0 and self.report_status:
-            return "stepwise: %s" % self.report_status
+        if self.config.getoption("verbose") >= 0 and self.report_status:
+            return f"stepwise: {self.report_status}"
         return None
 
-    def pytest_sessionfinish(self, session: Session) -> None:
+    def pytest_sessionfinish(self) -> None:
         assert self.config.cache is not None
-        if self.active:
-            self.config.cache.set("cache/stepwise", self.lastfailed)
-        else:
-            # Clear the list of failing tests if the plugin is not active.
-            self.config.cache.set("cache/stepwise", [])
+        self.config.cache.set(STEPWISE_CACHE_DIR, self.lastfailed)
