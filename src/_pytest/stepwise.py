@@ -20,6 +20,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group.addoption(
         "--stepwise-skip",
+        "--sw-skip",
         action="store_true",
         dest="stepwise_skip",
         help="ignore the first failing test but stop on the next failing test",

@@ -117,14 +117,10 @@ def test_fail_and_continue_with_stepwise(stepwise_testdir):
     assert "test_success_after_fail PASSED" in stdout
 
 
-def test_run_with_skip_option(stepwise_testdir):
+@pytest.mark.parametrize("sw_option", ("--stepwise-skip", "--sw-skip"))
+def test_run_with_skip_option(stepwise_testdir, sw_option):
     result = stepwise_testdir.runpytest(
-        "-v",
-        "--strict-markers",
-        "--stepwise",
-        "--stepwise-skip",
-        "--fail",
-        "--fail-last",
+        "-v", "--strict-markers", "--stepwise", f"{sw_option}", "--fail", "--fail-last",
     )
     assert _strip_resource_warnings(result.stderr.lines) == []
 
