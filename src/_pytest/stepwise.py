@@ -15,6 +15,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--sw",
         "--stepwise",
         action="store_true",
+        default=False,
         dest="stepwise",
         help="exit on test failure and continue from last failing test next time",
     )
@@ -22,6 +23,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--stepwise-skip",
         "--sw-skip",
         action="store_true",
+        default=False,
         dest="stepwise_skip",
         help="ignore the first failing test but stop on the next failing test",
     )
