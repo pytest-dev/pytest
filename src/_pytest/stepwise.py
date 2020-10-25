@@ -56,7 +56,7 @@ class StepwisePlugin:
         self.session = session
 
     def pytest_collection_modifyitems(
-        self, session: Session, config: Config, items: List[nodes.Item]
+        self, config: Config, items: List[nodes.Item]
     ) -> None:
         if not self.lastfailed:
             self.report_status = "no previously failed tests, not skipping."
