@@ -63,7 +63,7 @@ def test_marked_class_run_twice(pytester: Pytester):
     rec.assertoutcome(passed=6)
 
 
-def test_ini_markers(pytester):
+def test_ini_markers(pytester: Pytester):
     pytester.makeini(
         """
         [pytest]
@@ -86,7 +86,7 @@ def test_ini_markers(pytester):
     rec.assertoutcome(passed=1)
 
 
-def test_markers_option(pytester):
+def test_markers_option(pytester: Pytester):
     pytester.makeini(
         """
         [pytest]
@@ -102,7 +102,7 @@ def test_markers_option(pytester):
     )
 
 
-def test_ini_markers_whitespace(pytester):
+def test_ini_markers_whitespace(pytester: Pytester):
     pytester.makeini(
         """
         [pytest]
@@ -184,7 +184,7 @@ def test_mark_on_pseudo_function(pytester: Pytester):
 
 
 @pytest.mark.parametrize("option_name", ["--strict-markers", "--strict"])
-def test_strict_prohibits_unregistered_markers(pytester, option_name):
+def test_strict_prohibits_unregistered_markers(pytester: Pytester, option_name):
     pytester.makepyfile(
         """
         import pytest
