@@ -13,7 +13,7 @@ from _pytest.pytester import Pytester
         if inspect.isclass(w) and issubclass(w, Warning)
     ],
 )
-def test_warning_types(warning_class):
+def test_warning_types(warning_class) -> None:
     """Make sure all warnings declared in _pytest.warning_types are displayed as coming
     from 'pytest' instead of the internal module (#5452).
     """
@@ -21,7 +21,7 @@ def test_warning_types(warning_class):
 
 
 @pytest.mark.filterwarnings("error::pytest.PytestWarning")
-def test_pytest_warnings_repr_integration_test(pytester: Pytester):
+def test_pytest_warnings_repr_integration_test(pytester: Pytester) -> None:
     """Small integration test to ensure our small hack of setting the __module__ attribute
     of our warnings actually works (#5452).
     """
