@@ -336,10 +336,9 @@ class BaseFunctionalTests:
         assert reps[2].failed
         assert reps[2].when == "teardown"
         assert reps[2].longrepr.reprcrash.message in (
-            # python3 error
             "TypeError: teardown_method() missing 2 required positional arguments: 'y' and 'z'",
-            # python2 error
-            "TypeError: teardown_method() takes exactly 4 arguments (2 given)",
+            # Python >= 3.10
+            "TypeError: TestClass.teardown_method() missing 2 required positional arguments: 'y' and 'z'",
         )
 
     def test_failure_in_setup_function_ignores_custom_repr(self, testdir) -> None:

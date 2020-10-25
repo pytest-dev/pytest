@@ -707,8 +707,11 @@ class Pytester:
         # Some zope modules used by twisted-related tests keep internal state
         # and can't be deleted; we had some trouble in the past with
         # `zope.interface` for example.
+        #
+        # Preserve readline due to https://bugs.python.org/issue41033.
+        # pexpect issues a SIGWINCH.
         def preserve_module(name):
-            return name.startswith("zope")
+            return name.startswith(("zope", "readline"))
 
         return SysModulesSnapshot(preserve=preserve_module)
 
