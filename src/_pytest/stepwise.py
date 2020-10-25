@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from _pytest.cacheprovider import Cache
 
 STEPWISE_CACHE_DIR = "cache/stepwise"
+NO_PREVIOUSLY_FAILED_WONT_SKIP = "no previously failed tests, not skipping."
+PREVIOUSLY_FAILED_TEST_NOT_FOUND = "previously failed test not found, not skipping."
+SKIPPING_PASSED_ITEMS = "skipping {} already passed items."
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -53,8 +56,8 @@ class StepwisePlugin:
         self.report_status = ""
         assert config.cache is not None
         self.cache: Cache = config.cache
-        self.lastfailed = self.cache.get(STEPWISE_CACHE_DIR, None)
-        self.skip = config.option.stepwise_skip
+        self.lastfailed: Optional[str] = self.cache.get(STEPWISE_CACHE_DIR, None)
+        self.skip: bool = config.option.stepwise_skip
 
     def pytest_sessionstart(self, session: Session) -> None:
         self.session = session
@@ -63,9 +66,8 @@ class StepwisePlugin:
         self, config: Config, items: List[nodes.Item]
     ) -> None:
         if not self.lastfailed:
-            self.report_status = "no previously failed tests, not skipping."
+            self.report_status = NO_PREVIOUSLY_FAILED_WONT_SKIP
             return
-
         already_passed = []
         found = False
 
@@ -76,16 +78,13 @@ class StepwisePlugin:
                 break
             else:
                 already_passed.append(item)
-
         # If the previously failed test was not found among the test items,
         # do not skip any tests.
         if not found:
-            self.report_status = "previously failed test not found, not skipping."
+            self.report_status = PREVIOUSLY_FAILED_TEST_NOT_FOUND
             already_passed = []
         else:
-            self.report_status = "skipping {} already passed items.".format(
-                len(already_passed)
-            )
+            self.report_status = SKIPPING_PASSED_ITEMS.format(len(already_passed))
 
         for item in already_passed:
             items.remove(item)
