@@ -1,0 +1,1 @@
+Stepwise plugin improvements and a new ``--sw-skip`` shorthand argument is now available
