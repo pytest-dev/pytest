@@ -1,5 +1,6 @@
 from typing import List
 from typing import Optional
+from typing import TYPE_CHECKING
 
 import pytest
 from _pytest import nodes
@@ -8,6 +9,8 @@ from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 from _pytest.reports import TestReport
 
+if TYPE_CHECKING:
+    from _pytest.cacheprovider import Cache
 
 STEPWISE_CACHE_DIR = "cache/stepwise"
 
@@ -34,12 +37,12 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl
 def pytest_configure(config: Config) -> None:
+    assert config.cache is not None
     if config.option.stepwise:
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
     else:
         # clear the stepwise cache if the user is not running with stepwise enabled.
-        # cacheprovider plugin is tryfirst=True on pytest_configure
-        assert config.cache is not None
+        # cache provider plugin is `tryfirst=True` on pytest_configure
         config.cache.set(STEPWISE_CACHE_DIR, [])
 
 
@@ -49,7 +52,8 @@ class StepwisePlugin:
         self.session: Optional[Session] = None
         self.report_status = ""
         assert config.cache is not None
-        self.lastfailed = config.cache.get(STEPWISE_CACHE_DIR, None)
+        self.cache: Cache = config.cache
+        self.lastfailed = self.cache.get(STEPWISE_CACHE_DIR, None)
         self.skip = config.option.stepwise_skip
 
     def pytest_sessionstart(self, session: Session) -> None:
@@ -118,5 +122,4 @@ class StepwisePlugin:
         return None
 
     def pytest_sessionfinish(self) -> None:
-        assert self.config.cache is not None
-        self.config.cache.set(STEPWISE_CACHE_DIR, self.lastfailed)
+        self.cache.set(STEPWISE_CACHE_DIR, self.lastfailed)
