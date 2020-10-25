@@ -13,6 +13,7 @@ from _pytest.config import PytestPluginManager
 from _pytest.pytester import CwdSnapshot
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import LineMatcher
+from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
 from _pytest.pytester import Testdir
@@ -707,13 +708,13 @@ def test_popen_default_stdin_stderr_and_stdin_None(testdir) -> None:
     assert result.ret == 0
 
 
-def test_spawn_uses_tmphome(testdir) -> None:
-    tmphome = str(testdir.tmpdir)
+def test_spawn_uses_tmphome(pytester: Pytester) -> None:
+    tmphome = str(pytester.path)
     assert os.environ.get("HOME") == tmphome
 
-    testdir.monkeypatch.setenv("CUSTOMENV", "42")
+    pytester._monkeypatch.setenv("CUSTOMENV", "42")
 
-    p1 = testdir.makepyfile(
+    p1 = pytester.makepyfile(
         """
         import os
 
@@ -724,7 +725,7 @@ def test_spawn_uses_tmphome(testdir) -> None:
             tmphome=tmphome
         )
     )
-    child = testdir.spawn_pytest(str(p1))
+    child = pytester.spawn_pytest(str(p1))
     out = child.read()
     assert child.wait() == 0, out.decode("utf8")
 

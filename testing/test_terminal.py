@@ -133,23 +133,23 @@ class TestTerminal:
         )
         linecomp.assert_contains_lines(["*test_show_runtest_logstart.py*"])
 
-    def test_runtest_location_shown_before_test_starts(self, testdir):
-        testdir.makepyfile(
+    def test_runtest_location_shown_before_test_starts(self, pytester):
+        pytester.makepyfile(
             """
             def test_1():
                 import time
                 time.sleep(20)
         """
         )
-        child = testdir.spawn_pytest("")
+        child = pytester.spawn_pytest("")
         child.expect(".*test_runtest_location.*py")
         child.sendeof()
         child.kill(15)
 
-    def test_report_collect_after_half_a_second(self, testdir):
+    def test_report_collect_after_half_a_second(self, pytester, monkeypatch):
         """Test for "collecting" being updated after 0.5s"""
 
-        testdir.makepyfile(
+        pytester.makepyfile(
             **{
                 "test1.py": """
                 import _pytest.terminal
@@ -163,9 +163,9 @@ class TestTerminal:
             }
         )
         # Explicitly test colored output.
-        testdir.monkeypatch.setenv("PY_COLORS", "1")
+        monkeypatch.setenv("PY_COLORS", "1")
 
-        child = testdir.spawn_pytest("-v test1.py test2.py")
+        child = pytester.spawn_pytest("-v test1.py test2.py")
         child.expect(r"collecting \.\.\.")
         child.expect(r"collecting 1 item")
         child.expect(r"collecting 2 items")
