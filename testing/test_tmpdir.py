@@ -449,7 +449,13 @@ def test_basetemp_with_not_executable_dirs(testdir):
     testdir.makepyfile(
         """
         def test(tmp_path):
-            (tmp_path / "foo").mkdir(mode=0)
+            p = tmp_path / "foo" / "bar" / "baz"
+            p.parent.mkdir(parents=True)
+            p.touch(mode=0)
+            for p in p.parents:
+                if p == tmp_path:
+                    break
+                p.chmod(mode=0)
         """
     )
     assert testdir.runpytest("--basetemp=tmp").ret == 0
