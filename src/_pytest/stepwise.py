@@ -40,12 +40,17 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl
 def pytest_configure(config: Config) -> None:
-    assert config.cache is not None
+    # We should always have a cache as cache provider plugin uses tryfirst=True
     if config.option.stepwise:
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
-    else:
-        # clear the stepwise cache if the user is not running with stepwise enabled.
-        # cache provider plugin is `tryfirst=True` on pytest_configure
+
+
+def pytest_sessionfinish(session: Session) -> None:
+    config = session.config
+    assert config.cache is not None
+    if not config.option.stepwise:
+        # This hook exists so that --cache-show when empty will not output the empty [] for stepwise by default.
+        # Perhaps this is ok to set in the unconfigure hook?  But I added it here to avoid changing behaviour.
         config.cache.set(STEPWISE_CACHE_DIR, [])
 
 
