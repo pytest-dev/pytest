@@ -919,7 +919,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ========================== no tests ran in 0.12s ===========================
+   ========================== 10/10 tests found (0 deselected) in 0.12s ===========================
 
 .. _`fixture-parametrize-marks`:
 

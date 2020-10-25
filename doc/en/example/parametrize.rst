@@ -175,7 +175,7 @@ objects, they are still using the default pytest representation:
       <Function test_timedistance_v3[forward]>
       <Function test_timedistance_v3[backward]>
 
-    ========================== no tests ran in 0.12s ===========================
+    ========================== 8/8 tests found (0 deselected) in 0.12s ===========================
 
 In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
 together with the actual data, instead of listing them separately.
@@ -252,7 +252,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function test_demo1[advanced]>
           <Function test_demo2[advanced]>
 
-    ========================== no tests ran in 0.12s ===========================
+    ========================== 4/4 tests found (0 deselected) in 0.12s ===========================
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
@@ -328,7 +328,7 @@ Let's first see how it looks like at collection time:
       <Function test_db_initialized[d1]>
       <Function test_db_initialized[d2]>
 
-    ========================== no tests ran in 0.12s ===========================
+    ========================== 2/2 tests found (0 deselected) in 0.12s ===========================
 
 And then when we run the test:
 

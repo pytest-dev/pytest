@@ -1182,18 +1182,18 @@ class TerminalReporter:
                 if key in ["deselected"]:
                     selected -= count
 
-        if not parts:
+        if not parts and not self.config.getoption("collectonly"):
             parts = [("no tests ran", {_color_for_type_default: True})]
 
         if self.config.getoption("collectonly"):
-            # Always display "no tests ran" message with "--collect-only".
-            if parts[-1][0] != "no tests ran":
-                parts.append(("no tests ran", {_color_for_type_default: True}))
-
-            # Prepend total number of selected items with "--collect-only".
-            color = _color_for_type.get("selected", _color_for_type_default)
-            markup = {color: True, "bold": color == main_color}
-            parts.insert(0, ("%d %s" % _make_plural(selected, "selected"), markup))
+            co_output = "%i/%i tests found (%i deselected)"
+            deselected = self._numcollected - selected
+            parts = [
+                (
+                    co_output % (selected, self._numcollected, deselected),
+                    {main_color: True},
+                )
+            ]
 
         return parts, main_color
 

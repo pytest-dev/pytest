@@ -908,7 +908,7 @@ class TestLastFailed:
                 "",
                 "<Module pkg1/test_1.py>",
                 "  <Function test_fail>",
-                "*= 1 selected, 1 deselected, no tests ran in *",
+                "*= 1/2 tests found (1 deselected) in *",
             ],
         )
 
@@ -941,7 +941,7 @@ class TestLastFailed:
                 "      <Function test_fail>",
                 "  <Function test_other>",
                 "",
-                "*= 2 selected, 1 deselected, no tests ran in *",
+                "*= 2/3 tests found (1 deselected) in *",
             ],
             consecutive=True,
         )
@@ -976,7 +976,7 @@ class TestLastFailed:
                 "<Module pkg1/test_1.py>",
                 "  <Function test_pass>",
                 "",
-                "*= 1 selected, no tests ran in*",
+                "*= 1/1 tests found (0 deselected) in*",
             ],
             consecutive=True,
         )
