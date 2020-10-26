@@ -468,6 +468,9 @@ def import_path(
     if mode is ImportMode.importlib:
         module_name = path.stem
 
+        # If the module exists under a location in sys.path, just import it using that module name.
+        # This is as close to a "normal import" as possible - no need to modify sys.path and the
+        # module will have __package__ set correctly (so relative imports also work).
         resolved_name = resolve_sys_path_module_name(path)
         if resolved_name is not None:
             return importlib.import_module(resolved_name)
