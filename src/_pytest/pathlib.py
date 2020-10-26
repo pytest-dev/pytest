@@ -26,11 +26,11 @@ from pathlib import PurePath
 from posixpath import sep as posix_sep
 import shutil
 import sys
+import tempfile
 import types
 from types import ModuleType
 from typing import Any
 from typing import TypeVar
-import uuid
 import warnings
 
 from _pytest.compat import assert_never
@@ -286,11 +286,8 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
     lock_path = None
     try:
         lock_path = create_cleanup_lock(path)
-        parent = path.parent
-
-        garbage = parent.joinpath(f"garbage-{uuid.uuid4()}")
-        path.rename(garbage)
-        rm_rf(garbage)
+        with tempfile.TemporaryDirectory(prefix="garbage-", dir=path.parent) as garbage:
+            path.replace(garbage)
     except OSError:
         #  known races:
         #  * other process did a cleanup at the same time
