@@ -1,26 +1,27 @@
 import pytest
 from _pytest.config import ExitCode
+from _pytest.pytester import Pytester
 
 
-def test_version_verbose(testdir, pytestconfig):
-    testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
-    result = testdir.runpytest("--version", "--version")
+def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+    result = pytester.runpytest("--version", "--version")
     assert result.ret == 0
     result.stderr.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
     if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
 
 
-def test_version_less_verbose(testdir, pytestconfig):
-    testdir.monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
-    result = testdir.runpytest("--version")
+def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
+    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+    result = pytester.runpytest("--version")
     assert result.ret == 0
     # p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
 
 
-def test_help(testdir):
-    result = testdir.runpytest("--help")
+def test_help(pytester: Pytester) -> None:
+    result = pytester.runpytest("--help")
     assert result.ret == 0
     result.stdout.fnmatch_lines(
         """
@@ -36,29 +37,29 @@ def test_help(testdir):
     )
 
 
-def test_none_help_param_raises_exception(testdir):
+def test_none_help_param_raises_exception(pytester: Pytester) -> None:
     """Test that a None help param raises a TypeError."""
-    testdir.makeconftest(
+    pytester.makeconftest(
         """
         def pytest_addoption(parser):
             parser.addini("test_ini", None, default=True, type="bool")
     """
     )
-    result = testdir.runpytest("--help")
+    result = pytester.runpytest("--help")
     result.stderr.fnmatch_lines(
         ["*TypeError: help argument cannot be None for test_ini*"]
     )
 
 
-def test_empty_help_param(testdir):
+def test_empty_help_param(pytester: Pytester) -> None:
     """Test that an empty help param is displayed correctly."""
-    testdir.makeconftest(
+    pytester.makeconftest(
         """
         def pytest_addoption(parser):
             parser.addini("test_ini", "", default=True, type="bool")
     """
     )
-    result = testdir.runpytest("--help")
+    result = pytester.runpytest("--help")
     assert result.ret == 0
     lines = [
         "  required_plugins (args):",
@@ -69,20 +70,20 @@ def test_empty_help_param(testdir):
     result.stdout.fnmatch_lines(lines, consecutive=True)
 
 
-def test_hookvalidation_unknown(testdir):
-    testdir.makeconftest(
+def test_hookvalidation_unknown(pytester: Pytester) -> None:
+    pytester.makeconftest(
         """
         def pytest_hello(xyz):
             pass
     """
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     assert result.ret != 0
     result.stdout.fnmatch_lines(["*unknown hook*pytest_hello*"])
 
 
-def test_hookvalidation_optional(testdir):
-    testdir.makeconftest(
+def test_hookvalidation_optional(pytester: Pytester) -> None:
+    pytester.makeconftest(
         """
         import pytest
         @pytest.hookimpl(optionalhook=True)
@@ -90,25 +91,25 @@ def test_hookvalidation_optional(testdir):
             pass
     """
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
-def test_traceconfig(testdir):
-    result = testdir.runpytest("--traceconfig")
+def test_traceconfig(pytester: Pytester) -> None:
+    result = pytester.runpytest("--traceconfig")
     result.stdout.fnmatch_lines(["*using*pytest*py*", "*active plugins*"])
 
 
-def test_debug(testdir):
-    result = testdir.runpytest_subprocess("--debug")
+def test_debug(pytester: Pytester) -> None:
+    result = pytester.runpytest_subprocess("--debug")
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
-    p = testdir.tmpdir.join("pytestdebug.log")
-    assert "pytest_sessionstart" in p.read()
+    p = pytester.path.joinpath("pytestdebug.log")
+    assert "pytest_sessionstart" in p.read_text("utf-8")
 
 
-def test_PYTEST_DEBUG(testdir, monkeypatch):
+def test_PYTEST_DEBUG(pytester: Pytester, monkeypatch) -> None:
     monkeypatch.setenv("PYTEST_DEBUG", "1")
-    result = testdir.runpytest_subprocess()
+    result = pytester.runpytest_subprocess()
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
     result.stderr.fnmatch_lines(
         ["*pytest_plugin_registered*", "*manager*PluginManager*"]
