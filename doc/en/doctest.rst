@@ -113,7 +113,7 @@ lengthy exception stack traces you can just write:
 .. code-block:: ini
 
     [pytest]
-    doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
+    doctest_optionflags = NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
 
 Alternatively, options can be enabled by an inline comment in the doc test
 itself:
