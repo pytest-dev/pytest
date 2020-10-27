@@ -747,7 +747,6 @@ raise ValueError()
         from _pytest._code.code import Code
 
         monkeypatch.setattr(Code, "path", "bogus")
-        excinfo.traceback[0].frame.code.path = "bogus"  # type: ignore[misc]
         p = FormattedExcinfo(style="short")
         reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
         lines = reprtb.lines
