@@ -42,7 +42,7 @@ def getmsg(
     f, extra_ns: Optional[Mapping[str, object]] = None, *, must_pass: bool = False
 ) -> Optional[str]:
     """Rewrite the assertions in f, run it, and get the failure message."""
-    src = "\n".join(_pytest._code.Code(f).source().lines)
+    src = "\n".join(_pytest._code.Code.from_function(f).source().lines)
     mod = rewrite(src)
     code = compile(mod, "<test>", "exec")
     ns: Dict[str, object] = {}

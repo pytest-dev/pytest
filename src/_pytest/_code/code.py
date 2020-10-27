@@ -56,12 +56,12 @@ class Code:
 
     __slots__ = ("raw",)
 
-    def __init__(self, rawcode) -> None:
-        if not hasattr(rawcode, "co_filename"):
-            rawcode = getrawcode(rawcode)
-        if not isinstance(rawcode, CodeType):
-            raise TypeError(f"not a code object: {rawcode!r}")
-        self.raw = rawcode
+    def __init__(self, obj: CodeType) -> None:
+        self.raw = obj
+
+    @classmethod
+    def from_function(cls, obj: object) -> "Code":
+        return cls(getrawcode(obj))
 
     def __eq__(self, other):
         return self.raw == other.raw
@@ -1196,7 +1196,7 @@ def getfslineno(obj: object) -> Tuple[Union[str, py.path.local], int]:
         obj = obj.place_as  # type: ignore[attr-defined]
 
     try:
-        code = Code(obj)
+        code = Code.from_function(obj)
     except TypeError:
         try:
             fn = inspect.getsourcefile(obj) or inspect.getfile(obj)  # type: ignore[arg-type]

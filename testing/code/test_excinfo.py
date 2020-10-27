@@ -147,7 +147,7 @@ class TestTraceback_f_g_h:
         ]
 
     def test_traceback_cut(self):
-        co = _pytest._code.Code(f)
+        co = _pytest._code.Code.from_function(f)
         path, firstlineno = co.path, co.firstlineno
         traceback = self.excinfo.traceback
         newtraceback = traceback.cut(path=path, firstlineno=firstlineno)
@@ -290,7 +290,7 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, f)
         tb = excinfo.traceback
         entry = tb.getcrashentry()
-        co = _pytest._code.Code(h)
+        co = _pytest._code.Code.from_function(h)
         assert entry.frame.code.path == co.path
         assert entry.lineno == co.firstlineno + 1
         assert entry.frame.code.name == "h"
@@ -307,7 +307,7 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, f)
         tb = excinfo.traceback
         entry = tb.getcrashentry()
-        co = _pytest._code.Code(g)
+        co = _pytest._code.Code.from_function(g)
         assert entry.frame.code.path == co.path
         assert entry.lineno == co.firstlineno + 2
         assert entry.frame.code.name == "g"

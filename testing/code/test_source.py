@@ -16,8 +16,8 @@ import py.path
 import pytest
 from _pytest._code import Code
 from _pytest._code import Frame
-from _pytest._code import Source
 from _pytest._code import getfslineno
+from _pytest._code import Source
 
 
 def test_source_str_function() -> None:
@@ -291,7 +291,7 @@ def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot) -> None:
     # does not return the "x = 1" last line.
     source = Source(
         """
-        class A(object):
+        class A:
             def method(self):
                 x = 1
     """
@@ -374,14 +374,6 @@ def test_getfslineno() -> None:
     B.__name__ = B.__qualname__ = "B2"
     assert getfslineno(B)[1] == -1
 
-    co = compile("...", "", "eval")
-    assert co.co_filename == ""
-
-    if hasattr(sys, "pypy_version_info"):
-        assert getfslineno(co) == ("", -1)
-    else:
-        assert getfslineno(co) == ("", 0)
-
 
 def test_code_of_object_instance_with_call() -> None:
     class A:
@@ -393,14 +385,14 @@ def test_code_of_object_instance_with_call() -> None:
         def __call__(self) -> None:
             pass
 
-    code = Code(WithCall())
+    code = Code.from_function(WithCall())
     assert "pass" in str(code.source())
 
     class Hello:
         def __call__(self) -> None:
             pass
 
-    pytest.raises(TypeError, lambda: Code(Hello))
+    pytest.raises(TypeError, lambda: Code.from_function(Hello))
 
 
 def getstatement(lineno: int, source) -> Source:
