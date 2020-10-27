@@ -184,7 +184,9 @@ def test_mark_on_pseudo_function(pytester: Pytester) -> None:
 
 
 @pytest.mark.parametrize("option_name", ["--strict-markers", "--strict"])
-def test_strict_prohibits_unregistered_markers(pytester: Pytester, option_name) -> None:
+def test_strict_prohibits_unregistered_markers(
+    pytester: Pytester, option_name: str
+) -> None:
     pytester.makepyfile(
         """
         import pytest
@@ -572,8 +574,12 @@ class TestFunctional:
         )
         items, rec = pytester.inline_genitems(p)
         has_own, has_inherited = items
-        assert has_own.get_closest_marker("c").kwargs == {"location": "function"}  # type: ignore[union-attr]
-        assert has_inherited.get_closest_marker("c").kwargs == {"location": "class"}  # type: ignore[union-attr]
+        has_own_marker = has_own.get_closest_marker("c")
+        has_inherited_marker = has_inherited.get_closest_marker("c")
+        assert has_own_marker is not None
+        assert has_inherited_marker is not None
+        assert has_own_marker.kwargs == {"location": "function"}
+        assert has_inherited_marker.kwargs == {"location": "class"}
         assert has_own.get_closest_marker("missing") is None
 
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
