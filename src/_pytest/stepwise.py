@@ -13,9 +13,6 @@ if TYPE_CHECKING:
     from _pytest.cacheprovider import Cache
 
 STEPWISE_CACHE_DIR = "cache/stepwise"
-NO_PREVIOUSLY_FAILED_WONT_SKIP = "no previously failed tests, not skipping."
-PREVIOUSLY_FAILED_TEST_NOT_FOUND = "previously failed test not found, not skipping."
-SKIPPING_PASSED_ITEMS = "skipping {} already passed items."
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -29,8 +26,8 @@ def pytest_addoption(parser: Parser) -> None:
         help="exit on test failure and continue from last failing test next time",
     )
     group.addoption(
-        "--stepwise-skip",
         "--sw-skip",
+        "--stepwise-skip",
         action="store_true",
         default=False,
         dest="stepwise_skip",
@@ -41,17 +38,15 @@ def pytest_addoption(parser: Parser) -> None:
 @pytest.hookimpl
 def pytest_configure(config: Config) -> None:
     # We should always have a cache as cache provider plugin uses tryfirst=True
-    if config.option.stepwise:
+    if config.getoption("stepwise"):
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
 
 
 def pytest_sessionfinish(session: Session) -> None:
-    config = session.config
-    assert config.cache is not None
-    if not config.option.stepwise:
-        # This hook exists so that --cache-show when empty will not output the empty [] for stepwise by default.
-        # Perhaps this is ok to set in the unconfigure hook?  But I added it here to avoid changing behaviour.
-        config.cache.set(STEPWISE_CACHE_DIR, [])
+    if not session.config.getoption("stepwise"):
+        assert session.config.cache is not None
+        # Clear the list of failing tests if the plugin is not active.
+        session.config.cache.set(STEPWISE_CACHE_DIR, [])
 
 
 class StepwisePlugin:
@@ -71,30 +66,24 @@ class StepwisePlugin:
         self, config: Config, items: List[nodes.Item]
     ) -> None:
         if not self.lastfailed:
-            self.report_status = NO_PREVIOUSLY_FAILED_WONT_SKIP
+            self.report_status = "no previously failed tests, not skipping."
             return
-        already_passed = []
-        found = False
 
-        # Make a list of all tests that have been run before the last failing one.
-        for item in items:
+        # check all item nodes until we find a match on last failed
+        failed_index = None
+        for index, item in enumerate(items):
             if item.nodeid == self.lastfailed:
-                found = True
+                failed_index = index
                 break
-            else:
-                already_passed.append(item)
+
         # If the previously failed test was not found among the test items,
         # do not skip any tests.
-        if not found:
-            self.report_status = PREVIOUSLY_FAILED_TEST_NOT_FOUND
-            already_passed = []
+        if not failed_index:
+            self.report_status = "previously failed test not found, not skipping."
         else:
-            self.report_status = SKIPPING_PASSED_ITEMS.format(len(already_passed))
-
-        for item in already_passed:
-            items.remove(item)
-
-        config.hook.pytest_deselected(items=already_passed)
+            self.report_status = f"skipping {failed_index} already passed items."
+            items[:] = items[failed_index:]
+            config.hook.pytest_deselected(items=items[:failed_index])
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.failed:
