@@ -13,10 +13,11 @@ from typing import Optional
 
 import py.path
 
-import _pytest._code
 import pytest
-from _pytest._code import getfslineno
+from _pytest._code import Code
+from _pytest._code import Frame
 from _pytest._code import Source
+from _pytest._code import getfslineno
 
 
 def test_source_str_function() -> None:
@@ -35,7 +36,7 @@ def test_source_str_function() -> None:
 
 
 def test_source_from_function() -> None:
-    source = _pytest._code.Source(test_source_str_function)
+    source = Source(test_source_str_function)
     assert str(source).startswith("def test_source_str_function() -> None:")
 
 
@@ -44,13 +45,13 @@ def test_source_from_method() -> None:
         def test_method(self):
             pass
 
-    source = _pytest._code.Source(TestClass().test_method)
+    source = Source(TestClass().test_method)
     assert source.lines == ["def test_method(self):", "    pass"]
 
 
 def test_source_from_lines() -> None:
     lines = ["a \n", "b\n", "c"]
-    source = _pytest._code.Source(lines)
+    source = Source(lines)
     assert source.lines == ["a ", "b", "c"]
 
 
@@ -58,7 +59,7 @@ def test_source_from_inner_function() -> None:
     def f():
         raise NotImplementedError()
 
-    source = _pytest._code.Source(f)
+    source = Source(f)
     assert str(source).startswith("def f():")
 
 
@@ -220,7 +221,7 @@ def test_getstartingblock_singleline() -> None:
     class A:
         def __init__(self, *args) -> None:
             frame = sys._getframe(1)
-            self.source = _pytest._code.Frame(frame).statement
+            self.source = Frame(frame).statement
 
     x = A("x", "y")
 
@@ -250,8 +251,8 @@ def test_getfuncsource_dynamic() -> None:
     def g():
         pass  # pragma: no cover
 
-    f_source = _pytest._code.Source(f)
-    g_source = _pytest._code.Source(g)
+    f_source = Source(f)
+    g_source = Source(g)
     assert str(f_source).strip() == "def f():\n    raise NotImplementedError()"
     assert str(g_source).strip() == "def g():\n    pass  # pragma: no cover"
 
@@ -268,7 +269,7 @@ def test_getfuncsource_with_multine_string() -> None:
     pass
 """
 '''
-    assert str(_pytest._code.Source(f)) == expected.rstrip()
+    assert str(Source(f)) == expected.rstrip()
 
 
 def test_deindent() -> None:
@@ -288,7 +289,7 @@ def test_deindent() -> None:
 def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot) -> None:
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
-    source = _pytest._code.Source(
+    source = Source(
         """
         class A(object):
             def method(self):
@@ -297,7 +298,7 @@ def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot) -> None:
     )
     path = tmpdir.join("a.py")
     path.write(source)
-    s2 = _pytest._code.Source(tmpdir.join("a.py").pyimport().A)
+    s2 = Source(tmpdir.join("a.py").pyimport().A)
     assert str(source).strip() == str(s2).strip()
 
 
@@ -386,26 +387,26 @@ def test_code_of_object_instance_with_call() -> None:
     class A:
         pass
 
-    pytest.raises(TypeError, lambda: _pytest._code.Source(A()))
+    pytest.raises(TypeError, lambda: Source(A()))
 
     class WithCall:
         def __call__(self) -> None:
             pass
 
-    code = _pytest._code.Code(WithCall())
+    code = Code(WithCall())
     assert "pass" in str(code.source())
 
     class Hello:
         def __call__(self) -> None:
             pass
 
-    pytest.raises(TypeError, lambda: _pytest._code.Code(Hello))
+    pytest.raises(TypeError, lambda: Code(Hello))
 
 
 def getstatement(lineno: int, source) -> Source:
     from _pytest._code.source import getstatementrange_ast
 
-    src = _pytest._code.Source(source)
+    src = Source(source)
     ast, start, end = getstatementrange_ast(lineno, src)
     return src[start:end]
 
@@ -637,7 +638,7 @@ def test_getstartingblock_multiline() -> None:
     class A:
         def __init__(self, *args):
             frame = sys._getframe(1)
-            self.source = _pytest._code.Frame(frame).statement
+            self.source = Frame(frame).statement
 
     # fmt: off
     x = A('x',
