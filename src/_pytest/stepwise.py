@@ -82,8 +82,9 @@ class StepwisePlugin:
             self.report_status = "previously failed test not found, not skipping."
         else:
             self.report_status = f"skipping {failed_index} already passed items."
+            deselected = items[:failed_index]
             items[:] = items[failed_index:]
-            config.hook.pytest_deselected(items=items[:failed_index])
+            config.hook.pytest_deselected(items=deselected)
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if report.failed:
