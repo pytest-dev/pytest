@@ -29,7 +29,7 @@ from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
-from _pytest.pytester import Testdir
+from _pytest.pytester import Pytester
 
 
 def rewrite(src: str) -> ast.Module:
@@ -115,18 +115,18 @@ class TestAssertionRewrite:
         assert isinstance(m.body[1], ast.Assert)
         assert m.body[1].msg is None
 
-    def test_dont_rewrite_plugin(self, testdir):
+    def test_dont_rewrite_plugin(self, pytester: Pytester):
         contents = {
             "conftest.py": "pytest_plugins = 'plugin'; import plugin",
             "plugin.py": "'PYTEST_DONT_REWRITE'",
             "test_foo.py": "def test_foo(): pass",
         }
-        testdir.makepyfile(**contents)
-        result = testdir.runpytest_subprocess()
+        pytester.makepyfile(**contents)
+        result = pytester.runpytest_subprocess()
         assert "warning" not in "".join(result.outlines)
 
-    def test_rewrites_plugin_as_a_package(self, testdir):
-        pkgdir = testdir.mkpydir("plugin")
+    def test_rewrites_plugin_as_a_package(self, pytester: Pytester):
+        pkgdir = pytester.mkpydir("plugin")
         pkgdir.join("__init__.py").write(
             "import pytest\n"
             "@pytest.fixture\n"
@@ -135,18 +135,18 @@ class TestAssertionRewrite:
             "        assert x == y\n"
             "    return special_assert\n"
         )
-        testdir.makeconftest('pytest_plugins = ["plugin"]')
-        testdir.makepyfile("def test(special_asserter): special_asserter(1, 2)\n")
-        result = testdir.runpytest()
+        pytester.makeconftest('pytest_plugins = ["plugin"]')
+        pytester.makepyfile("def test(special_asserter): special_asserter(1, 2)\n")
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*assert 1 == 2*"])
 
-    def test_honors_pep_235(self, testdir, monkeypatch):
+    def test_honors_pep_235(self, pytester, monkeypatch):
         # note: couldn't make it fail on macos with a single `sys.path` entry
         # note: these modules are named `test_*` to trigger rewriting
-        testdir.tmpdir.join("test_y.py").write("x = 1")
-        xdir = testdir.tmpdir.join("x").ensure_dir()
+        pytester.tmpdir.join("test_y.py").write("x = 1")
+        xdir = pytester.tmpdir.join("x").ensure_dir()
         xdir.join("test_Y").ensure_dir().join("__init__.py").write("x = 2")
-        testdir.makepyfile(
+        pytester.makepyfile(
             "import test_y\n"
             "import test_Y\n"
             "def test():\n"
@@ -154,7 +154,7 @@ class TestAssertionRewrite:
             "    assert test_Y.x == 2\n"
         )
         monkeypatch.syspath_prepend(xdir)
-        testdir.runpytest().assert_outcomes(passed=1)
+        pytester.runpytest().assert_outcomes(passed=1)
 
     def test_name(self, request) -> None:
         def f1() -> None:
@@ -266,72 +266,72 @@ class TestAssertionRewrite:
 
         assert getmsg(f) == "AssertionError: something bad!\nassert False"
 
-    def test_assertion_message(self, testdir):
-        testdir.makepyfile(
+    def test_assertion_message(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             def test_foo():
                 assert 1 == 2, "The failure message"
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         assert result.ret == 1
         result.stdout.fnmatch_lines(
             ["*AssertionError*The failure message*", "*assert 1 == 2*"]
         )
 
-    def test_assertion_message_multiline(self, testdir):
-        testdir.makepyfile(
+    def test_assertion_message_multiline(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             def test_foo():
                 assert 1 == 2, "A multiline\\nfailure message"
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         assert result.ret == 1
         result.stdout.fnmatch_lines(
             ["*AssertionError*A multiline*", "*failure message*", "*assert 1 == 2*"]
         )
 
-    def test_assertion_message_tuple(self, testdir):
-        testdir.makepyfile(
+    def test_assertion_message_tuple(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             def test_foo():
                 assert 1 == 2, (1, 2)
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         assert result.ret == 1
         result.stdout.fnmatch_lines(
             ["*AssertionError*%s*" % repr((1, 2)), "*assert 1 == 2*"]
         )
 
-    def test_assertion_message_expr(self, testdir):
-        testdir.makepyfile(
+    def test_assertion_message_expr(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             def test_foo():
                 assert 1 == 2, 1 + 2
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         assert result.ret == 1
         result.stdout.fnmatch_lines(["*AssertionError*3*", "*assert 1 == 2*"])
 
-    def test_assertion_message_escape(self, testdir):
-        testdir.makepyfile(
+    def test_assertion_message_escape(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             def test_foo():
                 assert 1 == 2, 'To be escaped: %'
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         assert result.ret == 1
         result.stdout.fnmatch_lines(
             ["*AssertionError: To be escaped: %", "*assert 1 == 2"]
         )
 
-    def test_assertion_messages_bytes(self, testdir):
-        testdir.makepyfile("def test_bytes_assertion():\n    assert False, b'ohai!'\n")
-        result = testdir.runpytest()
+    def test_assertion_messages_bytes(self, pytester: Pytester):
+        pytester.makepyfile("def test_bytes_assertion():\n    assert False, b'ohai!'\n")
+        result = pytester.runpytest()
         assert result.ret == 1
         result.stdout.fnmatch_lines(["*AssertionError: b'ohai!'", "*assert False"])
 
@@ -475,8 +475,8 @@ class TestAssertionRewrite:
 
         assert getmsg(f2) == "assert (False or (4 % 2))"
 
-    def test_at_operator_issue1290(self, testdir):
-        testdir.makepyfile(
+    def test_at_operator_issue1290(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             class Matrix(object):
                 def __init__(self, num):
@@ -487,11 +487,11 @@ class TestAssertionRewrite:
             def test_multmat_operator():
                 assert Matrix(2) @ Matrix(3) == 6"""
         )
-        testdir.runpytest().assert_outcomes(passed=1)
+        pytester.runpytest().assert_outcomes(passed=1)
 
-    def test_starred_with_side_effect(self, testdir):
+    def test_starred_with_side_effect(self, pytester: Pytester):
         """See #4412"""
-        testdir.makepyfile(
+        pytester.makepyfile(
             """\
             def test():
                 f = lambda x: x
@@ -499,7 +499,7 @@ class TestAssertionRewrite:
                 assert 2 * next(x) == f(*[next(x)])
             """
         )
-        testdir.runpytest().assert_outcomes(passed=1)
+        pytester.runpytest().assert_outcomes(passed=1)
 
     def test_call(self) -> None:
         def g(a=42, *args, **kwargs) -> bool:
@@ -727,31 +727,31 @@ class TestAssertionRewrite:
 
 
 class TestRewriteOnImport:
-    def test_pycache_is_a_file(self, testdir):
-        testdir.tmpdir.join("__pycache__").write("Hello")
-        testdir.makepyfile(
+    def test_pycache_is_a_file(self, pytester: Pytester):
+        pytester.tmpdir.join("__pycache__").write("Hello")
+        pytester.makepyfile(
             """
             def test_rewritten():
                 assert "@py_builtins" in globals()"""
         )
-        assert testdir.runpytest().ret == 0
+        assert pytester.runpytest().ret == 0
 
-    def test_pycache_is_readonly(self, testdir):
-        cache = testdir.tmpdir.mkdir("__pycache__")
+    def test_pycache_is_readonly(self, pytester: Pytester):
+        cache = pytester.tmpdir.mkdir("__pycache__")
         old_mode = cache.stat().mode
         cache.chmod(old_mode ^ stat.S_IWRITE)
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             def test_rewritten():
                 assert "@py_builtins" in globals()"""
         )
         try:
-            assert testdir.runpytest().ret == 0
+            assert pytester.runpytest().ret == 0
         finally:
             cache.chmod(old_mode)
 
-    def test_zipfile(self, testdir):
-        z = testdir.tmpdir.join("myzip.zip")
+    def test_zipfile(self, pytester: Pytester):
+        z = pytester.tmpdir.join("myzip.zip")
         z_fn = str(z)
         f = zipfile.ZipFile(z_fn, "w")
         try:
@@ -760,17 +760,17 @@ class TestRewriteOnImport:
         finally:
             f.close()
         z.chmod(256)
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             import sys
             sys.path.append(%r)
             import test_gum.test_lizard"""
             % (z_fn,)
         )
-        assert testdir.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
+        assert pytester.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
-    def test_readonly(self, testdir):
-        sub = testdir.mkdir("testing")
+    def test_readonly(self, pytester: Pytester):
+        sub = pytester.mkdir("testing")
         sub.join("test_readonly.py").write(
             b"""
 def test_rewritten():
@@ -781,14 +781,14 @@ def test_rewritten():
         old_mode = sub.stat().mode
         sub.chmod(320)
         try:
-            assert testdir.runpytest().ret == 0
+            assert pytester.runpytest().ret == 0
         finally:
             sub.chmod(old_mode)
 
-    def test_dont_write_bytecode(self, testdir, monkeypatch):
+    def test_dont_write_bytecode(self, pytester, monkeypatch):
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
 
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             import os
             def test_no_bytecode():
@@ -797,20 +797,20 @@ def test_rewritten():
                 assert not os.path.exists(os.path.dirname(__cached__))"""
         )
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
-        assert testdir.runpytest_subprocess().ret == 0
+        assert pytester.runpytest_subprocess().ret == 0
 
-    def test_orphaned_pyc_file(self, testdir, monkeypatch):
+    def test_orphaned_pyc_file(self, pytester, monkeypatch):
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
         monkeypatch.setattr(sys, "pycache_prefix", None, raising=False)
 
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             import orphan
             def test_it():
                 assert orphan.value == 17
             """
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             orphan="""
             value = 17
             """
@@ -826,19 +826,19 @@ def test_rewritten():
             assert len(pycs) == 1
             os.rename(pycs[0], "orphan.pyc")
 
-        assert testdir.runpytest().ret == 0
+        assert pytester.runpytest().ret == 0
 
-    def test_cached_pyc_includes_pytest_version(self, testdir, monkeypatch):
+    def test_cached_pyc_includes_pytest_version(self, pytester, monkeypatch):
         """Avoid stale caches (#1671)"""
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
-        testdir.makepyfile(
+        pytester.makepyfile(
             test_foo="""
             def test_foo():
                 assert True
             """
         )
-        result = testdir.runpytest_subprocess()
+        result = pytester.runpytest_subprocess()
         assert result.ret == 0
         found_names = glob.glob(f"__pycache__/*-pytest-{pytest.__version__}.pyc")
         assert found_names, "pyc with expected tag not found in names: {}".format(
@@ -846,30 +846,30 @@ def test_rewritten():
         )
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
-    def test_pyc_vs_pyo(self, testdir, monkeypatch):
-        testdir.makepyfile(
+    def test_pyc_vs_pyo(self, pytester, monkeypatch):
+        pytester.makepyfile(
             """
             import pytest
             def test_optimized():
                 "hello"
                 assert test_optimized.__doc__ is None"""
         )
-        p = make_numbered_dir(root=Path(testdir.tmpdir), prefix="runpytest-")
+        p = make_numbered_dir(root=Path(pytester.tmpdir), prefix="runpytest-")
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
-        assert testdir.runpytest_subprocess(tmp).ret == 0
+        assert pytester.runpytest_subprocess(tmp).ret == 0
         tagged = "test_pyc_vs_pyo." + PYTEST_TAG
         assert tagged + ".pyo" in os.listdir("__pycache__")
         monkeypatch.undo()
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
-        assert testdir.runpytest_subprocess(tmp).ret == 1
+        assert pytester.runpytest_subprocess(tmp).ret == 1
         assert tagged + ".pyc" in os.listdir("__pycache__")
 
-    def test_package(self, testdir):
-        pkg = testdir.tmpdir.join("pkg")
+    def test_package(self, pytester: Pytester):
+        pkg = pytester.tmpdir.join("pkg")
         pkg.mkdir()
         pkg.join("__init__.py").ensure()
         pkg.join("test_blah.py").write(
@@ -877,50 +877,50 @@ def test_rewritten():
 def test_rewritten():
     assert "@py_builtins" in globals()"""
         )
-        assert testdir.runpytest().ret == 0
+        assert pytester.runpytest().ret == 0
 
-    def test_translate_newlines(self, testdir):
+    def test_translate_newlines(self, pytester: Pytester):
         content = "def test_rewritten():\r\n assert '@py_builtins' in globals()"
         b = content.encode("utf-8")
-        testdir.tmpdir.join("test_newlines.py").write(b, "wb")
-        assert testdir.runpytest().ret == 0
+        pytester.tmpdir.join("test_newlines.py").write(b, "wb")
+        assert pytester.runpytest().ret == 0
 
-    def test_package_without__init__py(self, testdir):
-        pkg = testdir.mkdir("a_package_without_init_py")
+    def test_package_without__init__py(self, pytester: Pytester):
+        pkg = pytester.mkdir("a_package_without_init_py")
         pkg.join("module.py").ensure()
-        testdir.makepyfile("import a_package_without_init_py.module")
-        assert testdir.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
+        pytester.makepyfile("import a_package_without_init_py.module")
+        assert pytester.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
-    def test_rewrite_warning(self, testdir):
-        testdir.makeconftest(
+    def test_rewrite_warning(self, pytester: Pytester):
+        pytester.makeconftest(
             """
             import pytest
             pytest.register_assert_rewrite("_pytest")
         """
         )
         # needs to be a subprocess because pytester explicitly disables this warning
-        result = testdir.runpytest_subprocess()
+        result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*Module already imported*: _pytest"])
 
-    def test_rewrite_module_imported_from_conftest(self, testdir):
-        testdir.makeconftest(
+    def test_rewrite_module_imported_from_conftest(self, pytester: Pytester):
+        pytester.makeconftest(
             """
             import test_rewrite_module_imported
         """
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             test_rewrite_module_imported="""
             def test_rewritten():
                 assert "@py_builtins" in globals()
         """
         )
-        assert testdir.runpytest_subprocess().ret == 0
+        assert pytester.runpytest_subprocess().ret == 0
 
-    def test_remember_rewritten_modules(self, pytestconfig, testdir, monkeypatch):
+    def test_remember_rewritten_modules(self, pytestconfig, pytester, monkeypatch):
         """`AssertionRewriteHook` should remember rewritten modules so it
         doesn't give false positives (#2005)."""
-        monkeypatch.syspath_prepend(testdir.tmpdir)
-        testdir.makepyfile(test_remember_rewritten_modules="")
+        monkeypatch.syspath_prepend(pytester.tmpdir)
+        pytester.makepyfile(test_remember_rewritten_modules="")
         warnings = []
         hook = AssertionRewritingHook(pytestconfig)
         monkeypatch.setattr(
@@ -934,8 +934,8 @@ def test_rewritten():
         hook.mark_rewrite("test_remember_rewritten_modules")
         assert warnings == []
 
-    def test_rewrite_warning_using_pytest_plugins(self, testdir):
-        testdir.makepyfile(
+    def test_rewrite_warning_using_pytest_plugins(self, pytester: Pytester):
+        pytester.makepyfile(
             **{
                 "conftest.py": "pytest_plugins = ['core', 'gui', 'sci']",
                 "core.py": "",
@@ -944,14 +944,14 @@ def test_rewritten():
                 "test_rewrite_warning_pytest_plugins.py": "def test(): pass",
             }
         )
-        testdir.chdir()
-        result = testdir.runpytest_subprocess()
+        pytester.chdir()
+        result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
         result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
-    def test_rewrite_warning_using_pytest_plugins_env_var(self, testdir, monkeypatch):
+    def test_rewrite_warning_using_pytest_plugins_env_var(self, pytester, monkeypatch):
         monkeypatch.setenv("PYTEST_PLUGINS", "plugin")
-        testdir.makepyfile(
+        pytester.makepyfile(
             **{
                 "plugin.py": "",
                 "test_rewrite_warning_using_pytest_plugins_env_var.py": """
@@ -962,26 +962,26 @@ def test_rewritten():
             """,
             }
         )
-        testdir.chdir()
-        result = testdir.runpytest_subprocess()
+        pytester.chdir()
+        result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*= 1 passed in *=*"])
         result.stdout.no_fnmatch_line("*pytest-warning summary*")
 
 
 class TestAssertionRewriteHookDetails:
-    def test_sys_meta_path_munged(self, testdir):
-        testdir.makepyfile(
+    def test_sys_meta_path_munged(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             def test_meta_path():
                 import sys; sys.meta_path = []"""
         )
-        assert testdir.runpytest().ret == 0
+        assert pytester.runpytest().ret == 0
 
-    def test_write_pyc(self, testdir: Testdir, tmpdir, monkeypatch) -> None:
+    def test_write_pyc(self, pytester: Testdir, tmpdir, monkeypatch) -> None:
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
 
-        config = testdir.parseconfig()
+        config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
         source_path = str(tmpdir.ensure("source.py"))
         pycpath = tmpdir.join("pyc").strpath
@@ -1010,7 +1010,7 @@ class TestAssertionRewriteHookDetails:
 
         assert not _write_pyc(state, co, os.stat(source_path), pycpath)
 
-    def test_resources_provider_for_loader(self, testdir):
+    def test_resources_provider_for_loader(self, pytester: Pytester):
         """
         Attempts to load resources from a package should succeed normally,
         even when the AssertionRewriteHook is used to load the modules.
@@ -1019,7 +1019,7 @@ class TestAssertionRewriteHookDetails:
         """
         pytest.importorskip("pkg_resources")
 
-        testdir.mkpydir("testpkg")
+        pytester.mkpydir("testpkg")
         contents = {
             "testpkg/test_pkg": """
                 import pkg_resources
@@ -1034,10 +1034,10 @@ class TestAssertionRewriteHookDetails:
                     assert res == 'Load me please.'
                 """
         }
-        testdir.makepyfile(**contents)
-        testdir.maketxtfile(**{"testpkg/resource": "Load me please."})
+        pytester.makepyfile(**contents)
+        pytester.maketxtfile(**{"testpkg/resource": "Load me please."})
 
-        result = testdir.runpytest_subprocess()
+        result = pytester.runpytest_subprocess()
         result.assert_outcomes(passed=1)
 
     def test_read_pyc(self, tmp_path: Path) -> None:
@@ -1062,15 +1062,15 @@ class TestAssertionRewriteHookDetails:
 
         assert _read_pyc(source, pyc) is None  # no error
 
-    def test_reload_is_same_and_reloads(self, testdir: Testdir) -> None:
+    def test_reload_is_same_and_reloads(self, pytester: Testdir) -> None:
         """Reloading a (collected) module after change picks up the change."""
-        testdir.makeini(
+        pytester.makeini(
             """
             [pytest]
             python_files = *.py
             """
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             file="""
             def reloaded():
                 return False
@@ -1091,12 +1091,12 @@ class TestAssertionRewriteHookDetails:
                 assert file.reloaded()
             """,
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 1 passed*"])
 
-    def test_get_data_support(self, testdir):
+    def test_get_data_support(self, pytester: Pytester):
         """Implement optional PEP302 api (#808)."""
-        path = testdir.mkpydir("foo")
+        path = pytester.mkpydir("foo")
         path.join("test_foo.py").write(
             textwrap.dedent(
                 """\
@@ -1109,12 +1109,12 @@ class TestAssertionRewriteHookDetails:
             )
         )
         path.join("data.txt").write("Hey")
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-def test_issue731(testdir):
-    testdir.makepyfile(
+def test_issue731(pytester: Pytester):
+    pytester.makepyfile(
         """
     class LongReprWithBraces(object):
         def __repr__(self):
@@ -1128,45 +1128,45 @@ def test_issue731(testdir):
         assert obj.some_method()
     """
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.stdout.no_fnmatch_line("*unbalanced braces*")
 
 
 class TestIssue925:
-    def test_simple_case(self, testdir):
-        testdir.makepyfile(
+    def test_simple_case(self, pytester: Pytester):
+        pytester.makepyfile(
             """
         def test_ternary_display():
             assert (False == False) == False
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*E*assert (False == False) == False"])
 
-    def test_long_case(self, testdir):
-        testdir.makepyfile(
+    def test_long_case(self, pytester: Pytester):
+        pytester.makepyfile(
             """
         def test_ternary_display():
              assert False == (False == True) == True
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*E*assert (False == True) == True"])
 
-    def test_many_brackets(self, testdir):
-        testdir.makepyfile(
+    def test_many_brackets(self, pytester: Pytester):
+        pytester.makepyfile(
             """
             def test_ternary_display():
                  assert True == ((False == True) == True)
             """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*E*assert True == ((False == True) == True)"])
 
 
 class TestIssue2121:
-    def test_rewrite_python_files_contain_subdirs(self, testdir):
-        testdir.makepyfile(
+    def test_rewrite_python_files_contain_subdirs(self, pytester: Pytester):
+        pytester.makepyfile(
             **{
                 "tests/file.py": """
                 def test_simple_failure():
@@ -1174,13 +1174,13 @@ class TestIssue2121:
                 """
             }
         )
-        testdir.makeini(
+        pytester.makeini(
             """
                 [pytest]
                 python_files = tests/**.py
             """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
@@ -1188,7 +1188,7 @@ class TestIssue2121:
     sys.maxsize <= (2 ** 31 - 1), reason="Causes OverflowError on 32bit systems"
 )
 @pytest.mark.parametrize("offset", [-1, +1])
-def test_source_mtime_long_long(testdir, offset):
+def test_source_mtime_long_long(pytester, offset):
     """Support modification dates after 2038 in rewritten files (#4903).
 
     pytest would crash with:
@@ -1196,7 +1196,7 @@ def test_source_mtime_long_long(testdir, offset):
             fp.write(struct.pack("<ll", mtime, size))
         E   struct.error: argument out of range
     """
-    p = testdir.makepyfile(
+    p = pytester.makepyfile(
         """
         def test(): pass
     """
@@ -1206,19 +1206,19 @@ def test_source_mtime_long_long(testdir, offset):
     # +1 offset also tests masking of 0xFFFFFFFF
     timestamp = 2 ** 32 + offset
     os.utime(str(p), (timestamp, timestamp))
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     assert result.ret == 0
 
 
-def test_rewrite_infinite_recursion(testdir, pytestconfig, monkeypatch) -> None:
+def test_rewrite_infinite_recursion(pytester, pytestconfig, monkeypatch) -> None:
     """Fix infinite recursion when writing pyc files: if an import happens to be triggered when writing the pyc
     file, this would cause another call to the hook, which would trigger another pyc writing, which could
     trigger another import, and so on. (#3506)"""
     from _pytest.assertion import rewrite as rewritemod
 
-    testdir.syspathinsert()
-    testdir.makepyfile(test_foo="def test_foo(): pass")
-    testdir.makepyfile(test_bar="def test_bar(): pass")
+    pytester.syspathinsert()
+    pytester.makepyfile(test_foo="def test_foo(): pass")
+    pytester.makepyfile(test_bar="def test_bar(): pass")
 
     original_write_pyc = rewritemod._write_pyc
 
@@ -1244,7 +1244,7 @@ def test_rewrite_infinite_recursion(testdir, pytestconfig, monkeypatch) -> None:
 
 class TestEarlyRewriteBailout:
     @pytest.fixture
-    def hook(self, pytestconfig, monkeypatch, testdir) -> AssertionRewritingHook:
+    def hook(self, pytestconfig, monkeypatch, pytester: Pytester) -> AssertionRewritingHook:
         """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
         if PathFinder.find_spec has been called.
         """
@@ -1268,24 +1268,24 @@ class TestEarlyRewriteBailout:
         hook.fnpats[:] = ["test_*.py", "*_test.py"]
         monkeypatch.setattr(hook, "_find_spec", spy_find_spec)
         hook.set_session(StubSession())  # type: ignore[arg-type]
-        testdir.syspathinsert()
+        pytester.syspathinsert()
         return hook
 
-    def test_basic(self, testdir, hook: AssertionRewritingHook) -> None:
+    def test_basic(self, pytester, hook: AssertionRewritingHook) -> None:
         """
         Ensure we avoid calling PathFinder.find_spec when we know for sure a certain
         module will not be rewritten to optimize assertion rewriting (#3918).
         """
-        testdir.makeconftest(
+        pytester.makeconftest(
             """
             import pytest
             @pytest.fixture
             def fix(): return 1
         """
         )
-        testdir.makepyfile(test_foo="def test_foo(): pass")
-        testdir.makepyfile(bar="def bar(): pass")
-        foobar_path = testdir.makepyfile(foobar="def foobar(): pass")
+        pytester.makepyfile(test_foo="def test_foo(): pass")
+        pytester.makepyfile(bar="def bar(): pass")
+        foobar_path = pytester.makepyfile(foobar="def foobar(): pass")
         self.initial_paths.add(foobar_path)
 
         # conftest files should always be rewritten
@@ -1305,12 +1305,12 @@ class TestEarlyRewriteBailout:
         assert self.find_spec_calls == ["conftest", "test_foo", "foobar"]
 
     def test_pattern_contains_subdirectories(
-        self, testdir, hook: AssertionRewritingHook
+        self, pytester, hook: AssertionRewritingHook
     ) -> None:
         """If one of the python_files patterns contain subdirectories ("tests/**.py") we can't bailout early
         because we need to match with the full path, which can only be found by calling PathFinder.find_spec
         """
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             **{
                 "tests/file.py": """\
                     def test_simple_failure():
@@ -1318,7 +1318,7 @@ class TestEarlyRewriteBailout:
                 """
             }
         )
-        testdir.syspathinsert(p.dirpath())
+        pytester.syspathinsert(p.dirpath())
         hook.fnpats[:] = ["tests/**.py"]
         assert hook.find_spec("file") is not None
         assert self.find_spec_calls == ["file"]
@@ -1326,14 +1326,14 @@ class TestEarlyRewriteBailout:
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
     )
-    def test_cwd_changed(self, testdir, monkeypatch):
+    def test_cwd_changed(self, pytester, monkeypatch):
         # Setup conditions for py's fspath trying to import pathlib on py34
         # always (previously triggered via xdist only).
         # Ref: https://github.com/pytest-dev/py/pull/207
         monkeypatch.syspath_prepend("")
         monkeypatch.delitem(sys.modules, "pathlib", raising=False)
 
-        testdir.makepyfile(
+        pytester.makepyfile(
             **{
                 "test_setup_nonexisting_cwd.py": """\
                     import os
@@ -1350,30 +1350,30 @@ class TestEarlyRewriteBailout:
                 """,
             }
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
 class TestAssertionPass:
-    def test_option_default(self, testdir):
-        config = testdir.parseconfig()
+    def test_option_default(self, pytester: Pytester):
+        config = pytester.parseconfig()
         assert config.getini("enable_assertion_pass_hook") is False
 
     @pytest.fixture
-    def flag_on(self, testdir):
-        testdir.makeini("[pytest]\nenable_assertion_pass_hook = True\n")
+    def flag_on(self, pytester: Pytester):
+        pytester.makeini("[pytest]\nenable_assertion_pass_hook = True\n")
 
     @pytest.fixture
-    def hook_on(self, testdir):
-        testdir.makeconftest(
+    def hook_on(self, pytester: Pytester):
+        pytester.makeconftest(
             """\
             def pytest_assertion_pass(item, lineno, orig, expl):
                 raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
             """
         )
 
-    def test_hook_call(self, testdir, flag_on, hook_on):
-        testdir.makepyfile(
+    def test_hook_call(self, pytester, flag_on, hook_on):
+        pytester.makepyfile(
             """\
             def test_simple():
                 a=1
@@ -1388,23 +1388,23 @@ class TestAssertionPass:
                 assert False, "assert with message"
             """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             "*Assertion Passed: a+b == c+d (1 + 2) == (3 + 0) at line 7*"
         )
 
-    def test_hook_call_with_parens(self, testdir, flag_on, hook_on):
-        testdir.makepyfile(
+    def test_hook_call_with_parens(self, pytester, flag_on, hook_on):
+        pytester.makepyfile(
             """\
             def f(): return 1
             def test():
                 assert f()
             """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines("*Assertion Passed: f() 1")
 
-    def test_hook_not_called_without_hookimpl(self, testdir, monkeypatch, flag_on):
+    def test_hook_not_called_without_hookimpl(self, pytester, monkeypatch, flag_on):
         """Assertion pass should not be called (and hence formatting should
         not occur) if there is no hook declared for pytest_assertion_pass"""
 
@@ -1415,7 +1415,7 @@ class TestAssertionPass:
             _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
         )
 
-        testdir.makepyfile(
+        pytester.makepyfile(
             """\
             def test_simple():
                 a=1
@@ -1426,10 +1426,10 @@ class TestAssertionPass:
                 assert a+b == c+d
             """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.assert_outcomes(passed=1)
 
-    def test_hook_not_called_without_cmd_option(self, testdir, monkeypatch):
+    def test_hook_not_called_without_cmd_option(self, pytester, monkeypatch):
         """Assertion pass should not be called (and hence formatting should
         not occur) if there is no hook declared for pytest_assertion_pass"""
 
@@ -1440,14 +1440,14 @@ class TestAssertionPass:
             _pytest.assertion.rewrite, "_call_assertion_pass", raise_on_assertionpass
         )
 
-        testdir.makeconftest(
+        pytester.makeconftest(
             """\
             def pytest_assertion_pass(item, lineno, orig, expl):
                 raise Exception("Assertion Passed: {} {} at line {}".format(orig, expl, lineno))
             """
         )
 
-        testdir.makepyfile(
+        pytester.makepyfile(
             """\
             def test_simple():
                 a=1
@@ -1458,7 +1458,7 @@ class TestAssertionPass:
                 assert a+b == c+d
             """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.assert_outcomes(passed=1)
 
 
@@ -1611,13 +1611,13 @@ class TestPyCacheDir:
     @pytest.mark.skipif(
         sys.version_info < (3, 8), reason="pycache_prefix not available in py<38"
     )
-    def test_sys_pycache_prefix_integration(self, tmp_path, monkeypatch, testdir):
+    def test_sys_pycache_prefix_integration(self, tmp_path, monkeypatch, pytester: Pytester):
         """Integration test for sys.pycache_prefix (#4730)."""
         pycache_prefix = tmp_path / "my/pycs"
         monkeypatch.setattr(sys, "pycache_prefix", str(pycache_prefix))
         monkeypatch.setattr(sys, "dont_write_bytecode", False)
 
-        testdir.makepyfile(
+        pytester.makepyfile(
             **{
                 "src/test_foo.py": """
                 import bar
@@ -1627,11 +1627,11 @@ class TestPyCacheDir:
                 "src/bar/__init__.py": "",
             }
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         assert result.ret == 0
 
-        test_foo = Path(testdir.tmpdir) / "src/test_foo.py"
-        bar_init = Path(testdir.tmpdir) / "src/bar/__init__.py"
+        test_foo = Path(pytester.tmpdir) / "src/test_foo.py"
+        bar_init = Path(pytester.tmpdir) / "src/bar/__init__.py"
         assert test_foo.is_file()
         assert bar_init.is_file()
 
