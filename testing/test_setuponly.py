@@ -1,8 +1,8 @@
 import sys
 
 import pytest
-from _pytest.pytester import Pytester
 from _pytest.config import ExitCode
+from _pytest.pytester import Pytester
 
 
 @pytest.fixture(params=["--setup-only", "--setup-plan", "--setup-show"], scope="module")
