@@ -150,7 +150,7 @@ class TestEvaluation:
                     pass
         """
         )
-        item.config._hackxyz = 3
+        item.config._hackxyz = 3  # type: ignore[attr-defined]
         skipped = evaluate_skip_marks(item)
         assert skipped
         assert skipped.reason == "condition: config._hackxyz"
