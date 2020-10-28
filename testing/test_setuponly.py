@@ -51,7 +51,7 @@ def test_show_different_scopes(pytester: Pytester, mode) -> None:
     '''
     )
 
-    result = pytester.runpytest(mode, str(p))
+    result = pytester.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -85,7 +85,7 @@ def test_show_nested_fixtures(pytester: Pytester, mode) -> None:
     '''
     )
 
-    result = pytester.runpytest(mode, str(p))
+    result = pytester.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -114,7 +114,7 @@ def test_show_fixtures_with_autouse(pytester: Pytester, mode) -> None:
     '''
     )
 
-    result = pytester.runpytest(mode, str(p))
+    result = pytester.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -146,7 +146,7 @@ def test_show_fixtures_with_parameters(pytester: Pytester, mode) -> None:
     '''
     )
 
-    result = pytester.runpytest(mode, str(p))
+    result = pytester.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -180,7 +180,7 @@ def test_show_fixtures_with_parameter_ids(pytester: Pytester, mode) -> None:
     '''
     )
 
-    result = pytester.runpytest(mode, str(p))
+    result = pytester.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -200,7 +200,7 @@ def test_show_fixtures_with_parameter_ids_function(pytester: Pytester, mode) -> 
     """
     )
 
-    result = pytester.runpytest(mode, str(p))
+    result = pytester.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -223,7 +223,7 @@ def test_dynamic_fixture_request(pytester: Pytester) -> None:
     """
     )
 
-    result = pytester.runpytest("--setup-only", str(p))
+    result = pytester.runpytest("--setup-only", p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -250,7 +250,7 @@ def test_capturing(pytester: Pytester) -> None:
     """
     )
 
-    result = pytester.runpytest("--setup-only", str(p))
+    result = pytester.runpytest("--setup-only", p)
     result.stdout.fnmatch_lines(
         ["this should be captured", "this should also be captured"]
     )
@@ -269,7 +269,7 @@ def test_show_fixtures_and_execute_test(pytester: Pytester) -> None:
     """
     )
 
-    result = pytester.runpytest("--setup-show", str(p))
+    result = pytester.runpytest("--setup-show", p)
     assert result.ret == 1
 
     result.stdout.fnmatch_lines(
@@ -288,7 +288,7 @@ def test_setup_show_with_KeyboardInterrupt_in_test(pytester: Pytester) -> None:
             raise KeyboardInterrupt()
     """
     )
-    result = pytester.runpytest("--setup-show", str(p), no_reraise_ctrlc=True)
+    result = pytester.runpytest("--setup-show", p, no_reraise_ctrlc=True)
     result.stdout.fnmatch_lines(
         [
             "*SETUP    F arg*",
