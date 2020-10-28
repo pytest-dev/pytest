@@ -158,7 +158,7 @@ class TestEvaluation:
 
 class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
-    def test_xfail_simple(self, pytester, strict) -> None:
+    def test_xfail_simple(self, pytester: Pytester, strict: bool) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -249,7 +249,7 @@ class TestXFail:
             ),
         ],
     )
-    def test_xfail_run_with_skip_mark(self, pytester, test_input, expected) -> None:
+    def test_xfail_run_with_skip_mark(self, pytester: Pytester, test_input, expected) -> None:
         pytester.makepyfile(
             test_sample="""
             import pytest
@@ -493,7 +493,7 @@ class TestXFail:
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict", [True, False])
-    def test_strict_xfail(self, pytester, strict) -> None:
+    def test_strict_xfail(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
             """
             import pytest
@@ -520,7 +520,7 @@ class TestXFail:
         assert pytester.path.joinpath("foo_executed").exists()
 
     @pytest.mark.parametrize("strict", [True, False])
-    def test_strict_xfail_condition(self, pytester, strict) -> None:
+    def test_strict_xfail_condition(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
             """
             import pytest
@@ -536,7 +536,7 @@ class TestXFail:
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict", [True, False])
-    def test_xfail_condition_keyword(self, pytester, strict) -> None:
+    def test_xfail_condition_keyword(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
             """
             import pytest
@@ -552,7 +552,7 @@ class TestXFail:
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict_val", ["true", "false"])
-    def test_strict_xfail_default_from_file(self, pytester, strict_val) -> None:
+    def test_strict_xfail_default_from_file(self, pytester: Pytester, strict_val) -> None:
         pytester.makeini(
             """
             [pytest]
@@ -719,7 +719,7 @@ class TestSkipif:
     @pytest.mark.parametrize(
         "params", ["\"hasattr(sys, 'platform')\"", 'True, reason="invalid platform"']
     )
-    def test_skipif_reporting(self, pytester, params) -> None:
+    def test_skipif_reporting(self, pytester: Pytester, params) -> None:
         p = pytester.makepyfile(
             test_foo="""
             import pytest
@@ -748,7 +748,7 @@ class TestSkipif:
         "marker, msg1, msg2",
         [("skipif", "SKIP", "skipped"), ("xfail", "XPASS", "xpassed")],
     )
-    def test_skipif_reporting_multiple(self, pytester, marker, msg1, msg2) -> None:
+    def test_skipif_reporting_multiple(self, pytester: Pytester, marker, msg1, msg2) -> None:
         pytester.makepyfile(
             test_foo="""
             import pytest
