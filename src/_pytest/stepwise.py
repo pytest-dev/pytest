@@ -57,7 +57,7 @@ class StepwisePlugin:
         assert config.cache is not None
         self.cache: Cache = config.cache
         self.lastfailed: Optional[str] = self.cache.get(STEPWISE_CACHE_DIR, None)
-        self.skip: bool = config.option.stepwise_skip
+        self.skip: bool = config.getoption("stepwise_skip")
 
     def pytest_sessionstart(self, session: Session) -> None:
         self.session = session
