@@ -38,7 +38,7 @@ else:
 __all__ = ["Path", "PurePath"]
 
 
-LOCK_TIMEOUT = 60 * 60 * 3
+LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
 
 _AnyPurePath = TypeVar("_AnyPurePath", bound=PurePath)
