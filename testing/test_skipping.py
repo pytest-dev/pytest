@@ -249,7 +249,9 @@ class TestXFail:
             ),
         ],
     )
-    def test_xfail_run_with_skip_mark(self, pytester: Pytester, test_input, expected) -> None:
+    def test_xfail_run_with_skip_mark(
+        self, pytester: Pytester, test_input, expected
+    ) -> None:
         pytester.makepyfile(
             test_sample="""
             import pytest
@@ -552,7 +554,9 @@ class TestXFail:
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict_val", ["true", "false"])
-    def test_strict_xfail_default_from_file(self, pytester: Pytester, strict_val) -> None:
+    def test_strict_xfail_default_from_file(
+        self, pytester: Pytester, strict_val
+    ) -> None:
         pytester.makeini(
             """
             [pytest]
@@ -748,7 +752,9 @@ class TestSkipif:
         "marker, msg1, msg2",
         [("skipif", "SKIP", "skipped"), ("xfail", "XPASS", "xpassed")],
     )
-    def test_skipif_reporting_multiple(self, pytester: Pytester, marker, msg1, msg2) -> None:
+    def test_skipif_reporting_multiple(
+        self, pytester: Pytester, marker, msg1, msg2
+    ) -> None:
         pytester.makepyfile(
             test_foo="""
             import pytest
