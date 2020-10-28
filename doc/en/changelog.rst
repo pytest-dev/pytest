@@ -28,6 +28,25 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.1.2 (2020-10-28)
+=========================
+
+Bug Fixes
+---------
+
+- `#7758 <https://github.com/pytest-dev/pytest/issues/7758>`_: Fixed an issue where some files in packages are getting lost from ``--lf`` even though they contain tests that failed. Regressed in pytest 5.4.0.
+
+
+- `#7911 <https://github.com/pytest-dev/pytest/issues/7911>`_: Directories created by `tmpdir` are now considered stale after 3 days without modification (previous value was 3 hours) to avoid deleting directories still in use in long running test suites.
+
+
+
+Improved Documentation
+----------------------
+
+- `#7815 <https://github.com/pytest-dev/pytest/issues/7815>`_: Improve deprecation warning message for ``pytest._fillfuncargs()``.
+
+
 pytest 6.1.1 (2020-10-03)
 =========================
 
