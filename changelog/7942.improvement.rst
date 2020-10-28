@@ -1,0 +1,1 @@
+Migrate from testdir to pytester in the acceptance_test.py file
