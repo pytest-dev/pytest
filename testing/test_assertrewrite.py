@@ -1297,7 +1297,7 @@ class TestEarlyRewriteBailout:
         pytester.makepyfile(test_foo="def test_foo(): pass")
         pytester.makepyfile(bar="def bar(): pass")
         foobar_path = pytester.makepyfile(foobar="def foobar(): pass")
-        self.initial_paths.add(str(foobar_path))
+        self.initial_paths.add(py.path.local(foobar_path))
 
         # conftest files should always be rewritten
         assert hook.find_spec("conftest") is not None
