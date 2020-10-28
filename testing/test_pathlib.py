@@ -17,6 +17,8 @@ from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import resolve_package_path
+from _pytest.pathlib import symlink_or_skip
+from _pytest.pathlib import visit
 
 
 class TestFNMatcherPort:
@@ -401,3 +403,14 @@ def test_commonpath() -> None:
     assert commonpath(subpath, path) == path
     assert commonpath(Path(str(path) + "suffix"), path) == path.parent
     assert commonpath(path, path.parent.parent) == path.parent.parent
+
+
+def test_visit_ignores_errors(tmpdir) -> None:
+    symlink_or_skip("recursive", tmpdir.join("recursive"))
+    tmpdir.join("foo").write_binary(b"")
+    tmpdir.join("bar").write_binary(b"")
+
+    assert [entry.name for entry in visit(tmpdir, recurse=lambda entry: False)] == [
+        "bar",
+        "foo",
+    ]
