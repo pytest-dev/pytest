@@ -140,13 +140,12 @@ class TestAssertionRewrite:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*assert 1 == 2*"])
 
-    def test_honors_pep_235(self, pytester: Pytester, monkeypatch):
+    def test_honors_pep_235(self, pytester: Pytester, monkeypatch) -> None:
         # note: couldn't make it fail on macos with a single `sys.path` entry
         # note: these modules are named `test_*` to trigger rewriting
-        pytester.makepyfile("test_y", "x = 1")
+        pytester.makepyfile(test_y="x = 1")
         xdir = pytester.mkdir("x")
-        xdir.joinpath("test_Y").mkdir()
-        xdir.joinpath("test_Y").joinpath("__init__.py").touch()
+        pytester.mkpydir(str(xdir.joinpath("test_Y")))
         xdir.joinpath("test_Y").joinpath("__init__.py").write_text("x = 2")
         pytester.makepyfile(
             "import test_y\n"
@@ -155,7 +154,7 @@ class TestAssertionRewrite:
             "    assert test_y.x == 1\n"
             "    assert test_Y.x == 2\n"
         )
-        monkeypatch.syspath_prepend(xdir)
+        monkeypatch.syspath_prepend(str(xdir))
         pytester.runpytest().assert_outcomes(passed=1)
 
     def test_name(self, request) -> None:
@@ -1298,7 +1297,7 @@ class TestEarlyRewriteBailout:
         pytester.makepyfile(test_foo="def test_foo(): pass")
         pytester.makepyfile(bar="def bar(): pass")
         foobar_path = pytester.makepyfile(foobar="def foobar(): pass")
-        self.initial_paths.add(foobar_path)
+        self.initial_paths.add(str(foobar_path))
 
         # conftest files should always be rewritten
         assert hook.find_spec("conftest") is not None
@@ -1322,7 +1321,7 @@ class TestEarlyRewriteBailout:
         """If one of the python_files patterns contain subdirectories ("tests/**.py") we can't bailout early
         because we need to match with the full path, which can only be found by calling PathFinder.find_spec
         """
-        p = pytester.makepyfile(
+        pytester.makepyfile(
             **{
                 "tests/file.py": """\
                     def test_simple_failure():
@@ -1330,7 +1329,7 @@ class TestEarlyRewriteBailout:
                 """
             }
         )
-        pytester.syspathinsert(str(pytester.path))
+        pytester.syspathinsert("tests")
         hook.fnpats[:] = ["tests/**.py"]
         assert hook.find_spec("file") is not None
         assert self.find_spec_calls == ["file"]
