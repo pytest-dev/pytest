@@ -32,7 +32,7 @@ from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
-LOCK_TIMEOUT = 60 * 60 * 3
+LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
 
 _AnyPurePath = TypeVar("_AnyPurePath", bound=PurePath)
