@@ -4,7 +4,7 @@ import py
 
 import pytest
 from _pytest import nodes
-from _pytest.pytester import Testdir
+from _pytest.pytester import Pytester
 
 
 @pytest.mark.parametrize(
@@ -35,8 +35,8 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
 
 
-def test_std_warn_not_pytestwarning(testdir: Testdir) -> None:
-    items = testdir.getitems(
+def test_std_warn_not_pytestwarning(pytester: Pytester) -> None:
+    items = pytester.getitems(
         """
         def test():
             pass
@@ -66,12 +66,12 @@ def test__check_initialpaths_for_relpath() -> None:
     assert nodes._check_initialpaths_for_relpath(FakeSession2, outside) is None
 
 
-def test_failure_with_changed_cwd(testdir):
+def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     """
     Test failure lines should use absolute paths if cwd has changed since
     invocation, so the path is correct (#6428).
     """
-    p = testdir.makepyfile(
+    p = pytester.makepyfile(
         """
         import os
         import pytest
@@ -89,5 +89,5 @@ def test_failure_with_changed_cwd(testdir):
             assert False
     """
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
