@@ -276,8 +276,8 @@ if sys.version_info[:2] >= (3, 7):
 
 @pytest.mark.parametrize("code, expected", TESTCASES)
 def test_error_diff(code: str, expected: str, pytester: Pytester) -> None:
-    expected = [line.lstrip() for line in expected.splitlines()]  # type: ignore
+    expected_lines = [line.lstrip() for line in expected.splitlines()]
     p = pytester.makepyfile(code)
     result = pytester.runpytest(p, "-vv")
-    result.stdout.fnmatch_lines(expected)
+    result.stdout.fnmatch_lines(expected_lines)
     assert result.ret == 1
