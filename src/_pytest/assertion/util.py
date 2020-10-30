@@ -9,7 +9,6 @@ from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Sequence
-from typing import Tuple
 
 import _pytest._code
 from _pytest import outcomes
@@ -179,8 +178,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
         elif isdict(left) and isdict(right):
             explanation = _compare_eq_dict(left, right, verbose)
         elif type(left) == type(right) and (isdatacls(left) or isattrs(left)):
-            type_fn = (isdatacls, isattrs)
-            explanation = _compare_eq_cls(left, right, verbose, type_fn)
+            explanation = _compare_eq_cls(left, right, verbose)
         elif verbose > 0:
             explanation = _compare_eq_verbose(left, right)
         if isiterable(left) and isiterable(right):
@@ -403,13 +401,7 @@ def _compare_eq_dict(
     return explanation
 
 
-def _compare_eq_cls(
-    left: Any,
-    right: Any,
-    verbose: int,
-    type_fns: Tuple[Callable[[Any], bool], Callable[[Any], bool]],
-) -> List[str]:
-    isdatacls, isattrs = type_fns
+def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
     if isdatacls(left):
         all_fields = left.__dataclass_fields__
         fields_to_check = [field for field, info in all_fields.items() if info.compare]
