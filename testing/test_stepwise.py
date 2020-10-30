@@ -93,6 +93,23 @@ def test_run_without_stepwise(stepwise_testdir):
     result.stdout.fnmatch_lines(["*test_success_after_fail PASSED*"])
 
 
+def test_stepwise_output_summary(testdir):
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("expected", [True, True, True, True, False])
+        def test_data(expected):
+            assert expected
+        """
+    )
+    result = testdir.runpytest("-v", "--stepwise")
+    result.stdout.fnmatch_lines(["stepwise: no previously failed tests, not skipping."])
+    result = testdir.runpytest("-v", "--stepwise")
+    result.stdout.fnmatch_lines(
+        ["stepwise: skipping 4 already passed items.", "*1 failed, 4 deselected*"]
+    )
+
+
 def test_fail_and_continue_with_stepwise(stepwise_testdir):
     # Run the tests with a failing second test.
     result = stepwise_testdir.runpytest(
@@ -117,14 +134,10 @@ def test_fail_and_continue_with_stepwise(stepwise_testdir):
     assert "test_success_after_fail PASSED" in stdout
 
 
-def test_run_with_skip_option(stepwise_testdir):
+@pytest.mark.parametrize("stepwise_skip", ["--stepwise-skip", "--sw-skip"])
+def test_run_with_skip_option(stepwise_testdir, stepwise_skip):
     result = stepwise_testdir.runpytest(
-        "-v",
-        "--strict-markers",
-        "--stepwise",
-        "--stepwise-skip",
-        "--fail",
-        "--fail-last",
+        "-v", "--strict-markers", "--stepwise", stepwise_skip, "--fail", "--fail-last",
     )
     assert _strip_resource_warnings(result.stderr.lines) == []
 
