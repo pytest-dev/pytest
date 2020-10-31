@@ -84,7 +84,7 @@ jobs:
             os: ubuntu-latest
             tox_env: "py38-xdist"
           - name: "ubuntu-py39"
-            python: "3.9-dev"
+            python: "3.9"
             os: ubuntu-latest
             tox_env: "py39-xdist"
           - name: "ubuntu-pypy3"
@@ -123,12 +123,6 @@ jobs:
         fetch-depth: 0
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v2
-      if: matrix.python != '3.9-dev'
-      with:
-        python-version: ${{ matrix.python }}
-    - name: Set up Python ${{ matrix.python }} (deadsnakes)
-      uses: deadsnakes/action@v2.0.0
-      if: matrix.python == '3.9-dev'
       with:
         python-version: ${{ matrix.python }}
     - name: Install dependencies
