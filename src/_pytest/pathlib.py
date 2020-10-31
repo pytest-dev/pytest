@@ -9,6 +9,10 @@ import sys
 import uuid
 import warnings
 from enum import Enum
+from errno import EBADF
+from errno import ELOOP
+from errno import ENOENT
+from errno import ENOTDIR
 from functools import partial
 from os.path import expanduser
 from os.path import expandvars
@@ -42,6 +46,24 @@ LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
 
 _AnyPurePath = TypeVar("_AnyPurePath", bound=PurePath)
+
+# The following function, variables and comments were
+# copied from cpython 3.9 Lib/pathlib.py file.
+
+# EBADF - guard against macOS `stat` throwing EBADF
+_IGNORED_ERRORS = (ENOENT, ENOTDIR, EBADF, ELOOP)
+
+_IGNORED_WINERRORS = (
+    21,  # ERROR_NOT_READY - drive exists but is not accessible
+    1921,  # ERROR_CANT_RESOLVE_FILENAME - fix for broken symlink pointing to itself
+)
+
+
+def _ignore_error(exception):
+    return (
+        getattr(exception, "errno", None) in _IGNORED_ERRORS
+        or getattr(exception, "winerror", None) in _IGNORED_WINERRORS
+    )
 
 
 def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
@@ -563,8 +585,23 @@ def visit(
 
     Entries at each directory level are sorted.
     """
-    entries = sorted(os.scandir(path), key=lambda entry: entry.name)
+
+    # Skip entries with symlink loops and other brokenness, so the caller doesn't
+    # have to deal with it.
+    entries = []
+    for entry in os.scandir(path):
+        try:
+            entry.is_file()
+        except OSError as err:
+            if _ignore_error(err):
+                continue
+            raise
+        entries.append(entry)
+
+    entries.sort(key=lambda entry: entry.name)
+
     yield from entries
+
     for entry in entries:
         if entry.is_dir(follow_symlinks=False) and recurse(entry):
             yield from visit(entry.path, recurse)

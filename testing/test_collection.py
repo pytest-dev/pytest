@@ -1407,3 +1407,17 @@ def test_does_not_crash_on_error_from_decorated_function(testdir: Testdir) -> No
     result = testdir.runpytest()
     # Not INTERNAL_ERROR
     assert result.ret == ExitCode.INTERRUPTED
+
+
+def test_does_not_crash_on_recursive_symlink(testdir: Testdir) -> None:
+    """Regression test for an issue around recursive symlinks (#7951)."""
+    symlink_or_skip("recursive", testdir.tmpdir.join("recursive"))
+    testdir.makepyfile(
+        """
+        def test_foo(): assert True
+        """
+    )
+    result = testdir.runpytest()
+
+    assert result.ret == ExitCode.OK
+    assert result.parseoutcomes() == {"passed": 1}
