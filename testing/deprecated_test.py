@@ -115,3 +115,11 @@ def test_strict_option_is_deprecated(pytester: Pytester) -> None:
             "*PytestDeprecationWarning: The --strict option is deprecated, use --strict-markers instead.",
         ]
     )
+
+
+def test_yield_fixture_is_deprecated() -> None:
+    with pytest.warns(DeprecationWarning, match=r"yield_fixture is deprecated"):
+
+        @pytest.yield_fixture
+        def fix():
+            assert False

@@ -8,6 +8,7 @@ from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import get_public_names
+from _pytest.pytester import Testdir
 
 
 def test_getfuncargnames_functions():
@@ -3526,28 +3527,11 @@ class TestShowFixtures:
 
 
 class TestContextManagerFixtureFuncs:
-    @pytest.fixture(params=["fixture", "yield_fixture"])
-    def flavor(self, request, testdir, monkeypatch):
-        monkeypatch.setenv("PYTEST_FIXTURE_FLAVOR", request.param)
-        testdir.makepyfile(
-            test_context="""
-            import os
-            import pytest
-            import warnings
-            VAR = "PYTEST_FIXTURE_FLAVOR"
-            if VAR not in os.environ:
-                warnings.warn("PYTEST_FIXTURE_FLAVOR was not set, assuming fixture")
-                fixture = pytest.fixture
-            else:
-                fixture = getattr(pytest, os.environ[VAR])
-        """
-        )
-
-    def test_simple(self, testdir, flavor):
+    def test_simple(self, testdir: Testdir) -> None:
         testdir.makepyfile(
             """
-            from test_context import fixture
-            @fixture
+            import pytest
+            @pytest.fixture
             def arg1():
                 print("setup")
                 yield 1
@@ -3571,11 +3555,11 @@ class TestContextManagerFixtureFuncs:
         """
         )
 
-    def test_scoped(self, testdir, flavor):
+    def test_scoped(self, testdir: Testdir) -> None:
         testdir.makepyfile(
             """
-            from test_context import fixture
-            @fixture(scope="module")
+            import pytest
+            @pytest.fixture(scope="module")
             def arg1():
                 print("setup")
                 yield 1
@@ -3596,11 +3580,11 @@ class TestContextManagerFixtureFuncs:
         """
         )
 
-    def test_setup_exception(self, testdir, flavor):
+    def test_setup_exception(self, testdir: Testdir) -> None:
         testdir.makepyfile(
             """
-            from test_context import fixture
-            @fixture(scope="module")
+            import pytest
+            @pytest.fixture(scope="module")
             def arg1():
                 pytest.fail("setup")
                 yield 1
@@ -3616,11 +3600,11 @@ class TestContextManagerFixtureFuncs:
         """
         )
 
-    def test_teardown_exception(self, testdir, flavor):
+    def test_teardown_exception(self, testdir: Testdir) -> None:
         testdir.makepyfile(
             """
-            from test_context import fixture
-            @fixture(scope="module")
+            import pytest
+            @pytest.fixture(scope="module")
             def arg1():
                 yield 1
                 pytest.fail("teardown")
@@ -3636,11 +3620,11 @@ class TestContextManagerFixtureFuncs:
         """
         )
 
-    def test_yields_more_than_one(self, testdir, flavor):
+    def test_yields_more_than_one(self, testdir: Testdir) -> None:
         testdir.makepyfile(
             """
-            from test_context import fixture
-            @fixture(scope="module")
+            import pytest
+            @pytest.fixture(scope="module")
             def arg1():
                 yield 1
                 yield 2
@@ -3656,11 +3640,11 @@ class TestContextManagerFixtureFuncs:
         """
         )
 
-    def test_custom_name(self, testdir, flavor):
+    def test_custom_name(self, testdir: Testdir) -> None:
         testdir.makepyfile(
             """
-            from test_context import fixture
-            @fixture(name='meow')
+            import pytest
+            @pytest.fixture(name='meow')
             def arg1():
                 return 'mew'
             def test_1(meow):

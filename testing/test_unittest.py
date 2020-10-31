@@ -4,6 +4,7 @@ from typing import List
 
 import pytest
 from _pytest.config import ExitCode
+from _pytest.pytester import Testdir
 
 
 def test_simple_unittest(testdir):
@@ -781,20 +782,18 @@ def test_unittest_expected_failure_for_passing_test_is_fail(testdir, runner):
     assert result.ret == 1
 
 
-@pytest.mark.parametrize(
-    "fix_type, stmt", [("fixture", "return"), ("yield_fixture", "yield")]
-)
-def test_unittest_setup_interaction(testdir, fix_type, stmt):
+@pytest.mark.parametrize("stmt", ["return", "yield"])
+def test_unittest_setup_interaction(testdir: Testdir, stmt: str) -> None:
     testdir.makepyfile(
         """
         import unittest
         import pytest
         class MyTestCase(unittest.TestCase):
-            @pytest.{fix_type}(scope="class", autouse=True)
+            @pytest.fixture(scope="class", autouse=True)
             def perclass(self, request):
                 request.cls.hello = "world"
                 {stmt}
-            @pytest.{fix_type}(scope="function", autouse=True)
+            @pytest.fixture(scope="function", autouse=True)
             def perfunction(self, request):
                 request.instance.funcname = request.function.__name__
                 {stmt}
@@ -809,7 +808,7 @@ def test_unittest_setup_interaction(testdir, fix_type, stmt):
             def test_classattr(self):
                 assert self.__class__.hello == "world"
     """.format(
-            fix_type=fix_type, stmt=stmt
+            stmt=stmt
         )
     )
     result = testdir.runpytest()

@@ -32,6 +32,10 @@ PYTEST_COLLECT_MODULE = UnformattedWarning(
     "Please update to the new name.",
 )
 
+YIELD_FIXTURE = PytestDeprecationWarning(
+    "@pytest.yield_fixture is deprecated.\n"
+    "Use @pytest.fixture instead; they are the same."
+)
 
 MINUS_K_DASH = PytestDeprecationWarning(
     "The `-k '-expr'` syntax to -k is deprecated.\nUse `-k 'not expr'` instead."

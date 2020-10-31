@@ -50,6 +50,7 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import FILLFUNCARGS
+from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
@@ -1339,6 +1340,7 @@ def yield_fixture(
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
+    warnings.warn(YIELD_FIXTURE, stacklevel=2)
     return fixture(
         fixture_function,
         *args,
