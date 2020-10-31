@@ -816,6 +816,13 @@ Function
     :members:
     :show-inheritance:
 
+FunctionDefinition
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.python.FunctionDefinition()
+    :members:
+    :show-inheritance:
+
 Item
 ~~~~
 
