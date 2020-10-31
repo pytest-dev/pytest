@@ -960,6 +960,7 @@ class Metafunc:
         cls=None,
         module=None,
     ) -> None:
+        #: Access to the underlying :class:`_pytest.python.FunctionDefinition`.
         self.definition = definition
 
         #: Access to the :class:`_pytest.config.Config` object for the test session.
@@ -1677,10 +1678,12 @@ class Function(PyobjMixin, nodes.Item):
 
 
 class FunctionDefinition(Function):
-    """Internal hack until we get actual definition nodes instead of the
-    crappy metafunc hack."""
+    """
+    This class is a step gap solution until we evolve to have actual function definition nodes
+    and manage to get rid of ``metafunc``.
+    """
 
     def runtest(self) -> None:
-        raise RuntimeError("function definitions are not supposed to be used")
+        raise RuntimeError("function definitions are not supposed to be run as tests")
 
     setup = runtest
