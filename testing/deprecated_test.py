@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 from _pytest import deprecated
+from _pytest.pytester import Pytester
 from _pytest.pytester import Testdir
 
 
@@ -95,3 +96,22 @@ def test_fscollector_gethookproxy_isinitpath(testdir: Testdir) -> None:
         session.gethookproxy(testdir.tmpdir)
         session.isinitpath(testdir.tmpdir)
     assert len(rec) == 0
+
+
+def test_strict_option_is_deprecated(pytester: Pytester) -> None:
+    """--strict is a deprecated alias to --strict-markers (#7530)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.unknown
+        def test_foo(): pass
+        """
+    )
+    result = pytester.runpytest("--strict")
+    result.stdout.fnmatch_lines(
+        [
+            "'unknown' not found in `markers` configuration option",
+            "*PytestDeprecationWarning: The --strict option is deprecated, use --strict-markers instead.",
+        ]
+    )

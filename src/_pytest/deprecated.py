@@ -51,3 +51,7 @@ FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestDeprecationWarning(
     "The gethookproxy() and isinitpath() methods of FSCollector and Package are deprecated; "
     "use self.session.gethookproxy() and self.session.isinitpath() instead. "
 )
+
+STRICT_OPTION = PytestDeprecationWarning(
+    "The --strict option is deprecated, use --strict-markers instead."
+)

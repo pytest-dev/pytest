@@ -496,7 +496,7 @@ class MarkGenerator:
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.
             if name not in self._markers:
-                if self._config.option.strict_markers:
+                if self._config.option.strict_markers or self._config.option.strict:
                     fail(
                         f"{name!r} not found in `markers` configuration option",
                         pytrace=False,

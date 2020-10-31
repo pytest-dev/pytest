@@ -101,9 +101,11 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(
         "--strict-markers",
-        "--strict",
         action="store_true",
         help="markers not registered in the `markers` section of the configuration file raise errors.",
+    )
+    group._addoption(
+        "--strict", action="store_true", help="(deprecated) alias to --strict-markers.",
     )
     group._addoption(
         "-c",
