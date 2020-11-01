@@ -220,7 +220,7 @@ You can always peek at the collection tree without running tests like this:
           <Function test_method>
           <Function test_anothermethod>
 
-    ========================== 3/3 tests found (0 deselected) in 0.12s ===========================
+    ========================== 3/3 tests found in 0.12s ===========================
 
 .. _customizing-test-collection:
 
