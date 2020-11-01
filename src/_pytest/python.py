@@ -1648,7 +1648,7 @@ class Function(PyobjMixin, nodes.Item):
 
     def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
-            code = _pytest._code.Code(get_real_func(self.obj))
+            code = _pytest._code.Code.from_function(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=path, firstlineno=firstlineno)

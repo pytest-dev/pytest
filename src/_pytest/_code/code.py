@@ -54,21 +54,28 @@ if TYPE_CHECKING:
 class Code:
     """Wrapper around Python code objects."""
 
-    def __init__(self, rawcode) -> None:
-        if not hasattr(rawcode, "co_filename"):
-            rawcode = getrawcode(rawcode)
-        if not isinstance(rawcode, CodeType):
-            raise TypeError(f"not a code object: {rawcode!r}")
-        self.filename = rawcode.co_filename
-        self.firstlineno = rawcode.co_firstlineno - 1
-        self.name = rawcode.co_name
-        self.raw = rawcode
+    __slots__ = ("raw",)
+
+    def __init__(self, obj: CodeType) -> None:
+        self.raw = obj
+
+    @classmethod
+    def from_function(cls, obj: object) -> "Code":
+        return cls(getrawcode(obj))
 
     def __eq__(self, other):
         return self.raw == other.raw
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.
     __hash__ = None  # type: ignore
+
+    @property
+    def firstlineno(self) -> int:
+        return self.raw.co_firstlineno - 1
+
+    @property
+    def name(self) -> str:
+        return self.raw.co_name
 
     @property
     def path(self) -> Union[py.path.local, str]:
@@ -117,12 +124,26 @@ class Frame:
     """Wrapper around a Python frame holding f_locals and f_globals
     in which expressions can be evaluated."""
 
+    __slots__ = ("raw",)
+
     def __init__(self, frame: FrameType) -> None:
-        self.lineno = frame.f_lineno - 1
-        self.f_globals = frame.f_globals
-        self.f_locals = frame.f_locals
         self.raw = frame
-        self.code = Code(frame.f_code)
+
+    @property
+    def lineno(self) -> int:
+        return self.raw.f_lineno - 1
+
+    @property
+    def f_globals(self) -> Dict[str, Any]:
+        return self.raw.f_globals
+
+    @property
+    def f_locals(self) -> Dict[str, Any]:
+        return self.raw.f_locals
+
+    @property
+    def code(self) -> Code:
+        return Code(self.raw.f_code)
 
     @property
     def statement(self) -> "Source":
@@ -164,17 +185,20 @@ class Frame:
 class TracebackEntry:
     """A single entry in a Traceback."""
 
-    _repr_style: Optional['Literal["short", "long"]'] = None
-    exprinfo = None
+    __slots__ = ("_rawentry", "_excinfo", "_repr_style")
 
     def __init__(
         self,
         rawentry: TracebackType,
         excinfo: Optional["ReferenceType[ExceptionInfo[BaseException]]"] = None,
     ) -> None:
-        self._excinfo = excinfo
         self._rawentry = rawentry
-        self.lineno = rawentry.tb_lineno - 1
+        self._excinfo = excinfo
+        self._repr_style: Optional['Literal["short", "long"]'] = None
+
+    @property
+    def lineno(self) -> int:
+        return self._rawentry.tb_lineno - 1
 
     def set_repr_style(self, mode: "Literal['short', 'long']") -> None:
         assert mode in ("short", "long")
@@ -1172,7 +1196,7 @@ def getfslineno(obj: object) -> Tuple[Union[str, py.path.local], int]:
         obj = obj.place_as  # type: ignore[attr-defined]
 
     try:
-        code = Code(obj)
+        code = Code.from_function(obj)
     except TypeError:
         try:
             fn = inspect.getsourcefile(obj) or inspect.getfile(obj)  # type: ignore[arg-type]
