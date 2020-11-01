@@ -1166,8 +1166,9 @@ class TerminalReporter:
 
     def build_summary_stats_line(self) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
         main_color, known_types = self._get_main_color()
-        parts = []
         selected = self._numcollected
+        parts = []
+        errors = 0
 
         for key in known_types:
             reports = self.stats.get(key, None)
@@ -1179,21 +1180,36 @@ class TerminalReporter:
                 markup = {color: True, "bold": color == main_color}
                 parts.append(("%d %s" % _make_plural(count, key), markup))
 
-                if key in ["deselected"]:
+                if key == "deselected":
                     selected -= count
+
+                if key == "error":
+                    errors = count
 
         if not parts and not self.config.getoption("collectonly"):
             parts = [("no tests ran", {_color_for_type_default: True})]
 
         if self.config.getoption("collectonly"):
-            co_output = "%i/%i tests found (%i deselected)"
+            co_output = "%i/%i tests found"
             deselected = self._numcollected - selected
-            parts = [
-                (
-                    co_output % (selected, self._numcollected, deselected),
-                    {main_color: True},
-                )
-            ]
+
+            # It seems unecessary to add this if no tests were deselected.
+            if deselected > 0:
+                co_output += " (%i deselected)" % (deselected)
+
+            parts = [(co_output % (selected, self._numcollected), {main_color: True},)]
+
+            # Sticking with "0/0 tests found (0 deselected)" would e confusing.
+            if self._numcollected == 0:
+                parts = [("no tests found", {_color_for_type_default: True})]
+
+            # Sanity check for errors that might have ocurred. Otherwise, it
+            # will never let the user know that an error ocurred during
+            # collection.
+            if errors:
+                color = _color_for_type.get(key, _color_for_type_default)
+                markup = {color: True, "bold": color == main_color}
+                parts = [("%d %s" % _make_plural(errors, "error"), markup)]
 
         return parts, main_color
 

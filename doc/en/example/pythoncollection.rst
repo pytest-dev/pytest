@@ -157,7 +157,7 @@ The test collection would look like this:
           <Function simple_check>
           <Function complex_check>
 
-    ========================== 2/2 tests found (0 deselected) in 0.12s ===========================
+    ========================== 2/2 tests found in 0.12s ===========================
 
 You can check for multiple glob patterns by adding a space between the patterns:
 
@@ -282,7 +282,7 @@ leave out the ``setup.py`` file:
     <Module 'pkg/module_py2.py'>
       <Function 'test_only_on_python2'>
 
-    ====== 1/1 tests found (0 deselected) in 0.04 seconds ======
+    ====== 1/1 tests found in 0.04 seconds ======
 
 If you run with a Python 3 interpreter both the one test and the ``setup.py``
 file will be left out:
@@ -296,7 +296,7 @@ file will be left out:
     rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
     collected 0 items
 
-    ========================== 0/0 tests found (0 deselected) in 0.12s ===========================
+    ========================== no tests found in 0.12s ===========================
 
 It's also possible to ignore files based on Unix shell-style wildcards by adding
 patterns to :globalvar:`collect_ignore_glob`.

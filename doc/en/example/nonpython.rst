@@ -102,4 +102,4 @@ interesting to just look at the collection tree:
         <YamlItem hello>
         <YamlItem ok>
 
-    ========================== 2/2 tests found (0 deselected) in 0.12s ===========================
+    ========================== 2/2 tests found in 0.12s ===========================
