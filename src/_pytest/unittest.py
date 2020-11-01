@@ -119,7 +119,12 @@ def _make_xunit_fixture(
     if setup is None and teardown is None:
         return None
 
-    @pytest.fixture(scope=scope, autouse=True)
+    @pytest.fixture(
+        scope=scope,
+        autouse=True,
+        # Use a unique name to speed up lookup.
+        name=f"unittest_{setup_name}_fixture_{obj.__qualname__}",
+    )
     def fixture(self, request: FixtureRequest) -> Generator[None, None, None]:
         if _is_skipped(self):
             reason = self.__unittest_skip_why__
