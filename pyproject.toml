@@ -23,6 +23,8 @@ xfail_strict = true
 filterwarnings = [
     "error",
     "default:Using or importing the ABCs:DeprecationWarning:unittest2.*",
+    # produced by older pyparsing<=2.2.0.
+    "default:Using or importing the ABCs:DeprecationWarning:pyparsing.*",
     "default:the imp module is deprecated in favour of importlib:DeprecationWarning:nose.*",
     "ignore:Module already imported so cannot be rewritten:pytest.PytestWarning",
     # produced by python3.6/site.py itself (3.6.7 on Travis, could not trigger it with 3.6.8)."
