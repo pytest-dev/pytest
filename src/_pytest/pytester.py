@@ -34,7 +34,6 @@ import py
 from iniconfig import IniConfig
 from iniconfig import SectionWrapper
 
-import pytest
 from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
@@ -42,17 +41,24 @@ from _pytest.compat import final
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import hookimpl
+from _pytest.config import main
 from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
+from _pytest.outcomes import fail
+from _pytest.outcomes import importorskip
+from _pytest.outcomes import skip
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
+from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -143,7 +149,7 @@ class LsofFdLeakChecker:
         else:
             return True
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
         lines1 = self.get_open_files()
         yield
@@ -165,13 +171,13 @@ class LsofFdLeakChecker:
                 "*** function %s:%s: %s " % item.location,
                 "See issue #2366",
             ]
-            item.warn(pytest.PytestWarning("\n".join(error)))
+            item.warn(PytestWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin
 
 
-@pytest.fixture
+@fixture
 def _pytest(request: FixtureRequest) -> "PytestArg":
     """Return a helper which offers a gethookrecorder(hook) method which
     returns a HookRecorder instance which helps to make assertions about called
@@ -257,7 +263,7 @@ class HookRecorder:
                     break
                 print("NONAMEMATCH", name, "with", call)
             else:
-                pytest.fail(f"could not find {name!r} check {check!r}")
+                fail(f"could not find {name!r} check {check!r}")
 
     def popcall(self, name: str) -> ParsedCall:
         __tracebackhide__ = True
@@ -267,7 +273,7 @@ class HookRecorder:
                 return call
         lines = [f"could not find call {name!r}, in:"]
         lines.extend(["  %s" % x for x in self.calls])
-        pytest.fail("\n".join(lines))
+        fail("\n".join(lines))
 
     def getcall(self, name: str) -> ParsedCall:
         values = self.getcalls(name)
@@ -417,14 +423,14 @@ class HookRecorder:
         self.calls[:] = []
 
 
-@pytest.fixture
+@fixture
 def linecomp() -> "LineComp":
     """A :class: `LineComp` instance for checking that an input linearly
     contains a sequence of strings."""
     return LineComp()
 
 
-@pytest.fixture(name="LineMatcher")
+@fixture(name="LineMatcher")
 def LineMatcher_fixture(request: FixtureRequest) -> Type["LineMatcher"]:
     """A reference to the :class: `LineMatcher`.
 
@@ -434,7 +440,7 @@ def LineMatcher_fixture(request: FixtureRequest) -> Type["LineMatcher"]:
     return LineMatcher
 
 
-@pytest.fixture
+@fixture
 def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pytester":
     """
     Facilities to write tests/configuration files, execute pytest in isolation, and match
@@ -449,7 +455,7 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
     return Pytester(request, tmp_path_factory)
 
 
-@pytest.fixture
+@fixture
 def testdir(pytester: "Pytester") -> "Testdir":
     """
     Identical to :fixture:`pytester`, and provides an instance whose methods return
@@ -460,7 +466,7 @@ def testdir(pytester: "Pytester") -> "Testdir":
     return Testdir(pytester)
 
 
-@pytest.fixture
+@fixture
 def _sys_snapshot() -> Generator[None, None, None]:
     snappaths = SysPathsSnapshot()
     snapmods = SysModulesSnapshot()
@@ -469,7 +475,7 @@ def _sys_snapshot() -> Generator[None, None, None]:
     snappaths.restore()
 
 
-@pytest.fixture
+@fixture
 def _config_for_test() -> Generator[Config, None, None]:
     from _pytest.config import get_config
 
@@ -495,7 +501,7 @@ class RunResult:
         duration: float,
     ) -> None:
         try:
-            self.ret: Union[int, ExitCode] = pytest.ExitCode(ret)
+            self.ret: Union[int, ExitCode] = ExitCode(ret)
             """The return value."""
         except ValueError:
             self.ret = ret
@@ -1062,7 +1068,7 @@ class Pytester:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
             plugins.append(Collect())
-            ret = pytest.main([str(x) for x in args], plugins=plugins)
+            ret = main([str(x) for x in args], plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
             else:
@@ -1448,11 +1454,11 @@ class Pytester:
 
         The pexpect child is returned.
         """
-        pexpect = pytest.importorskip("pexpect", "3.0")
+        pexpect = importorskip("pexpect", "3.0")
         if hasattr(sys, "pypy_version_info") and "64" in platform.machine():
-            pytest.skip("pypy-64 bit not supported")
+            skip("pypy-64 bit not supported")
         if not hasattr(pexpect, "spawn"):
-            pytest.skip("pexpect.spawn not available")
+            skip("pexpect.spawn not available")
         logfile = self.path.joinpath("spawn.out").open("wb")
 
         child = pexpect.spawn(cmd, logfile=logfile, timeout=expect_timeout)
@@ -1899,7 +1905,7 @@ class LineMatcher:
         __tracebackhide__ = True
         log_text = self._log_text
         self._log_output = []
-        pytest.fail(log_text)
+        fail(log_text)
 
     def str(self) -> str:
         """Return the entire original text."""

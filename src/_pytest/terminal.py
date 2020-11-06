@@ -29,7 +29,7 @@ import attr
 import pluggy
 import py
 
-import pytest
+import _pytest._version
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
@@ -39,6 +39,7 @@ from _pytest.compat import final
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 from _pytest.nodes import Node
@@ -259,7 +260,7 @@ def getreportopt(config: Config) -> str:
     return reportopts
 
 
-@pytest.hookimpl(trylast=True)  # after _pytest.runner
+@hookimpl(trylast=True)  # after _pytest.runner
 def pytest_report_teststatus(report: BaseReport) -> Tuple[str, str, str]:
     letter = "F"
     if report.passed:
@@ -628,7 +629,7 @@ class TerminalReporter:
             self._add_stats("error", [report])
         elif report.skipped:
             self._add_stats("skipped", [report])
-        items = [x for x in report.result if isinstance(x, pytest.Item)]
+        items = [x for x in report.result if isinstance(x, Item)]
         self._numcollected += len(items)
         if self.isatty:
             self.report_collect()
@@ -673,7 +674,7 @@ class TerminalReporter:
         else:
             self.write_line(line)
 
-    @pytest.hookimpl(trylast=True)
+    @hookimpl(trylast=True)
     def pytest_sessionstart(self, session: "Session") -> None:
         self._session = session
         self._sessionstarttime = timing.time()
@@ -688,7 +689,7 @@ class TerminalReporter:
                 verinfo = ".".join(map(str, pypy_version_info[:3]))
                 msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
             msg += ", pytest-{}, py-{}, pluggy-{}".format(
-                pytest.__version__, py.__version__, pluggy.__version__
+                _pytest._version.version, py.__version__, pluggy.__version__
             )
             if (
                 self.verbosity > 0
@@ -783,7 +784,7 @@ class TerminalReporter:
                         for line in doc.splitlines():
                             self._tw.line("{}{}".format(indent + "  ", line))
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_sessionfinish(
         self, session: "Session", exitstatus: Union[int, ExitCode]
     ):
@@ -810,7 +811,7 @@ class TerminalReporter:
             self.write_sep("!", str(session.shouldstop), red=True)
         self.summary_stats()
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_terminal_summary(self) -> Generator[None, None, None]:
         self.summary_errors()
         self.summary_failures()

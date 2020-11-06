@@ -16,7 +16,6 @@ from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
-import pytest
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
@@ -25,7 +24,10 @@ from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
+from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.store import StoreKey
@@ -468,7 +470,7 @@ class LogCaptureFixture:
             self.handler.setLevel(handler_orig_level)
 
 
-@pytest.fixture
+@fixture
 def caplog(request: FixtureRequest) -> Generator[LogCaptureFixture, None, None]:
     """Access and control log capturing.
 
@@ -501,7 +503,7 @@ def get_log_level_for_setting(config: Config, *setting_names: str) -> Optional[i
         return int(getattr(logging, log_level, log_level))
     except ValueError as e:
         # Python logging does not recognise this as a logging level
-        raise pytest.UsageError(
+        raise UsageError(
             "'{}' is not recognized as a logging level name for "
             "'{}'. Please consider passing the "
             "logging level num instead.".format(log_level, setting_name)
@@ -509,7 +511,7 @@ def get_log_level_for_setting(config: Config, *setting_names: str) -> Optional[i
 
 
 # run after terminalreporter/capturemanager are configured
-@pytest.hookimpl(trylast=True)
+@hookimpl(trylast=True)
 def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(LoggingPlugin(config), "logging-plugin")
 
@@ -639,7 +641,7 @@ class LoggingPlugin:
 
         return True
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionstart(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionstart")
 
@@ -647,7 +649,7 @@ class LoggingPlugin:
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("collection")
 
@@ -655,7 +657,7 @@ class LoggingPlugin:
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session: Session) -> Generator[None, None, None]:
         if session.config.option.collectonly:
             yield
@@ -669,12 +671,12 @@ class LoggingPlugin:
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield  # Run all the tests.
 
-    @pytest.hookimpl
+    @hookimpl
     def pytest_runtest_logstart(self) -> None:
         self.log_cli_handler.reset()
         self.log_cli_handler.set_when("start")
 
-    @pytest.hookimpl
+    @hookimpl
     def pytest_runtest_logreport(self) -> None:
         self.log_cli_handler.set_when("logreport")
 
@@ -695,7 +697,7 @@ class LoggingPlugin:
             log = report_handler.stream.getvalue().strip()
             item.add_report_section(when, "log", log)
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("setup")
 
@@ -703,13 +705,13 @@ class LoggingPlugin:
         item._store[caplog_records_key] = empty
         yield from self._runtest_for(item, "setup")
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("call")
 
         yield from self._runtest_for(item, "call")
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("teardown")
 
@@ -717,11 +719,11 @@ class LoggingPlugin:
         del item._store[caplog_records_key]
         del item._store[caplog_handler_key]
 
-    @pytest.hookimpl
+    @hookimpl
     def pytest_runtest_logfinish(self) -> None:
         self.log_cli_handler.set_when("finish")
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_sessionfinish(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionfinish")
 
@@ -729,7 +731,7 @@ class LoggingPlugin:
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 yield
 
-    @pytest.hookimpl
+    @hookimpl
     def pytest_unconfigure(self) -> None:
         # Close the FileHandler explicitly.
         # (logging.shutdown might have lost the weakref?!)

@@ -15,7 +15,6 @@ from typing import Union
 import attr
 import py
 
-import pytest
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
 from .reports import CollectReport
@@ -24,7 +23,9 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.python import Module
@@ -182,7 +183,7 @@ class LFPluginCollWrapper:
         self.lfplugin = lfplugin
         self._collected_at_least_one_failure = False
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector: nodes.Collector):
         if isinstance(collector, Session):
             out = yield
@@ -229,7 +230,7 @@ class LFPluginCollSkipfiles:
     def __init__(self, lfplugin: "LFPlugin") -> None:
         self.lfplugin = lfplugin
 
-    @pytest.hookimpl
+    @hookimpl
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Optional[CollectReport]:
@@ -291,7 +292,7 @@ class LFPlugin:
         else:
             self.lastfailed[report.nodeid] = True
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
         self, config: Config, items: List[nodes.Item]
     ) -> Generator[None, None, None]:
@@ -363,7 +364,7 @@ class NFPlugin:
         assert config.cache is not None
         self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
         self, items: List[nodes.Item]
     ) -> Generator[None, None, None]:
@@ -466,14 +467,14 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     return None
 
 
-@pytest.hookimpl(tryfirst=True)
+@hookimpl(tryfirst=True)
 def pytest_configure(config: Config) -> None:
     config.cache = Cache.for_config(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
 
 
-@pytest.fixture
+@fixture
 def cache(request: FixtureRequest) -> Cache:
     """Return a cache object that can persist state between testing sessions.
 
