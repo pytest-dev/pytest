@@ -1022,8 +1022,8 @@ class FixtureDef(Generic[_FixtureValue]):
             self._finalizers = []
 
     def execute(self, request: SubRequest) -> _FixtureValue:
-        # get required arguments and register our own finish()
-        # with their finalization
+        # Get required arguments and register our own finish()
+        # with their finalization.
         for argname in self._dependee_fixture_argnames(request):
             if argname == "request":
                 continue
