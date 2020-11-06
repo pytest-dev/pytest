@@ -18,6 +18,19 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+The ``--strict`` command-line option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.2
+
+The ``--strict`` command-line option has been deprecated in favor of ``--strict-markers``, which
+better conveys what the option does.
+
+We have plans to maybe in the future to reintroduce ``--strict`` and make it an encompassing
+flag for all strictness related options (``--strict-markers`` and ``--strict-config``
+at the moment, more might be introduced in the future).
+
+
 
 The ``pytest_warning_captured`` hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

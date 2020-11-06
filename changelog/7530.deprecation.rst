@@ -1,0 +1,4 @@
+The ``--strict`` command-line option has been deprecated, use ``--strict-markers`` instead.
+
+We have plans to maybe in the future to reintroduce ``--strict`` and make it an encompassing flag for all strictness
+related options (``--strict-markers`` and ``--strict-config`` at the moment, more might be introduced in the future).
