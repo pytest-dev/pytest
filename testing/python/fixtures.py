@@ -1739,29 +1739,38 @@ class TestMultiLevelAutouseAndParameterization:
         testdir.makepyfile(
             test_auto="""
             import pytest
+
             def f(param):
                 return param
+
             @pytest.fixture(scope="session", autouse=True)
             def s_fix(request):
                 yield
+
             @pytest.fixture(scope="package", params=["p1", "p2"], ids=f, autouse=True)
             def p_fix(request):
                 yield
+
             @pytest.fixture(scope="module", params=["m1", "m2"], ids=f, autouse=True)
             def m_fix(request):
                 yield
+
             @pytest.fixture(scope="class", autouse=True)
             def another_c_fix(m_fix):
                 yield
+
             @pytest.fixture(scope="class")
             def c_fix():
                 yield
+
             @pytest.fixture(scope="function", params=["f1", "f2"], ids=f, autouse=True)
             def f_fix(request):
                 yield
+
             class TestFixtures:
                 def test_a(self, c_fix):
                     pass
+
                 def test_b(self, c_fix):
                     pass
         """
