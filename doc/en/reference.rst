@@ -486,16 +486,14 @@ caplog
 monkeypatch
 ~~~~~~~~~~~
 
-.. currentmodule:: _pytest.monkeypatch
-
 **Tutorial**: :doc:`monkeypatch`.
 
 .. autofunction:: _pytest.monkeypatch.monkeypatch()
     :no-auto-options:
 
-    Returns a :class:`MonkeyPatch` instance.
+    Returns a :class:`~pytest.MonkeyPatch` instance.
 
-.. autoclass:: _pytest.monkeypatch.MonkeyPatch
+.. autoclass:: pytest.MonkeyPatch
     :members:
 
 

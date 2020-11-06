@@ -19,6 +19,7 @@ from _pytest.freeze_support import freeze_includes
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import param
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
@@ -74,6 +75,7 @@ __all__ = [
     "main",
     "mark",
     "Module",
+    "MonkeyPatch",
     "Package",
     "param",
     "PytestAssertRewriteWarning",
