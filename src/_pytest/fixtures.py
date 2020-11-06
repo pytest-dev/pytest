@@ -1028,6 +1028,7 @@ class FixtureDef(Generic[_FixtureValue]):
             if argname == "request":
                 continue
             fixturedef = request._get_active_fixturedef(argname)
+            assert not isinstance(fixturedef, PseudoFixtureDef)
             if not self._will_be_finalized_by_fixture(fixturedef):
                 # PseudoFixtureDef is only for "request".
                 assert isinstance(fixturedef, FixtureDef)
@@ -1054,9 +1055,7 @@ class FixtureDef(Generic[_FixtureValue]):
         result = hook.pytest_fixture_setup(fixturedef=self, request=request)
         return result
 
-    def _will_be_finalized_by_fixture(
-        self, fixturedef: Union["FixtureDef", PseudoFixtureDef]
-    ) -> bool:
+    def _will_be_finalized_by_fixture(self, fixturedef: "FixtureDef[object]") -> bool:
         """Whether or not this fixture will be finalized by the passed fixture.
 
         Every :class:`FixtureDef` keeps a list of all the finalizers (tear downs) of
@@ -1068,7 +1067,7 @@ class FixtureDef(Generic[_FixtureValue]):
         This method allows ``self`` to check if it has already told ``fixturedef`` that
         it is responsible for tearing down ``self``.
         """
-        for finalizer in getattr(fixturedef, "_finalizers", ()):
+        for finalizer in fixturedef._finalizers:
             if "request" in getattr(finalizer, "keywords", {}):
                 request = getattr(finalizer, "keywords")["request"]
                 if self == request._fixturedef:
@@ -1119,11 +1118,10 @@ class FixtureDef(Generic[_FixtureValue]):
         parent_fixture_indexes = set()
 
         parent_request = request._parent_request
-        while hasattr(parent_request, "_parent_request"):
-            if hasattr(parent_request, "_fixturedef"):
-                parent_fix_name = parent_request._fixturedef.argname
-                if parent_fix_name in all_fix_names:
-                    parent_fixture_indexes.add(all_fix_names.index(parent_fix_name))
+        while isinstance(parent_request, SubRequest):
+            parent_fix_name = parent_request._fixturedef.argname
+            if parent_fix_name in all_fix_names:
+                parent_fixture_indexes.add(all_fix_names.index(parent_fix_name))
             parent_request = parent_request._parent_request
 
         stack_slice_index = min([current_fix_index, *parent_fixture_indexes])

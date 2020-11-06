@@ -1728,7 +1728,7 @@ class TestAutouseDiscovery:
 class TestMultiLevelAutouseAndParametrization:
     def test_setup_and_teardown_order(self, testdir):
         """Tests that parametrized fixtures affect subsequent fixtures. (#6436)
-        
+
         If a fixture uses a parametrized fixture, or, for any other reason, is executed
         after the parametrized fixture in the fixture stack, then it should be affected
         by the parametrization, and as a result, should be torn down before the
