@@ -1057,15 +1057,16 @@ class FixtureDef(Generic[_FixtureValue]):
     def _will_be_finalized_by_fixture(
         self, fixturedef: Union["FixtureDef", PseudoFixtureDef]
     ) -> bool:
-        """Whether or not this fixture be finalized by the passed fixture.
-        Every ``:class:FixtureDef`` keeps a list of all the finishers (tear downs) of
-        other ``:class:FixtureDef`` instances that it should run before running its own.
-        Finishers are added to this list not by this ``:class:FixtureDef``, but by the
-        other ``:class:FixtureDef`` instances. They tell this instance that it's
+        """Whether or not this fixture will be finalized by the passed fixture.
+
+        Every :class:`FixtureDef` keeps a list of all the finalizers (tear downs) of
+        other :class:`FixtureDef instances that it should run before running its own.
+        Finalizers are added to this list not by this :class:`FixtureDef`, but by the
+        other :class:`FixtureDef` instances. They tell this instance that it's
         responsible for tearing them down before it tears itself down.
-        This method allows a ``:class:FixtureDef`` to check if it has already told
-        another ``:class:FixtureDef`` that the latter ``:class:FixtureDef`` is
-        responsible for tearing down this ``:class:FixtureDef``.
+
+        This method allows ``self`` to check if it has already told ``fixturedef`` that
+        it is responsible for tearing down ``self``.
         """
         for finalizer in getattr(fixturedef, "_finalizers", ()):
             if "request" in getattr(finalizer, "keywords", {}):
