@@ -1113,7 +1113,7 @@ class FixtureDef(Generic[_FixtureValue]):
             current_fix_index = len(request.fixturenames)
         parent_fixture_indexes = set()
 
-        parent_request = getattr(request, "_parent_request")
+        parent_request = request._parent_request
         while hasattr(parent_request, "_parent_request"):
             if hasattr(parent_request, "_fixturedef"):
                 parent_fix_name = parent_request._fixturedef.argname
