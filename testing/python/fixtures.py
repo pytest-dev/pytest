@@ -4388,7 +4388,7 @@ class TestFinalizerOnlyAddedOnce:
         b = request._get_active_fixturedef("b")
         assert b._will_be_finalized_by_fixture(a)
 
-    def test_a_only_finishes_one(self, request):
+    def test_a_only_finishes_once(self, request):
         a = request._get_active_fixturedef("a")
         assert len(a._finalizers)
 
