@@ -1725,7 +1725,7 @@ class TestAutouseDiscovery:
         reprec.assertoutcome(passed=3)
 
 
-class TestMultiLevelAutouseAndParameterization:
+class TestMultiLevelAutouseAndParametrization:
     def test_setup_and_teardown_order(self, testdir):
         """Tests that parametrized fixtures affect subsequent fixtures. (#6436)
         
