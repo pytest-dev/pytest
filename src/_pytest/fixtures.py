@@ -1077,6 +1077,7 @@ class FixtureDef(Generic[_FixtureValue]):
 
     def _dependee_fixture_argnames(self, request: SubRequest) -> Tuple[str, ...]:
         """A list of argnames for fixtures that this fixture depends on.
+
         Given a request, this looks at the currently known list of fixture argnames, and
         attempts to determine what slice of the list contains fixtures that it can know
         should execute before it. This information is necessary so that this fixture can
@@ -1085,12 +1086,14 @@ class FixtureDef(Generic[_FixtureValue]):
         crucial for fixtures to be torn down in the inverse order that they were set up
         in so that they don't try to clean up something that another fixture is still
         depending on.
+
         When autouse fixtures are involved, it can be tricky to figure out when fixtures
         should be torn down. To solve this, this method leverages the ``fixturenames``
         list provided by the ``request`` object, as this list is at least somewhat
         sorted (in terms of the order fixtures are set up in) by the time this method is
         reached. It's sorted enough that the starting point of fixtures that depend on
         this one can be found using the ``self._parent_request`` stack.
+
         If a request in the ``self._parent_request`` stack has a ``:class:FixtureDef``
         associated with it, then that fixture is dependent on this one, so any fixture
         names that appear in the list of fixture argnames that come after it can also be
@@ -1102,6 +1105,7 @@ class FixtureDef(Generic[_FixtureValue]):
         depends on, and so this fixture should register its finalizer with all of them
         to ensure that if any of them are to be torn down, they will tear this fixture
         down first.
+
         This is the first part of the list of fixture argnames that is returned. The last
         part of the list is everything in ``self.argnames`` as those are explicit
         dependees of this fixture, so this fixture should definitely register its
