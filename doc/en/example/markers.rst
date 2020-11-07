@@ -544,7 +544,7 @@ Let's run this without capturing output and see what we get:
     .
     1 passed in 0.12s
 
-marking platform specific tests with pytest
+Marking platform specific tests with pytest
 --------------------------------------------------------------
 
 .. regendoc:wipe
