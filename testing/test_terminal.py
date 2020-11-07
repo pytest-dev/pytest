@@ -475,9 +475,6 @@ class TestCollectonly:
         result = testdir.runpytest("--collect-only", "test_collect_foo.py")
         result.stdout.fnmatch_lines("*== 1 test found in * ==*")
 
-        result = testdir.runpytest("--collect-only", "test_collect_foo.py")
-        result.stdout.fnmatch_lines("*== 1 test found in * ==*")
-
         result = testdir.runpytest("--collect-only", "-k", "foo")
         result.stdout.fnmatch_lines("*== 2/3 tests found (1 deselected) in * ==*")
 
