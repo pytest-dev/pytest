@@ -50,7 +50,6 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.pathlib import make_numbered_dir
-from _pytest.python import Module
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
@@ -652,7 +651,7 @@ class Pytester:
     ) -> None:
         self._request = request
         self._mod_collections: WeakKeyDictionary[
-            Module, List[Union[Item, Collector]]
+            Collector, List[Union[Item, Collector]]
         ] = (WeakKeyDictionary())
         if request.function:
             name: str = request.function.__name__
@@ -1244,7 +1243,7 @@ class Pytester:
         return self.getnode(config, path)
 
     def collect_by_name(
-        self, modcol: Module, name: str
+        self, modcol: Collector, name: str
     ) -> Optional[Union[Item, Collector]]:
         """Return the collection node for name from the module collection.
 
@@ -1639,7 +1638,7 @@ class Testdir:
         )
 
     def collect_by_name(
-        self, modcol: Module, name: str
+        self, modcol: Collector, name: str
     ) -> Optional[Union[Item, Collector]]:
         """See :meth:`Pytester.collect_by_name`."""
         return self._pytester.collect_by_name(modcol, name)
