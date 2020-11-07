@@ -1190,16 +1190,16 @@ class TerminalReporter:
             parts = [("no tests ran", {_color_for_type_default: True})]
 
         if self.config.getoption("collectonly"):
-            co_output = "%i/%i tests found"
-            deselected = self._numcollected - selected
 
-            # It seems unecessary to add this if no tests were deselected.
-            if deselected > 0:
-                co_output += " (%i deselected)" % (deselected)
+            if self._numcollected == selected:
+                co_output = "%d %s found" % _make_plural(self._numcollected, "test")
+            else:
+                deselected = self._numcollected - selected
+                co_output = f"{selected}/{self._numcollected} tests found ({deselected} deselected)"
 
-            parts = [(co_output % (selected, self._numcollected), {main_color: True},)]
+            parts = [(co_output, {main_color: True})]
 
-            # Sticking with "0/0 tests found (0 deselected)" would e confusing.
+            # Sticking with "0/0 tests found (0 deselected)" would be confusing.
             if self._numcollected == 0:
                 parts = [("no tests found", {_color_for_type_default: True})]
 

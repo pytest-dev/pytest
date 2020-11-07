@@ -976,7 +976,7 @@ class TestLastFailed:
                 "<Module pkg1/test_1.py>",
                 "  <Function test_pass>",
                 "",
-                "*= 1/1 tests found in*",
+                "*= 1 test found in*",
             ],
             consecutive=True,
         )
