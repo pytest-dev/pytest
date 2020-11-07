@@ -67,7 +67,7 @@ def test_show_multi_test_fixture_setup_and_teardown_correctly_simple(pytester: P
     assert teardown_count == 1
 
 
-def test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show(pytester: Pytester):
+def test_show_multi_test_fixture_setup_and_teardown_same_as_setup_show(pytester: Pytester) -> None:
     """Verify that SETUP/TEARDOWN messages match what comes out of --setup-show."""
     pytester.makepyfile(
         """
