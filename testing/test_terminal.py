@@ -479,13 +479,13 @@ class TestCollectonly:
         result.stdout.fnmatch_lines("*== 1 test found in * ==*")
 
         result = testdir.runpytest("--collect-only", "-k", "foo")
-        result.stdout.fnmatch_lines("*== 2/3 tests matched (1 deselected) in * ==*")
+        result.stdout.fnmatch_lines("*== 2/3 tests found (1 deselected) in * ==*")
 
         result = testdir.runpytest("--collect-only", "-k", "test_bar")
-        result.stdout.fnmatch_lines("*== 1/3 tests matched (2 deselected) in * ==*")
+        result.stdout.fnmatch_lines("*== 1/3 tests found (2 deselected) in * ==*")
 
         result = testdir.runpytest("--collect-only", "-k", "invalid")
-        result.stdout.fnmatch_lines("*== no tests matched (3 deselected) in * ==*")
+        result.stdout.fnmatch_lines("*== no tests found (3 deselected) in * ==*")
 
         testdir.mkdir("no_tests_here")
         result = testdir.runpytest("--collect-only", "no_tests_here")
@@ -500,7 +500,7 @@ class TestCollectonly:
         result.stdout.fnmatch_lines("*== 3 tests found, 1 error in * ==*")
         result = testdir.runpytest("--collect-only", "-k", "foo")
         result.stdout.fnmatch_lines(
-            "*== 2/3 tests matched (1 deselected), 1 error in * ==*"
+            "*== 2/3 tests found (1 deselected), 1 error in * ==*"
         )
 
 

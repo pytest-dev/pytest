@@ -1165,57 +1165,87 @@ class TerminalReporter:
         self._main_color = self._determine_main_color(bool(unknown_types))
 
     def build_summary_stats_line(self) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
+        """
+        Build the parts used in the last summary stats line.
+
+        The summary stats line is the line shown at the end, "=== 12 passed, 2 errors in Xs===".
+
+        This function builds a list of the "parts" that make up for the text in that line, in
+        the example above it would be:
+
+            [
+                ("12 passed", {"green": True}),
+                ("2 errors", {"red": True}
+            ]
+
+        That last dict for each line is a "markup dictionary", used by TerminalWriter to
+        color output.
+
+        The final color of the line is also determined by this function, and is the second
+        element of the returned tuple.
+        """
+        if self.config.getoption("collectonly"):
+            return self._build_collect_only_summary_stats_line()
+        else:
+            return self._build_normal_only_summary_stats_line()
+
+    def _get_reports_to_display(self, key: str) -> List[Any]:
+        """Get test/collection reports for the given status key, such as `passed` or `error`."""
+        reports = self.stats.get(key, [])
+        return [x for x in reports if getattr(x, "count_towards_summary", True)]
+
+    def _build_normal_only_summary_stats_line(
+        self,
+    ) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
         main_color, known_types = self._get_main_color()
-        deselected = 0
         parts = []
         errors = 0
 
         for key in known_types:
-            reports = self.stats.get(key, None)
+            reports = self._get_reports_to_display(key)
             if reports:
-                count = sum(
-                    1 for rep in reports if getattr(rep, "count_towards_summary", True)
-                )
+                count = len(reports)
                 color = _color_for_type.get(key, _color_for_type_default)
                 markup = {color: True, "bold": color == main_color}
                 parts.append(("%d %s" % _make_plural(count, key), markup))
 
-                if key == "deselected":
-                    deselected += count
-
                 if key == "error":
-                    errors = count
+                    errors += count
 
-        if not parts and not self.config.getoption("collectonly"):
+        if not parts:
             parts = [("no tests ran", {_color_for_type_default: True})]
 
-        if self.config.getoption("collectonly"):
+        return parts, main_color
 
-            # No tests
-            if self._numcollected == 0:
-                parts = [("no tests found", {_color_for_type_default: True})]
+    def _build_collect_only_summary_stats_line(
+        self,
+    ) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
+        deselected = len(self._get_reports_to_display("deselected"))
+        errors = len(self._get_reports_to_display("error"))
 
-            elif deselected == 0:
-                collected_output = "%d %s found" % _make_plural(
-                    self._numcollected, "test"
-                )
-                parts = [(collected_output, {main_color: True})]
+        if self._numcollected == 0:
+            parts = [("no tests found", {"yellow": True})]
+            main_color = "yellow"
+
+        elif deselected == 0:
+            main_color = "green"
+            collected_output = "%d %s found" % _make_plural(self._numcollected, "test")
+            parts = [(collected_output, {main_color: True})]
+        else:
+            all_tests_were_deselected = self._numcollected == deselected
+            if all_tests_were_deselected:
+                main_color = "yellow"
+                collected_output = f"no tests found ({deselected} deselected)"
             else:
-                all_deselected = self._numcollected == deselected
-                if all_deselected:
-                    collected_output = f"no tests matched ({deselected} deselected)"
-                else:
-                    selected = self._numcollected - deselected
-                    collected_output = f"{selected}/{self._numcollected} tests matched ({deselected} deselected)"
-                parts = [(collected_output, {main_color: True})]
+                main_color = "green"
+                selected = self._numcollected - deselected
+                collected_output = f"{selected}/{self._numcollected} tests found ({deselected} deselected)"
 
-            # Sanity check for errors that might have occurred. Otherwise, it
-            # will never let the user know that an error occurred during
-            # collection.
-            if errors:
-                color = _color_for_type.get(key, _color_for_type_default)
-                markup = {color: True, "bold": color == main_color}
-                parts += [("%d %s" % _make_plural(errors, "error"), markup)]
+            parts = [(collected_output, {main_color: True})]
+
+        if errors:
+            main_color = _color_for_type["error"]
+            parts += [("%d %s" % _make_plural(errors, "error"), {main_color: True})]
 
         return parts, main_color
 

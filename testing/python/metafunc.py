@@ -1417,7 +1417,7 @@ class TestMetafuncFunctional:
                 '    @pytest.mark.parametrise("x", range(2))',
                 "E   Failed: Unknown 'parametrise' mark, did you mean 'parametrize'?",
                 "*! Interrupted: 1 error during collection !*",
-                "*= 1 error in *",
+                "*= no tests found, 1 error in *",
             ]
         )
 
