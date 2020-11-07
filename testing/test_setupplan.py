@@ -20,7 +20,7 @@ def test_show_fixtures_and_test(pytester: Pytester, dummy_yaml_custom_test: None
     )
 
 
-def test_show_multi_test_fixture_setup_and_teardown_correctly_simple(pytester: Pytester):
+def test_show_multi_test_fixture_setup_and_teardown_correctly_simple(pytester: Pytester) -> None:
     """Verify that when a fixture lives for longer than a single test, --setup-plan
     correctly displays the SETUP/TEARDOWN indicators the right number of times.
 
