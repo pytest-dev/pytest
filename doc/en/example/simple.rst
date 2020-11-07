@@ -452,7 +452,7 @@ and nothing when run plainly:
 
     ========================== no tests ran in 0.12s ===========================
 
-profiling test duration
+Profiling test duration
 --------------------------
 
 .. regendoc:wipe
@@ -498,7 +498,7 @@ Now we can profile which test functions execute the slowest:
     0.10s call     test_some_are_slow.py::test_funcfast
     ============================ 3 passed in 0.12s =============================
 
-incremental testing - test steps
+Incremental testing - test steps
 ---------------------------------------------------
 
 .. regendoc:wipe
@@ -739,7 +739,7 @@ it (unless you use "autouse" fixture which are always executed ahead of the firs
 executing).
 
 
-post-process test reports / failures
+Post-process test reports / failures
 ---------------------------------------
 
 If you want to postprocess test reports and need access to the executing
