@@ -31,6 +31,15 @@ flag for all strictness related options (``--strict-markers`` and ``--strict-con
 at the moment, more might be introduced in the future).
 
 
+The ``yield_fixture`` function/decorator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.2
+
+``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+
+It has been so for a very long time, so can be search/replaced safely.
+
 
 The ``pytest_warning_captured`` hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
