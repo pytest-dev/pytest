@@ -458,6 +458,51 @@ class TestCollectonly:
         result = testdir.runpytest("--collect-only", "-qq")
         result.stdout.fnmatch_lines(["*test_fun.py: 1*"])
 
+    def test_collect_only_summary_status(self, testdir):
+        """Custom status depending on test selection using -k or -m. #7701."""
+        testdir.makepyfile(
+            test_collect_foo="""
+            def test_foo(): pass
+            """,
+            test_collect_bar="""
+            def test_foobar(): pass
+            def test_bar(): pass
+            """,
+        )
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines("*== 3 tests found in * ==*")
+
+        result = testdir.runpytest("--collect-only", "test_collect_foo.py")
+        result.stdout.fnmatch_lines("*== 1 test found in * ==*")
+
+        result = testdir.runpytest("--collect-only", "test_collect_foo.py")
+        result.stdout.fnmatch_lines("*== 1 test found in * ==*")
+
+        result = testdir.runpytest("--collect-only", "-k", "foo")
+        result.stdout.fnmatch_lines("*== 2/3 tests matched (1 deselected) in * ==*")
+
+        result = testdir.runpytest("--collect-only", "-k", "test_bar")
+        result.stdout.fnmatch_lines("*== 1/3 tests matched (2 deselected) in * ==*")
+
+        result = testdir.runpytest("--collect-only", "-k", "invalid")
+        result.stdout.fnmatch_lines("*== no tests matched (3 deselected) in * ==*")
+
+        testdir.mkdir("no_tests_here")
+        result = testdir.runpytest("--collect-only", "no_tests_here")
+        result.stdout.fnmatch_lines("*== no tests found in * ==*")
+
+        testdir.makepyfile(
+            test_contains_error="""
+            raise RuntimeError
+            """,
+        )
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines("*== 3 tests found, 1 error in * ==*")
+        result = testdir.runpytest("--collect-only", "-k", "foo")
+        result.stdout.fnmatch_lines(
+            "*== 2/3 tests matched (1 deselected), 1 error in * ==*"
+        )
+
 
 class TestFixtureReporting:
     def test_setup_fixture_error(self, testdir):

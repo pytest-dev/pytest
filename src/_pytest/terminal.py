@@ -1166,7 +1166,7 @@ class TerminalReporter:
 
     def build_summary_stats_line(self) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
         main_color, known_types = self._get_main_color()
-        selected = self._numcollected
+        deselected = 0
         parts = []
         errors = 0
 
@@ -1181,7 +1181,7 @@ class TerminalReporter:
                 parts.append(("%d %s" % _make_plural(count, key), markup))
 
                 if key == "deselected":
-                    selected -= count
+                    deselected += count
 
                 if key == "error":
                     errors = count
@@ -1191,25 +1191,31 @@ class TerminalReporter:
 
         if self.config.getoption("collectonly"):
 
-            if self._numcollected == selected:
-                co_output = "%d %s found" % _make_plural(self._numcollected, "test")
-            else:
-                deselected = self._numcollected - selected
-                co_output = f"{selected}/{self._numcollected} tests found ({deselected} deselected)"
-
-            parts = [(co_output, {main_color: True})]
-
-            # Sticking with "0/0 tests found (0 deselected)" would be confusing.
+            # No tests
             if self._numcollected == 0:
                 parts = [("no tests found", {_color_for_type_default: True})]
 
-            # Sanity check for errors that might have ocurred. Otherwise, it
-            # will never let the user know that an error ocurred during
+            elif deselected == 0:
+                collected_output = "%d %s found" % _make_plural(
+                    self._numcollected, "test"
+                )
+                parts = [(collected_output, {main_color: True})]
+            else:
+                all_deselected = self._numcollected == deselected
+                if all_deselected:
+                    collected_output = f"no tests matched ({deselected} deselected)"
+                else:
+                    selected = self._numcollected - deselected
+                    collected_output = f"{selected}/{self._numcollected} tests matched ({deselected} deselected)"
+                parts = [(collected_output, {main_color: True})]
+
+            # Sanity check for errors that might have occurred. Otherwise, it
+            # will never let the user know that an error occurred during
             # collection.
             if errors:
                 color = _color_for_type.get(key, _color_for_type_default)
                 markup = {color: True, "bold": color == main_color}
-                parts = [("%d %s" % _make_plural(errors, "error"), markup)]
+                parts += [("%d %s" % _make_plural(errors, "error"), markup)]
 
         return parts, main_color
 
@@ -1299,7 +1305,7 @@ _color_for_type_default = "yellow"
 
 def _make_plural(count: int, noun: str) -> Tuple[int, str]:
     # No need to pluralize words such as `failed` or `passed`.
-    if noun not in ["error", "warnings"]:
+    if noun not in ["error", "warnings", "test"]:
         return count, noun
 
     # The `warnings` key is plural. To avoid API breakage, we keep it that way but
