@@ -1,5 +1,5 @@
 from _pytest.pytester import Pytester
-def test_show_fixtures_and_test(pytester: Pytester, dummy_yaml_custom_test):
+def test_show_fixtures_and_test(pytester: Pytester, dummy_yaml_custom_test: None) -> None:
     """Verify that fixtures are not executed."""
     pytester.makepyfile(
         """
