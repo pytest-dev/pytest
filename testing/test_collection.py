@@ -74,18 +74,20 @@ class TestCollector:
         """
         )
         cls = pytester.collect_by_name(modcol, "TestClass")
-        fn = pytester.collect_by_name(
-            pytester.collect_by_name(cls, "()"), "test_foo"  # type: ignore[arg-type]
-        )
+        assert isinstance(cls, pytest.Class)
+        instance = pytester.collect_by_name(cls, "()")
+        assert isinstance(instance, pytest.Instance)
+        fn = pytester.collect_by_name(instance, "test_foo")
+        assert isinstance(fn, pytest.Function)
 
-        parent = fn.getparent(pytest.Module)  # type: ignore[union-attr]
-        assert parent is modcol
+        module_parent = fn.getparent(pytest.Module)
+        assert module_parent is modcol
 
-        parent = fn.getparent(pytest.Function)  # type: ignore[union-attr]
-        assert parent is fn
+        function_parent = fn.getparent(pytest.Function)
+        assert function_parent is fn
 
-        parent = fn.getparent(pytest.Class)  # type: ignore[union-attr]
-        assert parent is cls
+        class_parent = fn.getparent(pytest.Class)
+        assert class_parent is cls
 
     def test_getcustomfile_roundtrip(self, pytester: Pytester) -> None:
         hello = pytester.makefile(".xxx", hello="world")
@@ -272,7 +274,7 @@ class TestCollectPluginHookRelay:
                     wascalled.append(path)
 
         testdir.makefile(".abc", "xyz")
-        pytest.main([testdir.tmpdir], plugins=[Plugin()])  # type: ignore[list-item]
+        pytest.main(testdir.tmpdir, plugins=[Plugin()])
         assert len(wascalled) == 1
         assert wascalled[0].ext == ".abc"
 
@@ -630,8 +632,8 @@ class Test_getinitialnodes:
         assert col.name == "x.py"
         assert col.parent is not None
         assert col.parent.parent is None
-        for col in col.listchain():  # type: ignore[assignment]
-            assert col.config is config
+        for parent in col.listchain():
+            assert parent.config is config
 
     def test_pkgfile(self, pytester: Pytester) -> None:
         """Verify nesting when a module is within a package.
@@ -645,14 +647,15 @@ class Test_getinitialnodes:
         with subdir.cwd():
             config = pytester.parseconfigure(x)
         col = pytester.getnode(config, x)
-        assert col.name == "x.py"  # type: ignore[union-attr]
+        assert col is not None
+        assert col.name == "x.py"
         assert isinstance(col, pytest.Module)
         assert isinstance(col.parent, pytest.Package)
         assert isinstance(col.parent.parent, pytest.Session)
         # session is batman (has no parents)
         assert col.parent.parent.parent is None
-        for col in col.listchain():  # type: ignore[assignment]
-            assert col.config is config
+        for parent in col.listchain():
+            assert parent.config is config
 
 
 class Test_genitems:
