@@ -1178,6 +1178,15 @@ def test_collect_symlink_out_of_tree(testdir):
     assert result.ret == 0
 
 
+def test_collect_symlink_dir(testdir: Testdir) -> None:
+    """A symlinked directory is collected."""
+    dir = testdir.mkdir("dir")
+    dir.join("test_it.py").write("def test_it(): pass")
+    symlink_or_skip(dir, testdir.tmpdir.join("symlink_dir"))
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_collectignore_via_conftest(testdir):
     """collect_ignore in parent conftest skips importing child (issue #4592)."""
     tests = testdir.mkpydir("tests")
