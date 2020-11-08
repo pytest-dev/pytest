@@ -1204,7 +1204,7 @@ class TerminalReporter:
                 count = len(reports)
                 color = _color_for_type.get(key, _color_for_type_default)
                 markup = {color: True, "bold": color == main_color}
-                parts.append(("%d %s" % _make_plural(count, key), markup))
+                parts.append(("%d %s" % pluralize(count, key), markup))
 
         if not parts:
             parts = [("no tests ran", {_color_for_type_default: True})]
@@ -1223,9 +1223,7 @@ class TerminalReporter:
 
         elif deselected == 0:
             main_color = "green"
-            collected_output = "%d %s collected" % _make_plural(
-                self._numcollected, "test"
-            )
+            collected_output = "%d %s collected" % pluralize(self._numcollected, "test")
             parts = [(collected_output, {main_color: True})]
         else:
             all_tests_were_deselected = self._numcollected == deselected
@@ -1241,7 +1239,7 @@ class TerminalReporter:
 
         if errors:
             main_color = _color_for_type["error"]
-            parts += [("%d %s" % _make_plural(errors, "error"), {main_color: True})]
+            parts += [("%d %s" % pluralize(errors, "error"), {main_color: True})]
 
         return parts, main_color
 
@@ -1329,7 +1327,7 @@ _color_for_type = {
 _color_for_type_default = "yellow"
 
 
-def _make_plural(count: int, noun: str) -> Tuple[int, str]:
+def pluralize(count: int, noun: str) -> Tuple[int, str]:
     # No need to pluralize words such as `failed` or `passed`.
     if noun not in ["error", "warnings", "test"]:
         return count, noun
