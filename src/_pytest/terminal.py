@@ -1187,19 +1187,18 @@ class TerminalReporter:
         if self.config.getoption("collectonly"):
             return self._build_collect_only_summary_stats_line()
         else:
-            return self._build_normal_only_summary_stats_line()
+            return self._build_normal_summary_stats_line()
 
     def _get_reports_to_display(self, key: str) -> List[Any]:
         """Get test/collection reports for the given status key, such as `passed` or `error`."""
         reports = self.stats.get(key, [])
         return [x for x in reports if getattr(x, "count_towards_summary", True)]
 
-    def _build_normal_only_summary_stats_line(
+    def _build_normal_summary_stats_line(
         self,
     ) -> Tuple[List[Tuple[str, Dict[str, bool]]], str]:
         main_color, known_types = self._get_main_color()
         parts = []
-        errors = 0
 
         for key in known_types:
             reports = self._get_reports_to_display(key)
@@ -1208,9 +1207,6 @@ class TerminalReporter:
                 color = _color_for_type.get(key, _color_for_type_default)
                 markup = {color: True, "bold": color == main_color}
                 parts.append(("%d %s" % _make_plural(count, key), markup))
-
-                if key == "error":
-                    errors += count
 
         if not parts:
             parts = [("no tests ran", {_color_for_type_default: True})]
@@ -1224,22 +1220,24 @@ class TerminalReporter:
         errors = len(self._get_reports_to_display("error"))
 
         if self._numcollected == 0:
-            parts = [("no tests found", {"yellow": True})]
+            parts = [("no tests collected", {"yellow": True})]
             main_color = "yellow"
 
         elif deselected == 0:
             main_color = "green"
-            collected_output = "%d %s found" % _make_plural(self._numcollected, "test")
+            collected_output = "%d %s collected" % _make_plural(
+                self._numcollected, "test"
+            )
             parts = [(collected_output, {main_color: True})]
         else:
             all_tests_were_deselected = self._numcollected == deselected
             if all_tests_were_deselected:
                 main_color = "yellow"
-                collected_output = f"no tests found ({deselected} deselected)"
+                collected_output = f"no tests collected ({deselected} deselected)"
             else:
                 main_color = "green"
                 selected = self._numcollected - deselected
-                collected_output = f"{selected}/{self._numcollected} tests found ({deselected} deselected)"
+                collected_output = f"{selected}/{self._numcollected} tests collected ({deselected} deselected)"
 
             parts = [(collected_output, {main_color: True})]
 

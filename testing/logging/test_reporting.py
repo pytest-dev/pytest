@@ -889,7 +889,7 @@ def test_collection_collect_only_live_logging(testdir, verbose):
             [
                 "*collected 1 item*",
                 "*<Module test_collection_collect_only_live_logging.py>*",
-                "*1 test found*",
+                "*1 test collected*",
             ]
         )
     elif verbose == "-q":
@@ -897,7 +897,7 @@ def test_collection_collect_only_live_logging(testdir, verbose):
         expected_lines.extend(
             [
                 "*test_collection_collect_only_live_logging.py::test_simple*",
-                "1 test found in [0-9].[0-9][0-9]s",
+                "1 test collected in [0-9].[0-9][0-9]s",
             ]
         )
     elif verbose == "-qq":
