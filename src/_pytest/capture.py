@@ -17,12 +17,14 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import pytest
 from _pytest.compat import final
 from _pytest.config import Config
+from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import fixture
 from _pytest.fixtures import SubRequest
 from _pytest.nodes import Collector
+from _pytest.nodes import File
 from _pytest.nodes import Item
 
 if TYPE_CHECKING:
@@ -145,7 +147,7 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
     sys.stderr = _reopen_stdio(sys.stderr, "wb")
 
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_load_initial_conftests(early_config: Config):
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
@@ -784,9 +786,9 @@ class CaptureManager:
 
     # Hooks
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector: Collector):
-        if isinstance(collector, pytest.File):
+        if isinstance(collector, File):
             self.resume_global_capture()
             outcome = yield
             self.suspend_global_capture()
@@ -799,26 +801,26 @@ class CaptureManager:
         else:
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("setup", item):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("call", item):
             yield
 
-    @pytest.hookimpl(hookwrapper=True)
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("teardown", item):
             yield
 
-    @pytest.hookimpl(tryfirst=True)
+    @hookimpl(tryfirst=True)
     def pytest_keyboard_interrupt(self) -> None:
         self.stop_global_capturing()
 
-    @pytest.hookimpl(tryfirst=True)
+    @hookimpl(tryfirst=True)
     def pytest_internalerror(self) -> None:
         self.stop_global_capturing()
 
@@ -893,7 +895,7 @@ class CaptureFixture(Generic[AnyStr]):
 # The fixtures.
 
 
-@pytest.fixture
+@fixture
 def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     """Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
@@ -910,7 +912,7 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     capman.unset_fixture()
 
 
-@pytest.fixture
+@fixture
 def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
     """Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
@@ -927,7 +929,7 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
     capman.unset_fixture()
 
 
-@pytest.fixture
+@fixture
 def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     """Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
@@ -944,7 +946,7 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     capman.unset_fixture()
 
 
-@pytest.fixture
+@fixture
 def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
     """Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
