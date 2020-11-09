@@ -3,6 +3,7 @@ import warnings
 from typing import Optional
 
 import pytest
+from _pytest.pytester import Pytester
 from _pytest.recwarn import WarningsRecorder
 
 
@@ -12,8 +13,8 @@ def test_recwarn_stacklevel(recwarn: WarningsRecorder) -> None:
     assert warn.filename == __file__
 
 
-def test_recwarn_functional(testdir) -> None:
-    testdir.makepyfile(
+def test_recwarn_functional(pytester: Pytester) -> None:
+    pytester.makepyfile(
         """
         import warnings
         def test_method(recwarn):
@@ -22,7 +23,7 @@ def test_recwarn_functional(testdir) -> None:
             assert isinstance(warn.message, UserWarning)
     """
     )
-    reprec = testdir.inline_run()
+    reprec = pytester.inline_run()
     reprec.assertoutcome(passed=1)
 
 
@@ -328,9 +329,9 @@ class TestWarns:
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
 
-    def test_double_test(self, testdir) -> None:
+    def test_double_test(self, pytester: Pytester) -> None:
         """If a test is run again, the warning should still be raised"""
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             import pytest
             import warnings
@@ -341,7 +342,7 @@ class TestWarns:
                     warnings.warn("runtime", RuntimeWarning)
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*2 passed in*"])
 
     def test_match_regex(self) -> None:
