@@ -256,6 +256,7 @@ default_plugins = essential_plugins + (
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
+builtin_plugins.add("pytester_assertions")
 
 
 def get_config(

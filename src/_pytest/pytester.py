@@ -1,4 +1,7 @@
-"""(Disabled by default) support for testing pytest and pytest plugins."""
+"""(Disabled by default) support for testing pytest and pytest plugins.
+
+PYTEST_DONT_REWRITE
+"""
 import collections.abc
 import contextlib
 import gc
@@ -64,6 +67,9 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
     import pexpect
+
+
+pytest_plugins = ["pytester_assertions"]
 
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
@@ -408,16 +414,12 @@ class HookRecorder:
 
     def assertoutcome(self, passed: int = 0, skipped: int = 0, failed: int = 0) -> None:
         __tracebackhide__ = True
+        from _pytest.pytester_assertions import assertoutcome
 
         outcomes = self.listoutcomes()
-        realpassed, realskipped, realfailed = outcomes
-        obtained = {
-            "passed": len(realpassed),
-            "skipped": len(realskipped),
-            "failed": len(realfailed),
-        }
-        expected = {"passed": passed, "skipped": skipped, "failed": failed}
-        assert obtained == expected, outcomes
+        assertoutcome(
+            outcomes, passed=passed, skipped=skipped, failed=failed,
+        )
 
     def clear(self) -> None:
         self.calls[:] = []
@@ -574,25 +576,18 @@ class RunResult:
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run."""
         __tracebackhide__ = True
+        from _pytest.pytester_assertions import assert_outcomes
 
-        d = self.parseoutcomes()
-        obtained = {
-            "passed": d.get("passed", 0),
-            "skipped": d.get("skipped", 0),
-            "failed": d.get("failed", 0),
-            "errors": d.get("errors", 0),
-            "xpassed": d.get("xpassed", 0),
-            "xfailed": d.get("xfailed", 0),
-        }
-        expected = {
-            "passed": passed,
-            "skipped": skipped,
-            "failed": failed,
-            "errors": errors,
-            "xpassed": xpassed,
-            "xfailed": xfailed,
-        }
-        assert obtained == expected
+        outcomes = self.parseoutcomes()
+        assert_outcomes(
+            outcomes,
+            passed=passed,
+            skipped=skipped,
+            failed=failed,
+            errors=errors,
+            xpassed=xpassed,
+            xfailed=xfailed,
+        )
 
 
 class CwdSnapshot:
