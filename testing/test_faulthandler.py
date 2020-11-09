@@ -1,26 +1,26 @@
 import sys
 
 import pytest
+from _pytest.pytester import Pytester
 
-
-def test_enabled(testdir):
+def test_enabled(pytester: Pytester) -> None:
     """Test single crashing test displays a traceback."""
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
     import faulthandler
     def test_crash():
         faulthandler._sigabrt()
     """
     )
-    result = testdir.runpytest_subprocess()
+    result = pytester.runpytest_subprocess()
     result.stderr.fnmatch_lines(["*Fatal Python error*"])
     assert result.ret != 0
 
 
-def test_crash_near_exit(testdir):
+def test_crash_near_exit(pytester: Pytester) -> None:
     """Test that fault handler displays crashes that happen even after
     pytest is exiting (for example, when the interpreter is shutting down)."""
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
     import faulthandler
     import atexit
@@ -28,21 +28,21 @@ def test_crash_near_exit(testdir):
         atexit.register(faulthandler._sigabrt)
     """
     )
-    result = testdir.runpytest_subprocess()
+    result = pytester.runpytest_subprocess()
     result.stderr.fnmatch_lines(["*Fatal Python error*"])
     assert result.ret != 0
 
 
-def test_disabled(testdir):
+def test_disabled(pytester: Pytester) -> None:
     """Test option to disable fault handler in the command line."""
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
     import faulthandler
     def test_disabled():
         assert not faulthandler.is_enabled()
     """
     )
-    result = testdir.runpytest_subprocess("-p", "no:faulthandler")
+    result = pytester.runpytest_subprocess("-p", "no:faulthandler")
     result.stdout.fnmatch_lines(["*1 passed*"])
     assert result.ret == 0
 
@@ -56,19 +56,19 @@ def test_disabled(testdir):
         False,
     ],
 )
-def test_timeout(testdir, enabled: bool) -> None:
+def test_timeout(pytester: Pytester, enabled: bool) -> None:
     """Test option to dump tracebacks after a certain timeout.
 
     If faulthandler is disabled, no traceback will be dumped.
     """
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
     import os, time
     def test_timeout():
         time.sleep(1 if "CI" in os.environ else 0.1)
     """
     )
-    testdir.makeini(
+    pytester.makeini(
         """
         [pytest]
         faulthandler_timeout = 0.01
@@ -76,7 +76,7 @@ def test_timeout(testdir, enabled: bool) -> None:
     )
     args = ["-p", "no:faulthandler"] if not enabled else []
 
-    result = testdir.runpytest_subprocess(*args)
+    result = pytester.runpytest_subprocess(*args)
     tb_output = "most recent call first"
     if enabled:
         result.stderr.fnmatch_lines(["*%s*" % tb_output])
@@ -108,21 +108,21 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name):
 
 
 @pytest.mark.parametrize("faulthandler_timeout", [0, 2])
-def test_already_initialized(faulthandler_timeout, testdir):
+def test_already_initialized(faulthandler_timeout, pytester: Pytester):
     """Test for faulthandler being initialized earlier than pytest (#6575)."""
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         def test():
             import faulthandler
             assert faulthandler.is_enabled()
     """
     )
-    result = testdir.run(
+    result = pytester.run(
         sys.executable,
         "-X",
         "faulthandler",
         "-mpytest",
-        testdir.tmpdir,
+        pytester.tmpdir,
         "-o",
         f"faulthandler_timeout={faulthandler_timeout}",
     )
