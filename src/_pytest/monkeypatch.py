@@ -111,8 +111,17 @@ notset = Notset()
 
 @final
 class MonkeyPatch:
-    """Object returned by the ``monkeypatch`` fixture keeping a record of
-    setattr/item/env/syspath changes."""
+    """Helper to conveniently monkeypatch attributes/items/environment
+    variables/syspath.
+
+    Returned by the :fixture:`monkeypatch` fixture.
+
+    :versionchanged:: 6.2
+        Can now also be used directly as `pytest.MonkeyPatch()`, for when
+        the fixture is not available. In this case, use
+        :meth:`with MonkeyPatch.context() as mp: <context>` or remember to call
+        :meth:`undo` explicitly.
+    """
 
     def __init__(self) -> None:
         self._setattr: List[Tuple[object, str, object]] = []
@@ -120,8 +129,9 @@ class MonkeyPatch:
         self._cwd: Optional[str] = None
         self._savesyspath: Optional[List[str]] = None
 
+    @classmethod
     @contextmanager
-    def context(self) -> Generator["MonkeyPatch", None, None]:
+    def context(cls) -> Generator["MonkeyPatch", None, None]:
         """Context manager that returns a new :class:`MonkeyPatch` object
         which undoes any patching done inside the ``with`` block upon exit.
 
@@ -140,7 +150,7 @@ class MonkeyPatch:
         such as mocking ``stdlib`` functions that might break pytest itself if mocked (for examples
         of this see `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_.
         """
-        m = MonkeyPatch()
+        m = cls()
         try:
             yield m
         finally:

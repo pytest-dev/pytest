@@ -1,0 +1,8 @@
+It is now possible to construct a :class:`~pytest.MonkeyPatch` object directly as ``pytest.MonkeyPatch()``,
+in cases when the :fixture:`monkeypatch` fixture cannot be used. Previously some users imported it
+from the private `_pytest.monkeypatch.MonkeyPatch` namespace.
+
+Additionally, :meth:`MonkeyPatch.context <pytest.MonkeyPatch.context>` is now a classmethod,
+and can be used as ``with MonkeyPatch.context() as mp: ...``. This is the recommended way to use
+``MonkeyPatch`` directly, since unlike the ``monkeypatch`` fixture, an instance created directly
+is not ``undo()``-ed automatically.

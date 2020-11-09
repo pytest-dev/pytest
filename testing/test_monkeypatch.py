@@ -409,6 +409,16 @@ def test_context() -> None:
     assert inspect.isclass(functools.partial)
 
 
+def test_context_classmethod() -> None:
+    class A:
+        x = 1
+
+    with MonkeyPatch.context() as m:
+        m.setattr(A, "x", 2)
+        assert A.x == 2
+    assert A.x == 1
+
+
 def test_syspath_prepend_with_namespace_packages(
     testdir: Testdir, monkeypatch: MonkeyPatch
 ) -> None:
