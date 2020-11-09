@@ -70,7 +70,7 @@ class TestDoctests:
 
     def test_collect_module_two_doctest_no_modulelevel(self, pytester: Pytester):
         path = pytester.makepyfile(
-            whatever="""
+            __init__="""
             '# Empty'
             def my_func():
                 ">>> magic = 42 "
