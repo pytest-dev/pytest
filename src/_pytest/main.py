@@ -765,12 +765,14 @@ class Session(nodes.FSCollector):
                     self._notfound.append((report_arg, col))
                     continue
 
-                # If __init__.py was the only file requested, then the matched node will be
-                # the corresponding Package, and the first yielded item will be the __init__
-                # Module itself, so just use that. If this special case isn't taken, then all
-                # the files in the package will be yielded.
-                if argpath.basename == "__init__.py":
-                    assert isinstance(matching[0], nodes.Collector)
+                # If __init__.py was the only file requested, then the matched
+                # node will be the corresponding Package (by default), and the
+                # first yielded item will be the __init__ Module itself, so
+                # just use that. If this special case isn't taken, then all the
+                # files in the package will be yielded.
+                if argpath.basename == "__init__.py" and isinstance(
+                    matching[0], Package
+                ):
                     try:
                         yield next(iter(matching[0].collect()))
                     except StopIteration:

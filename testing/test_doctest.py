@@ -68,9 +68,13 @@ class TestDoctests:
             assert isinstance(items[0].parent, DoctestModule)
             assert items[0].parent is items[1].parent
 
-    def test_collect_module_two_doctest_no_modulelevel(self, pytester: Pytester):
+    @pytest.mark.parametrize("filename", ["__init__", "whatever"])
+    def test_collect_module_two_doctest_no_modulelevel(
+        self, pytester: Pytester, filename: str,
+    ) -> None:
         path = pytester.makepyfile(
-            whatever="""
+            **{
+                filename: """
             '# Empty'
             def my_func():
                 ">>> magic = 42 "
@@ -84,7 +88,8 @@ class TestDoctests:
                 # This is another function
                 >>> import os # this one does have a doctest
                 '''
-        """
+            """,
+            },
         )
         for p in (path, pytester.path):
             items, reprec = pytester.inline_genitems(p, "--doctest-modules")
