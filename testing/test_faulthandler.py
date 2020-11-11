@@ -108,7 +108,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name):
 
 
 @pytest.mark.parametrize("faulthandler_timeout", [0, 2])
-def test_already_initialized(faulthandler_timeout, pytester: Pytester):
+def test_already_initialized(faulthandler_timeout: int, pytester: Pytester) -> None:
     """Test for faulthandler being initialized earlier than pytest (#6575)."""
     pytester.makepyfile(
         """
