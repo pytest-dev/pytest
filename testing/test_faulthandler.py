@@ -3,6 +3,7 @@ import sys
 import pytest
 from _pytest.pytester import Pytester
 
+
 def test_enabled(pytester: Pytester) -> None:
     """Test single crashing test displays a traceback."""
     pytester.makepyfile(
