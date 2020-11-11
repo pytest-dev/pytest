@@ -122,7 +122,7 @@ def test_already_initialized(faulthandler_timeout: int, pytester: Pytester) -> N
         "-X",
         "faulthandler",
         "-mpytest",
-        pytester.tmpdir,
+        pytester.path,
         "-o",
         f"faulthandler_timeout={faulthandler_timeout}",
     )
