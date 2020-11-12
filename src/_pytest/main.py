@@ -53,7 +53,17 @@ def pytest_addoption(parser: Parser) -> None:
         "norecursedirs",
         "directory patterns to avoid for recursion",
         type="args",
-        default=[".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv"],
+        default=[
+            "*.egg",
+            ".*",
+            "_darcs",
+            "build",
+            "CVS",
+            "dist",
+            "node_modules",
+            "venv",
+            "{arch}",
+        ],
     )
     parser.addini(
         "testpaths",
