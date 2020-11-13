@@ -34,7 +34,7 @@ issue/
 env/
 .env/
 .venv/
-pythonenv*
+/pythonenv*/
 3rdparty/
 .tox
 .cache
