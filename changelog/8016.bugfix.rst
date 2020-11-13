@@ -1,0 +1,1 @@
+Fixed only one doctest being collected when using ``pytest --doctest-modules path/to/an/__init__.py``.
