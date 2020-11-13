@@ -113,7 +113,7 @@ class UnitTestCase(Class):
             cls,
             "setup_method",
             "teardown_method",
-            "doCleanups",
+            "<no cleanup function>",
             scope="function",
             pass_self=True,
         )
