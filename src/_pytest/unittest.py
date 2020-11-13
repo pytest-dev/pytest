@@ -99,25 +99,48 @@ class UnitTestCase(Class):
         """Injects a hidden auto-use fixture to invoke setUpClass/setup_method and corresponding
         teardown functions (#517)."""
         class_fixture = _make_xunit_fixture(
-            cls, "setUpClass", "tearDownClass", scope="class", pass_self=False
+            cls,
+            "setUpClass",
+            "tearDownClass",
+            "doClassCleanups",
+            scope="class",
+            pass_self=False,
         )
         if class_fixture:
             cls.__pytest_class_setup = class_fixture  # type: ignore[attr-defined]
 
         method_fixture = _make_xunit_fixture(
-            cls, "setup_method", "teardown_method", scope="function", pass_self=True
+            cls,
+            "setup_method",
+            "teardown_method",
+            "doCleanups",
+            scope="function",
+            pass_self=True,
         )
         if method_fixture:
             cls.__pytest_method_setup = method_fixture  # type: ignore[attr-defined]
 
 
 def _make_xunit_fixture(
-    obj: type, setup_name: str, teardown_name: str, scope: "_Scope", pass_self: bool
+    obj: type,
+    setup_name: str,
+    teardown_name: str,
+    cleanup_name: str,
+    scope: "_Scope",
+    pass_self: bool,
 ):
     setup = getattr(obj, setup_name, None)
     teardown = getattr(obj, teardown_name, None)
     if setup is None and teardown is None:
         return None
+
+    cleanup = getattr(obj, cleanup_name, lambda *args: None)
+
+    def docleanup(self):
+        if pass_self:
+            cleanup(self)
+        else:
+            cleanup()
 
     @pytest.fixture(
         scope=scope,
@@ -130,16 +153,23 @@ def _make_xunit_fixture(
             reason = self.__unittest_skip_why__
             pytest.skip(reason)
         if setup is not None:
-            if pass_self:
-                setup(self, request.function)
-            else:
-                setup()
+            try:
+                if pass_self:
+                    setup(self, request.function)
+                else:
+                    setup()
+            except Exception:
+                docleanup(self)
+                raise
         yield
-        if teardown is not None:
-            if pass_self:
-                teardown(self, request.function)
-            else:
-                teardown()
+        try:
+            if teardown is not None:
+                if pass_self:
+                    teardown(self, request.function)
+                else:
+                    teardown()
+        finally:
+            docleanup(self)
 
     return fixture
 
