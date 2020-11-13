@@ -470,6 +470,38 @@ seconds to finish (not available on Windows).
       the command-line using ``-o faulthandler_timeout=X``.
 
 
+.. _unraisable:
+
+Warning about unraisable exceptions and unhandled thread exceptions
+-------------------------------------------------------------------
+
+.. versionadded:: 6.2
+
+.. note::
+
+    These features only work on Python>=3.8.
+
+Unhandled exceptions are exceptions that are raised in a situation in which
+they cannot propagate to a caller. The most common case is an exception raised
+in a :meth:`__del__ <object.__del__>` implementation.
+
+Unhandled thread exceptions are exceptions raised in a :class:`~threading.Thread`
+but not handled, causing the thread to terminate uncleanly.
+
+Both types of exceptions are normally considered bugs, but may go unnoticed
+because they don't cause the program itself to crash. Pytest detects these
+conditions and issues a warning that is visible in the test run summary.
+
+The plugins are automatically enabled for pytest runs, unless the
+``-p no:unraisableexception`` (for unraisable exceptions) and
+``-p no:threadexception`` (for thread exceptions) options are given on the
+command-line.
+
+The warnings may be silenced selectivly using the :ref:`pytest.mark.filterwarnings ref`
+mark. The warning categories are :class:`pytest.PytestUnraisableExceptionWarning` and
+:class:`pytest.PytestUnhandledThreadExceptionWarning`.
+
+
 Creating JUnitXML format files
 ----------------------------------------------------
 

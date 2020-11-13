@@ -1090,6 +1090,12 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestUnknownMarkWarning
    :show-inheritance:
 
+.. autoclass:: pytest.PytestUnraisableExceptionWarning
+   :show-inheritance:
+
+.. autoclass:: pytest.PytestUnhandledThreadExceptionWarning
+   :show-inheritance:
+
 
 Consult the :ref:`internal-warnings` section in the documentation for more information.
 
