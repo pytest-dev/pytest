@@ -2,6 +2,7 @@ import ast
 import errno
 import glob
 import importlib
+import marshal
 import os
 import py_compile
 import stat
@@ -1063,11 +1064,59 @@ class TestAssertionRewriteHookDetails:
         py_compile.compile(str(source), str(pyc))
 
         contents = pyc.read_bytes()
-        strip_bytes = 20  # header is around 8 bytes, strip a little more
+        strip_bytes = 20  # header is around 16 bytes, strip a little more
         assert len(contents) > strip_bytes
         pyc.write_bytes(contents[:strip_bytes])
 
         assert _read_pyc(source, pyc) is None  # no error
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 7), reason="Only the Python 3.7 format for simplicity"
+    )
+    def test_read_pyc_more_invalid(self, tmp_path: Path) -> None:
+        from _pytest.assertion.rewrite import _read_pyc
+
+        source = tmp_path / "source.py"
+        pyc = tmp_path / "source.pyc"
+
+        source_bytes = b"def test(): pass\n"
+        source.write_bytes(source_bytes)
+
+        magic = importlib.util.MAGIC_NUMBER
+
+        flags = b"\x00\x00\x00\x00"
+
+        mtime = b"\x58\x3c\xb0\x5f"
+        mtime_int = int.from_bytes(mtime, "little")
+        os.utime(source, (mtime_int, mtime_int))
+
+        size = len(source_bytes).to_bytes(4, "little")
+
+        code = marshal.dumps(compile(source_bytes, str(source), "exec"))
+
+        # Good header.
+        pyc.write_bytes(magic + flags + mtime + size + code)
+        assert _read_pyc(source, pyc, print) is not None
+
+        # Too short.
+        pyc.write_bytes(magic + flags + mtime)
+        assert _read_pyc(source, pyc, print) is None
+
+        # Bad magic.
+        pyc.write_bytes(b"\x12\x34\x56\x78" + flags + mtime + size + code)
+        assert _read_pyc(source, pyc, print) is None
+
+        # Unsupported flags.
+        pyc.write_bytes(magic + b"\x00\xff\x00\x00" + mtime + size + code)
+        assert _read_pyc(source, pyc, print) is None
+
+        # Bad mtime.
+        pyc.write_bytes(magic + flags + b"\x58\x3d\xb0\x5f" + size + code)
+        assert _read_pyc(source, pyc, print) is None
+
+        # Bad size.
+        pyc.write_bytes(magic + flags + mtime + b"\x99\x00\x00\x00" + code)
+        assert _read_pyc(source, pyc, print) is None
 
     def test_reload_is_same_and_reloads(self, pytester: Pytester) -> None:
         """Reloading a (collected) module after change picks up the change."""

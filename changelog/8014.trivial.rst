@@ -1,0 +1,2 @@
+`.pyc` files created by pytest's assertion rewriting now conform to the newer PEP-552 format on Python>=3.7.
+(These files are internal and only interpreted by pytest itself.)

@@ -281,12 +281,16 @@ def _write_pyc_fp(
 ) -> None:
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
-    # import. However, there's little reason deviate.
+    # import. However, there's little reason to deviate.
     fp.write(importlib.util.MAGIC_NUMBER)
+    # https://www.python.org/dev/peps/pep-0552/
+    if sys.version_info >= (3, 7):
+        flags = b"\x00\x00\x00\x00"
+        fp.write(flags)
     # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
     mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
     size = source_stat.st_size & 0xFFFFFFFF
-    # "<LL" stands for 2 unsigned longs, little-ending
+    # "<LL" stands for 2 unsigned longs, little-endian.
     fp.write(struct.pack("<LL", mtime, size))
     fp.write(marshal.dumps(co))
 
@@ -365,21 +369,33 @@ def _read_pyc(
     except OSError:
         return None
     with fp:
+        # https://www.python.org/dev/peps/pep-0552/
+        has_flags = sys.version_info >= (3, 7)
         try:
             stat_result = os.stat(os.fspath(source))
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
-            data = fp.read(12)
+            data = fp.read(16 if has_flags else 12)
         except OSError as e:
             trace(f"_read_pyc({source}): OSError {e}")
             return None
         # Check for invalid or out of date pyc file.
-        if (
-            len(data) != 12
-            or data[:4] != importlib.util.MAGIC_NUMBER
-            or struct.unpack("<LL", data[4:]) != (mtime & 0xFFFFFFFF, size & 0xFFFFFFFF)
-        ):
-            trace("_read_pyc(%s): invalid or out of date pyc" % source)
+        if len(data) != (16 if has_flags else 12):
+            trace("_read_pyc(%s): invalid pyc (too short)" % source)
+            return None
+        if data[:4] != importlib.util.MAGIC_NUMBER:
+            trace("_read_pyc(%s): invalid pyc (bad magic number)" % source)
+            return None
+        if has_flags and data[4:8] != b"\x00\x00\x00\x00":
+            trace("_read_pyc(%s): invalid pyc (unsupported flags)" % source)
+            return None
+        mtime_data = data[8 if has_flags else 4 : 12 if has_flags else 8]
+        if int.from_bytes(mtime_data, "little") != mtime & 0xFFFFFFFF:
+            trace("_read_pyc(%s): out of date" % source)
+            return None
+        size_data = data[12 if has_flags else 8 : 16 if has_flags else 12]
+        if int.from_bytes(size_data, "little") != size & 0xFFFFFFFF:
+            trace("_read_pyc(%s): invalid pyc (incorrect size)" % source)
             return None
         try:
             co = marshal.load(fp)
