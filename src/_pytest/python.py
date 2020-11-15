@@ -23,7 +23,6 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -214,7 +213,7 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
 
 def pytest_pycollect_makemodule(fspath: Path, path: py.path.local, parent) -> "Module":
     if fspath.name == "__init__.py":
-        pkg: Package = Package.from_parent(parent, fspath=path)
+        pkg: Package = Package.from_parent(parent, fs_path=fspath)
         return pkg
     mod: Module = Module.from_parent(parent, fspath=path)
     return mod
@@ -255,20 +254,8 @@ def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj: object):
             return res
 
 
-class PyobjMixin:
+class PyobjMixin(nodes.Node):
     _ALLOW_MARKERS = True
-
-    # Function and attributes that the mixin needs (for type-checking only).
-    if TYPE_CHECKING:
-        name: str = ""
-        parent: Optional[nodes.Node] = None
-        own_markers: List[Mark] = []
-
-        def getparent(self, cls: Type[nodes._NodeType]) -> Optional[nodes._NodeType]:
-            ...
-
-        def listchain(self) -> List[nodes.Node]:
-            ...
 
     @property
     def module(self):
@@ -497,7 +484,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
             for callspec in metafunc._calls:
                 subname = f"{name}[{callspec.id}]"
                 yield Function.from_parent(
-                    self,
+                    parent=self,
                     name=subname,
                     callspec=callspec,
                     callobj=funcobj,
@@ -634,22 +621,26 @@ class Module(nodes.File, PyCollector):
 
 
 class Package(Module):
-    def __init__(
-        self,
-        fspath: py.path.local,
-        parent: nodes.Collector,
-        # NOTE: following args are unused:
-        config=None,
-        session=None,
-        nodeid=None,
-    ) -> None:
-        # NOTE: Could be just the following, but kept as-is for compat.
-        # nodes.FSCollector.__init__(self, fspath, parent=parent)
-        session = parent.session
-        nodes.FSCollector.__init__(
-            self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
-        )
-        self.name = os.path.basename(str(fspath.dirname))
+    @classmethod
+    def from_parent(
+        cls,
+        parent,
+        *,
+        name=None,
+        fs_path: Optional[Path] = None,
+        fspath: Optional[py.path.local] = None,
+        **kw,
+    ):
+        if name is None:
+            if fs_path is not None:
+                name = fs_path.parent.name
+            elif fspath is not None:
+                fs_path = Path(fspath)
+                name = fs_path.parent.name
+            else:
+                raise TypeError("name required")
+
+        return super().from_parent(parent=parent, name=name, fs_path=fs_path, **kw)
 
     def setup(self) -> None:
         # Not using fixtures to call setup_module here because autouse fixtures
@@ -721,7 +712,7 @@ class Package(Module):
         if init_module.is_file() and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
-            yield Module.from_parent(self, fspath=py.path.local(init_module))
+            yield Module.from_parent(self, fs_path=init_module)
         pkg_prefixes: Set[Path] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
             path = Path(direntry.path)
@@ -1577,16 +1568,21 @@ class Function(PyobjMixin, nodes.Item):
     def __init__(
         self,
         name: str,
-        parent,
-        config: Optional[Config] = None,
+        parent: nodes.Node,
+        config: Config,
         callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
         keywords=None,
-        session: Optional[Session] = None,
         fixtureinfo: Optional[FuncFixtureInfo] = None,
         originalname: Optional[str] = None,
+        *,
+        session: Session,
+        nodeid: str,
+        fs_path: Path,
     ) -> None:
-        super().__init__(name, parent, config=config, session=session)
+        super().__init__(
+            name, parent, config=config, session=session, nodeid=nodeid, fs_path=fs_path
+        )
 
         if callobj is not NOTSET:
             self.obj = callobj
@@ -1635,11 +1631,6 @@ class Function(PyobjMixin, nodes.Item):
         self._fixtureinfo: FuncFixtureInfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
-
-    @classmethod
-    def from_parent(cls, parent, **kw):  # todo: determine sound type limitations
-        """The public constructor."""
-        return super().from_parent(parent=parent, **kw)
 
     def _initrequest(self) -> None:
         self.funcargs: Dict[str, object] = {}

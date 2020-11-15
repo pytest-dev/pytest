@@ -64,6 +64,12 @@ STRICT_OPTION = PytestDeprecationWarning(
 
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
+NODE_IMPLIED_ARG = UnformattedWarning(
+    PytestDeprecationWarning,
+    "implying {type.__name__}.{arg} from parent.{arg} has been deprecated\n"
+    "please use the Node.from_parent to have them be implied by the superclass named ctors",
+)
+
 
 # You want to make some `__init__` or function "private".
 #

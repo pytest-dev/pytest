@@ -26,6 +26,7 @@ from _pytest.compat import cached_property
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
+from _pytest.deprecated import NODE_IMPLIED_ARG
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -110,45 +111,68 @@ class Node(metaclass=NodeMeta):
         "parent",
         "config",
         "session",
-        "fspath",
+        "fs_path",
         "_nodeid",
         "_store",
         "__dict__",
     )
 
+    name: str
+    parent: Optional["Node"]
+    config: Config
+    session: "Session"
+    fs_path: Path
+    _nodeid: str
+
     def __init__(
         self,
+        *,
         name: str,
-        parent: "Optional[Node]" = None,
+        parent: Optional["Node"],
         config: Optional[Config] = None,
-        session: "Optional[Session]" = None,
-        fspath: Optional[py.path.local] = None,
+        session: Optional["Session"] = None,
+        fs_path: Optional[Path] = None,
         nodeid: Optional[str] = None,
     ) -> None:
         #: A unique name within the scope of the parent node.
         self.name = name
 
+        if nodeid is not None:
+            assert "::()" not in nodeid
+        else:
+            assert parent is not None
+            nodeid = parent.nodeid
+            if name != "()":
+                nodeid = f"{nodeid}::{name}"
+            warnings.warn(NODE_IMPLIED_ARG.format(type=type(self), arg="nodeid"))
+        self._nodeid = nodeid
         #: The parent collector node.
         self.parent = parent
 
         #: The pytest config object.
-        if config:
-            self.config: Config = config
-        else:
-            if not parent:
-                raise TypeError("config or parent must be provided")
+        if config is None:
+            assert parent is not None
             self.config = parent.config
+            warnings.warn(NODE_IMPLIED_ARG.format(type=type(self), arg="config"))
+        else:
+            self.config = config
 
         #: The pytest session this node is part of.
-        if session:
-            self.session = session
-        else:
-            if not parent:
-                raise TypeError("session or parent must be provided")
+        if session is None:
+            assert parent is not None
             self.session = parent.session
 
+            warnings.warn(NODE_IMPLIED_ARG.format(type=type(self), arg="session"))
+        else:
+            self.session = session
+
         #: Filesystem path where this node was collected from (can be None).
-        self.fspath = fspath or getattr(parent, "fspath", None)
+        if fs_path is None:
+            assert parent is not None
+            self.fs_path = parent.fs_path
+            warnings.warn(NODE_IMPLIED_ARG.format(type=type(self), arg="fs_path"))
+        else:
+            self.fs_path = fs_path
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -160,22 +184,29 @@ class Node(metaclass=NodeMeta):
         #: Allow adding of extra keywords to use for matching.
         self.extra_keyword_matches: Set[str] = set()
 
-        if nodeid is not None:
-            assert "::()" not in nodeid
-            self._nodeid = nodeid
-        else:
-            if not self.parent:
-                raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid
-            if self.name != "()":
-                self._nodeid += "::" + self.name
-
         # A place where plugins can store information on the node for their
         # own use. Currently only intended for internal plugins.
         self._store = Store()
 
+    @property
+    def fspath(self) -> py.path.local:
+        """Filesystem path where this node was collected from (can be None).
+
+        Since pytest 6.2, prefer to use `fs_path` instead which returns a `pathlib.Path`
+        instead of a `py.path.local`.
+        """
+        return py.path.local(self.fs_path)
+
     @classmethod
-    def from_parent(cls, parent: "Node", **kw):
+    def from_parent(
+        cls,
+        parent: "Node",
+        *,
+        name: str,
+        fs_path: Optional[Path] = None,
+        nodeid: Optional[str] = None,
+        **kw: Any,
+    ):
         """Public constructor for Nodes.
 
         This indirection got introduced in order to enable removing
@@ -190,7 +221,26 @@ class Node(metaclass=NodeMeta):
             raise TypeError("config is not a valid argument for from_parent")
         if "session" in kw:
             raise TypeError("session is not a valid argument for from_parent")
-        return cls._create(parent=parent, **kw)
+        if nodeid is not None:
+            assert "::()" not in nodeid
+        else:
+            nodeid = parent.nodeid
+            if name != "()":
+                nodeid = f"{nodeid}::{name}"
+
+        config = parent.config
+        session = parent.session
+        if fs_path is None:
+            fs_path = parent.fs_path
+        return cls._create(
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
+            name=name,
+            fs_path=fs_path,
+            **kw,
+        )
 
     @property
     def ihook(self):
@@ -495,38 +545,58 @@ def _check_initialpaths_for_relpath(
 
 
 class FSCollector(Collector):
-    def __init__(
-        self,
-        fspath: py.path.local,
-        parent=None,
-        config: Optional[Config] = None,
-        session: Optional["Session"] = None,
+    def __init__(self, **kw):
+
+        fs_path: Optional[Path] = kw.pop("fs_path", None)
+        fspath: Optional[py.path.local] = kw.pop("fspath", None)
+
+        if fspath is not None:
+            assert fs_path is None
+            fs_path = Path(fspath)
+        kw["fs_path"] = fs_path
+        super().__init__(**kw)
+
+    @classmethod
+    def from_parent(
+        cls,
+        parent: Node,
+        *,
+        fspath: Optional[py.path.local] = None,
+        fs_path: Optional[Path] = None,
         nodeid: Optional[str] = None,
-    ) -> None:
-        name = fspath.basename
-        if parent is not None:
+        name: Optional[str] = None,
+        **kw,
+    ):
+        """The public constructor."""
+        if fspath is not None:
+            assert fs_path is None
+            known_path = Path(fspath)
+        else:
+            assert fs_path is not None
+            known_path = fs_path
+            fspath = py.path.local(known_path)
+
+        if name is None:
+            name = known_path.name
             rel = fspath.relto(parent.fspath)
             if rel:
-                name = rel
-            name = name.replace(os.sep, SEP)
-        self.fspath = fspath
-
-        session = session or parent.session
+                name = str(rel)
 
         if nodeid is None:
-            nodeid = self.fspath.relto(session.config.rootdir)
+            assert parent is not None
+            session = parent.session
+            relp = session._bestrelpathcache[known_path]
+            if not relp.startswith(".." + os.sep):
+                nodeid = str(relp)
 
             if not nodeid:
                 nodeid = _check_initialpaths_for_relpath(session, fspath)
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
-        super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
-
-    @classmethod
-    def from_parent(cls, parent, *, fspath, **kw):
-        """The public constructor."""
-        return super().from_parent(parent=parent, fspath=fspath, **kw)
+        return super().from_parent(
+            parent=parent, name=name, fs_path=known_path, nodeid=nodeid, **kw
+        )
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):
         warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
@@ -555,12 +625,20 @@ class Item(Node):
     def __init__(
         self,
         name,
-        parent=None,
-        config: Optional[Config] = None,
-        session: Optional["Session"] = None,
-        nodeid: Optional[str] = None,
+        parent: Node,
+        config: Config,
+        session: "Session",
+        nodeid: str,
+        fs_path: Path,
     ) -> None:
-        super().__init__(name, parent, config, session, nodeid=nodeid)
+        super().__init__(
+            name=name,
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
+            fs_path=fs_path,
+        )
         self._report_sections: List[Tuple[str, str, str]] = []
 
         #: A list of tuples (name, value) that holds user defined properties

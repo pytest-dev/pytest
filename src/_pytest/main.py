@@ -464,7 +464,12 @@ class Session(nodes.FSCollector):
 
     def __init__(self, config: Config) -> None:
         super().__init__(
-            config.rootdir, parent=None, config=config, session=self, nodeid=""
+            fs_path=config.rootpath,
+            name="",
+            parent=None,
+            config=config,
+            session=self,
+            nodeid="",
         )
         self.testsfailed = 0
         self.testscollected = 0
@@ -688,7 +693,7 @@ class Session(nodes.FSCollector):
                             if col:
                                 if isinstance(col[0], Package):
                                     pkg_roots[str(parent)] = col[0]
-                                node_cache1[Path(col[0].fspath)] = [col[0]]
+                                node_cache1[col[0].fs_path] = [col[0]]
 
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
@@ -717,7 +722,7 @@ class Session(nodes.FSCollector):
                         continue
 
                     for x in self._collectfile(path):
-                        key2 = (type(x), Path(x.fspath))
+                        key2 = (type(x), x.fs_path)
                         if key2 in node_cache2:
                             yield node_cache2[key2]
                         else:
@@ -749,12 +754,12 @@ class Session(nodes.FSCollector):
                             continue
                         if not isinstance(node, nodes.Collector):
                             continue
-                        key = (type(node), node.nodeid)
-                        if key in matchnodes_cache:
-                            rep = matchnodes_cache[key]
+                        key_matchnodes = (type(node), node.nodeid)
+                        if key_matchnodes in matchnodes_cache:
+                            rep = matchnodes_cache[key_matchnodes]
                         else:
                             rep = collect_one_node(node)
-                            matchnodes_cache[key] = rep
+                            matchnodes_cache[key_matchnodes] = rep
                         if rep.passed:
                             submatchnodes = []
                             for r in rep.result:

@@ -900,7 +900,7 @@ class Pytester:
         example_dir = self._request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")
-        example_dir = Path(str(self._request.config.rootdir)) / example_dir
+        example_dir = self._request.config.rootpath / example_dir
 
         for extra_element in self._request.node.iter_markers("pytester_example_path"):
             assert extra_element.args

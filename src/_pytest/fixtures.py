@@ -662,7 +662,7 @@ class FixtureRequest:
                     "\n\nRequested here:\n{}:{}".format(
                         funcitem.nodeid,
                         fixturedef.argname,
-                        getlocation(fixturedef.func, funcitem.config.rootdir),
+                        getlocation(fixturedef.func, str(funcitem.config.rootpath)),
                         source_path_str,
                         source_lineno,
                     )

@@ -1346,13 +1346,9 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
     """
 
     class MyCollector(pytest.File):
-        def __init__(self, fspath, parent, x):
-            super().__init__(fspath, parent)
+        def __init__(self, *, x, **kw):
+            super().__init__(**kw)
             self.x = x
-
-        @classmethod
-        def from_parent(cls, parent, *, fspath, x):
-            return super().from_parent(parent=parent, fspath=fspath, x=x)
 
     collector = MyCollector.from_parent(
         parent=request.session, fspath=py.path.local(pytester.path) / "foo", x=10

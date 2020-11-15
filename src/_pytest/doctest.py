@@ -254,8 +254,9 @@ class DoctestItem(pytest.Item):
         parent: "Union[DoctestTextfile, DoctestModule]",
         runner: Optional["doctest.DocTestRunner"] = None,
         dtest: Optional["doctest.DocTest"] = None,
+        **kw: Any,
     ) -> None:
-        super().__init__(name, parent)
+        super().__init__(name=name, parent=parent, **kw)
         self.runner = runner
         self.dtest = dtest
         self.obj = None
