@@ -123,6 +123,20 @@ The regexp parameter of the ``match`` method is matched with the ``re.search``
 function, so in the above example ``match='123'`` would have worked as
 well.
 
+Also it useful to actually check return value from tested function, when no exception was raised.
+
+.. code-block:: python
+
+    def return_value():
+        return "No exception was raised, but there is a return value."
+
+
+    def test_my_exception():
+        with pytest.raises(RuntimeError) as excinfo:
+            excinfo.return_value = return_value()
+
+When no exception was raised, you'll see info about returned value.
+
 There's an alternate form of the ``pytest.raises`` function where you pass
 a function that will be executed with the given ``*args`` and ``**kwargs`` and
 assert that the given exception is raised:
