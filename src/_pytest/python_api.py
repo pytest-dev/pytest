@@ -697,6 +697,7 @@ def raises(
             raise TypeError(msg.format(not_a))
 
     message = f"DID NOT RAISE {expected_exception}"
+    message_return = "But There is some return value: {!r}"
 
     if not args:
         match: Optional[Union[str, Pattern[str]]] = kwargs.pop("match", None)
@@ -705,7 +706,7 @@ def raises(
             msg += ", ".join(sorted(kwargs))
             msg += "\nUse context-manager form instead?"
             raise TypeError(msg)
-        return RaisesContext(expected_exception, message, match)
+        return RaisesContext(expected_exception, message, message_return, match)
     else:
         func = args[0]
         if not callable(func):
@@ -733,10 +734,12 @@ class RaisesContext(Generic[_E]):
         self,
         expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
         message: str,
+        message_return: str,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message
+        self.message_return = message_return
         self.match_expr = match_expr
         self.excinfo: Optional[_pytest._code.ExceptionInfo[_E]] = None
 
@@ -752,7 +755,13 @@ class RaisesContext(Generic[_E]):
     ) -> bool:
         __tracebackhide__ = True
         if exc_type is None:
-            fail(self.message)
+            fail_message = self.message
+            if (
+                isinstance(self.excinfo, _pytest._code.ExceptionInfo)
+                and self.excinfo.return_value is not None
+            ):
+                fail_message += self.message_return.format(self.excinfo.return_value)
+            fail(fail_message)
         assert self.excinfo is not None
         if not issubclass(exc_type, self.expected_exception):
             return False

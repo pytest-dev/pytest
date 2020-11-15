@@ -446,6 +446,7 @@ class ExceptionInfo(Generic[_E]):
     _excinfo = attr.ib(type=Optional[Tuple[Type["_E"], "_E", TracebackType]])
     _striptext = attr.ib(type=str, default="")
     _traceback = attr.ib(type=Optional[Traceback], default=None)
+    return_value = attr.ib(type=Optional[Any], default=None)
 
     @classmethod
     def from_exc_info(
