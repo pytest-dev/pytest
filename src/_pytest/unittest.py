@@ -113,7 +113,7 @@ class UnitTestCase(Class):
             cls,
             "setup_method",
             "teardown_method",
-            "<no cleanup function>",
+            None,
             scope="function",
             pass_self=True,
         )
@@ -125,7 +125,7 @@ def _make_xunit_fixture(
     obj: type,
     setup_name: str,
     teardown_name: str,
-    cleanup_name: str,
+    cleanup_name: Optional[str],
     scope: "_Scope",
     pass_self: bool,
 ):
@@ -134,13 +134,12 @@ def _make_xunit_fixture(
     if setup is None and teardown is None:
         return None
 
-    cleanup = getattr(obj, cleanup_name, lambda *args: None)
+    if cleanup_name:
+        cleanup = getattr(obj, cleanup_name, lambda *args: None)
+    else:
 
-    def docleanup(self):
-        if pass_self:
-            cleanup(self)
-        else:
-            cleanup()
+        def cleanup(*args):
+            pass
 
     @pytest.fixture(
         scope=scope,
@@ -158,8 +157,14 @@ def _make_xunit_fixture(
                     setup(self, request.function)
                 else:
                     setup()
+            # unittest does not call the cleanup function for every BaseException, so we
+            # follow this here.
             except Exception:
-                docleanup(self)
+                if pass_self:
+                    cleanup(self)
+                else:
+                    cleanup()
+
                 raise
         yield
         try:
@@ -169,7 +174,10 @@ def _make_xunit_fixture(
                 else:
                     teardown()
         finally:
-            docleanup(self)
+            if pass_self:
+                cleanup(self)
+            else:
+                cleanup()
 
     return fixture
 
