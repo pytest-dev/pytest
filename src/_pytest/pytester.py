@@ -1819,7 +1819,6 @@ class LineMatcher:
             raise TypeError("invalid type for lines2: {}".format(type(lines2).__name__))
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
-        nextline = None
         extralines = []
         __tracebackhide__ = True
         wnick = len(match_nickname) + 1
