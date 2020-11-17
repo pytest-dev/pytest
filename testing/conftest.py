@@ -214,3 +214,8 @@ def mock_timing(monkeypatch: MonkeyPatch):
     result = MockTiming()
     result.patch()
     return result
+
+
+@pytest.fixture(autouse=True)
+def add_pytest_to_doctest_namespace(doctest_namespace):
+    doctest_namespace["pytest"] = pytest
