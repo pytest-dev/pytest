@@ -114,7 +114,7 @@ def warns(
     one for each warning raised.
 
     This function can be used as a context manager, or any of the other ways
-    ``pytest.raises`` can be used::
+    :func:`pytest.raises` can be used::
 
         >>> with warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)

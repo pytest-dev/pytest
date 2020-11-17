@@ -259,7 +259,7 @@ These two examples illustrate situations where you don't want to check for a con
 at the module level, which is when a condition would otherwise be evaluated for marks.
 
 This will make ``test_function`` ``XFAIL``. Note that no other code is executed after
-the ``pytest.xfail`` call, differently from the marker. That's because it is implemented
+the :func:`pytest.xfail` call, differently from the marker. That's because it is implemented
 internally by raising a known exception.
 
 **Reference**: :ref:`pytest.mark.xfail ref`
@@ -358,7 +358,7 @@ By specifying on the commandline:
     pytest --runxfail
 
 you can force the running and reporting of an ``xfail`` marked test
-as if it weren't marked at all. This also causes ``pytest.xfail`` to produce no effect.
+as if it weren't marked at all. This also causes :func:`pytest.xfail` to produce no effect.
 
 Examples
 ~~~~~~~~

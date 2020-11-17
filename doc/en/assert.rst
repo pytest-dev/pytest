@@ -74,7 +74,7 @@ Assertions about expected exceptions
 ------------------------------------------
 
 In order to write assertions about raised exceptions, you can use
-``pytest.raises`` as a context manager like this:
+:func:`pytest.raises` as a context manager like this:
 
 .. code-block:: python
 
@@ -123,7 +123,7 @@ The regexp parameter of the ``match`` method is matched with the ``re.search``
 function, so in the above example ``match='123'`` would have worked as
 well.
 
-There's an alternate form of the ``pytest.raises`` function where you pass
+There's an alternate form of the :func:`pytest.raises` function where you pass
 a function that will be executed with the given ``*args`` and ``**kwargs`` and
 assert that the given exception is raised:
 
@@ -144,8 +144,8 @@ specific way than just having any exception raised:
     def test_f():
         f()
 
-Using ``pytest.raises`` is likely to be better for cases where you are testing
-exceptions your own code is deliberately raising, whereas using
+Using :func:`pytest.raises` is likely to be better for cases where you are
+testing exceptions your own code is deliberately raising, whereas using
 ``@pytest.mark.xfail`` with a check function is probably better for something
 like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
