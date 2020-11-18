@@ -597,6 +597,7 @@ def raises(
     Use ``pytest.raises`` as a context manager, which will capture the exception of the given
     type::
 
+        >>> import pytest
         >>> with pytest.raises(ZeroDivisionError):
         ...    1/0
 

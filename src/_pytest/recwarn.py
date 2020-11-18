@@ -60,6 +60,7 @@ def deprecated_call(
         ...     warnings.warn('use v3 of this api', DeprecationWarning)
         ...     return 200
 
+        >>> import pytest
         >>> with pytest.deprecated_call():
         ...    assert api_call_v2() == 200
 
@@ -116,6 +117,7 @@ def warns(
     This function can be used as a context manager, or any of the other ways
     ``pytest.raises`` can be used::
 
+        >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)
 
