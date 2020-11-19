@@ -1,10 +1,12 @@
 from typing import List
+from typing import Type
 
 import py
 
 import pytest
 from _pytest import nodes
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestWarning
 
 
 @pytest.mark.parametrize(
@@ -35,15 +37,33 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
 
 
-def test_std_warn_not_pytestwarning(pytester: Pytester) -> None:
+@pytest.mark.parametrize(
+    "warn_type, msg", [(DeprecationWarning, "deprecated"), (PytestWarning, "pytest")]
+)
+def test_node_warn_is_no_longer_only_pytest_warnings(
+    pytester: Pytester, warn_type: Type[Warning], msg: str
+) -> None:
     items = pytester.getitems(
         """
         def test():
             pass
     """
     )
-    with pytest.raises(ValueError, match=".*instance of PytestWarning.*"):
-        items[0].warn(UserWarning("some warning"))  # type: ignore[arg-type]
+    with pytest.warns(warn_type, match=msg):
+        items[0].warn(warn_type(msg))
+
+
+def test_node_warning_enforces_warning_types(pytester: Pytester) -> None:
+    items = pytester.getitems(
+        """
+        def test():
+            pass
+    """
+    )
+    with pytest.raises(
+        ValueError, match="warning must be an instance of Warning or subclass"
+    ):
+        items[0].warn(Exception("ok"))  # type: ignore[arg-type]
 
 
 def test__check_initialpaths_for_relpath() -> None:
