@@ -1707,6 +1707,10 @@ class LineMatcher:
         self.lines = lines
         self._log_output: List[str] = []
 
+    def __str__(self) -> str:
+        """Return the entire original text."""
+        return "\n".join(self.lines)
+
     def _getlines(self, lines2: Union[str, Sequence[str], Source]) -> Sequence[str]:
         if isinstance(lines2, str):
             lines2 = Source(lines2)
@@ -1908,4 +1912,4 @@ class LineMatcher:
 
     def str(self) -> str:
         """Return the entire original text."""
-        return "\n".join(self.lines)
+        return self.__str__()
