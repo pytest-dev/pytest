@@ -1,0 +1,1 @@
+`doClassCleanups` (introduced in `unittest` in Python and 3.8) is now called.
