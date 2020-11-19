@@ -1912,4 +1912,4 @@ class LineMatcher:
 
     def str(self) -> str:
         """Return the entire original text."""
-        return self.__str__()
+        return str(self)
