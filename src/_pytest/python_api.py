@@ -597,7 +597,8 @@ def raises(
     Use ``pytest.raises`` as a context manager, which will capture the exception of the given
     type::
 
-        >>> with raises(ZeroDivisionError):
+        >>> import pytest
+        >>> with pytest.raises(ZeroDivisionError):
         ...    1/0
 
     If the code block does not raise the expected exception (``ZeroDivisionError`` in the example
@@ -606,16 +607,16 @@ def raises(
     You can also use the keyword argument ``match`` to assert that the
     exception matches a text or regex::
 
-        >>> with raises(ValueError, match='must be 0 or None'):
+        >>> with pytest.raises(ValueError, match='must be 0 or None'):
         ...     raise ValueError("value must be 0 or None")
 
-        >>> with raises(ValueError, match=r'must be \d+$'):
+        >>> with pytest.raises(ValueError, match=r'must be \d+$'):
         ...     raise ValueError("value must be 42")
 
     The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
     details of the captured exception::
 
-        >>> with raises(ValueError) as exc_info:
+        >>> with pytest.raises(ValueError) as exc_info:
         ...     raise ValueError("value must be 42")
         >>> assert exc_info.type is ValueError
         >>> assert exc_info.value.args[0] == "value must be 42"
@@ -629,7 +630,7 @@ def raises(
        not be executed. For example::
 
            >>> value = 15
-           >>> with raises(ValueError) as exc_info:
+           >>> with pytest.raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...     assert exc_info.type is ValueError  # this will not execute
@@ -637,7 +638,7 @@ def raises(
        Instead, the following approach must be taken (note the difference in
        scope)::
 
-           >>> with raises(ValueError) as exc_info:
+           >>> with pytest.raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...

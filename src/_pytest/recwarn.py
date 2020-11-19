@@ -60,7 +60,8 @@ def deprecated_call(
         ...     warnings.warn('use v3 of this api', DeprecationWarning)
         ...     return 200
 
-        >>> with deprecated_call():
+        >>> import pytest
+        >>> with pytest.deprecated_call():
         ...    assert api_call_v2() == 200
 
     It can also be used by passing a function and ``*args`` and ``**kwargs``,
@@ -116,19 +117,20 @@ def warns(
     This function can be used as a context manager, or any of the other ways
     ``pytest.raises`` can be used::
 
-        >>> with warns(RuntimeWarning):
+        >>> import pytest
+        >>> with pytest.warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)
 
     In the context manager form you may use the keyword argument ``match`` to assert
     that the warning matches a text or regex::
 
-        >>> with warns(UserWarning, match='must be 0 or None'):
+        >>> with pytest.warns(UserWarning, match='must be 0 or None'):
         ...     warnings.warn("value must be 0 or None", UserWarning)
 
-        >>> with warns(UserWarning, match=r'must be \d+$'):
+        >>> with pytest.warns(UserWarning, match=r'must be \d+$'):
         ...     warnings.warn("value must be 42", UserWarning)
 
-        >>> with warns(UserWarning, match=r'must be \d+$'):
+        >>> with pytest.warns(UserWarning, match=r'must be \d+$'):
         ...     warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
