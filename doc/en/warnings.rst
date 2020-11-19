@@ -265,7 +265,7 @@ Asserting warnings with the warns function
 
 
 
-You can check that code raises a particular warning using ``pytest.warns``,
+You can check that code raises a particular warning using func:`pytest.warns`,
 which works in a similar manner to :ref:`raises <assertraises>`:
 
 .. code-block:: python
@@ -293,7 +293,7 @@ argument ``match`` to assert that the exception matches a text or regex::
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
 
-You can also call ``pytest.warns`` on a function or code string:
+You can also call func:`pytest.warns` on a function or code string:
 
 .. code-block:: python
 
@@ -328,10 +328,10 @@ Alternatively, you can examine raised warnings in detail using the
 Recording warnings
 ------------------
 
-You can record raised warnings either using ``pytest.warns`` or with
+You can record raised warnings either using func:`pytest.warns` or with
 the ``recwarn`` fixture.
 
-To record with ``pytest.warns`` without asserting anything about the warnings,
+To record with func:`pytest.warns` without asserting anything about the warnings,
 pass ``None`` as the expected warning type:
 
 .. code-block:: python
@@ -360,7 +360,7 @@ The ``recwarn`` fixture will record warnings for the whole function:
         assert w.filename
         assert w.lineno
 
-Both ``recwarn`` and ``pytest.warns`` return the same interface for recorded
+Both ``recwarn`` and func:`pytest.warns` return the same interface for recorded
 warnings: a WarningsRecorder instance. To view the recorded warnings, you can
 iterate over this instance, call ``len`` on it to get the number of recorded
 warnings, or index into it to get a particular recorded warning.
@@ -387,7 +387,7 @@ are met.
                 pytest.fail("Expected a warning!")
 
 If no warnings are issued when calling ``f``, then ``not record`` will
-evaluate to ``True``.  You can then call ``pytest.fail`` with a
+evaluate to ``True``.  You can then call :func:`pytest.fail` with a
 custom error message.
 
 .. _internal-warnings:
