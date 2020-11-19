@@ -68,4 +68,13 @@ Unsupported idioms / known issues
   fundamentally incompatible with pytest because they don't support fixtures
   properly since collection and test execution are separated.
 
+Migrating from Nose to Pytest
+------------------------------
+
+`nose2pytest <https://github.com/pytest-dev/nose2pytest>`_ is a Python script
+and py.test plugin to help convert Nose-based tests into py.test-based tests.
+Specifically, the script transforms nose.tools.assert_* function calls into
+raw assert statements, while preserving format of original arguments
+as much as possible.
+
 .. _nose: https://nose.readthedocs.io/en/latest/
