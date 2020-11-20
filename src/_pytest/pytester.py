@@ -1349,7 +1349,7 @@ class Pytester:
                 stderr=f2,
                 close_fds=(sys.platform != "win32"),
             )
-            if isinstance(stdin, bytes):
+            if popen.stdin is not None:
                 popen.stdin.close()
 
             def handle_timeout() -> None:
