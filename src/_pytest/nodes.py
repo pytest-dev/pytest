@@ -213,6 +213,10 @@ class Node(metaclass=NodeMeta):
 
             node.warn(PytestWarning("some message"))
             node.warn(UserWarning("some message"))
+
+        .. versionchanged:: 6.2
+            Any subclass of :class:`Warning` is now accepted, rather than only
+            :class:`PytestWarning <pytest.PytestWarning>` subclasses.
         """
         # enforce type checks here to avoid getting a generic type error later otherwise.
         if not isinstance(warning, Warning):

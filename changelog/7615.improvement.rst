@@ -1,1 +1,1 @@
-`node.warn` now permits any subclass of Warning, not just PytestWarnings
+:meth:`Node.warn <_pytest.nodes.Node.warn>` now permits any subclass of :class:`Warning`, not just :class:`PytestWarning <pytest.PytestWarning>`.
