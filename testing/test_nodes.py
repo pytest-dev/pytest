@@ -99,7 +99,7 @@ def test_node_qual_name_package_func(pytester: Pytester) -> None:
     pkg.joinpath("test_mod.py").write_text(
         """
 def test_it(request):
-    assert request.node.qual_name == 'test_node_qual_name_package_func0/mypkg::test_mod.py::test_it'"""
+    assert request.node.qual_name == 'test_node_qual_name_package_func0.mypkg.test_mod.py.test_it'"""
     )
     result = pytester.runpytest()
     assert result.ret == ExitCode.OK
@@ -109,7 +109,7 @@ def test_node_qual_name_module_func(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         def test_qual_name(request):
-            expected = 'test_node_qual_name_module_func0/test_node_qual_name_module_func.py::test_qual_name'
+            expected = 'test_node_qual_name_module_func0.test_node_qual_name_module_func.py.test_qual_name'
             assert request.node.qual_name == expected
         """
     )
@@ -122,7 +122,7 @@ def test_node_qual_name_class_func(pytester: Pytester) -> None:
         """
         class TestQual:
             def test_clazz(self, request):
-                expected = 'test_node_qual_name_class_func0/test_node_qual_name_class_func.py::TestQual::test_clazz'
+                expected = 'test_node_qual_name_class_func0.test_node_qual_name_class_func.py.TestQual.test_clazz'
                 assert request.node.qual_name == expected
         """
     )

@@ -1,1 +1,1 @@
-Instances of :class:`Node <_pytest.nodes.Node>` now expose a `qual_name` property
+Instances of :class:`Node <_pytest.nodes.Node>` now store their fully dotted path via a `qual_name` property.

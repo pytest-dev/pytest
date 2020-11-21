@@ -174,7 +174,7 @@ class Node(metaclass=NodeMeta):
 
     @property
     def qual_name(self) -> str:
-        return "::".join([x for x in self.listnames() if x != "()"])
+        return ".".join(x for x in self.listnames() if x != "()")
 
     @classmethod
     def from_parent(cls, parent: "Node", **kw):
