@@ -1709,7 +1709,6 @@ class LineMatcher:
 
     def __str__(self) -> str:
         """Return the entire original text.
-        
         .. versionadded:: 6.2
             You can use :method:`str` in older versions.
         """
