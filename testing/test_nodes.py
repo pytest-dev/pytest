@@ -4,6 +4,7 @@ import py
 
 import pytest
 from _pytest import nodes
+from _pytest.config import ExitCode
 from _pytest.pytester import Pytester
 
 
@@ -91,3 +92,41 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
+
+
+def test_node_qual_name_package_func(pytester: Pytester) -> None:
+    pkg = pytester.mkpydir("mypkg")
+    pkg.joinpath("test_mod.py").write_text(
+        """
+def test_it(request):
+    assert request.node.qual_name == 'test_node_qual_name_package_func0::mypkg::test_mod.py::test_it'"""
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
+
+
+def test_node_qual_name_module_func(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_qual_name(request):
+            expected = 'test_node_qual_name_module_func0::test_node_qual_name_module_func.py::test_qual_name'
+            assert request.node.qual_name == expected
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
+
+
+@pytest.mark.xfail()
+def test_node_qual_name_class_func(pytester: Pytester) -> None:
+    # TODO fix the ::():: for inside classes here returned by listchain() ?
+    pytester.makepyfile(
+        """
+        class TestQual:
+            def test_clazz(self, request):
+                expected = 'test_node_qual_name_class_func0::test_node_qual_name_class_func.py::TestQual::test_clazz'
+                assert request.node.qual_name == expected
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK

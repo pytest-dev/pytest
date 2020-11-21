@@ -172,6 +172,10 @@ class Node(metaclass=NodeMeta):
         # own use. Currently only intended for internal plugins.
         self._store = Store()
 
+    @property
+    def qual_name(self) -> str:
+        return "::".join(node.name for node in self.listchain())
+
     @classmethod
     def from_parent(cls, parent: "Node", **kw):
         """Public constructor for Nodes.
