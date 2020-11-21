@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 from typing import Any
 from typing import Final
+from typing import NamedTuple
 from typing import NoReturn
 from typing import TYPE_CHECKING
 
@@ -72,18 +73,54 @@ def signature(obj: Callable[..., Any]) -> Signature:
     return inspect.signature(obj)
 
 
-def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
+class CodeLocation(NamedTuple):
+    """A source code location: file path and line number.
+
+    Converts to a ``path:lineno`` string representation.
+    """
+
+    path: Path
+    lineno: int
+
+    def __str__(self) -> str:
+        return f"{self.path}:{self.lineno}"
+
+
+def getlocation(
+    function,
+    relative_to: Path | None,
+    *,
+    allow_escape: bool = False,
+) -> CodeLocation:
+    """Return the source location (file path, line number) of *function*.
+
+    :param function:
+        The function (or wrapped function) to locate.
+    :param relative_to:
+        If given, the returned path is made relative to this directory.
+    :param allow_escape:
+        When *True* the relative path may contain ``..`` components
+        (i.e. the function is allowed to live outside *relative_to*).
+        When *False* (the default), only strict sub-paths are
+        relativised; everything else keeps its absolute path.
+    """
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno
-    if curdir is not None:
+
+    if relative_to is not None:
+        from .pathlib import bestrelpath
+
         try:
-            relfn = fn.relative_to(curdir)
+            if allow_escape:
+                relfn = Path(bestrelpath(relative_to, fn))
+            else:
+                relfn = fn.relative_to(relative_to)
         except ValueError:
             pass
         else:
-            return f"{relfn}:{lineno + 1}"
-    return f"{fn}:{lineno + 1}"
+            return CodeLocation(relfn, lineno + 1)
+    return CodeLocation(fn, lineno + 1)
 
 
 def num_mock_patch_args(function) -> int:
