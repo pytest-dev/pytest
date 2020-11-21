@@ -1210,7 +1210,7 @@ class FixtureFunctionMarker:
 
         name = self.name or function.__name__
         if name == "request":
-            location = getlocation(function)
+            location = getlocation(function, None)
             fail(
                 "'request' is a reserved word for fixtures, use another name:\n  {}".format(
                     location

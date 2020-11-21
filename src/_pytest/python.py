@@ -39,6 +39,7 @@ from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
 from _pytest.compat import assert_never
+from _pytest.compat import CodeLocation
 from _pytest.compat import final
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
@@ -1634,14 +1635,14 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     fm = session._fixturemanager
 
     available = []
-    seen: Set[Tuple[str, str]] = set()
+    seen: Set[Tuple[str, CodeLocation]] = set()
 
     for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None
         if not fixturedefs:
             continue
         for fixturedef in fixturedefs:
-            loc = getlocation(fixturedef.func, str(curdir))
+            loc = getlocation(fixturedef.func, curdir)
             if (fixturedef.argname, loc) in seen:
                 continue
             seen.add((fixturedef.argname, loc))
