@@ -34,7 +34,6 @@ from _pytest.store import Store
 if TYPE_CHECKING:
     # Imported here due to circular import.
     from _pytest.main import Session
-    from _pytest.warning_types import PytestWarning
     from _pytest._code.code import _TracebackStyle
 
 
@@ -198,27 +197,31 @@ class Node(metaclass=NodeMeta):
     def __repr__(self) -> str:
         return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
 
-    def warn(self, warning: "PytestWarning") -> None:
+    def warn(self, warning: Warning) -> None:
         """Issue a warning for this Node.
 
         Warnings will be displayed after the test session, unless explicitly suppressed.
 
         :param Warning warning:
-            The warning instance to issue. Must be a subclass of PytestWarning.
+            The warning instance to issue.
 
-        :raises ValueError: If ``warning`` instance is not a subclass of PytestWarning.
+        :raises ValueError: If ``warning`` instance is not a subclass of Warning.
 
         Example usage:
 
         .. code-block:: python
 
             node.warn(PytestWarning("some message"))
-        """
-        from _pytest.warning_types import PytestWarning
+            node.warn(UserWarning("some message"))
 
-        if not isinstance(warning, PytestWarning):
+        .. versionchanged:: 6.2
+            Any subclass of :class:`Warning` is now accepted, rather than only
+            :class:`PytestWarning <pytest.PytestWarning>` subclasses.
+        """
+        # enforce type checks here to avoid getting a generic type error later otherwise.
+        if not isinstance(warning, Warning):
             raise ValueError(
-                "warning must be an instance of PytestWarning or subclass, got {!r}".format(
+                "warning must be an instance of Warning or subclass, got {!r}".format(
                     warning
                 )
             )
