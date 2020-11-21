@@ -1,1 +1,1 @@
-When a comparison between `namedtuple` instances of the same type fails, pytest now shows the differing field names (possibly nested) instead of their indexes.
+When a comparison between :func:`namedtuple <collections.namedtuple>` instances of the same type fails, pytest now shows the differing field names (possibly nested) instead of their indexes.
