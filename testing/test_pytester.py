@@ -610,6 +610,11 @@ def test_linematcher_no_matching_after_match() -> None:
     assert str(e.value).splitlines() == ["fnmatch: '*'", "   with: '1'"]
 
 
+def test_linematcher_string_api() -> None:
+    lm = LineMatcher(["foo", "bar"])
+    assert str(lm) == "foo\nbar"
+
+
 def test_pytester_addopts_before_testdir(request, monkeypatch) -> None:
     orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")

@@ -527,6 +527,7 @@ To use it, include in your topmost ``conftest.py`` file:
 
 .. autoclass:: LineMatcher()
     :members:
+    :special-members: __str__
 
 .. autoclass:: HookRecorder()
     :members:

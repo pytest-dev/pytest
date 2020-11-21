@@ -512,7 +512,7 @@ class RunResult:
         self.stdout = LineMatcher(outlines)
         """:class:`LineMatcher` of stdout.
 
-        Use e.g. :func:`stdout.str() <LineMatcher.str()>` to reconstruct stdout, or the commonly used
+        Use e.g. :func:`str(stdout) <LineMatcher.__str__()>` to reconstruct stdout, or the commonly used
         :func:`stdout.fnmatch_lines() <LineMatcher.fnmatch_lines()>` method.
         """
         self.stderr = LineMatcher(errlines)
@@ -1707,6 +1707,14 @@ class LineMatcher:
         self.lines = lines
         self._log_output: List[str] = []
 
+    def __str__(self) -> str:
+        """Return the entire original text.
+
+        .. versionadded:: 6.2
+            You can use :meth:`str` in older versions.
+        """
+        return "\n".join(self.lines)
+
     def _getlines(self, lines2: Union[str, Sequence[str], Source]) -> Sequence[str]:
         if isinstance(lines2, str):
             lines2 = Source(lines2)
@@ -1908,4 +1916,4 @@ class LineMatcher:
 
     def str(self) -> str:
         """Return the entire original text."""
-        return "\n".join(self.lines)
+        return str(self)

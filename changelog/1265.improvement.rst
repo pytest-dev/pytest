@@ -1,0 +1,1 @@
+Added an ``__str__`` implementation to the :class:`~pytest.pytester.LineMatcher` class which is returned from ``pytester.run_pytest().stdout`` and similar. It returns the entire output, like the existing ``str()`` method.
