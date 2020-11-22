@@ -100,15 +100,18 @@ class CodeLocation(NamedTuple):
     lineno: int
 
 
+# TODO: integrate after pytest 3.6.0 has been dropped
 def CodeLocation__str__(self: CodeLocation) -> str:
-    """Python 3.6 hack for NamedTuple __str__"""
+    """Python 3.6.0 hack for NamedTuple __str__"""
     return f"{self.path}:{self.lineno}"
 
 
 setattr(CodeLocation, "__str__", CodeLocation__str__)
 
 
-def getlocation(function, curdir: Path | None) -> CodeLocation:
+def getlocation(
+    function, *, relative_to: Path | None, allow_escape: bool
+) -> CodeLocation:
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno
@@ -116,9 +119,12 @@ def getlocation(function, curdir: Path | None) -> CodeLocation:
     # TODO: this cycle indicates a larger issue
     from .pathlib import bestrelpath
 
-    if curdir is not None:
+    if relative_to is not None:
         try:
-            relfn = Path(bestrelpath(curdir, fn))
+            if allow_escape:
+                relfn = Path(bestrelpath(relative_to, fn))
+            else:
+                relfn = relative_to.relative_to(relative_to)
         except ValueError:
             pass
         else:

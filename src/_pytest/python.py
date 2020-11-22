@@ -1576,9 +1576,8 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
-    def get_best_relpath(func) -> str:
-        loc = getlocation(func, str(curdir))
-        return bestrelpath(curdir, Path(loc))
+    def get_best_relpath(func):
+        return getlocation(func, curdir)
 
     def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
         argname = fixture_def.argname
@@ -1599,8 +1598,11 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     def write_item(item: nodes.Item) -> None:
         # Not all items have _fixtureinfo attribute.
         info: Optional[FuncFixtureInfo] = getattr(item, "_fixtureinfo", None)
+        function: Optional[Callable[..., Any]] = getattr(item, "function", None)
         if info is None or not info.name2fixturedefs:
             # This test item does not use any fixtures.
+            return
+        if function is None:
             return
         tw.line()
         tw.sep("-", f"fixtures used by {item.name}")
@@ -1642,7 +1644,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if not fixturedefs:
             continue
         for fixturedef in fixturedefs:
-            loc = getlocation(fixturedef.func, curdir)
+            loc = getlocation(fixturedef.func, relative_to=curdir, allow_escape=True)
             if (fixturedef.argname, loc) in seen:
                 continue
             seen.add((fixturedef.argname, loc))
@@ -1668,7 +1670,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
             continue
         tw.write(f"{argname}", green=True)
         if fixturedef.scope != "function":
-            tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
+            tw.write(f" [{fixturedef.scope} scope]", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
         doc = inspect.getdoc(fixturedef.func)
