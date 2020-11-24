@@ -251,6 +251,7 @@ Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to 
 Example for using multiple custom markers:
 
 .. code-block:: python
+
     @pytest.mark.timeout(10, "slow", method="thread")
     @pytest.mark.slow
     def test_function():
