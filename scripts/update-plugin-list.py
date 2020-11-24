@@ -57,13 +57,11 @@ def iter_plugins():
                 last_release = release_date.strftime("%b %d, %Y")
                 break
         name = f'`{info["name"]} <{info["project_url"]}>`_'
-        pyversions = f'.. image:: https://img.shields.io/pypi/pyversions/{info["name"]}'
         summary = info["summary"].replace("\n", "")
         summary = re.sub(r"_\b", "", summary)
         yield {
             "name": name,
             "summary": summary,
-            "pyversions": pyversions,
             "last release": last_release,
             "status": status,
             "requires": requires,
