@@ -251,13 +251,12 @@ Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to 
 Example for using multiple custom markers:
 
 .. code-block:: python
-
     @pytest.mark.timeout(10, "slow", method="thread")
     @pytest.mark.slow
     def test_function():
         ...
 
-Will order execution of markers from inside - out. The above example will execute @pytest.mark.slow before @pytest.mark.timeout(10, "slow", method="thread"). 
+Will order execution of markers from inside - out. The above example will execute @pytest.mark.slow before @pytest.mark.timeout(10, "slow", method="thread").
 
 .. _`fixtures-api`:
 
