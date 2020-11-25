@@ -257,7 +257,7 @@ Example for using multiple custom markers:
     def test_function():
         ...
 
-Will order execution of markers from inside - out. The above example will execute @pytest.mark.slow before @pytest.mark.timeout(10, "slow", method="thread").
+When :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>` is used with multiple markers, the marker closest to the function will be iterated over first. The above example will result in ``@pytest.mark.slow`` followed by ``@pytest.mark.timeout(...)``.
 
 .. _`fixtures-api`:
 
