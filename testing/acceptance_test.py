@@ -12,7 +12,7 @@ from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
 
 
-def prepend_pythonpath(*dirs):
+def prepend_pythonpath(*dirs) -> str:
     cur = os.getenv("PYTHONPATH")
     if cur:
         dirs += (cur,)
@@ -20,20 +20,20 @@ def prepend_pythonpath(*dirs):
 
 
 class TestGeneralUsage:
-    def test_config_error(self, pytester: Pytester):
+    def test_config_error(self, pytester: Pytester) -> None:
         pytester.copy_example("conftest_usageerror/conftest.py")
         result = pytester.runpytest(pytester.path)
         assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(["*ERROR: hello"])
         result.stdout.fnmatch_lines(["*pytest_unconfigure_called"])
 
-    def test_root_conftest_syntax_error(self, pytester: Pytester):
+    def test_root_conftest_syntax_error(self, pytester: Pytester) -> None:
         pytester.makepyfile(conftest="raise SyntaxError\n")
         result = pytester.runpytest()
         result.stderr.fnmatch_lines(["*raise SyntaxError*"])
         assert result.ret != 0
 
-    def test_early_hook_error_issue38_1(self, pytester: Pytester):
+    def test_early_hook_error_issue38_1(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             def pytest_sessionstart():
@@ -53,7 +53,7 @@ class TestGeneralUsage:
             ["*INTERNALERROR*def pytest_sessionstart():*", "*INTERNALERROR*0 / 0*"]
         )
 
-    def test_early_hook_configure_error_issue38(self, pytester: Pytester):
+    def test_early_hook_configure_error_issue38(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             def pytest_configure():
@@ -67,12 +67,12 @@ class TestGeneralUsage:
             ["*INTERNALERROR*File*conftest.py*line 2*", "*0 / 0*"]
         )
 
-    def test_file_not_found(self, pytester: Pytester):
+    def test_file_not_found(self, pytester: Pytester) -> None:
         result = pytester.runpytest("asd")
         assert result.ret != 0
         result.stderr.fnmatch_lines(["ERROR: file or directory not found: asd"])
 
-    def test_file_not_found_unconfigure_issue143(self, pytester: Pytester):
+    def test_file_not_found_unconfigure_issue143(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             def pytest_configure():
@@ -86,7 +86,7 @@ class TestGeneralUsage:
         result.stderr.fnmatch_lines(["ERROR: file or directory not found: asd"])
         result.stdout.fnmatch_lines(["*---configure", "*---unconfigure"])
 
-    def test_config_preparse_plugin_option(self, pytester: Pytester):
+    def test_config_preparse_plugin_option(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             pytest_xyz="""
             def pytest_addoption(parser):
@@ -106,7 +106,7 @@ class TestGeneralUsage:
     @pytest.mark.parametrize("load_cov_early", [True, False])
     def test_early_load_setuptools_name(
         self, pytester: Pytester, monkeypatch, load_cov_early
-    ):
+    ) -> None:
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
 
         pytester.makepyfile(mytestplugin1_module="")
@@ -150,7 +150,7 @@ class TestGeneralUsage:
             assert loaded == ["myplugin1", "myplugin2", "mycov"]
 
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
-    def test_assertion_rewrite(self, pytester: Pytester, import_mode):
+    def test_assertion_rewrite(self, pytester: Pytester, import_mode) -> None:
         p = pytester.makepyfile(
             """
             def test_this():
@@ -162,7 +162,7 @@ class TestGeneralUsage:
         result.stdout.fnmatch_lines([">       assert x", "E       assert 0"])
         assert result.ret == 1
 
-    def test_nested_import_error(self, pytester: Pytester):
+    def test_nested_import_error(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
                 import import_fails
@@ -180,7 +180,7 @@ class TestGeneralUsage:
         )
         assert result.ret == 2
 
-    def test_not_collectable_arguments(self, pytester: Pytester):
+    def test_not_collectable_arguments(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("")
         p2 = pytester.makefile(".pyc", "123")
         result = pytester.runpytest(p1, p2)
@@ -194,7 +194,9 @@ class TestGeneralUsage:
         )
 
     @pytest.mark.filterwarnings("default")
-    def test_better_reporting_on_conftest_load_failure(self, pytester: Pytester):
+    def test_better_reporting_on_conftest_load_failure(
+        self, pytester: Pytester
+    ) -> None:
         """Show a user-friendly traceback on conftest import failures (#486, #3332)"""
         pytester.makepyfile("")
         conftest = pytester.makeconftest(
@@ -222,7 +224,7 @@ class TestGeneralUsage:
             "E   ModuleNotFoundError: No module named 'qwerty'",
         ]
 
-    def test_early_skip(self, pytester: Pytester):
+    def test_early_skip(self, pytester: Pytester) -> None:
         pytester.mkdir("xyz")
         pytester.makeconftest(
             """
@@ -235,13 +237,13 @@ class TestGeneralUsage:
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*1 skip*"])
 
-    def test_issue88_initial_file_multinodes(self, pytester: Pytester):
+    def test_issue88_initial_file_multinodes(self, pytester: Pytester) -> None:
         pytester.copy_example("issue88_initial_file_multinodes")
         p = pytester.makepyfile("def test_hello(): pass")
         result = pytester.runpytest(p, "--collect-only")
         result.stdout.fnmatch_lines(["*MyFile*test_issue88*", "*Module*test_issue88*"])
 
-    def test_issue93_initialnode_importing_capturing(self, pytester: Pytester):
+    def test_issue93_initialnode_importing_capturing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             import sys
@@ -254,7 +256,7 @@ class TestGeneralUsage:
         result.stdout.no_fnmatch_line("*should not be seen*")
         assert "stderr42" not in result.stderr.str()
 
-    def test_conftest_printing_shows_if_error(self, pytester: Pytester):
+    def test_conftest_printing_shows_if_error(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             print("should be seen")
@@ -265,7 +267,7 @@ class TestGeneralUsage:
         assert result.ret != 0
         assert "should be seen" in result.stdout.str()
 
-    def test_issue109_sibling_conftests_not_loaded(self, pytester: Pytester):
+    def test_issue109_sibling_conftests_not_loaded(self, pytester: Pytester) -> None:
         sub1 = pytester.mkdir("sub1")
         sub2 = pytester.mkdir("sub2")
         sub1.joinpath("conftest.py").write_text("assert 0")
@@ -279,7 +281,7 @@ class TestGeneralUsage:
         result = pytester.runpytest(sub1)
         assert result.ret == ExitCode.USAGE_ERROR
 
-    def test_directory_skipped(self, pytester: Pytester):
+    def test_directory_skipped(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             import pytest
@@ -292,7 +294,7 @@ class TestGeneralUsage:
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         result.stdout.fnmatch_lines(["*1 skipped*"])
 
-    def test_multiple_items_per_collector_byid(self, pytester: Pytester):
+    def test_multiple_items_per_collector_byid(self, pytester: Pytester) -> None:
         c = pytester.makeconftest(
             """
             import pytest
@@ -311,7 +313,7 @@ class TestGeneralUsage:
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 pass*"])
 
-    def test_skip_on_generated_funcarg_id(self, pytester: Pytester):
+    def test_skip_on_generated_funcarg_id(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             import pytest
@@ -329,7 +331,7 @@ class TestGeneralUsage:
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 skipped*"])
 
-    def test_direct_addressing_selects(self, pytester: Pytester):
+    def test_direct_addressing_selects(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
             def pytest_generate_tests(metafunc):
@@ -342,7 +344,7 @@ class TestGeneralUsage:
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_direct_addressing_notfound(self, pytester: Pytester):
+    def test_direct_addressing_notfound(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
             def test_func():
@@ -353,14 +355,14 @@ class TestGeneralUsage:
         assert res.ret
         res.stderr.fnmatch_lines(["*ERROR*not found*"])
 
-    def test_docstring_on_hookspec(self):
+    def test_docstring_on_hookspec(self) -> None:
         from _pytest import hookspec
 
         for name, value in vars(hookspec).items():
             if name.startswith("pytest_"):
                 assert value.__doc__, "no docstring for %s" % name
 
-    def test_initialization_error_issue49(self, pytester: Pytester):
+    def test_initialization_error_issue49(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             def pytest_configure():
@@ -375,7 +377,7 @@ class TestGeneralUsage:
     @pytest.mark.parametrize("lookfor", ["test_fun.py::test_a"])
     def test_issue134_report_error_when_collecting_member(
         self, pytester: Pytester, lookfor
-    ):
+    ) -> None:
         pytester.makepyfile(
             test_fun="""
             def test_a():
@@ -388,7 +390,7 @@ class TestGeneralUsage:
             result.stderr.fnmatch_lines(["*ERROR*"])
             assert result.ret == 4  # usage error only if item not found
 
-    def test_report_all_failed_collections_initargs(self, pytester: Pytester):
+    def test_report_all_failed_collections_initargs(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             from _pytest.config import ExitCode
@@ -404,7 +406,9 @@ class TestGeneralUsage:
         result.stdout.fnmatch_lines(["pytest_sessionfinish_called"])
         assert result.ret == ExitCode.USAGE_ERROR
 
-    def test_namespace_import_doesnt_confuse_import_hook(self, pytester: Pytester):
+    def test_namespace_import_doesnt_confuse_import_hook(
+        self, pytester: Pytester
+    ) -> None:
         """Ref #383.
 
         Python 3.3's namespace package messed with our import hooks.
@@ -427,7 +431,7 @@ class TestGeneralUsage:
         res = pytester.runpytest(p.name)
         assert res.ret == 0
 
-    def test_unknown_option(self, pytester: Pytester):
+    def test_unknown_option(self, pytester: Pytester) -> None:
         result = pytester.runpytest("--qwlkej")
         result.stderr.fnmatch_lines(
             """
@@ -435,7 +439,9 @@ class TestGeneralUsage:
         """
         )
 
-    def test_getsourcelines_error_issue553(self, pytester: Pytester, monkeypatch):
+    def test_getsourcelines_error_issue553(
+        self, pytester: Pytester, monkeypatch
+    ) -> None:
         monkeypatch.setattr("inspect.getsourcelines", None)
         p = pytester.makepyfile(
             """
@@ -456,7 +462,7 @@ class TestGeneralUsage:
 
     def test_plugins_given_as_strings(
         self, pytester: Pytester, monkeypatch, _sys_snapshot
-    ):
+    ) -> None:
         """Test that str values passed to main() as `plugins` arg are
         interpreted as module names to be imported and registered (#855)."""
         with pytest.raises(ImportError) as excinfo:
@@ -469,7 +475,7 @@ class TestGeneralUsage:
         monkeypatch.setitem(sys.modules, "myplugin", mod)
         assert pytest.main(args=[str(pytester.path)], plugins=["myplugin"]) == 0
 
-    def test_parametrized_with_bytes_regex(self, pytester: Pytester):
+    def test_parametrized_with_bytes_regex(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
             import re
@@ -482,7 +488,7 @@ class TestGeneralUsage:
         res = pytester.runpytest(p)
         res.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_parametrized_with_null_bytes(self, pytester: Pytester):
+    def test_parametrized_with_null_bytes(self, pytester: Pytester) -> None:
         """Test parametrization with values that contain null bytes and unicode characters (#2644, #2957)"""
         p = pytester.makepyfile(
             """\
@@ -498,7 +504,7 @@ class TestGeneralUsage:
 
 
 class TestInvocationVariants:
-    def test_earlyinit(self, pytester: Pytester):
+    def test_earlyinit(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
             import pytest
@@ -508,14 +514,14 @@ class TestInvocationVariants:
         result = pytester.runpython(p)
         assert result.ret == 0
 
-    def test_pydoc(self, pytester: Pytester):
+    def test_pydoc(self, pytester: Pytester) -> None:
         for name in ("py.test", "pytest"):
             result = pytester.runpython_c(f"import {name};help({name})")
             assert result.ret == 0
             s = result.stdout.str()
             assert "MarkGenerator" in s
 
-    def test_import_star_py_dot_test(self, pytester: Pytester):
+    def test_import_star_py_dot_test(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
             from py.test import *
@@ -532,7 +538,7 @@ class TestInvocationVariants:
         result = pytester.runpython(p)
         assert result.ret == 0
 
-    def test_import_star_pytest(self, pytester: Pytester):
+    def test_import_star_pytest(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
             from pytest import *
@@ -546,7 +552,7 @@ class TestInvocationVariants:
         result = pytester.runpython(p)
         assert result.ret == 0
 
-    def test_double_pytestcmdline(self, pytester: Pytester):
+    def test_double_pytestcmdline(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             run="""
             import pytest
@@ -563,17 +569,17 @@ class TestInvocationVariants:
         result = pytester.runpython(p)
         result.stdout.fnmatch_lines(["*1 passed*", "*1 passed*"])
 
-    def test_python_minus_m_invocation_ok(self, pytester: Pytester):
+    def test_python_minus_m_invocation_ok(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test_hello(): pass")
         res = pytester.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 0
 
-    def test_python_minus_m_invocation_fail(self, pytester: Pytester):
+    def test_python_minus_m_invocation_fail(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test_fail(): 0/0")
         res = pytester.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 1
 
-    def test_python_pytest_package(self, pytester: Pytester):
+    def test_python_pytest_package(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test_pass(): pass")
         res = pytester.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 0
@@ -594,7 +600,7 @@ class TestInvocationVariants:
         assert retcode == ExitCode.NO_TESTS_COLLECTED
         out, err = capsys.readouterr()
 
-    def test_invoke_plugin_api(self, capsys):
+    def test_invoke_plugin_api(self, capsys) -> None:
         class MyPlugin:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
@@ -603,7 +609,7 @@ class TestInvocationVariants:
         out, err = capsys.readouterr()
         assert "--myopt" in out
 
-    def test_pyargs_importerror(self, pytester: Pytester, monkeypatch):
+    def test_pyargs_importerror(self, pytester: Pytester, monkeypatch) -> None:
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", False)
         path = pytester.mkpydir("tpkg")
         path.joinpath("test_hello.py").write_text("raise ImportError")
@@ -613,7 +619,7 @@ class TestInvocationVariants:
 
         result.stdout.fnmatch_lines(["collected*0*items*/*1*error"])
 
-    def test_pyargs_only_imported_once(self, pytester: Pytester):
+    def test_pyargs_only_imported_once(self, pytester: Pytester) -> None:
         pkg = pytester.mkpydir("foo")
         pkg.joinpath("test_foo.py").write_text(
             "print('hello from test_foo')\ndef test(): pass"
@@ -630,13 +636,13 @@ class TestInvocationVariants:
         # should only configure once
         assert result.outlines.count("configuring") == 1
 
-    def test_pyargs_filename_looks_like_module(self, pytester: Pytester):
+    def test_pyargs_filename_looks_like_module(self, pytester: Pytester) -> None:
         pytester.path.joinpath("conftest.py").touch()
         pytester.path.joinpath("t.py").write_text("def test(): pass")
         result = pytester.runpytest("--pyargs", "t.py")
         assert result.ret == ExitCode.OK
 
-    def test_cmdline_python_package(self, pytester: Pytester, monkeypatch):
+    def test_cmdline_python_package(self, pytester: Pytester, monkeypatch) -> None:
         import warnings
 
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", False)
@@ -665,7 +671,9 @@ class TestInvocationVariants:
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
 
-    def test_cmdline_python_namespace_package(self, pytester: Pytester, monkeypatch):
+    def test_cmdline_python_namespace_package(
+        self, pytester: Pytester, monkeypatch
+    ) -> None:
         """Test --pyargs option with namespace packages (#1567).
 
         Ref: https://packaging.python.org/guides/packaging-namespace-packages/
@@ -732,7 +740,7 @@ class TestInvocationVariants:
             ["*test_world.py::test_other*PASSED*", "*1 passed*"]
         )
 
-    def test_invoke_test_and_doctestmodules(self, pytester: Pytester):
+    def test_invoke_test_and_doctestmodules(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
             def test():
@@ -742,7 +750,9 @@ class TestInvocationVariants:
         result = pytester.runpytest(str(p) + "::test", "--doctest-modules")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_cmdline_python_package_symlink(self, pytester: Pytester, monkeypatch):
+    def test_cmdline_python_package_symlink(
+        self, pytester: Pytester, monkeypatch
+    ) -> None:
         """
         --pyargs with packages with path containing symlink can have conftest.py in
         their package (#2985)
@@ -799,13 +809,13 @@ class TestInvocationVariants:
             ]
         )
 
-    def test_cmdline_python_package_not_exists(self, pytester: Pytester):
+    def test_cmdline_python_package_not_exists(self, pytester: Pytester) -> None:
         result = pytester.runpytest("--pyargs", "tpkgwhatv")
         assert result.ret
         result.stderr.fnmatch_lines(["ERROR*module*or*package*not*found*"])
 
     @pytest.mark.xfail(reason="decide: feature or bug")
-    def test_noclass_discovery_if_not_testcase(self, pytester: Pytester):
+    def test_noclass_discovery_if_not_testcase(self, pytester: Pytester) -> None:
         testpath = pytester.makepyfile(
             """
             import unittest
@@ -820,7 +830,7 @@ class TestInvocationVariants:
         reprec = pytester.inline_run(testpath)
         reprec.assertoutcome(passed=1)
 
-    def test_doctest_id(self, pytester: Pytester):
+    def test_doctest_id(self, pytester: Pytester) -> None:
         pytester.makefile(
             ".txt",
             """
@@ -845,7 +855,7 @@ class TestInvocationVariants:
         result = pytester.runpytest(testid, "-rf", "--tb=short")
         result.stdout.fnmatch_lines(expected_lines)
 
-    def test_core_backward_compatibility(self):
+    def test_core_backward_compatibility(self) -> None:
         """Test backward compatibility for get_plugin_manager function. See #787."""
         import _pytest.config
 
@@ -854,7 +864,7 @@ class TestInvocationVariants:
             is _pytest.config.PytestPluginManager
         )
 
-    def test_has_plugin(self, request):
+    def test_has_plugin(self, request) -> None:
         """Test hasplugin function of the plugin manager (#932)."""
         assert request.config.pluginmanager.hasplugin("python")
 
@@ -872,7 +882,7 @@ class TestDurations:
             timing.sleep(0.020)
     """
 
-    def test_calls(self, pytester: Pytester, mock_timing):
+    def test_calls(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=10")
         assert result.ret == 0
@@ -885,7 +895,7 @@ class TestDurations:
             ["(8 durations < 0.005s hidden.  Use -vv to show these durations.)"]
         )
 
-    def test_calls_show_2(self, pytester: Pytester, mock_timing):
+    def test_calls_show_2(self, pytester: Pytester, mock_timing) -> None:
 
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=2")
@@ -894,7 +904,7 @@ class TestDurations:
         lines = result.stdout.get_lines_after("*slowest*durations*")
         assert "4 passed" in lines[2]
 
-    def test_calls_showall(self, pytester: Pytester, mock_timing):
+    def test_calls_showall(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=0")
         assert result.ret == 0
@@ -908,7 +918,7 @@ class TestDurations:
                 else:
                     raise AssertionError(f"not found {x} {y}")
 
-    def test_calls_showall_verbose(self, pytester: Pytester, mock_timing):
+    def test_calls_showall_verbose(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=0", "-vv")
         assert result.ret == 0
@@ -921,14 +931,14 @@ class TestDurations:
                 else:
                     raise AssertionError(f"not found {x} {y}")
 
-    def test_with_deselected(self, pytester: Pytester, mock_timing):
+    def test_with_deselected(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=2", "-k test_3")
         assert result.ret == 0
 
         result.stdout.fnmatch_lines(["*durations*", "*call*test_3*"])
 
-    def test_with_failing_collection(self, pytester: Pytester, mock_timing):
+    def test_with_failing_collection(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         pytester.makepyfile(test_collecterror="""xyz""")
         result = pytester.runpytest_inprocess("--durations=2", "-k test_1")
@@ -939,7 +949,7 @@ class TestDurations:
         # output
         result.stdout.no_fnmatch_line("*duration*")
 
-    def test_with_not(self, pytester: Pytester, mock_timing):
+    def test_with_not(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("-k not 1")
         assert result.ret == 0
@@ -958,7 +968,7 @@ class TestDurationsWithFixture:
             timing.sleep(5)
     """
 
-    def test_setup_function(self, pytester: Pytester, mock_timing):
+    def test_setup_function(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=10")
         assert result.ret == 0
@@ -972,7 +982,7 @@ class TestDurationsWithFixture:
         )
 
 
-def test_zipimport_hook(pytester: Pytester):
+def test_zipimport_hook(pytester: Pytester) -> None:
     """Test package loader is being used correctly (see #1837)."""
     zipapp = pytest.importorskip("zipapp")
     pytester.path.joinpath("app").mkdir()
@@ -995,7 +1005,7 @@ def test_zipimport_hook(pytester: Pytester):
     result.stdout.no_fnmatch_line("*INTERNALERROR>*")
 
 
-def test_import_plugin_unicode_name(pytester: Pytester):
+def test_import_plugin_unicode_name(pytester: Pytester) -> None:
     pytester.makepyfile(myplugin="")
     pytester.makepyfile("def test(): pass")
     pytester.makeconftest("pytest_plugins = ['myplugin']")
@@ -1003,7 +1013,7 @@ def test_import_plugin_unicode_name(pytester: Pytester):
     assert r.ret == 0
 
 
-def test_pytest_plugins_as_module(pytester: Pytester):
+def test_pytest_plugins_as_module(pytester: Pytester) -> None:
     """Do not raise an error if pytest_plugins attribute is a module (#3899)"""
     pytester.makepyfile(
         **{
@@ -1017,7 +1027,7 @@ def test_pytest_plugins_as_module(pytester: Pytester):
     result.stdout.fnmatch_lines(["* 1 passed in *"])
 
 
-def test_deferred_hook_checking(pytester: Pytester):
+def test_deferred_hook_checking(pytester: Pytester) -> None:
     """Check hooks as late as possible (#1821)."""
     pytester.syspathinsert()
     pytester.makepyfile(
@@ -1045,7 +1055,7 @@ def test_deferred_hook_checking(pytester: Pytester):
     result.stdout.fnmatch_lines(["* 1 passed *"])
 
 
-def test_fixture_values_leak(pytester: Pytester):
+def test_fixture_values_leak(pytester: Pytester) -> None:
     """Ensure that fixture objects are properly destroyed by the garbage collector at the end of their expected
     life-times (#2981).
     """
@@ -1093,7 +1103,7 @@ def test_fixture_values_leak(pytester: Pytester):
     result.stdout.fnmatch_lines(["* 2 passed *"])
 
 
-def test_fixture_order_respects_scope(pytester: Pytester):
+def test_fixture_order_respects_scope(pytester: Pytester) -> None:
     """Ensure that fixtures are created according to scope order (#2405)."""
     pytester.makepyfile(
         """
@@ -1118,7 +1128,7 @@ def test_fixture_order_respects_scope(pytester: Pytester):
     assert result.ret == 0
 
 
-def test_frame_leak_on_failing_test(pytester: Pytester):
+def test_frame_leak_on_failing_test(pytester: Pytester) -> None:
     """Pytest would leak garbage referencing the frames of tests that failed
     that could never be reclaimed (#2798).
 
@@ -1151,20 +1161,20 @@ def test_frame_leak_on_failing_test(pytester: Pytester):
     result.stdout.fnmatch_lines(["*1 failed, 1 passed in*"])
 
 
-def test_fixture_mock_integration(pytester: Pytester):
+def test_fixture_mock_integration(pytester: Pytester) -> None:
     """Test that decorators applied to fixture are left working (#3774)"""
     p = pytester.copy_example("acceptance/fixture_mock_integration.py")
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-def test_usage_error_code(pytester: Pytester):
+def test_usage_error_code(pytester: Pytester) -> None:
     result = pytester.runpytest("-unknown-option-")
     assert result.ret == ExitCode.USAGE_ERROR
 
 
 @pytest.mark.filterwarnings("default")
-def test_warn_on_async_function(pytester: Pytester):
+def test_warn_on_async_function(pytester: Pytester) -> None:
     # In the below we .close() the coroutine only to avoid
     # "RuntimeWarning: coroutine 'test_2' was never awaited"
     # which messes with other tests.
@@ -1197,7 +1207,7 @@ def test_warn_on_async_function(pytester: Pytester):
 
 
 @pytest.mark.filterwarnings("default")
-def test_warn_on_async_gen_function(pytester: Pytester):
+def test_warn_on_async_gen_function(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_async="""
         async def test_1():
@@ -1224,7 +1234,7 @@ def test_warn_on_async_gen_function(pytester: Pytester):
     )
 
 
-def test_pdb_can_be_rewritten(pytester: Pytester):
+def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
     pytester.makepyfile(
         **{
             "conftest.py": """
@@ -1261,7 +1271,7 @@ def test_pdb_can_be_rewritten(pytester: Pytester):
     assert result.ret == 1
 
 
-def test_tee_stdio_captures_and_live_prints(pytester: Pytester):
+def test_tee_stdio_captures_and_live_prints(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
         import sys
