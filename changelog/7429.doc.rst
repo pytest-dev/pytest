@@ -1,0 +1,1 @@
+Add more information and use cases about using ``pytest.skip`` for skipping doctests with example.
