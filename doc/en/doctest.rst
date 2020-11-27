@@ -269,7 +269,7 @@ You can use ``pytest.skip`` to dynamically skip doctests. For example:
 
 This will skip all the doctests in python files in that directory. To skip particular docstrings, use the ``@pytest.mark.skipif`` decorator. `Learn more <https://docs.pytest.org/en/reorganize-docs/new-docs/user/skipping.html>`_.
 
-``pytest.skip`` can also be used inside a python script - 
+``pytest.skip`` can also be used inside a python script -
 
 .. code-block:: python
 
