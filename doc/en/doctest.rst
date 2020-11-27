@@ -273,8 +273,9 @@ This will skip all the doctests in python files in that directory. To skip parti
 
 .. code-block:: python
 
-    if sys.platform.startswith('win'):
-        pytest.skip('all doctests defined in this file will not work on windows')
+    if sys.platform.startswith("win"):
+        pytest.skip("all doctests defined in this file will not work on windows")
+
 
     def test_function_1(x):
         """
@@ -282,13 +283,11 @@ This will skip all the doctests in python files in that directory. To skip parti
         # Expected result
         """
 
+
     def test_function_2(y):
         """
         >>> test_function_2(y)
         # Expected result
         """
-    ..
-    ..
-    ..
 
 This example will skip doctests on Windows machines for ``test_function_1()``, ``test_function_2()`` and all other functions for which docstrings are defined in that python file.
