@@ -253,12 +253,32 @@ Note that like the normal ``conftest.py``, the fixtures are discovered in the di
 Meaning that if you put your doctest with your source code, the relevant conftest.py needs to be in the same directory tree.
 Fixtures will not be discovered in a sibling directory tree!
 
-Skipping tests dynamically
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Skipping tests
+^^^^^^^^^^^^^^
 
-.. versionadded:: 4.4
+For the same reasons one might want to skip normal tests, it is also possible to skip
+tests inside doctests.
 
-You can use ``pytest.skip`` to dynamically skip doctests. For example:
+To skip a single check inside a doctest you can use the standard
+`doctest.SKIP <https://docs.python.org/3/library/doctest.html#doctest.SKIP>`__ directive:
+
+.. code-block:: python
+
+    def test_random(y):
+        """
+        >>> random.random()  # doctest: +SKIP
+        0.156231223
+
+        >>> 1 + 1
+        2
+        """
+
+This will skip the first check, but not the second.
+
+pytest also allows using the standard pytest functions :func:`pytest.skip` and
+:func:`pytest.xfail` inside doctests, which might be useful because you can
+then skip/xfail tests based on external conditions:
+
 
 .. code-block:: text
 
@@ -266,3 +286,20 @@ You can use ``pytest.skip`` to dynamically skip doctests. For example:
     >>> if sys.platform.startswith('win'):
     ...     pytest.skip('this doctest does not work on Windows')
     ...
+    >>> import fcntl
+    >>> ...
+
+However using those functions is discouraged because it reduces the readability of the
+docstring.
+
+.. note::
+
+    :func:`pytest.skip` and :func:`pytest.xfail` behave differently depending
+    if the doctests are in a Python file (in docstrings) or a text file containing
+    doctests intermingled with text:
+
+    * Python modules (docstrings): the functions only act in that specific docstring,
+      letting the other docstrings in the same module execute as normal.
+
+    * Text files: the functions will skip/xfail the checks for the rest of the entire
+      file.

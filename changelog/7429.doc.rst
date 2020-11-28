@@ -1,0 +1,1 @@
+Add more information and use cases about skipping doctests.
