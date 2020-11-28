@@ -290,6 +290,7 @@ Skipping a single doctest can be done by ``# doctest: +SKIP``
         >>> test_function_2(y)  # doctest: +SKIP
         # Expected result
         """
+        
 Doctests which have chances of failing due to some reason can be declared with ``pytest.xfail``
 
 .. code-block:: python
