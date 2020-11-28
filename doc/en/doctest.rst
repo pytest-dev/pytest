@@ -267,27 +267,38 @@ You can use ``pytest.skip`` to dynamically skip doctests. For example:
     ...     pytest.skip('this doctest does not work on Windows')
     ...
 
-This will skip all the doctests in python files in that directory. To skip particular docstrings, use the ``@pytest.mark.skipif`` decorator. `Learn more <https://docs.pytest.org/en/reorganize-docs/new-docs/user/skipping.html>`_.
-
-``pytest.skip`` can also be used inside a python script -
+``pytest.skip`` is used inside specific docstrings and are not effective at module level.
 
 .. code-block:: python
 
-    if sys.platform.startswith("win"):
-        pytest.skip("all doctests defined in this file will not work on windows")
-
-
     def test_function_1(x):
         """
+        >>> import pytest, sys
+        >>> if sys.platform.startswith('win'):
+        ...     pytest.skip('skip doctest for foobar_pytest_skip on Windows')
         >>> test_function_1(x)
         # Expected result
         """
 
+Skipping a single doctest can be done by ``# doctest: +SKIP``
+
+.. code-block:: python
 
     def test_function_2(y):
         """
-        >>> test_function_2(y)
+
+        >>> test_function_2(y)  # doctest: +SKIP
         # Expected result
         """
+Doctests which have chances of failing due to some reason can be declared with ``pytest.xfail``
 
-This example will skip doctests on Windows machines for ``test_function_1()``, ``test_function_2()`` and all other functions for which docstrings are defined in that python file.
+.. code-block:: python
+
+    def test_function_3(z):
+        """
+        >>> import pytest, sys
+        >>> if sys.platform.startswith('win'):
+        ...     pytest.xfail('xfail doctest for foobar_pytest_xfail on Windows')
+        >>> test_function_3(y)
+        # Expected result
+        """
