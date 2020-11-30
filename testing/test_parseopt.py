@@ -9,6 +9,8 @@ import py
 import pytest
 from _pytest.config import argparsing as parseopt
 from _pytest.config.exceptions import UsageError
+from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pytester import Pytester
 
 
 @pytest.fixture
@@ -287,7 +289,7 @@ class TestParser:
         assert "--preferences=value1 value2 value3" in help
 
 
-def test_argcomplete(testdir, monkeypatch) -> None:
+def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     try:
         bash_version = subprocess.run(
             ["bash", "--version"],
@@ -302,7 +304,7 @@ def test_argcomplete(testdir, monkeypatch) -> None:
         # See #7518.
         pytest.skip("not a real bash")
 
-    script = str(testdir.tmpdir.join("test_argcomplete"))
+    script = str(pytester.path.joinpath("test_argcomplete"))
 
     with open(str(script), "w") as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
@@ -323,7 +325,7 @@ def test_argcomplete(testdir, monkeypatch) -> None:
     arg = "--fu"
     monkeypatch.setenv("COMP_LINE", "pytest " + arg)
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
-    result = testdir.run("bash", str(script), arg)
+    result = pytester.run("bash", str(script), arg)
     if result.ret == 255:
         # argcomplete not found
         pytest.skip("argcomplete not available")
@@ -339,5 +341,5 @@ def test_argcomplete(testdir, monkeypatch) -> None:
     arg = "test_argc"
     monkeypatch.setenv("COMP_LINE", "pytest " + arg)
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
-    result = testdir.run("bash", str(script), arg)
+    result = pytester.run("bash", str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
