@@ -248,6 +248,16 @@ Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to 
     mark.args == (10, "slow")
     mark.kwargs == {"method": "thread"}
 
+Example for using multiple custom markers:
+
+.. code-block:: python
+
+    @pytest.mark.timeout(10, "slow", method="thread")
+    @pytest.mark.slow
+    def test_function():
+        ...
+
+When :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>` or :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers_with_node>` is used with multiple markers, the marker closest to the function will be iterated over first. The above example will result in ``@pytest.mark.slow`` followed by ``@pytest.mark.timeout(...)``.
 
 .. _`fixtures-api`:
 
