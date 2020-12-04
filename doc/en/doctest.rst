@@ -77,15 +77,6 @@ putting them into a pytest.ini file like this:
     [pytest]
     addopts = --doctest-modules
 
-.. note::
-
-    The builtin pytest doctest supports only ``doctest`` blocks, but if you are looking
-    for more advanced checking over *all* your documentation,
-    including doctests, ``.. codeblock:: python`` Sphinx directive support,
-    and any other examples your documentation may include, you may wish to
-    consider `Sybil <https://sybil.readthedocs.io/en/latest/index.html>`__.
-    It provides pytest integration out of the box.
-
 
 Encoding
 --------
@@ -303,3 +294,18 @@ docstring.
 
     * Text files: the functions will skip/xfail the checks for the rest of the entire
       file.
+
+
+Alternatives
+------------
+
+While the built-in pytest support provides a good set of functionalities for using
+doctests, if you use them extensively you might be interested in those external packages
+which add many more features, and include pytest integration:
+
+* `pytest-doctestplus <https://github.com/astropy/pytest-doctestplus>`__: provides
+  advanced doctest support and enables the testing of reStructuredText (".rst") files.
+
+* `Sybil <https://sybil.readthedocs.io>`__: provides a way to test examples in
+  your documentation by parsing them from the documentation source and evaluating
+  the parsed examples as part of your normal test run.
