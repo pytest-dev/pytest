@@ -1315,3 +1315,6 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     ret = popen.wait()
     assert popen.stderr.read() == b""
     assert ret == 1
+
+    # Cleanup.
+    popen.stderr.close()

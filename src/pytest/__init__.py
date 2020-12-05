@@ -53,7 +53,9 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
+from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
+from _pytest.warning_types import PytestUnraisableExceptionWarning
 from _pytest.warning_types import PytestWarning
 
 set_trace = __pytestPDB.set_trace
@@ -99,7 +101,9 @@ __all__ = [
     "PytestExperimentalApiWarning",
     "Pytester",
     "PytestUnhandledCoroutineWarning",
+    "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
+    "PytestUnraisableExceptionWarning",
     "PytestWarning",
     "raises",
     "register_assert_rewrite",
