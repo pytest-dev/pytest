@@ -621,7 +621,7 @@ class TestRequestBasic:
             def test_func(something): pass
         """
         )
-        req = fixtures.FixtureRequest(item)
+        req = fixtures.FixtureRequest(item, _ispytest=True)
         assert req.function == item.obj
         assert req.keywords == item.keywords
         assert hasattr(req.module, "test_func")
@@ -661,7 +661,9 @@ class TestRequestBasic:
         )
         (item1,) = testdir.genitems([modcol])
         assert item1.name == "test_method"
-        arg2fixturedefs = fixtures.FixtureRequest(item1)._arg2fixturedefs
+        arg2fixturedefs = fixtures.FixtureRequest(
+            item1, _ispytest=True
+        )._arg2fixturedefs
         assert len(arg2fixturedefs) == 1
         assert arg2fixturedefs["something"][0].argname == "something"
 
@@ -910,7 +912,7 @@ class TestRequestBasic:
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
         (item,) = testdir.genitems([modcol])
-        req = fixtures.FixtureRequest(item)
+        req = fixtures.FixtureRequest(item, _ispytest=True)
         assert req.fspath == modcol.fspath
 
     def test_request_fixturenames(self, testdir):
@@ -1052,7 +1054,7 @@ class TestRequestMarking:
                     pass
         """
         )
-        req1 = fixtures.FixtureRequest(item1)
+        req1 = fixtures.FixtureRequest(item1, _ispytest=True)
         assert "xfail" not in item1.keywords
         req1.applymarker(pytest.mark.xfail)
         assert "xfail" in item1.keywords
@@ -3882,7 +3884,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = testdir.inline_genitems()
-        request = FixtureRequest(items[0])
+        request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
     def test_func_closure_with_native_fixtures(self, testdir, monkeypatch) -> None:
@@ -3928,7 +3930,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = testdir.inline_genitems()
-        request = FixtureRequest(items[0])
+        request = FixtureRequest(items[0], _ispytest=True)
         # order of fixtures based on their scope and position in the parameter list
         assert (
             request.fixturenames == "s1 my_tmpdir_factory p1 m1 f1 f2 my_tmpdir".split()
@@ -3954,7 +3956,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = testdir.inline_genitems()
-        request = FixtureRequest(items[0])
+        request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
     def test_func_closure_scopes_reordered(self, testdir):
@@ -3987,7 +3989,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = testdir.inline_genitems()
-        request = FixtureRequest(items[0])
+        request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "s1 m1 c1 f2 f1".split()
 
     def test_func_closure_same_scope_closer_root_first(self, testdir):
@@ -4027,7 +4029,7 @@ class TestScopeOrdering:
             }
         )
         items, _ = testdir.inline_genitems()
-        request = FixtureRequest(items[0])
+        request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "p_sub m_conf m_sub m_test f1".split()
 
     def test_func_closure_all_scopes_complex(self, testdir):
@@ -4071,7 +4073,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = testdir.inline_genitems()
-        request = FixtureRequest(items[0])
+        request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
 
     def test_multiple_packages(self, testdir):

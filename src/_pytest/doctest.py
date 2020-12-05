@@ -563,7 +563,7 @@ def _setup_fixtures(doctest_item: DoctestItem) -> FixtureRequest:
     doctest_item._fixtureinfo = fm.getfixtureinfo(  # type: ignore[attr-defined]
         node=doctest_item, func=func, cls=None, funcargs=False
     )
-    fixture_request = FixtureRequest(doctest_item)
+    fixture_request = FixtureRequest(doctest_item, _ispytest=True)
     fixture_request._fillfixtures()
     return fixture_request
 

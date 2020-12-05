@@ -1156,7 +1156,7 @@ def test_gitignore(testdir):
     from _pytest.cacheprovider import Cache
 
     config = testdir.parseconfig()
-    cache = Cache.for_config(config)
+    cache = Cache.for_config(config, _ispytest=True)
     cache.set("foo", "bar")
     msg = "# Created by pytest automatically.\n*\n"
     gitignore_path = cache._cachedir.joinpath(".gitignore")
@@ -1178,7 +1178,7 @@ def test_does_not_create_boilerplate_in_existing_dirs(testdir):
         """
     )
     config = testdir.parseconfig()
-    cache = Cache.for_config(config)
+    cache = Cache.for_config(config, _ispytest=True)
     cache.set("foo", "bar")
 
     assert os.path.isdir("v")  # cache contents
@@ -1192,7 +1192,7 @@ def test_cachedir_tag(testdir):
     from _pytest.cacheprovider import CACHEDIR_TAG_CONTENT
 
     config = testdir.parseconfig()
-    cache = Cache.for_config(config)
+    cache = Cache.for_config(config, _ispytest=True)
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
     assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT

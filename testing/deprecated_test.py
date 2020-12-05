@@ -123,3 +123,17 @@ def test_yield_fixture_is_deprecated() -> None:
         @pytest.yield_fixture
         def fix():
             assert False
+
+
+def test_private_is_deprecated() -> None:
+    class PrivateInit:
+        def __init__(self, foo: int, *, _ispytest: bool = False) -> None:
+            deprecated.check_ispytest(_ispytest)
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning, match="private pytest class or function"
+    ):
+        PrivateInit(10)
+
+    # Doesn't warn.
+    PrivateInit(10, _ispytest=True)

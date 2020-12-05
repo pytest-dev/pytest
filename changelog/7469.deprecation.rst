@@ -1,0 +1,18 @@
+Directly constructing/calling the following classes/functions is now deprecated:
+
+- ``_pytest.cacheprovider.Cache``
+- ``_pytest.cacheprovider.Cache.for_config()``
+- ``_pytest.cacheprovider.Cache.clear_cache()``
+- ``_pytest.cacheprovider.Cache.cache_dir_from_config()``
+- ``_pytest.capture.CaptureFixture``
+- ``_pytest.fixtures.FixtureRequest``
+- ``_pytest.fixtures.SubRequest``
+- ``_pytest.logging.LogCaptureFixture``
+- ``_pytest.pytester.Pytester``
+- ``_pytest.pytester.Testdir``
+- ``_pytest.recwarn.WarningsRecorder``
+- ``_pytest.recwarn.WarningsChecker``
+- ``_pytest.tmpdir.TempPathFactory``
+- ``_pytest.tmpdir.TempdirFactory``
+
+These have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 7.0.0.

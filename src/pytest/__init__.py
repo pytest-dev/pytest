@@ -3,6 +3,8 @@
 from . import collect
 from _pytest import __version__
 from _pytest.assertion import register_assert_rewrite
+from _pytest.cacheprovider import Cache
+from _pytest.capture import CaptureFixture
 from _pytest.config import cmdline
 from _pytest.config import console_main
 from _pytest.config import ExitCode
@@ -14,8 +16,10 @@ from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import _fillfuncargs
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureLookupError
+from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
+from _pytest.logging import LogCaptureFixture
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import param
@@ -28,6 +32,8 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.pytester import Pytester
+from _pytest.pytester import Testdir
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Instance
@@ -36,7 +42,10 @@ from _pytest.python import Package
 from _pytest.python_api import approx
 from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
+from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
+from _pytest.tmpdir import TempdirFactory
+from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
 from _pytest.warning_types import PytestCacheWarning
 from _pytest.warning_types import PytestCollectionWarning
@@ -53,6 +62,8 @@ __all__ = [
     "__version__",
     "_fillfuncargs",
     "approx",
+    "Cache",
+    "CaptureFixture",
     "Class",
     "cmdline",
     "collect",
@@ -65,6 +76,7 @@ __all__ = [
     "File",
     "fixture",
     "FixtureLookupError",
+    "FixtureRequest",
     "freeze_includes",
     "Function",
     "hookimpl",
@@ -72,6 +84,7 @@ __all__ = [
     "importorskip",
     "Instance",
     "Item",
+    "LogCaptureFixture",
     "main",
     "mark",
     "Module",
@@ -84,6 +97,7 @@ __all__ = [
     "PytestConfigWarning",
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
+    "Pytester",
     "PytestUnhandledCoroutineWarning",
     "PytestUnknownMarkWarning",
     "PytestWarning",
@@ -92,7 +106,11 @@ __all__ = [
     "Session",
     "set_trace",
     "skip",
+    "TempPathFactory",
+    "Testdir",
+    "TempdirFactory",
     "UsageError",
+    "WarningsRecorder",
     "warns",
     "xfail",
     "yield_fixture",

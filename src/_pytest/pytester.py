@@ -1,4 +1,7 @@
-"""(Disabled by default) support for testing pytest and pytest plugins."""
+"""(Disabled by default) support for testing pytest and pytest plugins.
+
+PYTEST_DONT_REWRITE
+"""
 import collections.abc
 import contextlib
 import gc
@@ -45,6 +48,7 @@ from _pytest.config import hookimpl
 from _pytest.config import main
 from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -64,6 +68,9 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
     import pexpect
+
+
+pytest_plugins = ["pytester_assertions"]
 
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
@@ -408,16 +415,12 @@ class HookRecorder:
 
     def assertoutcome(self, passed: int = 0, skipped: int = 0, failed: int = 0) -> None:
         __tracebackhide__ = True
+        from _pytest.pytester_assertions import assertoutcome
 
         outcomes = self.listoutcomes()
-        realpassed, realskipped, realfailed = outcomes
-        obtained = {
-            "passed": len(realpassed),
-            "skipped": len(realskipped),
-            "failed": len(realfailed),
-        }
-        expected = {"passed": passed, "skipped": skipped, "failed": failed}
-        assert obtained == expected, outcomes
+        assertoutcome(
+            outcomes, passed=passed, skipped=skipped, failed=failed,
+        )
 
     def clear(self) -> None:
         self.calls[:] = []
@@ -452,7 +455,7 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
     It is particularly useful for testing plugins. It is similar to the :fixture:`tmp_path`
     fixture but provides methods which aid in testing pytest itself.
     """
-    return Pytester(request, tmp_path_factory)
+    return Pytester(request, tmp_path_factory, _ispytest=True)
 
 
 @fixture
@@ -463,7 +466,7 @@ def testdir(pytester: "Pytester") -> "Testdir":
 
     New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
     """
-    return Testdir(pytester)
+    return Testdir(pytester, _ispytest=True)
 
 
 @fixture
@@ -574,25 +577,18 @@ class RunResult:
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run."""
         __tracebackhide__ = True
+        from _pytest.pytester_assertions import assert_outcomes
 
-        d = self.parseoutcomes()
-        obtained = {
-            "passed": d.get("passed", 0),
-            "skipped": d.get("skipped", 0),
-            "failed": d.get("failed", 0),
-            "errors": d.get("errors", 0),
-            "xpassed": d.get("xpassed", 0),
-            "xfailed": d.get("xfailed", 0),
-        }
-        expected = {
-            "passed": passed,
-            "skipped": skipped,
-            "failed": failed,
-            "errors": errors,
-            "xpassed": xpassed,
-            "xfailed": xfailed,
-        }
-        assert obtained == expected
+        outcomes = self.parseoutcomes()
+        assert_outcomes(
+            outcomes,
+            passed=passed,
+            skipped=skipped,
+            failed=failed,
+            errors=errors,
+            xpassed=xpassed,
+            xfailed=xfailed,
+        )
 
 
 class CwdSnapshot:
@@ -653,8 +649,13 @@ class Pytester:
         pass
 
     def __init__(
-        self, request: FixtureRequest, tmp_path_factory: TempPathFactory
+        self,
+        request: FixtureRequest,
+        tmp_path_factory: TempPathFactory,
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self._request = request
         self._mod_collections: WeakKeyDictionary[
             Collector, List[Union[Item, Collector]]
@@ -1485,7 +1486,7 @@ class LineComp:
 
 
 @final
-@attr.s(repr=False, str=False)
+@attr.s(repr=False, str=False, init=False)
 class Testdir:
     """
     Similar to :class:`Pytester`, but this class works with legacy py.path.local objects instead.
@@ -1500,7 +1501,9 @@ class Testdir:
     TimeoutExpired = Pytester.TimeoutExpired
     Session = Pytester.Session
 
-    _pytester: Pytester = attr.ib()
+    def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
+        check_ispytest(_ispytest)
+        self._pytester = pytester
 
     @property
     def tmpdir(self) -> py.path.local:

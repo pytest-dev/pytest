@@ -1620,7 +1620,7 @@ class Function(PyobjMixin, nodes.Item):
 
     def _initrequest(self) -> None:
         self.funcargs: Dict[str, object] = {}
-        self._request = fixtures.FixtureRequest(self)
+        self._request = fixtures.FixtureRequest(self, _ispytest=True)
 
     @property
     def function(self):

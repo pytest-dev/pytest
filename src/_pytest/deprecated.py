@@ -8,6 +8,8 @@ All constants defined in this module should be either instances of
 :class:`PytestWarning`, or :class:`UnformattedWarning`
 in case of warnings which need to format their messages.
 """
+from warnings import warn
+
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import UnformattedWarning
 
@@ -59,3 +61,27 @@ FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestDeprecationWarning(
 STRICT_OPTION = PytestDeprecationWarning(
     "The --strict option is deprecated, use --strict-markers instead."
 )
+
+PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
+
+
+# You want to make some `__init__` or function "private".
+#
+#   def my_private_function(some, args):
+#       ...
+#
+# Do this:
+#
+#   def my_private_function(some, args, *, _ispytest: bool = False):
+#       check_ispytest(_ispytest)
+#       ...
+#
+# Change all internal/allowed calls to
+#
+#   my_private_function(some, args, _ispytest=True)
+#
+# All other calls will get the default _ispytest=False and trigger
+# the warning (possibly error in the future).
+def check_ispytest(ispytest: bool) -> None:
+    if not ispytest:
+        warn(PRIVATE, stacklevel=3)
