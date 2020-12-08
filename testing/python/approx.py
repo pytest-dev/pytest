@@ -7,6 +7,7 @@ from operator import ne
 from typing import Optional
 
 import pytest
+from _pytest.pytester import Pytester
 from pytest import approx
 
 inf, nan = float("inf"), float("nan")
@@ -456,12 +457,12 @@ class TestApprox:
         )
         mocked_doctest_runner.run(test)
 
-    def test_unicode_plus_minus(self, testdir):
+    def test_unicode_plus_minus(self, pytester: Pytester) -> None:
         """
         Comparing approx instances inside lists should not produce an error in the detailed diff.
         Integration test for issue #2111.
         """
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             import pytest
             def test_foo():
@@ -469,7 +470,7 @@ class TestApprox:
         """
         )
         expected = "4.0e-06"
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [f"*At index 0 diff: 3 != 4 ± {expected}", "=* 1 failed in *="]
         )
