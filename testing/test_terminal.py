@@ -133,7 +133,9 @@ class TestTerminal:
         )
         linecomp.assert_contains_lines(["*test_show_runtest_logstart.py*"])
 
-    def test_runtest_location_shown_before_test_starts(self, pytester):
+    def test_runtest_location_shown_before_test_starts(
+        self, pytester: Pytester
+    ) -> None:
         pytester.makepyfile(
             """
             def test_1():
@@ -146,7 +148,9 @@ class TestTerminal:
         child.sendeof()
         child.kill(15)
 
-    def test_report_collect_after_half_a_second(self, pytester, monkeypatch):
+    def test_report_collect_after_half_a_second(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
         """Test for "collecting" being updated after 0.5s"""
 
         pytester.makepyfile(
