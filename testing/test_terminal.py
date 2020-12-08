@@ -1633,9 +1633,9 @@ def test_terminal_no_summary_warnings_header_once(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("*= short test summary info =*")
 
 
-@pytest.fixture(scope="session")
-def tr() -> TerminalReporter:
-    config = _pytest.config._prepareconfig()
+@pytest.fixture(scope="function")
+def tr(pytester: Pytester) -> TerminalReporter:
+    config = pytester.parseconfig()
     return TerminalReporter(config)
 
 
