@@ -8,6 +8,7 @@ from typing import List
 from typing import Sequence
 from typing import Tuple
 from typing import Type
+from typing import Union
 
 import attr
 import py.path
@@ -869,9 +870,10 @@ class TestConfigFromdictargs:
                 """
             )
         )
-        os.chdir(cwd)
-        config = Config.fromdictargs(option_dict, ())
-        inipath = py.path.local(inifile)
+        with MonkeyPatch.context() as mp:
+            mp.chdir(cwd)
+            config = Config.fromdictargs(option_dict, ())
+            inipath = py.path.local(inifile)
 
         assert config.args == [str(cwd)]
         assert config.option.inifilename == inifile
@@ -1041,7 +1043,7 @@ def test_plugin_preparse_prevents_setuptools_loading(
 def test_disable_plugin_autoload(
     pytester: Pytester,
     monkeypatch: MonkeyPatch,
-    parse_args: Tuple[str],
+    parse_args: Union[Tuple[str, str], Tuple[()]],
     should_load: bool,
 ) -> None:
     class DummyEntryPoint:
@@ -1165,8 +1167,9 @@ def test_consider_args_after_options_for_rootdir(
             args[i] = str(d1)
         elif arg == "dir2":
             args[i] = str(d2)
-    os.chdir(root)
-    result = pytester.runpytest(*args)
+    with MonkeyPatch.context() as mp:
+        mp.chdir(root)
+        result = pytester.runpytest(*args)
     result.stdout.fnmatch_lines(["*rootdir: *myroot"])
 
 
