@@ -1,11 +1,14 @@
-def test_no_items_should_not_show_output(testdir):
-    result = testdir.runpytest("--fixtures-per-test")
+from _pytest.pytester import Pytester
+
+
+def test_no_items_should_not_show_output(pytester: Pytester) -> None:
+    result = pytester.runpytest("--fixtures-per-test")
     result.stdout.no_fnmatch_line("*fixtures used by*")
     assert result.ret == 0
 
 
-def test_fixtures_in_module(testdir):
-    p = testdir.makepyfile(
+def test_fixtures_in_module(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
         '''
         import pytest
         @pytest.fixture
@@ -19,7 +22,7 @@ def test_fixtures_in_module(testdir):
     '''
     )
 
-    result = testdir.runpytest("--fixtures-per-test", p)
+    result = pytester.runpytest("--fixtures-per-test", p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -33,8 +36,8 @@ def test_fixtures_in_module(testdir):
     result.stdout.no_fnmatch_line("*_arg0*")
 
 
-def test_fixtures_in_conftest(testdir):
-    testdir.makeconftest(
+def test_fixtures_in_conftest(pytester: Pytester) -> None:
+    pytester.makeconftest(
         '''
         import pytest
         @pytest.fixture
@@ -50,7 +53,7 @@ def test_fixtures_in_conftest(testdir):
             """
     '''
     )
-    p = testdir.makepyfile(
+    p = pytester.makepyfile(
         """
         def test_arg2(arg2):
             pass
@@ -58,7 +61,7 @@ def test_fixtures_in_conftest(testdir):
             pass
     """
     )
-    result = testdir.runpytest("--fixtures-per-test", p)
+    result = pytester.runpytest("--fixtures-per-test", p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -80,8 +83,8 @@ def test_fixtures_in_conftest(testdir):
     )
 
 
-def test_should_show_fixtures_used_by_test(testdir):
-    testdir.makeconftest(
+def test_should_show_fixtures_used_by_test(pytester: Pytester) -> None:
+    pytester.makeconftest(
         '''
         import pytest
         @pytest.fixture
@@ -92,7 +95,7 @@ def test_should_show_fixtures_used_by_test(testdir):
             """arg2 from conftest"""
     '''
     )
-    p = testdir.makepyfile(
+    p = pytester.makepyfile(
         '''
         import pytest
         @pytest.fixture
@@ -102,7 +105,7 @@ def test_should_show_fixtures_used_by_test(testdir):
             pass
     '''
     )
-    result = testdir.runpytest("--fixtures-per-test", p)
+    result = pytester.runpytest("--fixtures-per-test", p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -117,8 +120,8 @@ def test_should_show_fixtures_used_by_test(testdir):
     )
 
 
-def test_verbose_include_private_fixtures_and_loc(testdir):
-    testdir.makeconftest(
+def test_verbose_include_private_fixtures_and_loc(pytester: Pytester) -> None:
+    pytester.makeconftest(
         '''
         import pytest
         @pytest.fixture
@@ -129,7 +132,7 @@ def test_verbose_include_private_fixtures_and_loc(testdir):
             """arg2 from conftest"""
     '''
     )
-    p = testdir.makepyfile(
+    p = pytester.makepyfile(
         '''
         import pytest
         @pytest.fixture
@@ -139,7 +142,7 @@ def test_verbose_include_private_fixtures_and_loc(testdir):
             pass
     '''
     )
-    result = testdir.runpytest("--fixtures-per-test", "-v", p)
+    result = pytester.runpytest("--fixtures-per-test", "-v", p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(
@@ -156,8 +159,8 @@ def test_verbose_include_private_fixtures_and_loc(testdir):
     )
 
 
-def test_doctest_items(testdir):
-    testdir.makepyfile(
+def test_doctest_items(pytester: Pytester) -> None:
+    pytester.makepyfile(
         '''
         def foo():
             """
@@ -166,13 +169,13 @@ def test_doctest_items(testdir):
             """
     '''
     )
-    testdir.maketxtfile(
+    pytester.maketxtfile(
         """
         >>> 1 + 1
         2
     """
     )
-    result = testdir.runpytest(
+    result = pytester.runpytest(
         "--fixtures-per-test", "--doctest-modules", "--doctest-glob=*.txt", "-v"
     )
     assert result.ret == 0

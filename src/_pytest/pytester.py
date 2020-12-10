@@ -1190,7 +1190,9 @@ class Pytester:
         config._do_configure()
         return config
 
-    def getitem(self, source: str, funcname: str = "test_func") -> Item:
+    def getitem(
+        self, source: Union[str, "os.PathLike[str]"], funcname: str = "test_func"
+    ) -> Item:
         """Return the test item for a test function.
 
         Writes the source to a python file and runs pytest's collection on
@@ -1210,7 +1212,7 @@ class Pytester:
             funcname, source, items
         )
 
-    def getitems(self, source: str) -> List[Item]:
+    def getitems(self, source: Union[str, "os.PathLike[str]"]) -> List[Item]:
         """Return all test items collected from the module.
 
         Writes the source to a Python file and runs pytest's collection on
@@ -1220,7 +1222,11 @@ class Pytester:
         return self.genitems([modcol])
 
     def getmodulecol(
-        self, source: Union[str, Path], configargs=(), *, withinit: bool = False
+        self,
+        source: Union[str, "os.PathLike[str]"],
+        configargs=(),
+        *,
+        withinit: bool = False,
     ):
         """Return the module collection node for ``source``.
 
@@ -1238,7 +1244,9 @@ class Pytester:
             Whether to also write an ``__init__.py`` file to the same
             directory to ensure it is a package.
         """
-        if isinstance(source, Path):
+        # TODO: Remove type ignore in next mypy release (> 0.790).
+        #       https://github.com/python/typeshed/pull/4582
+        if isinstance(source, os.PathLike):  # type: ignore[misc]
             path = self.path.joinpath(source)
             assert not withinit, "not supported for paths"
         else:
