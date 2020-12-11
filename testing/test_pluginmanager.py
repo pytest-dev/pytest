@@ -8,6 +8,7 @@ from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
 from _pytest.config.exceptions import UsageError
 from _pytest.main import Session
+from _pytest.pytester import Pytester
 
 
 @pytest.fixture
@@ -16,14 +17,16 @@ def pytestpm() -> PytestPluginManager:
 
 
 class TestPytestPluginInteractions:
-    def test_addhooks_conftestplugin(self, testdir, _config_for_test):
-        testdir.makepyfile(
+    def test_addhooks_conftestplugin(
+        self, pytester: Pytester, _config_for_test
+    ) -> None:
+        pytester.makepyfile(
             newhooks="""
             def pytest_myhook(xyz):
                 "new hook"
         """
         )
-        conf = testdir.makeconftest(
+        conf = pytester.makeconftest(
             """
             import newhooks
             def pytest_addhooks(pluginmanager):
@@ -54,10 +57,10 @@ class TestPytestPluginInteractions:
         assert res.ret != 0
         res.stderr.fnmatch_lines(["*did not find*sys*"])
 
-    def test_do_option_postinitialize(self, testdir):
-        config = testdir.parseconfigure()
+    def test_do_option_postinitialize(self, pytester: Pytester) -> None:
+        config = pytester.parseconfigure()
         assert not hasattr(config.option, "test123")
-        p = testdir.makepyfile(
+        p = pytester.makepyfile(
             """
             def pytest_addoption(parser):
                 parser.addoption('--test123', action="store_true",
@@ -120,20 +123,20 @@ class TestPytestPluginInteractions:
         finally:
             undo()
 
-    def test_hook_proxy(self, testdir):
+    def test_hook_proxy(self, pytester: Pytester) -> None:
         """Test the gethookproxy function(#2016)"""
-        config = testdir.parseconfig()
+        config = pytester.parseconfig()
         session = Session.from_config(config)
-        testdir.makepyfile(**{"tests/conftest.py": "", "tests/subdir/conftest.py": ""})
+        pytester.makepyfile(**{"tests/conftest.py": "", "tests/subdir/conftest.py": ""})
 
-        conftest1 = testdir.tmpdir.join("tests/conftest.py")
-        conftest2 = testdir.tmpdir.join("tests/subdir/conftest.py")
+        conftest1 = pytester.path.joinpath("tests/conftest.py")
+        conftest2 = pytester.path.joinpath("tests/subdir/conftest.py")
 
         config.pluginmanager._importconftest(conftest1, importmode="prepend")
-        ihook_a = session.gethookproxy(testdir.tmpdir.join("tests"))
+        ihook_a = session.gethookproxy(pytester.path / "tests")
         assert ihook_a is not None
         config.pluginmanager._importconftest(conftest2, importmode="prepend")
-        ihook_b = session.gethookproxy(testdir.tmpdir.join("tests"))
+        ihook_b = session.gethookproxy(pytester.path / "tests")
         assert ihook_a is not ihook_b
 
     def test_hook_with_addoption(self, testdir):

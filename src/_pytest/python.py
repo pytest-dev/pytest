@@ -653,7 +653,7 @@ class Package(Module):
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
 
-    def gethookproxy(self, fspath: py.path.local):
+    def gethookproxy(self, fspath: "os.PathLike[str]"):
         warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
         return self.session.gethookproxy(fspath)
 

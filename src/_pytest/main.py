@@ -371,22 +371,23 @@ def _in_venv(path: py.path.local) -> bool:
 
 
 def pytest_ignore_collect(path: py.path.local, config: Config) -> Optional[bool]:
-    ignore_paths = config._getconftest_pathlist("collect_ignore", path=path.dirpath())
+    path_ = Path(path)
+    ignore_paths = config._getconftest_pathlist("collect_ignore", path=path_.parent)
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
     if excludeopt:
-        ignore_paths.extend([py.path.local(x) for x in excludeopt])
+        ignore_paths.extend(absolutepath(x) for x in excludeopt)
 
-    if py.path.local(path) in ignore_paths:
+    if path_ in ignore_paths:
         return True
 
     ignore_globs = config._getconftest_pathlist(
-        "collect_ignore_glob", path=path.dirpath()
+        "collect_ignore_glob", path=path_.parent
     )
     ignore_globs = ignore_globs or []
     excludeglobopt = config.getoption("ignore_glob")
     if excludeglobopt:
-        ignore_globs.extend([py.path.local(x) for x in excludeglobopt])
+        ignore_globs.extend(absolutepath(x) for x in excludeglobopt)
 
     if any(fnmatch.fnmatch(str(path), str(glob)) for glob in ignore_globs):
         return True
@@ -512,12 +513,12 @@ class Session(nodes.FSCollector):
     def isinitpath(self, path: py.path.local) -> bool:
         return path in self._initialpaths
 
-    def gethookproxy(self, fspath: py.path.local):
+    def gethookproxy(self, fspath: "os.PathLike[str]"):
         # Check if we have the common case of running
         # hooks with all conftest.py files.
         pm = self.config.pluginmanager
         my_conftestmodules = pm._getconftestmodules(
-            fspath, self.config.getoption("importmode")
+            Path(fspath), self.config.getoption("importmode")
         )
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
@@ -668,8 +669,9 @@ class Session(nodes.FSCollector):
             # No point in finding packages when collecting doctests.
             if not self.config.getoption("doctestmodules", False):
                 pm = self.config.pluginmanager
+                confcutdir = py.path.local(pm._confcutdir) if pm._confcutdir else None
                 for parent in reversed(argpath.parts()):
-                    if pm._confcutdir and pm._confcutdir.relto(parent):
+                    if confcutdir and confcutdir.relto(parent):
                         break
 
                     if parent.isdir():
