@@ -362,6 +362,10 @@ class TestTerminal:
             @pytest.mark.xfail(reason="789")
             def test_3():
                 assert False
+
+            @pytest.mark.xfail(reason="")
+            def test_4():
+                assert False
         """
         )
         result = pytester.runpytest("-v")
@@ -370,6 +374,7 @@ class TestTerminal:
                 "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
                 "test_verbose_skip_reason.py::test_2 XPASS (456) *",
                 "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
+                "test_verbose_skip_reason.py::test_4 XFAIL  *",
             ]
         )
 

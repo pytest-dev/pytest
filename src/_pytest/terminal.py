@@ -554,7 +554,7 @@ class TerminalReporter:
                     )
                     reason = _get_raw_skip_reason(rep)
                     reason_ = _format_trimmed(" ({})", reason, available_width)
-                    if reason_ is not None:
+                    if reason and reason_ is not None:
                         self._tw.write(reason_)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
