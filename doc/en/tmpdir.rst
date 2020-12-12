@@ -61,7 +61,7 @@ Running this would result in a passed test except for the last
     >       assert 0
     E       assert 0
 
-    test_tmp_path.py:13: AssertionError
+    test_tmp_path.py:11: AssertionError
     ========================= short test summary info ==========================
     FAILED test_tmp_path.py::test_create_file - assert 0
     ============================ 1 failed in 0.12s =============================
@@ -129,7 +129,7 @@ Running this would result in a passed test except for the last
     >       assert 0
     E       assert 0
 
-    test_tmpdir.py:9: AssertionError
+    test_tmpdir.py:6: AssertionError
     ========================= short test summary info ==========================
     FAILED test_tmpdir.py::test_create_file - assert 0
     ============================ 1 failed in 0.12s =============================

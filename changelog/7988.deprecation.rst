@@ -1,3 +1,0 @@
-The ``@pytest.yield_fixture`` decorator/function is now deprecated. Use :func:`pytest.fixture` instead.
-
-``yield_fixture`` has been an alias for ``fixture`` for a very long time, so can be search/replaced safely.

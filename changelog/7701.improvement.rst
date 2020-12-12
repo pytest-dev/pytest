@@ -1,1 +1,0 @@
-Improved reporting when using ``--collected-only``. It will now show the number of collected tests in the summary stats.
