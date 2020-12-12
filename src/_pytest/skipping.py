@@ -3,6 +3,7 @@ import os
 import platform
 import sys
 import traceback
+from collections.abc import Mapping
 from typing import Generator
 from typing import Optional
 from typing import Tuple
@@ -98,6 +99,16 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
             "platform": platform,
             "config": item.config,
         }
+        for dictionary in reversed(
+            item.ihook.pytest_markeval_namespace(config=item.config)
+        ):
+            if not isinstance(dictionary, Mapping):
+                raise ValueError(
+                    "pytest_markeval_namespace() needs to return a dict, got {!r}".format(
+                        dictionary
+                    )
+                )
+            globals_.update(dictionary)
         if hasattr(item, "obj"):
             globals_.update(item.obj.__globals__)  # type: ignore[attr-defined]
         try:

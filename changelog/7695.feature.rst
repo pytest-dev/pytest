@@ -1,0 +1,19 @@
+A new hook was added, `pytest_markeval_namespace` which should return a dictionary.
+This dictionary will be used to augment the "global" variables available to evaluate skipif/xfail/xpass markers.
+
+Pseudo example
+
+``conftest.py``:
+
+.. code-block:: python
+
+   def pytest_markeval_namespace():
+       return {"color": "red"}
+
+``test_func.py``:
+
+.. code-block:: python
+
+   @pytest.mark.skipif("color == 'blue'", reason="Color is not red")
+   def test_func():
+       assert False
