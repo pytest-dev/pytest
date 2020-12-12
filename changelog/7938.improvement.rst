@@ -1,1 +1,0 @@
-New ``--sw-skip`` argument which is a shorthand for ``--stepwise-skip``.
