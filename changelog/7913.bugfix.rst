@@ -1,1 +1,0 @@
-Fixed a crash or hang in :meth:`pytester.spawn <_pytest.pytester.Pytester.spawn>` when the :mod:`readline` module is involved.

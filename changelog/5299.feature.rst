@@ -1,2 +1,0 @@
-pytest now warns about unraisable exceptions and unhandled thread exceptions that occur in tests on Python>=3.8.
-See :ref:`unraisable` for more information.
