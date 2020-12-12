@@ -1,1 +1,0 @@
-Verbose mode now shows the reason that a test was skipped in the test's terminal line after the "SKIPPED", "XFAIL" or "XPASS".

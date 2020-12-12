@@ -919,7 +919,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ========================== 10 tests found in 0.12s ===========================
+   ======================= 10 tests collected in 0.12s ========================
 
 .. _`fixture-parametrize-marks`:
 
@@ -958,7 +958,7 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 
     test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
     test_fixture_marks.py::test_data[1] PASSED                           [ 66%]
-    test_fixture_marks.py::test_data[2] SKIPPED                          [100%]
+    test_fixture_marks.py::test_data[2] SKIPPED (unconditional skip)     [100%]
 
     ======================= 2 passed, 1 skipped in 0.12s =======================
 

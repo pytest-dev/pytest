@@ -1,4 +1,0 @@
-Use strict equality comparison for non-numeric types in :func:`pytest.approx` instead of
-raising :class:`TypeError`.
-
-This was the undocumented behavior before 3.7, but is now officially a supported feature.
