@@ -947,7 +947,7 @@ Example:
 
 Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 
-.. code-block:: pytest
+.. code-block::
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
