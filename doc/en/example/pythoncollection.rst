@@ -157,7 +157,7 @@ The test collection would look like this:
           <Function simple_check>
           <Function complex_check>
 
-    ========================== 2 tests found in 0.12s ===========================
+    ======================== 2 tests collected in 0.12s ========================
 
 You can check for multiple glob patterns by adding a space between the patterns:
 
@@ -220,7 +220,7 @@ You can always peek at the collection tree without running tests like this:
           <Function test_method>
           <Function test_anothermethod>
 
-    ========================== 3 tests found in 0.12s ===========================
+    ======================== 3 tests collected in 0.12s ========================
 
 .. _customizing-test-collection:
 
@@ -296,7 +296,7 @@ file will be left out:
     rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
     collected 0 items
 
-    ========================== no tests found in 0.12s ===========================
+    ======================= no tests collected in 0.12s ========================
 
 It's also possible to ignore files based on Unix shell-style wildcards by adding
 patterns to :globalvar:`collect_ignore_glob`.

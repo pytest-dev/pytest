@@ -158,6 +158,11 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         function invocation, created as a sub directory of the base temporary
         directory.
 
+        By default, a new base temporary directory is created each test session,
+        and old bases are removed after 3 sessions, to aid in debugging. If
+        ``--basetemp`` is used then it is cleared each session. See :ref:`base
+        temporary directory`.
+
         The returned object is a `py.path.local`_ path object.
 
         .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
@@ -166,6 +171,11 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
+
+        By default, a new base temporary directory is created each test session,
+        and old bases are removed after 3 sessions, to aid in debugging. If
+        ``--basetemp`` is used then it is cleared each session. See :ref:`base
+        temporary directory`.
 
         The returned object is a :class:`pathlib.Path` object.
 

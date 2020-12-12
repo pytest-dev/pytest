@@ -1,1 +1,0 @@
-:meth:`doClassCleanups <unittest.TestCase.doClassCleanups>` (introduced in :mod:`unittest` in Python and 3.8) is now called appropriately.

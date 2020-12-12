@@ -1749,7 +1749,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             failures.
       --sw, --stepwise      exit on test failure and continue from last failing
                             test next time
-      --stepwise-skip       ignore the first failing test but stop on the next
+      --sw-skip, --stepwise-skip
+                            ignore the first failing test but stop on the next
                             failing test
 
     reporting:
@@ -1791,9 +1792,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --maxfail=num         exit after first num failures or errors.
       --strict-config       any warnings encountered while parsing the `pytest`
                             section of the configuration file raise errors.
-      --strict-markers, --strict
-                            markers not registered in the `markers` section of
+      --strict-markers      markers not registered in the `markers` section of
                             the configuration file raise errors.
+      --strict              (deprecated) alias to --strict-markers.
       -c file               load configuration from `file` instead of trying to
                             locate one of the implicit configuration files.
       --continue-on-collection-errors
