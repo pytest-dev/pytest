@@ -574,16 +574,16 @@ class TestConfigAPI:
             config.getvalue("x")
         assert config.getoption("x", 1) == 1
 
-    def test_getconftest_pathlist(self, pytester: Pytester, tmpdir) -> None:
-        somepath = tmpdir.join("x", "y", "z")
-        p = tmpdir.join("conftest.py")
-        p.write("pathlist = ['.', %r]" % str(somepath))
+    def test_getconftest_pathlist(self, pytester: Pytester, tmp_path: Path) -> None:
+        somepath = tmp_path.joinpath("x", "y", "z")
+        p = tmp_path.joinpath("conftest.py")
+        p.write_text(f"pathlist = ['.', {str(somepath)!r}]")
         config = pytester.parseconfigure(p)
-        assert config._getconftest_pathlist("notexist", path=tmpdir) is None
-        pl = config._getconftest_pathlist("pathlist", path=tmpdir) or []
+        assert config._getconftest_pathlist("notexist", path=tmp_path) is None
+        pl = config._getconftest_pathlist("pathlist", path=tmp_path) or []
         print(pl)
         assert len(pl) == 2
-        assert pl[0] == tmpdir
+        assert pl[0] == tmp_path
         assert pl[1] == somepath
 
     @pytest.mark.parametrize("maybe_type", ["not passed", "None", '"string"'])
@@ -1935,10 +1935,10 @@ class TestPytestPluginsVariable:
         assert msg not in res.stdout.str()
 
 
-def test_conftest_import_error_repr(tmpdir: py.path.local) -> None:
+def test_conftest_import_error_repr(tmp_path: Path) -> None:
     """`ConftestImportFailure` should use a short error message and readable
     path to the failed conftest.py file."""
-    path = tmpdir.join("foo/conftest.py")
+    path = tmp_path.joinpath("foo/conftest.py")
     with pytest.raises(
         ConftestImportFailure,
         match=re.escape(f"RuntimeError: some error (from {path})"),

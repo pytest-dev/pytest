@@ -7,6 +7,7 @@ import traceback
 import types
 import warnings
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -525,7 +526,7 @@ class DoctestModule(pytest.Module):
 
         if self.fspath.basename == "conftest.py":
             module = self.config.pluginmanager._importconftest(
-                self.fspath, self.config.getoption("importmode")
+                Path(self.fspath), self.config.getoption("importmode")
             )
         else:
             try:

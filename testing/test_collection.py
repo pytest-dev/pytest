@@ -364,7 +364,9 @@ class TestCustomConftests:
     def test_collectignore_exclude_on_option(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            collect_ignore = ['hello', 'test_world.py']
+            import py
+            from pathlib import Path
+            collect_ignore = [py.path.local('hello'), 'test_world.py', Path('bye')]
             def pytest_addoption(parser):
                 parser.addoption("--XX", action="store_true", default=False)
             def pytest_configure(config):

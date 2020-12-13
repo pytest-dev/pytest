@@ -50,9 +50,11 @@ from _pytest.compat import final
 from _pytest.compat import importlib_metadata
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
+from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportMode
+from _pytest.pathlib import resolve_package_path
 from _pytest.store import Store
 from _pytest.warning_types import PytestConfigWarning
 
@@ -102,9 +104,7 @@ class ExitCode(enum.IntEnum):
 
 class ConftestImportFailure(Exception):
     def __init__(
-        self,
-        path: py.path.local,
-        excinfo: Tuple[Type[Exception], Exception, TracebackType],
+        self, path: Path, excinfo: Tuple[Type[Exception], Exception, TracebackType],
     ) -> None:
         super().__init__(path, excinfo)
         self.path = path
@@ -342,9 +342,9 @@ class PytestPluginManager(PluginManager):
         self._conftest_plugins: Set[types.ModuleType] = set()
 
         # State related to local conftest plugins.
-        self._dirpath2confmods: Dict[py.path.local, List[types.ModuleType]] = {}
+        self._dirpath2confmods: Dict[Path, List[types.ModuleType]] = {}
         self._conftestpath2mod: Dict[Path, types.ModuleType] = {}
-        self._confcutdir: Optional[py.path.local] = None
+        self._confcutdir: Optional[Path] = None
         self._noconftest = False
         self._duplicatepaths: Set[py.path.local] = set()
 
@@ -479,9 +479,9 @@ class PytestPluginManager(PluginManager):
         All builtin and 3rd party plugins will have been loaded, however, so
         common options will not confuse our logic here.
         """
-        current = py.path.local()
+        current = Path.cwd()
         self._confcutdir = (
-            current.join(namespace.confcutdir, abs=True)
+            absolutepath(current / namespace.confcutdir)
             if namespace.confcutdir
             else None
         )
@@ -495,7 +495,7 @@ class PytestPluginManager(PluginManager):
             i = path.find("::")
             if i != -1:
                 path = path[:i]
-            anchor = current.join(path, abs=1)
+            anchor = absolutepath(current / path)
             if anchor.exists():  # we found some file object
                 self._try_load_conftest(anchor, namespace.importmode)
                 foundanchor = True
@@ -503,24 +503,24 @@ class PytestPluginManager(PluginManager):
             self._try_load_conftest(current, namespace.importmode)
 
     def _try_load_conftest(
-        self, anchor: py.path.local, importmode: Union[str, ImportMode]
+        self, anchor: Path, importmode: Union[str, ImportMode]
     ) -> None:
         self._getconftestmodules(anchor, importmode)
         # let's also consider test* subdirs
-        if anchor.check(dir=1):
-            for x in anchor.listdir("test*"):
-                if x.check(dir=1):
+        if anchor.is_dir():
+            for x in anchor.glob("test*"):
+                if x.is_dir():
                     self._getconftestmodules(x, importmode)
 
     @lru_cache(maxsize=128)
     def _getconftestmodules(
-        self, path: py.path.local, importmode: Union[str, ImportMode],
+        self, path: Path, importmode: Union[str, ImportMode],
     ) -> List[types.ModuleType]:
         if self._noconftest:
             return []
 
-        if path.isfile():
-            directory = path.dirpath()
+        if path.is_file():
+            directory = path.parent
         else:
             directory = path
 
@@ -528,18 +528,18 @@ class PytestPluginManager(PluginManager):
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir.
         clist = []
-        for parent in directory.parts():
-            if self._confcutdir and self._confcutdir.relto(parent):
+        for parent in reversed((directory, *directory.parents)):
+            if self._confcutdir and parent in self._confcutdir.parents:
                 continue
-            conftestpath = parent.join("conftest.py")
-            if conftestpath.isfile():
+            conftestpath = parent / "conftest.py"
+            if conftestpath.is_file():
                 mod = self._importconftest(conftestpath, importmode)
                 clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist
 
     def _rget_with_confmod(
-        self, name: str, path: py.path.local, importmode: Union[str, ImportMode],
+        self, name: str, path: Path, importmode: Union[str, ImportMode],
     ) -> Tuple[types.ModuleType, Any]:
         modules = self._getconftestmodules(path, importmode)
         for mod in reversed(modules):
@@ -550,21 +550,21 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(
-        self, conftestpath: py.path.local, importmode: Union[str, ImportMode],
+        self, conftestpath: Path, importmode: Union[str, ImportMode],
     ) -> types.ModuleType:
         # Use a resolved Path object as key to avoid loading the same conftest
         # twice with build systems that create build directories containing
         # symlinks to actual files.
         # Using Path().resolve() is better than py.path.realpath because
         # it resolves to the correct path/drive in case-insensitive file systems (#5792)
-        key = Path(str(conftestpath)).resolve()
+        key = conftestpath.resolve()
 
         with contextlib.suppress(KeyError):
             return self._conftestpath2mod[key]
 
-        pkgpath = conftestpath.pypkgpath()
+        pkgpath = resolve_package_path(conftestpath)
         if pkgpath is None:
-            _ensure_removed_sysmodule(conftestpath.purebasename)
+            _ensure_removed_sysmodule(conftestpath.stem)
 
         try:
             mod = import_path(conftestpath, mode=importmode)
@@ -577,10 +577,10 @@ class PytestPluginManager(PluginManager):
 
         self._conftest_plugins.add(mod)
         self._conftestpath2mod[key] = mod
-        dirpath = conftestpath.dirpath()
+        dirpath = conftestpath.parent
         if dirpath in self._dirpath2confmods:
             for path, mods in self._dirpath2confmods.items():
-                if path and path.relto(dirpath) or path == dirpath:
+                if path and dirpath in path.parents or path == dirpath:
                     assert mod not in mods
                     mods.append(mod)
         self.trace(f"loading conftestmodule {mod!r}")
@@ -588,7 +588,7 @@ class PytestPluginManager(PluginManager):
         return mod
 
     def _check_non_top_pytest_plugins(
-        self, mod: types.ModuleType, conftestpath: py.path.local,
+        self, mod: types.ModuleType, conftestpath: Path,
     ) -> None:
         if (
             hasattr(mod, "pytest_plugins")
@@ -1412,21 +1412,23 @@ class Config:
             assert type in [None, "string"]
             return value
 
-    def _getconftest_pathlist(
-        self, name: str, path: py.path.local
-    ) -> Optional[List[py.path.local]]:
+    def _getconftest_pathlist(self, name: str, path: Path) -> Optional[List[Path]]:
         try:
             mod, relroots = self.pluginmanager._rget_with_confmod(
                 name, path, self.getoption("importmode")
             )
         except KeyError:
             return None
-        modpath = py.path.local(mod.__file__).dirpath()
-        values: List[py.path.local] = []
+        modpath = Path(mod.__file__).parent
+        values: List[Path] = []
         for relroot in relroots:
-            if not isinstance(relroot, py.path.local):
+            if isinstance(relroot, Path):
+                pass
+            elif isinstance(relroot, py.path.local):
+                relroot = Path(relroot)
+            else:
                 relroot = relroot.replace("/", os.sep)
-                relroot = modpath.join(relroot, abs=True)
+                relroot = absolutepath(modpath / relroot)
             values.append(relroot)
         return values
 

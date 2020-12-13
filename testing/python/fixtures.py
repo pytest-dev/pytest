@@ -8,6 +8,7 @@ from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import get_public_names
+from _pytest.pytester import Pytester
 from _pytest.pytester import Testdir
 
 
@@ -1961,8 +1962,10 @@ class TestAutouseManagement:
         reprec = testdir.inline_run("-v", "-s")
         reprec.assertoutcome(passed=4)
 
-    def test_class_function_parametrization_finalization(self, testdir):
-        p = testdir.makeconftest(
+    def test_class_function_parametrization_finalization(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makeconftest(
             """
             import pytest
             import pprint
@@ -1984,7 +1987,7 @@ class TestAutouseManagement:
                 request.addfinalizer(fin)
         """
         )
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             import pytest
 
@@ -1996,8 +1999,7 @@ class TestAutouseManagement:
                     pass
         """
         )
-        confcut = f"--confcutdir={testdir.tmpdir}"
-        reprec = testdir.inline_run("-v", "-s", confcut)
+        reprec = pytester.inline_run("-v", "-s", "--confcutdir", pytester.path)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
         values = config.pluginmanager._getconftestmodules(p, importmode="prepend")[

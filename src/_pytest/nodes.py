@@ -520,7 +520,7 @@ class FSCollector(Collector):
         """The public constructor."""
         return super().from_parent(parent=parent, fspath=fspath, **kw)
 
-    def gethookproxy(self, fspath: py.path.local):
+    def gethookproxy(self, fspath: "os.PathLike[str]"):
         warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
         return self.session.gethookproxy(fspath)
 
