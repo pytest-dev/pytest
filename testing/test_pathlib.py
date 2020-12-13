@@ -7,6 +7,7 @@ from textwrap import dedent
 import py
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import ensure_deletable
@@ -414,3 +415,23 @@ def test_visit_ignores_errors(tmpdir) -> None:
         "bar",
         "foo",
     ]
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """
+    import_file() should not raise ImportPathMismatchError if the paths are exactly
+    equal on Windows. It seems directories mounted as UNC paths make os.path.samefile
+    return False, even when they are clearly equal.
+    """
+    module_path = tmp_path.joinpath("my_module.py")
+    module_path.write_text("def foo(): return 42")
+    monkeypatch.syspath_prepend(tmp_path)
+
+    with monkeypatch.context() as mp:
+        # Forcibly make os.path.samefile() return False here to ensure we are comparing
+        # the paths too. Using a context to narrow the patch as much as possible given
+        # this is an important system function.
+        mp.setattr(os.path, "samefile", lambda x, y: False)
+        module = import_path(module_path)
+    assert getattr(module, "foo")() == 42
