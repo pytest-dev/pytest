@@ -543,26 +543,18 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
 
 def _is_numpy_array(obj: object) -> bool:
-    """Return true if the given object is implicitly convertible to numpy array.
-
-    A special effort is made to avoid importing numpy unless it's really necessary.
     """
-    import sys
-
-    np: Any = sys.modules.get("numpy")
-    if np is not None:
-        # avoid infinite recursion on numpy scalars, which have __array__
-        if np.isscalar(obj):
-            return False
-        elif isinstance(obj, np.ndarray):
-            return True
-        elif hasattr(obj, "__array__") or hasattr("obj", "__array_interface__"):
-            return True
-    return False
+    Return true if the given object is implicitly convertible to ndarray,
+    and numpy is already imported.
+    """
+    return _as_numpy_array(obj) is not None
 
 
 def _as_numpy_array(obj: object) -> Optional["ndarray"]:
-    """Return an ndarray if obj is implicitly convertible, and numpy is already imported."""
+    """
+    Return an ndarray if the given object is implicitly convertible to ndarray,
+    and numpy is already imported, otherwise None.
+    """
     import sys
 
     np: Any = sys.modules.get("numpy")
