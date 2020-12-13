@@ -63,7 +63,7 @@ def regen(version):
     print(f"{Fore.CYAN}[generate.regen] {Fore.RESET}Updating docs")
     check_call(
         ["tox", "-e", "regen"],
-        env={**os.environ, "SETUPTOOLS_SCM_PRETEND_VERSION": version},
+        env={**os.environ, "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST": version},
     )
 
 
