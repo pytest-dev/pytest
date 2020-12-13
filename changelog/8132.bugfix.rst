@@ -1,0 +1,6 @@
+Fixed regression in ``approx``: in 6.2.0 ``approx`` no longer raises
+``TypeError`` when dealing with non-numeric types, falling back to normal comparison,
+however the check was done using ``isinstance`` which left out types which implemented
+the necessary methods for ``approx`` to work, such as tensorflow's ``DeviceArray``.
+
+The code has been changed to check for the necessary methods to accommodate those cases.

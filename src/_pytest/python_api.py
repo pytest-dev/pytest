@@ -241,12 +241,17 @@ class ApproxScalar(ApproxBase):
         if actual == self.expected:
             return True
 
-        # If either type is non-numeric, fall back to strict equality.
-        # NB: we need Complex, rather than just Number, to ensure that __abs__,
-        # __sub__, and __float__ are defined.
+        # Check types are non-numeric using duck-typing; if they are not numeric types,
+        # we consider them unequal because the short-circuit above failed.
+        required_attrs = [
+            "__abs__",
+            "__float__",
+            "__rsub__",
+            "__sub__",
+        ]
         if not (
-            isinstance(self.expected, (Complex, Decimal))
-            and isinstance(actual, (Complex, Decimal))
+            all(hasattr(self.expected, attr) for attr in required_attrs)
+            and all(hasattr(actual, attr) for attr in required_attrs)
         ):
             return False
 

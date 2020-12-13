@@ -6,6 +6,8 @@ from operator import eq
 from operator import ne
 from typing import Optional
 
+import attr
+
 import pytest
 from _pytest.pytester import Pytester
 from pytest import approx
@@ -582,3 +584,37 @@ class TestApprox:
 
         expected = MySizedIterable()
         assert [1, 2, 3, 4] == approx(expected)
+
+    def test_duck_typing(self):
+        """
+        Check that approx() works for objects which implemented the required
+        numeric methods (#8132).
+        """
+
+        @attr.s(auto_attribs=True)
+        class Container:
+            value: float
+
+            def __abs__(self) -> float:
+                return abs(self.value)
+
+            def __sub__(self, other):
+                if isinstance(other, Container):
+                    return Container(self.value - other.value)
+                elif isinstance(other, (float, int)):
+                    return self.value - other
+                return NotImplemented
+
+            def __rsub__(self, other):
+                if isinstance(other, Container):
+                    return other.value - self.value
+                elif isinstance(other, (float, int)):
+                    return other - self.value
+                return NotImplemented
+
+            def __float__(self) -> float:
+                return self.value
+
+        assert Container(1.0) == approx(1 + 1e-7, rel=5e-7)
+        assert Container(1.0) != approx(1 + 1e-7, rel=1e-8)
+        assert Container(1.0) == approx(1.0)
