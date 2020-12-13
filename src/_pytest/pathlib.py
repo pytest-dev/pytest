@@ -543,7 +543,7 @@ def import_path(
             module_file = module_file[: -(len(os.path.sep + "__init__.py"))]
 
         try:
-            is_same = os.path.samefile(str(path), module_file)
+            is_same = _is_same(str(path), module_file)
         except FileNotFoundError:
             is_same = False
 
@@ -551,6 +551,20 @@ def import_path(
             raise ImportPathMismatchError(module_name, module_file, path)
 
     return mod
+
+
+# Implement a special _is_same function on Windows which returns True if the two filenames
+# compare equal, to circumvent os.path.samefile returning False for mounts in UNC (#7678).
+if sys.platform.startswith("win"):
+
+    def _is_same(f1: str, f2: str) -> bool:
+        return Path(f1) == Path(f2) or os.path.samefile(f1, f2)
+
+
+else:
+
+    def _is_same(f1: str, f2: str) -> bool:
+        return os.path.samefile(f1, f2)
 
 
 def resolve_package_path(path: Path) -> Optional[Path]:
