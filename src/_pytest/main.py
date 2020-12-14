@@ -532,9 +532,10 @@ class Session(nodes.FSCollector):
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
         if direntry.name == "__pycache__":
             return False
-        path = py.path.local(direntry.path)
-        ihook = self.gethookproxy(path.dirpath())
-        if ihook.pytest_ignore_collect(path=path, config=self.config):
+        fspath = Path(direntry.path)
+        path = py.path.local(fspath)
+        ihook = self.gethookproxy(fspath.parent)
+        if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(path.check(fnmatch=pat) for pat in norecursepatterns):
@@ -544,6 +545,7 @@ class Session(nodes.FSCollector):
     def _collectfile(
         self, path: py.path.local, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
+        fspath = Path(path)
         assert (
             path.isfile()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -551,7 +553,9 @@ class Session(nodes.FSCollector):
         )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
-            if ihook.pytest_ignore_collect(path=path, config=self.config):
+            if ihook.pytest_ignore_collect(
+                fspath=fspath, path=path, config=self.config
+            ):
                 return ()
 
         if handle_dupes:
@@ -563,7 +567,7 @@ class Session(nodes.FSCollector):
                 else:
                     duplicate_paths.add(path)
 
-        return ihook.pytest_collect_file(path=path, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
 
     @overload
     def perform_collect(

@@ -1,5 +1,6 @@
 """Hook specifications for pytest plugins which are invoked by pytest itself
 and by builtin plugins."""
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -261,7 +262,9 @@ def pytest_collection_finish(session: "Session") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_ignore_collect(path: py.path.local, config: "Config") -> Optional[bool]:
+def pytest_ignore_collect(
+    fspath: Path, path: py.path.local, config: "Config"
+) -> Optional[bool]:
     """Return True to prevent considering this path for collection.
 
     This hook is consulted for all files and directories prior to calling
@@ -269,19 +272,29 @@ def pytest_ignore_collect(path: py.path.local, config: "Config") -> Optional[boo
 
     Stops at first non-None result, see :ref:`firstresult`.
 
+    :param pathlib.Path fspath: The path to analyze.
     :param py.path.local path: The path to analyze.
     :param _pytest.config.Config config: The pytest config object.
+
+    .. versionchanged:: 6.3.0
+        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        equivalent of the ``path`` parameter.
     """
 
 
 def pytest_collect_file(
-    path: py.path.local, parent: "Collector"
+    fspath: Path, path: py.path.local, parent: "Collector"
 ) -> "Optional[Collector]":
     """Create a Collector for the given path, or None if not relevant.
 
     The new node needs to have the specified ``parent`` as a parent.
 
+    :param pathlib.Path fspath: The path to analyze.
     :param py.path.local path: The path to collect.
+
+    .. versionchanged:: 6.3.0
+        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        equivalent of the ``path`` parameter.
     """
 
 
@@ -321,7 +334,9 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
 
 
 @hookspec(firstresult=True)
-def pytest_pycollect_makemodule(path: py.path.local, parent) -> Optional["Module"]:
+def pytest_pycollect_makemodule(
+    fspath: Path, path: py.path.local, parent
+) -> Optional["Module"]:
     """Return a Module collector or None for the given path.
 
     This hook will be called for each matching test module path.
@@ -330,7 +345,12 @@ def pytest_pycollect_makemodule(path: py.path.local, parent) -> Optional["Module
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param py.path.local path: The path of module to collect.
+    :param pathlib.Path fspath: The path of the module to collect.
+    :param py.path.local path: The path of the module to collect.
+
+    .. versionchanged:: 6.3.0
+        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        equivalent of the ``path`` parameter.
     """
 
 
@@ -653,11 +673,12 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
 
 
 def pytest_report_header(
-    config: "Config", startdir: py.path.local
+    config: "Config", startpath: Path, startdir: py.path.local
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
     :param _pytest.config.Config config: The pytest config object.
+    :param Path startpath: The starting dir.
     :param py.path.local startdir: The starting dir.
 
     .. note::
@@ -672,11 +693,15 @@ def pytest_report_header(
         This function should be implemented only in plugins or ``conftest.py``
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
+
+    .. versionchanged:: 6.3.0
+        The ``startpath`` parameter was added as a :class:`pathlib.Path`
+        equivalent of the ``startdir`` parameter.
     """
 
 
 def pytest_report_collectionfinish(
-    config: "Config", startdir: py.path.local, items: Sequence["Item"],
+    config: "Config", startpath: Path, startdir: py.path.local, items: Sequence["Item"],
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed after collection
     has finished successfully.
@@ -686,6 +711,7 @@ def pytest_report_collectionfinish(
     .. versionadded:: 3.2
 
     :param _pytest.config.Config config: The pytest config object.
+    :param Path startpath: The starting path.
     :param py.path.local startdir: The starting dir.
     :param items: List of pytest items that are going to be executed; this list should not be modified.
 
@@ -695,6 +721,10 @@ def pytest_report_collectionfinish(
         ran before it.
         If you want to have your line(s) displayed first, use
         :ref:`trylast=True <plugin-hookorder>`.
+
+    .. versionchanged:: 6.3.0
+        The ``startpath`` parameter was added as a :class:`pathlib.Path`
+        equivalent of the ``startdir`` parameter.
     """
 
 

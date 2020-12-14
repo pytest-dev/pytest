@@ -710,7 +710,7 @@ class TerminalReporter:
                 msg += " -- " + str(sys.executable)
             self.write_line(msg)
             lines = self.config.hook.pytest_report_header(
-                config=self.config, startdir=self.startdir
+                config=self.config, startpath=self.startpath, startdir=self.startdir
             )
             self._write_report_lines_from_hooks(lines)
 
@@ -745,7 +745,10 @@ class TerminalReporter:
         self.report_collect(True)
 
         lines = self.config.hook.pytest_report_collectionfinish(
-            config=self.config, startdir=self.startdir, items=session.items
+            config=self.config,
+            startpath=self.startpath,
+            startdir=self.startdir,
+            items=session.items,
         )
         self._write_report_lines_from_hooks(lines)
 

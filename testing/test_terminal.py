@@ -1010,7 +1010,7 @@ class TestTerminalFunctional:
     def test_report_collectionfinish_hook(self, pytester: Pytester, params) -> None:
         pytester.makeconftest(
             """
-            def pytest_report_collectionfinish(config, startdir, items):
+            def pytest_report_collectionfinish(config, startpath, startdir, items):
                 return ['hello from hook: {0} items'.format(len(items))]
         """
         )
@@ -1436,8 +1436,8 @@ class TestGenericReporting:
         )
         pytester.mkdir("a").joinpath("conftest.py").write_text(
             """
-def pytest_report_header(config, startdir):
-    return ["line1", str(startdir)]
+def pytest_report_header(config, startdir, startpath):
+    return ["line1", str(startpath)]
 """
         )
         result = pytester.runpytest("a")
