@@ -27,8 +27,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import py
-
 from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
@@ -37,6 +35,7 @@ from _pytest.assertion.util import (  # noqa: F401
 )
 from _pytest.config import Config
 from _pytest.main import Session
+from _pytest.pathlib import absolutepath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.store import StoreKey
 
@@ -215,7 +214,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             return True
 
         if self.session is not None:
-            if self.session.isinitpath(py.path.local(fn)):
+            if self.session.isinitpath(absolutepath(fn)):
                 state.trace(f"matched test file (was specified on cmdline): {fn!r}")
                 return True
 

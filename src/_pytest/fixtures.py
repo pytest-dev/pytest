@@ -648,12 +648,13 @@ class FixtureRequest:
             if has_params:
                 frame = inspect.stack()[3]
                 frameinfo = inspect.getframeinfo(frame[0])
-                source_path = py.path.local(frameinfo.filename)
+                source_path = absolutepath(frameinfo.filename)
                 source_lineno = frameinfo.lineno
-                rel_source_path = source_path.relto(funcitem.config.rootdir)
-                if rel_source_path:
-                    source_path_str = rel_source_path
-                else:
+                try:
+                    source_path_str = str(
+                        source_path.relative_to(funcitem.config.rootpath)
+                    )
+                except ValueError:
                     source_path_str = str(source_path)
                 msg = (
                     "The requested fixture has no parameter defined for test:\n"
@@ -876,7 +877,7 @@ class FixtureLookupError(LookupError):
 class FixtureLookupErrorRepr(TerminalRepr):
     def __init__(
         self,
-        filename: Union[str, py.path.local],
+        filename: Union[str, "os.PathLike[str]"],
         firstlineno: int,
         tblines: Sequence[str],
         errorstring: str,
@@ -903,7 +904,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
                     f"{FormattedExcinfo.flow_marker}       {line.strip()}", red=True,
                 )
         tw.line()
-        tw.line("%s:%d" % (self.filename, self.firstlineno + 1))
+        tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
 
 
 def fail_fixturefunc(fixturefunc, msg: str) -> "NoReturn":

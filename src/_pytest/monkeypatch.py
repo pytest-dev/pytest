@@ -4,7 +4,6 @@ import re
 import sys
 import warnings
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Any
 from typing import Generator
 from typing import List
@@ -325,20 +324,14 @@ class MonkeyPatch:
 
         invalidate_caches()
 
-    def chdir(self, path) -> None:
+    def chdir(self, path: Union[str, "os.PathLike[str]"]) -> None:
         """Change the current working directory to the specified path.
 
-        Path can be a string or a py.path.local object.
+        Path can be a string or a path object.
         """
         if self._cwd is None:
             self._cwd = os.getcwd()
-        if hasattr(path, "chdir"):
-            path.chdir()
-        elif isinstance(path, Path):
-            # Modern python uses the fspath protocol here LEGACY
-            os.chdir(str(path))
-        else:
-            os.chdir(path)
+        os.chdir(path)
 
     def undo(self) -> None:
         """Undo previous changes.
