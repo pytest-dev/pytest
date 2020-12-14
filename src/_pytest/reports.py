@@ -74,6 +74,10 @@ class BaseReport:
         def __getattr__(self, key: str) -> Any:
             ...
 
+        # Allow dynamic attributes to be set in tests without typing errors.
+        def __setattr__(self, key: str, value: Any) -> None:
+            ...
+
     def toterminal(self, out: TerminalWriter) -> None:
         if hasattr(self, "node"):
             out.line(getworkerinfoline(self.node))

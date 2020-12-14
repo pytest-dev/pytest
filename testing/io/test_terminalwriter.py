@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sys
+from pathlib import Path
 from typing import Generator
 from unittest import mock
 
@@ -64,10 +65,10 @@ win32 = int(sys.platform == "win32")
 class TestTerminalWriter:
     @pytest.fixture(params=["path", "stringio"])
     def tw(
-        self, request, tmpdir
+        self, request, tmp_path: Path
     ) -> Generator[terminalwriter.TerminalWriter, None, None]:
         if request.param == "path":
-            p = tmpdir.join("tmpfile")
+            p = tmp_path.joinpath("tmpfile")
             f = open(str(p), "w+", encoding="utf8")
             tw = terminalwriter.TerminalWriter(f)
 
