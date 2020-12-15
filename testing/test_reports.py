@@ -1,6 +1,8 @@
 from typing import Sequence
 from typing import Union
 
+import py.path
+
 import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
@@ -213,7 +215,7 @@ class TestReportSerialization:
         reports = reprec.getreports("pytest_collectreport")
         assert reports
         for rep in reports:
-            rep.extra = True
+            rep.extra = True  # type: ignore[attr-defined]
             d = rep._to_json()
             newrep = CollectReport._from_json(d)
             assert newrep.extra
@@ -224,7 +226,7 @@ class TestReportSerialization:
                 assert newrep.longrepr == str(rep.longrepr)
 
     def test_paths_support(self, pytester: Pytester) -> None:
-        """Report attributes which is pathlib object should become string."""
+        """Report attributes which are py.path or pathlib objects should become strings."""
         pytester.makepyfile(
             """
             def test_a():
@@ -235,9 +237,11 @@ class TestReportSerialization:
         reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 3
         test_a_call = reports[1]
-        test_a_call.path = pytester.path
+        test_a_call.path1 = py.path.local(pytester.path)  # type: ignore[attr-defined]
+        test_a_call.path2 = pytester.path  # type: ignore[attr-defined]
         data = test_a_call._to_json()
-        assert data["path"] == str(pytester.path)
+        assert data["path1"] == str(pytester.path)
+        assert data["path2"] == str(pytester.path)
 
     def test_deserialization_failure(self, pytester: Pytester) -> None:
         """Check handling of failure during deserialization of report types."""

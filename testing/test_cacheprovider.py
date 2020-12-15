@@ -1063,7 +1063,7 @@ class TestNewFirst:
         )
 
         p1 = pytester.path.joinpath("test_1/test_1.py")
-        os.utime(p1, (1, 1))
+        os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 
         result = pytester.runpytest("-v")
         result.stdout.fnmatch_lines(
@@ -1076,7 +1076,7 @@ class TestNewFirst:
         )
 
         p1.write_text("def test_1(): assert 1\n" "def test_2(): assert 1\n")
-        os.utime(p1, (1, 1))
+        os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 
         result = pytester.runpytest("--nf", "--collect-only", "-q")
         result.stdout.fnmatch_lines(
@@ -1123,7 +1123,7 @@ class TestNewFirst:
         )
 
         p1 = pytester.path.joinpath("test_1/test_1.py")
-        os.utime(p1, (1, 1))
+        os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 
         result = pytester.runpytest("-v")
         result.stdout.fnmatch_lines(
@@ -1150,7 +1150,7 @@ class TestNewFirst:
             "@pytest.mark.parametrize('num', [1, 2, 3])\n"
             "def test_1(num): assert num\n"
         )
-        os.utime(p1, (1, 1))
+        os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 
         # Running only a subset does not forget about existing ones.
         result = pytester.runpytest("-v", "--nf", "test_2/test_2.py")
