@@ -8,8 +8,6 @@ from typing import Generator
 from typing import List
 from typing import Optional
 
-import py
-
 import pytest
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
@@ -93,9 +91,9 @@ class TestConftestValueAccessGlobal:
         conftest = ConftestWithSetinitial(startdir)
         mod, value = conftest._rget_with_confmod("a", startdir, importmode="prepend")
         assert value == 1.5
-        path = py.path.local(mod.__file__)
-        assert path.dirpath() == basedir / "adir" / "b"
-        assert path.purebasename.startswith("conftest")
+        path = Path(mod.__file__)
+        assert path.parent == basedir / "adir" / "b"
+        assert path.stem == "conftest"
 
 
 def test_conftest_in_nonpkg_with_init(tmp_path: Path, _sys_snapshot) -> None:
@@ -361,11 +359,10 @@ def test_conftest_import_order(pytester: Pytester, monkeypatch: MonkeyPatch) -> 
 
 
 def test_fixture_dependency(pytester: Pytester) -> None:
-    ct1 = pytester.makeconftest("")
-    ct1 = pytester.makepyfile("__init__.py")
-    ct1.write_text("")
+    pytester.makeconftest("")
+    pytester.path.joinpath("__init__.py").touch()
     sub = pytester.mkdir("sub")
-    sub.joinpath("__init__.py").write_text("")
+    sub.joinpath("__init__.py").touch()
     sub.joinpath("conftest.py").write_text(
         textwrap.dedent(
             """\
@@ -387,7 +384,7 @@ def test_fixture_dependency(pytester: Pytester) -> None:
     )
     subsub = sub.joinpath("subsub")
     subsub.mkdir()
-    subsub.joinpath("__init__.py").write_text("")
+    subsub.joinpath("__init__.py").touch()
     subsub.joinpath("test_bar.py").write_text(
         textwrap.dedent(
             """\
@@ -525,8 +522,8 @@ class TestConftestVisibility:
         """#616"""
         dirs = self._setup_tree(pytester)
         print("pytest run in cwd: %s" % (dirs[chdir].relative_to(pytester.path)))
-        print("pytestarg        : %s" % (testarg))
-        print("expected pass    : %s" % (expect_ntests_passed))
+        print("pytestarg        : %s" % testarg)
+        print("expected pass    : %s" % expect_ntests_passed)
         os.chdir(dirs[chdir])
         reprec = pytester.inline_run(testarg, "-q", "--traceconfig")
         reprec.assertoutcome(passed=expect_ntests_passed)

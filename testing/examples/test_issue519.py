@@ -1,3 +1,6 @@
-def test_510(testdir):
-    testdir.copy_example("issue_519.py")
-    testdir.runpytest("issue_519.py")
+from _pytest.pytester import Pytester
+
+
+def test_510(pytester: Pytester) -> None:
+    pytester.copy_example("issue_519.py")
+    pytester.runpytest("issue_519.py")
