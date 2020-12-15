@@ -28,6 +28,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.2.1 (2020-12-15)
+=========================
+
+Bug Fixes
+---------
+
+- `#7678 <https://github.com/pytest-dev/pytest/issues/7678>`_: Fixed bug where ``ImportPathMismatchError`` would be raised for files compiled in
+  the host and loaded later from an UNC mounted path (Windows).
+
+
+- `#8132 <https://github.com/pytest-dev/pytest/issues/8132>`_: Fixed regression in ``approx``: in 6.2.0 ``approx`` no longer raises
+  ``TypeError`` when dealing with non-numeric types, falling back to normal comparison.
+  Before 6.2.0, array types like tf.DeviceArray fell through to the scalar case,
+  and happened to compare correctly to a scalar if they had only one element.
+  After 6.2.0, these types began failing, because they inherited neither from
+  standard Python number hierarchy nor from ``numpy.ndarray``.
+
+  ``approx`` now converts arguments to ``numpy.ndarray`` if they expose the array
+  protocol and are not scalars. This treats array-like objects like numpy arrays,
+  regardless of size.
+
+
 pytest 6.2.0 (2020-12-12)
 =========================
 
