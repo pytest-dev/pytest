@@ -1,0 +1,1 @@
+Fixed "(<Skipped instance>)" being shown as a skip reason in the verbose test summary line when the reason is empty.

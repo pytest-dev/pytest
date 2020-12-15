@@ -1403,4 +1403,6 @@ def _get_raw_skip_reason(report: TestReport) -> str:
         _, _, reason = report.longrepr
         if reason.startswith("Skipped: "):
             reason = reason[len("Skipped: ") :]
+        elif reason == "Skipped":
+            reason = ""
         return reason
