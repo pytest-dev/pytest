@@ -4,13 +4,12 @@ import re
 from pathlib import Path
 from typing import Optional
 
-import py.path
-
 import pytest
 from _pytest.config import ExitCode
 from _pytest.config import UsageError
 from _pytest.main import resolve_collection_argument
 from _pytest.main import validate_basetemp
+from _pytest.pytester import Pytester
 from _pytest.pytester import Testdir
 
 
@@ -109,40 +108,37 @@ def test_validate_basetemp_integration(testdir):
 
 class TestResolveCollectionArgument:
     @pytest.fixture
-    def invocation_dir(self, testdir: Testdir) -> py.path.local:
-        testdir.syspathinsert(str(testdir.tmpdir / "src"))
-        testdir.chdir()
+    def invocation_path(self, pytester: Pytester) -> Path:
+        pytester.syspathinsert(pytester.path / "src")
+        pytester.chdir()
 
-        pkg = testdir.tmpdir.join("src/pkg").ensure_dir()
-        pkg.join("__init__.py").ensure()
-        pkg.join("test.py").ensure()
-        return testdir.tmpdir
+        pkg = pytester.path.joinpath("src/pkg")
+        pkg.mkdir(parents=True)
+        pkg.joinpath("__init__.py").touch()
+        pkg.joinpath("test.py").touch()
+        return pytester.path
 
-    @pytest.fixture
-    def invocation_path(self, invocation_dir: py.path.local) -> Path:
-        return Path(str(invocation_dir))
-
-    def test_file(self, invocation_dir: py.path.local, invocation_path: Path) -> None:
+    def test_file(self, invocation_path: Path) -> None:
         """File and parts."""
         assert resolve_collection_argument(invocation_path, "src/pkg/test.py") == (
-            invocation_dir / "src/pkg/test.py",
+            invocation_path / "src/pkg/test.py",
             [],
         )
         assert resolve_collection_argument(invocation_path, "src/pkg/test.py::") == (
-            invocation_dir / "src/pkg/test.py",
+            invocation_path / "src/pkg/test.py",
             [""],
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar"
-        ) == (invocation_dir / "src/pkg/test.py", ["foo", "bar"])
+        ) == (invocation_path / "src/pkg/test.py", ["foo", "bar"])
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar::"
-        ) == (invocation_dir / "src/pkg/test.py", ["foo", "bar", ""])
+        ) == (invocation_path / "src/pkg/test.py", ["foo", "bar", ""])
 
-    def test_dir(self, invocation_dir: py.path.local, invocation_path: Path) -> None:
+    def test_dir(self, invocation_path: Path) -> None:
         """Directory and parts."""
         assert resolve_collection_argument(invocation_path, "src/pkg") == (
-            invocation_dir / "src/pkg",
+            invocation_path / "src/pkg",
             [],
         )
 
@@ -156,16 +152,16 @@ class TestResolveCollectionArgument:
         ):
             resolve_collection_argument(invocation_path, "src/pkg::foo::bar")
 
-    def test_pypath(self, invocation_dir: py.path.local, invocation_path: Path) -> None:
+    def test_pypath(self, invocation_path: Path) -> None:
         """Dotted name and parts."""
         assert resolve_collection_argument(
             invocation_path, "pkg.test", as_pypath=True
-        ) == (invocation_dir / "src/pkg/test.py", [])
+        ) == (invocation_path / "src/pkg/test.py", [])
         assert resolve_collection_argument(
             invocation_path, "pkg.test::foo::bar", as_pypath=True
-        ) == (invocation_dir / "src/pkg/test.py", ["foo", "bar"])
+        ) == (invocation_path / "src/pkg/test.py", ["foo", "bar"])
         assert resolve_collection_argument(invocation_path, "pkg", as_pypath=True) == (
-            invocation_dir / "src/pkg",
+            invocation_path / "src/pkg",
             [],
         )
 
@@ -191,13 +187,11 @@ class TestResolveCollectionArgument:
         ):
             resolve_collection_argument(invocation_path, "foobar", as_pypath=True)
 
-    def test_absolute_paths_are_resolved_correctly(
-        self, invocation_dir: py.path.local, invocation_path: Path
-    ) -> None:
+    def test_absolute_paths_are_resolved_correctly(self, invocation_path: Path) -> None:
         """Absolute paths resolve back to absolute paths."""
-        full_path = str(invocation_dir / "src")
+        full_path = str(invocation_path / "src")
         assert resolve_collection_argument(invocation_path, full_path) == (
-            py.path.local(os.path.abspath("src")),
+            Path(os.path.abspath("src")),
             [],
         )
 
@@ -206,7 +200,7 @@ class TestResolveCollectionArgument:
         drive, full_path_without_drive = os.path.splitdrive(full_path)
         assert resolve_collection_argument(
             invocation_path, full_path_without_drive
-        ) == (py.path.local(os.path.abspath("src")), [])
+        ) == (Path(os.path.abspath("src")), [])
 
 
 def test_module_full_path_without_drive(testdir):

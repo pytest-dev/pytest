@@ -17,8 +17,6 @@ from typing import Mapping
 from typing import Optional
 from typing import Set
 
-import py
-
 import _pytest._code
 import pytest
 from _pytest.assertion import util
@@ -1311,7 +1309,7 @@ class TestEarlyRewriteBailout:
         import importlib.machinery
 
         self.find_spec_calls: List[str] = []
-        self.initial_paths: Set[py.path.local] = set()
+        self.initial_paths: Set[Path] = set()
 
         class StubSession:
             _initialpaths = self.initial_paths
@@ -1346,7 +1344,7 @@ class TestEarlyRewriteBailout:
         pytester.makepyfile(test_foo="def test_foo(): pass")
         pytester.makepyfile(bar="def bar(): pass")
         foobar_path = pytester.makepyfile(foobar="def foobar(): pass")
-        self.initial_paths.add(py.path.local(foobar_path))
+        self.initial_paths.add(foobar_path)
 
         # conftest files should always be rewritten
         assert hook.find_spec("conftest") is not None

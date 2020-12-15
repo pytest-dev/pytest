@@ -1,3 +1,4 @@
+from typing import cast
 from typing import List
 from typing import Type
 
@@ -73,17 +74,21 @@ def test__check_initialpaths_for_relpath() -> None:
     class FakeSession1:
         _initialpaths = [cwd]
 
-    assert nodes._check_initialpaths_for_relpath(FakeSession1, cwd) == ""
+    session = cast(pytest.Session, FakeSession1)
+
+    assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
 
     sub = cwd.join("file")
 
     class FakeSession2:
         _initialpaths = [cwd]
 
-    assert nodes._check_initialpaths_for_relpath(FakeSession2, sub) == "file"
+    session = cast(pytest.Session, FakeSession2)
+
+    assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
 
     outside = py.path.local("/outside")
-    assert nodes._check_initialpaths_for_relpath(FakeSession2, outside) is None
+    assert nodes._check_initialpaths_for_relpath(session, outside) is None
 
 
 def test_failure_with_changed_cwd(pytester: Pytester) -> None:

@@ -467,7 +467,7 @@ class Session(nodes.FSCollector):
         self.shouldfail: Union[bool, str] = False
         self.trace = config.trace.root.get("collection")
         self.startdir = config.invocation_dir
-        self._initialpaths: FrozenSet[py.path.local] = frozenset()
+        self._initialpaths: FrozenSet[Path] = frozenset()
 
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
@@ -510,8 +510,8 @@ class Session(nodes.FSCollector):
 
     pytest_collectreport = pytest_runtest_logreport
 
-    def isinitpath(self, path: py.path.local) -> bool:
-        return path in self._initialpaths
+    def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
+        return Path(path) in self._initialpaths
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):
         # Check if we have the common case of running
@@ -532,9 +532,10 @@ class Session(nodes.FSCollector):
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
         if direntry.name == "__pycache__":
             return False
-        path = py.path.local(direntry.path)
-        ihook = self.gethookproxy(path.dirpath())
-        if ihook.pytest_ignore_collect(path=path, config=self.config):
+        fspath = Path(direntry.path)
+        path = py.path.local(fspath)
+        ihook = self.gethookproxy(fspath.parent)
+        if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(path.check(fnmatch=pat) for pat in norecursepatterns):
@@ -544,6 +545,7 @@ class Session(nodes.FSCollector):
     def _collectfile(
         self, path: py.path.local, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
+        fspath = Path(path)
         assert (
             path.isfile()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -551,7 +553,9 @@ class Session(nodes.FSCollector):
         )
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
-            if ihook.pytest_ignore_collect(path=path, config=self.config):
+            if ihook.pytest_ignore_collect(
+                fspath=fspath, path=path, config=self.config
+            ):
                 return ()
 
         if handle_dupes:
@@ -563,7 +567,7 @@ class Session(nodes.FSCollector):
                 else:
                     duplicate_paths.add(path)
 
-        return ihook.pytest_collect_file(path=path, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
 
     @overload
     def perform_collect(
@@ -601,14 +605,14 @@ class Session(nodes.FSCollector):
         self.trace.root.indent += 1
 
         self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
-        self._initial_parts: List[Tuple[py.path.local, List[str]]] = []
+        self._initial_parts: List[Tuple[Path, List[str]]] = []
         self.items: List[nodes.Item] = []
 
         hook = self.config.hook
 
         items: Sequence[Union[nodes.Item, nodes.Collector]] = self.items
         try:
-            initialpaths: List[py.path.local] = []
+            initialpaths: List[Path] = []
             for arg in args:
                 fspath, parts = resolve_collection_argument(
                     self.config.invocation_params.dir,
@@ -669,13 +673,13 @@ class Session(nodes.FSCollector):
             # No point in finding packages when collecting doctests.
             if not self.config.getoption("doctestmodules", False):
                 pm = self.config.pluginmanager
-                confcutdir = py.path.local(pm._confcutdir) if pm._confcutdir else None
-                for parent in reversed(argpath.parts()):
-                    if confcutdir and confcutdir.relto(parent):
+                confcutdir = pm._confcutdir
+                for parent in (argpath, *argpath.parents):
+                    if confcutdir and parent in confcutdir.parents:
                         break
 
-                    if parent.isdir():
-                        pkginit = parent.join("__init__.py")
+                    if parent.is_dir():
+                        pkginit = py.path.local(parent / "__init__.py")
                         if pkginit.isfile() and pkginit not in node_cache1:
                             col = self._collectfile(pkginit, handle_dupes=False)
                             if col:
@@ -685,7 +689,7 @@ class Session(nodes.FSCollector):
 
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
-            if argpath.check(dir=1):
+            if argpath.is_dir():
                 assert not names, "invalid arg {!r}".format((argpath, names))
 
                 seen_dirs: Set[py.path.local] = set()
@@ -717,15 +721,16 @@ class Session(nodes.FSCollector):
                             node_cache2[key] = x
                             yield x
             else:
-                assert argpath.check(file=1)
+                assert argpath.is_file()
 
-                if argpath in node_cache1:
-                    col = node_cache1[argpath]
+                argpath_ = py.path.local(argpath)
+                if argpath_ in node_cache1:
+                    col = node_cache1[argpath_]
                 else:
-                    collect_root = pkg_roots.get(argpath.dirname, self)
-                    col = collect_root._collectfile(argpath, handle_dupes=False)
+                    collect_root = pkg_roots.get(argpath_.dirname, self)
+                    col = collect_root._collectfile(argpath_, handle_dupes=False)
                     if col:
-                        node_cache1[argpath] = col
+                        node_cache1[argpath_] = col
 
                 matching = []
                 work: List[
@@ -782,9 +787,7 @@ class Session(nodes.FSCollector):
                 # first yielded item will be the __init__ Module itself, so
                 # just use that. If this special case isn't taken, then all the
                 # files in the package will be yielded.
-                if argpath.basename == "__init__.py" and isinstance(
-                    matching[0], Package
-                ):
+                if argpath.name == "__init__.py" and isinstance(matching[0], Package):
                     try:
                         yield next(iter(matching[0].collect()))
                     except StopIteration:
@@ -833,7 +836,7 @@ def search_pypath(module_name: str) -> str:
 
 def resolve_collection_argument(
     invocation_path: Path, arg: str, *, as_pypath: bool = False
-) -> Tuple[py.path.local, List[str]]:
+) -> Tuple[Path, List[str]]:
     """Parse path arguments optionally containing selection parts and return (fspath, names).
 
     Command-line arguments can point to files and/or directories, and optionally contain
@@ -875,4 +878,4 @@ def resolve_collection_argument(
             else "directory argument cannot contain :: selection parts: {arg}"
         )
         raise UsageError(msg.format(arg=arg))
-    return py.path.local(str(fspath)), parts
+    return fspath, parts

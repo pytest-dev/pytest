@@ -30,8 +30,6 @@ from typing import Set
 from typing import TypeVar
 from typing import Union
 
-import py
-
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
@@ -456,7 +454,7 @@ class ImportPathMismatchError(ImportError):
 
 
 def import_path(
-    p: Union[str, py.path.local, Path],
+    p: Union[str, "os.PathLike[str]"],
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend,
 ) -> ModuleType:
@@ -482,7 +480,7 @@ def import_path(
     """
     mode = ImportMode(mode)
 
-    path = Path(str(p))
+    path = Path(p)
 
     if not path.exists():
         raise ImportError(path)

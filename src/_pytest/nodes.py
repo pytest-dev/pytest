@@ -480,10 +480,14 @@ class Collector(Node):
             excinfo.traceback = ntraceback.filter()
 
 
-def _check_initialpaths_for_relpath(session, fspath):
+def _check_initialpaths_for_relpath(
+    session: "Session", fspath: py.path.local
+) -> Optional[str]:
     for initial_path in session._initialpaths:
-        if fspath.common(initial_path) == initial_path:
-            return fspath.relto(initial_path)
+        initial_path_ = py.path.local(initial_path)
+        if fspath.common(initial_path_) == initial_path_:
+            return fspath.relto(initial_path_)
+    return None
 
 
 class FSCollector(Collector):

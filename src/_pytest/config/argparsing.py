@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 import warnings
 from gettext import gettext
@@ -13,8 +14,6 @@ from typing import Sequence
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
-
-import py
 
 import _pytest._io
 from _pytest.compat import final
@@ -97,14 +96,14 @@ class Parser:
 
     def parse(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> argparse.Namespace:
         from _pytest._argcomplete import try_argcomplete
 
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
-        strargs = [str(x) if isinstance(x, py.path.local) else x for x in args]
+        strargs = [os.fspath(x) for x in args]
         return self.optparser.parse_args(strargs, namespace=namespace)
 
     def _getparser(self) -> "MyOptionParser":
@@ -128,7 +127,7 @@ class Parser:
 
     def parse_setoption(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         option: argparse.Namespace,
         namespace: Optional[argparse.Namespace] = None,
     ) -> List[str]:
@@ -139,7 +138,7 @@ class Parser:
 
     def parse_known_args(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> argparse.Namespace:
         """Parse and return a namespace object with known arguments at this point."""
@@ -147,13 +146,13 @@ class Parser:
 
     def parse_known_and_unknown_args(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> Tuple[argparse.Namespace, List[str]]:
         """Parse and return a namespace object with known arguments, and
         the remaining arguments unknown at this point."""
         optparser = self._getparser()
-        strargs = [str(x) if isinstance(x, py.path.local) else x for x in args]
+        strargs = [os.fspath(x) for x in args]
         return optparser.parse_known_args(strargs, namespace=namespace)
 
     def addini(
