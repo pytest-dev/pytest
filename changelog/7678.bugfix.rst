@@ -1,2 +1,0 @@
-Fixed bug where ``ImportPathMismatchError`` would be raised for files compiled in
-the host and loaded later from an UNC mounted path (Windows).
