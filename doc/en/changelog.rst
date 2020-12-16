@@ -28,6 +28,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.3.0 (2020-12-16)
+=========================
+
+Features
+--------
+
+- `#8144 <https://github.com/pytest-dev/pytest/issues/8144>`_: The following hooks now receive an additional ``pathlib.Path`` argument, equivalent to an existing ``py.path.local`` argument:
+
+  - :func:`pytest_ignore_collect <_pytest.hookspec.pytest_ignore_collect>` - The ``fspath`` parameter (equivalent to existing ``path`` parameter).
+  - :func:`pytest_collect_file <_pytest.hookspec.pytest_collect_file>` - The ``fspath`` parameter (equivalent to existing ``path`` parameter).
+  - :func:`pytest_pycollect_makemodule <_pytest.hookspec.pytest_pycollect_makemodule>` - The ``fspath`` parameter (equivalent to existing ``path`` parameter).
+  - :func:`pytest_report_header <_pytest.hookspec.pytest_report_header>` - The ``startpath`` parameter (equivalent to existing ``startdir`` parameter).
+  - :func:`pytest_report_collectionfinish <_pytest.hookspec.pytest_report_collectionfinish>` - The ``startpath`` parameter (equivalent to existing ``startdir`` parameter).
+
+
 pytest 6.2.1 (2020-12-15)
 =========================
 
