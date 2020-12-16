@@ -21,11 +21,10 @@ _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")
 
 
 @pytest.fixture(autouse=True)
-def pdb_env(request):
+def pdb_env(request, monkeypatch: MonkeyPatch):
     if "pytester" in request.fixturenames:
         # Disable pdb++ with inner tests.
-        pytester = request.getfixturevalue("testdir")
-        pytester.monkeypatch.setenv("PDBPP_HIJACK_PDB", "0")
+        monkeypatch.setenv("PDBPP_HIJACK_PDB", "0")
 
 
 def runpdb_and_get_report(pytester: Pytester, source: str):

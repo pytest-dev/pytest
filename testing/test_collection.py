@@ -6,6 +6,8 @@ import textwrap
 from pathlib import Path
 from typing import List
 
+import py.path
+
 import pytest
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
@@ -16,7 +18,6 @@ from _pytest.nodes import Item
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import Pytester
-from _pytest.pytester import Testdir
 
 
 def ensure_file(file_path: Path) -> Path:
@@ -206,15 +207,17 @@ class TestCollectFS:
             "Activate.ps1",
         ),
     )
-    def test__in_venv(self, testdir: Testdir, fname: str) -> None:
+    def test__in_venv(self, pytester: Pytester, fname: str) -> None:
         """Directly test the virtual env detection function"""
         bindir = "Scripts" if sys.platform.startswith("win") else "bin"
         # no bin/activate, not a virtualenv
-        base_path = testdir.tmpdir.mkdir("venv")
-        assert _in_venv(base_path) is False
+        base_path = pytester.mkdir("venv")
+        assert _in_venv(py.path.local(base_path)) is False
         # with bin/activate, totally a virtualenv
-        base_path.ensure(bindir, fname)
-        assert _in_venv(base_path) is True
+        bin_path = base_path.joinpath(bindir)
+        bin_path.mkdir()
+        bin_path.joinpath(fname).touch()
+        assert _in_venv(py.path.local(base_path)) is True
 
     def test_custom_norecursedirs(self, pytester: Pytester) -> None:
         pytester.makeini(
@@ -264,7 +267,7 @@ class TestCollectFS:
 
 
 class TestCollectPluginHookRelay:
-    def test_pytest_collect_file(self, testdir: Testdir) -> None:
+    def test_pytest_collect_file(self, pytester: Pytester) -> None:
         wascalled = []
 
         class Plugin:
@@ -273,8 +276,8 @@ class TestCollectPluginHookRelay:
                     # Ignore hidden files, e.g. .testmondata.
                     wascalled.append(path)
 
-        testdir.makefile(".abc", "xyz")
-        pytest.main(testdir.tmpdir, plugins=[Plugin()])
+        pytester.makefile(".abc", "xyz")
+        pytest.main(py.path.local(pytester.path), plugins=[Plugin()])
         assert len(wascalled) == 1
         assert wascalled[0].ext == ".abc"
 
@@ -1336,7 +1339,7 @@ def test_does_not_put_src_on_path(pytester: Pytester) -> None:
     assert result.ret == ExitCode.OK
 
 
-def test_fscollector_from_parent(testdir: Testdir, request: FixtureRequest) -> None:
+def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) -> None:
     """Ensure File.from_parent can forward custom arguments to the constructor.
 
     Context: https://github.com/pytest-dev/pytest-cpp/pull/47
@@ -1352,7 +1355,7 @@ def test_fscollector_from_parent(testdir: Testdir, request: FixtureRequest) -> N
             return super().from_parent(parent=parent, fspath=fspath, x=x)
 
     collector = MyCollector.from_parent(
-        parent=request.session, fspath=testdir.tmpdir / "foo", x=10
+        parent=request.session, fspath=py.path.local(pytester.path) / "foo", x=10
     )
     assert collector.x == 10
 

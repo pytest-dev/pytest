@@ -123,7 +123,8 @@ jobs:
       with:
         fetch-depth: 0
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v2
+      # https://github.com/actions/setup-python/issues/171
+      uses: actions/setup-python@v2.1.4
       with:
         python-version: ${{ matrix.python }}
     - name: Install dependencies

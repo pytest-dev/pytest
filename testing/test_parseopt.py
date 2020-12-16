@@ -315,7 +315,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
                 shlex.quote(sys.executable)
             )
         )
-    # alternative would be extended Testdir.{run(),_run(),popen()} to be able
+    # alternative would be extended Pytester.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
     monkeypatch.setenv("_ARGCOMPLETE", "1")
