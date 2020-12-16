@@ -1,0 +1,42 @@
+name: prepare release pr
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to base the release from'
+        required: true
+        default: ''
+      major:
+        description: 'Major release? (yes/no)'
+        required: true
+        default: 'no'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.8"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade setuptools tox
+
+    - name: Prepare release PR (minor/patch release)
+      if: github.event.inputs.branch.major == 'no'
+      run: |
+        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ secrets.chatops }}
+
+    - name: Prepare release PR (major release)
+      if: github.event.inputs.branch.major == 'yes'
+      run: |
+        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ secrets.chatops }} --major
