@@ -1,4 +1,4 @@
-.. image:: https://github.com/nicoddemus/pytest/raw/transparent-logo-8158/doc/en/img/pytest_logo_curves.svg
+.. image:: https://github.com/pytest-dev/pytest/raw/master/doc/en/img/pytest_logo_curves.svg
    :target: https://docs.pytest.org/en/stable/
    :align: center
    :height: 200
