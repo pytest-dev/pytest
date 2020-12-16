@@ -1,5 +1,5 @@
 """
-This script is part of the pytest release process which is manually in the Actions
+This script is part of the pytest release process which is triggered manually in the Actions
 tab of the repository.
 
 The user will need to enter the base branch to start the release from (for example
@@ -50,7 +50,7 @@ def login(token: str) -> Repository:
 
 def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     print()
-    print(f"Precessing release for branch {Fore.CYAN}{base_branch}")
+    print(f"Processing release for branch {Fore.CYAN}{base_branch}")
 
     check_call(["git", "checkout", f"origin/{base_branch}"])
 
