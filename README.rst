@@ -1,6 +1,7 @@
 .. image:: https://github.com/nicoddemus/pytest/raw/transparent-logo-8158/doc/en/img/pytest_logo_curves.svg
    :target: https://docs.pytest.org/en/stable/
    :align: center
+   :width: 400
    :alt: pytest
 
 
