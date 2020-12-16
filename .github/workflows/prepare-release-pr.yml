@@ -32,11 +32,11 @@ jobs:
         pip install --upgrade setuptools tox
 
     - name: Prepare release PR (minor/patch release)
-      if: github.event.inputs.branch.major == 'no'
+      if: github.event.inputs.major == 'no'
       run: |
         tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ secrets.chatops }}
 
     - name: Prepare release PR (major release)
-      if: github.event.inputs.branch.major == 'yes'
+      if: github.event.inputs.major == 'yes'
       run: |
         tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ secrets.chatops }} --major
