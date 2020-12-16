@@ -19,7 +19,6 @@ from pathlib import Path
 from subprocess import check_call
 from subprocess import check_output
 from subprocess import run
-from textwrap import dedent
 
 from colorama import Fore
 from colorama import init
@@ -127,16 +126,6 @@ def find_next_version(base_branch: str, is_major: bool) -> str:
     features = list(changelog.glob("*.feature.rst"))
     breaking = list(changelog.glob("*.breaking.rst"))
     is_feature_release = features or breaking
-
-    if is_feature_release and base_branch != "master":
-        msg = dedent(
-            f"""
-            Found features or breaking changes in `{base_branch}`, and feature releases can only be
-            created from `master`:
-        """
-        )
-        msg += "\n".join(f"* `{x.name}`" for x in sorted(features + breaking))
-        raise InvalidFeatureRelease(msg)
 
     if is_major:
         return f"{last_version[0]+1}.0.0"
