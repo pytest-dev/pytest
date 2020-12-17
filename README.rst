@@ -20,9 +20,6 @@
     :target: https://codecov.io/gh/pytest-dev/pytest
     :alt: Code coverage Status
 
-.. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
-    :target: https://travis-ci.org/pytest-dev/pytest
-
 .. image:: https://github.com/pytest-dev/pytest/workflows/main/badge.svg
     :target: https://github.com/pytest-dev/pytest/actions?query=workflow%3Amain
 
