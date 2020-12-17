@@ -38,7 +38,7 @@ class OutcomeException(BaseException):
         self.pytrace = pytrace
 
     def __repr__(self) -> str:
-        if self.msg:
+        if self.msg is not None:
             return self.msg
         return f"<{self.__class__.__name__} instance>"
 
