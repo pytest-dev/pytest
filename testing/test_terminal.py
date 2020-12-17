@@ -366,6 +366,26 @@ class TestTerminal:
             @pytest.mark.xfail(reason="")
             def test_4():
                 assert False
+
+            @pytest.mark.skip
+            def test_5():
+                pass
+
+            @pytest.mark.xfail
+            def test_6():
+                pass
+
+            def test_7():
+                pytest.skip()
+
+            def test_8():
+                pytest.skip("888 is great")
+
+            def test_9():
+                pytest.xfail()
+
+            def test_10():
+                pytest.xfail("It's 🕙 o'clock")
         """
         )
         result = pytester.runpytest("-v")
@@ -375,6 +395,12 @@ class TestTerminal:
                 "test_verbose_skip_reason.py::test_2 XPASS (456) *",
                 "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
                 "test_verbose_skip_reason.py::test_4 XFAIL  *",
+                "test_verbose_skip_reason.py::test_5 SKIPPED (unconditional skip) *",
+                "test_verbose_skip_reason.py::test_6 XPASS  *",
+                "test_verbose_skip_reason.py::test_7 SKIPPED  *",
+                "test_verbose_skip_reason.py::test_8 SKIPPED (888 is great) *",
+                "test_verbose_skip_reason.py::test_9 XFAIL  *",
+                "test_verbose_skip_reason.py::test_10 XFAIL (It's 🕙 o'clock) *",
             ]
         )
 
