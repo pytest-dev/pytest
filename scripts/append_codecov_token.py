@@ -1,8 +1,8 @@
 """
 Appends the codecov token to the 'codecov.yml' file at the root of the repository.
 
-This is done by CI during PRs and builds on the pytest-dev repository so we can upload coverage, at least
-until codecov grows some native integration like it has with Travis and AppVeyor.
+This is done by CI during PRs and builds on the pytest-dev repository so we can
+upload coverage, at least until codecov grows some native integration with GitHub Actions.
 
 See discussion in https://github.com/pytest-dev/pytest/pull/6441 for more information.
 """
