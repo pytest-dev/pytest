@@ -123,6 +123,7 @@ def getfuncargnames(
     * Don't have default values.
     * Aren't bound with functools.partial.
     * Aren't replaced with mocks.
+    * Aren't part of the wrapped function if this is a function decorated with `functools.wraps`.
 
     The is_method and cls arguments indicate that the function should
     be treated as a bound method even though it's not unless, only in
@@ -140,7 +141,7 @@ def getfuncargnames(
     # creates a tuple of the names of the parameters that don't have
     # defaults.
     try:
-        parameters = signature(function).parameters
+        parameters = signature(function, follow_wrapped=False).parameters
     except (ValueError, TypeError) as e:
         fail(
             f"Could not determine arguments of {function!r}: {e}", pytrace=False,
