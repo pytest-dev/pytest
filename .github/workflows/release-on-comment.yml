@@ -19,8 +19,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python
-      # TODO: Use "v2" tag once https://github.com/actions/setup-python/issues/171 is resolved.
-      uses: actions/setup-python@v2.1.4
+      uses: actions/setup-python@v2
       with:
         python-version: "3.8"
     - name: Install dependencies
