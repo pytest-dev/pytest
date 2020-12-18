@@ -89,7 +89,7 @@ jobs:
             os: ubuntu-latest
             tox_env: "py39-xdist"
           - name: "ubuntu-pypy3"
-            python: "pypy3"
+            python: "pypy-3.7"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
