@@ -277,7 +277,7 @@ class TestCollectPluginHookRelay:
                     wascalled.append(path)
 
         pytester.makefile(".abc", "xyz")
-        pytest.main(py.path.local(pytester.path), plugins=[Plugin()])
+        pytest.main(pytester.path, plugins=[Plugin()])
         assert len(wascalled) == 1
         assert wascalled[0].ext == ".abc"
 
