@@ -123,8 +123,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Set up Python ${{ matrix.python }}
-      # TODO: Use "v2" tag once https://github.com/actions/setup-python/issues/171 is resolved.
-      uses: actions/setup-python@v2.1.4
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
     - name: Install dependencies
@@ -159,8 +158,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    # TODO: Use "v2" tag once https://github.com/actions/setup-python/issues/171 is resolved.
-    - uses: actions/setup-python@v2.1.4
+    - uses: actions/setup-python@v2
     - name: set PY
       run: echo "name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')" >> $GITHUB_ENV
     - uses: actions/cache@v2
@@ -186,8 +184,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Set up Python
-      # TODO: Use "v2" tag once https://github.com/actions/setup-python/issues/171 is resolved.
-      uses: actions/setup-python@v2.1.4
+      uses: actions/setup-python@v2
       with:
         python-version: "3.7"
     - name: Install dependencies
