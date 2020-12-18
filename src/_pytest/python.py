@@ -660,7 +660,7 @@ class Package(Module):
         warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
         return self.session.gethookproxy(fspath)
 
-    def isinitpath(self, path: "os.PathLike[str]") -> bool:
+    def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
         warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
         return self.session.isinitpath(path)
 

@@ -92,7 +92,7 @@ def test_pytester_runs_with_plugin(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_pytester_with_doctest(pytester: Pytester):
+def test_pytester_with_doctest(pytester: Pytester) -> None:
     """Check that pytester can be used within doctests.
 
     It used to use `request.function`, which is `None` with doctests."""
@@ -314,20 +314,19 @@ def test_cwd_snapshot(pytester: Pytester) -> None:
 
 class TestSysModulesSnapshot:
     key = "my-test-module"
-    mod = ModuleType("something")
 
     def test_remove_added(self) -> None:
         original = dict(sys.modules)
         assert self.key not in sys.modules
         snapshot = SysModulesSnapshot()
-        sys.modules[self.key] = "something"  # type: ignore
+        sys.modules[self.key] = ModuleType("something")
         assert self.key in sys.modules
         snapshot.restore()
         assert sys.modules == original
 
     def test_add_removed(self, monkeypatch: MonkeyPatch) -> None:
         assert self.key not in sys.modules
-        monkeypatch.setitem(sys.modules, self.key, self.mod)
+        monkeypatch.setitem(sys.modules, self.key, ModuleType("something"))
         assert self.key in sys.modules
         original = dict(sys.modules)
         snapshot = SysModulesSnapshot()
@@ -338,11 +337,11 @@ class TestSysModulesSnapshot:
 
     def test_restore_reloaded(self, monkeypatch: MonkeyPatch) -> None:
         assert self.key not in sys.modules
-        monkeypatch.setitem(sys.modules, self.key, self.mod)
+        monkeypatch.setitem(sys.modules, self.key, ModuleType("something"))
         assert self.key in sys.modules
         original = dict(sys.modules)
         snapshot = SysModulesSnapshot()
-        sys.modules[self.key] = "something else"  # type: ignore
+        sys.modules[self.key] = ModuleType("something else")
         snapshot.restore()
         assert sys.modules == original
 
@@ -358,9 +357,9 @@ class TestSysModulesSnapshot:
             return name in (key[0], key[1], "some-other-key")
 
         snapshot = SysModulesSnapshot(preserve=preserve)
-        sys.modules[key[0]] = original[key[0]] = "something else0"  # type: ignore
-        sys.modules[key[1]] = original[key[1]] = "something else1"  # type: ignore
-        sys.modules[key[2]] = "something else2"  # type: ignore
+        sys.modules[key[0]] = original[key[0]] = ModuleType("something else0")
+        sys.modules[key[1]] = original[key[1]] = ModuleType("something else1")
+        sys.modules[key[2]] = ModuleType("something else2")
         snapshot.restore()
         assert sys.modules == original
 
@@ -368,7 +367,7 @@ class TestSysModulesSnapshot:
         original = dict(sys.modules)
         assert self.key not in original
         replacement = dict(sys.modules)
-        replacement[self.key] = "life of brian"  # type: ignore
+        replacement[self.key] = ModuleType("life of brian")
         snapshot = SysModulesSnapshot()
         monkeypatch.setattr(sys, "modules", replacement)
         snapshot.restore()
@@ -442,7 +441,9 @@ def test_pytester_subprocess_via_runpytest_arg(pytester: Pytester) -> None:
             assert pytester.runpytest(testfile).ret == 0
         """
     )
-    result = pytester.runpytest("-p", "pytester", "--runpytest", "subprocess", testfile)
+    result = pytester.runpytest_inprocess(
+        "-p", "pytester", "--runpytest", "subprocess", testfile
+    )
     assert result.ret == 0
 
 
@@ -777,7 +778,7 @@ def test_pytester_outcomes_with_multiple_errors(pytester: Pytester) -> None:
     assert result.parseoutcomes() == {"errors": 2}
 
 
-def test_parse_summary_line_always_plural():
+def test_parse_summary_line_always_plural() -> None:
     """Parsing summaries always returns plural nouns (#6505)"""
     lines = [
         "some output 1",
@@ -812,6 +813,6 @@ def test_makefile_joins_absolute_path(pytester: Pytester) -> None:
     assert str(p1) == str(pytester.path / "absfile.py")
 
 
-def test_testtmproot(testdir):
+def test_testtmproot(testdir) -> None:
     """Check test_tmproot is a py.path attribute for backward compatibility."""
     assert testdir.test_tmproot.check(dir=1)
