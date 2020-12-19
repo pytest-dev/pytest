@@ -465,7 +465,7 @@ def test_importmode_importlib_with_dataclass(tmp_path: Path) -> None:
     )
 
     module = import_path(fn, mode="importlib", root=tmp_path)
-    Data: Any = module.Data  # type: ignore[attr-defined]
+    Data: Any = getattr(module, "Data")
     data = Data(value="foo")
     assert data.value == "foo"
     assert data.__module__ == "src.tests.test_dataclass"
@@ -491,7 +491,8 @@ def test_importmode_importlib_with_pickle(tmp_path: Path) -> None:
     )
 
     module = import_path(fn, mode="importlib", root=tmp_path)
-    action: Any = module.round_trip()  # type: ignore[attr-defined]
+    round_trip = getattr(module, "round_trip")
+    action = round_trip()
     assert action() == 42
 
 
@@ -537,10 +538,10 @@ def test_importmode_importlib_with_pickle_separate_modules(tmp_path: Path) -> No
         return pickle.loads(s)
 
     module = import_path(fn1, mode="importlib", root=tmp_path)
-    Data1 = module.Data  # type: ignore[attr-defined]
+    Data1 = getattr(module, "Data")
 
     module = import_path(fn2, mode="importlib", root=tmp_path)
-    Data2 = module.Data  # type: ignore[attr-defined]
+    Data2 = getattr(module, "Data")
 
     assert round_trip(Data1(20)) == Data1(20)
     assert round_trip(Data2("hello")) == Data2("hello")
