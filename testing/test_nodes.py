@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import cast
 from typing import List
 from typing import Type
@@ -69,23 +70,23 @@ def test_node_warning_enforces_warning_types(pytester: Pytester) -> None:
 
 def test__check_initialpaths_for_relpath() -> None:
     """Ensure that it handles dirs, and does not always use dirname."""
-    cwd = py.path.local()
+    cwd = Path.cwd()
 
     class FakeSession1:
-        _initialpaths = [cwd]
+        _initialpaths = frozenset({cwd})
 
     session = cast(pytest.Session, FakeSession1)
 
-    assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
+    assert nodes._check_initialpaths_for_relpath(session, py.path.local(cwd)) == ""
 
-    sub = cwd.join("file")
+    sub = cwd / "file"
 
     class FakeSession2:
-        _initialpaths = [cwd]
+        _initialpaths = frozenset({cwd})
 
     session = cast(pytest.Session, FakeSession2)
 
-    assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
+    assert nodes._check_initialpaths_for_relpath(session, py.path.local(sub)) == "file"
 
     outside = py.path.local("/outside")
     assert nodes._check_initialpaths_for_relpath(session, outside) is None
