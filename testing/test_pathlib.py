@@ -552,5 +552,6 @@ def test_module_name_from_path(tmp_path: Path) -> None:
     result = module_name_from_path(tmp_path / "src/tests/test_foo.py", tmp_path)
     assert result == "src.tests.test_foo"
 
+    # Path is not relative to root dir: use the full path to obtain the module name.
     result = module_name_from_path(Path("/home/foo/test_foo.py"), Path("/bar"))
     assert result == "home.foo.test_foo"

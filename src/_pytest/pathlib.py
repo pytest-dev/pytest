@@ -476,8 +476,8 @@ def import_path(
       at all. It effectively allows having same-named test modules in different places.
 
     :param root:
-        Is used when mode == ImportMode.importlib, and is used as an anchor to obtain
-        a unique module name for the module being imported, so it can safely be stashed
+        Used as an anchor when mode == ImportMode.importlib to obtain
+        a unique name for the module being imported so it can safely be stored
         into ``sys.modules``.
 
     :raises ImportPathMismatchError:
