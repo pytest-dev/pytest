@@ -441,19 +441,18 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
         # the paths too. Using a context to narrow the patch as much as possible given
         # this is an important system function.
         mp.setattr(os.path, "samefile", lambda x, y: False)
-        module = import_path(module_path)
+        module = import_path(module_path, root=tmp_path)
     assert getattr(module, "foo")() == 42
 
 
-@pytest.fixture
-def module_with_dataclass(tmpdir):
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+def test_importmode_importlib_with_dataclass(tmpdir):
+    """Ensure that importlib mode works with a module containing dataclasses"""
     tmpdir.join("src/tests").ensure_dir()
     fn = tmpdir.join("src/tests/test_dataclass.py")
     fn.write(
         dedent(
-            f"""
-            {'from __future__ import annotations' if (3, 7) <= sys.version_info < (3, 10) else ''}
-
+            """
             from dataclasses import dataclass
 
             @dataclass
@@ -465,11 +464,13 @@ def module_with_dataclass(tmpdir):
             """
         )
     )
-    return fn
+
+    module = import_path(fn, mode="importlib", root=Path(tmpdir))
+    module.test_dataclass()  # type: ignore[attr-defined]
 
 
-@pytest.fixture
-def module_with_pickle(tmpdir):
+def test_importmode_importlib_with_pickle(tmpdir):
+    """Ensure that importlib mode works with pickle"""
     tmpdir.join("src/tests").ensure_dir()
     fn = tmpdir.join("src/tests/test_pickle.py")
     fn.write(
@@ -485,17 +486,6 @@ def module_with_pickle(tmpdir):
             """
         )
     )
-    return fn
 
-
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
-def test_importmode_importlib_with_dataclass(module_with_dataclass, tmpdir):
-    """Ensure that importlib mode works with a module containing dataclasses"""
-    module = import_path(module_with_dataclass, mode="importlib", root=Path(tmpdir))
-    module.test_dataclass()  # type: ignore[attr-defined]
-
-
-def test_importmode_importlib_with_pickle(module_with_pickle, tmpdir):
-    """Ensure that importlib mode works with pickle"""
-    module = import_path(module_with_pickle, mode="importlib", root=Path(tmpdir))
+    module = import_path(fn, mode="importlib", root=Path(tmpdir))
     module.test_pickle()  # type: ignore[attr-defined]
