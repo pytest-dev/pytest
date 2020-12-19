@@ -5,6 +5,7 @@ import sys
 import warnings
 from collections import defaultdict
 from collections import deque
+from pathlib import Path
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -58,6 +59,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
+from _pytest.pathlib import bestrelpath
 from _pytest.store import StoreKey
 
 if TYPE_CHECKING:
@@ -718,7 +720,11 @@ class FixtureRequest:
         for fixturedef in self._get_fixturestack():
             factory = fixturedef.func
             fs, lineno = getfslineno(factory)
-            p = self._pyfuncitem.session.fspath.bestrelpath(fs)
+            if isinstance(fs, Path):
+                session: Session = self._pyfuncitem.session
+                p = bestrelpath(Path(session.fspath), fs)
+            else:
+                p = fs
             args = _format_args(factory)
             lines.append("%s:%d:  def %s%s" % (p, lineno + 1, factory.__name__, args))
         return lines

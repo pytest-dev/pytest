@@ -340,7 +340,11 @@ class PyobjMixin:
             fspath: Union[py.path.local, str] = file_path
             lineno = compat_co_firstlineno
         else:
-            fspath, lineno = getfslineno(obj)
+            path, lineno = getfslineno(obj)
+            if isinstance(path, Path):
+                fspath = py.path.local(path)
+            else:
+                fspath = path
         modpath = self.getmodpath()
         assert isinstance(lineno, int)
         return fspath, lineno, modpath
