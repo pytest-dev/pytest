@@ -1,7 +1,9 @@
 import itertools
+import os
 import re
 import sys
 import textwrap
+from pathlib import Path
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -14,6 +16,7 @@ from typing import Union
 
 import attr
 import hypothesis
+import py.path
 from hypothesis import strategies
 
 import pytest
@@ -449,6 +452,20 @@ class TestMetafunc:
         e = enum.Enum("Foo", "one, two")
         result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
         assert result == ["Foo.one-Foo.two"]
+
+    def test_idmaker_pathlib_path(self) -> None:
+        filepath = os.path.join("dir", "test.txt")
+        expected = "dir/test.txt"
+        path = Path(filepath)
+        result = idmaker(("file"), [pytest.param(path)])
+        assert result == [expected]
+
+    def test_idmaker_pypath_local(self, pytestconfig) -> None:
+        filepath = os.path.join("dir", "test.txt")
+        expected = "/".join(os.path.abspath(filepath).split(os.sep))
+        path = py.path.local(filepath)
+        result = idmaker(("file"), [pytest.param(path)])
+        assert result == [expected]
 
     def test_idmaker_idfn(self) -> None:
         """#351"""
@@ -1338,6 +1355,25 @@ class TestMetafuncFunctional:
         )
         reprec = pytester.inline_run("--collect-only")
         assert not reprec.getcalls("pytest_internalerror")
+
+    def test_parametrize_with_pathlib_object(self, pytester: Pytester) -> None:
+        """#8118"""
+        pytester.makepyfile(
+            """
+            import pathlib
+            import pytest
+
+            @pytest.mark.parametrize('file', [pathlib.Path("test1.txt")])
+            def test_runscript(file):
+                assert True
+        """
+        )
+        result = pytester.runpytest("-v", "-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_parametrize_with_pathlib_object.py::test_runscript[test1.txt] PASSED",
+            ]
+        )
 
     def test_usefixtures_seen_in_generate_tests(self, pytester: Pytester) -> None:
         pytester.makepyfile(

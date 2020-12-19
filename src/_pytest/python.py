@@ -12,6 +12,7 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 from typing import Any
+from typing import AnyStr
 from typing import Callable
 from typing import Dict
 from typing import Generator
@@ -1343,7 +1344,22 @@ def _idval(
         # Name of a class, function, module, etc.
         name: str = getattr(val, "__name__")
         return name
+    # TODO: Remove type-ignore after next mypy release.
+    # https://github.com/python/typeshed/commit/076983eec45e739c68551cb6119fd7d85fd4afa9
+    elif isinstance(val, os.PathLike):  # type: ignore[misc]
+        return _idval_pathlike(val, config)
+
     return str(argname) + str(idx)
+
+
+def _idval_pathlike(pathlike: "os.PathLike[AnyStr]", config: Optional[Config]) -> str:
+    # For consistency, always use Unix path separators.
+    path: Union[str, bytes] = os.fspath(pathlike)
+    if isinstance(path, bytes):
+        path = path.replace(os.fsencode(os.sep), os.fsencode("/"))
+    else:
+        path = path.replace(os.sep, "/")
+    return _ascii_escaped_by_config(path, config)
 
 
 def _idvalset(
