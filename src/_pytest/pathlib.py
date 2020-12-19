@@ -23,6 +23,7 @@ from pathlib import PurePath
 from posixpath import sep as posix_sep
 from types import ModuleType
 from typing import Callable
+from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
@@ -508,6 +509,7 @@ def import_path(
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        insert_missing_modules(sys.modules, module_name)
         return mod
 
     pkg_path = resolve_package_path(path)
@@ -591,6 +593,26 @@ def module_name_from_path(path: Path, root: Path) -> str:
         path_parts = relative_path.parts
 
     return ".".join(path_parts)
+
+
+def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> None:
+    """
+    Used by ``import_path`` to create intermediate modules when using mode=importlib.
+
+    When we want to import a module as "src.tests.test_foo" for example, we need
+    to create empty modules "src" and "src.tests" after inserting "src.tests.test_foo",
+    otherwise "src.tests.test_foo" is not importable by ``__import__``.
+    """
+    module_parts = module_name.split(".")
+    while module_name:
+        if module_name not in modules:
+            module = ModuleType(
+                module_name,
+                doc="Empty module created by pytest's importmode=importlib.",
+            )
+            modules[module_name] = module
+        module_parts.pop(-1)
+        module_name = ".".join(module_parts)
 
 
 def resolve_package_path(path: Path) -> Optional[Path]:
