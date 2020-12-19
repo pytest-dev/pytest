@@ -6,6 +6,7 @@ from pathlib import Path
 from textwrap import dedent
 from types import ModuleType
 from typing import Generator
+from typing import Any
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -18,6 +19,7 @@ from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import maybe_delete_a_numbered_dir
+from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
@@ -446,46 +448,109 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
 
 
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
-def test_importmode_importlib_with_dataclass(tmpdir):
-    """Ensure that importlib mode works with a module containing dataclasses"""
-    tmpdir.join("src/tests").ensure_dir()
-    fn = tmpdir.join("src/tests/test_dataclass.py")
-    fn.write(
+def test_importmode_importlib_with_dataclass(tmp_path: Path) -> None:
+    """Ensure that importlib mode works with a module containing dataclasses (#7856)."""
+    fn = tmp_path.joinpath("src/tests/test_dataclass.py")
+    fn.parent.mkdir(parents=True)
+    fn.write_text(
         dedent(
             """
             from dataclasses import dataclass
 
             @dataclass
-            class DataClass:
+            class Data:
                 value: str
-
-            def test_dataclass():
-                assert DataClass(value='test').value == 'test'
             """
         )
     )
 
-    module = import_path(fn, mode="importlib", root=Path(tmpdir))
-    module.test_dataclass()  # type: ignore[attr-defined]
+    module = import_path(fn, mode="importlib", root=tmp_path)
+    Data: Any = module.Data  # type: ignore[attr-defined]
+    data = Data(value="foo")
+    assert data.value == "foo"
+    assert data.__module__ == "src.tests.test_dataclass"
 
 
-def test_importmode_importlib_with_pickle(tmpdir):
-    """Ensure that importlib mode works with pickle"""
-    tmpdir.join("src/tests").ensure_dir()
-    fn = tmpdir.join("src/tests/test_pickle.py")
-    fn.write(
+def test_importmode_importlib_with_pickle(tmp_path: Path) -> None:
+    """Ensure that importlib mode works with pickle (#7859)."""
+    fn = tmp_path.joinpath("src/tests/test_pickle.py")
+    fn.parent.mkdir(parents=True)
+    fn.write_text(
         dedent(
             """
             import pickle
 
-            def do_action():
-                pass
+            def _action():
+                return 42
 
-            def test_pickle():
-                pickle.dumps(do_action)
+            def round_trip():
+                s = pickle.dumps(_action)
+                return pickle.loads(s)
             """
         )
     )
 
-    module = import_path(fn, mode="importlib", root=Path(tmpdir))
-    module.test_pickle()  # type: ignore[attr-defined]
+    module = import_path(fn, mode="importlib", root=tmp_path)
+    action: Any = module.round_trip()  # type: ignore[attr-defined]
+    assert action() == 42
+
+
+def test_importmode_importlib_with_pickle_separate_modules(tmp_path: Path) -> None:
+    """
+    Ensure that importlib mode works can load pickles that look similar but are
+    defined in separate modules.
+    """
+    fn1 = tmp_path.joinpath("src/m1/tests/test.py")
+    fn1.parent.mkdir(parents=True)
+    fn1.write_text(
+        dedent(
+            """
+            import attr
+            import pickle
+
+            @attr.s(auto_attribs=True)
+            class Data:
+                x: int = 42
+            """
+        )
+    )
+
+    fn2 = tmp_path.joinpath("src/m2/tests/test.py")
+    fn2.parent.mkdir(parents=True)
+    fn2.write_text(
+        dedent(
+            """
+            import attr
+            import pickle
+
+            @attr.s(auto_attribs=True)
+            class Data:
+                x: str = ""
+            """
+        )
+    )
+
+    import pickle
+
+    def round_trip(obj):
+        s = pickle.dumps(obj)
+        return pickle.loads(s)
+
+    module = import_path(fn1, mode="importlib", root=tmp_path)
+    Data1 = module.Data  # type: ignore[attr-defined]
+
+    module = import_path(fn2, mode="importlib", root=tmp_path)
+    Data2 = module.Data  # type: ignore[attr-defined]
+
+    assert round_trip(Data1(20)) == Data1(20)
+    assert round_trip(Data2("hello")) == Data2("hello")
+    assert Data1.__module__ == "src.m1.tests.test"
+    assert Data2.__module__ == "src.m2.tests.test"
+
+
+def test_module_name_from_path(tmp_path: Path) -> None:
+    result = module_name_from_path(tmp_path / "src/tests/test_foo.py", tmp_path)
+    assert result == "src.tests.test_foo"
+
+    result = module_name_from_path(Path("/home/foo/test_foo.py"), Path("/bar"))
+    assert result == "home.foo.test_foo"

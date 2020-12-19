@@ -492,8 +492,7 @@ def import_path(
         raise ImportError(path)
 
     if mode is ImportMode.importlib:
-        relative_path = path.relative_to(root)
-        module_name = ".".join(relative_path.with_suffix("").parts)
+        module_name = module_name_from_path(path, root)
 
         for meta_importer in sys.meta_path:
             spec = meta_importer.find_spec(module_name, [str(path.parent)])
@@ -571,6 +570,27 @@ else:
 
     def _is_same(f1: str, f2: str) -> bool:
         return os.path.samefile(f1, f2)
+
+
+def module_name_from_path(path: Path, root: Path) -> str:
+    """
+    Return a dotted module name based on the given path, anchored on root.
+
+    For example: path="projects/src/tests/test_foo.py" and root="/projects", the
+    resulting module name will be "src.tests.test_foo".
+    """
+    path = path.with_suffix("")
+    try:
+        relative_path = path.relative_to(root)
+    except ValueError:
+        # If we can't get a relative path to root, use the full path, except
+        # for the first part ("d:\\" or "/" depending on the platform, for example).
+        path_parts = path.parts[1:]
+    else:
+        # Use the parts for the relative path to the root path.
+        path_parts = relative_path.parts
+
+    return ".".join(path_parts)
 
 
 def resolve_package_path(path: Path) -> Optional[Path]:
