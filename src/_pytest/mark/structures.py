@@ -28,6 +28,7 @@ from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
+from _pytest.deprecated import check_ispytest
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -200,21 +201,38 @@ class ParameterSet(
 
 
 @final
-@attr.s(frozen=True)
+@attr.s(frozen=True, init=False, auto_attribs=True)
 class Mark:
     #: Name of the mark.
-    name = attr.ib(type=str)
+    name: str
     #: Positional arguments of the mark decorator.
-    args = attr.ib(type=Tuple[Any, ...])
+    args: Tuple[Any, ...]
     #: Keyword arguments of the mark decorator.
-    kwargs = attr.ib(type=Mapping[str, Any])
+    kwargs: Mapping[str, Any]
 
     #: Source Mark for ids with parametrize Marks.
-    _param_ids_from = attr.ib(type=Optional["Mark"], default=None, repr=False)
+    _param_ids_from: Optional["Mark"] = attr.ib(default=None, repr=False)
     #: Resolved/generated ids with parametrize Marks.
-    _param_ids_generated = attr.ib(
-        type=Optional[Sequence[str]], default=None, repr=False
-    )
+    _param_ids_generated: Optional[Sequence[str]] = attr.ib(default=None, repr=False)
+
+    def __init__(
+        self,
+        name: str,
+        args: Tuple[Any, ...],
+        kwargs: Mapping[str, Any],
+        param_ids_from: Optional["Mark"] = None,
+        param_ids_generated: Optional[Sequence[str]] = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        """:meta private:"""
+        check_ispytest(_ispytest)
+        # Weirdness to bypass frozen=True.
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "args", args)
+        object.__setattr__(self, "kwargs", kwargs)
+        object.__setattr__(self, "_param_ids_from", param_ids_from)
+        object.__setattr__(self, "_param_ids_generated", param_ids_generated)
 
     def _has_param_ids(self) -> bool:
         return "ids" in self.kwargs or len(self.args) >= 4
@@ -243,6 +261,7 @@ class Mark:
             self.args + other.args,
             dict(self.kwargs, **other.kwargs),
             param_ids_from=param_ids_from,
+            _ispytest=True,
         )
 
 
@@ -320,7 +339,7 @@ class MarkDecorator:
 
         :rtype: MarkDecorator
         """
-        mark = Mark(self.name, args, kwargs)
+        mark = Mark(self.name, args, kwargs, _ispytest=True)
         return self.__class__(self.mark.combined_with(mark))
 
     # Type ignored because the overloads overlap with an incompatible
@@ -515,7 +534,7 @@ class MarkGenerator:
                     2,
                 )
 
-        return MarkDecorator(Mark(name, (), {}))
+        return MarkDecorator(Mark(name, (), {}, _ispytest=True))
 
 
 MARK_GEN = MarkGenerator()

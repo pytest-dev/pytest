@@ -21,6 +21,7 @@ from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
 from _pytest.logging import LogCaptureFixture
 from _pytest.main import Session
+from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import param
 from _pytest.monkeypatch import MonkeyPatch
@@ -89,6 +90,7 @@ __all__ = [
     "LogCaptureFixture",
     "main",
     "mark",
+    "Mark",
     "Module",
     "MonkeyPatch",
     "Package",

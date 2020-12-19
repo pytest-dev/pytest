@@ -239,7 +239,7 @@ For example:
     def test_function():
         ...
 
-Will create and attach a :class:`Mark <_pytest.mark.structures.Mark>` object to the collected
+Will create and attach a :class:`Mark <pytest.Mark>` object to the collected
 :class:`Item <pytest.Item>`, which can then be accessed by fixtures or hooks with
 :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>`. The ``mark`` object will have the following attributes:
 
@@ -863,7 +863,7 @@ MarkGenerator
 Mark
 ~~~~
 
-.. autoclass:: _pytest.mark.structures.Mark
+.. autoclass:: pytest.Mark()
     :members:
 
 
