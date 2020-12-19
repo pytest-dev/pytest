@@ -1050,7 +1050,7 @@ class TestLastFailed:
 
 
 class TestNewFirst:
-    def test_newfirst_usecase(self, pytester: Pytester, testdir) -> None:
+    def test_newfirst_usecase(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             **{
                 "test_1/test_1.py": """
