@@ -57,7 +57,12 @@ class TestConftestValueAccessGlobal:
     def test_basic_init(self, basedir: Path) -> None:
         conftest = PytestPluginManager()
         p = basedir / "adir"
-        assert conftest._rget_with_confmod("a", p, importmode="prepend", rootpath=basedir)[1] == 1
+        assert (
+            conftest._rget_with_confmod("a", p, importmode="prepend", rootpath=basedir)[
+                1
+            ]
+            == 1
+        )
 
     def test_immediate_initialiation_and_incremental_are_the_same(
         self, basedir: Path
@@ -69,9 +74,13 @@ class TestConftestValueAccessGlobal:
         )
         snap1 = len(conftest._dirpath2confmods)
         assert snap1 == 1
-        conftest._getconftestmodules(basedir / "adir", importmode="prepend", rootpath=basedir)
+        conftest._getconftestmodules(
+            basedir / "adir", importmode="prepend", rootpath=basedir
+        )
         assert len(conftest._dirpath2confmods) == snap1 + 1
-        conftest._getconftestmodules(basedir / "b", importmode="prepend", rootpath=basedir)
+        conftest._getconftestmodules(
+            basedir / "b", importmode="prepend", rootpath=basedir
+        )
         assert len(conftest._dirpath2confmods) == snap1 + 2
 
     def test_value_access_not_existing(self, basedir: Path) -> None:
@@ -84,9 +93,17 @@ class TestConftestValueAccessGlobal:
     def test_value_access_by_path(self, basedir: Path) -> None:
         conftest = ConftestWithSetinitial(basedir)
         adir = basedir / "adir"
-        assert conftest._rget_with_confmod("a", adir, importmode="prepend", rootpath=basedir)[1] == 1
         assert (
-            conftest._rget_with_confmod("a", adir / "b", importmode="prepend", rootpath=basedir)[1] == 1.5
+            conftest._rget_with_confmod(
+                "a", adir, importmode="prepend", rootpath=basedir
+            )[1]
+            == 1
+        )
+        assert (
+            conftest._rget_with_confmod(
+                "a", adir / "b", importmode="prepend", rootpath=basedir
+            )[1]
+            == 1.5
         )
 
     def test_value_access_with_confmod(self, basedir: Path) -> None:
@@ -116,7 +133,9 @@ def test_doubledash_considered(pytester: Pytester) -> None:
     conf.joinpath("conftest.py").touch()
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.name, conf.name])
-    values = conftest._getconftestmodules(conf, importmode="prepend", rootpath=pytester.path)
+    values = conftest._getconftestmodules(
+        conf, importmode="prepend", rootpath=pytester.path
+    )
     assert len(values) == 1
 
 
@@ -137,11 +156,10 @@ def test_conftest_global_import(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
         from pathlib import Path
-<<<<<<< HEAD
         import pytest
         from _pytest.config import PytestPluginManager
         conf = PytestPluginManager()
-        mod = conf._importconftest(Path("conftest.py"), importmode="prepend")
+        mod = conf._importconftest(Path("conftest.py"), importmode="prepend", rootpath=Path.cwd())
         assert mod.x == 3
         import conftest
         assert conftest is mod, (conftest, mod)
@@ -149,19 +167,7 @@ def test_conftest_global_import(pytester: Pytester) -> None:
         sub.mkdir()
         subconf = sub / "conftest.py"
         subconf.write_text("y=4")
-        mod2 = conf._importconftest(subconf, importmode="prepend")
-=======
-        import py, pytest
-        from _pytest.config import PytestPluginManager
-        conf = PytestPluginManager()
-        mod = conf._importconftest(py.path.local("conftest.py"), importmode="prepend", rootpath=Path.cwd)
-        assert mod.x == 3
-        import conftest
-        assert conftest is mod, (conftest, mod)
-        subconf = py.path.local().ensure("sub", "conftest.py")
-        subconf.write("y=4")
-        mod2 = conf._importconftest(subconf, importmode="prepend", rootpath=Path.cwd)
->>>>>>> 92960c5b3... Construct full module names when using importmode=importlib
+        mod2 = conf._importconftest(subconf, importmode="prepend", rootpath=Path.cwd())
         assert mod != mod2
         assert mod2.y == 4
         import conftest
@@ -177,17 +183,25 @@ def test_conftestcutdir(pytester: Pytester) -> None:
     p = pytester.mkdir("x")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [pytester.path], confcutdir=p)
-    values = conftest._getconftestmodules(p, importmode="prepend", rootpath=pytester.path)
+    values = conftest._getconftestmodules(
+        p, importmode="prepend", rootpath=pytester.path
+    )
     assert len(values) == 0
-    values = conftest._getconftestmodules(conf.parent, importmode="prepend", rootpath=pytester.path)
+    values = conftest._getconftestmodules(
+        conf.parent, importmode="prepend", rootpath=pytester.path
+    )
     assert len(values) == 0
     assert Path(conf) not in conftest._conftestpath2mod
     # but we can still import a conftest directly
     conftest._importconftest(conf, importmode="prepend", rootpath=pytester.path)
-    values = conftest._getconftestmodules(conf.parent, importmode="prepend", rootpath=pytester.path)
+    values = conftest._getconftestmodules(
+        conf.parent, importmode="prepend", rootpath=pytester.path
+    )
     assert values[0].__file__.startswith(str(conf))
     # and all sub paths get updated properly
-    values = conftest._getconftestmodules(p, importmode="prepend", rootpath=pytester.path)
+    values = conftest._getconftestmodules(
+        p, importmode="prepend", rootpath=pytester.path
+    )
     assert len(values) == 1
     assert values[0].__file__.startswith(str(conf))
 
@@ -196,7 +210,9 @@ def test_conftestcutdir_inplace_considered(pytester: Pytester) -> None:
     conf = pytester.makeconftest("")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.parent], confcutdir=conf.parent)
-    values = conftest._getconftestmodules(conf.parent, importmode="prepend", rootpath=pytester.path)
+    values = conftest._getconftestmodules(
+        conf.parent, importmode="prepend", rootpath=pytester.path
+    )
     assert len(values) == 1
     assert values[0].__file__.startswith(str(conf))
 
@@ -372,11 +388,12 @@ def test_conftest_import_order(pytester: Pytester, monkeypatch: MonkeyPatch) -> 
     conftest = PytestPluginManager()
     conftest._confcutdir = pytester.path
     monkeypatch.setattr(conftest, "_importconftest", impct)
-    mods = cast(List[Path], conftest._getconftestmodules(sub, importmode="prepend", rootpath=pytester.path))
+    mods = cast(
+        List[Path],
+        conftest._getconftestmodules(sub, importmode="prepend", rootpath=pytester.path),
+    )
     expected = [ct1, ct2]
     assert mods == expected
-    assert conftest._getconftestmodules(sub, importmode="prepend", rootpath=pytester.path) == [ct1, ct2]
-
 
 
 def test_fixture_dependency(pytester: Pytester) -> None:

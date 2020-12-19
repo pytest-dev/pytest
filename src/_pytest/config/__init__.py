@@ -522,7 +522,7 @@ class PytestPluginManager(PluginManager):
         if anchor.is_dir():
             for x in anchor.glob("test*"):
                 if x.is_dir():
-                    self._getconftestmodules(x, importmode)
+                    self._getconftestmodules(x, importmode, rootpath)
 
     @lru_cache(maxsize=128)
     def _getconftestmodules(
@@ -1444,7 +1444,9 @@ class Config:
             assert type in [None, "string"]
             return value
 
-    def _getconftest_pathlist(self, name: str, path: Path, rootpath: Path) -> Optional[List[Path]]:
+    def _getconftest_pathlist(
+        self, name: str, path: Path, rootpath: Path
+    ) -> Optional[List[Path]]:
         try:
             mod, relroots = self.pluginmanager._rget_with_confmod(
                 name, path, self.getoption("importmode"), rootpath

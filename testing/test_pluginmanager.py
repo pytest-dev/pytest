@@ -2,7 +2,6 @@ import os
 import shutil
 import sys
 import types
-from pathlib import Path
 from typing import List
 
 import pytest
@@ -46,7 +45,7 @@ class TestPytestPluginInteractions:
             kwargs=dict(pluginmanager=config.pluginmanager)
         )
         config.pluginmanager._importconftest(
-            conf, importmode="prepend", rootpath=Path(testdir.tmpdir)
+            conf, importmode="prepend", rootpath=pytester.path
         )
         # print(config.pluginmanager.get_plugins())
         res = config.hook.pytest_myhook(xyz=10)
@@ -74,7 +73,9 @@ class TestPytestPluginInteractions:
                     default=True)
         """
         )
-        config.pluginmanager._importconftest(p, importmode="prepend", rootpath=pytester.path)
+        config.pluginmanager._importconftest(
+            p, importmode="prepend", rootpath=pytester.path
+        )
         assert config.option.test123
 
     def test_configure(self, pytester: Pytester) -> None:
@@ -139,10 +140,14 @@ class TestPytestPluginInteractions:
         conftest1 = pytester.path.joinpath("tests/conftest.py")
         conftest2 = pytester.path.joinpath("tests/subdir/conftest.py")
 
-        config.pluginmanager._importconftest(conftest1, importmode="prepend", rootpath=pytester.path)
+        config.pluginmanager._importconftest(
+            conftest1, importmode="prepend", rootpath=pytester.path
+        )
         ihook_a = session.gethookproxy(pytester.path / "tests")
         assert ihook_a is not None
-        config.pluginmanager._importconftest(conftest2, importmode="prepend", rootpath=pytester.path)
+        config.pluginmanager._importconftest(
+            conftest2, importmode="prepend", rootpath=pytester.path
+        )
         ihook_b = session.gethookproxy(pytester.path / "tests")
         assert ihook_a is not ihook_b
 
@@ -353,7 +358,9 @@ class TestPytestPluginManager:
         pytester: Pytester,
         pytestpm: PytestPluginManager,
     ) -> None:
-        mod = import_path(pytester.makepyfile("pytest_plugins='xyz'"))
+        mod = import_path(
+            pytester.makepyfile("pytest_plugins='xyz'"), root=pytester.path
+        )
         with pytest.raises(ImportError):
             pytestpm.consider_conftest(mod)
 
