@@ -8,6 +8,7 @@ import pytest
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+from _pytest.tmpdir import TempPathFactory
 
 pytest_plugins = ("pytester",)
 
@@ -139,9 +140,11 @@ class TestNewAPI:
         pytester.runpytest()
         assert pytester.path.joinpath(rel_cache_dir).is_dir()
 
-    def test_custom_abs_cache_dir(self, pytester: Pytester, tmpdir_factory) -> None:
-        tmp = str(tmpdir_factory.mktemp("tmp"))
-        abs_cache_dir = os.path.join(tmp, "custom_cache_dir")
+    def test_custom_abs_cache_dir(
+        self, pytester: Pytester, tmp_path_factory: TempPathFactory
+    ) -> None:
+        tmp = tmp_path_factory.mktemp("tmp")
+        abs_cache_dir = tmp / "custom_cache_dir"
         pytester.makeini(
             """
             [pytest]
@@ -152,7 +155,7 @@ class TestNewAPI:
         )
         pytester.makepyfile(test_errored="def test_error():\n    assert False")
         pytester.runpytest()
-        assert Path(abs_cache_dir).is_dir()
+        assert abs_cache_dir.is_dir()
 
     def test_custom_cache_dir_with_env_var(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
@@ -185,9 +188,9 @@ def test_cache_reportheader(env, pytester: Pytester, monkeypatch: MonkeyPatch) -
 
 
 def test_cache_reportheader_external_abspath(
-    pytester: Pytester, tmpdir_factory
+    pytester: Pytester, tmp_path_factory: TempPathFactory
 ) -> None:
-    external_cache = tmpdir_factory.mktemp(
+    external_cache = tmp_path_factory.mktemp(
         "test_cache_reportheader_external_abspath_abs"
     )
 
