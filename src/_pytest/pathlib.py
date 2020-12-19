@@ -457,6 +457,7 @@ def import_path(
     p: Union[str, "os.PathLike[str]"],
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend,
+    root: Path,
 ) -> ModuleType:
     """Import and return a module from the given path, which can be a file (a module) or
     a directory (a package).
@@ -474,6 +475,11 @@ def import_path(
       to import the module, which avoids having to use `__import__` and muck with `sys.path`
       at all. It effectively allows having same-named test modules in different places.
 
+    :param root:
+        Is used when mode == ImportMode.importlib, and is used as an anchor to obtain
+        a unique module name for the module being imported, so it can safely be stashed
+        into ``sys.modules``.
+
     :raises ImportPathMismatchError:
         If after importing the given `path` and the module `__file__`
         are different. Only raised in `prepend` and `append` modes.
@@ -486,7 +492,8 @@ def import_path(
         raise ImportError(path)
 
     if mode is ImportMode.importlib:
-        module_name = path.stem
+        relative_path = path.relative_to(root)
+        module_name = ".".join(relative_path.with_suffix("").parts)
 
         for meta_importer in sys.meta_path:
             spec = meta_importer.find_spec(module_name, [str(path.parent)])
