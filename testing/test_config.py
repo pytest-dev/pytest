@@ -11,7 +11,6 @@ from typing import Type
 from typing import Union
 
 import attr
-import py.path
 
 import _pytest._code
 import pytest
@@ -28,6 +27,7 @@ from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
 
 
@@ -854,8 +854,8 @@ class TestConfigFromdictargs:
             )
         )
 
-        inifile = "../../foo/bar.ini"
-        option_dict = {"inifilename": inifile, "capture": "no"}
+        inifilename = "../../foo/bar.ini"
+        option_dict = {"inifilename": inifilename, "capture": "no"}
 
         cwd = tmp_path.joinpath("a/b")
         cwd.mkdir(parents=True)
@@ -873,14 +873,14 @@ class TestConfigFromdictargs:
         with MonkeyPatch.context() as mp:
             mp.chdir(cwd)
             config = Config.fromdictargs(option_dict, ())
-            inipath = py.path.local(inifile)
+            inipath = absolutepath(inifilename)
 
         assert config.args == [str(cwd)]
-        assert config.option.inifilename == inifile
+        assert config.option.inifilename == inifilename
         assert config.option.capture == "no"
 
         # this indicates this is the file used for getting configuration values
-        assert config.inifile == inipath
+        assert config.inipath == inipath
         assert config.inicfg.get("name") == "value"
         assert config.inicfg.get("should_not_be_set") is None
 
