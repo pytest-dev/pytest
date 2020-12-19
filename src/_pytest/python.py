@@ -66,6 +66,8 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
+from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
@@ -190,11 +192,10 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
 def pytest_collect_file(
     fspath: Path, path: py.path.local, parent: nodes.Collector
 ) -> Optional["Module"]:
-    ext = path.ext
-    if ext == ".py":
+    if fspath.suffix == ".py":
         if not parent.session.isinitpath(fspath):
             if not path_matches_patterns(
-                path, parent.config.getini("python_files") + ["__init__.py"]
+                fspath, parent.config.getini("python_files") + ["__init__.py"]
             ):
                 return None
         ihook = parent.session.gethookproxy(fspath)
@@ -205,13 +206,13 @@ def pytest_collect_file(
     return None
 
 
-def path_matches_patterns(path: py.path.local, patterns: Iterable[str]) -> bool:
+def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     """Return whether path matches any of the patterns in the list of globs given."""
-    return any(path.fnmatch(pattern) for pattern in patterns)
+    return any(fnmatch_ex(pattern, path) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(path: py.path.local, parent) -> "Module":
-    if path.basename == "__init__.py":
+def pytest_pycollect_makemodule(fspath: Path, path: py.path.local, parent) -> "Module":
+    if fspath.name == "__init__.py":
         pkg: Package = Package.from_parent(parent, fspath=path)
         return pkg
     mod: Module = Module.from_parent(parent, fspath=path)
@@ -677,21 +678,21 @@ class Package(Module):
         if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
-        if any(path.check(fnmatch=pat) for pat in norecursepatterns):
+        if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
             return False
         return True
 
     def _collectfile(
-        self, path: py.path.local, handle_dupes: bool = True
+        self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        fspath = Path(path)
+        path = py.path.local(fspath)
         assert (
-            path.isfile()
+            fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path, path.isdir(), path.exists(), path.islink()
+            path, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
         )
-        ihook = self.session.gethookproxy(path)
-        if not self.session.isinitpath(path):
+        ihook = self.session.gethookproxy(fspath)
+        if not self.session.isinitpath(fspath):
             if ihook.pytest_ignore_collect(
                 fspath=fspath, path=path, config=self.config
             ):
@@ -701,32 +702,32 @@ class Package(Module):
             keepduplicates = self.config.getoption("keepduplicates")
             if not keepduplicates:
                 duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if path in duplicate_paths:
+                if fspath in duplicate_paths:
                     return ()
                 else:
-                    duplicate_paths.add(path)
+                    duplicate_paths.add(fspath)
 
         return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        this_path = self.fspath.dirpath()
-        init_module = this_path.join("__init__.py")
-        if init_module.check(file=1) and path_matches_patterns(
+        this_path = Path(self.fspath).parent
+        init_module = this_path / "__init__.py"
+        if init_module.is_file() and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
-            yield Module.from_parent(self, fspath=init_module)
-        pkg_prefixes: Set[py.path.local] = set()
+            yield Module.from_parent(self, fspath=py.path.local(init_module))
+        pkg_prefixes: Set[Path] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
-            path = py.path.local(direntry.path)
+            path = Path(direntry.path)
 
             # We will visit our own __init__.py file, in which case we skip it.
             if direntry.is_file():
-                if direntry.name == "__init__.py" and path.dirpath() == this_path:
+                if direntry.name == "__init__.py" and path.parent == this_path:
                     continue
 
             parts_ = parts(direntry.path)
             if any(
-                str(pkg_prefix) in parts_ and pkg_prefix.join("__init__.py") != path
+                str(pkg_prefix) in parts_ and pkg_prefix / "__init__.py" != path
                 for pkg_prefix in pkg_prefixes
             ):
                 continue
@@ -736,7 +737,7 @@ class Package(Module):
             elif not direntry.is_dir():
                 # Broken symlink or invalid/missing file.
                 continue
-            elif path.join("__init__.py").check(file=1):
+            elif path.joinpath("__init__.py").is_file():
                 pkg_prefixes.add(path)
 
 
@@ -1416,13 +1417,13 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = py.path.local()
+    curdir = Path.cwd()
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
-    def get_best_relpath(func):
+    def get_best_relpath(func) -> str:
         loc = getlocation(func, str(curdir))
-        return curdir.bestrelpath(py.path.local(loc))
+        return bestrelpath(curdir, Path(loc))
 
     def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
         argname = fixture_def.argname
@@ -1472,7 +1473,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = py.path.local()
+    curdir = Path.cwd()
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
@@ -1494,7 +1495,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 (
                     len(fixturedef.baseid),
                     fixturedef.func.__module__,
-                    curdir.bestrelpath(py.path.local(loc)),
+                    bestrelpath(curdir, Path(loc)),
                     fixturedef.argname,
                     fixturedef,
                 )

@@ -348,7 +348,7 @@ class PytestPluginManager(PluginManager):
         self._conftestpath2mod: Dict[Path, types.ModuleType] = {}
         self._confcutdir: Optional[Path] = None
         self._noconftest = False
-        self._duplicatepaths: Set[py.path.local] = set()
+        self._duplicatepaths: Set[Path] = set()
 
         # plugins that were explicitly skipped with pytest.skip
         # list of (module name, skip reason)
