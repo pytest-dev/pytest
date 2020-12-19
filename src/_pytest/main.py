@@ -546,7 +546,9 @@ class Session(nodes.FSCollector):
         # hooks with all conftest.py files.
         pm = self.config.pluginmanager
         my_conftestmodules = pm._getconftestmodules(
-            Path(fspath), self.config.getoption("importmode"), rootpath=self.config.rootpath
+            Path(fspath),
+            self.config.getoption("importmode"),
+            rootpath=self.config.rootpath,
         )
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
