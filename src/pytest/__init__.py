@@ -23,6 +23,7 @@ from _pytest.logging import LogCaptureFixture
 from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
+from _pytest.mark import MarkDecorator
 from _pytest.mark import param
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
@@ -91,6 +92,7 @@ __all__ = [
     "main",
     "mark",
     "Mark",
+    "MarkDecorator",
     "Module",
     "MonkeyPatch",
     "Package",

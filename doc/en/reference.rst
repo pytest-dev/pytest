@@ -849,7 +849,7 @@ Item
 MarkDecorator
 ~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.mark.MarkDecorator
+.. autoclass:: pytest.MarkDecorator()
     :members:
 
 
