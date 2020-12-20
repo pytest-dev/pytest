@@ -488,9 +488,6 @@ class MarkGenerator:
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """
 
-    _config: Optional[Config] = None
-    _markers: Set[str] = set()
-
     # See TYPE_CHECKING above.
     if TYPE_CHECKING:
         skip: _SkipMarkDecorator
@@ -500,7 +497,13 @@ class MarkGenerator:
         usefixtures: _UsefixturesMarkDecorator
         filterwarnings: _FilterwarningsMarkDecorator
 
+    def __init__(self, *, _ispytest: bool = False) -> None:
+        check_ispytest(_ispytest)
+        self._config: Optional[Config] = None
+        self._markers: Set[str] = set()
+
     def __getattr__(self, name: str) -> MarkDecorator:
+        """Generate a new :class:`MarkDecorator` with the given name."""
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
 
@@ -541,7 +544,7 @@ class MarkGenerator:
         return MarkDecorator(Mark(name, (), {}, _ispytest=True), _ispytest=True)
 
 
-MARK_GEN = MarkGenerator()
+MARK_GEN = MarkGenerator(_ispytest=True)
 
 
 @final

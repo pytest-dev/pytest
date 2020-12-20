@@ -856,7 +856,7 @@ MarkDecorator
 MarkGenerator
 ~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.mark.MarkGenerator
+.. autoclass:: pytest.MarkGenerator()
     :members:
 
 

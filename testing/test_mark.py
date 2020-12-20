@@ -21,7 +21,7 @@ class TestMark:
         assert attr in module.__all__  # type: ignore
 
     def test_pytest_mark_notcallable(self) -> None:
-        mark = MarkGenerator()
+        mark = MarkGenerator(_ispytest=True)
         with pytest.raises(TypeError):
             mark()  # type: ignore[operator]
 
@@ -40,7 +40,7 @@ class TestMark:
         assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap]
 
     def test_pytest_mark_name_starts_with_underscore(self) -> None:
-        mark = MarkGenerator()
+        mark = MarkGenerator(_ispytest=True)
         with pytest.raises(AttributeError):
             mark._some_name
 
