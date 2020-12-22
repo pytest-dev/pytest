@@ -551,7 +551,7 @@ class FixtureRequest:
         on all function invocations.
 
         :param marker:
-            A :py:class:`_pytest.mark.MarkDecorator` object created by a call
+            A :class:`pytest.MarkDecorator` object created by a call
             to ``pytest.mark.NAME(...)``.
         """
         self.node.add_marker(marker)
