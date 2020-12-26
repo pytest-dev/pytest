@@ -758,7 +758,7 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or :ref:`hoo
 CallInfo
 ~~~~~~~~
 
-.. autoclass:: _pytest.runner.CallInfo()
+.. autoclass:: pytest.CallInfo()
     :members:
 
 

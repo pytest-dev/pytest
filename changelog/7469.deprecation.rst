@@ -4,5 +4,6 @@ Directly constructing the following classes is now deprecated:
 - ``_pytest.mark.structures.MarkDecorator``
 - ``_pytest.mark.structures.MarkGenerator``
 - ``_pytest.python.Metafunc``
+- ``_pytest.runner.CallInfo``
 
 These have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 7.0.0.

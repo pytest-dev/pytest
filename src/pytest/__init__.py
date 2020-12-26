@@ -48,6 +48,7 @@ from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
+from _pytest.runner import CallInfo
 from _pytest.tmpdir import TempdirFactory
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
@@ -69,6 +70,7 @@ __all__ = [
     "_fillfuncargs",
     "approx",
     "Cache",
+    "CallInfo",
     "CaptureFixture",
     "Class",
     "cmdline",
