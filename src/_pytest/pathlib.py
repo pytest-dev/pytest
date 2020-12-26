@@ -387,7 +387,7 @@ def resolve_from_str(input: str, rootpath: Path) -> Path:
         return rootpath.joinpath(input)
 
 
-def fnmatch_ex(pattern: str, path) -> bool:
+def fnmatch_ex(pattern: str, path: Union[str, "os.PathLike[str]"]) -> bool:
     """A port of FNMatcher from py.path.common which works with PurePath() instances.
 
     The difference between this algorithm and PurePath.match() is that the

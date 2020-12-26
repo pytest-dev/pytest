@@ -6,12 +6,11 @@ import inspect
 import linecache
 import sys
 import textwrap
+from pathlib import Path
 from types import CodeType
 from typing import Any
 from typing import Dict
 from typing import Optional
-
-import py.path
 
 import pytest
 from _pytest._code import Code
@@ -352,8 +351,8 @@ def test_getfslineno() -> None:
 
     fspath, lineno = getfslineno(f)
 
-    assert isinstance(fspath, py.path.local)
-    assert fspath.basename == "test_source.py"
+    assert isinstance(fspath, Path)
+    assert fspath.name == "test_source.py"
     assert lineno == f.__code__.co_firstlineno - 1  # see findsource
 
     class A:
@@ -362,8 +361,8 @@ def test_getfslineno() -> None:
     fspath, lineno = getfslineno(A)
 
     _, A_lineno = inspect.findsource(A)
-    assert isinstance(fspath, py.path.local)
-    assert fspath.basename == "test_source.py"
+    assert isinstance(fspath, Path)
+    assert fspath.name == "test_source.py"
     assert lineno == A_lineno
 
     assert getfslineno(3) == ("", -1)

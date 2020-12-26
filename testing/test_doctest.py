@@ -1,9 +1,8 @@
 import inspect
 import textwrap
+from pathlib import Path
 from typing import Callable
 from typing import Optional
-
-import py
 
 import pytest
 from _pytest.doctest import _get_checker
@@ -1496,25 +1495,25 @@ def test_warning_on_unwrap_of_broken_object(
     assert inspect.unwrap.__module__ == "inspect"
 
 
-def test_is_setup_py_not_named_setup_py(tmp_path):
+def test_is_setup_py_not_named_setup_py(tmp_path: Path) -> None:
     not_setup_py = tmp_path.joinpath("not_setup.py")
     not_setup_py.write_text('from setuptools import setup; setup(name="foo")')
-    assert not _is_setup_py(py.path.local(str(not_setup_py)))
+    assert not _is_setup_py(not_setup_py)
 
 
 @pytest.mark.parametrize("mod", ("setuptools", "distutils.core"))
-def test_is_setup_py_is_a_setup_py(tmpdir, mod):
-    setup_py = tmpdir.join("setup.py")
-    setup_py.write(f'from {mod} import setup; setup(name="foo")')
+def test_is_setup_py_is_a_setup_py(tmp_path: Path, mod: str) -> None:
+    setup_py = tmp_path.joinpath("setup.py")
+    setup_py.write_text(f'from {mod} import setup; setup(name="foo")', "utf-8")
     assert _is_setup_py(setup_py)
 
 
 @pytest.mark.parametrize("mod", ("setuptools", "distutils.core"))
-def test_is_setup_py_different_encoding(tmp_path, mod):
+def test_is_setup_py_different_encoding(tmp_path: Path, mod: str) -> None:
     setup_py = tmp_path.joinpath("setup.py")
     contents = (
         "# -*- coding: cp1252 -*-\n"
         'from {} import setup; setup(name="foo", description="€")\n'.format(mod)
     )
     setup_py.write_bytes(contents.encode("cp1252"))
-    assert _is_setup_py(py.path.local(str(setup_py)))
+    assert _is_setup_py(setup_py)

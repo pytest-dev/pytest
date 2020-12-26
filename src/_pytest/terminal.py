@@ -285,15 +285,13 @@ class WarningReport:
         User friendly message about the warning.
     :ivar str|None nodeid:
         nodeid that generated the warning (see ``get_location``).
-    :ivar tuple|py.path.local fslocation:
+    :ivar tuple fslocation:
         File system location of the source of the warning (see ``get_location``).
     """
 
     message = attr.ib(type=str)
     nodeid = attr.ib(type=Optional[str], default=None)
-    fslocation = attr.ib(
-        type=Optional[Union[Tuple[str, int], py.path.local]], default=None
-    )
+    fslocation = attr.ib(type=Optional[Tuple[str, int]], default=None)
     count_towards_summary = True
 
     def get_location(self, config: Config) -> Optional[str]:
@@ -301,14 +299,9 @@ class WarningReport:
         if self.nodeid:
             return self.nodeid
         if self.fslocation:
-            if isinstance(self.fslocation, tuple) and len(self.fslocation) >= 2:
-                filename, linenum = self.fslocation[:2]
-                relpath = bestrelpath(
-                    config.invocation_params.dir, absolutepath(filename)
-                )
-                return f"{relpath}:{linenum}"
-            else:
-                return str(self.fslocation)
+            filename, linenum = self.fslocation
+            relpath = bestrelpath(config.invocation_params.dir, absolutepath(filename))
+            return f"{relpath}:{linenum}"
         return None
 
 

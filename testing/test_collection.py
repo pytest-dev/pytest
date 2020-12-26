@@ -212,12 +212,12 @@ class TestCollectFS:
         bindir = "Scripts" if sys.platform.startswith("win") else "bin"
         # no bin/activate, not a virtualenv
         base_path = pytester.mkdir("venv")
-        assert _in_venv(py.path.local(base_path)) is False
+        assert _in_venv(base_path) is False
         # with bin/activate, totally a virtualenv
         bin_path = base_path.joinpath(bindir)
         bin_path.mkdir()
         bin_path.joinpath(fname).touch()
-        assert _in_venv(py.path.local(base_path)) is True
+        assert _in_venv(base_path) is True
 
     def test_custom_norecursedirs(self, pytester: Pytester) -> None:
         pytester.makeini(
@@ -277,7 +277,7 @@ class TestCollectPluginHookRelay:
                     wascalled.append(path)
 
         pytester.makefile(".abc", "xyz")
-        pytest.main(py.path.local(pytester.path), plugins=[Plugin()])
+        pytest.main(pytester.path, plugins=[Plugin()])
         assert len(wascalled) == 1
         assert wascalled[0].ext == ".abc"
 

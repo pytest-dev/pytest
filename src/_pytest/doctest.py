@@ -36,6 +36,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodes import Collector
 from _pytest.outcomes import OutcomeException
+from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
@@ -120,32 +121,32 @@ def pytest_unconfigure() -> None:
 
 
 def pytest_collect_file(
-    path: py.path.local, parent: Collector,
+    fspath: Path, path: py.path.local, parent: Collector,
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
-    if path.ext == ".py":
-        if config.option.doctestmodules and not _is_setup_py(path):
+    if fspath.suffix == ".py":
+        if config.option.doctestmodules and not _is_setup_py(fspath):
             mod: DoctestModule = DoctestModule.from_parent(parent, fspath=path)
             return mod
-    elif _is_doctest(config, path, parent):
+    elif _is_doctest(config, fspath, parent):
         txt: DoctestTextfile = DoctestTextfile.from_parent(parent, fspath=path)
         return txt
     return None
 
 
-def _is_setup_py(path: py.path.local) -> bool:
-    if path.basename != "setup.py":
+def _is_setup_py(path: Path) -> bool:
+    if path.name != "setup.py":
         return False
-    contents = path.read_binary()
+    contents = path.read_bytes()
     return b"setuptools" in contents or b"distutils" in contents
 
 
-def _is_doctest(config: Config, path: py.path.local, parent) -> bool:
-    if path.ext in (".txt", ".rst") and parent.session.isinitpath(path):
+def _is_doctest(config: Config, path: Path, parent: Collector) -> bool:
+    if path.suffix in (".txt", ".rst") and parent.session.isinitpath(path):
         return True
     globs = config.getoption("doctestglob") or ["test*.txt"]
     for glob in globs:
-        if path.check(fnmatch=glob):
+        if fnmatch_ex(glob, path):
             return True
     return False
 

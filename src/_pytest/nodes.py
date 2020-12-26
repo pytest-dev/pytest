@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 SEP = "/"
 
-tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
+tracebackcutdir = Path(_pytest.__file__).parent
 
 
 def iterparentnodeids(nodeid: str) -> Iterator[str]:
@@ -416,9 +416,7 @@ class Node(metaclass=NodeMeta):
         return self._repr_failure_py(excinfo, style)
 
 
-def get_fslocation_from_item(
-    node: "Node",
-) -> Tuple[Union[str, py.path.local], Optional[int]]:
+def get_fslocation_from_item(node: "Node") -> Tuple[Union[str, Path], Optional[int]]:
     """Try to extract the actual location from a node, depending on available attributes:
 
     * "location": a pair (path, lineno)
@@ -474,7 +472,7 @@ class Collector(Node):
     def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
         if hasattr(self, "fspath"):
             traceback = excinfo.traceback
-            ntraceback = traceback.cut(path=self.fspath)
+            ntraceback = traceback.cut(path=Path(self.fspath))
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
             excinfo.traceback = ntraceback.filter()

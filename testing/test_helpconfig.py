@@ -16,7 +16,6 @@ def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> 
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = pytester.runpytest("--version")
     assert result.ret == 0
-    # p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
 
 

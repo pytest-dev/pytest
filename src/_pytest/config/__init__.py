@@ -128,7 +128,7 @@ def filter_traceback_for_conftest_import_failure(
 
 
 def main(
-    args: Optional[Union[List[str], py.path.local]] = None,
+    args: Optional[Union[List[str], "os.PathLike[str]"]] = None,
     plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
 ) -> Union[int, ExitCode]:
     """Perform an in-process test run.
@@ -295,13 +295,15 @@ def get_plugin_manager() -> "PytestPluginManager":
 
 
 def _prepareconfig(
-    args: Optional[Union[py.path.local, List[str]]] = None,
+    args: Optional[Union[List[str], "os.PathLike[str]"]] = None,
     plugins: Optional[Sequence[Union[str, _PluggyPlugin]]] = None,
 ) -> "Config":
     if args is None:
         args = sys.argv[1:]
-    elif isinstance(args, py.path.local):
-        args = [str(args)]
+    # TODO: Remove type-ignore after next mypy release.
+    # https://github.com/python/typeshed/commit/076983eec45e739c68551cb6119fd7d85fd4afa9
+    elif isinstance(args, os.PathLike):  # type: ignore[misc]
+        args = [os.fspath(args)]
     elif not isinstance(args, list):
         msg = "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
         raise TypeError(msg.format(args, type(args)))
@@ -346,7 +348,7 @@ class PytestPluginManager(PluginManager):
         self._conftestpath2mod: Dict[Path, types.ModuleType] = {}
         self._confcutdir: Optional[Path] = None
         self._noconftest = False
-        self._duplicatepaths: Set[py.path.local] = set()
+        self._duplicatepaths: Set[Path] = set()
 
         # plugins that were explicitly skipped with pytest.skip
         # list of (module name, skip reason)
