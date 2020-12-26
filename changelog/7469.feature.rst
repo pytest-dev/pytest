@@ -5,6 +5,7 @@ The newly-exported types are:
 - ``pytest.Mark`` for :class:`marks <pytest.Mark>`.
 - ``pytest.MarkDecorator`` for :class:`mark decorators <pytest.MarkDecorator>`.
 - ``pytest.MarkGenerator`` for the :class:`pytest.mark <pytest.MarkGenerator>` singleton.
+- ``pytest.Metafunc`` for the :class:`metafunc <pytest.MarkGenerator>` argument to the `pytest_generate_tests <pytest.hookspec.pytest_generate_tests>` hook.
 
 Constructing them directly is not supported; they are only meant for use in type annotations.
 Doing so will emit a deprecation warning, and may become a hard-error in pytest 7.0.
