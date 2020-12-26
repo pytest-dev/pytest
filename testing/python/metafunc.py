@@ -460,9 +460,12 @@ class TestMetafunc:
         result = idmaker(("file"), [pytest.param(path)])
         assert result == [expected]
 
-    def test_idmaker_pypath_local(self, pytestconfig) -> None:
-        filepath = os.path.join("dir", "test.txt")
-        expected = "/".join(os.path.abspath(filepath).split(os.sep))
+    @pytest.mark.parametrize("filepath", [os.path.join("dir", "test.txt"), b"test.txt"])
+    def test_idmaker_pypath_local(self, filepath, pytestconfig) -> None:
+        if isinstance(filepath, bytes):
+            expected = "/".join(os.path.abspath(filepath.decode()).split(os.sep))
+        else:
+            expected = "/".join(os.path.abspath(filepath).split(os.sep))
         path = py.path.local(filepath)
         result = idmaker(("file"), [pytest.param(path)])
         assert result == [expected]
