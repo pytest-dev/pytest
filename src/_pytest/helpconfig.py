@@ -51,7 +51,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="count",
         default=0,
         dest="version",
-        help="display pytest version and information about plugins."
+        help="display pytest version and information about plugins. "
         "When given twice, also display information about plugins.",
     )
     group._addoption(
