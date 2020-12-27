@@ -12,7 +12,6 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 from typing import Any
-from typing import AnyStr
 from typing import Callable
 from typing import Dict
 from typing import Generator
@@ -1352,9 +1351,11 @@ def _idval(
     return str(argname) + str(idx)
 
 
-def _idval_pathlike(pathlike: "os.PathLike[AnyStr]", config: Optional[Config]) -> str:
+def _idval_pathlike(
+    pathlike: Union["os.PathLike[str]", "os.PathLike[bytes]"], config: Optional[Config]
+) -> str:
     # For consistency, always use Unix path separators.
-    path: Union[str, bytes] = os.fspath(pathlike)
+    path = os.fspath(pathlike)
     if isinstance(path, bytes):
         path = path.replace(os.fsencode(os.sep), os.fsencode("/"))
     else:
