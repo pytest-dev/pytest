@@ -540,7 +540,8 @@ def pytest_runtest_logreport(report: "TestReport") -> None:
 
 @hookspec(firstresult=True)
 def pytest_report_to_serializable(
-    config: "Config", report: Union["CollectReport", "TestReport"],
+    config: "Config",
+    report: Union["CollectReport", "TestReport"],
 ) -> Optional[Dict[str, Any]]:
     """Serialize the given report object into a data structure suitable for
     sending over the wire, e.g. converted to JSON."""
@@ -548,7 +549,8 @@ def pytest_report_to_serializable(
 
 @hookspec(firstresult=True)
 def pytest_report_from_serializable(
-    config: "Config", data: Dict[str, Any],
+    config: "Config",
+    data: Dict[str, Any],
 ) -> Optional[Union["CollectReport", "TestReport"]]:
     """Restore a report object previously serialized with pytest_report_to_serializable()."""
 
@@ -597,7 +599,8 @@ def pytest_sessionstart(session: "Session") -> None:
 
 
 def pytest_sessionfinish(
-    session: "Session", exitstatus: Union[int, "ExitCode"],
+    session: "Session",
+    exitstatus: Union[int, "ExitCode"],
 ) -> None:
     """Called after whole test run finished, right before returning the exit status to the system.
 
@@ -701,7 +704,10 @@ def pytest_report_header(
 
 
 def pytest_report_collectionfinish(
-    config: "Config", startpath: Path, startdir: py.path.local, items: Sequence["Item"],
+    config: "Config",
+    startpath: Path,
+    startdir: py.path.local,
+    items: Sequence["Item"],
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed after collection
     has finished successfully.
@@ -731,9 +737,7 @@ def pytest_report_collectionfinish(
 @hookspec(firstresult=True)
 def pytest_report_teststatus(
     report: Union["CollectReport", "TestReport"], config: "Config"
-) -> Tuple[
-    str, str, Union[str, Mapping[str, bool]],
-]:
+) -> Tuple[str, str, Union[str, Mapping[str, bool]],]:
     """Return result-category, shortletter and verbose word for status
     reporting.
 
@@ -758,7 +762,9 @@ def pytest_report_teststatus(
 
 
 def pytest_terminal_summary(
-    terminalreporter: "TerminalReporter", exitstatus: "ExitCode", config: "Config",
+    terminalreporter: "TerminalReporter",
+    exitstatus: "ExitCode",
+    config: "Config",
 ) -> None:
     """Add a section to terminal summary reporting.
 
@@ -865,7 +871,8 @@ def pytest_markeval_namespace(config: "Config") -> Dict[str, Any]:
 
 
 def pytest_internalerror(
-    excrepr: "ExceptionRepr", excinfo: "ExceptionInfo[BaseException]",
+    excrepr: "ExceptionRepr",
+    excinfo: "ExceptionInfo[BaseException]",
 ) -> Optional[bool]:
     """Called for internal errors.
 

@@ -138,7 +138,12 @@ def test_fail_and_continue_with_stepwise(stepwise_pytester: Pytester) -> None:
 @pytest.mark.parametrize("stepwise_skip", ["--stepwise-skip", "--sw-skip"])
 def test_run_with_skip_option(stepwise_pytester: Pytester, stepwise_skip: str) -> None:
     result = stepwise_pytester.runpytest(
-        "-v", "--strict-markers", "--stepwise", stepwise_skip, "--fail", "--fail-last",
+        "-v",
+        "--strict-markers",
+        "--stepwise",
+        stepwise_skip,
+        "--fail",
+        "--fail-last",
     )
     assert _strip_resource_warnings(result.stderr.lines) == []
 

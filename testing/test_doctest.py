@@ -69,7 +69,9 @@ class TestDoctests:
 
     @pytest.mark.parametrize("filename", ["__init__", "whatever"])
     def test_collect_module_two_doctest_no_modulelevel(
-        self, pytester: Pytester, filename: str,
+        self,
+        pytester: Pytester,
+        filename: str,
     ) -> None:
         path = pytester.makepyfile(
             **{

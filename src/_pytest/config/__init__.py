@@ -104,7 +104,9 @@ class ExitCode(enum.IntEnum):
 
 class ConftestImportFailure(Exception):
     def __init__(
-        self, path: Path, excinfo: Tuple[Type[Exception], Exception, TracebackType],
+        self,
+        path: Path,
+        excinfo: Tuple[Type[Exception], Exception, TracebackType],
     ) -> None:
         super().__init__(path, excinfo)
         self.path = path
@@ -269,7 +271,9 @@ def get_config(
     config = Config(
         pluginmanager,
         invocation_params=Config.InvocationParams(
-            args=args or (), plugins=plugins, dir=Path.cwd(),
+            args=args or (),
+            plugins=plugins,
+            dir=Path.cwd(),
         ),
     )
 
@@ -364,7 +368,10 @@ class PytestPluginManager(PluginManager):
             encoding: str = getattr(err, "encoding", "utf8")
             try:
                 err = open(
-                    os.dup(err.fileno()), mode=err.mode, buffering=1, encoding=encoding,
+                    os.dup(err.fileno()),
+                    mode=err.mode,
+                    buffering=1,
+                    encoding=encoding,
                 )
             except Exception:
                 pass
@@ -516,7 +523,9 @@ class PytestPluginManager(PluginManager):
 
     @lru_cache(maxsize=128)
     def _getconftestmodules(
-        self, path: Path, importmode: Union[str, ImportMode],
+        self,
+        path: Path,
+        importmode: Union[str, ImportMode],
     ) -> List[types.ModuleType]:
         if self._noconftest:
             return []
@@ -541,7 +550,10 @@ class PytestPluginManager(PluginManager):
         return clist
 
     def _rget_with_confmod(
-        self, name: str, path: Path, importmode: Union[str, ImportMode],
+        self,
+        name: str,
+        path: Path,
+        importmode: Union[str, ImportMode],
     ) -> Tuple[types.ModuleType, Any]:
         modules = self._getconftestmodules(path, importmode)
         for mod in reversed(modules):
@@ -552,7 +564,9 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(
-        self, conftestpath: Path, importmode: Union[str, ImportMode],
+        self,
+        conftestpath: Path,
+        importmode: Union[str, ImportMode],
     ) -> types.ModuleType:
         # Use a resolved Path object as key to avoid loading the same conftest
         # twice with build systems that create build directories containing
@@ -590,7 +604,9 @@ class PytestPluginManager(PluginManager):
         return mod
 
     def _check_non_top_pytest_plugins(
-        self, mod: types.ModuleType, conftestpath: Path,
+        self,
+        mod: types.ModuleType,
+        conftestpath: Path,
     ) -> None:
         if (
             hasattr(mod, "pytest_plugins")
@@ -1227,7 +1243,11 @@ class Config:
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
                     "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
-                    % (self.inipath, minver, pytest.__version__,)
+                    % (
+                        self.inipath,
+                        minver,
+                        pytest.__version__,
+                    )
                 )
 
     def _validate_config_options(self) -> None:
@@ -1502,7 +1522,8 @@ class Config:
                     "(are you using python -O?)\n"
                 )
             self.issue_config_time_warning(
-                PytestConfigWarning(warning_text), stacklevel=3,
+                PytestConfigWarning(warning_text),
+                stacklevel=3,
             )
 
     def _warn_about_skipped_plugins(self) -> None:

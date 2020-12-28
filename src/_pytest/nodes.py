@@ -228,7 +228,10 @@ class Node(metaclass=NodeMeta):
         path, lineno = get_fslocation_from_item(self)
         assert lineno is not None
         warnings.warn_explicit(
-            warning, category=None, filename=str(path), lineno=lineno + 1,
+            warning,
+            category=None,
+            filename=str(path),
+            lineno=lineno + 1,
         )
 
     # Methods for ordering nodes.

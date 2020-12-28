@@ -69,7 +69,9 @@ def thread_exception_runtest_hook() -> Generator[None, None, None]:
             msg = f"Exception in thread {thread_name}\n\n"
             msg += "".join(
                 traceback.format_exception(
-                    cm.args.exc_type, cm.args.exc_value, cm.args.exc_traceback,
+                    cm.args.exc_type,
+                    cm.args.exc_value,
+                    cm.args.exc_traceback,
                 )
             )
             warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))

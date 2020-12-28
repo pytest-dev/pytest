@@ -307,7 +307,7 @@ class TestReport(BaseReport):
                 Tuple[str, int, str],
                 str,
                 TerminalRepr,
-            ] = (None)
+            ] = None
         else:
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"

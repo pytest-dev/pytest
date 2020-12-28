@@ -460,15 +460,11 @@ if TYPE_CHECKING:
             ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):
-        def __call__(  # type: ignore[override]
-            self, *fixtures: str
-        ) -> MarkDecorator:
+        def __call__(self, *fixtures: str) -> MarkDecorator:  # type: ignore[override]
             ...
 
     class _FilterwarningsMarkDecorator(MarkDecorator):
-        def __call__(  # type: ignore[override]
-            self, *filters: str
-        ) -> MarkDecorator:
+        def __call__(self, *filters: str) -> MarkDecorator:  # type: ignore[override]
             ...
 
 

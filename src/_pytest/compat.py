@@ -143,7 +143,8 @@ def getfuncargnames(
         parameters = signature(function).parameters
     except (ValueError, TypeError) as e:
         fail(
-            f"Could not determine arguments of {function!r}: {e}", pytrace=False,
+            f"Could not determine arguments of {function!r}: {e}",
+            pytrace=False,
         )
 
     arg_names = tuple(

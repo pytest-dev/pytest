@@ -116,7 +116,9 @@ def pytest_addoption(parser: Parser) -> None:
         help="markers not registered in the `markers` section of the configuration file raise errors.",
     )
     group._addoption(
-        "--strict", action="store_true", help="(deprecated) alias to --strict-markers.",
+        "--strict",
+        action="store_true",
+        help="(deprecated) alias to --strict-markers.",
     )
     group._addoption(
         "-c",
@@ -656,11 +658,11 @@ class Session(nodes.FSCollector):
 
         # Keep track of any collected nodes in here, so we don't duplicate fixtures.
         node_cache1: Dict[Path, Sequence[nodes.Collector]] = {}
-        node_cache2: Dict[Tuple[Type[nodes.Collector], Path], nodes.Collector] = ({})
+        node_cache2: Dict[Tuple[Type[nodes.Collector], Path], nodes.Collector] = {}
 
         # Keep track of any collected collectors in matchnodes paths, so they
         # are not collected more than once.
-        matchnodes_cache: Dict[Tuple[Type[nodes.Collector], str], CollectReport] = ({})
+        matchnodes_cache: Dict[Tuple[Type[nodes.Collector], str], CollectReport] = {}
 
         # Dirnames of pkgs with dunder-init files.
         pkg_roots: Dict[str, Package] = {}

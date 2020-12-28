@@ -238,7 +238,7 @@ _Key = Tuple[object, ...]
 
 def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_Key]:
     """Return list of keys for all parametrized arguments which match
-    the specified scope. """
+    the specified scope."""
     assert scopenum < scopenum_function  # function
     try:
         callspec = item.callspec  # type: ignore[attr-defined]
@@ -443,7 +443,7 @@ class FixtureRequest:
         fixtureinfo: FuncFixtureInfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index: Dict[str, int] = {}
-        self._fixturemanager: FixtureManager = (pyfuncitem.session._fixturemanager)
+        self._fixturemanager: FixtureManager = pyfuncitem.session._fixturemanager
 
     @property
     def fixturenames(self) -> List[str]:
@@ -700,7 +700,10 @@ class FixtureRequest:
         )
 
     def _check_scope(
-        self, argname: str, invoking_scope: "_Scope", requested_scope: "_Scope",
+        self,
+        argname: str,
+        invoking_scope: "_Scope",
+        requested_scope: "_Scope",
     ) -> None:
         if argname == "request":
             return
@@ -907,7 +910,8 @@ class FixtureLookupErrorRepr(TerminalRepr):
             )
             for line in lines[1:]:
                 tw.line(
-                    f"{FormattedExcinfo.flow_marker}       {line.strip()}", red=True,
+                    f"{FormattedExcinfo.flow_marker}       {line.strip()}",
+                    red=True,
                 )
         tw.line()
         tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
@@ -1167,7 +1171,8 @@ def _params_converter(
 
 
 def wrap_function_to_error_out_if_called_directly(
-    function: _FixtureFunction, fixture_marker: "FixtureFunctionMarker",
+    function: _FixtureFunction,
+    fixture_marker: "FixtureFunctionMarker",
 ) -> _FixtureFunction:
     """Wrap the given fixture function so we can raise an error about it being called directly,
     instead of used as an argument in a test function."""
@@ -1332,7 +1337,11 @@ def fixture(
         ``@pytest.fixture(name='<fixturename>')``.
     """
     fixture_marker = FixtureFunctionMarker(
-        scope=scope, params=params, autouse=autouse, ids=ids, name=name,
+        scope=scope,
+        params=params,
+        autouse=autouse,
+        ids=ids,
+        name=name,
     )
 
     # Direct decoration.

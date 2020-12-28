@@ -514,7 +514,10 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], idfn=lambda _: "ação", config=config,
+                ("a",),
+                [pytest.param("string")],
+                idfn=lambda _: "ação",
+                config=config,
             )
             assert result == [expected]
 
@@ -546,7 +549,10 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], ids=["ação"], config=config,
+                ("a",),
+                [pytest.param("string")],
+                ids=["ação"],
+                config=config,
             )
             assert result == [expected]
 
