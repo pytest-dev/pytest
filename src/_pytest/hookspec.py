@@ -737,7 +737,7 @@ def pytest_report_collectionfinish(
 @hookspec(firstresult=True)
 def pytest_report_teststatus(
     report: Union["CollectReport", "TestReport"], config: "Config"
-) -> Tuple[str, str, Union[str, Mapping[str, bool]],]:
+) -> Tuple[str, str, Union[str, Mapping[str, bool]]]:
     """Return result-category, shortletter and verbose word for status
     reporting.
 
