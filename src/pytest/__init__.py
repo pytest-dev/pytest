@@ -40,6 +40,7 @@ from _pytest.pytester import Testdir
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Instance
+from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
@@ -47,6 +48,7 @@ from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
+from _pytest.runner import CallInfo
 from _pytest.tmpdir import TempdirFactory
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
@@ -68,6 +70,7 @@ __all__ = [
     "_fillfuncargs",
     "approx",
     "Cache",
+    "CallInfo",
     "CaptureFixture",
     "Class",
     "cmdline",
@@ -95,6 +98,7 @@ __all__ = [
     "Mark",
     "MarkDecorator",
     "MarkGenerator",
+    "Metafunc",
     "Module",
     "MonkeyPatch",
     "Package",

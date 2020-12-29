@@ -1,10 +1,12 @@
 import os
 import warnings
 from pathlib import Path
+from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import MutableMapping
 from typing import Optional
 from typing import overload
 from typing import Set
@@ -148,8 +150,9 @@ class Node(metaclass=NodeMeta):
         #: Filesystem path where this node was collected from (can be None).
         self.fspath = fspath or getattr(parent, "fspath", None)
 
+        # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
-        self.keywords = NodeKeywords(self)
+        self.keywords: MutableMapping[str, Any] = NodeKeywords(self)
 
         #: The marker objects belonging to this node.
         self.own_markers: List[Mark] = []

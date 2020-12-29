@@ -55,6 +55,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.main import Session
@@ -467,7 +468,12 @@ class PyCollector(PyobjMixin, nodes.Collector):
         fixtureinfo = definition._fixtureinfo
 
         metafunc = Metafunc(
-            definition, fixtureinfo, self.config, cls=cls, module=module
+            definition=definition,
+            fixtureinfo=fixtureinfo,
+            config=self.config,
+            cls=cls,
+            module=module,
+            _ispytest=True,
         )
         methods = []
         if hasattr(module, "pytest_generate_tests"):
@@ -971,7 +977,11 @@ class Metafunc:
         config: Config,
         cls=None,
         module=None,
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
+
         #: Access to the underlying :class:`_pytest.python.FunctionDefinition`.
         self.definition = definition
 

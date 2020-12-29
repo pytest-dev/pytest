@@ -47,7 +47,7 @@ class TestMetafunc:
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(func, "mock::nodeid")
-        return python.Metafunc(definition, fixtureinfo, config)
+        return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
         def function():

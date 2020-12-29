@@ -26,6 +26,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import final
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.nodes import Node
@@ -260,34 +261,47 @@ TResult = TypeVar("TResult", covariant=True)
 
 
 @final
-@attr.s(repr=False)
+@attr.s(repr=False, init=False, auto_attribs=True)
 class CallInfo(Generic[TResult]):
-    """Result/Exception info a function invocation.
+    """Result/Exception info of a function invocation."""
 
-    :param T result:
-        The return value of the call, if it didn't raise. Can only be
-        accessed if excinfo is None.
-    :param Optional[ExceptionInfo] excinfo:
-        The captured exception of the call, if it raised.
-    :param float start:
-        The system time when the call started, in seconds since the epoch.
-    :param float stop:
-        The system time when the call ended, in seconds since the epoch.
-    :param float duration:
-        The call duration, in seconds.
-    :param str when:
-        The context of invocation: "setup", "call", "teardown", ...
-    """
+    _result: Optional[TResult]
+    #: The captured exception of the call, if it raised.
+    excinfo: Optional[ExceptionInfo[BaseException]]
+    #: The system time when the call started, in seconds since the epoch.
+    start: float
+    #: The system time when the call ended, in seconds since the epoch.
+    stop: float
+    #: The call duration, in seconds.
+    duration: float
+    #: The context of invocation: "collect", "setup", "call" or "teardown".
+    when: "Literal['collect', 'setup', 'call', 'teardown']"
 
-    _result = attr.ib(type="Optional[TResult]")
-    excinfo = attr.ib(type=Optional[ExceptionInfo[BaseException]])
-    start = attr.ib(type=float)
-    stop = attr.ib(type=float)
-    duration = attr.ib(type=float)
-    when = attr.ib(type="Literal['collect', 'setup', 'call', 'teardown']")
+    def __init__(
+        self,
+        result: Optional[TResult],
+        excinfo: Optional[ExceptionInfo[BaseException]],
+        start: float,
+        stop: float,
+        duration: float,
+        when: "Literal['collect', 'setup', 'call', 'teardown']",
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        self._result = result
+        self.excinfo = excinfo
+        self.start = start
+        self.stop = stop
+        self.duration = duration
+        self.when = when
 
     @property
     def result(self) -> TResult:
+        """The return value of the call, if it didn't raise.
+
+        Can only be accessed if excinfo is None.
+        """
         if self.excinfo is not None:
             raise AttributeError(f"{self!r} has no valid result")
         # The cast is safe because an exception wasn't raised, hence
@@ -304,6 +318,16 @@ class CallInfo(Generic[TResult]):
             Union[Type[BaseException], Tuple[Type[BaseException], ...]]
         ] = None,
     ) -> "CallInfo[TResult]":
+        """Call func, wrapping the result in a CallInfo.
+
+        :param func:
+            The function to call. Called without arguments.
+        :param when:
+            The phase in which the function is called.
+        :param reraise:
+            Exception or exceptions that shall propagate if raised by the
+            function, instead of being wrapped in the CallInfo.
+        """
         excinfo = None
         start = timing.time()
         precise_start = timing.perf_counter()
@@ -325,6 +349,7 @@ class CallInfo(Generic[TResult]):
             when=when,
             result=result,
             excinfo=excinfo,
+            _ispytest=True,
         )
 
     def __repr__(self) -> str:
