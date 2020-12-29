@@ -762,8 +762,7 @@ declaring the hook functions directly in your plugin module, for example:
         """Simple plugin to defer pytest-xdist hook functions."""
 
         def pytest_testnodedown(self, node, error):
-            """standard xdist hook function.
-            """
+            """standard xdist hook function."""
 
 
     def pytest_configure(config):

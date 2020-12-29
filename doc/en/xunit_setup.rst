@@ -36,7 +36,7 @@ which will usually be called once for all the functions:
 
 
     def teardown_module(module):
-        """ teardown any state that was previously setup with a setup_module
+        """teardown any state that was previously setup with a setup_module
         method.
         """
 
@@ -52,14 +52,14 @@ and after all test methods of the class are called:
 
     @classmethod
     def setup_class(cls):
-        """ setup any state specific to the execution of the given class (which
+        """setup any state specific to the execution of the given class (which
         usually contains tests).
         """
 
 
     @classmethod
     def teardown_class(cls):
-        """ teardown any state that was previously setup with a call to
+        """teardown any state that was previously setup with a call to
         setup_class.
         """
 
@@ -71,13 +71,13 @@ Similarly, the following methods are called around each method invocation:
 .. code-block:: python
 
     def setup_method(self, method):
-        """ setup any state tied to the execution of the given method in a
+        """setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
 
 
     def teardown_method(self, method):
-        """ teardown any state that was previously setup with a setup_method
+        """teardown any state that was previously setup with a setup_method
         call.
         """
 
@@ -89,13 +89,13 @@ you can also use the following functions to implement fixtures:
 .. code-block:: python
 
     def setup_function(function):
-        """ setup any state tied to the execution of the given function.
+        """setup any state tied to the execution of the given function.
         Invoked for every test function in the module.
         """
 
 
     def teardown_function(function):
-        """ teardown any state that was previously setup with a setup_function
+        """teardown any state that was previously setup with a setup_function
         call.
         """
 
