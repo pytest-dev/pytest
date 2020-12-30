@@ -409,6 +409,26 @@ class SetupState:
         self.stack: List[Node] = []
         self._finalizers: Dict[Node, List[Callable[[], object]]] = {}
 
+    _prepare_exc_key = StoreKey[Union[OutcomeException, Exception]]()
+
+    def prepare(self, colitem: Item) -> None:
+        """Setup objects along the collector chain to the test-method."""
+
+        # Check if the last collection node has raised an error.
+        for col in self.stack:
+            prepare_exc = col._store.get(self._prepare_exc_key, None)
+            if prepare_exc:
+                raise prepare_exc
+
+        needed_collectors = colitem.listchain()
+        for col in needed_collectors[len(self.stack) :]:
+            self.stack.append(col)
+            try:
+                col.setup()
+            except TEST_OUTCOME as e:
+                col._store[self._prepare_exc_key] = e
+                raise e
+
     def addfinalizer(self, finalizer: Callable[[], object], colitem: Node) -> None:
         """Attach a finalizer to the given colitem."""
         assert colitem and not isinstance(colitem, tuple)
@@ -441,13 +461,6 @@ class SetupState:
         for colitem in self._finalizers:
             assert colitem in self.stack
 
-    def teardown_all(self) -> None:
-        while self.stack:
-            self._pop_and_teardown()
-        for key in list(self._finalizers):
-            self._teardown_with_finalization(key)
-        assert not self._finalizers
-
     def teardown_exact(self, item: Item, nextitem: Optional[Item]) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
         self._teardown_towards(needed_collectors)
@@ -467,25 +480,12 @@ class SetupState:
         if exc:
             raise exc
 
-    _prepare_exc_key = StoreKey[Union[OutcomeException, Exception]]()
-
-    def prepare(self, colitem: Item) -> None:
-        """Setup objects along the collector chain to the test-method."""
-
-        # Check if the last collection node has raised an error.
-        for col in self.stack:
-            prepare_exc = col._store.get(self._prepare_exc_key, None)
-            if prepare_exc:
-                raise prepare_exc
-
-        needed_collectors = colitem.listchain()
-        for col in needed_collectors[len(self.stack) :]:
-            self.stack.append(col)
-            try:
-                col.setup()
-            except TEST_OUTCOME as e:
-                col._store[self._prepare_exc_key] = e
-                raise e
+    def teardown_all(self) -> None:
+        while self.stack:
+            self._pop_and_teardown()
+        for key in list(self._finalizers):
+            self._teardown_with_finalization(key)
+        assert not self._finalizers
 
 
 def collect_one_node(collector: Collector) -> CollectReport:
