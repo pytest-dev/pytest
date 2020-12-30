@@ -124,7 +124,7 @@ class MonkeyPatch:
 
     def __init__(self) -> None:
         self._setattr: List[Tuple[object, str, object]] = []
-        self._setitem: List[Tuple[MutableMapping[Any, Any], object, object]] = ([])
+        self._setitem: List[Tuple[MutableMapping[Any, Any], object, object]] = []
         self._cwd: Optional[str] = None
         self._savesyspath: Optional[List[str]] = None
 
@@ -157,13 +157,21 @@ class MonkeyPatch:
 
     @overload
     def setattr(
-        self, target: str, name: object, value: Notset = ..., raising: bool = ...,
+        self,
+        target: str,
+        name: object,
+        value: Notset = ...,
+        raising: bool = ...,
     ) -> None:
         ...
 
     @overload
     def setattr(
-        self, target: object, name: str, value: object, raising: bool = ...,
+        self,
+        target: object,
+        name: str,
+        value: object,
+        raising: bool = ...,
     ) -> None:
         ...
 

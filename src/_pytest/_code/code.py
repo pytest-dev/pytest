@@ -272,9 +272,9 @@ class TracebackEntry:
 
         Mostly for internal use.
         """
-        tbh: Union[bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]] = (
-            False
-        )
+        tbh: Union[
+            bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]
+        ] = False
         for maybe_ns_dct in (self.frame.f_locals, self.frame.f_globals):
             # in normal cases, f_locals and f_globals are dictionaries
             # however via `exec(...)` / `eval(...)` they can be other types

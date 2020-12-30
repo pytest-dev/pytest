@@ -48,7 +48,7 @@ and functions, including from test modules:
 
     # content of mymodule.py
     def something():
-        """ a doctest in a docstring
+        """a doctest in a docstring
         >>> something()
         42
         """

@@ -107,7 +107,12 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
         if objid in context or p is None:
             # Type ignored because _format is private.
             super()._format(  # type: ignore[misc]
-                object, stream, indent, allowance, context, level,
+                object,
+                stream,
+                indent,
+                allowance,
+                context,
+                level,
             )
             return
 

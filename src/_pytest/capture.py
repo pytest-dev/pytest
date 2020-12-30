@@ -556,7 +556,11 @@ class MultiCapture(Generic[AnyStr]):
 
     def __repr__(self) -> str:
         return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
-            self.out, self.err, self.in_, self._state, self._in_suspended,
+            self.out,
+            self.err,
+            self.in_,
+            self._state,
+            self._in_suspended,
         )
 
     def start_capturing(self) -> None:
@@ -843,7 +847,9 @@ class CaptureFixture(Generic[AnyStr]):
     def _start(self) -> None:
         if self._capture is None:
             self._capture = MultiCapture(
-                in_=None, out=self.captureclass(1), err=self.captureclass(2),
+                in_=None,
+                out=self.captureclass(1),
+                err=self.captureclass(2),
             )
             self._capture.start_capturing()
 

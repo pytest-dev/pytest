@@ -219,7 +219,8 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
             res.result = sorted(
-                res.result, key=lambda x: 0 if Path(str(x.fspath)) in lf_paths else 1,
+                res.result,
+                key=lambda x: 0 if Path(str(x.fspath)) in lf_paths else 1,
             )
             return
 

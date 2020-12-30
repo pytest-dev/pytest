@@ -346,7 +346,9 @@ class TestPytestPluginManager:
         assert mod.x == 3
 
     def test_consider_conftest_deps(
-        self, pytester: Pytester, pytestpm: PytestPluginManager,
+        self,
+        pytester: Pytester,
+        pytestpm: PytestPluginManager,
     ) -> None:
         mod = import_path(pytester.makepyfile("pytest_plugins='xyz'"))
         with pytest.raises(ImportError):

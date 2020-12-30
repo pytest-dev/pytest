@@ -53,7 +53,10 @@ class TempPathFactory:
 
     @classmethod
     def from_config(
-        cls, config: Config, *, _ispytest: bool = False,
+        cls,
+        config: Config,
+        *,
+        _ispytest: bool = False,
     ) -> "TempPathFactory":
         """Create a factory according to pytest configuration.
 

@@ -90,7 +90,10 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     cmdline = ["tox", "-e", "release", "--", version, "--skip-check-links"]
     print("Running", " ".join(cmdline))
     run(
-        cmdline, text=True, check=True, capture_output=True,
+        cmdline,
+        text=True,
+        check=True,
+        capture_output=True,
     )
 
     oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
@@ -105,7 +108,10 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     body = PR_BODY.format(version=version)
     repo = login(token)
     pr = repo.create_pull(
-        f"Prepare release {version}", base=base_branch, head=release_branch, body=body,
+        f"Prepare release {version}",
+        base=base_branch,
+        head=release_branch,
+        body=body,
     )
     print(f"Pull request {Fore.CYAN}{pr.url}{Fore.RESET} created.")
 

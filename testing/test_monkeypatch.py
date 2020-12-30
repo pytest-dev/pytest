@@ -348,7 +348,9 @@ class SampleInherit(Sample):
 
 
 @pytest.mark.parametrize(
-    "Sample", [Sample, SampleInherit], ids=["new", "new-inherit"],
+    "Sample",
+    [Sample, SampleInherit],
+    ids=["new", "new-inherit"],
 )
 def test_issue156_undo_staticmethod(Sample: Type[Sample]) -> None:
     monkeypatch = MonkeyPatch()

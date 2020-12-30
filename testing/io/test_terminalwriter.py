@@ -258,13 +258,22 @@ class TestTerminalWriterLineWidth:
             id="with markup and code_highlight",
         ),
         pytest.param(
-            True, False, "assert 0\n", id="with markup but no code_highlight",
+            True,
+            False,
+            "assert 0\n",
+            id="with markup but no code_highlight",
         ),
         pytest.param(
-            False, True, "assert 0\n", id="without markup but with code_highlight",
+            False,
+            True,
+            "assert 0\n",
+            id="without markup but with code_highlight",
         ),
         pytest.param(
-            False, False, "assert 0\n", id="neither markup nor code_highlight",
+            False,
+            False,
+            "assert 0\n",
+            id="neither markup nor code_highlight",
         ),
     ],
 )

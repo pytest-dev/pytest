@@ -468,7 +468,9 @@ class TerminalReporter:
         return True
 
     def pytest_warning_recorded(
-        self, warning_message: warnings.WarningMessage, nodeid: str,
+        self,
+        warning_message: warnings.WarningMessage,
+        nodeid: str,
     ) -> None:
         from _pytest.warnings import warning_record_to_str
 
@@ -1306,7 +1308,8 @@ def _get_line_with_reprcrash_message(
 
 
 def _folded_skips(
-    startpath: Path, skipped: Sequence[CollectReport],
+    startpath: Path,
+    skipped: Sequence[CollectReport],
 ) -> List[Tuple[int, str, Optional[int], str]]:
     d: Dict[Tuple[str, Optional[int], str], List[CollectReport]] = {}
     for event in skipped:
