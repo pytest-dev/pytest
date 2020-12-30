@@ -438,9 +438,6 @@ class SetupState:
 
     def _pop_and_teardown(self) -> None:
         colitem = self.stack.pop()
-        self._teardown_with_finalization(colitem)
-
-    def _callfinalizers(self, colitem: Node) -> None:
         finalizers = self._finalizers.pop(colitem, None)
         exc = None
         while finalizers:
@@ -454,9 +451,6 @@ class SetupState:
                     exc = e
         if exc:
             raise exc
-
-    def _teardown_with_finalization(self, colitem: Node) -> None:
-        self._callfinalizers(colitem)
         colitem.teardown()
         for colitem in self._finalizers:
             assert colitem in self.stack

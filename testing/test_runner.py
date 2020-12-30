@@ -64,11 +64,12 @@ class TestSetupState:
 
         item = pytester.getitem("def test_func(): pass")
         ss = runner.SetupState()
+        ss.prepare(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
         ss.addfinalizer(fin3, item)
         with pytest.raises(Exception) as err:
-            ss._callfinalizers(item)
+            ss.teardown_exact(item, None)
         assert err.value.args == ("oops",)
         assert r == ["fin3", "fin1"]
 
@@ -83,10 +84,11 @@ class TestSetupState:
 
         item = pytester.getitem("def test_func(): pass")
         ss = runner.SetupState()
+        ss.prepare(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
         with pytest.raises(Exception) as err:
-            ss._callfinalizers(item)
+            ss.teardown_exact(item, None)
         assert err.value.args == ("oops2",)
 
     def test_teardown_multiple_scopes_one_fails(self, pytester: Pytester) -> None:
