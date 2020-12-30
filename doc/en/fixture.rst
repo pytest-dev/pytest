@@ -879,7 +879,7 @@ Here's what that might look like:
         admin_client.delete_user(user)
 
 
-    def test_email_received(receiving_user, email):
+    def test_email_received(sending_user, receiving_user, email):
         email = Email(subject="Hey!", body="How's it going?")
         sending_user.send_email(_email, receiving_user)
         assert email in receiving_user.inbox
