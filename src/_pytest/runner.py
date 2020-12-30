@@ -463,9 +463,6 @@ class SetupState:
 
     def teardown_exact(self, item: Item, nextitem: Optional[Item]) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
-        self._teardown_towards(needed_collectors)
-
-    def _teardown_towards(self, needed_collectors: List[Node]) -> None:
         exc = None
         while self.stack:
             if self.stack == needed_collectors[: len(self.stack)]:
