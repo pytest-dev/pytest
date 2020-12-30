@@ -480,8 +480,6 @@ class SetupState:
     def teardown_all(self) -> None:
         while self.stack:
             self._pop_and_teardown()
-        for key in list(self._finalizers):
-            self._teardown_with_finalization(key)
         assert not self._finalizers
 
 
