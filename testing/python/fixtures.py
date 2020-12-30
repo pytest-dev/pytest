@@ -59,6 +59,20 @@ def test_getfuncargnames_staticmethod():
     assert getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
 
 
+def test_getfuncargnames_staticmethod_inherited() -> None:
+    """Test getfuncargnames for inherited staticmethods (#8061)"""
+
+    class A:
+        @staticmethod
+        def static(arg1, arg2, x=1):
+            raise NotImplementedError()
+
+    class B(A):
+        pass
+
+    assert getfuncargnames(B.static, cls=B) == ("arg1", "arg2")
+
+
 def test_getfuncargnames_partial():
     """Check getfuncargnames for methods defined with functools.partial (#5701)"""
     import functools
