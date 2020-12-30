@@ -358,7 +358,9 @@ class CollectReport(BaseReport):
         self,
         nodeid: str,
         outcome: "Literal['passed', 'failed', 'skipped']",
-        longrepr,
+        longrepr: Union[
+            None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr
+        ],
         result: Optional[List[Union[Item, Collector]]],
         sections: Iterable[Tuple[str, str]] = (),
         **extra,
