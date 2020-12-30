@@ -28,6 +28,9 @@ def test_help(pytester: Pytester) -> None:
                                 For example: -m 'mark1 and not mark2'.
         reporting:
           --durations=N *
+          -V, --version         display pytest version and information about plugins.
+                                When given twice, also display information about
+                                plugins.
         *setup.cfg*
         *minversion*
         *to see*markers*pytest --markers*
