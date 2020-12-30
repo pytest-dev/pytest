@@ -33,8 +33,10 @@ from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
+from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
+from _pytest.store import StoreKey
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -465,14 +467,16 @@ class SetupState:
         if exc:
             raise exc
 
+    _prepare_exc_key = StoreKey[Union[OutcomeException, Exception]]()
+
     def prepare(self, colitem: Item) -> None:
         """Setup objects along the collector chain to the test-method."""
 
         # Check if the last collection node has raised an error.
         for col in self.stack:
-            if hasattr(col, "_prepare_exc"):
-                exc = col._prepare_exc  # type: ignore[attr-defined]
-                raise exc
+            prepare_exc = col._store.get(self._prepare_exc_key, None)
+            if prepare_exc:
+                raise prepare_exc
 
         needed_collectors = colitem.listchain()
         for col in needed_collectors[len(self.stack) :]:
@@ -480,7 +484,7 @@ class SetupState:
             try:
                 col.setup()
             except TEST_OUTCOME as e:
-                col._prepare_exc = e  # type: ignore[attr-defined]
+                col._store[self._prepare_exc_key] = e
                 raise e
 
 
