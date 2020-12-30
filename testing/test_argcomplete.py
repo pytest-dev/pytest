@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -65,16 +66,16 @@ class FilesCompleter:
 
 class TestArgComplete:
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
-    def test_compare_with_compgen(self, tmpdir):
+    def test_compare_with_compgen(self, tmp_path: Path) -> None:
         from _pytest._argcomplete import FastFilesCompleter
 
         ffc = FastFilesCompleter()
         fc = FilesCompleter()
 
-        with tmpdir.as_cwd():
+        with tmp_path.cwd() as cwd:
             assert equal_with_bash("", ffc, fc, out=sys.stdout)
 
-            tmpdir.ensure("data")
+            cwd.joinpath("data").touch()
 
             for x in ["d", "data", "doesnotexist", ""]:
                 assert equal_with_bash(x, ffc, fc, out=sys.stdout)
