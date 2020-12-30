@@ -403,22 +403,22 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
 class SetupState:
     """Shared state for setting up/tearing down test items or collectors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.stack: List[Node] = []
         self._finalizers: Dict[Node, List[Callable[[], object]]] = {}
 
-    def addfinalizer(self, finalizer: Callable[[], object], colitem) -> None:
+    def addfinalizer(self, finalizer: Callable[[], object], colitem: Node) -> None:
         """Attach a finalizer to the given colitem."""
         assert colitem and not isinstance(colitem, tuple)
         assert callable(finalizer)
         # assert colitem in self.stack  # some unit tests don't setup stack :/
         self._finalizers.setdefault(colitem, []).append(finalizer)
 
-    def _pop_and_teardown(self):
+    def _pop_and_teardown(self) -> None:
         colitem = self.stack.pop()
         self._teardown_with_finalization(colitem)
 
-    def _callfinalizers(self, colitem) -> None:
+    def _callfinalizers(self, colitem: Node) -> None:
         finalizers = self._finalizers.pop(colitem, None)
         exc = None
         while finalizers:
@@ -433,7 +433,7 @@ class SetupState:
         if exc:
             raise exc
 
-    def _teardown_with_finalization(self, colitem) -> None:
+    def _teardown_with_finalization(self, colitem: Node) -> None:
         self._callfinalizers(colitem)
         colitem.teardown()
         for colitem in self._finalizers:
@@ -446,11 +446,11 @@ class SetupState:
             self._teardown_with_finalization(key)
         assert not self._finalizers
 
-    def teardown_exact(self, item, nextitem) -> None:
+    def teardown_exact(self, item: Item, nextitem: Optional[Item]) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
         self._teardown_towards(needed_collectors)
 
-    def _teardown_towards(self, needed_collectors) -> None:
+    def _teardown_towards(self, needed_collectors: List[Node]) -> None:
         exc = None
         while self.stack:
             if self.stack == needed_collectors[: len(self.stack)]:
@@ -465,7 +465,7 @@ class SetupState:
         if exc:
             raise exc
 
-    def prepare(self, colitem) -> None:
+    def prepare(self, colitem: Item) -> None:
         """Setup objects along the collector chain to the test-method."""
 
         # Check if the last collection node has raised an error.
