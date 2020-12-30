@@ -2230,19 +2230,19 @@ def test_skip_reasons_folding() -> None:
 
     ev1 = cast(CollectReport, X())
     ev1.when = "execute"
-    ev1.skipped = True
+    ev1.skipped = True  # type: ignore[misc]
     ev1.longrepr = longrepr
 
     ev2 = cast(CollectReport, X())
     ev2.when = "execute"
     ev2.longrepr = longrepr
-    ev2.skipped = True
+    ev2.skipped = True  # type: ignore[misc]
 
     # ev3 might be a collection report
     ev3 = cast(CollectReport, X())
     ev3.when = "collect"
     ev3.longrepr = longrepr
-    ev3.skipped = True
+    ev3.skipped = True  # type: ignore[misc]
 
     values = _folded_skips(Path.cwd(), [ev1, ev2, ev3])
     assert len(values) == 1
