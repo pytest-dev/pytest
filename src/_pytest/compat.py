@@ -163,7 +163,12 @@ def getfuncargnames(
     # it's passed as an unbound method or function, remove the first
     # parameter name.
     if is_method or (
-        cls and not isinstance(cls.__dict__.get(name, None), staticmethod)
+        # Not using `getattr` because we don't want to resolve the staticmethod.
+        # Not using `cls.__dict__` because we want to check the entire MRO.
+        cls
+        and not isinstance(
+            inspect.getattr_static(cls, name, default=None), staticmethod
+        )
     ):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
