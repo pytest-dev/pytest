@@ -422,8 +422,10 @@ class SetupState:
 
         needed_collectors = colitem.listchain()
         for col in needed_collectors[len(self.stack) :]:
+            assert col not in self.stack
+            assert col not in self._finalizers
             self.stack.append(col)
-            self._finalizers.setdefault(col, [])
+            self._finalizers[col] = []
             try:
                 col.setup()
             except TEST_OUTCOME as e:
