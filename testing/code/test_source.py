@@ -17,6 +17,7 @@ from _pytest._code import Code
 from _pytest._code import Frame
 from _pytest._code import getfslineno
 from _pytest._code import Source
+from _pytest.pathlib import import_path
 
 
 def test_source_str_function() -> None:
@@ -285,7 +286,9 @@ def test_deindent() -> None:
     assert lines == ["def f():", "    def g():", "        pass"]
 
 
-def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot) -> None:
+def test_source_of_class_at_eof_without_newline(
+    tmpdir, _sys_snapshot, tmp_path: Path
+) -> None:
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
     source = Source(
@@ -295,9 +298,10 @@ def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot) -> None:
                 x = 1
     """
     )
-    path = tmpdir.join("a.py")
-    path.write(source)
-    s2 = Source(tmpdir.join("a.py").pyimport().A)
+    path = tmp_path.joinpath("a.py")
+    path.write_text(str(source))
+    mod: Any = import_path(path)
+    s2 = Source(mod.A)
     assert str(source).strip() == str(s2).strip()
 
 
