@@ -104,13 +104,14 @@ class TestSetupState:
             module_teardown.append("fin_module")
 
         item = pytester.getitem("def test_func(): pass")
+        mod = item.listchain()[-2]
         ss = item.session._setupstate
-        ss.addfinalizer(fin_module, item.listchain()[-2])
-        ss.addfinalizer(fin_func, item)
         ss.prepare(item)
+        ss.addfinalizer(fin_module, mod)
+        ss.addfinalizer(fin_func, item)
         with pytest.raises(Exception, match="oops1"):
             ss.teardown_exact(None)
-        assert module_teardown
+        assert module_teardown == ["fin_module"]
 
 
 class BaseFunctionalTests:
