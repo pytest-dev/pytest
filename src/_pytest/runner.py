@@ -443,29 +443,20 @@ class SetupState:
         while self.stack:
             if self.stack == needed_collectors[: len(self.stack)]:
                 break
-            try:
-                colitem = self.stack.pop()
-                finalizers = self._finalizers.pop(colitem)
-                finalizers.insert(0, colitem.teardown)
-                inner_exc = None
-                while finalizers:
-                    fin = finalizers.pop()
-                    try:
-                        fin()
-                    except TEST_OUTCOME as e:
-                        # XXX Only first exception will be seen by user,
-                        #     ideally all should be reported.
-                        if inner_exc is None:
-                            inner_exc = e
-                for colitem in self._finalizers:
-                    assert colitem in self.stack
-                if inner_exc:
-                    raise inner_exc
-            except TEST_OUTCOME as e:
-                # XXX Only first exception will be seen by user,
-                #     ideally all should be reported.
-                if exc is None:
-                    exc = e
+            colitem = self.stack.pop()
+            finalizers = self._finalizers.pop(colitem)
+            finalizers.insert(0, colitem.teardown)
+            while finalizers:
+                fin = finalizers.pop()
+                try:
+                    fin()
+                except TEST_OUTCOME as e:
+                    # XXX Only first exception will be seen by user,
+                    #     ideally all should be reported.
+                    if exc is None:
+                        exc = e
+            for colitem in self._finalizers:
+                assert colitem in self.stack
         if exc:
             raise exc
         if nextitem is None:
