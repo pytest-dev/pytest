@@ -423,6 +423,7 @@ class SetupState:
         needed_collectors = colitem.listchain()
         for col in needed_collectors[len(self.stack) :]:
             self.stack.append(col)
+            self._finalizers.setdefault(col, [])
             try:
                 col.setup()
             except TEST_OUTCOME as e:
@@ -444,7 +445,7 @@ class SetupState:
                 break
             try:
                 colitem = self.stack.pop()
-                finalizers = self._finalizers.pop(colitem, None)
+                finalizers = self._finalizers.pop(colitem)
                 inner_exc = None
                 while finalizers:
                     fin = finalizers.pop()
