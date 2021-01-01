@@ -856,7 +856,7 @@ class TestRequestBasic:
         teardownlist = parent.obj.teardownlist
         ss = item.session._setupstate
         assert not teardownlist
-        ss.teardown_exact(item, None)
+        ss.teardown_exact(None)
         print(ss.stack)
         assert teardownlist == [1]
 

@@ -105,7 +105,7 @@ def pytest_sessionstart(session: "Session") -> None:
 
 
 def pytest_sessionfinish(session: "Session") -> None:
-    session._setupstate.teardown_all()
+    session._setupstate.teardown_exact(None)
 
 
 def pytest_runtest_protocol(item: Item, nextitem: Optional[Item]) -> bool:
@@ -177,7 +177,7 @@ def pytest_runtest_call(item: Item) -> None:
 
 def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
     _update_current_test_var(item, "teardown")
-    item.session._setupstate.teardown_exact(item, nextitem)
+    item.session._setupstate.teardown_exact(nextitem)
     _update_current_test_var(item, None)
 
 
@@ -455,7 +455,7 @@ class SetupState:
         for colitem in self._finalizers:
             assert colitem in self.stack
 
-    def teardown_exact(self, item: Item, nextitem: Optional[Item]) -> None:
+    def teardown_exact(self, nextitem: Optional[Item]) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
         exc = None
         while self.stack:
@@ -470,11 +470,8 @@ class SetupState:
                     exc = e
         if exc:
             raise exc
-
-    def teardown_all(self) -> None:
-        while self.stack:
-            self._pop_and_teardown()
-        assert not self._finalizers
+        if nextitem is None:
+            assert not self._finalizers
 
 
 def collect_one_node(collector: Collector) -> CollectReport:

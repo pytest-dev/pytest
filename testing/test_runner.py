@@ -34,9 +34,10 @@ class TestSetupState:
     def test_teardown_exact_stack_empty(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
         ss = runner.SetupState()
-        ss.teardown_exact(item, None)
-        ss.teardown_exact(item, None)
-        ss.teardown_exact(item, None)
+        ss.prepare(item)
+        ss.teardown_exact(None)
+        ss.teardown_exact(None)
+        ss.teardown_exact(None)
 
     def test_setup_fails_and_failure_is_cached(self, pytester: Pytester) -> None:
         item = pytester.getitem(
@@ -69,7 +70,7 @@ class TestSetupState:
         ss.addfinalizer(fin2, item)
         ss.addfinalizer(fin3, item)
         with pytest.raises(Exception) as err:
-            ss.teardown_exact(item, None)
+            ss.teardown_exact(None)
         assert err.value.args == ("oops",)
         assert r == ["fin3", "fin1"]
 
@@ -88,7 +89,7 @@ class TestSetupState:
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
         with pytest.raises(Exception) as err:
-            ss.teardown_exact(item, None)
+            ss.teardown_exact(None)
         assert err.value.args == ("oops2",)
 
     def test_teardown_multiple_scopes_one_fails(self, pytester: Pytester) -> None:
@@ -106,7 +107,7 @@ class TestSetupState:
         ss.addfinalizer(fin_func, item)
         ss.prepare(item)
         with pytest.raises(Exception, match="oops1"):
-            ss.teardown_exact(item, None)
+            ss.teardown_exact(None)
         assert module_teardown
 
 
