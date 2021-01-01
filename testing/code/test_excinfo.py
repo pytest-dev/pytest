@@ -364,12 +364,12 @@ def test_excinfo_no_sourcecode():
     assert s == "  File '<string>':1 in <module>\n  ???\n"
 
 
-def test_excinfo_no_python_sourcecode(tmpdir):
+def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     # XXX: simplified locally testable version
-    tmpdir.join("test.txt").write("{{ h()}}:")
+    tmp_path.joinpath("test.txt").write_text("{{ h()}}:")
 
     jinja2 = pytest.importorskip("jinja2")
-    loader = jinja2.FileSystemLoader(str(tmpdir))
+    loader = jinja2.FileSystemLoader(str(tmp_path))
     env = jinja2.Environment(loader=loader)
     template = env.get_template("test.txt")
     excinfo = pytest.raises(ValueError, template.render, h=h)
