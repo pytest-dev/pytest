@@ -446,6 +446,7 @@ class SetupState:
             try:
                 colitem = self.stack.pop()
                 finalizers = self._finalizers.pop(colitem)
+                finalizers.insert(0, colitem.teardown)
                 inner_exc = None
                 while finalizers:
                     fin = finalizers.pop()
@@ -456,11 +457,10 @@ class SetupState:
                         #     ideally all should be reported.
                         if inner_exc is None:
                             inner_exc = e
-                if inner_exc:
-                    raise inner_exc
-                colitem.teardown()
                 for colitem in self._finalizers:
                     assert colitem in self.stack
+                if inner_exc:
+                    raise inner_exc
             except TEST_OUTCOME as e:
                 # XXX Only first exception will be seen by user,
                 #     ideally all should be reported.
