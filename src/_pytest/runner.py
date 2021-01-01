@@ -436,25 +436,6 @@ class SetupState:
         # assert colitem in self.stack  # some unit tests don't setup stack :/
         self._finalizers.setdefault(colitem, []).append(finalizer)
 
-    def _pop_and_teardown(self) -> None:
-        colitem = self.stack.pop()
-        finalizers = self._finalizers.pop(colitem, None)
-        exc = None
-        while finalizers:
-            fin = finalizers.pop()
-            try:
-                fin()
-            except TEST_OUTCOME as e:
-                # XXX Only first exception will be seen by user,
-                #     ideally all should be reported.
-                if exc is None:
-                    exc = e
-        if exc:
-            raise exc
-        colitem.teardown()
-        for colitem in self._finalizers:
-            assert colitem in self.stack
-
     def teardown_exact(self, nextitem: Optional[Item]) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
         exc = None
@@ -462,7 +443,23 @@ class SetupState:
             if self.stack == needed_collectors[: len(self.stack)]:
                 break
             try:
-                self._pop_and_teardown()
+                colitem = self.stack.pop()
+                finalizers = self._finalizers.pop(colitem, None)
+                inner_exc = None
+                while finalizers:
+                    fin = finalizers.pop()
+                    try:
+                        fin()
+                    except TEST_OUTCOME as e:
+                        # XXX Only first exception will be seen by user,
+                        #     ideally all should be reported.
+                        if inner_exc is None:
+                            inner_exc = e
+                if inner_exc:
+                    raise inner_exc
+                colitem.teardown()
+                for colitem in self._finalizers:
+                    assert colitem in self.stack
             except TEST_OUTCOME as e:
                 # XXX Only first exception will be seen by user,
                 #     ideally all should be reported.

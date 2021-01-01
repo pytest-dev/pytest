@@ -28,7 +28,7 @@ class TestSetupState:
         ss.prepare(item)
         ss.addfinalizer(values.pop, colitem=item)
         assert values
-        ss._pop_and_teardown()
+        ss.teardown_exact(None)
         assert not values
 
     def test_teardown_exact_stack_empty(self, pytester: Pytester) -> None:
