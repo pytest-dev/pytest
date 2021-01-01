@@ -607,14 +607,11 @@ class FixtureRequest:
     def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
         current = self
         values: List[FixtureDef[Any]] = []
-        while 1:
-            fixturedef = getattr(current, "_fixturedef", None)
-            if fixturedef is None:
-                values.reverse()
-                return values
-            values.append(fixturedef)
-            assert isinstance(current, SubRequest)
+        while isinstance(current, SubRequest):
+            values.append(current._fixturedef)  # type: ignore[has-type]
             current = current._parent_request
+        values.reverse()
+        return values
 
     def _compute_fixture_value(self, fixturedef: "FixtureDef[object]") -> None:
         """Create a SubRequest based on "self" and call the execute method
