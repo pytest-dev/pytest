@@ -16,6 +16,7 @@ from typing import Generic
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import MutableMapping
 from typing import Optional
 from typing import overload
 from typing import Sequence
@@ -525,9 +526,10 @@ class FixtureRequest:
         return self._pyfuncitem.fspath  # type: ignore
 
     @property
-    def keywords(self):
+    def keywords(self) -> MutableMapping[str, Any]:
         """Keywords/markers dictionary for the underlying node."""
-        return self.node.keywords
+        node: nodes.Node = self.node
+        return node.keywords
 
     @property
     def session(self) -> "Session":
