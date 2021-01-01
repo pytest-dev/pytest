@@ -434,8 +434,8 @@ class SetupState:
         """Attach a finalizer to the given colitem."""
         assert colitem and not isinstance(colitem, tuple)
         assert callable(finalizer)
-        # assert colitem in self.stack  # some unit tests don't setup stack :/
-        self._finalizers.setdefault(colitem, []).append(finalizer)
+        assert colitem in self.stack, (colitem, self.stack)
+        self._finalizers[colitem].append(finalizer)
 
     def teardown_exact(self, nextitem: Optional[Item]) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
