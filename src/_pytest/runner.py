@@ -406,8 +406,7 @@ class SetupState:
     """Shared state for setting up/tearing down test items or collectors."""
 
     def __init__(self) -> None:
-        self.stack: List[Node] = []
-        self._finalizers: Dict[Node, List[Callable[[], object]]] = {}
+        self.stack: Dict[Node, List[Callable[[], object]]] = {}
 
     _prepare_exc_key = StoreKey[Union[OutcomeException, Exception]]()
 
@@ -423,9 +422,7 @@ class SetupState:
         needed_collectors = colitem.listchain()
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
-            assert col not in self._finalizers
-            self.stack.append(col)
-            self._finalizers[col] = []
+            self.stack[col] = []
             try:
                 col.setup()
             except TEST_OUTCOME as e:
@@ -437,16 +434,15 @@ class SetupState:
         assert colitem and not isinstance(colitem, tuple)
         assert callable(finalizer)
         assert colitem in self.stack, (colitem, self.stack)
-        self._finalizers[colitem].append(finalizer)
+        self.stack[colitem].append(finalizer)
 
     def teardown_exact(self, nextitem: Optional[Item]) -> None:
         needed_collectors = nextitem and nextitem.listchain() or []
         exc = None
         while self.stack:
-            if self.stack == needed_collectors[: len(self.stack)]:
+            if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
-            colitem = self.stack.pop()
-            finalizers = self._finalizers.pop(colitem)
+            colitem, finalizers = self.stack.popitem()
             finalizers.insert(0, colitem.teardown)
             while finalizers:
                 fin = finalizers.pop()
@@ -457,12 +453,10 @@ class SetupState:
                     #     ideally all should be reported.
                     if exc is None:
                         exc = e
-            for colitem in self._finalizers:
-                assert colitem in self.stack
         if exc:
             raise exc
         if nextitem is None:
-            assert not self._finalizers
+            assert not self.stack
 
 
 def collect_one_node(collector: Collector) -> CollectReport:
