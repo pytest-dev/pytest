@@ -22,8 +22,8 @@ from _pytest.pytester import Pytester
 
 class TestSetupState:
     def test_setup(self, pytester: Pytester) -> None:
-        ss = runner.SetupState()
         item = pytester.getitem("def test_func(): pass")
+        ss = item.session._setupstate
         values = [1]
         ss.prepare(item)
         ss.addfinalizer(values.pop, colitem=item)
@@ -33,7 +33,7 @@ class TestSetupState:
 
     def test_teardown_exact_stack_empty(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
+        ss = item.session._setupstate
         ss.prepare(item)
         ss.teardown_exact(None)
         ss.teardown_exact(None)
@@ -47,9 +47,11 @@ class TestSetupState:
             def test_func(): pass
         """
         )
-        ss = runner.SetupState()
-        pytest.raises(ValueError, lambda: ss.prepare(item))
-        pytest.raises(ValueError, lambda: ss.prepare(item))
+        ss = item.session._setupstate
+        with pytest.raises(ValueError):
+            ss.prepare(item)
+        with pytest.raises(ValueError):
+            ss.prepare(item)
 
     def test_teardown_multiple_one_fails(self, pytester: Pytester) -> None:
         r = []
@@ -64,7 +66,7 @@ class TestSetupState:
             r.append("fin3")
 
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
+        ss = item.session._setupstate
         ss.prepare(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
@@ -84,7 +86,7 @@ class TestSetupState:
             raise Exception("oops2")
 
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
+        ss = item.session._setupstate
         ss.prepare(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
@@ -102,7 +104,7 @@ class TestSetupState:
             module_teardown.append("fin_module")
 
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
+        ss = item.session._setupstate
         ss.addfinalizer(fin_module, item.listchain()[-2])
         ss.addfinalizer(fin_func, item)
         ss.prepare(item)
