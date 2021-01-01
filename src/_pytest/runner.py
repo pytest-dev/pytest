@@ -422,7 +422,7 @@ class SetupState:
         needed_collectors = colitem.listchain()
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
-            self.stack[col] = []
+            self.stack[col] = [col.teardown]
             try:
                 col.setup()
             except TEST_OUTCOME as e:
@@ -443,7 +443,6 @@ class SetupState:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
             colitem, finalizers = self.stack.popitem()
-            finalizers.insert(0, colitem.teardown)
             while finalizers:
                 fin = finalizers.pop()
                 try:
