@@ -26,7 +26,7 @@ class TestSetupState:
         ss = item.session._setupstate
         values = [1]
         ss.prepare(item)
-        ss.addfinalizer(values.pop, colitem=item)
+        ss.addfinalizer(values.pop, item)
         assert values
         ss.teardown_exact(None)
         assert not values

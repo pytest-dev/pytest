@@ -544,8 +544,8 @@ class FixtureRequest:
         self._addfinalizer(finalizer, scope=self.scope)
 
     def _addfinalizer(self, finalizer: Callable[[], object], scope) -> None:
-        item = self._getscopeitem(scope)
-        item.addfinalizer(finalizer)
+        node = self._getscopeitem(scope)
+        node.addfinalizer(finalizer)
 
     def applymarker(self, marker: Union[str, MarkDecorator]) -> None:
         """Apply a marker to a single test function invocation.

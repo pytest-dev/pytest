@@ -403,23 +403,86 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
 
 
 class SetupState:
-    """Shared state for setting up/tearing down test items or collectors."""
+    """Shared state for setting up/tearing down test items or collectors
+    in a session.
+
+    Suppose we have a collection tree as follows:
+
+    <Session session>
+        <Module mod1>
+            <Function item1>
+        <Module mod2>
+            <Function item2>
+
+    The SetupState maintains a stack. The stack starts out empty:
+
+        []
+
+    During the setup phase of item1, prepare(item1) is called. What it does
+    is:
+
+        push session to stack, run session.setup()
+        push mod1 to stack, run mod1.setup()
+        push item1 to stack, run item1.setup()
+
+    The stack is:
+
+        [session, mod1, item1]
+
+    While the stack is in this shape, it is allowed to add finalizers to
+    each of session, mod1, item1 using addfinalizer().
+
+    During the teardown phase of item1, teardown_exact(item2) is called,
+    where item2 is the next item to item1. What it does is:
+
+        pop item1 from stack, run its teardowns
+        pop mod1 from stack, run its teardowns
+
+    mod1 was popped because it ended its purpose with item1. The stack is:
+
+        [session]
+
+    During the setup phase of item2, prepare(item2) is called. What it does
+    is:
+
+        push mod2 to stack, run mod2.setup()
+        push item2 to stack, run item2.setup()
+
+    Stack:
+
+        [session, mod2, item2]
+
+    During the teardown phase of item2, teardown_exact(None) is called,
+    because item2 is the last item. What it does is:
+
+        pop item2 from stack, run its teardowns
+        pop mod2 from stack, run its teardowns
+        pop session from stack, run its teardowns
+
+    Stack:
+
+        []
+
+    The end!
+    """
 
     def __init__(self) -> None:
+        # Maps node -> the node's finalizers.
+        # The stack is in the dict insertion order.
         self.stack: Dict[Node, List[Callable[[], object]]] = {}
 
     _prepare_exc_key = StoreKey[Union[OutcomeException, Exception]]()
 
-    def prepare(self, colitem: Item) -> None:
-        """Setup objects along the collector chain to the test-method."""
-
-        # Check if the last collection node has raised an error.
+    def prepare(self, item: Item) -> None:
+        """Setup objects along the collector chain to the item."""
+        # If a collector fails its setup, fail its entire subtree of items.
+        # The setup is not retried for each item - the same exception is used.
         for col in self.stack:
             prepare_exc = col._store.get(self._prepare_exc_key, None)
             if prepare_exc:
                 raise prepare_exc
 
-        needed_collectors = colitem.listchain()
+        needed_collectors = item.listchain()
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
             self.stack[col] = [col.teardown]
@@ -429,20 +492,29 @@ class SetupState:
                 col._store[self._prepare_exc_key] = e
                 raise e
 
-    def addfinalizer(self, finalizer: Callable[[], object], colitem: Node) -> None:
-        """Attach a finalizer to the given colitem."""
-        assert colitem and not isinstance(colitem, tuple)
+    def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:
+        """Attach a finalizer to the given node.
+
+        The node must be currently active in the stack.
+        """
+        assert node and not isinstance(node, tuple)
         assert callable(finalizer)
-        assert colitem in self.stack, (colitem, self.stack)
-        self.stack[colitem].append(finalizer)
+        assert node in self.stack, (node, self.stack)
+        self.stack[node].append(finalizer)
 
     def teardown_exact(self, nextitem: Optional[Item]) -> None:
+        """Teardown the current stack up until reaching nodes that nextitem
+        also descends from.
+
+        When nextitem is None (meaning we're at the last item), the entire
+        stack is torn down.
+        """
         needed_collectors = nextitem and nextitem.listchain() or []
         exc = None
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
-            colitem, finalizers = self.stack.popitem()
+            node, finalizers = self.stack.popitem()
             while finalizers:
                 fin = finalizers.pop()
                 try:
