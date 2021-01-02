@@ -763,8 +763,11 @@ class Pytester:
             p = self.path.joinpath(basename).with_suffix(ext)
             p.parent.mkdir(parents=True, exist_ok=True)
             source_ = Source(value)
-            source = "\n".join(to_text(line) for line in source_.lines)
-            p.write_text(source.strip(), encoding=encoding)
+            if isinstance(value, bytes):
+                p.write_bytes(value)
+            else:
+                source = "\n".join(to_text(line) for line in source_.lines)
+                p.write_text(source.strip(), encoding=encoding)
             if ret is None:
                 ret = p
         assert ret is not None
