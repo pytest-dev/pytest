@@ -64,6 +64,7 @@ from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestWarning
 
+
 if TYPE_CHECKING:
     from typing_extensions import Literal
 
@@ -749,6 +750,11 @@ class Pytester:
         encoding: str = "utf-8",
     ) -> Path:
         items = list(files.items())
+
+        if ext and not ext.startswith("."):
+            raise ValueError(
+                f"pytester.makefile expects a file extension, try .{ext} instead of {ext}"
+            )
 
         def to_text(s: Union[Any, bytes]) -> str:
             return s.decode(encoding) if isinstance(s, bytes) else str(s)
@@ -1559,6 +1565,14 @@ class Testdir:
 
     def makefile(self, ext, *args, **kwargs) -> py.path.local:
         """See :meth:`Pytester.makefile`."""
+        if ext and not ext.startswith("."):
+            # pytester.makefile is going to throw a ValueError in a way that
+            # testdir.makefile did not, because
+            # pathlib.Path is stricter suffixes than py.path
+            # This ext arguments is likely user error, but since testdir has
+            # allowed this, we will prepend "." as a workaround to avoid breaking
+            # testdir usage that worked before
+            ext = "." + ext
         return py.path.local(str(self._pytester.makefile(ext, *args, **kwargs)))
 
     def makeconftest(self, source) -> py.path.local:

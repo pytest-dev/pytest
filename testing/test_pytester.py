@@ -17,6 +17,7 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
+from _pytest.pytester import Testdir
 
 
 def test_make_hook_recorder(pytester: Pytester) -> None:
@@ -816,3 +817,21 @@ def test_makefile_joins_absolute_path(pytester: Pytester) -> None:
 def test_testtmproot(testdir) -> None:
     """Check test_tmproot is a py.path attribute for backward compatibility."""
     assert testdir.test_tmproot.check(dir=1)
+
+
+def test_testdir_makefile_dot_prefixes_extension_silently(
+    testdir: Testdir,
+) -> None:
+    p1 = testdir.makefile("foo.bar", "")
+    assert ".foo.bar" in str(p1)
+
+
+def test_pytester_makefile_dot_prefixes_extension_with_warning(
+    pytester: Pytester,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="pytester.makefile expects a file extension, try .foo.bar instead of foo.bar",
+    ):
+        p1 = pytester.makefile("foo.bar", "")
+        assert ".foo.bar" in str(p1)
