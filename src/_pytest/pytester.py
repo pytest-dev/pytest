@@ -747,6 +747,7 @@ class Pytester:
         lines: Sequence[Union[Any, bytes]],
         files: Dict[str, str],
         encoding: str = "utf-8",
+        bytes_input: bool = False,
     ) -> Path:
         items = list(files.items())
 
@@ -764,7 +765,10 @@ class Pytester:
             p.parent.mkdir(parents=True, exist_ok=True)
             source_ = Source(value)
             source = "\n".join(to_text(line) for line in source_.lines)
-            p.write_text(source.strip(), encoding=encoding)
+            if bytes_input:
+                p.write_bytes(str.encode(source))
+            else:
+                p.write_text(source.strip(), encoding=encoding)
             if ret is None:
                 ret = p
         assert ret is not None
@@ -806,6 +810,9 @@ class Pytester:
         """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)
         return IniConfig(str(p))["pytest"]
+
+    def makebinaryfile(self, *args, **kwargs) -> Path:
+        return self._makefile(".bin", args, kwargs, bytes_input=True)
 
     def makepyprojecttoml(self, source: str) -> Path:
         """Write a pyproject.toml file with 'source' as contents.
