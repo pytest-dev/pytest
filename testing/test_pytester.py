@@ -822,6 +822,7 @@ def test_testtmproot(testdir) -> None:
 def test_testdir_makefile_dot_prefixes_extension_silently(
     testdir: Testdir,
 ) -> None:
+    """For backwards compat #8192"""
     p1 = testdir.makefile("foo.bar", "")
     assert ".foo.bar" in str(p1)
 
@@ -835,3 +836,15 @@ def test_pytester_makefile_dot_prefixes_extension_with_warning(
     ):
         p1 = pytester.makefile("foo.bar", "")
         assert ".foo.bar" in str(p1)
+
+
+def test_testdir_makefile_ext_none_raises_type_error(testdir) -> None:
+    """For backwards compat #8192"""
+    with pytest.raises(TypeError):
+        testdir.makefile(None, "")
+
+
+def test_testdir_makefile_ext_empty_string_makes_file(testdir) -> None:
+    """For backwards compat #8192"""
+    p1 = testdir.makefile("", "")
+    assert "test_testdir_makefile" in str(p1)
