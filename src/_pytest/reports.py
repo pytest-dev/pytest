@@ -65,6 +65,7 @@ class BaseReport:
     ]
     sections: List[Tuple[str, str]]
     nodeid: str
+    outcome: "Literal['passed', 'failed', 'skipped']"
 
     def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
@@ -141,9 +142,17 @@ class BaseReport:
             content for (prefix, content) in self.get_sections("Captured stderr")
         )
 
-    passed = property(lambda x: x.outcome == "passed")
-    failed = property(lambda x: x.outcome == "failed")
-    skipped = property(lambda x: x.outcome == "skipped")
+    @property
+    def passed(self) -> bool:
+        return self.outcome == "passed"
+
+    @property
+    def failed(self) -> bool:
+        return self.outcome == "failed"
+
+    @property
+    def skipped(self) -> bool:
+        return self.outcome == "skipped"
 
     @property
     def fspath(self) -> str:
@@ -348,8 +357,10 @@ class CollectReport(BaseReport):
     def __init__(
         self,
         nodeid: str,
-        outcome: "Literal['passed', 'skipped', 'failed']",
-        longrepr,
+        outcome: "Literal['passed', 'failed', 'skipped']",
+        longrepr: Union[
+            None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr
+        ],
         result: Optional[List[Union[Item, Collector]]],
         sections: Iterable[Tuple[str, str]] = (),
         **extra,

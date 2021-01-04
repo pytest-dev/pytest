@@ -3,6 +3,7 @@ from typing import Any
 import pytest
 from _pytest import runner
 from _pytest._code import getfslineno
+from _pytest.fixtures import getfixturemarker
 from _pytest.pytester import Pytester
 
 
@@ -334,7 +335,8 @@ class TestReRunTests:
 def test_pytestconfig_is_session_scoped() -> None:
     from _pytest.fixtures import pytestconfig
 
-    marker = pytestconfig._pytestfixturefunction  # type: ignore
+    marker = getfixturemarker(pytestconfig)
+    assert marker is not None
     assert marker.scope == "session"
 
 

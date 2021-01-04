@@ -922,10 +922,6 @@ class CallSpec2:
         cs._idlist = list(self._idlist)
         return cs
 
-    def _checkargnotcontained(self, arg: str) -> None:
-        if arg in self.params or arg in self.funcargs:
-            raise ValueError(f"duplicate {arg!r}")
-
     def getparam(self, name: str) -> object:
         try:
             return self.params[name]
@@ -947,7 +943,8 @@ class CallSpec2:
         param_index: int,
     ) -> None:
         for arg, val in zip(argnames, valset):
-            self._checkargnotcontained(arg)
+            if arg in self.params or arg in self.funcargs:
+                raise ValueError(f"duplicate {arg!r}")
             valtype_for_arg = valtypes[arg]
             if valtype_for_arg == "params":
                 self.params[arg] = val
