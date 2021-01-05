@@ -3,6 +3,8 @@
 API Reference
 =============
 
+.. module:: pytest
+
 This page contains the full reference to pytest's API.
 
 .. contents::
