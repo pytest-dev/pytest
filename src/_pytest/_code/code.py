@@ -721,11 +721,11 @@ class FormattedExcinfo:
     ) -> List[str]:
         """Return formatted and marked up source lines."""
         lines = []
-        if source is None or line_index >= len(source.lines):
+        if source is not None and line_index < 0:
+            line_index += len(source.lines)
+        if source is None or line_index >= len(source.lines) or line_index < 0:
             source = Source("???")
             line_index = 0
-        if line_index < 0:
-            line_index += len(source)
         space_prefix = "    "
         if short:
             lines.append(space_prefix + source.lines[line_index].strip())
