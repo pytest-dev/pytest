@@ -405,6 +405,7 @@ test instances when using parametrize:
 
 .. code-block:: python
 
+    import sys
     import pytest
 
 
