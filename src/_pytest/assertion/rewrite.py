@@ -308,6 +308,12 @@ class AssertionRewritingHook(object):
             raise
         return sys.modules[name]
 
+    def create_module(self, spec):
+        return self.load_module(spec.name)
+
+    def exec_module(self, module):
+        pass
+
     def is_package(self, name):
         try:
             fd, fn, desc = self._imp_find_module(name)

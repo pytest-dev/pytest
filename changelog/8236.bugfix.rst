@@ -1,0 +1,2 @@
+Define ``create_module()`` and ``exec_module()`` methods in
+``AssertionRewritingHook`` to get rid of ``ImportWarning`` on Python 3.10+.
