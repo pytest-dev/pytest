@@ -280,7 +280,7 @@ class TestCaseFunction(Function):
         msg = "Unexpected success"
         if reason:
             msg += f": {reason.reason}"
-        # Preserve unittest behaviour - fail the test
+        # Preserve unittest behaviour - fail the test. Explicitly not an XPASS.
         try:
             fail(msg, pytrace=False)
         except fail.Exception:
