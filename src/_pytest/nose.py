@@ -13,7 +13,7 @@ def pytest_runtest_setup(item) -> None:
             # Call module level setup if there is no object level one.
             call_optional(item.parent.obj, "setup")
         # XXX This implies we only call teardown when setup worked.
-        item.session._setupstate.addfinalizer((lambda: teardown_nose(item)), item)
+        item.addfinalizer(lambda: teardown_nose(item))
 
 
 def teardown_nose(item) -> None:
