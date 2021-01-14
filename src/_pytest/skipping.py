@@ -230,8 +230,6 @@ def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:
     return None
 
 
-# Whether skipped due to skip or skipif marks.
-skipped_by_mark_key = StoreKey[bool]()
 # Saves the xfail mark evaluation. Can be refreshed during call if None.
 xfailed_key = StoreKey[Optional[Xfail]]()
 
@@ -239,9 +237,8 @@ xfailed_key = StoreKey[Optional[Xfail]]()
 @hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: Item) -> None:
     skipped = evaluate_skip_marks(item)
-    item._store[skipped_by_mark_key] = skipped is not None
     if skipped:
-        skip(skipped.reason)
+        raise skip.Exception(skipped.reason, _use_item_location=True)
 
     item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
     if xfailed and not item.config.option.runxfail and not xfailed.run:
@@ -291,19 +288,6 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
             else:
                 rep.outcome = "passed"
                 rep.wasxfail = xfailed.reason
-
-    if (
-        item._store.get(skipped_by_mark_key, True)
-        and rep.skipped
-        and type(rep.longrepr) is tuple
-    ):
-        # Skipped by mark.skipif; change the location of the failure
-        # to point to the item definition, otherwise it will display
-        # the location of where the skip exception was raised within pytest.
-        _, _, reason = rep.longrepr
-        filename, line = item.reportinfo()[:2]
-        assert line is not None
-        rep.longrepr = str(filename), line + 1, reason
 
 
 def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:
