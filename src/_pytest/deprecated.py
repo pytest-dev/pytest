@@ -64,6 +64,11 @@ STRICT_OPTION = PytestDeprecationWarning(
 
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
+UNITTEST_SKIP_DURING_COLLECTION = PytestDeprecationWarning(
+    "Raising unittest.SkipTest to skip tests during collection is deprecated. "
+    "Use pytest.skip() instead."
+)
+
 
 # You want to make some `__init__` or function "private".
 #
