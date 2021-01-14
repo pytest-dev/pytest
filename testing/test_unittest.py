@@ -765,7 +765,8 @@ def test_unittest_expected_failure_for_failing_test_is_xfail(
 
 @pytest.mark.parametrize("runner", ["pytest", "unittest"])
 def test_unittest_expected_failure_for_passing_test_is_fail(
-    pytester: Pytester, runner
+    pytester: Pytester,
+    runner: str,
 ) -> None:
     script = pytester.makepyfile(
         """
@@ -782,7 +783,11 @@ def test_unittest_expected_failure_for_passing_test_is_fail(
     if runner == "pytest":
         result = pytester.runpytest("-rxX")
         result.stdout.fnmatch_lines(
-            ["*MyTestCase*test_passing_test_is_fail*", "*1 failed*"]
+            [
+                "*MyTestCase*test_passing_test_is_fail*",
+                "Unexpected success",
+                "*1 failed*",
+            ]
         )
     else:
         result = pytester.runpython(script)

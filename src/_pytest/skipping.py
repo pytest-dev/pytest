@@ -234,7 +234,6 @@ def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:
 skipped_by_mark_key = StoreKey[bool]()
 # Saves the xfail mark evaluation. Can be refreshed during call if None.
 xfailed_key = StoreKey[Optional[Xfail]]()
-unexpectedsuccess_key = StoreKey[str]()
 
 
 @hookimpl(tryfirst=True)
@@ -271,15 +270,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
     outcome = yield
     rep = outcome.get_result()
     xfailed = item._store.get(xfailed_key, None)
-    # unittest special case, see setting of unexpectedsuccess_key
-    if unexpectedsuccess_key in item._store and rep.when == "call":
-        reason = item._store[unexpectedsuccess_key]
-        if reason:
-            rep.longrepr = f"Unexpected success: {reason}"
-        else:
-            rep.longrepr = "Unexpected success"
-        rep.outcome = "failed"
-    elif item.config.option.runxfail:
+    if item.config.option.runxfail:
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
         assert call.excinfo.value.msg is not None

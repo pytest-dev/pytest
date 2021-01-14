@@ -30,10 +30,10 @@ from _pytest.python import Function
 from _pytest.python import PyCollector
 from _pytest.runner import CallInfo
 from _pytest.skipping import skipped_by_mark_key
-from _pytest.skipping import unexpectedsuccess_key
 
 if TYPE_CHECKING:
     import unittest
+    import twisted.trial.unittest
 
     from _pytest.fixtures import _Scope
 
@@ -273,24 +273,24 @@ class TestCaseFunction(Function):
             self._addexcinfo(sys.exc_info())
 
     def addUnexpectedSuccess(
-        self, testcase: "unittest.TestCase", reason: str = ""
+        self,
+        testcase: "unittest.TestCase",
+        reason: Optional["twisted.trial.unittest.Todo"] = None,
     ) -> None:
-        self._store[unexpectedsuccess_key] = reason
+        msg = "Unexpected success"
+        if reason:
+            msg += f": {reason.reason}"
+        # Preserve unittest behaviour - fail the test. Explicitly not an XPASS.
+        try:
+            fail(msg, pytrace=False)
+        except fail.Exception:
+            self._addexcinfo(sys.exc_info())
 
     def addSuccess(self, testcase: "unittest.TestCase") -> None:
         pass
 
     def stopTest(self, testcase: "unittest.TestCase") -> None:
         pass
-
-    def _expecting_failure(self, test_method) -> bool:
-        """Return True if the given unittest method (or the entire class) is marked
-        with @expectedFailure."""
-        expecting_failure_method = getattr(
-            test_method, "__unittest_expecting_failure__", False
-        )
-        expecting_failure_class = getattr(self, "__unittest_expecting_failure__", False)
-        return bool(expecting_failure_class or expecting_failure_method)
 
     def runtest(self) -> None:
         from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
