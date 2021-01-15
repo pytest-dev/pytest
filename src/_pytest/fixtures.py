@@ -543,10 +543,8 @@ class FixtureRequest:
         self._addfinalizer(finalizer, scope=self.scope)
 
     def _addfinalizer(self, finalizer: Callable[[], object], scope) -> None:
-        colitem = self._getscopeitem(scope)
-        self._pyfuncitem.session._setupstate.addfinalizer(
-            finalizer=finalizer, colitem=colitem
-        )
+        item = self._getscopeitem(scope)
+        item.addfinalizer(finalizer)
 
     def applymarker(self, marker: Union[str, MarkDecorator]) -> None:
         """Apply a marker to a single test function invocation.
@@ -694,9 +692,7 @@ class FixtureRequest:
         self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
     ) -> None:
         # If fixture function failed it might have registered finalizers.
-        self.session._setupstate.addfinalizer(
-            functools.partial(fixturedef.finish, request=subrequest), subrequest.node
-        )
+        subrequest.node.addfinalizer(lambda: fixturedef.finish(request=subrequest))
 
     def _check_scope(
         self,

@@ -29,7 +29,6 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import PyCollector
 from _pytest.runner import CallInfo
-from _pytest.skipping import skipped_by_mark_key
 
 if TYPE_CHECKING:
     import unittest
@@ -150,7 +149,7 @@ def _make_xunit_fixture(
     def fixture(self, request: FixtureRequest) -> Generator[None, None, None]:
         if _is_skipped(self):
             reason = self.__unittest_skip_why__
-            pytest.skip(reason)
+            raise pytest.skip.Exception(reason, _use_item_location=True)
         if setup is not None:
             try:
                 if pass_self:
@@ -256,9 +255,8 @@ class TestCaseFunction(Function):
 
     def addSkip(self, testcase: "unittest.TestCase", reason: str) -> None:
         try:
-            skip(reason)
+            raise pytest.skip.Exception(reason, _use_item_location=True)
         except skip.Exception:
-            self._store[skipped_by_mark_key] = True
             self._addexcinfo(sys.exc_info())
 
     def addExpectedFailure(
@@ -343,6 +341,10 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
             except AttributeError:
                 pass
 
+    # Convert unittest.SkipTest to pytest.skip.
+    # This is actually only needed for nose, which reuses unittest.SkipTest for
+    # its own nose.SkipTest. For unittest TestCases, SkipTest is already
+    # handled internally, and doesn't reach here.
     unittest = sys.modules.get("unittest")
     if (
         unittest
@@ -350,7 +352,6 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
         and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
     ):
         excinfo = call.excinfo
-        # Let's substitute the excinfo with a pytest.skip one.
         call2 = CallInfo[None].from_call(
             lambda: pytest.skip(str(excinfo.value)), call.when
         )
