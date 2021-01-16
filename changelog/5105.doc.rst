@@ -1,1 +1,1 @@
-Add automatically generated `plugin_list.rst` and a workflow running on a cronjob for updates.
+Add automatically generated `plugin_list.rst`. The list is updated on a periodic schedule.
