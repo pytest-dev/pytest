@@ -1,0 +1,1 @@
+Introduce ``Node.fs_path`` as pathlib replacement for ``Node.fspath``
