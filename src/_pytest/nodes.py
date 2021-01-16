@@ -118,7 +118,6 @@ class Node(metaclass=NodeMeta):
     )
 
     name: str
-    parent: Optional["Node"]
     config: Config
     session: "Session"
     fs_path: Path
