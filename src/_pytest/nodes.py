@@ -568,7 +568,9 @@ class FSCollector(Collector):
     ):
         """The public constructor."""
         if fspath is not None:
-            assert fs_path is None, "fs_path and fspath cannot both be passed at the same time"
+            assert (
+                fs_path is None
+            ), "fs_path and fspath cannot both be passed at the same time"
             known_path = Path(fspath)
         else:
             assert fs_path is not None, "fs_path or fspath must be given"
