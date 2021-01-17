@@ -577,7 +577,7 @@ class Module(nodes.File, PyCollector):
         # We assume we are only called once per module.
         importmode = self.config.getoption("--import-mode")
         try:
-            mod = import_path(self.fspath, mode=importmode)
+            mod = import_path(self.path, mode=importmode)
         except SyntaxError as e:
             raise self.CollectError(
                 ExceptionInfo.from_current().getrepr(style="short")
@@ -603,10 +603,10 @@ class Module(nodes.File, PyCollector):
             )
             formatted_tb = str(exc_repr)
             raise self.CollectError(
-                "ImportError while importing test module '{fspath}'.\n"
+                "ImportError while importing test module '{path}'.\n"
                 "Hint: make sure your test modules/packages have valid Python names.\n"
                 "Traceback:\n"
-                "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
+                "{traceback}".format(path=self.path, traceback=formatted_tb)
             ) from e
         except skip.Exception as e:
             if e.allow_module_level:
@@ -624,18 +624,26 @@ class Module(nodes.File, PyCollector):
 class Package(Module):
     def __init__(
         self,
-        fspath: py.path.local,
+        fspath: Optional[py.path.local],
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
         session=None,
         nodeid=None,
+        path=Optional[Path],
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
+        path, fspath = nodes._imply_path(path, fspath=fspath)
         session = parent.session
         nodes.FSCollector.__init__(
-            self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
+            self,
+            fspath=fspath,
+            path=path,
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
         )
         self.name = os.path.basename(str(fspath.dirname))
 
@@ -704,12 +712,12 @@ class Package(Module):
         return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        this_path = Path(self.fspath).parent
+        this_path = self.path.parent
         init_module = this_path / "__init__.py"
         if init_module.is_file() and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
-            yield Module.from_parent(self, fspath=py.path.local(init_module))
+            yield Module.from_parent(self, path=init_module)
         pkg_prefixes: Set[Path] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
             path = Path(direntry.path)

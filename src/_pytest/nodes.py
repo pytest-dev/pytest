@@ -23,9 +23,12 @@ from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import cached_property
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
+from _pytest.deprecated import NODE_FSPATH
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -79,6 +82,26 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
             pos = at + len(sep)
 
 
+def _imply_path(
+    path: Optional[Path], fspath: Optional[LEGACY_PATH]
+) -> Tuple[Path, LEGACY_PATH]:
+    if path is not None:
+        if fspath is not None:
+            if Path(fspath) != path:
+                raise ValueError(
+                    f"Path({fspath!r}) != {path!r}\n"
+                    "if both path and fspath are given they need to be equal"
+                )
+            assert Path(fspath) == path, f"{fspath} != {path}"
+        else:
+            fspath = legacy_path(path)
+        return path, fspath
+
+    else:
+        assert fspath is not None
+        return Path(fspath), fspath
+
+
 _NodeType = TypeVar("_NodeType", bound="Node")
 
 
@@ -110,7 +133,7 @@ class Node(metaclass=NodeMeta):
         "parent",
         "config",
         "session",
-        "fspath",
+        "path",
         "_nodeid",
         "_store",
         "__dict__",
@@ -123,6 +146,7 @@ class Node(metaclass=NodeMeta):
         config: Optional[Config] = None,
         session: "Optional[Session]" = None,
         fspath: Optional[py.path.local] = None,
+        path: Optional[Path] = None,
         nodeid: Optional[str] = None,
     ) -> None:
         #: A unique name within the scope of the parent node.
@@ -148,7 +172,7 @@ class Node(metaclass=NodeMeta):
             self.session = parent.session
 
         #: Filesystem path where this node was collected from (can be None).
-        self.fspath = fspath or getattr(parent, "fspath", None)
+        self.path = _imply_path(path or getattr(parent, "path", None), fspath=fspath)[0]
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -174,6 +198,17 @@ class Node(metaclass=NodeMeta):
         # own use. Currently only intended for internal plugins.
         self._store = Store()
 
+    @property
+    def fspath(self):
+        """(deprecated) returns a py.path.local copy of self.path"""
+        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
+        return py.path.local(self.path)
+
+    @fspath.setter
+    def fspath(self, value: py.path.local):
+        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
+        self.path = Path(value)
+
     @classmethod
     def from_parent(cls, parent: "Node", **kw):
         """Public constructor for Nodes.
@@ -195,7 +230,7 @@ class Node(metaclass=NodeMeta):
     @property
     def ihook(self):
         """fspath-sensitive hook proxy used to call pytest hooks."""
-        return self.session.gethookproxy(self.fspath)
+        return self.session.gethookproxy(self.path)
 
     def __repr__(self) -> str:
         return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
@@ -476,9 +511,9 @@ class Collector(Node):
         return self._repr_failure_py(excinfo, style=tbstyle)
 
     def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
-        if hasattr(self, "fspath"):
+        if hasattr(self, "path"):
             traceback = excinfo.traceback
-            ntraceback = traceback.cut(path=Path(self.fspath))
+            ntraceback = traceback.cut(path=self.path)
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
             excinfo.traceback = ntraceback.filter()
@@ -497,36 +532,52 @@ def _check_initialpaths_for_relpath(
 class FSCollector(Collector):
     def __init__(
         self,
-        fspath: py.path.local,
+        fspath: Optional[py.path.local],
+        path: Optional[Path],
         parent=None,
         config: Optional[Config] = None,
         session: Optional["Session"] = None,
         nodeid: Optional[str] = None,
     ) -> None:
+        path, fspath = _imply_path(path, fspath=fspath)
         name = fspath.basename
-        if parent is not None:
-            rel = fspath.relto(parent.fspath)
-            if rel:
-                name = rel
+        if parent is not None and parent.path != path:
+            try:
+                rel = path.relative_to(parent.path)
+            except ValueError:
+                pass
+            else:
+                name = str(rel)
             name = name.replace(os.sep, SEP)
-        self.fspath = fspath
+        self.path = Path(fspath)
 
         session = session or parent.session
 
         if nodeid is None:
-            nodeid = self.fspath.relto(session.config.rootdir)
-
-            if not nodeid:
+            try:
+                nodeid = str(self.path.relative_to(session.config.rootpath))
+            except ValueError:
                 nodeid = _check_initialpaths_for_relpath(session, fspath)
+
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
-        super().__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
+        super().__init__(
+            name, parent, config, session, nodeid=nodeid, fspath=fspath, path=path
+        )
 
     @classmethod
-    def from_parent(cls, parent, *, fspath, **kw):
+    def from_parent(
+        cls,
+        parent,
+        *,
+        fspath: Optional[py.path.local] = None,
+        path: Optional[Path] = None,
+        **kw,
+    ):
         """The public constructor."""
-        return super().from_parent(parent=parent, fspath=fspath, **kw)
+        path, fspath = _imply_path(path, fspath=fspath)
+        return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):
         warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)

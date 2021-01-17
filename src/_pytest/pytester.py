@@ -61,6 +61,7 @@ from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
+from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -976,10 +977,10 @@ class Pytester:
 
         :param py.path.local path: Path to the file.
         """
-        path = py.path.local(path)
+        path = Path(path)
         config = self.parseconfigure(path)
         session = Session.from_config(config)
-        x = session.fspath.bestrelpath(path)
+        x = bestrelpath(session.path, path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)

@@ -2,6 +2,7 @@
 import enum
 import functools
 import inspect
+import os
 import re
 import sys
 from contextlib import contextmanager
@@ -18,6 +19,7 @@ from typing import TypeVar
 from typing import Union
 
 import attr
+import py
 
 from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
@@ -29,6 +31,16 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
+
+#: constant to prepare valuing py.path.local replacements/lazy proxies later on
+#  intended for removal in pytest 8.0 or 9.0
+
+LEGACY_PATH = py.path.local
+
+
+def legacy_path(path: Union[str, "os.PathLike[str]"]) -> LEGACY_PATH:
+    """Internal wrapper to prepare lazy proxies for py.path.local instances"""
+    return py.path.local(path)
 
 
 # fmt: off

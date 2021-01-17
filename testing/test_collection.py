@@ -464,13 +464,13 @@ class TestSession:
         config = pytester.parseconfig(id)
         topdir = pytester.path
         rcol = Session.from_config(config)
-        assert topdir == rcol.fspath
+        assert topdir == rcol.path
         # rootid = rcol.nodeid
         # root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
         # assert root2 == rcol, rootid
         colitems = rcol.perform_collect([rcol.nodeid], genitems=False)
         assert len(colitems) == 1
-        assert colitems[0].fspath == p
+        assert colitems[0].path == p
 
     def get_reported_items(self, hookrec: HookRecorder) -> List[Item]:
         """Return pytest.Item instances reported by the pytest_collectreport hook"""
@@ -494,10 +494,10 @@ class TestSession:
         topdir = pytester.path  # noqa
         hookrec.assert_contains(
             [
-                ("pytest_collectstart", "collector.fspath == topdir"),
-                ("pytest_make_collect_report", "collector.fspath == topdir"),
-                ("pytest_collectstart", "collector.fspath == p"),
-                ("pytest_make_collect_report", "collector.fspath == p"),
+                ("pytest_collectstart", "collector.path == topdir"),
+                ("pytest_make_collect_report", "collector.path == topdir"),
+                ("pytest_collectstart", "collector.path == p"),
+                ("pytest_make_collect_report", "collector.path == p"),
                 ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.result[0].name == 'test_func'"),
             ]
@@ -547,7 +547,7 @@ class TestSession:
         assert len(items) == 2
         hookrec.assert_contains(
             [
-                ("pytest_collectstart", "collector.fspath == collector.session.fspath"),
+                ("pytest_collectstart", "collector.path == collector.session.path"),
                 (
                     "pytest_collectstart",
                     "collector.__class__.__name__ == 'SpecialFile'",
@@ -570,7 +570,7 @@ class TestSession:
         pprint.pprint(hookrec.calls)
         hookrec.assert_contains(
             [
-                ("pytest_collectstart", "collector.fspath == test_aaa"),
+                ("pytest_collectstart", "collector.path == test_aaa"),
                 ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid.startswith('aaa/test_aaa.py')"),
             ]
@@ -592,10 +592,10 @@ class TestSession:
         pprint.pprint(hookrec.calls)
         hookrec.assert_contains(
             [
-                ("pytest_collectstart", "collector.fspath == test_aaa"),
+                ("pytest_collectstart", "collector.path == test_aaa"),
                 ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid == 'aaa/test_aaa.py'"),
-                ("pytest_collectstart", "collector.fspath == test_bbb"),
+                ("pytest_collectstart", "collector.path == test_bbb"),
                 ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid == 'bbb/test_bbb.py'"),
             ]
@@ -609,7 +609,9 @@ class TestSession:
         items2, hookrec = pytester.inline_genitems(item.nodeid)
         (item2,) = items2
         assert item2.name == item.name
-        assert item2.fspath == item.fspath
+        with pytest.warns(DeprecationWarning):
+            assert item2.fspath == item.fspath
+        assert item2.path == item.path
 
     def test_find_byid_without_instance_parents(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -1347,13 +1349,9 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
     """
 
     class MyCollector(pytest.File):
-        def __init__(self, fspath, parent, x):
-            super().__init__(fspath, parent)
+        def __init__(self, *k, x, **kw):
+            super().__init__(*k, **kw)
             self.x = x
-
-        @classmethod
-        def from_parent(cls, parent, *, fspath, x):
-            return super().from_parent(parent=parent, fspath=fspath, x=x)
 
     collector = MyCollector.from_parent(
         parent=request.session, fspath=py.path.local(pytester.path) / "foo", x=10

@@ -447,9 +447,9 @@ class TestSessionReports:
         assert not rep.skipped
         assert rep.passed
         locinfo = rep.location
-        assert locinfo[0] == col.fspath.basename
+        assert locinfo[0] == col.path.name
         assert not locinfo[1]
-        assert locinfo[2] == col.fspath.basename
+        assert locinfo[2] == col.path.name
         res = rep.result
         assert len(res) == 2
         assert res[0].name == "test_func1"

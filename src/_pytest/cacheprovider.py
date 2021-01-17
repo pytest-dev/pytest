@@ -218,14 +218,17 @@ class LFPluginCollWrapper:
 
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
+
             res.result = sorted(
                 res.result,
-                key=lambda x: 0 if Path(str(x.fspath)) in lf_paths else 1,
+                # use stable sort to priorize last failed
+                key=lambda x: x.path in lf_paths,
+                reverse=True,
             )
             return
 
         elif isinstance(collector, Module):
-            if Path(str(collector.fspath)) in self.lfplugin._last_failed_paths:
+            if collector.path in self.lfplugin._last_failed_paths:
                 out = yield
                 res = out.get_result()
                 result = res.result
@@ -246,7 +249,7 @@ class LFPluginCollWrapper:
                     for x in result
                     if x.nodeid in lastfailed
                     # Include any passed arguments (not trivial to filter).
-                    or session.isinitpath(x.fspath)
+                    or session.isinitpath(x.path)
                     # Keep all sub-collectors.
                     or isinstance(x, nodes.Collector)
                 ]
@@ -266,7 +269,7 @@ class LFPluginCollSkipfiles:
         # test-bearing paths and doesn't try to include the paths of their
         # packages, so don't filter them.
         if isinstance(collector, Module) and not isinstance(collector, Package):
-            if Path(str(collector.fspath)) not in self.lfplugin._last_failed_paths:
+            if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 
                 return CollectReport(
@@ -415,7 +418,7 @@ class NFPlugin:
             self.cached_nodeids.update(item.nodeid for item in items)
 
     def _get_increasing_order(self, items: Iterable[nodes.Item]) -> List[nodes.Item]:
-        return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
+        return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)  # type: ignore[no-any-return]
 
     def pytest_sessionfinish(self) -> None:
         config = self.config

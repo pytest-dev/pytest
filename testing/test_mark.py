@@ -1048,11 +1048,12 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
     # assert skipped_k == failed_k == 0
 
 
-def test_addmarker_order() -> None:
+def test_addmarker_order(pytester) -> None:
     session = mock.Mock()
     session.own_markers = []
     session.parent = None
     session.nodeid = ""
+    session.path = pytester.path
     node = Node.from_parent(session, name="Test")
     node.add_marker("foo")
     node.add_marker("bar")
