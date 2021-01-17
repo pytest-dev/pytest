@@ -1756,7 +1756,7 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
     result = pytester.runpytest("--version")
-    result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
+    result.stdout.fnmatch_lines([f"pytest {pytest.__version__}"])
     assert result.ret == ExitCode.USAGE_ERROR
 
 

@@ -7,16 +7,16 @@ def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = pytester.runpytest("--version", "--version")
     assert result.ret == 0
-    result.stderr.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
+    result.stdout.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
     if pytestconfig.pluginmanager.list_plugin_distinfo():
-        result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
+        result.stdout.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
 
 
 def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = pytester.runpytest("--version")
     assert result.ret == 0
-    result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
+    result.stdout.fnmatch_lines([f"pytest {pytest.__version__}"])
 
 
 def test_versions():
