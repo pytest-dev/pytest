@@ -777,7 +777,7 @@ class Pytester:
         return ret
 
     def makefile(self, ext: str, *args: str, **kwargs: str) -> Path:
-        r"""Create new file(s) in the test directory.
+        r"""Create new text file(s) in the test directory.
 
         :param str ext:
             The extension the file(s) should use, including the dot, e.g. `.py`.
@@ -788,6 +788,9 @@ class Pytester:
         :param kwargs:
             Each keyword is the name of a file, while the value of it will
             be written as contents of the file.
+
+        To create binary files, please consider using
+        :code:`pytester.path.joinpath('foo.bin').write_bytes(b'...')`.
 
         Examples:
 
