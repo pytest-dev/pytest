@@ -18,6 +18,20 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+Raising ``unittest.SkipTest`` during collection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.3
+
+Raising :class:`unittest.SkipTest` to skip collection of tests during the
+pytest collection phase is deprecated. Use :func:`pytest.skip` instead.
+
+Note: This deprecation only relates to using `unittest.SkipTest` during test
+collection. You are probably not doing that. Ordinary usage of
+:class:`unittest.SkipTest` / :meth:`unittest.TestCase.skipTest` /
+:func:`unittest.skip` in unittest test cases is fully supported.
+
+
 The ``--strict`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

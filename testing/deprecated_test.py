@@ -136,3 +136,20 @@ def test_private_is_deprecated() -> None:
 
     # Doesn't warn.
     PrivateInit(10, _ispytest=True)
+
+
+def test_raising_unittest_skiptest_during_collection_is_deprecated(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import unittest
+        raise unittest.SkipTest()
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: Raising unittest.SkipTest*",
+        ]
+    )
