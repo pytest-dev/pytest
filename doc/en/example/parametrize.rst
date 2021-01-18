@@ -97,9 +97,9 @@ the argument name:
 
     # content of test_time.py
 
-    import pytest
-
     from datetime import datetime, timedelta
+    
+    import pytest
 
     testdata = [
         (datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1)),
