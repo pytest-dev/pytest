@@ -94,7 +94,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
     to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
     other interactive exception (pytest-dev/pytest-faulthandler#14)."""
     import faulthandler
-    from _pytest.faulthandler import FaultHandlerHooks
+    from _pytest import faulthandler as faulthandler_plugin
 
     called = []
 
@@ -104,19 +104,18 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
 
     # call our hook explicitly, we can trust that pytest will call the hook
     # for us at the appropriate moment
-    hook_func = getattr(FaultHandlerHooks, hook_name)
-    hook_func(self=None)
+    hook_func = getattr(faulthandler_plugin, hook_name)
+    hook_func()
     assert called == [1]
 
 
-@pytest.mark.parametrize("faulthandler_timeout", [0, 2])
-def test_already_initialized(faulthandler_timeout: int, pytester: Pytester) -> None:
-    """Test for faulthandler being initialized earlier than pytest (#6575)."""
+def test_already_initialized_crash(pytester: Pytester) -> None:
+    """Even if faulthandler is already initialized, we still dump tracebacks on crashes (#8258)."""
     pytester.makepyfile(
         """
         def test():
             import faulthandler
-            assert faulthandler.is_enabled()
+            faulthandler._sigabrt()
     """
     )
     result = pytester.run(
@@ -125,22 +124,14 @@ def test_already_initialized(faulthandler_timeout: int, pytester: Pytester) -> N
         "faulthandler",
         "-mpytest",
         pytester.path,
-        "-o",
-        f"faulthandler_timeout={faulthandler_timeout}",
     )
-    # ensure warning is emitted if faulthandler_timeout is configured
-    warning_line = "*faulthandler.py*faulthandler module enabled before*"
-    if faulthandler_timeout > 0:
-        result.stdout.fnmatch_lines(warning_line)
-    else:
-        result.stdout.no_fnmatch_line(warning_line)
-    result.stdout.fnmatch_lines("*1 passed*")
-    assert result.ret == 0
+    result.stderr.fnmatch_lines(["*Fatal Python error*"])
+    assert result.ret != 0
 
 
 def test_get_stderr_fileno_invalid_fd() -> None:
     """Test for faulthandler being able to handle invalid file descriptors for stderr (#8249)."""
-    from _pytest.faulthandler import FaultHandlerHooks
+    from _pytest.faulthandler import get_stderr_fileno
 
     class StdErrWrapper(io.StringIO):
         """
@@ -159,4 +150,4 @@ def test_get_stderr_fileno_invalid_fd() -> None:
 
         # Even when the stderr wrapper signals an invalid file descriptor,
         # ``_get_stderr_fileno()`` should return the real one.
-        assert FaultHandlerHooks._get_stderr_fileno() == 2
+        assert get_stderr_fileno() == 2
