@@ -1,3 +1,4 @@
+import io
 import sys
 
 import pytest
@@ -135,3 +136,27 @@ def test_already_initialized(faulthandler_timeout: int, pytester: Pytester) -> N
         result.stdout.no_fnmatch_line(warning_line)
     result.stdout.fnmatch_lines("*1 passed*")
     assert result.ret == 0
+
+
+def test_get_stderr_fileno_invalid_fd() -> None:
+    """Test for faulthandler being able to handle invalid file descriptors for stderr (#8249)."""
+    from _pytest.faulthandler import FaultHandlerHooks
+
+    class StdErrWrapper(io.StringIO):
+        """
+        Mimic ``twisted.logger.LoggingFile`` to simulate returning an invalid file descriptor.
+
+        https://github.com/twisted/twisted/blob/twisted-20.3.0/src/twisted/logger/_io.py#L132-L139
+        """
+
+        def fileno(self):
+            return -1
+
+    wrapper = StdErrWrapper()
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr("sys.stderr", wrapper)
+
+        # Even when the stderr wrapper signals an invalid file descriptor,
+        # ``_get_stderr_fileno()`` should return the real one.
+        assert FaultHandlerHooks._get_stderr_fileno() == 2
