@@ -789,9 +789,6 @@ class Pytester:
             Each keyword is the name of a file, while the value of it will
             be written as contents of the file.
 
-        To create binary files, please consider using
-        :code:`pytester.path.joinpath('foo.bin').write_bytes(b'...')`.
-
         Examples:
 
         .. code-block:: python
@@ -800,6 +797,12 @@ class Pytester:
 
             pytester.makefile(".ini", pytest="[pytest]\naddopts=-rs\n")
 
+        To create binary files, use :meth:`pathlib.Path.write_bytes` directly:
+
+        .. code-block:: python
+
+            filename = pytester.path.joinpath("foo.bin")
+            filename.write_bytes(b"...")
         """
         return self._makefile(ext, args, kwargs)
 
