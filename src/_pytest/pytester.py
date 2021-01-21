@@ -777,7 +777,7 @@ class Pytester:
         return ret
 
     def makefile(self, ext: str, *args: str, **kwargs: str) -> Path:
-        r"""Create new file(s) in the test directory.
+        r"""Create new text file(s) in the test directory.
 
         :param str ext:
             The extension the file(s) should use, including the dot, e.g. `.py`.
@@ -797,6 +797,12 @@ class Pytester:
 
             pytester.makefile(".ini", pytest="[pytest]\naddopts=-rs\n")
 
+        To create binary files, use :meth:`pathlib.Path.write_bytes` directly:
+
+        .. code-block:: python
+
+            filename = pytester.path.joinpath("foo.bin")
+            filename.write_bytes(b"...")
         """
         return self._makefile(ext, args, kwargs)
 
