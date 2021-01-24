@@ -130,7 +130,8 @@ class TestFillFixtures:
         pytester.copy_example()
         item = pytester.getitem(Path("test_funcarg_basic.py"))
         assert isinstance(item, Function)
-        item._request._fillfixtures()
+        # Execute's item's setup, which fills fixtures.
+        item.session._setupstate.prepare(item)
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs["some"] == "test_func"
@@ -809,17 +810,24 @@ class TestRequestBasic:
         item = pytester.getitem(
             """
             import pytest
-            values = [2]
+
             @pytest.fixture
-            def something(request): return 1
+            def something(request):
+                return 1
+
+            values = [2]
             @pytest.fixture
             def other(request):
                 return values.pop()
+
             def test_func(something): pass
         """
         )
         assert isinstance(item, Function)
         req = item._request
+
+        # Execute item's setup.
+        item.session._setupstate.prepare(item)
 
         with pytest.raises(pytest.FixtureLookupError):
             req.getfixturevalue("notexists")
@@ -831,7 +839,6 @@ class TestRequestBasic:
         assert val2 == 2
         val2 = req.getfixturevalue("other")  # see about caching
         assert val2 == 2
-        item._request._fillfixtures()
         assert item.funcargs["something"] == 1
         assert len(get_public_names(item.funcargs)) == 2
         assert "request" in item.funcargs
@@ -856,7 +863,7 @@ class TestRequestBasic:
         teardownlist = parent.obj.teardownlist
         ss = item.session._setupstate
         assert not teardownlist
-        ss.teardown_exact(item, None)
+        ss.teardown_exact(None)
         print(ss.stack)
         assert teardownlist == [1]
 

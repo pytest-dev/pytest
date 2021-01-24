@@ -372,6 +372,7 @@ def _fill_fixtures_impl(function: "Function") -> None:
         fi = fm.getfixtureinfo(function.parent, function.obj, None)
         function._fixtureinfo = fi
         request = function._request = FixtureRequest(function, _ispytest=True)
+        fm.session._setupstate.prepare(function)
         request._fillfixtures()
         # Prune out funcargs for jstests.
         newfuncargs = {}
@@ -543,8 +544,8 @@ class FixtureRequest:
         self._addfinalizer(finalizer, scope=self.scope)
 
     def _addfinalizer(self, finalizer: Callable[[], object], scope) -> None:
-        item = self._getscopeitem(scope)
-        item.addfinalizer(finalizer)
+        node = self._getscopeitem(scope)
+        node.addfinalizer(finalizer)
 
     def applymarker(self, marker: Union[str, MarkDecorator]) -> None:
         """Apply a marker to a single test function invocation.
