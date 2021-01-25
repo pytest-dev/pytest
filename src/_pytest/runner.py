@@ -36,7 +36,6 @@ from _pytest.outcomes import Exit
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
-from _pytest.store import StoreKey
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -467,29 +466,33 @@ class SetupState:
     """
 
     def __init__(self) -> None:
-        # Maps node -> the node's finalizers.
         # The stack is in the dict insertion order.
-        self.stack: Dict[Node, List[Callable[[], object]]] = {}
-
-    _prepare_exc_key = StoreKey[Union[OutcomeException, Exception]]()
+        self.stack: Dict[
+            Node,
+            Tuple[
+                # Node's finalizers.
+                List[Callable[[], object]],
+                # Node's exception, if its setup raised.
+                Optional[Union[OutcomeException, Exception]],
+            ],
+        ] = {}
 
     def prepare(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
         # If a collector fails its setup, fail its entire subtree of items.
         # The setup is not retried for each item - the same exception is used.
-        for col in self.stack:
-            prepare_exc = col._store.get(self._prepare_exc_key, None)
+        for col, (finalizers, prepare_exc) in self.stack.items():
             if prepare_exc:
                 raise prepare_exc
 
         needed_collectors = item.listchain()
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
-            self.stack[col] = [col.teardown]
+            self.stack[col] = ([col.teardown], None)
             try:
                 col.setup()
             except TEST_OUTCOME as e:
-                col._store[self._prepare_exc_key] = e
+                self.stack[col] = (self.stack[col][0], e)
                 raise e
 
     def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:
@@ -500,7 +503,7 @@ class SetupState:
         assert node and not isinstance(node, tuple)
         assert callable(finalizer)
         assert node in self.stack, (node, self.stack)
-        self.stack[node].append(finalizer)
+        self.stack[node][0].append(finalizer)
 
     def teardown_exact(self, nextitem: Optional[Item]) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
@@ -514,7 +517,7 @@ class SetupState:
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
-            node, finalizers = self.stack.popitem()
+            node, (finalizers, prepare_exc) = self.stack.popitem()
             while finalizers:
                 fin = finalizers.pop()
                 try:
