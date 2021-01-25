@@ -28,6 +28,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.2.2 (2021-01-25)
+=========================
+
+Bug Fixes
+---------
+
+- `#8152 <https://github.com/pytest-dev/pytest/issues/8152>`_: Fixed "(<Skipped instance>)" being shown as a skip reason in the verbose test summary line when the reason is empty.
+
+
+- `#8249 <https://github.com/pytest-dev/pytest/issues/8249>`_: Fix the ``faulthandler`` plugin for occasions when running with ``twisted.logger`` and using ``pytest --capture=no``.
+
+
 pytest 6.2.1 (2020-12-15)
 =========================
 
