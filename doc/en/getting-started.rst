@@ -210,6 +210,8 @@ This is outlined below:
     FAILED test_class_demo.py::TestClassDemoInstance::test_two - assert 0
     2 failed in 0.12s
 
+Note that attributes added at class level are *class attributes*, so they will be shared between tests.
+
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
