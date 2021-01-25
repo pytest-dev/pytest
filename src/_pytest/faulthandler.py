@@ -12,6 +12,7 @@ from _pytest.store import StoreKey
 
 
 fault_handler_stderr_key = StoreKey[TextIO]()
+fault_handler_originally_enabled_key = StoreKey[bool]()
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -27,6 +28,7 @@ def pytest_configure(config: Config) -> None:
 
     stderr_fd_copy = os.dup(get_stderr_fileno())
     config._store[fault_handler_stderr_key] = open(stderr_fd_copy, "w")
+    config._store[fault_handler_originally_enabled_key] = faulthandler.is_enabled()
     faulthandler.enable(file=config._store[fault_handler_stderr_key])
 
 
@@ -38,10 +40,9 @@ def pytest_unconfigure(config: Config) -> None:
     if fault_handler_stderr_key in config._store:
         config._store[fault_handler_stderr_key].close()
         del config._store[fault_handler_stderr_key]
-    # Re-enable the faulthandler, attaching it to the default sys.stderr
-    # so we can see crashes after pytest has finished, usually during
-    # garbage collection during interpreter shutdown.
-    faulthandler.enable(file=get_stderr_fileno())
+    if config._store.get(fault_handler_originally_enabled_key, False):
+        # Re-enable the faulthandler if it was originally enabled.
+        faulthandler.enable(file=get_stderr_fileno())
 
 
 def get_stderr_fileno() -> int:

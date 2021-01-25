@@ -19,19 +19,38 @@ def test_enabled(pytester: Pytester) -> None:
     assert result.ret != 0
 
 
-def test_crash_near_exit(pytester: Pytester) -> None:
-    """Test that fault handler displays crashes that happen even after
-    pytest is exiting (for example, when the interpreter is shutting down)."""
+def setup_crashing_test(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
-    import faulthandler
-    import atexit
-    def test_ok():
-        atexit.register(faulthandler._sigabrt)
-    """
+        import faulthandler
+        import atexit
+        def test_ok():
+            atexit.register(faulthandler._sigabrt)
+        """
     )
-    result = pytester.runpytest_subprocess()
+
+
+def test_crash_during_shutdown_captured(pytester: Pytester) -> None:
+    """
+    Re-enable faulthandler if pytest encountered it enabled during configure.
+    We should be able to then see crashes during interpreter shutdown.
+    """
+    setup_crashing_test(pytester)
+    args = (sys.executable, "-Xfaulthandler", "-mpytest")
+    result = pytester.run(*args)
     result.stderr.fnmatch_lines(["*Fatal Python error*"])
+    assert result.ret != 0
+
+
+def test_crash_during_shutdown_not_captured(pytester: Pytester) -> None:
+    """
+    Check that pytest leaves faulthandler disabled if it was not enabled during configure.
+    This prevents us from seeing crashes during interpreter shutdown (see #8260).
+    """
+    setup_crashing_test(pytester)
+    args = (sys.executable, "-mpytest")
+    result = pytester.run(*args)
+    result.stderr.no_fnmatch_line("*Fatal Python error*")
     assert result.ret != 0
 
 
