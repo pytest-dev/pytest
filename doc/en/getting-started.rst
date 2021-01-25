@@ -198,7 +198,7 @@ This is outlined below:
     test_class_demo.py:3: AssertionError
     ______________________ TestClassDemoInstance.test_two ______________________
 
-    self = <test_class_demo.TestClassDemoInstance object at 0xdeadbeef>
+    self = <test_class_demo.TestClassDemoInstance object at 0xcafebabe>
 
         def test_two(self):
     >       assert 0
