@@ -11,6 +11,7 @@
 pytest: helps you write better programs
 =======================================
 
+.. module:: pytest
 
 The ``pytest`` framework makes it easy to write small tests, yet
 scales to support complex functional testing for applications and libraries.
