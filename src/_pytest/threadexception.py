@@ -34,11 +34,10 @@ class catch_threading_exception:
     """
 
     def __init__(self) -> None:
-        # See https://github.com/python/typeshed/issues/4767 regarding the underscore.
-        self.args: Optional["threading._ExceptHookArgs"] = None
-        self._old_hook: Optional[Callable[["threading._ExceptHookArgs"], Any]] = None
+        self.args: Optional["threading.ExceptHookArgs"] = None
+        self._old_hook: Optional[Callable[["threading.ExceptHookArgs"], Any]] = None
 
-    def _hook(self, args: "threading._ExceptHookArgs") -> None:
+    def _hook(self, args: "threading.ExceptHookArgs") -> None:
         self.args = args
 
     def __enter__(self) -> "catch_threading_exception":
