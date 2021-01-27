@@ -497,7 +497,7 @@ The plugins are automatically enabled for pytest runs, unless the
 ``-p no:threadexception`` (for thread exceptions) options are given on the
 command-line.
 
-The warnings may be silenced selectivly using the :ref:`pytest.mark.filterwarnings ref`
+The warnings may be silenced selectively using the :ref:`pytest.mark.filterwarnings ref`
 mark. The warning categories are :class:`pytest.PytestUnraisableExceptionWarning` and
 :class:`pytest.PytestUnhandledThreadExceptionWarning`.
 
