@@ -31,8 +31,11 @@ def iter_plugins():
         if not name.startswith("pytest-"):
             continue
         response = requests.get(f"https://pypi.org/pypi/{name}/json")
-        if not response.ok:
+        if response.status_code == 404:
+            # Some packages, like pytest-azurepipelines42, are included in https://pypi.org/simple but
+            # return 404 on the JSON API. Skip.
             continue
+        response.raise_for_status()
         info = response.json()["info"]
         if "Development Status :: 7 - Inactive" in info["classifiers"]:
             continue
