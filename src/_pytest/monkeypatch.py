@@ -91,7 +91,7 @@ def annotated_getattr(obj: object, name: str, ann: str) -> object:
 
 
 def derive_importpath(import_path: str, raising: bool) -> Tuple[str, object]:
-    if not isinstance(import_path, str) or "." not in import_path:  # type: ignore[unreachable]
+    if not isinstance(import_path, str) or "." not in import_path:
         raise TypeError(f"must be absolute import path string, not {import_path!r}")
     module, attr = import_path.rsplit(".", 1)
     target = resolve(module)

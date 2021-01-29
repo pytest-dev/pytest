@@ -1096,7 +1096,7 @@ class Pytester:
                 class reprec:  # type: ignore
                     pass
 
-            reprec.ret = ret  # type: ignore
+            reprec.ret = ret
 
             # Typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing.
@@ -1263,9 +1263,7 @@ class Pytester:
             Whether to also write an ``__init__.py`` file to the same
             directory to ensure it is a package.
         """
-        # TODO: Remove type ignore in next mypy release (> 0.790).
-        #       https://github.com/python/typeshed/pull/4582
-        if isinstance(source, os.PathLike):  # type: ignore[misc]
+        if isinstance(source, os.PathLike):
             path = self.path.joinpath(source)
             assert not withinit, "not supported for paths"
         else:
@@ -1367,10 +1365,8 @@ class Pytester:
         """
         __tracebackhide__ = True
 
-        # TODO: Remove type ignore in next mypy release.
-        #       https://github.com/python/typeshed/pull/4582
         cmdargs = tuple(
-            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs  # type: ignore[misc]
+            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs
         )
         p1 = self.path.joinpath("stdout")
         p2 = self.path.joinpath("stderr")

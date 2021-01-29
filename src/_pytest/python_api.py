@@ -713,7 +713,7 @@ def raises(
     else:
         excepted_exceptions = expected_exception
     for exc in excepted_exceptions:
-        if not isinstance(exc, type) or not issubclass(exc, BaseException):  # type: ignore[unreachable]
+        if not isinstance(exc, type) or not issubclass(exc, BaseException):
             msg = "expected exception must be a BaseException type, not {}"  # type: ignore[unreachable]
             not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
             raise TypeError(msg.format(not_a))
