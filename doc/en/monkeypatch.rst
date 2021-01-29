@@ -16,6 +16,7 @@ functionality in tests:
 .. code-block:: python
 
     monkeypatch.setattr(obj, name, value, raising=True)
+    monkeypatch.setattr("somemodule.obj.name", value, raising=True)
     monkeypatch.delattr(obj, name, raising=True)
     monkeypatch.setitem(mapping, name, value)
     monkeypatch.delitem(obj, name, raising=True)
