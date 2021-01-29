@@ -1296,16 +1296,16 @@ class Pytester:
 
     def popen(
         self,
-        cmdargs,
+        cmdargs: Sequence[Union[str, "os.PathLike[str]"]],
         stdout: Union[int, TextIO] = subprocess.PIPE,
         stderr: Union[int, TextIO] = subprocess.PIPE,
         stdin=CLOSE_STDIN,
         **kw,
     ):
-        """Invoke subprocess.Popen.
+        """Invoke :py:class:`subprocess.Popen`.
 
-        Calls subprocess.Popen making sure the current working directory is
-        in the PYTHONPATH.
+        Calls :py:class:`subprocess.Popen` making sure the current working
+        directory is in the ``PYTHONPATH``.
 
         You probably want to use :py:meth:`run` instead.
         """
@@ -1340,21 +1340,30 @@ class Pytester:
     ) -> RunResult:
         """Run a command with arguments.
 
-        Run a process using subprocess.Popen saving the stdout and stderr.
+        Run a process using :py:class:`subprocess.Popen` saving the stdout and
+        stderr.
 
         :param cmdargs:
-            The sequence of arguments to pass to `subprocess.Popen()`, with path-like objects
-            being converted to ``str`` automatically.
+            The sequence of arguments to pass to :py:class:`subprocess.Popen`,
+            with path-like objects being converted to :py:class:`str`
+            automatically.
         :param timeout:
             The period in seconds after which to timeout and raise
             :py:class:`Pytester.TimeoutExpired`.
         :param stdin:
-            Optional standard input.  Bytes are being send, closing
-            the pipe, otherwise it is passed through to ``popen``.
-            Defaults to ``CLOSE_STDIN``, which translates to using a pipe
-            (``subprocess.PIPE``) that gets closed.
+            Optional standard input.
 
-        :rtype: RunResult
+            - If it is :py:attr:`CLOSE_STDIN` (Default), then this method calls
+              :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
+              the standard input is closed immediately after the new command is
+              started.
+
+            - If it is of type :py:class:`bytes`, these bytes are sent to the
+              standard input of the command.
+
+            - Otherwise, it is passed through to :py:class:`subprocess.Popen`.
+              For further information in this case, consult the document of the
+              ``stdin`` parameter in :py:class:`subprocess.Popen`.
         """
         __tracebackhide__ = True
 
