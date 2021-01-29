@@ -1,1 +1,1 @@
-Add automatically generated `plugin_list.rst`. The list is updated on a periodic schedule.
+Add automatically generated :doc:`plugin_list`. The list is updated on a periodic schedule.
