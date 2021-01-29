@@ -1354,7 +1354,7 @@ class Pytester:
             Optional standard input.
 
             - If it is :py:attr:`CLOSE_STDIN` (Default), then this method calls
-              :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``). But
+              :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
               the standard input is closed immediately after the new command is
               started.
 
