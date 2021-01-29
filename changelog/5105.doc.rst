@@ -1,0 +1,1 @@
+Add automatically generated :doc:`plugin_list`. The list is updated on a periodic schedule.

@@ -28,6 +28,7 @@ Full pytest documentation
    nose
    xunit_setup
    plugins
+   plugin_list
    writing_plugins
    logging
    reference
