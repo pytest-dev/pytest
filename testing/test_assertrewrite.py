@@ -381,7 +381,7 @@ class TestAssertionRewrite:
         )
 
         def f7() -> None:
-            assert False or x()  # type: ignore[unreachable]
+            assert False or x()
 
         assert (
             getmsg(f7, {"x": x})
@@ -471,7 +471,7 @@ class TestAssertionRewrite:
         assert getmsg(f1) == "assert ((3 % 2) and False)"
 
         def f2() -> None:
-            assert False or 4 % 2  # type: ignore[unreachable]
+            assert False or 4 % 2
 
         assert getmsg(f2) == "assert (False or (4 % 2))"
 

@@ -139,8 +139,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
 
 def pytest_generate_tests(metafunc: "Metafunc") -> None:
     for marker in metafunc.definition.iter_markers(name="parametrize"):
-        # TODO: Fix this type-ignore (overlapping kwargs).
-        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)  # type: ignore[misc]
+        metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
 
 
 def pytest_configure(config: Config) -> None:
