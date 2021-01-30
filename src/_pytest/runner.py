@@ -479,15 +479,18 @@ class SetupState:
 
     def prepare(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
+        needed_collectors = item.listchain()
+
         # If a collector fails its setup, fail its entire subtree of items.
         # The setup is not retried for each item - the same exception is used.
         for col, (finalizers, prepare_exc) in self.stack.items():
+            assert col in needed_collectors, "previous item was not torn down properly"
             if prepare_exc:
                 raise prepare_exc
 
-        needed_collectors = item.listchain()
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
+            # Push onto the stack.
             self.stack[col] = ([col.teardown], None)
             try:
                 col.setup()

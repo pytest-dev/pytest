@@ -509,9 +509,9 @@ def pytest_runtest_teardown(item: "Item", nextitem: Optional["Item"]) -> None:
 
     :param nextitem:
         The scheduled-to-be-next test item (None if no further test item is
-        scheduled). This argument can be used to perform exact teardowns,
-        i.e. calling just enough finalizers so that nextitem only needs to
-        call setup-functions.
+        scheduled). This argument is used to perform exact teardowns, i.e.
+        calling just enough finalizers so that nextitem only needs to call
+        setup functions.
     """
 
 
