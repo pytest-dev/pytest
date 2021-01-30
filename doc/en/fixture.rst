@@ -844,12 +844,42 @@ Once the test is finished, pytest will go back down the list of fixtures, but in
 the *reverse order*, taking each one that yielded, and running the code inside
 it that was *after* the ``yield`` statement.
 
-As a simple example, let's say we want to test sending email from one user to
-another. We'll have to first make each user, then send the email from one user
-to the other, and finally assert that the other user received that message in
-their inbox. If we want to clean up after the test runs, we'll likely have to
-make sure the other user's mailbox is emptied before deleting that user,
-otherwise the system may complain.
+As a simple example, consider this basic email module:
+
+.. code-block:: python
+
+    # content of emaillib.py
+    class MailAdminClient:
+        def create_user(self):
+            return MailUser()
+
+        def delete_user(self, user):
+            # do some cleanup
+            pass
+
+
+    class MailUser:
+        def __init__(self):
+            self.inbox = []
+
+        def send_email(self, email, other):
+            other.inbox.append(email)
+
+        def clear_mailbox(self):
+            self.mailbox.clear()
+
+
+    class Email:
+        def __init__(self, subject, body):
+            self.body = body
+            self.subject = subject
+
+Let's say we want to test sending email from one user to another. We'll have to
+first make each user, then send the email from one user to the other, and
+finally assert that the other user received that message in their inbox. If we
+want to clean up after the test runs, we'll likely have to make sure the other
+user's mailbox is emptied before deleting that user, otherwise the system may
+complain.
 
 Here's what that might look like:
 
