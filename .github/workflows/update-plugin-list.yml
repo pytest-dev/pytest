@@ -26,6 +26,7 @@ jobs:
         uses: peter-evans/create-pull-request@2455e1596942c2902952003bbb574afbbe2ab2e6
         with:
           commit-message: '[automated] Update plugin list'
+          author: 'pytest bot <pytestbot@users.noreply.github.com>'
           branch: update-plugin-list/patch
           delete-branch: true
           branch-suffix: short-commit-hash
