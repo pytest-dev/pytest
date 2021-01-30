@@ -375,7 +375,7 @@ Fixtures are reusable
 ^^^^^^^^^^^^^^^^^^^^^
 
 One of the things that makes pytest's fixture system so powerful, is that it
-gives us the abilty to define a generic setup step that can reused over and
+gives us the ability to define a generic setup step that can reused over and
 over, just like a normal function would be used. Two different tests can request
 the same fixture and have pytest give each test their own result from that
 fixture.
@@ -902,7 +902,7 @@ attempt to tear them down as it normally would.
 2. Adding finalizers directly
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-While yield fixtures are considered to be the cleaner and more straighforward
+While yield fixtures are considered to be the cleaner and more straightforward
 option, there is another choice, and that is to add "finalizer" functions
 directly to the test's `request-context`_ object. It brings a similar result as
 yield fixtures, but requires a bit more verbosity.
@@ -1026,7 +1026,7 @@ making one state-changing action each, and then bundling them together with
 their teardown code, as :ref:`the email examples above <yield fixtures>` showed.
 
 The chance that a state-changing operation can fail but still modify state is
-neglibible, as most of these operations tend to be `transaction`_-based (at
+negligible, as most of these operations tend to be `transaction`_-based (at
 least at the level of testing where state could be left behind). So if we make
 sure that any successful state-changing action gets torn down by moving it to a
 separate fixture function and separating it from other, potentially failing
@@ -1124,7 +1124,7 @@ never have been made.
 .. _`conftest.py`:
 .. _`conftest`:
 
-Fixture availabiility
+Fixture availability
 ---------------------
 
 Fixture availability is determined from the perspective of the test. A fixture
@@ -1410,9 +1410,9 @@ pytest doesn't know where ``c`` should go in the case, so it should be assumed
 that it could go anywhere between ``g`` and ``b``.
 
 This isn't necessarily bad, but it's something to keep in mind. If the order
-they execute in could affect the behavior a test is targetting, or could
+they execute in could affect the behavior a test is targeting, or could
 otherwise influence the result of a test, then the order should be defined
-explicitely in a way that allows pytest to linearize/"flatten" that order.
+explicitly in a way that allows pytest to linearize/"flatten" that order.
 
 .. _`autouse order`:
 
@@ -1506,7 +1506,7 @@ of what we've gone over so far.
 
 All that's needed is stepping up to a larger scope, then having the **act**
 step defined as an autouse fixture, and finally, making sure all the fixtures
-are targetting that highler level scope.
+are targeting that higher level scope.
 
 Let's pull :ref:`an example from above <safe fixture structure>`, and tweak it a
 bit. Let's say that in addition to checking for a welcome message in the header,
@@ -1777,7 +1777,7 @@ Parametrizing fixtures
 -----------------------------------------------------------------
 
 Fixture functions can be parametrized in which case they will be called
-multiple times, each time executing the set of dependent tests, i. e. the
+multiple times, each time executing the set of dependent tests, i.e. the
 tests that depend on this fixture.  Test functions usually do not need
 to be aware of their re-running.  Fixture parametrization helps to
 write exhaustive functional tests for components which themselves can be
