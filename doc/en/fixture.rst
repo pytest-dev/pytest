@@ -829,6 +829,8 @@ This system can be leveraged in two ways.
 1. ``yield`` fixtures (recommended)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. regendoc: wipe
+
 "Yield" fixtures ``yield`` instead of ``return``. With these
 fixtures, we can run some code and pass an object back to the requesting
 fixture/test, just like with the other fixtures. The only differences are:
@@ -866,13 +868,13 @@ As a simple example, consider this basic email module:
             other.inbox.append(email)
 
         def clear_mailbox(self):
-            self.mailbox.clear()
+            self.inbox.clear()
 
 
     class Email:
         def __init__(self, subject, body):
-            self.body = body
             self.subject = subject
+            self.body = body
 
 Let's say we want to test sending email from one user to another. We'll have to
 first make each user, then send the email from one user to the other, and
@@ -885,6 +887,7 @@ Here's what that might look like:
 
 .. code-block:: python
 
+    # content of test_emaillib.py
     import pytest
 
     from emaillib import Email, MailAdminClient
@@ -899,17 +902,17 @@ Here's what that might look like:
     def sending_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
     @pytest.fixture
     def receiving_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
-    def test_email_received(sending_user, receiving_user, email):
+    def test_email_received(sending_user, receiving_user):
         email = Email(subject="Hey!", body="How's it going?")
         sending_user.send_email(email, receiving_user)
         assert email in receiving_user.inbox
@@ -920,6 +923,10 @@ during teardown.
 There is a risk that even having the order right on the teardown side of things
 doesn't guarantee a safe cleanup. That's covered in a bit more detail in
 :ref:`safe teardowns`.
+
+.. code-block:: pytest
+
+   $ pytest -q test_emaillib.py
 
 Handling errors for yield fixture
 """""""""""""""""""""""""""""""""
@@ -952,6 +959,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 
 .. code-block:: python
 
+    # content of test_emaillib.py
     import pytest
 
     from emaillib import Email, MailAdminClient
@@ -966,7 +974,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
     def sending_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
     @pytest.fixture
@@ -974,7 +982,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
         user = mail_admin.create_user()
 
         def delete_user():
-            admin_client.delete_user(user)
+            mail_admin.delete_user(user)
 
         request.addfinalizer(delete_user)
         return user
@@ -986,7 +994,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
         sending_user.send_email(_email, receiving_user)
 
         def empty_mailbox():
-            receiving_user.delete_email(_email)
+            receiving_user.clear_mailbox()
 
         request.addfinalizer(empty_mailbox)
         return _email
@@ -998,6 +1006,10 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 
 It's a bit longer than yield fixtures and a bit more complex, but it
 does offer some nuances for when you're in a pinch.
+
+.. code-block:: pytest
+
+   $ pytest -q test_emaillib.py
 
 .. _`safe teardowns`:
 
@@ -1014,6 +1026,7 @@ above):
 
 .. code-block:: python
 
+    # content of test_emaillib.py
     import pytest
 
     from emaillib import Email, MailAdminClient
@@ -1025,11 +1038,11 @@ above):
         sending_user = mail_admin.create_user()
         receiving_user = mail_admin.create_user()
         email = Email(subject="Hey!", body="How's it going?")
-        sending_user.send_emai(email, receiving_user)
+        sending_user.send_email(email, receiving_user)
         yield receiving_user, email
-        receiving_user.delete_email(email)
-        admin_client.delete_user(sending_user)
-        admin_client.delete_user(receiving_user)
+        receiving_user.clear_mailbox()
+        mail_admin.delete_user(sending_user)
+        mail_admin.delete_user(receiving_user)
 
 
     def test_email_received(setup):
@@ -1045,6 +1058,10 @@ setup raise an exception, none of the teardown code will run.
 One option might be to go with the ``addfinalizer`` method instead of yield
 fixtures, but that might get pretty complex and difficult to maintain (and it
 wouldn't be compact anymore).
+
+.. code-block:: pytest
+
+   $ pytest -q test_emaillib.py
 
 .. _`safe fixture structure`:
 
@@ -1676,7 +1693,7 @@ again, nothing much has changed:
 
 .. code-block:: pytest
 
-    $ pytest -s -q --tb=no
+    $ pytest -s -q --tb=no test_module.py
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
 
     ========================= short test summary info ==========================
