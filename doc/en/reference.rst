@@ -1872,6 +1872,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             log date format as used by the logging module.
       --log-cli-level=LOG_CLI_LEVEL
                             cli logging level.
+      --log-cli-level-color={yes,no}
+                            Whether log level name should be colored (only if --color
+                            is also enabled)
       --log-cli-format=LOG_CLI_FORMAT
                             log format as used by the logging module.
       --log-cli-date-format=LOG_CLI_DATE_FORMAT

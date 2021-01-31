@@ -189,7 +189,8 @@ as the logging level num.
 Additionally, you can also specify ``--log-cli-format`` and
 ``--log-cli-date-format`` which mirror and default to ``--log-format`` and
 ``--log-date-format`` if not provided, but are applied only to the console
-logging handler.
+logging handler. There is also an option ``--log-cli-level-color`` to enable/disable
+log level name coloring when ``--color`` is enabled.
 
 All of the CLI log options can also be set in the configuration INI file. The
 option names are:
@@ -197,6 +198,7 @@ option names are:
 * ``log_cli_level``
 * ``log_cli_format``
 * ``log_cli_date_format``
+* ``log_cli_level_color``
 
 If you need to record the whole test suite logging calls to a file, you can pass
 ``--log-file=/path/to/log/file``. This log file is opened in write mode which
