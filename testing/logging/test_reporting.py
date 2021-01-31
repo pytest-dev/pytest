@@ -1098,6 +1098,58 @@ def test_colored_captured_log(pytester: Pytester) -> None:
     )
 
 
+def test_cli_level_color_disabled(pytester: Pytester) -> None:
+    """Test that the log level names of captured log messages
+    are not colored if `--log-cli-level-color=no` is passed."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.info('text going to logger from call')
+            assert False
+        """
+    )
+    result = pytester.runpytest(
+        "--log-level=INFO", "--color=yes", "--log-cli-level-color=no"
+    )
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*-- Captured log call --*",
+            "INFO    *text going to logger from call",
+        ]
+    )
+
+
+def test_cli_level_color_enabled(pytester: Pytester) -> None:
+    """Test that the log level names of captured log messages
+    are not colored if `--log-cli-level-color=no` is passed."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.info('text going to logger from call')
+            assert False
+        """
+    )
+    result = pytester.runpytest(
+        "--log-level=INFO", "--color=yes", "--log-cli-level-color=yes"
+    )
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*-- Captured log call --*",
+            "\x1b[32mINFO    \x1b[0m*text going to logger from call",
+        ]
+    )
+
+
 def test_colored_ansi_esc_caplogtext(pytester: Pytester) -> None:
     """Make sure that caplog.text does not contain ANSI escape sequences."""
     pytester.makepyfile(
