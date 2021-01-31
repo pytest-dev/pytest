@@ -120,6 +120,8 @@ def runtestprotocol(
 ) -> List[TestReport]:
     hasrequest = hasattr(item, "_request")
     if hasrequest and not item._request:  # type: ignore[attr-defined]
+        # This only happens if the item is re-run, as is done by
+        # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
     rep = call_and_report(item, "setup", log)
     reports = [rep]
