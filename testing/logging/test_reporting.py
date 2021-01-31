@@ -1098,7 +1098,7 @@ def test_colored_captured_log(pytester: Pytester) -> None:
     )
 
 
-def test_cli_level_color_disabled(pytester: Pytester) -> None:
+def test_cli_level_color_disabled_1(pytester: Pytester) -> None:
     """Test that the log level names of captured log messages
     are not colored if `--log-cli-level-color=no` is passed."""
     pytester.makepyfile(
@@ -1124,9 +1124,40 @@ def test_cli_level_color_disabled(pytester: Pytester) -> None:
     )
 
 
-def test_cli_level_color_enabled(pytester: Pytester) -> None:
+def test_cli_level_color_disabled_2(pytester: Pytester) -> None:
     """Test that the log level names of captured log messages
-    are not colored if `--log-cli-level-color=no` is passed."""
+    are not colored if `log_cli_level_color = False` is passed
+    in ini configuration file."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.info('text going to logger from call')
+            assert False
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        log_cli_level_color=no
+        """
+    )
+    result = pytester.runpytest("--log-level=INFO", "--color=yes")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*-- Captured log call --*",
+            "INFO    *text going to logger from call",
+        ]
+    )
+
+
+def test_cli_level_color_enabled1(pytester: Pytester) -> None:
+    """Test that the log level names of captured log messages
+    are colored if `--log-cli-level-color=yes` is passed."""
     pytester.makepyfile(
         """
         import logging
@@ -1141,6 +1172,36 @@ def test_cli_level_color_enabled(pytester: Pytester) -> None:
     result = pytester.runpytest(
         "--log-level=INFO", "--color=yes", "--log-cli-level-color=yes"
     )
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*-- Captured log call --*",
+            "\x1b[32mINFO    \x1b[0m*text going to logger from call",
+        ]
+    )
+
+
+def test_cli_level_color_enabled2(pytester: Pytester) -> None:
+    """Test that the log level names of captured log messages
+    are colored if `log_cli_level_color = True` is passed."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.info('text going to logger from call')
+            assert False
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        log_cli_level_color=yes
+        """
+    )
+    result = pytester.runpytest("--log-level=INFO", "--color=yes")
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         [
