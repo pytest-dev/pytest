@@ -372,7 +372,7 @@ def _fill_fixtures_impl(function: "Function") -> None:
         fi = fm.getfixtureinfo(function.parent, function.obj, None)
         function._fixtureinfo = fi
         request = function._request = FixtureRequest(function, _ispytest=True)
-        fm.session._setupstate.prepare(function)
+        fm.session._setupstate.setup(function)
         request._fillfixtures()
         # Prune out funcargs for jstests.
         newfuncargs = {}

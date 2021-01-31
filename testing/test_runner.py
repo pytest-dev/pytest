@@ -25,7 +25,7 @@ class TestSetupState:
         item = pytester.getitem("def test_func(): pass")
         ss = item.session._setupstate
         values = [1]
-        ss.prepare(item)
+        ss.setup(item)
         ss.addfinalizer(values.pop, item)
         assert values
         ss.teardown_exact(None)
@@ -34,7 +34,7 @@ class TestSetupState:
     def test_teardown_exact_stack_empty(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
         ss = item.session._setupstate
-        ss.prepare(item)
+        ss.setup(item)
         ss.teardown_exact(None)
         ss.teardown_exact(None)
         ss.teardown_exact(None)
@@ -49,9 +49,9 @@ class TestSetupState:
         )
         ss = item.session._setupstate
         with pytest.raises(ValueError):
-            ss.prepare(item)
+            ss.setup(item)
         with pytest.raises(ValueError):
-            ss.prepare(item)
+            ss.setup(item)
 
     def test_teardown_multiple_one_fails(self, pytester: Pytester) -> None:
         r = []
@@ -67,7 +67,7 @@ class TestSetupState:
 
         item = pytester.getitem("def test_func(): pass")
         ss = item.session._setupstate
-        ss.prepare(item)
+        ss.setup(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
         ss.addfinalizer(fin3, item)
@@ -87,7 +87,7 @@ class TestSetupState:
 
         item = pytester.getitem("def test_func(): pass")
         ss = item.session._setupstate
-        ss.prepare(item)
+        ss.setup(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
         with pytest.raises(Exception) as err:
@@ -106,7 +106,7 @@ class TestSetupState:
         item = pytester.getitem("def test_func(): pass")
         mod = item.listchain()[-2]
         ss = item.session._setupstate
-        ss.prepare(item)
+        ss.setup(item)
         ss.addfinalizer(fin_module, mod)
         ss.addfinalizer(fin_func, item)
         with pytest.raises(Exception, match="oops1"):
