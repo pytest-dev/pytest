@@ -254,6 +254,12 @@ def pytest_addoption(parser: Parser) -> None:
         help="log date format as used by the logging module.",
     )
     add_option_ini(
+        "--log-cli-level-color",
+        dest="log_cli_level_color",
+        default=True,
+        help="enable log level name coloring (color in terminal output must be enabled).",
+    )
+    add_option_ini(
         "--log-file",
         dest="log_file",
         default=None,
@@ -583,8 +589,12 @@ class LoggingPlugin:
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # Color option doesn't exist if terminal plugin is disabled.
         color = getattr(self._config.option, "color", "no")
-        if color != "no" and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(
-            log_format
+        log_cli_level_color = get_option_ini(self._config, "log_cli_level_color")
+
+        if (
+            color != "no"
+            and log_cli_level_color
+            and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_format)
         ):
             formatter: logging.Formatter = ColoredLevelFormatter(
                 create_terminal_writer(self._config), log_format, log_date_format
