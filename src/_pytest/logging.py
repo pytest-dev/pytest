@@ -257,6 +257,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-cli-level-color",
         dest="log_cli_level_color",
         default=True,
+        type="bool",
         help="enable log level name coloring (color in terminal output must be enabled).",
     )
     add_option_ini(
