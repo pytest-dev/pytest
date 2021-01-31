@@ -256,9 +256,9 @@ def pytest_addoption(parser: Parser) -> None:
     add_option_ini(
         "--log-cli-level-color",
         dest="log_cli_level_color",
-        default=True,
-        type="bool",
-        help="enable log level name coloring (color in terminal output must be enabled).",
+        default="yes",
+        choices=["yes", "no"],
+        help="Whether log level name should be colored (only if --color is also enabled).",
     )
     add_option_ini(
         "--log-file",
@@ -594,7 +594,7 @@ class LoggingPlugin:
 
         if (
             color != "no"
-            and log_cli_level_color
+            and log_cli_level_color != "no"
             and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_format)
         ):
             formatter: logging.Formatter = ColoredLevelFormatter(
