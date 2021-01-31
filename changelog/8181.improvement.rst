@@ -1,1 +1,1 @@
-New option `log_cli_level_color` (default to True) to allow disabling the coloring of log level name when color in terminal output is enabled.
+New option `log_cli_level_color` (default to yes) to allow disabling the coloring of log level name when color in terminal output is enabled.
