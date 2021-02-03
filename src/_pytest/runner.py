@@ -221,19 +221,14 @@ def call_and_report(
     report: TestReport = hook.pytest_runtest_makereport(item=item, call=call)
     if log:
         hook.pytest_runtest_logreport(report=report)
-    if check_interactive_exception(call, report):
-        hook.pytest_exception_interact(node=item, call=call, report=report)
     return report
 
 
-def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) -> bool:
+def check_interactive_exception(call: "CallInfo[object]") -> bool:
     """Check whether the call raised an exception that should be reported as
     interactive."""
     if call.excinfo is None:
         # Didn't raise.
-        return False
-    if hasattr(report, "wasxfail"):
-        # Exception was expected.
         return False
     if isinstance(call.excinfo.value, (Skipped, bdb.BdbQuit)):
         # Special control flow exception.
@@ -255,9 +250,12 @@ def call_runtest_hook(
     reraise: Tuple[Type[BaseException], ...] = (Exit,)
     if not item.config.getoption("usepdb", False):
         reraise += (KeyboardInterrupt,)
-    return CallInfo.from_call(
+    call = CallInfo.from_call(
         lambda: ihook(item=item, **kwds), when=when, reraise=reraise
     )
+    if check_interactive_exception(call):
+        item.ihook.pytest_exception_interact(node=item, call=call)
+    return call
 
 
 TResult = TypeVar("TResult", covariant=True)
@@ -538,6 +536,6 @@ def collect_one_node(collector: Collector) -> CollectReport:
     ihook.pytest_collectstart(collector=collector)
     rep: CollectReport = ihook.pytest_make_collect_report(collector=collector)
     call = rep.__dict__.pop("call", None)
-    if call and check_interactive_exception(call, rep):
-        ihook.pytest_exception_interact(node=collector, call=call, report=rep)
+    if call and check_interactive_exception(call):
+        ihook.pytest_exception_interact(node=collector, call=call)
     return rep
