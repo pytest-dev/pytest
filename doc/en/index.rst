@@ -1,11 +1,5 @@
 :orphan:
 
-.. sidebar:: Next Open Trainings
-
-   - `Professional testing with Python <https://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, via Python Academy, February 1-3 2021, remote and Leipzig (Germany). **Early-bird discount available until January 15th**.
-
-   Also see `previous talks and blogposts <talks.html>`_.
-
 .. _features:
 
 pytest: helps you write better programs
