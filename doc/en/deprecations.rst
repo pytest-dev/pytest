@@ -18,6 +18,19 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+
+Backward compatibilities in ``Parser.addoption``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 2.4
+
+Several behaviors of :meth:`Parser.addoption <_pytest.config.argparsing.Parser.addoption>` are now
+scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
+
+- ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.
+- ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
+
+
 Raising ``unittest.SkipTest`` during collection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
