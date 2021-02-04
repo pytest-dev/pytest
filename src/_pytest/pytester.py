@@ -20,6 +20,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generator
+from typing import IO
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -41,6 +42,8 @@ from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
 from _pytest.compat import final
+from _pytest.compat import NOTSET
+from _pytest.compat import NotSetType
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -66,6 +69,7 @@ from _pytest.warning_types import PytestWarning
 
 
 if TYPE_CHECKING:
+    from typing_extensions import Final
     from typing_extensions import Literal
 
     import pexpect
@@ -651,7 +655,7 @@ class Pytester:
 
     __test__ = False
 
-    CLOSE_STDIN = object
+    CLOSE_STDIN: "Final" = NOTSET
 
     class TimeoutExpired(Exception):
         pass
@@ -1297,13 +1301,13 @@ class Pytester:
         cmdargs: Sequence[Union[str, "os.PathLike[str]"]],
         stdout: Union[int, TextIO] = subprocess.PIPE,
         stderr: Union[int, TextIO] = subprocess.PIPE,
-        stdin=CLOSE_STDIN,
+        stdin: Union[NotSetType, bytes, IO[Any], int] = CLOSE_STDIN,
         **kw,
     ):
         """Invoke :py:class:`subprocess.Popen`.
 
         Calls :py:class:`subprocess.Popen` making sure the current working
-        directory is in the ``PYTHONPATH``.
+        directory is in ``PYTHONPATH``.
 
         You probably want to use :py:meth:`run` instead.
         """
@@ -1334,7 +1338,7 @@ class Pytester:
         self,
         *cmdargs: Union[str, "os.PathLike[str]"],
         timeout: Optional[float] = None,
-        stdin=CLOSE_STDIN,
+        stdin: Union[NotSetType, bytes, IO[Any], int] = CLOSE_STDIN,
     ) -> RunResult:
         """Run a command with arguments.
 
@@ -1426,21 +1430,17 @@ class Pytester:
     def _getpytestargs(self) -> Tuple[str, ...]:
         return sys.executable, "-mpytest"
 
-    def runpython(self, script) -> RunResult:
-        """Run a python script using sys.executable as interpreter.
-
-        :rtype: RunResult
-        """
+    def runpython(self, script: "os.PathLike[str]") -> RunResult:
+        """Run a python script using sys.executable as interpreter."""
         return self.run(sys.executable, script)
 
-    def runpython_c(self, command):
-        """Run python -c "command".
-
-        :rtype: RunResult
-        """
+    def runpython_c(self, command: str) -> RunResult:
+        """Run ``python -c "command"``."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, timeout: Optional[float] = None) -> RunResult:
+    def runpytest_subprocess(
+        self, *args: Union[str, "os.PathLike[str]"], timeout: Optional[float] = None
+    ) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the
@@ -1454,8 +1454,6 @@ class Pytester:
         :param timeout:
             The period in seconds after which to timeout and raise
             :py:class:`Pytester.TimeoutExpired`.
-
-        :rtype: RunResult
         """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-")
@@ -1529,9 +1527,9 @@ class Testdir:
 
     __test__ = False
 
-    CLOSE_STDIN = Pytester.CLOSE_STDIN
-    TimeoutExpired = Pytester.TimeoutExpired
-    Session = Pytester.Session
+    CLOSE_STDIN: "Final" = Pytester.CLOSE_STDIN
+    TimeoutExpired: "Final" = Pytester.TimeoutExpired
+    Session: "Final" = Pytester.Session
 
     def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
@@ -1695,8 +1693,8 @@ class Testdir:
     def popen(
         self,
         cmdargs,
-        stdout: Union[int, TextIO] = subprocess.PIPE,
-        stderr: Union[int, TextIO] = subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         stdin=CLOSE_STDIN,
         **kw,
     ):
