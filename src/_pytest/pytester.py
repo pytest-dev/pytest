@@ -42,6 +42,8 @@ from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
 from _pytest.compat import final
+from _pytest.compat import NOTSET
+from _pytest.compat import NotSetType
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -653,7 +655,7 @@ class Pytester:
 
     __test__ = False
 
-    CLOSE_STDIN: "Final[type]" = object
+    CLOSE_STDIN: "Final" = NOTSET
 
     class TimeoutExpired(Exception):
         pass
@@ -1299,7 +1301,7 @@ class Pytester:
         cmdargs: Sequence[Union[str, "os.PathLike[str]"]],
         stdout: Union[int, TextIO] = subprocess.PIPE,
         stderr: Union[int, TextIO] = subprocess.PIPE,
-        stdin: Union[type, bytes, IO[Any], int] = CLOSE_STDIN,
+        stdin: Union[NotSetType, bytes, IO[Any], int] = CLOSE_STDIN,
         **kw,
     ):
         """Invoke :py:class:`subprocess.Popen`.
@@ -1336,7 +1338,7 @@ class Pytester:
         self,
         *cmdargs: Union[str, "os.PathLike[str]"],
         timeout: Optional[float] = None,
-        stdin: Union[type, bytes, IO[Any], int] = CLOSE_STDIN,
+        stdin: Union[NotSetType, bytes, IO[Any], int] = CLOSE_STDIN,
     ) -> RunResult:
         """Run a command with arguments.
 
@@ -1525,9 +1527,9 @@ class Testdir:
 
     __test__ = False
 
-    CLOSE_STDIN: "Final[type]" = Pytester.CLOSE_STDIN
-    TimeoutExpired = Pytester.TimeoutExpired
-    Session = Pytester.Session
+    CLOSE_STDIN: "Final" = Pytester.CLOSE_STDIN
+    TimeoutExpired: "Final" = Pytester.TimeoutExpired
+    Session: "Final" = Pytester.Session
 
     def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
