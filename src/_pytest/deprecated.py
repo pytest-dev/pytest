@@ -69,6 +69,25 @@ UNITTEST_SKIP_DURING_COLLECTION = PytestDeprecationWarning(
     "Use pytest.skip() instead."
 )
 
+ARGUMENT_PERCENT_DEFAULT = PytestDeprecationWarning(
+    'pytest now uses argparse. "%default" should be changed to "%(default)s"',
+)
+
+ARGUMENT_TYPE_STR_CHOICE = UnformattedWarning(
+    PytestDeprecationWarning,
+    "`type` argument to addoption() is the string {typ!r}."
+    " For choices this is optional and can be omitted, "
+    " but when supplied should be a type (for example `str` or `int`)."
+    " (options: {names})",
+)
+
+ARGUMENT_TYPE_STR = UnformattedWarning(
+    PytestDeprecationWarning,
+    "`type` argument to addoption() is the string {typ!r}, "
+    " but when supplied should be a type (for example `str` or `int`)."
+    " (options: {names})",
+)
+
 
 # You want to make some `__init__` or function "private".
 #

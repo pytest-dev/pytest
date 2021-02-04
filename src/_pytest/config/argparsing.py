@@ -18,6 +18,9 @@ from typing import Union
 import _pytest._io
 from _pytest.compat import final
 from _pytest.config.exceptions import UsageError
+from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
+from _pytest.deprecated import ARGUMENT_TYPE_STR
+from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 
 if TYPE_CHECKING:
     from typing import NoReturn
@@ -212,12 +215,7 @@ class Argument:
         self._short_opts: List[str] = []
         self._long_opts: List[str] = []
         if "%default" in (attrs.get("help") or ""):
-            warnings.warn(
-                'pytest now uses argparse. "%default" should be'
-                ' changed to "%(default)s" ',
-                DeprecationWarning,
-                stacklevel=3,
-            )
+            warnings.warn(ARGUMENT_PERCENT_DEFAULT, stacklevel=3)
         try:
             typ = attrs["type"]
         except KeyError:
@@ -227,11 +225,7 @@ class Argument:
             if isinstance(typ, str):
                 if typ == "choice":
                     warnings.warn(
-                        "`type` argument to addoption() is the string %r."
-                        " For choices this is optional and can be omitted, "
-                        " but when supplied should be a type (for example `str` or `int`)."
-                        " (options: %s)" % (typ, names),
-                        DeprecationWarning,
+                        ARGUMENT_TYPE_STR_CHOICE.format(typ=typ, names=names),
                         stacklevel=4,
                     )
                     # argparse expects a type here take it from
@@ -239,11 +233,7 @@ class Argument:
                     attrs["type"] = type(attrs["choices"][0])
                 else:
                     warnings.warn(
-                        "`type` argument to addoption() is the string %r, "
-                        " but when supplied should be a type (for example `str` or `int`)."
-                        " (options: %s)" % (typ, names),
-                        DeprecationWarning,
-                        stacklevel=4,
+                        ARGUMENT_TYPE_STR.format(typ=typ, names=names), stacklevel=4
                     )
                     attrs["type"] = Argument._typ_map[typ]
                 # Used in test_parseopt -> test_parse_defaultgetter.
