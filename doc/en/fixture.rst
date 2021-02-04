@@ -375,7 +375,7 @@ Fixtures are reusable
 ^^^^^^^^^^^^^^^^^^^^^
 
 One of the things that makes pytest's fixture system so powerful, is that it
-gives us the abilty to define a generic setup step that can reused over and
+gives us the ability to define a generic setup step that can reused over and
 over, just like a normal function would be used. Two different tests can request
 the same fixture and have pytest give each test their own result from that
 fixture.
@@ -829,6 +829,8 @@ This system can be leveraged in two ways.
 1. ``yield`` fixtures (recommended)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. regendoc: wipe
+
 "Yield" fixtures ``yield`` instead of ``return``. With these
 fixtures, we can run some code and pass an object back to the requesting
 fixture/test, just like with the other fixtures. The only differences are:
@@ -844,17 +846,48 @@ Once the test is finished, pytest will go back down the list of fixtures, but in
 the *reverse order*, taking each one that yielded, and running the code inside
 it that was *after* the ``yield`` statement.
 
-As a simple example, let's say we want to test sending email from one user to
-another. We'll have to first make each user, then send the email from one user
-to the other, and finally assert that the other user received that message in
-their inbox. If we want to clean up after the test runs, we'll likely have to
-make sure the other user's mailbox is emptied before deleting that user,
-otherwise the system may complain.
+As a simple example, consider this basic email module:
+
+.. code-block:: python
+
+    # content of emaillib.py
+    class MailAdminClient:
+        def create_user(self):
+            return MailUser()
+
+        def delete_user(self, user):
+            # do some cleanup
+            pass
+
+
+    class MailUser:
+        def __init__(self):
+            self.inbox = []
+
+        def send_email(self, email, other):
+            other.inbox.append(email)
+
+        def clear_mailbox(self):
+            self.inbox.clear()
+
+
+    class Email:
+        def __init__(self, subject, body):
+            self.subject = subject
+            self.body = body
+
+Let's say we want to test sending email from one user to another. We'll have to
+first make each user, then send the email from one user to the other, and
+finally assert that the other user received that message in their inbox. If we
+want to clean up after the test runs, we'll likely have to make sure the other
+user's mailbox is emptied before deleting that user, otherwise the system may
+complain.
 
 Here's what that might look like:
 
 .. code-block:: python
 
+    # content of test_emaillib.py
     import pytest
 
     from emaillib import Email, MailAdminClient
@@ -869,17 +902,17 @@ Here's what that might look like:
     def sending_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
     @pytest.fixture
     def receiving_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
-    def test_email_received(sending_user, receiving_user, email):
+    def test_email_received(sending_user, receiving_user):
         email = Email(subject="Hey!", body="How's it going?")
         sending_user.send_email(email, receiving_user)
         assert email in receiving_user.inbox
@@ -890,6 +923,12 @@ during teardown.
 There is a risk that even having the order right on the teardown side of things
 doesn't guarantee a safe cleanup. That's covered in a bit more detail in
 :ref:`safe teardowns`.
+
+.. code-block:: pytest
+
+   $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
 
 Handling errors for yield fixture
 """""""""""""""""""""""""""""""""
@@ -902,7 +941,7 @@ attempt to tear them down as it normally would.
 2. Adding finalizers directly
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-While yield fixtures are considered to be the cleaner and more straighforward
+While yield fixtures are considered to be the cleaner and more straightforward
 option, there is another choice, and that is to add "finalizer" functions
 directly to the test's `request-context`_ object. It brings a similar result as
 yield fixtures, but requires a bit more verbosity.
@@ -922,6 +961,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 
 .. code-block:: python
 
+    # content of test_emaillib.py
     import pytest
 
     from emaillib import Email, MailAdminClient
@@ -936,7 +976,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
     def sending_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
     @pytest.fixture
@@ -944,7 +984,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
         user = mail_admin.create_user()
 
         def delete_user():
-            admin_client.delete_user(user)
+            mail_admin.delete_user(user)
 
         request.addfinalizer(delete_user)
         return user
@@ -956,7 +996,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
         sending_user.send_email(_email, receiving_user)
 
         def empty_mailbox():
-            receiving_user.delete_email(_email)
+            receiving_user.clear_mailbox()
 
         request.addfinalizer(empty_mailbox)
         return _email
@@ -968,6 +1008,12 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 
 It's a bit longer than yield fixtures and a bit more complex, but it
 does offer some nuances for when you're in a pinch.
+
+.. code-block:: pytest
+
+   $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
 
 .. _`safe teardowns`:
 
@@ -984,6 +1030,7 @@ above):
 
 .. code-block:: python
 
+    # content of test_emaillib.py
     import pytest
 
     from emaillib import Email, MailAdminClient
@@ -995,11 +1042,11 @@ above):
         sending_user = mail_admin.create_user()
         receiving_user = mail_admin.create_user()
         email = Email(subject="Hey!", body="How's it going?")
-        sending_user.send_emai(email, receiving_user)
+        sending_user.send_email(email, receiving_user)
         yield receiving_user, email
-        receiving_user.delete_email(email)
-        admin_client.delete_user(sending_user)
-        admin_client.delete_user(receiving_user)
+        receiving_user.clear_mailbox()
+        mail_admin.delete_user(sending_user)
+        mail_admin.delete_user(receiving_user)
 
 
     def test_email_received(setup):
@@ -1016,6 +1063,12 @@ One option might be to go with the ``addfinalizer`` method instead of yield
 fixtures, but that might get pretty complex and difficult to maintain (and it
 wouldn't be compact anymore).
 
+.. code-block:: pytest
+
+   $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
+
 .. _`safe fixture structure`:
 
 Safe fixture structure
@@ -1026,7 +1079,7 @@ making one state-changing action each, and then bundling them together with
 their teardown code, as :ref:`the email examples above <yield fixtures>` showed.
 
 The chance that a state-changing operation can fail but still modify state is
-neglibible, as most of these operations tend to be `transaction`_-based (at
+negligible, as most of these operations tend to be `transaction`_-based (at
 least at the level of testing where state could be left behind). So if we make
 sure that any successful state-changing action gets torn down by moving it to a
 separate fixture function and separating it from other, potentially failing
@@ -1124,7 +1177,7 @@ never have been made.
 .. _`conftest.py`:
 .. _`conftest`:
 
-Fixture availabiility
+Fixture availability
 ---------------------
 
 Fixture availability is determined from the perspective of the test. A fixture
@@ -1410,9 +1463,9 @@ pytest doesn't know where ``c`` should go in the case, so it should be assumed
 that it could go anywhere between ``g`` and ``b``.
 
 This isn't necessarily bad, but it's something to keep in mind. If the order
-they execute in could affect the behavior a test is targetting, or could
+they execute in could affect the behavior a test is targeting, or could
 otherwise influence the result of a test, then the order should be defined
-explicitely in a way that allows pytest to linearize/"flatten" that order.
+explicitly in a way that allows pytest to linearize/"flatten" that order.
 
 .. _`autouse order`:
 
@@ -1506,7 +1559,7 @@ of what we've gone over so far.
 
 All that's needed is stepping up to a larger scope, then having the **act**
 step defined as an autouse fixture, and finally, making sure all the fixtures
-are targetting that highler level scope.
+are targeting that higher level scope.
 
 Let's pull :ref:`an example from above <safe fixture structure>`, and tweak it a
 bit. Let's say that in addition to checking for a welcome message in the header,
@@ -1646,7 +1699,7 @@ again, nothing much has changed:
 
 .. code-block:: pytest
 
-    $ pytest -s -q --tb=no
+    $ pytest -s -q --tb=no test_module.py
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
 
     ========================= short test summary info ==========================
@@ -1777,7 +1830,7 @@ Parametrizing fixtures
 -----------------------------------------------------------------
 
 Fixture functions can be parametrized in which case they will be called
-multiple times, each time executing the set of dependent tests, i. e. the
+multiple times, each time executing the set of dependent tests, i.e. the
 tests that depend on this fixture.  Test functions usually do not need
 to be aware of their re-running.  Fixture parametrization helps to
 write exhaustive functional tests for components which themselves can be
@@ -1931,11 +1984,13 @@ Running the above tests results in the following test IDs being used:
    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
    cachedir: $PYTHON_PREFIX/.pytest_cache
    rootdir: $REGENDOC_TMPDIR
-   collected 10 items
+   collected 11 items
 
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
      <Function test_showhelo[mail.python.org]>
+   <Module test_emaillib.py>
+     <Function test_email_received>
    <Module test_ids.py>
      <Function test_a[spam]>
      <Function test_a[ham]>
@@ -1947,7 +2002,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ======================= 10 tests collected in 0.12s ========================
+   ======================= 11 tests collected in 0.12s ========================
 
 .. _`fixture-parametrize-marks`:
 
