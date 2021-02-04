@@ -927,6 +927,8 @@ doesn't guarantee a safe cleanup. That's covered in a bit more detail in
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
 
 Handling errors for yield fixture
 """""""""""""""""""""""""""""""""
@@ -1010,6 +1012,8 @@ does offer some nuances for when you're in a pinch.
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
 
 .. _`safe teardowns`:
 
@@ -1062,6 +1066,8 @@ wouldn't be compact anymore).
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
 
 .. _`safe fixture structure`:
 
@@ -1978,11 +1984,13 @@ Running the above tests results in the following test IDs being used:
    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
    cachedir: $PYTHON_PREFIX/.pytest_cache
    rootdir: $REGENDOC_TMPDIR
-   collected 10 items
+   collected 11 items
 
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
      <Function test_showhelo[mail.python.org]>
+   <Module test_emaillib.py>
+     <Function test_email_received>
    <Module test_ids.py>
      <Function test_a[spam]>
      <Function test_a[ham]>
@@ -1994,7 +2002,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ======================= 10 tests collected in 0.12s ========================
+   ======================= 11 tests collected in 0.12s ========================
 
 .. _`fixture-parametrize-marks`:
 
