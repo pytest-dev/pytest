@@ -174,9 +174,6 @@ Back to fixtures
 "Fixtures", in the literal sense, are each of the **arrange** steps and data. They're
 everything that test needs to do its thing.
 
-At a basic level, test functions request fixtures by declaring them as
-arguments, as in the ``test_ehlo(smtp_connection):`` in the previous example.
-
 In pytest, "fixtures" are functions you define that serve this purpose. But they
 don't have to be limited to just the **arrange** steps. They can provide the
 **act** step, as well, and this can be a powerful technique for designing more
