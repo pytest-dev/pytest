@@ -2,8 +2,9 @@ name: Update Plugin List
 
 on:
   schedule:
-    # Run daily at midnight.
-    - cron: '0 0 * * *'
+    # At 00:00 on Sunday.
+    # https://crontab.guru
+    - cron: '0 0 * * 0'
   workflow_dispatch:
 
 jobs:
