@@ -758,7 +758,7 @@ class SubRequest(FixtureRequest):
         self,
         request: "FixtureRequest",
         scope: "_Scope",
-        param: Optional[Any],
+        param: Any,
         param_index: int,
         fixturedef: "FixtureDef[object]",
         *,
