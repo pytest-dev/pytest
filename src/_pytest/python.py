@@ -23,7 +23,6 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -254,20 +253,13 @@ def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj: object):
             return res
 
 
-class PyobjMixin:
+class PyobjMixin(nodes.Node):
+    """this mix-in inherits from Node to carry over the typing information
+
+    as its intended to always mix in before a node
+    its position in the mro is unaffected"""
+
     _ALLOW_MARKERS = True
-
-    # Function and attributes that the mixin needs (for type-checking only).
-    if TYPE_CHECKING:
-        name: str = ""
-        parent: Optional[nodes.Node] = None
-        own_markers: List[Mark] = []
-
-        def getparent(self, cls: Type[nodes._NodeType]) -> Optional[nodes._NodeType]:
-            ...
-
-        def listchain(self) -> List[nodes.Node]:
-            ...
 
     @property
     def module(self):
