@@ -120,6 +120,8 @@ def runtestprotocol(
 ) -> List[TestReport]:
     hasrequest = hasattr(item, "_request")
     if hasrequest and not item._request:  # type: ignore[attr-defined]
+        # This only happens if the item is re-run, as is done by
+        # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
     rep = call_and_report(item, "setup", log)
     reports = [rep]
@@ -151,7 +153,7 @@ def show_test_item(item: Item) -> None:
 
 def pytest_runtest_setup(item: Item) -> None:
     _update_current_test_var(item, "setup")
-    item.session._setupstate.prepare(item)
+    item.session._setupstate.setup(item)
 
 
 def pytest_runtest_call(item: Item) -> None:
@@ -417,7 +419,7 @@ class SetupState:
 
         []
 
-    During the setup phase of item1, prepare(item1) is called. What it does
+    During the setup phase of item1, setup(item1) is called. What it does
     is:
 
         push session to stack, run session.setup()
@@ -441,7 +443,7 @@ class SetupState:
 
         [session]
 
-    During the setup phase of item2, prepare(item2) is called. What it does
+    During the setup phase of item2, setup(item2) is called. What it does
     is:
 
         push mod2 to stack, run mod2.setup()
@@ -477,23 +479,26 @@ class SetupState:
             ],
         ] = {}
 
-    def prepare(self, item: Item) -> None:
+    def setup(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
+        needed_collectors = item.listchain()
+
         # If a collector fails its setup, fail its entire subtree of items.
         # The setup is not retried for each item - the same exception is used.
-        for col, (finalizers, prepare_exc) in self.stack.items():
-            if prepare_exc:
-                raise prepare_exc
+        for col, (finalizers, exc) in self.stack.items():
+            assert col in needed_collectors, "previous item was not torn down properly"
+            if exc:
+                raise exc
 
-        needed_collectors = item.listchain()
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
+            # Push onto the stack.
             self.stack[col] = ([col.teardown], None)
             try:
                 col.setup()
-            except TEST_OUTCOME as e:
-                self.stack[col] = (self.stack[col][0], e)
-                raise e
+            except TEST_OUTCOME as exc:
+                self.stack[col] = (self.stack[col][0], exc)
+                raise exc
 
     def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:
         """Attach a finalizer to the given node.
@@ -517,7 +522,7 @@ class SetupState:
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
-            node, (finalizers, prepare_exc) = self.stack.popitem()
+            node, (finalizers, _) = self.stack.popitem()
             while finalizers:
                 fin = finalizers.pop()
                 try:

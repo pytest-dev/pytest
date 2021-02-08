@@ -131,7 +131,7 @@ class TestFillFixtures:
         item = pytester.getitem(Path("test_funcarg_basic.py"))
         assert isinstance(item, Function)
         # Execute's item's setup, which fills fixtures.
-        item.session._setupstate.prepare(item)
+        item.session._setupstate.setup(item)
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs["some"] == "test_func"
@@ -827,7 +827,7 @@ class TestRequestBasic:
         req = item._request
 
         # Execute item's setup.
-        item.session._setupstate.prepare(item)
+        item.session._setupstate.setup(item)
 
         with pytest.raises(pytest.FixtureLookupError):
             req.getfixturevalue("notexists")
@@ -855,7 +855,7 @@ class TestRequestBasic:
         """
         )
         assert isinstance(item, Function)
-        item.session._setupstate.prepare(item)
+        item.session._setupstate.setup(item)
         item._request._fillfixtures()
         # successively check finalization calls
         parent = item.getparent(pytest.Module)
