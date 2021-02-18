@@ -66,7 +66,7 @@ Features
 
 - Python 3.6+ and PyPy 3
 
-- Rich plugin architecture, with over 315+ :doc:`external plugins <plugin_list>` and thriving community
+- Rich plugin architecture, with over 800+ :doc:`external plugins <plugin_list>` and thriving community
 
 
 Documentation
