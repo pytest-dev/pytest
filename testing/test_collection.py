@@ -127,16 +127,16 @@ class TestCollector:
 
 class TestCollectFS:
     def test_ignored_certain_directories(self, pytester: Pytester) -> None:
-        tmpdir = pytester.path
-        ensure_file(tmpdir / "build" / "test_notfound.py")
-        ensure_file(tmpdir / "dist" / "test_notfound.py")
-        ensure_file(tmpdir / "_darcs" / "test_notfound.py")
-        ensure_file(tmpdir / "CVS" / "test_notfound.py")
-        ensure_file(tmpdir / "{arch}" / "test_notfound.py")
-        ensure_file(tmpdir / ".whatever" / "test_notfound.py")
-        ensure_file(tmpdir / ".bzr" / "test_notfound.py")
-        ensure_file(tmpdir / "normal" / "test_found.py")
-        for x in Path(str(tmpdir)).rglob("test_*.py"):
+        tmp_path = pytester.path
+        ensure_file(tmp_path / "build" / "test_notfound.py")
+        ensure_file(tmp_path / "dist" / "test_notfound.py")
+        ensure_file(tmp_path / "_darcs" / "test_notfound.py")
+        ensure_file(tmp_path / "CVS" / "test_notfound.py")
+        ensure_file(tmp_path / "{arch}" / "test_notfound.py")
+        ensure_file(tmp_path / ".whatever" / "test_notfound.py")
+        ensure_file(tmp_path / ".bzr" / "test_notfound.py")
+        ensure_file(tmp_path / "normal" / "test_found.py")
+        for x in Path(str(tmp_path)).rglob("test_*.py"):
             x.write_text("def test_hello(): pass", "utf-8")
 
         result = pytester.runpytest("--collect-only")
@@ -226,10 +226,12 @@ class TestCollectFS:
             norecursedirs = mydir xyz*
         """
         )
-        tmpdir = pytester.path
-        ensure_file(tmpdir / "mydir" / "test_hello.py").write_text("def test_1(): pass")
-        ensure_file(tmpdir / "xyz123" / "test_2.py").write_text("def test_2(): 0/0")
-        ensure_file(tmpdir / "xy" / "test_ok.py").write_text("def test_3(): pass")
+        tmp_path = pytester.path
+        ensure_file(tmp_path / "mydir" / "test_hello.py").write_text(
+            "def test_1(): pass"
+        )
+        ensure_file(tmp_path / "xyz123" / "test_2.py").write_text("def test_2(): 0/0")
+        ensure_file(tmp_path / "xy" / "test_ok.py").write_text("def test_3(): pass")
         rec = pytester.inline_run()
         rec.assertoutcome(passed=1)
         rec = pytester.inline_run("xyz123/test_2.py")
@@ -242,10 +244,10 @@ class TestCollectFS:
             testpaths = gui uts
         """
         )
-        tmpdir = pytester.path
-        ensure_file(tmpdir / "env" / "test_1.py").write_text("def test_env(): pass")
-        ensure_file(tmpdir / "gui" / "test_2.py").write_text("def test_gui(): pass")
-        ensure_file(tmpdir / "uts" / "test_3.py").write_text("def test_uts(): pass")
+        tmp_path = pytester.path
+        ensure_file(tmp_path / "env" / "test_1.py").write_text("def test_env(): pass")
+        ensure_file(tmp_path / "gui" / "test_2.py").write_text("def test_gui(): pass")
+        ensure_file(tmp_path / "uts" / "test_3.py").write_text("def test_uts(): pass")
 
         # executing from rootdir only tests from `testpaths` directories
         # are collected
@@ -255,7 +257,7 @@ class TestCollectFS:
         # check that explicitly passing directories in the command-line
         # collects the tests
         for dirname in ("env", "gui", "uts"):
-            items, reprec = pytester.inline_genitems(tmpdir.joinpath(dirname))
+            items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
             assert [x.name for x in items] == ["test_%s" % dirname]
 
         # changing cwd to each subdirectory and running pytest without
@@ -628,9 +630,9 @@ class TestSession:
 
 class Test_getinitialnodes:
     def test_global_file(self, pytester: Pytester) -> None:
-        tmpdir = pytester.path
-        x = ensure_file(tmpdir / "x.py")
-        with tmpdir.cwd():
+        tmp_path = pytester.path
+        x = ensure_file(tmp_path / "x.py")
+        with tmp_path.cwd():
             config = pytester.parseconfigure(x)
         col = pytester.getnode(config, x)
         assert isinstance(col, pytest.Module)
@@ -645,8 +647,8 @@ class Test_getinitialnodes:
         The parent chain should match: Module<x.py> -> Package<subdir> -> Session.
             Session's parent should always be None.
         """
-        tmpdir = pytester.path
-        subdir = tmpdir.joinpath("subdir")
+        tmp_path = pytester.path
+        subdir = tmp_path.joinpath("subdir")
         x = ensure_file(subdir / "x.py")
         ensure_file(subdir / "__init__.py")
         with subdir.cwd():
