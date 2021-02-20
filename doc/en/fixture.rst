@@ -228,12 +228,6 @@ At a basic level, test functions request fixtures by declaring them as
 arguments, as in the ``test_my_fruit_in_basket(my_fruit, fruit_basket):`` in the
 previous example.
 
-At a basic level, pytest depends on a test to tell it what fixtures it needs, so
-we have to build that information into the test itself. We have to make the test
-"**request**" the fixtures it depends on, and to do this, we have to
-list those fixtures as parameters in the test function's "signature" (which is
-the ``def test_something(blah, stuff, more):`` line).
-
 When pytest goes to run a test, it looks at the parameters in that test
 function's signature, and then searches for fixtures that have the same names as
 those parameters. Once pytest finds them, it runs those fixtures, captures what
