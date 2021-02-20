@@ -122,6 +122,7 @@ def test_ini_markers_whitespace(pytester: Pytester) -> None:
     rec.assertoutcome(passed=1)
 
 
+@pytest.mark.filterwarnings("ignore:.*setup.cfg.*:pytest.PytestDeprecationWarning")
 def test_marker_without_description(pytester: Pytester) -> None:
     pytester.makefile(
         ".cfg",

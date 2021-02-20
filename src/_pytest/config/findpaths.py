@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from pathlib import Path
 from typing import Dict
 from typing import Iterable
@@ -11,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 from .exceptions import UsageError
+from _pytest.deprecated import SETUP_CFG_CONFIG
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath
@@ -70,6 +72,11 @@ def _parse_cfg_file(path: Path) -> PARSE_RESULT:
     iniconfig = _parse_ini_config(path)
 
     if "tool:pytest" in iniconfig.sections:
+
+        if path.name == "setup.cfg":
+            warnings.warn_explicit(
+                SETUP_CFG_CONFIG, None, os.fspath(path), 0, module="pytest"
+            )
         return dict(iniconfig["tool:pytest"].items())
     elif "pytest" in iniconfig.sections:
         # If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that

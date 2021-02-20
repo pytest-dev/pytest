@@ -31,9 +31,18 @@ from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
 
 
+setup_cfg_nowarn = pytest.mark.filterwarnings(
+    "ignore:.*setup.cfg.*:pytest.PytestDeprecationWarning"
+)
+
+
 class TestParseIni:
     @pytest.mark.parametrize(
-        "section, filename", [("pytest", "pytest.ini"), ("tool:pytest", "setup.cfg")]
+        "section, filename",
+        [
+            ("pytest", "pytest.ini"),
+            pytest.param("tool:pytest", "setup.cfg", marks=setup_cfg_nowarn),
+        ],
     )
     def test_getcfg_and_config(
         self,
@@ -62,6 +71,7 @@ class TestParseIni:
         config = pytester.parseconfigure(str(sub))
         assert config.inicfg["name"] == "value"
 
+    @setup_cfg_nowarn
     def test_setupcfg_uses_toolpytest_with_pytest(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test(): pass")
         pytester.makefile(
@@ -113,7 +123,7 @@ class TestParseIni:
     @pytest.mark.parametrize(
         "section, name",
         [
-            ("tool:pytest", "setup.cfg"),
+            pytest.param("tool:pytest", "setup.cfg", marks=setup_cfg_nowarn),
             ("pytest", "tox.ini"),
             ("pytest", "pytest.ini"),
             ("pytest", ".pytest.ini"),
@@ -1355,7 +1365,12 @@ class TestRootdir:
                 "pyproject.toml", "[tool.pytest.ini_options]\nx=10", id="pyproject.toml"
             ),
             pytest.param("tox.ini", "[pytest]\nx=10", id="tox.ini"),
-            pytest.param("setup.cfg", "[tool:pytest]\nx=10", id="setup.cfg"),
+            pytest.param(
+                "setup.cfg",
+                "[tool:pytest]\nx=10",
+                id="setup.cfg",
+                marks=setup_cfg_nowarn,
+            ),
         ],
     )
     def test_with_ini(self, tmp_path: Path, name: str, contents: str) -> None:
@@ -1488,6 +1503,7 @@ class TestRootdir:
         assert rootpath == tmp_path
         assert inipath is None
 
+    @setup_cfg_nowarn
     def test_with_config_also_in_parent_directory(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
@@ -1505,7 +1521,10 @@ class TestRootdir:
 
 
 class TestOverrideIniArgs:
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    @pytest.mark.parametrize(
+        "name",
+        [pytest.param("setup.cfg", marks=setup_cfg_nowarn), "tox.ini", "pytest.ini"],
+    )
     def test_override_ini_names(self, pytester: Pytester, name: str) -> None:
         section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
         pytester.path.joinpath(name).write_text(
