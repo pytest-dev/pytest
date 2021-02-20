@@ -10,8 +10,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import iniconfig
-
 from .exceptions import UsageError
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
@@ -19,17 +17,20 @@ from _pytest.pathlib import commonpath
 
 if TYPE_CHECKING:
     from . import Config
+    from iniconfig import IniConfig  # NOQA: F401
 
 
-def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
+def _parse_ini_config(path: Path) -> "IniConfig":
     """Parse the given generic '.ini' file using legacy IniConfig parser, returning
     the parsed object.
 
     Raise UsageError if the file cannot be parsed.
     """
+    from iniconfig import IniConfig, ParseError  # NOQA: F811
+
     try:
-        return iniconfig.IniConfig(str(path))
-    except iniconfig.ParseError as exc:
+        return IniConfig(os.fspath(path), data=path.read_text())
+    except ParseError as exc:
         raise UsageError(str(exc)) from exc
 
 
