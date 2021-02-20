@@ -143,12 +143,11 @@ def load_config_dict_from_file(path: Path) -> PARSE_RESULT:
 
 
 def locate_config(
-    args: Iterable[Path],
+    args: List[Path],
 ) -> Tuple[Optional[Path], Optional[Path], Dict[str, Union[str, List[str]]]]:
     """Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict)."""
 
-    args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [Path.cwd()]
     for arg in args:
