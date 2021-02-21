@@ -234,7 +234,7 @@ class TestMockDecoration:
             @mock.patch("os.path.abspath")
             @mock.patch("os.path.normpath")
             @mock.patch("os.path.basename", new=mock_basename)
-            def test_someting(normpath, abspath):
+            def test_someting(normpath, abspath, tmp_path):
                 abspath.return_value = "this"
                 os.path.normpath(os.path.abspath("hello"))
                 normpath.assert_any_call("this")
