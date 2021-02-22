@@ -205,7 +205,7 @@ class TestResolveCollectionArgument:
 def test_module_full_path_without_drive(pytester: Pytester) -> None:
     """Collect and run test using full path except for the drive letter (#7628).
 
-    Passing a full path without a drive letter would trigger a bug in py.path.local
+    Passing a full path without a drive letter would trigger a bug in legacy_path
     where it would keep the full path without the drive letter around, instead of resolving
     to the full path, resulting in fixtures node ids not matching against test node ids correctly.
     """

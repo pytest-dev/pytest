@@ -15,7 +15,6 @@ from typing import TypeVar
 from typing import Union
 
 import attr
-import py
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
@@ -30,6 +29,7 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -500,7 +500,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     else:
         d["longrepr"] = report.longrepr
     for name in d:
-        if isinstance(d[name], (py.path.local, Path)):
+        if isinstance(d[name], (LEGACY_PATH, Path)):
             d[name] = str(d[name])
         elif name == "result":
             d[name] = None  # for now

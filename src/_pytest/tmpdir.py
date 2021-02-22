@@ -6,13 +6,14 @@ from pathlib import Path
 from typing import Optional
 
 import attr
-import py
 
 from .pathlib import ensure_reset_dir
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
@@ -133,7 +134,7 @@ class TempPathFactory:
 @final
 @attr.s(init=False)
 class TempdirFactory:
-    """Backward comptibility wrapper that implements :class:``py.path.local``
+    """Backward comptibility wrapper that implements :class:``_pytest.compat.LEGACY_PATH``
     for :class:``TempPathFactory``."""
 
     _tmppath_factory = attr.ib(type=TempPathFactory)
@@ -144,13 +145,13 @@ class TempdirFactory:
         check_ispytest(_ispytest)
         self._tmppath_factory = tmppath_factory
 
-    def mktemp(self, basename: str, numbered: bool = True) -> py.path.local:
-        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``py.path.local`` object."""
-        return py.path.local(self._tmppath_factory.mktemp(basename, numbered).resolve())
+    def mktemp(self, basename: str, numbered: bool = True) -> LEGACY_PATH:
+        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``_pytest.compat.LEGACY_PATH`` object."""
+        return legacy_path(self._tmppath_factory.mktemp(basename, numbered).resolve())
 
-    def getbasetemp(self) -> py.path.local:
+    def getbasetemp(self) -> LEGACY_PATH:
         """Backward compat wrapper for ``_tmppath_factory.getbasetemp``."""
-        return py.path.local(self._tmppath_factory.getbasetemp().resolve())
+        return legacy_path(self._tmppath_factory.getbasetemp().resolve())
 
 
 def get_user() -> Optional[str]:
@@ -202,7 +203,7 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 
 
 @fixture
-def tmpdir(tmp_path: Path) -> py.path.local:
+def tmpdir(tmp_path: Path) -> LEGACY_PATH:
     """Return a temporary directory path object which is unique to each test
     function invocation, created as a sub directory of the base temporary
     directory.
@@ -212,11 +213,11 @@ def tmpdir(tmp_path: Path) -> py.path.local:
     ``--basetemp`` is used then it is cleared each session. See :ref:`base
     temporary directory`.
 
-    The returned object is a `py.path.local`_ path object.
+    The returned object is a `legacy_path`_ object.
 
-    .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
+    .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
     """
-    return py.path.local(tmp_path)
+    return legacy_path(tmp_path)
 
 
 @fixture

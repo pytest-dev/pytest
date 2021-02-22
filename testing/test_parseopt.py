@@ -4,9 +4,8 @@ import shlex
 import subprocess
 import sys
 
-import py
-
 import pytest
+from _pytest.compat import legacy_path
 from _pytest.config import argparsing as parseopt
 from _pytest.config.exceptions import UsageError
 from _pytest.monkeypatch import MonkeyPatch
@@ -124,11 +123,11 @@ class TestParser:
         assert not getattr(args, parseopt.FILE_OR_DIR)
 
     def test_parse2(self, parser: parseopt.Parser) -> None:
-        args = parser.parse([py.path.local()])
-        assert getattr(args, parseopt.FILE_OR_DIR)[0] == py.path.local()
+        args = parser.parse([legacy_path(".")])
+        assert getattr(args, parseopt.FILE_OR_DIR)[0] == legacy_path(".")
 
     def test_parse_known_args(self, parser: parseopt.Parser) -> None:
-        parser.parse_known_args([py.path.local()])
+        parser.parse_known_args([legacy_path(".")])
         parser.addoption("--hello", action="store_true")
         ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
         assert ns.hello

@@ -6,8 +6,6 @@ import textwrap
 from pathlib import Path
 from typing import List
 
-import py.path
-
 import pytest
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
@@ -369,9 +367,10 @@ class TestCustomConftests:
     def test_collectignore_exclude_on_option(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            import py
+            # potentially avoid dependency on pylib
+            from _pytest.compat import legacy_path
             from pathlib import Path
-            collect_ignore = [py.path.local('hello'), 'test_world.py', Path('bye')]
+            collect_ignore = [legacy_path('hello'), 'test_world.py', Path('bye')]
             def pytest_addoption(parser):
                 parser.addoption("--XX", action="store_true", default=False)
             def pytest_configure(config):
@@ -1347,6 +1346,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
 
     Context: https://github.com/pytest-dev/pytest-cpp/pull/47
     """
+    from _pytest.compat import legacy_path
 
     class MyCollector(pytest.File):
         def __init__(self, *k, x, **kw):
@@ -1354,7 +1354,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
             self.x = x
 
     collector = MyCollector.from_parent(
-        parent=request.session, fspath=py.path.local(pytester.path) / "foo", x=10
+        parent=request.session, fspath=legacy_path(pytester.path) / "foo", x=10
     )
     assert collector.x == 10
 

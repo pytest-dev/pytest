@@ -7,9 +7,8 @@ from textwrap import dedent
 from types import ModuleType
 from typing import Generator
 
-import py
-
 import pytest
+from _pytest.compat import legacy_path
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
@@ -28,14 +27,14 @@ from _pytest.tmpdir import TempPathFactory
 
 class TestFNMatcherPort:
     """Test that our port of py.common.FNMatcher (fnmatch_ex) produces the
-    same results as the original py.path.local.fnmatch method."""
+    same results as the original legacy_path.fnmatch method."""
 
     @pytest.fixture(params=["pathlib", "py.path"])
     def match(self, request):
         if request.param == "py.path":
 
             def match_(pattern, path):
-                return py.path.local(path).fnmatch(pattern)
+                return legacy_path(path).fnmatch(pattern)
 
         else:
             assert request.param == "pathlib"

@@ -92,7 +92,7 @@ ARGUMENT_TYPE_STR = UnformattedWarning(
 NODE_FSPATH = UnformattedWarning(
     PytestDeprecationWarning,
     "{type}.fspath is deprecated and will be replaced by {type}.path.\n"
-    "see TODO;URL for details on replacing py.path.local with pathlib.Path",
+    "see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path",
 )
 
 # You want to make some `__init__` or function "private".

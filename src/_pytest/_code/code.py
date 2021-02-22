@@ -31,7 +31,6 @@ from weakref import ref
 
 import attr
 import pluggy
-import py
 
 import _pytest
 from _pytest._code.source import findsource
@@ -1230,7 +1229,7 @@ _PLUGGY_DIR = Path(pluggy.__file__.rstrip("oc"))
 if _PLUGGY_DIR.name == "__init__.py":
     _PLUGGY_DIR = _PLUGGY_DIR.parent
 _PYTEST_DIR = Path(_pytest.__file__).parent
-_PY_DIR = Path(py.__file__).parent
+_PY_DIR = Path(__import__("py").__file__).parent
 
 
 def filter_traceback(entry: TracebackEntry) -> bool:

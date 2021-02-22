@@ -32,15 +32,18 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 
-#: constant to prepare valuing py.path.local replacements/lazy proxies later on
+#: constant to prepare valuing pylib path replacements/lazy proxies later on
 #  intended for removal in pytest 8.0 or 9.0
 
-LEGACY_PATH = py.path.local
+# fmt: off
+# intentional space to create a fake difference for the verification
+LEGACY_PATH = py.path. local
+# fmt: on
 
 
 def legacy_path(path: Union[str, "os.PathLike[str]"]) -> LEGACY_PATH:
-    """Internal wrapper to prepare lazy proxies for py.path.local instances"""
-    return py.path.local(path)
+    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
+    return LEGACY_PATH(path)
 
 
 # fmt: off

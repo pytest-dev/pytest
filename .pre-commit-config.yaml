@@ -87,3 +87,9 @@ repos:
                 xml\.
             )
         types: [python]
+    -   id: py-path-deprecated
+        name: py.path usage is deprecated
+        language: pygrep
+        entry: \bpy\.path\.local
+        exclude: docs
+        types: [python]

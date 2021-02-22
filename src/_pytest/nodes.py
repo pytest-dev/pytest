@@ -16,8 +16,6 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
-import py
-
 import _pytest._code
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
@@ -145,7 +143,7 @@ class Node(metaclass=NodeMeta):
         parent: "Optional[Node]" = None,
         config: Optional[Config] = None,
         session: "Optional[Session]" = None,
-        fspath: Optional[py.path.local] = None,
+        fspath: Optional[LEGACY_PATH] = None,
         path: Optional[Path] = None,
         nodeid: Optional[str] = None,
     ) -> None:
@@ -199,13 +197,13 @@ class Node(metaclass=NodeMeta):
         self._store = Store()
 
     @property
-    def fspath(self):
-        """(deprecated) returns a py.path.local copy of self.path"""
+    def fspath(self) -> LEGACY_PATH:
+        """(deprecated) returns a legacy_path copy of self.path"""
         warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
-        return py.path.local(self.path)
+        return legacy_path(self.path)
 
     @fspath.setter
-    def fspath(self, value: py.path.local):
+    def fspath(self, value: LEGACY_PATH) -> None:
         warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
         self.path = Path(value)
 
@@ -464,7 +462,7 @@ def get_fslocation_from_item(node: "Node") -> Tuple[Union[str, Path], Optional[i
     * "obj": a Python object that the node wraps.
     * "fspath": just a path
 
-    :rtype: A tuple of (str|py.path.local, int) with filename and line number.
+    :rtype: A tuple of (str|Path, int) with filename and line number.
     """
     # See Item.location.
     location: Optional[Tuple[str, Optional[int], str]] = getattr(node, "location", None)
@@ -520,10 +518,10 @@ class Collector(Node):
 
 
 def _check_initialpaths_for_relpath(
-    session: "Session", fspath: py.path.local
+    session: "Session", fspath: LEGACY_PATH
 ) -> Optional[str]:
     for initial_path in session._initialpaths:
-        initial_path_ = py.path.local(initial_path)
+        initial_path_ = legacy_path(initial_path)
         if fspath.common(initial_path_) == initial_path_:
             return fspath.relto(initial_path_)
     return None
@@ -532,7 +530,7 @@ def _check_initialpaths_for_relpath(
 class FSCollector(Collector):
     def __init__(
         self,
-        fspath: Optional[py.path.local],
+        fspath: Optional[LEGACY_PATH],
         path: Optional[Path],
         parent=None,
         config: Optional[Config] = None,
@@ -571,7 +569,7 @@ class FSCollector(Collector):
         cls,
         parent,
         *,
-        fspath: Optional[py.path.local] = None,
+        fspath: Optional[LEGACY_PATH] = None,
         path: Optional[Path] = None,
         **kw,
     ):
@@ -638,8 +636,10 @@ class Item(Node):
         if content:
             self._report_sections.append((when, key, content))
 
-    def reportinfo(self) -> Tuple[Union[py.path.local, str], Optional[int], str]:
-        return self.fspath, None, ""
+    def reportinfo(self) -> Tuple[Union[LEGACY_PATH, str], Optional[int], str]:
+
+        # TODO: enable Path objects in reportinfo
+        return legacy_path(self.path), None, ""
 
     @cached_property
     def location(self) -> Tuple[str, Optional[int], str]:

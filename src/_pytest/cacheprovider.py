@@ -13,7 +13,6 @@ from typing import Set
 from typing import Union
 
 import attr
-import py
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
@@ -21,6 +20,8 @@ from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -120,7 +121,7 @@ class Cache:
             stacklevel=3,
         )
 
-    def makedir(self, name: str) -> py.path.local:
+    def makedir(self, name: str) -> LEGACY_PATH:
         """Return a directory path object with the given name.
 
         If the directory does not yet exist, it will be created. You can use
@@ -137,7 +138,7 @@ class Cache:
             raise ValueError("name is not allowed to contain path separators")
         res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
         res.mkdir(exist_ok=True, parents=True)
-        return py.path.local(res)
+        return legacy_path(res)
 
     def _getvaluepath(self, key: str) -> Path:
         return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))

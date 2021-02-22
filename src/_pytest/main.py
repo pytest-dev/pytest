@@ -21,11 +21,11 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import attr
-import py
 
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
+from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -543,7 +543,7 @@ class Session(nodes.FSCollector):
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
-        path = py.path.local(fspath)
+        path = legacy_path(fspath)
         ihook = self.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
             return False
@@ -555,7 +555,7 @@ class Session(nodes.FSCollector):
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        path = py.path.local(fspath)
+        path = legacy_path(fspath)
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
