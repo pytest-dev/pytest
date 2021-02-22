@@ -11,6 +11,7 @@ import attr
 import pytest
 from _pytest import pathlib
 from _pytest.config import Config
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import create_cleanup_lock
 from _pytest.pathlib import make_numbered_dir
@@ -445,3 +446,32 @@ def test_basetemp_with_read_only_files(pytester: Pytester) -> None:
     # running a second time and ensure we don't crash
     result = pytester.runpytest("--basetemp=tmp")
     assert result.ret == 0
+
+
+@pytest.mark.usefixtures("invalid_get_user")
+def test_tmpdir_factory_handles_invalid_dir_characters(
+    tmpdir_factory: TempdirFactory,
+) -> None:
+    assert "pytest-of-unknown" in str(tmpdir_factory.mktemp("test"))
+
+
+@pytest.mark.usefixtures("invalid_get_user")
+def test_tmp_path_factory_handles_invalid_dir_characters(
+    tmp_path_factory: TempPathFactory,
+) -> None:
+    assert "pytest-of-unknown" in str(tmp_path_factory.mktemp("test"))
+
+
+@pytest.mark.usefixtures("invalid_get_user")
+def test_tmpdir_handles_invalid_dir_characters(tmpdir) -> None:
+    assert "pytest-of-unknown" in str(tmpdir)
+
+
+@pytest.mark.usefixtures("invalid_get_user")
+def test_pytester_handles_invalid_dir_characters(pytester: Pytester) -> None:
+    assert "pytest-of-unknown" in str(pytester)
+
+
+@pytest.fixture
+def invalid_get_user(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr("getpass.getuser", lambda: "os/agnostic")

@@ -115,7 +115,14 @@ class TempPathFactory:
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
-            rootdir.mkdir(exist_ok=True)
+            try:
+                rootdir.mkdir(exist_ok=True)
+            except OSError:
+                # Due to the weird and wonderful challenges of cross-platform compliant
+                # directory names, try to use whatever getuser() has provided and failing
+                # that, default back to unknown and try that.
+                rootdir = temproot.joinpath("pytest-of-unknown")
+                rootdir.mkdir(exist_ok=True)
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
             )
