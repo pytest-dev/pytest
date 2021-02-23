@@ -1372,9 +1372,7 @@ def test_class_from_parent(pytester: Pytester, request: FixtureRequest) -> None:
         def from_parent(cls, parent, *, name, x):
             return super().from_parent(parent=parent, name=name, x=x)
 
-    collector = MyCollector.from_parent(
-        parent=request.session, name="foo", x=10
-    )
+    collector = MyCollector.from_parent(parent=request.session, name="foo", x=10)
     assert collector.x == 10
 
 
