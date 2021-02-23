@@ -371,7 +371,9 @@ Note that on any failure the exception information is stored on
 ``sys.last_value``, ``sys.last_type`` and ``sys.last_traceback``. In
 interactive use, this allows one to drop into postmortem debugging with
 any debug tool. One can also manually access the exception information,
-for example::
+for example:
+
+.. code-block:: pycon
 
     >>> import sys
     >>> sys.last_traceback.tb_lineno

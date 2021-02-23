@@ -288,7 +288,7 @@ Example:
     def checkconfig(x):
         __tracebackhide__ = True
         if not hasattr(x, "config"):
-            pytest.fail("not configured: {}".format(x))
+            pytest.fail(f"not configured: {x}")
 
 
     def test_something():
@@ -332,7 +332,7 @@ this to make sure unexpected exception types aren't hidden:
     def checkconfig(x):
         __tracebackhide__ = operator.methodcaller("errisinstance", ConfigException)
         if not hasattr(x, "config"):
-            raise ConfigException("not configured: {}".format(x))
+            raise ConfigException(f"not configured: {x}")
 
 
     def test_something():
@@ -557,7 +557,7 @@ an ``incremental`` marker which is to be used on classes:
                 test_name = _test_failed_incremental[cls_name].get(parametrize_index, None)
                 # if name found, test has failed for the combination of class name & test name
                 if test_name is not None:
-                    pytest.xfail("previous test failed ({})".format(test_name))
+                    pytest.xfail(f"previous test failed ({test_name})")
 
 
 These two hook implementations work together to abort incremental-marked

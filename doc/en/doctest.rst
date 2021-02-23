@@ -126,7 +126,9 @@ pytest also introduces new options:
 
 * ``NUMBER``: when enabled, floating-point numbers only need to match as far as
   the precision you have written in the expected doctest output. For example,
-  the following output would only need to match to 2 decimal places::
+  the following output would only need to match to 2 decimal places:
+
+  .. code-block:: pycon
 
       >>> math.pi
       3.14

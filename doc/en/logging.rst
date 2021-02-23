@@ -164,9 +164,7 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
                 x.message for x in caplog.get_records(when) if x.levelno == logging.WARNING
             ]
             if messages:
-                pytest.fail(
-                    "warning messages encountered during testing: {}".format(messages)
-                )
+                pytest.fail(f"warning messages encountered during testing: {messages}")
 
 
 

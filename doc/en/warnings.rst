@@ -279,16 +279,21 @@ which works in a similar manner to :ref:`raises <assertraises>`:
             warnings.warn("my warning", UserWarning)
 
 The test will fail if the warning in question is not raised. The keyword
-argument ``match`` to assert that the exception matches a text or regex::
+argument ``match`` to assert that the exception matches a text or regex:
 
-    >>> with warns(UserWarning, match='must be 0 or None'):
+.. code-block:: pycon
+
+    >>> with warns(UserWarning, match="must be 0 or None"):
     ...     warnings.warn("value must be 0 or None", UserWarning)
+    ...
 
-    >>> with warns(UserWarning, match=r'must be \d+$'):
+    >>> with warns(UserWarning, match=r"must be \d+$"):
     ...     warnings.warn("value must be 42", UserWarning)
+    ...
 
-    >>> with warns(UserWarning, match=r'must be \d+$'):
+    >>> with warns(UserWarning, match=r"must be \d+$"):
     ...     warnings.warn("this is not here", UserWarning)
+    ...
     Traceback (most recent call last):
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...

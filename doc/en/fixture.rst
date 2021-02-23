@@ -1681,7 +1681,7 @@ read an optional server URL from the test module which uses our fixture:
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
         smtp_connection = smtplib.SMTP(server, 587, timeout=5)
         yield smtp_connection
-        print("finalizing {} ({})".format(smtp_connection, server))
+        print(f"finalizing {smtp_connection} ({server})")
         smtp_connection.close()
 
 We use the ``request.module`` attribute to optionally obtain an
@@ -1843,7 +1843,7 @@ through the special :py:class:`request <FixtureRequest>` object:
     def smtp_connection(request):
         smtp_connection = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp_connection
-        print("finalizing {}".format(smtp_connection))
+        print(f"finalizing {smtp_connection}")
         smtp_connection.close()
 
 The main change is the declaration of ``params`` with
@@ -2146,7 +2146,7 @@ to show the setup/teardown flow:
 
 
     def test_2(otherarg, modarg):
-        print("  RUN test2 with otherarg {} and modarg {}".format(otherarg, modarg))
+        print(f"  RUN test2 with otherarg {otherarg} and modarg {modarg}")
 
 
 Let's run the tests in verbose mode and with looking at the print-output:
