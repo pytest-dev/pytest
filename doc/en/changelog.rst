@@ -1028,7 +1028,7 @@ Bug Fixes
 - `#7110 <https://github.com/pytest-dev/pytest/issues/7110>`_: Fixed regression: ``asyncbase.TestCase`` tests are executed correctly again.
 
 
-- `#7143 <https://github.com/pytest-dev/pytest/issues/7143>`_: Fix ``File.from_constructor`` so it forwards extra keyword arguments to the constructor.
+- `#7143 <https://github.com/pytest-dev/pytest/issues/7143>`_: Fix ``File.from_parent`` so it forwards extra keyword arguments to the constructor.
 
 
 - `#7145 <https://github.com/pytest-dev/pytest/issues/7145>`_: Classes with broken ``__getattribute__`` methods are displayed correctly during failures.
