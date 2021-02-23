@@ -763,9 +763,9 @@ class Class(PyCollector):
     """Collector for test methods."""
 
     @classmethod
-    def from_parent(cls, parent, *, name, obj=None):
+    def from_parent(cls, parent, *, name, obj=None, **kw):
         """The public constructor."""
-        return super().from_parent(name=name, parent=parent)
+        return super().from_parent(name=name, parent=parent, **kw)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not safe_getattr(self.obj, "__test__", True):
