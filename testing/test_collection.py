@@ -1360,6 +1360,22 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
     assert collector.x == 10
 
 
+def test_class_from_parent(pytester: Pytester, request: FixtureRequest) -> None:
+    """Ensure Class.from_parent can forward custom arguments to the constructor."""
+
+    class MyCollector(pytest.Class):
+        def __init__(self, name, parent, x):
+            super().__init__(name, parent)
+            self.x = x
+
+        @classmethod
+        def from_parent(cls, parent, *, name, x):
+            return super().from_parent(parent=parent, name=name, x=x)
+
+    collector = MyCollector.from_parent(parent=request.session, name="foo", x=10)
+    assert collector.x == 10
+
+
 class TestImportModeImportlib:
     def test_collect_duplicate_names(self, pytester: Pytester) -> None:
         """--import-mode=importlib can import modules with same names that are not in packages."""
