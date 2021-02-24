@@ -448,30 +448,11 @@ def test_basetemp_with_read_only_files(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-@pytest.mark.usefixtures("invalid_get_user")
-def test_tmpdir_factory_handles_invalid_dir_characters(
-    tmpdir_factory: TempdirFactory,
-) -> None:
-    assert "pytest-of-unknown" in str(tmpdir_factory.mktemp("test"))
-
-
-@pytest.mark.usefixtures("invalid_get_user")
 def test_tmp_path_factory_handles_invalid_dir_characters(
-    tmp_path_factory: TempPathFactory,
+    tmp_path_factory: TempPathFactory, monkeypatch: MonkeyPatch
 ) -> None:
-    assert "pytest-of-unknown" in str(tmp_path_factory.mktemp("test"))
-
-
-@pytest.mark.usefixtures("invalid_get_user")
-def test_tmpdir_handles_invalid_dir_characters(tmpdir) -> None:
-    assert "pytest-of-unknown" in str(tmpdir)
-
-
-@pytest.mark.usefixtures("invalid_get_user")
-def test_pytester_handles_invalid_dir_characters(pytester: Pytester) -> None:
-    assert "pytest-of-unknown" in str(pytester)
-
-
-@pytest.fixture
-def invalid_get_user(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setattr("getpass.getuser", lambda: "os/agnostic")
+    monkeypatch.setattr("getpass.getuser", lambda: "os/<:*?;>agnostic")
+    # force the cached _basetemp to be None
+    monkeypatch.setattr(tmp_path_factory, "_basetemp", None)
+    p = tmp_path_factory.getbasetemp()
+    assert "pytest-of-unknown" in str(p)
