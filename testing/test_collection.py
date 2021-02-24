@@ -136,7 +136,7 @@ class TestCollectFS:
         ensure_file(tmp_path / ".whatever" / "test_notfound.py")
         ensure_file(tmp_path / ".bzr" / "test_notfound.py")
         ensure_file(tmp_path / "normal" / "test_found.py")
-        for x in Path(str(tmp_path)).rglob("test_*.py"):
+        for x in tmp_path.rglob("test_*.py"):
             x.write_text("def test_hello(): pass", "utf-8")
 
         result = pytester.runpytest("--collect-only")
@@ -632,8 +632,7 @@ class Test_getinitialnodes:
     def test_global_file(self, pytester: Pytester) -> None:
         tmp_path = pytester.path
         x = ensure_file(tmp_path / "x.py")
-        with tmp_path.cwd():
-            config = pytester.parseconfigure(x)
+        config = pytester.parseconfigure(x)
         col = pytester.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == "x.py"
