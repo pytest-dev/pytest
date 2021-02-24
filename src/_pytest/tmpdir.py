@@ -118,9 +118,7 @@ class TempPathFactory:
             try:
                 rootdir.mkdir(exist_ok=True)
             except OSError:
-                # Due to the weird and wonderful challenges of cross-platform compliant
-                # directory names, try to use whatever getuser() has provided and failing
-                # that, default back to unknown and try that.
+                # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
                 rootdir = temproot.joinpath("pytest-of-unknown")
                 rootdir.mkdir(exist_ok=True)
             basetemp = make_numbered_dir_with_cleanup(

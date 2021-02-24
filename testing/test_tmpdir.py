@@ -452,7 +452,7 @@ def test_tmp_path_factory_handles_invalid_dir_characters(
     tmp_path_factory: TempPathFactory, monkeypatch: MonkeyPatch
 ) -> None:
     monkeypatch.setattr("getpass.getuser", lambda: "os/<:*?;>agnostic")
-    # force the cached _basetemp to be None
+    # _basetemp / _given_basetemp are cached / set in parallel runs, patch them
     monkeypatch.setattr(tmp_path_factory, "_basetemp", None)
     monkeypatch.setattr(tmp_path_factory, "_given_basetemp", None)
     p = tmp_path_factory.getbasetemp()
