@@ -454,5 +454,6 @@ def test_tmp_path_factory_handles_invalid_dir_characters(
     monkeypatch.setattr("getpass.getuser", lambda: "os/<:*?;>agnostic")
     # force the cached _basetemp to be None
     monkeypatch.setattr(tmp_path_factory, "_basetemp", None)
+    monkeypatch.setattr(tmp_path_factory, "_given_basetemp", None)
     p = tmp_path_factory.getbasetemp()
     assert "pytest-of-unknown" in str(p)
