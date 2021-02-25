@@ -384,10 +384,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
             if isinstance(obj, staticmethod):
                 # staticmethods need to be unwrapped.
                 obj = safe_getattr(obj, "__func__", False)
-            return (
-                safe_getattr(obj, "__call__", False)
-                and fixtures.getfixturemarker(obj) is None
-            )
+            return callable(obj) and fixtures.getfixturemarker(obj) is None
         else:
             return False
 
