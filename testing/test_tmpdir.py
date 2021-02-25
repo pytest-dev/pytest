@@ -11,6 +11,7 @@ import attr
 import pytest
 from _pytest import pathlib
 from _pytest.config import Config
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import create_cleanup_lock
 from _pytest.pathlib import make_numbered_dir
@@ -445,3 +446,14 @@ def test_basetemp_with_read_only_files(pytester: Pytester) -> None:
     # running a second time and ensure we don't crash
     result = pytester.runpytest("--basetemp=tmp")
     assert result.ret == 0
+
+
+def test_tmp_path_factory_handles_invalid_dir_characters(
+    tmp_path_factory: TempPathFactory, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setattr("getpass.getuser", lambda: "os/<:*?;>agnostic")
+    # _basetemp / _given_basetemp are cached / set in parallel runs, patch them
+    monkeypatch.setattr(tmp_path_factory, "_basetemp", None)
+    monkeypatch.setattr(tmp_path_factory, "_given_basetemp", None)
+    p = tmp_path_factory.getbasetemp()
+    assert "pytest-of-unknown" in str(p)
