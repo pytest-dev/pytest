@@ -861,7 +861,7 @@ class TestSkip:
                 pass
         """
         )
-        result = pytester.runpytest("-rs")
+        result = pytester.runpytest("-rs", "--strict-markers")
         result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
 
 
