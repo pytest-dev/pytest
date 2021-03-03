@@ -161,6 +161,243 @@ will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
 
 
+Verbosity
+---------
+
+The ``-v`` flag controls the verbosity of pytest output in various aspects: test session progress, assertion
+details when tests fail, fixtures details with ``--fixtures``, etc.
+
+.. regendoc:wipe
+
+Consider this simple file:
+
+.. code-block:: python
+
+    # content of test_verbosity_example.py
+    def test_ok():
+        pass
+
+
+    def test_words_fail():
+        fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+        fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+        assert fruits1 == fruits2
+
+
+    def test_numbers_fail():
+        number_to_text1 = {str(x): x for x in range(5)}
+        number_to_text2 = {str(x * 10): x * 10 for x in range(5)}
+        assert number_to_text1 == number_to_text2
+
+
+    def test_long_text_fail():
+        long_text = "Lorem ipsum dolor sit amet " * 10
+        assert "hello world" in long_text
+
+Executing pytest normally gives us this output (we are skipping the header to focus on the rest):
+
+.. code-block:: pytest
+
+    $ pytest --no-header
+    =========================== test session starts ===========================
+    collected 4 items
+
+    test_verbosity_example.py .FFF                                       [100%]
+
+    ================================ FAILURES =================================
+    _____________________________ test_words_fail _____________________________
+
+        def test_words_fail():
+            fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+            fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+    >       assert fruits1 == fruits2
+    E       AssertionError: assert ['banana', 'a...elon', 'kiwi'] == ['banana', 'a...elon', 'kiwi']
+    E         At index 2 diff: 'grapes' != 'orange'
+    E         Use -v to get the full diff
+
+    test_verbosity_example.py:8: AssertionError
+    ____________________________ test_numbers_fail ____________________________
+
+        def test_numbers_fail():
+            number_to_text1 = {str(x): x for x in range(5)}
+            number_to_text2 = {str(x * 10): x * 10 for x in range(5)}
+    >       assert number_to_text1 == number_to_text2
+    E       AssertionError: assert {'0': 0, '1':..., '3': 3, ...} == {'0': 0, '10'...'30': 30, ...}
+    E         Omitting 1 identical items, use -vv to show
+    E         Left contains 4 more items:
+    E         {'1': 1, '2': 2, '3': 3, '4': 4}
+    E         Right contains 4 more items:
+    E         {'10': 10, '20': 20, '30': 30, '40': 40}
+    E         Use -v to get the full diff
+
+    test_verbosity_example.py:14: AssertionError
+    ___________________________ test_long_text_fail ___________________________
+
+        def test_long_text_fail():
+            long_text = "Lorem ipsum dolor sit amet " * 10
+    >       assert "hello world" in long_text
+    E       AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ips... sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
+
+    test_verbosity_example.py:19: AssertionError
+    ========================= short test summary info =========================
+    FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
+    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
+    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
+    ======================= 3 failed, 1 passed in 0.08s =======================
+
+Notice that:
+
+* Each test inside the file is shown by a single character in the output: ``.`` for passing, ``F`` for failure.
+* ``test_words_fail`` failed, and we are shown a short summary indicating the index 2 of the two lists differ.
+* ``test_numbers_fail`` failed, and we are shown a summary of left/right differences on dictionary items. Identical items are omitted.
+* ``test_long_text_fail`` failed, and the right hand side of the ``in`` statement is truncated using ``...```
+  because it is longer than an internal threshold (240 characters currently).
+
+Now we can increase pytest's verbosity:
+
+.. code-block:: pytest
+
+    $ pytest --no-header -v
+    =========================== test session starts ===========================
+    collecting ... collected 4 items
+
+    test_verbosity_example.py::test_ok PASSED                            [ 25%]
+    test_verbosity_example.py::test_words_fail FAILED                    [ 50%]
+    test_verbosity_example.py::test_numbers_fail FAILED                  [ 75%]
+    test_verbosity_example.py::test_long_text_fail FAILED                [100%]
+
+    ================================ FAILURES =================================
+    _____________________________ test_words_fail _____________________________
+
+        def test_words_fail():
+            fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+            fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+    >       assert fruits1 == fruits2
+    E       AssertionError: assert ['banana', 'a...elon', 'kiwi'] == ['banana', 'a...elon', 'kiwi']
+    E         At index 2 diff: 'grapes' != 'orange'
+    E         Full diff:
+    E         - ['banana', 'apple', 'orange', 'melon', 'kiwi']
+    E         ?                      ^  ^^
+    E         + ['banana', 'apple', 'grapes', 'melon', 'kiwi']
+    E         ?                      ^  ^ +
+
+    test_verbosity_example.py:8: AssertionError
+    ____________________________ test_numbers_fail ____________________________
+
+        def test_numbers_fail():
+            number_to_text1 = {str(x): x for x in range(5)}
+            number_to_text2 = {str(x * 10): x * 10 for x in range(5)}
+    >       assert number_to_text1 == number_to_text2
+    E       AssertionError: assert {'0': 0, '1':..., '3': 3, ...} == {'0': 0, '10'...'30': 30, ...}
+    E         Omitting 1 identical items, use -vv to show
+    E         Left contains 4 more items:
+    E         {'1': 1, '2': 2, '3': 3, '4': 4}
+    E         Right contains 4 more items:
+    E         {'10': 10, '20': 20, '30': 30, '40': 40}
+    E         Full diff:
+    E         - {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}...
+    E
+    E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+    test_verbosity_example.py:14: AssertionError
+    ___________________________ test_long_text_fail ___________________________
+
+        def test_long_text_fail():
+            long_text = "Lorem ipsum dolor sit amet " * 10
+    >       assert "hello world" in long_text
+    E       AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
+
+    test_verbosity_example.py:19: AssertionError
+    ========================= short test summary info =========================
+    FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
+    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
+    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
+    ======================= 3 failed, 1 passed in 0.07s =======================
+
+Notice now that:
+
+* Each test inside the file gets its own line in the output.
+* ``test_words_fail`` now shows the two failing lists in full, in addition to which index differs.
+* ``test_numbers_fail`` now shows a text diff of the two dictionaries, truncated.
+* ``test_long_text_fail`` no longer truncates the right hand side of the ``in`` statement, because the internal
+  threshold for truncation is larger now (2400 characters currently).
+
+Now if we increase verbosity even more:
+
+.. code-block:: pytest
+
+    $ pytest --no-header -vv
+    =========================== test session starts ===========================
+    collecting ... collected 4 items
+
+    test_verbosity_example.py::test_ok PASSED                            [ 25%]
+    test_verbosity_example.py::test_words_fail FAILED                    [ 50%]
+    test_verbosity_example.py::test_numbers_fail FAILED                  [ 75%]
+    test_verbosity_example.py::test_long_text_fail FAILED                [100%]
+
+    ================================ FAILURES =================================
+    _____________________________ test_words_fail _____________________________
+
+        def test_words_fail():
+            fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+            fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+    >       assert fruits1 == fruits2
+    E       AssertionError: assert ['banana', 'apple', 'grapes', 'melon', 'kiwi'] == ['banana', 'apple', 'orange', 'melon', 'kiwi']
+    E         At index 2 diff: 'grapes' != 'orange'
+    E         Full diff:
+    E         - ['banana', 'apple', 'orange', 'melon', 'kiwi']
+    E         ?                      ^  ^^
+    E         + ['banana', 'apple', 'grapes', 'melon', 'kiwi']
+    E         ?                      ^  ^ +
+
+    test_verbosity_example.py:8: AssertionError
+    ____________________________ test_numbers_fail ____________________________
+
+        def test_numbers_fail():
+            number_to_text1 = {str(x): x for x in range(5)}
+            number_to_text2 = {str(x * 10): x * 10 for x in range(5)}
+    >       assert number_to_text1 == number_to_text2
+    E       AssertionError: assert {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4} == {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}
+    E         Common items:
+    E         {'0': 0}
+    E         Left contains 4 more items:
+    E         {'1': 1, '2': 2, '3': 3, '4': 4}
+    E         Right contains 4 more items:
+    E         {'10': 10, '20': 20, '30': 30, '40': 40}
+    E         Full diff:
+    E         - {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}
+    E         ?            -    -    -    -    -    -    -    -
+    E         + {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4}
+
+    test_verbosity_example.py:14: AssertionError
+    ___________________________ test_long_text_fail ___________________________
+
+        def test_long_text_fail():
+            long_text = "Lorem ipsum dolor sit amet " * 10
+    >       assert "hello world" in long_text
+    E       AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
+
+    test_verbosity_example.py:19: AssertionError
+    ========================= short test summary info =========================
+    FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
+    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
+    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
+    ======================= 3 failed, 1 passed in 0.07s =======================
+
+Notice now that:
+
+* Each test inside the file gets its own line in the output.
+* ``test_words_fail`` gives the same output as before in this case.
+* ``test_numbers_fail`` now shows a full text diff of the two dictionaries.
+* ``test_long_text_fail`` also doesn't truncate on the right hand side as before, but now pytest won't truncate any
+  text at all, regardless of its size.
+
+Those were examples of how verbosity affects normal test session output, but verbosity also is used in other
+situations, for example you are shown even fixtures that start with ``_`` if you use ``pytest --fixtures -v``.
+
+Using higher verbosity levels (``-vvv``, ``-vvvv``, ...) is supported, but has no effect in pytest itself at the moment,
+however some plugins might make use of higher verbosity.
+
 .. _`pytest.detailed_failed_tests_usage`:
 
 Producing a detailed summary report
@@ -170,6 +407,8 @@ The ``-r`` flag can be used to display a "short test summary info" at the end of
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
 
 It defaults to ``fE`` to list failures and errors.
+
+.. regendoc:wipe
 
 Example:
 

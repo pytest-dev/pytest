@@ -36,12 +36,23 @@ def _ellipsize(s: str, maxsize: int) -> str:
 
 
 class SafeRepr(reprlib.Repr):
-    """repr.Repr that limits the resulting size of repr() and includes
-    information on exceptions raised during the call."""
+    """
+    repr.Repr that limits the resulting size of repr() and includes
+    information on exceptions raised during the call.
+    """
 
-    def __init__(self, maxsize: int) -> None:
+    def __init__(self, maxsize: Optional[int]) -> None:
+        """
+        :param maxsize:
+            If not None, will truncate the resulting repr to that specific size, using ellipsis
+            somewhere in the middle to hide the extra text.
+            If None, will not impose any size limits on the returning repr.
+        """
         super().__init__()
-        self.maxstring = maxsize
+        # ``maxstring`` is used by the superclass, and needs to be an int; using a
+        # very large number in case maxsize is None, meaning we want to disable
+        # truncation.
+        self.maxstring = maxsize if maxsize is not None else 1_000_000_000
         self.maxsize = maxsize
 
     def repr(self, x: object) -> str:
@@ -51,7 +62,9 @@ class SafeRepr(reprlib.Repr):
             raise
         except BaseException as exc:
             s = _format_repr_exception(exc, x)
-        return _ellipsize(s, self.maxsize)
+        if self.maxsize is not None:
+            s = _ellipsize(s, self.maxsize)
+        return s
 
     def repr_instance(self, x: object, level: int) -> str:
         try:
@@ -60,7 +73,9 @@ class SafeRepr(reprlib.Repr):
             raise
         except BaseException as exc:
             s = _format_repr_exception(exc, x)
-        return _ellipsize(s, self.maxsize)
+        if self.maxsize is not None:
+            s = _ellipsize(s, self.maxsize)
+        return s
 
 
 def safeformat(obj: object) -> str:
@@ -75,7 +90,11 @@ def safeformat(obj: object) -> str:
         return _format_repr_exception(exc, obj)
 
 
-def saferepr(obj: object, maxsize: int = 240) -> str:
+# Maximum size of overall repr of objects to display during assertion errors.
+DEFAULT_REPR_MAX_SIZE = 240
+
+
+def saferepr(obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE) -> str:
     """Return a size-limited safe repr-string for the given object.
 
     Failing __repr__ functions of user instances will be represented
@@ -83,7 +102,7 @@ def saferepr(obj: object, maxsize: int = 240) -> str:
     care to never raise exceptions itself.
 
     This function is a wrapper around the Repr/reprlib functionality of the
-    standard 2.6 lib.
+    stdlib.
     """
     return SafeRepr(maxsize).repr(obj)
 
