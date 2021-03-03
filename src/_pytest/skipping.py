@@ -161,7 +161,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
 class Skip:
     """The result of evaluate_skip_marks()."""
 
-    reason = attr.ib(type=str)
+    reason = attr.ib(type=str, default="unconditional skip")
 
 
 def evaluate_skip_marks(item: Item) -> Optional[Skip]:
@@ -184,13 +184,10 @@ def evaluate_skip_marks(item: Item) -> Optional[Skip]:
                 return Skip(reason)
 
     for mark in item.iter_markers(name="skip"):
-        if "reason" in mark.kwargs:
-            reason = mark.kwargs["reason"]
-        elif mark.args:
-            reason = mark.args[0]
-        else:
-            reason = "unconditional skip"
-        return Skip(reason)
+        try:
+            return Skip(*mark.args, **mark.kwargs)
+        except TypeError as e:
+            raise TypeError(str(e) + " - maybe you meant pytest.mark.skipif?")
 
     return None
 

@@ -150,7 +150,7 @@ pytest.mark.skip
 
 Unconditionally skip a test function.
 
-.. py:function:: pytest.mark.skip(*, reason=None)
+.. py:function:: pytest.mark.skip(reason=None)
 
     :keyword str reason: Reason why the test function is being skipped.
 
