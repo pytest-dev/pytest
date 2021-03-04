@@ -243,7 +243,7 @@ def test_fixtures_nose_setup_issue8394(pytester: Pytester) -> None:
                 pass
 
             def test_method(self): pass
-        """        
+        """
     )
     regex = "*no docstring available*"
     result = pytester.runpytest("--fixtures")
