@@ -861,8 +861,24 @@ class TestSkip:
                 pass
         """
         )
-        result = pytester.runpytest("-rs")
+        result = pytester.runpytest("-rs", "--strict-markers")
         result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
+
+    def test_wrong_skip_usage(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            @pytest.mark.skip(False, reason="I thought this was skipif")
+            def test_hello():
+                pass
+        """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*TypeError: __init__() got multiple values for argument 'reason' - maybe you meant pytest.mark.skipif?"
+            ]
+        )
 
 
 class TestSkipif:
