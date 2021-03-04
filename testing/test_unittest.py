@@ -302,6 +302,30 @@ def test_setup_setUpClass(pytester: Pytester) -> None:
     reprec.assertoutcome(passed=3)
 
 
+def test_fixtures_setup_setUpClass_issue8394(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import unittest
+        class MyTestCase(unittest.TestCase):
+            @classmethod
+            def setUpClass(cls):
+                pass
+            def test_func1(self):
+                pass
+            @classmethod
+            def tearDownClass(cls):
+                pass
+    """
+    )
+    result = pytester.runpytest("--fixtures")
+    assert result.ret == 0
+    result.stdout.no_fnmatch_line("*no docstring available*")
+
+    result = pytester.runpytest("--fixtures", "-v")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*no docstring available*"])
+
+
 def test_setup_class(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
