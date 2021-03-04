@@ -301,6 +301,7 @@ def test_setup_setUpClass(pytester: Pytester) -> None:
     reprec = pytester.inline_run(testpath)
     reprec.assertoutcome(passed=3)
 
+
 def test_fixtures_setup_setUpClass_issue8394(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
@@ -367,7 +368,9 @@ def test_fixtures_setup(pytester: Pytester) -> None:
 
     result = pytester.runpytest("--fixtures", "-v")
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*no docstring available*", "*no docstring available*"])
+    result.stdout.fnmatch_lines(
+        ["*no docstring available*", "*no docstring available*"]
+    )
 
 
 @pytest.mark.parametrize("type", ["Error", "Failure"])

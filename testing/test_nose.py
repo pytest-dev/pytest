@@ -222,7 +222,7 @@ def test_fixtures_nose_setup_module_issue8394(pytester: Pytester) -> None:
 
         def test_world():
             pass
-        """        
+        """
     )
     result = pytester.runpytest("--fixtures")
     assert result.ret == 0
@@ -237,16 +237,16 @@ def test_fixtures_nose_setup_method_issue8394(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         class Test(object):
-            def setup_method(self, meth): 
+            def setup_method(self, meth):
                 pass
 
             def teardown_method(self, meth):
                 pass
 
             def test_method_1(self): pass
-        """        
+        """
     )
-    
+
     result = pytester.runpytest("--fixtures")
     assert result.ret == 0
     result.stdout.no_fnmatch_line("*no docstring available*")
@@ -260,16 +260,16 @@ def test_fixtures_nose_setup_class_issue8394(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         class Test(object):
-            def setup_class(cls): 
+            def setup_class(cls):
                 pass
 
             def teardown_class(cls):
                 pass
 
             def test_method_1(self): pass
-        """        
+        """
     )
-    
+
     result = pytester.runpytest("--fixtures")
     assert result.ret == 0
     result.stdout.no_fnmatch_line("*no docstring available*")
@@ -290,7 +290,7 @@ def test_fixtures_nose_setup_function_issue8394(pytester: Pytester) -> None:
 
         def test_world():
             pass
-        """        
+        """
     )
     result = pytester.runpytest("--fixtures")
     assert result.ret == 0
