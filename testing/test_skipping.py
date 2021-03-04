@@ -864,7 +864,7 @@ class TestSkip:
         result = pytester.runpytest("-rs", "--strict-markers")
         result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
 
-    def test_wrong_strict_usage(self, pytester: Pytester) -> None:
+    def test_wrong_skip_usage(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
             import pytest
