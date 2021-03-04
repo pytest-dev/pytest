@@ -303,7 +303,7 @@ def test_setup_setUpClass(pytester: Pytester) -> None:
 
 
 def test_fixtures_setup_setUpClass_issue8394(pytester: Pytester) -> None:
-    testpath = pytester.makepyfile(
+    pytester.makepyfile(
         """
         import unittest
         class MyTestCase(unittest.TestCase):
@@ -327,7 +327,7 @@ def test_fixtures_setup_setUpClass_issue8394(pytester: Pytester) -> None:
 
 
 def test_setup_class(pytester: Pytester) -> None:
-    pytester.makepyfile(
+    testpath = pytester.makepyfile(
         """
         import unittest
         import pytest
