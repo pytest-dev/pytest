@@ -245,14 +245,14 @@ def test_fixtures_nose_setup_issue8394(pytester: Pytester) -> None:
             def test_method(self): pass
         """
     )
-    regex = "*no docstring available*"
+    match = "*no docstring available*"
     result = pytester.runpytest("--fixtures")
     assert result.ret == 0
-    result.stdout.no_fnmatch_line(regex)
+    result.stdout.no_fnmatch_line(match)
 
     result = pytester.runpytest("--fixtures", "-v")
     assert result.ret == 0
-    result.stdout.fnmatch_lines([regex, regex, regex, regex])
+    result.stdout.fnmatch_lines([match, match, match, match])
 
 
 def test_nose_setup_ordering(pytester: Pytester) -> None:
