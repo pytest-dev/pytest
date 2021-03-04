@@ -211,7 +211,7 @@ def test_nose_style_setup_teardown(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*2 passed*"])
 
 
-def test_fixtures_nose_setup_module_issue8394(pytester: Pytester) -> None:
+def test_fixtures_nose_setup_issue8394(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         def setup_module():
@@ -220,68 +220,6 @@ def test_fixtures_nose_setup_module_issue8394(pytester: Pytester) -> None:
         def teardown_module():
             pass
 
-        def test_world():
-            pass
-        """
-    )
-    result = pytester.runpytest("--fixtures")
-    assert result.ret == 0
-    result.stdout.no_fnmatch_line("*no docstring available*")
-
-    result = pytester.runpytest("--fixtures", "-v")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines(["*no docstring available*"])
-
-
-def test_fixtures_nose_setup_method_issue8394(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        class Test(object):
-            def setup_method(self, meth):
-                pass
-
-            def teardown_method(self, meth):
-                pass
-
-            def test_method_1(self): pass
-        """
-    )
-
-    result = pytester.runpytest("--fixtures")
-    assert result.ret == 0
-    result.stdout.no_fnmatch_line("*no docstring available*")
-
-    result = pytester.runpytest("--fixtures", "-v")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines(["*no docstring available*"])
-
-
-def test_fixtures_nose_setup_class_issue8394(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        class Test(object):
-            def setup_class(cls):
-                pass
-
-            def teardown_class(cls):
-                pass
-
-            def test_method_1(self): pass
-        """
-    )
-
-    result = pytester.runpytest("--fixtures")
-    assert result.ret == 0
-    result.stdout.no_fnmatch_line("*no docstring available*")
-
-    result = pytester.runpytest("--fixtures", "-v")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines(["*no docstring available*"])
-
-
-def test_fixtures_nose_setup_function_issue8394(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
         def setup_function(func):
             pass
 
@@ -290,15 +228,31 @@ def test_fixtures_nose_setup_function_issue8394(pytester: Pytester) -> None:
 
         def test_world():
             pass
-        """
+
+        class Test(object):
+            def setup_class(cls):
+                pass
+
+            def teardown_class(cls):
+                pass
+
+            def setup_method(self, meth):
+                pass
+
+            def teardown_method(self, meth):
+                pass
+
+            def test_method(self): pass
+        """        
     )
+    regex = "*no docstring available*"
     result = pytester.runpytest("--fixtures")
     assert result.ret == 0
-    result.stdout.no_fnmatch_line("*no docstring available*")
+    result.stdout.no_fnmatch_line(regex)
 
     result = pytester.runpytest("--fixtures", "-v")
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*no docstring available*"])
+    result.stdout.fnmatch_lines([regex, regex, regex, regex])
 
 
 def test_nose_setup_ordering(pytester: Pytester) -> None:
