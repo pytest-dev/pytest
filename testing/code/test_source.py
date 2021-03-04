@@ -286,9 +286,7 @@ def test_deindent() -> None:
     assert lines == ["def f():", "    def g():", "        pass"]
 
 
-def test_source_of_class_at_eof_without_newline(
-    tmpdir, _sys_snapshot, tmp_path: Path
-) -> None:
+def test_source_of_class_at_eof_without_newline(_sys_snapshot, tmp_path: Path) -> None:
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
     source = Source(

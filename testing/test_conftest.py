@@ -44,15 +44,15 @@ class TestConftestValueAccessGlobal:
     def basedir(
         self, request, tmp_path_factory: TempPathFactory
     ) -> Generator[Path, None, None]:
-        tmpdir = tmp_path_factory.mktemp("basedir", numbered=True)
-        tmpdir.joinpath("adir/b").mkdir(parents=True)
-        tmpdir.joinpath("adir/conftest.py").write_text("a=1 ; Directory = 3")
-        tmpdir.joinpath("adir/b/conftest.py").write_text("b=2 ; a = 1.5")
+        tmp_path = tmp_path_factory.mktemp("basedir", numbered=True)
+        tmp_path.joinpath("adir/b").mkdir(parents=True)
+        tmp_path.joinpath("adir/conftest.py").write_text("a=1 ; Directory = 3")
+        tmp_path.joinpath("adir/b/conftest.py").write_text("b=2 ; a = 1.5")
         if request.param == "inpackage":
-            tmpdir.joinpath("adir/__init__.py").touch()
-            tmpdir.joinpath("adir/b/__init__.py").touch()
+            tmp_path.joinpath("adir/__init__.py").touch()
+            tmp_path.joinpath("adir/b/__init__.py").touch()
 
-        yield tmpdir
+        yield tmp_path
 
     def test_basic_init(self, basedir: Path) -> None:
         conftest = PytestPluginManager()

@@ -274,7 +274,7 @@ class TestFunction:
         pytester.makepyfile(
             """
             class A(object):
-                def __call__(self, tmpdir):
+                def __call__(self, tmp_path):
                     0/0
 
             test_a = A()
