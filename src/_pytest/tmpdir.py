@@ -94,14 +94,14 @@ class TempPathFactory:
         basename = self._ensure_relative_to_basetemp(basename)
         if not numbered:
             p = self.getbasetemp().joinpath(basename)
-            p.mkdir()
+            p.mkdir(mode=0o700)
         else:
-            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename)
+            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename, mode=0o700)
             self._trace("mktemp", p)
         return p
 
     def getbasetemp(self) -> Path:
-        """Return base temporary directory."""
+        """Return the base temporary directory, creating it if needed."""
         if self._basetemp is not None:
             return self._basetemp
 
@@ -109,7 +109,7 @@ class TempPathFactory:
             basetemp = self._given_basetemp
             if basetemp.exists():
                 rm_rf(basetemp)
-            basetemp.mkdir()
+            basetemp.mkdir(mode=0o700)
             basetemp = basetemp.resolve()
         else:
             from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
@@ -119,13 +119,17 @@ class TempPathFactory:
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
             try:
-                rootdir.mkdir(exist_ok=True)
+                rootdir.mkdir(mode=0o700, exist_ok=True)
             except OSError:
                 # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
                 rootdir = temproot.joinpath("pytest-of-unknown")
-                rootdir.mkdir(exist_ok=True)
+                rootdir.mkdir(mode=0o700, exist_ok=True)
             basetemp = make_numbered_dir_with_cleanup(
-                prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
+                prefix="pytest-",
+                root=rootdir,
+                keep=3,
+                lock_timeout=LOCK_TIMEOUT,
+                mode=0o700,
             )
         assert basetemp is not None, basetemp
         self._basetemp = basetemp

@@ -454,3 +454,19 @@ def test_tmp_path_factory_handles_invalid_dir_characters(
     monkeypatch.setattr(tmp_path_factory, "_given_basetemp", None)
     p = tmp_path_factory.getbasetemp()
     assert "pytest-of-unknown" in str(p)
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+def test_tmp_path_factory_create_directory_with_safe_permissions(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Verify that pytest creates directories under /tmp with private permissions."""
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    basetemp = tmp_factory.getbasetemp()
+
+    # No world-readable permissions.
+    assert (basetemp.stat().st_mode & 0o077) == 0
+    # Parent too (pytest-of-foo).
+    assert (basetemp.parent.stat().st_mode & 0o077) == 0
