@@ -1,5 +1,11 @@
 :orphan:
 
+.. sidebar:: Next Open Trainings
+
+   - `Professionelles Testen für Python mit pytest <https://www.enterpy.de/lecture_compact1.php?id=12713>`_ (German), part of the enterPy conference, April 22nd, remote.
+
+   Also see `previous talks and blogposts <talks.html>`_.
+
 .. _features:
 
 pytest: helps you write better programs
