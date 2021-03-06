@@ -445,3 +445,19 @@ def test_basetemp_with_read_only_files(pytester: Pytester) -> None:
     # running a second time and ensure we don't crash
     result = pytester.runpytest("--basetemp=tmp")
     assert result.ret == 0
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+def test_tmp_path_factory_create_directory_with_safe_permissions(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    """Verify that pytest creates directories under /tmp with private permissions."""
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    basetemp = tmp_factory.getbasetemp()
+
+    # No world-readable permissions.
+    assert (basetemp.stat().st_mode & 0o077) == 0
+    # Parent too (pytest-of-foo).
+    assert (basetemp.parent.stat().st_mode & 0o077) == 0

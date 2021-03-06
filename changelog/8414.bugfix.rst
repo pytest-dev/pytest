@@ -1,0 +1,5 @@
+pytest used to create directories under ``/tmp`` with world-readable
+permissions. This means that any user in the system was able to read
+information written by tests in temporary directories (such as those created by
+the ``tmp_path``/``tmpdir`` fixture). Now the directories are created with
+private permissions.
