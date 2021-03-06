@@ -62,13 +62,6 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
     return path.joinpath(".lock")
 
 
-def ensure_reset_dir(path: Path) -> None:
-    """Ensure the given path is an empty directory."""
-    if path.exists():
-        rm_rf(path)
-    path.mkdir()
-
-
 def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
     """Handle known read-only errors during rmtree.
 

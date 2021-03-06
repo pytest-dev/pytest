@@ -7,10 +7,10 @@ from typing import Optional
 
 import attr
 
-from .pathlib import ensure_reset_dir
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
+from .pathlib import rm_rf
 from _pytest.compat import final
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
@@ -107,7 +107,9 @@ class TempPathFactory:
 
         if self._given_basetemp is not None:
             basetemp = self._given_basetemp
-            ensure_reset_dir(basetemp)
+            if basetemp.exists():
+                rm_rf(basetemp)
+            basetemp.mkdir()
             basetemp = basetemp.resolve()
         else:
             from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
