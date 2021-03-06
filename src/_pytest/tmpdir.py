@@ -115,6 +115,25 @@ class TempPathFactory:
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
             rootdir.mkdir(mode=0o700, exist_ok=True)
+            # Because we use exist_ok=True with a predictable name, make sure
+            # we are the owners, to prevent any funny business (on unix, where
+            # temproot is usually shared).
+            # Also, to keep things private, fixup any world-readable temp
+            # rootdir's permissions. Historically 0o755 was used, so we can't
+            # just error out on this, at least for a while.
+            if hasattr(os, "getuid"):
+                rootdir_stat = rootdir.stat()
+                uid = os.getuid()
+                # getuid shouldn't fail, but cpython defines such a case.
+                # Let's hope for the best.
+                if uid != -1:
+                    if rootdir_stat.st_uid != uid:
+                        raise OSError(
+                            f"The temporary directory {rootdir} is not owned by the current user. "
+                            "Fix this and try again."
+                        )
+                    if (rootdir_stat.st_mode & 0o077) != 0:
+                        os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-",
                 root=rootdir,
