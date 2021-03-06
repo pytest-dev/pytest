@@ -117,9 +117,9 @@ class TempPathFactory:
                 prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
             )
         assert basetemp is not None, basetemp
-        self._basetemp = t = basetemp
-        self._trace("new basetemp", t)
-        return t
+        self._basetemp = basetemp
+        self._trace("new basetemp", basetemp)
+        return basetemp
 
 
 @final
