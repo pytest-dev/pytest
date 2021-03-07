@@ -13,15 +13,21 @@ class EnvironmentAwareMixin:
         self._envpatcher.setenv(name, value)
 
 
-# This arrangement fails: setup_method runs before _monkeypatch
+# This arrangement works: _monkeypatch does run
 class MyPytestBase(
     EnvironmentAwareMixin,
 ):
     pass
 
 
+class TestAnotherThing(MyPytestBase):
+    def test_another_thing(self):
+        self.set_environ("X", "1")
+        assert os.environ["X"] == "1"
+
+
+# This arrangement fails: setup_method runs before _monkeypatch
 class TestSomething(MyPytestBase):
-    @pytest.fixture(autouse=True)
     def setup_method(self):
         self.set_environ("X", "1")
 
