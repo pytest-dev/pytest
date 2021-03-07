@@ -34,7 +34,6 @@ from typing import Union
 from weakref import WeakKeyDictionary
 
 import attr
-import py
 from iniconfig import IniConfig
 from iniconfig import SectionWrapper
 
@@ -42,6 +41,8 @@ from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
 from _pytest.config import _PluggyPlugin
@@ -61,6 +62,7 @@ from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
+from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -474,7 +476,7 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
 def testdir(pytester: "Pytester") -> "Testdir":
     """
     Identical to :fixture:`pytester`, and provides an instance whose methods return
-    legacy ``py.path.local`` objects instead when applicable.
+    legacy ``LEGACY_PATH`` objects instead when applicable.
 
     New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
     """
@@ -933,10 +935,10 @@ class Pytester:
             example_path = example_dir.joinpath(name)
 
         if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
-            # TODO: py.path.local.copy can copy files to existing directories,
+            # TODO: legacy_path.copy can copy files to existing directories,
             # while with shutil.copytree the destination directory cannot exist,
-            # we will need to roll our own in order to drop py.path.local completely
-            py.path.local(example_path).copy(py.path.local(self.path))
+            # we will need to roll our own in order to drop legacy_path completely
+            legacy_path(example_path).copy(legacy_path(self.path))
             return self.path
         elif example_path.is_file():
             result = self.path.joinpath(example_path.name)
@@ -957,12 +959,12 @@ class Pytester:
         :param _pytest.config.Config config:
            A pytest config.
            See :py:meth:`parseconfig` and :py:meth:`parseconfigure` for creating it.
-        :param py.path.local arg:
+        :param os.PathLike[str] arg:
             Path to the file.
         """
         session = Session.from_config(config)
         assert "::" not in str(arg)
-        p = py.path.local(arg)
+        p = legacy_path(arg)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([str(p)], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
@@ -974,12 +976,12 @@ class Pytester:
         This is like :py:meth:`getnode` but uses :py:meth:`parseconfigure` to
         create the (configured) pytest Config instance.
 
-        :param py.path.local path: Path to the file.
+        :param os.PathLike[str] path: Path to the file.
         """
-        path = py.path.local(path)
+        path = Path(path)
         config = self.parseconfigure(path)
         session = Session.from_config(config)
-        x = session.fspath.bestrelpath(path)
+        x = bestrelpath(session.path, path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
@@ -1519,10 +1521,10 @@ class LineComp:
 @attr.s(repr=False, str=False, init=False)
 class Testdir:
     """
-    Similar to :class:`Pytester`, but this class works with legacy py.path.local objects instead.
+    Similar to :class:`Pytester`, but this class works with legacy legacy_path objects instead.
 
     All methods just forward to an internal :class:`Pytester` instance, converting results
-    to `py.path.local` objects as necessary.
+    to `legacy_path` objects as necessary.
     """
 
     __test__ = False
@@ -1536,13 +1538,13 @@ class Testdir:
         self._pytester = pytester
 
     @property
-    def tmpdir(self) -> py.path.local:
+    def tmpdir(self) -> LEGACY_PATH:
         """Temporary directory where tests are executed."""
-        return py.path.local(self._pytester.path)
+        return legacy_path(self._pytester.path)
 
     @property
-    def test_tmproot(self) -> py.path.local:
-        return py.path.local(self._pytester._test_tmproot)
+    def test_tmproot(self) -> LEGACY_PATH:
+        return legacy_path(self._pytester._test_tmproot)
 
     @property
     def request(self):
@@ -1572,7 +1574,7 @@ class Testdir:
         """See :meth:`Pytester._finalize`."""
         return self._pytester._finalize()
 
-    def makefile(self, ext, *args, **kwargs) -> py.path.local:
+    def makefile(self, ext, *args, **kwargs) -> LEGACY_PATH:
         """See :meth:`Pytester.makefile`."""
         if ext and not ext.startswith("."):
             # pytester.makefile is going to throw a ValueError in a way that
@@ -1582,47 +1584,47 @@ class Testdir:
             # allowed this, we will prepend "." as a workaround to avoid breaking
             # testdir usage that worked before
             ext = "." + ext
-        return py.path.local(str(self._pytester.makefile(ext, *args, **kwargs)))
+        return legacy_path(self._pytester.makefile(ext, *args, **kwargs))
 
-    def makeconftest(self, source) -> py.path.local:
+    def makeconftest(self, source) -> LEGACY_PATH:
         """See :meth:`Pytester.makeconftest`."""
-        return py.path.local(str(self._pytester.makeconftest(source)))
+        return legacy_path(self._pytester.makeconftest(source))
 
-    def makeini(self, source) -> py.path.local:
+    def makeini(self, source) -> LEGACY_PATH:
         """See :meth:`Pytester.makeini`."""
-        return py.path.local(str(self._pytester.makeini(source)))
+        return legacy_path(self._pytester.makeini(source))
 
     def getinicfg(self, source: str) -> SectionWrapper:
         """See :meth:`Pytester.getinicfg`."""
         return self._pytester.getinicfg(source)
 
-    def makepyprojecttoml(self, source) -> py.path.local:
+    def makepyprojecttoml(self, source) -> LEGACY_PATH:
         """See :meth:`Pytester.makepyprojecttoml`."""
-        return py.path.local(str(self._pytester.makepyprojecttoml(source)))
+        return legacy_path(self._pytester.makepyprojecttoml(source))
 
-    def makepyfile(self, *args, **kwargs) -> py.path.local:
+    def makepyfile(self, *args, **kwargs) -> LEGACY_PATH:
         """See :meth:`Pytester.makepyfile`."""
-        return py.path.local(str(self._pytester.makepyfile(*args, **kwargs)))
+        return legacy_path(self._pytester.makepyfile(*args, **kwargs))
 
-    def maketxtfile(self, *args, **kwargs) -> py.path.local:
+    def maketxtfile(self, *args, **kwargs) -> LEGACY_PATH:
         """See :meth:`Pytester.maketxtfile`."""
-        return py.path.local(str(self._pytester.maketxtfile(*args, **kwargs)))
+        return legacy_path(self._pytester.maketxtfile(*args, **kwargs))
 
     def syspathinsert(self, path=None) -> None:
         """See :meth:`Pytester.syspathinsert`."""
         return self._pytester.syspathinsert(path)
 
-    def mkdir(self, name) -> py.path.local:
+    def mkdir(self, name) -> LEGACY_PATH:
         """See :meth:`Pytester.mkdir`."""
-        return py.path.local(str(self._pytester.mkdir(name)))
+        return legacy_path(self._pytester.mkdir(name))
 
-    def mkpydir(self, name) -> py.path.local:
+    def mkpydir(self, name) -> LEGACY_PATH:
         """See :meth:`Pytester.mkpydir`."""
-        return py.path.local(str(self._pytester.mkpydir(name)))
+        return legacy_path(self._pytester.mkpydir(name))
 
-    def copy_example(self, name=None) -> py.path.local:
+    def copy_example(self, name=None) -> LEGACY_PATH:
         """See :meth:`Pytester.copy_example`."""
-        return py.path.local(str(self._pytester.copy_example(name)))
+        return legacy_path(self._pytester.copy_example(name))
 
     def getnode(self, config: Config, arg) -> Optional[Union[Item, Collector]]:
         """See :meth:`Pytester.getnode`."""

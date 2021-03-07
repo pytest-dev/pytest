@@ -28,7 +28,6 @@ from typing import TypeVar
 from typing import Union
 
 import attr
-import py
 
 import _pytest
 from _pytest import nodes
@@ -46,6 +45,8 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
@@ -53,6 +54,7 @@ from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FILLFUNCARGS
+from _pytest.deprecated import NODE_FSPATH
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
@@ -256,12 +258,12 @@ def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_
             if scopenum == 0:  # session
                 key: _Key = (argname, param_index)
             elif scopenum == 1:  # package
-                key = (argname, param_index, item.fspath.dirpath())
+                key = (argname, param_index, item.path.parent)
             elif scopenum == 2:  # module
-                key = (argname, param_index, item.fspath)
+                key = (argname, param_index, item.path)
             elif scopenum == 3:  # class
                 item_cls = item.cls  # type: ignore[attr-defined]
-                key = (argname, param_index, item.fspath, item_cls)
+                key = (argname, param_index, item.path, item_cls)
             yield key
 
 
@@ -519,12 +521,17 @@ class FixtureRequest:
         return self._pyfuncitem.getparent(_pytest.python.Module).obj
 
     @property
-    def fspath(self) -> py.path.local:
-        """The file system path of the test module which collected this test."""
+    def fspath(self) -> LEGACY_PATH:
+        """(deprecated) The file system path of the test module which collected this test."""
+        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
+        return legacy_path(self.path)
+
+    @property
+    def path(self) -> Path:
         if self.scope not in ("function", "class", "module", "package"):
             raise AttributeError(f"module not available in {self.scope}-scoped context")
         # TODO: Remove ignore once _pyfuncitem is properly typed.
-        return self._pyfuncitem.fspath  # type: ignore
+        return self._pyfuncitem.path  # type: ignore
 
     @property
     def keywords(self) -> MutableMapping[str, Any]:
@@ -1040,7 +1047,7 @@ class FixtureDef(Generic[_FixtureValue]):
             if exc:
                 raise exc
         finally:
-            hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
+            hook = self._fixturemanager.session.gethookproxy(request.node.path)
             hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
             # Even if finalization fails, we invalidate the cached fixture
             # value and remove all finalizers because they may be bound methods
@@ -1075,7 +1082,7 @@ class FixtureDef(Generic[_FixtureValue]):
             self.finish(request)
             assert self.cached_result is None
 
-        hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
+        hook = self._fixturemanager.session.gethookproxy(request.node.path)
         result = hook.pytest_fixture_setup(fixturedef=self, request=request)
         return result
 
@@ -1623,6 +1630,11 @@ class FixtureManager:
         self._holderobjseen.add(holderobj)
         autousenames = []
         for name in dir(holderobj):
+            # ugly workaround for one of the fspath deprecated property of node
+            # todo: safely generalize
+            if isinstance(holderobj, nodes.Node) and name == "fspath":
+                continue
+
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getatt() ignores such exceptions.
             obj = safe_getattr(holderobj, name, None)

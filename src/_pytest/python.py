@@ -26,8 +26,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import py
-
 import _pytest
 from _pytest import fixtures
 from _pytest import nodes
@@ -45,6 +43,8 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.compat import NOTSET
 from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
@@ -189,7 +189,7 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
 
 
 def pytest_collect_file(
-    fspath: Path, path: py.path.local, parent: nodes.Collector
+    fspath: Path, path: LEGACY_PATH, parent: nodes.Collector
 ) -> Optional["Module"]:
     if fspath.suffix == ".py":
         if not parent.session.isinitpath(fspath):
@@ -210,7 +210,7 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     return any(fnmatch_ex(pattern, path) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(fspath: Path, path: py.path.local, parent) -> "Module":
+def pytest_pycollect_makemodule(fspath: Path, path: LEGACY_PATH, parent) -> "Module":
     if fspath.name == "__init__.py":
         pkg: Package = Package.from_parent(parent, fspath=path)
         return pkg
@@ -321,7 +321,7 @@ class PyobjMixin(nodes.Node):
         parts.reverse()
         return ".".join(parts)
 
-    def reportinfo(self) -> Tuple[Union[py.path.local, str], int, str]:
+    def reportinfo(self) -> Tuple[Union[LEGACY_PATH, str], int, str]:
         # XXX caching?
         obj = self.obj
         compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
@@ -330,12 +330,12 @@ class PyobjMixin(nodes.Node):
             file_path = sys.modules[obj.__module__].__file__
             if file_path.endswith(".pyc"):
                 file_path = file_path[:-1]
-            fspath: Union[py.path.local, str] = file_path
+            fspath: Union[LEGACY_PATH, str] = file_path
             lineno = compat_co_firstlineno
         else:
             path, lineno = getfslineno(obj)
             if isinstance(path, Path):
-                fspath = py.path.local(path)
+                fspath = legacy_path(path)
             else:
                 fspath = path
         modpath = self.getmodpath()
@@ -577,7 +577,7 @@ class Module(nodes.File, PyCollector):
         # We assume we are only called once per module.
         importmode = self.config.getoption("--import-mode")
         try:
-            mod = import_path(self.fspath, mode=importmode)
+            mod = import_path(self.path, mode=importmode)
         except SyntaxError as e:
             raise self.CollectError(
                 ExceptionInfo.from_current().getrepr(style="short")
@@ -603,10 +603,10 @@ class Module(nodes.File, PyCollector):
             )
             formatted_tb = str(exc_repr)
             raise self.CollectError(
-                "ImportError while importing test module '{fspath}'.\n"
+                "ImportError while importing test module '{path}'.\n"
                 "Hint: make sure your test modules/packages have valid Python names.\n"
                 "Traceback:\n"
-                "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
+                "{traceback}".format(path=self.path, traceback=formatted_tb)
             ) from e
         except skip.Exception as e:
             if e.allow_module_level:
@@ -624,18 +624,26 @@ class Module(nodes.File, PyCollector):
 class Package(Module):
     def __init__(
         self,
-        fspath: py.path.local,
+        fspath: Optional[LEGACY_PATH],
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
         session=None,
         nodeid=None,
+        path=Optional[Path],
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
+        path, fspath = nodes._imply_path(path, fspath=fspath)
         session = parent.session
         nodes.FSCollector.__init__(
-            self, fspath, parent=parent, config=config, session=session, nodeid=nodeid
+            self,
+            fspath=fspath,
+            path=path,
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
         )
         self.name = os.path.basename(str(fspath.dirname))
 
@@ -667,7 +675,7 @@ class Package(Module):
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
-        path = py.path.local(fspath)
+        path = legacy_path(fspath)
         ihook = self.session.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
             return False
@@ -679,7 +687,7 @@ class Package(Module):
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        path = py.path.local(fspath)
+        path = legacy_path(fspath)
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -704,12 +712,12 @@ class Package(Module):
         return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        this_path = Path(self.fspath).parent
+        this_path = self.path.parent
         init_module = this_path / "__init__.py"
         if init_module.is_file() and path_matches_patterns(
             init_module, self.config.getini("python_files")
         ):
-            yield Module.from_parent(self, fspath=py.path.local(init_module))
+            yield Module.from_parent(self, path=init_module)
         pkg_prefixes: Set[Path] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
             path = Path(direntry.path)

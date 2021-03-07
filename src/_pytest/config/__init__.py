@@ -32,7 +32,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import attr
-import py
 from pluggy import HookimplMarker
 from pluggy import HookspecMarker
 from pluggy import PluginManager
@@ -48,6 +47,8 @@ from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
 from _pytest.compat import importlib_metadata
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -937,15 +938,15 @@ class Config:
             self.cache: Optional[Cache] = None
 
     @property
-    def invocation_dir(self) -> py.path.local:
+    def invocation_dir(self) -> LEGACY_PATH:
         """The directory from which pytest was invoked.
 
         Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`,
         which is a :class:`pathlib.Path`.
 
-        :type: py.path.local
+        :type: LEGACY_PATH
         """
-        return py.path.local(str(self.invocation_params.dir))
+        return legacy_path(str(self.invocation_params.dir))
 
     @property
     def rootpath(self) -> Path:
@@ -958,14 +959,14 @@ class Config:
         return self._rootpath
 
     @property
-    def rootdir(self) -> py.path.local:
+    def rootdir(self) -> LEGACY_PATH:
         """The path to the :ref:`rootdir <rootdir>`.
 
         Prefer to use :attr:`rootpath`, which is a :class:`pathlib.Path`.
 
-        :type: py.path.local
+        :type: LEGACY_PATH
         """
-        return py.path.local(str(self.rootpath))
+        return legacy_path(str(self.rootpath))
 
     @property
     def inipath(self) -> Optional[Path]:
@@ -978,14 +979,14 @@ class Config:
         return self._inipath
 
     @property
-    def inifile(self) -> Optional[py.path.local]:
+    def inifile(self) -> Optional[LEGACY_PATH]:
         """The path to the :ref:`configfile <configfiles>`.
 
         Prefer to use :attr:`inipath`, which is a :class:`pathlib.Path`.
 
-        :type: Optional[py.path.local]
+        :type: Optional[LEGACY_PATH]
         """
-        return py.path.local(str(self.inipath)) if self.inipath else None
+        return legacy_path(str(self.inipath)) if self.inipath else None
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
@@ -1420,7 +1421,7 @@ class Config:
             assert self.inipath is not None
             dp = self.inipath.parent
             input_values = shlex.split(value) if isinstance(value, str) else value
-            return [py.path.local(str(dp / x)) for x in input_values]
+            return [legacy_path(str(dp / x)) for x in input_values]
         elif type == "args":
             return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":
@@ -1446,7 +1447,7 @@ class Config:
         for relroot in relroots:
             if isinstance(relroot, Path):
                 pass
-            elif isinstance(relroot, py.path.local):
+            elif isinstance(relroot, LEGACY_PATH):
                 relroot = Path(relroot)
             else:
                 relroot = relroot.replace("/", os.sep)

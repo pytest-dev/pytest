@@ -19,6 +19,16 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+``Node.fspath`` in favor of ``pathlib`` and ``Node.path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.3
+
+As pytest tries to move off `py.path.local <https://py.readthedocs.io/en/latest/path.html>`__ we ported most of the node internals to :mod:`pathlib`.
+
+Pytest will provide compatibility for quite a while.
+
+
 Backward compatibilities in ``Parser.addoption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -1125,7 +1125,8 @@ class TestReportInfo:
     def test_func_reportinfo(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
         fspath, lineno, modpath = item.reportinfo()
-        assert fspath == item.fspath
+        with pytest.warns(DeprecationWarning):
+            assert fspath == item.fspath
         assert lineno == 0
         assert modpath == "test_func"
 
@@ -1140,7 +1141,8 @@ class TestReportInfo:
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
         fspath, lineno, msg = classcol.reportinfo()
-        assert fspath == modcol.fspath
+        with pytest.warns(DeprecationWarning):
+            assert fspath == modcol.fspath
         assert lineno == 1
         assert msg == "TestClass"
 

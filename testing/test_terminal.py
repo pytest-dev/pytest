@@ -133,7 +133,7 @@ class TestTerminal:
         item.config.pluginmanager.register(tr)
         location = item.reportinfo()
         tr.config.hook.pytest_runtest_logstart(
-            nodeid=item.nodeid, location=location, fspath=str(item.fspath)
+            nodeid=item.nodeid, location=location, fspath=str(item.path)
         )
         linecomp.assert_contains_lines(["*test_show_runtest_logstart.py*"])
 

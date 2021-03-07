@@ -21,11 +21,11 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import attr
-import py
 
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
+from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -464,7 +464,12 @@ class Session(nodes.FSCollector):
 
     def __init__(self, config: Config) -> None:
         super().__init__(
-            config.rootdir, parent=None, config=config, session=self, nodeid=""
+            path=config.rootpath,
+            fspath=config.rootdir,
+            parent=None,
+            config=config,
+            session=self,
+            nodeid="",
         )
         self.testsfailed = 0
         self.testscollected = 0
@@ -538,7 +543,7 @@ class Session(nodes.FSCollector):
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
-        path = py.path.local(fspath)
+        path = legacy_path(fspath)
         ihook = self.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
             return False
@@ -550,7 +555,7 @@ class Session(nodes.FSCollector):
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        path = py.path.local(fspath)
+        path = legacy_path(fspath)
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -688,7 +693,7 @@ class Session(nodes.FSCollector):
                             if col:
                                 if isinstance(col[0], Package):
                                     pkg_roots[str(parent)] = col[0]
-                                node_cache1[Path(col[0].fspath)] = [col[0]]
+                                node_cache1[col[0].path] = [col[0]]
 
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
@@ -717,7 +722,7 @@ class Session(nodes.FSCollector):
                         continue
 
                     for x in self._collectfile(path):
-                        key2 = (type(x), Path(x.fspath))
+                        key2 = (type(x), x.path)
                         if key2 in node_cache2:
                             yield node_cache2[key2]
                         else:

@@ -22,14 +22,14 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
-import py.path
-
 import pytest
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -122,16 +122,16 @@ def pytest_unconfigure() -> None:
 
 def pytest_collect_file(
     fspath: Path,
-    path: py.path.local,
+    path: LEGACY_PATH,
     parent: Collector,
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
     if fspath.suffix == ".py":
         if config.option.doctestmodules and not _is_setup_py(fspath):
-            mod: DoctestModule = DoctestModule.from_parent(parent, fspath=path)
+            mod: DoctestModule = DoctestModule.from_parent(parent, path=fspath)
             return mod
     elif _is_doctest(config, fspath, parent):
-        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, fspath=path)
+        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, path=fspath)
         return txt
     return None
 
@@ -378,7 +378,7 @@ class DoctestItem(pytest.Item):
 
     def reportinfo(self):
         assert self.dtest is not None
-        return self.fspath, self.dtest.lineno, "[doctest] %s" % self.name
+        return legacy_path(self.path), self.dtest.lineno, "[doctest] %s" % self.name
 
 
 def _get_flag_lookup() -> Dict[str, int]:
@@ -425,9 +425,9 @@ class DoctestTextfile(pytest.Module):
         # Inspired by doctest.testfile; ideally we would use it directly,
         # but it doesn't support passing a custom checker.
         encoding = self.config.getini("doctest_encoding")
-        text = self.fspath.read_text(encoding)
-        filename = str(self.fspath)
-        name = self.fspath.basename
+        text = self.path.read_text(encoding)
+        filename = str(self.path)
+        name = self.path.name
         globs = {"__name__": "__main__"}
 
         optionflags = get_optionflags(self)
@@ -534,16 +534,16 @@ class DoctestModule(pytest.Module):
                         self, tests, obj, name, module, source_lines, globs, seen
                     )
 
-        if self.fspath.basename == "conftest.py":
+        if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
-                Path(self.fspath), self.config.getoption("importmode")
+                self.path, self.config.getoption("importmode")
             )
         else:
             try:
-                module = import_path(self.fspath)
+                module = import_path(self.path)
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
-                    pytest.skip("unable to import module %r" % self.fspath)
+                    pytest.skip("unable to import module %r" % self.path)
                 else:
                     raise
         # Uses internal doctest module parsing mechanism.

@@ -966,7 +966,9 @@ class TestRequestBasic:
         modcol = pytester.getmodulecol("def test_somefunc(): pass")
         (item,) = pytester.genitems([modcol])
         req = fixtures.FixtureRequest(item, _ispytest=True)
-        assert req.fspath == modcol.fspath
+        assert req.path == modcol.path
+        with pytest.warns(pytest.PytestDeprecationWarning):
+            assert req.fspath == modcol.fspath
 
     def test_request_fixturenames(self, pytester: Pytester) -> None:
         pytester.makepyfile(

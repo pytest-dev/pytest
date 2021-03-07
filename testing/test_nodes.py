@@ -3,10 +3,9 @@ from typing import cast
 from typing import List
 from typing import Type
 
-import py
-
 import pytest
 from _pytest import nodes
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
 
@@ -77,7 +76,7 @@ def test__check_initialpaths_for_relpath() -> None:
 
     session = cast(pytest.Session, FakeSession1)
 
-    assert nodes._check_initialpaths_for_relpath(session, py.path.local(cwd)) == ""
+    assert nodes._check_initialpaths_for_relpath(session, legacy_path(cwd)) == ""
 
     sub = cwd / "file"
 
@@ -86,9 +85,9 @@ def test__check_initialpaths_for_relpath() -> None:
 
     session = cast(pytest.Session, FakeSession2)
 
-    assert nodes._check_initialpaths_for_relpath(session, py.path.local(sub)) == "file"
+    assert nodes._check_initialpaths_for_relpath(session, legacy_path(sub)) == "file"
 
-    outside = py.path.local("/outside")
+    outside = legacy_path("/outside")
     assert nodes._check_initialpaths_for_relpath(session, outside) is None
 
 
