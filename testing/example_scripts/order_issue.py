@@ -35,6 +35,24 @@ class TestSomething(MyPytestBase):
         assert os.environ["X"] == "1"
 
 
+class TestSomethingWithFixture(MyPytestBase):
+    @pytest.fixture
+    def setup_method(self):
+        self.set_environ("X", "1")
+
+    def test_something(self):
+        assert os.environ["X"] == "1"
+
+
+class TestSomethingWithFixtureAutouse(MyPytestBase):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
+        self.set_environ("X", "1")
+
+    def test_something(self):
+        assert os.environ["X"] == "1"
+
+
 # This arrangement works: _monkeypatch runs before setUp
 class MyUnittestBase(
     EnvironmentAwareMixin,
