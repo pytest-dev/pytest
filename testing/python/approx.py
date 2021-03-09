@@ -313,7 +313,6 @@ class TestApprox:
         assert approx(expected, rel=5e-7, abs=0) == actual
         assert approx(expected, rel=5e-8, abs=0) != actual
 
-    @pytest.mark.xfail
     def test_list_decimal(self):
         actual = [Decimal("1.000001"), Decimal("2.000001")]
         expected = [Decimal("1"), Decimal("2")]
@@ -353,7 +352,6 @@ class TestApprox:
         assert approx(expected, rel=5e-7, abs=0) == actual
         assert approx(expected, rel=5e-8, abs=0) != actual
 
-    @pytest.mark.xfail
     def test_dict_decimal(self):
         actual = {"a": Decimal("1.000001"), "b": Decimal("2.000001")}
         # Dictionaries became ordered in python3.6, so switch up the order here
