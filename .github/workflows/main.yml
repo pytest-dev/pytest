@@ -3,7 +3,7 @@ name: main
 on:
   push:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.x"
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
@@ -11,7 +11,7 @@ on:
 
   pull_request:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.x"
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
           - name: "windows-py37-pluggy"
             python: "3.7"
             os: windows-latest
-            tox_env: "py37-pluggymaster-xdist"
+            tox_env: "py37-pluggymain-xdist"
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
@@ -75,7 +75,7 @@ jobs:
           - name: "ubuntu-py37-pluggy"
             python: "3.7"
             os: ubuntu-latest
-            tox_env: "py37-pluggymaster-xdist"
+            tox_env: "py37-pluggymain-xdist"
           - name: "ubuntu-py37-freeze"
             python: "3.7"
             os: ubuntu-latest

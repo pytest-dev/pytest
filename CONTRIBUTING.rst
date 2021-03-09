@@ -236,7 +236,7 @@ Here is a simple overview, with pytest-specific bits:
     $ cd pytest
     # now, create your own branch off "master":
 
-        $ git checkout -b your-bugfix-branch-name master
+        $ git checkout -b your-bugfix-branch-name main
 
    Given we have "major.minor.micro" version numbers, bug fixes will usually
    be released in micro releases whereas features will be released in
@@ -318,7 +318,7 @@ Here is a simple overview, with pytest-specific bits:
     compare: your-branch-name
 
     base-fork: pytest-dev/pytest
-    base: master
+    base: main
 
 
 Writing Tests
