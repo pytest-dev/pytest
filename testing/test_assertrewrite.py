@@ -1395,12 +1395,10 @@ class TestEarlyRewriteBailout:
             **{
                 "test_setup_nonexisting_cwd.py": """\
                     import os
-                    import shutil
                     import tempfile
 
-                    d = tempfile.mkdtemp()
-                    os.chdir(d)
-                    shutil.rmtree(d)
+                    with tempfile.TemporaryDirectory() as d:
+                        os.chdir(d)
                 """,
                 "test_test.py": """\
                     def test():
