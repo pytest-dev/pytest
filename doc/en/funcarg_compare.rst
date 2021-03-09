@@ -168,7 +168,7 @@ pytest for a long time offered a pytest_configure and a pytest_sessionstart
 hook which are often used to setup global resources.  This suffers from
 several problems:
 
-1. in distributed testing the master process would setup test resources
+1. in distributed testing the managing process would setup test resources
    that are never needed because it only co-ordinates the test run
    activities of the worker processes.
 
