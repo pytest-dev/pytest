@@ -1,4 +1,4 @@
-pallets-sphinx-themes
+furo
 pygments-pytest>=2.2.0
 sphinx-removed-in>=0.2.0
 sphinx>=3.1,<4
