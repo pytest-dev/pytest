@@ -1,4 +1,4 @@
-.. image:: https://docs.pytest.org/en/stable/_static/pytest1.png
+.. image:: https://github.com/pytest-dev/pytest/raw/main/doc/en/img/pytest_logo_curves.svg
    :target: https://docs.pytest.org/en/stable/
    :align: center
    :alt: pytest
@@ -15,7 +15,7 @@
 .. image:: https://img.shields.io/pypi/pyversions/pytest.svg
     :target: https://pypi.org/project/pytest/
 
-.. image:: https://codecov.io/gh/pytest-dev/pytest/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/pytest-dev/pytest/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/pytest-dev/pytest
     :alt: Code coverage Status
 
@@ -24,6 +24,10 @@
 
 .. image:: https://github.com/pytest-dev/pytest/workflows/main/badge.svg
     :target: https://github.com/pytest-dev/pytest/actions?query=workflow%3Amain
+
+.. image:: https://results.pre-commit.ci/badge/github/pytest-dev/pytest/main.svg
+   :target: https://results.pre-commit.ci/latest/github/pytest-dev/pytest/master
+   :alt: pre-commit.ci status
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
@@ -149,8 +153,8 @@ Tidelift will coordinate the fix and disclosure.
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2020.
+Copyright Holger Krekel and others, 2004-2021.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 
-.. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE
+.. _`MIT`: https://github.com/pytest-dev/pytest/blob/main/LICENSE
