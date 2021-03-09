@@ -214,3 +214,20 @@ def mock_timing(monkeypatch: MonkeyPatch):
     result = MockTiming()
     result.patch()
     return result
+
+
+def pytest_assertrepr_compare(config, op, left, right):
+    from _pytest.python_api import ApproxBase
+
+    if op != "==":
+        return None
+
+    if not isinstance(left, ApproxBase) and not isinstance(right, ApproxBase):
+        return None
+
+    # Although the common order should be obtained == expected, this ensures both ways
+    approx_side = left if isinstance(left, ApproxBase) else right
+    other_side = right if isinstance(left, ApproxBase) else left
+
+    verbosity_level = config.getoption("verbose")
+    return approx_side.repr_compare(other_side, verbosity_level)

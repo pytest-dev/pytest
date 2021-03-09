@@ -44,6 +44,105 @@ def mocked_doctest_runner(monkeypatch):
 
 
 class TestApprox:
+    def test_error_messages(self):
+        with pytest.raises(AssertionError) as e:
+            assert 2.0 == approx(1.0)
+        assert str(e.value) == "\n".join(
+            ["assert comparison failed", "  Obtained: 2.0", "  Expected: 1.0 ± 1.0e-06"]
+        )
+
+        with pytest.raises(AssertionError) as e:
+            assert approx({"a": 1.0, "b": 1000.0, "c": 1000000.0}) == {
+                "a": 2.0,
+                "b": 1000.0,
+                "c": 3000000.0,
+            }
+        assert str(e.value) == "\n".join(
+            [
+                "assert comparison failed. Mismatched elements: 2 / 3):",
+                "  Max absolute difference: 2000000.0",
+                "  Max relative difference: 2.0",
+                "  Index | Obtained  | Expected           ",
+                "  a     | 2.0       | 1.0 ± 1.0e-06      ",
+                "  c     | 3000000.0 | 1000000.0 ± 1.0e+00",
+            ]
+        )
+
+        with pytest.raises(AssertionError) as e:
+            assert [1, 2, 3, 4] == pytest.approx([1, 3, 3, 5])
+        assert str(e.value) == "\n".join(
+            [
+                "assert comparison failed. Mismatched elements: 2 / 4):",
+                "  Max absolute difference: 1",
+                "  Max relative difference: 0.5",
+                "  Index | Obtained | Expected   ",
+                "  1     | 2        | 3 ± 3.0e-06",
+                "  3     | 4        | 5 ± 5.0e-06",
+            ]
+        )
+
+        np = pytest.importorskip("numpy")
+        with pytest.raises(AssertionError) as e:
+            a = np.linspace(0, 100, 20)
+            b = np.linspace(0, 100, 20)
+            a[10] += 0.5
+            assert a == pytest.approx(b)
+        assert str(e.value) == "\n".join(
+            [
+                "assert comparison failed. Mismatched elements: 1 / 20):",
+                "  Max absolute difference: 0.5",
+                "  Max relative difference: 0.009410599306587419",
+                "  Index | Obtained           | Expected                    ",
+                "  (10,) | 53.131578947368425 | 52.631578947368425 ± 5.3e-05",
+            ]
+        )
+
+        with pytest.raises(AssertionError) as e:
+            assert np.array(
+                [
+                    [[1.1987311, 12412342.3], [3.214143244, 1423412423415.677]],
+                    [[1, 2], [3, 219371297321973]],
+                ]
+            ) == pytest.approx(
+                np.array(
+                    [
+                        [[1.12313, 12412342.3], [3.214143244, 534523542345.677]],
+                        [[1, 2], [3, 7]],
+                    ]
+                )
+            )
+        assert str(e.value) == "\n".join(
+            [
+                "assert comparison failed. Mismatched elements: 3 / 8):",
+                "  Max absolute difference: 219371297321966.0",
+                "  Max relative difference: 0.9999999999999681",
+                "  Index     | Obtained          | Expected                  ",
+                "  (0, 0, 0) | 1.1987311         | 1.12313 ± 1.1e-06         ",
+                "  (0, 1, 1) | 1423412423415.677 | 534523542345.677 ± 5.3e+05",
+                "  (1, 1, 1) | 219371297321973.0 | 7.0 ± 7.0e-06             ",
+            ]
+        )
+
+        with pytest.raises(AssertionError) as e:
+            assert [4.0, 5.0, 3.0] == pytest.approx([4.0, 5.0])
+        assert str(e.value) == "\n".join(
+            [
+                "assert Impossible to compare lists with different sizes.",
+                "  Lengths: 2 and 3",
+            ]
+        )
+
+        with pytest.raises(AssertionError) as e:
+            assert np.array([[1.2, 3.4], [4.0, 5.0]]) == pytest.approx(
+                np.array([[4.0], [5.0]])
+            )
+        assert str(e.value) == "\n".join(
+            [
+                "assert Impossible to compare lists with different shapes.",
+                "  Shapes: (2, 1) and (2, 2)",
+            ]
+        )
+
     def test_repr_string(self):
         assert repr(approx(1.0)) == "1.0 ± 1.0e-06"
         assert repr(approx([1.0, 2.0])) == "approx([1.0 ± 1.0e-06, 2.0 ± 2.0e-06])"
