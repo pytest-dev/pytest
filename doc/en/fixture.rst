@@ -2228,7 +2228,6 @@ file:
     # content of conftest.py
 
     import os
-    import shutil
     import tempfile
 
     import pytest
@@ -2236,12 +2235,11 @@ file:
 
     @pytest.fixture
     def cleandir():
-        old_cwd = os.getcwd()
-        newpath = tempfile.mkdtemp()
-        os.chdir(newpath)
-        yield
-        os.chdir(old_cwd)
-        shutil.rmtree(newpath)
+        with tempfile.TemporaryDirectory() as newpath:
+            old_cwd = os.getcwd()
+            os.chdir(newpath)
+            yield
+            os.chdir(old_cwd)
 
 and declare its use in a test module via a ``usefixtures`` marker:
 
