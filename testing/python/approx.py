@@ -46,7 +46,7 @@ def mocked_doctest_runner(monkeypatch):
 
 @contextmanager
 def temporary_verbosity(config, verbosity=0):
-    original_verbosity = config.getoption('verbose')
+    original_verbosity = config.getoption("verbose")
     config.option.verbose = verbosity
     yield
     config.option.verbose = original_verbosity
@@ -61,27 +61,33 @@ def assert_approx_raises_regex(pytestconfig):
             with pytest.raises(AssertionError) as e:
                 assert lhs == approx(rhs)
 
-        nl = '\n'
+        nl = "\n"
         obtained_message = str(e.value).splitlines()
-        assert len(obtained_message) == len(expected_message), \
-            "Regex message length doesn't match obtained.\n" \
-            "Obtained:\n" \
-            f"{nl.join(obtained_message)}\n\n" \
-            "Expected regex:\n" \
+        assert len(obtained_message) == len(expected_message), (
+            "Regex message length doesn't match obtained.\n"
+            "Obtained:\n"
+            f"{nl.join(obtained_message)}\n\n"
+            "Expected regex:\n"
             f"{nl.join(expected_message)}\n\n"
+        )
 
-        for i, (obtained_line, expected_line) in enumerate(zip(obtained_message, expected_message)):
+        for i, (obtained_line, expected_line) in enumerate(
+            zip(obtained_message, expected_message)
+        ):
             regex = re.compile(expected_line)
-            assert regex.match(obtained_line) is not None, \
-                "Unexpected error message:\n" \
-                f"{nl.join(obtained_message)}\n\n" \
-                "Did not match regex:\n" \
-                f"{nl.join(expected_message)}\n\n" \
+            assert regex.match(obtained_line) is not None, (
+                "Unexpected error message:\n"
+                f"{nl.join(obtained_message)}\n\n"
+                "Did not match regex:\n"
+                f"{nl.join(expected_message)}\n\n"
                 f"With verbosity level = {verbosity_level}, on line {i}"
+            )
+
     return do_assert
 
 
-SOME_FLOAT = '[+-]?([0-9]*[.])?[0-9]+\s*'
+SOME_FLOAT = r"[+-]?([0-9]*[.])?[0-9]+\s*"
+
 
 class TestApprox:
     def test_error_messages(self, assert_approx_raises_regex):
@@ -93,7 +99,7 @@ class TestApprox:
             [
                 "assert comparison failed",
                 f"  Obtained: {SOME_FLOAT}",
-                f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}"
+                f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}",
             ],
         )
 
@@ -115,8 +121,8 @@ class TestApprox:
         )
 
         assert_approx_raises_regex(
-            [1., 2., 3., 4.],
-            [1., 3., 3., 5.],
+            [1.0, 2.0, 3.0, 4.0],
+            [1.0, 3.0, 3.0, 5.0],
             [
                 r"assert comparison failed. Mismatched elements: 2 / 4:",
                 r"  Max absolute difference: 1",
@@ -166,7 +172,6 @@ class TestApprox:
             ],
         )
 
-
     def test_error_messages_invalid_args(self, assert_approx_raises_regex):
         np = pytest.importorskip("numpy")
         with pytest.raises(AssertionError) as e:
@@ -180,7 +185,6 @@ class TestApprox:
             ]
         )
 
-
     def test_error_messages_with_different_verbosity(self, assert_approx_raises_regex):
         np = pytest.importorskip("numpy")
         for v in [0, 1, 2]:
@@ -191,9 +195,9 @@ class TestApprox:
                 [
                     "assert comparison failed",
                     f"  Obtained: {SOME_FLOAT}",
-                    f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}"
+                    f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}",
                 ],
-                verbosity_level=v
+                verbosity_level=v,
             )
 
         a = np.linspace(1, 101, 20)
@@ -211,9 +215,9 @@ class TestApprox:
                 rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
                 rf"  \(3,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
                 "",
-                r"\s*...Full output truncated \(6 lines hidden\), use '-vv' to show"
+                r"\s*...Full output truncated \(6 lines hidden\), use '-vv' to show",
             ],
-            verbosity_level=0
+            verbosity_level=0,
         )
 
         assert_approx_raises_regex(
@@ -229,9 +233,9 @@ class TestApprox:
                 rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
                 rf"  \(3,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
                 "",
-                r"\s*...Full output truncated \(17 lines hidden\), use '-vv' to show"
+                r"\s*...Full output truncated \(17 lines hidden\), use '-vv' to show",
             ],
-            verbosity_level=1
+            verbosity_level=1,
         )
 
         assert_approx_raises_regex(
@@ -242,18 +246,17 @@ class TestApprox:
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected",
-            ] +
-            [
+            ]
+            + [
                 rf"  \({i},\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}"
                 for i in range(20)
-            ] +
-            [
+            ]
+            + [
                 "",
                 r"\s*Full object: .*",
             ],
-            verbosity_level=2
+            verbosity_level=2,
         )
-
 
     def test_repr_string(self):
         assert repr(approx(1.0)) == "1.0 ± 1.0e-06"

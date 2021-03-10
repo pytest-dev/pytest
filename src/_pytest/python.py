@@ -1706,9 +1706,7 @@ class FunctionDefinition(Function):
 
 @hookimpl(tryfirst=True)
 def pytest_assertrepr_compare(config, op, left, right):
-    """
-    pytest.approx message handler
-    """
+    """pytest.approx message handler"""
     from _pytest.python_api import ApproxBase
 
     if op != "==":
