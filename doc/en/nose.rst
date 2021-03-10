@@ -1,6 +1,6 @@
 .. _`noseintegration`:
 
-Running tests written for nose
+How to run tests written for nose
 =======================================
 
 ``pytest`` has basic support for running tests written for nose_.

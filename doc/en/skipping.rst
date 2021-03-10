@@ -2,8 +2,8 @@
 
 .. _skipping:
 
-Skip and xfail: dealing with tests that cannot succeed
-======================================================
+How to use skip and xfail to deal with tests that cannot succeed
+=================================================================
 
 You can mark test functions that cannot be run on certain platforms
 or that you expect to fail so pytest can deal with them accordingly and

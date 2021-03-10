@@ -1,7 +1,7 @@
 .. _mark:
 
-Marking test functions with attributes
-======================================
+How to mark test functions with attributes
+===========================================
 
 By using the ``pytest.mark`` helper you can easily set
 metadata on your test functions. You can find the full list of builtin markers

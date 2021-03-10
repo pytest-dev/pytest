@@ -1,7 +1,7 @@
 
 .. _`captures`:
 
-Capturing of the stdout/stderr output
+How to capture stdout/stderr output
 =========================================================
 
 Default stdout/stderr/stdin capturing behaviour

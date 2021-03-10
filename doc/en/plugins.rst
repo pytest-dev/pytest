@@ -2,8 +2,8 @@
 .. _`extplugins`:
 .. _`using plugins`:
 
-Installing and Using plugins
-============================
+How to install and use plugins
+===============================
 
 This section talks about installing and using third party plugins.
 For writing your own plugins, please refer to :ref:`writing-plugins`.
