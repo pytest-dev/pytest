@@ -1,5 +1,6 @@
 import operator
 import sys
+from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
 from operator import eq
@@ -43,95 +44,131 @@ def mocked_doctest_runner(monkeypatch):
     return MyDocTestRunner()
 
 
+@contextmanager
+def temporary_verbosity(config, verbosity=0):
+    original_verbosity = config.getoption('verbose')
+    config.option.verbose = verbosity
+    yield
+    config.option.verbose = original_verbosity
+
+
+@pytest.fixture
+def assert_approx_raises_regex(pytestconfig):
+    def do_assert(lhs, rhs, expected_message, verbosity_level=0):
+        import re
+
+        with temporary_verbosity(pytestconfig, verbosity_level):
+            with pytest.raises(AssertionError) as e:
+                assert lhs == approx(rhs)
+
+        nl = '\n'
+        obtained_message = str(e.value).splitlines()
+        assert len(obtained_message) == len(expected_message), \
+            "Regex message length doesn't match obtained.\n" \
+            "Obtained:\n" \
+            f"{nl.join(obtained_message)}\n\n" \
+            "Expected regex:\n" \
+            f"{nl.join(expected_message)}\n\n"
+
+        for i, (obtained_line, expected_line) in enumerate(zip(obtained_message, expected_message)):
+            regex = re.compile(expected_line)
+            assert regex.match(obtained_line) is not None, \
+                "Unexpected error message:\n" \
+                f"{nl.join(obtained_message)}\n\n" \
+                "Did not match regex:\n" \
+                f"{nl.join(expected_message)}\n\n" \
+                f"With verbosity level = {verbosity_level}, on line {i}"
+    return do_assert
+
+
+SOME_FLOAT = '[+-]?([0-9]*[.])?[0-9]+\s*'
+
 class TestApprox:
-    def test_error_messages(self):
-        with pytest.raises(AssertionError) as e:
-            assert 2.0 == approx(1.0)
-        assert str(e.value) == "\n".join(
-            ["assert comparison failed", "  Obtained: 2.0", "  Expected: 1.0 ± 1.0e-06"]
+    def test_error_messages(self, assert_approx_raises_regex):
+        np = pytest.importorskip("numpy")
+
+        assert_approx_raises_regex(
+            2.0,
+            1.0,
+            [
+                "assert comparison failed",
+                f"  Obtained: {SOME_FLOAT}",
+                f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}"
+            ],
         )
 
-        with pytest.raises(AssertionError) as e:
-            assert approx({"a": 1.0, "b": 1000.0, "c": 1000000.0}) == {
+        assert_approx_raises_regex(
+            {"a": 1.0, "b": 1000.0, "c": 1000000.0},
+            {
                 "a": 2.0,
                 "b": 1000.0,
                 "c": 3000000.0,
-            }
-        assert str(e.value) == "\n".join(
+            },
             [
-                "assert comparison failed. Mismatched elements: 2 / 3):",
-                "  Max absolute difference: 2000000.0",
-                "  Max relative difference: 2.0",
-                "  Index | Obtained  | Expected           ",
-                "  a     | 2.0       | 1.0 ± 1.0e-06      ",
-                "  c     | 3000000.0 | 1000000.0 ± 1.0e+00",
-            ]
+                r"assert comparison failed. Mismatched elements: 2 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected           ",
+                rf"  a     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  c     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
         )
 
-        with pytest.raises(AssertionError) as e:
-            assert [1, 2, 3, 4] == pytest.approx([1, 3, 3, 5])
-        assert str(e.value) == "\n".join(
+        assert_approx_raises_regex(
+            [1., 2., 3., 4.],
+            [1., 3., 3., 5.],
             [
-                "assert comparison failed. Mismatched elements: 2 / 4):",
-                "  Max absolute difference: 1",
-                "  Max relative difference: 0.5",
-                "  Index | Obtained | Expected   ",
-                "  1     | 2        | 3 ± 3.0e-06",
-                "  3     | 4        | 5 ± 5.0e-06",
-            ]
+                r"assert comparison failed. Mismatched elements: 2 / 4:",
+                r"  Max absolute difference: 1",
+                r"  Max relative difference: 0.5",
+                r"  Index \| Obtained\s+\| Expected   ",
+                rf"  1     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  3     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
         )
 
-        np = pytest.importorskip("numpy")
-        with pytest.raises(AssertionError) as e:
-            a = np.linspace(0, 100, 20)
-            b = np.linspace(0, 100, 20)
-            a[10] += 0.5
-            assert a == pytest.approx(b)
-        assert str(e.value) == "\n".join(
+        a = np.linspace(0, 100, 20)
+        b = np.linspace(0, 100, 20)
+        a[10] += 0.5
+        assert_approx_raises_regex(
+            a,
+            b,
             [
-                "assert comparison failed. Mismatched elements: 1 / 20):",
-                "  Max absolute difference: 0.5",
-                "  Max relative difference: 0.009410599306587419",
-                "  Index | Obtained           | Expected                    ",
-                "  (10,) | 53.131578947368425 | 52.631578947368425 ± 5.3e-05",
-            ]
+                r"assert comparison failed. Mismatched elements: 1 / 20:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected",
+                rf"  \(10,\) \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
         )
 
-        with pytest.raises(AssertionError) as e:
-            assert np.array(
+        assert_approx_raises_regex(
+            np.array(
                 [
                     [[1.1987311, 12412342.3], [3.214143244, 1423412423415.677]],
                     [[1, 2], [3, 219371297321973]],
                 ]
-            ) == pytest.approx(
-                np.array(
-                    [
-                        [[1.12313, 12412342.3], [3.214143244, 534523542345.677]],
-                        [[1, 2], [3, 7]],
-                    ]
-                )
-            )
-        assert str(e.value) == "\n".join(
+            ),
+            np.array(
+                [
+                    [[1.12313, 12412342.3], [3.214143244, 534523542345.677]],
+                    [[1, 2], [3, 7]],
+                ]
+            ),
             [
-                "assert comparison failed. Mismatched elements: 3 / 8):",
-                "  Max absolute difference: 219371297321966.0",
-                "  Max relative difference: 0.9999999999999681",
-                "  Index     | Obtained          | Expected                  ",
-                "  (0, 0, 0) | 1.1987311         | 1.12313 ± 1.1e-06         ",
-                "  (0, 1, 1) | 1423412423415.677 | 534523542345.677 ± 5.3e+05",
-                "  (1, 1, 1) | 219371297321973.0 | 7.0 ± 7.0e-06             ",
-            ]
+                r"assert comparison failed. Mismatched elements: 3 / 8:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index\s+\| Obtained\s+\| Expected\s+",
+                rf"  \(0, 0, 0\) \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(0, 1, 1\) \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(1, 1, 1\) \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
         )
 
-        with pytest.raises(AssertionError) as e:
-            assert [4.0, 5.0, 3.0] == pytest.approx([4.0, 5.0])
-        assert str(e.value) == "\n".join(
-            [
-                "assert Impossible to compare lists with different sizes.",
-                "  Lengths: 2 and 3",
-            ]
-        )
 
+    def test_error_messages_invalid_args(self, assert_approx_raises_regex):
+        np = pytest.importorskip("numpy")
         with pytest.raises(AssertionError) as e:
             assert np.array([[1.2, 3.4], [4.0, 5.0]]) == pytest.approx(
                 np.array([[4.0], [5.0]])
@@ -142,6 +179,81 @@ class TestApprox:
                 "  Shapes: (2, 1) and (2, 2)",
             ]
         )
+
+
+    def test_error_messages_with_different_verbosity(self, assert_approx_raises_regex):
+        np = pytest.importorskip("numpy")
+        for v in [0, 1, 2]:
+            # Verbosity level doesn't affect the error message for scalars
+            assert_approx_raises_regex(
+                2.0,
+                1.0,
+                [
+                    "assert comparison failed",
+                    f"  Obtained: {SOME_FLOAT}",
+                    f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}"
+                ],
+                verbosity_level=v
+            )
+
+        a = np.linspace(1, 101, 20)
+        b = np.linspace(2, 102, 20)
+        assert_approx_raises_regex(
+            a,
+            b,
+            [
+                r"assert comparison failed. Mismatched elements: 20 / 20:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected",
+                rf"  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(3,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
+                "",
+                r"\s*...Full output truncated \(6 lines hidden\), use '-vv' to show"
+            ],
+            verbosity_level=0
+        )
+
+        assert_approx_raises_regex(
+            a,
+            b,
+            [
+                r"assert comparison failed. Mismatched elements: 20 / 20:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected",
+                rf"  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(3,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
+                "",
+                r"\s*...Full output truncated \(17 lines hidden\), use '-vv' to show"
+            ],
+            verbosity_level=1
+        )
+
+        assert_approx_raises_regex(
+            a,
+            b,
+            [
+                r"assert comparison failed. Mismatched elements: 20 / 20:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected",
+            ] +
+            [
+                rf"  \({i},\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}"
+                for i in range(20)
+            ] +
+            [
+                "",
+                r"\s*Full object: .*",
+            ],
+            verbosity_level=2
+        )
+
 
     def test_repr_string(self):
         assert repr(approx(1.0)) == "1.0 ± 1.0e-06"
