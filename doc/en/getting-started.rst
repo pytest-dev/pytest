@@ -1,21 +1,13 @@
-Installation and Getting Started
+Get Started
 ===================================
-
-**Pythons**: Python 3.6, 3.7, 3.8, 3.9, PyPy3
-
-**Platforms**: Linux and Windows
-
-**PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
-
-**Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
-
-``pytest`` is a framework that makes building simple and scalable tests easy. Tests are expressive and readable—no boilerplate code required. Get started in minutes with a small unit test or complex functional test for your application or library.
 
 .. _`getstarted`:
 .. _`installation`:
 
 Install ``pytest``
 ----------------------------------------
+
+``pytest`` requires: Python 3.6, 3.7, 3.8, 3.9, or PyPy3.
 
 1. Run the following command in your command line:
 
@@ -35,7 +27,7 @@ Install ``pytest``
 Create your first test
 ----------------------------------------------------------
 
-Create a simple test function with just four lines of code:
+Create a new file called ``test_sample.py``, containing a function, and a test:
 
 .. code-block:: python
 
@@ -47,7 +39,7 @@ Create a simple test function with just four lines of code:
     def test_answer():
         assert func(3) == 5
 
-That’s it. You can now execute the test function:
+The test
 
 .. code-block:: pytest
 
