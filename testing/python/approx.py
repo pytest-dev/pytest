@@ -127,8 +127,8 @@ class TestApprox:
             [1.0, 3.0, 3.0, 5.0],
             [
                 r"assert comparison failed. Mismatched elements: 2 / 4:",
-                r"  Max absolute difference: 1",
-                r"  Max relative difference: 0.5",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected   ",
                 rf"  1     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
                 rf"  3     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
@@ -174,6 +174,31 @@ class TestApprox:
             ],
         )
 
+        # Specific test for comparison with 0.0 (relative diff will be 'inf')
+        assert_approx_raises_regex(
+            [0.0],
+            [1.0],
+            [
+                r"assert comparison failed. Mismatched elements: 1 / 1:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                r"  Max relative difference: inf",
+                r"  Index \| Obtained\s+\| Expected   ",
+                rf"\s*0\s*\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
+        assert_approx_raises_regex(
+            np.array([0.0]),
+            np.array([1.0]),
+            [
+                r"assert comparison failed. Mismatched elements: 1 / 1:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                r"  Max relative difference: inf",
+                r"  Index \| Obtained\s+\| Expected   ",
+                rf"\s*\(0,\)\s*\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
     def test_error_messages_invalid_args(self, assert_approx_raises_regex):
         np = pytest.importorskip("numpy")
         with pytest.raises(AssertionError) as e:
@@ -182,8 +207,17 @@ class TestApprox:
             )
         assert str(e.value) == "\n".join(
             [
-                "assert Impossible to compare lists with different shapes.",
+                "assert Impossible to compare arrays with different shapes.",
                 "  Shapes: (2, 1) and (2, 2)",
+            ]
+        )
+
+        with pytest.raises(AssertionError) as e:
+            assert [1.0, 2.0, 3.0] == pytest.approx([4.0, 5.0])
+        assert str(e.value) == "\n".join(
+            [
+                "assert Impossible to compare lists with different sizes.",
+                "  Lengths: 2 and 3",
             ]
         )
 

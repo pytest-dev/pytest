@@ -162,7 +162,7 @@ class ApproxNumpy(ApproxBase):
 
         if np_array_shape != other_side.shape:
             return [
-                "Impossible to compare lists with different shapes.",
+                "Impossible to compare arrays with different shapes.",
                 f"Shapes: {np_array_shape} and {other_side.shape}",
             ]
 
