@@ -48,8 +48,10 @@ def mocked_doctest_runner(monkeypatch):
 def temporary_verbosity(config, verbosity=0):
     original_verbosity = config.getoption("verbose")
     config.option.verbose = verbosity
-    yield
-    config.option.verbose = original_verbosity
+    try:
+        yield
+    finally:
+        config.option.verbose = original_verbosity
 
 
 @pytest.fixture
