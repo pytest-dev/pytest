@@ -1,6 +1,5 @@
 import math
 import pprint
-import typing
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sized
@@ -10,11 +9,13 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
+from typing import Dict
 from typing import Generic
 from typing import List
 from typing import Optional
 from typing import overload
 from typing import Pattern
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
@@ -92,7 +93,7 @@ class ApproxBase:
     def __repr__(self) -> str:
         raise NotImplementedError
 
-    def repr_compare(self, other_side: "ApproxBase", verbosity_level: int) -> List[str]:
+    def repr_compare(self, other_side: Any, verbosity_level: int) -> List[str]:
         return [
             "comparison failed",
             f"Obtained: {other_side}",
@@ -144,9 +145,7 @@ class ApproxNumpy(ApproxBase):
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return f"approx({list_scalars!r})"
 
-    def repr_compare(
-        self, other_side: "ApproxNumpy", verbosity_level: int
-    ) -> List[str]:
+    def repr_compare(self, other_side: "ndarray", verbosity_level: int) -> List[str]:
         import itertools
         import math
 
@@ -242,7 +241,7 @@ class ApproxMapping(ApproxBase):
         )
 
     def repr_compare(
-        self, other_side: "ApproxMapping", verbosity_level: int
+        self, other_side: Dict[Any, float], verbosity_level: int
     ) -> List[str]:
         import math
 
@@ -315,7 +314,7 @@ class ApproxSequencelike(ApproxBase):
         )
 
     def repr_compare(
-        self, other_side: "ApproxSequencelike", verbosity_level: int
+        self, other_side: Sequence[float], verbosity_level: int
     ) -> List[str]:
         import math
         import numpy as np
