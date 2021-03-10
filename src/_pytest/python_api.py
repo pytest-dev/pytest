@@ -11,6 +11,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Generic
+from typing import List
 from typing import Optional
 from typing import overload
 from typing import Pattern
@@ -41,13 +42,13 @@ def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
 
 def _generate_approx_error_message(
     full_object: object,
-    message_data: typing.List[typing.List[str]],
+    message_data: List[List[str]],
     number_of_elements: int,
-    different_ids: typing.List[typing.Any],
+    different_ids: List[Any],
     max_abs_diff: float,
     max_rel_diff: float,
     verbosity_level: int,
-) -> typing.List[str]:
+) -> List[str]:
     message_data.insert(0, ["Index", "Obtained", "Expected"])
     max_sizes = [0, 0, 0]
     for index, obtained, expected in message_data:
@@ -91,7 +92,7 @@ class ApproxBase:
     def __repr__(self) -> str:
         raise NotImplementedError
 
-    def repr_compare(self, other_side, verbosity_level) -> typing.List[str]:
+    def repr_compare(self, other_side: "ApproxBase", verbosity_level: int) -> List[str]:
         return [
             "comparison failed",
             f"Obtained: {other_side}",
@@ -143,7 +144,9 @@ class ApproxNumpy(ApproxBase):
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return f"approx({list_scalars!r})"
 
-    def repr_compare(self, other_side, verbosity_level) -> typing.List[str]:
+    def repr_compare(
+        self, other_side: "ApproxNumpy", verbosity_level: int
+    ) -> List[str]:
         import itertools
         import math
 
@@ -238,7 +241,9 @@ class ApproxMapping(ApproxBase):
             {k: self._approx_scalar(v) for k, v in self.expected.items()}
         )
 
-    def repr_compare(self, other_side, verbosity_level) -> typing.List[str]:
+    def repr_compare(
+        self, other_side: "ApproxMapping", verbosity_level: int
+    ) -> List[str]:
         import math
 
         approx_side_as_map = {
@@ -309,7 +314,9 @@ class ApproxSequencelike(ApproxBase):
             seq_type(self._approx_scalar(x) for x in self.expected)
         )
 
-    def repr_compare(self, other_side, verbosity_level) -> typing.List[str]:
+    def repr_compare(
+        self, other_side: "ApproxSequencelike", verbosity_level: int
+    ) -> List[str]:
         import math
         import numpy as np
 
