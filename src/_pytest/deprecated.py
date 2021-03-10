@@ -95,6 +95,8 @@ NODE_FSPATH = UnformattedWarning(
     "see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path",
 )
 
+MARKED_FIXTURE = PytestDeprecationWarning("Marks cannot be applied to fixtures")
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):

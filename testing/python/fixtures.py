@@ -3612,6 +3612,24 @@ class TestShowFixtures:
             def foo():
                 raise NotImplementedError()
 
+    def test_fixture_disallow_on_marked_functions(self):
+        """Test that applying @pytest.fixture to a marked function warns (#3364)."""
+        with pytest.warns(pytest.PytestDeprecationWarning):
+
+            @pytest.fixture
+            @pytest.mark.usefixtures("tmp_path")
+            def foo():
+                raise NotImplementedError()
+
+    def test_fixture_disallow_marks_on_fixtures(self):
+        """Test that applying a mark to a fixture warns (#3364)."""
+        with pytest.warns(pytest.PytestDeprecationWarning):
+
+            @pytest.mark.usefixtures("tmp_path")
+            @pytest.fixture
+            def foo():
+                raise NotImplementedError()
+
 
 class TestContextManagerFixtureFuncs:
     def test_simple(self, pytester: Pytester) -> None:

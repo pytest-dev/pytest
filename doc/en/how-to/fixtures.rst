@@ -1667,8 +1667,7 @@ into an ini-file:
         def my_fixture_that_sadly_wont_use_my_other_fixture():
             ...
 
-    Currently this will not generate any error or warning, but this is intended
-    to be handled by `#3664 <https://github.com/pytest-dev/pytest/issues/3664>`_.
+    Currently this will generate a deprecation warning.
 
 .. _`override fixtures`:
 

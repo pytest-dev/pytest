@@ -54,6 +54,7 @@ from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FILLFUNCARGS
+from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import NODE_FSPATH
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.mark import Mark
@@ -1221,6 +1222,9 @@ class FixtureFunctionMarker:
             raise ValueError(
                 "fixture is being applied more than once to the same function"
             )
+
+        if hasattr(function, "pytestmark"):
+            warnings.warn(MARKED_FIXTURE, stacklevel=2)
 
         function = wrap_function_to_error_out_if_called_directly(function, self)
 
