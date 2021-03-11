@@ -7,38 +7,65 @@ Full pytest documentation
 
 .. `Download latest version as EPUB <http://media.readthedocs.org/epub/pytest/latest/pytest.epub>`_
 
+
+Start here
+-----------
+
 .. toctree::
    :maxdepth: 2
 
    getting-started
+
+
+How-to guides
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
    usage
    existingtestsuite
    assert
-   fixture
    mark
    monkeypatch
    tmpdir
    capture
-   warnings
-   doctest
    skipping
    parametrize
+   plugins
+   nose
+   bash-completion
+
+
+Reference guides
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   fixture
+   warnings
+   doctest
    cache
    unittest
-   nose
    xunit_setup
-   plugins
    plugin_list
    writing_plugins
    logging
+   customize
    reference
+
+
+Further topics
+-----------------
+
+.. toctree::
+   :maxdepth: 2
 
    goodpractices
    flaky
    pythonpath
-   customize
    example/index
-   bash-completion
 
    backwards-compatibility
    deprecations
