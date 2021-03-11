@@ -1,5 +1,5 @@
 
-The writing and reporting of assertions in tests
+How to write and report assertions in tests
 ==================================================
 
 .. _`assertfeedback`:

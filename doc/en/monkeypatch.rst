@@ -1,5 +1,5 @@
 
-Monkeypatching/mocking modules and environments
+How to monkeypatch/mock modules and environments
 ================================================================
 
 .. currentmodule:: _pytest.monkeypatch

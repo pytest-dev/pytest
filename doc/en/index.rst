@@ -13,10 +13,19 @@ pytest: helps you write better programs
 
 .. module:: pytest
 
-The ``pytest`` framework makes it easy to write small tests, yet
-scales to support complex functional testing for applications and libraries.
+The ``pytest`` framework makes it easy to write small, readable tests, and can
+scale to support complex functional testing for applications and libraries.
 
-An example of a simple test:
+
+**Pythons**: ``pytest`` requires: Python 3.6, 3.7, 3.8, 3.9, or PyPy3.
+
+**PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
+
+**Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
+
+
+A quick example
+---------------
 
 .. code-block:: python
 
@@ -56,7 +65,7 @@ To execute it:
     ============================ 1 failed in 0.12s =============================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
-See :ref:`Getting Started <getstarted>` for more examples.
+See :ref:`Get started <getstarted>` for a basic introduction to using pytest.
 
 
 Features

@@ -1,7 +1,7 @@
 
 .. _usage:
 
-Usage and Invocations
+How to invoke pytest
 ==========================================
 
 

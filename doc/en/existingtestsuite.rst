@@ -1,7 +1,7 @@
 .. _existingtestsuite:
 
-Using pytest with an existing test suite
-===========================================
+How to use pytest with an existing test suite
+==============================================
 
 Pytest can be used with most existing test suites, but its
 behavior differs from other test runners such as :ref:`nose <noseintegration>` or

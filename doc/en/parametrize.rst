@@ -6,7 +6,7 @@
 
 .. _`parametrize-basics`:
 
-Parametrizing fixtures and test functions
+How to parametrize fixtures and test functions
 ==========================================================================
 
 pytest enables test parametrization at several levels:

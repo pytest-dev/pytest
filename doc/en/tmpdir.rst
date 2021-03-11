@@ -2,8 +2,8 @@
 .. _`tmpdir handling`:
 .. _tmpdir:
 
-Temporary directories and files
-================================================
+How to use temporary directories and files in tests
+===================================================
 
 The ``tmp_path`` fixture
 ------------------------
