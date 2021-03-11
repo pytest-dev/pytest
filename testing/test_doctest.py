@@ -730,12 +730,11 @@ class TestDoctests:
             test_unicode_doctest="""
             .. doctest::
 
-                >>> print(
-                ...    "Hi\\n\\nByé")
+                >>> print("Hi\\n\\nByé")
                 Hi
                 ...
                 Byé
-                >>> 1/0  # Byé
+                >>> 1 / 0  # Byé
                 1
         """
         )
