@@ -1188,12 +1188,12 @@ long as the test requesting them can see all fixtures involved.
 For example, here's a test file with a fixture (``outer``) that requests a
 fixture (``inner``) from a scope it wasn't defined in:
 
-.. literalinclude:: example/fixtures/test_fixtures_request_different_scope.py
+.. literalinclude:: /example/fixtures/test_fixtures_request_different_scope.py
 
 From the tests' perspectives, they have no problem seeing each of the fixtures
 they're dependent on:
 
-.. image:: example/fixtures/test_fixtures_request_different_scope.svg
+.. image:: /example/fixtures/test_fixtures_request_different_scope.svg
     :align: center
 
 So when they run, ``outer`` will have no problem finding ``inner``, because
@@ -1270,7 +1270,7 @@ For example, given a test file structure like this:
 
 The boundaries of the scopes can be visualized like this:
 
-.. image:: example/fixtures/fixture_availability.svg
+.. image:: /example/fixtures/fixture_availability.svg
     :align: center
 
 The directories become their own sort of scope where fixtures that are defined
@@ -1346,7 +1346,7 @@ If ``plugin_a`` is installed and provides the fixture ``a_fix``, and
 ``plugin_b`` is installed and provides the fixture ``b_fix``, then this is what
 the test's search for fixtures would look like:
 
-.. image:: example/fixtures/fixture_availability_plugins.svg
+.. image:: /example/fixtures/fixture_availability_plugins.svg
     :align: center
 
 pytest will only search for ``a_fix`` and ``b_fix`` in the plugins after
@@ -1401,13 +1401,13 @@ Within a function request for fixtures, those of higher-scopes (such as
 
 Here's an example:
 
-.. literalinclude:: example/fixtures/test_fixtures_order_scope.py
+.. literalinclude:: /example/fixtures/test_fixtures_order_scope.py
 
 The test will pass because the larger scoped fixtures are executing first.
 
 The order breaks down to this:
 
-.. image:: example/fixtures/test_fixtures_order_scope.svg
+.. image:: /example/fixtures/test_fixtures_order_scope.svg
     :align: center
 
 Fixtures of the same order execute based on dependencies
@@ -1421,17 +1421,17 @@ sure it is executed after ``b``.
 
 For example:
 
-.. literalinclude:: example/fixtures/test_fixtures_order_dependencies.py
+.. literalinclude:: /example/fixtures/test_fixtures_order_dependencies.py
 
 If we map out what depends on what, we get something that look like this:
 
-.. image:: example/fixtures/test_fixtures_order_dependencies.svg
+.. image:: /example/fixtures/test_fixtures_order_dependencies.svg
     :align: center
 
 The rules provided by each fixture (as to what fixture(s) each one has to come
 after) are comprehensive enough that it can be flattened to this:
 
-.. image:: example/fixtures/test_fixtures_order_dependencies_flat.svg
+.. image:: /example/fixtures/test_fixtures_order_dependencies_flat.svg
     :align: center
 
 Enough information has to be provided through these requests in order for pytest
@@ -1442,7 +1442,7 @@ could go with any one of those interpretations at any point.
 
 For example, if ``d`` didn't request ``c``, i.e.the graph would look like this:
 
-.. image:: example/fixtures/test_fixtures_order_dependencies_unclear.svg
+.. image:: /example/fixtures/test_fixtures_order_dependencies_unclear.svg
     :align: center
 
 Because nothing requested ``c`` other than ``g``, and ``g`` also requests ``f``,
@@ -1479,11 +1479,11 @@ non-autouse fixtures within that scope.
 
 So if the test file looked like this:
 
-.. literalinclude:: example/fixtures/test_fixtures_order_autouse.py
+.. literalinclude:: /example/fixtures/test_fixtures_order_autouse.py
 
 the graph would look like this:
 
-.. image:: example/fixtures/test_fixtures_order_autouse.svg
+.. image:: /example/fixtures/test_fixtures_order_autouse.svg
     :align: center
 
 Because ``c`` can now be put above ``d`` in the graph, pytest can once again
@@ -1496,12 +1496,12 @@ Be careful with autouse, though, as an autouse fixture will automatically
 execute for every test that can reach it, even if they don't request it. For
 example, consider this file:
 
-.. literalinclude:: example/fixtures/test_fixtures_order_autouse_multiple_scopes.py
+.. literalinclude:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.py
 
 Even though nothing in ``TestClassWithC1Request`` is requesting ``c1``, it still
 is executed for the tests inside it anyway:
 
-.. image:: example/fixtures/test_fixtures_order_autouse_multiple_scopes.svg
+.. image:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.svg
     :align: center
 
 But just because one autouse fixture requested a non-autouse fixture, that
@@ -1512,11 +1512,11 @@ fixture) can apply to.
 
 For example, take a look at this test file:
 
-.. literalinclude:: example/fixtures/test_fixtures_order_autouse_temp_effects.py
+.. literalinclude:: /example/fixtures/test_fixtures_order_autouse_temp_effects.py
 
 It would break down to something like this:
 
-.. image:: example/fixtures/test_fixtures_order_autouse_temp_effects.svg
+.. image:: /example/fixtures/test_fixtures_order_autouse_temp_effects.svg
     :align: center
 
 For ``test_req`` and ``test_no_req`` inside ``TestClassWithAutouse``, ``c3``

@@ -23,18 +23,18 @@ How-to guides
 .. toctree::
    :maxdepth: 2
 
-   usage
-   existingtestsuite
-   assert
-   mark
-   monkeypatch
-   tmpdir
-   capture
-   skipping
-   parametrize
-   plugins
-   nose
-   bash-completion
+   how-to/usage
+   how-to/existingtestsuite
+   how-to/assert
+   how-to/mark
+   how-to/monkeypatch
+   how-to/tmpdir
+   how-to/capture
+   how-to/skipping
+   how-to/parametrize
+   how-to/plugins
+   how-to/nose
+   how-to/bash-completion
 
 
 Reference guides
@@ -43,17 +43,17 @@ Reference guides
 .. toctree::
    :maxdepth: 2
 
-   fixture
-   warnings
-   doctest
-   cache
-   unittest
-   xunit_setup
-   plugin_list
-   writing_plugins
-   logging
-   customize
-   reference
+   reference/fixture
+   reference/warnings
+   reference/doctest
+   reference/cache
+   reference/unittest
+   reference/xunit_setup
+   reference/plugin_list
+   reference/writing_plugins
+   reference/logging
+   reference/customize
+   reference/reference
 
 
 Further topics

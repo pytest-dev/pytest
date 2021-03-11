@@ -1,3 +1,5 @@
+.. _plugin-list:
+
 Plugins List
 ============
 

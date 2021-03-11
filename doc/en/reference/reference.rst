@@ -136,7 +136,7 @@ Add warning filters to marked test items.
 pytest.mark.parametrize
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :doc:`parametrize`.
+:ref:`parametrize`.
 
 This mark has the same signature as :py:meth:`pytest.Metafunc.parametrize`; see there.
 
@@ -146,7 +146,7 @@ This mark has the same signature as :py:meth:`pytest.Metafunc.parametrize`; see 
 pytest.mark.skip
 ~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`skip`.
+:ref:`skip`.
 
 Unconditionally skip a test function.
 
@@ -160,7 +160,7 @@ Unconditionally skip a test function.
 pytest.mark.skipif
 ~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`skipif`.
+:ref:`skipif`.
 
 Skip a test function if a condition is ``True``.
 
@@ -325,7 +325,7 @@ Under the hood, the cache plugin uses the simple
 capsys
 ~~~~~~
 
-**Tutorial**: :doc:`capture`.
+:ref:`captures`.
 
 .. autofunction:: _pytest.capture.capsys()
     :no-auto-options:
@@ -350,7 +350,7 @@ capsys
 capsysbinary
 ~~~~~~~~~~~~
 
-**Tutorial**: :doc:`capture`.
+:ref:`captures`.
 
 .. autofunction:: _pytest.capture.capsysbinary()
     :no-auto-options:
@@ -372,7 +372,7 @@ capsysbinary
 capfd
 ~~~~~~
 
-**Tutorial**: :doc:`capture`.
+:ref:`captures`.
 
 .. autofunction:: _pytest.capture.capfd()
     :no-auto-options:
@@ -394,7 +394,7 @@ capfd
 capfdbinary
 ~~~~~~~~~~~~
 
-**Tutorial**: :doc:`capture`.
+:ref:`captures`.
 
 .. autofunction:: _pytest.capture.capfdbinary()
     :no-auto-options:
@@ -416,7 +416,7 @@ capfdbinary
 doctest_namespace
 ~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :doc:`doctest`.
+:ref:`doctest`.
 
 .. autofunction:: _pytest.doctest.doctest_namespace()
 
@@ -436,7 +436,7 @@ doctest_namespace
 request
 ~~~~~~~
 
-**Tutorial**: :ref:`request example`.
+:ref:`request example`.
 
 The ``request`` fixture is a special fixture providing information of the requesting test function.
 
@@ -477,7 +477,7 @@ record_testsuite_property
 caplog
 ~~~~~~
 
-**Tutorial**: :doc:`logging`.
+:ref:`logging`.
 
 .. autofunction:: _pytest.logging.caplog()
     :no-auto-options:
@@ -493,7 +493,7 @@ caplog
 monkeypatch
 ~~~~~~~~~~~
 
-**Tutorial**: :doc:`monkeypatch`.
+:ref:`monkeypatching`.
 
 .. autofunction:: _pytest.monkeypatch.monkeypatch()
     :no-auto-options:
@@ -576,7 +576,7 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
 tmp_path
 ~~~~~~~~
 
-**Tutorial**: :doc:`tmpdir`
+:ref:`tmpdir`
 
 .. autofunction:: _pytest.tmpdir.tmp_path()
     :no-auto-options:
@@ -587,7 +587,7 @@ tmp_path
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`tmp_path_factory example`
+:ref:`tmp_path_factory example`
 
 .. _`tmp_path_factory factory api`:
 
@@ -601,7 +601,7 @@ tmp_path_factory
 tmpdir
 ~~~~~~
 
-**Tutorial**: :doc:`tmpdir`
+:ref:`tmpdir`
 
 .. autofunction:: _pytest.tmpdir.tmpdir()
     :no-auto-options:
@@ -612,7 +612,7 @@ tmpdir
 tmpdir_factory
 ~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`tmpdir factory example`
+:ref:`tmpdir factory example`
 
 .. _`tmpdir factory api`:
 
@@ -626,7 +626,7 @@ tmpdir_factory
 Hooks
 -----
 
-**Tutorial**: :doc:`writing_plugins`.
+:ref:`writing-plugins`.
 
 .. currentmodule:: _pytest.hookspec
 
@@ -1178,13 +1178,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
    Default encoding to use to decode text files with docstrings.
-   :doc:`See how pytest handles doctests <doctest>`.
+   :ref:`See how pytest handles doctests <doctest>`.
 
 
 .. confval:: doctest_optionflags
 
    One or more doctest flag names from the standard ``doctest`` module.
-   :doc:`See how pytest handles doctests <doctest>`.
+   :ref:`See how pytest handles doctests <doctest>`.
 
 
 .. confval:: empty_parameter_set_mark
