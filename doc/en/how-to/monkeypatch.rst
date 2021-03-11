@@ -1,3 +1,4 @@
+.. _monkeypatching:
 
 How to monkeypatch/mock modules and environments
 ================================================================

@@ -122,7 +122,7 @@ you can copy from:
 
 * a custom collection example plugin: :ref:`yaml plugin`
 * builtin plugins which provide pytest's own functionality
-* many :doc:`external plugins <plugin_list>` providing additional features
+* many :ref:`external plugins <plugin-list>` providing additional features
 
 All of these plugins implement :ref:`hooks <hook-reference>` and/or :ref:`fixtures <fixture>`
 to extend and add functionality.

@@ -365,7 +365,7 @@ Examples
 
 Here is a simple test file with the several usages:
 
-.. literalinclude:: example/xfail_demo.py
+.. literalinclude:: /example/xfail_demo.py
 
 Running it with the report-on-xfail option gives this output:
 

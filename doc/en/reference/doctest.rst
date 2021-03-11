@@ -1,3 +1,4 @@
+.. _doctest:
 
 Doctest integration for modules and test files
 =========================================================
