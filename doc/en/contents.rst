@@ -57,17 +57,25 @@ Reference guides
    reference/reference
 
 
+Explanation
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   explanation/anatomy
+   explanation/fixtures
+   explanation/goodpractices
+   explanation/flaky
+   explanation/pythonpath
+
+
 Further topics
 -----------------
 
 .. toctree::
    :maxdepth: 2
 
-   anatomy
-   fixtures
-   goodpractices
-   flaky
-   pythonpath
    example/index
 
    backwards-compatibility

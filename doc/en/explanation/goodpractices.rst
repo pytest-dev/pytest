@@ -48,7 +48,7 @@ Conventions for Python test discovery
   * ``test`` prefixed test functions or methods outside of class
   * ``test`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
 
-For examples of how to customize your test discovery :doc:`example/pythoncollection`.
+For examples of how to customize your test discovery :doc:`/example/pythoncollection`.
 
 Within Python modules, ``pytest`` also discovers tests using the standard
 :ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
