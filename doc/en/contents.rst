@@ -35,6 +35,7 @@ How-to guides
    how-to/plugins
    how-to/nose
    how-to/bash-completion
+   how-to/fixtures
 
 
 Reference guides
@@ -43,7 +44,7 @@ Reference guides
 .. toctree::
    :maxdepth: 2
 
-   reference/fixture
+   reference/fixtures
    reference/warnings
    reference/doctest
    reference/cache
@@ -62,6 +63,8 @@ Further topics
 .. toctree::
    :maxdepth: 2
 
+   anatomy
+   fixtures
    goodpractices
    flaky
    pythonpath
