@@ -571,31 +571,31 @@ def _as_numpy_array(obj: object) -> Optional["ndarray"]:
 
 # builtin pytest.raises helper
 
-_E = TypeVar("_E", bound=BaseException)
+E = TypeVar("E", bound=BaseException)
 
 
 @overload
 def raises(
-    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
+    expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
-) -> "RaisesContext[_E]":
+) -> "RaisesContext[E]":
     ...
 
 
 @overload
 def raises(
-    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
+    expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     func: Callable[..., Any],
     *args: Any,
     **kwargs: Any,
-) -> _pytest._code.ExceptionInfo[_E]:
+) -> _pytest._code.ExceptionInfo[E]:
     ...
 
 
 def raises(
-    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]], *args: Any, **kwargs: Any
-) -> Union["RaisesContext[_E]", _pytest._code.ExceptionInfo[_E]]:
+    expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
+) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
     r"""Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
 
@@ -709,7 +709,7 @@ def raises(
     __tracebackhide__ = True
 
     if isinstance(expected_exception, type):
-        excepted_exceptions: Tuple[Type[_E], ...] = (expected_exception,)
+        excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:
         excepted_exceptions = expected_exception
     for exc in excepted_exceptions:
@@ -750,19 +750,19 @@ raises.Exception = fail.Exception  # type: ignore
 
 
 @final
-class RaisesContext(Generic[_E]):
+class RaisesContext(Generic[E]):
     def __init__(
         self,
-        expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
+        expected_exception: Union[Type[E], Tuple[Type[E], ...]],
         message: str,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message
         self.match_expr = match_expr
-        self.excinfo: Optional[_pytest._code.ExceptionInfo[_E]] = None
+        self.excinfo: Optional[_pytest._code.ExceptionInfo[E]] = None
 
-    def __enter__(self) -> _pytest._code.ExceptionInfo[_E]:
+    def __enter__(self) -> _pytest._code.ExceptionInfo[E]:
         self.excinfo = _pytest._code.ExceptionInfo.for_later()
         return self.excinfo
 
@@ -779,7 +779,7 @@ class RaisesContext(Generic[_E]):
         if not issubclass(exc_type, self.expected_exception):
             return False
         # Cast to narrow the exception type now that it's verified.
-        exc_info = cast(Tuple[Type[_E], _E, TracebackType], (exc_type, exc_val, exc_tb))
+        exc_info = cast(Tuple[Type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
         self.excinfo.fill_unfilled(exc_info)
         if self.match_expr is not None:
             self.excinfo.match(self.match_expr)
