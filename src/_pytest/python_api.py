@@ -72,6 +72,8 @@ class ApproxBase:
         return not (actual == self)
 
     def _approx_scalar(self, x) -> "ApproxScalar":
+        if isinstance(x, Decimal):
+            return ApproxDecimal(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
     def _yield_comparisons(self, actual):
