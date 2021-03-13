@@ -1,238 +1,24 @@
-.. _fixture:
-.. _fixtures:
-.. _`fixture functions`:
+.. _how-to-fixtures:
 
-pytest fixtures: explicit, modular, scalable
-========================================================
+How to use fixtures
+====================
 
-.. currentmodule:: _pytest.python
+.. seealso:: :ref:`about-fixtures`
+.. seealso:: :ref:`Fixtures reference <reference-fixtures>`
 
-
-
-.. _`xUnit`: https://en.wikipedia.org/wiki/XUnit
-.. _`Software test fixtures`: https://en.wikipedia.org/wiki/Test_fixture#Software
-.. _`Dependency injection`: https://en.wikipedia.org/wiki/Dependency_injection
-.. _`Transaction`: https://en.wikipedia.org/wiki/Transaction_processing
-.. _`linearizable`: https://en.wikipedia.org/wiki/Linearizability
-
-`Software test fixtures`_ initialize test functions.  They provide a
-fixed baseline so that tests execute reliably and produce consistent,
-repeatable, results.  Initialization may setup services, state, or
-other operating environments.  These are accessed by test functions
-through arguments; for each fixture used by a test function there is
-typically a parameter (named after the fixture) in the test function's
-definition.
-
-pytest fixtures offer dramatic improvements over the classic xUnit
-style of setup/teardown functions:
-
-* fixtures have explicit names and are activated by declaring their use
-  from test functions, modules, classes or whole projects.
-
-* fixtures are implemented in a modular manner, as each fixture name
-  triggers a *fixture function* which can itself use other fixtures.
-
-* fixture management scales from simple unit to complex
-  functional testing, allowing to parametrize fixtures and tests according
-  to configuration and component options, or to re-use fixtures
-  across function, class, module or whole test session scopes.
-
-* teardown logic can be easily, and safely managed, no matter how many fixtures
-  are used, without the need to carefully handle errors by hand or micromanage
-  the order that cleanup steps are added.
-
-In addition, pytest continues to support :ref:`xunitsetup`.  You can mix
-both styles, moving incrementally from classic to new style, as you
-prefer.  You can also start out from existing :ref:`unittest.TestCase
-style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
-
-:ref:`Fixtures <fixtures-api>` are defined using the
-:ref:`@pytest.fixture <pytest.fixture-api>` decorator, :ref:`described
-below <funcargs>`. Pytest has useful built-in fixtures, listed here
-for reference:
-
-   :fixture:`capfd`
-        Capture, as text, output to file descriptors ``1`` and ``2``.
-
-   :fixture:`capfdbinary`
-        Capture, as bytes, output to file descriptors ``1`` and ``2``.
-
-   :fixture:`caplog`
-        Control logging and access log entries.
-
-   :fixture:`capsys`
-        Capture, as text, output to ``sys.stdout`` and ``sys.stderr``.
-
-   :fixture:`capsysbinary`
-        Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``.
-
-   :fixture:`cache`
-        Store and retrieve values across pytest runs.
-
-   :fixture:`doctest_namespace`
-        Provide a dict injected into the docstests namespace.
-
-   :fixture:`monkeypatch`
-       Temporarily modify classes, functions, dictionaries,
-       ``os.environ``, and other objects.
-
-   :fixture:`pytestconfig`
-        Access to configuration values, pluginmanager and plugin hooks.
-
-   :fixture:`record_property`
-       Add extra properties to the test.
-
-   :fixture:`record_testsuite_property`
-       Add extra properties to the test suite.
-
-   :fixture:`recwarn`
-        Record warnings emitted by test functions.
-
-   :fixture:`request`
-       Provide information on the executing test function.
-
-   :fixture:`testdir`
-        Provide a temporary test directory to aid in running, and
-        testing, pytest plugins.
-
-   :fixture:`tmp_path`
-       Provide a :class:`pathlib.Path` object to a temporary directory
-       which is unique to each test function.
-
-   :fixture:`tmp_path_factory`
-        Make session-scoped temporary directories and return
-        :class:`pathlib.Path` objects.
-
-   :fixture:`tmpdir`
-        Provide a :class:`py.path.local` object to a temporary
-        directory which is unique to each test function;
-        replaced by :fixture:`tmp_path`.
-
-        .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
-
-   :fixture:`tmpdir_factory`
-        Make session-scoped temporary directories and return
-        :class:`py.path.local` objects;
-        replaced by :fixture:`tmp_path_factory`.
-
-.. _`funcargs`:
-.. _`funcarg mechanism`:
-.. _`fixture function`:
-.. _`@pytest.fixture`:
-.. _`pytest.fixture`:
-
-What fixtures are
------------------
-
-Before we dive into what fixtures are, let's first look at what a test is.
-
-In the simplest terms, a test is meant to look at the result of a particular
-behavior, and make sure that result aligns with what you would expect.
-Behavior is not something that can be empirically measured, which is why writing
-tests can be challenging.
-
-"Behavior" is the way in which some system **acts in response** to a particular
-situation and/or stimuli. But exactly *how* or *why* something is done is not
-quite as important as *what* was done.
-
-You can think of a test as being broken down into four steps:
-
-1. **Arrange**
-2. **Act**
-3. **Assert**
-4. **Cleanup**
-
-**Arrange** is where we prepare everything for our test. This means pretty
-much everything except for the "**act**". It's lining up the dominoes so that
-the **act** can do its thing in one, state-changing step. This can mean
-preparing objects, starting/killing services, entering records into a database,
-or even things like defining a URL to query, generating some credentials for a
-user that doesn't exist yet, or just waiting for some process to finish.
-
-**Act** is the singular, state-changing action that kicks off the **behavior**
-we want to test. This behavior is what carries out the changing of the state of
-the system under test (SUT), and it's the resulting changed state that we can
-look at to make a judgement about the behavior. This typically takes the form of
-a function/method call.
-
-**Assert** is where we look at that resulting state and check if it looks how
-we'd expect after the dust has settled. It's where we gather evidence to say the
-behavior does or does not aligns with what we expect. The ``assert`` in our test
-is where we take that measurement/observation and apply our judgement to it. If
-something should be green, we'd say ``assert thing == "green"``.
-
-**Cleanup** is where the test picks up after itself, so other tests aren't being
-accidentally influenced by it.
-
-At it's core, the test is ultimately the **act** and **assert** steps, with the
-**arrange** step only providing the context. **Behavior** exists between **act**
-and **assert**.
-
-Back to fixtures
-^^^^^^^^^^^^^^^^
-
-"Fixtures", in the literal sense, are each of the **arrange** steps and data. They're
-everything that test needs to do its thing.
-
-In pytest, "fixtures" are functions you define that serve this purpose. But they
-don't have to be limited to just the **arrange** steps. They can provide the
-**act** step, as well, and this can be a powerful technique for designing more
-complex tests, especially given how pytest's fixture system works. But we'll get
-into that further down.
-
-We can tell pytest that a particular function is a fixture by decorating it with
-:py:func:`@pytest.fixture <pytest.fixture>`. Here's a simple example of
-what a fixture in pytest might look like:
-
-.. code-block:: python
-
-    import pytest
-
-
-    class Fruit:
-        def __init__(self, name):
-            self.name = name
-
-        def __eq__(self, other):
-            return self.name == other.name
-
-
-    @pytest.fixture
-    def my_fruit():
-        return Fruit("apple")
-
-
-    @pytest.fixture
-    def fruit_basket(my_fruit):
-        return [Fruit("banana"), my_fruit]
-
-
-    def test_my_fruit_in_basket(my_fruit, fruit_basket):
-        assert my_fruit in fruit_basket
-
-
-
-Tests don't have to be limited to a single fixture, either. They can depend on
-as many fixtures as you want, and fixtures can use other fixtures, as well. This
-is where pytest's fixture system really shines.
-
-Don't be afraid to break things up if it makes things cleaner.
 
 "Requesting" fixtures
 ---------------------
 
-So fixtures are how we *prepare* for a test, but how do we tell pytest what
-tests and fixtures need which fixtures?
-
-At a basic level, test functions request fixtures by declaring them as
-arguments, as in the ``test_my_fruit_in_basket(my_fruit, fruit_basket):`` in the
-previous example.
+At a basic level, test functions request fixtures they require by declaring
+them as arguments.
 
 When pytest goes to run a test, it looks at the parameters in that test
 function's signature, and then searches for fixtures that have the same names as
 those parameters. Once pytest finds them, it runs those fixtures, captures what
 they returned (if anything), and passes those objects into the test function as
 arguments.
+
 
 Quick example
 ^^^^^^^^^^^^^
@@ -299,6 +85,7 @@ what's happening if we were to do it by hand:
     # Arrange
     bowl = fruit_bowl()
     test_fruit_salad(fruit_bowl=bowl)
+
 
 Fixtures can **request** other fixtures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -744,62 +531,6 @@ containers for different environments. See the example below.
     def docker_container():
         yield spawn_container()
 
-Fixture errors
---------------
-
-pytest does its best to put all the fixtures for a given test in a linear order
-so that it can see which fixture happens first, second, third, and so on. If an
-earlier fixture has a problem, though, and raises an exception, pytest will stop
-executing fixtures for that test and mark the test as having an error.
-
-When a test is marked as having an error, it doesn't mean the test failed,
-though. It just means the test couldn't even be attempted because one of the
-things it depends on had a problem.
-
-This is one reason why it's a good idea to cut out as many unnecessary
-dependencies as possible for a given test. That way a problem in something
-unrelated isn't causing us to have an incomplete picture of what may or may not
-have issues.
-
-Here's a quick example to help explain:
-
-.. code-block:: python
-
-    import pytest
-
-
-    @pytest.fixture
-    def order():
-        return []
-
-
-    @pytest.fixture
-    def append_first(order):
-        order.append(1)
-
-
-    @pytest.fixture
-    def append_second(order, append_first):
-        order.extend([2])
-
-
-    @pytest.fixture(autouse=True)
-    def append_third(order, append_second):
-        order += [3]
-
-
-    def test_order(order):
-        assert order == [1, 2, 3]
-
-
-If, for whatever reason, ``order.append(1)`` had a bug and it raises an exception,
-we wouldn't be able to know if ``order.extend([2])`` or ``order += [3]`` would
-also have problems. After ``append_first`` throws an exception, pytest won't run
-any more fixtures for ``test_order``, and it won't even try to run
-``test_order`` itself. The only things that would've run would be ``order`` and
-``append_first``.
-
-
 
 
 .. _`finalization`:
@@ -1070,12 +801,13 @@ making one state-changing action each, and then bundling them together with
 their teardown code, as :ref:`the email examples above <yield fixtures>` showed.
 
 The chance that a state-changing operation can fail but still modify state is
-negligible, as most of these operations tend to be `transaction`_-based (at
-least at the level of testing where state could be left behind). So if we make
-sure that any successful state-changing action gets torn down by moving it to a
-separate fixture function and separating it from other, potentially failing
-state-changing actions, then our tests will stand the best chance at leaving the
-test environment the way they found it.
+negligible, as most of these operations tend to be `transaction
+<https://en.wikipedia.org/wiki/Transaction_processing>`_-based (at least at the
+level of testing where state could be left behind). So if we make sure that any
+successful state-changing action gets torn down by moving it to a separate
+fixture function and separating it from other, potentially failing
+state-changing actions, then our tests will stand the best chance at leaving
+the test environment the way they found it.
 
 For an example, let's say we have a website with a login page, and we have
 access to an admin API where we can generate users. For our test, we want to:
@@ -1146,12 +878,13 @@ Here's what that might look like:
     def test_name_on_landing_page_after_login(landing_page, user):
         assert landing_page.header == f"Welcome, {user.name}!"
 
-The way the dependencies are laid out means it's unclear if the ``user`` fixture
-would execute before the ``driver`` fixture. But that's ok, because those are
-atomic operations, and so it doesn't matter which one runs first because the
-sequence of events for the test is still `linearizable`_. But what *does* matter
-is that, no matter which one runs first, if the one raises an exception while
-the other would not have, neither will have left anything behind. If ``driver``
+The way the dependencies are laid out means it's unclear if the ``user``
+fixture would execute before the ``driver`` fixture. But that's ok, because
+those are atomic operations, and so it doesn't matter which one runs first
+because the sequence of events for the test is still `linearizable
+<https://en.wikipedia.org/wiki/Linearizability>`_. But what *does* matter is
+that, no matter which one runs first, if the one raises an exception while the
+other would not have, neither will have left anything behind. If ``driver``
 executes before ``user``, and ``user`` raises an exception, the driver will
 still quit, and the user was never made. And if ``driver`` was the one to raise
 the exception, then the driver would never have been started and the user would
@@ -1164,380 +897,6 @@ never have been made.
     some time in the event that making the user raises an exception, since it
     won't bother trying to start the driver, which is a fairly expensive
     operation.
-
-.. _`conftest.py`:
-.. _`conftest`:
-
-Fixture availability
----------------------
-
-Fixture availability is determined from the perspective of the test. A fixture
-is only available for tests to request if they are in the scope that fixture is
-defined in. If a fixture is defined inside a class, it can only be requested by
-tests inside that class. But if a fixture is defined inside the global scope of
-the module, than every test in that module, even if it's defined inside a class,
-can request it.
-
-Similarly, a test can also only be affected by an autouse fixture if that test
-is in the same scope that autouse fixture is defined in (see
-:ref:`autouse order`).
-
-A fixture can also request any other fixture, no matter where it's defined, so
-long as the test requesting them can see all fixtures involved.
-
-For example, here's a test file with a fixture (``outer``) that requests a
-fixture (``inner``) from a scope it wasn't defined in:
-
-.. literalinclude:: /example/fixtures/test_fixtures_request_different_scope.py
-
-From the tests' perspectives, they have no problem seeing each of the fixtures
-they're dependent on:
-
-.. image:: /example/fixtures/test_fixtures_request_different_scope.svg
-    :align: center
-
-So when they run, ``outer`` will have no problem finding ``inner``, because
-pytest searched from the tests' perspectives.
-
-.. note::
-    The scope a fixture is defined in has no bearing on the order it will be
-    instantiated in: the order is mandated by the logic described
-    :ref:`here <fixture order>`.
-
-``conftest.py``: sharing fixtures across multiple files
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``conftest.py`` file serves as a means of providing fixtures for an entire
-directory. Fixtures defined in a ``conftest.py`` can be used by any test
-in that package without needing to import them (pytest will automatically
-discover them).
-
-You can have multiple nested directories/packages containing your tests, and
-each directory can have its own ``conftest.py`` with its own fixtures, adding on
-to the ones provided by the ``conftest.py`` files in parent directories.
-
-For example, given a test file structure like this:
-
-::
-
-    tests/
-        __init__.py
-
-        conftest.py
-            # content of tests/conftest.py
-            import pytest
-
-            @pytest.fixture
-            def order():
-                return []
-
-            @pytest.fixture
-            def top(order, innermost):
-                order.append("top")
-
-        test_top.py
-            # content of tests/test_top.py
-            import pytest
-
-            @pytest.fixture
-            def innermost(order):
-                order.append("innermost top")
-
-            def test_order(order, top):
-                assert order == ["innermost top", "top"]
-
-        subpackage/
-            __init__.py
-
-            conftest.py
-                # content of tests/subpackage/conftest.py
-                import pytest
-
-                @pytest.fixture
-                def mid(order):
-                    order.append("mid subpackage")
-
-            test_subpackage.py
-                # content of tests/subpackage/test_subpackage.py
-                import pytest
-
-                @pytest.fixture
-                def innermost(order, mid):
-                    order.append("innermost subpackage")
-
-                def test_order(order, top):
-                    assert order == ["mid subpackage", "innermost subpackage", "top"]
-
-The boundaries of the scopes can be visualized like this:
-
-.. image:: /example/fixtures/fixture_availability.svg
-    :align: center
-
-The directories become their own sort of scope where fixtures that are defined
-in a ``conftest.py`` file in that directory become available for that whole
-scope.
-
-Tests are allowed to search upward (stepping outside a circle) for fixtures, but
-can never go down (stepping inside a circle) to continue their search. So
-``tests/subpackage/test_subpackage.py::test_order`` would be able to find the
-``innermost`` fixture defined in ``tests/subpackage/test_subpackage.py``, but
-the one defined in ``tests/test_top.py`` would be unavailable to it because it
-would have to step down a level (step inside a circle) to find it.
-
-The first fixture the test finds is the one that will be used, so
-:ref:`fixtures can be overriden <override fixtures>` if you need to change or
-extend what one does for a particular scope.
-
-You can also use the ``conftest.py`` file to implement
-:ref:`local per-directory plugins <conftest.py plugins>`.
-
-Fixtures from third-party plugins
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Fixtures don't have to be defined in this structure to be available for tests,
-though. They can also be provided by third-party plugins that are installed, and
-this is how many pytest plugins operate. As long as those plugins are installed,
-the fixtures they provide can be requested from anywhere in your test suite.
-
-Because they're provided from outside the structure of your test suite,
-third-party plugins don't really provide a scope like `conftest.py` files and
-the directories in your test suite do. As a result, pytest will search for
-fixtures stepping out through scopes as explained previously, only reaching
-fixtures defined in plugins *last*.
-
-For example, given the following file structure:
-
-::
-
-    tests/
-        __init__.py
-
-        conftest.py
-            # content of tests/conftest.py
-            import pytest
-
-            @pytest.fixture
-            def order():
-                return []
-
-        subpackage/
-            __init__.py
-
-            conftest.py
-                # content of tests/subpackage/conftest.py
-                import pytest
-
-                @pytest.fixture(autouse=True)
-                def mid(order, b_fix):
-                    order.append("mid subpackage")
-
-            test_subpackage.py
-                # content of tests/subpackage/test_subpackage.py
-                import pytest
-
-                @pytest.fixture
-                def inner(order, mid, a_fix):
-                    order.append("inner subpackage")
-
-                def test_order(order, inner):
-                    assert order == ["b_fix", "mid subpackage", "a_fix", "inner subpackage"]
-
-If ``plugin_a`` is installed and provides the fixture ``a_fix``, and
-``plugin_b`` is installed and provides the fixture ``b_fix``, then this is what
-the test's search for fixtures would look like:
-
-.. image:: /example/fixtures/fixture_availability_plugins.svg
-    :align: center
-
-pytest will only search for ``a_fix`` and ``b_fix`` in the plugins after
-searching for them first in the scopes inside ``tests/``.
-
-.. note:
-
-    pytest can tell you what fixtures are available for a given test if you call
-    ``pytests`` along with the test's name (or the scope it's in), and provide
-    the ``--fixtures`` flag, e.g. ``pytest --fixtures test_something.py``
-    (fixtures with names that start with ``_`` will only be shown if you also
-    provide the ``-v`` flag).
-
-Sharing test data
------------------
-
-If you want to make test data from files available to your tests, a good way
-to do this is by loading these data in a fixture for use by your tests.
-This makes use of the automatic caching mechanisms of pytest.
-
-Another good approach is by adding the data files in the ``tests`` folder.
-There are also community plugins available to help managing this aspect of
-testing, e.g. `pytest-datadir <https://pypi.org/project/pytest-datadir/>`__
-and `pytest-datafiles <https://pypi.org/project/pytest-datafiles/>`__.
-
-.. _`fixture order`:
-
-Fixture instantiation order
----------------------------
-
-When pytest wants to execute a test, once it knows what fixtures will be
-executed, it has to figure out the order they'll be executed in. To do this, it
-considers 3 factors:
-
-1. scope
-2. dependencies
-3. autouse
-
-Names of fixtures or tests, where they're defined, the order they're defined in,
-and the order fixtures are requested in have no bearing on execution order
-beyond coincidence. While pytest will try to make sure coincidences like these
-stay consistent from run to run, it's not something that should be depended on.
-If you want to control the order, it's safest to rely on these 3 things and make
-sure dependencies are clearly established.
-
-Higher-scoped fixtures are executed first
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Within a function request for fixtures, those of higher-scopes (such as
-``session``) are executed before lower-scoped fixtures (such as ``function`` or
-``class``).
-
-Here's an example:
-
-.. literalinclude:: /example/fixtures/test_fixtures_order_scope.py
-
-The test will pass because the larger scoped fixtures are executing first.
-
-The order breaks down to this:
-
-.. image:: /example/fixtures/test_fixtures_order_scope.svg
-    :align: center
-
-Fixtures of the same order execute based on dependencies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When a fixture requests another fixture, the other fixture is executed first.
-So if fixture ``a`` requests fixture ``b``, fixture ``b`` will execute first,
-because ``a`` depends on ``b`` and can't operate without it. Even if ``a``
-doesn't need the result of ``b``, it can still request ``b`` if it needs to make
-sure it is executed after ``b``.
-
-For example:
-
-.. literalinclude:: /example/fixtures/test_fixtures_order_dependencies.py
-
-If we map out what depends on what, we get something that look like this:
-
-.. image:: /example/fixtures/test_fixtures_order_dependencies.svg
-    :align: center
-
-The rules provided by each fixture (as to what fixture(s) each one has to come
-after) are comprehensive enough that it can be flattened to this:
-
-.. image:: /example/fixtures/test_fixtures_order_dependencies_flat.svg
-    :align: center
-
-Enough information has to be provided through these requests in order for pytest
-to be able to figure out a clear, linear chain of dependencies, and as a result,
-an order of operations for a given test. If there's any ambiguity, and the order
-of operations can be interpreted more than one way, you should assume pytest
-could go with any one of those interpretations at any point.
-
-For example, if ``d`` didn't request ``c``, i.e.the graph would look like this:
-
-.. image:: /example/fixtures/test_fixtures_order_dependencies_unclear.svg
-    :align: center
-
-Because nothing requested ``c`` other than ``g``, and ``g`` also requests ``f``,
-it's now unclear if ``c`` should go before/after ``f``, ``e``, or ``d``. The
-only rules that were set for ``c`` is that it must execute after ``b`` and
-before ``g``.
-
-pytest doesn't know where ``c`` should go in the case, so it should be assumed
-that it could go anywhere between ``g`` and ``b``.
-
-This isn't necessarily bad, but it's something to keep in mind. If the order
-they execute in could affect the behavior a test is targeting, or could
-otherwise influence the result of a test, then the order should be defined
-explicitly in a way that allows pytest to linearize/"flatten" that order.
-
-.. _`autouse order`:
-
-Autouse fixtures are executed first within their scope
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Autouse fixtures are assumed to apply to every test that could reference them,
-so they are executed before other fixtures in that scope. Fixtures that are
-requested by autouse fixtures effectively become autouse fixtures themselves for
-the tests that the real autouse fixture applies to.
-
-So if fixture ``a`` is autouse and fixture ``b`` is not, but fixture ``a``
-requests fixture ``b``, then fixture ``b`` will effectively be an autouse
-fixture as well, but only for the tests that ``a`` applies to.
-
-In the last example, the graph became unclear if ``d`` didn't request ``c``. But
-if ``c`` was autouse, then ``b`` and ``a`` would effectively also be autouse
-because ``c`` depends on them. As a result, they would all be shifted above
-non-autouse fixtures within that scope.
-
-So if the test file looked like this:
-
-.. literalinclude:: /example/fixtures/test_fixtures_order_autouse.py
-
-the graph would look like this:
-
-.. image:: /example/fixtures/test_fixtures_order_autouse.svg
-    :align: center
-
-Because ``c`` can now be put above ``d`` in the graph, pytest can once again
-linearize the graph to this:
-
-In this example, ``c`` makes ``b`` and ``a`` effectively autouse fixtures as
-well.
-
-Be careful with autouse, though, as an autouse fixture will automatically
-execute for every test that can reach it, even if they don't request it. For
-example, consider this file:
-
-.. literalinclude:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.py
-
-Even though nothing in ``TestClassWithC1Request`` is requesting ``c1``, it still
-is executed for the tests inside it anyway:
-
-.. image:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.svg
-    :align: center
-
-But just because one autouse fixture requested a non-autouse fixture, that
-doesn't mean the non-autouse fixture becomes an autouse fixture for all contexts
-that it can apply to. It only effectively becomes an auotuse fixture for the
-contexts the real autouse fixture (the one that requested the non-autouse
-fixture) can apply to.
-
-For example, take a look at this test file:
-
-.. literalinclude:: /example/fixtures/test_fixtures_order_autouse_temp_effects.py
-
-It would break down to something like this:
-
-.. image:: /example/fixtures/test_fixtures_order_autouse_temp_effects.svg
-    :align: center
-
-For ``test_req`` and ``test_no_req`` inside ``TestClassWithAutouse``, ``c3``
-effectively makes ``c2`` an autouse fixture, which is why ``c2`` and ``c3`` are
-executed for both tests, despite not being requested, and why ``c2`` and ``c3``
-are executed before ``c1`` for ``test_req``.
-
-If this made ``c2`` an *actual* autouse fixture, then ``c2`` would also execute
-for the tests inside ``TestClassWithoutAutouse``, since they can reference
-``c2`` if they wanted to. But it doesn't, because from the perspective of the
-``TestClassWithoutAutouse`` tests, ``c2`` isn't an autouse fixture, since they
-can't see ``c3``.
-
-
-.. note:
-
-    pytest can tell you what order the fixtures will execute in for a given test
-    if you call ``pytests`` along with the test's name (or the scope it's in),
-    and provide the ``--setup-plan`` flag, e.g.
-    ``pytest --setup-plan test_something.py`` (fixtures with names that start
-    with ``_`` will only be shown if you also provide the ``-v`` flag).
 
 
 Running multiple ``assert`` statements safely

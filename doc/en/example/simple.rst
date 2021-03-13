@@ -69,7 +69,7 @@ Here is a basic pattern to achieve this:
 
 
 For this to work we need to add a command line option and
-provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
+provide the ``cmdopt`` through a :ref:`fixture function <fixture>`:
 
 .. code-block:: python
 
