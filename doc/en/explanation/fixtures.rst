@@ -6,6 +6,7 @@ About fixtures
 .. seealso:: :ref:`how-to-fixtures`
 .. seealso:: :ref:`Fixtures reference <reference-fixtures>`
 
+pytest fixtures are designed to be explicit, modular and scalable.
 
 What fixtures are
 -----------------

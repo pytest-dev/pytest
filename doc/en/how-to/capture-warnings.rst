@@ -1,7 +1,7 @@
 .. _`warnings`:
 
-Warnings Capture
-================
+How to capture warnings
+=======================
 
 
 

@@ -5,7 +5,7 @@
 .. _`pytest.fixture`:
 
 
-pytest fixtures: explicit, modular, scalable
+Fixtures reference
 ========================================================
 
 .. seealso:: :ref:`about-fixtures`

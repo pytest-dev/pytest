@@ -1,6 +1,6 @@
 .. _doctest:
 
-Doctest integration for modules and test files
+How to run doctests
 =========================================================
 
 By default, all files matching the ``test*.txt`` pattern will
