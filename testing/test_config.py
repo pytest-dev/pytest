@@ -1488,7 +1488,6 @@ class TestOverrideIniArgs:
         )
         pytester.makepyfile(
             """
-            import py.path
             def test_pathlist(pytestconfig):
                 config_paths = pytestconfig.getini("paths")
                 print(config_paths)

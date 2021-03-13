@@ -190,21 +190,22 @@ and define the fixture function in the context where you want it used.
 Let's look at an ``initdir`` fixture which makes all test methods of a
 ``TestCase`` class execute in a temporary directory with a
 pre-initialized ``samplefile.ini``.  Our ``initdir`` fixture itself uses
-the pytest builtin :ref:`tmpdir <tmpdir>` fixture to delegate the
+the pytest builtin :fixture:`tmp_path` fixture to delegate the
 creation of a per-test temporary directory:
 
 .. code-block:: python
 
     # content of test_unittest_cleandir.py
+    import os
     import pytest
     import unittest
 
 
     class MyTest(unittest.TestCase):
         @pytest.fixture(autouse=True)
-        def initdir(self, tmpdir):
-            tmpdir.chdir()  # change to pytest-provided temporary directory
-            tmpdir.join("samplefile.ini").write("# testdata")
+        def initdir(self, tmp_path, monkeypatch):
+            monkeypatch.chdir(tmp_path)  # change to pytest-provided temporary directory
+            tmp_path.joinpath("samplefile.ini").write_text("# testdata")
 
         def test_method(self):
             with open("samplefile.ini") as f:

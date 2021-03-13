@@ -284,9 +284,9 @@ Example of a fixture requiring another fixture:
 .. code-block:: python
 
     @pytest.fixture
-    def db_session(tmpdir):
-        fn = tmpdir / "db.file"
-        return connect(str(fn))
+    def db_session(tmp_path):
+        fn = tmp_path / "db.file"
+        return connect(fn)
 
 For more details, consult the full :ref:`fixtures docs <fixture>`.
 

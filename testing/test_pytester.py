@@ -618,12 +618,12 @@ def test_linematcher_string_api() -> None:
     assert str(lm) == "foo\nbar"
 
 
-def test_pytester_addopts_before_testdir(request, monkeypatch: MonkeyPatch) -> None:
+def test_pytest_addopts_before_pytester(request, monkeypatch: MonkeyPatch) -> None:
     orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
-    testdir = request.getfixturevalue("testdir")
+    pytester: Pytester = request.getfixturevalue("pytester")
     assert "PYTEST_ADDOPTS" not in os.environ
-    testdir.finalize()
+    pytester._finalize()
     assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
     monkeypatch.undo()
     assert os.environ.get("PYTEST_ADDOPTS") == orig
