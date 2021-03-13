@@ -42,6 +42,7 @@ from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import final
 from _pytest.compat import get_real_func
+from _pytest.deprecated import check_ispytest
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 
@@ -436,26 +437,39 @@ co_equal = compile(
 )
 
 
-_E = TypeVar("_E", bound=BaseException, covariant=True)
+E = TypeVar("E", bound=BaseException, covariant=True)
 
 
 @final
-@attr.s(repr=False)
-class ExceptionInfo(Generic[_E]):
+@attr.s(repr=False, init=False)
+class ExceptionInfo(Generic[E]):
     """Wraps sys.exc_info() objects and offers help for navigating the traceback."""
 
     _assert_start_repr = "AssertionError('assert "
 
-    _excinfo = attr.ib(type=Optional[Tuple[Type["_E"], "_E", TracebackType]])
-    _striptext = attr.ib(type=str, default="")
-    _traceback = attr.ib(type=Optional[Traceback], default=None)
+    _excinfo = attr.ib(type=Optional[Tuple[Type["E"], "E", TracebackType]])
+    _striptext = attr.ib(type=str)
+    _traceback = attr.ib(type=Optional[Traceback])
+
+    def __init__(
+        self,
+        excinfo: Optional[Tuple[Type["E"], "E", TracebackType]],
+        striptext: str = "",
+        traceback: Optional[Traceback] = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        self._excinfo = excinfo
+        self._striptext = striptext
+        self._traceback = traceback
 
     @classmethod
     def from_exc_info(
         cls,
-        exc_info: Tuple[Type[_E], _E, TracebackType],
+        exc_info: Tuple[Type[E], E, TracebackType],
         exprinfo: Optional[str] = None,
-    ) -> "ExceptionInfo[_E]":
+    ) -> "ExceptionInfo[E]":
         """Return an ExceptionInfo for an existing exc_info tuple.
 
         .. warning::
@@ -475,7 +489,7 @@ class ExceptionInfo(Generic[_E]):
             if exprinfo and exprinfo.startswith(cls._assert_start_repr):
                 _striptext = "AssertionError: "
 
-        return cls(exc_info, _striptext)
+        return cls(exc_info, _striptext, _ispytest=True)
 
     @classmethod
     def from_current(
@@ -500,17 +514,17 @@ class ExceptionInfo(Generic[_E]):
         return ExceptionInfo.from_exc_info(exc_info, exprinfo)
 
     @classmethod
-    def for_later(cls) -> "ExceptionInfo[_E]":
+    def for_later(cls) -> "ExceptionInfo[E]":
         """Return an unfilled ExceptionInfo."""
-        return cls(None)
+        return cls(None, _ispytest=True)
 
-    def fill_unfilled(self, exc_info: Tuple[Type[_E], _E, TracebackType]) -> None:
+    def fill_unfilled(self, exc_info: Tuple[Type[E], E, TracebackType]) -> None:
         """Fill an unfilled ExceptionInfo created with ``for_later()``."""
         assert self._excinfo is None, "ExceptionInfo was already filled"
         self._excinfo = exc_info
 
     @property
-    def type(self) -> Type[_E]:
+    def type(self) -> Type[E]:
         """The exception class."""
         assert (
             self._excinfo is not None
@@ -518,7 +532,7 @@ class ExceptionInfo(Generic[_E]):
         return self._excinfo[0]
 
     @property
-    def value(self) -> _E:
+    def value(self) -> E:
         """The exception value."""
         assert (
             self._excinfo is not None
@@ -562,10 +576,10 @@ class ExceptionInfo(Generic[_E]):
     def exconly(self, tryshort: bool = False) -> str:
         """Return the exception as a string.
 
-        When 'tryshort' resolves to True, and the exception is a
-        _pytest._code._AssertionError, only the actual exception part of
-        the exception representation is returned (so 'AssertionError: ' is
-        removed from the beginning).
+        When 'tryshort' resolves to True, and the exception is an
+        AssertionError, only the actual exception part of the exception
+        representation is returned (so 'AssertionError: ' is removed from
+        the beginning).
         """
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)
@@ -922,7 +936,7 @@ class FormattedExcinfo:
             if e.__cause__ is not None and self.chain:
                 e = e.__cause__
                 excinfo_ = (
-                    ExceptionInfo((type(e), e, e.__traceback__))
+                    ExceptionInfo.from_exc_info((type(e), e, e.__traceback__))
                     if e.__traceback__
                     else None
                 )
@@ -932,7 +946,7 @@ class FormattedExcinfo:
             ):
                 e = e.__context__
                 excinfo_ = (
-                    ExceptionInfo((type(e), e, e.__traceback__))
+                    ExceptionInfo.from_exc_info((type(e), e, e.__traceback__))
                     if e.__traceback__
                     else None
                 )

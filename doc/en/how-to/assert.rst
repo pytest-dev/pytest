@@ -98,7 +98,7 @@ and if you need to have access to the actual exception info you may use:
             f()
         assert "maximum recursion" in str(excinfo.value)
 
-``excinfo`` is an ``ExceptionInfo`` instance, which is a wrapper around
+``excinfo`` is an :class:`~pytest.ExceptionInfo` instance, which is a wrapper around
 the actual exception raised.  The main attributes of interest are
 ``.type``, ``.value`` and ``.traceback``.
 

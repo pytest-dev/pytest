@@ -145,7 +145,7 @@ def main(
         try:
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
-            exc_info = ExceptionInfo(e.excinfo)
+            exc_info = ExceptionInfo.from_exc_info(e.excinfo)
             tw = TerminalWriter(sys.stderr)
             tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
             exc_info.traceback = exc_info.traceback.filter(

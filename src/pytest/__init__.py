@@ -2,6 +2,7 @@
 """pytest: unit and functional testing with Python."""
 from . import collect
 from _pytest import __version__
+from _pytest._code import ExceptionInfo
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
@@ -79,6 +80,7 @@ __all__ = [
     "console_main",
     "deprecated_call",
     "exit",
+    "ExceptionInfo",
     "ExitCode",
     "fail",
     "File",

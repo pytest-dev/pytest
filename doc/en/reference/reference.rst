@@ -793,7 +793,7 @@ Config
 ExceptionInfo
 ~~~~~~~~~~~~~
 
-.. autoclass:: _pytest._code.ExceptionInfo
+.. autoclass:: pytest.ExceptionInfo()
     :members:
 
 
