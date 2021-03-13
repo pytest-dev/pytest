@@ -582,7 +582,7 @@ tmp_path
     :no-auto-options:
 
 
-.. fixture:: _pytest.tmpdir.tmp_path_factory
+.. fixture:: tmp_path_factory
 
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
@@ -601,7 +601,7 @@ tmp_path_factory
 tmpdir
 ~~~~~~
 
-:ref:`tmpdir`
+:ref:`tmpdir and tmpdir_factory`
 
 .. autofunction:: _pytest.tmpdir.tmpdir()
     :no-auto-options:
@@ -612,9 +612,7 @@ tmpdir
 tmpdir_factory
 ~~~~~~~~~~~~~~
 
-:ref:`tmpdir factory example`
-
-.. _`tmpdir factory api`:
+:ref:`tmpdir and tmpdir_factory`
 
 ``tmp_path_factory`` is an instance of :class:`~pytest.TempdirFactory`:
 
