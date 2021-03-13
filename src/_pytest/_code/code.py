@@ -562,10 +562,10 @@ class ExceptionInfo(Generic[E]):
     def exconly(self, tryshort: bool = False) -> str:
         """Return the exception as a string.
 
-        When 'tryshort' resolves to True, and the exception is a
-        _pytest._code._AssertionError, only the actual exception part of
-        the exception representation is returned (so 'AssertionError: ' is
-        removed from the beginning).
+        When 'tryshort' resolves to True, and the exception is an
+        AssertionError, only the actual exception part of the exception
+        representation is returned (so 'AssertionError: ' is removed from
+        the beginning).
         """
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)
