@@ -377,24 +377,32 @@ def test_testcase_adderrorandfailure_defers(pytester: Pytester, type: str) -> No
 def test_testcase_custom_exception_info(pytester: Pytester, type: str) -> None:
     pytester.makepyfile(
         """
+        from typing import Generic, TypeVar
         from unittest import TestCase
-        import py, pytest
-        import _pytest._code
+        import pytest, _pytest._code
+
         class MyTestCase(TestCase):
             def run(self, result):
                 excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
-                # we fake an incompatible exception info
-                from _pytest.monkeypatch import MonkeyPatch
-                mp = MonkeyPatch()
-                def t(*args):
-                    mp.undo()
-                    raise TypeError()
-                mp.setattr(_pytest._code, 'ExceptionInfo', t)
+                # We fake an incompatible exception info.
+                class FakeExceptionInfo(Generic[TypeVar("E")]):
+                    def __init__(self, *args, **kwargs):
+                        mp.undo()
+                        raise TypeError()
+                    @classmethod
+                    def from_current(cls):
+                        return cls()
+                    @classmethod
+                    def from_exc_info(cls, *args, **kwargs):
+                        return cls()
+                mp = pytest.MonkeyPatch()
+                mp.setattr(_pytest._code, 'ExceptionInfo', FakeExceptionInfo)
                 try:
                     excinfo = excinfo._excinfo
                     result.add%(type)s(self, excinfo)
                 finally:
                     mp.undo()
+
             def test_hello(self):
                 pass
     """

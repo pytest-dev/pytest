@@ -365,7 +365,7 @@ class DoctestItem(pytest.Item):
                         example, failure.got, report_choice
                     ).split("\n")
                 else:
-                    inner_excinfo = ExceptionInfo(failure.exc_info)
+                    inner_excinfo = ExceptionInfo.from_exc_info(failure.exc_info)
                     lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
                     lines += [
                         x.strip("\n")
