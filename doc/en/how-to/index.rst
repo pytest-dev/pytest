@@ -58,5 +58,3 @@ pytest development environment
    :maxdepth: 1
 
    bash-completion
-
-

@@ -74,7 +74,7 @@ def iter_plugins():
 def main():
     plugins = list(iter_plugins())
     plugin_table = tabulate.tabulate(plugins, headers="keys", tablefmt="rst")
-    plugin_list = pathlib.Path("doc", "en", "plugin_list.rst")
+    plugin_list = pathlib.Path("doc", "en", "reference", "plugin_list.rst")
     with plugin_list.open("w") as f:
         f.write(FILE_HEAD)
         f.write(f"This list contains {len(plugins)} plugins.\n\n")
