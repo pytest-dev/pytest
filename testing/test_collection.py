@@ -1346,7 +1346,6 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
 
     Context: https://github.com/pytest-dev/pytest-cpp/pull/47
     """
-    from _pytest.compat import legacy_path
 
     class MyCollector(pytest.File):
         def __init__(self, *k, x, **kw):
@@ -1354,7 +1353,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
             self.x = x
 
     collector = MyCollector.from_parent(
-        parent=request.session, fspath=legacy_path(pytester.path) / "foo", x=10
+        parent=request.session, path=pytester.path / "foo", x=10
     )
     assert collector.x == 10
 

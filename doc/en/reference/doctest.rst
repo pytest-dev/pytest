@@ -194,7 +194,7 @@ It is possible to use fixtures using the ``getfixture`` helper:
 .. code-block:: text
 
     # content of example.rst
-    >>> tmp = getfixture('tmpdir')
+    >>> tmp = getfixture('tmp_path')
     >>> ...
     >>>
 

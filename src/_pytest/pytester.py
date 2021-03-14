@@ -875,7 +875,7 @@ class Pytester:
     def syspathinsert(
         self, path: Optional[Union[str, "os.PathLike[str]"]] = None
     ) -> None:
-        """Prepend a directory to sys.path, defaults to :py:attr:`tmpdir`.
+        """Prepend a directory to sys.path, defaults to :attr:`path`.
 
         This is undone automatically when this object dies at the end of each
         test.
@@ -964,7 +964,7 @@ class Pytester:
         """
         session = Session.from_config(config)
         assert "::" not in str(arg)
-        p = legacy_path(arg)
+        p = Path(os.path.abspath(arg))
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([str(p)], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)

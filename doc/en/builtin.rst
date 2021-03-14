@@ -148,10 +148,10 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         on warning categories.
 
     tmpdir_factory [session scope]
-        Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.
+        Return a :class:`pytest.TempdirFactory` instance for the test session.
 
     tmp_path_factory [session scope]
-        Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.
+        Return a :class:`pytest.TempPathFactory` instance for the test session.
 
     tmpdir
         Return a temporary directory path object which is unique to each test

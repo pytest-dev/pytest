@@ -982,11 +982,11 @@ class TestRequestBasic:
             def farg(arg1):
                 pass
             @pytest.fixture(autouse=True)
-            def sarg(tmpdir):
+            def sarg(tmp_path):
                 pass
             def test_function(request, farg):
                 assert set(get_public_names(request.fixturenames)) == \
-                       set(["tmpdir", "sarg", "arg1", "request", "farg",
+                       set(["sarg", "arg1", "request", "farg",
                             "tmp_path", "tmp_path_factory"])
         """
         )
@@ -1059,7 +1059,7 @@ class TestRequestBasic:
     def test_show_fixtures_color_yes(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_this(): assert 1")
         result = pytester.runpytest("--color=yes", "--fixtures")
-        assert "\x1b[32mtmpdir" in result.stdout.str()
+        assert "\x1b[32mtmp_path" in result.stdout.str()
 
     def test_newstyle_with_request(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1752,11 +1752,11 @@ class TestAutouseDiscovery:
             """
             import pytest
             @pytest.fixture(autouse=True)
-            def perfunction(request, tmpdir):
+            def perfunction(request, tmp_path):
                 pass
 
             @pytest.fixture()
-            def arg1(tmpdir):
+            def arg1(tmp_path):
                 pass
             @pytest.fixture(autouse=True)
             def perfunction2(arg1):
@@ -3334,9 +3334,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             [
-                "tmpdir_factory [[]session scope[]]",
+                "tmp_path_factory [[]session scope[]]",
                 "*for the test session*",
-                "tmpdir",
+                "tmp_path",
                 "*temporary directory*",
             ]
         )
@@ -3345,9 +3345,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
             [
-                "tmpdir_factory [[]session scope[]] -- *tmpdir.py*",
+                "tmp_path_factory [[]session scope[]] -- *tmpdir.py*",
                 "*for the test session*",
-                "tmpdir -- *tmpdir.py*",
+                "tmp_path -- *tmpdir.py*",
                 "*temporary directory*",
             ]
         )
@@ -3367,7 +3367,7 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmpdir
+            *tmp_path
             *fixtures defined from*
             *arg1*
             *hello world*
@@ -3395,7 +3395,7 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             """
-            *tmpdir*
+            *tmp_path*
             *fixtures defined from*conftest*
             *arg1*
             *hello world*
@@ -4000,15 +4000,15 @@ class TestScopeOrdering:
                 FIXTURE_ORDER.append('m1')
 
             @pytest.fixture(scope='session')
-            def my_tmpdir_factory():
-                FIXTURE_ORDER.append('my_tmpdir_factory')
+            def my_tmp_path_factory():
+                FIXTURE_ORDER.append('my_tmp_path_factory')
 
             @pytest.fixture
-            def my_tmpdir(my_tmpdir_factory):
-                FIXTURE_ORDER.append('my_tmpdir')
+            def my_tmp_path(my_tmp_path_factory):
+                FIXTURE_ORDER.append('my_tmp_path')
 
             @pytest.fixture
-            def f1(my_tmpdir):
+            def f1(my_tmp_path):
                 FIXTURE_ORDER.append('f1')
 
             @pytest.fixture
@@ -4022,12 +4022,13 @@ class TestScopeOrdering:
         request = FixtureRequest(items[0], _ispytest=True)
         # order of fixtures based on their scope and position in the parameter list
         assert (
-            request.fixturenames == "s1 my_tmpdir_factory p1 m1 f1 f2 my_tmpdir".split()
+            request.fixturenames
+            == "s1 my_tmp_path_factory p1 m1 f1 f2 my_tmp_path".split()
         )
         pytester.runpytest()
-        # actual fixture execution differs: dependent fixtures must be created first ("my_tmpdir")
+        # actual fixture execution differs: dependent fixtures must be created first ("my_tmp_path")
         FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined]
-        assert FIXTURE_ORDER == "s1 my_tmpdir_factory p1 m1 my_tmpdir f1 f2".split()
+        assert FIXTURE_ORDER == "s1 my_tmp_path_factory p1 m1 my_tmp_path f1 f2".split()
 
     def test_func_closure_module(self, pytester: Pytester) -> None:
         pytester.makepyfile(

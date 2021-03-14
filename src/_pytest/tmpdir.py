@@ -166,11 +166,11 @@ def get_user() -> Optional[str]:
 
 
 def pytest_configure(config: Config) -> None:
-    """Create a TempdirFactory and attach it to the config object.
+    """Create a TempPathFactory and attach it to the config object.
 
     This is to comply with existing plugins which expect the handler to be
     available at pytest_configure time, but ideally should be moved entirely
-    to the tmpdir_factory session fixture.
+    to the tmp_path_factory session fixture.
     """
     mp = MonkeyPatch()
     tmppath_handler = TempPathFactory.from_config(config, _ispytest=True)
@@ -182,14 +182,14 @@ def pytest_configure(config: Config) -> None:
 
 @fixture(scope="session")
 def tmpdir_factory(request: FixtureRequest) -> TempdirFactory:
-    """Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session."""
+    """Return a :class:`pytest.TempdirFactory` instance for the test session."""
     # Set dynamically by pytest_configure() above.
     return request.config._tmpdirhandler  # type: ignore
 
 
 @fixture(scope="session")
 def tmp_path_factory(request: FixtureRequest) -> TempPathFactory:
-    """Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session."""
+    """Return a :class:`pytest.TempPathFactory` instance for the test session."""
     # Set dynamically by pytest_configure() above.
     return request.config._tmp_path_factory  # type: ignore
 

@@ -213,24 +213,24 @@ Request a unique temporary directory for functional tests
 
 .. code-block:: python
 
-    # content of test_tmpdir.py
-    def test_needsfiles(tmpdir):
-        print(tmpdir)
+    # content of test_tmp_path.py
+    def test_needsfiles(tmp_path):
+        print(tmp_path)
         assert 0
 
-List the name ``tmpdir`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory:
+List the name ``tmp_path`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory:
 
 .. code-block:: pytest
 
-    $ pytest -q test_tmpdir.py
+    $ pytest -q test_tmp_path.py
     F                                                                    [100%]
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
 
-    tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
+    tmp_path = Path('PYTEST_TMPDIR/test_needsfiles0')
 
-        def test_needsfiles(tmpdir):
-            print(tmpdir)
+        def test_needsfiles(tmp_path):
+            print(tmp_path)
     >       assert 0
     E       assert 0
 
@@ -238,10 +238,10 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0
     ========================= short test summary info ==========================
-    FAILED test_tmpdir.py::test_needsfiles - assert 0
+    FAILED test_tmp_path.py::test_needsfiles - assert 0
     1 failed in 0.12s
 
-More info on tmpdir handling is available at :ref:`Temporary directories and files <tmpdir handling>`.
+More info on temporary directory handling is available at :ref:`Temporary directories and files <tmpdir handling>`.
 
 Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the command:
 
