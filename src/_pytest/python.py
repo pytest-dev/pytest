@@ -449,7 +449,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
         assert modulecol is not None
         module = modulecol.obj
         clscol = self.getparent(Class)
-        cls = clscol and clscol.obj or None
+        cls = clscol.obj if clscol else None
         fm = self.session._fixturemanager
 
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)

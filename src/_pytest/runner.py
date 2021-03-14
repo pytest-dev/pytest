@@ -517,7 +517,7 @@ class SetupState:
         When nextitem is None (meaning we're at the last item), the entire
         stack is torn down.
         """
-        needed_collectors = nextitem and nextitem.listchain() or []
+        needed_collectors = nextitem.listchain() if nextitem else []
         exc = None
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:

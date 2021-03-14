@@ -817,7 +817,7 @@ class FormattedExcinfo:
             if short:
                 message = "in %s" % (entry.name)
             else:
-                message = excinfo and excinfo.typename or ""
+                message = excinfo.typename if excinfo else ""
             entry_path = entry.path
             path = self._makepath(entry_path)
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
@@ -860,7 +860,7 @@ class FormattedExcinfo:
             return ReprTraceback(entries, None, style=self.style)
 
         for index, entry in enumerate(traceback):
-            einfo = (last == entry) and excinfo or None
+            einfo = excinfo if (last == entry) else None
             reprentry = self.repr_traceback_entry(entry, einfo)
             entries.append(reprentry)
         return ReprTraceback(entries, extraline, style=self.style)
@@ -1221,7 +1221,7 @@ def getfslineno(obj: object) -> Tuple[Union[str, Path], int]:
         except TypeError:
             return "", -1
 
-        fspath = fn and absolutepath(fn) or ""
+        fspath = absolutepath(fn) if fn else ""
         lineno = -1
         if fspath:
             try:
