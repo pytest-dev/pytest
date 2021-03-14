@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import requests
+import sys
 
 issues_url = "https://api.github.com/repos/pytest-dev/pytest/issues"
 
@@ -16,7 +17,7 @@ def get_issues():
         if r.status_code == 403:
             # API request limit exceeded
             print(data["message"])
-            exit(1)
+            sys.exit(1)
         issues.extend(data)
 
         # Look for next page
