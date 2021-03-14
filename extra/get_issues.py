@@ -1,8 +1,8 @@
 import json
+import sys
 from pathlib import Path
 
 import requests
-import sys
 
 issues_url = "https://api.github.com/repos/pytest-dev/pytest/issues"
 

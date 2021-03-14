@@ -226,7 +226,7 @@ def make_numbered_dir(root: Path, prefix: str) -> Path:
         else:
             _force_symlink(root, prefix + "current", new_path)
             return new_path
-        
+
     raise OSError(
         "could not create numbered dir with prefix "
         "{prefix} in {root} after 10 tries".format(prefix=prefix, root=root)
