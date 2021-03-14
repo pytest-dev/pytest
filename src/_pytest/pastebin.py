@@ -105,6 +105,6 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
             tw = create_terminal_writer(terminalreporter.config, file)
             rep.toterminal(tw)
             s = file.getvalue()
-            assert len(s)
+            assert s
             pastebinurl = create_new_paste(s)
             terminalreporter.write_line(f"{msg} --> {pastebinurl}")
