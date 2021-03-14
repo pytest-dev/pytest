@@ -732,4 +732,4 @@ def _get_report_choice(key: str) -> int:
 def doctest_namespace() -> Dict[str, Any]:
     """Fixture that returns a :py:class:`dict` that will be injected into the
     namespace of doctests."""
-    return dict()
+    return {}
