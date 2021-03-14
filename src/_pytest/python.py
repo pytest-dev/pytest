@@ -210,11 +210,11 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     return any(fnmatch_ex(pattern, path) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(fspath: Path, path: LEGACY_PATH, parent) -> "Module":
+def pytest_pycollect_makemodule(fspath: Path, parent) -> "Module":
     if fspath.name == "__init__.py":
-        pkg: Package = Package.from_parent(parent, fspath=path)
+        pkg: Package = Package.from_parent(parent, path=fspath)
         return pkg
-    mod: Module = Module.from_parent(parent, fspath=path)
+    mod: Module = Module.from_parent(parent, path=fspath)
     return mod
 
 
@@ -691,7 +691,7 @@ class Package(Module):
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
+            fspath, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
         )
         ihook = self.session.gethookproxy(fspath)
         if not self.session.isinitpath(fspath):

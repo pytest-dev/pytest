@@ -28,7 +28,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
@@ -122,7 +121,6 @@ def pytest_unconfigure() -> None:
 
 def pytest_collect_file(
     fspath: Path,
-    path: LEGACY_PATH,
     parent: Collector,
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
