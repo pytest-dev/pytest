@@ -936,7 +936,7 @@ pytest treats some global variables in a special manner when defined in a test m
 **Tutorial**: :ref:`customizing-test-collection`
 
 Can be declared in *conftest.py files* to exclude test directories or modules.
-Needs to be ``list[str]``.
+Needs to be a list of paths (``str``, :class:`pathlib.Path` or any :class:`os.PathLike`).
 
 .. code-block:: python
 

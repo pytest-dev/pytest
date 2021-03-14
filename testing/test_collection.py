@@ -367,12 +367,19 @@ class TestCustomConftests:
     def test_collectignore_exclude_on_option(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            # potentially avoid dependency on pylib
-            from _pytest.compat import legacy_path
             from pathlib import Path
-            collect_ignore = [legacy_path('hello'), 'test_world.py', Path('bye')]
+
+            class MyPathLike:
+                def __init__(self, path):
+                    self.path = path
+                def __fspath__(self):
+                    return "path"
+
+            collect_ignore = [MyPathLike('hello'), 'test_world.py', Path('bye')]
+
             def pytest_addoption(parser):
                 parser.addoption("--XX", action="store_true", default=False)
+
             def pytest_configure(config):
                 if config.getvalue("XX"):
                     collect_ignore[:] = []
