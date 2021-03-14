@@ -1,0 +1,4 @@
+Warn when inheritance is used to bring Collectors into Items,
+it was never sanely supported and triggers hard to debug errors.
+
+Instead of inheritance composition should be used.
