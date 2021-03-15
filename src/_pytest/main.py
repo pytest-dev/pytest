@@ -25,6 +25,7 @@ import attr
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import directory_arg
@@ -301,7 +302,7 @@ def wrap_session(
     finally:
         # Explicitly break reference cycle.
         excinfo = None  # type: ignore
-        session.startdir.chdir()
+        os.chdir(session.startpath)
         if initstate >= 2:
             try:
                 config.hook.pytest_sessionfinish(
@@ -476,7 +477,6 @@ class Session(nodes.FSCollector):
         self.shouldstop: Union[bool, str] = False
         self.shouldfail: Union[bool, str] = False
         self.trace = config.trace.root.get("collection")
-        self.startdir = config.invocation_dir
         self._initialpaths: FrozenSet[Path] = frozenset()
 
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
@@ -496,6 +496,24 @@ class Session(nodes.FSCollector):
             self.testsfailed,
             self.testscollected,
         )
+
+    @property
+    def startpath(self) -> Path:
+        """The path from which pytest was invoked.
+
+        .. versionadded:: 6.3.0
+        """
+        return self.config.invocation_params.dir
+
+    @property
+    def stardir(self) -> LEGACY_PATH:
+        """The path from which pytest was invoked.
+
+        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+        :type: LEGACY_PATH
+        """
+        return legacy_path(self.startpath)
 
     def _node_location_to_relpath(self, node_path: Path) -> str:
         # bestrelpath is a quite slow function.
