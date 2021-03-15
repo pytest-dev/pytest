@@ -645,7 +645,7 @@ class Package(Module):
             session=session,
             nodeid=nodeid,
         )
-        self.name = os.path.basename(str(fspath.dirname))
+        self.name = path.parent.name
 
     def setup(self) -> None:
         # Not using fixtures to call setup_module here because autouse fixtures
