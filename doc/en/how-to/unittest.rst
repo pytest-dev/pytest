@@ -2,8 +2,8 @@
 .. _`unittest.TestCase`:
 .. _`unittest`:
 
-unittest.TestCase Support
-=========================
+How to use ``unittest``-based tests with pytest
+===============================================
 
 ``pytest`` supports running Python ``unittest``-based tests out of the box.
 It's meant for leveraging existing ``unittest``-based test suites

@@ -2,7 +2,7 @@
 .. _`classic xunit`:
 .. _xunitsetup:
 
-classic xunit-style setup
+How to implement xunit-style set-up
 ========================================
 
 This section describes a classic and popular way how you can implement

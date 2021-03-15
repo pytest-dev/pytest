@@ -1,16 +1,14 @@
+.. _`assert`:
 
 How to write and report assertions in tests
 ==================================================
 
-.. _`assertfeedback`:
 .. _`assert with the assert statement`:
-.. _`assert`:
-
 
 Asserting with the ``assert`` statement
 ---------------------------------------------------------
 
-``pytest`` allows you to use the standard python ``assert`` for verifying
+``pytest`` allows you to use the standard Python ``assert`` for verifying
 expectations and values in Python tests.  For example, you can write the
 following:
 
