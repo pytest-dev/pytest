@@ -244,9 +244,10 @@ def deselect_by_mark(items: "List[Item]", config: Config) -> None:
     remaining: List[Item] = []
     deselected: List[Item] = []
     for item in items:
-        (
-            remaining if expr.evaluate(MarkMatcher.from_item(item)) else deselected
-        ).append(item)
+        if expr.evaluate(MarkMatcher.from_item(item)):
+            remaining.append(item)
+        else:
+            deselected.append(item)
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
