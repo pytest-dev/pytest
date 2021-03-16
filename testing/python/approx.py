@@ -143,9 +143,9 @@ class TestApprox:
 
     def test_negative_tolerance_message(self):
         # Error message for negative tolerance should include the value.
-        with pytest.raises(ValueError, match='-3'):
+        with pytest.raises(ValueError, match="-3"):
             0 == approx(1, abs=-3)
-        with pytest.raises(ValueError, match='-3'):
+        with pytest.raises(ValueError, match="-3"):
             0 == approx(1, rel=-3)
 
     def test_inf_tolerance(self):
