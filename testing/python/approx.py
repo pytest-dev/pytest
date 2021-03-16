@@ -141,6 +141,13 @@ class TestApprox:
         with pytest.raises(ValueError):
             1.1 == approx(1, rel, abs)
 
+    def test_negative_tolerance_message(self):
+        # Error message for negative tolerance should include the value.
+        with pytest.raises(ValueError, match="-3"):
+            0 == approx(1, abs=-3)
+        with pytest.raises(ValueError, match="-3"):
+            0 == approx(1, rel=-3)
+
     def test_inf_tolerance(self):
         # Everything should be equal if the tolerance is infinite.
         large_diffs = [(1, 1000), (1e-50, 1e50), (-1.0, -1e300), (0.0, 10)]
