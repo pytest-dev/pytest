@@ -200,17 +200,12 @@ def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
         selectuntil = True
         keywordexpr = keywordexpr[:-1]
 
-    try:
-        expression = Expression.compile(keywordexpr)
-    except ParseError as e:
-        raise UsageError(
-            f"Wrong expression passed to '-k': {keywordexpr}: {e}"
-        ) from None
+    expr = _parse_expression(keywordexpr, "Wrong expression passed to '-k'")
 
     remaining = []
     deselected = []
     for colitem in items:
-        if keywordexpr and not expression.evaluate(KeywordMatcher.from_item(colitem)):
+        if keywordexpr and not expr.evaluate(KeywordMatcher.from_item(colitem)):
             deselected.append(colitem)
         else:
             if selectuntil:
@@ -245,22 +240,23 @@ def deselect_by_mark(items: "List[Item]", config: Config) -> None:
     if not matchexpr:
         return
 
-    try:
-        expression = Expression.compile(matchexpr)
-    except ParseError as e:
-        raise UsageError(f"Wrong expression passed to '-m': {matchexpr}: {e}") from None
-
-    remaining = []
-    deselected = []
+    expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'")
+    remaining: List[Item] = []
+    deselected: List[Item] = []
     for item in items:
-        if expression.evaluate(MarkMatcher.from_item(item)):
-            remaining.append(item)
-        else:
-            deselected.append(item)
-
+        (
+            remaining if expr.evaluate(MarkMatcher.from_item(item)) else deselected
+        ).append(item)
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
+
+
+def _parse_expression(expr: str, exc_message: str) -> Expression:
+    try:
+        return Expression.compile(expr)
+    except ParseError as e:
+        raise UsageError(f"{exc_message}: {expr}: {e}") from None
 
 
 def pytest_collection_modifyitems(items: "List[Item]", config: Config) -> None:
