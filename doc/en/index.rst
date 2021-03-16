@@ -87,7 +87,10 @@ Features
 Documentation
 -------------
 
-Please see :ref:`Contents <toc>` for full documentation, including installation, tutorials and PDF documents.
+* :ref:`Get started <get-started>` - install pytest and grasp its basics just twenty minutes
+* :ref:`How-to guides <how-to>` - step-by-step guides, covering a vast range of use-cases and needs
+* :ref:`Reference guides <reference>` - includes the complete pytest API reference, lists of plugins and more
+* :ref:`Explanation <explanation>` - background, discussion of key topics, answers to higher-level questions
 
 
 Bugs/Requests
@@ -128,7 +131,7 @@ Save time, reduce risk, and improve code health, while paying the maintainers of
 `Learn more. <https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`_
 
 Security
-^^^^^^^^
+~~~~~~~~
 
 pytest has never been associated with a security vulnerability, but in any case, to report a
 security vulnerability please use the `Tidelift security contact <https://tidelift.com/security>`_.

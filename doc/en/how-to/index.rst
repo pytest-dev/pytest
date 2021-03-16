@@ -1,5 +1,7 @@
 :orphan:
 
+.. _how-to:
+
 How-to guides
 ================
 

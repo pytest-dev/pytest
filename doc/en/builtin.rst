@@ -6,7 +6,7 @@ Pytest API and builtin fixtures
 ================================================
 
 
-Most of the information of this page has been moved over to :ref:`reference`.
+Most of the information of this page has been moved over to :ref:`api-reference`.
 
 For information on plugin hooks and objects, see :ref:`plugins`.
 
