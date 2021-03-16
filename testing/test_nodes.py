@@ -39,7 +39,7 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
 
 
-def test_subclassing_node_with_item_warns() -> None:
+def test_subclassing_both_item_and_collector_warns() -> None:
 
     with pytest.warns(
         PytestWarning, match="SoWrong is a Item subclass and should not be a collector"

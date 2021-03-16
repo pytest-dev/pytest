@@ -611,15 +611,15 @@ class Item(Node):
 
     nextitem = None
 
-    def __init_subclass__(cls):
+    def __init_subclass__(cls) -> None:
         problems = ", ".join(
             base.__name__ for base in cls.__bases__ if issubclass(base, Collector)
         )
         if problems:
             warnings.warn(
-                f"{cls.__name__} is a Item subclass and should not be a collector.\n"
-                f"however its bases {problems} are collectors\n"
-                "please split the collection and the items into 2 node types\n"
+                f"{cls.__name__} is an Item subclass and should not be a collector, "
+                f"however its bases {problems} are collectors.\n"
+                "Please split the Collectors and the Item into separate node types.\n"
                 "TODO: doc link",
                 PytestWarning,
             )
