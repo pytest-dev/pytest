@@ -317,7 +317,7 @@ class ApproxScalar(ApproxBase):
 
         if relative_tolerance < 0:
             raise ValueError(
-                f"relative tolerance can't be negative: {absolute_tolerance}"
+                f"relative tolerance can't be negative: {relative_tolerance}"
             )
         if math.isnan(relative_tolerance):
             raise ValueError("relative tolerance can't be NaN.")
