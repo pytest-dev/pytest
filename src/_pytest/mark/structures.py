@@ -40,10 +40,7 @@ EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
 def istestfunc(func) -> bool:
-    return (
-        hasattr(func, "__call__")
-        and getattr(func, "__name__", "<lambda>") != "<lambda>"
-    )
+    return callable(func) and getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 
 def get_empty_parameterset_mark(
