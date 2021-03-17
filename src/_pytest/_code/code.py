@@ -1221,7 +1221,7 @@ def getfslineno(obj: object) -> Tuple[Union[str, Path], int]:
         except TypeError:
             return "", -1
 
-        fspath = absolutepath(fn) if fn else ""
+        fspath = fn and absolutepath(fn) or ""
         lineno = -1
         if fspath:
             try:
