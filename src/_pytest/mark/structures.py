@@ -331,9 +331,6 @@ class MarkDecorator:
         """:meta private:"""
         return self.name  # for backward-compat (2.4.1 had this attr)
 
-    def __repr__(self) -> str:
-        return f"<MarkDecorator {repr(self.mark)}>"
-
     def with_args(self, *args: object, **kwargs: object) -> "MarkDecorator":
         """Return a MarkDecorator with extra arguments added.
 
