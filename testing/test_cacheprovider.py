@@ -14,15 +14,15 @@ pytest_plugins = ("pytester",)
 
 
 class TestNewAPI:
-    def test_config_cache_makedir(self, pytester: Pytester) -> None:
+    def test_config_cache_mkdir(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")
         config = pytester.parseconfigure()
         assert config.cache is not None
         with pytest.raises(ValueError):
-            config.cache.makedir("key/name")
+            config.cache.mkdir("key/name")
 
-        p = config.cache.makedir("name")
-        assert p.check()
+        p = config.cache.mkdir("name")
+        assert p.is_dir()
 
     def test_config_cache_dataerror(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")
@@ -217,9 +217,9 @@ def test_cache_show(pytester: Pytester) -> None:
             config.cache.set("my/name", [1,2,3])
             config.cache.set("my/hello", "world")
             config.cache.set("other/some", {1:2})
-            dp = config.cache.makedir("mydb")
-            dp.ensure("hello")
-            dp.ensure("world")
+            dp = config.cache.mkdir("mydb")
+            dp.joinpath("hello").touch()
+            dp.joinpath("world").touch()
     """
     )
     result = pytester.runpytest()

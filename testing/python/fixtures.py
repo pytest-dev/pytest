@@ -3208,10 +3208,10 @@ class TestRequestScopeAccess:
     pytestmark = pytest.mark.parametrize(
         ("scope", "ok", "error"),
         [
-            ["session", "", "fspath class function module"],
-            ["module", "module fspath", "cls function"],
-            ["class", "module fspath cls", "function"],
-            ["function", "module fspath cls function", ""],
+            ["session", "", "path class function module"],
+            ["module", "module path", "cls function"],
+            ["class", "module path cls", "function"],
+            ["function", "module path cls function", ""],
         ],
     )
 

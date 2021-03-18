@@ -1445,9 +1445,7 @@ class Config:
         modpath = Path(mod.__file__).parent
         values: List[Path] = []
         for relroot in relroots:
-            if isinstance(relroot, Path):
-                pass
-            elif isinstance(relroot, LEGACY_PATH):
+            if isinstance(relroot, os.PathLike):
                 relroot = Path(relroot)
             else:
                 relroot = relroot.replace("/", os.sep)

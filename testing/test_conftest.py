@@ -629,7 +629,7 @@ def test_hook_proxy(pytester: Pytester) -> None:
             "root/demo-0/test_foo1.py": "def test1(): pass",
             "root/demo-a/test_foo2.py": "def test1(): pass",
             "root/demo-a/conftest.py": """\
-            def pytest_ignore_collect(path, config):
+            def pytest_ignore_collect(fspath, config):
                 return True
             """,
             "root/demo-b/test_foo3.py": "def test1(): pass",

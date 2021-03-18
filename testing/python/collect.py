@@ -778,9 +778,9 @@ class TestConftestCustomization:
             import pytest
             class MyModule(pytest.Module):
                 pass
-            def pytest_pycollect_makemodule(path, parent):
-                if path.basename == "test_xyz.py":
-                    return MyModule.from_parent(fspath=path, parent=parent)
+            def pytest_pycollect_makemodule(fspath, parent):
+                if fspath.name == "test_xyz.py":
+                    return MyModule.from_parent(path=fspath, parent=parent)
         """
         )
         pytester.makepyfile("def test_some(): pass")
@@ -882,9 +882,9 @@ class TestConftestCustomization:
                         return Loader()
             sys.meta_path.append(Finder())
 
-            def pytest_collect_file(path, parent):
-                if path.ext == ".narf":
-                    return Module.from_parent(fspath=path, parent=parent)"""
+            def pytest_collect_file(fspath, parent):
+                if fspath.suffix == ".narf":
+                    return Module.from_parent(path=fspath, parent=parent)"""
         )
         pytester.makefile(
             ".narf",
