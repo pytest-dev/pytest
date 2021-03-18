@@ -5,7 +5,6 @@ from typing import Type
 
 import pytest
 from _pytest import nodes
-from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
 
@@ -76,7 +75,7 @@ def test__check_initialpaths_for_relpath() -> None:
 
     session = cast(pytest.Session, FakeSession1)
 
-    assert nodes._check_initialpaths_for_relpath(session, legacy_path(cwd)) == ""
+    assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
 
     sub = cwd / "file"
 
@@ -85,9 +84,9 @@ def test__check_initialpaths_for_relpath() -> None:
 
     session = cast(pytest.Session, FakeSession2)
 
-    assert nodes._check_initialpaths_for_relpath(session, legacy_path(sub)) == "file"
+    assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
 
-    outside = legacy_path("/outside")
+    outside = Path("/outside")
     assert nodes._check_initialpaths_for_relpath(session, outside) is None
 
 

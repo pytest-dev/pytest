@@ -1,5 +1,5 @@
+import os
 from io import StringIO
-from pathlib import Path
 from pprint import pprint
 from typing import Any
 from typing import cast
@@ -29,7 +29,6 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
-from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -500,8 +499,8 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     else:
         d["longrepr"] = report.longrepr
     for name in d:
-        if isinstance(d[name], (LEGACY_PATH, Path)):
-            d[name] = str(d[name])
+        if isinstance(d[name], os.PathLike):
+            d[name] = os.fspath(d[name])
         elif name == "result":
             d[name] = None  # for now
     return d

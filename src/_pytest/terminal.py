@@ -37,6 +37,8 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -318,7 +320,6 @@ class TerminalReporter:
         self.stats: Dict[str, List[Any]] = {}
         self._main_color: Optional[str] = None
         self._known_types: Optional[List[str]] = None
-        self.startdir = config.invocation_dir
         self.startpath = config.invocation_params.dir
         if file is None:
             file = sys.stdout
@@ -380,6 +381,16 @@ class TerminalReporter:
     @property
     def showlongtestinfo(self) -> bool:
         return self.verbosity > 0
+
+    @property
+    def startdir(self) -> LEGACY_PATH:
+        """The directory from which pytest was invoked.
+
+        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+        :type: LEGACY_PATH
+        """
+        return legacy_path(self.startpath)
 
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)

@@ -63,6 +63,7 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
 from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import copytree
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -935,10 +936,7 @@ class Pytester:
             example_path = example_dir.joinpath(name)
 
         if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
-            # TODO: legacy_path.copy can copy files to existing directories,
-            # while with shutil.copytree the destination directory cannot exist,
-            # we will need to roll our own in order to drop legacy_path completely
-            legacy_path(example_path).copy(legacy_path(self.path))
+            copytree(example_path, self.path)
             return self.path
         elif example_path.is_file():
             result = self.path.joinpath(example_path.name)

@@ -670,7 +670,7 @@ class FixtureRequest:
                     "\n\nRequested here:\n{}:{}".format(
                         funcitem.nodeid,
                         fixturedef.argname,
-                        getlocation(fixturedef.func, funcitem.config.rootdir),
+                        getlocation(fixturedef.func, funcitem.config.rootpath),
                         source_path_str,
                         source_lineno,
                     )
@@ -728,7 +728,7 @@ class FixtureRequest:
             fs, lineno = getfslineno(factory)
             if isinstance(fs, Path):
                 session: Session = self._pyfuncitem.session
-                p = bestrelpath(Path(session.fspath), fs)
+                p = bestrelpath(session.path, fs)
             else:
                 p = fs
             args = _format_args(factory)

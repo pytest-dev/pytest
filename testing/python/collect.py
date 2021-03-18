@@ -933,11 +933,11 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             """\
             import pytest
             def pytest_runtest_setup(item):
-                assert item.fspath.purebasename == "test_in_sub1"
+                assert item.path.stem == "test_in_sub1"
             def pytest_runtest_call(item):
-                assert item.fspath.purebasename == "test_in_sub1"
+                assert item.path.stem == "test_in_sub1"
             def pytest_runtest_teardown(item):
-                assert item.fspath.purebasename == "test_in_sub1"
+                assert item.path.stem == "test_in_sub1"
             """
         )
     )
@@ -946,11 +946,11 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             """\
             import pytest
             def pytest_runtest_setup(item):
-                assert item.fspath.purebasename == "test_in_sub2"
+                assert item.path.stem == "test_in_sub2"
             def pytest_runtest_call(item):
-                assert item.fspath.purebasename == "test_in_sub2"
+                assert item.path.stem == "test_in_sub2"
             def pytest_runtest_teardown(item):
-                assert item.fspath.purebasename == "test_in_sub2"
+                assert item.path.stem == "test_in_sub2"
             """
         )
     )
@@ -1125,8 +1125,7 @@ class TestReportInfo:
     def test_func_reportinfo(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
         fspath, lineno, modpath = item.reportinfo()
-        with pytest.warns(DeprecationWarning):
-            assert fspath == item.fspath
+        assert str(fspath) == str(item.path)
         assert lineno == 0
         assert modpath == "test_func"
 
@@ -1141,8 +1140,7 @@ class TestReportInfo:
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
         fspath, lineno, msg = classcol.reportinfo()
-        with pytest.warns(DeprecationWarning):
-            assert fspath == modcol.fspath
+        assert str(fspath) == str(modcol.path)
         assert lineno == 1
         assert msg == "TestClass"
 

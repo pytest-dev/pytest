@@ -32,6 +32,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
+from _pytest.pathlib import commonpath
 from _pytest.store import Store
 
 if TYPE_CHECKING:
@@ -517,13 +518,11 @@ class Collector(Node):
             excinfo.traceback = ntraceback.filter()
 
 
-def _check_initialpaths_for_relpath(
-    session: "Session", fspath: LEGACY_PATH
-) -> Optional[str]:
+def _check_initialpaths_for_relpath(session: "Session", path: Path) -> Optional[str]:
     for initial_path in session._initialpaths:
-        initial_path_ = legacy_path(initial_path)
-        if fspath.common(initial_path_) == initial_path_:
-            return fspath.relto(initial_path_)
+        if commonpath(path, initial_path) == initial_path:
+            rel = str(path.relative_to(initial_path))
+            return "" if rel == "." else rel
     return None
 
 
@@ -538,7 +537,7 @@ class FSCollector(Collector):
         nodeid: Optional[str] = None,
     ) -> None:
         path, fspath = _imply_path(path, fspath=fspath)
-        name = fspath.basename
+        name = path.name
         if parent is not None and parent.path != path:
             try:
                 rel = path.relative_to(parent.path)
@@ -547,7 +546,7 @@ class FSCollector(Collector):
             else:
                 name = str(rel)
             name = name.replace(os.sep, SEP)
-        self.path = Path(fspath)
+        self.path = path
 
         session = session or parent.session
 
@@ -555,7 +554,7 @@ class FSCollector(Collector):
             try:
                 nodeid = str(self.path.relative_to(session.config.rootpath))
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session, fspath)
+                nodeid = _check_initialpaths_for_relpath(session, path)
 
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)

@@ -583,7 +583,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
 
 
 def visit(
-    path: str, recurse: Callable[["os.DirEntry[str]"], bool]
+    path: Union[str, "os.PathLike[str]"], recurse: Callable[["os.DirEntry[str]"], bool]
 ) -> Iterator["os.DirEntry[str]"]:
     """Walk a directory recursively, in breadth-first order.
 
@@ -657,3 +657,21 @@ def bestrelpath(directory: Path, dest: Path) -> str:
         # Forward from base to dest.
         *reldest.parts,
     )
+
+
+# Originates from py. path.local.copy(), with siginficant trims and adjustments.
+# TODO(py38): Replace with shutil.copytree(..., symlinks=True, dirs_exist_ok=True)
+def copytree(source: Path, target: Path) -> None:
+    """Recursively copy a source directory to target."""
+    assert source.is_dir()
+    for entry in visit(source, recurse=lambda entry: not entry.is_symlink()):
+        x = Path(entry)
+        relpath = x.relative_to(source)
+        newx = target / relpath
+        newx.parent.mkdir(exist_ok=True)
+        if x.is_symlink():
+            newx.symlink_to(os.readlink(x))
+        elif x.is_file():
+            shutil.copyfile(x, newx)
+        elif x.is_dir():
+            newx.mkdir(exist_ok=True)
