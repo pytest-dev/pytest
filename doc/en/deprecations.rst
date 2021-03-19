@@ -29,6 +29,14 @@ As pytest tries to move off `py.path.local <https://py.readthedocs.io/en/latest/
 Pytest will provide compatibility for quite a while.
 
 
+Applying a mark to a fixture function
+-------------------------------------
+
+.. deprecated:: 6.3
+
+Applying a mark to a fixture function is deprecated. Doing so has no effect, and will raise an error in the next version.
+
+
 Backward compatibilities in ``Parser.addoption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
