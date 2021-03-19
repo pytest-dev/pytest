@@ -368,19 +368,19 @@ class TestParseIni:
             pytest.param(
                 """
                 [pytest]
-                required_plugins = pyplugin==1.6
+                required_plugins = myplugin==1.6
                 """,
                 "1.5",
-                "Missing required plugins: pyplugin==1.6",
+                "Missing required plugins: myplugin==1.6",
                 id="missing-version",
             ),
             pytest.param(
                 """
                 [pytest]
-                required_plugins = pyplugin==1.6 other==1.0
+                required_plugins = myplugin==1.6 other==1.0
                 """,
                 "1.5",
-                "Missing required plugins: other==1.0, pyplugin==1.6",
+                "Missing required plugins: myplugin==1.6, other==1.0",
                 id="missing-versions",
             ),
             pytest.param(
