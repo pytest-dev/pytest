@@ -309,13 +309,14 @@ class TestParseIni:
         result.stdout.no_fnmatch_line("*PytestConfigWarning*")
 
     @pytest.mark.parametrize(
-        "ini_file_text, exception_text",
+        "ini_file_text, plugin_version, exception_text",
         [
             pytest.param(
                 """
                 [pytest]
                 required_plugins = a z
                 """,
+                "1.5",
                 "Missing required plugins: a, z",
                 id="2-missing",
             ),
@@ -324,6 +325,7 @@ class TestParseIni:
                 [pytest]
                 required_plugins = a z myplugin
                 """,
+                "1.5",
                 "Missing required plugins: a, z",
                 id="2-missing-1-ok",
             ),
@@ -332,6 +334,7 @@ class TestParseIni:
                 [pytest]
                 required_plugins = myplugin
                 """,
+                "1.5",
                 None,
                 id="1-ok",
             ),
@@ -340,6 +343,7 @@ class TestParseIni:
                 [pytest]
                 required_plugins = myplugin==1.5
                 """,
+                "1.5",
                 None,
                 id="1-ok-pin-exact",
             ),
@@ -348,14 +352,25 @@ class TestParseIni:
                 [pytest]
                 required_plugins = myplugin>1.0,<2.0
                 """,
+                "1.5",
                 None,
                 id="1-ok-pin-loose",
             ),
             pytest.param(
                 """
                 [pytest]
+                required_plugins = myplugin
+                """,
+                "1.5a1",
+                None,
+                id="1-ok-prerelease",
+            ),
+            pytest.param(
+                """
+                [pytest]
                 required_plugins = pyplugin==1.6
                 """,
+                "1.5",
                 "Missing required plugins: pyplugin==1.6",
                 id="missing-version",
             ),
@@ -364,6 +379,7 @@ class TestParseIni:
                 [pytest]
                 required_plugins = pyplugin==1.6 other==1.0
                 """,
+                "1.5",
                 "Missing required plugins: other==1.0, pyplugin==1.6",
                 id="missing-versions",
             ),
@@ -373,6 +389,7 @@ class TestParseIni:
                 required_plugins = wont be triggered
                 [pytest]
                 """,
+                "1.5",
                 None,
                 id="invalid-header",
             ),
@@ -383,6 +400,7 @@ class TestParseIni:
         pytester: Pytester,
         monkeypatch: MonkeyPatch,
         ini_file_text: str,
+        plugin_version: str,
         exception_text: str,
     ) -> None:
         """Check 'required_plugins' option with various settings.
@@ -408,7 +426,7 @@ class TestParseIni:
         class DummyDist:
             entry_points = attr.ib()
             files = ()
-            version = "1.5"
+            version = plugin_version
 
             @property
             def metadata(self):

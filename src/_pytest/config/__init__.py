@@ -1270,14 +1270,16 @@ class Config:
         missing_plugins = []
         for required_plugin in required_plugins:
             try:
-                spec = Requirement(required_plugin)
+                req = Requirement(required_plugin)
             except InvalidRequirement:
                 missing_plugins.append(required_plugin)
                 continue
 
-            if spec.name not in plugin_dist_info:
+            if req.name not in plugin_dist_info:
                 missing_plugins.append(required_plugin)
-            elif Version(plugin_dist_info[spec.name]) not in spec.specifier:
+            elif not req.specifier.contains(
+                Version(plugin_dist_info[req.name]), prereleases=True
+            ):
                 missing_plugins.append(required_plugin)
 
         if missing_plugins:
