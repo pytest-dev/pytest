@@ -1,1 +1,1 @@
-Deprecate applying a mark to a fixture
+Applying a mark to a fixture function is deprecated. Doing so has no effect.
