@@ -89,7 +89,7 @@ repos:
         types: [python]
     -   id: py-path-deprecated
         name: py.path usage is deprecated
+        exclude: docs|src/_pytest/deprecated.py|testing/deprecated_test.py
         language: pygrep
         entry: \bpy\.path\.local
-        exclude: docs
         types: [python]

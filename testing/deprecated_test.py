@@ -4,7 +4,9 @@ from unittest import mock
 
 import pytest
 from _pytest import deprecated
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
+from pytest import PytestDeprecationWarning
 
 
 @pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
@@ -153,3 +155,22 @@ def test_raising_unittest_skiptest_during_collection_is_deprecated(
             "*PytestDeprecationWarning: Raising unittest.SkipTest*",
         ]
     )
+
+
+def test_hookproxy_warnings_for_fspath(pytestconfig, tmp_path, request):
+    path = legacy_path(tmp_path)
+
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match="path : py.path.local is deprecated, please use fspath : pathlib.Path",
+    ):
+        pytestconfig.hook.pytest_ignore_collect(
+            config=pytestconfig, path=path, fspath=tmp_path
+        )
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match="path : py.path.local is deprecated, please use fspath : pathlib.Path",
+    ):
+        request.node.ihook.pytest_ignore_collect(
+            config=pytestconfig, path=path, fspath=tmp_path
+        )
