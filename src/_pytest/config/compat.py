@@ -1,12 +1,9 @@
-from typing import TYPE_CHECKING
-
-from _pytest.nodes import _imply_path
-
-if TYPE_CHECKING:
-    from ..compat import LEGACY_PATH
-
-
 import functools
+from pathlib import Path
+from typing import Optional
+
+from ..compat import LEGACY_PATH
+from _pytest.nodes import _imply_path
 
 # hookname: (Path, LEGACY_PATH)
 imply_paths_hooks = {
@@ -31,8 +28,8 @@ class PathAwareHookProxy:
 
             @functools.wraps(hook)
             def fixed_hook(**kw):
-                path_value = kw.pop(path_var, None)
-                fspath_value: "LEGACY_PATH" = kw.pop(fspath_var, None)
+                path_value: Optional[Path] = kw.pop(path_var, None)
+                fspath_value: Optional[LEGACY_PATH] = kw.pop(fspath_var, None)
                 path_value, fspath_value = _imply_path(path_value, fspath_value)
                 kw[path_var] = path_value
                 kw[fspath_var] = fspath_value
