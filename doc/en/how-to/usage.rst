@@ -714,32 +714,6 @@ The generated XML is compatible with the latest ``xunit`` standard, contrary to 
 and `record_xml_attribute`_.
 
 
-Creating resultlog format files
-----------------------------------------------------
-
-
-To create plain-text machine-readable result files you can issue:
-
-.. code-block:: bash
-
-    pytest --resultlog=path
-
-and look at the content at the ``path`` location.  Such files are used e.g.
-by the `PyPy-test`_ web page to show test results over several revisions.
-
-.. warning::
-
-    This option is rarely used and is scheduled for removal in pytest 6.0.
-
-    If you use this option, consider using the new `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
-
-    See `the deprecation docs <https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log>`__
-    for more information.
-
-
-.. _`PyPy-test`: http://buildbot.pypy.org/summary
-
-
 Sending test report to online pastebin service
 -----------------------------------------------------
 
