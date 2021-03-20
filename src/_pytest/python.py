@@ -188,9 +188,7 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     return True
 
 
-def pytest_collect_file(
-    fspath: Path, path: LEGACY_PATH, parent: nodes.Collector
-) -> Optional["Module"]:
+def pytest_collect_file(fspath: Path, parent: nodes.Collector) -> Optional["Module"]:
     if fspath.suffix == ".py":
         if not parent.session.isinitpath(fspath):
             if not path_matches_patterns(
@@ -198,9 +196,7 @@ def pytest_collect_file(
             ):
                 return None
         ihook = parent.session.gethookproxy(fspath)
-        module: Module = ihook.pytest_pycollect_makemodule(
-            fspath=fspath, path=path, parent=parent
-        )
+        module: Module = ihook.pytest_pycollect_makemodule(fspath=fspath, parent=parent)
         return module
     return None
 
@@ -675,9 +671,8 @@ class Package(Module):
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
-        path = legacy_path(fspath)
         ihook = self.session.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
+        if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
@@ -687,7 +682,6 @@ class Package(Module):
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        path = legacy_path(fspath)
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -695,9 +689,7 @@ class Package(Module):
         )
         ihook = self.session.gethookproxy(fspath)
         if not self.session.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(
-                fspath=fspath, path=path, config=self.config
-            ):
+            if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
                 return ()
 
         if handle_dupes:
@@ -709,7 +701,7 @@ class Package(Module):
                 else:
                     duplicate_paths.add(fspath)
 
-        return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(fspath=fspath, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.path.parent
