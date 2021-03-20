@@ -174,3 +174,6 @@ def test_hookproxy_warnings_for_fspath(pytestconfig, tmp_path, request):
         request.node.ihook.pytest_ignore_collect(
             config=pytestconfig, path=path, fspath=tmp_path
         )
+
+    pytestconfig.hook.pytest_ignore_collect(config=pytestconfig, fspath=tmp_path)
+    request.node.ihook.pytest_ignore_collect(config=pytestconfig, fspath=tmp_path)
