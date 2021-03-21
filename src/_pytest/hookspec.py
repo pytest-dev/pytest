@@ -176,9 +176,6 @@ def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
     """Called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop.
 
-    .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
-
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param _pytest.config.Config config: The pytest config object.
