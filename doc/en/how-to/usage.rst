@@ -4,77 +4,19 @@
 How to invoke pytest
 ==========================================
 
+..  seealso:: :ref:`Complete pytest command-line flag reference <command-line-flags>`
 
-.. _cmdline:
+In general, pytest is invoked with the command ``pytest``. This will execute all tests in all files whose names follow
+the form ``test_*.py`` or ``\*_test.py`` in the current directory and its subdirectories. More generally, pytest
+follows :ref:`standard test discovery rules <test discovery>`.
 
-Calling pytest through ``python -m pytest``
------------------------------------------------------
+..  seealso:: :ref:`invoke-other`
 
-
-
-You can invoke testing through the Python interpreter from the command line:
-
-.. code-block:: text
-
-    python -m pytest [...]
-
-This is almost equivalent to invoking the command line script ``pytest [...]``
-directly, except that calling via ``python`` will also add the current directory to ``sys.path``.
-
-Possible exit codes
---------------------------------------------------------------
-
-Running ``pytest`` can result in six different exit codes:
-
-:Exit code 0: All tests were collected and passed successfully
-:Exit code 1: Tests were collected and run but some of the tests failed
-:Exit code 2: Test execution was interrupted by the user
-:Exit code 3: Internal error happened while executing tests
-:Exit code 4: pytest command line usage error
-:Exit code 5: No tests were collected
-
-They are represented by the :class:`pytest.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
-
-.. code-block:: python
-
-    from pytest import ExitCode
-
-.. note::
-
-    If you would like to customize the exit code in some scenarios, specially when
-    no tests are collected, consider using the
-    `pytest-custom_exit_code <https://github.com/yashtodi94/pytest-custom_exit_code>`__
-    plugin.
-
-
-Getting help on version, option names, environment variables
---------------------------------------------------------------
-
-.. code-block:: bash
-
-    pytest --version   # shows where pytest was imported from
-    pytest --fixtures  # show available builtin function arguments
-    pytest -h | --help # show help on command line and config file options
-
-
-The full command-line flags can be found in the :ref:`reference <command-line-flags>`.
-
-.. _maxfail:
-
-Stopping after the first (or N) failures
----------------------------------------------------
-
-To stop the testing process after the first (N) failures:
-
-.. code-block:: bash
-
-    pytest -x           # stop after first failure
-    pytest --maxfail=2  # stop after two failures
 
 .. _select-tests:
 
-Specifying tests / selecting tests
----------------------------------------------------
+Specifying which tests to run
+------------------------------
 
 Pytest supports several ways to run and select tests from the command-line.
 
@@ -139,8 +81,61 @@ For more information see :ref:`marks <mark>`.
 This will import ``pkg.testing`` and use its filesystem location to find and run tests from.
 
 
+Possible exit codes
+--------------------------------------------------------------
+
+Running ``pytest`` can result in six different exit codes:
+
+:Exit code 0: All tests were collected and passed successfully
+:Exit code 1: Tests were collected and run but some of the tests failed
+:Exit code 2: Test execution was interrupted by the user
+:Exit code 3: Internal error happened while executing tests
+:Exit code 4: pytest command line usage error
+:Exit code 5: No tests were collected
+
+They are represented by the :class:`pytest.ExitCode` enum. The exit codes being a part of the public API can be imported and accessed directly using:
+
+.. code-block:: python
+
+    from pytest import ExitCode
+
+.. note::
+
+    If you would like to customize the exit code in some scenarios, specially when
+    no tests are collected, consider using the
+    `pytest-custom_exit_code <https://github.com/yashtodi94/pytest-custom_exit_code>`__
+    plugin.
+
+
+Getting help on version, option names, environment variables
+--------------------------------------------------------------
+
+.. code-block:: bash
+
+    pytest --version   # shows where pytest was imported from
+    pytest --fixtures  # show available builtin function arguments
+    pytest -h | --help # show help on command line and config file options
+
+
+
+.. _maxfail:
+
+Stopping after the first (or N) failures
+---------------------------------------------------
+
+To stop the testing process after the first (N) failures:
+
+.. code-block:: bash
+
+    pytest -x           # stop after first failure
+    pytest --maxfail=2  # stop after two failures
+
+
+Managing pytest's output
+--------------------------
+
 Modifying Python traceback printing
-----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Examples for modifying traceback printing:
 
@@ -168,8 +163,8 @@ option you make sure a trace is shown.
 
 .. _`pytest.detailed_failed_tests_usage`:
 
-Detailed summary report
------------------------
+Producing a detailed summary report
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``-r`` flag can be used to display a "short test summary info" at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
@@ -344,10 +339,66 @@ captured output:
     PASSED test_example.py::test_ok
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
+
+Creating resultlog format files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To create plain-text machine-readable result files you can issue:
+
+.. code-block:: bash
+
+    pytest --resultlog=path
+
+and look at the content at the ``path`` location.  Such files are used e.g.
+by the `PyPy-test`_ web page to show test results over several revisions.
+
+.. warning::
+
+    This option is rarely used and is scheduled for removal in pytest 6.0.
+
+    If you use this option, consider using the new `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
+
+    See `the deprecation docs <https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log>`__
+    for more information.
+
+
+.. _`PyPy-test`: http://buildbot.pypy.org/summary
+
+
+Sending test report to online pastebin service
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Creating a URL for each test failure**:
+
+.. code-block:: bash
+
+    pytest --pastebin=failed
+
+This will submit test run information to a remote Paste service and
+provide a URL for each failure.  You may select tests as usual or add
+for example ``-x`` if you only want to send one particular failure.
+
+**Creating a URL for a whole test session log**:
+
+.. code-block:: bash
+
+    pytest --pastebin=all
+
+Currently only pasting to the http://bpaste.net service is implemented.
+
+.. versionchanged:: 5.2
+
+If creating the URL fails for any reason, a warning is generated instead of failing the
+entire test suite.
+
+
 .. _pdb-option:
 
+Using PDB_ (Python Debugger) with pytest
+----------------------------------------------------------
+
 Dropping to PDB_ (Python Debugger) on failures
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _PDB: http://docs.python.org/library/pdb.html
 
@@ -379,11 +430,11 @@ for example::
     >>> sys.last_value
     AssertionError('assert result == "ok"',)
 
+
 .. _trace-option:
 
-Dropping to PDB_ (Python Debugger) at the start of a test
-----------------------------------------------------------
-
+Dropping to PDB_ at the start of a test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``pytest`` allows one to drop into the PDB_ prompt immediately at the start of each test via a command line option:
 
@@ -396,7 +447,7 @@ This will invoke the Python debugger at the start of every test.
 .. _breakpoints:
 
 Setting breakpoints
--------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. versionadded: 2.4.0
 
@@ -413,7 +464,7 @@ in your code and pytest automatically disables its output capture for that test:
 .. _`breakpoint-builtin`:
 
 Using the builtin breakpoint function
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Python 3.7 introduces a builtin ``breakpoint()`` function.
 Pytest supports the use of ``breakpoint()`` with the following behaviours:
@@ -422,6 +473,7 @@ Pytest supports the use of ``breakpoint()`` with the following behaviours:
  - When tests are complete, the system will default back to the system ``Pdb`` trace UI.
  - With ``--pdb`` passed to pytest, the custom internal Pdb trace UI is used with both ``breakpoint()`` and failed tests/unhandled exceptions.
  - ``--pdbcls`` can be used to specify a custom debugger class.
+
 
 .. _durations:
 
@@ -540,7 +592,7 @@ instead, configure the ``junit_duration_report`` option like this:
 .. _record_property example:
 
 record_property
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 If you want to log additional information for a test, you can use the
 ``record_property`` fixture:
@@ -602,10 +654,9 @@ Will result in:
     Please note that using this feature will break schema verifications for the latest JUnitXML schema.
     This might be a problem when used with some CI servers.
 
+
 record_xml_attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
+~~~~~~~~~~~~~~~~~~~~~~~
 
 To add an additional xml attribute to a testcase element, you can use
 ``record_xml_attribute`` fixture. This can also be used to override existing values:
@@ -714,60 +765,11 @@ The generated XML is compatible with the latest ``xunit`` standard, contrary to 
 and `record_xml_attribute`_.
 
 
-Creating resultlog format files
-----------------------------------------------------
-
-
-To create plain-text machine-readable result files you can issue:
-
-.. code-block:: bash
-
-    pytest --resultlog=path
-
-and look at the content at the ``path`` location.  Such files are used e.g.
-by the `PyPy-test`_ web page to show test results over several revisions.
-
-.. warning::
-
-    This option is rarely used and is scheduled for removal in pytest 6.0.
-
-    If you use this option, consider using the new `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
-
-    See `the deprecation docs <https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log>`__
-    for more information.
-
-
-.. _`PyPy-test`: http://buildbot.pypy.org/summary
-
-
-Sending test report to online pastebin service
------------------------------------------------------
-
-**Creating a URL for each test failure**:
-
-.. code-block:: bash
-
-    pytest --pastebin=failed
-
-This will submit test run information to a remote Paste service and
-provide a URL for each failure.  You may select tests as usual or add
-for example ``-x`` if you only want to send one particular failure.
-
-**Creating a URL for a whole test session log**:
-
-.. code-block:: bash
-
-    pytest --pastebin=all
-
-Currently only pasting to the http://bpaste.net service is implemented.
-
-.. versionchanged:: 5.2
-
-If creating the URL fails for any reason, a warning is generated instead of failing the
-entire test suite.
+Managing loading of plugins
+-------------------------------
 
 Early loading plugins
----------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 You can early-load plugins (internal and external) explicitly in the command-line with the ``-p`` option::
 
@@ -783,7 +785,7 @@ The option receives a ``name`` parameter, which can be:
 
 
 Disabling plugins
------------------
+~~~~~~~~~~~~~~~~~~
 
 To disable loading specific plugins at invocation time, use the ``-p`` option
 together with the prefix ``no:``.
@@ -795,12 +797,31 @@ executing doctest tests from text files, invoke pytest like this:
 
     pytest -p no:doctest
 
+
+.. _invoke-other:
+
+Other ways of calling pytest
+-----------------------------------------------------
+
+.. _invoke-python:
+
+Calling pytest through ``python -m pytest``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can invoke testing through the Python interpreter from the command line:
+
+.. code-block:: text
+
+    python -m pytest [...]
+
+This is almost equivalent to invoking the command line script ``pytest [...]``
+directly, except that calling via ``python`` will also add the current directory to ``sys.path``.
+
+
 .. _`pytest.main-usage`:
 
 Calling pytest from Python code
-----------------------------------------------------
-
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can invoke ``pytest`` from Python code directly:
 
