@@ -1,1 +1,0 @@
-Added ``'node_modules'`` to default value for ``norecursedirs``.

@@ -30,8 +30,6 @@ from typing import Set
 from typing import TypeVar
 from typing import Union
 
-import py
-
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
@@ -389,7 +387,7 @@ def resolve_from_str(input: str, rootpath: Path) -> Path:
         return rootpath.joinpath(input)
 
 
-def fnmatch_ex(pattern: str, path) -> bool:
+def fnmatch_ex(pattern: str, path: Union[str, "os.PathLike[str]"]) -> bool:
     """A port of FNMatcher from py.path.common which works with PurePath() instances.
 
     The difference between this algorithm and PurePath.match() is that the
@@ -456,7 +454,7 @@ class ImportPathMismatchError(ImportError):
 
 
 def import_path(
-    p: Union[str, py.path.local, Path],
+    p: Union[str, "os.PathLike[str]"],
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend,
 ) -> ModuleType:
@@ -482,7 +480,7 @@ def import_path(
     """
     mode = ImportMode(mode)
 
-    path = Path(str(p))
+    path = Path(p)
 
     if not path.exists():
         raise ImportError(path)
@@ -543,7 +541,7 @@ def import_path(
             module_file = module_file[: -(len(os.path.sep + "__init__.py"))]
 
         try:
-            is_same = os.path.samefile(str(path), module_file)
+            is_same = _is_same(str(path), module_file)
         except FileNotFoundError:
             is_same = False
 
@@ -551,6 +549,20 @@ def import_path(
             raise ImportPathMismatchError(module_name, module_file, path)
 
     return mod
+
+
+# Implement a special _is_same function on Windows which returns True if the two filenames
+# compare equal, to circumvent os.path.samefile returning False for mounts in UNC (#7678).
+if sys.platform.startswith("win"):
+
+    def _is_same(f1: str, f2: str) -> bool:
+        return Path(f1) == Path(f2) or os.path.samefile(f1, f2)
+
+
+else:
+
+    def _is_same(f1: str, f2: str) -> bool:
+        return os.path.samefile(f1, f2)
 
 
 def resolve_package_path(path: Path) -> Optional[Path]:
@@ -571,7 +583,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
 
 
 def visit(
-    path: str, recurse: Callable[["os.DirEntry[str]"], bool]
+    path: Union[str, "os.PathLike[str]"], recurse: Callable[["os.DirEntry[str]"], bool]
 ) -> Iterator["os.DirEntry[str]"]:
     """Walk a directory recursively, in breadth-first order.
 
@@ -645,3 +657,21 @@ def bestrelpath(directory: Path, dest: Path) -> str:
         # Forward from base to dest.
         *reldest.parts,
     )
+
+
+# Originates from py. path.local.copy(), with siginficant trims and adjustments.
+# TODO(py38): Replace with shutil.copytree(..., symlinks=True, dirs_exist_ok=True)
+def copytree(source: Path, target: Path) -> None:
+    """Recursively copy a source directory to target."""
+    assert source.is_dir()
+    for entry in visit(source, recurse=lambda entry: not entry.is_symlink()):
+        x = Path(entry)
+        relpath = x.relative_to(source)
+        newx = target / relpath
+        newx.parent.mkdir(exist_ok=True)
+        if x.is_symlink():
+            newx.symlink_to(os.readlink(x))
+        elif x.is_file():
+            shutil.copyfile(x, newx)
+        elif x.is_dir():
+            newx.mkdir(exist_ok=True)

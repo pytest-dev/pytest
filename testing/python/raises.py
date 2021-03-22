@@ -3,6 +3,7 @@ import sys
 
 import pytest
 from _pytest.outcomes import Failed
+from _pytest.pytester import Pytester
 
 
 class TestRaises:
@@ -50,8 +51,8 @@ class TestRaises:
             pprint.pprint(excinfo)
             raise E()
 
-    def test_raises_as_contextmanager(self, testdir):
-        testdir.makepyfile(
+    def test_raises_as_contextmanager(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
             """
             import pytest
             import _pytest._code
@@ -75,11 +76,11 @@ class TestRaises:
                            1/0
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*3 passed*"])
 
-    def test_does_not_raise(self, testdir):
-        testdir.makepyfile(
+    def test_does_not_raise(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
             """
             from contextlib import contextmanager
             import pytest
@@ -100,11 +101,11 @@ class TestRaises:
                     assert (6 / example_input) is not None
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*4 passed*"])
 
-    def test_does_not_raise_does_raise(self, testdir):
-        testdir.makepyfile(
+    def test_does_not_raise_does_raise(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
             """
             from contextlib import contextmanager
             import pytest
@@ -123,7 +124,7 @@ class TestRaises:
                     assert (6 / example_input) is not None
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*2 failed*"])
 
     def test_noclass(self) -> None:

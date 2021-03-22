@@ -35,6 +35,7 @@ release = ".".join(version.split(".")[:2])
 # sys.path.insert(0, os.path.abspath('.'))
 
 autodoc_member_order = "bysource"
+autodoc_typehints = "description"
 todo_include_todos = 1
 
 # -- General configuration -----------------------------------------------------
@@ -159,7 +160,7 @@ html_short_title = "pytest-%s" % release
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "img/pytest1.png"
+html_logo = "img/pytest_logo_curves.svg"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

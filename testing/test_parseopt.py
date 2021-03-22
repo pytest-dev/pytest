@@ -3,12 +3,13 @@ import os
 import shlex
 import subprocess
 import sys
-
-import py
+from pathlib import Path
 
 import pytest
 from _pytest.config import argparsing as parseopt
 from _pytest.config.exceptions import UsageError
+from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pytester import Pytester
 
 
 @pytest.fixture
@@ -122,11 +123,11 @@ class TestParser:
         assert not getattr(args, parseopt.FILE_OR_DIR)
 
     def test_parse2(self, parser: parseopt.Parser) -> None:
-        args = parser.parse([py.path.local()])
-        assert getattr(args, parseopt.FILE_OR_DIR)[0] == py.path.local()
+        args = parser.parse([Path(".")])
+        assert getattr(args, parseopt.FILE_OR_DIR)[0] == "."
 
     def test_parse_known_args(self, parser: parseopt.Parser) -> None:
-        parser.parse_known_args([py.path.local()])
+        parser.parse_known_args([Path(".")])
         parser.addoption("--hello", action="store_true")
         ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
         assert ns.hello
@@ -287,7 +288,7 @@ class TestParser:
         assert "--preferences=value1 value2 value3" in help
 
 
-def test_argcomplete(testdir, monkeypatch) -> None:
+def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     try:
         bash_version = subprocess.run(
             ["bash", "--version"],
@@ -302,7 +303,7 @@ def test_argcomplete(testdir, monkeypatch) -> None:
         # See #7518.
         pytest.skip("not a real bash")
 
-    script = str(testdir.tmpdir.join("test_argcomplete"))
+    script = str(pytester.path.joinpath("test_argcomplete"))
 
     with open(str(script), "w") as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
@@ -313,7 +314,7 @@ def test_argcomplete(testdir, monkeypatch) -> None:
                 shlex.quote(sys.executable)
             )
         )
-    # alternative would be extended Testdir.{run(),_run(),popen()} to be able
+    # alternative would be extended Pytester.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
     monkeypatch.setenv("_ARGCOMPLETE", "1")
@@ -323,7 +324,7 @@ def test_argcomplete(testdir, monkeypatch) -> None:
     arg = "--fu"
     monkeypatch.setenv("COMP_LINE", "pytest " + arg)
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
-    result = testdir.run("bash", str(script), arg)
+    result = pytester.run("bash", str(script), arg)
     if result.ret == 255:
         # argcomplete not found
         pytest.skip("argcomplete not available")
@@ -339,5 +340,5 @@ def test_argcomplete(testdir, monkeypatch) -> None:
     arg = "test_argc"
     monkeypatch.setenv("COMP_LINE", "pytest " + arg)
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
-    result = testdir.run("bash", str(script), arg)
+    result = pytester.run("bash", str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])

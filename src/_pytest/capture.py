@@ -21,6 +21,7 @@ from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import SubRequest
 from _pytest.nodes import Collector
@@ -555,7 +556,11 @@ class MultiCapture(Generic[AnyStr]):
 
     def __repr__(self) -> str:
         return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
-            self.out, self.err, self.in_, self._state, self._in_suspended,
+            self.out,
+            self.err,
+            self.in_,
+            self._state,
+            self._in_suspended,
         )
 
     def start_capturing(self) -> None:
@@ -826,10 +831,13 @@ class CaptureManager:
 
 
 class CaptureFixture(Generic[AnyStr]):
-    """Object returned by the :py:func:`capsys`, :py:func:`capsysbinary`,
-    :py:func:`capfd` and :py:func:`capfdbinary` fixtures."""
+    """Object returned by the :fixture:`capsys`, :fixture:`capsysbinary`,
+    :fixture:`capfd` and :fixture:`capfdbinary` fixtures."""
 
-    def __init__(self, captureclass, request: SubRequest) -> None:
+    def __init__(
+        self, captureclass, request: SubRequest, *, _ispytest: bool = False
+    ) -> None:
+        check_ispytest(_ispytest)
         self.captureclass = captureclass
         self.request = request
         self._capture: Optional[MultiCapture[AnyStr]] = None
@@ -839,7 +847,9 @@ class CaptureFixture(Generic[AnyStr]):
     def _start(self) -> None:
         if self._capture is None:
             self._capture = MultiCapture(
-                in_=None, out=self.captureclass(1), err=self.captureclass(2),
+                in_=None,
+                out=self.captureclass(1),
+                err=self.captureclass(2),
             )
             self._capture.start_capturing()
 
@@ -904,7 +914,7 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     ``out`` and ``err`` will be ``text`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    capture_fixture = CaptureFixture[str](SysCapture, request)
+    capture_fixture = CaptureFixture[str](SysCapture, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
     yield capture_fixture
@@ -921,7 +931,7 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
     ``out`` and ``err`` will be ``bytes`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    capture_fixture = CaptureFixture[bytes](SysCaptureBinary, request)
+    capture_fixture = CaptureFixture[bytes](SysCaptureBinary, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
     yield capture_fixture
@@ -938,7 +948,7 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     ``out`` and ``err`` will be ``text`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    capture_fixture = CaptureFixture[str](FDCapture, request)
+    capture_fixture = CaptureFixture[str](FDCapture, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
     yield capture_fixture
@@ -955,7 +965,7 @@ def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, N
     ``out`` and ``err`` will be ``byte`` objects.
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    capture_fixture = CaptureFixture[bytes](FDCaptureBinary, request)
+    capture_fixture = CaptureFixture[bytes](FDCaptureBinary, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
     yield capture_fixture

@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 import warnings
 from gettext import gettext
@@ -14,11 +15,12 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import py
-
 import _pytest._io
 from _pytest.compat import final
 from _pytest.config.exceptions import UsageError
+from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
+from _pytest.deprecated import ARGUMENT_TYPE_STR
+from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 
 if TYPE_CHECKING:
     from typing import NoReturn
@@ -97,14 +99,14 @@ class Parser:
 
     def parse(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> argparse.Namespace:
         from _pytest._argcomplete import try_argcomplete
 
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
-        strargs = [str(x) if isinstance(x, py.path.local) else x for x in args]
+        strargs = [os.fspath(x) for x in args]
         return self.optparser.parse_args(strargs, namespace=namespace)
 
     def _getparser(self) -> "MyOptionParser":
@@ -128,7 +130,7 @@ class Parser:
 
     def parse_setoption(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         option: argparse.Namespace,
         namespace: Optional[argparse.Namespace] = None,
     ) -> List[str]:
@@ -139,7 +141,7 @@ class Parser:
 
     def parse_known_args(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> argparse.Namespace:
         """Parse and return a namespace object with known arguments at this point."""
@@ -147,13 +149,13 @@ class Parser:
 
     def parse_known_and_unknown_args(
         self,
-        args: Sequence[Union[str, py.path.local]],
+        args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> Tuple[argparse.Namespace, List[str]]:
         """Parse and return a namespace object with known arguments, and
         the remaining arguments unknown at this point."""
         optparser = self._getparser()
-        strargs = [str(x) if isinstance(x, py.path.local) else x for x in args]
+        strargs = [os.fspath(x) for x in args]
         return optparser.parse_known_args(strargs, namespace=namespace)
 
     def addini(
@@ -213,12 +215,7 @@ class Argument:
         self._short_opts: List[str] = []
         self._long_opts: List[str] = []
         if "%default" in (attrs.get("help") or ""):
-            warnings.warn(
-                'pytest now uses argparse. "%default" should be'
-                ' changed to "%(default)s" ',
-                DeprecationWarning,
-                stacklevel=3,
-            )
+            warnings.warn(ARGUMENT_PERCENT_DEFAULT, stacklevel=3)
         try:
             typ = attrs["type"]
         except KeyError:
@@ -228,11 +225,7 @@ class Argument:
             if isinstance(typ, str):
                 if typ == "choice":
                     warnings.warn(
-                        "`type` argument to addoption() is the string %r."
-                        " For choices this is optional and can be omitted, "
-                        " but when supplied should be a type (for example `str` or `int`)."
-                        " (options: %s)" % (typ, names),
-                        DeprecationWarning,
+                        ARGUMENT_TYPE_STR_CHOICE.format(typ=typ, names=names),
                         stacklevel=4,
                     )
                     # argparse expects a type here take it from
@@ -240,11 +233,7 @@ class Argument:
                     attrs["type"] = type(attrs["choices"][0])
                 else:
                     warnings.warn(
-                        "`type` argument to addoption() is the string %r, "
-                        " but when supplied should be a type (for example `str` or `int`)."
-                        " (options: %s)" % (typ, names),
-                        DeprecationWarning,
-                        stacklevel=4,
+                        ARGUMENT_TYPE_STR.format(typ=typ, names=names), stacklevel=4
                     )
                     attrs["type"] = Argument._typ_map[typ]
                 # Used in test_parseopt -> test_parse_defaultgetter.

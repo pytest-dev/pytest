@@ -7,6 +7,7 @@ from operator import ne
 from typing import Optional
 
 import pytest
+from _pytest.pytester import Pytester
 from pytest import approx
 
 inf, nan = float("inf"), float("nan")
@@ -139,6 +140,13 @@ class TestApprox:
         # Negative tolerances are not allowed.
         with pytest.raises(ValueError):
             1.1 == approx(1, rel, abs)
+
+    def test_negative_tolerance_message(self):
+        # Error message for negative tolerance should include the value.
+        with pytest.raises(ValueError, match="-3"):
+            0 == approx(1, abs=-3)
+        with pytest.raises(ValueError, match="-3"):
+            0 == approx(1, rel=-3)
 
     def test_inf_tolerance(self):
         # Everything should be equal if the tolerance is infinite.
@@ -312,6 +320,12 @@ class TestApprox:
         assert approx(expected, rel=5e-7, abs=0) == actual
         assert approx(expected, rel=5e-8, abs=0) != actual
 
+    def test_list_decimal(self):
+        actual = [Decimal("1.000001"), Decimal("2.000001")]
+        expected = [Decimal("1"), Decimal("2")]
+
+        assert actual == approx(expected)
+
     def test_list_wrong_len(self):
         assert [1, 2] != approx([1])
         assert [1, 2] != approx([1, 2, 3])
@@ -344,6 +358,14 @@ class TestApprox:
         assert actual != approx(expected, rel=5e-8, abs=0)
         assert approx(expected, rel=5e-7, abs=0) == actual
         assert approx(expected, rel=5e-8, abs=0) != actual
+
+    def test_dict_decimal(self):
+        actual = {"a": Decimal("1.000001"), "b": Decimal("2.000001")}
+        # Dictionaries became ordered in python3.6, so switch up the order here
+        # to make sure it doesn't matter.
+        expected = {"b": Decimal("2"), "a": Decimal("1")}
+
+        assert actual == approx(expected)
 
     def test_dict_wrong_len(self):
         assert {"a": 1, "b": 2} != approx({"a": 1})
@@ -446,6 +468,36 @@ class TestApprox:
         assert a12 != approx(a21)
         assert a21 != approx(a12)
 
+    def test_numpy_array_protocol(self):
+        """
+        array-like objects such as tensorflow's DeviceArray are handled like ndarray.
+        See issue #8132
+        """
+        np = pytest.importorskip("numpy")
+
+        class DeviceArray:
+            def __init__(self, value, size):
+                self.value = value
+                self.size = size
+
+            def __array__(self):
+                return self.value * np.ones(self.size)
+
+        class DeviceScalar:
+            def __init__(self, value):
+                self.value = value
+
+            def __array__(self):
+                return np.array(self.value)
+
+        expected = 1
+        actual = 1 + 1e-6
+        assert approx(expected) == DeviceArray(actual, size=1)
+        assert approx(expected) == DeviceArray(actual, size=2)
+        assert approx(expected) == DeviceScalar(actual)
+        assert approx(DeviceScalar(expected)) == actual
+        assert approx(DeviceScalar(expected)) == DeviceScalar(actual)
+
     def test_doctests(self, mocked_doctest_runner) -> None:
         import doctest
 
@@ -456,12 +508,12 @@ class TestApprox:
         )
         mocked_doctest_runner.run(test)
 
-    def test_unicode_plus_minus(self, testdir):
+    def test_unicode_plus_minus(self, pytester: Pytester) -> None:
         """
         Comparing approx instances inside lists should not produce an error in the detailed diff.
         Integration test for issue #2111.
         """
-        testdir.makepyfile(
+        pytester.makepyfile(
             """
             import pytest
             def test_foo():
@@ -469,7 +521,7 @@ class TestApprox:
         """
         )
         expected = "4.0e-06"
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [f"*At index 0 diff: 3 != 4 ± {expected}", "=* 1 failed in *="]
         )
@@ -483,7 +535,8 @@ class TestApprox:
     )
     def test_expected_value_type_error(self, x, name):
         with pytest.raises(
-            TypeError, match=fr"pytest.approx\(\) does not support nested {name}:",
+            TypeError,
+            match=fr"pytest.approx\(\) does not support nested {name}:",
         ):
             approx(x)
 

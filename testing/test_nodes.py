@@ -1,10 +1,12 @@
+from pathlib import Path
+from typing import cast
 from typing import List
-
-import py
+from typing import Type
 
 import pytest
 from _pytest import nodes
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestWarning
 
 
 @pytest.mark.parametrize(
@@ -35,35 +37,57 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
 
 
-def test_std_warn_not_pytestwarning(pytester: Pytester) -> None:
+@pytest.mark.parametrize(
+    "warn_type, msg", [(DeprecationWarning, "deprecated"), (PytestWarning, "pytest")]
+)
+def test_node_warn_is_no_longer_only_pytest_warnings(
+    pytester: Pytester, warn_type: Type[Warning], msg: str
+) -> None:
     items = pytester.getitems(
         """
         def test():
             pass
     """
     )
-    with pytest.raises(ValueError, match=".*instance of PytestWarning.*"):
-        items[0].warn(UserWarning("some warning"))  # type: ignore[arg-type]
+    with pytest.warns(warn_type, match=msg):
+        items[0].warn(warn_type(msg))
+
+
+def test_node_warning_enforces_warning_types(pytester: Pytester) -> None:
+    items = pytester.getitems(
+        """
+        def test():
+            pass
+    """
+    )
+    with pytest.raises(
+        ValueError, match="warning must be an instance of Warning or subclass"
+    ):
+        items[0].warn(Exception("ok"))  # type: ignore[arg-type]
 
 
 def test__check_initialpaths_for_relpath() -> None:
     """Ensure that it handles dirs, and does not always use dirname."""
-    cwd = py.path.local()
+    cwd = Path.cwd()
 
     class FakeSession1:
-        _initialpaths = [cwd]
+        _initialpaths = frozenset({cwd})
 
-    assert nodes._check_initialpaths_for_relpath(FakeSession1, cwd) == ""
+    session = cast(pytest.Session, FakeSession1)
 
-    sub = cwd.join("file")
+    assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
+
+    sub = cwd / "file"
 
     class FakeSession2:
-        _initialpaths = [cwd]
+        _initialpaths = frozenset({cwd})
 
-    assert nodes._check_initialpaths_for_relpath(FakeSession2, sub) == "file"
+    session = cast(pytest.Session, FakeSession2)
 
-    outside = py.path.local("/outside")
-    assert nodes._check_initialpaths_for_relpath(FakeSession2, outside) is None
+    assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
+
+    outside = Path("/outside")
+    assert nodes._check_initialpaths_for_relpath(session, outside) is None
 
 
 def test_failure_with_changed_cwd(pytester: Pytester) -> None:

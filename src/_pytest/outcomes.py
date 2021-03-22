@@ -38,7 +38,7 @@ class OutcomeException(BaseException):
         self.pytrace = pytrace
 
     def __repr__(self) -> str:
-        if self.msg:
+        if self.msg is not None:
             return self.msg
         return f"<{self.__class__.__name__} instance>"
 
@@ -58,9 +58,14 @@ class Skipped(OutcomeException):
         msg: Optional[str] = None,
         pytrace: bool = True,
         allow_module_level: bool = False,
+        *,
+        _use_item_location: bool = False,
     ) -> None:
         OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
         self.allow_module_level = allow_module_level
+        # If true, the skip location is reported as the item's location,
+        # instead of the place that raises the exception/calls skip().
+        self._use_item_location = _use_item_location
 
 
 class Failed(OutcomeException):

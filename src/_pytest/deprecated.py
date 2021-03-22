@@ -8,6 +8,8 @@ All constants defined in this module should be either instances of
 :class:`PytestWarning`, or :class:`UnformattedWarning`
 in case of warnings which need to format their messages.
 """
+from warnings import warn
+
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import UnformattedWarning
 
@@ -59,3 +61,59 @@ FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestDeprecationWarning(
 STRICT_OPTION = PytestDeprecationWarning(
     "The --strict option is deprecated, use --strict-markers instead."
 )
+
+PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
+
+UNITTEST_SKIP_DURING_COLLECTION = PytestDeprecationWarning(
+    "Raising unittest.SkipTest to skip tests during collection is deprecated. "
+    "Use pytest.skip() instead."
+)
+
+ARGUMENT_PERCENT_DEFAULT = PytestDeprecationWarning(
+    'pytest now uses argparse. "%default" should be changed to "%(default)s"',
+)
+
+ARGUMENT_TYPE_STR_CHOICE = UnformattedWarning(
+    PytestDeprecationWarning,
+    "`type` argument to addoption() is the string {typ!r}."
+    " For choices this is optional and can be omitted, "
+    " but when supplied should be a type (for example `str` or `int`)."
+    " (options: {names})",
+)
+
+ARGUMENT_TYPE_STR = UnformattedWarning(
+    PytestDeprecationWarning,
+    "`type` argument to addoption() is the string {typ!r}, "
+    " but when supplied should be a type (for example `str` or `int`)."
+    " (options: {names})",
+)
+
+
+NODE_FSPATH = UnformattedWarning(
+    PytestDeprecationWarning,
+    "{type}.fspath is deprecated and will be replaced by {type}.path.\n"
+    "see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path",
+)
+
+# You want to make some `__init__` or function "private".
+#
+#   def my_private_function(some, args):
+#       ...
+#
+# Do this:
+#
+#   def my_private_function(some, args, *, _ispytest: bool = False):
+#       check_ispytest(_ispytest)
+#       ...
+#
+# Change all internal/allowed calls to
+#
+#   my_private_function(some, args, _ispytest=True)
+#
+# All other calls will get the default _ispytest=False and trigger
+# the warning (possibly error in the future).
+
+
+def check_ispytest(ispytest: bool) -> None:
+    if not ispytest:
+        warn(PRIVATE, stacklevel=3)

@@ -15,8 +15,13 @@ from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import Type
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+
+if TYPE_CHECKING:
+    from numpy import ndarray
+
 
 import _pytest._code
 from _pytest.compat import final
@@ -67,6 +72,8 @@ class ApproxBase:
         return not (actual == self)
 
     def _approx_scalar(self, x) -> "ApproxScalar":
+        if isinstance(x, Decimal):
+            return ApproxDecimal(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
     def _yield_comparisons(self, actual):
@@ -232,10 +239,11 @@ class ApproxScalar(ApproxBase):
     def __eq__(self, actual) -> bool:
         """Return whether the given value is equal to the expected value
         within the pre-specified tolerance."""
-        if _is_numpy_array(actual):
+        asarray = _as_numpy_array(actual)
+        if asarray is not None:
             # Call ``__eq__()`` manually to prevent infinite-recursion with
             # numpy<1.13.  See #3748.
-            return all(self.__eq__(a) for a in actual.flat)
+            return all(self.__eq__(a) for a in asarray.flat)
 
         # Short-circuit exact equality.
         if actual == self.expected:
@@ -311,7 +319,7 @@ class ApproxScalar(ApproxBase):
 
         if relative_tolerance < 0:
             raise ValueError(
-                f"relative tolerance can't be negative: {absolute_tolerance}"
+                f"relative tolerance can't be negative: {relative_tolerance}"
             )
         if math.isnan(relative_tolerance):
             raise ValueError("relative tolerance can't be NaN.")
@@ -521,6 +529,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
     elif _is_numpy_array(expected):
+        expected = _as_numpy_array(expected)
         cls = ApproxNumpy
     elif (
         isinstance(expected, Iterable)
@@ -536,45 +545,59 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
 
 def _is_numpy_array(obj: object) -> bool:
-    """Return true if the given object is a numpy array.
+    """
+    Return true if the given object is implicitly convertible to ndarray,
+    and numpy is already imported.
+    """
+    return _as_numpy_array(obj) is not None
 
-    A special effort is made to avoid importing numpy unless it's really necessary.
+
+def _as_numpy_array(obj: object) -> Optional["ndarray"]:
+    """
+    Return an ndarray if the given object is implicitly convertible to ndarray,
+    and numpy is already imported, otherwise None.
     """
     import sys
 
     np: Any = sys.modules.get("numpy")
     if np is not None:
-        return isinstance(obj, np.ndarray)
-    return False
+        # avoid infinite recursion on numpy scalars, which have __array__
+        if np.isscalar(obj):
+            return None
+        elif isinstance(obj, np.ndarray):
+            return obj
+        elif hasattr(obj, "__array__") or hasattr("obj", "__array_interface__"):
+            return np.asarray(obj)
+    return None
 
 
 # builtin pytest.raises helper
 
-_E = TypeVar("_E", bound=BaseException)
+E = TypeVar("E", bound=BaseException)
 
 
 @overload
 def raises(
-    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
+    expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
-) -> "RaisesContext[_E]":
+) -> "RaisesContext[E]":
     ...
 
 
 @overload
 def raises(
-    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
+    expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     func: Callable[..., Any],
     *args: Any,
     **kwargs: Any,
-) -> _pytest._code.ExceptionInfo[_E]:
+) -> _pytest._code.ExceptionInfo[E]:
     ...
 
 
 def raises(
-    expected_exception: Union[Type[_E], Tuple[Type[_E], ...]], *args: Any, **kwargs: Any
-) -> Union["RaisesContext[_E]", _pytest._code.ExceptionInfo[_E]]:
+    expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
+) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
     r"""Assert that a code block/function call raises ``expected_exception``
     or raise a failure exception otherwise.
 
@@ -597,7 +620,8 @@ def raises(
     Use ``pytest.raises`` as a context manager, which will capture the exception of the given
     type::
 
-        >>> with raises(ZeroDivisionError):
+        >>> import pytest
+        >>> with pytest.raises(ZeroDivisionError):
         ...    1/0
 
     If the code block does not raise the expected exception (``ZeroDivisionError`` in the example
@@ -606,16 +630,16 @@ def raises(
     You can also use the keyword argument ``match`` to assert that the
     exception matches a text or regex::
 
-        >>> with raises(ValueError, match='must be 0 or None'):
+        >>> with pytest.raises(ValueError, match='must be 0 or None'):
         ...     raise ValueError("value must be 0 or None")
 
-        >>> with raises(ValueError, match=r'must be \d+$'):
+        >>> with pytest.raises(ValueError, match=r'must be \d+$'):
         ...     raise ValueError("value must be 42")
 
     The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
     details of the captured exception::
 
-        >>> with raises(ValueError) as exc_info:
+        >>> with pytest.raises(ValueError) as exc_info:
         ...     raise ValueError("value must be 42")
         >>> assert exc_info.type is ValueError
         >>> assert exc_info.value.args[0] == "value must be 42"
@@ -629,7 +653,7 @@ def raises(
        not be executed. For example::
 
            >>> value = 15
-           >>> with raises(ValueError) as exc_info:
+           >>> with pytest.raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...     assert exc_info.type is ValueError  # this will not execute
@@ -637,7 +661,7 @@ def raises(
        Instead, the following approach must be taken (note the difference in
        scope)::
 
-           >>> with raises(ValueError) as exc_info:
+           >>> with pytest.raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...
@@ -687,11 +711,11 @@ def raises(
     __tracebackhide__ = True
 
     if isinstance(expected_exception, type):
-        excepted_exceptions: Tuple[Type[_E], ...] = (expected_exception,)
+        excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:
         excepted_exceptions = expected_exception
     for exc in excepted_exceptions:
-        if not isinstance(exc, type) or not issubclass(exc, BaseException):  # type: ignore[unreachable]
+        if not isinstance(exc, type) or not issubclass(exc, BaseException):
             msg = "expected exception must be a BaseException type, not {}"  # type: ignore[unreachable]
             not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
             raise TypeError(msg.format(not_a))
@@ -728,19 +752,19 @@ raises.Exception = fail.Exception  # type: ignore
 
 
 @final
-class RaisesContext(Generic[_E]):
+class RaisesContext(Generic[E]):
     def __init__(
         self,
-        expected_exception: Union[Type[_E], Tuple[Type[_E], ...]],
+        expected_exception: Union[Type[E], Tuple[Type[E], ...]],
         message: str,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message
         self.match_expr = match_expr
-        self.excinfo: Optional[_pytest._code.ExceptionInfo[_E]] = None
+        self.excinfo: Optional[_pytest._code.ExceptionInfo[E]] = None
 
-    def __enter__(self) -> _pytest._code.ExceptionInfo[_E]:
+    def __enter__(self) -> _pytest._code.ExceptionInfo[E]:
         self.excinfo = _pytest._code.ExceptionInfo.for_later()
         return self.excinfo
 
@@ -757,7 +781,7 @@ class RaisesContext(Generic[_E]):
         if not issubclass(exc_type, self.expected_exception):
             return False
         # Cast to narrow the exception type now that it's verified.
-        exc_info = cast(Tuple[Type[_E], _E, TracebackType], (exc_type, exc_val, exc_tb))
+        exc_info = cast(Tuple[Type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
         self.excinfo.fill_unfilled(exc_info)
         if self.match_expr is not None:
             self.excinfo.match(self.match_expr)

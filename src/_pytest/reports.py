@@ -1,5 +1,5 @@
+import os
 from io import StringIO
-from pathlib import Path
 from pprint import pprint
 from typing import Any
 from typing import cast
@@ -15,7 +15,6 @@ from typing import TypeVar
 from typing import Union
 
 import attr
-import py
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
@@ -65,6 +64,7 @@ class BaseReport:
     ]
     sections: List[Tuple[str, str]]
     nodeid: str
+    outcome: "Literal['passed', 'failed', 'skipped']"
 
     def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
@@ -141,9 +141,17 @@ class BaseReport:
             content for (prefix, content) in self.get_sections("Captured stderr")
         )
 
-    passed = property(lambda x: x.outcome == "passed")
-    failed = property(lambda x: x.outcome == "failed")
-    skipped = property(lambda x: x.outcome == "skipped")
+    @property
+    def passed(self) -> bool:
+        return self.outcome == "passed"
+
+    @property
+    def failed(self) -> bool:
+        return self.outcome == "failed"
+
+    @property
+    def skipped(self) -> bool:
+        return self.outcome == "skipped"
 
     @property
     def fspath(self) -> str:
@@ -307,7 +315,7 @@ class TestReport(BaseReport):
                 Tuple[str, int, str],
                 str,
                 TerminalRepr,
-            ] = (None)
+            ] = None
         else:
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
@@ -315,7 +323,12 @@ class TestReport(BaseReport):
             elif isinstance(excinfo.value, skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
-                longrepr = (str(r.path), r.lineno, r.message)
+                if excinfo.value._use_item_location:
+                    filename, line = item.reportinfo()[:2]
+                    assert line is not None
+                    longrepr = str(filename), line + 1, r.message
+                else:
+                    longrepr = (str(r.path), r.lineno, r.message)
             else:
                 outcome = "failed"
                 if call.when == "call":
@@ -348,8 +361,10 @@ class CollectReport(BaseReport):
     def __init__(
         self,
         nodeid: str,
-        outcome: "Literal['passed', 'skipped', 'failed']",
-        longrepr,
+        outcome: "Literal['passed', 'failed', 'skipped']",
+        longrepr: Union[
+            None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr
+        ],
         result: Optional[List[Union[Item, Collector]]],
         sections: Iterable[Tuple[str, str]] = (),
         **extra,
@@ -484,8 +499,8 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     else:
         d["longrepr"] = report.longrepr
     for name in d:
-        if isinstance(d[name], (py.path.local, Path)):
-            d[name] = str(d[name])
+        if isinstance(d[name], os.PathLike):
+            d[name] = os.fspath(d[name])
         elif name == "result":
             d[name] = None  # for now
     return d

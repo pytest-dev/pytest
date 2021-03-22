@@ -69,7 +69,7 @@ Here is a basic pattern to achieve this:
 
 
 For this to work we need to add a command line option and
-provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
+provide the ``cmdopt`` through a :ref:`fixture function <fixture>`:
 
 .. code-block:: python
 
@@ -768,8 +768,8 @@ case we just write some information out to a ``failures`` file:
             mode = "a" if os.path.exists("failures") else "w"
             with open("failures", mode) as f:
                 # let's also access a fixture for the fun of it
-                if "tmpdir" in item.fixturenames:
-                    extra = " ({})".format(item.funcargs["tmpdir"])
+                if "tmp_path" in item.fixturenames:
+                    extra = " ({})".format(item.funcargs["tmp_path"])
                 else:
                     extra = ""
 
@@ -781,7 +781,7 @@ if you then have failing tests:
 .. code-block:: python
 
     # content of test_module.py
-    def test_fail1(tmpdir):
+    def test_fail1(tmp_path):
         assert 0
 
 
@@ -804,9 +804,9 @@ and run them:
     ================================= FAILURES =================================
     ________________________________ test_fail1 ________________________________
 
-    tmpdir = local('PYTEST_TMPDIR/test_fail10')
+    tmp_path = Path('PYTEST_TMPDIR/test_fail10')
 
-        def test_fail1(tmpdir):
+        def test_fail1(tmp_path):
     >       assert 0
     E       assert 0
 

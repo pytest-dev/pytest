@@ -1,4 +1,7 @@
-"""(Disabled by default) support for testing pytest and pytest plugins."""
+"""(Disabled by default) support for testing pytest and pytest plugins.
+
+PYTEST_DONT_REWRITE
+"""
 import collections.abc
 import contextlib
 import gc
@@ -17,6 +20,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generator
+from typing import IO
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -30,7 +34,6 @@ from typing import Union
 from weakref import WeakKeyDictionary
 
 import attr
-import py
 from iniconfig import IniConfig
 from iniconfig import SectionWrapper
 
@@ -38,6 +41,10 @@ from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
+from _pytest.compat import NOTSET
+from _pytest.compat import NotSetType
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -45,6 +52,7 @@ from _pytest.config import hookimpl
 from _pytest.config import main
 from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -54,16 +62,23 @@ from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
+from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import copytree
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestWarning
 
+
 if TYPE_CHECKING:
+    from typing_extensions import Final
     from typing_extensions import Literal
 
     import pexpect
+
+
+pytest_plugins = ["pytester_assertions"]
 
 
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
@@ -284,13 +299,15 @@ class HookRecorder:
 
     @overload
     def getreports(
-        self, names: "Literal['pytest_collectreport']",
+        self,
+        names: "Literal['pytest_collectreport']",
     ) -> Sequence[CollectReport]:
         ...
 
     @overload
     def getreports(
-        self, names: "Literal['pytest_runtest_logreport']",
+        self,
+        names: "Literal['pytest_runtest_logreport']",
     ) -> Sequence[TestReport]:
         ...
 
@@ -347,13 +364,15 @@ class HookRecorder:
 
     @overload
     def getfailures(
-        self, names: "Literal['pytest_collectreport']",
+        self,
+        names: "Literal['pytest_collectreport']",
     ) -> Sequence[CollectReport]:
         ...
 
     @overload
     def getfailures(
-        self, names: "Literal['pytest_runtest_logreport']",
+        self,
+        names: "Literal['pytest_runtest_logreport']",
     ) -> Sequence[TestReport]:
         ...
 
@@ -408,16 +427,15 @@ class HookRecorder:
 
     def assertoutcome(self, passed: int = 0, skipped: int = 0, failed: int = 0) -> None:
         __tracebackhide__ = True
+        from _pytest.pytester_assertions import assertoutcome
 
         outcomes = self.listoutcomes()
-        realpassed, realskipped, realfailed = outcomes
-        obtained = {
-            "passed": len(realpassed),
-            "skipped": len(realskipped),
-            "failed": len(realfailed),
-        }
-        expected = {"passed": passed, "skipped": skipped, "failed": failed}
-        assert obtained == expected, outcomes
+        assertoutcome(
+            outcomes,
+            passed=passed,
+            skipped=skipped,
+            failed=failed,
+        )
 
     def clear(self) -> None:
         self.calls[:] = []
@@ -452,18 +470,18 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
     It is particularly useful for testing plugins. It is similar to the :fixture:`tmp_path`
     fixture but provides methods which aid in testing pytest itself.
     """
-    return Pytester(request, tmp_path_factory)
+    return Pytester(request, tmp_path_factory, _ispytest=True)
 
 
 @fixture
 def testdir(pytester: "Pytester") -> "Testdir":
     """
     Identical to :fixture:`pytester`, and provides an instance whose methods return
-    legacy ``py.path.local`` objects instead when applicable.
+    legacy ``LEGACY_PATH`` objects instead when applicable.
 
     New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
     """
-    return Testdir(pytester)
+    return Testdir(pytester, _ispytest=True)
 
 
 @fixture
@@ -512,7 +530,7 @@ class RunResult:
         self.stdout = LineMatcher(outlines)
         """:class:`LineMatcher` of stdout.
 
-        Use e.g. :func:`stdout.str() <LineMatcher.str()>` to reconstruct stdout, or the commonly used
+        Use e.g. :func:`str(stdout) <LineMatcher.__str__()>` to reconstruct stdout, or the commonly used
         :func:`stdout.fnmatch_lines() <LineMatcher.fnmatch_lines()>` method.
         """
         self.stderr = LineMatcher(errlines)
@@ -574,25 +592,18 @@ class RunResult:
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run."""
         __tracebackhide__ = True
+        from _pytest.pytester_assertions import assert_outcomes
 
-        d = self.parseoutcomes()
-        obtained = {
-            "passed": d.get("passed", 0),
-            "skipped": d.get("skipped", 0),
-            "failed": d.get("failed", 0),
-            "errors": d.get("errors", 0),
-            "xpassed": d.get("xpassed", 0),
-            "xfailed": d.get("xfailed", 0),
-        }
-        expected = {
-            "passed": passed,
-            "skipped": skipped,
-            "failed": failed,
-            "errors": errors,
-            "xpassed": xpassed,
-            "xfailed": xfailed,
-        }
-        assert obtained == expected
+        outcomes = self.parseoutcomes()
+        assert_outcomes(
+            outcomes,
+            passed=passed,
+            skipped=skipped,
+            failed=failed,
+            errors=errors,
+            xpassed=xpassed,
+            xfailed=xfailed,
+        )
 
 
 class CwdSnapshot:
@@ -647,18 +658,23 @@ class Pytester:
 
     __test__ = False
 
-    CLOSE_STDIN = object
+    CLOSE_STDIN: "Final" = NOTSET
 
     class TimeoutExpired(Exception):
         pass
 
     def __init__(
-        self, request: FixtureRequest, tmp_path_factory: TempPathFactory
+        self,
+        request: FixtureRequest,
+        tmp_path_factory: TempPathFactory,
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self._request = request
         self._mod_collections: WeakKeyDictionary[
             Collector, List[Union[Item, Collector]]
-        ] = (WeakKeyDictionary())
+        ] = WeakKeyDictionary()
         if request.function:
             name: str = request.function.__name__
         else:
@@ -742,6 +758,11 @@ class Pytester:
     ) -> Path:
         items = list(files.items())
 
+        if ext and not ext.startswith("."):
+            raise ValueError(
+                f"pytester.makefile expects a file extension, try .{ext} instead of {ext}"
+            )
+
         def to_text(s: Union[Any, bytes]) -> str:
             return s.decode(encoding) if isinstance(s, bytes) else str(s)
 
@@ -763,7 +784,7 @@ class Pytester:
         return ret
 
     def makefile(self, ext: str, *args: str, **kwargs: str) -> Path:
-        r"""Create new file(s) in the test directory.
+        r"""Create new text file(s) in the test directory.
 
         :param str ext:
             The extension the file(s) should use, including the dot, e.g. `.py`.
@@ -783,6 +804,12 @@ class Pytester:
 
             pytester.makefile(".ini", pytest="[pytest]\naddopts=-rs\n")
 
+        To create binary files, use :meth:`pathlib.Path.write_bytes` directly:
+
+        .. code-block:: python
+
+            filename = pytester.path.joinpath("foo.bin")
+            filename.write_bytes(b"...")
         """
         return self._makefile(ext, args, kwargs)
 
@@ -849,7 +876,7 @@ class Pytester:
     def syspathinsert(
         self, path: Optional[Union[str, "os.PathLike[str]"]] = None
     ) -> None:
-        """Prepend a directory to sys.path, defaults to :py:attr:`tmpdir`.
+        """Prepend a directory to sys.path, defaults to :attr:`path`.
 
         This is undone automatically when this object dies at the end of each
         test.
@@ -886,7 +913,7 @@ class Pytester:
         example_dir = self._request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")
-        example_dir = Path(str(self._request.config.rootdir)) / example_dir
+        example_dir = self._request.config.rootpath / example_dir
 
         for extra_element in self._request.node.iter_markers("pytester_example_path"):
             assert extra_element.args
@@ -909,10 +936,7 @@ class Pytester:
             example_path = example_dir.joinpath(name)
 
         if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
-            # TODO: py.path.local.copy can copy files to existing directories,
-            # while with shutil.copytree the destination directory cannot exist,
-            # we will need to roll our own in order to drop py.path.local completely
-            py.path.local(example_path).copy(py.path.local(self.path))
+            copytree(example_path, self.path)
             return self.path
         elif example_path.is_file():
             result = self.path.joinpath(example_path.name)
@@ -933,12 +957,12 @@ class Pytester:
         :param _pytest.config.Config config:
            A pytest config.
            See :py:meth:`parseconfig` and :py:meth:`parseconfigure` for creating it.
-        :param py.path.local arg:
+        :param os.PathLike[str] arg:
             Path to the file.
         """
         session = Session.from_config(config)
         assert "::" not in str(arg)
-        p = py.path.local(arg)
+        p = Path(os.path.abspath(arg))
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([str(p)], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
@@ -950,12 +974,12 @@ class Pytester:
         This is like :py:meth:`getnode` but uses :py:meth:`parseconfigure` to
         create the (configured) pytest Config instance.
 
-        :param py.path.local path: Path to the file.
+        :param os.PathLike[str] path: Path to the file.
         """
-        path = py.path.local(path)
+        path = Path(path)
         config = self.parseconfigure(path)
         session = Session.from_config(config)
-        x = session.fspath.bestrelpath(path)
+        x = bestrelpath(session.path, path)
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([x], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
@@ -1076,7 +1100,7 @@ class Pytester:
                 class reprec:  # type: ignore
                     pass
 
-            reprec.ret = ret  # type: ignore
+            reprec.ret = ret
 
             # Typically we reraise keyboard interrupts from the child run
             # because it's our user requesting interruption of the testing.
@@ -1189,7 +1213,9 @@ class Pytester:
         config._do_configure()
         return config
 
-    def getitem(self, source: str, funcname: str = "test_func") -> Item:
+    def getitem(
+        self, source: Union[str, "os.PathLike[str]"], funcname: str = "test_func"
+    ) -> Item:
         """Return the test item for a test function.
 
         Writes the source to a python file and runs pytest's collection on
@@ -1209,7 +1235,7 @@ class Pytester:
             funcname, source, items
         )
 
-    def getitems(self, source: str) -> List[Item]:
+    def getitems(self, source: Union[str, "os.PathLike[str]"]) -> List[Item]:
         """Return all test items collected from the module.
 
         Writes the source to a Python file and runs pytest's collection on
@@ -1219,7 +1245,11 @@ class Pytester:
         return self.genitems([modcol])
 
     def getmodulecol(
-        self, source: Union[str, Path], configargs=(), *, withinit: bool = False
+        self,
+        source: Union[str, "os.PathLike[str]"],
+        configargs=(),
+        *,
+        withinit: bool = False,
     ):
         """Return the module collection node for ``source``.
 
@@ -1237,7 +1267,7 @@ class Pytester:
             Whether to also write an ``__init__.py`` file to the same
             directory to ensure it is a package.
         """
-        if isinstance(source, Path):
+        if isinstance(source, os.PathLike):
             path = self.path.joinpath(source)
             assert not withinit, "not supported for paths"
         else:
@@ -1268,16 +1298,16 @@ class Pytester:
 
     def popen(
         self,
-        cmdargs,
+        cmdargs: Sequence[Union[str, "os.PathLike[str]"]],
         stdout: Union[int, TextIO] = subprocess.PIPE,
         stderr: Union[int, TextIO] = subprocess.PIPE,
-        stdin=CLOSE_STDIN,
+        stdin: Union[NotSetType, bytes, IO[Any], int] = CLOSE_STDIN,
         **kw,
     ):
-        """Invoke subprocess.Popen.
+        """Invoke :py:class:`subprocess.Popen`.
 
-        Calls subprocess.Popen making sure the current working directory is
-        in the PYTHONPATH.
+        Calls :py:class:`subprocess.Popen` making sure the current working
+        directory is in ``PYTHONPATH``.
 
         You probably want to use :py:meth:`run` instead.
         """
@@ -1308,32 +1338,39 @@ class Pytester:
         self,
         *cmdargs: Union[str, "os.PathLike[str]"],
         timeout: Optional[float] = None,
-        stdin=CLOSE_STDIN,
+        stdin: Union[NotSetType, bytes, IO[Any], int] = CLOSE_STDIN,
     ) -> RunResult:
         """Run a command with arguments.
 
-        Run a process using subprocess.Popen saving the stdout and stderr.
+        Run a process using :py:class:`subprocess.Popen` saving the stdout and
+        stderr.
 
         :param cmdargs:
-            The sequence of arguments to pass to `subprocess.Popen()`, with path-like objects
-            being converted to ``str`` automatically.
+            The sequence of arguments to pass to :py:class:`subprocess.Popen`,
+            with path-like objects being converted to :py:class:`str`
+            automatically.
         :param timeout:
             The period in seconds after which to timeout and raise
             :py:class:`Pytester.TimeoutExpired`.
         :param stdin:
-            Optional standard input.  Bytes are being send, closing
-            the pipe, otherwise it is passed through to ``popen``.
-            Defaults to ``CLOSE_STDIN``, which translates to using a pipe
-            (``subprocess.PIPE``) that gets closed.
+            Optional standard input.
 
-        :rtype: RunResult
+            - If it is :py:attr:`CLOSE_STDIN` (Default), then this method calls
+              :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
+              the standard input is closed immediately after the new command is
+              started.
+
+            - If it is of type :py:class:`bytes`, these bytes are sent to the
+              standard input of the command.
+
+            - Otherwise, it is passed through to :py:class:`subprocess.Popen`.
+              For further information in this case, consult the document of the
+              ``stdin`` parameter in :py:class:`subprocess.Popen`.
         """
         __tracebackhide__ = True
 
-        # TODO: Remove type ignore in next mypy release.
-        #       https://github.com/python/typeshed/pull/4582
         cmdargs = tuple(
-            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs  # type: ignore[misc]
+            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs
         )
         p1 = self.path.joinpath("stdout")
         p2 = self.path.joinpath("stderr")
@@ -1349,7 +1386,7 @@ class Pytester:
                 stderr=f2,
                 close_fds=(sys.platform != "win32"),
             )
-            if isinstance(stdin, bytes):
+            if popen.stdin is not None:
                 popen.stdin.close()
 
             def handle_timeout() -> None:
@@ -1393,21 +1430,17 @@ class Pytester:
     def _getpytestargs(self) -> Tuple[str, ...]:
         return sys.executable, "-mpytest"
 
-    def runpython(self, script) -> RunResult:
-        """Run a python script using sys.executable as interpreter.
-
-        :rtype: RunResult
-        """
+    def runpython(self, script: "os.PathLike[str]") -> RunResult:
+        """Run a python script using sys.executable as interpreter."""
         return self.run(sys.executable, script)
 
-    def runpython_c(self, command):
-        """Run python -c "command".
-
-        :rtype: RunResult
-        """
+    def runpython_c(self, command: str) -> RunResult:
+        """Run ``python -c "command"``."""
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args, timeout: Optional[float] = None) -> RunResult:
+    def runpytest_subprocess(
+        self, *args: Union[str, "os.PathLike[str]"], timeout: Optional[float] = None
+    ) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will be added using the
@@ -1421,8 +1454,6 @@ class Pytester:
         :param timeout:
             The period in seconds after which to timeout and raise
             :py:class:`Pytester.TimeoutExpired`.
-
-        :rtype: RunResult
         """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-")
@@ -1485,31 +1516,33 @@ class LineComp:
 
 
 @final
-@attr.s(repr=False, str=False)
+@attr.s(repr=False, str=False, init=False)
 class Testdir:
     """
-    Similar to :class:`Pytester`, but this class works with legacy py.path.local objects instead.
+    Similar to :class:`Pytester`, but this class works with legacy legacy_path objects instead.
 
     All methods just forward to an internal :class:`Pytester` instance, converting results
-    to `py.path.local` objects as necessary.
+    to `legacy_path` objects as necessary.
     """
 
     __test__ = False
 
-    CLOSE_STDIN = Pytester.CLOSE_STDIN
-    TimeoutExpired = Pytester.TimeoutExpired
-    Session = Pytester.Session
+    CLOSE_STDIN: "Final" = Pytester.CLOSE_STDIN
+    TimeoutExpired: "Final" = Pytester.TimeoutExpired
+    Session: "Final" = Pytester.Session
 
-    _pytester: Pytester = attr.ib()
+    def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
+        check_ispytest(_ispytest)
+        self._pytester = pytester
 
     @property
-    def tmpdir(self) -> py.path.local:
+    def tmpdir(self) -> LEGACY_PATH:
         """Temporary directory where tests are executed."""
-        return py.path.local(self._pytester.path)
+        return legacy_path(self._pytester.path)
 
     @property
-    def test_tmproot(self) -> py.path.local:
-        return py.path.local(self._pytester._test_tmproot)
+    def test_tmproot(self) -> LEGACY_PATH:
+        return legacy_path(self._pytester._test_tmproot)
 
     @property
     def request(self):
@@ -1539,49 +1572,57 @@ class Testdir:
         """See :meth:`Pytester._finalize`."""
         return self._pytester._finalize()
 
-    def makefile(self, ext, *args, **kwargs) -> py.path.local:
+    def makefile(self, ext, *args, **kwargs) -> LEGACY_PATH:
         """See :meth:`Pytester.makefile`."""
-        return py.path.local(str(self._pytester.makefile(ext, *args, **kwargs)))
+        if ext and not ext.startswith("."):
+            # pytester.makefile is going to throw a ValueError in a way that
+            # testdir.makefile did not, because
+            # pathlib.Path is stricter suffixes than py.path
+            # This ext arguments is likely user error, but since testdir has
+            # allowed this, we will prepend "." as a workaround to avoid breaking
+            # testdir usage that worked before
+            ext = "." + ext
+        return legacy_path(self._pytester.makefile(ext, *args, **kwargs))
 
-    def makeconftest(self, source) -> py.path.local:
+    def makeconftest(self, source) -> LEGACY_PATH:
         """See :meth:`Pytester.makeconftest`."""
-        return py.path.local(str(self._pytester.makeconftest(source)))
+        return legacy_path(self._pytester.makeconftest(source))
 
-    def makeini(self, source) -> py.path.local:
+    def makeini(self, source) -> LEGACY_PATH:
         """See :meth:`Pytester.makeini`."""
-        return py.path.local(str(self._pytester.makeini(source)))
+        return legacy_path(self._pytester.makeini(source))
 
     def getinicfg(self, source: str) -> SectionWrapper:
         """See :meth:`Pytester.getinicfg`."""
         return self._pytester.getinicfg(source)
 
-    def makepyprojecttoml(self, source) -> py.path.local:
+    def makepyprojecttoml(self, source) -> LEGACY_PATH:
         """See :meth:`Pytester.makepyprojecttoml`."""
-        return py.path.local(str(self._pytester.makepyprojecttoml(source)))
+        return legacy_path(self._pytester.makepyprojecttoml(source))
 
-    def makepyfile(self, *args, **kwargs) -> py.path.local:
+    def makepyfile(self, *args, **kwargs) -> LEGACY_PATH:
         """See :meth:`Pytester.makepyfile`."""
-        return py.path.local(str(self._pytester.makepyfile(*args, **kwargs)))
+        return legacy_path(self._pytester.makepyfile(*args, **kwargs))
 
-    def maketxtfile(self, *args, **kwargs) -> py.path.local:
+    def maketxtfile(self, *args, **kwargs) -> LEGACY_PATH:
         """See :meth:`Pytester.maketxtfile`."""
-        return py.path.local(str(self._pytester.maketxtfile(*args, **kwargs)))
+        return legacy_path(self._pytester.maketxtfile(*args, **kwargs))
 
     def syspathinsert(self, path=None) -> None:
         """See :meth:`Pytester.syspathinsert`."""
         return self._pytester.syspathinsert(path)
 
-    def mkdir(self, name) -> py.path.local:
+    def mkdir(self, name) -> LEGACY_PATH:
         """See :meth:`Pytester.mkdir`."""
-        return py.path.local(str(self._pytester.mkdir(name)))
+        return legacy_path(self._pytester.mkdir(name))
 
-    def mkpydir(self, name) -> py.path.local:
+    def mkpydir(self, name) -> LEGACY_PATH:
         """See :meth:`Pytester.mkpydir`."""
-        return py.path.local(str(self._pytester.mkpydir(name)))
+        return legacy_path(self._pytester.mkpydir(name))
 
-    def copy_example(self, name=None) -> py.path.local:
+    def copy_example(self, name=None) -> LEGACY_PATH:
         """See :meth:`Pytester.copy_example`."""
-        return py.path.local(str(self._pytester.copy_example(name)))
+        return legacy_path(self._pytester.copy_example(name))
 
     def getnode(self, config: Config, arg) -> Optional[Union[Item, Collector]]:
         """See :meth:`Pytester.getnode`."""
@@ -1652,8 +1693,8 @@ class Testdir:
     def popen(
         self,
         cmdargs,
-        stdout: Union[int, TextIO] = subprocess.PIPE,
-        stderr: Union[int, TextIO] = subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         stdin=CLOSE_STDIN,
         **kw,
     ):
@@ -1706,6 +1747,14 @@ class LineMatcher:
     def __init__(self, lines: List[str]) -> None:
         self.lines = lines
         self._log_output: List[str] = []
+
+    def __str__(self) -> str:
+        """Return the entire original text.
+
+        .. versionadded:: 6.2
+            You can use :meth:`str` in older versions.
+        """
+        return "\n".join(self.lines)
 
     def _getlines(self, lines2: Union[str, Sequence[str], Source]) -> Sequence[str]:
         if isinstance(lines2, str):
@@ -1819,7 +1868,6 @@ class LineMatcher:
             raise TypeError("invalid type for lines2: {}".format(type(lines2).__name__))
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
-        nextline = None
         extralines = []
         __tracebackhide__ = True
         wnick = len(match_nickname) + 1
@@ -1909,4 +1957,4 @@ class LineMatcher:
 
     def str(self) -> str:
         """Return the entire original text."""
-        return "\n".join(self.lines)
+        return str(self)

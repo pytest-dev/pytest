@@ -486,7 +486,7 @@ class LogXML:
         )
         self.node_reporters: Dict[
             Tuple[Union[str, TestReport], object], _NodeReporter
-        ] = ({})
+        ] = {}
         self.node_reporters_ordered: List[_NodeReporter] = []
         self.global_properties: List[Tuple[str, str]] = []
 

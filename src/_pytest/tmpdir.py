@@ -6,45 +6,68 @@ from pathlib import Path
 from typing import Optional
 
 import attr
-import py
 
 from .pathlib import ensure_reset_dir
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import Config
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
 
 
 @final
-@attr.s
+@attr.s(init=False)
 class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option.
     """
 
-    _given_basetemp = attr.ib(
-        type=Optional[Path],
-        # Use os.path.abspath() to get absolute path instead of resolve() as it
-        # does not work the same in all platforms (see #4427).
-        # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012).
-        # Ignore type because of https://github.com/python/mypy/issues/6172.
-        converter=attr.converters.optional(
-            lambda p: Path(os.path.abspath(str(p)))  # type: ignore
-        ),
-    )
+    _given_basetemp = attr.ib(type=Optional[Path])
     _trace = attr.ib()
-    _basetemp = attr.ib(type=Optional[Path], default=None)
+    _basetemp = attr.ib(type=Optional[Path])
+
+    def __init__(
+        self,
+        given_basetemp: Optional[Path],
+        trace,
+        basetemp: Optional[Path] = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        if given_basetemp is None:
+            self._given_basetemp = None
+        else:
+            # Use os.path.abspath() to get absolute path instead of resolve() as it
+            # does not work the same in all platforms (see #4427).
+            # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012).
+            self._given_basetemp = Path(os.path.abspath(str(given_basetemp)))
+        self._trace = trace
+        self._basetemp = basetemp
 
     @classmethod
-    def from_config(cls, config: Config) -> "TempPathFactory":
-        """Create a factory according to pytest configuration."""
+    def from_config(
+        cls,
+        config: Config,
+        *,
+        _ispytest: bool = False,
+    ) -> "TempPathFactory":
+        """Create a factory according to pytest configuration.
+
+        :meta private:
+        """
+        check_ispytest(_ispytest)
         return cls(
-            given_basetemp=config.option.basetemp, trace=config.trace.get("tmpdir")
+            given_basetemp=config.option.basetemp,
+            trace=config.trace.get("tmpdir"),
+            _ispytest=True,
         )
 
     def _ensure_relative_to_basetemp(self, basename: str) -> str:
@@ -93,7 +116,12 @@ class TempPathFactory:
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
-            rootdir.mkdir(exist_ok=True)
+            try:
+                rootdir.mkdir(exist_ok=True)
+            except OSError:
+                # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
+                rootdir = temproot.joinpath("pytest-of-unknown")
+                rootdir.mkdir(exist_ok=True)
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
             )
@@ -104,20 +132,26 @@ class TempPathFactory:
 
 
 @final
-@attr.s
+@attr.s(init=False)
 class TempdirFactory:
-    """Backward comptibility wrapper that implements :class:``py.path.local``
+    """Backward compatibility wrapper that implements :class:``_pytest.compat.LEGACY_PATH``
     for :class:``TempPathFactory``."""
 
     _tmppath_factory = attr.ib(type=TempPathFactory)
 
-    def mktemp(self, basename: str, numbered: bool = True) -> py.path.local:
-        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``py.path.local`` object."""
-        return py.path.local(self._tmppath_factory.mktemp(basename, numbered).resolve())
+    def __init__(
+        self, tmppath_factory: TempPathFactory, *, _ispytest: bool = False
+    ) -> None:
+        check_ispytest(_ispytest)
+        self._tmppath_factory = tmppath_factory
 
-    def getbasetemp(self) -> py.path.local:
+    def mktemp(self, basename: str, numbered: bool = True) -> LEGACY_PATH:
+        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``_pytest.compat.LEGACY_PATH`` object."""
+        return legacy_path(self._tmppath_factory.mktemp(basename, numbered).resolve())
+
+    def getbasetemp(self) -> LEGACY_PATH:
         """Backward compat wrapper for ``_tmppath_factory.getbasetemp``."""
-        return py.path.local(self._tmppath_factory.getbasetemp().resolve())
+        return legacy_path(self._tmppath_factory.getbasetemp().resolve())
 
 
 def get_user() -> Optional[str]:
@@ -132,15 +166,15 @@ def get_user() -> Optional[str]:
 
 
 def pytest_configure(config: Config) -> None:
-    """Create a TempdirFactory and attach it to the config object.
+    """Create a TempPathFactory and attach it to the config object.
 
     This is to comply with existing plugins which expect the handler to be
     available at pytest_configure time, but ideally should be moved entirely
-    to the tmpdir_factory session fixture.
+    to the tmp_path_factory session fixture.
     """
     mp = MonkeyPatch()
-    tmppath_handler = TempPathFactory.from_config(config)
-    t = TempdirFactory(tmppath_handler)
+    tmppath_handler = TempPathFactory.from_config(config, _ispytest=True)
+    t = TempdirFactory(tmppath_handler, _ispytest=True)
     config._cleanup.append(mp.undo)
     mp.setattr(config, "_tmp_path_factory", tmppath_handler, raising=False)
     mp.setattr(config, "_tmpdirhandler", t, raising=False)
@@ -148,14 +182,14 @@ def pytest_configure(config: Config) -> None:
 
 @fixture(scope="session")
 def tmpdir_factory(request: FixtureRequest) -> TempdirFactory:
-    """Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session."""
+    """Return a :class:`pytest.TempdirFactory` instance for the test session."""
     # Set dynamically by pytest_configure() above.
     return request.config._tmpdirhandler  # type: ignore
 
 
 @fixture(scope="session")
 def tmp_path_factory(request: FixtureRequest) -> TempPathFactory:
-    """Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session."""
+    """Return a :class:`pytest.TempPathFactory` instance for the test session."""
     # Set dynamically by pytest_configure() above.
     return request.config._tmp_path_factory  # type: ignore
 
@@ -169,16 +203,21 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 
 
 @fixture
-def tmpdir(tmp_path: Path) -> py.path.local:
+def tmpdir(tmp_path: Path) -> LEGACY_PATH:
     """Return a temporary directory path object which is unique to each test
     function invocation, created as a sub directory of the base temporary
     directory.
 
-    The returned object is a `py.path.local`_ path object.
+    By default, a new base temporary directory is created each test session,
+    and old bases are removed after 3 sessions, to aid in debugging. If
+    ``--basetemp`` is used then it is cleared each session. See :ref:`base
+    temporary directory`.
 
-    .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
+    The returned object is a `legacy_path`_ object.
+
+    .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
     """
-    return py.path.local(tmp_path)
+    return legacy_path(tmp_path)
 
 
 @fixture
@@ -186,6 +225,11 @@ def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path
     """Return a temporary directory path object which is unique to each test
     function invocation, created as a sub directory of the base temporary
     directory.
+
+    By default, a new base temporary directory is created each test session,
+    and old bases are removed after 3 sessions, to aid in debugging. If
+    ``--basetemp`` is used then it is cleared each session. See :ref:`base
+    temporary directory`.
 
     The returned object is a :class:`pathlib.Path` object.
     """

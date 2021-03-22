@@ -5,24 +5,23 @@ from unittest import mock
 import pytest
 from _pytest import deprecated
 from _pytest.pytester import Pytester
-from _pytest.pytester import Testdir
 
 
 @pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
 # false positive due to dynamic attribute
-def test_pytest_collect_module_deprecated(attribute):
+def test_pytest_collect_module_deprecated(attribute) -> None:
     with pytest.warns(DeprecationWarning, match=attribute):
         getattr(pytest.collect, attribute)
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
 @pytest.mark.filterwarnings("default")
-def test_external_plugins_integrated(testdir, plugin):
-    testdir.syspathinsert()
-    testdir.makepyfile(**{plugin: ""})
+def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:
+    pytester.syspathinsert()
+    pytester.makepyfile(**{plugin: ""})
 
     with pytest.warns(pytest.PytestConfigWarning):
-        testdir.parseconfig("-p", plugin)
+        pytester.parseconfig("-p", plugin)
 
 
 def test_fillfuncargs_is_deprecated() -> None:
@@ -49,32 +48,32 @@ def test_fillfixtures_is_deprecated() -> None:
         _pytest.fixtures.fillfixtures(mock.Mock())
 
 
-def test_minus_k_dash_is_deprecated(testdir) -> None:
-    threepass = testdir.makepyfile(
+def test_minus_k_dash_is_deprecated(pytester: Pytester) -> None:
+    threepass = pytester.makepyfile(
         test_threepass="""
         def test_one(): assert 1
         def test_two(): assert 1
         def test_three(): assert 1
     """
     )
-    result = testdir.runpytest("-k=-test_two", threepass)
+    result = pytester.runpytest("-k=-test_two", threepass)
     result.stdout.fnmatch_lines(["*The `-k '-expr'` syntax*deprecated*"])
 
 
-def test_minus_k_colon_is_deprecated(testdir) -> None:
-    threepass = testdir.makepyfile(
+def test_minus_k_colon_is_deprecated(pytester: Pytester) -> None:
+    threepass = pytester.makepyfile(
         test_threepass="""
         def test_one(): assert 1
         def test_two(): assert 1
         def test_three(): assert 1
     """
     )
-    result = testdir.runpytest("-k", "test_two:", threepass)
+    result = pytester.runpytest("-k", "test_two:", threepass)
     result.stdout.fnmatch_lines(["*The `-k 'expr:'` syntax*deprecated*"])
 
 
-def test_fscollector_gethookproxy_isinitpath(testdir: Testdir) -> None:
-    module = testdir.getmodulecol(
+def test_fscollector_gethookproxy_isinitpath(pytester: Pytester) -> None:
+    module = pytester.getmodulecol(
         """
         def test_foo(): pass
         """,
@@ -85,16 +84,16 @@ def test_fscollector_gethookproxy_isinitpath(testdir: Testdir) -> None:
     assert isinstance(package, pytest.Package)
 
     with pytest.warns(pytest.PytestDeprecationWarning, match="gethookproxy"):
-        package.gethookproxy(testdir.tmpdir)
+        package.gethookproxy(pytester.path)
 
     with pytest.warns(pytest.PytestDeprecationWarning, match="isinitpath"):
-        package.isinitpath(testdir.tmpdir)
+        package.isinitpath(pytester.path)
 
     # The methods on Session are *not* deprecated.
     session = module.session
     with warnings.catch_warnings(record=True) as rec:
-        session.gethookproxy(testdir.tmpdir)
-        session.isinitpath(testdir.tmpdir)
+        session.gethookproxy(pytester.path)
+        session.isinitpath(pytester.path)
     assert len(rec) == 0
 
 
@@ -123,3 +122,34 @@ def test_yield_fixture_is_deprecated() -> None:
         @pytest.yield_fixture
         def fix():
             assert False
+
+
+def test_private_is_deprecated() -> None:
+    class PrivateInit:
+        def __init__(self, foo: int, *, _ispytest: bool = False) -> None:
+            deprecated.check_ispytest(_ispytest)
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning, match="private pytest class or function"
+    ):
+        PrivateInit(10)
+
+    # Doesn't warn.
+    PrivateInit(10, _ispytest=True)
+
+
+def test_raising_unittest_skiptest_during_collection_is_deprecated(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import unittest
+        raise unittest.SkipTest()
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: Raising unittest.SkipTest*",
+        ]
+    )

@@ -1,21 +1,15 @@
-Installation and Getting Started
+.. _get-started:
+
+Get Started
 ===================================
-
-**Pythons**: Python 3.6, 3.7, 3.8, 3.9, PyPy3
-
-**Platforms**: Linux and Windows
-
-**PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
-
-**Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
-
-``pytest`` is a framework that makes building simple and scalable tests easy. Tests are expressive and readable—no boilerplate code required. Get started in minutes with a small unit test or complex functional test for your application or library.
 
 .. _`getstarted`:
 .. _`installation`:
 
 Install ``pytest``
 ----------------------------------------
+
+``pytest`` requires: Python 3.6, 3.7, 3.8, 3.9, or PyPy3.
 
 1. Run the following command in your command line:
 
@@ -28,14 +22,14 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 6.1.2
+    pytest 6.2.2
 
 .. _`simpletest`:
 
 Create your first test
 ----------------------------------------------------------
 
-Create a simple test function with just four lines of code:
+Create a new file called ``test_sample.py``, containing a function, and a test:
 
 .. code-block:: python
 
@@ -47,7 +41,7 @@ Create a simple test function with just four lines of code:
     def test_answer():
         assert func(3) == 5
 
-That’s it. You can now execute the test function:
+The test
 
 .. code-block:: pytest
 
@@ -210,6 +204,8 @@ This is outlined below:
     FAILED test_class_demo.py::TestClassDemoInstance::test_two - assert 0
     2 failed in 0.12s
 
+Note that attributes added at class level are *class attributes*, so they will be shared between tests.
+
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
@@ -217,24 +213,24 @@ Request a unique temporary directory for functional tests
 
 .. code-block:: python
 
-    # content of test_tmpdir.py
-    def test_needsfiles(tmpdir):
-        print(tmpdir)
+    # content of test_tmp_path.py
+    def test_needsfiles(tmp_path):
+        print(tmp_path)
         assert 0
 
-List the name ``tmpdir`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory:
+List the name ``tmp_path`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory:
 
 .. code-block:: pytest
 
-    $ pytest -q test_tmpdir.py
+    $ pytest -q test_tmp_path.py
     F                                                                    [100%]
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
 
-    tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
+    tmp_path = Path('PYTEST_TMPDIR/test_needsfiles0')
 
-        def test_needsfiles(tmpdir):
-            print(tmpdir)
+        def test_needsfiles(tmp_path):
+            print(tmp_path)
     >       assert 0
     E       assert 0
 
@@ -242,10 +238,10 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0
     ========================= short test summary info ==========================
-    FAILED test_tmpdir.py::test_needsfiles - assert 0
+    FAILED test_tmp_path.py::test_needsfiles - assert 0
     1 failed in 0.12s
 
-More info on tmpdir handling is available at :ref:`Temporary directories and files <tmpdir handling>`.
+More info on temporary directory handling is available at :ref:`Temporary directories and files <tmpdir handling>`.
 
 Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the command:
 

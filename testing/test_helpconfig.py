@@ -16,7 +16,6 @@ def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> 
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = pytester.runpytest("--version")
     assert result.ret == 0
-    # p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
 
 
@@ -29,6 +28,9 @@ def test_help(pytester: Pytester) -> None:
                                 For example: -m 'mark1 and not mark2'.
         reporting:
           --durations=N *
+          -V, --version         display pytest version and information about plugins.
+                                When given twice, also display information about
+                                plugins.
         *setup.cfg*
         *minversion*
         *to see*markers*pytest --markers*

@@ -1,4 +1,5 @@
 import sys
+import textwrap
 
 import pytest
 from _pytest.pytester import Pytester
@@ -154,6 +155,136 @@ class TestEvaluation:
         skipped = evaluate_skip_marks(item)
         assert skipped
         assert skipped.reason == "condition: config._hackxyz"
+
+    def test_skipif_markeval_namespace(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"color": "green"}
+            """
+        )
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skipif("color == 'green'")
+            def test_1():
+                assert True
+
+            @pytest.mark.skipif("color == 'red'")
+            def test_2():
+                assert True
+        """
+        )
+        res = pytester.runpytest(p)
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 skipped*"])
+        res.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_skipif_markeval_namespace_multiple(self, pytester: Pytester) -> None:
+        """Keys defined by ``pytest_markeval_namespace()`` in nested plugins override top-level ones."""
+        root = pytester.mkdir("root")
+        root.joinpath("__init__.py").touch()
+        root.joinpath("conftest.py").write_text(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"arg": "root"}
+            """
+            )
+        )
+        root.joinpath("test_root.py").write_text(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            @pytest.mark.skipif("arg == 'root'")
+            def test_root():
+                assert False
+            """
+            )
+        )
+        foo = root.joinpath("foo")
+        foo.mkdir()
+        foo.joinpath("__init__.py").touch()
+        foo.joinpath("conftest.py").write_text(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"arg": "foo"}
+            """
+            )
+        )
+        foo.joinpath("test_foo.py").write_text(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            @pytest.mark.skipif("arg == 'foo'")
+            def test_foo():
+                assert False
+            """
+            )
+        )
+        bar = root.joinpath("bar")
+        bar.mkdir()
+        bar.joinpath("__init__.py").touch()
+        bar.joinpath("conftest.py").write_text(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"arg": "bar"}
+            """
+            )
+        )
+        bar.joinpath("test_bar.py").write_text(
+            textwrap.dedent(
+                """\
+            import pytest
+
+            @pytest.mark.skipif("arg == 'bar'")
+            def test_bar():
+                assert False
+            """
+            )
+        )
+
+        reprec = pytester.inline_run("-vs", "--capture=no")
+        reprec.assertoutcome(skipped=3)
+
+    def test_skipif_markeval_namespace_ValueError(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_markeval_namespace():
+                return True
+            """
+        )
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skipif("color == 'green'")
+            def test_1():
+                assert True
+        """
+        )
+        res = pytester.runpytest(p)
+        assert res.ret == 1
+        res.stdout.fnmatch_lines(
+            [
+                "*ValueError: pytest_markeval_namespace() needs to return a dict, got True*"
+            ]
+        )
 
 
 class TestXFail:
@@ -577,6 +708,33 @@ class TestXFail:
         result.stdout.fnmatch_lines(["*1 failed*" if strict else "*1 xpassed*"])
         assert result.ret == (1 if strict else 0)
 
+    def test_xfail_markeval_namespace(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_markeval_namespace():
+                return {"color": "green"}
+            """
+        )
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.xfail("color == 'green'")
+            def test_1():
+                assert False
+
+            @pytest.mark.xfail("color == 'red'")
+            def test_2():
+                assert False
+        """
+        )
+        res = pytester.runpytest(p)
+        assert res.ret == 1
+        res.stdout.fnmatch_lines(["*1 failed*"])
+        res.stdout.fnmatch_lines(["*1 xfailed*"])
+
 
 class TestXFailwithSetupTeardown:
     def test_failing_setup_issue9(self, pytester: Pytester) -> None:
@@ -703,8 +861,24 @@ class TestSkip:
                 pass
         """
         )
-        result = pytester.runpytest("-rs")
+        result = pytester.runpytest("-rs", "--strict-markers")
         result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
+
+    def test_wrong_skip_usage(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            @pytest.mark.skip(False, reason="I thought this was skipif")
+            def test_hello():
+                pass
+        """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*TypeError: __init__() got multiple values for argument 'reason' - maybe you meant pytest.mark.skipif?"
+            ]
+        )
 
 
 class TestSkipif:
@@ -1129,7 +1303,7 @@ def test_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 pytest.xfail("Expected Failure")
 
-        def pytest_collect_file(path, parent):
+        def pytest_collect_file(fspath, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )
@@ -1203,7 +1377,7 @@ def test_mark_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 assert False
 
-        def pytest_collect_file(path, parent):
+        def pytest_collect_file(fspath, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )

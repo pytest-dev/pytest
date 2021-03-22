@@ -236,7 +236,7 @@ Here is a simple overview, with pytest-specific bits:
     $ cd pytest
     # now, create your own branch off "master":
 
-        $ git checkout -b your-bugfix-branch-name master
+        $ git checkout -b your-bugfix-branch-name main
 
    Given we have "major.minor.micro" version numbers, bug fixes will usually
    be released in micro releases whereas features will be released in
@@ -318,26 +318,26 @@ Here is a simple overview, with pytest-specific bits:
     compare: your-branch-name
 
     base-fork: pytest-dev/pytest
-    base: master
+    base: main
 
 
 Writing Tests
 ~~~~~~~~~~~~~
 
-Writing tests for plugins or for pytest itself is often done using the `testdir fixture <https://docs.pytest.org/en/stable/reference.html#testdir>`_, as a "black-box" test.
+Writing tests for plugins or for pytest itself is often done using the `pytester fixture <https://docs.pytest.org/en/stable/reference.html#pytester>`_, as a "black-box" test.
 
 For example, to ensure a simple test passes you can write:
 
 .. code-block:: python
 
-    def test_true_assertion(testdir):
-        testdir.makepyfile(
+    def test_true_assertion(pytester):
+        pytester.makepyfile(
             """
             def test_foo():
                 assert True
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.assert_outcomes(failed=0, passed=1)
 
 
@@ -346,14 +346,14 @@ Alternatively, it is possible to make checks based on the actual output of the t
 
 .. code-block:: python
 
-    def test_true_assertion(testdir):
-        testdir.makepyfile(
+    def test_true_assertion(pytester):
+        pytester.makepyfile(
             """
             def test_foo():
                 assert False
         """
         )
-        result = testdir.runpytest()
+        result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*assert False*", "*1 failed*"])
 
 When choosing a file where to write a new test, take a look at the existing files and see if there's

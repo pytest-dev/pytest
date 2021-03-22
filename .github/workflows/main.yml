@@ -3,7 +3,7 @@ name: main
 on:
   push:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.x"
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
@@ -11,7 +11,7 @@ on:
 
   pull_request:
     branches:
-      - master
+      - main
       - "[0-9]+.[0-9]+.x"
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
           - name: "windows-py37-pluggy"
             python: "3.7"
             os: windows-latest
-            tox_env: "py37-pluggymaster-xdist"
+            tox_env: "py37-pluggymain-xdist"
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
@@ -75,7 +75,7 @@ jobs:
           - name: "ubuntu-py37-pluggy"
             python: "3.7"
             os: ubuntu-latest
-            tox_env: "py37-pluggymaster-xdist"
+            tox_env: "py37-pluggymain-xdist"
           - name: "ubuntu-py37-freeze"
             python: "3.7"
             os: ubuntu-latest
@@ -89,7 +89,7 @@ jobs:
             os: ubuntu-latest
             tox_env: "py39-xdist"
           - name: "ubuntu-pypy3"
-            python: "pypy3"
+            python: "pypy-3.7"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
@@ -137,22 +137,13 @@ jobs:
 
     - name: Test with coverage
       if: "matrix.use_coverage"
-      env:
-        _PYTEST_TOX_COVERAGE_RUN: "coverage run -m"
-        COVERAGE_PROCESS_START: ".coveragerc"
-        _PYTEST_TOX_EXTRA_DEP: "coverage-enable-subprocess"
-      run: "tox -e ${{ matrix.tox_env }}"
+      run: "tox -e ${{ matrix.tox_env }}-coverage"
 
-    - name: Prepare coverage token
-      if: (matrix.use_coverage && ( github.repository == 'pytest-dev/pytest' || github.event_name == 'pull_request' ))
-      run: |
-        python scripts/append_codecov_token.py
-
-    - name: Report coverage
-      if: (matrix.use_coverage)
+    - name: Upload coverage
+      if: matrix.use_coverage && github.repository == 'pytest-dev/pytest'
       env:
         CODECOV_NAME: ${{ matrix.name }}
-      run: bash scripts/report-coverage.sh -F GHA,${{ runner.os }}
+      run: bash scripts/upload-coverage.sh -F GHA,${{ runner.os }}
 
   linting:
     runs-on: ubuntu-latest
@@ -165,7 +156,10 @@ jobs:
       with:
         path: ~/.cache/pre-commit
         key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
-    - run: pip install tox
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
     - run: tox -e linting
 
   deploy:

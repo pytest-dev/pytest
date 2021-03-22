@@ -1,1 +1,0 @@
-Fixed symlinked directories not being followed during collection. Regressed in pytest 6.1.0.

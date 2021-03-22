@@ -29,7 +29,7 @@ def test_recwarn_functional(pytester: Pytester) -> None:
 
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:
-        rec = WarningsRecorder()
+        rec = WarningsRecorder(_ispytest=True)
         with rec:
             assert not rec.list
             warnings.warn_explicit("hello", UserWarning, "xyz", 13)
@@ -46,7 +46,7 @@ class TestWarningsRecorderChecker:
 
     def test_warn_stacklevel(self) -> None:
         """#4243"""
-        rec = WarningsRecorder()
+        rec = WarningsRecorder(_ispytest=True)
         with rec:
             warnings.warn("test", DeprecationWarning, 2)
 
@@ -54,21 +54,21 @@ class TestWarningsRecorderChecker:
         from _pytest.recwarn import WarningsChecker
 
         with pytest.raises(TypeError):
-            WarningsChecker(5)  # type: ignore
+            WarningsChecker(5, _ispytest=True)  # type: ignore[arg-type]
         with pytest.raises(TypeError):
-            WarningsChecker(("hi", RuntimeWarning))  # type: ignore
+            WarningsChecker(("hi", RuntimeWarning), _ispytest=True)  # type: ignore[arg-type]
         with pytest.raises(TypeError):
-            WarningsChecker([DeprecationWarning, RuntimeWarning])  # type: ignore
+            WarningsChecker([DeprecationWarning, RuntimeWarning], _ispytest=True)  # type: ignore[arg-type]
 
     def test_invalid_enter_exit(self) -> None:
         # wrap this test in WarningsRecorder to ensure warning state gets reset
-        with WarningsRecorder():
+        with WarningsRecorder(_ispytest=True):
             with pytest.raises(RuntimeError):
-                rec = WarningsRecorder()
+                rec = WarningsRecorder(_ispytest=True)
                 rec.__exit__(None, None, None)  # can't exit before entering
 
             with pytest.raises(RuntimeError):
-                rec = WarningsRecorder()
+                rec = WarningsRecorder(_ispytest=True)
                 with rec:
                     with rec:
                         pass  # can't enter twice

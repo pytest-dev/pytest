@@ -13,6 +13,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import Generator
 from typing import List
@@ -36,6 +37,8 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -284,15 +287,13 @@ class WarningReport:
         User friendly message about the warning.
     :ivar str|None nodeid:
         nodeid that generated the warning (see ``get_location``).
-    :ivar tuple|py.path.local fslocation:
+    :ivar tuple fslocation:
         File system location of the source of the warning (see ``get_location``).
     """
 
     message = attr.ib(type=str)
     nodeid = attr.ib(type=Optional[str], default=None)
-    fslocation = attr.ib(
-        type=Optional[Union[Tuple[str, int], py.path.local]], default=None
-    )
+    fslocation = attr.ib(type=Optional[Tuple[str, int]], default=None)
     count_towards_summary = True
 
     def get_location(self, config: Config) -> Optional[str]:
@@ -300,14 +301,9 @@ class WarningReport:
         if self.nodeid:
             return self.nodeid
         if self.fslocation:
-            if isinstance(self.fslocation, tuple) and len(self.fslocation) >= 2:
-                filename, linenum = self.fslocation[:2]
-                relpath = bestrelpath(
-                    config.invocation_params.dir, absolutepath(filename)
-                )
-                return f"{relpath}:{linenum}"
-            else:
-                return str(self.fslocation)
+            filename, linenum = self.fslocation
+            relpath = bestrelpath(config.invocation_params.dir, absolutepath(filename))
+            return f"{relpath}:{linenum}"
         return None
 
 
@@ -324,7 +320,6 @@ class TerminalReporter:
         self.stats: Dict[str, List[Any]] = {}
         self._main_color: Optional[str] = None
         self._known_types: Optional[List[str]] = None
-        self.startdir = config.invocation_dir
         self.startpath = config.invocation_params.dir
         if file is None:
             file = sys.stdout
@@ -386,6 +381,16 @@ class TerminalReporter:
     @property
     def showlongtestinfo(self) -> bool:
         return self.verbosity > 0
+
+    @property
+    def startdir(self) -> LEGACY_PATH:
+        """The directory from which pytest was invoked.
+
+        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+        :type: LEGACY_PATH
+        """
+        return legacy_path(self.startpath)
 
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
@@ -474,7 +479,9 @@ class TerminalReporter:
         return True
 
     def pytest_warning_recorded(
-        self, warning_message: warnings.WarningMessage, nodeid: str,
+        self,
+        warning_message: warnings.WarningMessage,
+        nodeid: str,
     ) -> None:
         from _pytest.warnings import warning_record_to_str
 
@@ -545,6 +552,16 @@ class TerminalReporter:
             line = self._locationline(rep.nodeid, *rep.location)
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
+                if rep.skipped or hasattr(report, "wasxfail"):
+                    available_width = (
+                        (self._tw.fullwidth - self._tw.width_of_current_line)
+                        - len(" [100%]")
+                        - 1
+                    )
+                    reason = _get_raw_skip_reason(rep)
+                    reason_ = _format_trimmed(" ({})", reason, available_width)
+                    if reason and reason_ is not None:
+                        self._tw.write(reason_)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
             else:
@@ -699,7 +716,7 @@ class TerminalReporter:
                 msg += " -- " + str(sys.executable)
             self.write_line(msg)
             lines = self.config.hook.pytest_report_header(
-                config=self.config, startdir=self.startdir
+                config=self.config, startpath=self.startpath, startdir=self.startdir
             )
             self._write_report_lines_from_hooks(lines)
 
@@ -734,7 +751,10 @@ class TerminalReporter:
         self.report_collect(True)
 
         lines = self.config.hook.pytest_report_collectionfinish(
-            config=self.config, startdir=self.startdir, items=session.items
+            config=self.config,
+            startpath=self.startpath,
+            startdir=self.startdir,
+            items=session.items,
         )
         self._write_report_lines_from_hooks(lines)
 
@@ -1249,6 +1269,31 @@ def _get_pos(config: Config, rep: BaseReport):
     return nodeid
 
 
+def _format_trimmed(format: str, msg: str, available_width: int) -> Optional[str]:
+    """Format msg into format, ellipsizing it if doesn't fit in available_width.
+
+    Returns None if even the ellipsis can't fit.
+    """
+    # Only use the first line.
+    i = msg.find("\n")
+    if i != -1:
+        msg = msg[:i]
+
+    ellipsis = "..."
+    format_width = wcswidth(format.format(""))
+    if format_width + len(ellipsis) > available_width:
+        return None
+
+    if format_width + wcswidth(msg) > available_width:
+        available_width -= len(ellipsis)
+        msg = msg[:available_width]
+        while format_width + wcswidth(msg) > available_width:
+            msg = msg[:-1]
+        msg += ellipsis
+
+    return format.format(msg)
+
+
 def _get_line_with_reprcrash_message(
     config: Config, rep: BaseReport, termwidth: int
 ) -> str:
@@ -1257,11 +1302,7 @@ def _get_line_with_reprcrash_message(
     pos = _get_pos(config, rep)
 
     line = f"{verbose_word} {pos}"
-    len_line = wcswidth(line)
-    ellipsis, len_ellipsis = "...", 3
-    if len_line > termwidth - len_ellipsis:
-        # No space for an additional message.
-        return line
+    line_width = wcswidth(line)
 
     try:
         # Type ignored intentionally -- possible AttributeError expected.
@@ -1269,27 +1310,17 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        # Only use the first line.
-        i = msg.find("\n")
-        if i != -1:
-            msg = msg[:i]
-        len_msg = wcswidth(msg)
+        available_width = termwidth - line_width
+        msg = _format_trimmed(" - {}", msg, available_width)
+        if msg is not None:
+            line += msg
 
-        sep, len_sep = " - ", 3
-        max_len_msg = termwidth - len_line - len_sep
-        if max_len_msg >= len_ellipsis:
-            if len_msg > max_len_msg:
-                max_len_msg -= len_ellipsis
-                msg = msg[:max_len_msg]
-                while wcswidth(msg) > max_len_msg:
-                    msg = msg[:-1]
-                msg += ellipsis
-            line += sep + msg
     return line
 
 
 def _folded_skips(
-    startpath: Path, skipped: Sequence[CollectReport],
+    startpath: Path,
+    skipped: Sequence[CollectReport],
 ) -> List[Tuple[int, str, Optional[int], str]]:
     d: Dict[Tuple[str, Optional[int], str], List[CollectReport]] = {}
     for event in skipped:
@@ -1361,3 +1392,24 @@ def format_session_duration(seconds: float) -> str:
     else:
         dt = datetime.timedelta(seconds=int(seconds))
         return f"{seconds:.2f}s ({dt})"
+
+
+def _get_raw_skip_reason(report: TestReport) -> str:
+    """Get the reason string of a skip/xfail/xpass test report.
+
+    The string is just the part given by the user.
+    """
+    if hasattr(report, "wasxfail"):
+        reason = cast(str, report.wasxfail)
+        if reason.startswith("reason: "):
+            reason = reason[len("reason: ") :]
+        return reason
+    else:
+        assert report.skipped
+        assert isinstance(report.longrepr, tuple)
+        _, _, reason = report.longrepr
+        if reason.startswith("Skipped: "):
+            reason = reason[len("Skipped: ") :]
+        elif reason == "Skipped":
+            reason = ""
+        return reason

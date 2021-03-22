@@ -7,6 +7,7 @@ import traceback
 import types
 import warnings
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -21,20 +22,20 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
-import py.path
-
 import pytest
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest.compat import legacy_path
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodes import Collector
 from _pytest.outcomes import OutcomeException
+from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
@@ -119,32 +120,33 @@ def pytest_unconfigure() -> None:
 
 
 def pytest_collect_file(
-    path: py.path.local, parent: Collector,
+    fspath: Path,
+    parent: Collector,
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
-    if path.ext == ".py":
-        if config.option.doctestmodules and not _is_setup_py(path):
-            mod: DoctestModule = DoctestModule.from_parent(parent, fspath=path)
+    if fspath.suffix == ".py":
+        if config.option.doctestmodules and not _is_setup_py(fspath):
+            mod: DoctestModule = DoctestModule.from_parent(parent, path=fspath)
             return mod
-    elif _is_doctest(config, path, parent):
-        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, fspath=path)
+    elif _is_doctest(config, fspath, parent):
+        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, path=fspath)
         return txt
     return None
 
 
-def _is_setup_py(path: py.path.local) -> bool:
-    if path.basename != "setup.py":
+def _is_setup_py(path: Path) -> bool:
+    if path.name != "setup.py":
         return False
-    contents = path.read_binary()
+    contents = path.read_bytes()
     return b"setuptools" in contents or b"distutils" in contents
 
 
-def _is_doctest(config: Config, path: py.path.local, parent) -> bool:
-    if path.ext in (".txt", ".rst") and parent.session.isinitpath(path):
+def _is_doctest(config: Config, path: Path, parent: Collector) -> bool:
+    if path.suffix in (".txt", ".rst") and parent.session.isinitpath(path):
         return True
     globs = config.getoption("doctestglob") or ["test*.txt"]
     for glob in globs:
-        if path.check(fnmatch=glob):
+        if fnmatch_ex(glob, path):
             return True
     return False
 
@@ -191,7 +193,11 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
             self.continue_on_failure = continue_on_failure
 
         def report_failure(
-            self, out, test: "doctest.DocTest", example: "doctest.Example", got: str,
+            self,
+            out,
+            test: "doctest.DocTest",
+            example: "doctest.Example",
+            got: str,
         ) -> None:
             failure = doctest.DocTestFailure(test, example, got)
             if self.continue_on_failure:
@@ -301,13 +307,14 @@ class DoctestItem(pytest.Item):
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override]
-        self, excinfo: ExceptionInfo[BaseException],
+        self,
+        excinfo: ExceptionInfo[BaseException],
     ) -> Union[str, TerminalRepr]:
         import doctest
 
         failures: Optional[
             Sequence[Union[doctest.DocTestFailure, doctest.UnexpectedException]]
-        ] = (None)
+        ] = None
         if isinstance(
             excinfo.value, (doctest.DocTestFailure, doctest.UnexpectedException)
         ):
@@ -356,7 +363,7 @@ class DoctestItem(pytest.Item):
                         example, failure.got, report_choice
                     ).split("\n")
                 else:
-                    inner_excinfo = ExceptionInfo(failure.exc_info)
+                    inner_excinfo = ExceptionInfo.from_exc_info(failure.exc_info)
                     lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
                     lines += [
                         x.strip("\n")
@@ -369,7 +376,7 @@ class DoctestItem(pytest.Item):
 
     def reportinfo(self):
         assert self.dtest is not None
-        return self.fspath, self.dtest.lineno, "[doctest] %s" % self.name
+        return legacy_path(self.path), self.dtest.lineno, "[doctest] %s" % self.name
 
 
 def _get_flag_lookup() -> Dict[str, int]:
@@ -416,9 +423,9 @@ class DoctestTextfile(pytest.Module):
         # Inspired by doctest.testfile; ideally we would use it directly,
         # but it doesn't support passing a custom checker.
         encoding = self.config.getini("doctest_encoding")
-        text = self.fspath.read_text(encoding)
-        filename = str(self.fspath)
-        name = self.fspath.basename
+        text = self.path.read_text(encoding)
+        filename = str(self.path)
+        name = self.path.name
         globs = {"__name__": "__main__"}
 
         optionflags = get_optionflags(self)
@@ -508,7 +515,9 @@ class DoctestModule(pytest.Module):
                     obj = getattr(obj, "fget", obj)
                 # Type ignored because this is a private function.
                 return doctest.DocTestFinder._find_lineno(  # type: ignore
-                    self, obj, source_lines,
+                    self,
+                    obj,
+                    source_lines,
                 )
 
             def _find(
@@ -523,16 +532,16 @@ class DoctestModule(pytest.Module):
                         self, tests, obj, name, module, source_lines, globs, seen
                     )
 
-        if self.fspath.basename == "conftest.py":
+        if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
-                self.fspath, self.config.getoption("importmode")
+                self.path, self.config.getoption("importmode")
             )
         else:
             try:
-                module = import_path(self.fspath)
+                module = import_path(self.path)
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
-                    pytest.skip("unable to import module %r" % self.fspath)
+                    pytest.skip("unable to import module %r" % self.path)
                 else:
                     raise
         # Uses internal doctest module parsing mechanism.
@@ -563,7 +572,7 @@ def _setup_fixtures(doctest_item: DoctestItem) -> FixtureRequest:
     doctest_item._fixtureinfo = fm.getfixtureinfo(  # type: ignore[attr-defined]
         node=doctest_item, func=func, cls=None, funcargs=False
     )
-    fixture_request = FixtureRequest(doctest_item)
+    fixture_request = FixtureRequest(doctest_item, _ispytest=True)
     fixture_request._fillfixtures()
     return fixture_request
 

@@ -27,6 +27,7 @@ from _pytest.config import create_terminal_writer
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -346,7 +347,8 @@ class LogCaptureHandler(logging.StreamHandler):
 class LogCaptureFixture:
     """Provides access and control of log capturing."""
 
-    def __init__(self, item: nodes.Node) -> None:
+    def __init__(self, item: nodes.Node, *, _ispytest: bool = False) -> None:
+        check_ispytest(_ispytest)
         self._item = item
         self._initial_handler_level: Optional[int] = None
         # Dict of log name -> log level.
@@ -482,7 +484,7 @@ def caplog(request: FixtureRequest) -> Generator[LogCaptureFixture, None, None]:
     * caplog.record_tuples   -> list of (logger_name, level, message) tuples
     * caplog.clear()         -> clear captured records and formatted log output string
     """
-    result = LogCaptureFixture(request.node)
+    result = LogCaptureFixture(request.node, _ispytest=True)
     yield result
     result._finalize()
 
@@ -683,9 +685,11 @@ class LoggingPlugin:
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
         """Implement the internals of the pytest_runtest_xxx() hooks."""
         with catching_logs(
-            self.caplog_handler, level=self.log_level,
+            self.caplog_handler,
+            level=self.log_level,
         ) as caplog_handler, catching_logs(
-            self.report_handler, level=self.log_level,
+            self.report_handler,
+            level=self.log_level,
         ) as report_handler:
             caplog_handler.reset()
             report_handler.reset()
