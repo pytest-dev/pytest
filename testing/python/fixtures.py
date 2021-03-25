@@ -975,14 +975,14 @@ class TestRequestBasic:
         result = pytester.runpytest("-s")
         result.stdout.fnmatch_lines(
             [
-                "test_request_addfinalizer_ordering.py SETUP first",
-                "SETUP second",
-                "SETUP test",
-                "SETUP instance",
-                ".TEARDOWN instance",
-                "TEARDOWN test",
-                "TEARDOWN second",
-                "TEARDOWN first",
+                "test_request_addfinalizer_ordering.py SETUP (1) first",
+                "SETUP (2) second",
+                "SETUP (3) test",
+                "SETUP (4) instance",
+                ".TEARDOWN (4) instance",
+                "TEARDOWN (3) test",
+                "TEARDOWN (2) second",
+                "TEARDOWN (1) first",
             ],
             consecutive=True,
         )
