@@ -6,8 +6,11 @@ import packaging.version
 import requests
 import tabulate
 
-FILE_HEAD = r"""Plugins List
-============
+FILE_HEAD = r"""\
+.. _plugin-list:
+
+Plugin List
+===========
 
 PyPI projects that match "pytest-\*" are considered plugins and are listed
 automatically. Packages classified as inactive are excluded.

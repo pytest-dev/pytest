@@ -15,6 +15,8 @@ from _pytest import outcomes
 from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest.config import Config
+
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -25,6 +27,9 @@ _reprcompare: Optional[Callable[[str, object, object], Optional[str]]] = None
 # Works similarly as _reprcompare attribute. Is populated with the hook call
 # when pytest_runtest_setup is called.
 _assertion_pass: Optional[Callable[[int, str, str], None]] = None
+
+# Config object which is assigned during pytest_runtest_protocol.
+_config: Optional[Config] = None
 
 
 def format_explanation(explanation: str) -> str:

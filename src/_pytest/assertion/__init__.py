@@ -153,6 +153,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
 
     saved_assert_hooks = util._reprcompare, util._assertion_pass
     util._reprcompare = callbinrepr
+    util._config = item.config
 
     if ihook.pytest_assertion_pass.get_hookimpls():
 
@@ -164,6 +165,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     yield
 
     util._reprcompare, util._assertion_pass = saved_assert_hooks
+    util._config = None
 
 
 def pytest_sessionfinish(session: "Session") -> None:
