@@ -8,7 +8,6 @@ from types import ModuleType
 from typing import Generator
 
 import pytest
-from _pytest.compat import legacy_path
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
@@ -26,23 +25,7 @@ from _pytest.tmpdir import TempPathFactory
 
 
 class TestFNMatcherPort:
-    """Test that our port of py.common.FNMatcher (fnmatch_ex) produces the
-    same results as the original legacy_path.fnmatch method."""
-
-    @pytest.fixture(params=["pathlib", "py.path"])
-    def match(self, request):
-        if request.param == "py.path":
-
-            def match_(pattern, path):
-                return legacy_path(path).fnmatch(pattern)
-
-        else:
-            assert request.param == "pathlib"
-
-            def match_(pattern, path):
-                return fnmatch_ex(pattern, path)
-
-        return match_
+    """Test our port of py.common.FNMatcher (fnmatch_ex)."""
 
     if sys.platform == "win32":
         drv1 = "c:"
@@ -58,19 +41,19 @@ class TestFNMatcherPort:
             ("*.py", "bar/foo.py"),
             ("test_*.py", "foo/test_foo.py"),
             ("tests/*.py", "tests/foo.py"),
-            (drv1 + "/*.py", drv1 + "/foo.py"),
-            (drv1 + "/foo/*.py", drv1 + "/foo/foo.py"),
+            (f"{drv1}/*.py", f"{drv1}/foo.py"),
+            (f"{drv1}/foo/*.py", f"{drv1}/foo/foo.py"),
             ("tests/**/test*.py", "tests/foo/test_foo.py"),
             ("tests/**/doc/test*.py", "tests/foo/bar/doc/test_foo.py"),
             ("tests/**/doc/**/test*.py", "tests/foo/doc/bar/test_foo.py"),
         ],
     )
-    def test_matching(self, match, pattern, path):
-        assert match(pattern, path)
+    def test_matching(self, pattern: str, path: str) -> None:
+        assert fnmatch_ex(pattern, path)
 
-    def test_matching_abspath(self, match):
+    def test_matching_abspath(self) -> None:
         abspath = os.path.abspath(os.path.join("tests/foo.py"))
-        assert match("tests/foo.py", abspath)
+        assert fnmatch_ex("tests/foo.py", abspath)
 
     @pytest.mark.parametrize(
         "pattern, path",
@@ -78,16 +61,16 @@ class TestFNMatcherPort:
             ("*.py", "foo.pyc"),
             ("*.py", "foo/foo.pyc"),
             ("tests/*.py", "foo/foo.py"),
-            (drv1 + "/*.py", drv2 + "/foo.py"),
-            (drv1 + "/foo/*.py", drv2 + "/foo/foo.py"),
+            (f"{drv1}/*.py", f"{drv2}/foo.py"),
+            (f"{drv1}/foo/*.py", f"{drv2}/foo/foo.py"),
             ("tests/**/test*.py", "tests/foo.py"),
             ("tests/**/test*.py", "foo/test_foo.py"),
             ("tests/**/doc/test*.py", "tests/foo/bar/doc/foo.py"),
             ("tests/**/doc/test*.py", "tests/foo/bar/test_foo.py"),
         ],
     )
-    def test_not_matching(self, match, pattern, path):
-        assert not match(pattern, path)
+    def test_not_matching(self, pattern: str, path: str) -> None:
+        assert not fnmatch_ex(pattern, path)
 
 
 class TestImportPath:
