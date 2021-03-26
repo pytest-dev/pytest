@@ -281,10 +281,10 @@ class TestReport(BaseReport):
         #: defined properties of the test.
         self.user_properties = list(user_properties or [])
 
-        #: List of pairs ``(str, str)`` of extra information which needs to
-        #: marshallable. Used by pytest to add captured text
-        #: from ``stdout`` and ``stderr``, but may be used by other plugins
-        #: to add arbitrary information to reports.
+        #: Tuples of str ``(heading, content)`` with extra information
+        #: for the test report. Used by pytest to add text captured
+        #: from ``stdout``, ``stderr``, and intercepted logging events. May
+        #: be used by other plugins to add arbitrary information to reports.
         self.sections = list(sections)
 
         #: Time it took to run just the test.
@@ -381,11 +381,10 @@ class CollectReport(BaseReport):
         #: The collected items and collection nodes.
         self.result = result or []
 
-        #: List of pairs ``(str, str)`` of extra information which needs to
-        #: marshallable.
-        # Used by pytest to add captured text : from ``stdout`` and ``stderr``,
-        # but may be used by other plugins : to add arbitrary information to
-        # reports.
+        #: Tuples of str ``(heading, content)`` with extra information
+        #: for the test report. Used by pytest to add text captured
+        #: from ``stdout``, ``stderr``, and intercepted logging events. May
+        #: be used by other plugins to add arbitrary information to reports.
         self.sections = list(sections)
 
         self.__dict__.update(extra)
