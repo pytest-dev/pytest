@@ -133,4 +133,4 @@ Running pytest with ``pytest [...]`` instead of ``python -m pytest [...]`` yield
 equivalent behaviour, except that the latter will add the current directory to ``sys.path``, which
 is standard ``python`` behavior.
 
-See also :ref:`cmdline`.
+See also :ref:`invoke-python`.

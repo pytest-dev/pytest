@@ -256,7 +256,7 @@ Continue reading
 
 Check out additional pytest resources to help you customize tests for your unique workflow:
 
-* ":ref:`cmdline`" for command line invocation examples
+* ":ref:`usage`" for command line invocation examples
 * ":ref:`existingtestsuite`" for working with pre-existing tests
 * ":ref:`mark`" for information on the ``pytest.mark`` mechanism
 * ":ref:`fixtures`" for providing a functional baseline to your tests
