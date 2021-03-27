@@ -876,7 +876,8 @@ class TestSkip:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "*TypeError: __init__() got multiple values for argument 'reason' - maybe you meant pytest.mark.skipif?"
+                "*TypeError: *__init__() got multiple values for argument 'reason'"
+                " - maybe you meant pytest.mark.skipif?"
             ]
         )
 
