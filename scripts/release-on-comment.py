@@ -3,7 +3,7 @@ This script is part of the pytest release process which is triggered by comments
 in issues.
 
 This script is started by the `release-on-comment.yml` workflow, which always executes on
-`master` and is triggered by two comment related events:
+`main` and is triggered by two comment related events:
 
 * https://help.github.com/en/actions/reference/events-that-trigger-workflows#issue-comment-event-issue_comment
 * https://help.github.com/en/actions/reference/events-that-trigger-workflows#issues-event-issues
@@ -16,8 +16,8 @@ The payload must contain a comment with a phrase matching this pseudo-regular ex
 
 Then the appropriate version will be obtained based on the given branch name:
 
-* a major release from master if "major" appears in the phrase in that position
-* a feature or bug fix release from master (based if there are features in the current changelog
+* a major release from main if "major" appears in the phrase in that position
+* a feature or bug fix release from main (based if there are features in the current changelog
   folder)
 * a bug fix from a maintenance branch
 
@@ -230,11 +230,11 @@ def find_next_version(base_branch: str, is_major: bool) -> str:
     breaking = list(changelog.glob("*.breaking.rst"))
     is_feature_release = features or breaking
 
-    if is_feature_release and base_branch != "master":
+    if is_feature_release and base_branch != "main":
         msg = dedent(
             f"""
             Found features or breaking changes in `{base_branch}`, and feature releases can only be
-            created from `master`:
+            created from `main`:
         """
         )
         msg += "\n".join(f"* `{x.name}`" for x in sorted(features + breaking))

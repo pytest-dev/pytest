@@ -3,7 +3,7 @@ This script is part of the pytest release process which is triggered manually in
 tab of the repository.
 
 The user will need to enter the base branch to start the release from (for example
-``6.1.x`` or ``master``) and if it should be a major release.
+``6.1.x`` or ``main``) and if it should be a major release.
 
 The appropriate version will be obtained based on the given branch automatically.
 

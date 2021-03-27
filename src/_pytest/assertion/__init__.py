@@ -104,7 +104,7 @@ def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
 
 def pytest_collection(session: "Session") -> None:
     # This hook is only called when test modules are collected
-    # so for example not in the master process of pytest-xdist
+    # so for example not in the managing process of pytest-xdist
     # (which does not collect test modules).
     assertstate = session.config._store.get(assertstate_key, None)
     if assertstate:

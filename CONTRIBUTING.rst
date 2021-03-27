@@ -234,7 +234,7 @@ Here is a simple overview, with pytest-specific bits:
 
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
-    # now, create your own branch off "master":
+    # now, create your own branch off "main":
 
         $ git checkout -b your-bugfix-branch-name main
 
@@ -387,15 +387,15 @@ Suppose for example that the latest release was 1.2.3, and you want to include
 a bug fix in 1.2.4 (check https://github.com/pytest-dev/pytest/releases for the
 actual latest release). The procedure for this is:
 
-#. First, make sure the bug is fixed the ``master`` branch, with a regular pull
+#. First, make sure the bug is fixed the ``main`` branch, with a regular pull
    request, as described above. An exception to this is if the bug fix is not
-   applicable to ``master`` anymore.
+   applicable to ``main`` anymore.
 
-#. ``git checkout origin/1.2.x -b backport-XXXX`` # use the master PR number here
+#. ``git checkout origin/1.2.x -b backport-XXXX`` # use the main PR number here
 
 #. Locate the merge commit on the PR, in the *merged* message, for example:
 
-    nicoddemus merged commit 0f8b462 into pytest-dev:master
+    nicoddemus merged commit 0f8b462 into pytest-dev:main
 
 #. ``git cherry-pick -x -m1 REVISION`` # use the revision you found above (``0f8b462``).
 
@@ -408,7 +408,7 @@ actual latest release). The procedure for this is:
 Who does the backporting
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-As mentioned above, bugs should first be fixed on ``master`` (except in rare occasions
+As mentioned above, bugs should first be fixed on ``main`` (except in rare occasions
 that a bug only happens in a previous release). So who should do the backport procedure described
 above?
 
@@ -417,8 +417,8 @@ above?
 2. However, often the merge is done by another maintainer, in which case it is nice of them to
    do the backport procedure if they have the time.
 3. For bugs submitted by non-maintainers, it is expected that a core developer will to do
-   the backport, normally the one that merged the PR on ``master``.
-4. If a non-maintainers notices a bug which is fixed on ``master`` but has not been backported
+   the backport, normally the one that merged the PR on ``main``.
+4. If a non-maintainers notices a bug which is fixed on ``main`` but has not been backported
    (due to maintainers forgetting to apply the *needs backport* label, or just plain missing it),
    they are also welcome to open a PR with the backport. The procedure is simple and really
    helps with the maintenance of the project.
