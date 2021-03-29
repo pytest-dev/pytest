@@ -19,6 +19,20 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to support the transition oto pathlib, the following hooks added additional arugments:
+
+*  ``pytest_ignore_collect(fspath: pathlib.Path)``
+*  ``pytest_collect_file(fspath: pathlib.Path)``
+*  ``pytest_pycollect_makemodule(fspath: pathlib.Path)``
+*  ``pytest_report_header(startpath: pathlib.Path)``
+*  ``pytest_report_collectionfinish(startpath: pathlib.Path)``
+
+The accompanying ``py.path.local`` based paths have been deprecated.
+
+
 ``Node.fspath`` in favor of ``pathlib`` and ``Node.path``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

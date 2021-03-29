@@ -1,3 +1,4 @@
+import functools
 import warnings
 from pathlib import Path
 from typing import Optional
@@ -17,20 +18,31 @@ imply_paths_hooks = {
 
 
 class PathAwareHookProxy:
+    """
+    this helper wraps around hook callers
+    until pluggy supports fixingcalls, this one will do
+
+    it currently doesnt return full hook caller proxies for fixed hooks,
+    this may have to be changed later depending on bugs
+    """
+
     def __init__(self, hook_caller):
         self.__hook_caller = hook_caller
 
     def __dir__(self):
         return dir(self.__hook_caller)
 
-    def __getattr__(self, key):
+    def __getattr__(self, key, _wraps=functools.wraps):
+        hook = getattr(self.__hook_caller, key)
         if key not in imply_paths_hooks:
-            return getattr(self.__hook_caller, key)
+            self.__dict__[key] = hook
+            return hook
         else:
-            hook = getattr(self.__hook_caller, key)
             path_var, fspath_var = imply_paths_hooks[key]
 
+            @_wraps(hook)
             def fixed_hook(**kw):
+
                 path_value: Optional[Path] = kw.pop(path_var, None)
                 fspath_value: Optional[LEGACY_PATH] = kw.pop(fspath_var, None)
                 if fspath_value is not None:
@@ -45,4 +57,5 @@ class PathAwareHookProxy:
                 return hook(**kw)
 
             fixed_hook.__name__ = key
+            self.__dict__[key] = fixed_hook
             return fixed_hook
