@@ -1,4 +1,4 @@
-\
+
 .. _plugin-list:
 
 Plugin List
