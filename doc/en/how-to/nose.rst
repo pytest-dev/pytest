@@ -70,6 +70,34 @@ Unsupported idioms / known issues
   fundamentally incompatible with pytest because they don't support fixtures
   properly since collection and test execution are separated.
 
+Here is a table comparing the default supported naming conventions for both
+nose and pytest.
+
+========================== ======== ======
+Convention                  nose    pytest
+========================== ======== ======
+Ⓜ test*.py                  ✅
+Ⓜ test_*.py                 ✅       ✅
+Ⓜ \*_test.py                         ✅
+Ⓜ \*_tests.py
+Ⓒ \*\(unittest.TestCase\)   ✅       ✅
+ⓜ test_\*                   ✅       ✅
+Ⓒ Test\*                             ✅
+ⓜ test_\*                            ✅
+ⓕ test_\*                            ✅
+========================== ======== ======
+
+Symbols are described below
+
+======= =========
+Legend
+======= =========
+Ⓜ       module
+Ⓒ       Class
+ⓜ       method
+ⓕ       function
+======= =========
+
 Migrating from nose to pytest
 ------------------------------
 
