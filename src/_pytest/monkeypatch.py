@@ -312,14 +312,17 @@ class MonkeyPatch:
 
     def syspath_prepend(self, path) -> None:
         """Prepend ``path`` to ``sys.path`` list of import locations."""
-        from pkg_resources import fixup_namespace_packages
 
         if self._savesyspath is None:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
 
         # https://github.com/pypa/setuptools/blob/d8b901bc/docs/pkg_resources.txt#L162-L171
-        fixup_namespace_packages(str(path))
+        # this is only needed when pkg_resources was already loaded by the namespace package
+        if "pkg_resources" in sys.modules:
+            from pkg_resources import fixup_namespace_packages
+
+            fixup_namespace_packages(str(path))
 
         # A call to syspathinsert() usually means that the caller wants to
         # import some dynamically created files, thus with python3 we
