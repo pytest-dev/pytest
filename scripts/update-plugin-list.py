@@ -6,7 +6,7 @@ import packaging.version
 import requests
 import tabulate
 
-FILE_HEAD = r"""\
+FILE_HEAD = r"""
 .. _plugin-list:
 
 Plugin List
