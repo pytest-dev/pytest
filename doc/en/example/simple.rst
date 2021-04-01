@@ -621,7 +621,7 @@ Package/Directory-level fixtures (setups)
 -------------------------------------------------------
 
 If you have nested test directories, you can have per-directory fixture scopes
-by placing fixture functions in a ``conftest.py`` file in that directory
+by placing fixture functions in a ``conftest.py`` file in that directory.
 You can use all types of fixtures including :ref:`autouse fixtures
 <autouse fixtures>` which are the equivalent of xUnit's setup/teardown
 concept.  It's however recommended to have explicit fixture references in your
