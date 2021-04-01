@@ -160,20 +160,22 @@ def test_raising_unittest_skiptest_during_collection_is_deprecated(
 def test_hookproxy_warnings_for_fspath(pytestconfig, tmp_path, request):
     path = legacy_path(tmp_path)
 
-    with pytest.warns(
-        PytestDeprecationWarning,
-        match="path : py.path.local is deprecated, please use fspath : pathlib.Path",
-    ):
+    PATH_WARN_MATCH = r".*path: py\.path\.local\) argument is deprecated, please use \(fspath: pathlib\.Path.*"
+
+    with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
         pytestconfig.hook.pytest_ignore_collect(
             config=pytestconfig, path=path, fspath=tmp_path
         )
-    with pytest.warns(
-        PytestDeprecationWarning,
-        match="path : py.path.local is deprecated, please use fspath : pathlib.Path",
-    ):
+    (record,) = r
+    assert record.filename == __file__
+    assert record.lineno == 166
+
+    with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
         request.node.ihook.pytest_ignore_collect(
             config=pytestconfig, path=path, fspath=tmp_path
         )
-
+    (record,) = r
+    assert record.filename == __file__
+    assert record.lineno == 174
     pytestconfig.hook.pytest_ignore_collect(config=pytestconfig, fspath=tmp_path)
     request.node.ihook.pytest_ignore_collect(config=pytestconfig, fspath=tmp_path)

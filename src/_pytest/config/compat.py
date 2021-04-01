@@ -49,7 +49,8 @@ class PathAwareHookProxy:
                     warnings.warn(
                         HOOK_LEGACY_PATH_ARG.format(
                             pylib_path_arg=fspath_var, pathlib_path_arg=path_var
-                        )
+                        ),
+                        stacklevel=2,
                     )
                 path_value, fspath_value = _imply_path(path_value, fspath_value)
                 kw[path_var] = path_value
