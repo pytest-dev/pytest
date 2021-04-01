@@ -1,6 +1,7 @@
 """Record warnings during test function execution."""
 import re
 import warnings
+from pprint import pformat
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -142,10 +143,11 @@ def warns(
     __tracebackhide__ = True
     if not args:
         if kwargs:
-            msg = "Unexpected keyword arguments passed to pytest.warns: "
-            msg += ", ".join(sorted(kwargs))
-            msg += "\nUse context-manager form instead?"
-            raise TypeError(msg)
+            argnames = ", ".join(sorted(kwargs))
+            raise TypeError(
+                f"Unexpected keyword arguments passed to pytest.warns: {argnames}"
+                "\nUse context-manager form instead?"
+            )
         return WarningsChecker(expected_warning, match_expr=match, _ispytest=True)
     else:
         func = args[0]
@@ -191,7 +193,7 @@ class WarningsRecorder(warnings.catch_warnings):
             if issubclass(w.category, cls):
                 return self._list.pop(i)
         __tracebackhide__ = True
-        raise AssertionError("%r not found in warning list" % cls)
+        raise AssertionError(f"{cls!r} not found in warning list")
 
     def clear(self) -> None:
         """Clear the list of recorded warnings."""
@@ -202,7 +204,7 @@ class WarningsRecorder(warnings.catch_warnings):
     def __enter__(self) -> "WarningsRecorder":  # type: ignore
         if self._entered:
             __tracebackhide__ = True
-            raise RuntimeError("Cannot enter %r twice" % self)
+            raise RuntimeError(f"Cannot enter {self!r} twice")
         _list = super().__enter__()
         # record=True means it's None.
         assert _list is not None
@@ -218,7 +220,7 @@ class WarningsRecorder(warnings.catch_warnings):
     ) -> None:
         if not self._entered:
             __tracebackhide__ = True
-            raise RuntimeError("Cannot exit %r without entering first" % self)
+            raise RuntimeError(f"Cannot exit {self!r} without entering first")
 
         super().__exit__(exc_type, exc_val, exc_tb)
 
@@ -268,16 +270,17 @@ class WarningsChecker(WarningsRecorder):
 
         __tracebackhide__ = True
 
+        def found_str():
+            return pformat([record.message for record in self], indent=2)
+
         # only check if we're not currently handling an exception
         if exc_type is None and exc_val is None and exc_tb is None:
             if self.expected_warning is not None:
                 if not any(issubclass(r.category, self.expected_warning) for r in self):
                     __tracebackhide__ = True
                     fail(
-                        "DID NOT WARN. No warnings of type {} were emitted. "
-                        "The list of emitted warnings is: {}.".format(
-                            self.expected_warning, [each.message for each in self]
-                        )
+                        f"DID NOT WARN. No warnings of type {self.expected_warning} were emitted.\n"
+                        f"The list of emitted warnings is: {found_str()}."
                     )
                 elif self.match_expr is not None:
                     for r in self:
@@ -286,11 +289,8 @@ class WarningsChecker(WarningsRecorder):
                                 break
                     else:
                         fail(
-                            "DID NOT WARN. No warnings of type {} matching"
-                            " ('{}') were emitted. The list of emitted warnings"
-                            " is: {}.".format(
-                                self.expected_warning,
-                                self.match_expr,
-                                [each.message for each in self],
-                            )
+                            f"""\
+DID NOT WARN. No warnings of type {self.expected_warning} matching the regex were emitted.
+The regex is: {self.match_expr}
+The list of emitted warnings is: {found_str()}"""
                         )
