@@ -273,13 +273,7 @@ class TestImportPath:
     def simple_module(self, tmp_path: Path) -> Path:
         fn = tmp_path / "_src/tests/mymod.py"
         fn.parent.mkdir(parents=True)
-        fn.write_text(
-            dedent(
-                """
-            def foo(x): return 40 + x
-            """
-            )
-        )
+        fn.write_text("def foo(x): return 40 + x")
         return fn
 
     def test_importmode_importlib(self, simple_module: Path, tmp_path: Path) -> None:

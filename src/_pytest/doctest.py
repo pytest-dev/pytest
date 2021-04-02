@@ -534,7 +534,9 @@ class DoctestModule(pytest.Module):
 
         if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
-                self.path, self.config.getoption("importmode"), rootpath=self.config.rootpath
+                self.path,
+                self.config.getoption("importmode"),
+                rootpath=self.config.rootpath,
             )
         else:
             try:

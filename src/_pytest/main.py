@@ -378,7 +378,9 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(fspath: Path, config: Config) -> Optional[bool]:
-    ignore_paths = config._getconftest_pathlist("collect_ignore", path=fspath.parent, rootpath=config.rootpath)
+    ignore_paths = config._getconftest_pathlist(
+        "collect_ignore", path=fspath.parent, rootpath=config.rootpath
+    )
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
     if excludeopt:

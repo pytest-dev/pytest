@@ -526,10 +526,7 @@ class PytestPluginManager(PluginManager):
 
     @lru_cache(maxsize=128)
     def _getconftestmodules(
-        self,
-        path: Path,
-        importmode: Union[str, ImportMode],
-        rootpath: Path
+        self, path: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> List[types.ModuleType]:
         if self._noconftest:
             return []
@@ -569,10 +566,7 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(
-        self,
-        conftestpath: Path,
-        importmode: Union[str, ImportMode],
-        rootpath: Path
+        self, conftestpath: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> types.ModuleType:
         # Use a resolved Path object as key to avoid loading the same conftest
         # twice with build systems that create build directories containing
