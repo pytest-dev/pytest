@@ -276,15 +276,21 @@ class TestApprox:
 
     def test_decimal(self):
         within_1e6 = [
-            (Decimal("1.000001"), Decimal("1.0")),
-            (Decimal("-1.000001"), Decimal("-1.0")),
+            (Decimal("1.0000005"), Decimal("1.0")),
+            (Decimal("-1.0000005"), Decimal("-1.0")),
+            (Decimal("1.0000005"), 1.0),
+            (Decimal("-1.0000005"), -1.0),
         ]
         for a, x in within_1e6:
+            T = type(x)
+            # Need to test the default values here, because some code is needed
+            # to account for the facts that you can't add floats to decimals.
             assert a == approx(x)
-            assert a == approx(x, rel=Decimal("5e-6"), abs=0)
-            assert a != approx(x, rel=Decimal("5e-7"), abs=0)
-            assert approx(x, rel=Decimal("5e-6"), abs=0) == a
-            assert approx(x, rel=Decimal("5e-7"), abs=0) != a
+
+            assert a == approx(x, rel=T("1e-6"), abs=0)
+            assert a != approx(x, rel=T("1e-7"), abs=0)
+            assert approx(x, rel=T("1e-6"), abs=0) == a
+            assert approx(x, rel=T("1e-7"), abs=0) != a
 
     def test_fraction(self):
         within_1e6 = [
