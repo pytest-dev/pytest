@@ -280,12 +280,13 @@ class ApproxScalar(ApproxBase):
         # numbers, which don't implement comparison operators.  The second
         # requires that the actual and expected values can be compared.  This
         # is necessary for comparing Decimals with floats, see #8495.
+        result: bool
         try:
-            result: bool = abs(self.expected - actual) <= self.tolerance
+            result = abs(self.expected - actual) <= self.tolerance
         except TypeError:
             low = self.expected - self.tolerance
             high = self.expected + self.tolerance
-            result: bool = low <= actual <= high
+            result = low <= actual <= high
 
         return result
 
