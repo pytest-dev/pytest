@@ -298,7 +298,7 @@ def test_source_of_class_at_eof_without_newline(_sys_snapshot, tmp_path: Path) -
     )
     path = tmp_path.joinpath("a.py")
     path.write_text(str(source))
-    mod: Any = import_path(path)
+    mod: Any = import_path(path, root=tmp_path)
     s2 = Source(mod.A)
     assert str(source).strip() == str(s2).strip()
 

@@ -5,8 +5,8 @@ import unittest.mock
 from pathlib import Path
 from textwrap import dedent
 from types import ModuleType
-from typing import Generator
 from typing import Any
+from typing import Generator
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -149,7 +149,7 @@ class TestImportPath:
         tmp_path.joinpath("a").mkdir()
         p = tmp_path.joinpath("a", "test_x123.py")
         p.touch()
-        import_path(p)
+        import_path(p, root=tmp_path)
         tmp_path.joinpath("a").rename(tmp_path.joinpath("b"))
         with pytest.raises(ImportPathMismatchError):
             import_path(tmp_path.joinpath("b", "test_x123.py"), root=tmp_path)
@@ -207,7 +207,7 @@ class TestImportPath:
         tmp_path.joinpath("xxxpackage", "__init__.py").touch()
         mod1path = tmp_path.joinpath("xxxpackage", "module1.py")
         mod1path.touch()
-        mod1 = import_path(mod1path, root=path1)
+        mod1 = import_path(mod1path, root=tmp_path)
         assert mod1.__name__ == "xxxpackage.module1"
         from xxxpackage import module1
 
@@ -225,7 +225,7 @@ class TestImportPath:
             pseudopath.touch()
             mod.__file__ = str(pseudopath)
             monkeypatch.setitem(sys.modules, name, mod)
-            newmod = import_path(p, root=Path(tmpdir))
+            newmod = import_path(p, root=tmp_path)
             assert mod == newmod
         monkeypatch.undo()
         mod = ModuleType(name)
@@ -234,7 +234,7 @@ class TestImportPath:
         mod.__file__ = str(pseudopath)
         monkeypatch.setitem(sys.modules, name, mod)
         with pytest.raises(ImportPathMismatchError) as excinfo:
-            import_path(p, root=Path(tmpdir))
+            import_path(p, root=tmp_path)
         modname, modfile, orig = excinfo.value.args
         assert modname == name
         assert modfile == str(pseudopath)
@@ -271,7 +271,8 @@ class TestImportPath:
 
     @pytest.fixture
     def simple_module(self, tmp_path: Path) -> Path:
-        fn = tmp_path / "mymod.py"
+        fn = tmp_path / "_src/tests/mymod.py"
+        fn.parent.mkdir(parents=True)
         fn.write_text(
             dedent(
                 """
@@ -291,7 +292,9 @@ class TestImportPath:
         assert "_src" in sys.modules
         assert "_src.tests" in sys.modules
 
-    def test_importmode_twice_is_different_module(self, simple_module: Path, tmp_path: Path) -> None:
+    def test_importmode_twice_is_different_module(
+        self, simple_module: Path, tmp_path: Path
+    ) -> None:
         """`importlib` mode always returns a new module."""
         module1 = import_path(simple_module, mode="importlib", root=tmp_path)
         module2 = import_path(simple_module, mode="importlib", root=tmp_path)
@@ -312,7 +315,7 @@ class TestImportPath:
             importlib.util, "spec_from_file_location", lambda *args: None
         )
         with pytest.raises(ImportError):
-            import_path(simple_module, mode="importlib", root=Path(tmpdir))
+            import_path(simple_module, mode="importlib", root=tmp_path)
 
 
 def test_resolve_package_path(tmp_path: Path) -> None:
