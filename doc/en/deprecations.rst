@@ -22,15 +22,15 @@ Below is a complete list of all pytest features which are considered deprecated.
 ``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to support the transition oto pathlib, the following hooks added additional arugments:
+In order to support the transition to :mod:`pathlib`, the following hooks now receive additional arguments:
 
-*  ``pytest_ignore_collect(fspath: pathlib.Path)``
-*  ``pytest_collect_file(fspath: pathlib.Path)``
-*  ``pytest_pycollect_makemodule(fspath: pathlib.Path)``
-*  ``pytest_report_header(startpath: pathlib.Path)``
-*  ``pytest_report_collectionfinish(startpath: pathlib.Path)``
+*  :func:`pytest_ignore_collect(fspath: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>`
+*  :func:`pytest_collect_file(fspath: pathlib.Path) <_pytest.hookspec.pytest_collect_file>`
+*  :func:`pytest_pycollect_makemodule(fspath: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>`
+*  :func:`pytest_report_header(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_header>`
+*  :func:`pytest_report_collectionfinish(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>`
 
-The accompanying ``py.path.local`` based paths have been deprecated.
+The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
 
 ``Node.fspath`` in favor of ``pathlib`` and ``Node.path``
