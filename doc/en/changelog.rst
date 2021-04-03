@@ -28,6 +28,24 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.2.3 (2021-04-03)
+=========================
+
+Bug Fixes
+---------
+
+- `#8414 <https://github.com/pytest-dev/pytest/issues/8414>`_: pytest used to create directories under ``/tmp`` with world-readable
+  permissions. This means that any user in the system was able to read
+  information written by tests in temporary directories (such as those created by
+  the ``tmp_path``/``tmpdir`` fixture). Now the directories are created with
+  private permissions.
+
+  pytest used silenty use a pre-existing ``/tmp/pytest-of-<username>`` directory,
+  even if owned by another user. This means another user could pre-create such a
+  directory and gain control of another user's temporary directory. Now such a
+  condition results in an error.
+
+
 pytest 6.2.2 (2021-01-25)
 =========================
 
