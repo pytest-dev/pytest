@@ -1,4 +1,5 @@
 import re
+import sys
 import warnings
 from unittest import mock
 
@@ -157,25 +158,23 @@ def test_raising_unittest_skiptest_during_collection_is_deprecated(
     )
 
 
-def test_hookproxy_warnings_for_fspath(pytestconfig, tmp_path, request):
+@pytest.mark.parametrize("hooktype", ["hook", "ihook"])
+def test_hookproxy_warnings_for_fspath(tmp_path, hooktype, request):
     path = legacy_path(tmp_path)
 
     PATH_WARN_MATCH = r".*path: py\.path\.local\) argument is deprecated, please use \(fspath: pathlib\.Path.*"
+    if hooktype == "ihook":
+        hooks = request.node.ihook
+    else:
+        hooks = request.config.hook
 
     with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
-        pytestconfig.hook.pytest_ignore_collect(
-            config=pytestconfig, path=path, fspath=tmp_path
-        )
-    (record,) = r
-    assert record.filename == __file__
-    assert record.lineno == 166
+        l1 = sys._getframe().f_lineno
+        hooks.pytest_ignore_collect(config=request.config, path=path, fspath=tmp_path)
+        l2 = sys._getframe().f_lineno
 
-    with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
-        request.node.ihook.pytest_ignore_collect(
-            config=pytestconfig, path=path, fspath=tmp_path
-        )
     (record,) = r
     assert record.filename == __file__
-    assert record.lineno == 174
-    pytestconfig.hook.pytest_ignore_collect(config=pytestconfig, fspath=tmp_path)
-    request.node.ihook.pytest_ignore_collect(config=pytestconfig, fspath=tmp_path)
+    assert l1 < record.lineno < l2
+
+    hooks.pytest_ignore_collect(config=request.config, fspath=tmp_path)
