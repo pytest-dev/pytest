@@ -8,10 +8,10 @@ from typing import Optional
 import attr
 import py
 
-from .pathlib import ensure_reset_dir
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
+from .pathlib import rm_rf
 from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
@@ -90,20 +90,22 @@ class TempPathFactory:
         basename = self._ensure_relative_to_basetemp(basename)
         if not numbered:
             p = self.getbasetemp().joinpath(basename)
-            p.mkdir()
+            p.mkdir(mode=0o700)
         else:
-            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename)
+            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename, mode=0o700)
             self._trace("mktemp", p)
         return p
 
     def getbasetemp(self) -> Path:
-        """Return base temporary directory."""
+        """Return the base temporary directory, creating it if needed."""
         if self._basetemp is not None:
             return self._basetemp
 
         if self._given_basetemp is not None:
             basetemp = self._given_basetemp
-            ensure_reset_dir(basetemp)
+            if basetemp.exists():
+                rm_rf(basetemp)
+            basetemp.mkdir(mode=0o700)
             basetemp = basetemp.resolve()
         else:
             from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
@@ -112,14 +114,37 @@ class TempPathFactory:
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
-            rootdir.mkdir(exist_ok=True)
+            rootdir.mkdir(mode=0o700, exist_ok=True)
+            # Because we use exist_ok=True with a predictable name, make sure
+            # we are the owners, to prevent any funny business (on unix, where
+            # temproot is usually shared).
+            # Also, to keep things private, fixup any world-readable temp
+            # rootdir's permissions. Historically 0o755 was used, so we can't
+            # just error out on this, at least for a while.
+            if hasattr(os, "getuid"):
+                rootdir_stat = rootdir.stat()
+                uid = os.getuid()
+                # getuid shouldn't fail, but cpython defines such a case.
+                # Let's hope for the best.
+                if uid != -1:
+                    if rootdir_stat.st_uid != uid:
+                        raise OSError(
+                            f"The temporary directory {rootdir} is not owned by the current user. "
+                            "Fix this and try again."
+                        )
+                    if (rootdir_stat.st_mode & 0o077) != 0:
+                        os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
             basetemp = make_numbered_dir_with_cleanup(
-                prefix="pytest-", root=rootdir, keep=3, lock_timeout=LOCK_TIMEOUT
+                prefix="pytest-",
+                root=rootdir,
+                keep=3,
+                lock_timeout=LOCK_TIMEOUT,
+                mode=0o700,
             )
         assert basetemp is not None, basetemp
-        self._basetemp = t = basetemp
-        self._trace("new basetemp", t)
-        return t
+        self._basetemp = basetemp
+        self._trace("new basetemp", basetemp)
+        return basetemp
 
 
 @final
