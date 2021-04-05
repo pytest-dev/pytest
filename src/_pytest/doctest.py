@@ -534,11 +534,13 @@ class DoctestModule(pytest.Module):
 
         if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
-                self.path, self.config.getoption("importmode")
+                self.path,
+                self.config.getoption("importmode"),
+                rootpath=self.config.rootpath,
             )
         else:
             try:
-                module = import_path(self.path)
+                module = import_path(self.path, root=self.config.rootpath)
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
                     pytest.skip("unable to import module %r" % self.path)

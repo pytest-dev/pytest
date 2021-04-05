@@ -151,7 +151,7 @@ This layout prevents a lot of common pitfalls and has many benefits, which are b
 
 .. note::
     The new ``--import-mode=importlib`` (see :ref:`import-modes`) doesn't have
-    any of the drawbacks above because ``sys.path`` and ``sys.modules`` are not changed when importing
+    any of the drawbacks above because ``sys.path`` is not changed when importing
     test modules, so users that run
     into this issue are strongly encouraged to try it and report if the new option works well for them.
 

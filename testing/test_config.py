@@ -597,8 +597,14 @@ class TestConfigAPI:
         p = tmp_path.joinpath("conftest.py")
         p.write_text(f"pathlist = ['.', {str(somepath)!r}]")
         config = pytester.parseconfigure(p)
-        assert config._getconftest_pathlist("notexist", path=tmp_path) is None
-        pl = config._getconftest_pathlist("pathlist", path=tmp_path) or []
+        assert (
+            config._getconftest_pathlist("notexist", path=tmp_path, rootpath=tmp_path)
+            is None
+        )
+        pl = (
+            config._getconftest_pathlist("pathlist", path=tmp_path, rootpath=tmp_path)
+            or []
+        )
         print(pl)
         assert len(pl) == 2
         assert pl[0] == tmp_path
