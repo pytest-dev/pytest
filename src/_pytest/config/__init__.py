@@ -916,8 +916,10 @@ class Config:
         :type: PytestPluginManager
         """
 
+        from .compat import PathAwareHookProxy
+
         self.trace = self.pluginmanager.trace.root.get("config")
-        self.hook = self.pluginmanager.hook
+        self.hook = PathAwareHookProxy(self.pluginmanager.hook)
         self._inicache: Dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}

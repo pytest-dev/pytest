@@ -95,6 +95,12 @@ NODE_FSPATH = UnformattedWarning(
     "see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path",
 )
 
+HOOK_LEGACY_PATH_ARG = UnformattedWarning(
+    PytestDeprecationWarning,
+    "The ({pylib_path_arg}: py.path.local) argument is deprecated, please use ({pathlib_path_arg}: pathlib.Path)\n"
+    "see https://docs.pytest.org/en/latest/deprecations.html"
+    "#py-path-local-arguments-for-hooks-replaced-with-pathlib-path",
+)
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
