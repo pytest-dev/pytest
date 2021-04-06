@@ -375,7 +375,7 @@ def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List
     Normalize an iterable of Mark or MarkDecorator objects into a list of marks
     by retrieving the `mark` attribute on MarkDecorator instances.
 
-    :param mark_list: Iterable[Union[Mark, MarkDecorator]] to normalize
+    :param mark_list: marks to normalize
     :returns: A new list of the extracted Mark objects
     """
 
