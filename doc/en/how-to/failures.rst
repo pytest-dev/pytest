@@ -97,8 +97,8 @@ Pytest supports the use of ``breakpoint()`` with the following behaviours:
  - When tests are complete, the system will default back to the system ``Pdb`` trace UI.
  - With ``--pdb`` passed to pytest, the custom internal Pdb trace UI is used with both ``breakpoint()`` and failed tests/unhandled exceptions.
  - ``--pdbcls`` can be used to specify a custom debugger class.
- 
- 
+
+
 .. _faulthandler:
 
 Fault Handler
@@ -160,4 +160,3 @@ command-line.
 The warnings may be silenced selectively using the :ref:`pytest.mark.filterwarnings ref`
 mark. The warning categories are :class:`pytest.PytestUnraisableExceptionWarning` and
 :class:`pytest.PytestUnhandledThreadExceptionWarning`.
-
