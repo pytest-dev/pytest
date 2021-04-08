@@ -12,3 +12,4 @@ Reference guides
    plugin_list
    customize
    reference
+   exit-codes
