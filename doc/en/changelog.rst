@@ -40,7 +40,7 @@ Bug Fixes
   the ``tmp_path``/``tmpdir`` fixture). Now the directories are created with
   private permissions.
 
-  pytest used silenty use a pre-existing ``/tmp/pytest-of-<username>`` directory,
+  pytest used to silenty use a pre-existing ``/tmp/pytest-of-<username>`` directory,
   even if owned by another user. This means another user could pre-create such a
   directory and gain control of another user's temporary directory. Now such a
   condition results in an error.
