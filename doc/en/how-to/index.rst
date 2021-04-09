@@ -21,12 +21,14 @@ Core pytest functionality
    doctest
    cache
 
-test output and outcomes
+Test output and outcomes
 ----------------------------
 
 .. toctree::
    :maxdepth: 1
 
+   failures
+   output
    logging
    capture-stdout-stderr
    capture-warnings
