@@ -178,7 +178,7 @@ def determine_setup(
         if rootdir_cmd_arg is None:
             ancestor = get_common_ancestor(dirs)
             rootdir, _, _ = locate_config([ancestor])
-            if not rootdir:
+            if not rootdir and inipath:
                 rootdir = inipath.parent
 
     else:
