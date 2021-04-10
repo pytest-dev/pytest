@@ -1,0 +1,1 @@
+``-c`` no longer yield wrong rootdir.
