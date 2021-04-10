@@ -1406,13 +1406,12 @@ class TestRootdir:
         assert ini_config == {"x": "10"}
 
     @pytest.mark.parametrize(
-        "tree,ini_file,args,rootdir_arg, expected_root",
+        "tree,ini_file,args, expected_root",
         [
             pytest.param(
                 ["pytest.ini", "tests/test1"],
                 "cfg/cfg.ini",
                 ["tests"],
-                None,
                 "",
                 id="root_ini_exist",
             ),
@@ -1420,7 +1419,6 @@ class TestRootdir:
                 ["tests/a/test1"],
                 "tests/a/cfg.ini",
                 ["tests/a"],
-                None,
                 "tests/a",
                 id="no_root_ini",
             ),
@@ -1428,7 +1426,6 @@ class TestRootdir:
                 ["tests/a/test1", "tests/b/test2"],
                 "tests/a/cfg.ini",
                 ["tests"],
-                None,
                 "tests/a",
                 id="nested",
             ),
@@ -1440,7 +1437,6 @@ class TestRootdir:
         tree: List[str],
         ini_file: str,
         args: List[str],
-        rootdir_arg: Union[None, str],
         expected_root: str,
     ) -> None:
         for f in tree:
@@ -1448,9 +1444,8 @@ class TestRootdir:
             (tmp_path / f).touch()
         (tmp_path / ini_file).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / ini_file).touch()
-        rootdir_arg = str(tmp_path / rootdir_arg) if rootdir_arg else None
         rootpath, parsed_inipath, _ = determine_setup(
-            str(tmp_path / ini_file), [str(tmp_path / p) for p in args], rootdir_arg
+            str(tmp_path / ini_file), [str(tmp_path / p) for p in args]
         )
         assert rootpath == (tmp_path / expected_root)
         assert parsed_inipath == (tmp_path / ini_file)
