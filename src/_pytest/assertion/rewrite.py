@@ -722,8 +722,10 @@ class AssertionRewriter(ast.NodeVisitor):
             aliases = [
                 ast.alias("builtins", "@py_builtins", lineno=lineno, col_offset=0),
                 ast.alias(
-                    "_pytest.assertion.rewrite", "@pytest_ar",
-                    lineno=lineno, col_offset=0
+                    "_pytest.assertion.rewrite",
+                    "@pytest_ar",
+                    lineno=lineno,
+                    col_offset=0,
                 ),
             ]
         else:
