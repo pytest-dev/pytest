@@ -1,0 +1,1 @@
+Fixed assertion rewriting on Python 3.10.

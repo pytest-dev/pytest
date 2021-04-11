@@ -652,12 +652,9 @@ class AssertionRewriter(ast.NodeVisitor):
         if not mod.body:
             # Nothing to do.
             return
+
         # Insert some special imports at the top of the module but after any
         # docstrings and __future__ imports.
-        aliases = [
-            ast.alias(six.moves.builtins.__name__, "@py_builtins"),
-            ast.alias("_pytest.assertion.rewrite", "@pytest_ar"),
-        ]
         doc = getattr(mod, "docstring", None)
         expect_docstring = doc is None
         if doc is not None and self.is_rewrite_disabled(doc):
@@ -684,6 +681,19 @@ class AssertionRewriter(ast.NodeVisitor):
             pos += 1
         else:
             lineno = item.lineno
+        if sys.version_info >= (3, 10):
+            aliases = [
+                ast.alias(six.moves.builtins.__name__, "@py_builtins", lineno=lineno, col_offset=0),
+                ast.alias(
+                    "_pytest.assertion.rewrite", "@pytest_ar",
+                    lineno=lineno, col_offset=0
+                ),
+            ]
+        else:
+            aliases = [
+                ast.alias(six.moves.builtins.__name__, "@py_builtins"),
+                ast.alias("_pytest.assertion.rewrite", "@pytest_ar"),
+            ]
         imports = [
             ast.Import([alias], lineno=lineno, col_offset=0) for alias in aliases
         ]
