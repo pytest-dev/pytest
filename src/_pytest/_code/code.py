@@ -968,7 +968,7 @@ class TerminalRepr:
         return io.getvalue().strip()
 
     def __repr__(self) -> str:
-        return "<{} instance at {:0x}>".format(self.__class__, id(self))
+        return f"<{self.__class__} instance at {id(self):0x}>"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         raise NotImplementedError()

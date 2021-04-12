@@ -188,7 +188,7 @@ class TestGeneralUsage:
         result.stderr.fnmatch_lines(
             [
                 f"ERROR: not found: {p2}",
-                "(no name {!r} in any of [[][]])".format(str(p2)),
+                f"(no name {str(p2)!r} in any of [[][]])",
                 "",
             ]
         )

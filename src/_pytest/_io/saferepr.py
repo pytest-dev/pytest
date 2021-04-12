@@ -12,7 +12,7 @@ def _try_repr_or_str(obj: object) -> str:
     except (KeyboardInterrupt, SystemExit):
         raise
     except BaseException:
-        return '{}("{}")'.format(type(obj).__name__, obj)
+        return f'{type(obj).__name__}("{obj}")'
 
 
 def _format_repr_exception(exc: BaseException, obj: object) -> str:
@@ -21,7 +21,7 @@ def _format_repr_exception(exc: BaseException, obj: object) -> str:
     except (KeyboardInterrupt, SystemExit):
         raise
     except BaseException as exc:
-        exc_info = "unpresentable exception ({})".format(_try_repr_or_str(exc))
+        exc_info = f"unpresentable exception ({_try_repr_or_str(exc)})"
     return "<[{} raised in repr()] {} object at 0x{:x}>".format(
         exc_info, type(obj).__name__, id(obj)
     )

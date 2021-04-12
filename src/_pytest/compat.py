@@ -418,4 +418,4 @@ else:
 #
 # This also work for Enums (if you use `is` to compare) and Literals.
 def assert_never(value: "NoReturn") -> "NoReturn":
-    assert False, "Unhandled value: {} ({})".format(value, type(value).__name__)
+    assert False, f"Unhandled value: {value} ({type(value).__name__})"

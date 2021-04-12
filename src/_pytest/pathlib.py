@@ -501,7 +501,7 @@ def import_path(
 
         if spec is None:
             raise ImportError(
-                "Can't find module {} at location {}".format(module_name, str(path))
+                f"Can't find module {module_name} at location {str(path)}"
             )
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
