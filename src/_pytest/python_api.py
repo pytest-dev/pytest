@@ -733,9 +733,7 @@ def raises(
     else:
         func = args[0]
         if not callable(func):
-            raise TypeError(
-                f"{func!r} object (type: {type(func)}) must be callable"
-            )
+            raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         try:
             func(*args[1:], **kwargs)
         except expected_exception as e:
