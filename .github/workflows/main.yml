@@ -18,6 +18,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    continue-on-error: "${{ matrix.experimental == true }}"
 
     strategy:
       fail-fast: false
@@ -73,6 +74,7 @@ jobs:
             python: "3.10-dev"
             os: windows-latest
             tox_env: "py310-xdist"
+            experimental: true
 
           - name: "ubuntu-py36"
             python: "3.6"
@@ -103,6 +105,7 @@ jobs:
             python: "3.10-dev"
             os: ubuntu-latest
             tox_env: "py310-xdist"
+            experimental: true
           - name: "ubuntu-pypy3"
             python: "pypy-3.7"
             os: ubuntu-latest
