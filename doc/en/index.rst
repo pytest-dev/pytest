@@ -2,7 +2,7 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `Professionelles Testen für Python mit pytest <https://www.enterpy.de/lecture_compact1.php?id=12713>`_ (German), part of the enterPy conference, April 22nd, remote.
+   - `Professionelles Testen für Python mit pytest <https://www.enterpy.de/lecture_compact1.php?id=12713>`_ (German), part of the enterPy conference, April 22nd (sold out) and May 20th, remote.
 
    Also see `previous talks and blogposts <talks.html>`_.
 
