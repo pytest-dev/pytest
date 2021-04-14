@@ -79,7 +79,7 @@ def _show_fixture_action(fixturedef: FixtureDef[object], msg: str) -> None:
             tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
     if hasattr(fixturedef, "cached_param"):
-        tw.write("[{}]".format(saferepr(fixturedef.cached_param, maxsize=42)))  # type: ignore[attr-defined]
+        tw.write(f"[{saferepr(fixturedef.cached_param, maxsize=42)}]")  # type: ignore[attr-defined]
 
     tw.flush()
 

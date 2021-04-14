@@ -144,7 +144,7 @@ class TestRaises:
         try:
             pytest.raises(ValueError, int, "0")
         except pytest.fail.Exception as e:
-            assert e.msg == "DID NOT RAISE {}".format(repr(ValueError))
+            assert e.msg == f"DID NOT RAISE {repr(ValueError)}"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -152,7 +152,7 @@ class TestRaises:
             with pytest.raises(ValueError):
                 pass
         except pytest.fail.Exception as e:
-            assert e.msg == "DID NOT RAISE {}".format(repr(ValueError))
+            assert e.msg == f"DID NOT RAISE {repr(ValueError)}"
         else:
             assert False, "Expected pytest.raises.Exception"
 

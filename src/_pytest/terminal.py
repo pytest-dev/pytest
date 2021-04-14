@@ -588,7 +588,7 @@ class TerminalReporter:
         if self.verbosity <= 0 and self._show_progress_info:
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
-                progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
+                progress_length = len(f" [{num_tests}/{num_tests}]")
             else:
                 progress_length = len(" [100%]")
 
@@ -610,7 +610,7 @@ class TerminalReporter:
         if self._show_progress_info == "count":
             if collected:
                 progress = self._progress_nodeids_reported
-                counter_format = "{{:{}d}}".format(len(str(collected)))
+                counter_format = f"{{:{len(str(collected))}d}}"
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(len(progress), collected)
             return f" [ {collected} / {collected} ]"
@@ -704,7 +704,7 @@ class TerminalReporter:
             pypy_version_info = getattr(sys, "pypy_version_info", None)
             if pypy_version_info:
                 verinfo = ".".join(map(str, pypy_version_info[:3]))
-                msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
+                msg += f"[pypy-{verinfo}-{pypy_version_info[3]}]"
             msg += ", pytest-{}, py-{}, pluggy-{}".format(
                 _pytest._version.version, py.__version__, pluggy.__version__
             )
@@ -1066,7 +1066,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = " in {}".format(format_session_duration(session_duration))
+        duration = f" in {format_session_duration(session_duration)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)

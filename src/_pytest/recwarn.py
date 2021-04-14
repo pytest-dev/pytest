@@ -149,9 +149,7 @@ def warns(
     else:
         func = args[0]
         if not callable(func):
-            raise TypeError(
-                "{!r} object (type: {}) must be callable".format(func, type(func))
-            )
+            raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         with WarningsChecker(expected_warning, _ispytest=True):
             return func(*args[1:], **kwargs)
 

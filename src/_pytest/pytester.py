@@ -1865,7 +1865,7 @@ class LineMatcher:
             Match lines consecutively?
         """
         if not isinstance(lines2, collections.abc.Sequence):
-            raise TypeError("invalid type for lines2: {}".format(type(lines2).__name__))
+            raise TypeError(f"invalid type for lines2: {type(lines2).__name__}")
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         extralines = []

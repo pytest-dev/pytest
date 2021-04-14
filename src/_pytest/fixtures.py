@@ -859,7 +859,7 @@ class FixtureLookupError(LookupError):
                 error_msg = "file %s, line %s: source code not available"
                 addline(error_msg % (fspath, lineno + 1))
             else:
-                addline("file {}, line {}".format(fspath, lineno + 1))
+                addline(f"file {fspath}, line {lineno + 1}")
                 for i, line in enumerate(lines):
                     line = line.rstrip()
                     addline("  " + line)
@@ -908,7 +908,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
         lines = self.errorstring.split("\n")
         if lines:
             tw.line(
-                "{}       {}".format(FormattedExcinfo.fail_marker, lines[0].strip()),
+                f"{FormattedExcinfo.fail_marker}       {lines[0].strip()}",
                 red=True,
             )
             for line in lines[1:]:
@@ -922,7 +922,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
 
 def fail_fixturefunc(fixturefunc, msg: str) -> "NoReturn":
     fs, lineno = getfslineno(fixturefunc)
-    location = "{}:{}".format(fs, lineno + 1)
+    location = f"{fs}:{lineno + 1}"
     source = _pytest._code.Source(fixturefunc)
     fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
 

@@ -294,7 +294,7 @@ def wrap_session(
             except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
-                sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
+                sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
             else:
                 if isinstance(excinfo.value, SystemExit):
                     sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
@@ -311,7 +311,7 @@ def wrap_session(
             except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
-                sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
+                sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
         config._ensure_unconfigure()
     return session.exitstatus
 
@@ -718,7 +718,7 @@ class Session(nodes.FSCollector):
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
             if argpath.is_dir():
-                assert not names, "invalid arg {!r}".format((argpath, names))
+                assert not names, f"invalid arg {(argpath, names)!r}"
 
                 seen_dirs: Set[Path] = set()
                 for direntry in visit(str(argpath), self._recurse):

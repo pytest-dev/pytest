@@ -99,9 +99,7 @@ class ParameterSet(
 
         if id is not None:
             if not isinstance(id, str):
-                raise TypeError(
-                    "Expected id to be a string, got {}: {!r}".format(type(id), id)
-                )
+                raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
             id = ascii_escaped(id)
         return cls(values, marks, id)
 

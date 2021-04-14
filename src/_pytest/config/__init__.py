@@ -721,7 +721,7 @@ class PytestPluginManager(PluginManager):
             __import__(importspec)
         except ImportError as e:
             raise ImportError(
-                'Error importing plugin "{}": {}'.format(modname, str(e.args[0]))
+                f'Error importing plugin "{modname}": {e.args[0]}'
             ).with_traceback(e.__traceback__) from e
 
         except Skipped as e:
