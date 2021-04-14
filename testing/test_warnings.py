@@ -772,7 +772,7 @@ class TestStackLevel:
         # with stacklevel=2 the warning should originate from the above created test file
         result.stdout.fnmatch_lines_random(
             [
-                f"*{str(testfile)}:3*",
+                f"*{testfile}:3*",
                 "*Unknown pytest.mark.unknown*",
             ]
         )
