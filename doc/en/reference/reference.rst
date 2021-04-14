@@ -618,6 +618,7 @@ tmpdir_factory
 ``tmp_path_factory`` is an instance of :class:`~pytest.TempdirFactory`:
 
 .. autoclass:: pytest.TempdirFactory()
+    :members:
 
 
 .. _`hook-reference`:
