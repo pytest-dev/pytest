@@ -594,6 +594,7 @@ tmp_path_factory
 ``tmp_path_factory`` is an instance of :class:`~pytest.TempPathFactory`:
 
 .. autoclass:: pytest.TempPathFactory()
+    :members:
 
 
 .. fixture:: tmpdir
