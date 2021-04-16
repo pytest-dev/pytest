@@ -176,7 +176,7 @@ def determine_setup(
         inipath: Optional[Path] = inipath_
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
-            rootdir = get_common_ancestor(dirs)
+            rootdir = inipath_.parent
     else:
         ancestor = get_common_ancestor(dirs)
         rootdir, inipath, inicfg = locate_config([ancestor])

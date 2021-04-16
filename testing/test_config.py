@@ -1405,6 +1405,26 @@ class TestRootdir:
         assert inipath == p
         assert ini_config == {"x": "10"}
 
+    def test_explicit_config_file_sets_rootdir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+
+        monkeypatch.chdir(tmp_path)
+
+        # No config file is explicitly given: rootdir is determined to be cwd.
+        rootpath, found_inipath, *_ = determine_setup(None, [str(tests_dir)])
+        assert rootpath == tmp_path
+        assert found_inipath is None
+
+        # Config file is explicitly given: rootdir is determined to be inifile's directory.
+        inipath = tmp_path / "pytest.ini"
+        inipath.touch()
+        rootpath, found_inipath, *_ = determine_setup(str(inipath), [str(tests_dir)])
+        assert rootpath == tmp_path
+        assert found_inipath == inipath
+
     def test_with_arg_outside_cwd_without_inifile(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
