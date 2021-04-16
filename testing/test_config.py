@@ -1405,50 +1405,25 @@ class TestRootdir:
         assert inipath == p
         assert ini_config == {"x": "10"}
 
-    @pytest.mark.parametrize(
-        "tree,ini_file,args, expected_root",
-        [
-            pytest.param(
-                ["pytest.ini", "tests/test1"],
-                "cfg/cfg.ini",
-                ["tests"],
-                "",
-                id="root_ini_exist",
-            ),
-            pytest.param(
-                ["tests/a/test1"],
-                "tests/a/cfg.ini",
-                ["tests/a"],
-                "tests/a",
-                id="no_root_ini",
-            ),
-            pytest.param(
-                ["tests/a/test1", "tests/b/test2"],
-                "tests/a/cfg.ini",
-                ["tests"],
-                "tests/a",
-                id="nested",
-            ),
-        ],
-    )
-    def test_with_args_and_specific_inifile(
-        self,
-        tmp_path: Path,
-        tree: List[str],
-        ini_file: str,
-        args: List[str],
-        expected_root: str,
+    def test_explicit_config_file_sets_rootdir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        for f in tree:
-            (tmp_path / f).parent.mkdir(parents=True, exist_ok=True)
-            (tmp_path / f).touch()
-        (tmp_path / ini_file).parent.mkdir(parents=True, exist_ok=True)
-        (tmp_path / ini_file).touch()
-        rootpath, parsed_inipath, _ = determine_setup(
-            str(tmp_path / ini_file), [str(tmp_path / p) for p in args]
-        )
-        assert rootpath == (tmp_path / expected_root)
-        assert parsed_inipath == (tmp_path / ini_file)
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+
+        monkeypatch.chdir(tmp_path)
+
+        # No config file is explicitly given: rootdir is determined to be cwd.
+        rootpath, found_inipath, *_ = determine_setup(None, [str(tests_dir)])
+        assert rootpath == tmp_path
+        assert found_inipath is None
+
+        # Config file is explicitly given: rootdir is determined to be inifile's directory.
+        inipath = tmp_path / "pytest.ini"
+        inipath.touch()
+        rootpath, found_inipath, *_ = determine_setup(str(inipath), [str(tests_dir)])
+        assert rootpath == tmp_path
+        assert found_inipath == inipath
 
     def test_with_arg_outside_cwd_without_inifile(
         self, tmp_path: Path, monkeypatch: MonkeyPatch

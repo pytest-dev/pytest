@@ -145,6 +145,8 @@ Finding the ``rootdir``
 
 Here is the algorithm which finds the rootdir from ``args``:
 
+- If ``-c`` is passed in the command-line, use that as configuration file, and its directory as ``rootdir``.
+
 - Determine the common ancestor directory for the specified ``args`` that are
   recognised as paths that exist in the file system. If no such paths are
   found, the common ancestor directory is set to the current working directory.
@@ -163,8 +165,6 @@ Here is the algorithm which finds the rootdir from ``args``:
 - If no ``configfile`` was found and no configuration argument is passed, use the already determined common ancestor as root
   directory. This allows the use of pytest in structures that are not part of
   a package and don't have any particular configuration file.
-
-- If no ``configfile`` was found and configuration argument is passed, use the configuration argument directory as root directory.
 
 If no ``args`` are given, pytest collects test below the current working
 directory and also starts determining the ``rootdir`` from there.
