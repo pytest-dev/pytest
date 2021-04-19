@@ -82,7 +82,7 @@ def validate_and_get_issue_comment_payload(
 ) -> Tuple[str, str, bool]:
     payload = json.loads(issue_payload_path.read_text(encoding="UTF-8"))
     body = get_comment_data(payload)["body"]
-    m = re.match(r"@pytestbot please prepare (major )?release from ([\w\-_\.]+)", body)
+    m = re.match(r"@pytestbot please prepare (major )?release from ([-_.\w]+)", body)
     if m:
         is_major, base_branch = m.group(1) is not None, m.group(2)
     else:

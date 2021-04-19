@@ -25,7 +25,7 @@ class StoreKey(Generic[T]):
 
 
 class Store:
-    """Store is a type-safe heterogenous mutable mapping that
+    """Store is a type-safe heterogeneous mutable mapping that
     allows keys and value types to be defined separately from
     where it (the Store) is created.
 
