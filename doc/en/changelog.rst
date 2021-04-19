@@ -5097,7 +5097,7 @@ Improved Documentation
 
 - In one of the simple examples, use ``pytest_collection_modifyitems()`` to skip
   tests based on a command-line option, allowing its sharing while preventing a
-  user error when acessing ``pytest.config`` before the argument parsing.
+  user error when accessing ``pytest.config`` before the argument parsing.
   (`#2653 <https://github.com/pytest-dev/pytest/issues/2653>`_)
 
 
@@ -5509,7 +5509,7 @@ Changes
   Thanks `@ojii`_ for the PR.
 
 * Replace minor/patch level version numbers in the documentation with placeholders.
-  This significantly reduces change-noise as different contributors regnerate
+  This significantly reduces change-noise as different contributors regenerate
   the documentation on different platforms.
   Thanks `@RonnyPfannschmidt`_ for the PR.
 

@@ -268,7 +268,7 @@ class DoctestItem(pytest.Item):
         runner: "doctest.DocTestRunner",
         dtest: "doctest.DocTest",
     ):
-        # incompatible signature due to to imposed limits on sublcass
+        # incompatible signature due to imposed limits on subclass
         """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
 

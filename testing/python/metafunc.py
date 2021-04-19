@@ -692,9 +692,8 @@ class TestMetafunc:
         """
         #714
         Test parametrization with 'indirect' parameter applied on
-        particular arguments. As y is is direct, its value should
-        be used directly rather than being passed to the fixture
-        y.
+        particular arguments. As y is direct, its value should
+        be used directly rather than being passed to the fixture y.
 
         :param pytester: the instance of Pytester class, a temporary
         test directory.

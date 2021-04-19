@@ -363,7 +363,7 @@ class FDCaptureBinary:
         except OSError:
             # FD capturing is conceptually simple -- create a temporary file,
             # redirect the FD to it, redirect back when done. But when the
-            # target FD is invalid it throws a wrench into this loveley scheme.
+            # target FD is invalid it throws a wrench into this lovely scheme.
             #
             # Tests themselves shouldn't care if the FD is valid, FD capturing
             # should work regardless of external circumstances. So falling back
