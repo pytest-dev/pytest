@@ -21,7 +21,7 @@ repos:
         exclude: _pytest/(debugging|hookspec).py
         language_version: python3
 -   repo: https://github.com/PyCQA/flake8
-    rev: 3.9.0
+    rev: 3.9.1
     hooks:
     -   id: flake8
         language_version: python3
