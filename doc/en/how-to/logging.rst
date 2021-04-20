@@ -167,7 +167,7 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
 
 
 
-The full API is available at :class:`_pytest.logging.LogCaptureFixture`.
+The full API is available at :class:`pytest.LogCaptureFixture`.
 
 
 .. _live_logs:
