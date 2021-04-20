@@ -409,7 +409,7 @@ Who does the backporting
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 As mentioned above, bugs should first be fixed on ``main`` (except in rare occasions
-that a bug only happens in a previous release). So who should do the backport procedure described
+that a bug only happens in a previous release). So, who should do the backport procedure described
 above?
 
 1. If the bug was fixed by a core developer, it is the main responsibility of that core developer
@@ -447,7 +447,7 @@ can always reopen the issue/pull request in their own time later if it makes sen
 When to close
 ~~~~~~~~~~~~~
 
-Here are a few general rules the maintainers use to decide when to close issues/PRs because
+Here are a few general rules the maintainers use deciding when to close issues/PRs because
 of lack of inactivity:
 
 * Issues labeled ``question`` or ``needs information``: closed after 14 days inactive.
@@ -459,15 +459,15 @@ The above are **not hard rules**, but merely **guidelines**, and can be (and oft
 Closing pull requests
 ~~~~~~~~~~~~~~~~~~~~~
 
-When closing a Pull Request, it needs to be acknowledge the time, effort, and interest demonstrated by the person which submitted it. As mentioned previously, it is not the intent of the team to dismiss stalled pull request entirely but to merely to clear up our queue, so a message like the one below is warranted when closing a pull request that went stale:
+When closing a Pull Request, it needs to be acknowledging the time, effort, and interest demonstrated by the person which submitted it. As mentioned previously, it is not the intent of the team to dismiss a stalled pull request entirely but to merely to clear up our queue, so a message like the one below is warranted when closing a pull request that went stale:
 
     Hi <contributor>,
 
-    First of all we would like to thank you for your time and effort on working on this, the pytest team deeply appreciates it.
+    First of all, we would like to thank you for your time and effort on working on this, the pytest team deeply appreciates it.
 
     We noticed it has been awhile since you have updated this PR, however. pytest is a high activity project, with many issues/PRs being opened daily, so it is hard for us maintainers to track which PRs are ready for merging, for review, or need more attention.
 
-    So for those reasons we think it is best to close the PR for now, but with the only intention to cleanup our queue, it is by no means a rejection of your changes. We still encourage you to re-open this PR (it is just a click of a button away) when you are ready to get back to it.
+    So for those reasons we, think it is best to close the PR for now, but with the only intention to clean up our queue, it is by no means a rejection of your changes. We still encourage you to re-open this PR (it is just a click of a button away) when you are ready to get back to it.
 
     Again we appreciate your time for working on this, and hope you might get back to this at a later time!
 
