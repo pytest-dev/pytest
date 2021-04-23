@@ -29,7 +29,6 @@ from _pytest.warning_types import PytestWarning
 )
 def test_iterparentnodeids(nodeid: str, expected: List[str]) -> None:
     result = list(nodes.iterparentnodeids(nodeid))
-    print("RESULT", result)
     assert result == expected
 
 
