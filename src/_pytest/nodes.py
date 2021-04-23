@@ -77,7 +77,16 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
             break
         else:
             if at:
-                yield nodeid[:at]
+                if sep == SEP:
+                    colons_after_at = nodeid.find("::", at)
+                    colons_before_at = nodeid.find("::", pos, at)
+                    if colons_after_at > -1 or colons_before_at == -1:
+                        yield nodeid[:at]
+                    else:
+                        sep = "::"
+                        continue
+                else:
+                    yield nodeid[:at]
             pos = at + len(sep)
 
 

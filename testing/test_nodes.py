@@ -23,10 +23,13 @@ from _pytest.warning_types import PytestWarning
         ("a/b/c::D/d::e", ["", "a", "a/b", "a/b/c::D", "a/b/c::D/d", "a/b/c::D/d::e"]),
         # : alone is not a separator.
         ("a/b::D:e:f::g", ["", "a", "a/b", "a/b::D:e:f", "a/b::D:e:f::g"]),
+        # / not considered if a part of a test name
+        ("a/b::c/d::e[/test]", ["", "a", "a/b::c", "a/b::c/d", "a/b::c/d::e[/test]"]),
     ),
 )
 def test_iterparentnodeids(nodeid: str, expected: List[str]) -> None:
     result = list(nodes.iterparentnodeids(nodeid))
+    print("RESULT", result)
     assert result == expected
 
 
