@@ -1389,6 +1389,29 @@ def test_cwd_deleted(testdir):
     result.stderr.no_fnmatch_line("*INTERNALERROR*")
 
 
+def test_regression_nagative_line_index(pytester):
+    """
+    With Python 3.10 alphas, there was an INTERNALERROR reported in
+    https://github.com/pytest-dev/pytest/pull/8227
+    This test ensures it does not regress.
+    """
+    pytester.makepyfile(
+        """
+        import ast
+        import pytest
+
+
+        def test_literal_eval():
+            with pytest.raises(ValueError, match="^$"):
+                ast.literal_eval("pytest")
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["* 1 failed in *"])
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
+    result.stderr.no_fnmatch_line("*INTERNALERROR*")
+
+
 @pytest.mark.usefixtures("limited_recursion_depth")
 def test_exception_repr_extraction_error_on_recursion():
     """
