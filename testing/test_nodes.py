@@ -39,14 +39,23 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
 
 
-def test_subclassing_both_item_and_collector_warns() -> None:
+def test_subclassing_both_item_and_collector_warns(request, tmp_path: Path) -> None:
+    from _pytest.compat import legacy_path
 
     with pytest.warns(
-        PytestWarning, match="SoWrong is a Item subclass and should not be a collector"
+        PytestWarning,
+        match=(
+            "(?m)SoWrong is an Item subclass and should not be a collector, however its bases File are collectors.\n"
+            "Please split the Collectors and the Item into separate node types.\nTODO:.*"
+        ),
     ):
 
-        class SoWrong(nodes.Item, nodes.File):
-            pass
+        class SoWrong(nodes.File, nodes.Item):
+            def __init__(self, fspath, parent):
+                """Legacy ctor with legacy call # don't wana see"""
+                super().__init__(fspath, parent)
+
+    SoWrong.from_parent(request.session, fspath=legacy_path(tmp_path / "broken.txt"))
 
 
 @pytest.mark.parametrize(
