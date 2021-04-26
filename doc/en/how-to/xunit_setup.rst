@@ -116,4 +116,4 @@ Remarks:
   Now the xunit-style functions are integrated with the fixture mechanism and obey the proper
   scope rules of fixtures involved in the call.
 
-.. _`unittest.py module`: http://docs.python.org/library/unittest.html
+.. _`unittest.py module`: https://docs.python.org/library/unittest.html

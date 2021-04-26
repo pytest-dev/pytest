@@ -160,7 +160,7 @@ the following:
 
 - an issue tracker for bug reports and enhancement requests.
 
-- a `changelog <http://keepachangelog.com/>`_.
+- a `changelog <https://keepachangelog.com/>`_.
 
 If no contributor strongly objects and two agree, the repository can then be
 transferred to the ``pytest-dev`` organisation.
@@ -259,7 +259,7 @@ Here is a simple overview, with pytest-specific bits:
 
    Tox is used to run all the tests and will automatically setup virtualenvs
    to run the tests in.
-   (will implicitly use http://www.virtualenv.org/en/latest/)::
+   (will implicitly use https://virtualenv.pypa.io/en/latest/)::
 
     $ pip install tox
 

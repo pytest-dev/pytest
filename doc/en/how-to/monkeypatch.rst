@@ -58,7 +58,7 @@ call ``pkg_resources.fixup_namespace_packages`` and :py:func:`importlib.invalida
 See the `monkeypatch blog post`_ for some introduction material
 and a discussion of its motivation.
 
-.. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+.. _`monkeypatch blog post`: https://tetamap.wordpress.com//2009/03/03/monkeypatching-in-unit-tests-done-right/
 
 Simple example: monkeypatching functions
 ----------------------------------------

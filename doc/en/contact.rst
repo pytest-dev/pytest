@@ -30,19 +30,19 @@ Contact channels
   consulting.
 
 .. _`pytest issue tracker`: https://github.com/pytest-dev/pytest/issues
-.. _`old issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/
+.. _`old issue tracker`: https://bitbucket.org/hpk42/py-trunk/issues/
 
-.. _`merlinux.eu`: http://merlinux.eu
+.. _`merlinux.eu`: https://merlinux.eu/
 
 .. _`get an account`:
 
-.. _tetamap: http://tetamap.wordpress.com
+.. _tetamap: https://tetamap.wordpress.com/
 
-.. _`@pylibcommit`: http://twitter.com/pylibcommit
+.. _`@pylibcommit`: https://twitter.com/pylibcommit
 
 
 .. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
-.. _FOAF: http://en.wikipedia.org/wiki/FOAF
+.. _FOAF: https://en.wikipedia.org/wiki/FOAF
 .. _`py-dev`:
 .. _`development mailing list`:
 .. _`pytest-dev at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-dev

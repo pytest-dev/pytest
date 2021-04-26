@@ -703,11 +703,11 @@ for example ``-x`` if you only want to send one particular failure.
 
     pytest --pastebin=all
 
-Currently only pasting to the http://bpaste.net service is implemented.
+Currently only pasting to the https://bpaste.net/ service is implemented.
 
 .. versionchanged:: 5.2
 
 If creating the URL fails for any reason, a warning is generated instead of failing the
 entire test suite.
 
-.. _jenkins: http://jenkins-ci.org/
+.. _jenkins: https://jenkins-ci.org

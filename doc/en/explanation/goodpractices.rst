@@ -231,7 +231,7 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 
 .. _`virtualenv`: https://pypi.org/project/virtualenv/
-.. _`buildout`: http://www.buildout.org/
+.. _`buildout`: http://www.buildout.org/en/latest/
 .. _pip: https://pypi.org/project/pip/
 
 .. _`use tox`:
