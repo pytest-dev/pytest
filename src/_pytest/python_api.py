@@ -1,7 +1,5 @@
 import math
 import pprint
-from collections.abc import Iterable
-from collections.abc import Mapping
 from collections.abc import Sized
 from decimal import Decimal
 from numbers import Complex
@@ -10,7 +8,9 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Generic
+from typing import Iterable
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import overload
 from typing import Pattern

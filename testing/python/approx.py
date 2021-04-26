@@ -64,7 +64,7 @@ def assert_approx_raises_regex(pytestconfig):
                 assert lhs == approx(rhs)
 
         nl = "\n"
-        obtained_message = str(e.value).splitlines()
+        obtained_message = str(e.value).splitlines()[1:]
         assert len(obtained_message) == len(expected_message), (
             "Regex message length doesn't match obtained.\n"
             "Obtained:\n"
@@ -89,6 +89,7 @@ def assert_approx_raises_regex(pytestconfig):
 
 
 SOME_FLOAT = r"[+-]?([0-9]*[.])?[0-9]+\s*"
+SOME_INT = r"[0-9]+\s*"
 
 
 class TestApprox:
@@ -99,7 +100,7 @@ class TestApprox:
             2.0,
             1.0,
             [
-                "assert comparison failed",
+                "  comparison failed",
                 f"  Obtained: {SOME_FLOAT}",
                 f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}",
             ],
@@ -113,7 +114,7 @@ class TestApprox:
                 "c": 3000000.0,
             },
             [
-                r"assert comparison failed. Mismatched elements: 2 / 3:",
+                r"  comparison failed. Mismatched elements: 2 / 3:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected           ",
@@ -126,7 +127,7 @@ class TestApprox:
             [1.0, 2.0, 3.0, 4.0],
             [1.0, 3.0, 3.0, 5.0],
             [
-                r"assert comparison failed. Mismatched elements: 2 / 4:",
+                r"  comparison failed. Mismatched elements: 2 / 4:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected   ",
@@ -142,7 +143,7 @@ class TestApprox:
             a,
             b,
             [
-                r"assert comparison failed. Mismatched elements: 1 / 20:",
+                r"  comparison failed. Mismatched elements: 1 / 20:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected",
@@ -164,7 +165,7 @@ class TestApprox:
                 ]
             ),
             [
-                r"assert comparison failed. Mismatched elements: 3 / 8:",
+                r"  comparison failed. Mismatched elements: 3 / 8:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index\s+\| Obtained\s+\| Expected\s+",
@@ -179,7 +180,7 @@ class TestApprox:
             [0.0],
             [1.0],
             [
-                r"assert comparison failed. Mismatched elements: 1 / 1:",
+                r"  comparison failed. Mismatched elements: 1 / 1:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 r"  Max relative difference: inf",
                 r"  Index \| Obtained\s+\| Expected   ",
@@ -191,7 +192,7 @@ class TestApprox:
             np.array([0.0]),
             np.array([1.0]),
             [
-                r"assert comparison failed. Mismatched elements: 1 / 1:",
+                r"  comparison failed. Mismatched elements: 1 / 1:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 r"  Max relative difference: inf",
                 r"  Index \| Obtained\s+\| Expected   ",
@@ -205,18 +206,20 @@ class TestApprox:
             assert np.array([[1.2, 3.4], [4.0, 5.0]]) == pytest.approx(
                 np.array([[4.0], [5.0]])
             )
-        assert str(e.value) == "\n".join(
+        message = "\n".join(str(e.value).split("\n")[1:])
+        assert message == "\n".join(
             [
-                "assert Impossible to compare arrays with different shapes.",
+                "  Impossible to compare arrays with different shapes.",
                 "  Shapes: (2, 1) and (2, 2)",
             ]
         )
 
         with pytest.raises(AssertionError) as e:
             assert [1.0, 2.0, 3.0] == pytest.approx([4.0, 5.0])
-        assert str(e.value) == "\n".join(
+        message = "\n".join(str(e.value).split("\n")[1:])
+        assert message == "\n".join(
             [
-                "assert Impossible to compare lists with different sizes.",
+                "  Impossible to compare lists with different sizes.",
                 "  Lengths: 2 and 3",
             ]
         )
@@ -229,7 +232,7 @@ class TestApprox:
                 2.0,
                 1.0,
                 [
-                    "assert comparison failed",
+                    "  comparison failed",
                     f"  Obtained: {SOME_FLOAT}",
                     f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}",
                 ],
@@ -242,16 +245,15 @@ class TestApprox:
             a,
             b,
             [
-                r"assert comparison failed. Mismatched elements: 20 / 20:",
+                r"  comparison failed. Mismatched elements: 20 / 20:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected",
                 rf"  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
                 rf"  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(3,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
+                rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
                 "",
-                r"\s*...Full output truncated \(6 lines hidden\), use '-vv' to show",
+                rf"\s*...Full output truncated \({SOME_INT} lines hidden\), use '-vv' to show",
             ],
             verbosity_level=0,
         )
@@ -260,25 +262,7 @@ class TestApprox:
             a,
             b,
             [
-                r"assert comparison failed. Mismatched elements: 20 / 20:",
-                rf"  Max absolute difference: {SOME_FLOAT}",
-                rf"  Max relative difference: {SOME_FLOAT}",
-                r"  Index \| Obtained\s+\| Expected",
-                rf"  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(3,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
-                "",
-                r"\s*...Full output truncated \(17 lines hidden\), use '-vv' to show",
-            ],
-            verbosity_level=1,
-        )
-
-        assert_approx_raises_regex(
-            a,
-            b,
-            [
-                r"assert comparison failed. Mismatched elements: 20 / 20:",
+                r"  comparison failed. Mismatched elements: 20 / 20:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected",
@@ -286,10 +270,6 @@ class TestApprox:
             + [
                 rf"  \({i},\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}"
                 for i in range(20)
-            ]
-            + [
-                "",
-                r"\s*Full object: .*",
             ],
             verbosity_level=2,
         )

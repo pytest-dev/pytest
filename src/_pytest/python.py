@@ -1702,29 +1702,3 @@ class FunctionDefinition(Function):
         raise RuntimeError("function definitions are not supposed to be run as tests")
 
     setup = runtest
-
-
-@hookimpl(tryfirst=True)
-def pytest_assertrepr_compare(config, op, left, right):
-    """Improves pytest.approx assertion messages.
-
-    Note:
-    Since the 'assertion' plugin is always installed by default on pytest, and it is installed before this one,
-    it'll always get preferred. Its implementation has code that handles assertion messages,
-    which changes the message for "high" verbosity level, regardless of the lhs and rhs types,
-    so the 'tryfirst' is necessary here so that we can handle the message even with verbosity level > 0.
-    """
-    from _pytest.python_api import ApproxBase
-
-    if op != "==":
-        return None
-
-    if not isinstance(left, ApproxBase) and not isinstance(right, ApproxBase):
-        return None
-
-    # Although the common order should be obtained == expected, this ensures both ways
-    approx_side = left if isinstance(left, ApproxBase) else right
-    other_side = right if isinstance(left, ApproxBase) else left
-
-    verbosity_level = config.getoption("verbose")
-    return approx_side.repr_compare(other_side, verbosity_level)
