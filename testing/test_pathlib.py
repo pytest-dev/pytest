@@ -164,7 +164,7 @@ class TestImportPath:
             import_path(tmp_path.joinpath("b", "test_x123.py"), root=tmp_path)
 
     def test_messy_name(self, tmp_path: Path) -> None:
-        # http://bitbucket.org/hpk42/py-trunk/issue/129
+        # https://bitbucket.org/hpk42/py-trunk/issue/129
         path = tmp_path / "foo__init__.py"
         path.touch()
         module = import_path(path, root=tmp_path)

@@ -24,7 +24,7 @@ Using PDB_ (Python Debugger) with pytest
 Dropping to PDB_ (Python Debugger) on failures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _PDB: http://docs.python.org/library/pdb.html
+.. _PDB: https://docs.python.org/library/pdb.html
 
 Python comes with a builtin Python debugger called PDB_.  ``pytest``
 allows one to drop into the PDB_ prompt via a command line option:

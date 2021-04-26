@@ -3108,12 +3108,12 @@ Features
   will not issue the warning.
 
 
-- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <http://www.attrs.org/en/stable/>`__ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
+- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <https://www.attrs.org/en/stable/>`__ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
 
 
 - `#4278 <https://github.com/pytest-dev/pytest/issues/4278>`_: ``CACHEDIR.TAG`` files are now created inside cache directories.
 
-  Those files are part of the `Cache Directory Tagging Standard <http://www.bford.info/cachedir/spec.html>`__, and can
+  Those files are part of the `Cache Directory Tagging Standard <https://bford.info/cachedir/spec.html>`__, and can
   be used by backup or synchronization programs to identify pytest's cache directory as such.
 
 
@@ -8466,7 +8466,7 @@ Bug fixes:
 
 - fixes for making the jython/win32 combination work, note however:
   jython2.5.1/win32 does not provide a command line launcher, see
-  http://bugs.jython.org/issue1491 . See pylib install documentation
+  https://bugs.jython.org/issue1491 . See pylib install documentation
   for how to work around.
 
 - fixes for handling of unicode exception values and unprintable objects

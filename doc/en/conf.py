@@ -252,7 +252,7 @@ latex_documents = [
         "contents",
         "pytest.tex",
         "pytest Documentation",
-        "holger krekel, trainer and consultant, http://merlinux.eu",
+        "holger krekel, trainer and consultant, https://merlinux.eu/",
         "manual",
     )
 ]
