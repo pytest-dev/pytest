@@ -1427,6 +1427,12 @@ class Config:
             dp = self.inipath.parent
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [legacy_path(str(dp / x)) for x in input_values]
+        elif type == "paths":
+            # TODO: This assert is probably not valid in all cases.
+            assert self.inipath is not None
+            dp = self.inipath.parent
+            input_values = shlex.split(value) if isinstance(value, str) else value
+            return [dp / x for x in input_values]
         elif type == "args":
             return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":

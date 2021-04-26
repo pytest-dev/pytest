@@ -595,14 +595,14 @@ class TestConfigAPI:
     def test_getconftest_pathlist(self, pytester: Pytester, tmp_path: Path) -> None:
         somepath = tmp_path.joinpath("x", "y", "z")
         p = tmp_path.joinpath("conftest.py")
-        p.write_text(f"pathlist = ['.', {str(somepath)!r}]")
+        p.write_text(f"mylist = {['.', os.fspath(somepath)]}")
         config = pytester.parseconfigure(p)
         assert (
             config._getconftest_pathlist("notexist", path=tmp_path, rootpath=tmp_path)
             is None
         )
         pl = (
-            config._getconftest_pathlist("pathlist", path=tmp_path, rootpath=tmp_path)
+            config._getconftest_pathlist("mylist", path=tmp_path, rootpath=tmp_path)
             or []
         )
         print(pl)
@@ -634,41 +634,37 @@ class TestConfigAPI:
         assert val == "hello"
         pytest.raises(ValueError, config.getini, "other")
 
-    def make_conftest_for_pathlist(self, pytester: Pytester) -> None:
+    @pytest.mark.parametrize("config_type", ["ini", "pyproject"])
+    @pytest.mark.parametrize("ini_type", ["paths", "pathlist"])
+    def test_addini_paths(
+        self, pytester: Pytester, config_type: str, ini_type: str
+    ) -> None:
         pytester.makeconftest(
-            """
+            f"""
             def pytest_addoption(parser):
-                parser.addini("paths", "my new ini value", type="pathlist")
+                parser.addini("paths", "my new ini value", type="{ini_type}")
                 parser.addini("abc", "abc value")
         """
         )
-
-    def test_addini_pathlist_ini_files(self, pytester: Pytester) -> None:
-        self.make_conftest_for_pathlist(pytester)
-        p = pytester.makeini(
+        if config_type == "ini":
+            inipath = pytester.makeini(
+                """
+                [pytest]
+                paths=hello world/sub.py
             """
-            [pytest]
-            paths=hello world/sub.py
-        """
-        )
-        self.check_config_pathlist(pytester, p)
-
-    def test_addini_pathlist_pyproject_toml(self, pytester: Pytester) -> None:
-        self.make_conftest_for_pathlist(pytester)
-        p = pytester.makepyprojecttoml(
+            )
+        elif config_type == "pyproject":
+            inipath = pytester.makepyprojecttoml(
+                """
+                [tool.pytest.ini_options]
+                paths=["hello", "world/sub.py"]
             """
-            [tool.pytest.ini_options]
-            paths=["hello", "world/sub.py"]
-        """
-        )
-        self.check_config_pathlist(pytester, p)
-
-    def check_config_pathlist(self, pytester: Pytester, config_path: Path) -> None:
+            )
         config = pytester.parseconfig()
         values = config.getini("paths")
         assert len(values) == 2
-        assert values[0] == config_path.parent.joinpath("hello")
-        assert values[1] == config_path.parent.joinpath("world/sub.py")
+        assert values[0] == inipath.parent.joinpath("hello")
+        assert values[1] == inipath.parent.joinpath("world/sub.py")
         pytest.raises(ValueError, config.getini, "other")
 
     def make_conftest_for_args(self, pytester: Pytester) -> None:
@@ -1519,11 +1515,12 @@ class TestOverrideIniArgs:
         assert result.ret == 0
         result.stdout.fnmatch_lines(["custom_option:3.0"])
 
-    def test_override_ini_pathlist(self, pytester: Pytester) -> None:
+    @pytest.mark.parametrize("ini_type", ["paths", "pathlist"])
+    def test_override_ini_paths(self, pytester: Pytester, ini_type: str) -> None:
         pytester.makeconftest(
-            """
+            f"""
             def pytest_addoption(parser):
-                parser.addini("paths", "my new ini value", type="pathlist")"""
+                parser.addini("paths", "my new ini value", type="{ini_type}")"""
         )
         pytester.makeini(
             """
@@ -1531,12 +1528,16 @@ class TestOverrideIniArgs:
             paths=blah.py"""
         )
         pytester.makepyfile(
-            """
-            def test_pathlist(pytestconfig):
+            rf"""
+            def test_overriden(pytestconfig):
                 config_paths = pytestconfig.getini("paths")
                 print(config_paths)
                 for cpf in config_paths:
-                    print('\\nuser_path:%s' % cpf.basename)"""
+                    if "{ini_type}" == "pathlist":
+                        print('\nuser_path:%s' % cpf.basename)
+                    else:
+                        print('\nuser_path:%s' % cpf.name)
+            """
         )
         result = pytester.runpytest(
             "--override-ini", "paths=foo/bar1.py foo/bar2.py", "-s"
