@@ -1710,7 +1710,7 @@ def pytest_assertrepr_compare(config, op, left, right):
 
     Note:
     Since the 'assertion' plugin is always installed by default on pytest, and it is installed before this one,
-    it'll always get preferred. It's implementation has a code that handles assertion messages,
+    it'll always get preferred. Its implementation has code that handles assertion messages,
     which changes the message for "high" verbosity level, regardless of the lhs and rhs types,
     so the 'tryfirst' is necessary here so that we can handle the message even with verbosity level > 0.
     """

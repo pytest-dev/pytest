@@ -9,7 +9,6 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
-from typing import Dict
 from typing import Generic
 from typing import List
 from typing import Optional
@@ -41,34 +40,30 @@ def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
     )
 
 
-def _generate_approx_error_message(
+def _compare_approx(
     full_object: object,
-    message_data: List[List[str]],
+    message_data: Sequence[Tuple[str, str, str]],
     number_of_elements: int,
-    different_ids: List[Any],
+    different_ids: Sequence[object],
     max_abs_diff: float,
     max_rel_diff: float,
-    verbosity_level: int,
 ) -> List[str]:
-    message_data.insert(0, ["Index", "Obtained", "Expected"])
+    message_list = list(message_data)
+    message_list.insert(0, ("Index", "Obtained", "Expected"))
     max_sizes = [0, 0, 0]
-    for index, obtained, expected in message_data:
+    for index, obtained, expected in message_list:
         max_sizes[0] = max(max_sizes[0], len(index))
         max_sizes[1] = max(max_sizes[1], len(obtained))
         max_sizes[2] = max(max_sizes[2], len(expected))
-    err_msg_as_list = [
+    explanation = [
         f"comparison failed. Mismatched elements: {len(different_ids)} / {number_of_elements}:",
         f"Max absolute difference: {max_abs_diff}",
         f"Max relative difference: {max_rel_diff}",
     ] + [
         f"{indexes:<{max_sizes[0]}} | {obtained:<{max_sizes[1]}} | {expected:<{max_sizes[2]}}"
-        for indexes, obtained, expected in (
-            message_data[:10] if verbosity_level <= 0 else message_data
-        )
+        for indexes, obtained, expected in message_list
     ]
-    if verbosity_level >= 2:
-        err_msg_as_list += ["", f"Full object: {str(full_object)}"]
-    return err_msg_as_list
+    return explanation
 
 
 # builtin pytest.approx helper
@@ -93,7 +88,7 @@ class ApproxBase:
     def __repr__(self) -> str:
         raise NotImplementedError
 
-    def repr_compare(self, other_side: Any, verbosity_level: int) -> List[str]:
+    def repr_compare(self, other_side: Any) -> List[str]:
         return [
             "comparison failed",
             f"Obtained: {other_side}",
@@ -145,7 +140,7 @@ class ApproxNumpy(ApproxBase):
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return f"approx({list_scalars!r})"
 
-    def repr_compare(self, other_side: "ndarray", verbosity_level: int) -> List[str]:
+    def repr_compare(self, other_side: "ndarray") -> List[str]:
         import itertools
         import math
 
@@ -183,21 +178,20 @@ class ApproxNumpy(ApproxBase):
                 different_ids.append(index)
 
         message_data = [
-            [
+            (
                 str(index),
                 str(_get_index_from_list(other_side, index)),
                 str(_get_index_from_list(approx_side_as_list, index)),
-            ]
+            )
             for index in different_ids
         ]
-        return _generate_approx_error_message(
+        return _compare_approx(
             self.expected,
             message_data,
             number_of_elements,
             different_ids,
             max_abs_diff,
             max_rel_diff,
-            verbosity_level,
         )
 
     def __eq__(self, actual) -> bool:
@@ -240,9 +234,7 @@ class ApproxMapping(ApproxBase):
             {k: self._approx_scalar(v) for k, v in self.expected.items()}
         )
 
-    def repr_compare(
-        self, other_side: Dict[Any, float], verbosity_level: int
-    ) -> List[str]:
+    def repr_compare(self, other_side: Mapping[object, float]) -> List[str]:
         import math
 
         approx_side_as_map = {
@@ -267,18 +259,17 @@ class ApproxMapping(ApproxBase):
                 different_ids.append(approx_key)
 
         message_data = [
-            [str(key), str(other_side[key]), str(approx_side_as_map[key])]
+            (str(key), str(other_side[key]), str(approx_side_as_map[key]))
             for key in different_ids
         ]
 
-        return _generate_approx_error_message(
+        return _compare_approx(
             self.expected,
             message_data,
             number_of_elements,
             different_ids,
             max_abs_diff,
             max_rel_diff,
-            verbosity_level,
         )
 
     def __eq__(self, actual) -> bool:
@@ -313,9 +304,7 @@ class ApproxSequencelike(ApproxBase):
             seq_type(self._approx_scalar(x) for x in self.expected)
         )
 
-    def repr_compare(
-        self, other_side: Sequence[float], verbosity_level: int
-    ) -> List[str]:
+    def repr_compare(self, other_side: Sequence[float]) -> List[str]:
         import math
         import numpy as np
 
@@ -344,18 +333,17 @@ class ApproxSequencelike(ApproxBase):
                 different_ids.append(i)
 
         message_data = [
-            [str(i), str(other_side[i]), str(approx_side_as_map[i])]
+            (str(i), str(other_side[i]), str(approx_side_as_map[i]))
             for i in different_ids
         ]
 
-        return _generate_approx_error_message(
+        return _compare_approx(
             self.expected,
             message_data,
             number_of_elements,
             different_ids,
             max_abs_diff,
             max_rel_diff,
-            verbosity_level,
         )
 
     def __eq__(self, actual) -> bool:
