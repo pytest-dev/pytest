@@ -347,6 +347,17 @@ class SysCapture(SysCaptureBinary):
         self._old.flush()
 
 
+def flush(func):
+    def flush_inner(*args, **kwargs):
+        sys.stdout.flush()
+        sys.stderr.flush()
+        ret = func(*args, **kwargs)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        return ret
+    return flush_inner
+
+
 class FDCaptureBinary:
     """Capture IO to/from a given OS-level file descriptor.
 
@@ -380,7 +391,7 @@ class FDCaptureBinary:
 
         if targetfd == 0:
             self.tmpfile = open(os.devnull)
-            self.syscapture = SysCapture(targetfd)
+            #self.syscapture = SysCapture(targetfd)
         else:
             self.tmpfile = EncodedFile(
                 TemporaryFile(buffering=0),
@@ -389,10 +400,10 @@ class FDCaptureBinary:
                 newline="",
                 write_through=True,
             )
-            if targetfd in patchsysdict:
-                self.syscapture = SysCapture(targetfd, self.tmpfile)
-            else:
-                self.syscapture = NoCapture()
+            #if targetfd in patchsysdict:
+                #self.syscapture = SysCapture(targetfd, self.tmpfile)
+            #else:
+                #self.syscapture = NoCapture()
 
         self._state = "initialized"
 
@@ -412,13 +423,17 @@ class FDCaptureBinary:
             op, self._state, ", ".join(states)
         )
 
+    @flush
     def start(self) -> None:
         """Start capturing on targetfd using memorized tmpfile."""
         self._assert_state("start", ("initialized",))
+        sys.stdout.flush()
+        sys.stderr.flush()
         os.dup2(self.tmpfile.fileno(), self.targetfd)
-        self.syscapture.start()
+        #self.syscapture.start()
         self._state = "started"
 
+    @flush
     def snap(self):
         self._assert_state("snap", ("started", "suspended"))
         self.tmpfile.seek(0)
@@ -427,35 +442,42 @@ class FDCaptureBinary:
         self.tmpfile.truncate()
         return res
 
+    @flush
     def done(self) -> None:
         """Stop capturing, restore streams, return original capture file,
         seeked to position zero."""
         self._assert_state("done", ("initialized", "started", "suspended", "done"))
         if self._state == "done":
             return
+        sys.stdout.flush()
+        sys.stderr.flush()
         os.dup2(self.targetfd_save, self.targetfd)
         os.close(self.targetfd_save)
         if self.targetfd_invalid is not None:
             if self.targetfd_invalid != self.targetfd:
                 os.close(self.targetfd)
             os.close(self.targetfd_invalid)
-        self.syscapture.done()
+        #self.syscapture.done()
         self.tmpfile.close()
         self._state = "done"
 
+    @flush
     def suspend(self) -> None:
         self._assert_state("suspend", ("started", "suspended"))
         if self._state == "suspended":
             return
-        self.syscapture.suspend()
+        #self.syscapture.suspend()
+        sys.stdout.flush()
+        sys.stderr.flush()
         os.dup2(self.targetfd_save, self.targetfd)
         self._state = "suspended"
 
+    @flush
     def resume(self) -> None:
         self._assert_state("resume", ("started", "suspended"))
         if self._state == "started":
             return
-        self.syscapture.resume()
+        #self.syscapture.resume()
         os.dup2(self.tmpfile.fileno(), self.targetfd)
         self._state = "started"
 
@@ -475,6 +497,8 @@ class FDCapture(FDCaptureBinary):
     EMPTY_BUFFER = ""  # type: ignore
 
     def snap(self):
+        sys.stdout.flush()
+        sys.stderr.flush()
         self._assert_state("snap", ("started", "suspended"))
         self.tmpfile.seek(0)
         res = self.tmpfile.read()

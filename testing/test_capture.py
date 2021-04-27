@@ -275,7 +275,7 @@ class TestPerTestCapturing:
                 raise ValueError
             """
         )
-        result = pytester.runpytest(p1)
+        result = pytester.runpytest_subprocess(p1)
         result.stdout.fnmatch_lines(
             [
                 "*test_capturing_outerr.py .F*",
@@ -510,7 +510,7 @@ class TestCaptureFixture:
                 method
             )
         )
-        result = pytester.runpytest(p)
+        result = pytester.runpytest_subprocess(p)
         result.stdout.fnmatch_lines(["xxx42xxx"])
 
     def test_stdfd_functional(self, pytester: Pytester) -> None:
@@ -571,7 +571,7 @@ class TestCaptureFixture:
                 print("stderr after", file=sys.stderr)
             """
         )
-        result = pytester.runpytest(str(p1), "-rA")
+        result = pytester.runpytest_subprocess(str(p1), "-rA")
         result.stdout.fnmatch_lines(
             [
                 "*- Captured stdout call -*",
@@ -738,8 +738,8 @@ class TestCaptureFixture:
                 cap=cap
             )
         )
-        reprec = pytester.inline_run()
-        reprec.assertoutcome(passed=1)
+        result = pytester.runpytest_subprocess()
+        result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_setup_failure_does_not_kill_capturing(pytester: Pytester) -> None:
@@ -765,7 +765,7 @@ def test_capture_conftest_runtest_setup(pytester: Pytester) -> None:
     """
     )
     pytester.makepyfile("def test_func(): pass")
-    result = pytester.runpytest()
+    result = pytester.runpytest_subprocess()
     assert result.ret == 0
     result.stdout.no_fnmatch_line("*hello19*")
 
@@ -1037,12 +1037,6 @@ class TestFDCapture:
             assert repr(cap) == (
                 "<FDCapture 1 oldfd={} _state='done' tmpfile={!r}>".format(
                     cap.targetfd_save, cap.tmpfile
-                )
-            )
-            # Should not crash with missing "_old".
-            assert repr(cap.syscapture) == (
-                "<SysCapture stdout _old=<UNSET> _state='done' tmpfile={!r}>".format(
-                    cap.syscapture.tmpfile
                 )
             )
 
@@ -1422,8 +1416,8 @@ def test_error_attribute_issue555(pytester: Pytester) -> None:
         """
         import sys
         def test_capattr():
-            assert sys.stdout.errors == "replace"
-            assert sys.stderr.errors == "replace"
+            assert sys.stdout.errors == "strict"
+            assert sys.stderr.errors == "strict"
     """
     )
     reprec = pytester.inline_run()
