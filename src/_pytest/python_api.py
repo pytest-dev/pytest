@@ -144,9 +144,15 @@ class ApproxNumpy(ApproxBase):
         import itertools
         import math
 
-        def _get_index_from_list(list, index):
-            value = list
-            for i in index:
+        def _get_value_from_nested_list(
+            nested_list: List[Any], nd_index: Tuple[Any, ...]
+        ) -> Any:
+            """
+            Helper function to get the value out of a nested list, given an n-dimensional index.
+            This mimics numpy's indexing, but for raw nested python lists.
+            """
+            value: Any = nested_list
+            for i in nd_index:
                 value = value[i]
             return value
 
@@ -166,8 +172,8 @@ class ApproxNumpy(ApproxBase):
         max_rel_diff = -math.inf
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
-            approx_value = _get_index_from_list(approx_side_as_list, index)
-            other_value = _get_index_from_list(other_side, index)
+            approx_value = _get_value_from_nested_list(approx_side_as_list, index)
+            other_value = _get_value_from_nested_list(other_side, index)
             if approx_value != other_value:
                 abs_diff = abs(approx_value.expected - other_value)
                 max_abs_diff = max(max_abs_diff, abs_diff)
@@ -180,8 +186,8 @@ class ApproxNumpy(ApproxBase):
         message_data = [
             (
                 str(index),
-                str(_get_index_from_list(other_side, index)),
-                str(_get_index_from_list(approx_side_as_list, index)),
+                str(_get_value_from_nested_list(other_side, index)),
+                str(_get_value_from_nested_list(approx_side_as_list, index)),
             )
             for index in different_ids
         ]
