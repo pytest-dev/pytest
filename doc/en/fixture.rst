@@ -1124,7 +1124,7 @@ never have been made.
 .. _`conftest.py`:
 .. _`conftest`:
 
-Fixture availabiility
+Fixture availability
 ---------------------
 
 Fixture availability is determined from the perspective of the test. A fixture
