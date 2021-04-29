@@ -139,10 +139,59 @@ And now with supplying a command line option:
     FAILED test_sample.py::test_answer - assert 0
     1 failed in 0.12s
 
-You can see that the command line option arrived in our test.  This
-completes the basic pattern.  However, one often rather wants to process
-command line options outside of the test and rather pass in different or
-more complex objects.
+You can see that the command line option arrived in our test.
+
+We could add simple validation for the input by listing the choices:
+
+.. code-block:: python
+
+    # content of conftest.py
+    import pytest
+
+
+    def pytest_addoption(parser):
+        parser.addoption(
+            "--cmdopt", action="store", default="type1", help="my option: type1 or type2",
+            choices=("type1", "type2"),
+        )
+
+Now we'll get feedback on a bad argument:
+
+.. code-block:: pytest
+
+    $ pytest -q --cmdopt=type3
+    ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
+    pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from 'type1', 'type2')
+
+If you need to provide more detailed error messages, you can use the
+``type`` parameter and raise ``pytest.UsageError``:
+
+.. code-block:: python
+
+    # content of conftest.py
+    import pytest
+
+
+    def type_checker(value):
+        msg = "cmdopt must specify a numeric type as typeNNN"
+        if not value.startswith("type"):
+            raise pytest.UsageError(msg)
+        try:
+            int(value[4:])
+        except ValueError:
+            raise pytest.UsageError(msg)
+
+        return value
+
+    def pytest_addoption(parser):
+        parser.addoption(
+            "--cmdopt", action="store", default="type1", help="my option: type1 or type2",
+            type=type_checker,
+        )
+
+This completes the basic pattern.  However, one often rather wants to
+process command line options outside of the test and rather pass in
+different or more complex objects.
 
 Dynamically adding command line options
 --------------------------------------------------------------
