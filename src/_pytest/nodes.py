@@ -62,23 +62,33 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
         "testing/code/test_excinfo.py::TestFormattedExcinfo"
         "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
 
-    Note that :: parts are only considered at the last / component.
+    Note that / components are only considered until the first ::.
     """
     pos = 0
-    sep = SEP
+    first_colons: Optional[int] = nodeid.find("::")
+    if first_colons == -1:
+        first_colons = None
+    # The root Session node - always present.
     yield ""
+    # Eagerly consume SEP parts until first colons.
     while True:
-        at = nodeid.find(sep, pos)
-        if at == -1 and sep == SEP:
-            sep = "::"
-        elif at == -1:
-            if nodeid:
-                yield nodeid
+        at = nodeid.find(SEP, pos, first_colons)
+        if at == -1:
             break
-        else:
-            if at:
-                yield nodeid[:at]
-            pos = at + len(sep)
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len(SEP)
+    # Eagerly consume :: parts.
+    while True:
+        at = nodeid.find("::", pos)
+        if at == -1:
+            break
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len("::")
+    # The node ID itself.
+    if nodeid:
+        yield nodeid
 
 
 def _imply_path(
