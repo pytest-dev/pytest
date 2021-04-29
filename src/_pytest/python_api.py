@@ -88,7 +88,7 @@ class ApproxBase:
     def __repr__(self) -> str:
         raise NotImplementedError
 
-    def repr_compare(self, other_side: Any) -> List[str]:
+    def _repr_compare(self, other_side: Any) -> List[str]:
         return [
             "comparison failed",
             f"Obtained: {other_side}",
@@ -140,11 +140,11 @@ class ApproxNumpy(ApproxBase):
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return f"approx({list_scalars!r})"
 
-    def repr_compare(self, other_side: "ndarray") -> List[str]:
+    def _repr_compare(self, other_side: "ndarray") -> List[str]:
         import itertools
         import math
 
-        def _get_value_from_nested_list(
+        def get_value_from_nested_list(
             nested_list: List[Any], nd_index: Tuple[Any, ...]
         ) -> Any:
             """
@@ -172,8 +172,8 @@ class ApproxNumpy(ApproxBase):
         max_rel_diff = -math.inf
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
-            approx_value = _get_value_from_nested_list(approx_side_as_list, index)
-            other_value = _get_value_from_nested_list(other_side, index)
+            approx_value = get_value_from_nested_list(approx_side_as_list, index)
+            other_value = get_value_from_nested_list(other_side, index)
             if approx_value != other_value:
                 abs_diff = abs(approx_value.expected - other_value)
                 max_abs_diff = max(max_abs_diff, abs_diff)
@@ -186,8 +186,8 @@ class ApproxNumpy(ApproxBase):
         message_data = [
             (
                 str(index),
-                str(_get_value_from_nested_list(other_side, index)),
-                str(_get_value_from_nested_list(approx_side_as_list, index)),
+                str(get_value_from_nested_list(other_side, index)),
+                str(get_value_from_nested_list(approx_side_as_list, index)),
             )
             for index in different_ids
         ]
@@ -240,7 +240,7 @@ class ApproxMapping(ApproxBase):
             {k: self._approx_scalar(v) for k, v in self.expected.items()}
         )
 
-    def repr_compare(self, other_side: Mapping[object, float]) -> List[str]:
+    def _repr_compare(self, other_side: Mapping[object, float]) -> List[str]:
         import math
 
         approx_side_as_map = {
@@ -310,7 +310,7 @@ class ApproxSequencelike(ApproxBase):
             seq_type(self._approx_scalar(x) for x in self.expected)
         )
 
-    def repr_compare(self, other_side: Sequence[float]) -> List[str]:
+    def _repr_compare(self, other_side: Sequence[float]) -> List[str]:
         import math
         import numpy as np
 

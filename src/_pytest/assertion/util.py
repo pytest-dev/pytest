@@ -182,7 +182,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             approx_side = left if isinstance(left, ApproxBase) else right
             other_side = right if isinstance(left, ApproxBase) else left
 
-            explanation = approx_side.repr_compare(other_side)
+            explanation = approx_side._repr_compare(other_side)
         elif type(left) == type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
