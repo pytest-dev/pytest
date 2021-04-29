@@ -151,7 +151,10 @@ We could add simple validation for the input by listing the choices:
 
     def pytest_addoption(parser):
         parser.addoption(
-            "--cmdopt", action="store", default="type1", help="my option: type1 or type2",
+            "--cmdopt",
+            action="store",
+            default="type1",
+            help="my option: type1 or type2",
             choices=("type1", "type2"),
         )
 
@@ -183,9 +186,13 @@ If you need to provide more detailed error messages, you can use the
 
         return value
 
+
     def pytest_addoption(parser):
         parser.addoption(
-            "--cmdopt", action="store", default="type1", help="my option: type1 or type2",
+            "--cmdopt",
+            action="store",
+            default="type1",
+            help="my option: type1 or type2",
             type=type_checker,
         )
 
