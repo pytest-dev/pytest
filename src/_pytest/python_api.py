@@ -1,7 +1,5 @@
 import math
 import pprint
-from collections.abc import Iterable
-from collections.abc import Mapping
 from collections.abc import Sized
 from decimal import Decimal
 from numbers import Complex
@@ -10,9 +8,13 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Generic
+from typing import Iterable
+from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import overload
 from typing import Pattern
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
@@ -38,6 +40,32 @@ def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
     )
 
 
+def _compare_approx(
+    full_object: object,
+    message_data: Sequence[Tuple[str, str, str]],
+    number_of_elements: int,
+    different_ids: Sequence[object],
+    max_abs_diff: float,
+    max_rel_diff: float,
+) -> List[str]:
+    message_list = list(message_data)
+    message_list.insert(0, ("Index", "Obtained", "Expected"))
+    max_sizes = [0, 0, 0]
+    for index, obtained, expected in message_list:
+        max_sizes[0] = max(max_sizes[0], len(index))
+        max_sizes[1] = max(max_sizes[1], len(obtained))
+        max_sizes[2] = max(max_sizes[2], len(expected))
+    explanation = [
+        f"comparison failed. Mismatched elements: {len(different_ids)} / {number_of_elements}:",
+        f"Max absolute difference: {max_abs_diff}",
+        f"Max relative difference: {max_rel_diff}",
+    ] + [
+        f"{indexes:<{max_sizes[0]}} | {obtained:<{max_sizes[1]}} | {expected:<{max_sizes[2]}}"
+        for indexes, obtained, expected in message_list
+    ]
+    return explanation
+
+
 # builtin pytest.approx helper
 
 
@@ -59,6 +87,13 @@ class ApproxBase:
 
     def __repr__(self) -> str:
         raise NotImplementedError
+
+    def _repr_compare(self, other_side: Any) -> List[str]:
+        return [
+            "comparison failed",
+            f"Obtained: {other_side}",
+            f"Expected: {self}",
+        ]
 
     def __eq__(self, actual) -> bool:
         return all(
@@ -107,6 +142,66 @@ class ApproxNumpy(ApproxBase):
         list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
         return f"approx({list_scalars!r})"
 
+    def _repr_compare(self, other_side: "ndarray") -> List[str]:
+        import itertools
+        import math
+
+        def get_value_from_nested_list(
+            nested_list: List[Any], nd_index: Tuple[Any, ...]
+        ) -> Any:
+            """
+            Helper function to get the value out of a nested list, given an n-dimensional index.
+            This mimics numpy's indexing, but for raw nested python lists.
+            """
+            value: Any = nested_list
+            for i in nd_index:
+                value = value[i]
+            return value
+
+        np_array_shape = self.expected.shape
+        approx_side_as_list = _recursive_list_map(
+            self._approx_scalar, self.expected.tolist()
+        )
+
+        if np_array_shape != other_side.shape:
+            return [
+                "Impossible to compare arrays with different shapes.",
+                f"Shapes: {np_array_shape} and {other_side.shape}",
+            ]
+
+        number_of_elements = self.expected.size
+        max_abs_diff = -math.inf
+        max_rel_diff = -math.inf
+        different_ids = []
+        for index in itertools.product(*(range(i) for i in np_array_shape)):
+            approx_value = get_value_from_nested_list(approx_side_as_list, index)
+            other_value = get_value_from_nested_list(other_side, index)
+            if approx_value != other_value:
+                abs_diff = abs(approx_value.expected - other_value)
+                max_abs_diff = max(max_abs_diff, abs_diff)
+                if other_value == 0.0:
+                    max_rel_diff = math.inf
+                else:
+                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                different_ids.append(index)
+
+        message_data = [
+            (
+                str(index),
+                str(get_value_from_nested_list(other_side, index)),
+                str(get_value_from_nested_list(approx_side_as_list, index)),
+            )
+            for index in different_ids
+        ]
+        return _compare_approx(
+            self.expected,
+            message_data,
+            number_of_elements,
+            different_ids,
+            max_abs_diff,
+            max_rel_diff,
+        )
+
     def __eq__(self, actual) -> bool:
         import numpy as np
 
@@ -147,6 +242,44 @@ class ApproxMapping(ApproxBase):
             {k: self._approx_scalar(v) for k, v in self.expected.items()}
         )
 
+    def _repr_compare(self, other_side: Mapping[object, float]) -> List[str]:
+        import math
+
+        approx_side_as_map = {
+            k: self._approx_scalar(v) for k, v in self.expected.items()
+        }
+
+        number_of_elements = len(approx_side_as_map)
+        max_abs_diff = -math.inf
+        max_rel_diff = -math.inf
+        different_ids = []
+        for (approx_key, approx_value), other_value in zip(
+            approx_side_as_map.items(), other_side.values()
+        ):
+            if approx_value != other_value:
+                max_abs_diff = max(
+                    max_abs_diff, abs(approx_value.expected - other_value)
+                )
+                max_rel_diff = max(
+                    max_rel_diff,
+                    abs((approx_value.expected - other_value) / approx_value.expected),
+                )
+                different_ids.append(approx_key)
+
+        message_data = [
+            (str(key), str(other_side[key]), str(approx_side_as_map[key]))
+            for key in different_ids
+        ]
+
+        return _compare_approx(
+            self.expected,
+            message_data,
+            number_of_elements,
+            different_ids,
+            max_abs_diff,
+            max_rel_diff,
+        )
+
     def __eq__(self, actual) -> bool:
         try:
             if set(actual.keys()) != set(self.expected.keys()):
@@ -177,6 +310,48 @@ class ApproxSequencelike(ApproxBase):
             seq_type = list
         return "approx({!r})".format(
             seq_type(self._approx_scalar(x) for x in self.expected)
+        )
+
+    def _repr_compare(self, other_side: Sequence[float]) -> List[str]:
+        import math
+        import numpy as np
+
+        if len(self.expected) != len(other_side):
+            return [
+                "Impossible to compare lists with different sizes.",
+                f"Lengths: {len(self.expected)} and {len(other_side)}",
+            ]
+
+        approx_side_as_map = _recursive_list_map(self._approx_scalar, self.expected)
+
+        number_of_elements = len(approx_side_as_map)
+        max_abs_diff = -math.inf
+        max_rel_diff = -math.inf
+        different_ids = []
+        for i, (approx_value, other_value) in enumerate(
+            zip(approx_side_as_map, other_side)
+        ):
+            if approx_value != other_value:
+                abs_diff = abs(approx_value.expected - other_value)
+                max_abs_diff = max(max_abs_diff, abs_diff)
+                if other_value == 0.0:
+                    max_rel_diff = np.inf
+                else:
+                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                different_ids.append(i)
+
+        message_data = [
+            (str(i), str(other_side[i]), str(approx_side_as_map[i]))
+            for i in different_ids
+        ]
+
+        return _compare_approx(
+            self.expected,
+            message_data,
+            number_of_elements,
+            different_ids,
+            max_abs_diff,
+            max_rel_diff,
         )
 
     def __eq__(self, actual) -> bool:
@@ -212,7 +387,6 @@ class ApproxScalar(ApproxBase):
 
         For example, ``1.0 ± 1e-6``, ``(3+4j) ± 5e-6 ∠ ±180°``.
         """
-
         # Don't show a tolerance for values that aren't compared using
         # tolerances, i.e. non-numerics and infinities. Need to call abs to
         # handle complex numbers, e.g. (inf + 1j).
