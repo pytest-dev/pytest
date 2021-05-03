@@ -29,8 +29,7 @@ def test_fixtures_in_module(pytester: Pytester) -> None:
         [
             "*fixtures used by test_arg1*",
             "*(test_fixtures_in_module.py:9)*",
-            "arg1",
-            "    arg1 docstring",
+            "arg1 -- test_fixtures_in_module.py:6",
         ]
     )
     result.stdout.no_fnmatch_line("*_arg0*")
@@ -68,17 +67,16 @@ def test_fixtures_in_conftest(pytester: Pytester) -> None:
         [
             "*fixtures used by test_arg2*",
             "*(test_fixtures_in_conftest.py:2)*",
-            "arg2",
+            "arg2 -- conftest.py:6",
             "    arg2 docstring",
             "*fixtures used by test_arg3*",
             "*(test_fixtures_in_conftest.py:4)*",
-            "arg1",
+            "arg1 -- conftest.py:3",
             "    arg1 docstring",
-            "arg2",
+            "arg2 -- conftest.py:6",
             "    arg2 docstring",
-            "arg3",
+            "arg3 -- conftest.py:9",
             "    arg3",
-            "    docstring",
         ]
     )
 
@@ -112,9 +110,9 @@ def test_should_show_fixtures_used_by_test(pytester: Pytester) -> None:
         [
             "*fixtures used by test_args*",
             "*(test_should_show_fixtures_used_by_test.py:6)*",
-            "arg1",
+            "arg1 -- test_should_show_fixtures_used_by_test.py:3",
             "    arg1 from testmodule",
-            "arg2",
+            "arg2 -- conftest.py:6",
             "    arg2 from conftest",
         ]
     )
@@ -172,7 +170,6 @@ def test_doctest_items(pytester: Pytester) -> None:
     pytester.maketxtfile(
         """
         >>> 1 + 1
-        2
     """
     )
     result = pytester.runpytest(
