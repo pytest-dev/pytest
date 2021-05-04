@@ -480,9 +480,9 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
     .. note::
 
-        Although ``approx`` can handle numpy arrays, you may also want to check
-        `numpy.testing`__ module, which have many possibilities of comparing
-        floating point numbers, if you are comparing two numpy arrays of floats.
+        ``approx`` can handle numpy arrays, but we recommend the
+        specialised test helpers in `numpy.testing`__ if you need
+        support for comparisons, NaNs, or ULP-based tolerances.
 
         __ https://numpy.org/doc/stable/reference/routines.testing.html
 
