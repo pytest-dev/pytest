@@ -1225,7 +1225,7 @@ def test_collect_symlink_dir(pytester: Pytester) -> None:
     """A symlinked directory is collected."""
     dir = pytester.mkdir("dir")
     dir.joinpath("test_it.py").write_text("def test_it(): pass", "utf-8")
-    pytester.path.joinpath("symlink_dir").symlink_to(dir)
+    symlink_or_skip(pytester.path.joinpath("symlink_dir"), dir)
     result = pytester.runpytest()
     result.assert_outcomes(passed=2)
 
