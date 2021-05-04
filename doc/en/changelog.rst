@@ -28,6 +28,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.2.4 (2021-05-04)
+=========================
+
+Bug Fixes
+---------
+
+- `#8539 <https://github.com/pytest-dev/pytest/issues/8539>`_: Fixed assertion rewriting on Python 3.10.
+
+
 pytest 6.2.3 (2021-04-03)
 =========================
 
