@@ -337,12 +337,6 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     """Assert that two numbers (or two sets of numbers) are equal to each other
     within some tolerance.
 
-    Although approx can handle numpy arrays, you may also want to check
-    `numpy.testing`__ module, which have many possibilities of comparing
-    floating point numbers, if you are comparing two numpy arrays of floats.
-
-    __ https://numpy.org/doc/stable/reference/routines.testing.html
-
     Due to the `intricacies of floating-point arithmetic`__, numbers that we
     would intuitively expect to be equal are not always so::
 
@@ -483,6 +477,14 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       is asymmetric and you can think of ``b`` as the reference value.  In the
       special case that you explicitly specify an absolute tolerance but not a
       relative tolerance, only the absolute tolerance is considered.
+
+    .. note::
+
+        Although ``approx`` can handle numpy arrays, you may also want to check
+        `numpy.testing`__ module, which have many possibilities of comparing
+        floating point numbers, if you are comparing two numpy arrays of floats.
+
+        __ https://numpy.org/doc/stable/reference/routines.testing.html
 
     .. warning::
 
