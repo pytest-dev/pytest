@@ -30,6 +30,7 @@ def test_fixtures_in_module(pytester: Pytester) -> None:
             "*fixtures used by test_arg1*",
             "*(test_fixtures_in_module.py:9)*",
             "arg1 -- test_fixtures_in_module.py:6",
+            "    arg1 docstring"
         ]
     )
     result.stdout.no_fnmatch_line("*_arg0*")
@@ -179,3 +180,73 @@ def test_doctest_items(pytester: Pytester) -> None:
     assert result.ret == 0
 
     result.stdout.fnmatch_lines(["*collected 2 items*"])
+
+def test_multiline_docstring_in_module(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        '''
+        import pytest
+        @pytest.fixture
+        def arg1():
+            """Docstring content that spans across multiple lines,
+            through second line,
+            and through third line.
+            
+            Docstring content that extends into a second paragraph.
+            
+            Docstring content that extends into a third paragraph.
+            """
+        def test_arg1(arg1):
+            pass
+    '''
+    )
+
+    result = pytester.runpytest("--fixtures-per-test", p)
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines(
+        [
+            "*fixtures used by test_arg1*",
+            "*(test_multiline_docstring_in_module.py:13)*",
+            "arg1 -- test_multiline_docstring_in_module.py:3",
+            "    Docstring content that spans across multiple lines,",
+            "    through second line,",
+            "    and through third line."
+        ]
+    )
+
+def test_verbose_include_multiline_docstring(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        '''
+        import pytest
+        @pytest.fixture
+        def arg1():
+            """Docstring content that spans across multiple lines,
+            through second line,
+            and through third line.
+
+            Docstring content that extends into a second paragraph.
+
+            Docstring content that extends into a third paragraph.
+            """
+        def test_arg1(arg1):
+            pass
+    '''
+    )
+
+    result = pytester.runpytest("--fixtures-per-test", "-v", p)
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines(
+        [
+            "*fixtures used by test_arg1*",
+            "*(test_verbose_include_multiline_docstring.py:13)*",
+            "arg1 -- test_verbose_include_multiline_docstring.py:3",
+            "    Docstring content that spans across multiple lines,",
+            "    through second line,",
+            "    and through third line.",
+            "    ",
+            "    Docstring content that extends into a second paragraph.",
+            "    ",
+            "    Docstring content that extends into a third paragraph."
+        ]
+    )

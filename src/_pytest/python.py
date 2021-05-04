@@ -1433,7 +1433,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         tw.line(funcargspec, green=True)
         fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
-            write_docstring(tw, fixture_doc.split("\n")[0])
+            write_docstring(tw, fixture_doc.split("\n\n")[0] if verbose<=0 else fixture_doc)
         else:
             tw.line("    no docstring available", red=True)
 
