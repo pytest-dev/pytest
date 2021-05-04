@@ -117,7 +117,7 @@ Both automatic and manual processes described above follow the same steps from t
 #. Cherry-pick the CHANGELOG / announce files to the ``main`` branch::
 
        git fetch --all --prune
-       git checkout origin/main -b cherry-pick-release
+       git checkout upstream/main -b cherry-pick-release
        git cherry-pick -x -m1 upstream/MAJOR.MINOR.x
 
 #. Open a PR for ``cherry-pick-release`` and merge it once CI passes. No need to wait for approvals if there were no conflicts on the previous step.
