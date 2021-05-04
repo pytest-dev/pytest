@@ -46,14 +46,16 @@ def login(token: str) -> Repository:
     return github.repository(owner, repo)
 
 
-def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
+def prepare_release_pr(
+    base_branch: str, is_major: bool, token: str, prerelease: str
+) -> None:
     print()
     print(f"Processing release for branch {Fore.CYAN}{base_branch}")
 
     check_call(["git", "checkout", f"origin/{base_branch}"])
 
     try:
-        version = find_next_version(base_branch, is_major)
+        version = find_next_version(base_branch, is_major, prerelease)
     except InvalidFeatureRelease as e:
         print(f"{Fore.RED}{e}")
         raise SystemExit(1)
@@ -115,7 +117,7 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     print(f"Pull request {Fore.CYAN}{pr.url}{Fore.RESET} created.")
 
 
-def find_next_version(base_branch: str, is_major: bool) -> str:
+def find_next_version(base_branch: str, is_major: bool, prerelease: str) -> str:
     output = check_output(["git", "tag"], encoding="UTF-8")
     valid_versions = []
     for v in output.splitlines():
@@ -133,11 +135,11 @@ def find_next_version(base_branch: str, is_major: bool) -> str:
     is_feature_release = features or breaking
 
     if is_major:
-        return f"{last_version[0]+1}.0.0"
+        return f"{last_version[0]+1}.0.0{prerelease}"
     elif is_feature_release:
-        return f"{last_version[0]}.{last_version[1] + 1}.0"
+        return f"{last_version[0]}.{last_version[1] + 1}.0{prerelease}"
     else:
-        return f"{last_version[0]}.{last_version[1]}.{last_version[2] + 1}"
+        return f"{last_version[0]}.{last_version[1]}.{last_version[2] + 1}{prerelease}"
 
 
 def main() -> None:
@@ -146,9 +148,13 @@ def main() -> None:
     parser.add_argument("base_branch")
     parser.add_argument("token")
     parser.add_argument("--major", action="store_true", default=False)
+    parser.add_argument("--prerelease", default="")
     options = parser.parse_args()
     prepare_release_pr(
-        base_branch=options.base_branch, is_major=options.major, token=options.token
+        base_branch=options.base_branch,
+        is_major=options.major,
+        token=options.token,
+        prerelease=options.prerelease,
     )
 
 
