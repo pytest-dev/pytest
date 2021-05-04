@@ -1505,18 +1505,17 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 tw.line()
                 tw.sep("-", f"fixtures defined from {module}")
                 currentmodule = module
-        if verbose <= 0 and argname[0] == "_":
+        if verbose <= 0 and argname.startswith("_"):
             continue
-        tw.write(argname, green=True)
+        funcargspec = f"{argname} -- {bestrel}"
+        tw.write(funcargspec, green=True)
         if fixturedef.scope != "function":
             tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
-        if verbose > 0:
-            tw.write(" -- %s" % bestrel, yellow=True)
         tw.write("\n")
         loc = getlocation(fixturedef.func, str(curdir))
         doc = inspect.getdoc(fixturedef.func)
         if doc:
-            write_docstring(tw, doc)
+            write_docstring(tw, doc.split("\n\n")[0] if verbose<=0 else doc)
         else:
             tw.line(f"    {loc}: no docstring available", red=True)
         tw.line()
