@@ -170,6 +170,7 @@ def test_doctest_items(pytester: Pytester) -> None:
     pytester.maketxtfile(
         """
         >>> 1 + 1
+        2
     """
     )
     result = pytester.runpytest(
