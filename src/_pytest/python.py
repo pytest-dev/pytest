@@ -1428,9 +1428,8 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
-        else:
-            bestrel = get_best_relpath(fixture_def.func)
-            funcargspec = f"{argname} -- {bestrel}"
+        bestrel = get_best_relpath(fixture_def.func)
+        funcargspec = f"{argname} -- {bestrel}"
         tw.line(funcargspec, green=True)
         fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
