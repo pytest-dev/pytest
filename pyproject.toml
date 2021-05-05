@@ -42,6 +42,14 @@ filterwarnings = [
     "default:invalid escape sequence:DeprecationWarning",
     # ignore use of unregistered marks, because we use many to test the implementation
     "ignore::_pytest.warning_types.PytestUnknownMarkWarning",
+    # https://github.com/benjaminp/six/issues/341
+    "ignore:_SixMetaPathImporter\\.exec_module\\(\\) not found; falling back to load_module\\(\\):ImportWarning",
+    # https://github.com/benjaminp/six/pull/352
+    "ignore:_SixMetaPathImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
+    # https://github.com/pypa/setuptools/pull/2517
+    "ignore:VendorImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
+    # https://github.com/pytest-dev/execnet/pull/127
+    "ignore:isSet\\(\\) is deprecated, use is_set\\(\\) instead:DeprecationWarning",
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [

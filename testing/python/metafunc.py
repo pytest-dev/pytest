@@ -448,7 +448,10 @@ class TestMetafunc:
         enum = pytest.importorskip("enum")
         e = enum.Enum("Foo", "one, two")
         result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
-        assert result == ["Foo.one-Foo.two"]
+        if sys.version_info[:2] >= (3, 10):
+            assert result == ["one-two"]
+        else:
+            assert result == ["Foo.one-Foo.two"]
 
     def test_idmaker_idfn(self) -> None:
         """#351"""

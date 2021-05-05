@@ -1210,7 +1210,7 @@ def test_unorderable_types(testdir):
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestCollectionWarning")
 def test_dont_collect_non_function_callable(testdir):
     """Test for issue https://github.com/pytest-dev/pytest/issues/331
 
