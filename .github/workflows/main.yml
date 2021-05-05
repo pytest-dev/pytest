@@ -13,6 +13,8 @@ on:
     branches:
       - main
       - "[0-9]+.[0-9]+.x"
+env:
+  PYTEST_ADDOPTS: "--color=yes"
 
 jobs:
   build:
