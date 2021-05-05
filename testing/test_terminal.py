@@ -1618,7 +1618,7 @@ def test_terminal_summary(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning")
 def test_terminal_summary_warnings_are_displayed(pytester: Pytester) -> None:
     """Test that warnings emitted during pytest_terminal_summary are displayed.
     (#1305).
@@ -1655,7 +1655,7 @@ def test_terminal_summary_warnings_are_displayed(pytester: Pytester) -> None:
     assert stdout.count("=== warnings summary ") == 2
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning")
 def test_terminal_summary_warnings_header_once(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
