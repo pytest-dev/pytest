@@ -640,10 +640,9 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
     - ``unittest.TestCase.assertAlmostEqual(a, b)``: True if ``a`` and ``b``
       are within an absolute tolerance of ``1e-7``.  No relative tolerance is
-      considered and the absolute tolerance cannot be changed, so this function
-      is not appropriate for very large or very small numbers.  Also, it's only
-      available in subclasses of ``unittest.TestCase`` and it's ugly because it
-      doesn't follow PEP8.  `More information...`__
+      considered , so this function is not appropriate for very large or very
+      small numbers.  Also, it's only available in subclasses of ``unittest.TestCase``
+      and it's ugly because it doesn't follow PEP8.  `More information...`__
 
       __ https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertAlmostEqual
 
