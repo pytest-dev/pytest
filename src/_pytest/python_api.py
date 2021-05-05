@@ -654,6 +654,14 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       special case that you explicitly specify an absolute tolerance but not a
       relative tolerance, only the absolute tolerance is considered.
 
+    .. note::
+
+        ``approx`` can handle numpy arrays, but we recommend the
+        specialised test helpers in `numpy.testing`__ if you need
+        support for comparisons, NaNs, or ULP-based tolerances.
+
+        __ https://numpy.org/doc/stable/reference/routines.testing.html
+
     .. warning::
 
        .. versionchanged:: 3.2
