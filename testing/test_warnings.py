@@ -38,7 +38,7 @@ def pyfile_with_warnings(testdir: Testdir, request: FixtureRequest) -> str:
     return str(test_file)
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning", "default::RuntimeWarning")
 def test_normal_flow(testdir, pyfile_with_warnings):
     """Check that the warnings section is displayed."""
     result = testdir.runpytest(pyfile_with_warnings)
@@ -55,7 +55,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     )
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_setup_teardown_warnings(testdir):
     testdir.makepyfile(
         """
@@ -123,7 +123,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_unicode(testdir):
     testdir.makepyfile(
         """
@@ -182,7 +182,7 @@ def test_filterwarnings_mark(testdir, default_config):
         testdir.makeini(
             """
             [pytest]
-            filterwarnings = always
+            filterwarnings = always::RuntimeWarning
         """
         )
     testdir.makepyfile(
@@ -202,7 +202,9 @@ def test_filterwarnings_mark(testdir, default_config):
             warnings.warn(RuntimeWarning())
     """
     )
-    result = testdir.runpytest("-W always" if default_config == "cmdline" else "")
+    result = testdir.runpytest(
+        "-W always::RuntimeWarning" if default_config == "cmdline" else ""
+    )
     result.stdout.fnmatch_lines(["*= 1 failed, 2 passed, 1 warning in *"])
 
 
@@ -217,7 +219,7 @@ def test_non_string_warning_argument(testdir):
             warnings.warn(UserWarning(1, 'foo'))
         """
     )
-    result = testdir.runpytest("-W", "always")
+    result = testdir.runpytest("-W", "always::UserWarning")
     result.stdout.fnmatch_lines(["*= 1 passed, 1 warning in *"])
 
 
@@ -236,7 +238,7 @@ def test_filterwarnings_mark_registration(testdir):
     assert result.ret == 0
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_warning_captured_hook(testdir):
     testdir.makeconftest(
         """
@@ -297,7 +299,7 @@ def test_warning_captured_hook(testdir):
             assert collected_result[3] is None, str(collected)
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_collection_warnings(testdir):
     """Check that we also capture warnings issued during test collection (#3251)."""
     testdir.makepyfile(
@@ -321,7 +323,7 @@ def test_collection_warnings(testdir):
     )
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_mark_regex_escape(testdir):
     """@pytest.mark.filterwarnings should not try to escape regex characters (#3936)"""
     testdir.makepyfile(
@@ -337,7 +339,7 @@ def test_mark_regex_escape(testdir):
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestWarning")
 @pytest.mark.parametrize("ignore_pytest_warnings", ["no", "ini", "cmdline"])
 def test_hide_pytest_internal_warnings(testdir, ignore_pytest_warnings):
     """Make sure we can ignore internal pytest warnings using a warnings filter."""
@@ -383,7 +385,7 @@ def test_option_precedence_cmdline_over_ini(testdir, ignore_on_cmdline):
     testdir.makeini(
         """
         [pytest]
-        filterwarnings = error
+        filterwarnings = error::UserWarning
     """
     )
     testdir.makepyfile(
@@ -578,7 +580,7 @@ def test_warnings_checker_twice():
 
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_group_warnings_by_message(testdir):
     testdir.copy_example("warnings/test_group_warnings_by_message.py")
     result = testdir.runpytest()
@@ -610,7 +612,7 @@ def test_group_warnings_by_message(testdir):
 
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_group_warnings_by_message_summary(testdir):
     testdir.copy_example("warnings/test_group_warnings_by_message_summary")
     testdir.syspathinsert()

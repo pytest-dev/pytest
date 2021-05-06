@@ -27,6 +27,8 @@ jobs:
           "windows-py37",
           "windows-py37-pluggy",
           "windows-py38",
+          "windows-py39",
+          "windows-py310",
 
           "ubuntu-py36",
           "ubuntu-py37",
@@ -34,6 +36,7 @@ jobs:
           "ubuntu-py37-freeze",
           "ubuntu-py38",
           "ubuntu-py39",
+          "ubuntu-py310",
           "ubuntu-pypy3",
 
           "macos-py37",
@@ -62,6 +65,14 @@ jobs:
             os: windows-latest
             tox_env: "py38-unittestextras"
             use_coverage: true
+          - name: "windows-py39"
+            python: "3.9"
+            os: windows-latest
+            tox_env: "py39-xdist"
+          - name: "windows-py310"
+            python: "3.10-dev"
+            os: windows-latest
+            tox_env: "py310-xdist"
 
           - name: "ubuntu-py36"
             python: "3.6"
@@ -88,6 +99,10 @@ jobs:
             python: "3.9"
             os: ubuntu-latest
             tox_env: "py39-xdist"
+          - name: "ubuntu-py310"
+            python: "3.10-dev"
+            os: ubuntu-latest
+            tox_env: "py310-xdist"
           - name: "ubuntu-pypy3"
             python: "pypy3"
             os: ubuntu-latest
