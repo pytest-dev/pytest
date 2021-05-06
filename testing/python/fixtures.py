@@ -3334,7 +3334,7 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory -- *[[]session scope[]]",
+                "tmp_path_factory [[]session scope[]] -- *tmpdir.py*",
                 "*for the test session*",
                 "tmp_path -- *",
                 "*temporary directory*",
@@ -3345,7 +3345,7 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory -- *tmpdir.py* [[]session scope[]]",
+                "tmp_path_factory [[]session scope[]] -- *tmpdir.py*",
                 "*for the test session*",
                 "tmp_path -- *tmpdir.py*",
                 "*temporary directory*",
