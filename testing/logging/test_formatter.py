@@ -37,7 +37,7 @@ def test_coloredlogformatter() -> None:
 
 
 def test_coloredlogformatter_with_width_precision() -> None:
-    logfmt = "%(filename)-25s %(lineno)4d %(levelname)-8.2s %(message)s"
+    logfmt = "%(filename)-25s %(lineno)4d %(levelname)-8.8s %(message)s"
 
     record = logging.LogRecord(
         name="dummy",
