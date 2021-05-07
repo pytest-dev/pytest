@@ -18,10 +18,6 @@ def test_coloredlogformatter() -> None:
         exc_info=None,
     )
 
-    class ColorConfig:
-        class option:
-            pass
-
     tw = TerminalWriter()
     tw.hasmarkup = True
     formatter = ColoredLevelFormatter(tw, logfmt)
@@ -48,10 +44,6 @@ def test_coloredlogformatter_with_width_precision() -> None:
         args=(),
         exc_info=None,
     )
-
-    class ColorConfig:
-        class option:
-            pass
 
     tw = TerminalWriter()
     tw.hasmarkup = True
