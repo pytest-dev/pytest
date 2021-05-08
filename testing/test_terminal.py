@@ -689,6 +689,32 @@ class TestTerminalFunctional:
         )
         assert result.ret == 0
 
+    def test_keyword_with_private_node(self, pytester: Pytester) -> None:
+        testpath = pytester.makepyfile(
+            """
+                def test_foo_one():
+                    pass
+                def test_foo_two():
+                    pass
+                def test_foo_three():
+                    pass
+                def test_bar_one():
+                    pass
+                def test_bar_two():
+                    pass
+                def _test_bar_three():
+                    pass
+           """
+        )
+        result = pytester.runpytest("-k", "bar", testpath)
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items / 3 deselected / 2 selected",
+                "*test_keyword_with_private_node.py ..*",
+            ]
+        )
+        assert result.ret == 0
+
     def test_deselected_with_hookwrapper(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """

@@ -1,0 +1,2 @@
+add feature to ignore private names(characterised with names starting with '_') from being collected when running pytest
+with ``-k`` option.

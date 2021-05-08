@@ -172,6 +172,9 @@ class KeywordMatcher:
         # Add the markers to the keywords as we no longer handle them correctly.
         mapped_names.update(mark.name for mark in item.iter_markers())
 
+        # Remove names that are private(characterised by starting with '_')
+        mapped_names = set(filter(lambda name: not name.startswith("_"), mapped_names))
+
         return cls(mapped_names)
 
     def __call__(self, subname: str) -> bool:
