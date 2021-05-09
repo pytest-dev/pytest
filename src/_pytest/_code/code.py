@@ -1,3 +1,4 @@
+import collections
 import inspect
 import re
 import sys
@@ -409,31 +410,77 @@ class Traceback(List[TracebackEntry]):
     def recursionindex(self) -> Optional[int]:
         """Return the index of the frame/TracebackEntry where recursion originates if
         appropriate, None if no recursion occurred."""
-        cache: Dict[Tuple[Any, int, int], List[Dict[str, Any]]] = {}
+        entries: Dict[
+            Tuple[Any, int, int], List[Tuple[int, Frame]]
+        ] = collections.defaultdict(list)
+
         for i, entry in enumerate(self):
             # id for the code.raw is needed to work around
             # the strange metaprogramming in the decorator lib from pypi
             # which generates code objects that have hash/value equality
             # XXX needs a test
             key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
-            # print "checking for recursion at", key
-            values = cache.setdefault(key, [])
-            if values:
-                f = entry.frame
-                loc = f.f_locals
-                for otherloc in values:
-                    if f.eval(
-                        co_equal,
-                        __recursioncache_locals_1=loc,
-                        __recursioncache_locals_2=otherloc,
-                    ):
-                        return i
-            values.append(entry.frame.f_locals)
+            entries[key].append((i, entry.frame))
+
+        recursion_index = len(self)
+        for same_pos_entries in entries.values():
+            frames_indexes: Tuple[int, ...]
+            frames: Tuple[Frame, ...]
+            frames_indexes, frames = zip(*same_pos_entries)
+            local_recursion_index = self._get_frames_recursion_index(frames)
+            if local_recursion_index is not None:
+                recursion_index = min(
+                    recursion_index, frames_indexes[local_recursion_index]
+                )
+
+        if recursion_index != len(self):
+            return recursion_index
         return None
+
+    @staticmethod
+    def _get_frames_recursion_index(frames: Sequence[Frame]) -> Optional[int]:
+        """Return the index in the `frames` array from which the elements are looped.
+        That is, for the (illustrative) array [0 | 1, 2 | 1, 2 | ...], 3 will be returned.
+        """
+        if len(frames) <= 1:
+            return None
+
+        loop_end_pos = len(frames) - 1
+        last_frame = frames[loop_end_pos]
+
+        # Finding beginning of the loop: such n that frames[n] equals to the last_frame
+        for i in range(loop_end_pos - 1, -1, -1):
+            frame = frames[i]
+            if frame.eval(
+                co_equal,
+                __recursion_frame_locals_1=last_frame.f_locals,
+                __recursion_frame_locals_2=frame.f_locals,
+            ):
+                loop_start_pos = i
+                break
+        else:
+            return None
+
+        # If frames[a] is equal to frames[b] then frames[a+1] must be equal to frames[b+1]
+        # Trying to shift loop indexes (start, end) to the beginning:
+        # checking all pairs (start-1, end-1), (start-2, end-2), ..., (0, loop_length)
+        while loop_start_pos > 0:
+            loop_start_pos -= 1
+            loop_end_pos -= 1
+            frame = frames[loop_start_pos]
+            if not frame.eval(
+                co_equal,
+                __recursion_frame_locals_1=frames[loop_end_pos].f_locals,
+                __recursion_frame_locals_2=frame.f_locals,
+            ):
+                loop_end_pos += 1
+                break
+
+        return loop_end_pos
 
 
 co_equal = compile(
-    "__recursioncache_locals_1 == __recursioncache_locals_2", "?", "eval"
+    "__recursion_frame_locals_1 == __recursion_frame_locals_2", "?", "eval"
 )
 
 
