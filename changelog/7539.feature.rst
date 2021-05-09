@@ -1,2 +1,1 @@
-add feature to ignore private names(characterised with names starting with '_') from being collected when running pytest
-with ``-k`` option.
+Pytest with ``-k`` option ignore private names(characterised with names starting with '_') from being collected.

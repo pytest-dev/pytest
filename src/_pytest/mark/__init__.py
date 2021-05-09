@@ -173,7 +173,7 @@ class KeywordMatcher:
         mapped_names.update(mark.name for mark in item.iter_markers())
 
         # Remove names that are private(characterised by starting with '_')
-        mapped_names = set(filter(lambda name: not name.startswith("_"), mapped_names))
+        mapped_names = {name for name in mapped_names if not name.startswith("_")}
 
         return cls(mapped_names)
 
