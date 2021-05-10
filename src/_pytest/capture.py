@@ -618,10 +618,8 @@ class MultiCapture(Generic[AnyStr]):
         return self._state == "started"
 
     def readouterr(self) -> CaptureResult[AnyStr]:
-        if self.out:
-            out = self.out.snap()
-        else:
-            out = ""
+        out = self.out.snap() if self.out else ""
+
         if self.err:
             err = self.err.snap()
         else:
