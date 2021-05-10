@@ -619,11 +619,7 @@ class MultiCapture(Generic[AnyStr]):
 
     def readouterr(self) -> CaptureResult[AnyStr]:
         out = self.out.snap() if self.out else ""
-
-        if self.err:
-            err = self.err.snap()
-        else:
-            err = ""
+        err = self.err.snap() if self.err else ""
         return CaptureResult(out, err)
 
 
