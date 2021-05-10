@@ -61,10 +61,7 @@ def thread_exception_runtest_hook() -> Generator[None, None, None]:
     with catch_threading_exception() as cm:
         yield
         if cm.args:
-            if cm.args.thread is not None:
-                thread_name = cm.args.thread.name
-            else:
-                thread_name = "<unknown>"
+            thread_name = "<unknown>" if cm.args.thread is None else cm.args.thread.name
             msg = f"Exception in thread {thread_name}\n\n"
             msg += "".join(
                 traceback.format_exception(
