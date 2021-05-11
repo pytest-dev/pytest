@@ -130,7 +130,7 @@ class ApproxBase:
 
 def _recursive_list_map(f, x):
     if isinstance(x, list):
-        return list(_recursive_list_map(f, xi) for xi in x)
+        return [_recursive_list_map(f, xi) for xi in x]
     else:
         return f(x)
 
