@@ -4,7 +4,6 @@ import fnmatch
 import functools
 import importlib
 import os
-import pathlib
 import sys
 from pathlib import Path
 from typing import Callable
