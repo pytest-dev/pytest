@@ -322,57 +322,58 @@ class DoctestItem(pytest.Item):
         elif isinstance(excinfo.value, MultipleDoctestFailures):
             failures = excinfo.value.failures
 
-        if failures is not None:
-            reprlocation_lines = []
-            for failure in failures:
-                example = failure.example
-                test = failure.test
-                filename = test.filename
-                if test.lineno is None:
-                    lineno = None
-                else:
-                    lineno = test.lineno + example.lineno + 1
-                message = type(failure).__name__
-                # TODO: ReprFileLocation doesn't expect a None lineno.
-                reprlocation = ReprFileLocation(filename, lineno, message)  # type: ignore[arg-type]
-                checker = _get_checker()
-                report_choice = _get_report_choice(
-                    self.config.getoption("doctestreport")
-                )
-                if lineno is not None:
-                    assert failure.test.docstring is not None
-                    lines = failure.test.docstring.splitlines(False)
-                    # add line numbers to the left of the error message
-                    assert test.lineno is not None
-                    lines = [
-                        "%03d %s" % (i + test.lineno + 1, x)
-                        for (i, x) in enumerate(lines)
-                    ]
-                    # trim docstring error lines to 10
-                    lines = lines[max(example.lineno - 9, 0) : example.lineno + 1]
-                else:
-                    lines = [
-                        "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example"
-                    ]
-                    indent = ">>>"
-                    for line in example.source.splitlines():
-                        lines.append(f"??? {indent} {line}")
-                        indent = "..."
-                if isinstance(failure, doctest.DocTestFailure):
-                    lines += checker.output_difference(
-                        example, failure.got, report_choice
-                    ).split("\n")
-                else:
-                    inner_excinfo = ExceptionInfo.from_exc_info(failure.exc_info)
-                    lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
-                    lines += [
-                        x.strip("\n")
-                        for x in traceback.format_exception(*failure.exc_info)
-                    ]
-                reprlocation_lines.append((reprlocation, lines))
-            return ReprFailDoctest(reprlocation_lines)
-        else:
+        if failures is None:
             return super().repr_failure(excinfo)
+
+        reprlocation_lines = []
+        for failure in failures:
+            example = failure.example
+            test = failure.test
+            filename = test.filename
+            if test.lineno is None:
+                lineno = None
+            else:
+                lineno = test.lineno + example.lineno + 1
+            message = type(failure).__name__
+            # TODO: ReprFileLocation doesn't expect a None lineno.
+            reprlocation = ReprFileLocation(filename, lineno, message)  # type: ignore[arg-type]
+            checker = _get_checker()
+            report_choice = _get_report_choice(
+                self.config.getoption("doctestreport")
+            )
+            if lineno is not None:
+                assert failure.test.docstring is not None
+                lines = failure.test.docstring.splitlines(False)
+                # add line numbers to the left of the error message
+                assert test.lineno is not None
+                lines = [
+                    "%03d %s" % (i + test.lineno + 1, x)
+                    for (i, x) in enumerate(lines)
+                ]
+                # trim docstring error lines to 10
+                lines = lines[max(example.lineno - 9, 0) : example.lineno + 1]
+            else:
+                lines = [
+                    "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example"
+                ]
+                indent = ">>>"
+                for line in example.source.splitlines():
+                    lines.append(f"??? {indent} {line}")
+                    indent = "..."
+            if isinstance(failure, doctest.DocTestFailure):
+                lines += checker.output_difference(
+                    example, failure.got, report_choice
+                ).split("\n")
+            else:
+                inner_excinfo = ExceptionInfo.from_exc_info(failure.exc_info)
+                lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
+                lines += [
+                    x.strip("\n")
+                    for x in traceback.format_exception(*failure.exc_info)
+                ]
+            reprlocation_lines.append((reprlocation, lines))
+        return ReprFailDoctest(reprlocation_lines)
+
 
     def reportinfo(self):
         assert self.dtest is not None
