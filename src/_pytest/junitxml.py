@@ -648,39 +648,39 @@ class LogXML:
         dirname = os.path.dirname(os.path.abspath(self.logfile))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
-        logfile = open(self.logfile, "w", encoding="utf-8")
-        suite_stop_time = timing.time()
-        suite_time_delta = suite_stop_time - self.suite_start_time
 
-        numtests = (
-            self.stats["passed"]
-            + self.stats["failure"]
-            + self.stats["skipped"]
-            + self.stats["error"]
-            - self.cnt_double_fail_tests
-        )
-        logfile.write('<?xml version="1.0" encoding="utf-8"?>')
+        with open(self.logfile, "w", encoding="utf-8") as logfile:
+            suite_stop_time = timing.time()
+            suite_time_delta = suite_stop_time - self.suite_start_time
 
-        suite_node = ET.Element(
-            "testsuite",
-            name=self.suite_name,
-            errors=str(self.stats["error"]),
-            failures=str(self.stats["failure"]),
-            skipped=str(self.stats["skipped"]),
-            tests=str(numtests),
-            time="%.3f" % suite_time_delta,
-            timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
-            hostname=platform.node(),
-        )
-        global_properties = self._get_global_properties_node()
-        if global_properties is not None:
-            suite_node.append(global_properties)
-        for node_reporter in self.node_reporters_ordered:
-            suite_node.append(node_reporter.to_xml())
-        testsuites = ET.Element("testsuites")
-        testsuites.append(suite_node)
-        logfile.write(ET.tostring(testsuites, encoding="unicode"))
-        logfile.close()
+            numtests = (
+                self.stats["passed"]
+                + self.stats["failure"]
+                + self.stats["skipped"]
+                + self.stats["error"]
+                - self.cnt_double_fail_tests
+            )
+            logfile.write('<?xml version="1.0" encoding="utf-8"?>')
+
+            suite_node = ET.Element(
+                "testsuite",
+                name=self.suite_name,
+                errors=str(self.stats["error"]),
+                failures=str(self.stats["failure"]),
+                skipped=str(self.stats["skipped"]),
+                tests=str(numtests),
+                time="%.3f" % suite_time_delta,
+                timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
+                hostname=platform.node(),
+            )
+            global_properties = self._get_global_properties_node()
+            if global_properties is not None:
+                suite_node.append(global_properties)
+            for node_reporter in self.node_reporters_ordered:
+                suite_node.append(node_reporter.to_xml())
+            testsuites = ET.Element("testsuites")
+            testsuites.append(suite_node)
+            logfile.write(ET.tostring(testsuites, encoding="unicode"))
 
     def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
         terminalreporter.write_sep("-", f"generated xml file: {self.logfile}")
