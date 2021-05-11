@@ -377,8 +377,7 @@ def _fill_fixtures_impl(function: "Function") -> None:
         fm.session._setupstate.setup(function)
         request._fillfixtures()
         # Prune out funcargs for jstests.
-        newfuncargs = {name: function.funcargs[name] for name in fi.argnames}
-        function.funcargs = newfuncargs
+        function.funcargs = {name: function.funcargs[name] for name in fi.argnames}
     else:
         request._fillfixtures()
 
