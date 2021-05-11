@@ -4,6 +4,7 @@ import fnmatch
 import functools
 import importlib
 import os
+import pathlib
 import sys
 from pathlib import Path
 from typing import Callable
@@ -239,9 +240,7 @@ def validate_basetemp(path: str) -> str:
 
     def is_ancestor(base: Path, query: Path) -> bool:
         """Return whether query is an ancestor of base."""
-        if base == query:
-            return True
-        return query in base.parents
+        return base.is_relative_to(query)
 
     # check if path is an ancestor of cwd
     if is_ancestor(Path.cwd(), Path(path).absolute()):
