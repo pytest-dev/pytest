@@ -647,10 +647,7 @@ def _init_checker_class() -> Type["doctest.OutputChecker"]:
                 exponent: Optional[str] = w.group("exponent1")
                 if exponent is None:
                     exponent = w.group("exponent2")
-                if fraction is None:
-                    precision = 0
-                else:
-                    precision = len(fraction)
+                precision = 0 if fraction is None else len(fraction)
                 if exponent is not None:
                     precision -= int(exponent)
                 if float(w.group()) == approx(float(g.group()), abs=10 ** -precision):

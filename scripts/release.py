@@ -100,10 +100,7 @@ def pre_release(version, *, skip_check_links):
 
 
 def changelog(version, write_out=False):
-    if write_out:
-        addopts = []
-    else:
-        addopts = ["--draft"]
+    addopts = [] if write_out else ["--draft"]
     check_call(["towncrier", "--yes", "--version", version] + addopts)
 
 
