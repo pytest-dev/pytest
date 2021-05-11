@@ -5,7 +5,7 @@ import functools
 import importlib
 import os
 import sys
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Callable
 from typing import Dict
 from typing import FrozenSet
@@ -239,6 +239,8 @@ def validate_basetemp(path: str) -> str:
 
     def is_ancestor(base: Path, query: Path) -> bool:
         """Return whether query is an ancestor of base."""
+        base = PurePath(base)
+        query = PurePath(query)
         return base.is_relative_to(query)
 
     # check if path is an ancestor of cwd
