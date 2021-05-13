@@ -3,6 +3,7 @@ import inspect
 import warnings
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Collection
 from typing import Iterable
 from typing import Iterator
@@ -264,9 +265,9 @@ class Mark:
 
 
 # A generic parameter designating an object to which a Mark may
-# be applied -- a test function (callable) or class.
+# be applied -- a test function (callable) or class (also callable).
 # Note: a lambda is not allowed, but this can't be represented.
-Markable = TypeVar("Markable", bound=Union[Callable[..., object], type])
+Markable = TypeVar("Markable", bound=Callable[..., Any])
 
 
 @attr.s(init=False, auto_attribs=True)
@@ -344,25 +345,22 @@ class MarkDecorator:
         mark = Mark(self.name, args, kwargs, _ispytest=True)
         return MarkDecorator(self.mark.combined_with(mark), _ispytest=True)
 
-    # Type ignored because the overloads overlap with an incompatible
-    # return type. Not much we can do about that. Thankfully mypy picks
-    # the first match so it works out even if we break the rules.
     @overload
-    def __call__(self, arg: Markable) -> Markable:  # type: ignore[misc]
+    def __call__(self, arg: Markable) -> Markable:
         pass
 
     @overload
-    def __call__(self, *args: object, **kwargs: object) -> "MarkDecorator":
+    def __call__(self, *args: Any, **kwargs: Any) -> "MarkDecorator":
         pass
 
-    def __call__(self, *args: object, **kwargs: object):
+    def __call__(self, *args: Any, **kwargs: Any) -> Union[Markable, "MarkDecorator"]:
         """Call the MarkDecorator."""
         if args and not kwargs:
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
                 store_mark(func, self.mark)
-                return func
+                return cast(Markable, func)
         return self.with_args(*args, **kwargs)
 
 
