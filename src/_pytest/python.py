@@ -1428,15 +1428,15 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
-        if verbose > 0:
-            bestrel = get_best_relpath(fixture_def.func)
-            funcargspec = f"{argname} -- {bestrel}"
-        else:
-            funcargspec = argname
-        tw.line(funcargspec, green=True)
+        bestrel = get_best_relpath(fixture_def.func)
+        tw.write(f"{argname}", green=True)
+        tw.write(f" -- {bestrel}", yellow=True)
+        tw.write("\n")
         fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
-            write_docstring(tw, fixture_doc)
+            write_docstring(
+                tw, fixture_doc.split("\n\n")[0] if verbose <= 0 else fixture_doc
+            )
         else:
             tw.line("    no docstring available", red=True)
 
@@ -1508,18 +1508,17 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 tw.line()
                 tw.sep("-", f"fixtures defined from {module}")
                 currentmodule = module
-        if verbose <= 0 and argname[0] == "_":
+        if verbose <= 0 and argname.startswith("_"):
             continue
-        tw.write(argname, green=True)
+        tw.write(f"{argname}", green=True)
         if fixturedef.scope != "function":
             tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
-        if verbose > 0:
-            tw.write(" -- %s" % bestrel, yellow=True)
+        tw.write(f" -- {bestrel}", yellow=True)
         tw.write("\n")
         loc = getlocation(fixturedef.func, str(curdir))
         doc = inspect.getdoc(fixturedef.func)
         if doc:
-            write_docstring(tw, doc)
+            write_docstring(tw, doc.split("\n\n")[0] if verbose <= 0 else doc)
         else:
             tw.line(f"    {loc}: no docstring available", red=True)
         tw.line()
