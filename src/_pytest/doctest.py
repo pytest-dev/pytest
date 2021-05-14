@@ -145,10 +145,7 @@ def _is_doctest(config: Config, path: Path, parent: Collector) -> bool:
     if path.suffix in (".txt", ".rst") and parent.session.isinitpath(path):
         return True
     globs = config.getoption("doctestglob") or ["test*.txt"]
-    for glob in globs:
-        if fnmatch_ex(glob, path):
-            return True
-    return False
+    return any(fnmatch_ex(glob, path) for glob in globs)
 
 
 class ReprFailDoctest(TerminalRepr):

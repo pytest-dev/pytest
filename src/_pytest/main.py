@@ -241,10 +241,7 @@ def validate_basetemp(path: str) -> str:
         """Return whether query is an ancestor of base."""
         if base == query:
             return True
-        for parent in base.parents:
-            if parent == query:
-                return True
-        return False
+        return query in base.parents
 
     # check if path is an ancestor of cwd
     if is_ancestor(Path.cwd(), Path(path).absolute()):

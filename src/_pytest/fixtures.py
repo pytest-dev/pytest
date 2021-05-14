@@ -276,7 +276,7 @@ def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_
 def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
     argkeys_cache: Dict[int, Dict[nodes.Item, Dict[_Key, None]]] = {}
     items_by_argkey: Dict[int, Dict[_Key, Deque[nodes.Item]]] = {}
-    for scopenum in range(0, scopenum_function):
+    for scopenum in range(scopenum_function):
         d: Dict[nodes.Item, Dict[_Key, None]] = {}
         argkeys_cache[scopenum] = d
         item_d: Dict[_Key, Deque[nodes.Item]] = defaultdict(deque)
@@ -296,7 +296,7 @@ def fix_cache_order(
     argkeys_cache: Dict[int, Dict[nodes.Item, Dict[_Key, None]]],
     items_by_argkey: Dict[int, Dict[_Key, "Deque[nodes.Item]"]],
 ) -> None:
-    for scopenum in range(0, scopenum_function):
+    for scopenum in range(scopenum_function):
         for key in argkeys_cache[scopenum].get(item, []):
             items_by_argkey[scopenum][key].appendleft(item)
 
@@ -377,10 +377,7 @@ def _fill_fixtures_impl(function: "Function") -> None:
         fm.session._setupstate.setup(function)
         request._fillfixtures()
         # Prune out funcargs for jstests.
-        newfuncargs = {}
-        for name in fi.argnames:
-            newfuncargs[name] = function.funcargs[name]
-        function.funcargs = newfuncargs
+        function.funcargs = {name: function.funcargs[name] for name in fi.argnames}
     else:
         request._fillfixtures()
 
