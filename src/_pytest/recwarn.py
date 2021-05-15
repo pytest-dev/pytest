@@ -17,6 +17,7 @@ from typing import Union
 
 from _pytest.compat import final
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import WARNS_NONE_ARG
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 
@@ -83,7 +84,7 @@ def deprecated_call(
 
 @overload
 def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]] = ...,
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
 ) -> "WarningsChecker":
@@ -101,7 +102,7 @@ def warns(
 
 
 def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
     **kwargs: Any,
@@ -232,7 +233,7 @@ class WarningsChecker(WarningsRecorder):
         self,
         expected_warning: Optional[
             Union[Type[Warning], Tuple[Type[Warning], ...]]
-        ] = None,
+        ] = Warning,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
         *,
         _ispytest: bool = False,
@@ -242,6 +243,7 @@ class WarningsChecker(WarningsRecorder):
 
         msg = "exceptions must be derived from Warning, not %s"
         if expected_warning is None:
+            warnings.warn(WARNS_NONE_ARG, stacklevel=4)
             expected_warning_tup = None
         elif isinstance(expected_warning, tuple):
             for exc in expected_warning:

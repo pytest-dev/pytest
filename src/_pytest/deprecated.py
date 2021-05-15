@@ -101,6 +101,11 @@ HOOK_LEGACY_PATH_ARG = UnformattedWarning(
     "see https://docs.pytest.org/en/latest/deprecations.html"
     "#py-path-local-arguments-for-hooks-replaced-with-pathlib-path",
 )
+
+WARNS_NONE_ARG = PytestDeprecationWarning(
+    "Please pass an explicit Warning type or tuple of Warning types."
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
