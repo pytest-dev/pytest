@@ -102,7 +102,9 @@ def warns(
 
 
 def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]] = Warning,
+    expected_warning: Optional[
+        Union[Type[Warning], Tuple[Type[Warning], ...]]
+    ] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
     **kwargs: Any,
