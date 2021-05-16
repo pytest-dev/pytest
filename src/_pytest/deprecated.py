@@ -103,7 +103,8 @@ HOOK_LEGACY_PATH_ARG = UnformattedWarning(
 )
 
 WARNS_NONE_ARG = PytestDeprecationWarning(
-    "Please pass an explicit Warning type or tuple of Warning types."
+    "Passing None to catch any warning has been deprecated, pass no arguments instead:\n"
+    " Replace pytest.warns(None) by simply pytest.warns()."
 )
 
 # You want to make some `__init__` or function "private".

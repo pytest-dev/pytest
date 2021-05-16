@@ -183,6 +183,7 @@ def test_hookproxy_warnings_for_fspath(tmp_path, hooktype, request):
 def test_warns_none_is_deprecated():
     with pytest.warns(
         PytestDeprecationWarning,
-        match="Please pass an explicit Warning type or tuple of Warning types.",
+        match=r"Passing None to catch any warning has been deprecated, pass no arguments instead:\n Replace pytest.warns\(None\) by simply pytest.warns\(\).",
     ):
-        pytest.warns(None)
+        with pytest.warns(None):
+            pass
