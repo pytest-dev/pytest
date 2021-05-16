@@ -14,7 +14,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
+      issues: write
 
     if: (github.event.comment && startsWith(github.event.comment.body, '@pytestbot please')) || (github.event.issue && !github.event.comment && startsWith(github.event.issue.body, '@pytestbot please'))
 
@@ -36,4 +37,4 @@ jobs:
 
     - name: Prepare release
       run: |
-        tox -e release-on-comment -- $GITHUB_EVENT_PATH ${{ secrets.chatops }}
+        tox -e release-on-comment -- $GITHUB_EVENT_PATH ${{ github.token }}
