@@ -84,7 +84,7 @@ def deprecated_call(
 
 @overload
 def warns(
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
+    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
 ) -> "WarningsChecker":
