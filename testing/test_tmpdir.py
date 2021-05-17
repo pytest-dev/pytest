@@ -403,7 +403,7 @@ class TestRmRf:
         # ignored function
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            with pytest.warns(None) as warninfo:
+            with pytest.warns(None) as warninfo:  # type: ignore[call-overload]
                 exc_info4 = (None, PermissionError(), None)
                 on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
                 assert fn.is_file()

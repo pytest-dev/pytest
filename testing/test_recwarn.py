@@ -310,7 +310,7 @@ class TestWarns:
         # This should become an error when WARNS_NONE_ARG is removed in Pytest 7.0
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            with pytest.warns(None) as record:
+            with pytest.warns(None) as record:  # type: ignore[call-overload]
                 warnings.warn("user", UserWarning)
                 warnings.warn("runtime", RuntimeWarning)
 

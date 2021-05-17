@@ -188,5 +188,5 @@ def test_warns_none_is_deprecated():
             "Replace pytest.warns(None) by simply pytest.warns()."
         ),
     ):
-        with pytest.warns(None):
+        with pytest.warns(None):  # type: ignore[call-overload]
             pass
