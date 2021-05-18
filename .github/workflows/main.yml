@@ -13,13 +13,19 @@ on:
     branches:
       - main
       - "[0-9]+.[0-9]+.x"
+
 env:
   PYTEST_ADDOPTS: "--color=yes"
+
+# Set permissions at the job level.
+permissions: {}
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    permissions:
+      contents: read
 
     strategy:
       fail-fast: false
@@ -139,10 +145,13 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
+        persist-credentials: false
+
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -164,19 +173,29 @@ jobs:
 
   linting:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
     - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+
     - uses: actions/setup-python@v2
+
     - name: set PY
       run: echo "name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')" >> $GITHUB_ENV
+
     - uses: actions/cache@v2
       with:
         path: ~/.cache/pre-commit
         key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install tox
+
     - run: tox -e linting
 
   deploy:
@@ -184,6 +203,8 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     needs: [build]
 
@@ -191,25 +212,31 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
+        persist-credentials: false
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: "3.7"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install --upgrade wheel setuptools tox
+
     - name: Build package
       run: |
         python setup.py sdist bdist_wheel
+
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
         password: ${{ secrets.pypi_token }}
+
     - name: Publish GitHub release notes
       env:
-        GH_RELEASE_NOTES_TOKEN: ${{ secrets.release_notes }}
+        GH_RELEASE_NOTES_TOKEN: ${{ github.token }}
       run: |
         sudo apt-get install pandoc
         tox -e publish-gh-release-notes

@@ -23,8 +23,8 @@ Then the appropriate version will be obtained based on the given branch name:
 
 After that, it will create a release using the `release` tox environment, and push a new PR.
 
-**Secret**: currently the secret is defined in the @pytestbot account, which the core maintainers
-have access to. There we created a new secret named `chatops` with write access to the repository.
+**Token**: currently the token from the GitHub Actions is used, pushed with
+`pytest bot <pytestbot@gmail.com>` commit author.
 """
 import argparse
 import json
