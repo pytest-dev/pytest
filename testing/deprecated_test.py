@@ -178,3 +178,15 @@ def test_hookproxy_warnings_for_fspath(tmp_path, hooktype, request):
     assert l1 < record.lineno < l2
 
     hooks.pytest_ignore_collect(config=request.config, fspath=tmp_path)
+
+
+def test_warns_none_is_deprecated():
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=re.escape(
+            "Passing None to catch any warning has been deprecated, pass no arguments instead:\n "
+            "Replace pytest.warns(None) by simply pytest.warns()."
+        ),
+    ):
+        with pytest.warns(None):  # type: ignore[call-overload]
+            pass

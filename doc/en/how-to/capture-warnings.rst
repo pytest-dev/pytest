@@ -332,11 +332,11 @@ You can record raised warnings either using func:`pytest.warns` or with
 the ``recwarn`` fixture.
 
 To record with func:`pytest.warns` without asserting anything about the warnings,
-pass ``None`` as the expected warning type:
+pass no arguments as the expected warning type and it will default to a generic Warning:
 
 .. code-block:: python
 
-    with pytest.warns(None) as record:
+    with pytest.warns() as record:
         warnings.warn("user", UserWarning)
         warnings.warn("runtime", RuntimeWarning)
 
