@@ -422,19 +422,10 @@ class Traceback(List[TracebackEntry]):
                 f = entry.frame
                 loc = f.f_locals
                 for otherloc in values:
-                    if f.eval(
-                        co_equal,
-                        __recursioncache_locals_1=loc,
-                        __recursioncache_locals_2=otherloc,
-                    ):
+                    if otherloc == loc:
                         return i
             values.append(entry.frame.f_locals)
         return None
-
-
-co_equal = compile(
-    "__recursioncache_locals_1 == __recursioncache_locals_2", "?", "eval"
-)
 
 
 E = TypeVar("E", bound=BaseException, covariant=True)
