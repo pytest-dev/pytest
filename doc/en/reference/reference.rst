@@ -889,9 +889,14 @@ Node
 Parser
 ~~~~~~
 
-.. autoclass:: _pytest.config.argparsing.Parser()
+.. autoclass:: pytest.Parser()
     :members:
 
+OptionGroup
+~~~~~~~~~~~
+
+.. autoclass:: pytest.OptionGroup()
+    :members:
 
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~

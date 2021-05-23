@@ -909,6 +909,7 @@ class Config:
         self._parser = Parser(
             usage=f"%(prog)s [options] [{_a}] [{_a}] [...]",
             processopt=self._processopt,
+            _ispytest=True,
         )
         self.pluginmanager = pluginmanager
         """The plugin manager handles plugin registration and hook invocation.
@@ -1380,8 +1381,8 @@ class Config:
         """Return configuration value from an :ref:`ini file <configfiles>`.
 
         If the specified name hasn't been registered through a prior
-        :py:func:`parser.addini <_pytest.config.argparsing.Parser.addini>`
-        call (usually from a plugin), a ValueError is raised.
+        :func:`parser.addini <pytest.Parser.addini>` call (usually from a
+        plugin), a ValueError is raised.
         """
         try:
             return self._inicache[name]
