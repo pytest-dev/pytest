@@ -787,7 +787,7 @@ CollectReport
 Config
 ~~~~~~
 
-.. autoclass:: _pytest.config.Config()
+.. autoclass:: pytest.Config()
     :members:
 
 ExceptionInfo

@@ -841,6 +841,7 @@ class Config:
     """Access to configuration values, pluginmanager and plugin hooks.
 
     :param PytestPluginManager pluginmanager:
+        A pytest PluginManager.
 
     :param InvocationParams invocation_params:
         Object containing parameters regarding the :func:`pytest.main`
@@ -1226,8 +1227,8 @@ class Config:
 
     @hookimpl(hookwrapper=True)
     def pytest_collection(self) -> Generator[None, None, None]:
-        """Validate invalid ini keys after collection is done so we take in account
-        options added by late-loading conftest files."""
+        # Validate invalid ini keys after collection is done so we take in account
+        # options added by late-loading conftest files.
         yield
         self._validate_config_options()
 

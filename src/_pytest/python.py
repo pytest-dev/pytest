@@ -970,7 +970,7 @@ class Metafunc:
         #: Access to the underlying :class:`_pytest.python.FunctionDefinition`.
         self.definition = definition
 
-        #: Access to the :class:`_pytest.config.Config` object for the test session.
+        #: Access to the :class:`pytest.Config` object for the test session.
         self.config = config
 
         #: The module object where the test function is defined in.

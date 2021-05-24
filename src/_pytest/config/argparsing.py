@@ -189,7 +189,7 @@ class Parser:
             Default value if no ini-file option exists but is queried.
 
         The value of ini-variables can be retrieved via a call to
-        :py:func:`config.getini(name) <_pytest.config.Config.getini>`.
+        :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
         assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool")
         self._inidict[name] = (help, type, default)

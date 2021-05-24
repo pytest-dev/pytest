@@ -1379,7 +1379,8 @@ def yield_fixture(
 
 @fixture(scope="session")
 def pytestconfig(request: FixtureRequest) -> Config:
-    """Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
+    """Session-scoped fixture that returns the session's :class:`pytest.Config`
+    object.
 
     Example::
 

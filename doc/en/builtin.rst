@@ -61,7 +61,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         namespace of doctests.
 
     pytestconfig [session scope]
-        Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
+        Session-scoped fixture that returns the :class:`pytest.Config` object.
 
         Example::
 

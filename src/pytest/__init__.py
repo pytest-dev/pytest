@@ -7,6 +7,7 @@ from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
 from _pytest.config import cmdline
+from _pytest.config import Config
 from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -77,6 +78,7 @@ __all__ = [
     "cmdline",
     "collect",
     "Collector",
+    "Config",
     "console_main",
     "deprecated_call",
     "exit",
