@@ -13,6 +13,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
+from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import _fillfuncargs
@@ -114,6 +115,7 @@ __all__ = [
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
     "Pytester",
+    "PytestPluginManager",
     "PytestUnhandledCoroutineWarning",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",

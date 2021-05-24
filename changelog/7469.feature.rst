@@ -8,6 +8,7 @@ The newly-exported types are:
 - ``pytest.MarkGenerator`` for the :class:`pytest.mark <pytest.MarkGenerator>` singleton.
 - ``pytest.Metafunc`` for the :class:`metafunc <pytest.MarkGenerator>` argument to the :func:`pytest_generate_tests <pytest.hookspec.pytest_generate_tests>` hook.
 - ``pytest.CallInfo`` for the :class:`CallInfo <pytest.CallInfo>` type passed to various hooks.
+- ``pytest.PytestPluginManager`` for :class:`PytestPluginManager <pytest.PytestPluginManager>`.
 - ``pytest.ExceptionInfo`` for the :class:`ExceptionInfo <pytest.ExceptionInfo>` type returned from :func:`pytest.raises` and passed to various hooks.
 
 Constructing them directly is not supported; they are only meant for use in type annotations.

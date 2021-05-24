@@ -56,7 +56,7 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
     """Called at plugin registration time to allow adding new hooks via a call to
     ``pluginmanager.add_hookspecs(module_or_class, prefix)``.
 
-    :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager.
+    :param pytest.PytestPluginManager pluginmanager: The pytest plugin manager.
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
@@ -70,7 +70,7 @@ def pytest_plugin_registered(
     """A new pytest plugin got registered.
 
     :param plugin: The plugin module or instance.
-    :param _pytest.config.PytestPluginManager manager: pytest plugin manager.
+    :param pytest.PytestPluginManager manager: pytest plugin manager.
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
@@ -94,8 +94,8 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
         To add ini-file values call :py:func:`parser.addini(...)
         <_pytest.config.argparsing.Parser.addini>`.
 
-    :param _pytest.config.PytestPluginManager pluginmanager:
-        pytest plugin manager, which can be used to install :py:func:`hookspec`'s
+    :param pytest.PytestPluginManager pluginmanager:
+        The pytest plugin manager, which can be used to install :py:func:`hookspec`'s
         or :py:func:`hookimpl`'s and allow one plugin to call another plugin's hooks
         to change how command line options are added.
 
@@ -152,7 +152,7 @@ def pytest_cmdline_parse(
         ``plugins`` arg when using `pytest.main`_ to perform an in-process
         test run.
 
-    :param _pytest.config.PytestPluginManager pluginmanager: Pytest plugin manager.
+    :param pytest.PytestPluginManager pluginmanager: The pytest plugin manager.
     :param List[str] args: List of arguments passed on the command line.
     """
 
