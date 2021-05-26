@@ -48,7 +48,7 @@ Backward compatibilities in ``Parser.addoption``
 
 .. deprecated:: 2.4
 
-Several behaviors of :meth:`Parser.addoption <_pytest.config.argparsing.Parser.addoption>` are now
+Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
 scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
 
 - ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.

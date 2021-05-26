@@ -88,11 +88,11 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
-    :param _pytest.config.argparsing.Parser parser:
+    :param pytest.Parser parser:
         To add command line options, call
-        :py:func:`parser.addoption(...) <_pytest.config.argparsing.Parser.addoption>`.
+        :py:func:`parser.addoption(...) <pytest.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
-        <_pytest.config.argparsing.Parser.addini>`.
+        <pytest.Parser.addini>`.
 
     :param _pytest.config.PytestPluginManager pluginmanager:
         pytest plugin manager, which can be used to install :py:func:`hookspec`'s
@@ -193,7 +193,7 @@ def pytest_load_initial_conftests(
 
     :param _pytest.config.Config early_config: The pytest config object.
     :param List[str] args: Arguments passed on the command line.
-    :param _pytest.config.argparsing.Parser parser: To add command line options.
+    :param pytest.Parser parser: To add command line options.
     """
 
 

@@ -13,6 +13,8 @@ from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
 from _pytest.config import UsageError
+from _pytest.config.argparsing import OptionGroup
+from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import _fillfuncargs
 from _pytest.fixtures import fixture
@@ -103,8 +105,10 @@ __all__ = [
     "Metafunc",
     "Module",
     "MonkeyPatch",
+    "OptionGroup",
     "Package",
     "param",
+    "Parser",
     "PytestAssertRewriteWarning",
     "PytestCacheWarning",
     "PytestCollectionWarning",
