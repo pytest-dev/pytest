@@ -169,40 +169,34 @@ This is outlined below:
 
     # content of test_class_demo.py
     class TestClassDemoInstance:
+        value = 0
+
         def test_one(self):
-            assert 0
+            self.value = 1
+            assert self.value == 1
 
         def test_two(self):
-            assert 0
+            assert self.value == 1
 
 
 .. code-block:: pytest
 
     $ pytest -k TestClassDemoInstance -q
-    FF                                                                   [100%]
+    .F                                                                   [100%]
     ================================= FAILURES =================================
-    ______________________ TestClassDemoInstance.test_one ______________________
-
-    self = <test_class_demo.TestClassDemoInstance object at 0xdeadbeef>
-
-        def test_one(self):
-    >       assert 0
-    E       assert 0
-
-    test_class_demo.py:3: AssertionError
     ______________________ TestClassDemoInstance.test_two ______________________
 
     self = <test_class_demo.TestClassDemoInstance object at 0xdeadbeef>
 
         def test_two(self):
-    >       assert 0
-    E       assert 0
+    >       assert self.value == 1
+    E       assert 0 == 1
+    E        +  where 0 = <test_class_demo.TestClassDemoInstance object at 0xdeadbeef>.value
 
-    test_class_demo.py:6: AssertionError
+    test_class_demo.py:9: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_class_demo.py::TestClassDemoInstance::test_one - assert 0
-    FAILED test_class_demo.py::TestClassDemoInstance::test_two - assert 0
-    2 failed in 0.12s
+    FAILED test_class_demo.py::TestClassDemoInstance::test_two - assert 0 == 1
+    1 failed, 1 passed in 0.04s
 
 Note that attributes added at class level are *class attributes*, so they will be shared between tests.
 
