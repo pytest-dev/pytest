@@ -1611,7 +1611,7 @@ def parse_warning_filter(
         raise warnings._OptionError(f"too many fields (max 5): {arg!r}")
     while len(parts) < 5:
         parts.append("")
-    action_, message, category_, module, lineno_ = [s.strip() for s in parts]
+    action_, message, category_, module, lineno_ = (s.strip() for s in parts)
     action: str = warnings._getaction(action_)  # type: ignore[attr-defined]
     category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined]
     if message and escape:

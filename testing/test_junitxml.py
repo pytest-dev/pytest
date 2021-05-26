@@ -1388,7 +1388,7 @@ def test_runs_twice(pytester: Pytester, run_and_parse: RunAndParse) -> None:
 
     result, dom = run_and_parse(f, f)
     result.stdout.no_fnmatch_line("*INTERNALERROR*")
-    first, second = [x["classname"] for x in dom.find_by_tag("testcase")]
+    first, second = (x["classname"] for x in dom.find_by_tag("testcase"))
     assert first == second
 
 
@@ -1406,7 +1406,7 @@ def test_runs_twice_xdist(
 
     result, dom = run_and_parse(f, "--dist", "each", "--tx", "2*popen")
     result.stdout.no_fnmatch_line("*INTERNALERROR*")
-    first, second = [x["classname"] for x in dom.find_by_tag("testcase")]
+    first, second = (x["classname"] for x in dom.find_by_tag("testcase"))
     assert first == second
 
 
