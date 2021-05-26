@@ -240,7 +240,7 @@ tox
 ------
 
 Once you are done with your work and want to make sure that your actual
-package passes all tests you may want to look into `tox`_, the
+package passes all tests you may want to look into `tox <https://tox.readthedocs.io/>`_, the
 virtualenv test automation tool and its `pytest support
 <https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
 tox helps you to setup virtualenv environments with pre-defined
