@@ -179,12 +179,12 @@ Files will only be matched for configuration if:
 The files are considered in the order above. Options from multiple ``configfiles`` candidates
 are never merged - the first match wins.
 
-The internal :class:`Config <_pytest.config.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
+The :class:`Config <pytest.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
 will subsequently carry these attributes:
 
-- :attr:`config.rootpath <_pytest.config.Config.rootpath>`: the determined root directory, guaranteed to exist.
+- :attr:`config.rootpath <pytest.Config.rootpath>`: the determined root directory, guaranteed to exist.
 
-- :attr:`config.inipath <_pytest.config.Config.inipath>`: the determined ``configfile``, may be ``None``
+- :attr:`config.inipath <pytest.Config.inipath>`: the determined ``configfile``, may be ``None``
   (it is named ``inipath`` for historical reasons).
 
 .. versionadded:: 6.1

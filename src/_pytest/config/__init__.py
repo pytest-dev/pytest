@@ -290,7 +290,7 @@ def get_config(
 
 def get_plugin_manager() -> "PytestPluginManager":
     """Obtain a new instance of the
-    :py:class:`_pytest.config.PytestPluginManager`, with default plugins
+    :py:class:`pytest.PytestPluginManager`, with default plugins
     already loaded.
 
     This function can be used by integration with other tools, like hooking
@@ -632,6 +632,7 @@ class PytestPluginManager(PluginManager):
     def consider_preparse(
         self, args: Sequence[str], *, exclude_only: bool = False
     ) -> None:
+        """:meta private:"""
         i = 0
         n = len(args)
         while i < n:
@@ -653,6 +654,7 @@ class PytestPluginManager(PluginManager):
                 self.consider_pluginarg(parg)
 
     def consider_pluginarg(self, arg: str) -> None:
+        """:meta private:"""
         if arg.startswith("no:"):
             name = arg[3:]
             if name in essential_plugins:
@@ -678,12 +680,15 @@ class PytestPluginManager(PluginManager):
             self.import_plugin(arg, consider_entry_points=True)
 
     def consider_conftest(self, conftestmodule: types.ModuleType) -> None:
+        """:meta private:"""
         self.register(conftestmodule, name=conftestmodule.__file__)
 
     def consider_env(self) -> None:
+        """:meta private:"""
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
     def consider_module(self, mod: types.ModuleType) -> None:
+        """:meta private:"""
         self._import_plugin_specs(getattr(mod, "pytest_plugins", []))
 
     def _import_plugin_specs(
@@ -841,6 +846,7 @@ class Config:
     """Access to configuration values, pluginmanager and plugin hooks.
 
     :param PytestPluginManager pluginmanager:
+        A pytest PluginManager.
 
     :param InvocationParams invocation_params:
         Object containing parameters regarding the :func:`pytest.main`
@@ -1227,8 +1233,8 @@ class Config:
 
     @hookimpl(hookwrapper=True)
     def pytest_collection(self) -> Generator[None, None, None]:
-        """Validate invalid ini keys after collection is done so we take in account
-        options added by late-loading conftest files."""
+        # Validate invalid ini keys after collection is done so we take in account
+        # options added by late-loading conftest files.
         yield
         self._validate_config_options()
 

@@ -337,7 +337,7 @@ testing directory:
 Alternatively you can invoke pytest with the ``-p pytester`` command line
 option.
 
-This will allow you to use the :py:class:`pytester <_pytest.pytester.Pytester>`
+This will allow you to use the :py:class:`pytester <pytest.Pytester>`
 fixture for testing your plugin code.
 
 Let's demonstrate what you can do with the plugin with an example. Imagine we

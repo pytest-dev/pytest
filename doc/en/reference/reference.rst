@@ -787,7 +787,7 @@ CollectReport
 Config
 ~~~~~~
 
-.. autoclass:: _pytest.config.Config()
+.. autoclass:: pytest.Config()
     :members:
 
 ExceptionInfo
@@ -901,7 +901,7 @@ OptionGroup
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.config.PytestPluginManager()
+.. autoclass:: pytest.PytestPluginManager()
     :members:
     :undoc-members:
     :inherited-members:

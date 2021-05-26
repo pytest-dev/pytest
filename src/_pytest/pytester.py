@@ -954,7 +954,7 @@ class Pytester:
     ) -> Optional[Union[Collector, Item]]:
         """Return the collection node of a file.
 
-        :param _pytest.config.Config config:
+        :param pytest.Config config:
            A pytest config.
            See :py:meth:`parseconfig` and :py:meth:`parseconfigure` for creating it.
         :param os.PathLike[str] arg:
@@ -1186,7 +1186,7 @@ class Pytester:
         This invokes the pytest bootstrapping code in _pytest.config to create
         a new :py:class:`_pytest.core.PluginManager` and call the
         pytest_cmdline_parse hook to create a new
-        :py:class:`_pytest.config.Config` instance.
+        :py:class:`pytest.Config` instance.
 
         If :py:attr:`plugins` has been populated they should be plugin modules
         to be registered with the PluginManager.
@@ -1206,7 +1206,7 @@ class Pytester:
     def parseconfigure(self, *args: Union[str, "os.PathLike[str]"]) -> Config:
         """Return a new pytest configured Config instance.
 
-        Returns a new :py:class:`_pytest.config.Config` instance like
+        Returns a new :py:class:`pytest.Config` instance like
         :py:meth:`parseconfig`, but also calls the pytest_configure hook.
         """
         config = self.parseconfig(*args)
