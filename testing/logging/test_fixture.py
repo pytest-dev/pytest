@@ -1,3 +1,4 @@
+# type: ignore[attr-defined]
 import logging
 
 import pytest
@@ -28,10 +29,30 @@ def test_change_level(caplog):
     assert "CRITICAL" in caplog.text
 
 
+def test_change_level_logging_disabled(caplog):
+    logging.disable(logging.CRITICAL)
+    assert logging.root.manager.disable == logging.CRITICAL
+    caplog.set_level(logging.WARNING)
+    logger.info("handler INFO level")
+    logger.warning("handler WARNING level")
+
+    caplog.set_level(logging.CRITICAL, logger=sublogger.name)
+    sublogger.warning("logger SUB_WARNING level")
+    sublogger.critical("logger SUB_CRITICAL level")
+
+    assert "INFO" not in caplog.text
+    assert "WARNING" in caplog.text
+    assert "SUB_WARNING" not in caplog.text
+    assert "SUB_CRITICAL" in caplog.text
+
+    # logging.disable needs to be reset because it's global and causes future tests will break.
+    logging.disable(logging.NOTSET)
+
+
 def test_change_level_undo(pytester: Pytester) -> None:
     """Ensure that 'set_level' is undone after the end of the test.
 
-    Tests the logging output themselves (affacted both by logger and handler levels).
+    Tests the logging output themselves (affected both by logger and handler levels).
     """
     pytester.makepyfile(
         """
@@ -52,6 +73,38 @@ def test_change_level_undo(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
     result.stdout.no_fnmatch_line("*log from test2*")
+
+
+def test_change_disabled_level_undo(pytester: Pytester) -> None:
+    """Ensure that 'force_enable_logging' in 'set_level' is undone after the end of the test.
+
+    Tests the logging output themselves (affected by disabled logging level).
+    """
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test1(caplog):
+            logging.disable(logging.CRITICAL)
+            caplog.set_level(logging.INFO)
+            # using + operator here so fnmatch_lines doesn't match the code in the traceback
+            logging.info('log from ' + 'test1')
+            assert 0
+
+        def test2(caplog):
+            # using + operator here so fnmatch_lines doesn't match the code in the traceback
+            # use logging.warning because we need a level that will show up if logging.disabled
+            # isn't reset to ``CRITICAL`` after test1.
+            logging.warning('log from ' + 'test2')
+            assert 0
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
+    result.stdout.no_fnmatch_line("*log from test2*")
+
+    # logging.disable needs to be reset because it's global and causes future tests will break.
+    logging.disable(logging.NOTSET)
 
 
 def test_change_level_undos_handler_level(pytester: Pytester) -> None:
@@ -95,6 +148,35 @@ def test_with_statement(caplog):
     assert "INFO" in caplog.text
     assert "WARNING" not in caplog.text
     assert "CRITICAL" in caplog.text
+
+
+def test_with_statement_logging_disabled(caplog):
+    logging.disable(logging.CRITICAL)
+    assert logging.root.manager.disable == logging.CRITICAL
+    with caplog.at_level(logging.WARNING):
+        logger.debug("handler DEBUG level")
+        logger.info("handler INFO level")
+        logger.warning("handler WARNING level")
+        logger.error("handler ERROR level")
+        logger.critical("handler CRITICAL level")
+
+        assert logging.root.manager.disable == logging.INFO
+
+        with caplog.at_level(logging.CRITICAL, logger=sublogger.name):
+            sublogger.warning("logger SUB_WARNING level")
+            sublogger.critical("logger SUB_CRITICAL level")
+
+    assert "DEBUG" not in caplog.text
+    assert "INFO" not in caplog.text
+    assert "WARNING" in caplog.text
+    assert "ERROR" in caplog.text
+    assert " CRITICAL" in caplog.text
+    assert "SUB_WARNING" not in caplog.text
+    assert "SUB_CRITICAL" in caplog.text
+    assert logging.root.manager.disable == logging.CRITICAL
+
+    # logging.disable needs to be reset because it's global and causes future tests will break.
+    logging.disable(logging.NOTSET)
 
 
 def test_log_access(caplog):
