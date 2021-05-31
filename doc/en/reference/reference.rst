@@ -615,7 +615,7 @@ tmpdir_factory
 
 :ref:`tmpdir and tmpdir_factory`
 
-``tmp_path_factory`` is an instance of :class:`~pytest.TempdirFactory`:
+``tmpdir_factory`` is an instance of :class:`~pytest.TempdirFactory`:
 
 .. autoclass:: pytest.TempdirFactory()
     :members:
