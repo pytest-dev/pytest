@@ -16,12 +16,13 @@ Contact channels
 
 - `pytest-dev at python.org (mailing list)`_ pytest specific announcements and discussions.
 
-- `pytest-commit at python.org (mailing list)`_: for commits and new issues
-
 - :doc:`contribution guide <contributing>` for help on submitting pull
   requests to GitHub.
 
-- ``#pylib`` on irc.freenode.net IRC channel for random questions.
+- ``#pytest`` `on irc.libera.chat <ircs://irc.libera.chat:6697/#pytest>`_ IRC
+  channel for random questions (using an IRC client, `via webchat
+  <https://web.libera.chat/#pytest>`_, or `via Matrix
+  <https://matrix.to/#/%23pytest:libera.chat>`_).
 
 - private mail to Holger.Krekel at gmail com if you want to communicate sensitive issues
 
