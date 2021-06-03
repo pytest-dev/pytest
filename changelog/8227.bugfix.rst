@@ -1,0 +1,1 @@
+Fixed internal error when formatting some tracebacks in Python 3.10.
