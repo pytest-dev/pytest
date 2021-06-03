@@ -118,7 +118,7 @@ def test_syntax_errors(expr: str, column: int, message: str) -> None:
     with pytest.raises(ParseError) as excinfo:
         evaluate(expr, lambda ident: True)
     assert excinfo.value.column == column
-    assert excinfo.value.message == message
+    assert str(excinfo.value) == message
 
 
 @pytest.mark.parametrize(
