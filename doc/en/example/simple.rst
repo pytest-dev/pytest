@@ -1068,7 +1068,7 @@ your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to
 have a single executable, which is usually more convenient.
 Please note that the mechanism for plugin discovery used by pytest
-(setupttools entry points) doesn't work with frozen executables so pytest
+(setuptools entry points) doesn't work with frozen executables so pytest
 can't find any third party plugins automatically. To include third party plugins
 like ``pytest-timeout`` they must be imported explicitly and passed on to pytest.main.
 
