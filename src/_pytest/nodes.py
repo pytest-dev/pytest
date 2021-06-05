@@ -566,7 +566,6 @@ class FSCollector(Collector):
                 assert path is None
                 path = path_or_parent
 
-        assert parent is not None
         path, fspath = _imply_path(path, fspath=fspath)
         if name is None:
             name = path.name
@@ -580,7 +579,9 @@ class FSCollector(Collector):
                 name = name.replace(os.sep, SEP)
         self.path = path
 
-        session = session or parent.session
+        if session is None:
+            assert parent is not None
+            session = parent.session
 
         if nodeid is None:
             try:
