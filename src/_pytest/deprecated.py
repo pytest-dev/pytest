@@ -66,12 +66,6 @@ ARGUMENT_TYPE_STR = UnformattedWarning(
     " (options: {names})",
 )
 
-SETUP_CFG_CONFIG = PytestDeprecationWarning(
-    "configuring pytest in setup.cfg has been deprecated \n"
-    "as pytest and setuptools do not share he same config parser\n"
-    "please consider pytest.ini/tox.ini or pyproject.toml"
-)
-
 
 HOOK_LEGACY_PATH_ARG = UnformattedWarning(
     PytestRemovedIn8Warning,
