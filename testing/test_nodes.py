@@ -55,7 +55,12 @@ def test_subclassing_both_item_and_collector_warns(request, tmp_path: Path) -> N
                 """Legacy ctor with legacy call # don't wana see"""
                 super().__init__(fspath, parent)
 
-    SoWrong.from_parent(request.session, fspath=legacy_path(tmp_path / "broken.txt"))
+    with pytest.warns(
+        PytestWarning, match=".*SoWrong.* not using a cooperative constructor.*"
+    ):
+        SoWrong.from_parent(
+            request.session, fspath=legacy_path(tmp_path / "broken.txt")
+        )
 
 
 @pytest.mark.parametrize(

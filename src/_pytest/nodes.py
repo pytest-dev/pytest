@@ -132,8 +132,14 @@ class NodeMeta(type):
             return super().__call__(*k, **kw)
         except TypeError:
             sig = signature(cast(Type[Node], self).__init__)
-            sig.replace()
             known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
+            from .warning_types import PytestDeprecationWarning
+
+            warnings.warn(
+                PytestDeprecationWarning(
+                    f"{self} is not using a cooperative constructor and only takes {set(known_kw)}"
+                )
+            )
 
             return super().__call__(*k, **known_kw)
 
