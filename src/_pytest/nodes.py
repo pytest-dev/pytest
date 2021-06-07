@@ -131,7 +131,7 @@ class NodeMeta(type):
         try:
             return super().__call__(*k, **kw)
         except TypeError:
-            sig = signature(cast(Type[Node], self).__init__)
+            sig = signature(getattr(self, "__init__"))
             known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
             from .warning_types import PytestDeprecationWarning
 
