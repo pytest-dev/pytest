@@ -451,7 +451,7 @@ class LogCaptureFixture:
 
     @contextmanager
     def at_level(
-        self, level: int, logger: Optional[str] = None
+        self, level: Union[int, str], logger: Optional[str] = None
     ) -> Generator[None, None, None]:
         """Context manager that sets the level for capturing of logs. After
         the end of the 'with' statement the level is restored to its original
