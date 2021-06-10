@@ -653,7 +653,8 @@ class Item(Node):
                 f"{cls.__name__} is an Item subclass and should not be a collector, "
                 f"however its bases {problems} are collectors.\n"
                 "Please split the Collectors and the Item into separate node types.\n"
-                "TODO: doc link",
+                "Pytest Doc example: https://docs.pytest.org/en/latest/example/nonpython.html\n"
+                "example pull request on a plugin: https://github.com/asmeurer/pytest-flakes/pull/40/",
                 PytestWarning,
             )
 

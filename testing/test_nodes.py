@@ -46,7 +46,7 @@ def test_subclassing_both_item_and_collector_warns(request, tmp_path: Path) -> N
         PytestWarning,
         match=(
             "(?m)SoWrong is an Item subclass and should not be a collector, however its bases File are collectors.\n"
-            "Please split the Collectors and the Item into separate node types.\nTODO:.*"
+            "Please split the Collectors and the Item into separate node types.\n.*"
         ),
     ):
 
