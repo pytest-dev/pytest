@@ -1075,6 +1075,14 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
 
+.. envvar:: PYTEST_THEME
+
+Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
+
+.. envvar:: PYTEST_THEME_MODE
+
+Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
+
 .. envvar:: PY_COLORS
 
 When set to ``1``, pytest will use color in terminal output.

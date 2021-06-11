@@ -239,3 +239,11 @@ Builtin configuration file options
 ----------------------------------------------
 
 For the full list of options consult the :ref:`reference documentation <ini options ref>`.
+
+Syntax highlighting theme customization
+---------------------------------------
+
+The syntax highlighting themes used by pytest can be customized using two environment variables:
+
+- :envvar:`PYTEST_THEME` sets a `pygment style <https://pygments.org/docs/styles/>`_ to use.
+- :envvar:`PYTEST_THEME_MODE` sets this style to *light* or *dark*.

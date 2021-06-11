@@ -2408,6 +2408,60 @@ class TestCodeHighlight:
             )
         )
 
+    def test_code_highlight_custom_theme(
+        self, pytester: Pytester, color_mapping, monkeypatch: MonkeyPatch
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_foo():
+                assert 1 == 10
+        """
+        )
+        monkeypatch.setenv("PYTEST_THEME", "solarized-dark")
+        monkeypatch.setenv("PYTEST_THEME_MODE", "dark")
+        result = pytester.runpytest("--color=yes")
+        result.stdout.fnmatch_lines(
+            color_mapping.format_for_fnmatch(
+                [
+                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
+                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}",
+                    "{bold}{red}E       assert 1 == 10{reset}",
+                ]
+            )
+        )
+
+    def test_code_highlight_invalid_theme(
+        self, pytester: Pytester, color_mapping, monkeypatch: MonkeyPatch
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_foo():
+                assert 1 == 10
+        """
+        )
+        monkeypatch.setenv("PYTEST_THEME", "invalid")
+        result = pytester.runpytest_subprocess("--color=yes")
+        result.stderr.fnmatch_lines(
+            "ERROR: PYTEST_THEME environment variable had an invalid value: 'invalid'. "
+            "Only valid pygment styles are allowed."
+        )
+
+    def test_code_highlight_invalid_theme_mode(
+        self, pytester: Pytester, color_mapping, monkeypatch: MonkeyPatch
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_foo():
+                assert 1 == 10
+        """
+        )
+        monkeypatch.setenv("PYTEST_THEME_MODE", "invalid")
+        result = pytester.runpytest_subprocess("--color=yes")
+        result.stderr.fnmatch_lines(
+            "ERROR: PYTEST_THEME_MODE environment variable had an invalid value: 'invalid'. "
+            "The only allowed values are 'dark' and 'light'."
+        )
+
 
 def test_raw_skip_reason_skipped() -> None:
     report = SimpleNamespace()
