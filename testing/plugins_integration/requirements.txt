@@ -3,7 +3,7 @@ django==3.2.4
 pytest-asyncio==0.15.1
 pytest-bdd==4.0.2
 pytest-cov==2.12.1
-pytest-django==4.3.0
+pytest-django==4.4.0
 pytest-flakes==4.0.3
 pytest-html==3.1.1
 pytest-mock==3.6.1
