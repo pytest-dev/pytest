@@ -27,6 +27,17 @@ def test_recwarn_functional(pytester: Pytester) -> None:
     reprec.assertoutcome(passed=1)
 
 
+@pytest.mark.filterwarnings("")
+def test_recwarn_captures_deprecation_warning(recwarn: WarningsRecorder) -> None:
+    """
+    Check that recwarn can capture DeprecationWarning by default
+    without custom filterwarnings (see #8666).
+    """
+    warnings.warn(DeprecationWarning("some deprecation"))
+    assert len(recwarn) == 1
+    assert recwarn.pop(DeprecationWarning)
+
+
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:
         rec = WarningsRecorder(_ispytest=True)

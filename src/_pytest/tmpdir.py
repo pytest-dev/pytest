@@ -1,6 +1,7 @@
 """Support for providing temporary directories to test functions."""
 import os
 import re
+import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -121,9 +122,9 @@ class TempPathFactory:
             # Also, to keep things private, fixup any world-readable temp
             # rootdir's permissions. Historically 0o755 was used, so we can't
             # just error out on this, at least for a while.
-            if hasattr(os, "getuid"):
-                rootdir_stat = rootdir.stat()
+            if sys.platform != "win32":
                 uid = os.getuid()
+                rootdir_stat = rootdir.stat()
                 # getuid shouldn't fail, but cpython defines such a case.
                 # Let's hope for the best.
                 if uid != -1:
