@@ -173,8 +173,6 @@ DeprecationWarning and PendingDeprecationWarning
 ------------------------------------------------
 
 
-
-
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
 user code and third-party libraries, as recommended by `PEP-0565 <https://www.python.org/dev/peps/pep-0565>`_.
 This helps users keep their code modern and avoid breakages when deprecated warnings are effectively removed.
@@ -230,27 +228,8 @@ that a certain function call triggers a ``DeprecationWarning`` or
 This test will fail if ``myfunction`` does not issue a deprecation warning
 when called with a ``17`` argument.
 
-By default, ``DeprecationWarning`` and ``PendingDeprecationWarning`` will not be
-caught when using :func:`pytest.warns` or :ref:`recwarn <recwarn>` because
-the default Python warnings filters hide
-them. If you wish to record them in your own code, use
-``warnings.simplefilter('always')``:
-
-.. code-block:: python
-
-    import warnings
-    import pytest
 
 
-    def test_deprecation(recwarn):
-        warnings.simplefilter("always")
-        myfunction(17)
-        assert len(recwarn) == 1
-        assert recwarn.pop(DeprecationWarning)
-
-
-The :ref:`recwarn <recwarn>` fixture automatically ensures to reset the warnings
-filter at the end of the test, so no global state is leaked.
 
 .. _`asserting warnings`:
 
@@ -317,9 +296,9 @@ additional information:
 Alternatively, you can examine raised warnings in detail using the
 :ref:`recwarn <recwarn>` fixture (see below).
 
-.. note::
-    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
-    differently; see :ref:`ensuring_function_triggers`.
+
+The :ref:`recwarn <recwarn>` fixture automatically ensures to reset the warnings
+filter at the end of the test, so no global state is leaked.
 
 .. _`recording warnings`:
 
