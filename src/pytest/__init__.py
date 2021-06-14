@@ -2,6 +2,7 @@
 """pytest: unit and functional testing with Python."""
 from . import collect
 from _pytest import __version__
+from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
@@ -130,6 +131,7 @@ __all__ = [
     "Session",
     "set_trace",
     "skip",
+    "version_tuple",
     "TempPathFactory",
     "Testdir",
     "TempdirFactory",
