@@ -19,6 +19,12 @@ def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> 
     result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
 
 
+def test_versions():
+    """Regression check for the public version attributes in pytest."""
+    assert isinstance(pytest.__version__, str)
+    assert isinstance(pytest.version_tuple, tuple)
+
+
 def test_help(pytester: Pytester) -> None:
     result = pytester.runpytest("--help")
     assert result.ret == 0

@@ -226,6 +226,37 @@ Marks a test function as *expected to fail*.
           a new release of a library fixes a known bug).
 
 
+pytest.__version__
+~~~~~~~~~~~~~~~~~~
+
+The current pytest version, as a string::
+
+    >>> import pytest
+    >>> pytest.__version__
+    '7.0.0'
+
+
+.. _`version-tuple`:
+
+pytest.version_tuple
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 7.0
+
+The current pytest version, as a tuple::
+
+    >>> import pytest
+    >>> pytest.version_tuple
+    (7, 0, 0)
+
+For pre-releases, the last component will be a string with the prerelease version::
+
+    >>> import pytest
+    >>> pytest.version_tuple
+    (7, 0, '0rc1')
+
+
+
 Custom marks
 ~~~~~~~~~~~~
 
