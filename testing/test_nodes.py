@@ -5,6 +5,7 @@ from typing import Type
 
 import pytest
 from _pytest import nodes
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
 
@@ -39,8 +40,14 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
 
 
-def test_subclassing_both_item_and_collector_warns(request, tmp_path: Path) -> None:
-    from _pytest.compat import legacy_path
+def test_subclassing_both_item_and_collector_deprecated(
+    request, tmp_path: Path
+) -> None:
+    """
+    Verifies we warn on diamond inheritance
+    as well as correctly managing legacy inheritance ctors with missing args
+    as found in plugins
+    """
 
     with pytest.warns(
         PytestWarning,
