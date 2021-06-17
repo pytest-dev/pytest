@@ -2,16 +2,22 @@
 """pytest: unit and functional testing with Python."""
 from . import collect
 from _pytest import __version__
+from _pytest import version_tuple
+from _pytest._code import ExceptionInfo
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
 from _pytest.config import cmdline
+from _pytest.config import Config
 from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
+from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
+from _pytest.config.argparsing import OptionGroup
+from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import _fillfuncargs
 from _pytest.fixtures import fixture
@@ -21,7 +27,10 @@ from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
 from _pytest.logging import LogCaptureFixture
 from _pytest.main import Session
+from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
+from _pytest.mark import MarkDecorator
+from _pytest.mark import MarkGenerator
 from _pytest.mark import param
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
@@ -37,6 +46,7 @@ from _pytest.pytester import Testdir
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Instance
+from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
@@ -44,6 +54,7 @@ from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
+from _pytest.runner import CallInfo
 from _pytest.tmpdir import TempdirFactory
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
@@ -65,14 +76,17 @@ __all__ = [
     "_fillfuncargs",
     "approx",
     "Cache",
+    "CallInfo",
     "CaptureFixture",
     "Class",
     "cmdline",
     "collect",
     "Collector",
+    "Config",
     "console_main",
     "deprecated_call",
     "exit",
+    "ExceptionInfo",
     "ExitCode",
     "fail",
     "File",
@@ -89,10 +103,16 @@ __all__ = [
     "LogCaptureFixture",
     "main",
     "mark",
+    "Mark",
+    "MarkDecorator",
+    "MarkGenerator",
+    "Metafunc",
     "Module",
     "MonkeyPatch",
+    "OptionGroup",
     "Package",
     "param",
+    "Parser",
     "PytestAssertRewriteWarning",
     "PytestCacheWarning",
     "PytestCollectionWarning",
@@ -100,6 +120,7 @@ __all__ = [
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
     "Pytester",
+    "PytestPluginManager",
     "PytestUnhandledCoroutineWarning",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
@@ -110,6 +131,7 @@ __all__ = [
     "Session",
     "set_trace",
     "skip",
+    "version_tuple",
     "TempPathFactory",
     "Testdir",
     "TempdirFactory",

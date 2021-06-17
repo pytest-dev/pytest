@@ -18,6 +18,57 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+
+``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to support the transition to :mod:`pathlib`, the following hooks now receive additional arguments:
+
+*  :func:`pytest_ignore_collect(fspath: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>`
+*  :func:`pytest_collect_file(fspath: pathlib.Path) <_pytest.hookspec.pytest_collect_file>`
+*  :func:`pytest_pycollect_makemodule(fspath: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>`
+*  :func:`pytest_report_header(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_header>`
+*  :func:`pytest_report_collectionfinish(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>`
+
+The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
+
+
+``Node.fspath`` in favor of ``pathlib`` and ``Node.path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.3
+
+As pytest tries to move off `py.path.local <https://py.readthedocs.io/en/latest/path.html>`__ we ported most of the node internals to :mod:`pathlib`.
+
+Pytest will provide compatibility for quite a while.
+
+
+Backward compatibilities in ``Parser.addoption``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 2.4
+
+Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
+scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
+
+- ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.
+- ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
+
+
+Raising ``unittest.SkipTest`` during collection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.3
+
+Raising :class:`unittest.SkipTest` to skip collection of tests during the
+pytest collection phase is deprecated. Use :func:`pytest.skip` instead.
+
+Note: This deprecation only relates to using `unittest.SkipTest` during test
+collection. You are probably not doing that. Ordinary usage of
+:class:`unittest.SkipTest` / :meth:`unittest.TestCase.skipTest` /
+:func:`unittest.skip` in unittest test cases is fully supported.
+
+
 The ``--strict`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -397,8 +448,8 @@ Metafunc.addcall
 
 .. versionremoved:: 4.0
 
-``_pytest.python.Metafunc.addcall`` was a precursor to the current parametrized mechanism. Users should use
-:meth:`_pytest.python.Metafunc.parametrize` instead.
+``Metafunc.addcall`` was a precursor to the current parametrized mechanism. Users should use
+:meth:`pytest.Metafunc.parametrize` instead.
 
 Example:
 

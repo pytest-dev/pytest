@@ -235,7 +235,7 @@ def test_log_cli_default_level(pytester: Pytester) -> None:
         ]
     )
     result.stdout.no_fnmatch_line("*INFO message won't be shown*")
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
 
@@ -528,7 +528,7 @@ def test_log_cli_level(pytester: Pytester) -> None:
     )
     result.stdout.no_fnmatch_line("*This log message won't be shown*")
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
     result = pytester.runpytest("-s", "--log-level=INFO")
@@ -542,7 +542,7 @@ def test_log_cli_level(pytester: Pytester) -> None:
     )
     result.stdout.no_fnmatch_line("*This log message won't be shown*")
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
 
@@ -578,7 +578,7 @@ def test_log_cli_ini_level(pytester: Pytester) -> None:
     )
     result.stdout.no_fnmatch_line("*This log message won't be shown*")
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
 
@@ -653,7 +653,7 @@ def test_log_file_cli(pytester: Pytester) -> None:
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(["test_log_file_cli.py PASSED"])
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
     with open(log_file) as rfh:
@@ -684,7 +684,7 @@ def test_log_file_cli_level(pytester: Pytester) -> None:
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(["test_log_file_cli_level.py PASSED"])
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
     with open(log_file) as rfh:
@@ -735,7 +735,7 @@ def test_log_file_ini(pytester: Pytester) -> None:
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(["test_log_file_ini.py PASSED"])
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
     with open(log_file) as rfh:
@@ -774,7 +774,7 @@ def test_log_file_ini_level(pytester: Pytester) -> None:
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(["test_log_file_ini_level.py PASSED"])
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
     with open(log_file) as rfh:
@@ -808,7 +808,7 @@ def test_log_file_unicode(pytester: Pytester) -> None:
 
     result = pytester.runpytest()
 
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
     with open(log_file, encoding="utf-8") as rfh:

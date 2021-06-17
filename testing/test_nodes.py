@@ -1,8 +1,7 @@
+from pathlib import Path
 from typing import cast
 from typing import List
 from typing import Type
-
-import py
 
 import pytest
 from _pytest import nodes
@@ -19,11 +18,13 @@ from _pytest.warning_types import PytestWarning
         ("a/b/c", ["", "a", "a/b", "a/b/c"]),
         ("a/bbb/c::D", ["", "a", "a/bbb", "a/bbb/c", "a/bbb/c::D"]),
         ("a/b/c::D::eee", ["", "a", "a/b", "a/b/c", "a/b/c::D", "a/b/c::D::eee"]),
-        # :: considered only at the last component.
         ("::xx", ["", "::xx"]),
-        ("a/b/c::D/d::e", ["", "a", "a/b", "a/b/c::D", "a/b/c::D/d", "a/b/c::D/d::e"]),
+        # / only considered until first ::
+        ("a/b/c::D/d::e", ["", "a", "a/b", "a/b/c", "a/b/c::D/d", "a/b/c::D/d::e"]),
         # : alone is not a separator.
         ("a/b::D:e:f::g", ["", "a", "a/b", "a/b::D:e:f", "a/b::D:e:f::g"]),
+        # / not considered if a part of a test name
+        ("a/b::c/d::e[/test]", ["", "a", "a/b", "a/b::c/d", "a/b::c/d::e[/test]"]),
     ),
 )
 def test_iterparentnodeids(nodeid: str, expected: List[str]) -> None:
@@ -69,25 +70,25 @@ def test_node_warning_enforces_warning_types(pytester: Pytester) -> None:
 
 def test__check_initialpaths_for_relpath() -> None:
     """Ensure that it handles dirs, and does not always use dirname."""
-    cwd = py.path.local()
+    cwd = Path.cwd()
 
     class FakeSession1:
-        _initialpaths = [cwd]
+        _initialpaths = frozenset({cwd})
 
     session = cast(pytest.Session, FakeSession1)
 
     assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
 
-    sub = cwd.join("file")
+    sub = cwd / "file"
 
     class FakeSession2:
-        _initialpaths = [cwd]
+        _initialpaths = frozenset({cwd})
 
     session = cast(pytest.Session, FakeSession2)
 
     assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
 
-    outside = py.path.local("/outside")
+    outside = Path("/outside")
     assert nodes._check_initialpaths_for_relpath(session, outside) is None
 
 

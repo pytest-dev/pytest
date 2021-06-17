@@ -27,6 +27,7 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
+from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
@@ -427,7 +428,18 @@ def _saferepr(obj: object) -> str:
     sequences, especially '\n{' and '\n}' are likely to be present in
     JSON reprs.
     """
-    return saferepr(obj).replace("\n", "\\n")
+    maxsize = _get_maxsize_for_saferepr(util._config)
+    return saferepr(obj, maxsize=maxsize).replace("\n", "\\n")
+
+
+def _get_maxsize_for_saferepr(config: Optional[Config]) -> Optional[int]:
+    """Get `maxsize` configuration for saferepr based on the given config object."""
+    verbosity = config.getoption("verbose") if config is not None else 0
+    if verbosity >= 2:
+        return None
+    if verbosity >= 1:
+        return DEFAULT_REPR_MAX_SIZE * 10
+    return DEFAULT_REPR_MAX_SIZE
 
 
 def _format_assertmsg(obj: object) -> str:
@@ -672,12 +684,9 @@ class AssertionRewriter(ast.NodeVisitor):
         if not mod.body:
             # Nothing to do.
             return
-        # Insert some special imports at the top of the module but after any
-        # docstrings and __future__ imports.
-        aliases = [
-            ast.alias("builtins", "@py_builtins"),
-            ast.alias("_pytest.assertion.rewrite", "@pytest_ar"),
-        ]
+
+        # We'll insert some special imports at the top of the module, but after any
+        # docstrings and __future__ imports, so first figure out where that is.
         doc = getattr(mod, "docstring", None)
         expect_docstring = doc is None
         if doc is not None and self.is_rewrite_disabled(doc):
@@ -709,10 +718,27 @@ class AssertionRewriter(ast.NodeVisitor):
             lineno = item.decorator_list[0].lineno
         else:
             lineno = item.lineno
+        # Now actually insert the special imports.
+        if sys.version_info >= (3, 10):
+            aliases = [
+                ast.alias("builtins", "@py_builtins", lineno=lineno, col_offset=0),
+                ast.alias(
+                    "_pytest.assertion.rewrite",
+                    "@pytest_ar",
+                    lineno=lineno,
+                    col_offset=0,
+                ),
+            ]
+        else:
+            aliases = [
+                ast.alias("builtins", "@py_builtins"),
+                ast.alias("_pytest.assertion.rewrite", "@pytest_ar"),
+            ]
         imports = [
             ast.Import([alias], lineno=lineno, col_offset=0) for alias in aliases
         ]
         mod.body[pos:pos] = imports
+
         # Collect asserts.
         nodes: List[ast.AST] = [mod]
         while nodes:

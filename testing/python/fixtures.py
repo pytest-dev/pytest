@@ -59,6 +59,20 @@ def test_getfuncargnames_staticmethod():
     assert getfuncargnames(A.static, cls=A) == ("arg1", "arg2")
 
 
+def test_getfuncargnames_staticmethod_inherited() -> None:
+    """Test getfuncargnames for inherited staticmethods (#8061)"""
+
+    class A:
+        @staticmethod
+        def static(arg1, arg2, x=1):
+            raise NotImplementedError()
+
+    class B(A):
+        pass
+
+    assert getfuncargnames(B.static, cls=B) == ("arg1", "arg2")
+
+
 def test_getfuncargnames_partial():
     """Check getfuncargnames for methods defined with functools.partial (#5701)"""
     import functools
@@ -116,7 +130,8 @@ class TestFillFixtures:
         pytester.copy_example()
         item = pytester.getitem(Path("test_funcarg_basic.py"))
         assert isinstance(item, Function)
-        item._request._fillfixtures()
+        # Execute's item's setup, which fills fixtures.
+        item.session._setupstate.setup(item)
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs["some"] == "test_func"
@@ -795,17 +810,24 @@ class TestRequestBasic:
         item = pytester.getitem(
             """
             import pytest
-            values = [2]
+
             @pytest.fixture
-            def something(request): return 1
+            def something(request):
+                return 1
+
+            values = [2]
             @pytest.fixture
             def other(request):
                 return values.pop()
+
             def test_func(something): pass
         """
         )
         assert isinstance(item, Function)
         req = item._request
+
+        # Execute item's setup.
+        item.session._setupstate.setup(item)
 
         with pytest.raises(pytest.FixtureLookupError):
             req.getfixturevalue("notexists")
@@ -817,7 +839,6 @@ class TestRequestBasic:
         assert val2 == 2
         val2 = req.getfixturevalue("other")  # see about caching
         assert val2 == 2
-        item._request._fillfixtures()
         assert item.funcargs["something"] == 1
         assert len(get_public_names(item.funcargs)) == 2
         assert "request" in item.funcargs
@@ -834,7 +855,7 @@ class TestRequestBasic:
         """
         )
         assert isinstance(item, Function)
-        item.session._setupstate.prepare(item)
+        item.session._setupstate.setup(item)
         item._request._fillfixtures()
         # successively check finalization calls
         parent = item.getparent(pytest.Module)
@@ -842,7 +863,7 @@ class TestRequestBasic:
         teardownlist = parent.obj.teardownlist
         ss = item.session._setupstate
         assert not teardownlist
-        ss.teardown_exact(item, None)
+        ss.teardown_exact(None)
         print(ss.stack)
         assert teardownlist == [1]
 
@@ -945,7 +966,9 @@ class TestRequestBasic:
         modcol = pytester.getmodulecol("def test_somefunc(): pass")
         (item,) = pytester.genitems([modcol])
         req = fixtures.FixtureRequest(item, _ispytest=True)
-        assert req.fspath == modcol.fspath
+        assert req.path == modcol.path
+        with pytest.warns(pytest.PytestDeprecationWarning):
+            assert req.fspath == modcol.fspath
 
     def test_request_fixturenames(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -959,11 +982,11 @@ class TestRequestBasic:
             def farg(arg1):
                 pass
             @pytest.fixture(autouse=True)
-            def sarg(tmpdir):
+            def sarg(tmp_path):
                 pass
             def test_function(request, farg):
                 assert set(get_public_names(request.fixturenames)) == \
-                       set(["tmpdir", "sarg", "arg1", "request", "farg",
+                       set(["sarg", "arg1", "request", "farg",
                             "tmp_path", "tmp_path_factory"])
         """
         )
@@ -1036,7 +1059,7 @@ class TestRequestBasic:
     def test_show_fixtures_color_yes(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_this(): assert 1")
         result = pytester.runpytest("--color=yes", "--fixtures")
-        assert "\x1b[32mtmpdir" in result.stdout.str()
+        assert "\x1b[32mtmp_path" in result.stdout.str()
 
     def test_newstyle_with_request(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1729,11 +1752,11 @@ class TestAutouseDiscovery:
             """
             import pytest
             @pytest.fixture(autouse=True)
-            def perfunction(request, tmpdir):
+            def perfunction(request, tmp_path):
                 pass
 
             @pytest.fixture()
-            def arg1(tmpdir):
+            def arg1(tmp_path):
                 pass
             @pytest.fixture(autouse=True)
             def perfunction2(arg1):
@@ -2046,9 +2069,9 @@ class TestAutouseManagement:
         reprec = pytester.inline_run("-v", "-s", "--confcutdir", pytester.path)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
-        values = config.pluginmanager._getconftestmodules(p, importmode="prepend")[
-            0
-        ].values
+        values = config.pluginmanager._getconftestmodules(
+            p, importmode="prepend", rootpath=pytester.path
+        )[0].values
         assert values == ["fin_a1", "fin_a2", "fin_b1", "fin_b2"] * 2
 
     def test_scope_ordering(self, pytester: Pytester) -> None:
@@ -3185,10 +3208,10 @@ class TestRequestScopeAccess:
     pytestmark = pytest.mark.parametrize(
         ("scope", "ok", "error"),
         [
-            ["session", "", "fspath class function module"],
-            ["module", "module fspath", "cls function"],
-            ["class", "module fspath cls", "function"],
-            ["function", "module fspath cls function", ""],
+            ["session", "", "path class function module"],
+            ["module", "module path", "cls function"],
+            ["class", "module path cls", "function"],
+            ["function", "module path cls function", ""],
         ],
     )
 
@@ -3311,9 +3334,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             [
-                "tmpdir_factory [[]session scope[]]",
+                "tmp_path_factory [[]session scope[]] -- *tmpdir.py*",
                 "*for the test session*",
-                "tmpdir",
+                "tmp_path -- *",
                 "*temporary directory*",
             ]
         )
@@ -3322,9 +3345,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
             [
-                "tmpdir_factory [[]session scope[]] -- *tmpdir.py*",
+                "tmp_path_factory [[]session scope[]] -- *tmpdir.py*",
                 "*for the test session*",
-                "tmpdir -- *tmpdir.py*",
+                "tmp_path -- *tmpdir.py*",
                 "*temporary directory*",
             ]
         )
@@ -3344,9 +3367,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmpdir
+            *tmp_path -- *
             *fixtures defined from*
-            *arg1*
+            *arg1 -- test_show_fixtures_testmodule.py:6*
             *hello world*
         """
         )
@@ -3372,7 +3395,7 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             """
-            *tmpdir*
+            *tmp_path*
             *fixtures defined from*conftest*
             *arg1*
             *hello world*
@@ -3406,10 +3429,10 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_trimmed_doc *
-                arg2
+                arg2 -- test_show_fixtures_trimmed_doc.py:10
                     line1
                     line2
-                arg1
+                arg1 -- test_show_fixtures_trimmed_doc.py:3
                     line1
                     line2
                 """
@@ -3435,7 +3458,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc *
-                fixture1
+                fixture1 -- test_show_fixtures_indented_doc.py:3
                     line1
                         indented line
                 """
@@ -3463,7 +3486,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc_first_line_unindented *
-                fixture1
+                fixture1 -- test_show_fixtures_indented_doc_first_line_unindented.py:3
                     line1
                     line2
                         indented line
@@ -3491,7 +3514,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_in_class *
-                fixture1
+                fixture1 -- test_show_fixtures_indented_in_class.py:4
                     line1
                     line2
                         indented line
@@ -3531,11 +3554,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from test_a *
-            fix_a
+            fix_a -- test_a.py:4
                 Fixture A
 
             * fixtures defined from test_b *
-            fix_b
+            fix_b -- test_b.py:4
                 Fixture B
         """
         )
@@ -3571,11 +3594,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from conftest *
-            arg1
+            arg1 -- conftest.py:3
                 Hello World in conftest.py
 
             * fixtures defined from test_show_fixtures_with_same_name *
-            arg1
+            arg1 -- test_show_fixtures_with_same_name.py:3
                 Hi from test module
         """
         )
@@ -3977,15 +4000,15 @@ class TestScopeOrdering:
                 FIXTURE_ORDER.append('m1')
 
             @pytest.fixture(scope='session')
-            def my_tmpdir_factory():
-                FIXTURE_ORDER.append('my_tmpdir_factory')
+            def my_tmp_path_factory():
+                FIXTURE_ORDER.append('my_tmp_path_factory')
 
             @pytest.fixture
-            def my_tmpdir(my_tmpdir_factory):
-                FIXTURE_ORDER.append('my_tmpdir')
+            def my_tmp_path(my_tmp_path_factory):
+                FIXTURE_ORDER.append('my_tmp_path')
 
             @pytest.fixture
-            def f1(my_tmpdir):
+            def f1(my_tmp_path):
                 FIXTURE_ORDER.append('f1')
 
             @pytest.fixture
@@ -3999,12 +4022,13 @@ class TestScopeOrdering:
         request = FixtureRequest(items[0], _ispytest=True)
         # order of fixtures based on their scope and position in the parameter list
         assert (
-            request.fixturenames == "s1 my_tmpdir_factory p1 m1 f1 f2 my_tmpdir".split()
+            request.fixturenames
+            == "s1 my_tmp_path_factory p1 m1 f1 f2 my_tmp_path".split()
         )
         pytester.runpytest()
-        # actual fixture execution differs: dependent fixtures must be created first ("my_tmpdir")
+        # actual fixture execution differs: dependent fixtures must be created first ("my_tmp_path")
         FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined]
-        assert FIXTURE_ORDER == "s1 my_tmpdir_factory p1 m1 my_tmpdir f1 f2".split()
+        assert FIXTURE_ORDER == "s1 my_tmp_path_factory p1 m1 my_tmp_path f1 f2".split()
 
     def test_func_closure_module(self, pytester: Pytester) -> None:
         pytester.makepyfile(

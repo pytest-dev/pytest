@@ -274,7 +274,7 @@ class TestFunction:
         pytester.makepyfile(
             """
             class A(object):
-                def __call__(self, tmpdir):
+                def __call__(self, tmp_path):
                     0/0
 
             test_a = A()
@@ -778,9 +778,9 @@ class TestConftestCustomization:
             import pytest
             class MyModule(pytest.Module):
                 pass
-            def pytest_pycollect_makemodule(path, parent):
-                if path.basename == "test_xyz.py":
-                    return MyModule.from_parent(fspath=path, parent=parent)
+            def pytest_pycollect_makemodule(fspath, parent):
+                if fspath.name == "test_xyz.py":
+                    return MyModule.from_parent(path=fspath, parent=parent)
         """
         )
         pytester.makepyfile("def test_some(): pass")
@@ -882,9 +882,9 @@ class TestConftestCustomization:
                         return Loader()
             sys.meta_path.append(Finder())
 
-            def pytest_collect_file(path, parent):
-                if path.ext == ".narf":
-                    return Module.from_parent(fspath=path, parent=parent)"""
+            def pytest_collect_file(fspath, parent):
+                if fspath.suffix == ".narf":
+                    return Module.from_parent(path=fspath, parent=parent)"""
         )
         pytester.makefile(
             ".narf",
@@ -933,11 +933,11 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             """\
             import pytest
             def pytest_runtest_setup(item):
-                assert item.fspath.purebasename == "test_in_sub1"
+                assert item.path.stem == "test_in_sub1"
             def pytest_runtest_call(item):
-                assert item.fspath.purebasename == "test_in_sub1"
+                assert item.path.stem == "test_in_sub1"
             def pytest_runtest_teardown(item):
-                assert item.fspath.purebasename == "test_in_sub1"
+                assert item.path.stem == "test_in_sub1"
             """
         )
     )
@@ -946,11 +946,11 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             """\
             import pytest
             def pytest_runtest_setup(item):
-                assert item.fspath.purebasename == "test_in_sub2"
+                assert item.path.stem == "test_in_sub2"
             def pytest_runtest_call(item):
-                assert item.fspath.purebasename == "test_in_sub2"
+                assert item.path.stem == "test_in_sub2"
             def pytest_runtest_teardown(item):
-                assert item.fspath.purebasename == "test_in_sub2"
+                assert item.path.stem == "test_in_sub2"
             """
         )
     )
@@ -1125,7 +1125,7 @@ class TestReportInfo:
     def test_func_reportinfo(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
         fspath, lineno, modpath = item.reportinfo()
-        assert fspath == item.fspath
+        assert str(fspath) == str(item.path)
         assert lineno == 0
         assert modpath == "test_func"
 
@@ -1140,7 +1140,7 @@ class TestReportInfo:
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
         fspath, lineno, msg = classcol.reportinfo()
-        assert fspath == modcol.fspath
+        assert str(fspath) == str(modcol.path)
         assert lineno == 1
         assert msg == "TestClass"
 
@@ -1237,7 +1237,7 @@ def test_unorderable_types(pytester: Pytester) -> None:
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestCollectionWarning")
 def test_dont_collect_non_function_callable(pytester: Pytester) -> None:
     """Test for issue https://github.com/pytest-dev/pytest/issues/331
 

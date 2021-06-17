@@ -59,7 +59,7 @@ class ColoredLevelFormatter(logging.Formatter):
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
     }
-    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
+    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*(?:\.\d+)?s)")
 
     def __init__(self, terminalwriter: TerminalWriter, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -451,7 +451,7 @@ class LogCaptureFixture:
 
     @contextmanager
     def at_level(
-        self, level: int, logger: Optional[str] = None
+        self, level: Union[int, str], logger: Optional[str] = None
     ) -> Generator[None, None, None]:
         """Context manager that sets the level for capturing of logs. After
         the end of the 'with' statement the level is restored to its original
@@ -685,9 +685,11 @@ class LoggingPlugin:
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
         """Implement the internals of the pytest_runtest_xxx() hooks."""
         with catching_logs(
-            self.caplog_handler, level=self.log_level,
+            self.caplog_handler,
+            level=self.log_level,
         ) as caplog_handler, catching_logs(
-            self.report_handler, level=self.log_level,
+            self.report_handler,
+            level=self.log_level,
         ) as report_handler:
             caplog_handler.reset()
             report_handler.reset()

@@ -38,7 +38,7 @@ def pyfile_with_warnings(pytester: Pytester, request: FixtureRequest) -> str:
     return str(test_file)
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning", "default::RuntimeWarning")
 def test_normal_flow(pytester: Pytester, pyfile_with_warnings) -> None:
     """Check that the warnings section is displayed."""
     result = pytester.runpytest(pyfile_with_warnings)
@@ -55,7 +55,7 @@ def test_normal_flow(pytester: Pytester, pyfile_with_warnings) -> None:
     )
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_setup_teardown_warnings(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
@@ -123,7 +123,7 @@ def test_ignore(pytester: Pytester, pyfile_with_warnings, method) -> None:
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_unicode(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
@@ -182,7 +182,7 @@ def test_filterwarnings_mark(pytester: Pytester, default_config) -> None:
         pytester.makeini(
             """
             [pytest]
-            filterwarnings = always
+            filterwarnings = always::RuntimeWarning
         """
         )
     pytester.makepyfile(
@@ -202,7 +202,9 @@ def test_filterwarnings_mark(pytester: Pytester, default_config) -> None:
             warnings.warn(RuntimeWarning())
     """
     )
-    result = pytester.runpytest("-W always" if default_config == "cmdline" else "")
+    result = pytester.runpytest(
+        "-W always::RuntimeWarning" if default_config == "cmdline" else ""
+    )
     result.stdout.fnmatch_lines(["*= 1 failed, 2 passed, 1 warning in *"])
 
 
@@ -217,7 +219,7 @@ def test_non_string_warning_argument(pytester: Pytester) -> None:
             warnings.warn(UserWarning(1, 'foo'))
         """
     )
-    result = pytester.runpytest("-W", "always")
+    result = pytester.runpytest("-W", "always::UserWarning")
     result.stdout.fnmatch_lines(["*= 1 passed, 1 warning in *"])
 
 
@@ -236,7 +238,7 @@ def test_filterwarnings_mark_registration(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_warning_captured_hook(pytester: Pytester) -> None:
     pytester.makeconftest(
         """
@@ -297,7 +299,7 @@ def test_warning_captured_hook(pytester: Pytester) -> None:
             assert collected_result[3] is None, str(collected)
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_collection_warnings(pytester: Pytester) -> None:
     """Check that we also capture warnings issued during test collection (#3251)."""
     pytester.makepyfile(
@@ -321,7 +323,7 @@ def test_collection_warnings(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_mark_regex_escape(pytester: Pytester) -> None:
     """@pytest.mark.filterwarnings should not try to escape regex characters (#3936)"""
     pytester.makepyfile(
@@ -337,7 +339,7 @@ def test_mark_regex_escape(pytester: Pytester) -> None:
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestWarning")
 @pytest.mark.parametrize("ignore_pytest_warnings", ["no", "ini", "cmdline"])
 def test_hide_pytest_internal_warnings(
     pytester: Pytester, ignore_pytest_warnings
@@ -387,7 +389,7 @@ def test_option_precedence_cmdline_over_ini(
     pytester.makeini(
         """
         [pytest]
-        filterwarnings = error
+        filterwarnings = error::UserWarning
     """
     )
     pytester.makepyfile(
@@ -581,8 +583,7 @@ def test_warnings_checker_twice() -> None:
         warnings.warn("Message B", UserWarning)
 
 
-@pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_group_warnings_by_message(pytester: Pytester) -> None:
     pytester.copy_example("warnings/test_group_warnings_by_message.py")
     result = pytester.runpytest()
@@ -613,8 +614,7 @@ def test_group_warnings_by_message(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("ignore::pytest.PytestExperimentalApiWarning")
-@pytest.mark.filterwarnings("always")
+@pytest.mark.filterwarnings("always::UserWarning")
 def test_group_warnings_by_message_summary(pytester: Pytester) -> None:
     pytester.copy_example("warnings/test_group_warnings_by_message_summary")
     pytester.syspathinsert()
@@ -662,7 +662,7 @@ class TestStackLevel:
         class CapturedWarnings:
             captured: List[
                 Tuple[warnings.WarningMessage, Optional[Tuple[str, int, str]]]
-            ] = ([])
+            ] = []
 
             @classmethod
             def pytest_warning_recorded(cls, warning_message, when, nodeid, location):
@@ -772,7 +772,7 @@ class TestStackLevel:
         # with stacklevel=2 the warning should originate from the above created test file
         result.stdout.fnmatch_lines_random(
             [
-                "*{testfile}:3*".format(testfile=str(testfile)),
+                f"*{testfile}:3*",
                 "*Unknown pytest.mark.unknown*",
             ]
         )

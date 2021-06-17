@@ -32,10 +32,10 @@ and notify it as a comment in the issue.
 Minor releases
 ^^^^^^^^^^^^^^
 
-1. Create a new maintenance branch from ``master``::
+1. Create a new maintenance branch from ``main``::
 
         git fetch --all
-        git branch 5.2.x upstream/master
+        git branch 5.2.x upstream/main
         git push upstream 5.2.x
 
 2. Open a new issue and add this comment to the body::
@@ -48,10 +48,10 @@ notify it as a comment in the issue.
 Major and release candidates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1. Create a new maintenance branch from ``master``::
+1. Create a new maintenance branch from ``main``::
 
         git fetch --all
-        git branch 6.0.x upstream/master
+        git branch 6.0.x upstream/main
         git push upstream 6.0.x
 
 2. For a **major release**, open a new issue and add this comment in the body::
@@ -66,7 +66,7 @@ The automated workflow will publish a PR for a branch ``release-6.0.0`` and
 notify it as a comment in the issue.
 
 At this point on, this follows the same workflow as other maintenance branches: bug-fixes are merged
-into ``master`` and ported back to the maintenance branch, even for release candidates.
+into ``main`` and ported back to the maintenance branch, even for release candidates.
 
 **A note about release candidates**
 
@@ -83,7 +83,7 @@ to be executed on that platform.
 To release a version ``MAJOR.MINOR.PATCH``, follow these steps:
 
 #. For major and minor releases, create a new branch ``MAJOR.MINOR.x`` from
-   ``upstream/master`` and push it to ``upstream``.
+   ``upstream/main`` and push it to ``upstream``.
 
 #. Create a branch ``release-MAJOR.MINOR.PATCH`` from the ``MAJOR.MINOR.x`` branch.
 
@@ -114,18 +114,18 @@ Both automatic and manual processes described above follow the same steps from t
 
 #. Merge the PR.
 
-#. Cherry-pick the CHANGELOG / announce files to the ``master`` branch::
+#. Cherry-pick the CHANGELOG / announce files to the ``main`` branch::
 
        git fetch --all --prune
-       git checkout origin/master -b cherry-pick-release
+       git checkout upstream/main -b cherry-pick-release
        git cherry-pick -x -m1 upstream/MAJOR.MINOR.x
 
 #. Open a PR for ``cherry-pick-release`` and merge it once CI passes. No need to wait for approvals if there were no conflicts on the previous step.
 
-#. For major and minor releases, tag the release cherry-pick merge commit in master with
+#. For major and minor releases, tag the release cherry-pick merge commit in main with
    a dev tag for the next feature release::
 
-       git checkout master
+       git checkout main
        git pull
        git tag MAJOR.{MINOR+1}.0.dev0
        git push git@github.com:pytest-dev/pytest.git MAJOR.{MINOR+1}.0.dev0

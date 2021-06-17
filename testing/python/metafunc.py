@@ -47,7 +47,7 @@ class TestMetafunc:
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(func, "mock::nodeid")
-        return python.Metafunc(definition, fixtureinfo, config)
+        return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
         def function():
@@ -448,7 +448,10 @@ class TestMetafunc:
         enum = pytest.importorskip("enum")
         e = enum.Enum("Foo", "one, two")
         result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
-        assert result == ["Foo.one-Foo.two"]
+        if sys.version_info[:2] >= (3, 10):
+            assert result == ["one-two"]
+        else:
+            assert result == ["Foo.one-Foo.two"]
 
     def test_idmaker_idfn(self) -> None:
         """#351"""
@@ -514,7 +517,10 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], idfn=lambda _: "ação", config=config,
+                ("a",),
+                [pytest.param("string")],
+                idfn=lambda _: "ação",
+                config=config,
             )
             assert result == [expected]
 
@@ -546,7 +552,10 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = idmaker(
-                ("a",), [pytest.param("string")], ids=["ação"], config=config,
+                ("a",),
+                [pytest.param("string")],
+                ids=["ação"],
+                config=config,
             )
             assert result == [expected]
 
@@ -686,9 +695,8 @@ class TestMetafunc:
         """
         #714
         Test parametrization with 'indirect' parameter applied on
-        particular arguments. As y is is direct, its value should
-        be used directly rather than being passed to the fixture
-        y.
+        particular arguments. As y is direct, its value should
+        be used directly rather than being passed to the fixture y.
 
         :param pytester: the instance of Pytester class, a temporary
         test directory.

@@ -6,7 +6,7 @@ Pytest API and builtin fixtures
 ================================================
 
 
-Most of the information of this page has been moved over to :ref:`reference`.
+Most of the information of this page has been moved over to :ref:`api-reference`.
 
 For information on plugin hooks and objects, see :ref:`plugins`.
 
@@ -61,7 +61,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         namespace of doctests.
 
     pytestconfig [session scope]
-        Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
+        Session-scoped fixture that returns the :class:`pytest.Config` object.
 
         Example::
 
@@ -144,14 +144,14 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     recwarn
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
-        See http://docs.python.org/library/warnings.html for information
+        See https://docs.python.org/library/warnings.html for information
         on warning categories.
 
     tmpdir_factory [session scope]
-        Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.
+        Return a :class:`pytest.TempdirFactory` instance for the test session.
 
     tmp_path_factory [session scope]
-        Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.
+        Return a :class:`pytest.TempPathFactory` instance for the test session.
 
     tmpdir
         Return a temporary directory path object which is unique to each test

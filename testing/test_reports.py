@@ -1,8 +1,6 @@
 from typing import Sequence
 from typing import Union
 
-import py.path
-
 import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
@@ -226,18 +224,26 @@ class TestReportSerialization:
                 assert newrep.longrepr == str(rep.longrepr)
 
     def test_paths_support(self, pytester: Pytester) -> None:
-        """Report attributes which are py.path or pathlib objects should become strings."""
+        """Report attributes which are path-like should become strings."""
         pytester.makepyfile(
             """
             def test_a():
                 assert False
         """
         )
+
+        class MyPathLike:
+            def __init__(self, path: str) -> None:
+                self.path = path
+
+            def __fspath__(self) -> str:
+                return self.path
+
         reprec = pytester.inline_run()
         reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 3
         test_a_call = reports[1]
-        test_a_call.path1 = py.path.local(pytester.path)  # type: ignore[attr-defined]
+        test_a_call.path1 = MyPathLike(str(pytester.path))  # type: ignore[attr-defined]
         test_a_call.path2 = pytester.path  # type: ignore[attr-defined]
         data = test_a_call._to_json()
         assert data["path1"] == str(pytester.path)

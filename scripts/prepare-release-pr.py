@@ -3,15 +3,14 @@ This script is part of the pytest release process which is triggered manually in
 tab of the repository.
 
 The user will need to enter the base branch to start the release from (for example
-``6.1.x`` or ``master``) and if it should be a major release.
+``6.1.x`` or ``main``) and if it should be a major release.
 
 The appropriate version will be obtained based on the given branch automatically.
 
 After that, it will create a release using the `release` tox environment, and push a new PR.
 
-**Secret**: currently the secret is defined in the @pytestbot account,
-which the core maintainers have access to. There we created a new secret named `chatops`
-with write access to the repository.
+**Token**: currently the token from the GitHub Actions is used, pushed with
+`pytest bot <pytestbot@gmail.com>` commit author.
 """
 import argparse
 import re
@@ -90,7 +89,10 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     cmdline = ["tox", "-e", "release", "--", version, "--skip-check-links"]
     print("Running", " ".join(cmdline))
     run(
-        cmdline, text=True, check=True, capture_output=True,
+        cmdline,
+        text=True,
+        check=True,
+        capture_output=True,
     )
 
     oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
@@ -105,7 +107,10 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     body = PR_BODY.format(version=version)
     repo = login(token)
     pr = repo.create_pull(
-        f"Prepare release {version}", base=base_branch, head=release_branch, body=body,
+        f"Prepare release {version}",
+        base=base_branch,
+        head=release_branch,
+        body=body,
     )
     print(f"Pull request {Fore.CYAN}{pr.url}{Fore.RESET} created.")
 

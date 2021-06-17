@@ -133,7 +133,7 @@ class TestTerminal:
         item.config.pluginmanager.register(tr)
         location = item.reportinfo()
         tr.config.hook.pytest_runtest_logstart(
-            nodeid=item.nodeid, location=location, fspath=str(item.fspath)
+            nodeid=item.nodeid, location=location, fspath=str(item.path)
         )
         linecomp.assert_contains_lines(["*test_show_runtest_logstart.py*"])
 
@@ -1036,8 +1036,8 @@ class TestTerminalFunctional:
     def test_report_collectionfinish_hook(self, pytester: Pytester, params) -> None:
         pytester.makeconftest(
             """
-            def pytest_report_collectionfinish(config, startpath, startdir, items):
-                return ['hello from hook: {0} items'.format(len(items))]
+            def pytest_report_collectionfinish(config, startpath, items):
+                return [f'hello from hook: {len(items)} items']
         """
         )
         pytester.makepyfile(
@@ -1462,7 +1462,7 @@ class TestGenericReporting:
         )
         pytester.mkdir("a").joinpath("conftest.py").write_text(
             """
-def pytest_report_header(config, startdir, startpath):
+def pytest_report_header(config, startpath):
     return ["line1", str(startpath)]
 """
         )
@@ -1618,7 +1618,7 @@ def test_terminal_summary(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning")
 def test_terminal_summary_warnings_are_displayed(pytester: Pytester) -> None:
     """Test that warnings emitted during pytest_terminal_summary are displayed.
     (#1305).
@@ -1655,7 +1655,7 @@ def test_terminal_summary_warnings_are_displayed(pytester: Pytester) -> None:
     assert stdout.count("=== warnings summary ") == 2
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning")
 def test_terminal_summary_warnings_header_once(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
@@ -2230,19 +2230,19 @@ def test_skip_reasons_folding() -> None:
 
     ev1 = cast(CollectReport, X())
     ev1.when = "execute"
-    ev1.skipped = True
+    ev1.skipped = True  # type: ignore[misc]
     ev1.longrepr = longrepr
 
     ev2 = cast(CollectReport, X())
     ev2.when = "execute"
     ev2.longrepr = longrepr
-    ev2.skipped = True
+    ev2.skipped = True  # type: ignore[misc]
 
     # ev3 might be a collection report
     ev3 = cast(CollectReport, X())
     ev3.when = "collect"
     ev3.longrepr = longrepr
-    ev3.skipped = True
+    ev3.skipped = True  # type: ignore[misc]
 
     values = _folded_skips(Path.cwd(), [ev1, ev2, ev3])
     assert len(values) == 1

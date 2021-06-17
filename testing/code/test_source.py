@@ -6,18 +6,18 @@ import inspect
 import linecache
 import sys
 import textwrap
+from pathlib import Path
 from types import CodeType
 from typing import Any
 from typing import Dict
 from typing import Optional
-
-import py.path
 
 import pytest
 from _pytest._code import Code
 from _pytest._code import Frame
 from _pytest._code import getfslineno
 from _pytest._code import Source
+from _pytest.pathlib import import_path
 
 
 def test_source_str_function() -> None:
@@ -286,7 +286,7 @@ def test_deindent() -> None:
     assert lines == ["def f():", "    def g():", "        pass"]
 
 
-def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot) -> None:
+def test_source_of_class_at_eof_without_newline(_sys_snapshot, tmp_path: Path) -> None:
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
     source = Source(
@@ -296,9 +296,10 @@ def test_source_of_class_at_eof_without_newline(tmpdir, _sys_snapshot) -> None:
                 x = 1
     """
     )
-    path = tmpdir.join("a.py")
-    path.write(source)
-    s2 = Source(tmpdir.join("a.py").pyimport().A)
+    path = tmp_path.joinpath("a.py")
+    path.write_text(str(source))
+    mod: Any = import_path(path, root=tmp_path)
+    s2 = Source(mod.A)
     assert str(source).strip() == str(s2).strip()
 
 
@@ -352,8 +353,8 @@ def test_getfslineno() -> None:
 
     fspath, lineno = getfslineno(f)
 
-    assert isinstance(fspath, py.path.local)
-    assert fspath.basename == "test_source.py"
+    assert isinstance(fspath, Path)
+    assert fspath.name == "test_source.py"
     assert lineno == f.__code__.co_firstlineno - 1  # see findsource
 
     class A:
@@ -362,8 +363,8 @@ def test_getfslineno() -> None:
     fspath, lineno = getfslineno(A)
 
     _, A_lineno = inspect.findsource(A)
-    assert isinstance(fspath, py.path.local)
-    assert fspath.basename == "test_source.py"
+    assert isinstance(fspath, Path)
+    assert fspath.name == "test_source.py"
     assert lineno == A_lineno
 
     assert getfslineno(3) == ("", -1)

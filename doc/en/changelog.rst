@@ -28,6 +28,45 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.2.4 (2021-05-04)
+=========================
+
+Bug Fixes
+---------
+
+- `#8539 <https://github.com/pytest-dev/pytest/issues/8539>`_: Fixed assertion rewriting on Python 3.10.
+
+
+pytest 6.2.3 (2021-04-03)
+=========================
+
+Bug Fixes
+---------
+
+- `#8414 <https://github.com/pytest-dev/pytest/issues/8414>`_: pytest used to create directories under ``/tmp`` with world-readable
+  permissions. This means that any user in the system was able to read
+  information written by tests in temporary directories (such as those created by
+  the ``tmp_path``/``tmpdir`` fixture). Now the directories are created with
+  private permissions.
+
+  pytest used to silenty use a pre-existing ``/tmp/pytest-of-<username>`` directory,
+  even if owned by another user. This means another user could pre-create such a
+  directory and gain control of another user's temporary directory. Now such a
+  condition results in an error.
+
+
+pytest 6.2.2 (2021-01-25)
+=========================
+
+Bug Fixes
+---------
+
+- `#8152 <https://github.com/pytest-dev/pytest/issues/8152>`_: Fixed "(<Skipped instance>)" being shown as a skip reason in the verbose test summary line when the reason is empty.
+
+
+- `#8249 <https://github.com/pytest-dev/pytest/issues/8249>`_: Fix the ``faulthandler`` plugin for occasions when running with ``twisted.logger`` and using ``pytest --capture=no``.
+
+
 pytest 6.2.1 (2020-12-15)
 =========================
 
@@ -1016,7 +1055,7 @@ Bug Fixes
 - `#7110 <https://github.com/pytest-dev/pytest/issues/7110>`_: Fixed regression: ``asyncbase.TestCase`` tests are executed correctly again.
 
 
-- `#7143 <https://github.com/pytest-dev/pytest/issues/7143>`_: Fix ``File.from_constructor`` so it forwards extra keyword arguments to the constructor.
+- `#7143 <https://github.com/pytest-dev/pytest/issues/7143>`_: Fix ``File.from_parent`` so it forwards extra keyword arguments to the constructor.
 
 
 - `#7145 <https://github.com/pytest-dev/pytest/issues/7145>`_: Classes with broken ``__getattribute__`` methods are displayed correctly during failures.
@@ -3078,12 +3117,12 @@ Features
   will not issue the warning.
 
 
-- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <http://www.attrs.org/en/stable/>`__ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
+- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <https://www.attrs.org/en/stable/>`__ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
 
 
 - `#4278 <https://github.com/pytest-dev/pytest/issues/4278>`_: ``CACHEDIR.TAG`` files are now created inside cache directories.
 
-  Those files are part of the `Cache Directory Tagging Standard <http://www.bford.info/cachedir/spec.html>`__, and can
+  Those files are part of the `Cache Directory Tagging Standard <https://bford.info/cachedir/spec.html>`__, and can
   be used by backup or synchronization programs to identify pytest's cache directory as such.
 
 
@@ -5067,7 +5106,7 @@ Improved Documentation
 
 - In one of the simple examples, use ``pytest_collection_modifyitems()`` to skip
   tests based on a command-line option, allowing its sharing while preventing a
-  user error when acessing ``pytest.config`` before the argument parsing.
+  user error when accessing ``pytest.config`` before the argument parsing.
   (`#2653 <https://github.com/pytest-dev/pytest/issues/2653>`_)
 
 
@@ -5479,7 +5518,7 @@ Changes
   Thanks `@ojii`_ for the PR.
 
 * Replace minor/patch level version numbers in the documentation with placeholders.
-  This significantly reduces change-noise as different contributors regnerate
+  This significantly reduces change-noise as different contributors regenerate
   the documentation on different platforms.
   Thanks `@RonnyPfannschmidt`_ for the PR.
 
@@ -8436,7 +8475,7 @@ Bug fixes:
 
 - fixes for making the jython/win32 combination work, note however:
   jython2.5.1/win32 does not provide a command line launcher, see
-  http://bugs.jython.org/issue1491 . See pylib install documentation
+  https://bugs.jython.org/issue1491 . See pylib install documentation
   for how to work around.
 
 - fixes for handling of unicode exception values and unprintable objects

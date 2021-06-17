@@ -21,7 +21,7 @@ class TestMark:
         assert attr in module.__all__  # type: ignore
 
     def test_pytest_mark_notcallable(self) -> None:
-        mark = MarkGenerator()
+        mark = MarkGenerator(_ispytest=True)
         with pytest.raises(TypeError):
             mark()  # type: ignore[operator]
 
@@ -40,7 +40,7 @@ class TestMark:
         assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap]
 
     def test_pytest_mark_name_starts_with_underscore(self) -> None:
-        mark = MarkGenerator()
+        mark = MarkGenerator(_ispytest=True)
         with pytest.raises(AttributeError):
             mark._some_name
 
@@ -356,8 +356,14 @@ def test_parametrize_with_module(pytester: Pytester) -> None:
             "foo or or",
             "at column 8: expected not OR left parenthesis OR identifier; got or",
         ),
-        ("(foo", "at column 5: expected right parenthesis; got end of input",),
-        ("foo bar", "at column 5: expected end of input; got identifier",),
+        (
+            "(foo",
+            "at column 5: expected right parenthesis; got end of input",
+        ),
+        (
+            "foo bar",
+            "at column 5: expected end of input; got identifier",
+        ),
         (
             "or or",
             "at column 1: expected not OR left parenthesis OR identifier; got or",
@@ -863,7 +869,8 @@ class TestKeywordSelection:
         assert passed + skipped + failed == 0
 
     @pytest.mark.parametrize(
-        "keyword", ["__", "+", ".."],
+        "keyword",
+        ["__", "+", ".."],
     )
     def test_no_magic_values(self, pytester: Pytester, keyword: str) -> None:
         """Make sure the tests do not match on magic values,
@@ -1041,11 +1048,12 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
     # assert skipped_k == failed_k == 0
 
 
-def test_addmarker_order() -> None:
+def test_addmarker_order(pytester) -> None:
     session = mock.Mock()
     session.own_markers = []
     session.parent = None
     session.nodeid = ""
+    session.path = pytester.path
     node = Node.from_parent(session, name="Test")
     node.add_marker("foo")
     node.add_marker("bar")

@@ -104,7 +104,7 @@ def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
 
 def pytest_collection(session: "Session") -> None:
     # This hook is only called when test modules are collected
-    # so for example not in the master process of pytest-xdist
+    # so for example not in the managing process of pytest-xdist
     # (which does not collect test modules).
     assertstate = session.config._store.get(assertstate_key, None)
     if assertstate:
@@ -153,6 +153,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
 
     saved_assert_hooks = util._reprcompare, util._assertion_pass
     util._reprcompare = callbinrepr
+    util._config = item.config
 
     if ihook.pytest_assertion_pass.get_hookimpls():
 
@@ -164,6 +165,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     yield
 
     util._reprcompare, util._assertion_pass = saved_assert_hooks
+    util._config = None
 
 
 def pytest_sessionfinish(session: "Session") -> None:

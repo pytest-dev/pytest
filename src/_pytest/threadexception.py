@@ -34,11 +34,10 @@ class catch_threading_exception:
     """
 
     def __init__(self) -> None:
-        # See https://github.com/python/typeshed/issues/4767 regarding the underscore.
-        self.args: Optional["threading._ExceptHookArgs"] = None
-        self._old_hook: Optional[Callable[["threading._ExceptHookArgs"], Any]] = None
+        self.args: Optional["threading.ExceptHookArgs"] = None
+        self._old_hook: Optional[Callable[["threading.ExceptHookArgs"], Any]] = None
 
-    def _hook(self, args: "threading._ExceptHookArgs") -> None:
+    def _hook(self, args: "threading.ExceptHookArgs") -> None:
         self.args = args
 
     def __enter__(self) -> "catch_threading_exception":
@@ -62,14 +61,13 @@ def thread_exception_runtest_hook() -> Generator[None, None, None]:
     with catch_threading_exception() as cm:
         yield
         if cm.args:
-            if cm.args.thread is not None:
-                thread_name = cm.args.thread.name
-            else:
-                thread_name = "<unknown>"
+            thread_name = "<unknown>" if cm.args.thread is None else cm.args.thread.name
             msg = f"Exception in thread {thread_name}\n\n"
             msg += "".join(
                 traceback.format_exception(
-                    cm.args.exc_type, cm.args.exc_value, cm.args.exc_traceback,
+                    cm.args.exc_type,
+                    cm.args.exc_value,
+                    cm.args.exc_traceback,
                 )
             )
             warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))

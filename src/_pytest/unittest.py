@@ -29,11 +29,10 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import PyCollector
 from _pytest.runner import CallInfo
-from _pytest.skipping import skipped_by_mark_key
-from _pytest.skipping import unexpectedsuccess_key
 
 if TYPE_CHECKING:
     import unittest
+    import twisted.trial.unittest
 
     from _pytest.fixtures import _Scope
 
@@ -145,12 +144,12 @@ def _make_xunit_fixture(
         scope=scope,
         autouse=True,
         # Use a unique name to speed up lookup.
-        name=f"unittest_{setup_name}_fixture_{obj.__qualname__}",
+        name=f"_unittest_{setup_name}_fixture_{obj.__qualname__}",
     )
     def fixture(self, request: FixtureRequest) -> Generator[None, None, None]:
         if _is_skipped(self):
             reason = self.__unittest_skip_why__
-            pytest.skip(reason)
+            raise pytest.skip.Exception(reason, _use_item_location=True)
         if setup is not None:
             try:
                 if pass_self:
@@ -210,7 +209,7 @@ class TestCaseFunction(Function):
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
-            excinfo = _pytest._code.ExceptionInfo(rawexcinfo)  # type: ignore[arg-type]
+            excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(rawexcinfo)  # type: ignore[arg-type]
             # Invoke the attributes to trigger storing the traceback
             # trial causes some issue there.
             excinfo.value
@@ -256,9 +255,8 @@ class TestCaseFunction(Function):
 
     def addSkip(self, testcase: "unittest.TestCase", reason: str) -> None:
         try:
-            skip(reason)
+            raise pytest.skip.Exception(reason, _use_item_location=True)
         except skip.Exception:
-            self._store[skipped_by_mark_key] = True
             self._addexcinfo(sys.exc_info())
 
     def addExpectedFailure(
@@ -273,24 +271,24 @@ class TestCaseFunction(Function):
             self._addexcinfo(sys.exc_info())
 
     def addUnexpectedSuccess(
-        self, testcase: "unittest.TestCase", reason: str = ""
+        self,
+        testcase: "unittest.TestCase",
+        reason: Optional["twisted.trial.unittest.Todo"] = None,
     ) -> None:
-        self._store[unexpectedsuccess_key] = reason
+        msg = "Unexpected success"
+        if reason:
+            msg += f": {reason.reason}"
+        # Preserve unittest behaviour - fail the test. Explicitly not an XPASS.
+        try:
+            fail(msg, pytrace=False)
+        except fail.Exception:
+            self._addexcinfo(sys.exc_info())
 
     def addSuccess(self, testcase: "unittest.TestCase") -> None:
         pass
 
     def stopTest(self, testcase: "unittest.TestCase") -> None:
         pass
-
-    def _expecting_failure(self, test_method) -> bool:
-        """Return True if the given unittest method (or the entire class) is marked
-        with @expectedFailure."""
-        expecting_failure_method = getattr(
-            test_method, "__unittest_expecting_failure__", False
-        )
-        expecting_failure_class = getattr(self, "__unittest_expecting_failure__", False)
-        return bool(expecting_failure_class or expecting_failure_method)
 
     def runtest(self) -> None:
         from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
@@ -343,6 +341,10 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
             except AttributeError:
                 pass
 
+    # Convert unittest.SkipTest to pytest.skip.
+    # This is actually only needed for nose, which reuses unittest.SkipTest for
+    # its own nose.SkipTest. For unittest TestCases, SkipTest is already
+    # handled internally, and doesn't reach here.
     unittest = sys.modules.get("unittest")
     if (
         unittest
@@ -350,7 +352,6 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
         and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
     ):
         excinfo = call.excinfo
-        # Let's substitute the excinfo with a pytest.skip one.
         call2 = CallInfo[None].from_call(
             lambda: pytest.skip(str(excinfo.value)), call.when
         )

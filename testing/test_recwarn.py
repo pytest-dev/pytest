@@ -27,6 +27,17 @@ def test_recwarn_functional(pytester: Pytester) -> None:
     reprec.assertoutcome(passed=1)
 
 
+@pytest.mark.filterwarnings("")
+def test_recwarn_captures_deprecation_warning(recwarn: WarningsRecorder) -> None:
+    """
+    Check that recwarn can capture DeprecationWarning by default
+    without custom filterwarnings (see #8666).
+    """
+    warnings.warn(DeprecationWarning("some deprecation"))
+    assert len(recwarn) == 1
+    assert recwarn.pop(DeprecationWarning)
+
+
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:
         rec = WarningsRecorder(_ispytest=True)
@@ -298,13 +309,25 @@ class TestWarns:
         assert str(record[0].message) == "user"
 
     def test_record_only(self) -> None:
-        with pytest.warns(None) as record:
+        with pytest.warns() as record:
             warnings.warn("user", UserWarning)
             warnings.warn("runtime", RuntimeWarning)
 
         assert len(record) == 2
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
+
+    def test_record_only_none_deprecated_warn(self) -> None:
+        # This should become an error when WARNS_NONE_ARG is removed in Pytest 7.0
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pytest.warns(None) as record:  # type: ignore[call-overload]
+                warnings.warn("user", UserWarning)
+                warnings.warn("runtime", RuntimeWarning)
+
+            assert len(record) == 2
+            assert str(record[0].message) == "user"
+            assert str(record[1].message) == "runtime"
 
     def test_record_by_subclass(self) -> None:
         with pytest.warns(Warning) as record:

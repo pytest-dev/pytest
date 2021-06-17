@@ -37,6 +37,8 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -285,15 +287,13 @@ class WarningReport:
         User friendly message about the warning.
     :ivar str|None nodeid:
         nodeid that generated the warning (see ``get_location``).
-    :ivar tuple|py.path.local fslocation:
+    :ivar tuple fslocation:
         File system location of the source of the warning (see ``get_location``).
     """
 
     message = attr.ib(type=str)
     nodeid = attr.ib(type=Optional[str], default=None)
-    fslocation = attr.ib(
-        type=Optional[Union[Tuple[str, int], py.path.local]], default=None
-    )
+    fslocation = attr.ib(type=Optional[Tuple[str, int]], default=None)
     count_towards_summary = True
 
     def get_location(self, config: Config) -> Optional[str]:
@@ -301,14 +301,9 @@ class WarningReport:
         if self.nodeid:
             return self.nodeid
         if self.fslocation:
-            if isinstance(self.fslocation, tuple) and len(self.fslocation) >= 2:
-                filename, linenum = self.fslocation[:2]
-                relpath = bestrelpath(
-                    config.invocation_params.dir, absolutepath(filename)
-                )
-                return f"{relpath}:{linenum}"
-            else:
-                return str(self.fslocation)
+            filename, linenum = self.fslocation
+            relpath = bestrelpath(config.invocation_params.dir, absolutepath(filename))
+            return f"{relpath}:{linenum}"
         return None
 
 
@@ -325,7 +320,6 @@ class TerminalReporter:
         self.stats: Dict[str, List[Any]] = {}
         self._main_color: Optional[str] = None
         self._known_types: Optional[List[str]] = None
-        self.startdir = config.invocation_dir
         self.startpath = config.invocation_params.dir
         if file is None:
             file = sys.stdout
@@ -387,6 +381,16 @@ class TerminalReporter:
     @property
     def showlongtestinfo(self) -> bool:
         return self.verbosity > 0
+
+    @property
+    def startdir(self) -> LEGACY_PATH:
+        """The directory from which pytest was invoked.
+
+        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+        :type: LEGACY_PATH
+        """
+        return legacy_path(self.startpath)
 
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
@@ -475,7 +479,9 @@ class TerminalReporter:
         return True
 
     def pytest_warning_recorded(
-        self, warning_message: warnings.WarningMessage, nodeid: str,
+        self,
+        warning_message: warnings.WarningMessage,
+        nodeid: str,
     ) -> None:
         from _pytest.warnings import warning_record_to_str
 
@@ -582,7 +588,7 @@ class TerminalReporter:
         if self.verbosity <= 0 and self._show_progress_info:
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
-                progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
+                progress_length = len(f" [{num_tests}/{num_tests}]")
             else:
                 progress_length = len(" [100%]")
 
@@ -604,7 +610,7 @@ class TerminalReporter:
         if self._show_progress_info == "count":
             if collected:
                 progress = self._progress_nodeids_reported
-                counter_format = "{{:{}d}}".format(len(str(collected)))
+                counter_format = f"{{:{len(str(collected))}d}}"
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(len(progress), collected)
             return f" [ {collected} / {collected} ]"
@@ -663,10 +669,7 @@ class TerminalReporter:
         skipped = len(self.stats.get("skipped", []))
         deselected = len(self.stats.get("deselected", []))
         selected = self._numcollected - errors - skipped - deselected
-        if final:
-            line = "collected "
-        else:
-            line = "collecting "
+        line = "collected " if final else "collecting "
         line += (
             str(self._numcollected) + " item" + ("" if self._numcollected == 1 else "s")
         )
@@ -698,7 +701,7 @@ class TerminalReporter:
             pypy_version_info = getattr(sys, "pypy_version_info", None)
             if pypy_version_info:
                 verinfo = ".".join(map(str, pypy_version_info[:3]))
-                msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
+                msg += f"[pypy-{verinfo}-{pypy_version_info[3]}]"
             msg += ", pytest-{}, py-{}, pluggy-{}".format(
                 _pytest._version.version, py.__version__, pluggy.__version__
             )
@@ -710,7 +713,7 @@ class TerminalReporter:
                 msg += " -- " + str(sys.executable)
             self.write_line(msg)
             lines = self.config.hook.pytest_report_header(
-                config=self.config, startpath=self.startpath, startdir=self.startdir
+                config=self.config, startpath=self.startpath
             )
             self._write_report_lines_from_hooks(lines)
 
@@ -747,7 +750,6 @@ class TerminalReporter:
         lines = self.config.hook.pytest_report_collectionfinish(
             config=self.config,
             startpath=self.startpath,
-            startdir=self.startdir,
             items=session.items,
         )
         self._write_report_lines_from_hooks(lines)
@@ -1061,7 +1063,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = " in {}".format(format_session_duration(session_duration))
+        duration = f" in {format_session_duration(session_duration)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)
@@ -1313,7 +1315,8 @@ def _get_line_with_reprcrash_message(
 
 
 def _folded_skips(
-    startpath: Path, skipped: Sequence[CollectReport],
+    startpath: Path,
+    skipped: Sequence[CollectReport],
 ) -> List[Tuple[int, str, Optional[int], str]]:
     d: Dict[Tuple[str, Optional[int], str], List[CollectReport]] = {}
     for event in skipped:

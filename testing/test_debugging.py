@@ -877,7 +877,9 @@ class TestPDB:
         assert custom_pdb_calls == []
 
     def test_pdb_custom_cls_with_set_trace(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch,
+        self,
+        pytester: Pytester,
+        monkeypatch: MonkeyPatch,
     ) -> None:
         pytester.makepyfile(
             custom_pdb="""

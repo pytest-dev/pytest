@@ -302,6 +302,30 @@ def test_setup_setUpClass(pytester: Pytester) -> None:
     reprec.assertoutcome(passed=3)
 
 
+def test_fixtures_setup_setUpClass_issue8394(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import unittest
+        class MyTestCase(unittest.TestCase):
+            @classmethod
+            def setUpClass(cls):
+                pass
+            def test_func1(self):
+                pass
+            @classmethod
+            def tearDownClass(cls):
+                pass
+    """
+    )
+    result = pytester.runpytest("--fixtures")
+    assert result.ret == 0
+    result.stdout.no_fnmatch_line("*no docstring available*")
+
+    result = pytester.runpytest("--fixtures", "-v")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*no docstring available*"])
+
+
 def test_setup_class(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
@@ -353,24 +377,32 @@ def test_testcase_adderrorandfailure_defers(pytester: Pytester, type: str) -> No
 def test_testcase_custom_exception_info(pytester: Pytester, type: str) -> None:
     pytester.makepyfile(
         """
+        from typing import Generic, TypeVar
         from unittest import TestCase
-        import py, pytest
-        import _pytest._code
+        import pytest, _pytest._code
+
         class MyTestCase(TestCase):
             def run(self, result):
                 excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
-                # we fake an incompatible exception info
-                from _pytest.monkeypatch import MonkeyPatch
-                mp = MonkeyPatch()
-                def t(*args):
-                    mp.undo()
-                    raise TypeError()
-                mp.setattr(_pytest._code, 'ExceptionInfo', t)
+                # We fake an incompatible exception info.
+                class FakeExceptionInfo(Generic[TypeVar("E")]):
+                    def __init__(self, *args, **kwargs):
+                        mp.undo()
+                        raise TypeError()
+                    @classmethod
+                    def from_current(cls):
+                        return cls()
+                    @classmethod
+                    def from_exc_info(cls, *args, **kwargs):
+                        return cls()
+                mp = pytest.MonkeyPatch()
+                mp.setattr(_pytest._code, 'ExceptionInfo', FakeExceptionInfo)
                 try:
                     excinfo = excinfo._excinfo
                     result.add%(type)s(self, excinfo)
                 finally:
                     mp.undo()
+
             def test_hello(self):
                 pass
     """
@@ -538,7 +570,9 @@ class TestTrialUnittest:
                 # will crash both at test time and at teardown
         """
         )
-        result = pytester.runpytest("-vv", "-oconsole_output_style=classic")
+        result = pytester.runpytest(
+            "-vv", "-oconsole_output_style=classic", "-W", "ignore::DeprecationWarning"
+        )
         result.stdout.fnmatch_lines(
             [
                 "test_trial_error.py::TC::test_four FAILED",
@@ -765,7 +799,8 @@ def test_unittest_expected_failure_for_failing_test_is_xfail(
 
 @pytest.mark.parametrize("runner", ["pytest", "unittest"])
 def test_unittest_expected_failure_for_passing_test_is_fail(
-    pytester: Pytester, runner
+    pytester: Pytester,
+    runner: str,
 ) -> None:
     script = pytester.makepyfile(
         """
@@ -782,7 +817,11 @@ def test_unittest_expected_failure_for_passing_test_is_fail(
     if runner == "pytest":
         result = pytester.runpytest("-rxX")
         result.stdout.fnmatch_lines(
-            ["*MyTestCase*test_passing_test_is_fail*", "*1 failed*"]
+            [
+                "*MyTestCase*test_passing_test_is_fail*",
+                "Unexpected success",
+                "*1 failed*",
+            ]
         )
     else:
         result = pytester.runpython(script)

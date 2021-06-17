@@ -17,6 +17,7 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
+from _pytest.pytester import Testdir
 
 
 def test_make_hook_recorder(pytester: Pytester) -> None:
@@ -617,12 +618,12 @@ def test_linematcher_string_api() -> None:
     assert str(lm) == "foo\nbar"
 
 
-def test_pytester_addopts_before_testdir(request, monkeypatch: MonkeyPatch) -> None:
+def test_pytest_addopts_before_pytester(request, monkeypatch: MonkeyPatch) -> None:
     orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
-    testdir = request.getfixturevalue("testdir")
+    pytester: Pytester = request.getfixturevalue("pytester")
     assert "PYTEST_ADDOPTS" not in os.environ
-    testdir.finalize()
+    pytester._finalize()
     assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
     monkeypatch.undo()
     assert os.environ.get("PYTEST_ADDOPTS") == orig
@@ -743,10 +744,16 @@ def test_run_result_repr() -> None:
 
     # known exit code
     r = pytester_mod.RunResult(1, outlines, errlines, duration=0.5)
-    assert (
-        repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
-        " len(stderr.lines)=4 duration=0.50s>"
-    )
+    if sys.version_info[:2] >= (3, 10):
+        assert repr(r) == (
+            "<RunResult ret=TESTS_FAILED len(stdout.lines)=3"
+            " len(stderr.lines)=4 duration=0.50s>"
+        )
+    else:
+        assert repr(r) == (
+            "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
+            " len(stderr.lines)=4 duration=0.50s>"
+        )
 
     # unknown exit code: just the number
     r = pytester_mod.RunResult(99, outlines, errlines, duration=0.5)
@@ -816,3 +823,33 @@ def test_makefile_joins_absolute_path(pytester: Pytester) -> None:
 def test_testtmproot(testdir) -> None:
     """Check test_tmproot is a py.path attribute for backward compatibility."""
     assert testdir.test_tmproot.check(dir=1)
+
+
+def test_testdir_makefile_dot_prefixes_extension_silently(
+    testdir: Testdir,
+) -> None:
+    """For backwards compat #8192"""
+    p1 = testdir.makefile("foo.bar", "")
+    assert ".foo.bar" in str(p1)
+
+
+def test_pytester_makefile_dot_prefixes_extension_with_warning(
+    pytester: Pytester,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="pytester.makefile expects a file extension, try .foo.bar instead of foo.bar",
+    ):
+        pytester.makefile("foo.bar", "")
+
+
+def test_testdir_makefile_ext_none_raises_type_error(testdir) -> None:
+    """For backwards compat #8192"""
+    with pytest.raises(TypeError):
+        testdir.makefile(None, "")
+
+
+def test_testdir_makefile_ext_empty_string_makes_file(testdir) -> None:
+    """For backwards compat #8192"""
+    p1 = testdir.makefile("", "")
+    assert "test_testdir_makefile" in str(p1)

@@ -1,21 +1,33 @@
 :orphan:
 
-.. sidebar:: Next Open Trainings
+..
+    (note: please leave this here, next open training to follow soon)
+    .. sidebar:: Next Open Trainings
 
-   - `Professional testing with Python <https://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, via Python Academy, February 1-3 2021, Leipzig (Germany) and remote.
+       - `Professionelles Testen für Python mit pytest <https://www.enterpy.de/lecture_compact1.php?id=12713>`_ (German), part of the enterPy conference, April 22nd (sold out) and May 20th, remote.
 
-   Also see `previous talks and blogposts <talks.html>`_.
+       Also see `previous talks and blogposts <talks.html>`_.
 
 .. _features:
 
 pytest: helps you write better programs
 =======================================
 
+.. module:: pytest
 
-The ``pytest`` framework makes it easy to write small tests, yet
-scales to support complex functional testing for applications and libraries.
+The ``pytest`` framework makes it easy to write small, readable tests, and can
+scale to support complex functional testing for applications and libraries.
 
-An example of a simple test:
+
+**Pythons**: ``pytest`` requires: Python 3.6, 3.7, 3.8, 3.9, or PyPy3.
+
+**PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
+
+**Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
+
+
+A quick example
+---------------
 
 .. code-block:: python
 
@@ -55,7 +67,7 @@ To execute it:
     ============================ 1 failed in 0.12s =============================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
-See :ref:`Getting Started <getstarted>` for more examples.
+See :ref:`Get started <getstarted>` for a basic introduction to using pytest.
 
 
 Features
@@ -71,13 +83,16 @@ Features
 
 - Python 3.6+ and PyPy 3
 
-- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community
+- Rich plugin architecture, with over 800+ :ref:`external plugins <plugin-list>` and thriving community
 
 
 Documentation
 -------------
 
-Please see :ref:`Contents <toc>` for full documentation, including installation, tutorials and PDF documents.
+* :ref:`Get started <get-started>` - install pytest and grasp its basics just twenty minutes
+* :ref:`How-to guides <how-to>` - step-by-step guides, covering a vast range of use-cases and needs
+* :ref:`Reference guides <reference>` - includes the complete pytest API reference, lists of plugins and more
+* :ref:`Explanation <explanation>` - background, discussion of key topics, answers to higher-level questions
 
 
 Bugs/Requests
@@ -118,7 +133,7 @@ Save time, reduce risk, and improve code health, while paying the maintainers of
 `Learn more. <https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`_
 
 Security
-^^^^^^^^
+~~~~~~~~
 
 pytest has never been associated with a security vulnerability, but in any case, to report a
 security vulnerability please use the `Tidelift security contact <https://tidelift.com/security>`_.
@@ -128,8 +143,8 @@ Tidelift will coordinate the fix and disclosure.
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2020.
+Copyright Holger Krekel and others, 2004-2021.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 
-.. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE
+.. _`MIT`: https://github.com/pytest-dev/pytest/blob/main/LICENSE

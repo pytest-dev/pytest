@@ -22,21 +22,22 @@ from _pytest.pytester import Pytester
 
 class TestSetupState:
     def test_setup(self, pytester: Pytester) -> None:
-        ss = runner.SetupState()
         item = pytester.getitem("def test_func(): pass")
+        ss = item.session._setupstate
         values = [1]
-        ss.prepare(item)
-        ss.addfinalizer(values.pop, colitem=item)
+        ss.setup(item)
+        ss.addfinalizer(values.pop, item)
         assert values
-        ss._pop_and_teardown()
+        ss.teardown_exact(None)
         assert not values
 
     def test_teardown_exact_stack_empty(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
-        ss.teardown_exact(item, None)
-        ss.teardown_exact(item, None)
-        ss.teardown_exact(item, None)
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.teardown_exact(None)
+        ss.teardown_exact(None)
+        ss.teardown_exact(None)
 
     def test_setup_fails_and_failure_is_cached(self, pytester: Pytester) -> None:
         item = pytester.getitem(
@@ -46,9 +47,11 @@ class TestSetupState:
             def test_func(): pass
         """
         )
-        ss = runner.SetupState()
-        pytest.raises(ValueError, lambda: ss.prepare(item))
-        pytest.raises(ValueError, lambda: ss.prepare(item))
+        ss = item.session._setupstate
+        with pytest.raises(ValueError):
+            ss.setup(item)
+        with pytest.raises(ValueError):
+            ss.setup(item)
 
     def test_teardown_multiple_one_fails(self, pytester: Pytester) -> None:
         r = []
@@ -63,12 +66,13 @@ class TestSetupState:
             r.append("fin3")
 
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
+        ss = item.session._setupstate
+        ss.setup(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
         ss.addfinalizer(fin3, item)
         with pytest.raises(Exception) as err:
-            ss._callfinalizers(item)
+            ss.teardown_exact(None)
         assert err.value.args == ("oops",)
         assert r == ["fin3", "fin1"]
 
@@ -82,11 +86,12 @@ class TestSetupState:
             raise Exception("oops2")
 
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
+        ss = item.session._setupstate
+        ss.setup(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
         with pytest.raises(Exception) as err:
-            ss._callfinalizers(item)
+            ss.teardown_exact(None)
         assert err.value.args == ("oops2",)
 
     def test_teardown_multiple_scopes_one_fails(self, pytester: Pytester) -> None:
@@ -99,13 +104,14 @@ class TestSetupState:
             module_teardown.append("fin_module")
 
         item = pytester.getitem("def test_func(): pass")
-        ss = runner.SetupState()
-        ss.addfinalizer(fin_module, item.listchain()[-2])
+        mod = item.listchain()[-2]
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(fin_module, mod)
         ss.addfinalizer(fin_func, item)
-        ss.prepare(item)
         with pytest.raises(Exception, match="oops1"):
-            ss.teardown_exact(item, None)
-        assert module_teardown
+            ss.teardown_exact(None)
+        assert module_teardown == ["fin_module"]
 
 
 class BaseFunctionalTests:
@@ -441,9 +447,9 @@ class TestSessionReports:
         assert not rep.skipped
         assert rep.passed
         locinfo = rep.location
-        assert locinfo[0] == col.fspath.basename
+        assert locinfo[0] == col.path.name
         assert not locinfo[1]
-        assert locinfo[2] == col.fspath.basename
+        assert locinfo[2] == col.path.name
         res = rep.result
         assert len(res) == 2
         assert res[0].name == "test_func1"

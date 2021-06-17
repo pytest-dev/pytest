@@ -17,6 +17,7 @@ from typing import Union
 
 from _pytest.compat import final
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import WARNS_NONE_ARG
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 
@@ -28,7 +29,7 @@ T = TypeVar("T")
 def recwarn() -> Generator["WarningsRecorder", None, None]:
     """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
-    See http://docs.python.org/library/warnings.html for information
+    See https://docs.python.org/library/warnings.html for information
     on warning categories.
     """
     wrec = WarningsRecorder(_ispytest=True)
@@ -83,7 +84,7 @@ def deprecated_call(
 
 @overload
 def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
 ) -> "WarningsChecker":
@@ -92,7 +93,7 @@ def warns(
 
 @overload
 def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any,
@@ -101,7 +102,7 @@ def warns(
 
 
 def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
     **kwargs: Any,
@@ -149,9 +150,7 @@ def warns(
     else:
         func = args[0]
         if not callable(func):
-            raise TypeError(
-                "{!r} object (type: {}) must be callable".format(func, type(func))
-            )
+            raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         with WarningsChecker(expected_warning, _ispytest=True):
             return func(*args[1:], **kwargs)
 
@@ -234,7 +233,7 @@ class WarningsChecker(WarningsRecorder):
         self,
         expected_warning: Optional[
             Union[Type[Warning], Tuple[Type[Warning], ...]]
-        ] = None,
+        ] = Warning,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
         *,
         _ispytest: bool = False,
@@ -244,6 +243,7 @@ class WarningsChecker(WarningsRecorder):
 
         msg = "exceptions must be derived from Warning, not %s"
         if expected_warning is None:
+            warnings.warn(WARNS_NONE_ARG, stacklevel=4)
             expected_warning_tup = None
         elif isinstance(expected_warning, tuple):
             for exc in expected_warning:

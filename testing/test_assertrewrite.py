@@ -11,6 +11,7 @@ import textwrap
 import zipfile
 from functools import partial
 from pathlib import Path
+from typing import cast
 from typing import Dict
 from typing import List
 from typing import Mapping
@@ -19,13 +20,16 @@ from typing import Set
 
 import _pytest._code
 import pytest
+from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import _get_assertion_exprs
+from _pytest.assertion.rewrite import _get_maxsize_for_saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.assertion.rewrite import get_cache_dir
 from _pytest.assertion.rewrite import PYC_TAIL
 from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
+from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
@@ -381,7 +385,7 @@ class TestAssertionRewrite:
         )
 
         def f7() -> None:
-            assert False or x()  # type: ignore[unreachable]
+            assert False or x()
 
         assert (
             getmsg(f7, {"x": x})
@@ -471,7 +475,7 @@ class TestAssertionRewrite:
         assert getmsg(f1) == "assert ((3 % 2) and False)"
 
         def f2() -> None:
-            assert False or 4 % 2  # type: ignore[unreachable]
+            assert False or 4 % 2
 
         assert getmsg(f2) == "assert (False or (4 % 2))"
 
@@ -1395,12 +1399,10 @@ class TestEarlyRewriteBailout:
             **{
                 "test_setup_nonexisting_cwd.py": """\
                     import os
-                    import shutil
                     import tempfile
 
-                    d = tempfile.mkdtemp()
-                    os.chdir(d)
-                    shutil.rmtree(d)
+                    with tempfile.TemporaryDirectory() as d:
+                        os.chdir(d)
                 """,
                 "test_test.py": """\
                     def test():
@@ -1708,3 +1710,52 @@ class TestPyCacheDir:
             cache_tag=sys.implementation.cache_tag
         )
         assert bar_init_pyc.is_file()
+
+
+class TestReprSizeVerbosity:
+    """
+    Check that verbosity also controls the string length threshold to shorten it using
+    ellipsis.
+    """
+
+    @pytest.mark.parametrize(
+        "verbose, expected_size",
+        [
+            (0, DEFAULT_REPR_MAX_SIZE),
+            (1, DEFAULT_REPR_MAX_SIZE * 10),
+            (2, None),
+            (3, None),
+        ],
+    )
+    def test_get_maxsize_for_saferepr(self, verbose: int, expected_size) -> None:
+        class FakeConfig:
+            def getoption(self, name: str) -> int:
+                assert name == "verbose"
+                return verbose
+
+        config = FakeConfig()
+        assert _get_maxsize_for_saferepr(cast(Config, config)) == expected_size
+
+    def create_test_file(self, pytester: Pytester, size: int) -> None:
+        pytester.makepyfile(
+            f"""
+            def test_very_long_string():
+                text = "x" * {size}
+                assert "hello world" in text
+            """
+        )
+
+    def test_default_verbosity(self, pytester: Pytester) -> None:
+        self.create_test_file(pytester, DEFAULT_REPR_MAX_SIZE)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*xxx...xxx*"])
+
+    def test_increased_verbosity(self, pytester: Pytester) -> None:
+        self.create_test_file(pytester, DEFAULT_REPR_MAX_SIZE)
+        result = pytester.runpytest("-v")
+        result.stdout.no_fnmatch_line("*xxx...xxx*")
+
+    def test_max_increased_verbosity(self, pytester: Pytester) -> None:
+        self.create_test_file(pytester, DEFAULT_REPR_MAX_SIZE * 10)
+        result = pytester.runpytest("-vv")
+        result.stdout.no_fnmatch_line("*xxx...xxx*")

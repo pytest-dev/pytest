@@ -97,9 +97,9 @@ the argument name:
 
     # content of test_time.py
 
-    import pytest
-
     from datetime import datetime, timedelta
+
+    import pytest
 
     testdata = [
         (datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1)),
@@ -508,11 +508,12 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssss...ssssssssssss                                          [100%]
+   sssssssssssssssssssssssssss                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [12] multipython.py:29: 'python3.5' not found
-   SKIPPED [12] multipython.py:29: 'python3.7' not found
-   3 passed, 24 skipped in 0.12s
+   SKIPPED [9] multipython.py:29: 'python3.5' not found
+   SKIPPED [9] multipython.py:29: 'python3.6' not found
+   SKIPPED [9] multipython.py:29: 'python3.7' not found
+   27 skipped in 0.12s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -637,13 +638,13 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
-    collecting ... collected 14 items / 11 deselected / 3 selected
+    collecting ... collected 24 items / 21 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]
     test_pytest_param_example.py::test_eval[basic_2+4] PASSED            [ 66%]
     test_pytest_param_example.py::test_eval[basic_6*9] XFAIL             [100%]
 
-    =============== 2 passed, 11 deselected, 1 xfailed in 0.12s ================
+    =============== 2 passed, 21 deselected, 1 xfailed in 0.12s ================
 
 As the result:
 

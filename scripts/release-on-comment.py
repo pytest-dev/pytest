@@ -3,7 +3,7 @@ This script is part of the pytest release process which is triggered by comments
 in issues.
 
 This script is started by the `release-on-comment.yml` workflow, which always executes on
-`master` and is triggered by two comment related events:
+`main` and is triggered by two comment related events:
 
 * https://help.github.com/en/actions/reference/events-that-trigger-workflows#issue-comment-event-issue_comment
 * https://help.github.com/en/actions/reference/events-that-trigger-workflows#issues-event-issues
@@ -16,15 +16,15 @@ The payload must contain a comment with a phrase matching this pseudo-regular ex
 
 Then the appropriate version will be obtained based on the given branch name:
 
-* a major release from master if "major" appears in the phrase in that position
-* a feature or bug fix release from master (based if there are features in the current changelog
+* a major release from main if "major" appears in the phrase in that position
+* a feature or bug fix release from main (based if there are features in the current changelog
   folder)
 * a bug fix from a maintenance branch
 
 After that, it will create a release using the `release` tox environment, and push a new PR.
 
-**Secret**: currently the secret is defined in the @pytestbot account, which the core maintainers
-have access to. There we created a new secret named `chatops` with write access to the repository.
+**Token**: currently the token from the GitHub Actions is used, pushed with
+`pytest bot <pytestbot@gmail.com>` commit author.
 """
 import argparse
 import json
@@ -82,7 +82,7 @@ def validate_and_get_issue_comment_payload(
 ) -> Tuple[str, str, bool]:
     payload = json.loads(issue_payload_path.read_text(encoding="UTF-8"))
     body = get_comment_data(payload)["body"]
-    m = re.match(r"@pytestbot please prepare (major )?release from ([\w\-_\.]+)", body)
+    m = re.match(r"@pytestbot please prepare (major )?release from ([-_.\w]+)", body)
     if m:
         is_major, base_branch = m.group(1) is not None, m.group(2)
     else:
@@ -153,7 +153,10 @@ def trigger_release(payload_path: Path, token: str) -> None:
         cmdline = ["tox", "-e", "release", "--", version, "--skip-check-links"]
         print("Running", " ".join(cmdline))
         run(
-            cmdline, text=True, check=True, capture_output=True,
+            cmdline,
+            text=True,
+            check=True,
+            capture_output=True,
         )
 
         oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
@@ -227,11 +230,11 @@ def find_next_version(base_branch: str, is_major: bool) -> str:
     breaking = list(changelog.glob("*.breaking.rst"))
     is_feature_release = features or breaking
 
-    if is_feature_release and base_branch != "master":
+    if is_feature_release and base_branch != "main":
         msg = dedent(
             f"""
             Found features or breaking changes in `{base_branch}`, and feature releases can only be
-            created from `master`:
+            created from `main`:
         """
         )
         msg += "\n".join(f"* `{x.name}`" for x in sorted(features + breaking))

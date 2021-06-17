@@ -91,7 +91,7 @@ def annotated_getattr(obj: object, name: str, ann: str) -> object:
 
 
 def derive_importpath(import_path: str, raising: bool) -> Tuple[str, object]:
-    if not isinstance(import_path, str) or "." not in import_path:  # type: ignore[unreachable]
+    if not isinstance(import_path, str) or "." not in import_path:
         raise TypeError(f"must be absolute import path string, not {import_path!r}")
     module, attr = import_path.rsplit(".", 1)
     target = resolve(module)
@@ -124,7 +124,7 @@ class MonkeyPatch:
 
     def __init__(self) -> None:
         self._setattr: List[Tuple[object, str, object]] = []
-        self._setitem: List[Tuple[MutableMapping[Any, Any], object, object]] = ([])
+        self._setitem: List[Tuple[MutableMapping[Any, Any], object, object]] = []
         self._cwd: Optional[str] = None
         self._savesyspath: Optional[List[str]] = None
 
@@ -157,13 +157,21 @@ class MonkeyPatch:
 
     @overload
     def setattr(
-        self, target: str, name: object, value: Notset = ..., raising: bool = ...,
+        self,
+        target: str,
+        name: object,
+        value: Notset = ...,
+        raising: bool = ...,
     ) -> None:
         ...
 
     @overload
     def setattr(
-        self, target: object, name: str, value: object, raising: bool = ...,
+        self,
+        target: object,
+        name: str,
+        value: object,
+        raising: bool = ...,
     ) -> None:
         ...
 
@@ -304,14 +312,17 @@ class MonkeyPatch:
 
     def syspath_prepend(self, path) -> None:
         """Prepend ``path`` to ``sys.path`` list of import locations."""
-        from pkg_resources import fixup_namespace_packages
 
         if self._savesyspath is None:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
 
         # https://github.com/pypa/setuptools/blob/d8b901bc/docs/pkg_resources.txt#L162-L171
-        fixup_namespace_packages(str(path))
+        # this is only needed when pkg_resources was already loaded by the namespace package
+        if "pkg_resources" in sys.modules:
+            from pkg_resources import fixup_namespace_packages
+
+            fixup_namespace_packages(str(path))
 
         # A call to syspathinsert() usually means that the caller wants to
         # import some dynamically created files, thus with python3 we

@@ -1,10 +1,13 @@
 import re
+import sys
 import warnings
 from unittest import mock
 
 import pytest
 from _pytest import deprecated
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
+from pytest import PytestDeprecationWarning
 
 
 @pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
@@ -136,3 +139,54 @@ def test_private_is_deprecated() -> None:
 
     # Doesn't warn.
     PrivateInit(10, _ispytest=True)
+
+
+def test_raising_unittest_skiptest_during_collection_is_deprecated(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import unittest
+        raise unittest.SkipTest()
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: Raising unittest.SkipTest*",
+        ]
+    )
+
+
+@pytest.mark.parametrize("hooktype", ["hook", "ihook"])
+def test_hookproxy_warnings_for_fspath(tmp_path, hooktype, request):
+    path = legacy_path(tmp_path)
+
+    PATH_WARN_MATCH = r".*path: py\.path\.local\) argument is deprecated, please use \(fspath: pathlib\.Path.*"
+    if hooktype == "ihook":
+        hooks = request.node.ihook
+    else:
+        hooks = request.config.hook
+
+    with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
+        l1 = sys._getframe().f_lineno
+        hooks.pytest_ignore_collect(config=request.config, path=path, fspath=tmp_path)
+        l2 = sys._getframe().f_lineno
+
+    (record,) = r
+    assert record.filename == __file__
+    assert l1 < record.lineno < l2
+
+    hooks.pytest_ignore_collect(config=request.config, fspath=tmp_path)
+
+
+def test_warns_none_is_deprecated():
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=re.escape(
+            "Passing None to catch any warning has been deprecated, pass no arguments instead:\n "
+            "Replace pytest.warns(None) by simply pytest.warns()."
+        ),
+    ):
+        with pytest.warns(None):  # type: ignore[call-overload]
+            pass

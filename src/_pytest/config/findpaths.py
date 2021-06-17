@@ -83,9 +83,7 @@ def load_config_dict_from_file(
 
 def locate_config(
     args: Iterable[Path],
-) -> Tuple[
-    Optional[Path], Optional[Path], Dict[str, Union[str, List[str]]],
-]:
+) -> Tuple[Optional[Path], Optional[Path], Dict[str, Union[str, List[str]]]]:
     """Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict)."""
     config_names = [
@@ -178,7 +176,7 @@ def determine_setup(
         inipath: Optional[Path] = inipath_
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
-            rootdir = get_common_ancestor(dirs)
+            rootdir = inipath_.parent
     else:
         ancestor = get_common_ancestor(dirs)
         rootdir, inipath, inicfg = locate_config([ancestor])
