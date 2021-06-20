@@ -48,6 +48,7 @@ from _pytest.pathlib import bestrelpath
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
+    from typing_extensions import SupportsIndex
     from weakref import ReferenceType
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
@@ -371,14 +372,16 @@ class Traceback(List[TracebackEntry]):
         return self
 
     @overload
-    def __getitem__(self, key: int) -> TracebackEntry:
+    def __getitem__(self, key: "SupportsIndex") -> TracebackEntry:
         ...
 
     @overload
     def __getitem__(self, key: slice) -> "Traceback":
         ...
 
-    def __getitem__(self, key: Union[int, slice]) -> Union[TracebackEntry, "Traceback"]:
+    def __getitem__(
+        self, key: Union["SupportsIndex", slice]
+    ) -> Union[TracebackEntry, "Traceback"]:
         if isinstance(key, slice):
             return self.__class__(super().__getitem__(key))
         else:
