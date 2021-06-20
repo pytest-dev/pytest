@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/psf/black
-    rev: 21.5b2
+    rev: 21.6b0
     hooks:
     -   id: black
         args: [--safe, --quiet]
@@ -34,7 +34,7 @@ repos:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py36-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.19.1
+    rev: v2.19.4
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
@@ -44,11 +44,11 @@ repos:
     -   id: setup-cfg-fmt
         args: [--max-py-version=3.10]
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.8.0
+    rev: v1.9.0
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.812
+    rev: v0.902
     hooks:
     -   id: mypy
         files: ^(src/|testing/)
@@ -58,6 +58,8 @@ repos:
           - py>=1.8.2
           - attrs>=19.2.0
           - packaging
+          - types-toml
+          - types-pkg_resources
 -   repo: local
     hooks:
     -   id: rst

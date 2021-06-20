@@ -626,7 +626,8 @@ class LoggingPlugin:
             finally:
                 self.log_file_handler.release()
         if old_stream:
-            old_stream.close()
+            # https://github.com/python/typeshed/pull/5663
+            old_stream.close()  # type:ignore[attr-defined]
 
     def _log_cli_enabled(self):
         """Return whether live logging is enabled."""
