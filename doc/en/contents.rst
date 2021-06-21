@@ -95,6 +95,7 @@ Further topics
    license
    contact
 
+   history
    historical-notes
    talks
    projects
