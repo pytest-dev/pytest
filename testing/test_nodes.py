@@ -88,7 +88,7 @@ def test__check_initialpaths_for_relpath() -> None:
 
     assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
 
-    outside = Path("/outside")
+    outside = Path("/outside-this-does-not-exist")
     assert nodes._check_initialpaths_for_relpath(session, outside) is None
 
 
