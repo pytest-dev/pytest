@@ -59,7 +59,9 @@ class TestNewAPI:
     @pytest.mark.filterwarnings(
         "ignore:could not create cache path:pytest.PytestWarning"
     )
-    def test_cache_writefail_permissions(self, unwritable_cache_dir: Path, pytester: Pytester) -> None:
+    def test_cache_writefail_permissions(
+        self, unwritable_cache_dir: Path, pytester: Pytester
+    ) -> None:
         pytester.makeini("[pytest]")
         config = pytester.parseconfigure()
         cache = config.cache
@@ -68,7 +70,10 @@ class TestNewAPI:
 
     @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch, unwritable_cache_dir: Path,
+        self,
+        pytester: Pytester,
+        monkeypatch: MonkeyPatch,
+        unwritable_cache_dir: Path,
     ) -> None:
         monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
 
