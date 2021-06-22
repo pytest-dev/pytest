@@ -46,12 +46,13 @@ class TestNewAPI:
 
     @pytest.fixture
     def unwritable_cache_dir(self, pytester: Pytester) -> Path:
-        if sys.platform.startswith("win"):
-            pytest.skip(reason="no chmod on windows")
         cache_dir = pytester.path.joinpath(".pytest_cache")
         cache_dir.mkdir()
         mode = cache_dir.stat().st_mode
         cache_dir.chmod(0)
+        if os.access(cache_dir, os.W_OK):
+            pytest.skip("Failed to make cache dir unwritable")
+
         yield cache_dir
         cache_dir.chmod(mode)
 
