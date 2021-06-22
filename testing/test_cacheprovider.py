@@ -1,7 +1,7 @@
 import os
 import shutil
-import sys
 from pathlib import Path
+from typing import Generator
 from typing import List
 
 import pytest
@@ -45,7 +45,7 @@ class TestNewAPI:
         cache.set("test/broken", [])
 
     @pytest.fixture
-    def unwritable_cache_dir(self, pytester: Pytester) -> Path:
+    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path, None, None]:
         cache_dir = pytester.path.joinpath(".pytest_cache")
         cache_dir.mkdir()
         mode = cache_dir.stat().st_mode
