@@ -1,7 +1,7 @@
 import os
 import shutil
-import sys
 from pathlib import Path
+from typing import Generator
 from typing import List
 
 import pytest
@@ -44,52 +44,54 @@ class TestNewAPI:
         assert cache is not None
         cache.set("test/broken", [])
 
-    @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
+    @pytest.fixture
+    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path, None, None]:
+        cache_dir = pytester.path.joinpath(".pytest_cache")
+        cache_dir.mkdir()
+        mode = cache_dir.stat().st_mode
+        cache_dir.chmod(0)
+        if os.access(cache_dir, os.W_OK):
+            pytest.skip("Failed to make cache dir unwritable")
+
+        yield cache_dir
+        cache_dir.chmod(mode)
+
     @pytest.mark.filterwarnings(
         "ignore:could not create cache path:pytest.PytestWarning"
     )
-    def test_cache_writefail_permissions(self, pytester: Pytester) -> None:
+    def test_cache_writefail_permissions(
+        self, unwritable_cache_dir: Path, pytester: Pytester
+    ) -> None:
         pytester.makeini("[pytest]")
-        cache_dir = pytester.path.joinpath(".pytest_cache")
-        cache_dir.mkdir()
-        mode = cache_dir.stat().st_mode
-        cache_dir.chmod(0)
-        try:
-            config = pytester.parseconfigure()
-            cache = config.cache
-            assert cache is not None
-            cache.set("test/broken", [])
-        finally:
-            cache_dir.chmod(mode)
+        config = pytester.parseconfigure()
+        cache = config.cache
+        assert cache is not None
+        cache.set("test/broken", [])
 
-    @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
     @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
+        self,
+        pytester: Pytester,
+        monkeypatch: MonkeyPatch,
+        unwritable_cache_dir: Path,
     ) -> None:
         monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-        cache_dir = pytester.path.joinpath(".pytest_cache")
-        cache_dir.mkdir()
-        mode = cache_dir.stat().st_mode
-        cache_dir.chmod(0)
-        try:
-            pytester.makepyfile("def test_error(): raise Exception")
-            result = pytester.runpytest()
-            assert result.ret == 1
-            # warnings from nodeids, lastfailed, and stepwise
-            result.stdout.fnmatch_lines(
-                [
-                    # Validate location/stacklevel of warning from cacheprovider.
-                    "*= warnings summary =*",
-                    "*/cacheprovider.py:*",
-                    "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
-                    "{}/v/cache/nodeids".format(cache_dir),
-                    '    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))',
-                    "*1 failed, 3 warnings in*",
-                ]
-            )
-        finally:
-            cache_dir.chmod(mode)
+
+        pytester.makepyfile("def test_error(): raise Exception")
+        result = pytester.runpytest()
+        assert result.ret == 1
+        # warnings from nodeids, lastfailed, and stepwise
+        result.stdout.fnmatch_lines(
+            [
+                # Validate location/stacklevel of warning from cacheprovider.
+                "*= warnings summary =*",
+                "*/cacheprovider.py:*",
+                "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
+                f"{unwritable_cache_dir}/v/cache/nodeids",
+                '    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))',
+                "*1 failed, 3 warnings in*",
+            ]
+        )
 
     def test_config_cache(self, pytester: Pytester) -> None:
         pytester.makeconftest(
