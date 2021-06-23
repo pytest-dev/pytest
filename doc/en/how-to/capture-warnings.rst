@@ -244,7 +244,7 @@ Asserting warnings with the warns function
 
 
 
-You can check that code raises a particular warning using func:`pytest.warns`,
+You can check that code raises a particular warning using :func:`pytest.warns`,
 which works in a similar manner to :ref:`raises <assertraises>`:
 
 .. code-block:: python
@@ -272,7 +272,7 @@ argument ``match`` to assert that the exception matches a text or regex::
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
 
-You can also call func:`pytest.warns` on a function or code string:
+You can also call :func:`pytest.warns` on a function or code string:
 
 .. code-block:: python
 
@@ -307,10 +307,10 @@ filter at the end of the test, so no global state is leaked.
 Recording warnings
 ------------------
 
-You can record raised warnings either using func:`pytest.warns` or with
+You can record raised warnings either using :func:`pytest.warns` or with
 the ``recwarn`` fixture.
 
-To record with func:`pytest.warns` without asserting anything about the warnings,
+To record with :func:`pytest.warns` without asserting anything about the warnings,
 pass no arguments as the expected warning type and it will default to a generic Warning:
 
 .. code-block:: python
@@ -339,7 +339,7 @@ The ``recwarn`` fixture will record warnings for the whole function:
         assert w.filename
         assert w.lineno
 
-Both ``recwarn`` and func:`pytest.warns` return the same interface for recorded
+Both ``recwarn`` and :func:`pytest.warns` return the same interface for recorded
 warnings: a WarningsRecorder instance. To view the recorded warnings, you can
 iterate over this instance, call ``len`` on it to get the number of recorded
 warnings, or index into it to get a particular recorded warning.
