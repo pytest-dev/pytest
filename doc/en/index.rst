@@ -1,12 +1,12 @@
 :orphan:
 
-..
-    (note: please leave this here, next open training to follow soon)
-    .. sidebar:: Next Open Trainings
+.. sidebar:: Next Open Trainings
 
-       - `Professionelles Testen für Python mit pytest <https://www.enterpy.de/lecture_compact1.php?id=12713>`_ (German), part of the enterPy conference, April 22nd (sold out) and May 20th, remote.
+   - `Introduction to pytest <https://ep2021.europython.eu/talks/7S5Cnc6-introduction-to-pytest/>`_, part of `Europython 2021 <https://ep2021.europython.eu/>`_, July 27th, remote.
+   - `pytest: Professionelles Testen (nicht nur) für Python <https://workshoptage.ch/workshops/2021/pytest-test-driven-development-nicht-nur-fuer-python-2/>`_ (German), part of `CH-Open Workshoptage <https://workshoptage.ch/>`_, September 9th, ETH Zurich, Switzerland.
+   - `Professional Testing with Python <https://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, Q4/2021 (TBD, 3 days), Leipzig (Germany) and remote.
 
-       Also see `previous talks and blogposts <talks.html>`_.
+   Also see `previous talks and blogposts <talks.html>`_.
 
 .. _features:
 
