@@ -11,6 +11,10 @@ on:
         description: 'Major release? (yes/no)'
         required: true
         default: 'no'
+      prerelease:
+        description: 'Prerelease (ex: rc1). Leave empty if not a pre-release.'
+        required: true
+        default: ''
 
 # Set permissions at the job level.
 permissions: {}
@@ -41,9 +45,9 @@ jobs:
     - name: Prepare release PR (minor/patch release)
       if: github.event.inputs.major == 'no'
       run: |
-        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ github.token }}
+        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ github.token }} --prerelease '${{ github.event.inputs.prerelease }}'
 
     - name: Prepare release PR (major release)
       if: github.event.inputs.major == 'yes'
       run: |
-        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ github.token }} --major
+        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ github.token }} --major --prerelease '${{ github.event.inputs.prerelease }}'
