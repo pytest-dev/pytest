@@ -42,6 +42,20 @@ As pytest tries to move off `py.path.local <https://py.readthedocs.io/en/latest/
 
 Pytest will provide compatibility for quite a while.
 
+Diamond inheritance between :class:`pytest.File` and :class:`pytest.Item`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.3
+
+Inheriting from both Item and file at once has never been supported officially,
+however some plugins providing linting/code analysis have been using this as a hack.
+
+This practice is now officially deprecated and a common way to fix this is `example pr fixing inheritance`_.
+
+
+
+.. _example pr fixing inheritance: https://github.com/asmeurer/pytest-flakes/pull/40/files
+
 
 Backward compatibilities in ``Parser.addoption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

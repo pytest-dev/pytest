@@ -1,8 +1,10 @@
 import os
 import warnings
+from inspect import signature
 from pathlib import Path
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -34,6 +36,7 @@ from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath
 from _pytest.store import Store
+from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     # Imported here due to circular import.
@@ -125,7 +128,20 @@ class NodeMeta(type):
         fail(msg, pytrace=False)
 
     def _create(self, *k, **kw):
-        return super().__call__(*k, **kw)
+        try:
+            return super().__call__(*k, **kw)
+        except TypeError:
+            sig = signature(getattr(self, "__init__"))
+            known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
+            from .warning_types import PytestDeprecationWarning
+
+            warnings.warn(
+                PytestDeprecationWarning(
+                    f"{self} is not using a cooperative constructor and only takes {set(known_kw)}"
+                )
+            )
+
+            return super().__call__(*k, **known_kw)
 
 
 class Node(metaclass=NodeMeta):
@@ -539,26 +555,39 @@ def _check_initialpaths_for_relpath(session: "Session", path: Path) -> Optional[
 class FSCollector(Collector):
     def __init__(
         self,
-        fspath: Optional[LEGACY_PATH],
-        path: Optional[Path],
-        parent=None,
+        fspath: Optional[LEGACY_PATH] = None,
+        path_or_parent: Optional[Union[Path, Node]] = None,
+        path: Optional[Path] = None,
+        name: Optional[str] = None,
+        parent: Optional[Node] = None,
         config: Optional[Config] = None,
         session: Optional["Session"] = None,
         nodeid: Optional[str] = None,
     ) -> None:
+        if path_or_parent:
+            if isinstance(path_or_parent, Node):
+                assert parent is None
+                parent = cast(FSCollector, path_or_parent)
+            elif isinstance(path_or_parent, Path):
+                assert path is None
+                path = path_or_parent
+
         path, fspath = _imply_path(path, fspath=fspath)
-        name = path.name
-        if parent is not None and parent.path != path:
-            try:
-                rel = path.relative_to(parent.path)
-            except ValueError:
-                pass
-            else:
-                name = str(rel)
-            name = name.replace(os.sep, SEP)
+        if name is None:
+            name = path.name
+            if parent is not None and parent.path != path:
+                try:
+                    rel = path.relative_to(parent.path)
+                except ValueError:
+                    pass
+                else:
+                    name = str(rel)
+                name = name.replace(os.sep, SEP)
         self.path = path
 
-        session = session or parent.session
+        if session is None:
+            assert parent is not None
+            session = parent.session
 
         if nodeid is None:
             try:
@@ -570,7 +599,12 @@ class FSCollector(Collector):
                 nodeid = nodeid.replace(os.sep, SEP)
 
         super().__init__(
-            name, parent, config, session, nodeid=nodeid, fspath=fspath, path=path
+            name=name,
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
+            path=path,
         )
 
     @classmethod
@@ -610,6 +644,20 @@ class Item(Node):
 
     nextitem = None
 
+    def __init_subclass__(cls) -> None:
+        problems = ", ".join(
+            base.__name__ for base in cls.__bases__ if issubclass(base, Collector)
+        )
+        if problems:
+            warnings.warn(
+                f"{cls.__name__} is an Item subclass and should not be a collector, "
+                f"however its bases {problems} are collectors.\n"
+                "Please split the Collectors and the Item into separate node types.\n"
+                "Pytest Doc example: https://docs.pytest.org/en/latest/example/nonpython.html\n"
+                "example pull request on a plugin: https://github.com/asmeurer/pytest-flakes/pull/40/",
+                PytestWarning,
+            )
+
     def __init__(
         self,
         name,
@@ -617,8 +665,16 @@ class Item(Node):
         config: Optional[Config] = None,
         session: Optional["Session"] = None,
         nodeid: Optional[str] = None,
+        **kw,
     ) -> None:
-        super().__init__(name, parent, config, session, nodeid=nodeid)
+        super().__init__(
+            name=name,
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
+            **kw,
+        )
         self._report_sections: List[Tuple[str, str, str]] = []
 
         #: A list of tuples (name, value) that holds user defined properties

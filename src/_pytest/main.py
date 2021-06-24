@@ -484,7 +484,7 @@ class Session(nodes.FSCollector):
 
     @classmethod
     def from_config(cls, config: Config) -> "Session":
-        session: Session = cls._create(config)
+        session: Session = cls._create(config=config)
         return session
 
     def __repr__(self) -> str:
