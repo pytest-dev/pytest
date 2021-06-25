@@ -43,11 +43,11 @@ For a new minor release, first create a new maintenance branch from ``main``::
 
 Then, trigger the workflow with the following inputs:
 
-   - branch: **7.1.x**
-   - major release: **no**
-   - prerelease: empty
+- branch: **7.1.x**
+- major release: **no**
+- prerelease: empty
 
-Or via the commandline::
+Or via the commandline using `GitHub's cli <https://github.com/cli/cli>`__::
 
     gh workflow run prepare-release-pr.yml -f branch=7.1.x -f major=no -f prerelease=
 
@@ -88,9 +88,9 @@ Release candidates
 To release a release candidate, set the "prerelease" input to the version number
 suffix to use. To release a ``8.0.0rc1``, proceed like under "major releases", but set:
 
-   - branch: 8.0.x
-   - major release: yes
-   - prerelease: **rc1**
+- branch: 8.0.x
+- major release: yes
+- prerelease: **rc1**
 
 Or via the commandline::
 
