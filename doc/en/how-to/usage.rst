@@ -168,15 +168,15 @@ You can invoke ``pytest`` from Python code directly:
 
 .. code-block:: python
 
-    pytest.main()
+    retcode = pytest.main()
 
 this acts as if you would call "pytest" from the command line.
-It will not raise ``SystemExit`` but return the exitcode instead.
+It will not raise :class:`SystemExit` but return the :ref:`exit code <exit-codes>` instead.
 You can pass in options and arguments:
 
 .. code-block:: python
 
-    pytest.main(["-x", "mytestdir"])
+    retcode = pytest.main(["-x", "mytestdir"])
 
 You can specify additional plugins to ``pytest.main``:
 
@@ -191,7 +191,8 @@ You can specify additional plugins to ``pytest.main``:
             print("*** test run reporting finishing")
 
 
-    pytest.main(["-qq"], plugins=[MyPlugin()])
+    if __name__ == "__main__":
+        sys.exit(pytest.main(["-qq"], plugins=[MyPlugin()]))
 
 Running it will show that ``MyPlugin`` was added and its
 hook was invoked:
