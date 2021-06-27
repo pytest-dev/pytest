@@ -168,8 +168,7 @@ You can invoke ``pytest`` from Python code directly:
 
 .. code-block:: python
 
-    if __name__ == "__main__":
-        sys.exit(pytest.main())
+    retcode = pytest.main()
 
 this acts as if you would call "pytest" from the command line.
 It will not raise ``SystemExit`` but return the exitcode instead.
@@ -177,8 +176,7 @@ You can pass in options and arguments:
 
 .. code-block:: python
 
-    if __name__ == "__main__":
-        sys.exit(pytest.main(["-x", "mytestdir"]))
+    retcode = pytest.main(["-x", "mytestdir"])
 
 You can specify additional plugins to ``pytest.main``:
 
