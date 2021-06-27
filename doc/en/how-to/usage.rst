@@ -171,7 +171,7 @@ You can invoke ``pytest`` from Python code directly:
     retcode = pytest.main()
 
 this acts as if you would call "pytest" from the command line.
-It will not raise ``SystemExit`` but return the exitcode instead.
+It will not raise :class:`SystemExit` but return the :ref:`exit code <exit-codes>` instead.
 You can pass in options and arguments:
 
 .. code-block:: python
