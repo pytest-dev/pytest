@@ -79,9 +79,7 @@ class ColoredLevelFormatter(logging.Formatter):
             return
         levelname_fmt = levelname_fmt_match.group()
 
-        formatted_levelname = levelname_fmt % {
-            "levelname": logging.getLevelName(level)
-        }
+        formatted_levelname = levelname_fmt % {"levelname": logging.getLevelName(level)}
 
         # add ANSI escape sequences around the formatted levelname
         color_kwargs = {name: True for name in color_opts}

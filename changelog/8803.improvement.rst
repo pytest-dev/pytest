@@ -5,4 +5,3 @@ By using :func:`add_color_level <_pytest.logging.add_color_level` from a ``pytes
     logging_plugin = config.pluginmanager.get_plugin('logging-plugin')
     logging_plugin.log_cli_handler.formatter.add_color_level(logging.INFO, 'cyan')
     logging_plugin.log_cli_handler.formatter.add_color_level(logging.SPAM, 'blue')
-
