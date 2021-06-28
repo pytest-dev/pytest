@@ -22,7 +22,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 6.2.4
+    pytest 7.0.0rc1
 
 .. _`simpletest`:
 
@@ -47,7 +47,7 @@ The test
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
@@ -196,7 +196,7 @@ This is outlined below:
     test_class_demo.py:9: AssertionError
     ========================= short test summary info ==========================
     FAILED test_class_demo.py::TestClassDemoInstance::test_two - assert 0 == 1
-    1 failed, 1 passed in 0.04s
+    1 failed, 1 passed in 0.12s
 
 Note that attributes added at class level are *class attributes*, so they will be shared between tests.
 
@@ -221,14 +221,14 @@ List the name ``tmp_path`` in the test function signature and ``pytest`` will lo
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
 
-    tmp_path = Path('PYTEST_TMPDIR/test_needsfiles0')
+    tmp_path = PosixPath('PYTEST_TMPDIR/test_needsfiles0')
 
         def test_needsfiles(tmp_path):
             print(tmp_path)
     >       assert 0
     E       assert 0
 
-    test_tmpdir.py:3: AssertionError
+    test_tmp_path.py:3: AssertionError
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0
     ========================= short test summary info ==========================

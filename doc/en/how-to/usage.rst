@@ -200,28 +200,10 @@ hook was invoked:
 .. code-block:: pytest
 
     $ python myinvoke.py
-    .FEsxX.                                                              [100%]*** test run reporting finishing
-
-    ================================== ERRORS ==================================
-    _______________________ ERROR at setup of test_error _______________________
-
-        @pytest.fixture
-        def error_fixture():
-    >       assert 0
-    E       assert 0
-
-    test_example.py:6: AssertionError
-    ================================= FAILURES =================================
-    ________________________________ test_fail _________________________________
-
-        def test_fail():
-    >       assert 0
-    E       assert 0
-
-    test_example.py:14: AssertionError
-    ========================= short test summary info ==========================
-    FAILED test_example.py::test_fail - assert 0
-    ERROR test_example.py::test_error - assert 0
+    Traceback (most recent call last):
+      File "myinvoke.py", line 10, in <module>
+        sys.exit(pytest.main(["-qq"], plugins=[MyPlugin()]))
+    NameError: name 'sys' is not defined
 
 .. note::
 

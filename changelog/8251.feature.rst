@@ -1,1 +1,0 @@
-Implement ``Node.path`` as a ``pathlib.Path``.

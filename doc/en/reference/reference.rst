@@ -1761,8 +1761,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --pdb                 start the interactive Python debugger on errors or
                             KeyboardInterrupt.
       --pdbcls=modulename:classname
-                            start a custom interactive Python debugger on
-                            errors. For example:
+                            specify a custom interactive Python debugger for use
+                            with --pdb.For example:
                             --pdbcls=IPython.terminal.debugger:TerminalPdb
       --trace               Immediately break when running each test.
       --capture=method      per-test capturing method: one of fd|sys|no|tee-sys.
@@ -1874,7 +1874,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --basetemp=dir        base temporary directory for this test run.(warning:
                             this directory is removed if it exists)
       -V, --version         display pytest version and information about
-                            plugins.When given twice, also display information
+                            plugins. When given twice, also display information
                             about plugins.
       -h, --help            show help message and configuration info
       -p name               early-load given plugin module name or entry point

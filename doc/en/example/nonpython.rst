@@ -29,7 +29,7 @@ now execute the test specification:
 
     nonpython $ pytest test_simple.yaml
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items
@@ -41,9 +41,17 @@ now execute the test specification:
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
+    ============================= warnings summary =============================
+    test_simple.yaml::hello
+    test_simple.yaml::ok
+      $REGENDOC_TMPDIR/nonpython/conftest.py:43: PytestDeprecationWarning: YamlItem.fspath is deprecated and will be replaced by YamlItem.path.
+      see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path
+        return self.fspath, 0, f"usecase: {self.name}"
+
+    -- Docs: https://docs.pytest.org/en/stable/warnings.html
     ========================= short test summary info ==========================
     FAILED test_simple.yaml::hello
-    ======================= 1 failed, 1 passed in 0.12s ========================
+    ================= 1 failed, 1 passed, 2 warnings in 0.12s ==================
 
 .. regendoc:wipe
 
@@ -66,7 +74,7 @@ consulted when reporting in ``verbose`` mode:
 
     nonpython $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-7.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython
     collecting ... collected 2 items
@@ -79,9 +87,17 @@ consulted when reporting in ``verbose`` mode:
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
+    ============================= warnings summary =============================
+    test_simple.yaml::hello
+    test_simple.yaml::ok
+      $REGENDOC_TMPDIR/nonpython/conftest.py:43: PytestDeprecationWarning: YamlItem.fspath is deprecated and will be replaced by YamlItem.path.
+      see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path
+        return self.fspath, 0, f"usecase: {self.name}"
+
+    -- Docs: https://docs.pytest.org/en/stable/warnings.html
     ========================= short test summary info ==========================
     FAILED test_simple.yaml::hello
-    ======================= 1 failed, 1 passed in 0.12s ========================
+    ================= 1 failed, 1 passed, 2 warnings in 0.12s ==================
 
 .. regendoc:wipe
 
@@ -92,7 +108,7 @@ interesting to just look at the collection tree:
 
     nonpython $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/nonpython
     collected 2 items

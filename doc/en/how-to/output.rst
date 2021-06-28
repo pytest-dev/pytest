@@ -68,13 +68,13 @@ Executing pytest normally gives us this output (we are skipping the header to fo
 .. code-block:: pytest
 
     $ pytest --no-header
-    =========================== test session starts ===========================
+    =========================== test session starts ============================
     collected 4 items
 
     test_verbosity_example.py .FFF                                       [100%]
 
-    ================================ FAILURES =================================
-    _____________________________ test_words_fail _____________________________
+    ================================= FAILURES =================================
+    _____________________________ test_words_fail ______________________________
 
         def test_words_fail():
             fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
@@ -85,7 +85,7 @@ Executing pytest normally gives us this output (we are skipping the header to fo
     E         Use -v to get the full diff
 
     test_verbosity_example.py:8: AssertionError
-    ____________________________ test_numbers_fail ____________________________
+    ____________________________ test_numbers_fail _____________________________
 
         def test_numbers_fail():
             number_to_text1 = {str(x): x for x in range(5)}
@@ -100,7 +100,7 @@ Executing pytest normally gives us this output (we are skipping the header to fo
     E         Use -v to get the full diff
 
     test_verbosity_example.py:14: AssertionError
-    ___________________________ test_long_text_fail ___________________________
+    ___________________________ test_long_text_fail ____________________________
 
         def test_long_text_fail():
             long_text = "Lorem ipsum dolor sit amet " * 10
@@ -108,11 +108,11 @@ Executing pytest normally gives us this output (we are skipping the header to fo
     E       AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ips... sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
 
     test_verbosity_example.py:19: AssertionError
-    ========================= short test summary info =========================
+    ========================= short test summary info ==========================
     FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
     FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
     FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
-    ======================= 3 failed, 1 passed in 0.08s =======================
+    ======================= 3 failed, 1 passed in 0.12s ========================
 
 Notice that:
 
@@ -127,7 +127,7 @@ Now we can increase pytest's verbosity:
 .. code-block:: pytest
 
     $ pytest --no-header -v
-    =========================== test session starts ===========================
+    =========================== test session starts ============================
     collecting ... collected 4 items
 
     test_verbosity_example.py::test_ok PASSED                            [ 25%]
@@ -135,8 +135,8 @@ Now we can increase pytest's verbosity:
     test_verbosity_example.py::test_numbers_fail FAILED                  [ 75%]
     test_verbosity_example.py::test_long_text_fail FAILED                [100%]
 
-    ================================ FAILURES =================================
-    _____________________________ test_words_fail _____________________________
+    ================================= FAILURES =================================
+    _____________________________ test_words_fail ______________________________
 
         def test_words_fail():
             fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
@@ -151,7 +151,7 @@ Now we can increase pytest's verbosity:
     E         ?                      ^  ^ +
 
     test_verbosity_example.py:8: AssertionError
-    ____________________________ test_numbers_fail ____________________________
+    ____________________________ test_numbers_fail _____________________________
 
         def test_numbers_fail():
             number_to_text1 = {str(x): x for x in range(5)}
@@ -169,7 +169,7 @@ Now we can increase pytest's verbosity:
     E         ...Full output truncated (3 lines hidden), use '-vv' to show
 
     test_verbosity_example.py:14: AssertionError
-    ___________________________ test_long_text_fail ___________________________
+    ___________________________ test_long_text_fail ____________________________
 
         def test_long_text_fail():
             long_text = "Lorem ipsum dolor sit amet " * 10
@@ -177,11 +177,11 @@ Now we can increase pytest's verbosity:
     E       AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
 
     test_verbosity_example.py:19: AssertionError
-    ========================= short test summary info =========================
+    ========================= short test summary info ==========================
     FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
     FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
     FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
-    ======================= 3 failed, 1 passed in 0.07s =======================
+    ======================= 3 failed, 1 passed in 0.12s ========================
 
 Notice now that:
 
@@ -196,7 +196,7 @@ Now if we increase verbosity even more:
 .. code-block:: pytest
 
     $ pytest --no-header -vv
-    =========================== test session starts ===========================
+    =========================== test session starts ============================
     collecting ... collected 4 items
 
     test_verbosity_example.py::test_ok PASSED                            [ 25%]
@@ -204,8 +204,8 @@ Now if we increase verbosity even more:
     test_verbosity_example.py::test_numbers_fail FAILED                  [ 75%]
     test_verbosity_example.py::test_long_text_fail FAILED                [100%]
 
-    ================================ FAILURES =================================
-    _____________________________ test_words_fail _____________________________
+    ================================= FAILURES =================================
+    _____________________________ test_words_fail ______________________________
 
         def test_words_fail():
             fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
@@ -220,7 +220,7 @@ Now if we increase verbosity even more:
     E         ?                      ^  ^ +
 
     test_verbosity_example.py:8: AssertionError
-    ____________________________ test_numbers_fail ____________________________
+    ____________________________ test_numbers_fail _____________________________
 
         def test_numbers_fail():
             number_to_text1 = {str(x): x for x in range(5)}
@@ -239,7 +239,7 @@ Now if we increase verbosity even more:
     E         + {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4}
 
     test_verbosity_example.py:14: AssertionError
-    ___________________________ test_long_text_fail ___________________________
+    ___________________________ test_long_text_fail ____________________________
 
         def test_long_text_fail():
             long_text = "Lorem ipsum dolor sit amet " * 10
@@ -247,11 +247,11 @@ Now if we increase verbosity even more:
     E       AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
 
     test_verbosity_example.py:19: AssertionError
-    ========================= short test summary info =========================
+    ========================= short test summary info ==========================
     FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
     FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
     FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
-    ======================= 3 failed, 1 passed in 0.07s =======================
+    ======================= 3 failed, 1 passed in 0.12s ========================
 
 Notice now that:
 
@@ -321,7 +321,7 @@ Example:
 
     $ pytest -ra
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 6 items
@@ -379,7 +379,7 @@ More than one character can be used, so for example to only see failed and skipp
 
     $ pytest -rfs
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 6 items
@@ -415,7 +415,7 @@ captured output:
 
     $ pytest -rpP
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, py-1.x.y, pluggy-0.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 6 items
@@ -446,7 +446,6 @@ captured output:
     ========================= short test summary info ==========================
     PASSED test_example.py::test_ok
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
-
 
 Creating resultlog format files
 --------------------------------------------------

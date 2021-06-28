@@ -28,6 +28,233 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.0.0rc1 (2021-06-28)
+Breaking Changes
+----------------
+
+- `#8246 <https://github.com/pytest-dev/pytest/issues/8246>`_: ``--version`` now writes version information to ``stdout`` rather than ``stderr``.
+
+
+
+Deprecations
+------------
+
+- `#7469 <https://github.com/pytest-dev/pytest/issues/7469>`_: Directly constructing the following classes is now deprecated:
+
+  - ``_pytest.mark.structures.Mark``
+  - ``_pytest.mark.structures.MarkDecorator``
+  - ``_pytest.mark.structures.MarkGenerator``
+  - ``_pytest.python.Metafunc``
+  - ``_pytest.runner.CallInfo``
+  - ``_pytest._code.ExceptionInfo``
+  - ``_pytest.config.argparsing.Parser``
+  - ``_pytest.config.argparsing.OptionGroup``
+
+  These have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 7.0.0.
+
+
+- `#8242 <https://github.com/pytest-dev/pytest/issues/8242>`_: Raising :class:`unittest.SkipTest` to skip collection of tests during the
+  pytest collection phase is deprecated. Use :func:`pytest.skip` instead.
+
+  Note: This deprecation only relates to using `unittest.SkipTest` during test
+  collection. You are probably not doing that. Ordinary usage of
+  :class:`unittest.SkipTest` / :meth:`unittest.TestCase.skipTest` /
+  :func:`unittest.skip` in unittest test cases is fully supported.
+
+
+- `#8251 <https://github.com/pytest-dev/pytest/issues/8251>`_: Deprecate ``Node.fspath`` as we plan to move off `py.path.local <https://py.readthedocs.io/en/latest/path.html>`__ and switch to :mod:``pathlib``.
+
+
+- `#8315 <https://github.com/pytest-dev/pytest/issues/8315>`_: Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
+  scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
+
+  - ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.
+  - ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
+
+
+- `#8447 <https://github.com/pytest-dev/pytest/issues/8447>`_: Defining a custom pytest node type which is both an item and a collector now issues a warning.
+  It was never sanely supported and triggers hard to debug errors.
+
+  Instead, a separate collector node should be used, which collects the item. See :ref:`non-python tests` for an example.
+
+
+
+Features
+--------
+
+- `#7259 <https://github.com/pytest-dev/pytest/issues/7259>`_: Added :meth:`cache.mkdir() <pytest.Cache.mkdir>`, which is similar to the existing :meth:`cache.makedir() <pytest.Cache.makedir>`,
+  but returns a :class:`pathlib.Path` instead of a legacy ``py.path.local``.
+
+  Added a ``paths`` type to :meth:`parser.addini() <pytest.Parser.addini>`,
+  as in ``parser.addini("mypaths", "my paths", type="paths")``,
+  which is similar to the existing ``pathlist``,
+  but returns a list of :class:`pathlib.Path` instead of legacy ``py.path.local``.
+
+
+- `#7469 <https://github.com/pytest-dev/pytest/issues/7469>`_: The types of objects used in pytest's API are now exported so they may be used in type annotations.
+
+  The newly-exported types are:
+
+  - ``pytest.Config`` for :class:`Config <pytest.Config>`.
+  - ``pytest.Mark`` for :class:`marks <pytest.Mark>`.
+  - ``pytest.MarkDecorator`` for :class:`mark decorators <pytest.MarkDecorator>`.
+  - ``pytest.MarkGenerator`` for the :class:`pytest.mark <pytest.MarkGenerator>` singleton.
+  - ``pytest.Metafunc`` for the :class:`metafunc <pytest.MarkGenerator>` argument to the :func:`pytest_generate_tests <pytest.hookspec.pytest_generate_tests>` hook.
+  - ``pytest.CallInfo`` for the :class:`CallInfo <pytest.CallInfo>` type passed to various hooks.
+  - ``pytest.PytestPluginManager`` for :class:`PytestPluginManager <pytest.PytestPluginManager>`.
+  - ``pytest.ExceptionInfo`` for the :class:`ExceptionInfo <pytest.ExceptionInfo>` type returned from :func:`pytest.raises` and passed to various hooks.
+  - ``pytest.Parser`` for the :class:`Parser <pytest.Parser>` type passed to the :func:`pytest_addoption <pytest.hookspec.pytest_addoption>` hook.
+  - ``pytest.OptionGroup`` for the :class:`OptionGroup <pytest.OptionGroup>` type returned from the :func:`parser.addgroup <pytest.Parser.getgroup>` method.
+
+  Constructing them directly is not supported; they are only meant for use in type annotations.
+  Doing so will emit a deprecation warning, and may become a hard-error in pytest 7.0.
+
+  Subclassing them is also not supported. This is not currently enforced at runtime, but is detected by type-checkers such as mypy.
+
+
+- `#7856 <https://github.com/pytest-dev/pytest/issues/7856>`_: :ref:`--import-mode=importlib <import-modes>` now works with features that
+  depend on modules being on :py:data:`sys.modules`, such as :mod:`pickle` and :mod:`dataclasses`.
+
+
+- `#8144 <https://github.com/pytest-dev/pytest/issues/8144>`_: The following hooks now receive an additional ``pathlib.Path`` argument, equivalent to an existing ``py.path.local`` argument:
+
+  - :func:`pytest_ignore_collect <_pytest.hookspec.pytest_ignore_collect>` - The ``fspath`` parameter (equivalent to existing ``path`` parameter).
+  - :func:`pytest_collect_file <_pytest.hookspec.pytest_collect_file>` - The ``fspath`` parameter (equivalent to existing ``path`` parameter).
+  - :func:`pytest_pycollect_makemodule <_pytest.hookspec.pytest_pycollect_makemodule>` - The ``fspath`` parameter (equivalent to existing ``path`` parameter).
+  - :func:`pytest_report_header <_pytest.hookspec.pytest_report_header>` - The ``startpath`` parameter (equivalent to existing ``startdir`` parameter).
+  - :func:`pytest_report_collectionfinish <_pytest.hookspec.pytest_report_collectionfinish>` - The ``startpath`` parameter (equivalent to existing ``startdir`` parameter).
+
+
+- `#8251 <https://github.com/pytest-dev/pytest/issues/8251>`_: Implement ``Node.path`` as a ``pathlib.Path``.
+
+
+- `#8421 <https://github.com/pytest-dev/pytest/issues/8421>`_: :func:`pytest.approx` now works on :class:`~decimal.Decimal` within mappings/dicts and sequences/lists.
+
+
+- `#8494 <https://github.com/pytest-dev/pytest/issues/8494>`_: Python 3.10 is now supported.
+
+
+- `#8606 <https://github.com/pytest-dev/pytest/issues/8606>`_: pytest invocations with ``--fixtures-per-test`` and ``--fixtures`` have been enabled with:
+
+  - Fixture location path printed with the fixture name.
+  - First section of the fixture's docstring printed under the fixture name.
+  - Whole of fixture's docstring printed under the fixture name using ``--verbose`` option.
+
+
+- `#8761 <https://github.com/pytest-dev/pytest/issues/8761>`_: New :ref:`version-tuple` attribute, which makes it simpler for users to do something depending on the pytest version (such as declaring hooks which are introduced in later versions).
+
+
+
+Improvements
+------------
+
+- `#8335 <https://github.com/pytest-dev/pytest/issues/8335>`_: Improved :func:`pytest.approx` assertion messages for sequences of numbers.
+
+  The assertion messages now dumps a table with the index and the error of each diff.
+  Example::
+
+      >       assert [1, 2, 3, 4] == pytest.approx([1, 3, 3, 5])
+      E       assert comparison failed for 2 values:
+      E         Index | Obtained | Expected
+      E         1     | 2        | 3 +- 3.0e-06
+      E         3     | 4        | 5 +- 5.0e-06
+
+
+- `#8403 <https://github.com/pytest-dev/pytest/issues/8403>`_: By default, pytest will truncate long strings in assert errors so they don't clutter the output too much,
+  currently at ``240`` characters by default.
+
+  However, in some cases the longer output helps, or is even crucial, to diagnose a failure. Using ``-v`` will
+  now increase the truncation threshold to ``2400`` characters, and ``-vv`` or higher will disable truncation entirely.
+
+
+- `#8509 <https://github.com/pytest-dev/pytest/issues/8509>`_: Fixed issue where `TestCase.setUpClass` is not called when a test has `/` in its name since pytest 6.2.0.
+
+  This refers to the path part in pytest node IDs, e.g. `TestClass::test_it` in the node ID `tests/test_file.py::TestClass::test_it`.
+
+  Now, instead of assuming that the test name does not contain ``/``, it is assumed that test path does not contain ``::``. We plan to hopefully make both of these work in the future.
+
+
+- `#8645 <https://github.com/pytest-dev/pytest/issues/8645>`_: Reducing confusion from `pytest.warns(None)` by:
+
+  - Allowing no arguments to be passed in order to catch any exception (no argument defaults to `Warning`).
+  - Emit a deprecation warning if passed `None`.
+
+
+
+Bug Fixes
+---------
+
+- `#8061 <https://github.com/pytest-dev/pytest/issues/8061>`_: Fixed failing staticmethod test cases if they are inherited from a parent test class.
+
+
+- `#8192 <https://github.com/pytest-dev/pytest/issues/8192>`_: ``testdir.makefile`` now silently accepts values which don't start with ``.`` to maintain backward compatibility with older pytest versions.
+
+  ``pytester.makefile`` now issues a clearer error if the ``.`` is missing in the ``ext`` argument.
+
+
+- `#8258 <https://github.com/pytest-dev/pytest/issues/8258>`_: Fixed issue where pytest's ``faulthandler`` support would not dump traceback on crashes
+  if the :mod:`faulthandler` module was already enabled during pytest startup (using
+  ``python -X dev -m pytest`` for example).
+
+
+- `#8317 <https://github.com/pytest-dev/pytest/issues/8317>`_: Fixed an issue where illegal directory characters derived from ``getpass.getuser()`` raised an ``OSError``.
+
+
+- `#8367 <https://github.com/pytest-dev/pytest/issues/8367>`_: Fix ``Class.from_parent`` so it forwards extra keyword arguments to the constructor.
+
+
+- `#8384 <https://github.com/pytest-dev/pytest/issues/8384>`_: The ``@pytest.mark.skip`` decorator now correctly handles its arguments. When the ``reason`` argument is accidentally given both positional and as a keyword (e.g. because it was confused with ``skipif``), a ``TypeError`` now occurs. Before, such tests were silently skipped, and the positional argument ignored. Additionally, ``reason`` is now documented correctly as positional or keyword (rather than keyword-only).
+
+
+- `#8394 <https://github.com/pytest-dev/pytest/issues/8394>`_: Use private names for internal fixtures that handle classic setup/teardown so that they don't show up with the default ``--fixtures`` invocation (but they still show up with ``--fixtures -v``).
+
+
+- `#8456 <https://github.com/pytest-dev/pytest/issues/8456>`_: The :confval:`required_plugins` config option now works correctly when pre-releases of plugins are installed, rather than falsely claiming that those plugins aren't installed at all.
+
+
+- `#8464 <https://github.com/pytest-dev/pytest/issues/8464>`_: ``-c <config file>`` now also properly defines ``rootdir`` as the directory that contains ``<config file>``.
+
+
+- `#8548 <https://github.com/pytest-dev/pytest/issues/8548>`_: Introduce fix to handle precision width in ``log-cli-format`` in turn to fix output coloring for certain formats.
+
+
+
+Improved Documentation
+----------------------
+
+- `#5105 <https://github.com/pytest-dev/pytest/issues/5105>`_: Add automatically generated :ref:`plugin-list`. The list is updated on a periodic schedule.
+
+
+- `#8337 <https://github.com/pytest-dev/pytest/issues/8337>`_: Recommend `numpy.testing <https://numpy.org/doc/stable/reference/routines.testing.html>`__ module on :func:`pytest.approx` documentation.
+
+
+- `#8655 <https://github.com/pytest-dev/pytest/issues/8655>`_: Help text for ``--pdbcls`` more accurately reflects the option's behavior.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#8174 <https://github.com/pytest-dev/pytest/issues/8174>`_: The following changes have been made to internal pytest types/functions:
+
+  - The ``path`` property of ``_pytest.code.Code`` returns ``Path`` instead of ``py.path.local``.
+  - The ``path`` property of ``_pytest.code.TracebackEntry`` returns ``Path`` instead of ``py.path.local``.
+  - The ``_pytest.code.getfslineno()`` function returns ``Path`` instead of ``py.path.local``.
+  - The ``_pytest.python.path_matches_patterns()`` function takes ``Path`` instead of ``py.path.local``.
+
+
+- `#8248 <https://github.com/pytest-dev/pytest/issues/8248>`_: Internal Restructure: let python.PyObjMixing inherit from nodes.Node to carry over typing information.
+
+
+- `#8411 <https://github.com/pytest-dev/pytest/issues/8411>`_: Assert the outcomes for the issue 518 test and fix the test.
+
+
+- `#8503 <https://github.com/pytest-dev/pytest/issues/8503>`_: :meth:`pytest.MonkeyPatch.syspath_prepend` no longer fails when
+  ``setuptools`` is not installed.
+  It now only calls :func:`pkg_resources.fixup_namespace_packages` if
+  ``pkg_resources`` was previously imported, because it is not needed otherwise.
+
+
 pytest 6.2.4 (2021-05-04)
 =========================
 
