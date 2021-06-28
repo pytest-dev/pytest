@@ -30,7 +30,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-        persist-credentials: false
 
     - name: Set up Python
       uses: actions/setup-python@v2
