@@ -190,12 +190,12 @@ def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
         return
 
     if keywordexpr.startswith("-"):
-        # To be removed in pytest 7.0.0.
+        # To be removed in pytest 8.0.0.
         warnings.warn(MINUS_K_DASH, stacklevel=2)
         keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
     if keywordexpr[-1:] == ":":
-        # To be removed in pytest 7.0.0.
+        # To be removed in pytest 8.0.0.
         warnings.warn(MINUS_K_COLON, stacklevel=2)
         selectuntil = True
         keywordexpr = keywordexpr[:-1]
