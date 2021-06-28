@@ -63,8 +63,15 @@ class ColoredLevelFormatter(logging.Formatter):
 
     def __init__(self, terminalwriter: TerminalWriter, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self._terminalwriter = terminalwriter
         self._original_fmt = self._style._fmt
         self._level_to_fmt_mapping: Dict[int, str] = {}
+
+        for level, color_opts in self.LOGLEVEL_COLOROPTS.items():
+            self.add_color_level(level, *color_opts)
+
+    def add_color_level(self, level, *color_opts):
+        """Add or update color opts for a log level."""
 
         assert self._fmt is not None
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
@@ -72,19 +79,18 @@ class ColoredLevelFormatter(logging.Formatter):
             return
         levelname_fmt = levelname_fmt_match.group()
 
-        for level, color_opts in self.LOGLEVEL_COLOROPTS.items():
-            formatted_levelname = levelname_fmt % {
-                "levelname": logging.getLevelName(level)
-            }
+        formatted_levelname = levelname_fmt % {
+            "levelname": logging.getLevelName(level)
+        }
 
-            # add ANSI escape sequences around the formatted levelname
-            color_kwargs = {name: True for name in color_opts}
-            colorized_formatted_levelname = terminalwriter.markup(
-                formatted_levelname, **color_kwargs
-            )
-            self._level_to_fmt_mapping[level] = self.LEVELNAME_FMT_REGEX.sub(
-                colorized_formatted_levelname, self._fmt
-            )
+        # add ANSI escape sequences around the formatted levelname
+        color_kwargs = {name: True for name in color_opts}
+        colorized_formatted_levelname = self._terminalwriter.markup(
+            formatted_levelname, **color_kwargs
+        )
+        self._level_to_fmt_mapping[level] = self.LEVELNAME_FMT_REGEX.sub(
+            colorized_formatted_levelname, self._fmt
+        )
 
     def format(self, record: logging.LogRecord) -> str:
         fmt = self._level_to_fmt_mapping.get(record.levelno, self._original_fmt)
