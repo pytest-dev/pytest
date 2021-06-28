@@ -74,7 +74,7 @@ Features
 
 - Python 3.6+ and PyPy 3
 
-- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community
+- Rich plugin architecture, with over 315+ `external plugins <https://docs.pytest.org/en/latest/reference/plugin_list.html>`_ and thriving community
 
 
 Documentation
