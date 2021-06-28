@@ -369,6 +369,9 @@ Here is a simple test file with the several usages:
 
 Running it with the report-on-xfail option gives this output:
 
+.. FIXME: Use $ instead of ! again to reenable regendoc once it's fixed:
+   https://github.com/pytest-dev/pytest/issues/8807
+
 .. code-block:: pytest
 
     ! pytest -rx xfail_demo.py
