@@ -66,22 +66,16 @@ def prepare_release_pr(
 
     run(
         ["git", "config", "user.name", "pytest bot"],
-        text=True,
         check=True,
-        capture_output=True,
     )
     run(
         ["git", "config", "user.email", "pytestbot@gmail.com"],
-        text=True,
         check=True,
-        capture_output=True,
     )
 
     run(
         ["git", "checkout", "-b", release_branch, f"origin/{base_branch}"],
-        text=True,
         check=True,
-        capture_output=True,
     )
 
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
@@ -92,17 +86,13 @@ def prepare_release_pr(
     print("Running", " ".join(cmdline))
     run(
         cmdline,
-        text=True,
         check=True,
-        capture_output=True,
     )
 
     oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
     run(
         ["git", "push", oauth_url, f"HEAD:{release_branch}", "--force"],
-        text=True,
         check=True,
-        capture_output=True,
     )
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} pushed.")
 
