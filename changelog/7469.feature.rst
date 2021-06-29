@@ -14,6 +14,6 @@ The newly-exported types are:
 - ``pytest.OptionGroup`` for the :class:`OptionGroup <pytest.OptionGroup>` type returned from the :func:`parser.addgroup <pytest.Parser.getgroup>` method.
 
 Constructing them directly is not supported; they are only meant for use in type annotations.
-Doing so will emit a deprecation warning, and may become a hard-error in pytest 7.0.
+Doing so will emit a deprecation warning, and may become a hard-error in pytest 8.0.
 
 Subclassing them is also not supported. This is not currently enforced at runtime, but is detected by type-checkers such as mypy.
