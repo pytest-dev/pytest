@@ -22,6 +22,11 @@ def announce(version):
 
     contributors = set(stdout.splitlines())
 
+    # remove strings within contributors that have substring "[bot]"
+    for name in contributors:
+        if "[bot]" in name:
+            contributors.remove(name)
+
     template_name = (
         "release.minor.rst" if version.endswith(".0") else "release.patch.rst"
     )
