@@ -8,9 +8,10 @@ from subprocess import check_output
 
 from colorama import Fore
 from colorama import init
+from packaging.version import Version
 
 
-def announce(version):
+def announce(version: Version):
     """Generates a new release announcement entry in the docs."""
     # Get our list of authors
     stdout = check_output(["git", "describe", "--abbrev=0", "--tags"])
@@ -22,9 +23,7 @@ def announce(version):
 
     contributors = set(stdout.splitlines())
 
-    template_name = (
-        "release.minor.rst" if version.endswith(".0") else "release.patch.rst"
-    )
+    template_name = "release.minor.rst" if version.minor == 0 else "release.patch.rst"
     template_text = (
         Path(__file__).parent.joinpath(template_name).read_text(encoding="UTF-8")
     )
@@ -63,7 +62,7 @@ def regen(version):
     print(f"{Fore.CYAN}[generate.regen] {Fore.RESET}Updating docs")
     check_call(
         ["tox", "-e", "regen"],
-        env={**os.environ, "SETUPTOOLS_SCM_PRETEND_VERSION": version},
+        env={**os.environ, "SETUPTOOLS_SCM_PRETEND_VERSION": str(version)},
     )
 
 
@@ -81,7 +80,7 @@ def check_links():
     check_call(["tox", "-e", "docs-checklinks"])
 
 
-def pre_release(version, *, skip_check_links):
+def pre_release(version: Version, *, skip_check_links):
     """Generates new docs, release announcements and creates a local tag."""
     announce(version)
     regen(version)
@@ -99,9 +98,9 @@ def pre_release(version, *, skip_check_links):
     print("Please push your branch and open a PR.")
 
 
-def changelog(version, write_out=False):
+def changelog(version: Version, write_out=False):
     addopts = [] if write_out else ["--draft"]
-    check_call(["towncrier", "--yes", "--version", version] + addopts)
+    check_call(["towncrier", "--yes", "--version", str(version)] + addopts)
 
 
 def main():
@@ -110,7 +109,7 @@ def main():
     parser.add_argument("version", help="Release version")
     parser.add_argument("--skip-check-links", action="store_true", default=False)
     options = parser.parse_args()
-    pre_release(options.version, skip_check_links=options.skip_check_links)
+    pre_release(Version(options.version), skip_check_links=options.skip_check_links)
 
 
 if __name__ == "__main__":
