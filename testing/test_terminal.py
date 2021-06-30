@@ -683,7 +683,9 @@ class TestTerminalFunctional:
                     pass
            """
         )
-        result = pytester.runpytest("-k", "test_two:", testpath)
+        result = pytester.runpytest(
+            "-k", "test_two:", testpath, "-Wignore::pytest.PytestDeprecationWarning"
+        )
         result.stdout.fnmatch_lines(
             ["collected 3 items / 1 deselected / 2 selected", "*test_deselected.py ..*"]
         )

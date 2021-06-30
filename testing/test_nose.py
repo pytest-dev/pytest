@@ -334,7 +334,7 @@ def test_SkipTest_during_collection(pytester: Pytester) -> None:
             assert False
         """
     )
-    result = pytester.runpytest(p)
+    result = pytester.runpytest(p, "-Wignore::pytest.PytestDeprecationWarning")
     result.assert_outcomes(skipped=1)
 
 

@@ -832,7 +832,9 @@ class TestKeywordSelection:
             def test_three(): assert 1
         """
         )
-        reprec = pytester.inline_run("-k", "test_two:", threepass)
+        reprec = pytester.inline_run(
+            "-k", "test_two:", threepass, "-Wignore::pytest.PytestDeprecationWarning"
+        )
         passed, skipped, failed = reprec.listoutcomes()
         assert len(passed) == 2
         assert not failed
