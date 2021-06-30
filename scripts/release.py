@@ -20,12 +20,9 @@ def announce(version):
     stdout = check_output(["git", "log", f"{last_version}..HEAD", "--format=%aN"])
     stdout = stdout.decode("utf-8")
 
-    contributors = set(stdout.splitlines())
-
-    # remove strings within contributors that have substring "[bot]"
-    for name in contributors:
-        if "[bot]" in name:
-            contributors.remove(name)
+    contributors = {
+        name for name in stdout.splitlines() if not name.endswith("[bot]")
+    }
 
     template_name = (
         "release.minor.rst" if version.endswith(".0") else "release.patch.rst"
