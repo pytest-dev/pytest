@@ -1,5 +1,6 @@
 # content of conftest.py
 import pytest
+from _pytest.compat import legacy_path
 
 
 def pytest_collect_file(parent, fspath):
@@ -40,7 +41,7 @@ class YamlItem(pytest.Item):
             )
 
     def reportinfo(self):
-        return self.fspath, 0, f"usecase: {self.name}"
+        return legacy_path(self.path), 0, f"usecase: {self.name}"
 
 
 class YamlException(Exception):
