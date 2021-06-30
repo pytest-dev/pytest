@@ -20,9 +20,7 @@ def announce(version):
     stdout = check_output(["git", "log", f"{last_version}..HEAD", "--format=%aN"])
     stdout = stdout.decode("utf-8")
 
-    contributors = {
-        name for name in stdout.splitlines() if not name.endswith("[bot]")
-    }
+    contributors = {name for name in stdout.splitlines() if not name.endswith("[bot]")}
 
     template_name = (
         "release.minor.rst" if version.endswith(".0") else "release.patch.rst"
