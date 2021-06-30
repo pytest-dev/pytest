@@ -184,6 +184,7 @@ You can specify additional plugins to ``pytest.main``:
 
     # content of myinvoke.py
     import pytest
+    import sys
 
 
     class MyPlugin:
