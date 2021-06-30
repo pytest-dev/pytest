@@ -119,7 +119,7 @@ Deprecations
   - ``_pytest.tmpdir.TempPathFactory``
   - ``_pytest.tmpdir.TempdirFactory``
 
-  These have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 7.0.0.
+  These have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 8.0.0.
 
 
 - `#7530 <https://github.com/pytest-dev/pytest/issues/7530>`_: The ``--strict`` command-line option has been deprecated, use ``--strict-markers`` instead.
@@ -205,7 +205,7 @@ Improvements
   - ``pytest.WarningsRecorder`` for the :fixture:`recwarn` fixture.
 
   Constructing them is not supported (except for `MonkeyPatch`); they are only meant for use in type annotations.
-  Doing so will emit a deprecation warning, and may become a hard-error in pytest 7.0.
+  Doing so will emit a deprecation warning, and may become a hard-error in pytest 8.0.
 
   Subclassing them is also not supported. This is not currently enforced at runtime, but is detected by type-checkers such as mypy.
 
