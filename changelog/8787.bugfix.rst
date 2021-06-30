@@ -1,1 +1,1 @@
-Fixed URL of documentation link in message of warning issued on unregisterd marks.
+Fixed URL of documentation link in message of warning issued on unregistered marks.
