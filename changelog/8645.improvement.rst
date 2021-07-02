@@ -1,4 +1,0 @@
-Reducing confusion from ``pytest.warns(None)`` by:
-
-- Allowing no arguments to be passed in order to catch any exception (no argument defaults to :class:`Warning`).
-- Emit a deprecation warning if passed ``None``.
