@@ -1,0 +1,1 @@
+Support TOML v1.0.0 syntax in ``pyproject.toml``.

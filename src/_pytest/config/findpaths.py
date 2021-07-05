@@ -64,9 +64,9 @@ def load_config_dict_from_file(
 
     # '.toml' files are considered if they contain a [tool.pytest.ini_options] table.
     elif filepath.suffix == ".toml":
-        import toml
+        import tomli
 
-        config = toml.load(str(filepath))
+        config = tomli.loads(filepath.read_text(encoding="utf-8"))
 
         result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
         if result is not None:

@@ -77,6 +77,7 @@ class TestLoadConfigDictFromFile:
             y = 20.0
             values = ["tests", "integration"]
             name = "foo"
+            heterogeneous_array = [1, "str"]
             """
             ),
             encoding="utf-8",
@@ -86,6 +87,7 @@ class TestLoadConfigDictFromFile:
             "y": "20.0",
             "values": ["tests", "integration"],
             "name": "foo",
+            "heterogeneous_array": [1, "str"],
         }
 
 

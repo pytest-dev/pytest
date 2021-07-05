@@ -58,7 +58,7 @@ repos:
           - py>=1.8.2
           - attrs>=19.2.0
           - packaging
-          - types-toml
+          - tomli
           - types-pkg_resources
 -   repo: local
     hooks:
