@@ -137,7 +137,7 @@ def skip(msg: str = "", *, allow_module_level: bool = False) -> "NoReturn":
         possible to declare a test to be skipped under certain conditions
         like mismatching platforms or dependencies.
         Similarly, use the ``# doctest: +SKIP`` directive (see `doctest.SKIP
-        <https://docs.python.org/3/library/doctest.html#doctest.SKIP>`_)
+        <https://docs.python.org/3/library/how-to/doctest.html#doctest.SKIP>`_)
         to skip a doctest statically.
     """
     __tracebackhide__ = True

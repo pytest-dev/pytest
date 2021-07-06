@@ -68,7 +68,7 @@ def pytest_configure(config: Config) -> None:
         "skipif(condition, ..., *, reason=...): "
         "skip the given test function if any of the conditions evaluate to True. "
         "Example: skipif(sys.platform == 'win32') skips the test if we are on the win32 platform. "
-        "See https://docs.pytest.org/en/stable/reference.html#pytest-mark-skipif",
+        "See https://docs.pytest.org/en/stable/reference/reference.html#pytest-mark-skipif",
     )
     config.addinivalue_line(
         "markers",
@@ -78,7 +78,7 @@ def pytest_configure(config: Config) -> None:
         "and run=False if you don't even want to execute the test function. "
         "If only specific exception(s) are expected, you can list them in "
         "raises, and if the test fails in other ways, it will be reported as "
-        "a true failure. See https://docs.pytest.org/en/stable/reference.html#pytest-mark-xfail",
+        "a true failure. See https://docs.pytest.org/en/stable/reference/reference.html#pytest-mark-xfail",
     )
 
 

@@ -79,17 +79,17 @@ Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` stat
 Features
 --------
 
-- Detailed info on failing `assert statements <https://docs.pytest.org/en/stable/assert.html>`_ (no need to remember ``self.assert*`` names)
+- Detailed info on failing `assert statements <https://docs.pytest.org/en/stable/how-to/assert.html>`_ (no need to remember ``self.assert*`` names)
 
 - `Auto-discovery
-  <https://docs.pytest.org/en/stable/goodpractices.html#python-test-discovery>`_
+  <https://docs.pytest.org/en/stable/explanation/goodpractices.html#python-test-discovery>`_
   of test modules and functions
 
-- `Modular fixtures <https://docs.pytest.org/en/stable/fixture.html>`_ for
+- `Modular fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`_ for
   managing small or parametrized long-lived test resources
 
-- Can run `unittest <https://docs.pytest.org/en/stable/unittest.html>`_ (or trial),
-  `nose <https://docs.pytest.org/en/stable/nose.html>`_ test suites out of the box
+- Can run `unittest <https://docs.pytest.org/en/stable/how-to/unittest.html>`_ (or trial),
+  `nose <https://docs.pytest.org/en/stable/how-to/nose.html>`_ test suites out of the box
 
 - Python 3.6+ and PyPy3
 

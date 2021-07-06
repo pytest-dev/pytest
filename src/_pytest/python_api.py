@@ -644,7 +644,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       small numbers.  Also, it's only available in subclasses of ``unittest.TestCase``
       and it's ugly because it doesn't follow PEP8.  `More information...`__
 
-      __ https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertAlmostEqual
+      __ https://docs.python.org/3/library/how-to/unittest.html#unittest.TestCase.assertAlmostEqual
 
     - ``a == pytest.approx(b, rel=1e-6, abs=1e-12)``: True if the relative
       tolerance is met w.r.t. ``b`` or if the absolute tolerance is met.
