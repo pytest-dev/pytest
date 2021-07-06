@@ -153,7 +153,7 @@ Fixtures are reusable
 ^^^^^^^^^^^^^^^^^^^^^
 
 One of the things that makes pytest's fixture system so powerful, is that it
-gives us the ability to define a generic setup step that can reused over and
+gives us the ability to define a generic setup step that can be reused over and
 over, just like a normal function would be used. Two different tests can request
 the same fixture and have pytest give each test their own result from that
 fixture.
