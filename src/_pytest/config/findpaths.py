@@ -66,7 +66,11 @@ def load_config_dict_from_file(
     elif filepath.suffix == ".toml":
         import tomli
 
-        config = tomli.loads(filepath.read_text(encoding="utf-8"))
+        toml_text = filepath.read_text(encoding="utf-8")
+        try:
+            config = tomli.loads(toml_text)
+        except tomli.TOMLDecodeError as exc:
+            raise UsageError(str(exc)) from exc
 
         result = config.get("tool", {}).get("pytest", {}).get("ini_options", None)
         if result is not None:
