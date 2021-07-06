@@ -958,7 +958,9 @@ class TerminalReporter:
                     message = message.rstrip()
                 self._tw.line(message)
                 self._tw.line()
-            self._tw.line("-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html")
+            self._tw.line(
+                "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html"
+            )
 
     def summary_passes(self) -> None:
         if self.config.option.tbstyle != "no":
