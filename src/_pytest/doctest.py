@@ -506,6 +506,11 @@ class DoctestModule(pytest.Module):
                 """
                 if isinstance(obj, property):
                     obj = getattr(obj, "fget", obj)
+
+                if hasattr(obj, "__wrapped__"):
+                    # Get the main obj in case of it being wrapped
+                    obj = inspect.unwrap(obj)
+
                 # Type ignored because this is a private function.
                 return doctest.DocTestFinder._find_lineno(  # type: ignore
                     self,
