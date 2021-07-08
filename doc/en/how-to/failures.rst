@@ -140,6 +140,7 @@ Warning about unraisable exceptions and unhandled thread exceptions
 .. note::
 
     These features only work on Python>=3.8.
+    In case Python version was older than 3.8(<3.8 )It will be handled through skipping raising error message "Python version less than 3.8".
 
 Unhandled exceptions are exceptions that are raised in a situation in which
 they cannot propagate to a caller. The most common case is an exception raised
@@ -160,3 +161,6 @@ command-line.
 The warnings may be silenced selectively using the :ref:`pytest.mark.filterwarnings ref`
 mark. The warning categories are :class:`pytest.PytestUnraisableExceptionWarning` and
 :class:`pytest.PytestUnhandledThreadExceptionWarning`.
+
+
+These exceptions are raised, when 
