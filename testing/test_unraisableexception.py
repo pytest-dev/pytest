@@ -3,8 +3,8 @@ import sys
 import pytest
 from _pytest.pytester import Pytester
 
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="Python version less than 3.8")
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="Python version less than 3.8")
 def test_unraisable(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_it="""

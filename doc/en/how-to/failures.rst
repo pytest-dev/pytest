@@ -163,4 +163,4 @@ mark. The warning categories are :class:`pytest.PytestUnraisableExceptionWarning
 :class:`pytest.PytestUnhandledThreadExceptionWarning`.
 
 
-These exceptions are raised, when 
+These exceptions are raised, when
