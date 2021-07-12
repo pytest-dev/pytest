@@ -403,6 +403,7 @@ class TestMetafunc:
                 pytest.param(tuple("eight"), (8, -8, 8)),
                 pytest.param(b"\xc3\xb4", b"name"),
                 pytest.param(b"\xc3\xb4", "other"),
+                pytest.param(1.0j, -2.0j),
             ],
         )
         assert result == [
@@ -418,6 +419,7 @@ class TestMetafunc:
             "a9-b9",
             "\\xc3\\xb4-name",
             "\\xc3\\xb4-other",
+            "1j-(-0-2j)",
         ]
 
     def test_idmaker_non_printable_characters(self) -> None:

@@ -1334,7 +1334,7 @@ def _idval(
 
     if isinstance(val, STRING_TYPES):
         return _ascii_escaped_by_config(val, config)
-    elif val is None or isinstance(val, (float, int, bool)):
+    elif val is None or isinstance(val, (float, int, bool, complex)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return ascii_escaped(val.pattern)
