@@ -54,7 +54,6 @@ from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FILLFUNCARGS
-from _pytest.deprecated import NODE_FSPATH
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
@@ -520,7 +519,6 @@ class FixtureRequest:
     @property
     def fspath(self) -> LEGACY_PATH:
         """(deprecated) The file system path of the test module which collected this test."""
-        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
         return legacy_path(self.path)
 
     @property

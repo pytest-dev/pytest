@@ -89,12 +89,6 @@ ARGUMENT_TYPE_STR = UnformattedWarning(
 )
 
 
-NODE_FSPATH = UnformattedWarning(
-    PytestDeprecationWarning,
-    "{type}.fspath is deprecated and will be replaced by {type}.path.\n"
-    "see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path",
-)
-
 HOOK_LEGACY_PATH_ARG = UnformattedWarning(
     PytestDeprecationWarning,
     "The ({pylib_path_arg}: py.path.local) argument is deprecated, please use ({pathlib_path_arg}: pathlib.Path)\n"

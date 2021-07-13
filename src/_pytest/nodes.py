@@ -28,7 +28,6 @@ from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
-from _pytest.deprecated import NODE_FSPATH
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -226,12 +225,10 @@ class Node(metaclass=NodeMeta):
     @property
     def fspath(self) -> LEGACY_PATH:
         """(deprecated) returns a legacy_path copy of self.path"""
-        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
         return legacy_path(self.path)
 
     @fspath.setter
     def fspath(self, value: LEGACY_PATH) -> None:
-        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
         self.path = Path(value)
 
     @classmethod
