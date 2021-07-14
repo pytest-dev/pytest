@@ -144,7 +144,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     recwarn
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
-        See https://docs.python.org/library/warnings.html for information
+        See https://docs.python.org/library/how-to/capture-warnings.html for information
         on warning categories.
 
     tmpdir_factory [session scope]

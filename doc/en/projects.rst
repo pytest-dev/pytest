@@ -56,7 +56,7 @@ Here are some examples of projects using ``pytest`` (please send notes via :ref:
 * `bu <https://packages.python.org/bu/>`_ a microscopic build system
 * `katcp <https://bitbucket.org/hodgestar/katcp>`_ Telescope communication protocol over Twisted
 * `kss plugin timer <https://pypi.org/project/kss.plugin.timer/>`_
-* `pyudev <https://pyudev.readthedocs.io/en/latest/tests/plugins.html>`_ a pure Python binding to the Linux library libudev
+* `pyudev <https://pyudev.readthedocs.io/en/latest/tests/how-to/plugins.html>`_ a pure Python binding to the Linux library libudev
 * `pytest-localserver <https://bitbucket.org/pytest-dev/pytest-localserver/>`_ a plugin for pytest that provides an httpserver and smtpserver
 * `pytest-monkeyplus <https://pypi.org/project/pytest-monkeyplus/>`_ a plugin that extends monkeypatch
 

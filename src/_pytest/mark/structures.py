@@ -530,7 +530,7 @@ class MarkGenerator:
                 warnings.warn(
                     "Unknown pytest.mark.%s - is this a typo?  You can register "
                     "custom marks to avoid this warning - for details, see "
-                    "https://docs.pytest.org/en/stable/mark.html" % name,
+                    "https://docs.pytest.org/en/stable/how-to/mark.html" % name,
                     PytestUnknownMarkWarning,
                     2,
                 )

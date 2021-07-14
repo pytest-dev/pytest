@@ -121,7 +121,7 @@ project:
    -  Various `default
       plugins <http://web.archive.org/web/20091005181132/https://codespeak.net/py/dist/test/plugin/index.html>`__,
       including
-      `monkeypatch <http://web.archive.org/web/20091012022829/http://codespeak.net/py/dist/test/plugin/monkeypatch.html>`__
+      `monkeypatch <http://web.archive.org/web/20091012022829/http://codespeak.net/py/dist/test/plugin/how-to/monkeypatch.html>`__
 
 -  Even back there, the
    `FAQ <http://web.archive.org/web/20091005222413/http://codespeak.net/py/dist/faq.html>`__

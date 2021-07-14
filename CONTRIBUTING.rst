@@ -324,7 +324,7 @@ Here is a simple overview, with pytest-specific bits:
 Writing Tests
 ~~~~~~~~~~~~~
 
-Writing tests for plugins or for pytest itself is often done using the `pytester fixture <https://docs.pytest.org/en/stable/reference.html#pytester>`_, as a "black-box" test.
+Writing tests for plugins or for pytest itself is often done using the `pytester fixture <https://docs.pytest.org/en/stable/reference/reference.html#pytester>`_, as a "black-box" test.
 
 For example, to ensure a simple test passes you can write:
 

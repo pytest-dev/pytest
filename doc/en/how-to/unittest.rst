@@ -27,8 +27,8 @@ Almost all ``unittest`` features are supported:
 * ``setUpClass/tearDownClass``;
 * ``setUpModule/tearDownModule``;
 
-.. _`load_tests protocol`: https://docs.python.org/3/library/unittest.html#load-tests-protocol
-.. _`subtests`: https://docs.python.org/3/library/unittest.html#distinguishing-test-iterations-using-subtests
+.. _`load_tests protocol`: https://docs.python.org/3/library/how-to/unittest.html#load-tests-protocol
+.. _`subtests`: https://docs.python.org/3/library/how-to/unittest.html#distinguishing-test-iterations-using-subtests
 
 Up to this point pytest does not have support for the following features:
 

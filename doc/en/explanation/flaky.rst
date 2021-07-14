@@ -28,7 +28,7 @@ Flaky tests sometimes appear when a test suite is run in parallel (such as use o
 Overly strict assertion
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Overly strict assertions can cause problems with floating point comparison as well as timing issues. `pytest.approx <https://docs.pytest.org/en/stable/reference.html#pytest-approx>`_ is useful here.
+Overly strict assertions can cause problems with floating point comparison as well as timing issues. `pytest.approx <https://docs.pytest.org/en/stable/reference/reference.html#pytest-approx>`_ is useful here.
 
 
 Pytest features

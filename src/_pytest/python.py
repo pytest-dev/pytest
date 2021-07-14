@@ -150,14 +150,14 @@ def pytest_configure(config: Config) -> None:
         "or a list of tuples of values if argnames specifies multiple names. "
         "Example: @parametrize('arg1', [1,2]) would lead to two calls of the "
         "decorated test function, one with arg1=1 and another with arg1=2."
-        "see https://docs.pytest.org/en/stable/parametrize.html for more info "
+        "see https://docs.pytest.org/en/stable/how-to/parametrize.html for more info "
         "and examples.",
     )
     config.addinivalue_line(
         "markers",
         "usefixtures(fixturename1, fixturename2, ...): mark tests as needing "
         "all of the specified fixtures. see "
-        "https://docs.pytest.org/en/stable/fixture.html#usefixtures ",
+        "https://docs.pytest.org/en/stable/explanation/fixtures.html#usefixtures ",
     )
 
 
