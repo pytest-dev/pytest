@@ -28,7 +28,7 @@ How-to guides
    how-to/fixtures
    how-to/mark
    how-to/parametrize
-   how-to/tmpdir
+   how-to/tmp_path
    how-to/monkeypatch
    how-to/doctest
    how-to/cache
