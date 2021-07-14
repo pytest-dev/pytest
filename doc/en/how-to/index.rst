@@ -16,7 +16,7 @@ Core pytest functionality
    fixtures
    mark
    parametrize
-   tmpdir
+   tmp_path
    monkeypatch
    doctest
    cache

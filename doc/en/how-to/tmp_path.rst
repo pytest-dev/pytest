@@ -1,6 +1,6 @@
 
-.. _`tmpdir handling`:
-.. _tmpdir:
+.. _`tmp_path handling`:
+.. _tmp_path:
 
 How to use temporary directories and files in tests
 ===================================================
@@ -98,6 +98,7 @@ to save time:
 See :ref:`tmp_path_factory API <tmp_path_factory factory api>` for details.
 
 .. _`tmpdir and tmpdir_factory`:
+.. _tmpdir:
 
 The ``tmpdir`` and ``tmpdir_factory`` fixtures
 ---------------------------------------------------
