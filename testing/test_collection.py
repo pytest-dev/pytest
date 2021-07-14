@@ -614,8 +614,7 @@ class TestSession:
         items2, hookrec = pytester.inline_genitems(item.nodeid)
         (item2,) = items2
         assert item2.name == item.name
-        with pytest.warns(DeprecationWarning):
-            assert item2.fspath == item.fspath
+        assert item2.fspath == item.fspath
         assert item2.path == item.path
 
     def test_find_byid_without_instance_parents(self, pytester: Pytester) -> None:
