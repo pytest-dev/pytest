@@ -1341,7 +1341,7 @@ def test_module_level_skip_error(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
-        ["*Using pytest.skip outside of a test is not allowed*"]
+        ["*Using pytest.skip outside of a test will skip the entire module*"]
     )
 
 
