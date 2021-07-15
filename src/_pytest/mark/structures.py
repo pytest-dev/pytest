@@ -400,7 +400,7 @@ def store_mark(obj, mark: Mark) -> None:
 # Typing for builtin pytest marks. This is cheating; it gives builtin marks
 # special privilege, and breaks modularity. But practicality beats purity...
 if TYPE_CHECKING:
-    from _pytest.fixtures import _Scope
+    from _pytest.scope import _ScopeName
 
     class _SkipMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc]
@@ -450,7 +450,7 @@ if TYPE_CHECKING:
                     Callable[[Any], Optional[object]],
                 ]
             ] = ...,
-            scope: Optional[_Scope] = ...,
+            scope: Optional[_ScopeName] = ...,
         ) -> MarkDecorator:
             ...
 

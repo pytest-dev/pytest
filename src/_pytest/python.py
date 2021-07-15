@@ -72,12 +72,13 @@ from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.pathlib import visit
+from _pytest.scope import Scope
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
-    from _pytest.fixtures import _Scope
+    from _pytest.scope import _ScopeName
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -896,7 +897,7 @@ class CallSpec2:
         self._idlist: List[str] = []
         self.params: Dict[str, object] = {}
         # Used for sorting parametrized resources.
-        self._arg2scopenum: Dict[str, int] = {}
+        self._arg2scope: Dict[str, Scope] = {}
         self.marks: List[Mark] = []
         self.indices: Dict[str, int] = {}
 
@@ -906,7 +907,7 @@ class CallSpec2:
         cs.params.update(self.params)
         cs.marks.extend(self.marks)
         cs.indices.update(self.indices)
-        cs._arg2scopenum.update(self._arg2scopenum)
+        cs._arg2scope.update(self._arg2scope)
         cs._idlist = list(self._idlist)
         return cs
 
@@ -927,7 +928,7 @@ class CallSpec2:
         valset: Iterable[object],
         id: str,
         marks: Iterable[Union[Mark, MarkDecorator]],
-        scopenum: int,
+        scope: Scope,
         param_index: int,
     ) -> None:
         for arg, val in zip(argnames, valset):
@@ -941,7 +942,7 @@ class CallSpec2:
             else:  # pragma: no cover
                 assert False, f"Unhandled valtype for arg: {valtype_for_arg}"
             self.indices[arg] = param_index
-            self._arg2scopenum[arg] = scopenum
+            self._arg2scope[arg] = scope
         self._idlist.append(id)
         self.marks.extend(normalize_mark_list(marks))
 
@@ -999,7 +1000,7 @@ class Metafunc:
                 Callable[[Any], Optional[object]],
             ]
         ] = None,
-        scope: "Optional[_Scope]" = None,
+        scope: "Optional[_ScopeName]" = None,
         *,
         _param_mark: Optional[Mark] = None,
     ) -> None:
@@ -1055,8 +1056,6 @@ class Metafunc:
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-        from _pytest.fixtures import scope2index
-
         argnames, parameters = ParameterSet._for_parametrize(
             argnames,
             argvalues,
@@ -1072,8 +1071,12 @@ class Metafunc:
                 pytrace=False,
             )
 
-        if scope is None:
-            scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+        if scope is not None:
+            scope_ = Scope.from_user(
+                scope, descr=f"parametrize() call in {self.function.__name__}"
+            )
+        else:
+            scope_ = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
         self._validate_if_using_arg_names(argnames, indirect)
 
@@ -1093,10 +1096,6 @@ class Metafunc:
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
-        scopenum = scope2index(
-            scope, descr=f"parametrize() call in {self.function.__name__}"
-        )
-
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
@@ -1110,7 +1109,7 @@ class Metafunc:
                     param_set.values,
                     param_id,
                     param_set.marks,
-                    scopenum,
+                    scope_,
                     param_index,
                 )
                 newcalls.append(newcallspec)
@@ -1263,7 +1262,7 @@ def _find_parametrized_scope(
     argnames: Sequence[str],
     arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
     indirect: Union[bool, Sequence[str]],
-) -> "fixtures._Scope":
+) -> Scope:
     """Find the most appropriate scope for a parametrized call based on its arguments.
 
     When there's at least one direct argument, always use "function" scope.
@@ -1281,17 +1280,14 @@ def _find_parametrized_scope(
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [
-            fixturedef[0].scope
+            fixturedef[0]._scope
             for name, fixturedef in fixturedefs.items()
             if name in argnames
         ]
-        if used_scopes:
-            # Takes the most narrow scope from used fixtures.
-            for scope in reversed(fixtures.scopes):
-                if scope in used_scopes:
-                    return scope
+        # Takes the most narrow scope from used fixtures.
+        return min(used_scopes, default=Scope.Function)
 
-    return "function"
+    return Scope.Function
 
 
 def _ascii_escaped_by_config(val: Union[str, bytes], config: Optional[Config]) -> str:
