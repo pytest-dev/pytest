@@ -59,6 +59,7 @@ repos:
           - attrs>=19.2.0
           - packaging
           - tomli
+          - types-atomicwrites
           - types-pkg_resources
 -   repo: local
     hooks:
