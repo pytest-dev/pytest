@@ -8,11 +8,11 @@ import pytest
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 
 
-fault_handler_stderr_key = StoreKey[TextIO]()
-fault_handler_originally_enabled_key = StoreKey[bool]()
+fault_handler_stderr_key = StashKey[TextIO]()
+fault_handler_originally_enabled_key = StashKey[bool]()
 
 
 def pytest_addoption(parser: Parser) -> None:

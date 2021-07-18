@@ -21,7 +21,7 @@ from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
-from _pytest.store import Store
+from _pytest.stash import Stash
 
 
 @pytest.fixture(scope="session")
@@ -951,7 +951,7 @@ def test_dont_configure_on_workers(tmp_path: Path) -> None:
         def __init__(self):
             self.pluginmanager = self
             self.option = self
-            self._store = Store()
+            self._store = Stash()
 
         def getini(self, name):
             return "pytest"

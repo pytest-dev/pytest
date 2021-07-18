@@ -62,7 +62,7 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from typing import Deque
@@ -149,7 +149,7 @@ def get_scope_node(
 
 
 # Used for storing artificial fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StoreKey[Dict[str, "FixtureDef[Any]"]]()
+name2pseudofixturedef_key = StashKey[Dict[str, "FixtureDef[Any]"]]()
 
 
 def add_funcarg_pseudo_fixture_def(

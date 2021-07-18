@@ -25,7 +25,7 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import MINUS_K_COLON
 from _pytest.deprecated import MINUS_K_DASH
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from _pytest.nodes import Item
@@ -41,7 +41,7 @@ __all__ = [
 ]
 
 
-old_mark_config_key = StoreKey[Optional[Config]]()
+old_mark_config_key = StashKey[Optional[Config]]()
 
 
 def param(

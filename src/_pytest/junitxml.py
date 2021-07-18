@@ -30,11 +30,11 @@ from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 
 
-xml_key = StoreKey["LogXML"]()
+xml_key = StashKey["LogXML"]()
 
 
 def bin_xml_escape(arg: object) -> str:

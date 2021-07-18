@@ -8,11 +8,11 @@ import pytest
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
 from _pytest.config.argparsing import Parser
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 
 
-pastebinfile_key = StoreKey[IO[bytes]]()
+pastebinfile_key = StashKey[IO[bytes]]()
 
 
 def pytest_addoption(parser: Parser) -> None:

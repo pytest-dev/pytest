@@ -31,15 +31,15 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 
 
 DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
-caplog_handler_key = StoreKey["LogCaptureHandler"]()
-caplog_records_key = StoreKey[Dict[str, List[logging.LogRecord]]]()
+caplog_handler_key = StashKey["LogCaptureHandler"]()
+caplog_records_key = StashKey[Dict[str, List[logging.LogRecord]]]()
 
 
 def _remove_ansi_escape_sequences(text: str) -> str:

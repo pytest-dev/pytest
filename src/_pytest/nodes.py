@@ -34,7 +34,7 @@ from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath
-from _pytest.store import Store
+from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
@@ -220,7 +220,7 @@ class Node(metaclass=NodeMeta):
 
         # A place where plugins can store information on the node for their
         # own use. Currently only intended for internal plugins.
-        self._store = Store()
+        self._store = Stash()
 
     @property
     def fspath(self) -> LEGACY_PATH:

@@ -38,13 +38,13 @@ from _pytest.config import Config
 from _pytest.main import Session
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import fnmatch_ex
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
 
-assertstate_key = StoreKey["AssertionState"]()
+assertstate_key = StashKey["AssertionState"]()
 
 
 # pytest caches rewritten pycs in pycache dirs

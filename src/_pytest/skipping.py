@@ -21,7 +21,7 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -228,7 +228,7 @@ def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:
 
 
 # Saves the xfail mark evaluation. Can be refreshed during call if None.
-xfailed_key = StoreKey[Optional[Xfail]]()
+xfailed_key = StashKey[Optional[Xfail]]()
 
 
 @hookimpl(tryfirst=True)

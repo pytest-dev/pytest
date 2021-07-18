@@ -56,7 +56,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
-from _pytest.store import Store
+from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 
 if TYPE_CHECKING:
@@ -933,7 +933,7 @@ class Config:
         self._cleanup: List[Callable[[], None]] = []
         # A place where plugins can store information on the config for their
         # own use. Currently only intended for internal plugins.
-        self._store = Store()
+        self._store = Stash()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(

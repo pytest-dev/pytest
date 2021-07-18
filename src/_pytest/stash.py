@@ -6,59 +6,59 @@ from typing import TypeVar
 from typing import Union
 
 
-__all__ = ["Store", "StoreKey"]
+__all__ = ["Stash", "StashKey"]
 
 
 T = TypeVar("T")
 D = TypeVar("D")
 
 
-class StoreKey(Generic[T]):
-    """StoreKey is an object used as a key to a Store.
+class StashKey(Generic[T]):
+    """``StashKey`` is an object used as a key to a ``Stash``.
 
-    A StoreKey is associated with the type T of the value of the key.
+    A ``StashKey`` is associated with the type ``T`` of the value of the key.
 
-    A StoreKey is unique and cannot conflict with another key.
+    A ``StashKey`` is unique and cannot conflict with another key.
     """
 
     __slots__ = ()
 
 
-class Store:
-    """Store is a type-safe heterogeneous mutable mapping that
+class Stash:
+    r"""``Stash`` is a type-safe heterogeneous mutable mapping that
     allows keys and value types to be defined separately from
-    where it (the Store) is created.
+    where it (the ``Stash``) is created.
 
-    Usually you will be given an object which has a ``Store``:
+    Usually you will be given an object which has a ``Stash``:
 
     .. code-block:: python
 
-        store: Store = some_object.store
+        stash: Stash = some_object.stash
 
-    If a module wants to store data in this Store, it creates StoreKeys
+    If a module wants to store data in this Stash, it creates ``StashKey``\s
     for its keys (at the module level):
 
     .. code-block:: python
 
-        some_str_key = StoreKey[str]()
-        some_bool_key = StoreKey[bool]()
+        some_str_key = StashKey[str]()
+        some_bool_key = StashKey[bool]()
 
     To store information:
 
     .. code-block:: python
 
         # Value type must match the key.
-        store[some_str_key] = "value"
-        store[some_bool_key] = True
+        stash[some_str_key] = "value"
+        stash[some_bool_key] = True
 
     To retrieve the information:
 
     .. code-block:: python
 
         # The static type of some_str is str.
-        some_str = store[some_str_key]
+        some_str = stash[some_str_key]
         # The static type of some_bool is bool.
-        some_bool = store[some_bool_key]
+        some_bool = stash[some_bool_key]
 
     Why use this?
     -------------
@@ -75,28 +75,28 @@ class Store:
     the object. Module External stores its data in private keys of this dict.
     This doesn't work well because retrieved values are untyped.
 
-    Good solution: module Internal adds a ``Store`` to the object. Module
-    External mints StoreKeys for its own keys. Module External stores and
+    Good solution: module Internal adds a ``Stash`` to the object. Module
+    External mints StashKeys for its own keys. Module External stores and
     retrieves its data using these keys.
     """
 
-    __slots__ = ("_store",)
+    __slots__ = ("_storage",)
 
     def __init__(self) -> None:
-        self._store: Dict[StoreKey[Any], object] = {}
+        self._storage: Dict[StashKey[Any], object] = {}
 
-    def __setitem__(self, key: StoreKey[T], value: T) -> None:
+    def __setitem__(self, key: StashKey[T], value: T) -> None:
         """Set a value for key."""
-        self._store[key] = value
+        self._storage[key] = value
 
-    def __getitem__(self, key: StoreKey[T]) -> T:
+    def __getitem__(self, key: StashKey[T]) -> T:
         """Get the value for key.
 
         Raises ``KeyError`` if the key wasn't set before.
         """
-        return cast(T, self._store[key])
+        return cast(T, self._storage[key])
 
-    def get(self, key: StoreKey[T], default: D) -> Union[T, D]:
+    def get(self, key: StashKey[T], default: D) -> Union[T, D]:
         """Get the value for key, or return default if the key wasn't set
         before."""
         try:
@@ -104,7 +104,7 @@ class Store:
         except KeyError:
             return default
 
-    def setdefault(self, key: StoreKey[T], default: T) -> T:
+    def setdefault(self, key: StashKey[T], default: T) -> T:
         """Return the value of key if already set, otherwise set the value
         of key to default and return default."""
         try:
@@ -113,13 +113,13 @@ class Store:
             self[key] = default
             return default
 
-    def __delitem__(self, key: StoreKey[T]) -> None:
+    def __delitem__(self, key: StashKey[T]) -> None:
         """Delete the value for key.
 
         Raises ``KeyError`` if the key wasn't set before.
         """
-        del self._store[key]
+        del self._storage[key]
 
-    def __contains__(self, key: StoreKey[T]) -> bool:
+    def __contains__(self, key: StashKey[T]) -> bool:
         """Return whether key was set."""
-        return key in self._store
+        return key in self._storage
