@@ -500,9 +500,10 @@ class DoctestModule(pytest.Module):
 
             def _find_lineno(self, obj, source_lines):
                 """Doctest code does not take into account `@property`, this
-                is a hackish way to fix it.
-
-                https://bugs.python.org/issue17446
+                is a hackish way to fix it. https://bugs.python.org/issue17446
+                
+                Wrapped Doctests will need to be unwrapped so the correct
+                line number is returned. This will be reported upstream. #8796
                 """
                 if isinstance(obj, property):
                     obj = getattr(obj, "fget", obj)
