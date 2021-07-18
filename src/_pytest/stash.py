@@ -123,3 +123,7 @@ class Stash:
     def __contains__(self, key: StashKey[T]) -> bool:
         """Return whether key was set."""
         return key in self._storage
+
+    def __len__(self) -> int:
+        """Return how many items exist in the stash."""
+        return len(self._storage)

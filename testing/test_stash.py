@@ -6,6 +6,9 @@ from _pytest.stash import StashKey
 def test_stash() -> None:
     stash = Stash()
 
+    assert len(stash) == 0
+    assert not stash
+
     key1 = StashKey[str]()
     key2 = StashKey[int]()
 
@@ -19,6 +22,8 @@ def test_stash() -> None:
     assert stash[key1] == "world"
     # Has correct type (no mypy error).
     stash[key1] + "string"
+    assert len(stash) == 1
+    assert stash
 
     # No interaction with another key.
     assert key2 not in stash
@@ -44,6 +49,8 @@ def test_stash() -> None:
     key_setdefault = StashKey[bytes]()
     assert stash.setdefault(key_setdefault, b"default") == b"default"
     assert stash[key_setdefault] == b"default"
+    assert len(stash) == 3
+    assert stash
 
     # Can't accidentally add attributes to stash object itself.
     with pytest.raises(AttributeError):
