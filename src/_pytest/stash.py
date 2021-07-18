@@ -14,7 +14,7 @@ D = TypeVar("D")
 
 
 class StashKey(Generic[T]):
-    """``StashKey`` is an object used as a key to a ``Stash``.
+    """``StashKey`` is an object used as a key to a :class:`Stash`.
 
     A ``StashKey`` is associated with the type ``T`` of the value of the key.
 
@@ -29,17 +29,19 @@ class Stash:
     allows keys and value types to be defined separately from
     where it (the ``Stash``) is created.
 
-    Usually you will be given an object which has a ``Stash``:
+    Usually you will be given an object which has a ``Stash``, for example
+    :class:`~pytest.Config` or a :class:`~_pytest.nodes.Node`:
 
     .. code-block:: python
 
         stash: Stash = some_object.stash
 
-    If a module wants to store data in this Stash, it creates ``StashKey``\s
-    for its keys (at the module level):
+    If a module or plugin wants to store data in this ``Stash``, it creates
+    :class:`StashKey`\s for its keys (at the module level):
 
     .. code-block:: python
 
+        # At the top-level of the module
         some_str_key = StashKey[str]()
         some_bool_key = StashKey[bool]()
 
@@ -59,25 +61,6 @@ class Stash:
         some_str = stash[some_str_key]
         # The static type of some_bool is bool.
         some_bool = stash[some_bool_key]
-
-    Why use this?
-    -------------
-
-    Problem: module Internal defines an object. Module External, which
-    module Internal doesn't know about, receives the object and wants to
-    attach information to it, to be retrieved later given the object.
-
-    Bad solution 1: Module External assigns private attributes directly on
-    the object. This doesn't work well because the type checker doesn't
-    know about these attributes and it complains about undefined attributes.
-
-    Bad solution 2: module Internal adds a ``Dict[str, Any]`` attribute to
-    the object. Module External stores its data in private keys of this dict.
-    This doesn't work well because retrieved values are untyped.
-
-    Good solution: module Internal adds a ``Stash`` to the object. Module
-    External mints StashKeys for its own keys. Module External stores and
-    retrieves its data using these keys.
     """
 
     __slots__ = ("_storage",)

@@ -923,6 +923,15 @@ class Config:
         :type: PytestPluginManager
         """
 
+        self.stash = Stash()
+        """A place where plugins can store information on the config for their
+        own use.
+
+        :type: Stash
+        """
+        # Deprecated alias. Was never public. Can be removed in a few releases.
+        self._store = self.stash
+
         from .compat import PathAwareHookProxy
 
         self.trace = self.pluginmanager.trace.root.get("config")
@@ -931,9 +940,6 @@ class Config:
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}
         self._cleanup: List[Callable[[], None]] = []
-        # A place where plugins can store information on the config for their
-        # own use. Currently only intended for internal plugins.
-        self._store = Stash()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(

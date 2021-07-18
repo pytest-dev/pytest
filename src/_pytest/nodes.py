@@ -218,9 +218,13 @@ class Node(metaclass=NodeMeta):
             if self.name != "()":
                 self._nodeid += "::" + self.name
 
-        # A place where plugins can store information on the node for their
-        # own use. Currently only intended for internal plugins.
-        self._store = Stash()
+        #: A place where plugins can store information on the node for their
+        #: own use.
+        #:
+        #: :type: Stash
+        self.stash = Stash()
+        # Deprecated alias. Was never public. Can be removed in a few releases.
+        self._store = self.stash
 
     @property
     def fspath(self) -> LEGACY_PATH:
