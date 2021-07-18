@@ -372,7 +372,7 @@ class LogCaptureFixture:
 
         :rtype: LogCaptureHandler
         """
-        return self._item._store[caplog_handler_key]
+        return self._item.stash[caplog_handler_key]
 
     def get_records(self, when: str) -> List[logging.LogRecord]:
         """Get the logging records for one of the possible test phases.
@@ -385,7 +385,7 @@ class LogCaptureFixture:
 
         .. versionadded:: 3.4
         """
-        return self._item._store[caplog_records_key].get(when, [])
+        return self._item.stash[caplog_records_key].get(when, [])
 
     @property
     def text(self) -> str:
@@ -694,8 +694,8 @@ class LoggingPlugin:
         ) as report_handler:
             caplog_handler.reset()
             report_handler.reset()
-            item._store[caplog_records_key][when] = caplog_handler.records
-            item._store[caplog_handler_key] = caplog_handler
+            item.stash[caplog_records_key][when] = caplog_handler.records
+            item.stash[caplog_handler_key] = caplog_handler
 
             yield
 
@@ -707,7 +707,7 @@ class LoggingPlugin:
         self.log_cli_handler.set_when("setup")
 
         empty: Dict[str, List[logging.LogRecord]] = {}
-        item._store[caplog_records_key] = empty
+        item.stash[caplog_records_key] = empty
         yield from self._runtest_for(item, "setup")
 
     @hookimpl(hookwrapper=True)
@@ -721,8 +721,8 @@ class LoggingPlugin:
         self.log_cli_handler.set_when("teardown")
 
         yield from self._runtest_for(item, "teardown")
-        del item._store[caplog_records_key]
-        del item._store[caplog_handler_key]
+        del item.stash[caplog_records_key]
+        del item.stash[caplog_handler_key]
 
     @hookimpl
     def pytest_runtest_logfinish(self) -> None:

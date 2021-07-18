@@ -951,7 +951,7 @@ def test_dont_configure_on_workers(tmp_path: Path) -> None:
         def __init__(self):
             self.pluginmanager = self
             self.option = self
-            self._store = Stash()
+            self.stash = Stash()
 
         def getini(self, name):
             return "pytest"

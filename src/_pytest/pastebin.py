@@ -37,26 +37,26 @@ def pytest_configure(config: Config) -> None:
         # when using pytest-xdist, for example.
         if tr is not None:
             # pastebin file will be UTF-8 encoded binary file.
-            config._store[pastebinfile_key] = tempfile.TemporaryFile("w+b")
+            config.stash[pastebinfile_key] = tempfile.TemporaryFile("w+b")
             oldwrite = tr._tw.write
 
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
                 if isinstance(s, str):
                     s = s.encode("utf-8")
-                config._store[pastebinfile_key].write(s)
+                config.stash[pastebinfile_key].write(s)
 
             tr._tw.write = tee_write
 
 
 def pytest_unconfigure(config: Config) -> None:
-    if pastebinfile_key in config._store:
-        pastebinfile = config._store[pastebinfile_key]
+    if pastebinfile_key in config.stash:
+        pastebinfile = config.stash[pastebinfile_key]
         # Get terminal contents and delete file.
         pastebinfile.seek(0)
         sessionlog = pastebinfile.read()
         pastebinfile.close()
-        del config._store[pastebinfile_key]
+        del config.stash[pastebinfile_key]
         # Undo our patching in the terminal reporter.
         tr = config.pluginmanager.getplugin("terminalreporter")
         del tr._tw.__dict__["write"]

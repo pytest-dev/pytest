@@ -169,7 +169,7 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
 
     # This reaches into private API, don't use this type of thing in real tests!
-    assert set(caplog._item._store[caplog_records_key]) == {"setup", "call"}
+    assert set(caplog._item.stash[caplog_records_key]) == {"setup", "call"}
 
 
 def test_ini_controls_global_log_level(pytester: Pytester) -> None:

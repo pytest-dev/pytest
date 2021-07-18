@@ -87,7 +87,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
     ) -> Optional[importlib.machinery.ModuleSpec]:
         if self._writing_pyc:
             return None
-        state = self.config._store[assertstate_key]
+        state = self.config.stash[assertstate_key]
         if self._early_rewrite_bailout(name, state):
             return None
         state.trace("find_module called for: %s" % name)
@@ -131,7 +131,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         assert module.__spec__ is not None
         assert module.__spec__.origin is not None
         fn = Path(module.__spec__.origin)
-        state = self.config._store[assertstate_key]
+        state = self.config.stash[assertstate_key]
 
         self._rewritten_names.add(module.__name__)
 

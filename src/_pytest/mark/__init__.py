@@ -269,7 +269,7 @@ def pytest_collection_modifyitems(items: "List[Item]", config: Config) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    config._store[old_mark_config_key] = MARK_GEN._config
+    config.stash[old_mark_config_key] = MARK_GEN._config
     MARK_GEN._config = config
 
     empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
@@ -282,4 +282,4 @@ def pytest_configure(config: Config) -> None:
 
 
 def pytest_unconfigure(config: Config) -> None:
-    MARK_GEN._config = config._store.get(old_mark_config_key, None)
+    MARK_GEN._config = config.stash.get(old_mark_config_key, None)

@@ -237,16 +237,16 @@ def pytest_runtest_setup(item: Item) -> None:
     if skipped:
         raise skip.Exception(skipped.reason, _use_item_location=True)
 
-    item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
+    item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
     if xfailed and not item.config.option.runxfail and not xfailed.run:
         xfail("[NOTRUN] " + xfailed.reason)
 
 
 @hookimpl(hookwrapper=True)
 def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
-    xfailed = item._store.get(xfailed_key, None)
+    xfailed = item.stash.get(xfailed_key, None)
     if xfailed is None:
-        item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
+        item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
 
     if xfailed and not item.config.option.runxfail and not xfailed.run:
         xfail("[NOTRUN] " + xfailed.reason)
@@ -254,16 +254,16 @@ def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
     yield
 
     # The test run may have added an xfail mark dynamically.
-    xfailed = item._store.get(xfailed_key, None)
+    xfailed = item.stash.get(xfailed_key, None)
     if xfailed is None:
-        item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
+        item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
 
 
 @hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
     outcome = yield
     rep = outcome.get_result()
-    xfailed = item._store.get(xfailed_key, None)
+    xfailed = item.stash.get(xfailed_key, None)
     if item.config.option.runxfail:
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):

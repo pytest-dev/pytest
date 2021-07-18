@@ -199,7 +199,7 @@ def add_funcarg_pseudo_fixture_def(
             name2pseudofixturedef = None
         else:
             default: Dict[str, FixtureDef[Any]] = {}
-            name2pseudofixturedef = node._store.setdefault(
+            name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
         if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
