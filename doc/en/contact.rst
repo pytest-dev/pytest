@@ -7,9 +7,9 @@ Contact channels
 
 - `pytest issue tracker`_ to report bugs or suggest features (for version
   2.0 and above).
-
+- `pytest discussions`_ at github for general questions.
 - `pytest on stackoverflow.com <http://stackoverflow.com/search?q=pytest>`_
-  to post questions with the tag ``pytest``.  New Questions will usually
+  to post precise questions with the tag ``pytest``.  New Questions will usually
   be seen by pytest users or developers and answered quickly.
 
 - `Testing In Python`_: a mailing list for Python testing tools and discussion.
@@ -32,6 +32,8 @@ Contact channels
 
 .. _`pytest issue tracker`: https://github.com/pytest-dev/pytest/issues
 .. _`old issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/
+
+.. _`pytest discussions`: https://github.com/pytest-dev/pytest/discussions
 
 .. _`merlinux.eu`: http://merlinux.eu
 
