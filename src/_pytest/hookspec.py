@@ -56,7 +56,7 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
     """Called at plugin registration time to allow adding new hooks via a call to
     ``pluginmanager.add_hookspecs(module_or_class, prefix)``.
 
-    :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager.
+    :param pytest.PytestPluginManager pluginmanager: The pytest plugin manager.
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
@@ -70,7 +70,7 @@ def pytest_plugin_registered(
     """A new pytest plugin got registered.
 
     :param plugin: The plugin module or instance.
-    :param _pytest.config.PytestPluginManager manager: pytest plugin manager.
+    :param pytest.PytestPluginManager manager: pytest plugin manager.
 
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
@@ -88,24 +88,24 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
-    :param _pytest.config.argparsing.Parser parser:
+    :param pytest.Parser parser:
         To add command line options, call
-        :py:func:`parser.addoption(...) <_pytest.config.argparsing.Parser.addoption>`.
+        :py:func:`parser.addoption(...) <pytest.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
-        <_pytest.config.argparsing.Parser.addini>`.
+        <pytest.Parser.addini>`.
 
-    :param _pytest.config.PytestPluginManager pluginmanager:
-        pytest plugin manager, which can be used to install :py:func:`hookspec`'s
+    :param pytest.PytestPluginManager pluginmanager:
+        The pytest plugin manager, which can be used to install :py:func:`hookspec`'s
         or :py:func:`hookimpl`'s and allow one plugin to call another plugin's hooks
         to change how command line options are added.
 
     Options can later be accessed through the
-    :py:class:`config <_pytest.config.Config>` object, respectively:
+    :py:class:`config <pytest.Config>` object, respectively:
 
-    - :py:func:`config.getoption(name) <_pytest.config.Config.getoption>` to
+    - :py:func:`config.getoption(name) <pytest.Config.getoption>` to
       retrieve the value of a command line option.
 
-    - :py:func:`config.getini(name) <_pytest.config.Config.getini>` to retrieve
+    - :py:func:`config.getini(name) <pytest.Config.getini>` to retrieve
       a value read from an ini-style file.
 
     The config object is passed around on many internal objects via the ``.config``
@@ -129,7 +129,7 @@ def pytest_configure(config: "Config") -> None:
     .. note::
         This hook is incompatible with ``hookwrapper=True``.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     """
 
 
@@ -152,7 +152,7 @@ def pytest_cmdline_parse(
         ``plugins`` arg when using `pytest.main`_ to perform an in-process
         test run.
 
-    :param _pytest.config.PytestPluginManager pluginmanager: Pytest plugin manager.
+    :param pytest.PytestPluginManager pluginmanager: The pytest plugin manager.
     :param List[str] args: List of arguments passed on the command line.
     """
 
@@ -166,7 +166,7 @@ def pytest_cmdline_preparse(config: "Config", args: List[str]) -> None:
     .. note::
         This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :param List[str] args: Arguments passed on the command line.
     """
 
@@ -176,12 +176,9 @@ def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
     """Called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop.
 
-    .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
-
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     """
 
 
@@ -194,9 +191,9 @@ def pytest_load_initial_conftests(
     .. note::
         This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
-    :param _pytest.config.Config early_config: The pytest config object.
+    :param pytest.Config early_config: The pytest config object.
     :param List[str] args: Arguments passed on the command line.
-    :param _pytest.config.argparsing.Parser parser: To add command line options.
+    :param pytest.Parser parser: To add command line options.
     """
 
 
@@ -249,7 +246,7 @@ def pytest_collection_modifyitems(
     the items in-place.
 
     :param pytest.Session session: The pytest session object.
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :param List[pytest.Item] items: List of item objects.
     """
 
@@ -274,7 +271,7 @@ def pytest_ignore_collect(
 
     :param pathlib.Path fspath: The path to analyze.
     :param LEGACY_PATH path: The path to analyze.
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
 
     .. versionchanged:: 6.3.0
         The ``fspath`` parameter was added as a :class:`pathlib.Path`
@@ -388,7 +385,7 @@ def pytest_make_parametrize_id(
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :param val: The parametrized value.
     :param str argname: The automatic parameter name produced by pytest.
     """
@@ -612,7 +609,7 @@ def pytest_sessionfinish(
 def pytest_unconfigure(config: "Config") -> None:
     """Called before test process is exited.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     """
 
 
@@ -631,7 +628,7 @@ def pytest_assertrepr_compare(
     *in* a string will be escaped. Note that all but the first line will
     be indented slightly, the intention is for the first line to be a summary.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     """
 
 
@@ -680,7 +677,7 @@ def pytest_report_header(
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :param Path startpath: The starting dir.
     :param LEGACY_PATH startdir: The starting dir.
 
@@ -716,7 +713,7 @@ def pytest_report_collectionfinish(
 
     .. versionadded:: 3.2
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :param Path startpath: The starting path.
     :param LEGACY_PATH startdir: The starting dir.
     :param items: List of pytest items that are going to be executed; this list should not be modified.
@@ -755,7 +752,7 @@ def pytest_report_teststatus(
     for example ``"rerun", "R", ("RERUN", {"yellow": True})``.
 
     :param report: The report object whose status is to be returned.
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
 
     Stops at first non-None result, see :ref:`firstresult`.
     """
@@ -770,7 +767,7 @@ def pytest_terminal_summary(
 
     :param _pytest.terminal.TerminalReporter terminalreporter: The internal terminal reporter object.
     :param int exitstatus: The exit status that will be reported back to the OS.
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
 
     .. versionadded:: 4.2
         The ``config`` parameter.
@@ -860,7 +857,7 @@ def pytest_markeval_namespace(config: "Config") -> Dict[str, Any]:
 
     .. versionadded:: 6.2
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :returns: A dictionary of additional globals to add.
     """
 
@@ -912,7 +909,7 @@ def pytest_enter_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
     Can be used by plugins to take special action just before the python
     debugger enters interactive mode.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :param pdb.Pdb pdb: The Pdb instance.
     """
 
@@ -923,6 +920,6 @@ def pytest_leave_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
     Can be used by plugins to take special action just after the python
     debugger leaves interactive mode.
 
-    :param _pytest.config.Config config: The pytest config object.
+    :param pytest.Config config: The pytest config object.
     :param pdb.Pdb pdb: The Pdb instance.
     """

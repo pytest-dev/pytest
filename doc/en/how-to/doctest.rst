@@ -1,6 +1,6 @@
 .. _doctest:
 
-Doctest integration for modules and test files
+How to run doctests
 =========================================================
 
 By default, all files matching the ``test*.txt`` pattern will
@@ -95,7 +95,7 @@ that will be used for those doctest files using the
 Using 'doctest' options
 -----------------------
 
-Python's standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
+Python's standard ``doctest`` module provides some `options <https://docs.python.org/3/library/how-to/doctest.html#option-flags>`__
 to configure the strictness of doctest tests. In pytest, you can enable those flags using the
 configuration file.
 
@@ -194,7 +194,7 @@ It is possible to use fixtures using the ``getfixture`` helper:
 .. code-block:: text
 
     # content of example.rst
-    >>> tmp = getfixture('tmpdir')
+    >>> tmp = getfixture('tmp_path')
     >>> ...
     >>>
 
@@ -252,7 +252,7 @@ For the same reasons one might want to skip normal tests, it is also possible to
 tests inside doctests.
 
 To skip a single check inside a doctest you can use the standard
-`doctest.SKIP <https://docs.python.org/3/library/doctest.html#doctest.SKIP>`__ directive:
+`doctest.SKIP <https://docs.python.org/3/library/how-to/doctest.html#doctest.SKIP>`__ directive:
 
 .. code-block:: python
 

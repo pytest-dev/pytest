@@ -1,8 +1,10 @@
 import os
 import warnings
+from inspect import signature
 from pathlib import Path
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -26,13 +28,14 @@ from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
-from _pytest.deprecated import NODE_FSPATH
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
+from _pytest.pathlib import commonpath
 from _pytest.store import Store
+from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     # Imported here due to circular import.
@@ -61,23 +64,33 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
         "testing/code/test_excinfo.py::TestFormattedExcinfo"
         "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
 
-    Note that :: parts are only considered at the last / component.
+    Note that / components are only considered until the first ::.
     """
     pos = 0
-    sep = SEP
+    first_colons: Optional[int] = nodeid.find("::")
+    if first_colons == -1:
+        first_colons = None
+    # The root Session node - always present.
     yield ""
+    # Eagerly consume SEP parts until first colons.
     while True:
-        at = nodeid.find(sep, pos)
-        if at == -1 and sep == SEP:
-            sep = "::"
-        elif at == -1:
-            if nodeid:
-                yield nodeid
+        at = nodeid.find(SEP, pos, first_colons)
+        if at == -1:
             break
-        else:
-            if at:
-                yield nodeid[:at]
-            pos = at + len(sep)
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len(SEP)
+    # Eagerly consume :: parts.
+    while True:
+        at = nodeid.find("::", pos)
+        if at == -1:
+            break
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len("::")
+    # The node ID itself.
+    if nodeid:
+        yield nodeid
 
 
 def _imply_path(
@@ -114,7 +127,20 @@ class NodeMeta(type):
         fail(msg, pytrace=False)
 
     def _create(self, *k, **kw):
-        return super().__call__(*k, **kw)
+        try:
+            return super().__call__(*k, **kw)
+        except TypeError:
+            sig = signature(getattr(self, "__init__"))
+            known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
+            from .warning_types import PytestDeprecationWarning
+
+            warnings.warn(
+                PytestDeprecationWarning(
+                    f"{self} is not using a cooperative constructor and only takes {set(known_kw)}"
+                )
+            )
+
+            return super().__call__(*k, **known_kw)
 
 
 class Node(metaclass=NodeMeta):
@@ -199,12 +225,10 @@ class Node(metaclass=NodeMeta):
     @property
     def fspath(self) -> LEGACY_PATH:
         """(deprecated) returns a legacy_path copy of self.path"""
-        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
         return legacy_path(self.path)
 
     @fspath.setter
     def fspath(self, value: LEGACY_PATH) -> None:
-        warnings.warn(NODE_FSPATH.format(type=type(self).__name__), stacklevel=2)
         self.path = Path(value)
 
     @classmethod
@@ -396,7 +420,7 @@ class Node(metaclass=NodeMeta):
         from _pytest.fixtures import FixtureLookupError
 
         if isinstance(excinfo.value, ConftestImportFailure):
-            excinfo = ExceptionInfo(excinfo.value.excinfo)
+            excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 style = "value"
@@ -517,51 +541,67 @@ class Collector(Node):
             excinfo.traceback = ntraceback.filter()
 
 
-def _check_initialpaths_for_relpath(
-    session: "Session", fspath: LEGACY_PATH
-) -> Optional[str]:
+def _check_initialpaths_for_relpath(session: "Session", path: Path) -> Optional[str]:
     for initial_path in session._initialpaths:
-        initial_path_ = legacy_path(initial_path)
-        if fspath.common(initial_path_) == initial_path_:
-            return fspath.relto(initial_path_)
+        if commonpath(path, initial_path) == initial_path:
+            rel = str(path.relative_to(initial_path))
+            return "" if rel == "." else rel
     return None
 
 
 class FSCollector(Collector):
     def __init__(
         self,
-        fspath: Optional[LEGACY_PATH],
-        path: Optional[Path],
-        parent=None,
+        fspath: Optional[LEGACY_PATH] = None,
+        path_or_parent: Optional[Union[Path, Node]] = None,
+        path: Optional[Path] = None,
+        name: Optional[str] = None,
+        parent: Optional[Node] = None,
         config: Optional[Config] = None,
         session: Optional["Session"] = None,
         nodeid: Optional[str] = None,
     ) -> None:
-        path, fspath = _imply_path(path, fspath=fspath)
-        name = fspath.basename
-        if parent is not None and parent.path != path:
-            try:
-                rel = path.relative_to(parent.path)
-            except ValueError:
-                pass
-            else:
-                name = str(rel)
-            name = name.replace(os.sep, SEP)
-        self.path = Path(fspath)
+        if path_or_parent:
+            if isinstance(path_or_parent, Node):
+                assert parent is None
+                parent = cast(FSCollector, path_or_parent)
+            elif isinstance(path_or_parent, Path):
+                assert path is None
+                path = path_or_parent
 
-        session = session or parent.session
+        path, fspath = _imply_path(path, fspath=fspath)
+        if name is None:
+            name = path.name
+            if parent is not None and parent.path != path:
+                try:
+                    rel = path.relative_to(parent.path)
+                except ValueError:
+                    pass
+                else:
+                    name = str(rel)
+                name = name.replace(os.sep, SEP)
+        self.path = path
+
+        if session is None:
+            assert parent is not None
+            session = parent.session
 
         if nodeid is None:
             try:
                 nodeid = str(self.path.relative_to(session.config.rootpath))
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session, fspath)
+                nodeid = _check_initialpaths_for_relpath(session, path)
 
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
 
         super().__init__(
-            name, parent, config, session, nodeid=nodeid, fspath=fspath, path=path
+            name=name,
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
+            path=path,
         )
 
     @classmethod
@@ -601,6 +641,20 @@ class Item(Node):
 
     nextitem = None
 
+    def __init_subclass__(cls) -> None:
+        problems = ", ".join(
+            base.__name__ for base in cls.__bases__ if issubclass(base, Collector)
+        )
+        if problems:
+            warnings.warn(
+                f"{cls.__name__} is an Item subclass and should not be a collector, "
+                f"however its bases {problems} are collectors.\n"
+                "Please split the Collectors and the Item into separate node types.\n"
+                "Pytest Doc example: https://docs.pytest.org/en/latest/example/nonpython.html\n"
+                "example pull request on a plugin: https://github.com/asmeurer/pytest-flakes/pull/40/",
+                PytestWarning,
+            )
+
     def __init__(
         self,
         name,
@@ -608,8 +662,16 @@ class Item(Node):
         config: Optional[Config] = None,
         session: Optional["Session"] = None,
         nodeid: Optional[str] = None,
+        **kw,
     ) -> None:
-        super().__init__(name, parent, config, session, nodeid=nodeid)
+        super().__init__(
+            name=name,
+            parent=parent,
+            config=config,
+            session=session,
+            nodeid=nodeid,
+            **kw,
+        )
         self._report_sections: List[Tuple[str, str, str]] = []
 
         #: A list of tuples (name, value) that holds user defined properties

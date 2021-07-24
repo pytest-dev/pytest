@@ -25,6 +25,7 @@ import attr
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import directory_arg
@@ -240,10 +241,7 @@ def validate_basetemp(path: str) -> str:
         """Return whether query is an ancestor of base."""
         if base == query:
             return True
-        for parent in base.parents:
-            if parent == query:
-                return True
-        return False
+        return query in base.parents
 
     # check if path is an ancestor of cwd
     if is_ancestor(Path.cwd(), Path(path).absolute()):
@@ -293,7 +291,7 @@ def wrap_session(
             except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
-                sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
+                sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
             else:
                 if isinstance(excinfo.value, SystemExit):
                     sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
@@ -301,7 +299,7 @@ def wrap_session(
     finally:
         # Explicitly break reference cycle.
         excinfo = None  # type: ignore
-        session.startdir.chdir()
+        os.chdir(session.startpath)
         if initstate >= 2:
             try:
                 config.hook.pytest_sessionfinish(
@@ -310,7 +308,7 @@ def wrap_session(
             except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
-                sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
+                sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
         config._ensure_unconfigure()
     return session.exitstatus
 
@@ -377,7 +375,9 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(fspath: Path, config: Config) -> Optional[bool]:
-    ignore_paths = config._getconftest_pathlist("collect_ignore", path=fspath.parent)
+    ignore_paths = config._getconftest_pathlist(
+        "collect_ignore", path=fspath.parent, rootpath=config.rootpath
+    )
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
     if excludeopt:
@@ -387,7 +387,7 @@ def pytest_ignore_collect(fspath: Path, config: Config) -> Optional[bool]:
         return True
 
     ignore_globs = config._getconftest_pathlist(
-        "collect_ignore_glob", path=fspath.parent
+        "collect_ignore_glob", path=fspath.parent, rootpath=config.rootpath
     )
     ignore_globs = ignore_globs or []
     excludeglobopt = config.getoption("ignore_glob")
@@ -465,7 +465,7 @@ class Session(nodes.FSCollector):
     def __init__(self, config: Config) -> None:
         super().__init__(
             path=config.rootpath,
-            fspath=config.rootdir,
+            fspath=None,
             parent=None,
             config=config,
             session=self,
@@ -476,7 +476,6 @@ class Session(nodes.FSCollector):
         self.shouldstop: Union[bool, str] = False
         self.shouldfail: Union[bool, str] = False
         self.trace = config.trace.root.get("collection")
-        self.startdir = config.invocation_dir
         self._initialpaths: FrozenSet[Path] = frozenset()
 
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
@@ -485,7 +484,7 @@ class Session(nodes.FSCollector):
 
     @classmethod
     def from_config(cls, config: Config) -> "Session":
-        session: Session = cls._create(config)
+        session: Session = cls._create(config=config)
         return session
 
     def __repr__(self) -> str:
@@ -496,6 +495,24 @@ class Session(nodes.FSCollector):
             self.testsfailed,
             self.testscollected,
         )
+
+    @property
+    def startpath(self) -> Path:
+        """The path from which pytest was invoked.
+
+        .. versionadded:: 6.3.0
+        """
+        return self.config.invocation_params.dir
+
+    @property
+    def stardir(self) -> LEGACY_PATH:
+        """The path from which pytest was invoked.
+
+        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+        :type: LEGACY_PATH
+        """
+        return legacy_path(self.startpath)
 
     def _node_location_to_relpath(self, node_path: Path) -> str:
         # bestrelpath is a quite slow function.
@@ -528,12 +545,16 @@ class Session(nodes.FSCollector):
         # hooks with all conftest.py files.
         pm = self.config.pluginmanager
         my_conftestmodules = pm._getconftestmodules(
-            Path(fspath), self.config.getoption("importmode")
+            Path(fspath),
+            self.config.getoption("importmode"),
+            rootpath=self.config.rootpath,
         )
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # One or more conftests are not in use at this fspath.
-            proxy = FSHookProxy(pm, remove_mods)
+            from .config.compat import PathAwareHookProxy
+
+            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook
@@ -543,9 +564,8 @@ class Session(nodes.FSCollector):
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
-        path = legacy_path(fspath)
         ihook = self.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
+        if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
@@ -555,7 +575,6 @@ class Session(nodes.FSCollector):
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        path = legacy_path(fspath)
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -563,9 +582,7 @@ class Session(nodes.FSCollector):
         )
         ihook = self.gethookproxy(fspath)
         if not self.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(
-                fspath=fspath, path=path, config=self.config
-            ):
+            if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
                 return ()
 
         if handle_dupes:
@@ -577,7 +594,7 @@ class Session(nodes.FSCollector):
                 else:
                     duplicate_paths.add(fspath)
 
-        return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(fspath=fspath, parent=self)  # type: ignore[no-any-return]
 
     @overload
     def perform_collect(
@@ -698,7 +715,7 @@ class Session(nodes.FSCollector):
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
             if argpath.is_dir():
-                assert not names, "invalid arg {!r}".format((argpath, names))
+                assert not names, f"invalid arg {(argpath, names)!r}"
 
                 seen_dirs: Set[Path] = set()
                 for direntry in visit(str(argpath), self._recurse):

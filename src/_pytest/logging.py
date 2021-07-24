@@ -59,7 +59,7 @@ class ColoredLevelFormatter(logging.Formatter):
         logging.DEBUG: {"purple"},
         logging.NOTSET: set(),
     }
-    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*s)")
+    LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-.]?\d*(?:\.\d+)?s)")
 
     def __init__(self, terminalwriter: TerminalWriter, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -451,7 +451,7 @@ class LogCaptureFixture:
 
     @contextmanager
     def at_level(
-        self, level: int, logger: Optional[str] = None
+        self, level: Union[int, str], logger: Optional[str] = None
     ) -> Generator[None, None, None]:
         """Context manager that sets the level for capturing of logs. After
         the end of the 'with' statement the level is restored to its original
@@ -626,7 +626,8 @@ class LoggingPlugin:
             finally:
                 self.log_file_handler.release()
         if old_stream:
-            old_stream.close()
+            # https://github.com/python/typeshed/pull/5663
+            old_stream.close()  # type:ignore[attr-defined]
 
     def _log_cli_enabled(self):
         """Return whether live logging is enabled."""

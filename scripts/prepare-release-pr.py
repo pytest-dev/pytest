@@ -3,15 +3,14 @@ This script is part of the pytest release process which is triggered manually in
 tab of the repository.
 
 The user will need to enter the base branch to start the release from (for example
-``6.1.x`` or ``master``) and if it should be a major release.
+``6.1.x`` or ``main``) and if it should be a major release.
 
 The appropriate version will be obtained based on the given branch automatically.
 
 After that, it will create a release using the `release` tox environment, and push a new PR.
 
-**Secret**: currently the secret is defined in the @pytestbot account,
-which the core maintainers have access to. There we created a new secret named `chatops`
-with write access to the repository.
+**Token**: currently the token from the GitHub Actions is used, pushed with
+`pytest bot <pytestbot@gmail.com>` commit author.
 """
 import argparse
 import re
@@ -47,14 +46,16 @@ def login(token: str) -> Repository:
     return github.repository(owner, repo)
 
 
-def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
+def prepare_release_pr(
+    base_branch: str, is_major: bool, token: str, prerelease: str
+) -> None:
     print()
     print(f"Processing release for branch {Fore.CYAN}{base_branch}")
 
     check_call(["git", "checkout", f"origin/{base_branch}"])
 
     try:
-        version = find_next_version(base_branch, is_major)
+        version = find_next_version(base_branch, is_major, prerelease)
     except InvalidFeatureRelease as e:
         print(f"{Fore.RED}{e}")
         raise SystemExit(1)
@@ -65,22 +66,16 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
 
     run(
         ["git", "config", "user.name", "pytest bot"],
-        text=True,
         check=True,
-        capture_output=True,
     )
     run(
         ["git", "config", "user.email", "pytestbot@gmail.com"],
-        text=True,
         check=True,
-        capture_output=True,
     )
 
     run(
         ["git", "checkout", "-b", release_branch, f"origin/{base_branch}"],
-        text=True,
         check=True,
-        capture_output=True,
     )
 
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
@@ -91,17 +86,13 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     print("Running", " ".join(cmdline))
     run(
         cmdline,
-        text=True,
         check=True,
-        capture_output=True,
     )
 
     oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
     run(
         ["git", "push", oauth_url, f"HEAD:{release_branch}", "--force"],
-        text=True,
         check=True,
-        capture_output=True,
     )
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} pushed.")
 
@@ -116,7 +107,7 @@ def prepare_release_pr(base_branch: str, is_major: bool, token: str) -> None:
     print(f"Pull request {Fore.CYAN}{pr.url}{Fore.RESET} created.")
 
 
-def find_next_version(base_branch: str, is_major: bool) -> str:
+def find_next_version(base_branch: str, is_major: bool, prerelease: str) -> str:
     output = check_output(["git", "tag"], encoding="UTF-8")
     valid_versions = []
     for v in output.splitlines():
@@ -134,11 +125,11 @@ def find_next_version(base_branch: str, is_major: bool) -> str:
     is_feature_release = features or breaking
 
     if is_major:
-        return f"{last_version[0]+1}.0.0"
+        return f"{last_version[0]+1}.0.0{prerelease}"
     elif is_feature_release:
-        return f"{last_version[0]}.{last_version[1] + 1}.0"
+        return f"{last_version[0]}.{last_version[1] + 1}.0{prerelease}"
     else:
-        return f"{last_version[0]}.{last_version[1]}.{last_version[2] + 1}"
+        return f"{last_version[0]}.{last_version[1]}.{last_version[2] + 1}{prerelease}"
 
 
 def main() -> None:
@@ -147,9 +138,13 @@ def main() -> None:
     parser.add_argument("base_branch")
     parser.add_argument("token")
     parser.add_argument("--major", action="store_true", default=False)
+    parser.add_argument("--prerelease", default="")
     options = parser.parse_args()
     prepare_release_pr(
-        base_branch=options.base_branch, is_major=options.major, token=options.token
+        base_branch=options.base_branch,
+        is_major=options.major,
+        token=options.token,
+        prerelease=options.prerelease,
     )
 
 

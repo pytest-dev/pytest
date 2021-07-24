@@ -21,6 +21,7 @@ from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
 from _pytest.deprecated import ARGUMENT_TYPE_STR
 from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
+from _pytest.deprecated import check_ispytest
 
 if TYPE_CHECKING:
     from typing import NoReturn
@@ -43,8 +44,11 @@ class Parser:
         self,
         usage: Optional[str] = None,
         processopt: Optional[Callable[["Argument"], None]] = None,
+        *,
+        _ispytest: bool = False,
     ) -> None:
-        self._anonymous = OptionGroup("custom options", parser=self)
+        check_ispytest(_ispytest)
+        self._anonymous = OptionGroup("custom options", parser=self, _ispytest=True)
         self._groups: List[OptionGroup] = []
         self._processopt = processopt
         self._usage = usage
@@ -67,14 +71,14 @@ class Parser:
         :after: Name of another group, used for ordering --help output.
 
         The returned group object has an ``addoption`` method with the same
-        signature as :py:func:`parser.addoption
-        <_pytest.config.argparsing.Parser.addoption>` but will be shown in the
-        respective group in the output of ``pytest. --help``.
+        signature as :func:`parser.addoption <pytest.Parser.addoption>` but
+        will be shown in the respective group in the output of
+        ``pytest. --help``.
         """
         for group in self._groups:
             if group.name == name:
                 return group
-        group = OptionGroup(name, description, parser=self)
+        group = OptionGroup(name, description, parser=self, _ispytest=True)
         i = 0
         for i, grp in enumerate(self._groups):
             if grp.name == after:
@@ -163,22 +167,35 @@ class Parser:
         name: str,
         help: str,
         type: Optional[
-            "Literal['string', 'pathlist', 'args', 'linelist', 'bool']"
+            "Literal['string', 'paths', 'pathlist', 'args', 'linelist', 'bool']"
         ] = None,
         default=None,
     ) -> None:
         """Register an ini-file option.
 
-        :name: Name of the ini-variable.
-        :type: Type of the variable, can be ``string``, ``pathlist``, ``args``,
-               ``linelist`` or ``bool``.  Defaults to ``string`` if ``None`` or
-               not passed.
-        :default: Default value if no ini-file option exists but is queried.
+        :name:
+            Name of the ini-variable.
+        :type:
+            Type of the variable. Can be:
+
+                * ``string``: a string
+                * ``bool``: a boolean
+                * ``args``: a list of strings, separated as in a shell
+                * ``linelist``: a list of strings, separated by line breaks
+                * ``paths``: a list of :class:`pathlib.Path`, separated as in a shell
+                * ``pathlist``: a list of ``py.path``, separated as in a shell
+
+            .. versionadded:: 6.3
+                The ``paths`` variable type.
+
+            Defaults to ``string`` if ``None`` or not passed.
+        :default:
+            Default value if no ini-file option exists but is queried.
 
         The value of ini-variables can be retrieved via a call to
-        :py:func:`config.getini(name) <_pytest.config.Config.getini>`.
+        :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
-        assert type in (None, "string", "pathlist", "args", "linelist", "bool")
+        assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool")
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
 
@@ -321,9 +338,17 @@ class Argument:
 
 
 class OptionGroup:
+    """A group of options shown in its own section."""
+
     def __init__(
-        self, name: str, description: str = "", parser: Optional[Parser] = None
+        self,
+        name: str,
+        description: str = "",
+        parser: Optional[Parser] = None,
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self.name = name
         self.description = description
         self.options: List[Argument] = []
@@ -333,9 +358,9 @@ class OptionGroup:
         """Add an option to this group.
 
         If a shortened version of a long option is specified, it will
-        be suppressed in the help. addoption('--twowords', '--two-words')
-        results in help showing '--two-words' only, but --twowords gets
-        accepted **and** the automatic destination is in args.twowords.
+        be suppressed in the help. ``addoption('--twowords', '--two-words')``
+        results in help showing ``--two-words`` only, but ``--twowords`` gets
+        accepted **and** the automatic destination is in ``args.twowords``.
         """
         conflict = set(optnames).intersection(
             name for opt in self.options for name in opt.names()

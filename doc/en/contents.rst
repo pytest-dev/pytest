@@ -24,18 +24,30 @@ How-to guides
    :maxdepth: 2
 
    how-to/usage
-   how-to/existingtestsuite
    how-to/assert
-   how-to/mark
-   how-to/monkeypatch
-   how-to/tmpdir
-   how-to/capture
-   how-to/skipping
-   how-to/parametrize
-   how-to/plugins
-   how-to/nose
-   how-to/bash-completion
    how-to/fixtures
+   how-to/mark
+   how-to/parametrize
+   how-to/tmp_path
+   how-to/monkeypatch
+   how-to/doctest
+   how-to/cache
+
+   how-to/logging
+   how-to/capture-stdout-stderr
+   how-to/capture-warnings
+   how-to/skipping
+
+   how-to/plugins
+   how-to/writing_plugins
+   how-to/writing_hook_functions
+
+   how-to/existingtestsuite
+   how-to/unittest
+   how-to/nose
+   how-to/xunit_setup
+
+   how-to/bash-completion
 
 
 Reference guides
@@ -45,14 +57,7 @@ Reference guides
    :maxdepth: 2
 
    reference/fixtures
-   reference/warnings
-   reference/doctest
-   reference/cache
-   reference/unittest
-   reference/xunit_setup
    reference/plugin_list
-   reference/writing_plugins
-   reference/logging
    reference/customize
    reference/reference
 
@@ -90,6 +95,7 @@ Further topics
    license
    contact
 
+   history
    historical-notes
    talks
    projects

@@ -5,7 +5,7 @@
 .. _`pytest.fixture`:
 
 
-pytest fixtures: explicit, modular, scalable
+Fixtures reference
 ========================================================
 
 .. seealso:: :ref:`about-fixtures`
@@ -410,7 +410,7 @@ example, consider this file:
 
 .. literalinclude:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.py
 
-Even though nothing in ``TestClassWithC1Request`` is requesting ``c1``, it still
+Even though nothing in ``TestClassWithoutC1Request`` is requesting ``c1``, it still
 is executed for the tests inside it anyway:
 
 .. image:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.svg

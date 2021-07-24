@@ -1036,8 +1036,8 @@ class TestTerminalFunctional:
     def test_report_collectionfinish_hook(self, pytester: Pytester, params) -> None:
         pytester.makeconftest(
             """
-            def pytest_report_collectionfinish(config, startpath, startdir, items):
-                return ['hello from hook: {0} items'.format(len(items))]
+            def pytest_report_collectionfinish(config, startpath, items):
+                return [f'hello from hook: {len(items)} items']
         """
         )
         pytester.makepyfile(
@@ -1462,7 +1462,7 @@ class TestGenericReporting:
         )
         pytester.mkdir("a").joinpath("conftest.py").write_text(
             """
-def pytest_report_header(config, startdir, startpath):
+def pytest_report_header(config, startpath):
     return ["line1", str(startpath)]
 """
         )
@@ -1618,7 +1618,7 @@ def test_terminal_summary(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning")
 def test_terminal_summary_warnings_are_displayed(pytester: Pytester) -> None:
     """Test that warnings emitted during pytest_terminal_summary are displayed.
     (#1305).
@@ -1655,7 +1655,7 @@ def test_terminal_summary_warnings_are_displayed(pytester: Pytester) -> None:
     assert stdout.count("=== warnings summary ") == 2
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::UserWarning")
 def test_terminal_summary_warnings_header_once(pytester: Pytester) -> None:
     pytester.makepyfile(
         """

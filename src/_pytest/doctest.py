@@ -28,7 +28,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
@@ -122,7 +121,6 @@ def pytest_unconfigure() -> None:
 
 def pytest_collect_file(
     fspath: Path,
-    path: LEGACY_PATH,
     parent: Collector,
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
@@ -147,10 +145,7 @@ def _is_doctest(config: Config, path: Path, parent: Collector) -> bool:
     if path.suffix in (".txt", ".rst") and parent.session.isinitpath(path):
         return True
     globs = config.getoption("doctestglob") or ["test*.txt"]
-    for glob in globs:
-        if fnmatch_ex(glob, path):
-            return True
-    return False
+    return any(fnmatch_ex(glob, path) for glob in globs)
 
 
 class ReprFailDoctest(TerminalRepr):
@@ -270,7 +265,7 @@ class DoctestItem(pytest.Item):
         runner: "doctest.DocTestRunner",
         dtest: "doctest.DocTest",
     ):
-        # incompatible signature due to to imposed limits on sublcass
+        # incompatible signature due to imposed limits on subclass
         """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
 
@@ -324,57 +319,53 @@ class DoctestItem(pytest.Item):
         elif isinstance(excinfo.value, MultipleDoctestFailures):
             failures = excinfo.value.failures
 
-        if failures is not None:
-            reprlocation_lines = []
-            for failure in failures:
-                example = failure.example
-                test = failure.test
-                filename = test.filename
-                if test.lineno is None:
-                    lineno = None
-                else:
-                    lineno = test.lineno + example.lineno + 1
-                message = type(failure).__name__
-                # TODO: ReprFileLocation doesn't expect a None lineno.
-                reprlocation = ReprFileLocation(filename, lineno, message)  # type: ignore[arg-type]
-                checker = _get_checker()
-                report_choice = _get_report_choice(
-                    self.config.getoption("doctestreport")
-                )
-                if lineno is not None:
-                    assert failure.test.docstring is not None
-                    lines = failure.test.docstring.splitlines(False)
-                    # add line numbers to the left of the error message
-                    assert test.lineno is not None
-                    lines = [
-                        "%03d %s" % (i + test.lineno + 1, x)
-                        for (i, x) in enumerate(lines)
-                    ]
-                    # trim docstring error lines to 10
-                    lines = lines[max(example.lineno - 9, 0) : example.lineno + 1]
-                else:
-                    lines = [
-                        "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example"
-                    ]
-                    indent = ">>>"
-                    for line in example.source.splitlines():
-                        lines.append(f"??? {indent} {line}")
-                        indent = "..."
-                if isinstance(failure, doctest.DocTestFailure):
-                    lines += checker.output_difference(
-                        example, failure.got, report_choice
-                    ).split("\n")
-                else:
-                    inner_excinfo = ExceptionInfo(failure.exc_info)
-                    lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
-                    lines += [
-                        x.strip("\n")
-                        for x in traceback.format_exception(*failure.exc_info)
-                    ]
-                reprlocation_lines.append((reprlocation, lines))
-            return ReprFailDoctest(reprlocation_lines)
-        else:
+        if failures is None:
             return super().repr_failure(excinfo)
+
+        reprlocation_lines = []
+        for failure in failures:
+            example = failure.example
+            test = failure.test
+            filename = test.filename
+            if test.lineno is None:
+                lineno = None
+            else:
+                lineno = test.lineno + example.lineno + 1
+            message = type(failure).__name__
+            # TODO: ReprFileLocation doesn't expect a None lineno.
+            reprlocation = ReprFileLocation(filename, lineno, message)  # type: ignore[arg-type]
+            checker = _get_checker()
+            report_choice = _get_report_choice(self.config.getoption("doctestreport"))
+            if lineno is not None:
+                assert failure.test.docstring is not None
+                lines = failure.test.docstring.splitlines(False)
+                # add line numbers to the left of the error message
+                assert test.lineno is not None
+                lines = [
+                    "%03d %s" % (i + test.lineno + 1, x) for (i, x) in enumerate(lines)
+                ]
+                # trim docstring error lines to 10
+                lines = lines[max(example.lineno - 9, 0) : example.lineno + 1]
+            else:
+                lines = [
+                    "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example"
+                ]
+                indent = ">>>"
+                for line in example.source.splitlines():
+                    lines.append(f"??? {indent} {line}")
+                    indent = "..."
+            if isinstance(failure, doctest.DocTestFailure):
+                lines += checker.output_difference(
+                    example, failure.got, report_choice
+                ).split("\n")
+            else:
+                inner_excinfo = ExceptionInfo.from_exc_info(failure.exc_info)
+                lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
+                lines += [
+                    x.strip("\n") for x in traceback.format_exception(*failure.exc_info)
+                ]
+            reprlocation_lines.append((reprlocation, lines))
+        return ReprFailDoctest(reprlocation_lines)
 
     def reportinfo(self):
         assert self.dtest is not None
@@ -536,11 +527,13 @@ class DoctestModule(pytest.Module):
 
         if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
-                self.path, self.config.getoption("importmode")
+                self.path,
+                self.config.getoption("importmode"),
+                rootpath=self.config.rootpath,
             )
         else:
             try:
-                module = import_path(self.path)
+                module = import_path(self.path, root=self.config.rootpath)
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
                     pytest.skip("unable to import module %r" % self.path)
@@ -651,10 +644,7 @@ def _init_checker_class() -> Type["doctest.OutputChecker"]:
                 exponent: Optional[str] = w.group("exponent1")
                 if exponent is None:
                     exponent = w.group("exponent2")
-                if fraction is None:
-                    precision = 0
-                else:
-                    precision = len(fraction)
+                precision = 0 if fraction is None else len(fraction)
                 if exponent is not None:
                     precision -= int(exponent)
                 if float(w.group()) == approx(float(g.group()), abs=10 ** -precision):

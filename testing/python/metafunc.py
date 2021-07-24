@@ -403,6 +403,7 @@ class TestMetafunc:
                 pytest.param(tuple("eight"), (8, -8, 8)),
                 pytest.param(b"\xc3\xb4", b"name"),
                 pytest.param(b"\xc3\xb4", "other"),
+                pytest.param(1.0j, -2.0j),
             ],
         )
         assert result == [
@@ -418,6 +419,7 @@ class TestMetafunc:
             "a9-b9",
             "\\xc3\\xb4-name",
             "\\xc3\\xb4-other",
+            "1j-(-0-2j)",
         ]
 
     def test_idmaker_non_printable_characters(self) -> None:
@@ -692,9 +694,8 @@ class TestMetafunc:
         """
         #714
         Test parametrization with 'indirect' parameter applied on
-        particular arguments. As y is is direct, its value should
-        be used directly rather than being passed to the fixture
-        y.
+        particular arguments. As y is direct, its value should
+        be used directly rather than being passed to the fixture y.
 
         :param pytester: the instance of Pytester class, a temporary
         test directory.

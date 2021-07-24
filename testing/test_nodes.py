@@ -19,11 +19,13 @@ from _pytest.warning_types import PytestWarning
         ("a/b/c", ["", "a", "a/b", "a/b/c"]),
         ("a/bbb/c::D", ["", "a", "a/bbb", "a/bbb/c", "a/bbb/c::D"]),
         ("a/b/c::D::eee", ["", "a", "a/b", "a/b/c", "a/b/c::D", "a/b/c::D::eee"]),
-        # :: considered only at the last component.
         ("::xx", ["", "::xx"]),
-        ("a/b/c::D/d::e", ["", "a", "a/b", "a/b/c::D", "a/b/c::D/d", "a/b/c::D/d::e"]),
+        # / only considered until first ::
+        ("a/b/c::D/d::e", ["", "a", "a/b", "a/b/c", "a/b/c::D/d", "a/b/c::D/d::e"]),
         # : alone is not a separator.
         ("a/b::D:e:f::g", ["", "a", "a/b", "a/b::D:e:f", "a/b::D:e:f::g"]),
+        # / not considered if a part of a test name
+        ("a/b::c/d::e[/test]", ["", "a", "a/b", "a/b::c/d", "a/b::c/d::e[/test]"]),
     ),
 )
 def test_iterparentnodeids(nodeid: str, expected: List[str]) -> None:
@@ -36,6 +38,36 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, session=None)  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="config is"):
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
+
+
+def test_subclassing_both_item_and_collector_deprecated(
+    request, tmp_path: Path
+) -> None:
+    """
+    Verifies we warn on diamond inheritance
+    as well as correctly managing legacy inheritance ctors with missing args
+    as found in plugins
+    """
+
+    with pytest.warns(
+        PytestWarning,
+        match=(
+            "(?m)SoWrong is an Item subclass and should not be a collector, however its bases File are collectors.\n"
+            "Please split the Collectors and the Item into separate node types.\n.*"
+        ),
+    ):
+
+        class SoWrong(nodes.File, nodes.Item):
+            def __init__(self, fspath, parent):
+                """Legacy ctor with legacy call # don't wana see"""
+                super().__init__(fspath, parent)
+
+    with pytest.warns(
+        PytestWarning, match=".*SoWrong.* not using a cooperative constructor.*"
+    ):
+        SoWrong.from_parent(
+            request.session, fspath=legacy_path(tmp_path / "broken.txt")
+        )
 
 
 @pytest.mark.parametrize(
@@ -76,7 +108,7 @@ def test__check_initialpaths_for_relpath() -> None:
 
     session = cast(pytest.Session, FakeSession1)
 
-    assert nodes._check_initialpaths_for_relpath(session, legacy_path(cwd)) == ""
+    assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
 
     sub = cwd / "file"
 
@@ -85,9 +117,9 @@ def test__check_initialpaths_for_relpath() -> None:
 
     session = cast(pytest.Session, FakeSession2)
 
-    assert nodes._check_initialpaths_for_relpath(session, legacy_path(sub)) == "file"
+    assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
 
-    outside = legacy_path("/outside")
+    outside = Path("/outside-this-does-not-exist")
     assert nodes._check_initialpaths_for_relpath(session, outside) is None
 
 

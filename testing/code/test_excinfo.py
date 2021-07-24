@@ -162,7 +162,7 @@ class TestTraceback_f_g_h:
     def test_traceback_cut_excludepath(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("def f(): raise ValueError")
         with pytest.raises(ValueError) as excinfo:
-            import_path(p).f()  # type: ignore[attr-defined]
+            import_path(p, root=pytester.path).f()  # type: ignore[attr-defined]
         basedir = Path(pytest.__file__).parent
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
         for x in newtraceback:
@@ -443,7 +443,7 @@ class TestFormattedExcinfo:
             tmp_path.joinpath("__init__.py").touch()
             modpath.write_text(source)
             importlib.invalidate_caches()
-            return import_path(modpath)
+            return import_path(modpath, root=tmp_path)
 
         return importasmod
 
@@ -1389,6 +1389,29 @@ def test_cwd_deleted(pytester: Pytester) -> None:
             os.chdir(tmp_path)
             tmp_path.unlink()
             assert False
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["* 1 failed in *"])
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
+    result.stderr.no_fnmatch_line("*INTERNALERROR*")
+
+
+def test_regression_nagative_line_index(pytester: Pytester) -> None:
+    """
+    With Python 3.10 alphas, there was an INTERNALERROR reported in
+    https://github.com/pytest-dev/pytest/pull/8227
+    This test ensures it does not regress.
+    """
+    pytester.makepyfile(
+        """
+        import ast
+        import pytest
+
+
+        def test_literal_eval():
+            with pytest.raises(ValueError, match="^$"):
+                ast.literal_eval("pytest")
     """
     )
     result = pytester.runpytest()

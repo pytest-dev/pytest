@@ -19,14 +19,33 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
-``Node.fspath`` in favor of ``pathlib`` and ``Node.path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to support the transition to :mod:`pathlib`, the following hooks now receive additional arguments:
+
+*  :func:`pytest_ignore_collect(fspath: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>`
+*  :func:`pytest_collect_file(fspath: pathlib.Path) <_pytest.hookspec.pytest_collect_file>`
+*  :func:`pytest_pycollect_makemodule(fspath: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>`
+*  :func:`pytest_report_header(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_header>`
+*  :func:`pytest_report_collectionfinish(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>`
+
+The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
+
+
+Diamond inheritance between :class:`pytest.File` and :class:`pytest.Item`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 6.3
 
-As pytest tries to move off `py.path.local <https://py.readthedocs.io/en/latest/path.html>`__ we ported most of the node internals to :mod:`pathlib`.
+Inheriting from both Item and file at once has never been supported officially,
+however some plugins providing linting/code analysis have been using this as a hack.
 
-Pytest will provide compatibility for quite a while.
+This practice is now officially deprecated and a common way to fix this is `example pr fixing inheritance`_.
+
+
+
+.. _example pr fixing inheritance: https://github.com/asmeurer/pytest-flakes/pull/40/files
 
 
 Backward compatibilities in ``Parser.addoption``
@@ -34,7 +53,7 @@ Backward compatibilities in ``Parser.addoption``
 
 .. deprecated:: 2.4
 
-Several behaviors of :meth:`Parser.addoption <_pytest.config.argparsing.Parser.addoption>` are now
+Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
 scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
 
 - ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.

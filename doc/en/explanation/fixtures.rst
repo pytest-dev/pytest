@@ -6,6 +6,7 @@ About fixtures
 .. seealso:: :ref:`how-to-fixtures`
 .. seealso:: :ref:`Fixtures reference <reference-fixtures>`
 
+pytest fixtures are designed to be explicit, modular and scalable.
 
 What fixtures are
 -----------------
@@ -152,6 +153,6 @@ to do this is by loading these data in a fixture for use by your tests.
 This makes use of the automatic caching mechanisms of pytest.
 
 Another good approach is by adding the data files in the ``tests`` folder.
-There are also community plugins available to help managing this aspect of
+There are also community plugins available to help to manage this aspect of
 testing, e.g. `pytest-datadir <https://pypi.org/project/pytest-datadir/>`__
 and `pytest-datafiles <https://pypi.org/project/pytest-datafiles/>`__.

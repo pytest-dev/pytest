@@ -2,16 +2,22 @@
 """pytest: unit and functional testing with Python."""
 from . import collect
 from _pytest import __version__
+from _pytest import version_tuple
+from _pytest._code import ExceptionInfo
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
 from _pytest.config import cmdline
+from _pytest.config import Config
 from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
+from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
+from _pytest.config.argparsing import OptionGroup
+from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import _fillfuncargs
 from _pytest.fixtures import fixture
@@ -76,9 +82,11 @@ __all__ = [
     "cmdline",
     "collect",
     "Collector",
+    "Config",
     "console_main",
     "deprecated_call",
     "exit",
+    "ExceptionInfo",
     "ExitCode",
     "fail",
     "File",
@@ -101,8 +109,10 @@ __all__ = [
     "Metafunc",
     "Module",
     "MonkeyPatch",
+    "OptionGroup",
     "Package",
     "param",
+    "Parser",
     "PytestAssertRewriteWarning",
     "PytestCacheWarning",
     "PytestCollectionWarning",
@@ -110,6 +120,7 @@ __all__ = [
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
     "Pytester",
+    "PytestPluginManager",
     "PytestUnhandledCoroutineWarning",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
@@ -120,6 +131,7 @@ __all__ = [
     "Session",
     "set_trace",
     "skip",
+    "version_tuple",
     "TempPathFactory",
     "Testdir",
     "TempdirFactory",

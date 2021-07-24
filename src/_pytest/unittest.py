@@ -209,7 +209,7 @@ class TestCaseFunction(Function):
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
-            excinfo = _pytest._code.ExceptionInfo(rawexcinfo)  # type: ignore[arg-type]
+            excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(rawexcinfo)  # type: ignore[arg-type]
             # Invoke the attributes to trigger storing the traceback
             # trial causes some issue there.
             excinfo.value

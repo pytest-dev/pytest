@@ -876,7 +876,8 @@ class TestSkip:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "*TypeError: __init__() got multiple values for argument 'reason' - maybe you meant pytest.mark.skipif?"
+                "*TypeError: *__init__() got multiple values for argument 'reason'"
+                " - maybe you meant pytest.mark.skipif?"
             ]
         )
 
@@ -1142,21 +1143,34 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
     pypy_version_info = getattr(sys, "pypy_version_info", None)
     if pypy_version_info is not None and pypy_version_info < (6,):
         markline = markline[5:]
+    elif sys.version_info[:2] >= (3, 10):
+        markline = markline[11:]
     elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
         markline = markline[4:]
-    result.stdout.fnmatch_lines(
-        [
+
+    if sys.version_info[:2] >= (3, 10):
+        expected = [
             "*ERROR*test_nameerror*",
-            "*evaluating*skipif*condition*",
             "*asd*",
-            "*ERROR*test_syntax*",
-            "*evaluating*xfail*condition*",
-            "    syntax error",
-            markline,
-            "SyntaxError: invalid syntax",
-            "*1 pass*2 errors*",
+            "",
+            "During handling of the above exception, another exception occurred:",
         ]
-    )
+    else:
+        expected = [
+            "*ERROR*test_nameerror*",
+        ]
+
+    expected += [
+        "*evaluating*skipif*condition*",
+        "*asd*",
+        "*ERROR*test_syntax*",
+        "*evaluating*xfail*condition*",
+        "    syntax error",
+        markline,
+        "SyntaxError: invalid syntax",
+        "*1 pass*2 errors*",
+    ]
+    result.stdout.fnmatch_lines(expected)
 
 
 def test_xfail_skipif_with_globals(pytester: Pytester) -> None:
@@ -1303,7 +1317,7 @@ def test_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 pytest.xfail("Expected Failure")
 
-        def pytest_collect_file(path, parent):
+        def pytest_collect_file(fspath, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )
@@ -1327,7 +1341,7 @@ def test_module_level_skip_error(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
-        ["*Using pytest.skip outside of a test is not allowed*"]
+        ["*Using pytest.skip outside of a test will skip the entire module*"]
     )
 
 
@@ -1377,7 +1391,7 @@ def test_mark_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 assert False
 
-        def pytest_collect_file(path, parent):
+        def pytest_collect_file(fspath, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )

@@ -1,7 +1,7 @@
 .. _`warnings`:
 
-Warnings Capture
-================
+How to capture warnings
+=======================
 
 
 
@@ -40,7 +40,7 @@ Running pytest now produces this output:
       $REGENDOC_TMPDIR/test_show_warnings.py:5: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
 
-    -- Docs: https://docs.pytest.org/en/stable/warnings.html
+    -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
     ======================= 1 passed, 1 warning in 0.12s =======================
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
@@ -144,7 +144,7 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 *plugin.*
 
 .. _`-W option`: https://docs.python.org/3/using/cmdline.html#cmdoption-w
-.. _warnings.simplefilter: https://docs.python.org/3/library/warnings.html#warnings.simplefilter
+.. _warnings.simplefilter: https://docs.python.org/3/library/how-to/capture-warnings.html#warnings.simplefilter
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
 
 Disabling warnings summary
@@ -171,8 +171,6 @@ using an external system.
 
 DeprecationWarning and PendingDeprecationWarning
 ------------------------------------------------
-
-
 
 
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
@@ -230,27 +228,8 @@ that a certain function call triggers a ``DeprecationWarning`` or
 This test will fail if ``myfunction`` does not issue a deprecation warning
 when called with a ``17`` argument.
 
-By default, ``DeprecationWarning`` and ``PendingDeprecationWarning`` will not be
-caught when using :func:`pytest.warns` or :ref:`recwarn <recwarn>` because
-the default Python warnings filters hide
-them. If you wish to record them in your own code, use
-``warnings.simplefilter('always')``:
-
-.. code-block:: python
-
-    import warnings
-    import pytest
 
 
-    def test_deprecation(recwarn):
-        warnings.simplefilter("always")
-        myfunction(17)
-        assert len(recwarn) == 1
-        assert recwarn.pop(DeprecationWarning)
-
-
-The :ref:`recwarn <recwarn>` fixture automatically ensures to reset the warnings
-filter at the end of the test, so no global state is leaked.
 
 .. _`asserting warnings`:
 
@@ -265,7 +244,7 @@ Asserting warnings with the warns function
 
 
 
-You can check that code raises a particular warning using func:`pytest.warns`,
+You can check that code raises a particular warning using :func:`pytest.warns`,
 which works in a similar manner to :ref:`raises <assertraises>`:
 
 .. code-block:: python
@@ -293,7 +272,7 @@ argument ``match`` to assert that the exception matches a text or regex::
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
 
-You can also call func:`pytest.warns` on a function or code string:
+You can also call :func:`pytest.warns` on a function or code string:
 
 .. code-block:: python
 
@@ -317,9 +296,9 @@ additional information:
 Alternatively, you can examine raised warnings in detail using the
 :ref:`recwarn <recwarn>` fixture (see below).
 
-.. note::
-    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
-    differently; see :ref:`ensuring_function_triggers`.
+
+The :ref:`recwarn <recwarn>` fixture automatically ensures to reset the warnings
+filter at the end of the test, so no global state is leaked.
 
 .. _`recording warnings`:
 
@@ -328,15 +307,15 @@ Alternatively, you can examine raised warnings in detail using the
 Recording warnings
 ------------------
 
-You can record raised warnings either using func:`pytest.warns` or with
+You can record raised warnings either using :func:`pytest.warns` or with
 the ``recwarn`` fixture.
 
-To record with func:`pytest.warns` without asserting anything about the warnings,
-pass ``None`` as the expected warning type:
+To record with :func:`pytest.warns` without asserting anything about the warnings,
+pass no arguments as the expected warning type and it will default to a generic Warning:
 
 .. code-block:: python
 
-    with pytest.warns(None) as record:
+    with pytest.warns() as record:
         warnings.warn("user", UserWarning)
         warnings.warn("runtime", RuntimeWarning)
 
@@ -360,7 +339,7 @@ The ``recwarn`` fixture will record warnings for the whole function:
         assert w.filename
         assert w.lineno
 
-Both ``recwarn`` and func:`pytest.warns` return the same interface for recorded
+Both ``recwarn`` and :func:`pytest.warns` return the same interface for recorded
 warnings: a WarningsRecorder instance. To view the recorded warnings, you can
 iterate over this instance, call ``len`` on it to get the number of recorded
 warnings, or index into it to get a particular recorded warning.
@@ -419,7 +398,7 @@ defines an ``__init__`` constructor, as this prevents the class from being insta
       $REGENDOC_TMPDIR/test_pytest_warnings.py:1: PytestCollectionWarning: cannot collect test class 'Test' because it has a __init__ constructor (from: test_pytest_warnings.py)
         class Test:
 
-    -- Docs: https://docs.pytest.org/en/stable/warnings.html
+    -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
     1 warning in 0.12s
 
 These warnings might be filtered using the same builtin mechanisms used to filter other types of warnings.

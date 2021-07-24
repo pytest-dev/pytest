@@ -150,14 +150,14 @@ def pytest_configure(config: Config) -> None:
         "or a list of tuples of values if argnames specifies multiple names. "
         "Example: @parametrize('arg1', [1,2]) would lead to two calls of the "
         "decorated test function, one with arg1=1 and another with arg1=2."
-        "see https://docs.pytest.org/en/stable/parametrize.html for more info "
+        "see https://docs.pytest.org/en/stable/how-to/parametrize.html for more info "
         "and examples.",
     )
     config.addinivalue_line(
         "markers",
         "usefixtures(fixturename1, fixturename2, ...): mark tests as needing "
         "all of the specified fixtures. see "
-        "https://docs.pytest.org/en/stable/fixture.html#usefixtures ",
+        "https://docs.pytest.org/en/stable/explanation/fixtures.html#usefixtures ",
     )
 
 
@@ -188,9 +188,7 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     return True
 
 
-def pytest_collect_file(
-    fspath: Path, path: LEGACY_PATH, parent: nodes.Collector
-) -> Optional["Module"]:
+def pytest_collect_file(fspath: Path, parent: nodes.Collector) -> Optional["Module"]:
     if fspath.suffix == ".py":
         if not parent.session.isinitpath(fspath):
             if not path_matches_patterns(
@@ -198,9 +196,7 @@ def pytest_collect_file(
             ):
                 return None
         ihook = parent.session.gethookproxy(fspath)
-        module: Module = ihook.pytest_pycollect_makemodule(
-            fspath=fspath, path=path, parent=parent
-        )
+        module: Module = ihook.pytest_pycollect_makemodule(fspath=fspath, parent=parent)
         return module
     return None
 
@@ -210,11 +206,11 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     return any(fnmatch_ex(pattern, path) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(fspath: Path, path: LEGACY_PATH, parent) -> "Module":
+def pytest_pycollect_makemodule(fspath: Path, parent) -> "Module":
     if fspath.name == "__init__.py":
-        pkg: Package = Package.from_parent(parent, fspath=path)
+        pkg: Package = Package.from_parent(parent, path=fspath)
         return pkg
-    mod: Module = Module.from_parent(parent, fspath=path)
+    mod: Module = Module.from_parent(parent, path=fspath)
     return mod
 
 
@@ -577,7 +573,7 @@ class Module(nodes.File, PyCollector):
         # We assume we are only called once per module.
         importmode = self.config.getoption("--import-mode")
         try:
-            mod = import_path(self.path, mode=importmode)
+            mod = import_path(self.path, mode=importmode, root=self.config.rootpath)
         except SyntaxError as e:
             raise self.CollectError(
                 ExceptionInfo.from_current().getrepr(style="short")
@@ -612,10 +608,10 @@ class Module(nodes.File, PyCollector):
             if e.allow_module_level:
                 raise
             raise self.CollectError(
-                "Using pytest.skip outside of a test is not allowed. "
-                "To decorate a test function, use the @pytest.mark.skip "
-                "or @pytest.mark.skipif decorators instead, and to skip a "
-                "module use `pytestmark = pytest.mark.{skip,skipif}."
+                "Using pytest.skip outside of a test will skip the entire module. "
+                "If that's your intention, pass `allow_module_level=True`. "
+                "If you want to skip a specific test or an entire class, "
+                "use the @pytest.mark.skip or @pytest.mark.skipif decorators."
             ) from e
         self.config.pluginmanager.consider_module(mod)
         return mod
@@ -645,7 +641,7 @@ class Package(Module):
             session=session,
             nodeid=nodeid,
         )
-        self.name = os.path.basename(str(fspath.dirname))
+        self.name = path.parent.name
 
     def setup(self) -> None:
         # Not using fixtures to call setup_module here because autouse fixtures
@@ -675,9 +671,8 @@ class Package(Module):
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
-        path = legacy_path(fspath)
         ihook = self.session.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
+        if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
@@ -687,17 +682,14 @@ class Package(Module):
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        path = legacy_path(fspath)
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            path, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
+            fspath, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
         )
         ihook = self.session.gethookproxy(fspath)
         if not self.session.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(
-                fspath=fspath, path=path, config=self.config
-            ):
+            if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
                 return ()
 
         if handle_dupes:
@@ -709,7 +701,7 @@ class Package(Module):
                 else:
                     duplicate_paths.add(fspath)
 
-        return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(fspath=fspath, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.path.parent
@@ -978,7 +970,7 @@ class Metafunc:
         #: Access to the underlying :class:`_pytest.python.FunctionDefinition`.
         self.definition = definition
 
-        #: Access to the :class:`_pytest.config.Config` object for the test session.
+        #: Access to the :class:`pytest.Config` object for the test session.
         self.config = config
 
         #: The module object where the test function is defined in.
@@ -1342,7 +1334,7 @@ def _idval(
 
     if isinstance(val, STRING_TYPES):
         return _ascii_escaped_by_config(val, config)
-    elif val is None or isinstance(val, (float, int, bool)):
+    elif val is None or isinstance(val, (float, int, bool, complex)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return ascii_escaped(val.pattern)
@@ -1408,7 +1400,7 @@ def idmaker(
         # Suffix non-unique IDs to make them unique.
         for index, test_id in enumerate(resolved_ids):
             if test_id_counts[test_id] > 1:
-                resolved_ids[index] = "{}{}".format(test_id, test_id_suffixes[test_id])
+                resolved_ids[index] = f"{test_id}{test_id_suffixes[test_id]}"
                 test_id_suffixes[test_id] += 1
 
     return resolved_ids
@@ -1436,15 +1428,15 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
-        if verbose > 0:
-            bestrel = get_best_relpath(fixture_def.func)
-            funcargspec = f"{argname} -- {bestrel}"
-        else:
-            funcargspec = argname
-        tw.line(funcargspec, green=True)
+        bestrel = get_best_relpath(fixture_def.func)
+        tw.write(f"{argname}", green=True)
+        tw.write(f" -- {bestrel}", yellow=True)
+        tw.write("\n")
         fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
-            write_docstring(tw, fixture_doc)
+            write_docstring(
+                tw, fixture_doc.split("\n\n")[0] if verbose <= 0 else fixture_doc
+            )
         else:
             tw.line("    no docstring available", red=True)
 
@@ -1457,7 +1449,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         tw.line()
         tw.sep("-", f"fixtures used by {item.name}")
         # TODO: Fix this type ignore.
-        tw.sep("-", "({})".format(get_best_relpath(item.function)))  # type: ignore[attr-defined]
+        tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
         # dict key not used in loop but needed for sorting.
         for _, fixturedefs in sorted(info.name2fixturedefs.items()):
             assert fixturedefs is not None
@@ -1516,18 +1508,17 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 tw.line()
                 tw.sep("-", f"fixtures defined from {module}")
                 currentmodule = module
-        if verbose <= 0 and argname[0] == "_":
+        if verbose <= 0 and argname.startswith("_"):
             continue
-        tw.write(argname, green=True)
+        tw.write(f"{argname}", green=True)
         if fixturedef.scope != "function":
             tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
-        if verbose > 0:
-            tw.write(" -- %s" % bestrel, yellow=True)
+        tw.write(f" -- {bestrel}", yellow=True)
         tw.write("\n")
         loc = getlocation(fixturedef.func, str(curdir))
         doc = inspect.getdoc(fixturedef.func)
         if doc:
-            write_docstring(tw, doc)
+            write_docstring(tw, doc.split("\n\n")[0] if verbose <= 0 else doc)
         else:
             tw.line(f"    {loc}: no docstring available", red=True)
         tw.line()

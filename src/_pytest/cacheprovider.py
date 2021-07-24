@@ -43,14 +43,14 @@ which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 
 **Do not** commit this to version control.
 
-See [the docs](https://docs.pytest.org/en/stable/cache.html) for more information.
+See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
 """
 
 CACHEDIR_TAG_CONTENT = b"""\
 Signature: 8a477f597d28d172789f06886806bc55
 # This file is a cache directory tag created by pytest.
 # For information about cache directory tags, see:
-#	http://www.bford.info/cachedir/spec.html
+#	https://bford.info/cachedir/spec.html
 """
 
 
@@ -60,10 +60,10 @@ class Cache:
     _cachedir = attr.ib(type=Path, repr=False)
     _config = attr.ib(type=Config, repr=False)
 
-    # sub-directory under cache-dir for directories created by "makedir"
+    # Sub-directory under cache-dir for directories created by `mkdir()`.
     _CACHE_PREFIX_DIRS = "d"
 
-    # sub-directory under cache-dir for values created by "set"
+    # Sub-directory under cache-dir for values created by `set()`.
     _CACHE_PREFIX_VALUES = "v"
 
     def __init__(
@@ -121,12 +121,14 @@ class Cache:
             stacklevel=3,
         )
 
-    def makedir(self, name: str) -> LEGACY_PATH:
+    def mkdir(self, name: str) -> Path:
         """Return a directory path object with the given name.
 
         If the directory does not yet exist, it will be created. You can use
         it to manage files to e.g. store/retrieve database dumps across test
         sessions.
+
+        .. versionadded:: 6.3
 
         :param name:
             Must be a string not containing a ``/`` separator.
@@ -138,7 +140,14 @@ class Cache:
             raise ValueError("name is not allowed to contain path separators")
         res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
         res.mkdir(exist_ok=True, parents=True)
-        return legacy_path(res)
+        return res
+
+    def makedir(self, name: str) -> LEGACY_PATH:
+        """Return a directory path object with the given name.
+
+        Same as :func:`mkdir`, but returns a legacy py path instance.
+        """
+        return legacy_path(self.mkdir(name))
 
     def _getvaluepath(self, key: str) -> Path:
         return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
@@ -572,8 +581,8 @@ def cacheshow(config: Config, session: Session) -> int:
         contents = sorted(ddir.rglob(glob))
         tw.sep("-", "cache directories for %r" % glob)
         for p in contents:
-            # if p.check(dir=1):
-            #    print("%s/" % p.relto(basedir))
+            # if p.is_dir():
+            #    print("%s/" % p.relative_to(basedir))
             if p.is_file():
                 key = str(p.relative_to(basedir))
                 tw.line(f"{key} is a file of length {p.stat().st_size:d}")

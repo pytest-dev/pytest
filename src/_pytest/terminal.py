@@ -37,6 +37,8 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -318,7 +320,6 @@ class TerminalReporter:
         self.stats: Dict[str, List[Any]] = {}
         self._main_color: Optional[str] = None
         self._known_types: Optional[List[str]] = None
-        self.startdir = config.invocation_dir
         self.startpath = config.invocation_params.dir
         if file is None:
             file = sys.stdout
@@ -380,6 +381,16 @@ class TerminalReporter:
     @property
     def showlongtestinfo(self) -> bool:
         return self.verbosity > 0
+
+    @property
+    def startdir(self) -> LEGACY_PATH:
+        """The directory from which pytest was invoked.
+
+        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+        :type: LEGACY_PATH
+        """
+        return legacy_path(self.startpath)
 
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
@@ -577,7 +588,7 @@ class TerminalReporter:
         if self.verbosity <= 0 and self._show_progress_info:
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
-                progress_length = len(" [{}/{}]".format(str(num_tests), str(num_tests)))
+                progress_length = len(f" [{num_tests}/{num_tests}]")
             else:
                 progress_length = len(" [100%]")
 
@@ -599,7 +610,7 @@ class TerminalReporter:
         if self._show_progress_info == "count":
             if collected:
                 progress = self._progress_nodeids_reported
-                counter_format = "{{:{}d}}".format(len(str(collected)))
+                counter_format = f"{{:{len(str(collected))}d}}"
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(len(progress), collected)
             return f" [ {collected} / {collected} ]"
@@ -658,10 +669,7 @@ class TerminalReporter:
         skipped = len(self.stats.get("skipped", []))
         deselected = len(self.stats.get("deselected", []))
         selected = self._numcollected - errors - skipped - deselected
-        if final:
-            line = "collected "
-        else:
-            line = "collecting "
+        line = "collected " if final else "collecting "
         line += (
             str(self._numcollected) + " item" + ("" if self._numcollected == 1 else "s")
         )
@@ -693,7 +701,7 @@ class TerminalReporter:
             pypy_version_info = getattr(sys, "pypy_version_info", None)
             if pypy_version_info:
                 verinfo = ".".join(map(str, pypy_version_info[:3]))
-                msg += "[pypy-{}-{}]".format(verinfo, pypy_version_info[3])
+                msg += f"[pypy-{verinfo}-{pypy_version_info[3]}]"
             msg += ", pytest-{}, py-{}, pluggy-{}".format(
                 _pytest._version.version, py.__version__, pluggy.__version__
             )
@@ -705,7 +713,7 @@ class TerminalReporter:
                 msg += " -- " + str(sys.executable)
             self.write_line(msg)
             lines = self.config.hook.pytest_report_header(
-                config=self.config, startpath=self.startpath, startdir=self.startdir
+                config=self.config, startpath=self.startpath
             )
             self._write_report_lines_from_hooks(lines)
 
@@ -742,7 +750,6 @@ class TerminalReporter:
         lines = self.config.hook.pytest_report_collectionfinish(
             config=self.config,
             startpath=self.startpath,
-            startdir=self.startdir,
             items=session.items,
         )
         self._write_report_lines_from_hooks(lines)
@@ -951,7 +958,9 @@ class TerminalReporter:
                     message = message.rstrip()
                 self._tw.line(message)
                 self._tw.line()
-            self._tw.line("-- Docs: https://docs.pytest.org/en/stable/warnings.html")
+            self._tw.line(
+                "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html"
+            )
 
     def summary_passes(self) -> None:
         if self.config.option.tbstyle != "no":
@@ -1056,7 +1065,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = " in {}".format(format_session_duration(session_duration))
+        duration = f" in {format_session_duration(session_duration)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)

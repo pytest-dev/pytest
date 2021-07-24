@@ -15,6 +15,8 @@ from _pytest import outcomes
 from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest.config import Config
+
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -25,6 +27,9 @@ _reprcompare: Optional[Callable[[str, object, object], Optional[str]]] = None
 # Works similarly as _reprcompare attribute. Is populated with the hook call
 # when pytest_runtest_setup is called.
 _assertion_pass: Optional[Callable[[int, str, str], None]] = None
+
+# Config object which is assigned during pytest_runtest_protocol.
+_config: Optional[Config] = None
 
 
 def format_explanation(explanation: str) -> str:
@@ -175,7 +180,15 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
     if istext(left) and istext(right):
         explanation = _diff_text(left, right, verbose)
     else:
-        if type(left) == type(right) and (
+        from _pytest.python_api import ApproxBase
+
+        if isinstance(left, ApproxBase) or isinstance(right, ApproxBase):
+            # Although the common order should be obtained == expected, this ensures both ways
+            approx_side = left if isinstance(left, ApproxBase) else right
+            other_side = right if isinstance(left, ApproxBase) else left
+
+            explanation = approx_side._repr_compare(other_side)
+        elif type(left) == type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
             # Note: unlike dataclasses/attrs, namedtuples compare only the
@@ -191,9 +204,11 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             explanation = _compare_eq_dict(left, right, verbose)
         elif verbose > 0:
             explanation = _compare_eq_verbose(left, right)
+
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left, right, verbose)
             explanation.extend(expl)
+
     return explanation
 
 

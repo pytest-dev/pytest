@@ -26,7 +26,7 @@ Here is a little annotated list for some popular plugins:
   for `django`_ apps, using pytest integration.
 
 * `pytest-twisted <https://pypi.org/project/pytest-twisted/>`_: write tests
-  for `twisted <http://twistedmatrix.com>`_ apps, starting a reactor and
+  for `twisted <https://twistedmatrix.com/>`_ apps, starting a reactor and
   processing deferreds from test functions.
 
 * `pytest-cov <https://pypi.org/project/pytest-cov/>`__:

@@ -1,1 +1,0 @@
-Assert the outcomes for the issue 518 test and fix the test.

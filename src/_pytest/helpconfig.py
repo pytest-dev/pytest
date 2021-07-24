@@ -127,7 +127,7 @@ def pytest_cmdline_parse():
 
 def showversion(config: Config) -> None:
     if config.option.version > 1:
-        sys.stderr.write(
+        sys.stdout.write(
             "This is pytest version {}, imported from {}\n".format(
                 pytest.__version__, pytest.__file__
             )
@@ -135,9 +135,9 @@ def showversion(config: Config) -> None:
         plugininfo = getpluginversioninfo(config)
         if plugininfo:
             for line in plugininfo:
-                sys.stderr.write(line + "\n")
+                sys.stdout.write(line + "\n")
     else:
-        sys.stderr.write(f"pytest {pytest.__version__}\n")
+        sys.stdout.write(f"pytest {pytest.__version__}\n")
 
 
 def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:

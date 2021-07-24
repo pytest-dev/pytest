@@ -63,6 +63,7 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
 from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import copytree
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -875,7 +876,7 @@ class Pytester:
     def syspathinsert(
         self, path: Optional[Union[str, "os.PathLike[str]"]] = None
     ) -> None:
-        """Prepend a directory to sys.path, defaults to :py:attr:`tmpdir`.
+        """Prepend a directory to sys.path, defaults to :attr:`path`.
 
         This is undone automatically when this object dies at the end of each
         test.
@@ -912,7 +913,7 @@ class Pytester:
         example_dir = self._request.config.getini("pytester_example_dir")
         if example_dir is None:
             raise ValueError("pytester_example_dir is unset, can't copy examples")
-        example_dir = Path(str(self._request.config.rootdir)) / example_dir
+        example_dir = self._request.config.rootpath / example_dir
 
         for extra_element in self._request.node.iter_markers("pytester_example_path"):
             assert extra_element.args
@@ -935,10 +936,7 @@ class Pytester:
             example_path = example_dir.joinpath(name)
 
         if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
-            # TODO: legacy_path.copy can copy files to existing directories,
-            # while with shutil.copytree the destination directory cannot exist,
-            # we will need to roll our own in order to drop legacy_path completely
-            legacy_path(example_path).copy(legacy_path(self.path))
+            copytree(example_path, self.path)
             return self.path
         elif example_path.is_file():
             result = self.path.joinpath(example_path.name)
@@ -956,7 +954,7 @@ class Pytester:
     ) -> Optional[Union[Collector, Item]]:
         """Return the collection node of a file.
 
-        :param _pytest.config.Config config:
+        :param pytest.Config config:
            A pytest config.
            See :py:meth:`parseconfig` and :py:meth:`parseconfigure` for creating it.
         :param os.PathLike[str] arg:
@@ -964,7 +962,7 @@ class Pytester:
         """
         session = Session.from_config(config)
         assert "::" not in str(arg)
-        p = legacy_path(arg)
+        p = Path(os.path.abspath(arg))
         config.hook.pytest_sessionstart(session=session)
         res = session.perform_collect([str(p)], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=ExitCode.OK)
@@ -1188,7 +1186,7 @@ class Pytester:
         This invokes the pytest bootstrapping code in _pytest.config to create
         a new :py:class:`_pytest.core.PluginManager` and call the
         pytest_cmdline_parse hook to create a new
-        :py:class:`_pytest.config.Config` instance.
+        :py:class:`pytest.Config` instance.
 
         If :py:attr:`plugins` has been populated they should be plugin modules
         to be registered with the PluginManager.
@@ -1208,7 +1206,7 @@ class Pytester:
     def parseconfigure(self, *args: Union[str, "os.PathLike[str]"]) -> Config:
         """Return a new pytest configured Config instance.
 
-        Returns a new :py:class:`_pytest.config.Config` instance like
+        Returns a new :py:class:`pytest.Config` instance like
         :py:meth:`parseconfig`, but also calls the pytest_configure hook.
         """
         config = self.parseconfig(*args)
@@ -1458,7 +1456,7 @@ class Pytester:
             :py:class:`Pytester.TimeoutExpired`.
         """
         __tracebackhide__ = True
-        p = make_numbered_dir(root=self.path, prefix="runpytest-")
+        p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
         args = ("--basetemp=%s" % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
@@ -1477,7 +1475,7 @@ class Pytester:
         The pexpect child is returned.
         """
         basetemp = self.path / "temp-pexpect"
-        basetemp.mkdir()
+        basetemp.mkdir(mode=0o700)
         invoke = " ".join(map(str, self._getpytestargs()))
         cmd = f"{invoke} --basetemp={basetemp} {string}"
         return self.spawn(cmd, expect_timeout=expect_timeout)
@@ -1867,7 +1865,7 @@ class LineMatcher:
             Match lines consecutively?
         """
         if not isinstance(lines2, collections.abc.Sequence):
-            raise TypeError("invalid type for lines2: {}".format(type(lines2).__name__))
+            raise TypeError(f"invalid type for lines2: {type(lines2).__name__}")
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         extralines = []

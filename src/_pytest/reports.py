@@ -1,5 +1,5 @@
+import os
 from io import StringIO
-from pathlib import Path
 from pprint import pprint
 from typing import Any
 from typing import cast
@@ -29,7 +29,6 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
-from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -282,10 +281,10 @@ class TestReport(BaseReport):
         #: defined properties of the test.
         self.user_properties = list(user_properties or [])
 
-        #: List of pairs ``(str, str)`` of extra information which needs to
-        #: marshallable. Used by pytest to add captured text
-        #: from ``stdout`` and ``stderr``, but may be used by other plugins
-        #: to add arbitrary information to reports.
+        #: Tuples of str ``(heading, content)`` with extra information
+        #: for the test report. Used by pytest to add text captured
+        #: from ``stdout``, ``stderr``, and intercepted logging events. May
+        #: be used by other plugins to add arbitrary information to reports.
         self.sections = list(sections)
 
         #: Time it took to run just the test.
@@ -382,11 +381,10 @@ class CollectReport(BaseReport):
         #: The collected items and collection nodes.
         self.result = result or []
 
-        #: List of pairs ``(str, str)`` of extra information which needs to
-        #: marshallable.
-        # Used by pytest to add captured text : from ``stdout`` and ``stderr``,
-        # but may be used by other plugins : to add arbitrary information to
-        # reports.
+        #: Tuples of str ``(heading, content)`` with extra information
+        #: for the test report. Used by pytest to add text captured
+        #: from ``stdout``, ``stderr``, and intercepted logging events. May
+        #: be used by other plugins to add arbitrary information to reports.
         self.sections = list(sections)
 
         self.__dict__.update(extra)
@@ -500,8 +498,8 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     else:
         d["longrepr"] = report.longrepr
     for name in d:
-        if isinstance(d[name], (LEGACY_PATH, Path)):
-            d[name] = str(d[name])
+        if isinstance(d[name], os.PathLike):
+            d[name] = os.fspath(d[name])
         elif name == "result":
             d[name] = None  # for now
     return d

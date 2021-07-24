@@ -95,9 +95,9 @@ class TestCollector:
             import pytest
             class CustomFile(pytest.File):
                 pass
-            def pytest_collect_file(path, parent):
-                if path.ext == ".xxx":
-                    return CustomFile.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(fspath, parent):
+                if fspath.suffix == ".xxx":
+                    return CustomFile.from_parent(path=fspath, parent=parent)
         """
         )
         node = pytester.getpathnode(hello)
@@ -271,15 +271,15 @@ class TestCollectPluginHookRelay:
         wascalled = []
 
         class Plugin:
-            def pytest_collect_file(self, path):
-                if not path.basename.startswith("."):
+            def pytest_collect_file(self, fspath: Path) -> None:
+                if not fspath.name.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
-                    wascalled.append(path)
+                    wascalled.append(fspath)
 
         pytester.makefile(".abc", "xyz")
         pytest.main(pytester.path, plugins=[Plugin()])
         assert len(wascalled) == 1
-        assert wascalled[0].ext == ".abc"
+        assert wascalled[0].suffix == ".abc"
 
 
 class TestPrunetraceback:
@@ -292,15 +292,15 @@ class TestPrunetraceback:
         pytester.makeconftest(
             """
             import pytest
-            def pytest_collect_file(path, parent):
-                return MyFile.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(fspath, parent):
+                return MyFile.from_parent(path=fspath, parent=parent)
             class MyError(Exception):
                 pass
             class MyFile(pytest.File):
                 def collect(self):
                     raise MyError()
                 def repr_failure(self, excinfo):
-                    if excinfo.errisinstance(MyError):
+                    if isinstance(excinfo.value, MyError):
                         return "hello world"
                     return pytest.File.repr_failure(self, excinfo)
         """
@@ -335,9 +335,8 @@ class TestCustomConftests:
     def test_ignore_collect_path(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(path, config):
-                return path.basename.startswith("x") or \
-                       path.basename == "test_one.py"
+            def pytest_ignore_collect(fspath, config):
+                return fspath.name.startswith("x") or fspath.name == "test_one.py"
         """
         )
         sub = pytester.mkdir("xy123")
@@ -352,7 +351,7 @@ class TestCustomConftests:
     def test_ignore_collect_not_called_on_argument(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(path, config):
+            def pytest_ignore_collect(fspath, config):
                 return True
         """
         )
@@ -367,12 +366,19 @@ class TestCustomConftests:
     def test_collectignore_exclude_on_option(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            # potentially avoid dependency on pylib
-            from _pytest.compat import legacy_path
             from pathlib import Path
-            collect_ignore = [legacy_path('hello'), 'test_world.py', Path('bye')]
+
+            class MyPathLike:
+                def __init__(self, path):
+                    self.path = path
+                def __fspath__(self):
+                    return "path"
+
+            collect_ignore = [MyPathLike('hello'), 'test_world.py', Path('bye')]
+
             def pytest_addoption(parser):
                 parser.addoption("--XX", action="store_true", default=False)
+
             def pytest_configure(config):
                 if config.getvalue("XX"):
                     collect_ignore[:] = []
@@ -413,9 +419,9 @@ class TestCustomConftests:
             import pytest
             class MyModule(pytest.Module):
                 pass
-            def pytest_collect_file(path, parent):
-                if path.ext == ".py":
-                    return MyModule.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(fspath, parent):
+                if fspath.suffix == ".py":
+                    return MyModule.from_parent(path=fspath, parent=parent)
         """
         )
         pytester.mkdir("sub")
@@ -431,9 +437,9 @@ class TestCustomConftests:
             import pytest
             class MyModule1(pytest.Module):
                 pass
-            def pytest_collect_file(path, parent):
-                if path.ext == ".py":
-                    return MyModule1.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(fspath, parent):
+                if fspath.suffix == ".py":
+                    return MyModule1.from_parent(path=fspath, parent=parent)
         """
         )
         conf1.replace(sub1.joinpath(conf1.name))
@@ -442,9 +448,9 @@ class TestCustomConftests:
             import pytest
             class MyModule2(pytest.Module):
                 pass
-            def pytest_collect_file(path, parent):
-                if path.ext == ".py":
-                    return MyModule2.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(fspath, parent):
+                if fspath.suffix == ".py":
+                    return MyModule2.from_parent(path=fspath, parent=parent)
         """
         )
         conf2.replace(sub2.joinpath(conf2.name))
@@ -533,9 +539,9 @@ class TestSession:
             class SpecialFile(pytest.File):
                 def collect(self):
                     return [SpecialItem.from_parent(name="check", parent=self)]
-            def pytest_collect_file(path, parent):
-                if path.basename == %r:
-                    return SpecialFile.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(fspath, parent):
+                if fspath.name == %r:
+                    return SpecialFile.from_parent(path=fspath, parent=parent)
         """
             % p.name
         )
@@ -608,8 +614,7 @@ class TestSession:
         items2, hookrec = pytester.inline_genitems(item.nodeid)
         (item2,) = items2
         assert item2.name == item.name
-        with pytest.warns(DeprecationWarning):
-            assert item2.fspath == item.fspath
+        assert item2.fspath == item.fspath
         assert item2.path == item.path
 
     def test_find_byid_without_instance_parents(self, pytester: Pytester) -> None:
@@ -755,13 +760,13 @@ def test_matchnodes_two_collections_same_file(pytester: Pytester) -> None:
             config.pluginmanager.register(Plugin2())
 
         class Plugin2(object):
-            def pytest_collect_file(self, path, parent):
-                if path.ext == ".abc":
-                    return MyFile2.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(self, fspath, parent):
+                if fspath.suffix == ".abc":
+                    return MyFile2.from_parent(path=fspath, parent=parent)
 
-        def pytest_collect_file(path, parent):
-            if path.ext == ".abc":
-                return MyFile1.from_parent(fspath=path, parent=parent)
+        def pytest_collect_file(fspath, parent):
+            if fspath.suffix == ".abc":
+                return MyFile1.from_parent(path=fspath, parent=parent)
 
         class MyFile1(pytest.File):
             def collect(self):
@@ -1219,7 +1224,7 @@ def test_collect_symlink_dir(pytester: Pytester) -> None:
     """A symlinked directory is collected."""
     dir = pytester.mkdir("dir")
     dir.joinpath("test_it.py").write_text("def test_it(): pass", "utf-8")
-    pytester.path.joinpath("symlink_dir").symlink_to(dir)
+    symlink_or_skip(pytester.path.joinpath("symlink_dir"), dir)
     result = pytester.runpytest()
     result.assert_outcomes(passed=2)
 
@@ -1346,7 +1351,6 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
 
     Context: https://github.com/pytest-dev/pytest-cpp/pull/47
     """
-    from _pytest.compat import legacy_path
 
     class MyCollector(pytest.File):
         def __init__(self, *k, x, **kw):
@@ -1354,7 +1358,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
             self.x = x
 
     collector = MyCollector.from_parent(
-        parent=request.session, fspath=legacy_path(pytester.path) / "foo", x=10
+        parent=request.session, path=pytester.path / "foo", x=10
     )
     assert collector.x == 10
 

@@ -21,7 +21,7 @@ functionality in tests:
     monkeypatch.delattr(obj, name, raising=True)
     monkeypatch.setitem(mapping, name, value)
     monkeypatch.delitem(obj, name, raising=True)
-    monkeypatch.setenv(name, value, prepend=False)
+    monkeypatch.setenv(name, value, prepend=None)
     monkeypatch.delenv(name, raising=True)
     monkeypatch.syspath_prepend(path)
     monkeypatch.chdir(path)
@@ -58,7 +58,7 @@ call ``pkg_resources.fixup_namespace_packages`` and :py:func:`importlib.invalida
 See the `monkeypatch blog post`_ for some introduction material
 and a discussion of its motivation.
 
-.. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+.. _`monkeypatch blog post`: https://tetamap.wordpress.com//2009/03/03/monkeypatching-in-unit-tests-done-right/
 
 Simple example: monkeypatching functions
 ----------------------------------------

@@ -188,7 +188,7 @@ class TestGeneralUsage:
         result.stderr.fnmatch_lines(
             [
                 f"ERROR: not found: {p2}",
-                "(no name {!r} in any of [[][]])".format(str(p2)),
+                f"(no name {str(p2)!r} in any of [[][]])",
                 "",
             ]
         )
@@ -304,9 +304,9 @@ class TestGeneralUsage:
             class MyCollector(pytest.File):
                 def collect(self):
                     return [MyItem.from_parent(name="xyz", parent=self)]
-            def pytest_collect_file(path, parent):
-                if path.basename.startswith("conftest"):
-                    return MyCollector.from_parent(fspath=path, parent=parent)
+            def pytest_collect_file(fspath, parent):
+                if fspath.name.startswith("conftest"):
+                    return MyCollector.from_parent(path=fspath, parent=parent)
         """
         )
         result = pytester.runpytest(c.name + "::" + "xyz")
@@ -1173,7 +1173,7 @@ def test_usage_error_code(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestUnhandledCoroutineWarning")
 def test_warn_on_async_function(pytester: Pytester) -> None:
     # In the below we .close() the coroutine only to avoid
     # "RuntimeWarning: coroutine 'test_2' was never awaited"
@@ -1206,7 +1206,7 @@ def test_warn_on_async_function(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestUnhandledCoroutineWarning")
 def test_warn_on_async_gen_function(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_async="""

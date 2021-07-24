@@ -89,10 +89,16 @@ ARGUMENT_TYPE_STR = UnformattedWarning(
 )
 
 
-NODE_FSPATH = UnformattedWarning(
+HOOK_LEGACY_PATH_ARG = UnformattedWarning(
     PytestDeprecationWarning,
-    "{type}.fspath is deprecated and will be replaced by {type}.path.\n"
-    "see https://docs.pytest.org/en/latest/deprecations.html#node-fspath-in-favor-of-pathlib-and-node-path",
+    "The ({pylib_path_arg}: py.path.local) argument is deprecated, please use ({pathlib_path_arg}: pathlib.Path)\n"
+    "see https://docs.pytest.org/en/latest/deprecations.html"
+    "#py-path-local-arguments-for-hooks-replaced-with-pathlib-path",
+)
+
+WARNS_NONE_ARG = PytestDeprecationWarning(
+    "Passing None to catch any warning has been deprecated, pass no arguments instead:\n"
+    " Replace pytest.warns(None) by simply pytest.warns()."
 )
 
 # You want to make some `__init__` or function "private".

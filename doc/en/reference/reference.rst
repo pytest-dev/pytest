@@ -1,4 +1,4 @@
-.. _`reference`:
+.. _`api-reference`:
 
 API Reference
 =============
@@ -118,7 +118,7 @@ Add warning filters to marked test items.
 
     :keyword str filter:
         A *warning specification string*, which is composed of contents of the tuple ``(action, message, category, module, lineno)``
-        as specified in `The Warnings filter <https://docs.python.org/3/library/warnings.html#warning-filter>`_ section of
+        as specified in `The Warnings filter <https://docs.python.org/3/library/how-to/capture-warnings.html#warning-filter>`_ section of
         the Python documentation, separated by ``":"``. Optional fields can be omitted.
         Module names passed for filtering are not regex-escaped.
 
@@ -226,6 +226,37 @@ Marks a test function as *expected to fail*.
           a new release of a library fixes a known bug).
 
 
+pytest.__version__
+~~~~~~~~~~~~~~~~~~
+
+The current pytest version, as a string::
+
+    >>> import pytest
+    >>> pytest.__version__
+    '7.0.0'
+
+
+.. _`version-tuple`:
+
+pytest.version_tuple
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 7.0
+
+The current pytest version, as a tuple::
+
+    >>> import pytest
+    >>> pytest.version_tuple
+    (7, 0, 0)
+
+For pre-releases, the last component will be a string with the prerelease version::
+
+    >>> import pytest
+    >>> pytest.version_tuple
+    (7, 0, '0rc1')
+
+
+
 Custom marks
 ~~~~~~~~~~~~
 
@@ -284,9 +315,9 @@ Example of a fixture requiring another fixture:
 .. code-block:: python
 
     @pytest.fixture
-    def db_session(tmpdir):
-        fn = tmpdir / "db.file"
-        return connect(str(fn))
+    def db_session(tmp_path):
+        fn = tmp_path / "db.file"
+        return connect(fn)
 
 For more details, consult the full :ref:`fixtures docs <fixture>`.
 
@@ -576,13 +607,13 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
 tmp_path
 ~~~~~~~~
 
-:ref:`tmpdir`
+:ref:`tmp_path`
 
 .. autofunction:: _pytest.tmpdir.tmp_path()
     :no-auto-options:
 
 
-.. fixture:: _pytest.tmpdir.tmp_path_factory
+.. fixture:: tmp_path_factory
 
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
@@ -594,6 +625,7 @@ tmp_path_factory
 ``tmp_path_factory`` is an instance of :class:`~pytest.TempPathFactory`:
 
 .. autoclass:: pytest.TempPathFactory()
+    :members:
 
 
 .. fixture:: tmpdir
@@ -601,7 +633,7 @@ tmp_path_factory
 tmpdir
 ~~~~~~
 
-:ref:`tmpdir`
+:ref:`tmpdir and tmpdir_factory`
 
 .. autofunction:: _pytest.tmpdir.tmpdir()
     :no-auto-options:
@@ -612,13 +644,12 @@ tmpdir
 tmpdir_factory
 ~~~~~~~~~~~~~~
 
-:ref:`tmpdir factory example`
+:ref:`tmpdir and tmpdir_factory`
 
-.. _`tmpdir factory api`:
-
-``tmp_path_factory`` is an instance of :class:`~pytest.TempdirFactory`:
+``tmpdir_factory`` is an instance of :class:`~pytest.TempdirFactory`:
 
 .. autoclass:: pytest.TempdirFactory()
+    :members:
 
 
 .. _`hook-reference`:
@@ -787,13 +818,13 @@ CollectReport
 Config
 ~~~~~~
 
-.. autoclass:: _pytest.config.Config()
+.. autoclass:: pytest.Config()
     :members:
 
 ExceptionInfo
 ~~~~~~~~~~~~~
 
-.. autoclass:: _pytest._code.ExceptionInfo
+.. autoclass:: pytest.ExceptionInfo()
     :members:
 
 
@@ -889,14 +920,19 @@ Node
 Parser
 ~~~~~~
 
-.. autoclass:: _pytest.config.argparsing.Parser()
+.. autoclass:: pytest.Parser()
     :members:
 
+OptionGroup
+~~~~~~~~~~~
+
+.. autoclass:: pytest.OptionGroup()
+    :members:
 
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.config.PytestPluginManager()
+.. autoclass:: pytest.PytestPluginManager()
     :members:
     :undoc-members:
     :inherited-members:
@@ -938,7 +974,7 @@ pytest treats some global variables in a special manner when defined in a test m
 **Tutorial**: :ref:`customizing-test-collection`
 
 Can be declared in *conftest.py files* to exclude test directories or modules.
-Needs to be ``list[str]``.
+Needs to be a list of paths (``str``, :class:`pathlib.Path` or any :class:`os.PathLike`).
 
 .. code-block:: python
 

@@ -8,7 +8,7 @@ if sys.version_info < (3, 8):
     pytest.skip("threadexception plugin needs Python>=3.8", allow_module_level=True)
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestUnhandledThreadExceptionWarning")
 def test_unhandled_thread_exception(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_it="""
@@ -42,7 +42,7 @@ def test_unhandled_thread_exception(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestUnhandledThreadExceptionWarning")
 def test_unhandled_thread_exception_in_setup(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_it="""
@@ -78,7 +78,7 @@ def test_unhandled_thread_exception_in_setup(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestUnhandledThreadExceptionWarning")
 def test_unhandled_thread_exception_in_teardown(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_it="""

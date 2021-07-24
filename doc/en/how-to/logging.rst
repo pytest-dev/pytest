@@ -1,10 +1,7 @@
 .. _logging:
 
-Logging
--------
-
-
-
+How to manage logging
+---------------------
 
 pytest captures log messages of level ``WARNING`` or above automatically and displays them in their own section
 for each failed test in the same manner as captured stdout and stderr.
@@ -170,7 +167,7 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
 
 
 
-The full API is available at :class:`_pytest.logging.LogCaptureFixture`.
+The full API is available at :class:`pytest.LogCaptureFixture`.
 
 
 .. _live_logs:

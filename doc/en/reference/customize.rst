@@ -145,6 +145,8 @@ Finding the ``rootdir``
 
 Here is the algorithm which finds the rootdir from ``args``:
 
+- If ``-c`` is passed in the command-line, use that as configuration file, and its directory as ``rootdir``.
+
 - Determine the common ancestor directory for the specified ``args`` that are
   recognised as paths that exist in the file system. If no such paths are
   found, the common ancestor directory is set to the current working directory.
@@ -160,7 +162,7 @@ Here is the algorithm which finds the rootdir from ``args``:
   ``setup.cfg`` in each of the specified ``args`` and upwards. If one is
   matched, it becomes the ``configfile`` and its directory becomes the ``rootdir``.
 
-- If no ``configfile`` was found, use the already determined common ancestor as root
+- If no ``configfile`` was found and no configuration argument is passed, use the already determined common ancestor as root
   directory. This allows the use of pytest in structures that are not part of
   a package and don't have any particular configuration file.
 
@@ -177,12 +179,12 @@ Files will only be matched for configuration if:
 The files are considered in the order above. Options from multiple ``configfiles`` candidates
 are never merged - the first match wins.
 
-The internal :class:`Config <_pytest.config.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
+The :class:`Config <pytest.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
 will subsequently carry these attributes:
 
-- :attr:`config.rootpath <_pytest.config.Config.rootpath>`: the determined root directory, guaranteed to exist.
+- :attr:`config.rootpath <pytest.Config.rootpath>`: the determined root directory, guaranteed to exist.
 
-- :attr:`config.inipath <_pytest.config.Config.inipath>`: the determined ``configfile``, may be ``None``
+- :attr:`config.inipath <pytest.Config.inipath>`: the determined ``configfile``, may be ``None``
   (it is named ``inipath`` for historical reasons).
 
 .. versionadded:: 6.1

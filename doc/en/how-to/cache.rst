@@ -2,8 +2,8 @@
 .. _cache:
 
 
-Cache: working with cross-testrun state
-=======================================
+How to re-run failed tests and maintain state between test runs
+===============================================================
 
 
 

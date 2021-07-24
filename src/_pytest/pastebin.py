@@ -86,7 +86,7 @@ def create_new_paste(contents: Union[str, bytes]) -> str:
         return "bad response: %s" % exc_info
     m = re.search(r'href="/raw/(\w+)"', response)
     if m:
-        return "{}/show/{}".format(url, m.group(1))
+        return f"{url}/show/{m.group(1)}"
     else:
         return "bad response: invalid format ('" + response + "')"
 

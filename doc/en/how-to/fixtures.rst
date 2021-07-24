@@ -153,7 +153,7 @@ Fixtures are reusable
 ^^^^^^^^^^^^^^^^^^^^^
 
 One of the things that makes pytest's fixture system so powerful, is that it
-gives us the ability to define a generic setup step that can reused over and
+gives us the ability to define a generic setup step that can be reused over and
 over, just like a normal function would be used. Two different tests can request
 the same fixture and have pytest give each test their own result from that
 fixture.
@@ -1578,7 +1578,7 @@ Sometimes test functions do not directly need access to a fixture object.
 For example, tests may require to operate with an empty directory as the
 current working directory but otherwise do not care for the concrete
 directory.  Here is how you can use the standard `tempfile
-<http://docs.python.org/library/tempfile.html>`_ and pytest fixtures to
+<https://docs.python.org/library/tempfile.html>`_ and pytest fixtures to
 achieve it.  We separate the creation of the fixture into a conftest.py
 file:
 

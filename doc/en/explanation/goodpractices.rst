@@ -151,7 +151,7 @@ This layout prevents a lot of common pitfalls and has many benefits, which are b
 
 .. note::
     The new ``--import-mode=importlib`` (see :ref:`import-modes`) doesn't have
-    any of the drawbacks above because ``sys.path`` and ``sys.modules`` are not changed when importing
+    any of the drawbacks above because ``sys.path`` is not changed when importing
     test modules, so users that run
     into this issue are strongly encouraged to try it and report if the new option works well for them.
 
@@ -231,7 +231,7 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 
 .. _`virtualenv`: https://pypi.org/project/virtualenv/
-.. _`buildout`: http://www.buildout.org/
+.. _`buildout`: http://www.buildout.org/en/latest/
 .. _pip: https://pypi.org/project/pip/
 
 .. _`use tox`:
@@ -240,7 +240,7 @@ tox
 ------
 
 Once you are done with your work and want to make sure that your actual
-package passes all tests you may want to look into `tox`_, the
+package passes all tests you may want to look into `tox <https://tox.readthedocs.io/>`_, the
 virtualenv test automation tool and its `pytest support
 <https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
 tox helps you to setup virtualenv environments with pre-defined
