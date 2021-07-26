@@ -40,10 +40,7 @@ EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
 def istestfunc(func) -> bool:
-    return (
-        hasattr(func, "__call__")
-        and getattr(func, "__name__", "<lambda>") != "<lambda>"
-    )
+    return callable(func) and getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 
 def get_empty_parameterset_mark(
@@ -332,9 +329,6 @@ class MarkDecorator:
         """:meta private:"""
         return self.name  # for backward-compat (2.4.1 had this attr)
 
-    def __repr__(self) -> str:
-        return f"<MarkDecorator {self.mark!r}>"
-
     def with_args(self, *args: object, **kwargs: object) -> "MarkDecorator":
         """Return a MarkDecorator with extra arguments added.
 
@@ -375,18 +369,21 @@ def get_unpacked_marks(obj) -> List[Mark]:
 
 
 def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List[Mark]:
-    """Normalize marker decorating helpers to mark objects.
-
-    :type List[Union[Mark, Markdecorator]] mark_list:
-    :rtype: List[Mark]
     """
-    extracted = [
-        getattr(mark, "mark", mark) for mark in mark_list
-    ]  # unpack MarkDecorator
-    for mark in extracted:
-        if not isinstance(mark, Mark):
-            raise TypeError(f"got {mark!r} instead of Mark")
-    return [x for x in extracted if isinstance(x, Mark)]
+    Normalize an iterable of Mark or MarkDecorator objects into a list of marks
+    by retrieving the `mark` attribute on MarkDecorator instances.
+
+    :param mark_list: marks to normalize
+    :returns: A new list of the extracted Mark objects
+    """
+
+    def parse_mark(mark: Union[Mark, MarkDecorator]) -> Mark:
+        mark_obj = getattr(mark, "mark", mark)
+        if not isinstance(mark_obj, Mark):
+            raise TypeError(f"got {repr(mark_obj)} instead of Mark")
+        return mark_obj
+
+    return [parse_mark(x) for x in mark_list]
 
 
 def store_mark(obj, mark: Mark) -> None:
