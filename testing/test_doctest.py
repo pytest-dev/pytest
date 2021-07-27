@@ -813,7 +813,7 @@ class TestDoctests:
         result.stdout.fnmatch_lines(["*collected 0 items*"])
 
     def test_main_py_does_not_cause_import_errors(self, pytester: Pytester):
-        p = pytester.copy_example("doctest//main_py")
+        p = pytester.copy_example("doctest/main_py")
         result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["*collected 2 items*", "*1 failed, 1 passed*"])
 
