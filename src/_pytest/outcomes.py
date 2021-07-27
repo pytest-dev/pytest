@@ -1,6 +1,7 @@
 """Exception classes and constants handling test outcomes as well as
 functions creating them."""
 import sys
+import warnings
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -26,6 +27,7 @@ class OutcomeException(BaseException):
     """OutcomeException and its subclass instances indicate and contain info
     about test and collection outcomes."""
 
+    # todo: rename msg to reason here? (not everything is unified yet)
     def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
         if msg is not None and not isinstance(msg, str):
             error_msg = (  # type: ignore[unreachable]
@@ -55,13 +57,13 @@ class Skipped(OutcomeException):
 
     def __init__(
         self,
-        msg: Optional[str] = None,
+        reason: Optional[str] = None,
         pytrace: bool = True,
         allow_module_level: bool = False,
         *,
         _use_item_location: bool = False,
     ) -> None:
-        OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
+        super().__init__(msg=reason, pytrace=pytrace)
         self.allow_module_level = allow_module_level
         # If true, the skip location is reported as the item's location,
         # instead of the place that raises the exception/calls skip().
@@ -121,7 +123,7 @@ def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
 
 
 @_with_exception(Skipped)
-def skip(msg: str = "", *, allow_module_level: bool = False) -> "NoReturn":
+def skip(reason: str = "", *, allow_module_level: bool = False, **kwargs) -> "NoReturn":
     """Skip an executing test with the given message.
 
     This function should be called only during testing (setup, call or teardown) or
@@ -141,7 +143,14 @@ def skip(msg: str = "", *, allow_module_level: bool = False) -> "NoReturn":
         to skip a doctest statically.
     """
     __tracebackhide__ = True
-    raise Skipped(msg=msg, allow_module_level=allow_module_level)
+    if "msg" in kwargs:
+        reason = kwargs.get("msg", "")
+        from _pytest.deprecated import (
+            PYTEST_SKIP_MSG,
+        )  # TODO: Investigate circle imports
+
+        warnings.warn(PYTEST_SKIP_MSG, stacklevel=2)
+    raise Skipped(reason=reason, allow_module_level=allow_module_level)
 
 
 @_with_exception(Failed)

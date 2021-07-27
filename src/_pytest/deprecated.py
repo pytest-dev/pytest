@@ -101,6 +101,10 @@ WARNS_NONE_ARG = PytestDeprecationWarning(
     " Replace pytest.warns(None) by simply pytest.warns()."
 )
 
+PYTEST_SKIP_MSG = PytestDeprecationWarning(
+    "pytest.skip(msg=...) has been deprecated, use pytest.skip(reason=...) instead."
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):

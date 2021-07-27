@@ -1444,3 +1444,38 @@ def test_relpath_rootdir(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         ["SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip"]
     )
+
+
+def test_skip_with_msg_is_deprecated(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+
+        def test_skipping_msg():
+            pytest.skip(msg="donotuse")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: pytest.skip(msg=...) has been deprecated, "
+            "use pytest.skip(reason=...) instead.*",
+            '*pytest.skip(msg="donotuse")',
+        ]
+    )
+    result.assert_outcomes(skipped=1)
+
+
+def test_skip_using_reason_works_ok(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_skipping_reason():
+            pytest.skip(reason="foo")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.no_fnmatch_line("*PytestDeprecationWarning*")
+    result.assert_outcomes(skipped=1)
