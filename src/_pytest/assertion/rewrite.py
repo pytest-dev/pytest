@@ -53,7 +53,7 @@ PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
 
-class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.InspectLoader):
     """PEP302/PEP451 import hook which rewrites asserts."""
 
     def __init__(self, config: Config) -> None:
@@ -71,6 +71,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         self._basenames_to_check_rewrite = {"conftest"}
         self._marked_for_rewrite_cache: Dict[str, bool] = {}
         self._session_paths_checked = False
+        self._fullname_to_info: Dict[str, Tuple[str, bool]] = {}
 
     def set_session(self, session: Optional[Session]) -> None:
         self.session = session
@@ -115,6 +116,8 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         if not self._should_rewrite(name, fn, state):
             return None
 
+        self._fullname_to_info[name] = (fn, spec.loader.is_package(name))
+
         return importlib.util.spec_from_file_location(
             name,
             fn,
@@ -128,12 +131,24 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         return None  # default behaviour is fine
 
     def exec_module(self, module: types.ModuleType) -> None:
-        assert module.__spec__ is not None
-        assert module.__spec__.origin is not None
-        fn = Path(module.__spec__.origin)
+        co = self.get_code(module.__name__)
+        exec(co, module.__dict__)
+
+    def get_code(self, fullname: str) -> Optional[types.CodeType]:
+        """
+        Returns the code for a rewritten test file.
+        """
+        # The type annotation is *Optional[...]* to match the declaration
+        # in importlib.abc.InspectLoader
+
+        try:
+            fn = Path(self._fullname_to_info[fullname][0])
+        except KeyError:
+            raise ImportError(fullname)
+
         state = self.config._store[assertstate_key]
 
-        self._rewritten_names.add(module.__name__)
+        self._rewritten_names.add(fullname)
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
@@ -167,7 +182,18 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                     self._writing_pyc = False
         else:
             state.trace(f"found cached rewritten pyc for {fn}")
-        exec(co, module.__dict__)
+        return co
+
+    def is_package(self, fullname: str) -> bool:
+        return self._fullname_to_info[fullname][1]
+
+    def get_source(self, fullname: str) -> Optional[str]:
+        """
+        This method always returns None.
+        """
+        # The type annotation is *Optional[str]* to match the declaration
+        # in importlib.abc.InspectLoader
+        return None
 
     def _early_rewrite_bailout(self, name: str, state: "AssertionState") -> bool:
         """A fast way to get out of rewriting modules.
