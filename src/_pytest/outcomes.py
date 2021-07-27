@@ -123,7 +123,9 @@ def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
 
 
 @_with_exception(Skipped)
-def skip(reason: str = "", *, allow_module_level: bool = False, **kwargs) -> "NoReturn":
+def skip(
+    reason: str = "", *, allow_module_level: bool = False, msg: Optional[str] = None
+) -> "NoReturn":
     """Skip an executing test with the given message.
 
     This function should be called only during testing (setup, call or teardown) or
@@ -143,8 +145,8 @@ def skip(reason: str = "", *, allow_module_level: bool = False, **kwargs) -> "No
         to skip a doctest statically.
     """
     __tracebackhide__ = True
-    if "msg" in kwargs:
-        reason = kwargs.get("msg", "")
+    if msg is not None:
+        reason = msg
         from _pytest.deprecated import (
             PYTEST_SKIP_MSG,
         )  # TODO: Investigate circle imports
