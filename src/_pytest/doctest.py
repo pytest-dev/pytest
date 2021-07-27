@@ -125,7 +125,9 @@ def pytest_collect_file(
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
     if fspath.suffix == ".py":
-        if config.option.doctestmodules and not _is_setup_py(fspath):
+        if config.option.doctestmodules and not any(
+            (_is_setup_py(fspath), _is_main_py(fspath))
+        ):
             mod: DoctestModule = DoctestModule.from_parent(parent, path=fspath)
             return mod
     elif _is_doctest(config, fspath, parent):
@@ -146,6 +148,10 @@ def _is_doctest(config: Config, path: Path, parent: Collector) -> bool:
         return True
     globs = config.getoption("doctestglob") or ["test*.txt"]
     return any(fnmatch_ex(glob, path) for glob in globs)
+
+
+def _is_main_py(path: Path) -> bool:
+    return path.name == "__main__.py"
 
 
 class ReprFailDoctest(TerminalRepr):
