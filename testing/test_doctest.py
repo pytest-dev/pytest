@@ -6,6 +6,7 @@ from typing import Optional
 
 import pytest
 from _pytest.doctest import _get_checker
+from _pytest.doctest import _is_main_py
 from _pytest.doctest import _is_mocked
 from _pytest.doctest import _is_setup_py
 from _pytest.doctest import _patch_unwrap_mock_aware
@@ -811,6 +812,11 @@ class TestDoctests:
         result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["*collected 0 items*"])
 
+    def test_main_py_does_not_cause_import_errors(self, pytester: Pytester):
+        p = pytester.copy_example("doctest//main_py")
+        result = pytester.runpytest(p, "--doctest-modules")
+        result.stdout.fnmatch_lines(["*collected 2 items*", "*1 failed, 1 passed*"])
+
     def test_invalid_setup_py(self, pytester: Pytester):
         """
         Test to make sure that pytest reads setup.py files that are not used
@@ -1518,3 +1524,11 @@ def test_is_setup_py_different_encoding(tmp_path: Path, mod: str) -> None:
     )
     setup_py.write_bytes(contents.encode("cp1252"))
     assert _is_setup_py(setup_py)
+
+
+@pytest.mark.parametrize(
+    "name, expected", [("__main__.py", True), ("__init__.py", False)]
+)
+def test_is_main_py(tmp_path: Path, name: str, expected: bool) -> None:
+    dunder_main = tmp_path.joinpath(name)
+    assert _is_main_py(dunder_main) == expected
