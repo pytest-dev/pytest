@@ -150,7 +150,7 @@ def skip(
         to skip a doctest statically.
     """
     __tracebackhide__ = True
-    _resolve_msg_to_reason("skip", reason, msg)
+    reason = _resolve_msg_to_reason("skip", reason, msg)
     raise Skipped(msg=reason, allow_module_level=allow_module_level)
 
 
@@ -171,7 +171,7 @@ def fail(
         Temporary string to support deprecating msg=, will be removed later.
     """
     __tracebackhide__ = True
-    _resolve_msg_to_reason("fail", reason, msg)
+    reason = _resolve_msg_to_reason("fail", reason, msg)
     raise Failed(msg=reason, pytrace=pytrace)
 
 
