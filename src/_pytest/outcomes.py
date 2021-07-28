@@ -27,7 +27,6 @@ class OutcomeException(BaseException):
     """OutcomeException and its subclass instances indicate and contain info
     about test and collection outcomes."""
 
-    # todo: rename msg to reason here? (not everything is unified yet)
     def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
         if msg is not None and not isinstance(msg, str):
             error_msg = (  # type: ignore[unreachable]
@@ -35,7 +34,7 @@ class OutcomeException(BaseException):
                 "Perhaps you meant to use a mark?"
             )
             raise TypeError(error_msg.format(type(self).__name__, type(msg).__name__))
-        BaseException.__init__(self, msg)
+        super().__init__(msg)
         self.msg = msg
         self.pytrace = pytrace
 
@@ -57,13 +56,13 @@ class Skipped(OutcomeException):
 
     def __init__(
         self,
-        reason: Optional[str] = None,
+        msg: Optional[str] = None,
         pytrace: bool = True,
         allow_module_level: bool = False,
         *,
         _use_item_location: bool = False,
     ) -> None:
-        super().__init__(msg=reason, pytrace=pytrace)
+        super().__init__(msg=msg, pytrace=pytrace)
         self.allow_module_level = allow_module_level
         # If true, the skip location is reported as the item's location,
         # instead of the place that raises the exception/calls skip().
@@ -132,9 +131,15 @@ def skip(
     during collection by using the ``allow_module_level`` flag.  This function can
     be called in doctests as well.
 
+    :param str reason:
+        The message to show the user as reason for the skip.
+
     :param bool allow_module_level:
         Allows this function to be called at module level, skipping the rest
         of the module. Defaults to False.
+
+    :param str msg:
+        Temporary string to support deprecating msg=, will be removed later.
 
     .. note::
         It is better to use the :ref:`pytest.mark.skipif ref` marker when
@@ -145,28 +150,62 @@ def skip(
         to skip a doctest statically.
     """
     __tracebackhide__ = True
-    if msg is not None:
-        reason = msg
-        from _pytest.deprecated import (
-            PYTEST_SKIP_MSG,
-        )  # TODO: Investigate circle imports
-
-        warnings.warn(PYTEST_SKIP_MSG, stacklevel=2)
-    raise Skipped(reason=reason, allow_module_level=allow_module_level)
+    _resolve_msg_to_reason("skip", reason, msg)
+    raise Skipped(msg=reason, allow_module_level=allow_module_level)
 
 
 @_with_exception(Failed)
-def fail(msg: str = "", pytrace: bool = True) -> "NoReturn":
+def fail(
+    reason: str = "", pytrace: bool = True, msg: Optional[str] = None
+) -> "NoReturn":
     """Explicitly fail an executing test with the given message.
 
-    :param str msg:
+    :param str reason:
         The message to show the user as reason for the failure.
+
     :param bool pytrace:
         If False, msg represents the full failure information and no
         python traceback will be reported.
+
+    :param str msg:
+        Temporary string to support deprecating msg=, will be removed later.
     """
     __tracebackhide__ = True
-    raise Failed(msg=msg, pytrace=pytrace)
+    _resolve_msg_to_reason("fail", reason, msg)
+    raise Failed(msg=reason, pytrace=pytrace)
+
+
+def _resolve_msg_to_reason(
+    func_name: str, reason: str, msg: Optional[str] = None
+) -> str:
+    """
+    Handles converting the deprecated msg parameter if provided into
+    reason, raising a deprecation warning.  This function will be removed
+    when the optional msg argument is removed from here in future.
+
+    :param str func_name:
+        The name of the offending function, this is formatted into the deprecation message.
+
+    :param str reason:
+        The reason= passed into either pytest.fail() or pytest.skip()
+
+    :param str msg:
+        The msg= passed into either pytest.fail() or pytest.skip().  This will
+        be converted into reason if it is provided to allow pytest.skip(msg=) or
+        pytest.fail(msg=) to continue working in the interim period.
+
+    :returns:
+        The value to use as reason.
+
+    """
+    __tracebackhide__ = True
+    if msg is not None:
+        from _pytest.deprecated import KEYWORD_MSG_ARG
+
+        assert reason == ""
+        warnings.warn(KEYWORD_MSG_ARG.format(func=func_name), stacklevel=3)
+        reason = msg
+    return reason
 
 
 class XFailed(Failed):

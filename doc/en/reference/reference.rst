@@ -27,7 +27,7 @@ pytest.fail
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.skip(msg, [allow_module_level=False])
+.. autofunction:: pytest.skip(reason, [allow_module_level=False, msg=None])
 
 .. _`pytest.importorskip ref`:
 

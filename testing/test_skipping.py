@@ -1451,17 +1451,16 @@ def test_skip_with_msg_is_deprecated(pytester: Pytester) -> None:
         """
         import pytest
 
-
         def test_skipping_msg():
-            pytest.skip(msg="donotuse")
+            pytest.skip(msg="skippedmsg")
         """
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines(
         [
-            "*PytestDeprecationWarning: pytest.skip(msg=...) has been deprecated, "
-            "use pytest.skip(reason=...) instead.*",
-            '*pytest.skip(msg="donotuse")',
+            "*PytestDeprecationWarning: pytest.skip(msg=...) is now deprecated, use pytest.skip(reason=...) instead",
+            '*pytest.skip(msg="skippedmsg")*',
+            "*1 skipped, 1 warning*",
         ]
     )
     result.assert_outcomes(skipped=1)
@@ -1473,9 +1472,42 @@ def test_skip_using_reason_works_ok(pytester: Pytester) -> None:
         import pytest
 
         def test_skipping_reason():
-            pytest.skip(reason="foo")
+            pytest.skip(reason="skippedreason")
         """
     )
     result = pytester.runpytest(p)
     result.stdout.no_fnmatch_line("*PytestDeprecationWarning*")
     result.assert_outcomes(skipped=1)
+
+
+def test_fail_with_msg_is_deprecated(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_failing_msg():
+            pytest.fail(msg="failedmsg")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: pytest.fail(msg=...) is now deprecated, use pytest.fail(reason=...) instead",
+            '*pytest.fail(msg="failedmsg")',
+            "*1 failed, 1 warning*",
+        ]
+    )
+
+
+def test_fail_using_reason_works_ok(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_failing_reason():
+            pytest.fail(reason="failedreason")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.no_fnmatch_line("*PytestDeprecationWarning*")
+    result.assert_outcomes(failed=1)
