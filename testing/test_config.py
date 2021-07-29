@@ -2055,7 +2055,7 @@ def test_without_debug_does_not_write_log(pytester: Pytester) -> None:
     result.stderr.no_fnmatch_line(
         "*writing pytest debug information to*pytestdebug.log"
     )
-    result.stderr.no_fnmatch_line("*wrote pyt2est debug information to*pytestdebug.log")
+    result.stderr.no_fnmatch_line("*wrote pytest debug information to*pytestdebug.log")
     assert not [f.name for f in pytester.path.glob("**/*.log")]
 
 
