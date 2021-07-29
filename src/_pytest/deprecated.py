@@ -54,8 +54,8 @@ WARNING_CAPTURED_HOOK = PytestDeprecationWarning(
 )
 
 WARNING_CMDLINE_PREPARSE_HOOK = PytestDeprecationWarning(
-    "The pytest_cmdline_preparse is deprecated and will be removed in a future release. \n"
-    "Please use pytest_load_initial_conftests instead."
+    "The pytest_cmdline_preparse hook is deprecated and will be removed in a future release. \n"
+    "Please use pytest_load_initial_conftests hook instead."
 )
 
 FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestDeprecationWarning(
