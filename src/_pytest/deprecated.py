@@ -53,6 +53,11 @@ WARNING_CAPTURED_HOOK = PytestDeprecationWarning(
     "Please use pytest_warning_recorded instead."
 )
 
+WARNING_CMDLINE_PREPARSE_HOOK = PytestDeprecationWarning(
+    "The pytest_cmdline_preparse is deprecated and will be removed in a future release. \n"
+    "Please use pytest_load_initial_conftests instead."
+)
+
 FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestDeprecationWarning(
     "The gethookproxy() and isinitpath() methods of FSCollector and Package are deprecated; "
     "use self.session.gethookproxy() and self.session.isinitpath() instead. "
