@@ -26,6 +26,7 @@ from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import locate_config
+from _pytest.helpconfig import _resolve_debug_log_name
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
@@ -2042,3 +2043,58 @@ def test_parse_warning_filter_failure(arg: str) -> None:
 
     with pytest.raises(warnings._OptionError):
         parse_warning_filter(arg, escape=True)
+
+
+def test_debug_file_name_is_suffixed_with_dot_log() -> None:
+    assert _resolve_debug_log_name("mylog").endswith(".log")
+    assert _resolve_debug_log_name("mylog.log").count(".log") == 1
+
+
+def test_without_debug_does_not_write_log(pytester: Pytester) -> None:
+    result = pytester.runpytest()
+    result.stderr.no_fnmatch_line(
+        "*writing pytest debug information to*pytestdebug.log"
+    )
+    result.stderr.no_fnmatch_line("*wrote pyt2est debug information to*pytestdebug.log")
+    assert not [f.name for f in pytester.path.glob("**/*.log")]
+
+
+def test_with_only_debug_writes_pytestdebug_log(pytester: Pytester) -> None:
+    result = pytester.runpytest("--debug")
+    result.stderr.fnmatch_lines(
+        [
+            "*writing pytest debug information to*pytestdebug.log",
+            "*wrote pytest debug information to*pytestdebug.log",
+        ]
+    )
+    assert "pytestdebug.log" in [f.name for f in pytester.path.glob("**/*.log")]
+
+
+def test_custom_log_file_name(pytester: Pytester) -> None:
+    result = pytester.runpytest("--debug", "bar.log")
+    result.stderr.fnmatch_lines(
+        [
+            "*writing pytest debug information to*bar.log",
+            "*wrote pytest debug information to*bar.log",
+        ]
+    )
+    result = pytester.runpytest("--debug", "foo")
+    result.stderr.fnmatch_lines(
+        [
+            "*writing pytest debug information to*foo.log",
+            "*wrote pytest debug information to*foo.log",
+        ]
+    )
+
+    assert ["bar.log", "foo.log"] == [f.name for f in pytester.path.glob("**/*.log")]
+
+
+def test_debug_help(pytester: Pytester) -> None:
+    result = pytester.runpytest("-h")
+    result.stdout.fnmatch_lines(
+        [
+            "*store internal tracing debug information in this log*",
+            "*This file is opened with 'w' and truncated as a result*",
+            "*Defaults to 'pytestdebug.log', '.log' is suffixed*",
+        ]
+    )
