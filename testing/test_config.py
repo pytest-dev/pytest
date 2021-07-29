@@ -2086,7 +2086,7 @@ def test_custom_log_file_name(pytester: Pytester) -> None:
         ]
     )
 
-    assert ["bar.log", "foo.log"] == [f.name for f in pytester.path.glob("**/*.log")]
+    assert {"bar.log", "foo.log"} == {f.name for f in pytester.path.glob("**/*.log")}
 
 
 def test_debug_help(pytester: Pytester) -> None:
