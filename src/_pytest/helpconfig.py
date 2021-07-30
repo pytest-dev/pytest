@@ -87,7 +87,7 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="DEBUG_FILE_NAME",
         help="store internal tracing debug information in this log file.\n"
         "This file is opened with 'w' and truncated as a result, care advised.\n"
-        "Defaults to 'pytestdebug.log', '.log' is suffixed if omitted.",
+        "Defaults to 'pytestdebug.log'.",
     )
     group._addoption(
         "-o",
@@ -105,7 +105,7 @@ def pytest_cmdline_parse():
 
     if config.option.debug:
         # --debug | --debug <file.log> was provided.
-        path = _resolve_debug_log_name(config.option.debug)
+        path = config.option.debug
         debugfile = open(path, "w")
         debugfile.write(
             "versions pytest-%s, py-%s, "
@@ -129,19 +129,6 @@ def pytest_cmdline_parse():
             undo_tracing()
 
         config.add_cleanup(unset_tracing)
-
-
-def _resolve_debug_log_name(file_name: str) -> str:
-    """
-    Enforces the user provided value is a `.log` file to keep as close
-    as possible to the original aim of the debug functionality.
-
-    :param str file_name
-        The file_name passed to `--debug`.
-    """
-    return os.path.abspath(
-        file_name if file_name.endswith(".log") else file_name + ".log"
-    )
 
 
 def showversion(config: Config) -> None:
