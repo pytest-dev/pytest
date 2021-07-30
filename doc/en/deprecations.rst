@@ -33,6 +33,31 @@ In order to support the transition to :mod:`pathlib`, the following hooks now re
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
 
+Passing ``msg=`` to ``pytest.skip`` or ``pytest.fail``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.3
+
+Passing the keyword argument ``msg`` to both :func:`pytest.skip` or :func:`pytest.fail` is now deprecated and
+``reason`` should be used instead.  This change is to bring consistency between these functions and the
+``@pytest.mark.skip`` and ``@pytest.mark.xfail`` markers which already accepts a ``reason`` argument.
+
+.. code-block:: python
+
+    def test_fail_example():
+        # old
+        pytest.fail(msg="foo")
+        # new
+        pytest.fail(reason="bar")
+
+
+    def test_skip_example():
+        # old
+        pytest.skip(msg="foo")
+        # new
+        pytest.skip(reason="bar")
+
+
 Diamond inheritance between :class:`pytest.File` and :class:`pytest.Item`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

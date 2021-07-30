@@ -9,6 +9,8 @@ from typing import Optional
 from typing import Type
 from typing import TypeVar
 
+from _pytest.deprecated import KEYWORD_MSG_ARG
+
 TYPE_CHECKING = False  # Avoid circular import through compat.
 
 if TYPE_CHECKING:
@@ -131,15 +133,15 @@ def skip(
     during collection by using the ``allow_module_level`` flag.  This function can
     be called in doctests as well.
 
-    :param str reason:
+    :param reason:
         The message to show the user as reason for the skip.
 
-    :param bool allow_module_level:
+    :param allow_module_level:
         Allows this function to be called at module level, skipping the rest
         of the module. Defaults to False.
 
-    :param str msg:
-        Temporary string to support deprecating msg=, will be removed later.
+    :param msg:
+        Same as ``reason``, but deprecated. Will be removed in a future version, use ``reason`` instead.
 
     .. note::
         It is better to use the :ref:`pytest.mark.skipif ref` marker when
@@ -160,15 +162,15 @@ def fail(
 ) -> "NoReturn":
     """Explicitly fail an executing test with the given message.
 
-    :param str reason:
+    :param reason:
         The message to show the user as reason for the failure.
 
-    :param bool pytrace:
+    :param pytrace:
         If False, msg represents the full failure information and no
         python traceback will be reported.
 
-    :param str msg:
-        Temporary string to support deprecating msg=, will be removed later.
+    :param msg:
+        Same as ``reason``, but deprecated. Will be removed in a future version, use ``reason`` instead.
     """
     __tracebackhide__ = True
     reason = _resolve_msg_to_reason("fail", reason, msg)
@@ -200,9 +202,11 @@ def _resolve_msg_to_reason(
     """
     __tracebackhide__ = True
     if msg is not None:
-        from _pytest.deprecated import KEYWORD_MSG_ARG
 
-        assert reason == ""
+        if reason:
+            fail(
+                reason=f"Passing both ``reason`` and ``msg`` to pytest.{func_name}(...) is not permitted."
+            )
         warnings.warn(KEYWORD_MSG_ARG.format(func=func_name), stacklevel=3)
         reason = msg
     return reason

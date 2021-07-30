@@ -1446,26 +1446,6 @@ def test_relpath_rootdir(pytester: Pytester) -> None:
     )
 
 
-def test_skip_with_msg_is_deprecated(pytester: Pytester) -> None:
-    p = pytester.makepyfile(
-        """
-        import pytest
-
-        def test_skipping_msg():
-            pytest.skip(msg="skippedmsg")
-        """
-    )
-    result = pytester.runpytest(p)
-    result.stdout.fnmatch_lines(
-        [
-            "*PytestDeprecationWarning: pytest.skip(msg=...) is now deprecated, use pytest.skip(reason=...) instead",
-            '*pytest.skip(msg="skippedmsg")*',
-            "*1 skipped, 1 warning*",
-        ]
-    )
-    result.assert_outcomes(skipped=1)
-
-
 def test_skip_using_reason_works_ok(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
@@ -1480,25 +1460,6 @@ def test_skip_using_reason_works_ok(pytester: Pytester) -> None:
     result.assert_outcomes(skipped=1)
 
 
-def test_fail_with_msg_is_deprecated(pytester: Pytester) -> None:
-    p = pytester.makepyfile(
-        """
-        import pytest
-
-        def test_failing_msg():
-            pytest.fail(msg="failedmsg")
-        """
-    )
-    result = pytester.runpytest(p)
-    result.stdout.fnmatch_lines(
-        [
-            "*PytestDeprecationWarning: pytest.fail(msg=...) is now deprecated, use pytest.fail(reason=...) instead",
-            '*pytest.fail(msg="failedmsg")',
-            "*1 failed, 1 warning*",
-        ]
-    )
-
-
 def test_fail_using_reason_works_ok(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
@@ -1510,4 +1471,36 @@ def test_fail_using_reason_works_ok(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.no_fnmatch_line("*PytestDeprecationWarning*")
+    result.assert_outcomes(failed=1)
+
+
+def test_fail_fails_with_msg_and_reason(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_fail_both_arguments():
+            pytest.fail(reason="foo", msg="bar")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        "*Failed: Passing both ``reason`` and ``msg`` to pytest.fail(...) is not permitted.*"
+    )
+    result.assert_outcomes(failed=1)
+
+
+def test_skip_fails_with_msg_and_reason(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_skip_both_arguments():
+            pytest.skip(reason="foo", msg="bar")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        "*Failed: Passing both ``reason`` and ``msg`` to pytest.skip(...) is not permitted.*"
+    )
     result.assert_outcomes(failed=1)
