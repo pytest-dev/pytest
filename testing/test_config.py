@@ -2042,3 +2042,55 @@ def test_parse_warning_filter_failure(arg: str) -> None:
 
     with pytest.raises(warnings._OptionError):
         parse_warning_filter(arg, escape=True)
+
+
+class TestDebugOptions:
+    def test_without_debug_does_not_write_log(self, pytester: Pytester) -> None:
+        result = pytester.runpytest()
+        result.stderr.no_fnmatch_line(
+            "*writing pytest debug information to*pytestdebug.log"
+        )
+        result.stderr.no_fnmatch_line(
+            "*wrote pytest debug information to*pytestdebug.log"
+        )
+        assert not [f.name for f in pytester.path.glob("**/*.log")]
+
+    def test_with_only_debug_writes_pytestdebug_log(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("--debug")
+        result.stderr.fnmatch_lines(
+            [
+                "*writing pytest debug information to*pytestdebug.log",
+                "*wrote pytest debug information to*pytestdebug.log",
+            ]
+        )
+        assert "pytestdebug.log" in [f.name for f in pytester.path.glob("**/*.log")]
+
+    def test_multiple_custom_debug_logs(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("--debug", "bar.log")
+        result.stderr.fnmatch_lines(
+            [
+                "*writing pytest debug information to*bar.log",
+                "*wrote pytest debug information to*bar.log",
+            ]
+        )
+        result = pytester.runpytest("--debug", "foo.log")
+        result.stderr.fnmatch_lines(
+            [
+                "*writing pytest debug information to*foo.log",
+                "*wrote pytest debug information to*foo.log",
+            ]
+        )
+
+        assert {"bar.log", "foo.log"} == {
+            f.name for f in pytester.path.glob("**/*.log")
+        }
+
+    def test_debug_help(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("-h")
+        result.stdout.fnmatch_lines(
+            [
+                "*store internal tracing debug information in this log*",
+                "*This file is opened with 'w' and truncated as a result*",
+                "*Defaults to 'pytestdebug.log'.",
+            ]
+        )
