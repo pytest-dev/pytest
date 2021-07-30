@@ -1759,20 +1759,3 @@ class TestReprSizeVerbosity:
         self.create_test_file(pytester, DEFAULT_REPR_MAX_SIZE * 10)
         result = pytester.runpytest("-vv")
         result.stdout.no_fnmatch_line("*xxx...xxx*")
-
-
-def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
-    pytester.makeconftest(
-        """
-        def pytest_cmdline_preparse(config, args):
-            print(args)
-
-        """
-    )
-    result = pytester.runpytest()
-    result.stdout.fnmatch_lines(
-        [
-            "*PytestDeprecationWarning: The pytest_cmdline_preparse hook is deprecated*",
-            "*Please use pytest_load_initial_conftests hook instead.*",
-        ]
-    )
