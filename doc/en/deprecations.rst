@@ -36,7 +36,7 @@ The accompanying ``py.path.local`` based paths have been deprecated: plugins whi
 Implementing the ``pytest_cmdline_preparse`` hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.3
+.. deprecated:: 7.0
 
 Implementing the :func:`pytest_cmdline_preparse <_pytest.hookspec.pytest_cmdline_preparse>` hook has been officially deprecated.
 Implement the :func:`pytest_load_initial_conftests <_pytest.hookspec.pytest_load_initial_conftests>` hook instead.
