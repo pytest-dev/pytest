@@ -36,7 +36,7 @@ The accompanying ``py.path.local`` based paths have been deprecated: plugins whi
 Passing ``msg=`` to ``pytest.skip`` or ``pytest.fail``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.3
+.. deprecated:: 7.0
 
 Passing the keyword argument ``msg`` to both :func:`pytest.skip` or :func:`pytest.fail` is now deprecated and
 ``reason`` should be used instead.  This change is to bring consistency between these functions and the
