@@ -190,3 +190,20 @@ def test_warns_none_is_deprecated():
     ):
         with pytest.warns(None):  # type: ignore[call-overload]
             pass
+
+
+def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_cmdline_preparse(config, args):
+            ...
+
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestDeprecationWarning: The pytest_cmdline_preparse hook is deprecated*",
+            "*Please use pytest_load_initial_conftests hook instead.*",
+        ]
+    )
