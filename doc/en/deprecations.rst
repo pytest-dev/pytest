@@ -58,6 +58,29 @@ Passing the keyword argument ``msg`` to both :func:`pytest.skip` or :func:`pytes
         pytest.skip(reason="bar")
 
 
+Implementing the ``pytest_cmdline_preparse`` hook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+Implementing the :func:`pytest_cmdline_preparse <_pytest.hookspec.pytest_cmdline_preparse>` hook has been officially deprecated.
+Implement the :func:`pytest_load_initial_conftests <_pytest.hookspec.pytest_load_initial_conftests>` hook instead.
+
+.. code-block:: python
+
+    def pytest_cmdline_preparse(config: Config, args: List[str]) -> None:
+        ...
+
+
+    # becomes:
+
+
+    def pytest_load_initial_conftests(
+        early_config: Config, parser: Parser, args: List[str]
+    ) -> None:
+        ...
+
+
 Diamond inheritance between :class:`pytest.File` and :class:`pytest.Item`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

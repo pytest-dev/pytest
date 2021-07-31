@@ -14,6 +14,7 @@ from typing import Union
 from pluggy import HookspecMarker
 
 from _pytest.deprecated import WARNING_CAPTURED_HOOK
+from _pytest.deprecated import WARNING_CMDLINE_PREPARSE_HOOK
 
 if TYPE_CHECKING:
     import pdb
@@ -157,6 +158,7 @@ def pytest_cmdline_parse(
     """
 
 
+@hookspec(warn_on_impl=WARNING_CMDLINE_PREPARSE_HOOK)
 def pytest_cmdline_preparse(config: "Config", args: List[str]) -> None:
     """(**Deprecated**) modify command line arguments before option parsing.
 

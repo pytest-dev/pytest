@@ -56,7 +56,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
-from _pytest.store import Store
+from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 
 if TYPE_CHECKING:
@@ -305,9 +305,7 @@ def _prepareconfig(
 ) -> "Config":
     if args is None:
         args = sys.argv[1:]
-    # TODO: Remove type-ignore after next mypy release.
-    # https://github.com/python/typeshed/commit/076983eec45e739c68551cb6119fd7d85fd4afa9
-    elif isinstance(args, os.PathLike):  # type: ignore[misc]
+    elif isinstance(args, os.PathLike):
         args = [os.fspath(args)]
     elif not isinstance(args, list):
         msg = "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
@@ -923,6 +921,15 @@ class Config:
         :type: PytestPluginManager
         """
 
+        self.stash = Stash()
+        """A place where plugins can store information on the config for their
+        own use.
+
+        :type: Stash
+        """
+        # Deprecated alias. Was never public. Can be removed in a few releases.
+        self._store = self.stash
+
         from .compat import PathAwareHookProxy
 
         self.trace = self.pluginmanager.trace.root.get("config")
@@ -931,9 +938,6 @@ class Config:
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}
         self._cleanup: List[Callable[[], None]] = []
-        # A place where plugins can store information on the config for their
-        # own use. Currently only intended for internal plugins.
-        self._store = Store()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(

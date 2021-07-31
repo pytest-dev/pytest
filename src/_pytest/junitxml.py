@@ -30,11 +30,11 @@ from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 
 
-xml_key = StoreKey["LogXML"]()
+xml_key = StashKey["LogXML"]()
 
 
 def bin_xml_escape(arg: object) -> str:
@@ -267,7 +267,7 @@ def _warn_incompatibility_with_xunit2(
     """Emit a PytestWarning about the given fixture being incompatible with newer xunit revisions."""
     from _pytest.warning_types import PytestWarning
 
-    xml = request.config._store.get(xml_key, None)
+    xml = request.config.stash.get(xml_key, None)
     if xml is not None and xml.family not in ("xunit1", "legacy"):
         request.node.warn(
             PytestWarning(
@@ -322,7 +322,7 @@ def record_xml_attribute(request: FixtureRequest) -> Callable[[str, object], Non
 
     attr_func = add_attr_noop
 
-    xml = request.config._store.get(xml_key, None)
+    xml = request.config.stash.get(xml_key, None)
     if xml is not None:
         node_reporter = xml.node_reporter(request.node.nodeid)
         attr_func = node_reporter.add_attribute
@@ -370,7 +370,7 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
         __tracebackhide__ = True
         _check_record_param_type("name", name)
 
-    xml = request.config._store.get(xml_key, None)
+    xml = request.config.stash.get(xml_key, None)
     if xml is not None:
         record_func = xml.add_global_property  # noqa
     return record_func
@@ -428,7 +428,7 @@ def pytest_configure(config: Config) -> None:
     # Prevent opening xmllog on worker nodes (xdist).
     if xmlpath and not hasattr(config, "workerinput"):
         junit_family = config.getini("junit_family")
-        config._store[xml_key] = LogXML(
+        config.stash[xml_key] = LogXML(
             xmlpath,
             config.option.junitprefix,
             config.getini("junit_suite_name"),
@@ -437,13 +437,13 @@ def pytest_configure(config: Config) -> None:
             junit_family,
             config.getini("junit_log_passing_tests"),
         )
-        config.pluginmanager.register(config._store[xml_key])
+        config.pluginmanager.register(config.stash[xml_key])
 
 
 def pytest_unconfigure(config: Config) -> None:
-    xml = config._store.get(xml_key, None)
+    xml = config.stash.get(xml_key, None)
     if xml:
-        del config._store[xml_key]
+        del config.stash[xml_key]
         config.pluginmanager.unregister(xml)
 
 

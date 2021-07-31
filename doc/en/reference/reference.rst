@@ -962,6 +962,18 @@ Result used within :ref:`hook wrappers <hookwrapper>`.
 .. automethod:: pluggy.callers._Result.get_result
 .. automethod:: pluggy.callers._Result.force_result
 
+Stash
+~~~~~
+
+.. autoclass:: pytest.Stash
+    :special-members: __setitem__, __getitem__, __delitem__, __contains__, __len__
+    :members:
+
+.. autoclass:: pytest.StashKey
+    :show-inheritance:
+    :members:
+
+
 Global Variables
 ----------------
 

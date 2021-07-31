@@ -55,6 +55,8 @@ from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
 from _pytest.runner import CallInfo
+from _pytest.stash import Stash
+from _pytest.stash import StashKey
 from _pytest.tmpdir import TempdirFactory
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
@@ -131,6 +133,8 @@ __all__ = [
     "Session",
     "set_trace",
     "skip",
+    "Stash",
+    "StashKey",
     "version_tuple",
     "TempPathFactory",
     "Testdir",
