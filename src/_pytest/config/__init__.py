@@ -305,9 +305,7 @@ def _prepareconfig(
 ) -> "Config":
     if args is None:
         args = sys.argv[1:]
-    # TODO: Remove type-ignore after next mypy release.
-    # https://github.com/python/typeshed/commit/076983eec45e739c68551cb6119fd7d85fd4afa9
-    elif isinstance(args, os.PathLike):  # type: ignore[misc]
+    elif isinstance(args, os.PathLike):
         args = [os.fspath(args)]
     elif not isinstance(args, list):
         msg = "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
