@@ -110,7 +110,41 @@ the simple test function.  And as usual with test function arguments,
 you can see the ``input`` and ``output`` values in the traceback.
 
 Note that you could also use the parametrize marker on a class or a module
-(see :ref:`mark`) which would invoke several functions with the argument sets.
+(see :ref:`mark`) which would invoke several functions with the argument sets,
+for instance:
+
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.mark.parametrize("n,expected", [(1, 2), (3, 4)])
+    class TestClass:
+        def test_simple_case(self, n, expected):
+            assert n + 1 == expected
+
+        def test_weird_simple_case(self, n, expected):
+            assert (n * 1) + 1 == expected
+
+
+You can assign the global variable **pytestmark**:
+
+
+.. code-block:: python
+
+    import pytest
+
+    pytestmark = pytest.mark.parametrize("n,expected", [(1, 2), (3, 4)])
+
+
+    class TestClass:
+        def test_simple_case(self, n, expected):
+            assert n + 1 == expected
+
+        def test_weird_simple_case(self, n, expected):
+            assert (n * 1) + 1 == expected
+
 
 It is also possible to mark individual test instances within parametrize,
 for example with the builtin ``mark.xfail``:
