@@ -42,6 +42,7 @@ def assert_outcomes(
     errors: int = 0,
     xpassed: int = 0,
     xfailed: int = 0,
+    warnings: int = 0,
 ) -> None:
     """Assert that the specified outcomes appear with the respective
     numbers (0 means it didn't occur) in the text output from a test run."""
@@ -54,6 +55,7 @@ def assert_outcomes(
         "errors": outcomes.get("errors", 0),
         "xpassed": outcomes.get("xpassed", 0),
         "xfailed": outcomes.get("xfailed", 0),
+        "warnings": outcomes.get("warnings", 0),
     }
     expected = {
         "passed": passed,
@@ -62,5 +64,6 @@ def assert_outcomes(
         "errors": errors,
         "xpassed": xpassed,
         "xfailed": xfailed,
+        "warnings": warnings,
     }
     assert obtained == expected
