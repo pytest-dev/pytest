@@ -34,7 +34,7 @@ from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath
-from _pytest.store import Store
+from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
@@ -218,9 +218,13 @@ class Node(metaclass=NodeMeta):
             if self.name != "()":
                 self._nodeid += "::" + self.name
 
-        # A place where plugins can store information on the node for their
-        # own use. Currently only intended for internal plugins.
-        self._store = Store()
+        #: A place where plugins can store information on the node for their
+        #: own use.
+        #:
+        #: :type: Stash
+        self.stash = Stash()
+        # Deprecated alias. Was never public. Can be removed in a few releases.
+        self._store = self.stash
 
     @property
     def fspath(self) -> LEGACY_PATH:

@@ -8,11 +8,11 @@ import pytest
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 
 
-fault_handler_stderr_key = StoreKey[TextIO]()
-fault_handler_originally_enabled_key = StoreKey[bool]()
+fault_handler_stderr_key = StashKey[TextIO]()
+fault_handler_originally_enabled_key = StashKey[bool]()
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -27,9 +27,9 @@ def pytest_configure(config: Config) -> None:
     import faulthandler
 
     stderr_fd_copy = os.dup(get_stderr_fileno())
-    config._store[fault_handler_stderr_key] = open(stderr_fd_copy, "w")
-    config._store[fault_handler_originally_enabled_key] = faulthandler.is_enabled()
-    faulthandler.enable(file=config._store[fault_handler_stderr_key])
+    config.stash[fault_handler_stderr_key] = open(stderr_fd_copy, "w")
+    config.stash[fault_handler_originally_enabled_key] = faulthandler.is_enabled()
+    faulthandler.enable(file=config.stash[fault_handler_stderr_key])
 
 
 def pytest_unconfigure(config: Config) -> None:
@@ -37,10 +37,10 @@ def pytest_unconfigure(config: Config) -> None:
 
     faulthandler.disable()
     # Close the dup file installed during pytest_configure.
-    if fault_handler_stderr_key in config._store:
-        config._store[fault_handler_stderr_key].close()
-        del config._store[fault_handler_stderr_key]
-    if config._store.get(fault_handler_originally_enabled_key, False):
+    if fault_handler_stderr_key in config.stash:
+        config.stash[fault_handler_stderr_key].close()
+        del config.stash[fault_handler_stderr_key]
+    if config.stash.get(fault_handler_originally_enabled_key, False):
         # Re-enable the faulthandler if it was originally enabled.
         faulthandler.enable(file=get_stderr_fileno())
 
@@ -67,7 +67,7 @@ def get_timeout_config_value(config: Config) -> float:
 @pytest.hookimpl(hookwrapper=True, trylast=True)
 def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     timeout = get_timeout_config_value(item.config)
-    stderr = item.config._store[fault_handler_stderr_key]
+    stderr = item.config.stash[fault_handler_stderr_key]
     if timeout > 0 and stderr is not None:
         import faulthandler
 
