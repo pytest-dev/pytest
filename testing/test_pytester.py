@@ -849,12 +849,15 @@ def test_testdir_makefile_ext_empty_string_makes_file(testdir) -> None:
     assert "test_testdir_makefile" in str(p1)
 
 
+@pytest.mark.filterwarnings("default")
 def test_pytester_assert_outcomes_warnings(pytester: Pytester) -> None:
-    p = pytester.makepyfile(
+    pytester.makepyfile(
         """
+        import warnings
+
         def test_with_warning():
-            pass
+            warnings.warn(UserWarning("some custom warning"))
         """
     )
-    result = pytester.runpytest(p, "--strict")
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1, warnings=1)
