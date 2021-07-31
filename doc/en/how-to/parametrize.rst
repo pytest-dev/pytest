@@ -128,7 +128,7 @@ for instance:
             assert (n * 1) + 1 == expected
 
 
-You can assign the global variable **pytestmark**:
+To parametrize all tests in a module, you can assign to the :globalvar:`pytestmark` global variable:
 
 
 .. code-block:: python
