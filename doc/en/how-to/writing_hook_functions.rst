@@ -261,9 +261,9 @@ and use pytest_addoption as follows:
 
    def pytest_addhooks(pluginmanager):
        """ This example assumes the hooks are grouped in the 'hooks' module. """
-       from . import hook
+       from . import hooks
 
-       pluginmanager.add_hookspecs(hook)
+       pluginmanager.add_hookspecs(hooks)
 
 
    def pytest_addoption(parser, pluginmanager):
