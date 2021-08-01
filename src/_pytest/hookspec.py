@@ -635,7 +635,7 @@ def pytest_assertrepr_compare(
 
 
 def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> None:
-    """**(Experimental)** Called whenever an assertion passes.
+    """Called whenever an assertion passes.
 
     .. versionadded:: 5.0
 
@@ -659,13 +659,6 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
     :param int lineno: Line number of the assert statement.
     :param str orig: String with the original assertion.
     :param str expl: String with the assert explanation.
-
-    .. note::
-
-        This hook is **experimental**, so its parameters or even the hook itself might
-        be changed/removed without warning in any future pytest release.
-
-        If you find this hook useful, please share your feedback in an issue.
     """
 
 
