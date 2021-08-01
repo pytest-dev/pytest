@@ -5,6 +5,7 @@ import sys
 import warnings
 from collections import defaultdict
 from collections import deque
+from contextlib import suppress
 from pathlib import Path
 from types import TracebackType
 from typing import Any
@@ -62,19 +63,20 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
+from _pytest.scope import HIGH_SCOPES
+from _pytest.scope import Scope
 from _pytest.stash import StashKey
+
 
 if TYPE_CHECKING:
     from typing import Deque
     from typing import NoReturn
-    from typing_extensions import Literal
 
+    from _pytest.scope import _ScopeName
     from _pytest.main import Session
     from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
-
-    _Scope = Literal["session", "package", "module", "class", "function"]
 
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
@@ -104,10 +106,10 @@ _FixtureCachedResult = Union[
 ]
 
 
-@attr.s(frozen=True)
+@attr.s(frozen=True, auto_attribs=True)
 class PseudoFixtureDef(Generic[FixtureValue]):
-    cached_result = attr.ib(type="_FixtureCachedResult[FixtureValue]")
-    scope = attr.ib(type="_Scope")
+    cached_result: "_FixtureCachedResult[FixtureValue]"
+    _scope: Scope
 
 
 def pytest_sessionstart(session: "Session") -> None:
@@ -130,19 +132,19 @@ def get_scope_package(node, fixturedef: "FixtureDef[object]"):
 
 
 def get_scope_node(
-    node: nodes.Node, scope: "_Scope"
+    node: nodes.Node, scope: Scope
 ) -> Optional[Union[nodes.Item, nodes.Collector]]:
     import _pytest.python
 
-    if scope == "function":
+    if scope is Scope.Function:
         return node.getparent(nodes.Item)
-    elif scope == "class":
+    elif scope is Scope.Class:
         return node.getparent(_pytest.python.Class)
-    elif scope == "module":
+    elif scope is Scope.Module:
         return node.getparent(_pytest.python.Module)
-    elif scope == "package":
+    elif scope is Scope.Package:
         return node.getparent(_pytest.python.Package)
-    elif scope == "session":
+    elif scope is Scope.Session:
         return node.getparent(_pytest.main.Session)
     else:
         assert_never(scope)
@@ -166,7 +168,7 @@ def add_funcarg_pseudo_fixture_def(
         return
     # Collect funcargs of all callspecs into a list of values.
     arg2params: Dict[str, List[object]] = {}
-    arg2scope: Dict[str, _Scope] = {}
+    arg2scope: Dict[str, Scope] = {}
     for callspec in metafunc._calls:
         for argname, argvalue in callspec.funcargs.items():
             assert argname not in callspec.params
@@ -175,8 +177,8 @@ def add_funcarg_pseudo_fixture_def(
             callspec.indices[argname] = len(arg2params_list)
             arg2params_list.append(argvalue)
             if argname not in arg2scope:
-                scopenum = callspec._arg2scopenum.get(argname, scopenum_function)
-                arg2scope[argname] = scopes[scopenum]
+                scope = callspec._arg2scope.get(argname, Scope.Function)
+                arg2scope[argname] = scope
         callspec.funcargs.clear()
 
     # Register artificial FixtureDef's so that later at test execution
@@ -189,10 +191,12 @@ def add_funcarg_pseudo_fixture_def(
         # node related to the scope.
         scope = arg2scope[argname]
         node = None
-        if scope != "function":
+        if scope is not Scope.Function:
             node = get_scope_node(collector, scope)
             if node is None:
-                assert scope == "class" and isinstance(collector, _pytest.python.Module)
+                assert scope is Scope.Class and isinstance(
+                    collector, _pytest.python.Module
+                )
                 # Use module-level collector for class-scope (for now).
                 node = collector
         if node is None:
@@ -238,10 +242,10 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
 _Key = Tuple[object, ...]
 
 
-def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_Key]:
+def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
     """Return list of keys for all parametrized arguments which match
     the specified scope."""
-    assert scopenum < scopenum_function  # function
+    assert scope is not Scope.Function
     try:
         callspec = item.callspec  # type: ignore[attr-defined]
     except AttributeError:
@@ -252,67 +256,71 @@ def get_parametrized_fixture_keys(item: nodes.Item, scopenum: int) -> Iterator[_
         # sort this so that different calls to
         # get_parametrized_fixture_keys will be deterministic.
         for argname, param_index in sorted(cs.indices.items()):
-            if cs._arg2scopenum[argname] != scopenum:
+            if cs._arg2scope[argname] != scope:
                 continue
-            if scopenum == 0:  # session
+            if scope is Scope.Session:
                 key: _Key = (argname, param_index)
-            elif scopenum == 1:  # package
+            elif scope is Scope.Package:
                 key = (argname, param_index, item.path.parent)
-            elif scopenum == 2:  # module
+            elif scope is Scope.Module:
                 key = (argname, param_index, item.path)
-            elif scopenum == 3:  # class
+            elif scope is Scope.Class:
                 item_cls = item.cls  # type: ignore[attr-defined]
                 key = (argname, param_index, item.path, item_cls)
+            else:
+                assert_never(scope)
             yield key
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
-# It is called for scopenum==0 (session) first and performs sorting
+# It is called for Session scope first and performs sorting
 # down to the lower scopes such as to minimize number of "high scope"
 # setups and teardowns.
 
 
 def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
-    argkeys_cache: Dict[int, Dict[nodes.Item, Dict[_Key, None]]] = {}
-    items_by_argkey: Dict[int, Dict[_Key, Deque[nodes.Item]]] = {}
-    for scopenum in range(scopenum_function):
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]] = {}
+    items_by_argkey: Dict[Scope, Dict[_Key, Deque[nodes.Item]]] = {}
+    for scope in HIGH_SCOPES:
         d: Dict[nodes.Item, Dict[_Key, None]] = {}
-        argkeys_cache[scopenum] = d
+        argkeys_cache[scope] = d
         item_d: Dict[_Key, Deque[nodes.Item]] = defaultdict(deque)
-        items_by_argkey[scopenum] = item_d
+        items_by_argkey[scope] = item_d
         for item in items:
-            keys = dict.fromkeys(get_parametrized_fixture_keys(item, scopenum), None)
+            keys = dict.fromkeys(get_parametrized_fixture_keys(item, scope), None)
             if keys:
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
     items_dict = dict.fromkeys(items, None)
-    return list(reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, 0))
+    return list(
+        reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, Scope.Session)
+    )
 
 
 def fix_cache_order(
     item: nodes.Item,
-    argkeys_cache: Dict[int, Dict[nodes.Item, Dict[_Key, None]]],
-    items_by_argkey: Dict[int, Dict[_Key, "Deque[nodes.Item]"]],
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]],
+    items_by_argkey: Dict[Scope, Dict[_Key, "Deque[nodes.Item]"]],
 ) -> None:
-    for scopenum in range(scopenum_function):
-        for key in argkeys_cache[scopenum].get(item, []):
-            items_by_argkey[scopenum][key].appendleft(item)
+    for scope in HIGH_SCOPES:
+        for key in argkeys_cache[scope].get(item, []):
+            items_by_argkey[scope][key].appendleft(item)
 
 
 def reorder_items_atscope(
     items: Dict[nodes.Item, None],
-    argkeys_cache: Dict[int, Dict[nodes.Item, Dict[_Key, None]]],
-    items_by_argkey: Dict[int, Dict[_Key, "Deque[nodes.Item]"]],
-    scopenum: int,
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]],
+    items_by_argkey: Dict[Scope, Dict[_Key, "Deque[nodes.Item]"]],
+    scope: Scope,
 ) -> Dict[nodes.Item, None]:
-    if scopenum >= scopenum_function or len(items) < 3:
+    if scope is Scope.Function or len(items) < 3:
         return items
     ignore: Set[Optional[_Key]] = set()
     items_deque = deque(items)
     items_done: Dict[nodes.Item, None] = {}
-    scoped_items_by_argkey = items_by_argkey[scopenum]
-    scoped_argkeys_cache = argkeys_cache[scopenum]
+    scoped_items_by_argkey = items_by_argkey[scope]
+    scoped_argkeys_cache = argkeys_cache[scope]
     while items_deque:
         no_argkey_group: Dict[nodes.Item, None] = {}
         slicing_argkey = None
@@ -338,7 +346,7 @@ def reorder_items_atscope(
                 break
         if no_argkey_group:
             no_argkey_group = reorder_items_atscope(
-                no_argkey_group, argkeys_cache, items_by_argkey, scopenum + 1
+                no_argkey_group, argkeys_cache, items_by_argkey, scope.next_lower()
             )
             for item in no_argkey_group:
                 items_done[item] = None
@@ -437,13 +445,17 @@ class FixtureRequest:
         self._pyfuncitem = pyfuncitem
         #: Fixture for which this request is being performed.
         self.fixturename: Optional[str] = None
-        #: Scope string, one of "function", "class", "module", "session".
-        self.scope: _Scope = "function"
+        self._scope = Scope.Function
         self._fixture_defs: Dict[str, FixtureDef[Any]] = {}
         fixtureinfo: FuncFixtureInfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index: Dict[str, int] = {}
         self._fixturemanager: FixtureManager = pyfuncitem.session._fixturemanager
+
+    @property
+    def scope(self) -> "_ScopeName":
+        """Scope string, one of "function", "class", "module", "package", "session"."""
+        return self._scope.value
 
     @property
     def fixturenames(self) -> List[str]:
@@ -455,7 +467,7 @@ class FixtureRequest:
     @property
     def node(self):
         """Underlying collection node (depends on current request scope)."""
-        return self._getscopeitem(self.scope)
+        return self._getscopeitem(self._scope)
 
     def _getnextfixturedef(self, argname: str) -> "FixtureDef[Any]":
         fixturedefs = self._arg2fixturedefs.get(argname, None)
@@ -598,8 +610,7 @@ class FixtureRequest:
             except FixtureLookupError:
                 if argname == "request":
                     cached_result = (self, [0], None)
-                    scope: _Scope = "function"
-                    return PseudoFixtureDef(cached_result, scope)
+                    return PseudoFixtureDef(cached_result, Scope.Function)
                 raise
         # Remove indent to prevent the python3 exception
         # from leaking into the call.
@@ -628,7 +639,7 @@ class FixtureRequest:
         # (latter managed by fixturedef)
         argname = fixturedef.argname
         funcitem = self._pyfuncitem
-        scope = fixturedef.scope
+        scope = fixturedef._scope
         try:
             param = funcitem.callspec.getparam(argname)
         except (AttributeError, ValueError):
@@ -675,16 +686,15 @@ class FixtureRequest:
             param_index = funcitem.callspec.indices[argname]
             # If a parametrize invocation set a scope it will override
             # the static scope defined with the fixture function.
-            paramscopenum = funcitem.callspec._arg2scopenum.get(argname)
-            if paramscopenum is not None:
-                scope = scopes[paramscopenum]
+            with suppress(KeyError):
+                scope = funcitem.callspec._arg2scope[argname]
 
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
 
         # Check if a higher-level scoped fixture accesses a lower level one.
-        subrequest._check_scope(argname, self.scope, scope)
+        subrequest._check_scope(argname, self._scope, scope)
         try:
             # Call the fixture function.
             fixturedef.execute(request=subrequest)
@@ -700,19 +710,18 @@ class FixtureRequest:
     def _check_scope(
         self,
         argname: str,
-        invoking_scope: "_Scope",
-        requested_scope: "_Scope",
+        invoking_scope: Scope,
+        requested_scope: Scope,
     ) -> None:
         if argname == "request":
             return
-        if scopemismatch(invoking_scope, requested_scope):
+        if invoking_scope > requested_scope:
             # Try to report something helpful.
-            lines = self._factorytraceback()
+            text = "\n".join(self._factorytraceback())
             fail(
-                "ScopeMismatch: You tried to access the %r scoped "
-                "fixture %r with a %r scoped request object, "
-                "involved factories\n%s"
-                % ((requested_scope, argname, invoking_scope, "\n".join(lines))),
+                f"ScopeMismatch: You tried to access the {requested_scope.value} scoped "
+                f"fixture {argname} with a {invoking_scope.value} scoped request object, "
+                f"involved factories:\n{text}",
                 pytrace=False,
             )
 
@@ -730,17 +739,21 @@ class FixtureRequest:
             lines.append("%s:%d:  def %s%s" % (p, lineno + 1, factory.__name__, args))
         return lines
 
-    def _getscopeitem(self, scope: "_Scope") -> Union[nodes.Item, nodes.Collector]:
-        if scope == "function":
+    def _getscopeitem(
+        self, scope: Union[Scope, "_ScopeName"]
+    ) -> Union[nodes.Item, nodes.Collector]:
+        if isinstance(scope, str):
+            scope = Scope(scope)
+        if scope is Scope.Function:
             # This might also be a non-function Item despite its attribute name.
             node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
-        elif scope == "package":
+        elif scope is Scope.Package:
             # FIXME: _fixturedef is not defined on FixtureRequest (this class),
             # but on FixtureRequest (a subclass).
             node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
         else:
             node = get_scope_node(self._pyfuncitem, scope)
-        if node is None and scope == "class":
+        if node is None and scope is Scope.Class:
             # Fallback to function item itself.
             node = self._pyfuncitem
         assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
@@ -759,7 +772,7 @@ class SubRequest(FixtureRequest):
     def __init__(
         self,
         request: "FixtureRequest",
-        scope: "_Scope",
+        scope: Scope,
         param: Any,
         param_index: int,
         fixturedef: "FixtureDef[object]",
@@ -772,7 +785,7 @@ class SubRequest(FixtureRequest):
         if param is not NOTSET:
             self.param = param
         self.param_index = param_index
-        self.scope = scope
+        self._scope = scope
         self._fixturedef = fixturedef
         self._pyfuncitem = request._pyfuncitem
         self._fixture_defs = request._fixture_defs
@@ -799,29 +812,6 @@ class SubRequest(FixtureRequest):
                 functools.partial(self._fixturedef.finish, request=self)
             )
         super()._schedule_finalizers(fixturedef, subrequest)
-
-
-scopes: List["_Scope"] = ["session", "package", "module", "class", "function"]
-scopenum_function = scopes.index("function")
-
-
-def scopemismatch(currentscope: "_Scope", newscope: "_Scope") -> bool:
-    return scopes.index(newscope) > scopes.index(currentscope)
-
-
-def scope2index(scope: str, descr: str, where: Optional[str] = None) -> int:
-    """Look up the index of ``scope`` and raise a descriptive value error
-    if not defined."""
-    strscopes: Sequence[str] = scopes
-    try:
-        return strscopes.index(scope)
-    except ValueError:
-        fail(
-            "{} {}got an unexpected scope value '{}'".format(
-                descr, f"from {where} " if where else "", scope
-            ),
-            pytrace=False,
-        )
 
 
 @final
@@ -955,10 +945,10 @@ def _teardown_yield_fixture(fixturefunc, it) -> None:
 
 
 def _eval_scope_callable(
-    scope_callable: "Callable[[str, Config], _Scope]",
+    scope_callable: "Callable[[str, Config], _ScopeName]",
     fixture_name: str,
     config: Config,
-) -> "_Scope":
+) -> "_ScopeName":
     try:
         # Type ignored because there is no typing mechanism to specify
         # keyword arguments, currently.
@@ -989,7 +979,7 @@ class FixtureDef(Generic[FixtureValue]):
         baseid: Optional[str],
         argname: str,
         func: "_FixtureFunc[FixtureValue]",
-        scope: "Union[_Scope, Callable[[str, Config], _Scope]]",
+        scope: Union[Scope, "_ScopeName", Callable[[str, Config], "_ScopeName"], None],
         params: Optional[Sequence[object]],
         unittest: bool = False,
         ids: Optional[
@@ -1004,17 +994,16 @@ class FixtureDef(Generic[FixtureValue]):
         self.has_location = baseid is not None
         self.func = func
         self.argname = argname
-        if callable(scope):
-            scope_ = _eval_scope_callable(scope, argname, fixturemanager.config)
-        else:
-            scope_ = scope
-        self.scopenum = scope2index(
-            # TODO: Check if the `or` here is really necessary.
-            scope_ or "function",  # type: ignore[unreachable]
-            descr=f"Fixture '{func.__name__}'",
-            where=baseid,
-        )
-        self.scope = scope_
+        if scope is None:
+            scope = Scope.Function
+        elif callable(scope):
+            scope = _eval_scope_callable(scope, argname, fixturemanager.config)
+
+        if isinstance(scope, str):
+            scope = Scope.from_user(
+                scope, descr=f"Fixture '{func.__name__}'", where=baseid
+            )
+        self._scope = scope
         self.params: Optional[Sequence[object]] = params
         self.argnames: Tuple[str, ...] = getfuncargnames(
             func, name=argname, is_method=unittest
@@ -1023,6 +1012,11 @@ class FixtureDef(Generic[FixtureValue]):
         self.ids = ids
         self.cached_result: Optional[_FixtureCachedResult[FixtureValue]] = None
         self._finalizers: List[Callable[[], object]] = []
+
+    @property
+    def scope(self) -> "_ScopeName":
+        """Scope string, one of "function", "class", "module", "package", "session"."""
+        return self._scope.value
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._finalizers.append(finalizer)
@@ -1126,7 +1120,7 @@ def pytest_fixture_setup(
         fixdef = request._get_active_fixturedef(argname)
         assert fixdef.cached_result is not None
         result, arg_cache_key, exc = fixdef.cached_result
-        request._check_scope(argname, request.scope, fixdef.scope)
+        request._check_scope(argname, request._scope, fixdef._scope)
         kwargs[argname] = result
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
@@ -1195,18 +1189,17 @@ def wrap_function_to_error_out_if_called_directly(
 @final
 @attr.s(frozen=True)
 class FixtureFunctionMarker:
-    scope = attr.ib(type="Union[_Scope, Callable[[str, Config], _Scope]]")
-    params = attr.ib(type=Optional[Tuple[object, ...]], converter=_params_converter)
-    autouse = attr.ib(type=bool, default=False)
-    ids = attr.ib(
-        type=Union[
-            Tuple[Union[None, str, float, int, bool], ...],
-            Callable[[Any], Optional[object]],
-        ],
+    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = attr.ib()
+    params: Optional[Tuple[object, ...]] = attr.ib(converter=_params_converter)
+    autouse: bool = attr.ib(default=False)
+    ids: Union[
+        Tuple[Union[None, str, float, int, bool], ...],
+        Callable[[Any], Optional[object]],
+    ] = attr.ib(
         default=None,
         converter=_ensure_immutable_ids,
     )
-    name = attr.ib(type=Optional[str], default=None)
+    name: Optional[str] = attr.ib(default=None)
 
     def __call__(self, function: FixtureFunction) -> FixtureFunction:
         if inspect.isclass(function):
@@ -1238,7 +1231,7 @@ class FixtureFunctionMarker:
 def fixture(
     fixture_function: FixtureFunction,
     *,
-    scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = ...,
+    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
     ids: Optional[
@@ -1256,7 +1249,7 @@ def fixture(
 def fixture(
     fixture_function: None = ...,
     *,
-    scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = ...,
+    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
     ids: Optional[
@@ -1273,7 +1266,7 @@ def fixture(
 def fixture(
     fixture_function: Optional[FixtureFunction] = None,
     *,
-    scope: "Union[_Scope, Callable[[str, Config], _Scope]]" = "function",
+    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = "function",
     params: Optional[Iterable[object]] = None,
     autouse: bool = False,
     ids: Optional[
@@ -1552,15 +1545,15 @@ class FixtureManager:
                     arg2fixturedefs[argname] = fixturedefs
                     merge(fixturedefs[-1].argnames)
 
-        def sort_by_scope(arg_name: str) -> int:
+        def sort_by_scope(arg_name: str) -> Scope:
             try:
                 fixturedefs = arg2fixturedefs[arg_name]
             except KeyError:
-                return scopes.index("function")
+                return Scope.Function
             else:
-                return fixturedefs[-1].scopenum
+                return fixturedefs[-1]._scope
 
-        fixturenames_closure.sort(key=sort_by_scope)
+        fixturenames_closure.sort(key=sort_by_scope, reverse=True)
         return initialnames, fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc: "Metafunc") -> None:

@@ -26,6 +26,7 @@ from _pytest.outcomes import fail
 from _pytest.pytester import Pytester
 from _pytest.python import _idval
 from _pytest.python import idmaker
+from _pytest.scope import Scope
 
 
 class TestMetafunc:
@@ -142,16 +143,16 @@ class TestMetafunc:
 
         @attr.s
         class DummyFixtureDef:
-            scope = attr.ib()
+            _scope = attr.ib()
 
         fixtures_defs = cast(
             Dict[str, Sequence[fixtures.FixtureDef[object]]],
             dict(
-                session_fix=[DummyFixtureDef("session")],
-                package_fix=[DummyFixtureDef("package")],
-                module_fix=[DummyFixtureDef("module")],
-                class_fix=[DummyFixtureDef("class")],
-                func_fix=[DummyFixtureDef("function")],
+                session_fix=[DummyFixtureDef(Scope.Session)],
+                package_fix=[DummyFixtureDef(Scope.Package)],
+                module_fix=[DummyFixtureDef(Scope.Module)],
+                class_fix=[DummyFixtureDef(Scope.Class)],
+                func_fix=[DummyFixtureDef(Scope.Function)],
             ),
         )
 
@@ -160,29 +161,33 @@ class TestMetafunc:
         def find_scope(argnames, indirect):
             return _find_parametrized_scope(argnames, fixtures_defs, indirect=indirect)
 
-        assert find_scope(["func_fix"], indirect=True) == "function"
-        assert find_scope(["class_fix"], indirect=True) == "class"
-        assert find_scope(["module_fix"], indirect=True) == "module"
-        assert find_scope(["package_fix"], indirect=True) == "package"
-        assert find_scope(["session_fix"], indirect=True) == "session"
+        assert find_scope(["func_fix"], indirect=True) == Scope.Function
+        assert find_scope(["class_fix"], indirect=True) == Scope.Class
+        assert find_scope(["module_fix"], indirect=True) == Scope.Module
+        assert find_scope(["package_fix"], indirect=True) == Scope.Package
+        assert find_scope(["session_fix"], indirect=True) == Scope.Session
 
-        assert find_scope(["class_fix", "func_fix"], indirect=True) == "function"
-        assert find_scope(["func_fix", "session_fix"], indirect=True) == "function"
-        assert find_scope(["session_fix", "class_fix"], indirect=True) == "class"
-        assert find_scope(["package_fix", "session_fix"], indirect=True) == "package"
-        assert find_scope(["module_fix", "session_fix"], indirect=True) == "module"
+        assert find_scope(["class_fix", "func_fix"], indirect=True) == Scope.Function
+        assert find_scope(["func_fix", "session_fix"], indirect=True) == Scope.Function
+        assert find_scope(["session_fix", "class_fix"], indirect=True) == Scope.Class
+        assert (
+            find_scope(["package_fix", "session_fix"], indirect=True) == Scope.Package
+        )
+        assert find_scope(["module_fix", "session_fix"], indirect=True) == Scope.Module
 
         # when indirect is False or is not for all scopes, always use function
-        assert find_scope(["session_fix", "module_fix"], indirect=False) == "function"
+        assert (
+            find_scope(["session_fix", "module_fix"], indirect=False) == Scope.Function
+        )
         assert (
             find_scope(["session_fix", "module_fix"], indirect=["module_fix"])
-            == "function"
+            == Scope.Function
         )
         assert (
             find_scope(
                 ["session_fix", "module_fix"], indirect=["session_fix", "module_fix"]
             )
-            == "module"
+            == Scope.Module
         )
 
     def test_parametrize_and_id(self) -> None:
