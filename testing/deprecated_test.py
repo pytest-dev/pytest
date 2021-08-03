@@ -208,10 +208,9 @@ class TestSkipMsgArgumentDeprecated:
                 "*PytestDeprecationWarning: pytest.skip(msg=...) is now deprecated, "
                 "use pytest.skip(reason=...) instead",
                 '*pytest.skip(msg="skippedmsg")*',
-                "*1 skipped, 1 warning*",
             ]
         )
-        result.assert_outcomes(skipped=1)
+        result.assert_outcomes(skipped=1, warnings=1)
 
     def test_fail_with_msg_is_deprecated(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
