@@ -335,7 +335,7 @@ def test_SkipTest_during_collection(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest(p)
-    result.assert_outcomes(skipped=1)
+    result.assert_outcomes(skipped=1, warnings=1)
 
 
 def test_SkipTest_in_test(pytester: Pytester) -> None:

@@ -847,3 +847,17 @@ def test_testdir_makefile_ext_empty_string_makes_file(testdir) -> None:
     """For backwards compat #8192"""
     p1 = testdir.makefile("", "")
     assert "test_testdir_makefile" in str(p1)
+
+
+@pytest.mark.filterwarnings("default")
+def test_pytester_assert_outcomes_warnings(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import warnings
+
+        def test_with_warning():
+            warnings.warn(UserWarning("some custom warning"))
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, warnings=1)
