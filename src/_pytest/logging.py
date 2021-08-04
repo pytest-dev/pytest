@@ -71,7 +71,11 @@ class ColoredLevelFormatter(logging.Formatter):
             self.add_color_level(level, *color_opts)
 
     def add_color_level(self, level, *color_opts):
-        """Add or update color opts for a log level."""
+        """Add or update color opts for a log level.
+
+        .. warning::
+            This is an experimental API.
+        """
 
         assert self._fmt is not None
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
