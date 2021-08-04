@@ -227,13 +227,13 @@ from default colors or putting color on custom log levels is supported
 
     @pytest.hookimpl
     def pytest_configure(config):
-        logging_plugin = config.pluginmanager.get_plugin('logging-plugin')
+        logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
 
         # Change color on existing log level
-        logging_plugin.log_cli_handler.formatter.add_color_level(logging.INFO, 'cyan')
+        logging_plugin.log_cli_handler.formatter.add_color_level(logging.INFO, "cyan")
 
         # Add color to a custom log level (a custom log level `SPAM` is already set up)
-        logging_plugin.log_cli_handler.formatter.add_color_level(logging.SPAM, 'blue')
+        logging_plugin.log_cli_handler.formatter.add_color_level(logging.SPAM, "blue")
 
 .. _log_release_notes:
 
