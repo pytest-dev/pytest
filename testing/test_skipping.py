@@ -1504,3 +1504,32 @@ def test_skip_fails_with_msg_and_reason(pytester: Pytester) -> None:
         "*Failed: Passing both ``reason`` and ``msg`` to pytest.skip(...) is not permitted.*"
     )
     result.assert_outcomes(failed=1)
+
+
+def test_exit_with_msg_and_reason_fails(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_exit_both_arguments():
+            pytest.exit(reason="foo", msg="bar")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        "*UsageError: cannot pass reason and msg to exit(), `msg` is deprecated, use `reason`.*"
+    )
+    result.assert_outcomes(failed=1)
+
+
+def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_exit_reason_only():
+            pytest.exit(reason="foo")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")

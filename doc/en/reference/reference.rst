@@ -22,7 +22,7 @@ pytest.fail
 
 **Tutorial**: :ref:`skipping`
 
-.. autofunction:: pytest.fail
+.. autofunction:: pytest.fail(reason, [pytrace=True, msg=None])
 
 pytest.skip
 ~~~~~~~~~~~
@@ -44,7 +44,7 @@ pytest.xfail
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.exit
+.. autofunction:: pytest.exit(reason, [returncode=False, msg=None])
 
 pytest.main
 ~~~~~~~~~~~

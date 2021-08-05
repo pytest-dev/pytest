@@ -227,9 +227,27 @@ class TestSkipMsgArgumentDeprecated:
                 "*PytestDeprecationWarning: pytest.fail(msg=...) is now deprecated, "
                 "use pytest.fail(reason=...) instead",
                 '*pytest.fail(msg="failedmsg")',
-                "*1 failed, 1 warning*",
             ]
         )
+        result.assert_outcomes(failed=1, warnings=1)
+
+    def test_exit_with_msg_is_deprecated(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def test_exit_msg():
+                pytest.exit(msg="exitmsg")
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestDeprecationWarning: pytest.exit(msg=...) is now deprecated, "
+                "use pytest.exit(reason=...) instead",
+            ]
+        )
+        result.assert_outcomes(warnings=1)
 
 
 def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:

@@ -113,14 +113,34 @@ def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _E
 
 
 @_with_exception(Exit)
-def exit(msg: str, returncode: Optional[int] = None) -> "NoReturn":
+def exit(
+    reason: str = "", returncode: Optional[int] = None, *, msg: Optional[str] = None
+) -> "NoReturn":
     """Exit testing process.
 
-    :param str msg: Message to display upon exit.
-    :param int returncode: Return code to be used when exiting pytest.
+    :param reason:
+        The message to show as the reason for exiting pytest.  reason has a default value
+        only because `msg` is deprecated.
+
+    :param returncode:
+        Return code to be used when exiting pytest.
+
+    :param msg:
+        Same as ``reason``, but deprecated. Will be removed in a future version, use ``reason`` instead.
     """
     __tracebackhide__ = True
-    raise Exit(msg, returncode)
+    from _pytest.config import UsageError
+
+    if reason and msg:
+        raise UsageError(
+            "cannot pass reason and msg to exit(), `msg` is deprecated, use `reason`."
+        )
+    if not reason:
+        if msg is None:
+            raise UsageError("exit() requires a reason argument")
+        warnings.warn(KEYWORD_MSG_ARG.format(func="exit"), stacklevel=2)
+        reason = msg
+    raise Exit(reason, returncode)
 
 
 @_with_exception(Skipped)
