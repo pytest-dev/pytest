@@ -70,7 +70,7 @@ class ColoredLevelFormatter(logging.Formatter):
         for level, color_opts in self.LOGLEVEL_COLOROPTS.items():
             self.add_color_level(level, *color_opts)
 
-    def add_color_level(self, level, *color_opts):
+    def add_color_level(self, level: int, *color_opts: AbstractSet[str]):
         """Add or update color opts for a log level.
 
         .. warning::
