@@ -70,8 +70,15 @@ class ColoredLevelFormatter(logging.Formatter):
         for level, color_opts in self.LOGLEVEL_COLOROPTS.items():
             self.add_color_level(level, *color_opts)
 
-    def add_color_level(self, level: int, *color_opts: AbstractSet[str]):
+    def add_color_level(self, level: int, *color_opts: str):
         """Add or update color opts for a log level.
+
+        :param level:
+            Log level to apply a style to, e.g. ``logging.INFO``.
+        :param color_opts:
+            ANSI escape sequence color options. Capitalized colors indicates
+            background color, i.e. ``'green', 'Yellow', 'bold'`` will give bold
+            green text on yellow background.
 
         .. warning::
             This is an experimental API.
