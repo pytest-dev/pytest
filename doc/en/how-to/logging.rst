@@ -242,7 +242,7 @@ through ``add_color_level()``. Example:
 .. warning::
 
     This feature and its API are considered **experimental** and might change
-    between releases without a deprecation notice.   
+    between releases without a deprecation notice.
 .. _log_release_notes:
 
 Release notes
