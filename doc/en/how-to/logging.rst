@@ -219,9 +219,14 @@ option names are:
 You can call ``set_log_path()`` to customize the log_file path dynamically. This functionality
 is considered **experimental**.
 
+.. _log_colors:
+
+Customizing Colors
+^^^^^^^^^^^^^^^^^^
+
 Log levels are colored if colored terminal output is enabled. Changing
 from default colors or putting color on custom log levels is supported
-**experimentally** through ``add_color_level()``. Example:
+through ``add_color_level()``. Example:
 
 .. code-block:: python
 
@@ -234,7 +239,10 @@ from default colors or putting color on custom log levels is supported
 
         # Add color to a custom log level (a custom log level `SPAM` is already set up)
         logging_plugin.log_cli_handler.formatter.add_color_level(logging.SPAM, "blue")
+.. warning::
 
+    This feature and its API are considered **experimental** and might change
+    between releases without a deprecation notice.   
 .. _log_release_notes:
 
 Release notes
