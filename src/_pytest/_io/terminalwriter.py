@@ -195,16 +195,39 @@ class TerminalWriter:
 
     def _highlight(self, source: str) -> str:
         """Highlight the given source code if we have markup support."""
+        from _pytest.config.exceptions import UsageError
+
         if not self.hasmarkup or not self.code_highlight:
             return source
         try:
             from pygments.formatters.terminal import TerminalFormatter
             from pygments.lexers.python import PythonLexer
             from pygments import highlight
+            import pygments.util
         except ImportError:
             return source
         else:
-            highlighted: str = highlight(
-                source, PythonLexer(), TerminalFormatter(bg="dark")
-            )
-            return highlighted
+            try:
+                highlighted: str = highlight(
+                    source,
+                    PythonLexer(),
+                    TerminalFormatter(
+                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
+                        style=os.getenv("PYTEST_THEME"),
+                    ),
+                )
+                return highlighted
+            except pygments.util.ClassNotFound:
+                raise UsageError(
+                    "PYTEST_THEME environment variable had an invalid value: '{}'. "
+                    "Only valid pygment styles are allowed.".format(
+                        os.getenv("PYTEST_THEME")
+                    )
+                )
+            except pygments.util.OptionError:
+                raise UsageError(
+                    "PYTEST_THEME_MODE environment variable had an invalid value: '{}'. "
+                    "The only allowed values are 'dark' and 'light'.".format(
+                        os.getenv("PYTEST_THEME_MODE")
+                    )
+                )
