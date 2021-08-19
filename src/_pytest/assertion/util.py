@@ -287,7 +287,7 @@ def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
 def _compare_eq_iterable(
     left: Iterable[Any], right: Iterable[Any], verbose: int = 0
 ) -> List[str]:
-    if not verbose:
+    if not verbose and not running_on_ci():
         return ["Use -v to get the full diff"]
     # dynamic import to speedup pytest
     import difflib

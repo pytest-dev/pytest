@@ -13,6 +13,7 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
 
@@ -447,6 +448,25 @@ class TestAssert_reprcompare:
         verbose_expl = callequal(left, right, verbose=1)
         assert verbose_expl is not None
         assert "\n".join(verbose_expl).endswith(textwrap.dedent(expected).strip())
+
+    def test_iterable_full_diff_ci(
+        self, monkeypatch: MonkeyPatch, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            r"""
+            def test_full_diff():
+                left = [0, 1]
+                right = [0, 2]
+                assert left == right
+        """
+        )
+        monkeypatch.setenv("CI", "true")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["E         Full diff:"])
+
+        monkeypatch.delenv("CI", raising=False)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["E         Use -v to get the full diff"])
 
     def test_list_different_lengths(self) -> None:
         expl = callequal([0, 1], [0, 1, 2])
