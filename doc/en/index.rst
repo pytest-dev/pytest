@@ -109,7 +109,7 @@ Support pytest
 --------------
 
 `Open Collective`_ is an online funding platform for open and transparent communities.
-It provide tools to raise money and share your finances in full transparency.
+It provides tools to raise money and share your finances in full transparency.
 
 It is the platform of choice for individuals and companies that want to make one-time or
 monthly donations directly to the project.
