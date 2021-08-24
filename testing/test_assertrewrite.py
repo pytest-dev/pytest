@@ -1388,6 +1388,9 @@ class TestEarlyRewriteBailout:
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
     )
+    @pytest.mark.skipif(
+        sys.platform.startswith("sunos5"), reason="cannot remove cwd on Solaris"
+    )
     def test_cwd_changed(self, pytester: Pytester, monkeypatch) -> None:
         # Setup conditions for py's fspath trying to import pathlib on py34
         # always (previously triggered via xdist only).
