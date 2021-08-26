@@ -1577,9 +1577,9 @@ Use fixtures in classes and modules with ``usefixtures``
 Sometimes test functions do not directly need access to a fixture object.
 For example, tests may require to operate with an empty directory as the
 current working directory but otherwise do not care for the concrete
-directory.  Here is how you can use the standard `tempfile
-<https://docs.python.org/library/tempfile.html>`_ and pytest fixtures to
-achieve it.  We separate the creation of the fixture into a conftest.py
+directory.  Here is how you can use the standard :mod:`tempfile`
+and pytest fixtures to
+achieve it.  We separate the creation of the fixture into a :file:`conftest.py`
 file:
 
 .. code-block:: python

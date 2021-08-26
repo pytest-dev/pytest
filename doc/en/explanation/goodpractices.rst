@@ -7,7 +7,7 @@ Good Integration Practices
 Install package with pip
 -------------------------------------------------
 
-For development, we recommend you use venv_ for virtual environments and
+For development, we recommend you use :mod:`venv` for virtual environments and
 pip_ for installing your application and any dependencies,
 as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
@@ -248,5 +248,3 @@ dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
-
-.. _`venv`: https://docs.python.org/3/library/venv.html

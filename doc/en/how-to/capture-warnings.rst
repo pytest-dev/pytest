@@ -98,7 +98,7 @@ When a warning matches more than one option in the list, the action for the last
 is performed.
 
 Both ``-W`` command-line option and ``filterwarnings`` ini option are based on Python's own
-`-W option`_ and `warnings.simplefilter`_, so please refer to those sections in the Python
+:option:`-W option <python:-W>` and :func:`warnings.simplefilter`, so please refer to those sections in the Python
 documentation for other examples and advanced usage.
 
 .. _`filterwarnings`:
@@ -143,8 +143,6 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 *Credits go to Florian Schulze for the reference implementation in the* `pytest-warnings`_
 *plugin.*
 
-.. _`-W option`: https://docs.python.org/3/using/cmdline.html#cmdoption-w
-.. _warnings.simplefilter: https://docs.python.org/3/library/how-to/capture-warnings.html#warnings.simplefilter
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
 
 Disabling warnings summary
@@ -196,12 +194,12 @@ the regular expression ``".*U.*mode is deprecated"``.
 .. note::
 
     If warnings are configured at the interpreter level, using
-    the `PYTHONWARNINGS <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONWARNINGS>`_ environment variable or the
+    the :envvar:`python:PYTHONWARNINGS` environment variable or the
     ``-W`` command-line option, pytest will not configure any filters by default.
 
     Also pytest doesn't follow ``PEP-0506`` suggestion of resetting all warning filters because
     it might break test suites that configure warning filters themselves
-    by calling ``warnings.simplefilter`` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_
+    by calling :func:`warnings.simplefilter` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_
     for an example of that).
 
 

@@ -11,12 +11,12 @@ Import modes
 pytest as a testing framework needs to import test modules and ``conftest.py`` files for execution.
 
 Importing files in Python (at least until recently) is a non-trivial processes, often requiring
-changing `sys.path <https://docs.python.org/3/library/sys.html#sys.path>`__. Some aspects of the
+changing :data:`sys.path`. Some aspects of the
 import process can be controlled through the ``--import-mode`` command-line flag, which can assume
 these values:
 
 * ``prepend`` (default): the directory path containing each module will be inserted into the *beginning*
-  of :py:data:`sys.path` if not already there, and then imported with the `__import__ <https://docs.python.org/3/library/functions.html#__import__>`__ builtin.
+  of :py:data:`sys.path` if not already there, and then imported with the :func:`__import__ <__import__>` builtin.
 
   This requires test module names to be unique when the test directory tree is not arranged in
   packages, because the modules will put in :py:data:`sys.modules` after importing.
@@ -43,7 +43,7 @@ these values:
   Same as ``prepend``, requires test module names to be unique when the test directory tree is
   not arranged in packages, because the modules will put in :py:data:`sys.modules` after importing.
 
-* ``importlib``: new in pytest-6.0, this mode uses `importlib <https://docs.python.org/3/library/importlib.html>`__ to import test modules. This gives full control over the import process, and doesn't require changing :py:data:`sys.path`.
+* ``importlib``: new in pytest-6.0, this mode uses :mod:`importlib` to import test modules. This gives full control over the import process, and doesn't require changing :py:data:`sys.path`.
 
   For this reason this doesn't require test module names to be unique, but also makes test
   modules non-importable by each other.
