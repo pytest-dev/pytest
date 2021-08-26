@@ -956,11 +956,8 @@ TestReport
 _Result
 ~~~~~~~
 
-Result used within :ref:`hook wrappers <hookwrapper>`.
+Result object used within :ref:`hook wrappers <hookwrapper>`, see :py:class:`_Result in the pluggy documentation <pluggy._callers._Result>` for more information.
 
-.. autoclass:: pluggy.callers._Result
-.. automethod:: pluggy.callers._Result.get_result
-.. automethod:: pluggy.callers._Result.force_result
 
 Stash
 ~~~~~
