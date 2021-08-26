@@ -1,0 +1,23 @@
+name: Documentation
+on:
+  pull_request_target:
+    paths:
+      - "doc/**"
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed # necessary to deactivate the version in Read the Docs
+permissions:
+  pull-requests: write
+  checks: write
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to the staging site
+        uses: KengoTODA/readthedocs-action@v2.0.12
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          rtd-token: ${{ secrets.RTD_TOKEN }}
+          rtd-project: pytest
