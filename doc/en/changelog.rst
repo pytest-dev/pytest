@@ -28,6 +28,13 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.3.0 (2021-08-27)
+Features
+--------
+
+- `#8494 <https://github.com/pytest-dev/pytest/issues/8494>`_: Python 3.10 is now supported.
+
+
 pytest 6.2.4 (2021-05-04)
 =========================
 
