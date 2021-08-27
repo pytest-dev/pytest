@@ -1780,7 +1780,7 @@ def test_invocation_args(pytester: Pytester) -> None:
 )
 def test_config_blocked_default_plugins(pytester: Pytester, plugin: str) -> None:
     if plugin == "debugging":
-        # Fixed in xdist master (after 1.27.0).
+        # Fixed in xdist (after 1.27.0).
         # https://github.com/pytest-dev/pytest-xdist/pull/422
         try:
             import xdist  # noqa: F401
