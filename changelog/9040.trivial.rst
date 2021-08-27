@@ -1,0 +1,1 @@
+Enable compatibility with ``pluggy 1.0`` or later.
