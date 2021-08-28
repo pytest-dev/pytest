@@ -224,8 +224,10 @@ def _resolve_msg_to_reason(
     if msg is not None:
 
         if reason:
-            fail(
-                reason=f"Passing both ``reason`` and ``msg`` to pytest.{func_name}(...) is not permitted."
+            from pytest import UsageError
+
+            raise UsageError(
+                f"Passing both ``reason`` and ``msg`` to pytest.{func_name}(...) is not permitted."
             )
         warnings.warn(KEYWORD_MSG_ARG.format(func=func_name), stacklevel=3)
         reason = msg

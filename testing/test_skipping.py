@@ -1485,7 +1485,7 @@ def test_fail_fails_with_msg_and_reason(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines(
-        "*Failed: Passing both ``reason`` and ``msg`` to pytest.fail(...) is not permitted.*"
+        "*UsageError: Passing both ``reason`` and ``msg`` to pytest.fail(...) is not permitted.*"
     )
     result.assert_outcomes(failed=1)
 
@@ -1501,7 +1501,7 @@ def test_skip_fails_with_msg_and_reason(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines(
-        "*Failed: Passing both ``reason`` and ``msg`` to pytest.skip(...) is not permitted.*"
+        "*UsageError: Passing both ``reason`` and ``msg`` to pytest.skip(...) is not permitted.*"
     )
     result.assert_outcomes(failed=1)
 

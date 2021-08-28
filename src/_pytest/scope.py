@@ -79,6 +79,9 @@ class Scope(Enum):
                 ),
                 pytrace=False,
             )
+            # I don't know why mypy complains here, `fail()` is typed as `typing.NoReturn`
+            # yet it complains of error: Missing return statement [return] ?
+            assert False, "unreachable"
 
 
 _ALL_SCOPES = list(Scope)
