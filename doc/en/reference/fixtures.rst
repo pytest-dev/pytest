@@ -418,7 +418,7 @@ is executed for the tests inside it anyway:
 
 But just because one autouse fixture requested a non-autouse fixture, that
 doesn't mean the non-autouse fixture becomes an autouse fixture for all contexts
-that it can apply to. It only effectively becomes an auotuse fixture for the
+that it can apply to. It only effectively becomes an autouse fixture for the
 contexts the real autouse fixture (the one that requested the non-autouse
 fixture) can apply to.
 

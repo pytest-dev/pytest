@@ -102,7 +102,7 @@ the actual exception raised.  The main attributes of interest are
 
 You can pass a ``match`` keyword parameter to the context-manager to test
 that a regular expression matches on the string representation of an exception
-(similar to the ``TestCase.assertRaisesRegexp`` method from ``unittest``):
+(similar to the ``TestCase.assertRaisesRegex`` method from ``unittest``):
 
 .. code-block:: python
 

@@ -1,0 +1,2 @@
+The test selection options ``pytest -k`` and ``pytest -m`` now support matching names containing backslash (`\\`) characters.
+Backslashes are treated literally, not as escape characters (the values being matched against are already escaped).

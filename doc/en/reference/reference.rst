@@ -956,11 +956,8 @@ TestReport
 _Result
 ~~~~~~~
 
-Result used within :ref:`hook wrappers <hookwrapper>`.
+Result object used within :ref:`hook wrappers <hookwrapper>`, see :py:class:`_Result in the pluggy documentation <pluggy._callers._Result>` for more information.
 
-.. autoclass:: pluggy.callers._Result
-.. automethod:: pluggy.callers._Result.get_result
-.. automethod:: pluggy.callers._Result.force_result
 
 Stash
 ~~~~~
@@ -1074,6 +1071,14 @@ Contains comma-separated list of modules that should be loaded as plugins:
 .. code-block:: bash
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
+
+.. envvar:: PYTEST_THEME
+
+Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
+
+.. envvar:: PYTEST_THEME_MODE
+
+Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
 
 .. envvar:: PY_COLORS
 
