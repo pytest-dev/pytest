@@ -28,7 +28,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 6.2.4
+    pytest 6.2.5
 
 .. _`simpletest`:
 
@@ -53,7 +53,7 @@ That’s it. You can now execute the test function:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR
     collected 1 item
