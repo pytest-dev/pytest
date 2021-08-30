@@ -248,3 +248,33 @@ def test_xfail_handling(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
             "* 2 passed, 1 deselected, 1 xfailed in *",
         ]
     )
+
+
+def test_stepwise_skip_is_independent(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_one():
+            assert False
+
+        def test_two():
+            assert False
+
+        def test_three():
+            assert False
+
+        """
+    )
+    result = pytester.runpytest("--tb", "no", "--stepwise-skip")
+    result.assert_outcomes(failed=2)
+    result.stdout.fnmatch_lines(
+        [
+            "FAILED test_stepwise_skip_is_independent.py::test_one - assert False",
+            "FAILED test_stepwise_skip_is_independent.py::test_two - assert False",
+            "*Interrupted: Test failed, continuing from this test next run.*",
+        ]
+    )
+
+
+def test_sw_skip_help(pytester: Pytester) -> None:
+    result = pytester.runpytest("-h")
+    result.stdout.fnmatch_lines("*implicitly enables --stepwise.")
