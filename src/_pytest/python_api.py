@@ -101,7 +101,7 @@ class ApproxBase:
         )
 
     def __bool__(self):
-        raise AssertionError("use approx() like this: `assert a == approx(b)`")
+        raise AssertionError("approx() is not supported in a boolean context.\nDid you mean: `assert a == approx(b)`")
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.
     __hash__ = None  # type: ignore

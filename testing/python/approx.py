@@ -323,7 +323,7 @@ class TestApprox:
         with pytest.raises(AssertionError) as err:
             assert approx(1)
 
-        assert err.match(r"use approx\(\) like this")
+        assert err.match(r"approx\(\) is not supported in a boolean context")
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
