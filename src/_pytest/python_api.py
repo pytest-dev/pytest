@@ -100,6 +100,11 @@ class ApproxBase:
             a == self._approx_scalar(x) for a, x in self._yield_comparisons(actual)
         )
 
+    def __bool__(self):
+        raise AssertionError(
+            "approx() is not supported in a boolean context.\nDid you mean: `assert a == approx(b)`?"
+        )
+
     # Ignore type because of https://github.com/python/mypy/issues/4266.
     __hash__ = None  # type: ignore
 

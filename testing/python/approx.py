@@ -319,6 +319,12 @@ class TestApprox:
         np_array = np.array(value)
         assert repr(approx(np_array)) == expected_repr_string
 
+    def test_bool(self):
+        with pytest.raises(AssertionError) as err:
+            assert approx(1)
+
+        assert err.match(r"approx\(\) is not supported in a boolean context")
+
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
         assert not (1 != approx(1, rel=1e-6, abs=1e-12))

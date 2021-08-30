@@ -1,0 +1,15 @@
+Using :func:`pytest.approx` in a boolean context now raises an error hinting at the proper usage.
+
+It is apparently common for users to mistakenly use ``pytest.approx`` like this:
+
+.. code-block:: python
+
+    assert pytest.approx(actual, expected)
+
+While the correct usage is:
+
+.. code-block:: python
+
+    assert actual == pytest.approx(expected)
+
+The new error message helps catch those mistakes.
