@@ -31,13 +31,16 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         default=False,
         dest="stepwise_skip",
-        help="ignore the first failing test but stop on the next failing test",
+        help="ignore the first failing test but stop on the next failing test.\n"
+        "implicitly enables --stepwise.",
     )
 
 
 @pytest.hookimpl
 def pytest_configure(config: Config) -> None:
-    # We should always have a cache as cache provider plugin uses tryfirst=True
+    if config.option.stepwise_skip:
+        # allow --stepwise-skip to work on it's own merits.
+        config.option.stepwise = True
     if config.getoption("stepwise"):
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
 
