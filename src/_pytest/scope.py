@@ -71,7 +71,8 @@ class Scope(Enum):
         from _pytest.outcomes import fail
 
         try:
-            return Scope(scope_name)
+            # Holding this reference is necessary for mypy at the moment.
+            scope = Scope(scope_name)
         except ValueError:
             fail(
                 "{} {}got an unexpected scope value '{}'".format(
@@ -79,9 +80,7 @@ class Scope(Enum):
                 ),
                 pytrace=False,
             )
-            # I don't know why mypy complains here, `fail()` is typed as `typing.NoReturn`
-            # yet it complains of error: Missing return statement [return] ?
-            assert False, "unreachable"
+        return scope
 
 
 _ALL_SCOPES = list(Scope)
