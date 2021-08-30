@@ -28,6 +28,19 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 6.2.5 (2021-08-29)
+=========================
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#8494 <https://github.com/pytest-dev/pytest/issues/8494>`_: Python 3.10 is now supported.
+
+
+- `#9040 <https://github.com/pytest-dev/pytest/issues/9040>`_: Enable compatibility with ``pluggy 1.0`` or later.
+
+
 pytest 6.2.4 (2021-05-04)
 =========================
 
