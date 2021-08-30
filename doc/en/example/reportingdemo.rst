@@ -9,7 +9,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
     assertion $ pytest failure_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/assertion
     collected 44 items
