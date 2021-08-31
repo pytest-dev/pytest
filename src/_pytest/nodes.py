@@ -123,7 +123,7 @@ class NodeMeta(type):
             "See "
             "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
             " for more details."
-        ).format(name=self.__name__)
+        ).format(name=f"{self.__module__}.{self.__name__}")
         fail(msg, pytrace=False)
 
     def _create(self, *k, **kw):
