@@ -55,6 +55,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
     "sphinxcontrib_trio",
+    "sphinxcontrib.inkscapeconverter",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
