@@ -17,6 +17,7 @@
 # The short X.Y version.
 import ast
 import os
+import shutil
 import sys
 from typing import List
 from typing import TYPE_CHECKING
@@ -55,8 +56,14 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
     "sphinxcontrib_trio",
-    "sphinxcontrib.inkscapeconverter",
 ]
+
+# Building PDF docs on readthedocs requires inkscape for svg to pdf
+# conversion. The relevant plugin is not useful for normal HTML builds, but
+# it still raises warnings and fails CI if inkscape is not available. So
+# only use the plugin if inkscape is actually available.
+if shutil.which('inkscape'):
+    extensions.append("sphinxcontrib.inkscapeconverter")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
