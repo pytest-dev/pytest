@@ -1092,6 +1092,26 @@ class TestRequestBasic:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
 
+    @pytest.mark.parametrize("name", ["path", "fspath", "module"])
+    def test_session_scoped_unavailable_attributes(self, pytester, name):
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.fixture(scope="session")
+            def fixt(request):
+                request.{name}
+
+            def test_request(fixt):
+                pass
+        """
+        )
+        result = pytester.runpytest()
+        expected = "path" if name == "fspath" else name
+        result.stdout.fnmatch_lines(
+            [f"E*AttributeError: {expected} not available in session-scoped context"]
+        )
+
 
 class TestRequestMarking:
     def test_applymarker(self, pytester: Pytester) -> None:
