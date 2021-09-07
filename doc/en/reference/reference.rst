@@ -118,7 +118,7 @@ Add warning filters to marked test items.
 
     :keyword str filter:
         A *warning specification string*, which is composed of contents of the tuple ``(action, message, category, module, lineno)``
-        as specified in `The Warnings filter <https://docs.python.org/3/library/how-to/capture-warnings.html#warning-filter>`_ section of
+        as specified in :ref:`python:warning-filter` section of
         the Python documentation, separated by ``":"``. Optional fields can be omitted.
         Module names passed for filtering are not regex-escaped.
 
@@ -958,7 +958,6 @@ _Result
 
 Result object used within :ref:`hook wrappers <hookwrapper>`, see :py:class:`_Result in the pluggy documentation <pluggy._callers._Result>` for more information.
 
-
 Stash
 ~~~~~
 
@@ -1266,7 +1265,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: faulthandler_timeout
 
    Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
-   fixture setup and teardown). Implemented using the `faulthandler.dump_traceback_later`_ function,
+   fixture setup and teardown). Implemented using the :func:`faulthandler.dump_traceback_later` function,
    so all caveats there apply.
 
    .. code-block:: ini
@@ -1276,9 +1275,6 @@ passed multiple times. The expected format is ``name=value``. For example::
         faulthandler_timeout=5
 
    For more information please refer to :ref:`faulthandler`.
-
-.. _`faulthandler.dump_traceback_later`: https://docs.python.org/3/library/faulthandler.html#faulthandler.dump_traceback_later
-
 
 .. confval:: filterwarnings
 

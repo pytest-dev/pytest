@@ -4,7 +4,7 @@ How to run doctests
 =========================================================
 
 By default, all files matching the ``test*.txt`` pattern will
-be run through the python standard ``doctest`` module.  You
+be run through the python standard :mod:`doctest` module.  You
 can change the pattern by issuing:
 
 .. code-block:: bash
@@ -95,7 +95,7 @@ that will be used for those doctest files using the
 Using 'doctest' options
 -----------------------
 
-Python's standard ``doctest`` module provides some `options <https://docs.python.org/3/library/how-to/doctest.html#option-flags>`__
+Python's standard :mod:`doctest` module provides some :ref:`options <python:option-flags-and-directives>`
 to configure the strictness of doctest tests. In pytest, you can enable those flags using the
 configuration file.
 
@@ -252,7 +252,7 @@ For the same reasons one might want to skip normal tests, it is also possible to
 tests inside doctests.
 
 To skip a single check inside a doctest you can use the standard
-`doctest.SKIP <https://docs.python.org/3/library/how-to/doctest.html#doctest.SKIP>`__ directive:
+:data:`doctest.SKIP` directive:
 
 .. code-block:: python
 

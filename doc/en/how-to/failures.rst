@@ -18,16 +18,14 @@ To stop the testing process after the first (N) failures:
 
 .. _pdb-option:
 
-Using PDB_ (Python Debugger) with pytest
-----------------------------------------------------------
+Using :doc:`python:library/pdb` with pytest
+-------------------------------------------
 
-Dropping to PDB_ (Python Debugger) on failures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Dropping to :doc:`pdb <python:library/pdb>` on failures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _PDB: https://docs.python.org/library/pdb.html
-
-Python comes with a builtin Python debugger called PDB_.  ``pytest``
-allows one to drop into the PDB_ prompt via a command line option:
+Python comes with a builtin Python debugger called :doc:`pdb <python:library/pdb>`.  ``pytest``
+allows one to drop into the :doc:`pdb <python:library/pdb>` prompt via a command line option:
 
 .. code-block:: bash
 
@@ -57,10 +55,10 @@ for example::
 
 .. _trace-option:
 
-Dropping to PDB_ at the start of a test
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Dropping to :doc:`pdb <python:library/pdb>` at the start of a test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``pytest`` allows one to drop into the PDB_ prompt immediately at the start of each test via a command line option:
+``pytest`` allows one to drop into the :doc:`pdb <python:library/pdb>` prompt immediately at the start of each test via a command line option:
 
 .. code-block:: bash
 
@@ -106,7 +104,7 @@ Fault Handler
 
 .. versionadded:: 5.0
 
-The `faulthandler <https://docs.python.org/3/library/faulthandler.html>`__ standard module
+The :mod:`faulthandler` standard module
 can be used to dump Python tracebacks on a segfault or after a timeout.
 
 The module is automatically enabled for pytest runs, unless the ``-p no:faulthandler`` is given

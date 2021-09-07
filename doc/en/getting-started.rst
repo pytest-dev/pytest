@@ -71,7 +71,7 @@ The ``[100%]`` refers to the overall progress of running all test cases. After i
 
 .. note::
 
-    You can use the ``assert`` statement to verify test expectations. pytest’s `Advanced assertion introspection <https://docs.python.org/reference/simple_stmts.html>`_ will intelligently report intermediate values of the assert expression so you can avoid the many names `of JUnit legacy methods <https://docs.python.org/library/how-to/unittest.html>`_.
+    You can use the ``assert`` statement to verify test expectations. pytest’s :ref:`Advanced assertion introspection <python:assert>` will intelligently report intermediate values of the assert expression so you can avoid the many names :ref:`of JUnit legacy methods <testcase-objects>`.
 
 Run multiple tests
 ----------------------------------------------------------

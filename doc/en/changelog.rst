@@ -411,7 +411,7 @@ Improvements
   and should be preferred over them when possible.
 
 
-- `#7780 <https://github.com/pytest-dev/pytest/issues/7780>`_: Public classes which are not designed to be inherited from are now marked `@final <https://docs.python.org/3/library/typing.html#typing.final>`_.
+- `#7780 <https://github.com/pytest-dev/pytest/issues/7780>`_: Public classes which are not designed to be inherited from are now marked :func:`@final <typing.final>`.
   Code which inherits from these classes will trigger a type-checking (e.g. mypy) error, but will still work in runtime.
   Currently the ``final`` designation does not appear in the API Reference but hopefully will in the future.
 
@@ -785,7 +785,7 @@ Features
 - `#6906 <https://github.com/pytest-dev/pytest/issues/6906>`_: Added `--code-highlight` command line option to enable/disable code highlighting in terminal output.
 
 
-- `#7245 <https://github.com/pytest-dev/pytest/issues/7245>`_: New ``--import-mode=importlib`` option that uses `importlib <https://docs.python.org/3/library/importlib.html>`__ to import test modules.
+- `#7245 <https://github.com/pytest-dev/pytest/issues/7245>`_: New ``--import-mode=importlib`` option that uses :mod:`importlib` to import test modules.
 
   Traditionally pytest used ``__import__`` while changing ``sys.path`` to import test modules (which
   also changes ``sys.modules`` as a side-effect), which works but has a number of drawbacks, like requiring test modules
@@ -2032,7 +2032,7 @@ Features
   This hook is still **experimental** so use it with caution.
 
 
-- `#5440 <https://github.com/pytest-dev/pytest/issues/5440>`_: The `faulthandler <https://docs.python.org/3/library/faulthandler.html>`__ standard library
+- `#5440 <https://github.com/pytest-dev/pytest/issues/5440>`_: The :mod:`faulthandler` standard library
   module is now enabled by default to help users diagnose crashes in C modules.
 
   This functionality was provided by integrating the external
@@ -3130,7 +3130,7 @@ Features
   will not issue the warning.
 
 
-- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <https://www.attrs.org/en/stable/>`__ or `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
+- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <https://www.attrs.org/en/stable/>`__ or :mod:`dataclasses` (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
 
 
 - `#4278 <https://github.com/pytest-dev/pytest/issues/4278>`_: ``CACHEDIR.TAG`` files are now created inside cache directories.
