@@ -1094,7 +1094,6 @@ class TestRequestBasic:
 
 
 class TestRequestSessionScoped:
-
     @pytest.fixture(scope="session")
     def session_request(self, request):
         return request
