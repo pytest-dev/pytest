@@ -2,7 +2,6 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `pytest: Professionelles Testen (nicht nur) für Python <https://workshoptage.ch/workshops/2021/pytest-test-driven-development-nicht-nur-fuer-python-2/>`_ (German), part of `CH-Open Workshoptage <https://workshoptage.ch/>`_, September 9th, ETH Zurich, Switzerland.
    - `Professional Testing with Python <https://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, February 1st to 3rd, 2022, Leipzig (Germany) and remote.
 
    Also see `previous talks and blogposts <talks.html>`_.
