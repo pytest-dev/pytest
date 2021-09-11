@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 from typing import cast
 from typing import Iterable
@@ -16,7 +17,13 @@ if TYPE_CHECKING:
     import sphinx.application
     import sphinx.domains
 
-Inventory = dict[str, dict[str, tuple[str, str, str, str]]]
+if sys.version_info >= (3, 9):
+    Inventory = dict[str, dict[str, tuple[str, str, str, str]]]
+else:
+    from typing import Dict, Tuple
+
+    Inventory = Dict[str, Dict[str, Tuple[str, str, str, str]]]
+
 
 logger = sphinx.util.logging.getLogger(__name__)
 
