@@ -108,11 +108,19 @@ class ExternalLinkChecker(sphinx.builders.dummy.DummyBuilder):
     def finish(self) -> None:
         intersphinx_cache = getattr(self.app.env, "intersphinx_cache", dict())
         for uri_info in self.uris:
-            for inventory_uri, (inventory_name, _, inventory) in intersphinx_cache.items():
+            for inventory_uri, (
+                inventory_name,
+                _,
+                inventory,
+            ) in intersphinx_cache.items():
                 if uri_info.uri.startswith(inventory_uri):
                     # build a replacement suggestion
                     try:
-                        replacement = next(replacements(uri_info.uri, inventory, self.app.env.domains.values()))
+                        replacement = next(
+                            replacements(
+                                uri_info.uri, inventory, self.app.env.domains.values()
+                            )
+                        )
                         suggestion = f"try using {replacement!r} instead"
                     except StopIteration:
                         suggestion = "no suggestion"
@@ -127,7 +135,9 @@ class ExternalLinkChecker(sphinx.builders.dummy.DummyBuilder):
                     )
 
 
-def replacements(uri: str, inventory: Inventory, domains: Iterable["sphinx.domains.Domain"]) -> Iterator[str]:
+def replacements(
+    uri: str, inventory: Inventory, domains: Iterable["sphinx.domains.Domain"]
+) -> Iterator[str]:
     """
     Create a crossreference to replace hardcoded ``uri``.
 
