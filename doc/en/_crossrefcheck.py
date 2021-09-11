@@ -1,6 +1,7 @@
 from typing import Any
 from typing import cast
-from typing import List
+from typing import Iterable
+from typing import Iterator
 from typing import NamedTuple
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,9 @@ import sphinx.util.nodes
 
 if TYPE_CHECKING:
     import sphinx.application
+    import sphinx.domains
+
+Inventory = dict[str, dict[str, tuple[str, str, str, str]]]
 
 logger = sphinx.util.logging.getLogger(__name__)
 
@@ -69,16 +73,29 @@ class ExternalLinkChecker(sphinx.builders.dummy.DummyBuilder):
     an inventory URL configured in ``intersphinx_mapping`` and warns if the
     link can be replaced by an cross-reference.
 
-    .. note:: Special case: since we can't infer the hostname where our docs
-       will be hosted, we provide a fake inventory configuration for ``pytest``
-       explicitly in addition to the configured intersphinx inventories.
-
     .. note:: The matching is done by simply comparing URLs as strings
-       via ``str.startswith``. This means that with ``"https://pluggy.readthedocs.io/en/stable"``
-       configured in ``intersphinx_mapping``, no warning will be emitted for
-       e.g. ``https://pluggy.readthedocs.io/en/latest`` or ``https://pluggy.readthedocs.io/de/stable``.
-       If this is desired, reimplement the comparison by parsing hostnames
-       via e.g. ``urllib.parse.urlparse`` etc.
+       via ``str.startswith``. This means that with e.g. ``x`` project
+       configured as
+
+       .. code-block:: python
+
+          intersphinx_mapping = {
+              "x": ("https://x.readthedocs.io/en/stable", None),
+          }
+
+       no warning will be emitted for links ``https://x.readthedocs.io/en/latest``
+       or ``https://x.readthedocs.io/de/stable``.
+
+       Those links can be included by adding the missing docs
+       for ``x`` to ``intersphinx_mapping``:
+
+       .. code-block:: python
+
+          intersphinx_mapping = {
+              "x": ("https://x.readthedocs.io/en/stable", None),
+              "x-dev": ("https://x.readthedocs.io/en/latest", None),
+              "x-german": ("https://x.readthedocs.io/de/stable", None),
+          }
 
     """
 
@@ -86,33 +103,47 @@ class ExternalLinkChecker(sphinx.builders.dummy.DummyBuilder):
 
     def __init__(self, app: "sphinx.application.Sphinx") -> None:
         super().__init__(app)
-        self.uris: List[URIInfo] = []
+        self.uris: list[URIInfo] = []
 
     def finish(self) -> None:
-        intersphinx_mapping = getattr(self.config, "intersphinx_mapping", dict())
-        # add internal inventory as a fake intersphinx inventory too,
-        # as we can't guess the pytest docs hostname otherwise.
-        # This way, we treat hardcoded links that can be replaced
-        # by internal references same as if we would crossref
-        # to pytest docs via intersphinx.
-        intersphinx_mapping["pytest"] = ("pytest", ("https://docs.pytest.org/", None))
+        intersphinx_cache = getattr(self.app.env, "intersphinx_cache", dict())
         for uri_info in self.uris:
-            for inventory, (_, (inventory_uri, *_)) in intersphinx_mapping.items():
+            for inventory_uri, (inventory_name, _, inventory) in intersphinx_cache.items():
                 if uri_info.uri.startswith(inventory_uri):
+                    # build a replacement suggestion
+                    try:
+                        replacement = next(replacements(uri_info.uri, inventory, self.app.env.domains.values()))
+                        suggestion = f"try using {replacement!r} instead"
+                    except StopIteration:
+                        suggestion = "no suggestion"
+
                     location = (uri_info.document_name, uri_info.line_number)
-                    if inventory == "pytest":
-                        logger.warning(
-                            "hardcoded link %r should be replaced by an internal reference",
-                            uri_info.uri,
-                            location=location,
-                        )
-                    else:
-                        logger.warning(
-                            "hardcoded link %r could be replaced by a cross-reference to %r inventory",
-                            uri_info.uri,
-                            inventory,
-                            location=location,
-                        )
+                    logger.warning(
+                        "hardcoded link %r could be replaced by a cross-reference to %r inventory (%s)",
+                        uri_info.uri,
+                        inventory_name,
+                        suggestion,
+                        location=location,
+                    )
+
+
+def replacements(uri: str, inventory: Inventory, domains: Iterable["sphinx.domains.Domain"]) -> Iterator[str]:
+    """
+    Create a crossreference to replace hardcoded ``uri``.
+
+    This is straightforward: search the given inventory
+    for an entry that points to the ``uri`` and build
+    a ReST markup that should replace ``uri`` with a crossref.
+    """
+    for key, entries in inventory.items():
+        domain_name, directive_type = key.split(":")
+        for target, (_, _, target_uri, _) in entries.items():
+            if uri == target_uri:
+                role = "any"
+                for domain in domains:
+                    if domain_name == domain.name:
+                        role = domain.role_for_objtype(directive_type) or "any"
+                        yield f":{domain_name}:{role}:`{target}`"
 
 
 def setup(app: "sphinx.application.Sphinx") -> None:
