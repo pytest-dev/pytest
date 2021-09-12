@@ -37,6 +37,15 @@
     :target: https://pytest.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://img.shields.io/badge/Discord-pytest--dev-blue
+    :target: https://discord.com/invite/pytest-dev
+    :alt: Discord
+
+.. image:: https://img.shields.io/badge/Libera%20chat-%23pytest-orange
+    :target: https://web.libera.chat/#pytest
+    :alt: Libera chat
+
+
 The ``pytest`` framework makes it easy to write small tests, yet
 scales to support complex functional testing for applications and libraries.
 
