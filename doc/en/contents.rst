@@ -98,7 +98,6 @@ Further topics
    history
    historical-notes
    talks
-   projects
 
 
 .. only:: html
