@@ -378,10 +378,12 @@ class Node(metaclass=NodeMeta):
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
+        duplicate_markers = set()
         for node in reversed(self.listchain()):
             for mark in node.own_markers:
-                if name is None or getattr(mark, "name", None) == name:
+                if (name is None or getattr(mark, "name", None) == name) and str(mark) not in duplicate_markers:
                     yield node, mark
+                    duplicate_markers.add(str(mark))
 
     @overload
     def get_closest_marker(self, name: str) -> Optional[Mark]:
