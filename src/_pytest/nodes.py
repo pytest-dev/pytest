@@ -381,7 +381,9 @@ class Node(metaclass=NodeMeta):
         duplicate_markers = set()
         for node in reversed(self.listchain()):
             for mark in node.own_markers:
-                if (name is None or getattr(mark, "name", None) == name) and str(mark) not in duplicate_markers:
+                if (name is None or getattr(mark, "name", None) == name) and str(
+                    mark
+                ) not in duplicate_markers:
                     yield node, mark
                     duplicate_markers.add(str(mark))
 

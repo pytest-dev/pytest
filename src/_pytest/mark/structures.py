@@ -385,7 +385,11 @@ def extract_mro_markers(cls):
         if not getattr(parent_obj, "mro_markers", []):
             extract_mro_markers(parent_obj)
 
-        [markers.__setitem__(str(mark), mark) for mark in parent_obj.mro_markers if mark.name != "parametrize"]
+        [
+            markers.__setitem__(str(mark), mark)
+            for mark in parent_obj.mro_markers
+            if mark.name != "parametrize"
+        ]
     setattr(cls, "mro_markers", list(markers.values()))
 
 
