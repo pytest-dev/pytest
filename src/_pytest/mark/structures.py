@@ -374,20 +374,19 @@ def get_unpacked_marks(obj) -> List[Mark]:
     return normalize_mark_list(get_marks_as_list(obj))
 
 
-def update_cls_pytestmark(cls):
-    if cls is None or getattr(cls, "is_mro_markers_updated", False) or cls is object:
+def extract_mro_markers(cls):
+    if cls is None or getattr(cls, "mro_markers", []) or cls is object:
         return
 
-    markers = {str(mark): mark for mark in get_marks_as_list(cls)}
-    for parent_obj in cls.__mro__[1:]:
+    markers = {str(mark): mark for mark in get_marks_as_list(cls) if mark.name != "parametrize"}
+    for parent_obj in cls.__mro__[::-1][:-1]:
         if parent_obj is object:
             continue
-        if not getattr(parent_obj, "is_mro_markers_updated", False):
-            update_cls_pytestmark(parent_obj)
+        if not getattr(parent_obj, "mro_markers", []):
+            extract_mro_markers(parent_obj)
 
-        [markers.__setitem__(str(mark), mark) for mark in get_marks_as_list(parent_obj)]
-    setattr(cls, "pytestmark", list(markers.values()))
-    setattr(cls, "is_mro_markers_updated", True)
+        [markers.__setitem__(str(mark), mark) for mark in parent_obj.mro_markers if mark.name != "parametrize"]
+    setattr(cls, "mro_markers", list(markers.values()))
 
 
 def normalize_mark_list(
