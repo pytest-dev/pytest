@@ -31,6 +31,11 @@ with advance notice in the **Deprecations** section of releases.
 pytest 6.2.5 (2021-08-29)
 =========================
 
+Bug Fixes
+---------
+
+- `#7792 <https://github.com/pytest-dev/pytest/issues/7792>`_: Fix missing marks when inheritance from multiple classes.
+
 
 Trivial/Internal Changes
 ------------------------

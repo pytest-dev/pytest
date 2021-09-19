@@ -63,10 +63,12 @@ from _pytest.fixtures import FuncFixtureInfo
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
+from _pytest.mark.structures import get_marks_as_list
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import normalize_mark_list
+from _pytest.mark.structures import update_cls_pytestmark
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.pathlib import bestrelpath
@@ -1617,6 +1619,8 @@ class Function(PyobjMixin, nodes.Item):
         # to a readonly property that returns FunctionDefinition.name.
 
         self.keywords.update(self.obj.__dict__)
+        update_cls_pytestmark(self.cls)
+        self.own_markers.extend(get_marks_as_list(self.cls))
         self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec

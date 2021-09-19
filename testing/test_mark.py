@@ -1127,3 +1127,35 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     result = pytester.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR
+
+
+@pytest.mark.parametrize(
+    "markers",
+    (
+        "mark1",
+        "mark1 and mark2",
+        "mark1 and mark2 and mark3",
+        "mark1 and mark2 and mark3 and mark4",
+    ),
+)
+def test_markers_from_multiple_inheritances(pytester: Pytester, markers) -> None:
+    py_file = pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.mark1
+        class Base1:
+            pass
+
+        @pytest.mark.mark2
+        class Base2:
+            pass
+
+        @pytest.mark.mark3
+        class TestMultipleInheritances(Base1, Base2):
+            @pytest.mark.mark4
+            def test_multiple_inheritances(self):
+                pass
+        """
+    )
+    result = pytester.inline_run(py_file, "-m", markers)
+    result.assertoutcome(passed=1)

@@ -4,6 +4,7 @@ import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
+from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -365,7 +366,28 @@ def get_unpacked_marks(obj: object) -> Iterable[Mark]:
     mark_list = getattr(obj, "pytestmark", [])
     if not isinstance(mark_list, list):
         mark_list = [mark_list]
-    return normalize_mark_list(mark_list)
+    return mark_list
+
+
+def get_unpacked_marks(obj) -> List[Mark]:
+    """Obtain the unpacked marks that are stored on an object."""
+    return normalize_mark_list(get_marks_as_list(obj))
+
+
+def update_cls_pytestmark(cls):
+    if cls is None or getattr(cls, "is_mro_markers_updated", False) or cls is object:
+        return
+
+    markers = {str(mark): mark for mark in get_marks_as_list(cls)}
+    for parent_obj in cls.__mro__[1:]:
+        if parent_obj is object:
+            continue
+        if not getattr(parent_obj, "is_mro_markers_updated", False):
+            update_cls_pytestmark(parent_obj)
+
+        [markers.__setitem__(str(mark), mark) for mark in get_marks_as_list(parent_obj)]
+    setattr(cls, "pytestmark", list(markers.values()))
+    setattr(cls, "is_mro_markers_updated", True)
 
 
 def normalize_mark_list(
