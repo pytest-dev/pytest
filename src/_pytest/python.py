@@ -1311,6 +1311,10 @@ def _idval(
     nodeid: Optional[str],
     config: Optional[Config],
 ) -> str:
+    if val is NOTSET:
+        # Fallback to default. Note that NOTSET is an enum.Enum.
+        return str(argname) + str(idx)
+
     if idfn:
         try:
             generated_id = idfn(val)
@@ -1334,15 +1338,13 @@ def _idval(
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return ascii_escaped(val.pattern)
-    elif val is NOTSET:
-        # Fallback to default. Note that NOTSET is an enum.Enum.
-        pass
     elif isinstance(val, enum.Enum):
         return str(val)
     elif isinstance(getattr(val, "__name__", None), str):
         # Name of a class, function, module, etc.
         name: str = getattr(val, "__name__")
         return name
+
     return str(argname) + str(idx)
 
 
