@@ -416,7 +416,12 @@ return a result object, with which we can assert the tests' outcomes.
         result.assert_outcomes(passed=4)
 
 
-Additionally it is possible to copy examples for an example folder before running pytest on it.
+Additionally it is possible to copy examples to the ``pytester``'s isolated environment
+before running pytest on it. This way we can abstract the tested logic to separate files,
+which is especially useful for longer tests and/or longer ``conftest.py`` files.
+
+Note that for ``pytester.copy_example`` to work we need to set `pytester_example_dir`
+in our ``pytest.ini`` to tell pytest where to look for example files.
 
 .. code-block:: ini
 
