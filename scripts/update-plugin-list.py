@@ -26,6 +26,19 @@ DEVELOPMENT_STATUS_CLASSIFIERS = (
 )
 
 
+def escape_rst(text: str) -> str:
+    """Rudimentary attempt to escape special RST characters to appear as
+    plain text."""
+    text = (
+        text.replace("*", "\\*")
+        .replace("<", "\\<")
+        .replace(">", "\\>")
+        .replace("`", "\\`")
+    )
+    text = re.sub(r"_\b", "", text)
+    return text
+
+
 def iter_plugins():
     regex = r">([\d\w-]*)</a>"
     response = requests.get("https://pypi.org/simple")
@@ -63,8 +76,7 @@ def iter_plugins():
                 last_release = release_date.strftime("%b %d, %Y")
                 break
         name = f'`{info["name"]} <{info["project_url"]}>`_'
-        summary = info["summary"].replace("\n", "")
-        summary = re.sub(r"_\b", "", summary)
+        summary = escape_rst(info["summary"].replace("\n", ""))
         yield {
             "name": name,
             "summary": summary,
