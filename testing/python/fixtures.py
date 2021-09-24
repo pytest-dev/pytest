@@ -1093,6 +1093,21 @@ class TestRequestBasic:
         reprec.assertoutcome(passed=2)
 
 
+class TestRequestSessionScoped:
+    @pytest.fixture(scope="session")
+    def session_request(self, request):
+        return request
+
+    @pytest.mark.parametrize("name", ["path", "fspath", "module"])
+    def test_session_scoped_unavailable_attributes(self, session_request, name):
+        expected = "path" if name == "fspath" else name
+        with pytest.raises(
+            AttributeError,
+            match=f"{expected} not available in session-scoped context",
+        ):
+            getattr(session_request, name)
+
+
 class TestRequestMarking:
     def test_applymarker(self, pytester: Pytester) -> None:
         item1, item2 = pytester.getitems(
