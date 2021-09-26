@@ -3,6 +3,8 @@
 Managing pytest's output
 =========================
 
+.. _how-to-modifying-python-tb-printing:
+
 Modifying Python traceback printing
 --------------------------------------------------
 
@@ -466,8 +468,7 @@ by the `PyPy-test`_ web page to show test results over several revisions.
 
     If you use this option, consider using the new `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
 
-    See `the deprecation docs <https://docs.pytest.org/en/stable/deprecations.html#result-log-result-log>`__
-    for more information.
+    See :ref:`the deprecation docs <resultlog deprecated>` for more information.
 
 
 .. _`PyPy-test`: http://buildbot.pypy.org/summary

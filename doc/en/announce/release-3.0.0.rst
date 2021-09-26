@@ -18,7 +18,7 @@ To see the complete changelog and documentation, please visit:
 
     http://docs.pytest.org
 
-As usual, you can upgrade from pypi via:
+As usual, you can upgrade from pypi via::
 
     pip install -U pytest
 

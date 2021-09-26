@@ -171,6 +171,7 @@ A ``--show-capture`` command-line option was added in ``pytest 3.5.0`` which all
 display captured output when tests fail: ``no``, ``stdout``, ``stderr``, ``log`` or ``all`` (the default).
 
 
+.. _resultlog deprecated:
 
 Result log (``--result-log``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -207,6 +208,8 @@ with ``py.io.TerminalWriter``.
 
 Plugins that used ``TerminalReporter.writer`` directly should instead use ``TerminalReporter``
 methods that provide the same functionality.
+
+.. _junit-family changed default value:
 
 ``junit_family`` default value change to "xunit2"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -294,6 +297,8 @@ that as an alias since.  It is finally due for removal, as it is often confusing
 in places where we or plugin authors must distinguish between fixture names and
 names supplied by non-fixture things such as ``pytest.mark.parametrize``.
 
+
+.. _pytest.config global deprecated:
 
 ``pytest.config`` global
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -392,6 +397,8 @@ This issue should affect only advanced plugins who create new collection types, 
 message please contact the authors so they can change the code.
 
 
+.. _marks in pytest.parametrize deprecated:
+
 marks in ``pytest.mark.parametrize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -440,6 +447,8 @@ To update the code, use ``pytest.param``:
         ...
 
 
+.. _pytest_funcarg__ prefix deprecated:
+
 ``pytest_funcarg__`` prefix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -471,6 +480,8 @@ Switch over to the ``@pytest.fixture`` decorator:
 to avoid conflicts with other distutils commands.
 
 
+.. _metafunc.addcall deprecated:
+
 Metafunc.addcall
 ~~~~~~~~~~~~~~~~
 
@@ -494,6 +505,8 @@ Becomes:
     def pytest_generate_tests(metafunc):
         metafunc.parametrize("i", [1, 2], ids=["1", "2"])
 
+
+.. _cached_setup deprecated:
 
 ``cached_setup``
 ~~~~~~~~~~~~~~~~
@@ -523,9 +536,11 @@ This should be updated to make use of standard fixture mechanisms:
         session.close()
 
 
-You can consult `funcarg comparison section in the docs <https://docs.pytest.org/en/stable/funcarg_compare.html>`_ for
+You can consult :std:doc:`funcarg comparison section in the docs <funcarg_compare>` for
 more information.
 
+
+.. _pytest_plugins in non-top-level conftest files deprecated:
 
 pytest_plugins in non-top-level conftest files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -536,6 +551,8 @@ Defining :globalvar:`pytest_plugins` is now deprecated in non-top-level conftest
 files because they will activate referenced plugins *globally*, which is surprising because for all other pytest
 features ``conftest.py`` files are only *active* for tests at or below it.
 
+
+.. _config.warn and node.warn deprecated:
 
 ``Config.warn`` and ``Node.warn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -564,6 +581,8 @@ Becomes:
 
 * ``node.warn("CI", "some message")``: this code/message form has been **removed** and should be converted to the warning instance form above.
 
+.. _record_xml_property deprecated:
+
 record_xml_property
 ~~~~~~~~~~~~~~~~~~~
 
@@ -587,6 +606,8 @@ Change to:
         ...
 
 
+.. _passing command-line string to pytest.main deprecated:
+
 Passing command-line string to ``pytest.main()``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -608,6 +629,8 @@ Pass a list instead:
 By passing a string, users expect that pytest will interpret that command-line using the shell rules they are working
 on (for example ``bash`` or ``Powershell``), but this is very hard/impossible to do in a portable way.
 
+
+.. _calling fixtures directly deprecated:
 
 Calling fixtures directly
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -662,6 +685,8 @@ with the ``name`` parameter:
         return cell()
 
 
+.. _yield tests deprecated:
+
 ``yield`` tests
 ~~~~~~~~~~~~~~~
 
@@ -689,6 +714,8 @@ This form of test function doesn't support fixtures properly, and users should s
     @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
     def test_squared(x, y):
         assert x ** x == y
+
+.. _internal classes accessed through node deprecated:
 
 Internal classes accessed through ``Node``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -723,6 +750,8 @@ As part of a large :ref:`marker-revamp`, ``_pytest.nodes.Node.get_marker`` is re
 As part of a large :ref:`marker-revamp` we already deprecated using ``MarkInfo``
 the only correct way to get markers of an element is via ``node.iter_markers(name)``.
 
+
+.. _pytest.namespace deprecated:
 
 ``pytest_namespace``
 ~~~~~~~~~~~~~~~~~~~~

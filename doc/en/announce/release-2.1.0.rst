@@ -11,8 +11,8 @@ The single biggest news about this release are **perfected assertions**
 courtesy of Benjamin Peterson.  You can now safely use ``assert``
 statements in test modules without having to worry about side effects
 or python optimization ("-OO") options.  This is achieved by rewriting
-assert statements in test modules upon import, using a PEP302 hook.
-See https://docs.pytest.org/en/stable/how-to/assert.html for
+assert statements in test modules upon import, using a :pep:`302` hook.
+See :doc:`../how-to/assert` for
 detailed information.  The work has been partly sponsored by my company,
 merlinux GmbH.
 

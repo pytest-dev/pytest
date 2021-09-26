@@ -172,7 +172,7 @@ DeprecationWarning and PendingDeprecationWarning
 
 
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
-user code and third-party libraries, as recommended by `PEP-0565 <https://www.python.org/dev/peps/pep-0565>`_.
+user code and third-party libraries, as recommended by :pep:`565`.
 This helps users keep their code modern and avoid breakages when deprecated warnings are effectively removed.
 
 Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
@@ -197,7 +197,7 @@ the regular expression ``".*U.*mode is deprecated"``.
     the :envvar:`python:PYTHONWARNINGS` environment variable or the
     ``-W`` command-line option, pytest will not configure any filters by default.
 
-    Also pytest doesn't follow ``PEP-0506`` suggestion of resetting all warning filters because
+    Also pytest doesn't follow :pep:`506` suggestion of resetting all warning filters because
     it might break test suites that configure warning filters themselves
     by calling :func:`warnings.simplefilter` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_
     for an example of that).
