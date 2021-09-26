@@ -34,6 +34,7 @@ from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.config.compat import PathAwareHookProxy
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
@@ -478,6 +479,9 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._initialpaths: FrozenSet[Path] = frozenset()
 
+        self._pm = config.pluginmanager
+        self._num_conftest_plugins_collected = 0
+        self._fspath_hookproxy_cache: Dict[os.PathLike[str], PathAwareHookProxy] = {}
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
         self.config.pluginmanager.register(self, name="session")
@@ -542,26 +546,36 @@ class Session(nodes.FSCollector):
         path_ = path if isinstance(path, Path) else Path(path)
         return path_ in self._initialpaths
 
-    def gethookproxy(self, fspath: "os.PathLike[str]"):
+    def gethookproxy(self, fspath: "os.PathLike[str]") -> PathAwareHookProxy:
         # Optimization: Path(Path(...)) is much slower than isinstance.
         path = fspath if isinstance(fspath, Path) else Path(fspath)
-        pm = self.config.pluginmanager
         # Check if we have the common case of running
         # hooks with all conftest.py files.
-        my_conftestmodules = pm._getconftestmodules(
+
+        len_conftest_plugins = len(self._pm._conftest_plugins)
+
+        if len_conftest_plugins != self._num_conftest_plugins_collected:
+            self._fspath_hookproxy_cache.clear()
+            self._num_conftest_plugins_collected = len_conftest_plugins
+
+        proxy: Optional[PathAwareHookProxy] = self._fspath_hookproxy_cache.get(fspath)
+
+        if proxy:
+            return proxy
+
+        my_conftestmodules = self._pm._getconftestmodules(
             path,
             self.config.getoption("importmode"),
             rootpath=self.config.rootpath,
         )
-        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        remove_mods = self._pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # One or more conftests are not in use at this fspath.
-            from .config.compat import PathAwareHookProxy
-
-            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))
+            proxy = PathAwareHookProxy(FSHookProxy(self._pm, remove_mods))
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook
+        self._fspath_hookproxy_cache[fspath] = proxy
         return proxy
 
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
