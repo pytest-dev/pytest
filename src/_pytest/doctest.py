@@ -190,8 +190,7 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
             optionflags: int = 0,
             continue_on_failure: bool = True,
         ) -> None:
-            doctest.DebugRunner.__init__(
-                self, checker=checker, verbose=verbose, optionflags=optionflags
+            super().__init__(checker=checker, verbose=verbose, optionflags=optionflags
             )
             self.continue_on_failure = continue_on_failure
 
@@ -513,8 +512,7 @@ class DoctestModule(pytest.Module):
                 if isinstance(obj, property):
                     obj = getattr(obj, "fget", obj)
                 # Type ignored because this is a private function.
-                return doctest.DocTestFinder._find_lineno(  # type: ignore
-                    self,
+                return super()._find_lineno(
                     obj,
                     source_lines,
                 )
@@ -527,8 +525,7 @@ class DoctestModule(pytest.Module):
                 with _patch_unwrap_mock_aware():
 
                     # Type ignored because this is a private function.
-                    doctest.DocTestFinder._find(  # type: ignore
-                        self, tests, obj, name, module, source_lines, globs, seen
+                    super()._find(tests, obj, name, module, source_lines, globs, seen
                     )
 
         if self.path.name == "conftest.py":
@@ -613,7 +610,7 @@ def _init_checker_class() -> Type["doctest.OutputChecker"]:
         )
 
         def check_output(self, want: str, got: str, optionflags: int) -> bool:
-            if doctest.OutputChecker.check_output(self, want, got, optionflags):
+            if super().check_output(want, got, optionflags):
                 return True
 
             allow_unicode = optionflags & _get_allow_unicode_flag()
@@ -637,7 +634,7 @@ def _init_checker_class() -> Type["doctest.OutputChecker"]:
             if allow_number:
                 got = self._remove_unwanted_precision(want, got)
 
-            return doctest.OutputChecker.check_output(self, want, got, optionflags)
+            return super().check_output(want, got, optionflags)
 
         def _remove_unwanted_precision(self, want: str, got: str) -> str:
             wants = list(self._number_re.finditer(want))

@@ -221,7 +221,7 @@ class ApproxNumpy(ApproxBase):
         if not np.isscalar(actual) and actual.shape != self.expected.shape:
             return False
 
-        return ApproxBase.__eq__(self, actual)
+        return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
         import numpy as np
@@ -292,7 +292,7 @@ class ApproxMapping(ApproxBase):
         except AttributeError:
             return False
 
-        return ApproxBase.__eq__(self, actual)
+        return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
         for k in self.expected.keys():
@@ -365,7 +365,7 @@ class ApproxSequencelike(ApproxBase):
                 return False
         except TypeError:
             return False
-        return ApproxBase.__eq__(self, actual)
+        return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
         return zip(actual, self.expected)
