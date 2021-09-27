@@ -322,7 +322,7 @@ class TestCaseFunction(Function):
     def _prunetraceback(
         self, excinfo: _pytest._code.ExceptionInfo[BaseException]
     ) -> None:
-        Function._prunetraceback(self, excinfo)
+        super()._prunetraceback(excinfo)
         traceback = excinfo.traceback.filter(
             lambda x: not x.frame.f_globals.get("__unittest")
         )

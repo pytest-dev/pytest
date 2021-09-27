@@ -33,7 +33,7 @@ class OutcomeException(BaseException):
                 "Perhaps you meant to use a mark?"
             )
             raise TypeError(error_msg.format(type(self).__name__, type(msg).__name__))
-        BaseException.__init__(self, msg)
+        super().__init__(msg)
         self.msg = msg
         self.pytrace = pytrace
 
@@ -61,7 +61,7 @@ class Skipped(OutcomeException):
         *,
         _use_item_location: bool = False,
     ) -> None:
-        OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
+        super().__init__(msg=msg, pytrace=pytrace)
         self.allow_module_level = allow_module_level
         # If true, the skip location is reported as the item's location,
         # instead of the place that raises the exception/calls skip().

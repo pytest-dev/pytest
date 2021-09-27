@@ -784,7 +784,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         terminal_reporter: TerminalReporter,
         capture_manager: Optional[CaptureManager],
     ) -> None:
-        logging.StreamHandler.__init__(self, stream=terminal_reporter)  # type: ignore[arg-type]
+        super().__init__(stream=terminal_reporter)  # type: ignore[arg-type]
         self.capture_manager = capture_manager
         self.reset()
         self.set_when(None)

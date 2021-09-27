@@ -392,8 +392,7 @@ class MyOptionParser(argparse.ArgumentParser):
         prog: Optional[str] = None,
     ) -> None:
         self._parser = parser
-        argparse.ArgumentParser.__init__(
-            self,
+        super().__init__(
             prog=prog,
             usage=parser._usage,
             add_help=False,
@@ -486,7 +485,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         super().__init__(*args, **kwargs)
 
     def _format_action_invocation(self, action: argparse.Action) -> str:
-        orgstr = argparse.HelpFormatter._format_action_invocation(self, action)
+        orgstr = super()._format_action_invocation(action)
         if orgstr and orgstr[0] != "-":  # only optional arguments
             return orgstr
         res: Optional[str] = getattr(action, "_formatted_action_invocation", None)
