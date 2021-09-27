@@ -479,7 +479,10 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._initialpaths: FrozenSet[Path] = frozenset()
 
-        self._pm = config.pluginmanager
+        # Cache of hookproxy objects, which speeds up collection.
+        # The cache is cleared whenever the number of collected conftest changes.
+        # See #9125 for a detailed summary of the gains.
+
         self._num_conftest_plugins_collected = 0
         self._fspath_hookproxy_cache: Dict[os.PathLike[str], PathAwareHookProxy] = {}
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
@@ -552,7 +555,8 @@ class Session(nodes.FSCollector):
         # Check if we have the common case of running
         # hooks with all conftest.py files.
 
-        len_conftest_plugins = len(self._pm._conftest_plugins)
+        pm = self.config.pluginmanager
+        len_conftest_plugins = len(pm._conftest_plugins)
 
         if len_conftest_plugins != self._num_conftest_plugins_collected:
             self._fspath_hookproxy_cache.clear()
@@ -568,10 +572,10 @@ class Session(nodes.FSCollector):
             self.config.getoption("importmode"),
             rootpath=self.config.rootpath,
         )
-        remove_mods = self._pm._conftest_plugins.difference(my_conftestmodules)
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # One or more conftests are not in use at this fspath.
-            proxy = PathAwareHookProxy(FSHookProxy(self._pm, remove_mods))
+            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook

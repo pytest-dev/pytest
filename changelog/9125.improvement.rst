@@ -1,0 +1,1 @@
+Improve collection performance by caching the internal hook proxy objects.
