@@ -190,8 +190,7 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
             optionflags: int = 0,
             continue_on_failure: bool = True,
         ) -> None:
-            super().__init__(checker=checker, verbose=verbose, optionflags=optionflags
-            )
+            super().__init__(checker=checker, verbose=verbose, optionflags=optionflags)
             self.continue_on_failure = continue_on_failure
 
         def report_failure(
@@ -512,7 +511,7 @@ class DoctestModule(pytest.Module):
                 if isinstance(obj, property):
                     obj = getattr(obj, "fget", obj)
                 # Type ignored because this is a private function.
-                return super()._find_lineno(
+                return super()._find_lineno(  # type:ignore[misc]
                     obj,
                     source_lines,
                 )
@@ -525,7 +524,8 @@ class DoctestModule(pytest.Module):
                 with _patch_unwrap_mock_aware():
 
                     # Type ignored because this is a private function.
-                    super()._find(tests, obj, name, module, source_lines, globs, seen
+                    super()._find(  # type:ignore[misc]
+                        tests, obj, name, module, source_lines, globs, seen
                     )
 
         if self.path.name == "conftest.py":
