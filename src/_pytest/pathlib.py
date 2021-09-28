@@ -497,6 +497,16 @@ def import_path(
             if spec is not None:
                 break
         else:
+            if (3, 8) <= sys.version_info[:2] < (3, 10) and not path.is_absolute():
+                # module.__spec__.__file__ is supposed to be absolute in py3.8+
+                # importlib.util.spec_from_file_location does this automatically from
+                # 3.10+
+                # This was backported to 3.8 and 3.9, but then reverted in 3.8.11 and
+                # 3.9.6
+                # See https://twistedmatrix.com/trac/ticket/10230
+                # and https://bugs.python.org/issue44070
+                path = path.resolve()
+
             spec = importlib.util.spec_from_file_location(module_name, str(path))
 
         if spec is None:
