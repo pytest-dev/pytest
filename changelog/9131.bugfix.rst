@@ -1,0 +1,1 @@
+Fixed the URL used by ``--pastebin`` to use `bpa.st <http://bpa.st>`__.
