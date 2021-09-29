@@ -480,10 +480,8 @@ class Session(nodes.FSCollector):
         self._initialpaths: FrozenSet[Path] = frozenset()
 
         # Cache of hookproxy objects, which speeds up collection.
-        # The cache is cleared whenever the number of collected conftest changes.
+        # The cache is cleared whenever a new plugin got registered.
         # See #9125 for a detailed summary of the gains.
-
-        self._num_conftest_plugins_collected = 0
         self._fspath_hookproxy_cache: Dict[os.PathLike[str], PathAwareHookProxy] = {}
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
@@ -556,15 +554,9 @@ class Session(nodes.FSCollector):
         # hooks with all conftest.py files.
 
         pm = self.config.pluginmanager
-        len_conftest_plugins = len(pm._conftest_plugins)
-
-        if len_conftest_plugins != self._num_conftest_plugins_collected:
-            self._fspath_hookproxy_cache.clear()
-            self._num_conftest_plugins_collected = len_conftest_plugins
-
         proxy: Optional[PathAwareHookProxy] = self._fspath_hookproxy_cache.get(fspath)
 
-        if proxy:
+        if proxy is not None:
             return proxy
 
         my_conftestmodules = self._pm._getconftestmodules(
@@ -581,6 +573,9 @@ class Session(nodes.FSCollector):
             proxy = self.config.hook
         self._fspath_hookproxy_cache[fspath] = proxy
         return proxy
+
+    def pytest_plugin_registered(self, plugin):
+        self._fspath_hookproxy_cache.clear()
 
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
         if direntry.name == "__pycache__":
