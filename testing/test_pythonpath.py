@@ -56,7 +56,8 @@ def test_two_dirs(pytester: Pytester, file_structure) -> None:
 
 
 def test_module_not_found(pytester: Pytester, file_structure) -> None:
-    pytester.makefile(".ini", pytest="[pytest]\n")  # no pythonpath listed
+    # if pythonpath setting not there, test should error
+    pytester.makefile(".ini", pytest="[pytest]\n")
     result = pytester.runpytest("test_foo.py")
     result.assert_outcomes(errors=1)
     expected_error = "E   ModuleNotFoundError: No module named 'foo'"
@@ -64,6 +65,7 @@ def test_module_not_found(pytester: Pytester, file_structure) -> None:
 
 
 def test_no_ini(pytester: Pytester, file_structure) -> None:
+    # if no ini file, test should error
     result = pytester.runpytest("test_foo.py")
     result.assert_outcomes(errors=1)
     expected_error = "E   ModuleNotFoundError: No module named 'foo'"
