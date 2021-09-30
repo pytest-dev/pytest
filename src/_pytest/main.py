@@ -22,6 +22,11 @@ from typing import Union
 
 import attr
 
+try:
+    from pluggy.hooks import _HookCaller
+except ImportError:
+    from pluggy._hooks import _HookCaller
+
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
@@ -482,7 +487,9 @@ class Session(nodes.FSCollector):
         # Cache of hookproxy objects, which speeds up collection.
         # The cache is cleared whenever a new plugin got registered.
         # See #9125 for a detailed summary of the gains.
-        self._fspath_hookproxy_cache: Dict[os.PathLike[str], PathAwareHookProxy] = {}
+        self._fspath_hookproxy_cache: Dict[
+            os.PathLike[str], Union[_HookCaller, PathAwareHookProxy]
+        ] = {}
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
         self.config.pluginmanager.register(self, name="session")
@@ -547,7 +554,9 @@ class Session(nodes.FSCollector):
         path_ = path if isinstance(path, Path) else Path(path)
         return path_ in self._initialpaths
 
-    def gethookproxy(self, fspath: "os.PathLike[str]") -> PathAwareHookProxy:
+    def gethookproxy(
+        self, fspath: "os.PathLike[str]"
+    ) -> Union[_HookCaller, PathAwareHookProxy]:
         # Optimization: Path(Path(...)) is much slower than isinstance.
         path = fspath if isinstance(fspath, Path) else Path(fspath)
         # Check if we have the common case of running
