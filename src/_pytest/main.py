@@ -538,14 +538,18 @@ class Session(nodes.FSCollector):
     pytest_collectreport = pytest_runtest_logreport
 
     def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
-        return Path(path) in self._initialpaths
+        # Optimization: Path(Path(...)) is much slower than isinstance.
+        path_ = path if isinstance(path, Path) else Path(path)
+        return path_ in self._initialpaths
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):
+        # Optimization: Path(Path(...)) is much slower than isinstance.
+        path = fspath if isinstance(fspath, Path) else Path(fspath)
+        pm = self.config.pluginmanager
         # Check if we have the common case of running
         # hooks with all conftest.py files.
-        pm = self.config.pluginmanager
         my_conftestmodules = pm._getconftestmodules(
-            Path(fspath),
+            path,
             self.config.getoption("importmode"),
             rootpath=self.config.rootpath,
         )
