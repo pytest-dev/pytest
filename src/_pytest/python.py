@@ -20,6 +20,7 @@ from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Pattern
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -46,7 +47,6 @@ from _pytest.compat import is_generator
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.compat import NOTSET
-from _pytest.compat import REGEX_TYPE
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.compat import STRING_TYPES
@@ -1332,7 +1332,7 @@ def _idval(
         return _ascii_escaped_by_config(val, config)
     elif val is None or isinstance(val, (float, int, bool, complex)):
         return str(val)
-    elif isinstance(val, REGEX_TYPE):
+    elif isinstance(val, Pattern):
         return ascii_escaped(val.pattern)
     elif val is NOTSET:
         # Fallback to default. Note that NOTSET is an enum.Enum.

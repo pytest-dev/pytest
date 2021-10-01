@@ -3,7 +3,6 @@ import enum
 import functools
 import inspect
 import os
-import re
 import sys
 from contextlib import contextmanager
 from inspect import Parameter
@@ -62,10 +61,6 @@ else:
 
 def _format_args(func: Callable[..., Any]) -> str:
     return str(signature(func))
-
-
-# The type of re.compile objects is not exposed in Python.
-REGEX_TYPE = type(re.compile(""))
 
 
 def is_generator(func: object) -> bool:
