@@ -1,4 +1,3 @@
-import sys
 from textwrap import dedent
 
 import pytest
@@ -71,11 +70,3 @@ def test_no_ini(pytester: Pytester, file_structure) -> None:
     result.assert_outcomes(errors=1)
     expected_error = "E   ModuleNotFoundError: No module named 'foo'"
     result.stdout.fnmatch_lines([expected_error])
-
-
-def test_path_removal(pytester: Pytester, file_structure) -> None:
-    """Make sure sys.path is cleaned up after testing."""
-    original = sys.path.copy()
-    pytester.makefile(".ini", pytest="[pytest]\npythonpath=sub sub2\n")
-    pytester.runpytest()
-    assert sys.path == original
