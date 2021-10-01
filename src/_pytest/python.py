@@ -407,15 +407,18 @@ class PyCollector(PyobjMixin, nodes.Collector):
         if not getattr(self.obj, "__test__", True):
             return []
 
-        # NB. we avoid random getattrs and peek in the __dict__ instead
-        # (XXX originally introduced from a PyPy need, still true?)
+        # Avoid random getattrs and peek in the __dict__ instead.
         dicts = [getattr(self.obj, "__dict__", {})]
         for basecls in self.obj.__class__.__mro__:
             dicts.append(basecls.__dict__)
+
+        # In each class, nodes should be definition ordered. Since Python 3.6,
+        # __dict__ is definition ordered.
         seen: Set[str] = set()
-        values: List[Union[nodes.Item, nodes.Collector]] = []
+        dict_values: List[List[Union[nodes.Item, nodes.Collector]]] = []
         ihook = self.ihook
         for dic in dicts:
+            values: List[Union[nodes.Item, nodes.Collector]] = []
             # Note: seems like the dict can change during iteration -
             # be careful not to remove the list() without consideration.
             for name, obj in list(dic.items()):
@@ -433,13 +436,14 @@ class PyCollector(PyobjMixin, nodes.Collector):
                     values.extend(res)
                 else:
                     values.append(res)
+            dict_values.append(values)
 
-        def sort_key(item):
-            fspath, lineno, _ = item.reportinfo()
-            return (str(fspath), lineno)
-
-        values.sort(key=sort_key)
-        return values
+        # Between classes in the class hierarchy, reverse-MRO order -- nodes
+        # inherited from base classes should come before subclasses.
+        result = []
+        for values in reversed(dict_values):
+            result.extend(values)
+        return result
 
     def _genfunctions(self, name: str, funcobj) -> Iterator["Function"]:
         modulecol = self.getparent(Module)
