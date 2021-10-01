@@ -447,8 +447,8 @@ class LogCaptureFixture:
         self.handler.reset()
 
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
-        """Sets the threshold for this logger to level. Logging messages which are less 
-        severe than level will be ignored; logging messages which have severity level or 
+        """Sets the threshold for this logger to level. Logging messages which are less
+        severe than level will be ignored; logging messages which have severity level or
         higher will be emitted by whichever handler or handlers service this logger, unless
         a handler’s level has been set to a higher severity level than level.
 
