@@ -328,8 +328,8 @@ top level of your plugin:
 
 .. code-block:: python
 
-    been_there_key: pytest.StashKey[bool]()
-    done_that_key: pytest.StashKey[str]()
+    been_there_key = pytest.StashKey[bool]()
+    done_that_key = pytest.StashKey[str]()
 
 then use the keys to stash your data at some point:
 
