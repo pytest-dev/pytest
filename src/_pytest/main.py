@@ -568,7 +568,7 @@ class Session(nodes.FSCollector):
         if proxy is not None:
             return proxy
 
-        my_conftestmodules = self._pm._getconftestmodules(
+        my_conftestmodules = pm._getconftestmodules(
             path,
             self.config.getoption("importmode"),
             rootpath=self.config.rootpath,
