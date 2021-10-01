@@ -522,7 +522,6 @@ class PytestPluginManager(PluginManager):
                 if x.is_dir():
                     self._getconftestmodules(x, importmode, rootpath)
 
-    @lru_cache(maxsize=128)
     def _getconftestmodules(
         self, path: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> List[types.ModuleType]:

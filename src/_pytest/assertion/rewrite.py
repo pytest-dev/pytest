@@ -554,6 +554,7 @@ def set_location(node, lineno, col_offset):
     return node
 
 
+@functools.lru_cache(maxsize=1)
 def _get_assertion_exprs(src: bytes) -> Dict[int, str]:
     """Return a mapping from {lineno: "assertion test expression"}."""
     ret: Dict[int, str] = {}
@@ -674,10 +675,6 @@ class AssertionRewriter(ast.NodeVisitor):
         else:
             self.enable_assertion_pass_hook = False
         self.source = source
-
-    @functools.lru_cache(maxsize=1)
-    def _assert_expr_to_lineno(self) -> Dict[int, str]:
-        return _get_assertion_exprs(self.source)
 
     def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""
@@ -906,7 +903,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
             # Passed
             fmt_pass = self.helper("_format_explanation", msg)
-            orig = self._assert_expr_to_lineno()[assert_.lineno]
+            orig = _get_assertion_exprs(self.source)[assert_.lineno]
             hook_call_pass = ast.Expr(
                 self.helper(
                     "_call_assertion_pass",
