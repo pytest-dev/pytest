@@ -1,1 +1,1 @@
-Added :ref:`pythonpath` setting that adds listed paths to `sys.path`.
+Added :ref:`pythonpath` setting that adds listed paths to `sys.path` for the duration of the test session.
