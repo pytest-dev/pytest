@@ -360,7 +360,7 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
-def get_unpacked_marks(obj) -> List[Mark]:
+def get_unpacked_marks(obj: object) -> Iterable[Mark]:
     """Obtain the unpacked marks that are stored on an object."""
     mark_list = getattr(obj, "pytestmark", [])
     if not isinstance(mark_list, list):
@@ -368,7 +368,9 @@ def get_unpacked_marks(obj) -> List[Mark]:
     return normalize_mark_list(mark_list)
 
 
-def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List[Mark]:
+def normalize_mark_list(
+    mark_list: Iterable[Union[Mark, MarkDecorator]]
+) -> Iterable[Mark]:
     """
     Normalize an iterable of Mark or MarkDecorator objects into a list of marks
     by retrieving the `mark` attribute on MarkDecorator instances.
@@ -376,14 +378,11 @@ def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List
     :param mark_list: marks to normalize
     :returns: A new list of the extracted Mark objects
     """
-
-    def parse_mark(mark: Union[Mark, MarkDecorator]) -> Mark:
+    for mark in mark_list:
         mark_obj = getattr(mark, "mark", mark)
         if not isinstance(mark_obj, Mark):
             raise TypeError(f"got {repr(mark_obj)} instead of Mark")
-        return mark_obj
-
-    return [parse_mark(x) for x in mark_list]
+        yield mark_obj
 
 
 def store_mark(obj, mark: Mark) -> None:
@@ -394,7 +393,7 @@ def store_mark(obj, mark: Mark) -> None:
     assert isinstance(mark, Mark), mark
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
-    obj.pytestmark = get_unpacked_marks(obj) + [mark]
+    obj.pytestmark = [*get_unpacked_marks(obj), mark]
 
 
 # Typing for builtin pytest marks. This is cheating; it gives builtin marks
