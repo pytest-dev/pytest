@@ -56,7 +56,7 @@ def test_two_dirs(pytester: Pytester, file_structure) -> None:
 
 
 def test_module_not_found(pytester: Pytester, file_structure) -> None:
-    """If pythonpath setting not there, test should error."""
+    """Without the pythonpath setting, the module should not be found."""
     pytester.makefile(".ini", pytest="[pytest]\n")
     result = pytester.runpytest("test_foo.py")
     result.assert_outcomes(errors=1)
