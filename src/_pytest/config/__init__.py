@@ -533,12 +533,19 @@ class PytestPluginManager(PluginManager):
         else:
             directory = path
 
+        # Optimization: avoid repeated searches in the same directory.
+        # Assumes always called with same importmode and rootpath.
+        existing_clist = self._dirpath2confmods.get(directory)
+        if existing_clist:
+            return existing_clist
+
         # XXX these days we may rather want to use config.rootpath
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir.
         clist = []
+        confcutdir_parents = self._confcutdir.parents if self._confcutdir else []
         for parent in reversed((directory, *directory.parents)):
-            if self._confcutdir and parent in self._confcutdir.parents:
+            if parent in confcutdir_parents:
                 continue
             conftestpath = parent / "conftest.py"
             if conftestpath.is_file():
