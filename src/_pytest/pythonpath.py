@@ -19,4 +19,6 @@ def pytest_load_initial_conftests(early_config: Config) -> None:
 @pytest.hookimpl(trylast=True)
 def pytest_unconfigure(config: Config) -> None:
     for path in config.getini("pythonpath"):
-        sys.path.remove(path)
+        path_str = str(path)
+        if path_str in sys.path:
+            sys.path.remove(path_str)
