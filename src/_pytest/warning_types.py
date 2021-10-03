@@ -1,3 +1,6 @@
+import inspect
+import warnings
+from types import FunctionType
 from typing import Any
 from typing import Generic
 from typing import Type
@@ -142,3 +145,19 @@ class UnformattedWarning(Generic[_W]):
     def format(self, **kwargs: Any) -> _W:
         """Return an instance of the warning category, formatted with given kwargs."""
         return self.category(self.template.format(**kwargs))
+
+
+def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
+    lineno = method.__code__.co_firstlineno
+    filename = inspect.getfile(method)
+    module = method.__module__
+    mod_globals = method.__globals__
+
+    warnings.warn_explicit(
+        message,
+        type(message),
+        filename=filename,
+        module=module,
+        registry=mod_globals.setdefault("__warningregistry__", {}),
+        lineno=lineno,
+    )

@@ -14,6 +14,7 @@ import warnings
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
+from types import FunctionType
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -58,6 +59,7 @@ from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
+from _pytest.warning_types import warn_explicit_for
 
 if TYPE_CHECKING:
 
@@ -341,6 +343,32 @@ def _get_directory(path: Path) -> Path:
         return path
 
 
+def _get_legacy_hook_marks(
+    method: object,  # using object to avoid function type excess
+    hook_type: str,
+    opt_names: Tuple[str, ...],
+) -> Dict[str, bool]:
+    known_marks = {m.name for m in getattr(method, "pytestmark", [])}
+    must_warn = False
+    opts = {}
+    for opt_name in opt_names:
+        if hasattr(method, opt_name) or opt_name in known_marks:
+            opts[opt_name] = True
+            must_warn = True
+        else:
+            opts[opt_name] = False
+    if must_warn:
+
+        hook_opts = ", ".join(f"{name}=True" for name, val in opts.items() if val)
+        message = _pytest.deprecated.HOOK_LEGACY_MARKING.format(
+            type=hook_type,
+            fullname=method.__qualname__,  # type: ignore
+            hook_opts=hook_opts,
+        )
+        warn_explicit_for(cast(FunctionType, method), message)
+    return opts
+
+
 @final
 class PytestPluginManager(PluginManager):
     """A :py:class:`pluggy.PluginManager <pluggy.PluginManager>` with
@@ -414,40 +442,29 @@ class PytestPluginManager(PluginManager):
         if name == "pytest_plugins":
             return
 
-        method = getattr(plugin, name)
         opts = super().parse_hookimpl_opts(plugin, name)
+        if opts is not None:
+            return opts
 
+        method = getattr(plugin, name)
         # Consider only actual functions for hooks (#3775).
         if not inspect.isroutine(method):
             return
-
         # Collect unmarked hooks as long as they have the `pytest_' prefix.
-        if opts is None and name.startswith("pytest_"):
-            opts = {}
-        if opts is not None:
-            # TODO: DeprecationWarning, people should use hookimpl
-            # https://github.com/pytest-dev/pytest/issues/4562
-            known_marks = {m.name for m in getattr(method, "pytestmark", [])}
-
-            for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
-                opts.setdefault(name, hasattr(method, name) or name in known_marks)
-        return opts
+        return _get_legacy_hook_marks(
+            method, "impl", ("tryfirst", "trylast", "optionalhook", "hookwrapper")
+        )
 
     def parse_hookspec_opts(self, module_or_class, name: str):
         opts = super().parse_hookspec_opts(module_or_class, name)
         if opts is None:
             method = getattr(module_or_class, name)
-
             if name.startswith("pytest_"):
-                # todo: deprecate hookspec hacks
-                # https://github.com/pytest-dev/pytest/issues/4562
-                known_marks = {m.name for m in getattr(method, "pytestmark", [])}
-                opts = {
-                    "firstresult": hasattr(method, "firstresult")
-                    or "firstresult" in known_marks,
-                    "historic": hasattr(method, "historic")
-                    or "historic" in known_marks,
-                }
+                opts = _get_legacy_hook_marks(
+                    method,
+                    "spec",
+                    ("firstresult", "historic"),
+                )
         return opts
 
     def register(

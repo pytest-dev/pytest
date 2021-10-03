@@ -20,6 +20,54 @@ def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:
         pytester.parseconfig("-p", plugin)
 
 
+def test_hookspec_via_function_attributes_are_deprecated():
+    from _pytest.config import PytestPluginManager
+
+    pm = PytestPluginManager()
+
+    class DeprecatedHookMarkerSpec:
+        def pytest_bad_hook(self):
+            pass
+
+        pytest_bad_hook.historic = True  # type: ignore[attr-defined]
+
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=r"Please use the pytest\.hookspec\(historic=True\) decorator",
+    ) as recorder:
+        pm.add_hookspecs(DeprecatedHookMarkerSpec)
+    (record,) = recorder
+    assert (
+        record.lineno
+        == DeprecatedHookMarkerSpec.pytest_bad_hook.__code__.co_firstlineno
+    )
+    assert record.filename == __file__
+
+
+def test_hookimpl_via_function_attributes_are_deprecated():
+    from _pytest.config import PytestPluginManager
+
+    pm = PytestPluginManager()
+
+    class DeprecatedMarkImplPlugin:
+        def pytest_runtest_call(self):
+            pass
+
+        pytest_runtest_call.tryfirst = True  # type: ignore[attr-defined]
+
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=r"Please use the pytest.hookimpl\(tryfirst=True\)",
+    ) as recorder:
+        pm.register(DeprecatedMarkImplPlugin())
+    (record,) = recorder
+    assert (
+        record.lineno
+        == DeprecatedMarkImplPlugin.pytest_runtest_call.__code__.co_firstlineno
+    )
+    assert record.filename == __file__
+
+
 def test_fscollector_gethookproxy_isinitpath(pytester: Pytester) -> None:
     module = pytester.getmodulecol(
         """
