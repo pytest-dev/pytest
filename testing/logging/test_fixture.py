@@ -172,8 +172,7 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
     assert set(caplog._item.stash[caplog_records_key]) == {"setup", "call"}
 
 
-def test_caplog_filters_by_logger(caplog, logging_during_setup_and_teardown):
-    assert not caplog.records
+def test_caplog_filters_by_logger(caplog):
 
 
 def test_ini_controls_global_log_level(pytester: Pytester) -> None:
