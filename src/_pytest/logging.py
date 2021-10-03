@@ -402,6 +402,17 @@ class LogCaptureFixture:
         """
         return self._item.stash[caplog_records_key].get(when, [])
 
+    def get_records_by_logger(self, logger: str) -> List[logging.LogRecord]:
+        """Get the logging records for a specified logger
+
+        :param str logger:
+            The name of the logger to obtain records from.
+
+        :returns: The list of captured records by the given logger.
+        :rtype: List[logging.LogRecord]
+        """
+        return [record for record in self.records if record.name == logger]
+
     @property
     def text(self) -> str:
         """The formatted log text."""
