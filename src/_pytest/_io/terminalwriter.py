@@ -2,13 +2,17 @@
 import os
 import shutil
 import sys
+from typing import Callable
+from typing import cast
+from typing import Dict
 from typing import Optional
 from typing import Sequence
 from typing import TextIO
 
+from colorama import ansi
+
 from .wcwidth import wcswidth
 from _pytest.compat import final
-
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
 
@@ -37,32 +41,39 @@ def should_do_markup(file: TextIO) -> bool:
     )
 
 
+def _ansi_items(inst, transform: Callable[[str], str] = str.lower) -> Dict[str, str]:
+    return {transform(name): cast(str, item) for name, item in vars(inst).items()}
+
+
+ESC_TABLE = {
+    **_ansi_items(ansi.Fore),
+    **_ansi_items(ansi.Back, str.capitalize),
+    **_ansi_items(ansi.Style),
+    # wrongly named in pylib
+    "purple": ansi.Fore.MAGENTA,
+    "Purple": ansi.Back.MAGENTA,
+    # missing, but hopefully unused
+    "invert": ansi.code_to_chars(7),
+    "blink": ansi.code_to_chars(5),
+    # wrongly named in pylib
+    "light": ansi.Style.DIM,
+    "bold": ansi.Style.BRIGHT,
+}
+RESET = ansi.Style.RESET_ALL
+
+
 @final
 class TerminalWriter:
-    _esctable = dict(
-        black=30,
-        red=31,
-        green=32,
-        yellow=33,
-        blue=34,
-        purple=35,
-        cyan=36,
-        white=37,
-        Black=40,
-        Red=41,
-        Green=42,
-        Yellow=43,
-        Blue=44,
-        Purple=45,
-        Cyan=46,
-        White=47,
-        bold=1,
-        light=2,
-        blink=5,
-        invert=7,
-    )
+    hasmarkup: bool
+    code_highlight: bool
 
-    def __init__(self, file: Optional[TextIO] = None) -> None:
+    def __init__(
+        self,
+        file: Optional[TextIO] = None,
+        dup=False,
+        has_markup: Optional[bool] = None,
+        code_highlight: bool = True,
+    ) -> None:
         if file is None:
             file = sys.stdout
         if hasattr(file, "isatty") and file.isatty() and sys.platform == "win32":
@@ -74,10 +85,10 @@ class TerminalWriter:
                 file = colorama.AnsiToWin32(file).stream
                 assert file is not None
         self._file = file
-        self.hasmarkup = should_do_markup(file)
+        self.hasmarkup = should_do_markup(file) if has_markup is None else has_markup
         self._current_line = ""
         self._terminal_width: Optional[int] = None
-        self.code_highlight = True
+        self.code_highlight = code_highlight
 
     @property
     def fullwidth(self) -> int:
@@ -95,13 +106,13 @@ class TerminalWriter:
         return wcswidth(self._current_line)
 
     def markup(self, text: str, **markup: bool) -> str:
-        for name in markup:
-            if name not in self._esctable:
-                raise ValueError(f"unknown markup: {name!r}")
+        unknown = markup.keys() - ESC_TABLE.keys()
+        if unknown:
+            raise ValueError(f"unknown markup: {unknown!r}")
         if self.hasmarkup:
-            esc = [self._esctable[name] for name, on in markup.items() if on]
+            esc = "".join(ESC_TABLE[name] for name, on in markup.items() if on)
             if esc:
-                text = "".join("\x1b[%sm" % cod for cod in esc) + text + "\x1b[0m"
+                text = esc + text + RESET
         return text
 
     def sep(

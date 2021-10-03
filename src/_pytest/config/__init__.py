@@ -1581,18 +1581,16 @@ def create_terminal_writer(
     Every code which requires a TerminalWriter object and has access to a
     config object should use this function.
     """
-    tw = TerminalWriter(file=file)
 
-    if config.option.color == "yes":
-        tw.hasmarkup = True
-    elif config.option.color == "no":
-        tw.hasmarkup = False
+    color = config.option.color
+    if color == "auto":
+        has_markup = None
+    else:
+        has_markup = _strtobool(color)
 
-    if config.option.code_highlight == "yes":
-        tw.code_highlight = True
-    elif config.option.code_highlight == "no":
-        tw.code_highlight = False
+    code_highlight = _strtobool(config.option.code_highlight)
 
+    tw = TerminalWriter(file=file, has_markup=has_markup, code_highlight=code_highlight)
     return tw
 
 
