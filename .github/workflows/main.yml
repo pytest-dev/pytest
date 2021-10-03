@@ -222,7 +222,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install --upgrade wheel setuptools tox
+        pip install --upgrade wheel setuptools setuptools_scm[toml]>=6 tox
 
     - name: Build package
       run: |
