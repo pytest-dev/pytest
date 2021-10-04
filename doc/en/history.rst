@@ -136,8 +136,7 @@ project:
    released <https://mail.python.org/pipermail/pytest-dev/2010-November/001687.html>`__
    as a package separate from ``py`` (but still called ``py.test``).
 
--  In August 2016, pytest 3.0.0 `was
-   released <https://docs.pytest.org/en/latest/changelog.html#id1313>`__,
+-  In August 2016, pytest 3.0.0 :std:ref:`was released <release-3.0.0>`,
    which adds ``pytest`` (rather than ``py.test``) as the recommended
    command-line entry point
 

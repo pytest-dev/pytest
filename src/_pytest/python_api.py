@@ -518,13 +518,11 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     """Assert that two numbers (or two sets of numbers) are equal to each other
     within some tolerance.
 
-    Due to the `intricacies of floating-point arithmetic`__, numbers that we
+    Due to the :std:doc:`tutorial/floatingpoint`, numbers that we
     would intuitively expect to be equal are not always so::
 
         >>> 0.1 + 0.2 == 0.3
         False
-
-    __ https://docs.python.org/3/tutorial/floatingpoint.html
 
     This problem is commonly encountered when writing tests, e.g. when making
     sure that floating-point values are what you expect them to be.  One way to
@@ -630,26 +628,22 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       both ``a`` and ``b``, this test is symmetric (i.e.  neither ``a`` nor
       ``b`` is a "reference value").  You have to specify an absolute tolerance
       if you want to compare to ``0.0`` because there is no tolerance by
-      default.  `More information...`__
-
-      __ https://docs.python.org/3/library/math.html#math.isclose
+      default.  More information: :py:func:`math.isclose`.
 
     - ``numpy.isclose(a, b, rtol=1e-5, atol=1e-8)``: True if the difference
       between ``a`` and ``b`` is less that the sum of the relative tolerance
       w.r.t. ``b`` and the absolute tolerance.  Because the relative tolerance
       is only calculated w.r.t. ``b``, this test is asymmetric and you can
       think of ``b`` as the reference value.  Support for comparing sequences
-      is provided by ``numpy.allclose``.  `More information...`__
-
-      __ https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
+      is provided by :py:func:`numpy.allclose`.  More information:
+      :std:doc:`numpy:reference/generated/numpy.isclose`.
 
     - ``unittest.TestCase.assertAlmostEqual(a, b)``: True if ``a`` and ``b``
       are within an absolute tolerance of ``1e-7``.  No relative tolerance is
       considered , so this function is not appropriate for very large or very
       small numbers.  Also, it's only available in subclasses of ``unittest.TestCase``
-      and it's ugly because it doesn't follow PEP8.  `More information...`__
-
-      __ https://docs.python.org/3/library/how-to/unittest.html#unittest.TestCase.assertAlmostEqual
+      and it's ugly because it doesn't follow PEP8.  More information:
+      :py:meth:`unittest.TestCase.assertAlmostEqual`.
 
     - ``a == pytest.approx(b, rel=1e-6, abs=1e-12)``: True if the relative
       tolerance is met w.r.t. ``b`` or if the absolute tolerance is met.
@@ -661,16 +655,14 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     .. note::
 
         ``approx`` can handle numpy arrays, but we recommend the
-        specialised test helpers in `numpy.testing`__ if you need
-        support for comparisons, NaNs, or ULP-based tolerances.
-
-        __ https://numpy.org/doc/stable/reference/routines.testing.html
+        specialised test helpers in :std:doc:`numpy:reference/routines.testing`
+        if you need support for comparisons, NaNs, or ULP-based tolerances.
 
     .. warning::
 
        .. versionchanged:: 3.2
 
-       In order to avoid inconsistent behavior, ``TypeError`` is
+       In order to avoid inconsistent behavior, :py:exc:`TypeError` is
        raised for ``>``, ``>=``, ``<`` and ``<=`` comparisons.
        The example below illustrates the problem::
 
@@ -680,9 +672,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
        In the second example one expects ``approx(0.1).__le__(0.1 + 1e-10)``
        to be called. But instead, ``approx(0.1).__lt__(0.1 + 1e-10)`` is used to
        comparison. This is because the call hierarchy of rich comparisons
-       follows a fixed behavior. `More information...`__
-
-       __ https://docs.python.org/3/reference/datamodel.html#object.__ge__
+       follows a fixed behavior. More information: :py:meth:`object.__ge__`
 
     .. versionchanged:: 3.7.1
        ``approx`` raises ``TypeError`` when it encounters a dict value or
@@ -790,16 +780,14 @@ def raises(
     :kwparam match:
         If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
-        representation of the exception using ``re.search``. To match a literal
-        string that may contain `special characters`__, the pattern can
-        first be escaped with ``re.escape``.
+        representation of the exception using :py:func:`re.search`. To match a literal
+        string that may contain :std:ref:`special characters <re-syntax>`, the pattern can
+        first be escaped with :py:func:`re.escape`.
 
-        (This is only used when ``pytest.raises`` is used as a context manager,
+        (This is only used when :py:func:`pytest.raises` is used as a context manager,
         and passed through to the function otherwise.
-        When using ``pytest.raises`` as a function, you can use:
+        When using :py:func:`pytest.raises` as a function, you can use:
         ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
-
-        __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     .. currentmodule:: _pytest._code
 

@@ -203,7 +203,7 @@ Note that attributes added at class level are *class attributes*, so they will b
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
-``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/stable/builtin.html>`_ to request arbitrary resources, like a unique temporary directory:
+``pytest`` provides :std:doc:`Builtin fixtures/function arguments <builtin>` to request arbitrary resources, like a unique temporary directory:
 
 .. code-block:: python
 

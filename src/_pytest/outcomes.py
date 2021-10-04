@@ -136,8 +136,7 @@ def skip(msg: str = "", *, allow_module_level: bool = False) -> "NoReturn":
         It is better to use the :ref:`pytest.mark.skipif ref` marker when
         possible to declare a test to be skipped under certain conditions
         like mismatching platforms or dependencies.
-        Similarly, use the ``# doctest: +SKIP`` directive (see `doctest.SKIP
-        <https://docs.python.org/3/library/how-to/doctest.html#doctest.SKIP>`_)
+        Similarly, use the ``# doctest: +SKIP`` directive (see :py:data:`doctest.SKIP`)
         to skip a doctest statically.
     """
     __tracebackhide__ = True

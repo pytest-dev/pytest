@@ -125,6 +125,7 @@ as a third party plugin named ``pytest-cache``.  The core plugin
 is compatible regarding command line options and API usage except that you
 can only store/receive data between test runs that is json-serializable.
 
+.. _historical funcargs and pytest.funcargs:
 
 funcargs and ``pytest_funcarg__``
 ---------------------------------

@@ -92,6 +92,8 @@ that will be used for those doctest files using the
     [pytest]
     doctest_encoding = latin1
 
+.. _using doctest options:
+
 Using 'doctest' options
 -----------------------
 

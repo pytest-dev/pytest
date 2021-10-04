@@ -7,7 +7,7 @@ pytest-2.3: reasoning for fixture/funcarg evolution
 
 **Target audience**: Reading this document requires basic knowledge of
 python testing, xUnit setup methods and the (previous) basic pytest
-funcarg mechanism, see https://docs.pytest.org/en/stable/historical-notes.html#funcargs-and-pytest-funcarg.
+funcarg mechanism, see :ref:`historical funcargs and pytest.funcargs`.
 If you are new to pytest, then you can simply ignore this
 section and read the other sections.
 
