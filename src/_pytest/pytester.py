@@ -33,7 +33,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 from weakref import WeakKeyDictionary
 
-import attr
 from iniconfig import IniConfig
 from iniconfig import SectionWrapper
 
@@ -1518,7 +1517,6 @@ class LineComp:
 
 
 @final
-@attr.s(repr=False, str=False, init=False)
 class Testdir:
     """
     Similar to :class:`Pytester`, but this class works with legacy legacy_path objects instead.

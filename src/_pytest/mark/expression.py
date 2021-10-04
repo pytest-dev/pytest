@@ -47,11 +47,11 @@ class TokenType(enum.Enum):
     EOF = "end of input"
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class Token:
-    type = attr.ib(type=TokenType)
-    value = attr.ib(type=str)
-    pos = attr.ib(type=int)
+    type: TokenType
+    value: str
+    pos: int
 
 
 class ParseError(Exception):

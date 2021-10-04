@@ -55,10 +55,10 @@ Signature: 8a477f597d28d172789f06886806bc55
 
 
 @final
-@attr.s(init=False)
+@attr.s(init=False, auto_attribs=True)
 class Cache:
-    _cachedir = attr.ib(type=Path, repr=False)
-    _config = attr.ib(type=Config, repr=False)
+    _cachedir: Path = attr.ib(repr=False)
+    _config: Config = attr.ib(repr=False)
 
     # Sub-directory under cache-dir for directories created by `mkdir()`.
     _CACHE_PREFIX_DIRS = "d"

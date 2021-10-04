@@ -455,7 +455,7 @@ class TestFormattedExcinfo:
                 pass
             """
         ).strip()
-        pr.flow_marker = "|"
+        pr.flow_marker = "|"  # type: ignore[misc]
         lines = pr.get_source(source, 0)
         assert len(lines) == 2
         assert lines[0] == "|   def f(x):"

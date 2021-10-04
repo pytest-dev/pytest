@@ -116,7 +116,7 @@ _W = TypeVar("_W", bound=PytestWarning)
 
 
 @final
-@attr.s
+@attr.s(auto_attribs=True)
 class UnformattedWarning(Generic[_W]):
     """A warning meant to be formatted during runtime.
 
@@ -124,8 +124,8 @@ class UnformattedWarning(Generic[_W]):
     as opposed to a direct message.
     """
 
-    category = attr.ib(type=Type["_W"])
-    template = attr.ib(type=str)
+    category: Type["_W"]
+    template: str
 
     def format(self, **kwargs: Any) -> _W:
         """Return an instance of the warning category, formatted with given kwargs."""

@@ -858,7 +858,7 @@ class Config:
     """
 
     @final
-    @attr.s(frozen=True)
+    @attr.s(frozen=True, auto_attribs=True)
     class InvocationParams:
         """Holds parameters passed during :func:`pytest.main`.
 
@@ -874,21 +874,12 @@ class Config:
             Plugins accessing ``InvocationParams`` must be aware of that.
         """
 
-        args = attr.ib(type=Tuple[str, ...], converter=_args_converter)
-        """The command-line arguments as passed to :func:`pytest.main`.
-
-        :type: Tuple[str, ...]
-        """
-        plugins = attr.ib(type=Optional[Sequence[Union[str, _PluggyPlugin]]])
-        """Extra plugins, might be `None`.
-
-        :type: Optional[Sequence[Union[str, plugin]]]
-        """
-        dir = attr.ib(type=Path)
-        """The directory from which :func:`pytest.main` was invoked.
-
-        :type: pathlib.Path
-        """
+        args: Tuple[str, ...] = attr.ib(converter=_args_converter)
+        """The command-line arguments as passed to :func:`pytest.main`."""
+        plugins: Optional[Sequence[Union[str, _PluggyPlugin]]]
+        """Extra plugins, might be `None`."""
+        dir: Path
+        """The directory from which :func:`pytest.main` was invoked."""
 
     def __init__(
         self,

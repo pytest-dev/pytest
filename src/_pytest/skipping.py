@@ -157,11 +157,11 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
     return result, reason
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class Skip:
     """The result of evaluate_skip_marks()."""
 
-    reason = attr.ib(type=str, default="unconditional skip")
+    reason: str = "unconditional skip"
 
 
 def evaluate_skip_marks(item: Item) -> Optional[Skip]:
@@ -192,14 +192,14 @@ def evaluate_skip_marks(item: Item) -> Optional[Skip]:
     return None
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class Xfail:
     """The result of evaluate_xfail_marks()."""
 
-    reason = attr.ib(type=str)
-    run = attr.ib(type=bool)
-    strict = attr.ib(type=bool)
-    raises = attr.ib(type=Optional[Tuple[Type[BaseException], ...]])
+    reason: str
+    run: bool
+    strict: bool
+    raises: Optional[Tuple[Type[BaseException], ...]]
 
 
 def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:

@@ -133,7 +133,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     return None
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, auto_attribs=True)
 class KeywordMatcher:
     """A matcher for keywords.
 
@@ -148,7 +148,7 @@ class KeywordMatcher:
     any item, as well as names directly assigned to test functions.
     """
 
-    _names = attr.ib(type=AbstractSet[str])
+    _names: AbstractSet[str]
 
     @classmethod
     def from_item(cls, item: "Item") -> "KeywordMatcher":
@@ -217,17 +217,17 @@ def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
         items[:] = remaining
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, auto_attribs=True)
 class MarkMatcher:
     """A matcher for markers which are present.
 
     Tries to match on any marker names, attached to the given colitem.
     """
 
-    own_mark_names = attr.ib()
+    own_mark_names: AbstractSet[str]
 
     @classmethod
-    def from_item(cls, item) -> "MarkMatcher":
+    def from_item(cls, item: "Item") -> "MarkMatcher":
         mark_names = {mark.name for mark in item.iter_markers()}
         return cls(mark_names)
 

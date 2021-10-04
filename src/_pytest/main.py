@@ -442,9 +442,9 @@ class Failed(Exception):
     """Signals a stop as failed test run."""
 
 
-@attr.s
+@attr.s(slots=True, auto_attribs=True)
 class _bestrelpath_cache(Dict[Path, str]):
-    path = attr.ib(type=Path)
+    path: Path
 
     def __missing__(self, path: Path) -> str:
         r = bestrelpath(self.path, path)
