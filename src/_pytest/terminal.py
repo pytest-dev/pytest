@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import cast
+from typing import ClassVar
 from typing import Dict
 from typing import Generator
 from typing import List
@@ -279,7 +280,7 @@ def pytest_report_teststatus(report: BaseReport) -> Tuple[str, str, str]:
     return outcome, letter, outcome.upper()
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class WarningReport:
     """Simple structure to hold warnings information captured by ``pytest_warning_recorded``.
 
@@ -291,10 +292,11 @@ class WarningReport:
         File system location of the source of the warning (see ``get_location``).
     """
 
-    message = attr.ib(type=str)
-    nodeid = attr.ib(type=Optional[str], default=None)
-    fslocation = attr.ib(type=Optional[Tuple[str, int]], default=None)
-    count_towards_summary = True
+    message: str
+    nodeid: Optional[str] = None
+    fslocation: Optional[Tuple[str, int]] = None
+
+    count_towards_summary: ClassVar = True
 
     def get_location(self, config: Config) -> Optional[str]:
         """Return the more user-friendly information about the location of a warning, or None."""

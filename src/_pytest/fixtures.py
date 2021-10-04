@@ -393,16 +393,16 @@ def get_direct_param_fixture_func(request):
     return request.param
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, auto_attribs=True)
 class FuncFixtureInfo:
     # Original function argument names.
-    argnames = attr.ib(type=Tuple[str, ...])
+    argnames: Tuple[str, ...]
     # Argnames that function immediately requires. These include argnames +
     # fixture names specified via usefixtures and via autouse=True in fixture
     # definitions.
-    initialnames = attr.ib(type=Tuple[str, ...])
-    names_closure = attr.ib(type=List[str])
-    name2fixturedefs = attr.ib(type=Dict[str, Sequence["FixtureDef[Any]"]])
+    initialnames: Tuple[str, ...]
+    names_closure: List[str]
+    name2fixturedefs: Dict[str, Sequence["FixtureDef[Any]"]]
 
     def prune_dependency_tree(self) -> None:
         """Recompute names_closure from initialnames and name2fixturedefs.
@@ -1187,11 +1187,11 @@ def wrap_function_to_error_out_if_called_directly(
 
 
 @final
-@attr.s(frozen=True)
+@attr.s(frozen=True, auto_attribs=True)
 class FixtureFunctionMarker:
-    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = attr.ib()
+    scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]"
     params: Optional[Tuple[object, ...]] = attr.ib(converter=_params_converter)
-    autouse: bool = attr.ib(default=False)
+    autouse: bool = False
     ids: Union[
         Tuple[Union[None, str, float, int, bool], ...],
         Callable[[Any], Optional[object]],
@@ -1199,7 +1199,7 @@ class FixtureFunctionMarker:
         default=None,
         converter=_ensure_immutable_ids,
     )
-    name: Optional[str] = attr.ib(default=None)
+    name: Optional[str] = None
 
     def __call__(self, function: FixtureFunction) -> FixtureFunction:
         if inspect.isclass(function):

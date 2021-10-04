@@ -1,3 +1,4 @@
+import ast
 import inspect
 import re
 import sys
@@ -12,6 +13,7 @@ from types import FrameType
 from types import TracebackType
 from typing import Any
 from typing import Callable
+from typing import ClassVar
 from typing import Dict
 from typing import Generic
 from typing import Iterable
@@ -238,7 +240,9 @@ class TracebackEntry:
     def getfirstlinesource(self) -> int:
         return self.frame.code.firstlineno
 
-    def getsource(self, astcache=None) -> Optional["Source"]:
+    def getsource(
+        self, astcache: Optional[Dict[Union[str, Path], ast.AST]] = None
+    ) -> Optional["Source"]:
         """Return failing source code."""
         # we use the passed in astcache to not reparse asttrees
         # within exception info printing
@@ -258,7 +262,7 @@ class TracebackEntry:
         except SyntaxError:
             end = self.lineno + 1
         else:
-            if key is not None:
+            if key is not None and astcache is not None:
                 astcache[key] = astnode
         return source[start:end]
 
@@ -435,15 +439,15 @@ E = TypeVar("E", bound=BaseException, covariant=True)
 
 
 @final
-@attr.s(repr=False, init=False)
+@attr.s(repr=False, init=False, auto_attribs=True)
 class ExceptionInfo(Generic[E]):
     """Wraps sys.exc_info() objects and offers help for navigating the traceback."""
 
-    _assert_start_repr = "AssertionError('assert "
+    _assert_start_repr: ClassVar = "AssertionError('assert "
 
-    _excinfo = attr.ib(type=Optional[Tuple[Type["E"], "E", TracebackType]])
-    _striptext = attr.ib(type=str)
-    _traceback = attr.ib(type=Optional[Traceback])
+    _excinfo: Optional[Tuple[Type["E"], "E", TracebackType]]
+    _striptext: str
+    _traceback: Optional[Traceback]
 
     def __init__(
         self,
@@ -673,22 +677,24 @@ class ExceptionInfo(Generic[E]):
         return True
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class FormattedExcinfo:
     """Presenting information about failing Functions and Generators."""
 
     # for traceback entries
-    flow_marker = ">"
-    fail_marker = "E"
+    flow_marker: ClassVar = ">"
+    fail_marker: ClassVar = "E"
 
-    showlocals = attr.ib(type=bool, default=False)
-    style = attr.ib(type="_TracebackStyle", default="long")
-    abspath = attr.ib(type=bool, default=True)
-    tbfilter = attr.ib(type=bool, default=True)
-    funcargs = attr.ib(type=bool, default=False)
-    truncate_locals = attr.ib(type=bool, default=True)
-    chain = attr.ib(type=bool, default=True)
-    astcache = attr.ib(default=attr.Factory(dict), init=False, repr=False)
+    showlocals: bool = False
+    style: "_TracebackStyle" = "long"
+    abspath: bool = True
+    tbfilter: bool = True
+    funcargs: bool = False
+    truncate_locals: bool = True
+    chain: bool = True
+    astcache: Dict[Union[str, Path], ast.AST] = attr.ib(
+        factory=dict, init=False, repr=False
+    )
 
     def _getindent(self, source: "Source") -> int:
         # Figure out indent for the given source.
@@ -951,7 +957,7 @@ class FormattedExcinfo:
         return ExceptionChainRepr(repr_chain)
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class TerminalRepr:
     def __str__(self) -> str:
         # FYI this is called from pytest-xdist's serialization of exception
@@ -987,13 +993,9 @@ class ExceptionRepr(TerminalRepr):
             tw.line(content)
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ExceptionChainRepr(ExceptionRepr):
-    chain = attr.ib(
-        type=Sequence[
-            Tuple["ReprTraceback", Optional["ReprFileLocation"], Optional[str]]
-        ]
-    )
+    chain: Sequence[Tuple["ReprTraceback", Optional["ReprFileLocation"], Optional[str]]]
 
     def __attrs_post_init__(self) -> None:
         super().__attrs_post_init__()
@@ -1011,23 +1013,23 @@ class ExceptionChainRepr(ExceptionRepr):
         super().toterminal(tw)
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ReprExceptionInfo(ExceptionRepr):
-    reprtraceback = attr.ib(type="ReprTraceback")
-    reprcrash = attr.ib(type="ReprFileLocation")
+    reprtraceback: "ReprTraceback"
+    reprcrash: "ReprFileLocation"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         self.reprtraceback.toterminal(tw)
         super().toterminal(tw)
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ReprTraceback(TerminalRepr):
-    reprentries = attr.ib(type=Sequence[Union["ReprEntry", "ReprEntryNative"]])
-    extraline = attr.ib(type=Optional[str])
-    style = attr.ib(type="_TracebackStyle")
+    reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]]
+    extraline: Optional[str]
+    style: "_TracebackStyle"
 
-    entrysep = "_ "
+    entrysep: ClassVar = "_ "
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # The entries might have different styles.
@@ -1055,22 +1057,23 @@ class ReprTracebackNative(ReprTraceback):
         self.extraline = None
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ReprEntryNative(TerminalRepr):
-    lines = attr.ib(type=Sequence[str])
-    style: "_TracebackStyle" = "native"
+    lines: Sequence[str]
+
+    style: ClassVar["_TracebackStyle"] = "native"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ReprEntry(TerminalRepr):
-    lines = attr.ib(type=Sequence[str])
-    reprfuncargs = attr.ib(type=Optional["ReprFuncArgs"])
-    reprlocals = attr.ib(type=Optional["ReprLocals"])
-    reprfileloc = attr.ib(type=Optional["ReprFileLocation"])
-    style = attr.ib(type="_TracebackStyle")
+    lines: Sequence[str]
+    reprfuncargs: Optional["ReprFuncArgs"]
+    reprlocals: Optional["ReprLocals"]
+    reprfileloc: Optional["ReprFileLocation"]
+    style: "_TracebackStyle"
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
         """Write the source code portions of a list of traceback entries with syntax highlighting.
@@ -1144,11 +1147,11 @@ class ReprEntry(TerminalRepr):
         )
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ReprFileLocation(TerminalRepr):
-    path = attr.ib(type=str, converter=str)
-    lineno = attr.ib(type=int)
-    message = attr.ib(type=str)
+    path: str = attr.ib(converter=str)
+    lineno: int
+    message: str
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # Filename and lineno output for each entry, using an output format
@@ -1161,18 +1164,18 @@ class ReprFileLocation(TerminalRepr):
         tw.line(f":{self.lineno}: {msg}")
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ReprLocals(TerminalRepr):
-    lines = attr.ib(type=Sequence[str])
+    lines: Sequence[str]
 
     def toterminal(self, tw: TerminalWriter, indent="") -> None:
         for line in self.lines:
             tw.line(indent + line)
 
 
-@attr.s(eq=False)
+@attr.s(eq=False, auto_attribs=True)
 class ReprFuncArgs(TerminalRepr):
-    args = attr.ib(type=Sequence[Tuple[str, object]])
+    args: Sequence[Tuple[str, object]]
 
     def toterminal(self, tw: TerminalWriter) -> None:
         if self.args:

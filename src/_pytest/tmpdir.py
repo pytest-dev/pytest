@@ -158,12 +158,12 @@ class TempPathFactory:
 
 
 @final
-@attr.s(init=False)
+@attr.s(init=False, auto_attribs=True)
 class TempdirFactory:
     """Backward compatibility wrapper that implements :class:``_pytest.compat.LEGACY_PATH``
     for :class:``TempPathFactory``."""
 
-    _tmppath_factory = attr.ib(type=TempPathFactory)
+    _tmppath_factory: TempPathFactory
 
     def __init__(
         self, tmppath_factory: TempPathFactory, *, _ispytest: bool = False
