@@ -57,8 +57,8 @@ them in turn:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_expectation.py ..F                                              [100%]
@@ -169,8 +169,8 @@ Let's run this:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_expectation.py ..x                                              [100%]
@@ -268,8 +268,8 @@ Let's also run with a stringinput that will lead to a failing test:
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
     E       AssertionError: assert False
-    E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
-    E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
+    E        +  where False = <built-in method isalpha of str object at 0xdeadbeef0001>()
+    E        +    where <built-in method isalpha of str object at 0xdeadbeef0001> = '!'.isalpha
 
     test_strings.py:4: AssertionError
     ========================= short test summary info ==========================
@@ -287,7 +287,7 @@ list:
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:2
+    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at /home/sweet/project/test_strings.py:2
     1 skipped in 0.12s
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across

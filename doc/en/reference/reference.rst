@@ -1774,8 +1774,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --pdb                 start the interactive Python debugger on errors or
                             KeyboardInterrupt.
       --pdbcls=modulename:classname
-                            start a custom interactive Python debugger on
-                            errors. For example:
+                            specify a custom interactive Python debugger for use
+                            with --pdb.For example:
                             --pdbcls=IPython.terminal.debugger:TerminalPdb
       --trace               Immediately break when running each test.
       --capture=method      per-test capturing method: one of fd|sys|no|tee-sys.
@@ -1800,7 +1800,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             test next time
       --sw-skip, --stepwise-skip
                             ignore the first failing test but stop on the next
-                            failing test
+                            failing test.
+                            implicitly enables --stepwise.
 
     reporting:
       --durations=N         show N slowest setup/test durations (N=0 for all).
@@ -1887,7 +1888,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --basetemp=dir        base temporary directory for this test run.(warning:
                             this directory is removed if it exists)
       -V, --version         display pytest version and information about
-                            plugins.When given twice, also display information
+                            plugins. When given twice, also display information
                             about plugins.
       -h, --help            show help message and configuration info
       -p name               early-load given plugin module name or entry point
@@ -1895,8 +1896,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             To avoid loading of plugins, use the `no:` prefix,
                             e.g. `no:doctest`.
       --trace-config        trace considerations of conftest.py files.
-      --debug               store internal tracing debug information in
-                            'pytestdebug.log'.
+      --debug=[DEBUG_FILE_NAME]
+                            store internal tracing debug information in this log
+                            file.
+                            This file is opened with 'w' and truncated as a
+                            result, care advised.
+                            Defaults to 'pytestdebug.log'.
       -o OVERRIDE_INI, --override-ini=OVERRIDE_INI
                             override ini option with "option=value" style, e.g.
                             `-o xfail_strict=True -o cache_dir=cache`.

@@ -87,8 +87,8 @@ If you then run it with ``--lf``:
     $ pytest --lf
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
     run-last-failure: rerun previous 2 failures
 
@@ -134,8 +134,8 @@ of ``FF`` and dots):
     $ pytest --ff
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 50 items
     run-last-failure: rerun previous 2 failures first
 
@@ -278,72 +278,14 @@ You can always peek at the content of the cache using the
     $ pytest --cache-show
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
-    cachedir: $PYTHON_PREFIX/.pytest_cache
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
+    cachedir: /home/sweet/project/.pytest_cache
     --------------------------- cache values for '*' ---------------------------
     cache/lastfailed contains:
-      {'test_50.py::test_num[17]': True,
-       'test_50.py::test_num[25]': True,
-       'test_assert1.py::test_function': True,
-       'test_assert2.py::test_set_comparison': True,
-       'test_caching.py::test_function': True,
-       'test_foocompare.py::test_compare': True}
+      {'test_caching.py::test_function': True}
     cache/nodeids contains:
-      ['test_50.py::test_num[0]',
-       'test_50.py::test_num[10]',
-       'test_50.py::test_num[11]',
-       'test_50.py::test_num[12]',
-       'test_50.py::test_num[13]',
-       'test_50.py::test_num[14]',
-       'test_50.py::test_num[15]',
-       'test_50.py::test_num[16]',
-       'test_50.py::test_num[17]',
-       'test_50.py::test_num[18]',
-       'test_50.py::test_num[19]',
-       'test_50.py::test_num[1]',
-       'test_50.py::test_num[20]',
-       'test_50.py::test_num[21]',
-       'test_50.py::test_num[22]',
-       'test_50.py::test_num[23]',
-       'test_50.py::test_num[24]',
-       'test_50.py::test_num[25]',
-       'test_50.py::test_num[26]',
-       'test_50.py::test_num[27]',
-       'test_50.py::test_num[28]',
-       'test_50.py::test_num[29]',
-       'test_50.py::test_num[2]',
-       'test_50.py::test_num[30]',
-       'test_50.py::test_num[31]',
-       'test_50.py::test_num[32]',
-       'test_50.py::test_num[33]',
-       'test_50.py::test_num[34]',
-       'test_50.py::test_num[35]',
-       'test_50.py::test_num[36]',
-       'test_50.py::test_num[37]',
-       'test_50.py::test_num[38]',
-       'test_50.py::test_num[39]',
-       'test_50.py::test_num[3]',
-       'test_50.py::test_num[40]',
-       'test_50.py::test_num[41]',
-       'test_50.py::test_num[42]',
-       'test_50.py::test_num[43]',
-       'test_50.py::test_num[44]',
-       'test_50.py::test_num[45]',
-       'test_50.py::test_num[46]',
-       'test_50.py::test_num[47]',
-       'test_50.py::test_num[48]',
-       'test_50.py::test_num[49]',
-       'test_50.py::test_num[4]',
-       'test_50.py::test_num[5]',
-       'test_50.py::test_num[6]',
-       'test_50.py::test_num[7]',
-       'test_50.py::test_num[8]',
-       'test_50.py::test_num[9]',
-       'test_assert1.py::test_function',
-       'test_assert2.py::test_set_comparison',
-       'test_caching.py::test_function',
-       'test_foocompare.py::test_compare']
+      ['test_caching.py::test_function']
     cache/stepwise contains:
       []
     example/value contains:
@@ -359,9 +301,9 @@ filtering:
     $ pytest --cache-show example/*
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
-    cachedir: $PYTHON_PREFIX/.pytest_cache
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
+    cachedir: /home/sweet/project/.pytest_cache
     ----------------------- cache values for 'example/*' -----------------------
     example/value contains:
       42

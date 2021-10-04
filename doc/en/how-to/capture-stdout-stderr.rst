@@ -84,8 +84,8 @@ of the failing function and hide the other one:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py .F                                                    [100%]
@@ -99,7 +99,7 @@ of the failing function and hide the other one:
 
     test_module.py:12: AssertionError
     -------------------------- Captured stdout setup ---------------------------
-    setting up <function test_func2 at 0xdeadbeef>
+    setting up <function test_func2 at 0xdeadbeef0001>
     ========================= short test summary info ==========================
     FAILED test_module.py::test_func2 - assert False
     ======================= 1 failed, 1 passed in 0.12s ========================
