@@ -161,8 +161,8 @@ objects, they are still using the default pytest representation:
     $ pytest test_time.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 8 items
 
     <Module test_time.py>
@@ -226,8 +226,8 @@ this is a fully self-contained example which you can run with:
     $ pytest test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 4 items
 
     test_scenarios.py ....                                               [100%]
@@ -241,8 +241,8 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     $ pytest --collect-only test_scenarios.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 4 items
 
     <Module test_scenarios.py>
@@ -320,8 +320,8 @@ Let's first see how it looks like at collection time:
     $ pytest test_backends.py --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     <Module test_backends.py>
@@ -339,7 +339,7 @@ And then when we run the test:
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
 
-    db = <conftest.DB2 object at 0xdeadbeef>
+    db = <conftest.DB2 object at 0xdeadbeef0001>
 
         def test_db_initialized(db):
             # a dummy test
@@ -419,8 +419,8 @@ The result of this test will be successful:
     $ pytest -v test_indirect_list.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 1 item
 
     test_indirect_list.py::test_indirect[a-b] PASSED                     [100%]
@@ -478,7 +478,7 @@ argument sets to use for each test function.  Let's run it:
     ================================= FAILURES =================================
     ________________________ TestClass.test_equals[1-2] ________________________
 
-    self = <test_parametrize.TestClass object at 0xdeadbeef>, a = 1, b = 2
+    self = <test_parametrize.TestClass object at 0xdeadbeef0002>, a = 1, b = 2
 
         def test_equals(self, a, b):
     >       assert a == b
@@ -508,12 +508,8 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   sssssssssssssssssssssssssss                                          [100%]
-   ========================= short test summary info ==========================
-   SKIPPED [9] multipython.py:29: 'python3.5' not found
-   SKIPPED [9] multipython.py:29: 'python3.6' not found
-   SKIPPED [9] multipython.py:29: 'python3.7' not found
-   27 skipped in 0.12s
+   ...........................                                          [100%]
+   27 passed in 0.12s
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -574,8 +570,8 @@ If you run this with reporting for skips enabled:
     $ pytest -rs test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py .s                                                    [100%]
@@ -636,8 +632,8 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
     $ pytest -v -m basic
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 24 items / 21 deselected / 3 selected
 
     test_pytest_param_example.py::test_eval[1+7-8] PASSED                [ 33%]

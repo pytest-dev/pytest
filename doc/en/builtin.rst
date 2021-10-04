@@ -16,8 +16,13 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
 .. code-block:: pytest
 
-    $ pytest -q --fixtures
-    cache
+    $ pytest  --fixtures -v
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
+    collected 0 items
+    cache -- ../../../..$PYTHON_SITE/_pytest/cacheprovider.py:520
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -28,40 +33,41 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         Values can be any object handled by the json stdlib module.
 
-    capsys
+    capsys -- ../../../..$PYTHON_SITE/_pytest/capture.py:903
         Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsys.readouterr()`` method
         calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``text`` objects.
 
-    capsysbinary
+    capsysbinary -- ../../../..$PYTHON_SITE/_pytest/capture.py:920
         Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsysbinary.readouterr()``
         method calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``bytes`` objects.
 
-    capfd
+    capfd -- ../../../..$PYTHON_SITE/_pytest/capture.py:937
         Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
         calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``text`` objects.
 
-    capfdbinary
+    capfdbinary -- ../../../..$PYTHON_SITE/_pytest/capture.py:954
         Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
         calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``byte`` objects.
 
-    doctest_namespace [session scope]
+    doctest_namespace [session scope] -- ../../../..$PYTHON_SITE/_pytest/doctest.py:728
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
-    pytestconfig [session scope]
-        Session-scoped fixture that returns the :class:`pytest.Config` object.
+    pytestconfig [session scope] -- ../../../..$PYTHON_SITE/_pytest/fixtures.py:1372
+        Session-scoped fixture that returns the session's :class:`pytest.Config`
+        object.
 
         Example::
 
@@ -69,7 +75,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 if pytestconfig.getoption("verbose") > 0:
                     ...
 
-    record_property
+    record_property -- ../../../..$PYTHON_SITE/_pytest/junitxml.py:282
         Add extra properties to the calling test.
 
         User properties become part of the test report and are available to the
@@ -83,13 +89,13 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             def test_function(record_property):
                 record_property("example_key", 1)
 
-    record_xml_attribute
+    record_xml_attribute -- ../../../..$PYTHON_SITE/_pytest/junitxml.py:305
         Add extra xml attributes to the tag for the calling test.
 
         The fixture is callable with ``name, value``. The value is
         automatically XML-encoded.
 
-    record_testsuite_property [session scope]
+    record_testsuite_property [session scope] -- ../../../..$PYTHON_SITE/_pytest/junitxml.py:343
         Record a new ``<property>`` tag as child of the root ``<testsuite>``.
 
         This is suitable to writing global information regarding the entire test
@@ -111,7 +117,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See issue
             `#7767 <https://github.com/pytest-dev/pytest/issues/7767>`__ for details.
 
-    caplog
+    caplog -- ../../../..$PYTHON_SITE/_pytest/logging.py:491
         Access and control log capturing.
 
         Captured logs are available through the following properties/methods::
@@ -122,7 +128,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
 
-    monkeypatch
+    monkeypatch -- ../../../..$PYTHON_SITE/_pytest/monkeypatch.py:29
         A convenient fixture for monkey-patching.
 
         The fixture provides these methods to modify objects, dictionaries or
@@ -141,19 +147,19 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         fixture has finished. The ``raising`` parameter determines if a KeyError
         or AttributeError will be raised if the set/deletion operation has no target.
 
-    recwarn
+    recwarn -- ../../../..$PYTHON_SITE/_pytest/recwarn.py:29
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
         See https://docs.python.org/library/how-to/capture-warnings.html for information
         on warning categories.
 
-    tmpdir_factory [session scope]
+    tmpdir_factory [session scope] -- ../../../..$PYTHON_SITE/_pytest/tmpdir.py:210
         Return a :class:`pytest.TempdirFactory` instance for the test session.
 
-    tmp_path_factory [session scope]
+    tmp_path_factory [session scope] -- ../../../..$PYTHON_SITE/_pytest/tmpdir.py:217
         Return a :class:`pytest.TempPathFactory` instance for the test session.
 
-    tmpdir
+    tmpdir -- ../../../..$PYTHON_SITE/_pytest/tmpdir.py:232
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
@@ -163,11 +169,11 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         ``--basetemp`` is used then it is cleared each session. See :ref:`base
         temporary directory`.
 
-        The returned object is a `py.path.local`_ path object.
+        The returned object is a `legacy_path`_ object.
 
-        .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
+        .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
 
-    tmp_path
+    tmp_path -- ../../../..$PYTHON_SITE/_pytest/tmpdir.py:250
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
@@ -180,7 +186,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         The returned object is a :class:`pathlib.Path` object.
 
 
-    no tests ran in 0.12s
+    ========================== no tests ran in 0.12s ===========================
 
 You can also interactively ask for help, e.g. by typing on the Python interactive prompt something like:
 

@@ -37,8 +37,8 @@ Running this would result in a passed test except for the last
     $ pytest test_tmp_path.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_tmp_path.py F                                                   [100%]

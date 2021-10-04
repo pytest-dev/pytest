@@ -31,8 +31,8 @@ then you can just invoke ``pytest`` directly:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_example.txt .                                                   [100%]
@@ -60,8 +60,8 @@ and functions, including from test modules:
     $ pytest --doctest-modules
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     mymodule.py .                                                        [ 50%]

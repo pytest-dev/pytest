@@ -433,8 +433,8 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -442,7 +442,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0001>
 
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
@@ -454,7 +454,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     test_module.py:7: AssertionError
     ________________________________ test_noop _________________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0001>
 
         def test_noop(smtp_connection):
             response, msg = smtp_connection.noop()
@@ -1050,7 +1050,7 @@ again, nothing much has changed:
 .. code-block:: pytest
 
     $ pytest -s -q --tb=no test_module.py
-    FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
+    FFfinalizing <smtplib.SMTP object at 0xdeadbeef0002> (smtp.gmail.com)
 
     ========================= short test summary info ==========================
     FAILED test_module.py::test_ehlo - assert 0
@@ -1083,7 +1083,7 @@ Running it:
     E   AssertionError: (250, b'mail.python.org')
     E   assert 0
     ------------------------- Captured stdout teardown -------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef> (mail.python.org)
+    finalizing <smtplib.SMTP object at 0xdeadbeef0003> (mail.python.org)
     ========================= short test summary info ==========================
     FAILED test_anothersmtp.py::test_showhelo - AssertionError: (250, b'mail....
 
@@ -1218,7 +1218,7 @@ So let's just do another run:
     ================================= FAILURES =================================
     ________________________ test_ehlo[smtp.gmail.com] _________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0004>
 
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
@@ -1230,7 +1230,7 @@ So let's just do another run:
     test_module.py:7: AssertionError
     ________________________ test_noop[smtp.gmail.com] _________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0004>
 
         def test_noop(smtp_connection):
             response, msg = smtp_connection.noop()
@@ -1241,7 +1241,7 @@ So let's just do another run:
     test_module.py:13: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0005>
 
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
@@ -1251,10 +1251,10 @@ So let's just do another run:
 
     test_module.py:6: AssertionError
     -------------------------- Captured stdout setup ---------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef>
+    finalizing <smtplib.SMTP object at 0xdeadbeef0004>
     ________________________ test_noop[mail.python.org] ________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0005>
 
         def test_noop(smtp_connection):
             response, msg = smtp_connection.noop()
@@ -1264,7 +1264,7 @@ So let's just do another run:
 
     test_module.py:13: AssertionError
     ------------------------- Captured stdout teardown -------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef>
+    finalizing <smtplib.SMTP object at 0xdeadbeef0005>
     ========================= short test summary info ==========================
     FAILED test_module.py::test_ehlo[smtp.gmail.com] - assert 0
     FAILED test_module.py::test_noop[smtp.gmail.com] - assert 0
@@ -1332,8 +1332,8 @@ Running the above tests results in the following test IDs being used:
    $ pytest --collect-only
    =========================== test session starts ============================
    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-   cachedir: $PYTHON_PREFIX/.pytest_cache
-   rootdir: $REGENDOC_TMPDIR
+   cachedir: .pytest_cache
+   rootdir: /home/sweet/project
    collected 11 items
 
    <Module test_anothersmtp.py>
@@ -1385,8 +1385,8 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 3 items
 
     test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
@@ -1435,8 +1435,8 @@ Here we declare an ``app`` fixture which receives the previously defined
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 2 items
 
     test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
@@ -1515,8 +1515,8 @@ Let's run the tests in verbose mode and with looking at the print-output:
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 8 items
 
     test_module.py::test_0[1]   SETUP otherarg 1

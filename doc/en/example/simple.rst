@@ -166,6 +166,7 @@ Now we'll get feedback on a bad argument:
     ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
     pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from 'type1', 'type2')
 
+
 If you need to provide more detailed error messages, you can use the
 ``type`` parameter and raise ``pytest.UsageError``:
 
@@ -232,8 +233,8 @@ directory with the above conftest.py:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 0 items
 
     ========================== no tests ran in 0.12s ===========================
@@ -297,8 +298,8 @@ and when running it will see a skipped "slow" test:
     $ pytest -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py .s                                                    [100%]
@@ -314,8 +315,8 @@ Or run it including the ``slow`` marked test:
     $ pytest --runslow
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py ..                                                    [100%]
@@ -458,9 +459,9 @@ which will add the string to the test header accordingly:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
+    cachedir: .pytest_cache
     project deps: mylib-1.1
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collected 0 items
 
     ========================== no tests ran in 0.12s ===========================
@@ -487,10 +488,10 @@ which will add info only when run with "--v":
     $ pytest -v
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
+    cachedir: .pytest_cache
     info1: did you know that ...
     did you?
-    rootdir: $REGENDOC_TMPDIR
+    rootdir: /home/sweet/project
     collecting ... collected 0 items
 
     ========================== no tests ran in 0.12s ===========================
@@ -502,8 +503,8 @@ and nothing when run plainly:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 0 items
 
     ========================== no tests ran in 0.12s ===========================
@@ -542,8 +543,8 @@ Now we can profile which test functions execute the slowest:
     $ pytest --durations=3
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_some_are_slow.py ...                                            [100%]
@@ -648,8 +649,8 @@ If we run this:
     $ pytest -rx
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 4 items
 
     test_step.py .Fx.                                                    [100%]
@@ -657,7 +658,7 @@ If we run this:
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
 
-    self = <test_step.TestUserHandling object at 0xdeadbeef>
+    self = <test_step.TestUserHandling object at 0xdeadbeef0001>
 
         def test_modification(self):
     >       assert 0
@@ -732,8 +733,8 @@ We can run this:
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 7 items
 
     test_step.py .Fx.                                                    [ 57%]
@@ -743,17 +744,17 @@ We can run this:
 
     ================================== ERRORS ==================================
     _______________________ ERROR at setup of test_root ________________________
-    file $REGENDOC_TMPDIR/b/test_error.py, line 1
+    file /home/sweet/project/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
     >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
-    $REGENDOC_TMPDIR/b/test_error.py:1
+    /home/sweet/project/b/test_error.py:1
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
 
-    self = <test_step.TestUserHandling object at 0xdeadbeef>
+    self = <test_step.TestUserHandling object at 0xdeadbeef0002>
 
         def test_modification(self):
     >       assert 0
@@ -762,21 +763,21 @@ We can run this:
     test_step.py:11: AssertionError
     _________________________________ test_a1 __________________________________
 
-    db = <conftest.DB object at 0xdeadbeef>
+    db = <conftest.DB object at 0xdeadbeef0003>
 
         def test_a1(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0xdeadbeef>
+    E       AssertionError: <conftest.DB object at 0xdeadbeef0003>
     E       assert 0
 
     a/test_db.py:2: AssertionError
     _________________________________ test_a2 __________________________________
 
-    db = <conftest.DB object at 0xdeadbeef>
+    db = <conftest.DB object at 0xdeadbeef0003>
 
         def test_a2(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0xdeadbeef>
+    E       AssertionError: <conftest.DB object at 0xdeadbeef0003>
     E       assert 0
 
     a/test_db2.py:2: AssertionError
@@ -851,8 +852,8 @@ and run them:
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -860,7 +861,7 @@ and run them:
     ================================= FAILURES =================================
     ________________________________ test_fail1 ________________________________
 
-    tmp_path = Path('PYTEST_TMPDIR/test_fail10')
+    tmp_path = PosixPath('PYTEST_TMPDIR/test_fail10')
 
         def test_fail1(tmp_path):
     >       assert 0
@@ -958,8 +959,8 @@ and run it:
     $ pytest -s test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
