@@ -6,13 +6,13 @@ The pytest team is proud to announce the 6.1.0 release!
 This release contains new features, improvements, bug fixes, and breaking changes, so users
 are encouraged to take a look at the CHANGELOG carefully:
 
-    :std:doc:`changelog`
+    https://docs.pytest.org/en/stable/changelog.html
 
 For complete documentation, please visit:
 
-    :std:doc:`../index`
+    https://docs.pytest.org/en/stable/
 
-As usual, you can upgrade from PyPI via::
+As usual, you can upgrade from PyPI via:
 
     pip install -U pytest
 

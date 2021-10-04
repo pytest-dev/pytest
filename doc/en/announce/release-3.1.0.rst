@@ -9,13 +9,13 @@ against itself, passing on many different interpreters and platforms.
 This release contains a bugs fixes and improvements, so users are encouraged
 to take a look at the CHANGELOG:
 
-:std:doc:`changelog`
+http://doc.pytest.org/en/stable/changelog.html
 
 For complete documentation, please visit:
 
     http://docs.pytest.org
 
-As usual, you can upgrade from pypi via::
+As usual, you can upgrade from pypi via:
 
     pip install -U pytest
 
