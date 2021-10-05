@@ -3,10 +3,10 @@
 Current default behaviour is to truncate assertion explanations at
 ~8 terminal lines, unless running in "-vv" mode or running on CI.
 """
-import os
 from typing import List
 from typing import Optional
 
+from _pytest.assertion import util
 from _pytest.nodes import Item
 
 
@@ -27,13 +27,7 @@ def truncate_if_required(
 def _should_truncate_item(item: Item) -> bool:
     """Whether or not this test item is eligible for truncation."""
     verbose = item.config.option.verbose
-    return verbose < 2 and not _running_on_ci()
-
-
-def _running_on_ci() -> bool:
-    """Check if we're currently running on a CI system."""
-    env_vars = ["CI", "BUILD_NUMBER"]
-    return any(var in os.environ for var in env_vars)
+    return verbose < 2 and not util.running_on_ci()
 
 
 def _truncate_explanation(

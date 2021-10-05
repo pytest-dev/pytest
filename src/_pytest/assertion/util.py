@@ -1,5 +1,6 @@
 """Utilities for assertion debugging."""
 import collections.abc
+import os
 import pprint
 from typing import AbstractSet
 from typing import Any
@@ -16,7 +17,6 @@ from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
-
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -287,7 +287,7 @@ def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
 def _compare_eq_iterable(
     left: Iterable[Any], right: Iterable[Any], verbose: int = 0
 ) -> List[str]:
-    if not verbose:
+    if not verbose and not running_on_ci():
         return ["Use -v to get the full diff"]
     # dynamic import to speedup pytest
     import difflib
@@ -490,3 +490,9 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> List[str]:
         else:
             newdiff.append(line)
     return newdiff
+
+
+def running_on_ci() -> bool:
+    """Check if we're currently running on a CI system."""
+    env_vars = ["CI", "BUILD_NUMBER"]
+    return any(var in os.environ for var in env_vars)
