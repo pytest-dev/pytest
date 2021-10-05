@@ -639,7 +639,6 @@ class Package(Module):
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
-        path, fspath = nodes._imply_path(path, fspath=fspath)
         session = parent.session
         nodes.FSCollector.__init__(
             self,
@@ -650,7 +649,7 @@ class Package(Module):
             session=session,
             nodeid=nodeid,
         )
-        self.name = path.parent.name
+        self.name = self.path.parent.name
 
     def setup(self) -> None:
         # Not using fixtures to call setup_module here because autouse fixtures
