@@ -1676,6 +1676,21 @@ passed multiple times. The expected format is ``name=value``. For example::
    See :ref:`change naming conventions` for more detailed examples.
 
 
+.. confval:: pythonpath
+
+   Sets list of directories that should be added to the python search path.
+   Directories will be added to the head of :data:`sys.path`.
+   Similar to the :envvar:`PYTHONPATH` environment variable, the directories will be
+   included in where Python will look for imported modules.
+   Paths are relative to the :ref:`rootdir <rootdir>` directory.
+   Directories remain in path for the duration of the test session.
+
+   .. code-block:: ini
+
+        [pytest]
+        pythonpath = src1 src2
+
+
 .. confval:: required_plugins
 
    A space separated list of plugins that must be present for pytest to run.
