@@ -861,3 +861,17 @@ def test_pytester_assert_outcomes_warnings(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_pytester_outcomes_deselected(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_one():
+            pass
+
+        def test_two():
+            pass
+        """
+    )
+    result = pytester.runpytest("-k", "test_one")
+    result.assert_outcomes(passed=1, deselected=1)

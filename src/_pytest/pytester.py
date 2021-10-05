@@ -588,6 +588,7 @@ class RunResult:
         xpassed: int = 0,
         xfailed: int = 0,
         warnings: int = 0,
+        deselected: int = 0,
     ) -> None:
         """Assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run."""
@@ -604,6 +605,7 @@ class RunResult:
             xpassed=xpassed,
             xfailed=xfailed,
             warnings=warnings,
+            deselected=deselected,
         )
 
 
