@@ -111,6 +111,28 @@ class TestAssertionRewrite(object):
             assert imp.col_offset == 0
         assert isinstance(m.body[3], ast.Expr)
 
+    def test_location_is_set(self):
+        s = textwrap.dedent(
+            """
+
+        assert False, (
+
+            "Ouch"
+          )
+
+        """
+        )
+        m = rewrite(s)
+        for node in m.body:
+            if isinstance(node, ast.Import):
+                continue
+            for n in [node, *ast.iter_child_nodes(node)]:
+                assert n.lineno == 3
+                assert n.col_offset == 0
+                if sys.version_info >= (3, 8):
+                    assert n.end_lineno == 6
+                    assert n.end_col_offset == 3
+
     def test_dont_rewrite(self):
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
         m = rewrite(s)

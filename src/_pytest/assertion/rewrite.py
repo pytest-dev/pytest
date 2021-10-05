@@ -575,19 +575,12 @@ else:
         return ast.Name(str(c), ast.Load())
 
 
-def set_location(node, lineno, col_offset):
-    """Set node location information recursively."""
-
-    def _fix(node, lineno, col_offset):
-        if "lineno" in node._attributes:
-            node.lineno = lineno
-        if "col_offset" in node._attributes:
-            node.col_offset = col_offset
-        for child in ast.iter_child_nodes(node):
-            _fix(child, lineno, col_offset)
-
-    _fix(node, lineno, col_offset)
-    return node
+def traverse_node(node):
+    """Recursively yield node and all its children in depth-first order."""
+    yield node
+    for child in ast.iter_child_nodes(node):
+        for descendant in traverse_node(child):
+            yield descendant
 
 
 class AssertionRewriter(ast.NodeVisitor):
@@ -868,9 +861,10 @@ class AssertionRewriter(ast.NodeVisitor):
             variables = [ast.Name(name, ast.Store()) for name in self.variables]
             clear = ast.Assign(variables, _NameConstant(None))
             self.statements.append(clear)
-        # Fix line numbers.
+        # Fix locations (line numbers/column offsets).
         for stmt in self.statements:
-            set_location(stmt, assert_.lineno, assert_.col_offset)
+            for node in traverse_node(stmt):
+                ast.copy_location(node, assert_)
         return self.statements
 
     def warn_about_none_ast(self, node, module_path, lineno):
