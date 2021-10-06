@@ -1666,7 +1666,7 @@ class Function(PyobjMixin, nodes.Item):
                 # feel free to cry, this was broken for years before
                 # and keywords can't fix it per design
                 self.keywords[mark.name] = mark
-            self.own_markers.extend(normalize_mark_list(callspec.marks))
+            self.own_markers.extend(callspec.marks)
         if keywords:
             self.keywords.update(keywords)
 
