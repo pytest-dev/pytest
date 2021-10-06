@@ -161,12 +161,12 @@ class TestPaste:
 
     def test_create_new_paste(self, pastebin, mocked_urlopen) -> None:
         result = pastebin.create_new_paste(b"full-paste-contents")
-        assert result == "https://bpaste.net/show/3c0c6750bd"
+        assert result == "https://bpa.st/show/3c0c6750bd"
         assert len(mocked_urlopen) == 1
         url, data = mocked_urlopen[0]
         assert type(data) is bytes
         lexer = "text"
-        assert url == "https://bpaste.net"
+        assert url == "https://bpa.st"
         assert "lexer=%s" % lexer in data.decode()
         assert "code=full-paste-contents" in data.decode()
         assert "expiry=1week" in data.decode()
