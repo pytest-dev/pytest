@@ -579,14 +579,17 @@ class NodeKeywords(MutableMapping[str, Any]):
         raise ValueError("cannot delete key in keywords dict")
 
     def __iter__(self) -> Iterator[str]:
+        # Doesn't need to be fast.
         yield from self._markers
         if self.parent is not None:
-            yield from self.parent.keywords
+            for keyword in self.parent.keywords:
+                # self._marks and self.parent.keywords can have duplicates.
+                if keyword not in self._markers:
+                    yield keyword
 
     def __len__(self) -> int:
-        return len(self._markers) + (
-            len(self.parent.keywords) if self.parent is not None else 0
-        )
+        # Doesn't need to be fast.
+        return sum(1 for keyword in self)
 
     def __repr__(self) -> str:
         return f"<NodeKeywords for node {self.node}>"
