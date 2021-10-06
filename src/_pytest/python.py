@@ -1658,25 +1658,20 @@ class Function(PyobjMixin, nodes.Item):
         # Note: when FunctionDefinition is introduced, we should change ``originalname``
         # to a readonly property that returns FunctionDefinition.name.
 
-        self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
             self.own_markers.extend(callspec.marks)
-        if keywords:
-            self.keywords.update(keywords)
 
         # todo: this is a hell of a hack
         # https://github.com/pytest-dev/pytest/issues/4569
-
+        # Note: the order of the updates is important here; indicates what
+        # takes priority (ctor argument over function attributes over markers).
         # Take own_markers only; NodeKeywords handles parent traversal on its own.
-        self.keywords.update(
-            {
-                mark.name: mark
-                for mark in self.own_markers
-                if mark.name not in self.keywords
-            }
-        )
+        self.keywords.update({mark.name: mark for mark in self.own_markers})
+        self.keywords.update(self.obj.__dict__)
+        if keywords:
+            self.keywords.update(keywords)
 
         if fixtureinfo is None:
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(
