@@ -1637,7 +1637,7 @@ class Function(PyobjMixin, nodes.Item):
         config: Optional[Config] = None,
         callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
-        keywords=None,
+        keywords: Optional[Mapping[str, Any]] = None,
         session: Optional[Session] = None,
         fixtureinfo: Optional[FuncFixtureInfo] = None,
         originalname: Optional[str] = None,

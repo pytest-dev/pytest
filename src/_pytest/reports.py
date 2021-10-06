@@ -7,6 +7,7 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -254,7 +255,7 @@ class TestReport(BaseReport):
         self,
         nodeid: str,
         location: Tuple[str, Optional[int], str],
-        keywords,
+        keywords: Mapping[str, Any],
         outcome: "Literal['passed', 'failed', 'skipped']",
         longrepr: Union[
             None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr
