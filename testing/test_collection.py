@@ -881,6 +881,36 @@ class TestNodeKeywords:
         assert item.keywords["kw"] == "method"
         assert len(item.keywords) == len(set(item.keywords))
 
+    def test_unpacked_marks_added_to_keywords(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            pytestmark = pytest.mark.foo
+            class TestClass:
+                pytestmark = pytest.mark.bar
+                def test_method(self): pass
+                test_method.pytestmark = pytest.mark.baz
+        """,
+            "test_method",
+        )
+        assert isinstance(item, pytest.Function)
+        cls = item.getparent(pytest.Class)
+        assert cls is not None
+        mod = item.getparent(pytest.Module)
+        assert mod is not None
+
+        assert item.keywords["foo"] == pytest.mark.foo.mark
+        assert item.keywords["bar"] == pytest.mark.bar.mark
+        assert item.keywords["baz"] == pytest.mark.baz.mark
+
+        assert cls.keywords["foo"] == pytest.mark.foo.mark
+        assert cls.keywords["bar"] == pytest.mark.bar.mark
+        assert "baz" not in cls.keywords
+
+        assert mod.keywords["foo"] == pytest.mark.foo.mark
+        assert "bar" not in mod.keywords
+        assert "baz" not in mod.keywords
+
 
 COLLECTION_ERROR_PY_FILES = dict(
     test_01_failure="""

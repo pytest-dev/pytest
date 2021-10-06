@@ -303,6 +303,9 @@ class PyobjMixin(nodes.Node):
             # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
                 self.own_markers.extend(get_unpacked_marks(self.obj))
+                # This assumes that `obj` is called before there is a chance
+                # to add custom keys to `self.keywords`, so no fear of overriding.
+                self.keywords.update({mark.name: mark for mark in self.own_markers})
         return obj
 
     @obj.setter
