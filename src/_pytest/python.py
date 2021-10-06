@@ -1676,10 +1676,11 @@ class Function(PyobjMixin, nodes.Item):
         # todo: this is a hell of a hack
         # https://github.com/pytest-dev/pytest/issues/4569
 
+        # Take own_markers only; NodeKeywords handles parent traversal on its own.
         self.keywords.update(
             {
                 mark.name: mark
-                for mark in self.iter_markers()
+                for mark in self.own_markers
                 if mark.name not in self.keywords
             }
         )
