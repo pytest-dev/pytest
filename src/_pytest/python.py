@@ -1662,13 +1662,6 @@ class Function(PyobjMixin, nodes.Item):
         self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
-            # this is total hostile and a mess
-            # keywords are broken by design by now
-            # this will be redeemed later
-            for mark in callspec.marks:
-                # feel free to cry, this was broken for years before
-                # and keywords can't fix it per design
-                self.keywords[mark.name] = mark
             self.own_markers.extend(callspec.marks)
         if keywords:
             self.keywords.update(keywords)
