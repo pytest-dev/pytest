@@ -305,7 +305,7 @@ class PyobjMixin(nodes.Node):
                 self.own_markers.extend(get_unpacked_marks(self.obj))
                 # This assumes that `obj` is called before there is a chance
                 # to add custom keys to `self.keywords`, so no fear of overriding.
-                self.keywords.update({mark.name: mark for mark in self.own_markers})
+                self.keywords.update((mark.name, mark) for mark in self.own_markers)
         return obj
 
     @obj.setter
@@ -1668,7 +1668,7 @@ class Function(PyobjMixin, nodes.Item):
         # Note: the order of the updates is important here; indicates what
         # takes priority (ctor argument over function attributes over markers).
         # Take own_markers only; NodeKeywords handles parent traversal on its own.
-        self.keywords.update({mark.name: mark for mark in self.own_markers})
+        self.keywords.update((mark.name, mark) for mark in self.own_markers)
         self.keywords.update(self.obj.__dict__)
         if keywords:
             self.keywords.update(keywords)
