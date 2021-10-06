@@ -3,6 +3,7 @@ import re
 import sys
 import textwrap
 from pathlib import Path
+from pathlib import PurePath
 from typing import Dict
 from typing import List
 from typing import Sequence
@@ -820,20 +821,21 @@ class TestConfigAPI:
         "names, expected",
         [
             # dist-info based distributions root are files as will be put in PYTHONPATH
-            (["bar.py"], ["bar"]),
-            (["foo/bar.py"], ["bar"]),
-            (["foo/bar.pyc"], []),
-            (["foo/__init__.py"], ["foo"]),
-            (["bar/__init__.py", "xz.py"], ["bar", "xz"]),
-            (["setup.py"], []),
+            (["bar.py", "a.dist-info/METADATA"], ["bar"]),
+            (["foo/bar.py", "a.dist-info/METADATA"], ["foo.bar"]),
+            (["foo/bar.pyc", "a.dist-info/METADATA"], []),
+            (["foo/__init__.py", "a.dist-info/METADATA"], ["foo"]),
+            (["bar/__init__.py", "xz.py", "a.dist-info/METADATA"], ["bar", "xz"]),
+            (["setup.py", "a.dist-info/METADATA"], []),
             # egg based distributions root contain the files from the dist root
-            (["src/bar/__init__.py"], ["bar"]),
-            (["src/bar/__init__.py", "setup.py"], ["bar"]),
-            (["source/python/bar/__init__.py", "setup.py"], ["bar"]),
+            (["src/bar/__init__.py", "src/a.egg-info/METADATA"], ["bar"]),
+            (["src/bar/__init__.py", "setup.py", "src/a.egg-info/METADATA"], ["bar"]),
+            (["s/p/bar/__init__.py", "setup.py", "s/a.egg-info/METADATA"], ["p.bar"]),
         ],
     )
     def test_iter_rewritable_modules(self, names, expected) -> None:
-        assert list(_iter_rewritable_modules(names)) == expected
+        files = [PurePath(i) for i in names]
+        assert list(_iter_rewritable_modules(files)) == expected
 
 
 class TestConfigFromdictargs:
@@ -982,7 +984,7 @@ def test_setuptools_importerror_issue1479(
 
     class Distribution:
         version = "1.0"
-        files = ("foo.txt",)
+        files = (PurePath("foo.txt"),)
         metadata = {"name": "foo"}
         entry_points = (DummyEntryPoint(),)
 
@@ -1037,7 +1039,7 @@ def test_plugin_preparse_prevents_setuptools_loading(
 
     class Distribution:
         version = "1.0"
-        files = ("foo.txt",)
+        files = (PurePath("foo.txt"),)
         metadata = {"name": "foo"}
         entry_points = (DummyEntryPoint(),)
 

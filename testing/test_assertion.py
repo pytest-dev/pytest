@@ -201,6 +201,7 @@ class TestImportHookInstallation:
             "mainwrapper.py": """\
             import pytest
             from _pytest.compat import importlib_metadata
+            from pathlib import PurePath
 
             class DummyEntryPoint(object):
                 name = 'spam'
@@ -213,7 +214,7 @@ class TestImportHookInstallation:
 
             class DummyDistInfo(object):
                 version = '1.0'
-                files = ('spamplugin.py', 'hampkg/__init__.py')
+                files = (PurePath('spamplugin.py'), PurePath('hampkg/__init__.py'))
                 entry_points = (DummyEntryPoint(),)
                 metadata = {'name': 'foo'}
 

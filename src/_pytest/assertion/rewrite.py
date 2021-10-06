@@ -234,11 +234,10 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         try:
             return self._marked_for_rewrite_cache[name]
         except KeyError:
-            for marked in self._must_rewrite:
-                if name == marked or name.startswith(marked + "."):
-                    state.trace(f"matched marked file {name!r} (from {marked!r})")
-                    self._marked_for_rewrite_cache[name] = True
-                    return True
+            if name in self._must_rewrite:
+                state.trace(f"matched marked file {name!r}")
+                self._marked_for_rewrite_cache[name] = True
+                return True
 
             self._marked_for_rewrite_cache[name] = False
             return False
