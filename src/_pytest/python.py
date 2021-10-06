@@ -1675,7 +1675,7 @@ class Function(PyobjMixin, nodes.Item):
 
         self.keywords.update(
             {
-                mark.name: True
+                mark.name: mark
                 for mark in self.iter_markers()
                 if mark.name not in self.keywords
             }
