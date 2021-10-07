@@ -795,31 +795,33 @@ class TestRewriteOnImport:
         )
         assert pytester.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
-    if sys.version_info >= (3, 9):
+    @pytest.mark.skipif(
+        sys.version_info < (3, 9),
+        reason="importlib.resources.files was introduced in 3.9",
+    )
+    def test_load_resource_via_files_with_rewrite(self, pytester: Pytester) -> None:
+        example = pytester.path.joinpath("demo") / "example"
+        init = pytester.path.joinpath("demo") / "__init__.py"
+        pytester.makepyfile(
+            **{
+                "demo/__init__.py": """
+                from importlib.resources import files
 
-        def test_load_resource_via_files_with_rewrite(self, pytester: Pytester) -> None:
-            example = pytester.path.joinpath("demo") / "example"
-            init = pytester.path.joinpath("demo") / "__init__.py"
-            pytester.makepyfile(
-                **{
-                    "demo/__init__.py": """
-                    from importlib.resources import files
+                def load():
+                    return files(__name__)
+                """,
+                "test_load": f"""
+                pytest_plugins = ["demo"]
 
-                    def load():
-                        return files(__name__)
-                    """,
-                    "test_load": f"""
-                    pytest_plugins = ["demo"]
+                def test_load():
+                    from demo import load
+                    assert list(str(i) for i in load().iterdir()) == [{str(example)!r}, {str(init)!r}]
+                """,
+            }
+        )
+        example.mkdir()
 
-                    def test_load():
-                        from demo import load
-                        assert list(str(i) for i in load().iterdir()) == [{str(example)!r}, {str(init)!r}]
-                    """,
-                }
-            )
-            example.mkdir()
-
-            assert pytester.runpytest("-vv").ret == ExitCode.OK
+        assert pytester.runpytest("-vv").ret == ExitCode.OK
 
     def test_readonly(self, pytester: Pytester) -> None:
         sub = pytester.mkdir("testing")
