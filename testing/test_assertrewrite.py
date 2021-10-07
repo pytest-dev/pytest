@@ -815,7 +815,8 @@ class TestRewriteOnImport:
 
                 def test_load():
                     from demo import load
-                    assert list(str(i) for i in load().iterdir()) == [{str(example)!r}, {str(init)!r}]
+                    found = {{str(i) for i in load().iterdir() if i.name != "__pycache__"}}
+                    assert found == {{{str(example)!r}, {str(init)!r}}}
                 """,
             }
         )
