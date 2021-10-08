@@ -869,14 +869,14 @@ Here's what that might look like:
     def sending_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
     @pytest.fixture
     def receiving_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
     def test_email_received(receiving_user, sending_user):
