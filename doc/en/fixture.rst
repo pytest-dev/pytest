@@ -936,7 +936,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
     def sending_user(mail_admin):
         user = mail_admin.create_user()
         yield user
-        admin_client.delete_user(user)
+        mail_admin.delete_user(user)
 
 
     @pytest.fixture
@@ -944,7 +944,7 @@ Here's how the previous example would look using the ``addfinalizer`` method:
         user = mail_admin.create_user()
 
         def delete_user():
-            admin_client.delete_user(user)
+            mail_admin.delete_user(user)
 
         request.addfinalizer(delete_user)
         return user
@@ -998,8 +998,8 @@ above):
         sending_user.send_emai(email, receiving_user)
         yield receiving_user, email
         receiving_user.delete_email(email)
-        admin_client.delete_user(sending_user)
-        admin_client.delete_user(receiving_user)
+        mail_admin.delete_user(sending_user)
+        mail_admin.delete_user(receiving_user)
 
 
     def test_email_received(setup):
