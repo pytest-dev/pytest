@@ -879,9 +879,9 @@ Here's what that might look like:
         admin_client.delete_user(user)
 
 
-    def test_email_received(receiving_user, email):
+    def test_email_received(receiving_user, sending_user):
         email = Email(subject="Hey!", body="How's it going?")
-        sending_user.send_email(_email, receiving_user)
+        sending_user.send_email(email, receiving_user)
         assert email in receiving_user.inbox
 
 Because ``receiving_user`` is the last fixture to run during setup, it's the first to run
