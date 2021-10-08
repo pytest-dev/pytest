@@ -10,7 +10,7 @@ from colorama import Fore
 from colorama import init
 
 
-def announce(version):
+def announce(version, template_name):
     """Generates a new release announcement entry in the docs."""
     # Get our list of authors
     stdout = check_output(["git", "describe", "--abbrev=0", "--tags"])
@@ -22,9 +22,6 @@ def announce(version):
 
     contributors = {name for name in stdout.splitlines() if not name.endswith("[bot]")}
 
-    template_name = (
-        "release.minor.rst" if version.endswith(".0") else "release.patch.rst"
-    )
     template_text = (
         Path(__file__).parent.joinpath(template_name).read_text(encoding="UTF-8")
     )
@@ -81,7 +78,7 @@ def check_links():
     check_call(["tox", "-e", "docs-checklinks"])
 
 
-def pre_release(version, *, skip_check_links):
+def pre_release(version, template_name, *, skip_check_links):
     """Generates new docs, release announcements and creates a local tag."""
     announce(version)
     regen(version)
@@ -108,9 +105,14 @@ def main():
     init(autoreset=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("version", help="Release version")
+    parser.add_argument("template_name")
     parser.add_argument("--skip-check-links", action="store_true", default=False)
     options = parser.parse_args()
-    pre_release(options.version, skip_check_links=options.skip_check_links)
+    pre_release(
+        options.version,
+        options.template_name,
+        skip_check_links=options.skip_check_links,
+    )
 
 
 if __name__ == "__main__":
