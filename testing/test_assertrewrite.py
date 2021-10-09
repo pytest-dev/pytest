@@ -1681,7 +1681,7 @@ def test_try_makedirs(monkeypatch, tmp_path: Path) -> None:
 
     # monkeypatch to simulate all error situations
     def fake_mkdir(p, exist_ok=False, *, exc):
-        assert isinstance(p, str)
+        assert isinstance(p, Path)
         raise exc
 
     monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=FileNotFoundError()))

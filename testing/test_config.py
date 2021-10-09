@@ -595,7 +595,7 @@ class TestConfigAPI:
     def test_getconftest_pathlist(self, pytester: Pytester, tmp_path: Path) -> None:
         somepath = tmp_path.joinpath("x", "y", "z")
         p = tmp_path.joinpath("conftest.py")
-        p.write_text(f"mylist = {['.', os.fspath(somepath)]}")
+        p.write_text(f"mylist = {['.', str(somepath)]}")
         config = pytester.parseconfigure(p)
         assert (
             config._getconftest_pathlist("notexist", path=tmp_path, rootpath=tmp_path)

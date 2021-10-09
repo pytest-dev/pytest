@@ -342,7 +342,7 @@ else:
 
         try:
             _write_pyc_fp(fp, source_stat, co)
-            os.rename(proc_pyc, os.fspath(pyc))
+            os.rename(proc_pyc, pyc)
         except OSError as e:
             state.trace(f"error writing pyc file at {pyc}: {e}")
             # we ignore any failure to write the cache file
@@ -356,13 +356,12 @@ else:
 
 def _rewrite_test(fn: Path, config: Config) -> Tuple[os.stat_result, types.CodeType]:
     """Read and rewrite *fn* and return the code object."""
-    fn_ = os.fspath(fn)
-    stat = os.stat(fn_)
-    with open(fn_, "rb") as f:
-        source = f.read()
-    tree = ast.parse(source, filename=fn_)
-    rewrite_asserts(tree, source, fn_, config)
-    co = compile(tree, fn_, "exec", dont_inherit=True)
+    stat = os.stat(fn)
+    source = fn.read_bytes()
+    strfn = str(fn)
+    tree = ast.parse(source, filename=strfn)
+    rewrite_asserts(tree, source, strfn, config)
+    co = compile(tree, strfn, "exec", dont_inherit=True)
     return stat, co
 
 
@@ -374,14 +373,14 @@ def _read_pyc(
     Return rewritten code if successful or None if not.
     """
     try:
-        fp = open(os.fspath(pyc), "rb")
+        fp = open(pyc, "rb")
     except OSError:
         return None
     with fp:
         # https://www.python.org/dev/peps/pep-0552/
         has_flags = sys.version_info >= (3, 7)
         try:
-            stat_result = os.stat(os.fspath(source))
+            stat_result = os.stat(source)
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
             data = fp.read(16 if has_flags else 12)
@@ -863,7 +862,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     "assertion is always true, perhaps remove parentheses?"
                 ),
                 category=None,
-                filename=os.fspath(self.module_path),
+                filename=self.module_path,
                 lineno=assert_.lineno,
             )
 
@@ -1105,7 +1104,7 @@ def try_makedirs(cache_dir: Path) -> bool:
     Returns True if successful or if it already exists.
     """
     try:
-        os.makedirs(os.fspath(cache_dir), exist_ok=True)
+        os.makedirs(cache_dir, exist_ok=True)
     except (FileNotFoundError, NotADirectoryError, FileExistsError):
         # One of the path components was not a directory:
         # - we're in a zip file
