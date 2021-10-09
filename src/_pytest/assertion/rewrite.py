@@ -64,7 +64,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         except ValueError:
             self.fnpats = ["test_*.py", "*_test.py"]
         self.session: Optional[Session] = None
-        self._rewritten_names: Set[str] = set()
+        self._rewritten_names: Dict[str, Path] = {}
         self._must_rewrite: Set[str] = set()
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
         # which might result in infinite recursion (#3506)
@@ -134,7 +134,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         fn = Path(module.__spec__.origin)
         state = self.config.stash[assertstate_key]
 
-        self._rewritten_names.add(module.__name__)
+        self._rewritten_names[module.__name__] = fn
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
@@ -275,6 +275,14 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         """Optional PEP302 get_data API."""
         with open(pathname, "rb") as f:
             return f.read()
+
+    if sys.version_info >= (3, 9):
+
+        def get_resource_reader(self, name: str) -> importlib.abc.TraversableResources:  # type: ignore
+            from types import SimpleNamespace
+            from importlib.readers import FileReader
+
+            return FileReader(SimpleNamespace(path=self._rewritten_names[name]))
 
 
 def _write_pyc_fp(
