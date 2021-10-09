@@ -1372,9 +1372,7 @@ class Pytester:
         """
         __tracebackhide__ = True
 
-        cmdargs = tuple(
-            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in cmdargs
-        )
+        cmdargs = tuple(os.fspath(arg) for arg in cmdargs)
         p1 = self.path.joinpath("stdout")
         p2 = self.path.joinpath("stderr")
         print("running:", *cmdargs)
