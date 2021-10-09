@@ -197,7 +197,9 @@ def test_caplog_filters_by_logger(pytester: Pytester, caplog, logging_during_set
     )
     pytester.runpytest()
     assert [record.name for record in caplog.records] == ["test_fixture", "testLog"]
-    assert [record.name for record in caplog.get_records_by_logger("testLog")] == ["testLog"]
+    assert [record.name for record in caplog.get_records_by_logger("testLog")] == [
+        "testLog"
+    ]
 
 
 def test_ini_controls_global_log_level(pytester: Pytester) -> None:
