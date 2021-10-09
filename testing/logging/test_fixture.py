@@ -173,6 +173,9 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
 
 
 def test_caplog_filters_by_logger(pytester: Pytester, caplog, logging_during_setup_and_teardown):
+    """
+    Tests that records are filtered properly by the given logger name.
+    """
     assert not caplog.records
     caplog.set_level("INFO")
     logger.info("a_call_log")
