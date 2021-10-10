@@ -172,7 +172,9 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
     assert set(caplog._item.stash[caplog_records_key]) == {"setup", "call"}
 
 
-def test_caplog_filters_by_logger(pytester: Pytester, caplog, logging_during_setup_and_teardown):
+def test_caplog_filters_by_logger(
+    pytester: Pytester, caplog, logging_during_setup_and_teardown
+):
     """
     Tests that records are filtered properly by the given logger name.
     """
