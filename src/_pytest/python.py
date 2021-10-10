@@ -63,10 +63,11 @@ from _pytest.fixtures import FuncFixtureInfo
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
-from _pytest.mark.structures import get_mro_marks, marks_to_dict
+from _pytest.mark.structures import get_mro_marks
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
+from _pytest.mark.structures import marks_to_dict
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
@@ -1620,7 +1621,11 @@ class Function(PyobjMixin, nodes.Item):
         self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))
         if self.cls:
-            self.own_markers[:] = list(dict(get_mro_marks(self.cls), **marks_to_dict(self.own_markers)).values())
+            self.own_markers[:] = list(
+                dict(
+                    get_mro_marks(self.cls), **marks_to_dict(self.own_markers)
+                ).values()
+            )
         if callspec:
             self.callspec = callspec
             # this is total hostile and a mess

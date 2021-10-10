@@ -600,7 +600,10 @@ class TestFunctional:
         )
         values = reprec.getfailedcollections()
         assert len(values) == 1
-        assert "AttributeError: type object 'pytestmark' has no attribute 'name'" in str(values[0].longrepr)
+        assert (
+            "AttributeError: type object 'pytestmark' has no attribute 'name'"
+            in str(values[0].longrepr)
+        )
 
     def test_mark_dynamically_in_funcarg(self, pytester: Pytester) -> None:
         pytester.makeconftest(

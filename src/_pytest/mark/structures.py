@@ -371,7 +371,10 @@ def get_unpacked_marks(obj: object) -> Iterable[Mark]:
 
 
 def marks_to_dict(marks: Iterable[Mark]) -> Dict[str, Mark]:
-    return {mark.name if mark.name != "parametrize" else mark.args[0]: mark for mark in marks}
+    return {
+        mark.name if mark.name != "parametrize" else mark.args[0]: mark
+        for mark in marks
+    }
 
 
 def get_mro_marks(cls: type) -> Dict[str, Mark]:
