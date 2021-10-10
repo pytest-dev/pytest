@@ -1,11 +1,9 @@
 import collections.abc
 import inspect
-import operator
 import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -367,36 +365,24 @@ def get_unpacked_marks(obj: object) -> Iterable[Mark]:
     mark_list = getattr(obj, "pytestmark", [])
     if not isinstance(mark_list, list):
         mark_list = [mark_list]
-    return mark_list
+    return normalize_mark_list(mark_list)
 
 
-def marks_to_dict(marks: Iterable[Mark]) -> Dict[str, Mark]:
-    return {
-        mark.name if mark.name != "parametrize" else mark.args[0]: mark
-        for mark in marks
-    }
-
-
-def get_mro_marks(cls: type) -> Dict[str, Mark]:
+def get_mro_marks(cls: type) -> List[Mark]:
     if cls is object or cls is None:
-        return {}
+        return []
     if hasattr(cls, "mro_markers"):
         return getattr(cls, "mro_markers")
 
-    markers_dict = marks_to_dict(get_unpacked_marks(cls))
+    # markers = list(mark for mark in get_unpacked_marks(cls) if mark.name != "parametrize")
+    markers = list(mark for mark in get_unpacked_marks(cls))
     for parent_obj in cls.__mro__[1:]:
         if parent_obj is not object:
-            for mark_name, mark in get_mro_marks(parent_obj).items():
-                if mark_name not in markers_dict:
-                    markers_dict[mark_name] = mark
+            markers.extend(get_mro_marks(parent_obj))
 
-    # The method is recursive, and it's called for each class.
     # To not extract the marks for each item's classes, I store the variable in "cls" as variable cached.
-    setattr(cls, "mro_markers", markers_dict)
-    # marks = dict(markers_dict, **{mark.name: mark for mark in getattr(cls, "pytestmark", [])})
-    # setattr(cls, "pytestmark", list(marks.values()))
-    # return marks
-    return markers_dict
+    setattr(cls, "mro_markers", list({str(mark): mark for mark in markers}.values()))
+    return markers
 
 
 def normalize_mark_list(
