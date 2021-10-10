@@ -368,11 +368,9 @@ def get_unpacked_marks(obj: object) -> Iterable[Mark]:
     return normalize_mark_list(mark_list)
 
 
-def get_mro_marks(cls: type) -> List[Mark]:
-    if cls is object or cls is None:
-        return []
-    if hasattr(cls, "mro_markers"):
-        return getattr(cls, "mro_markers")
+def get_mro_marks(cls: type):
+    if cls is object or cls is None or hasattr(cls, "mro_markers"):
+        return getattr(cls, "mro_markers", [])
 
     # markers = list(mark for mark in get_unpacked_marks(cls) if mark.name != "parametrize")
     markers = list(mark for mark in get_unpacked_marks(cls))

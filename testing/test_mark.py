@@ -1129,8 +1129,8 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_markers_from_multiple_inheritances(pytester: Pytester, request) -> None:
-    py_file = pytester.makepyfile(
+def test_markers_from_multiple_inheritances(pytester: Pytester) -> None:
+    pytester.makepyfile(
         """
         import pytest
         @pytest.mark.mark1
