@@ -1,5 +1,6 @@
 import collections.abc
 import inspect
+import operator
 import warnings
 from typing import Any
 from typing import Callable
@@ -369,28 +370,30 @@ def get_unpacked_marks(obj: object) -> Iterable[Mark]:
     return mark_list
 
 
-def get_unpacked_marks(obj) -> List[Mark]:
-    """Obtain the unpacked marks that are stored on an object."""
-    return normalize_mark_list(get_unpacked_marks(obj))
+def marks_to_dict(marks: Iterable[Mark]) -> Dict[str, Mark]:
+    return {mark.name if mark.name != "parametrize" else mark.args[0]: mark for mark in marks}
 
 
-def extract_mro_markers(cls):
-    if cls is None or getattr(cls, "mro_markers", []) or cls is object:
-        return
+def get_mro_marks(cls: type) -> Dict[str, Mark]:
+    if cls is object or cls is None:
+        return {}
+    if hasattr(cls, "mro_markers"):
+        return getattr(cls, "mro_markers")
 
-    markers = {str(mark): mark for mark in get_unpacked_marks(cls) if mark.name != "parametrize"}
-    for parent_obj in cls.__mro__[::-1][:-1]:
-        if parent_obj is object:
-            continue
-        if not getattr(parent_obj, "mro_markers", []):
-            extract_mro_markers(parent_obj)
+    markers_dict = marks_to_dict(get_unpacked_marks(cls))
+    for parent_obj in cls.__mro__[1:]:
+        if parent_obj is not object:
+            for mark_name, mark in get_mro_marks(parent_obj).items():
+                if mark_name not in markers_dict:
+                    markers_dict[mark_name] = mark
 
-        [
-            markers.__setitem__(str(mark), mark)
-            for mark in parent_obj.mro_markers
-            if mark.name != "parametrize"
-        ]
-    setattr(cls, "mro_markers", list(markers.values()))
+    # The method is recursive, and it's called for each class.
+    # To not extract the marks for each item's classes, I store the variable in "cls" as variable cached.
+    setattr(cls, "mro_markers", markers_dict)
+    # marks = dict(markers_dict, **{mark.name: mark for mark in getattr(cls, "pytestmark", [])})
+    # setattr(cls, "pytestmark", list(marks.values()))
+    # return marks
+    return markers_dict
 
 
 def normalize_mark_list(

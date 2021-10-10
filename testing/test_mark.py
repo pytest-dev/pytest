@@ -600,7 +600,7 @@ class TestFunctional:
         )
         values = reprec.getfailedcollections()
         assert len(values) == 1
-        assert "TypeError" in str(values[0].longrepr)
+        assert "AttributeError: type object 'pytestmark' has no attribute 'name'" in str(values[0].longrepr)
 
     def test_mark_dynamically_in_funcarg(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -1129,16 +1129,7 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-@pytest.mark.parametrize(
-    "markers",
-    (
-        "mark1",
-        "mark1 and mark2",
-        "mark1 and mark2 and mark3",
-        "mark1 and mark2 and mark3 and mark4",
-    ),
-)
-def test_markers_from_multiple_inheritances(pytester: Pytester, markers) -> None:
+def test_markers_from_multiple_inheritances(pytester: Pytester, request) -> None:
     py_file = pytester.makepyfile(
         """
         import pytest
@@ -1153,9 +1144,9 @@ def test_markers_from_multiple_inheritances(pytester: Pytester, markers) -> None
         @pytest.mark.mark3
         class TestMultipleInheritances(Base1, Base2):
             @pytest.mark.mark4
-            def test_multiple_inheritances(self):
-                pass
+            def test_multiple_inheritances(self, request):
+                assert {mark.name for mark in request.node.iter_markers()} == {"mark1","mark2","mark3","mark4",}
         """
     )
-    result = pytester.inline_run(py_file, "-m", markers)
+    result = pytester.inline_run()
     result.assertoutcome(passed=1)
