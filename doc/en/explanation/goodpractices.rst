@@ -248,3 +248,20 @@ dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
+
+Do not run via setuptools
+-------------------------
+
+Integration with setuptools is **not recommended**,
+i.e. you should not be using ``python setup.py test`` or ``pytest-runner``,
+and may stop working in the future.
+
+This is deprecated since it depends on deprecated features of setuptools
+and relies on features that break security mechanisms in pip.
+For example 'setup_requires' and 'tests_require' bypass ``pip --require-hashes``.
+For more information and migration instructions,
+see the `pytest-runner notice <https://github.com/pytest-dev/pytest-runner#deprecation-notice>`_.
+See also `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`_.
+
+setuptools intends to
+`remove the test command <https://github.com/pypa/setuptools/issues/931>`_.
