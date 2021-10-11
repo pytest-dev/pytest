@@ -249,11 +249,12 @@ options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
 
-Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
---------------------------------------------------------------------------
+Do not run via setuptools
+-------------------------
 
-Integration with setuptools is **not recommended**
-and may be removed in the future.
+Integration with setuptools is **not recommended**,
+i.e. you should not be using ``python setup.py test`` or ``pytest-runner``,
+and may stop working in the future.
 
 This is deprecated since it depends on deprecated features of setuptools
 and relies on features that break security mechanisms in pip.
