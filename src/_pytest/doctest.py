@@ -1,6 +1,7 @@
 """Discover and run doctests in modules and test files."""
 import bdb
 import inspect
+import os
 import platform
 import sys
 import traceback
@@ -28,7 +29,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import legacy_path
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -371,9 +371,9 @@ class DoctestItem(pytest.Item):
             reprlocation_lines.append((reprlocation, lines))
         return ReprFailDoctest(reprlocation_lines)
 
-    def reportinfo(self):
+    def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
         assert self.dtest is not None
-        return legacy_path(self.path), self.dtest.lineno, "[doctest] %s" % self.name
+        return self.path, self.dtest.lineno, "[doctest] %s" % self.name
 
 
 def _get_flag_lookup() -> Dict[str, int]:

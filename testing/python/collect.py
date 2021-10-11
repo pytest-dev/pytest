@@ -1154,8 +1154,8 @@ class TestReportInfo:
 
     def test_func_reportinfo(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
-        fspath, lineno, modpath = item.reportinfo()
-        assert str(fspath) == str(item.path)
+        path, lineno, modpath = item.reportinfo()
+        assert os.fspath(path) == str(item.path)
         assert lineno == 0
         assert modpath == "test_func"
 
@@ -1169,8 +1169,8 @@ class TestReportInfo:
         )
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
-        fspath, lineno, msg = classcol.reportinfo()
-        assert str(fspath) == str(modcol.path)
+        path, lineno, msg = classcol.reportinfo()
+        assert os.fspath(path) == str(modcol.path)
         assert lineno == 1
         assert msg == "TestClass"
 
@@ -1194,7 +1194,7 @@ class TestReportInfo:
         assert isinstance(classcol, Class)
         instance = list(classcol.collect())[0]
         assert isinstance(instance, Instance)
-        fspath, lineno, msg = instance.reportinfo()
+        path, lineno, msg = instance.reportinfo()
 
 
 def test_customized_python_discovery(pytester: Pytester) -> None:
