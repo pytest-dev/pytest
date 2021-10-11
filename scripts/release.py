@@ -105,7 +105,9 @@ def main():
     init(autoreset=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("version", help="Release version")
-    parser.add_argument("template_name", help="Name of template file to use for release announcement")
+    parser.add_argument(
+        "template_name", help="Name of template file to use for release announcement"
+    )
     parser.add_argument("--skip-check-links", action="store_true", default=False)
     options = parser.parse_args()
     pre_release(
