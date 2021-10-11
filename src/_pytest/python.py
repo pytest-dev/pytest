@@ -48,7 +48,6 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
 from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -321,7 +320,7 @@ class PyobjMixin(nodes.Node):
         parts.reverse()
         return ".".join(parts)
 
-    def reportinfo(self) -> Tuple[Union[LEGACY_PATH, str], int, str]:
+    def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
         # XXX caching?
         obj = self.obj
         compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
@@ -330,17 +329,13 @@ class PyobjMixin(nodes.Node):
             file_path = sys.modules[obj.__module__].__file__
             if file_path.endswith(".pyc"):
                 file_path = file_path[:-1]
-            fspath: Union[LEGACY_PATH, str] = file_path
+            path: Union["os.PathLike[str]", str] = file_path
             lineno = compat_co_firstlineno
         else:
             path, lineno = getfslineno(obj)
-            if isinstance(path, Path):
-                fspath = legacy_path(path)
-            else:
-                fspath = path
         modpath = self.getmodpath()
         assert isinstance(lineno, int)
-        return fspath, lineno, modpath
+        return path, lineno, modpath
 
 
 # As an optimization, these builtin attribute names are pre-ignored when

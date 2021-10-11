@@ -718,15 +718,13 @@ class Item(Node):
         if content:
             self._report_sections.append((when, key, content))
 
-    def reportinfo(self) -> Tuple[Union[LEGACY_PATH, str], Optional[int], str]:
-
-        # TODO: enable Path objects in reportinfo
-        return legacy_path(self.path), None, ""
+    def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
+        return self.path, None, ""
 
     @cached_property
     def location(self) -> Tuple[str, Optional[int], str]:
         location = self.reportinfo()
-        fspath = absolutepath(str(location[0]))
-        relfspath = self.session._node_location_to_relpath(fspath)
+        path = absolutepath(os.fspath(location[0]))
+        relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])
