@@ -259,9 +259,9 @@ and may stop working in the future.
 This is deprecated since it depends on deprecated features of setuptools
 and relies on features that break security mechanisms in pip.
 For example 'setup_requires' and 'tests_require' bypass ``pip --require-hashes``.
-For more information,
-see the `pytest-runner notice <https://github.com/pytest-dev/pytest-runner#deprecation-notice>`_
-and `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`_.
+For more information and migration instructions,
+see the `pytest-runner notice <https://github.com/pytest-dev/pytest-runner#deprecation-notice>`_.
+See also `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`_.
 
 setuptools intends to
 `remove the test command <https://github.com/pypa/setuptools/issues/931>`_.
