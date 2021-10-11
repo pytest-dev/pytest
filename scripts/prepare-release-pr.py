@@ -70,7 +70,7 @@ def prepare_release_pr(
 
     template_name = ""
 
-    if is_major:
+    if prerelease:
         template_name = "release.pre.rst"
     elif is_feature_release:
         template_name = "release.minor.rst"
