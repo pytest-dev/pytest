@@ -34,6 +34,7 @@ pytest 6.2.5 (2021-08-29)
 Bug Fixes
 ---------
 
+- `#9175 <https://github.com/pytest-dev/pytest/issues/9175>`_: Fix duplicate parametrizes in the same module.
 - `#7792 <https://github.com/pytest-dev/pytest/issues/7792>`_: Fix missing marks when inheritance from multiple classes.
 
 
