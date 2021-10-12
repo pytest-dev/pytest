@@ -80,7 +80,7 @@ def check_links():
 
 def pre_release(version, template_name, *, skip_check_links):
     """Generates new docs, release announcements and creates a local tag."""
-    announce(version)
+    announce(version, template_name)
     regen(version)
     changelog(version, write_out=True)
     fix_formatting()

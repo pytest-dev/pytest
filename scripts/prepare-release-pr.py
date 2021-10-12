@@ -58,7 +58,7 @@ def prepare_release_pr(
 
     features = list(changelog.glob("*.feature.rst"))
     breaking = list(changelog.glob("*.breaking.rst"))
-    is_feature_release = features or breaking
+    is_feature_release = bool(features or breaking)
 
     try:
         version = find_next_version(
@@ -67,15 +67,6 @@ def prepare_release_pr(
     except InvalidFeatureRelease as e:
         print(f"{Fore.RED}{e}")
         raise SystemExit(1)
-
-    template_name = ""
-
-    if prerelease:
-        template_name = "release.pre.rst"
-    elif is_feature_release:
-        template_name = "release.minor.rst"
-    else:
-        template_name = "release.patch.rst"
 
     print(f"Version: {Fore.CYAN}{version}")
 
@@ -96,6 +87,13 @@ def prepare_release_pr(
     )
 
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
+
+    if prerelease:
+        template_name = "release.pre.rst"
+    elif is_feature_release:
+        template_name = "release.minor.rst"
+    else:
+        template_name = "release.patch.rst"
 
     # important to use tox here because we have changed branches, so dependencies
     # might have changed as well
