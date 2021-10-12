@@ -39,6 +39,10 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 todo_include_todos = 1
 
+# Use a different latex engine due to possible Unicode characters in the documentation:
+# https://docs.readthedocs.io/en/stable/guides/pdf-non-ascii-languages.html
+latex_engine = "xelatex"
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
