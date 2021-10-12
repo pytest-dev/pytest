@@ -24,7 +24,6 @@ import attr
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
-from ..compat import cached_property
 from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
@@ -260,11 +259,6 @@ class Mark:
             _ispytest=True,
         )
 
-    @cached_property
-    def unique_name(self):
-        # For "parametrize" mark, the name value is "parametrize" and not the name that the user was wrote
-        return str(self.args[0] if self.name == "parametrize" else self.name)
-
 
 # A generic parameter designating an object to which a Mark may
 # be applied -- a test function (callable) or class.
@@ -378,12 +372,12 @@ def get_mro_marks(cls: type):
     if cls is object or cls is None or hasattr(cls, "mro_markers"):
         return getattr(cls, "mro_markers", {})
 
-    mro_markers = {mark.unique_name: mark for mark in get_unpacked_marks(cls)}
+    mro_markers = {str(mark): mark for mark in get_unpacked_marks(cls)}
     for parent_obj in cls.__mro__[1:]:
         if parent_obj is not object:
-            for unique_name, mark in get_mro_marks(parent_obj).items():
-                if unique_name not in mro_markers:
-                    mro_markers[unique_name] = mark
+            for name, mark in get_mro_marks(parent_obj).items():
+                if name not in mro_markers:
+                    mro_markers[name] = mark
 
     # To not extract the marks for each item's classes, I store the variable in "cls" as variable cached.
     setattr(cls, "mro_markers", mro_markers)

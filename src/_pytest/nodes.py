@@ -382,9 +382,9 @@ class Node(metaclass=NodeMeta):
         for node in reversed(self.listchain()):
             for mark in node.own_markers:
                 if name is None or getattr(mark, "name", None) == name:
-                    mark_to_name = str(mark)
-                    if mark_to_name not in duplicate_marks:
-                        duplicate_marks[mark_to_name] = mark
+                    mark_to_str = str(mark)
+                    if mark_to_str not in duplicate_marks:
+                        duplicate_marks[mark_to_str] = mark
                         yield node, mark
 
     @overload

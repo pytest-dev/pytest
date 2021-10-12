@@ -1620,12 +1620,7 @@ class Function(PyobjMixin, nodes.Item):
         self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))
         if self.cls:
-            self.own_markers = list(
-                dict(
-                    get_mro_marks(self.cls),
-                    **{mark.unique_name: mark for mark in self.own_markers},
-                ).values()
-            )
+            self.own_markers.extend(list(get_mro_marks(self.cls).values()))
         if callspec:
             self.callspec = callspec
             # this is total hostile and a mess

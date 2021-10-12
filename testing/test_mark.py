@@ -1151,34 +1151,3 @@ def test_markers_from_multiple_inheritances(pytester: Pytester) -> None:
     )
     result = pytester.inline_run()
     result.assertoutcome(passed=1)
-
-
-def test_duplicate_fixtures_in_same_class(pytester: Pytester) -> None:
-    # https://github.com/pytest-dev/pytest/issues/9175
-    pytester.makepyfile(
-        """
-        from typing import Any
-
-        import pytest
-
-
-        @pytest.fixture
-        def some_fixture(request) -> Any:
-            return request.param
-
-
-        # I apply to all test methods
-        @pytest.mark.parametrize("some_fixture", [{"b": "b"}], indirect=True)
-        class TestMultiParameterization:
-            # I apply to just this one test method
-            @pytest.mark.parametrize("some_fixture", [{"a": "a"}], indirect=True)
-            def test_local_some_fixture(self, some_fixture: Any) -> None:
-                assert "a" in some_fixture
-
-            def test_global_some_fixture(self, some_fixture: Any) -> None:
-                assert "b" in some_fixture
-
-        """
-    )
-    result = pytester.inline_run()
-    result.assertoutcome(passed=2)
