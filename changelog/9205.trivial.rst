@@ -1,0 +1,1 @@
+Maintain sort order of dict in ``config.Cache``.
