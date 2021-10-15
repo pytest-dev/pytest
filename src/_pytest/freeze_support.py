@@ -9,11 +9,9 @@ from typing import Union
 def freeze_includes() -> List[str]:
     """Return a list of module names used by pytest that should be
     included by cx_freeze."""
-    import py
     import _pytest
 
-    result = list(_iter_all_modules(py))
-    result += list(_iter_all_modules(_pytest))
+    result = list(_iter_all_modules(_pytest))
     return result
 
 

@@ -6,8 +6,6 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-import py
-
 import pytest
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -108,11 +106,10 @@ def pytest_cmdline_parse():
         path = config.option.debug
         debugfile = open(path, "w")
         debugfile.write(
-            "versions pytest-%s, py-%s, "
+            "versions pytest-%s, "
             "python-%s\ncwd=%s\nargs=%s\n\n"
             % (
                 pytest.__version__,
-                py.__version__,
                 ".".join(map(str, sys.version_info)),
                 os.getcwd(),
                 config.invocation_params.args,
@@ -249,7 +246,7 @@ def getpluginversioninfo(config: Config) -> List[str]:
 def pytest_report_header(config: Config) -> List[str]:
     lines = []
     if config.option.debug or config.option.traceconfig:
-        lines.append(f"using: pytest-{pytest.__version__} pylib-{py.__version__}")
+        lines.append(f"using: pytest-{pytest.__version__}")
 
         verinfo = getpluginversioninfo(config)
         if verinfo:
