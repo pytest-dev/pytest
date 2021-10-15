@@ -1379,8 +1379,7 @@ def test_capturing_and_logging_fundamentals(pytester: Pytester, method: str) -> 
     # here we check a fundamental feature
     p = pytester.makepyfile(
         """
-        import sys, os
-        import py, logging
+        import sys, os, logging
         from _pytest import capture
         cap = capture.MultiCapture(
             in_=None,
