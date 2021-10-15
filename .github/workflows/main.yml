@@ -169,7 +169,13 @@ jobs:
       if: matrix.use_coverage && github.repository == 'pytest-dev/pytest'
       env:
         CODECOV_NAME: ${{ matrix.name }}
-      run: bash scripts/upload-coverage.sh -F GHA,${{ runner.os }}
+      uses: codecov/codecov-action@v2
+      with:
+        files: ./coverage1.xml
+        fail_ci_if_error: true
+        env_vars: OS,PYTHON
+        name: pytest-codecov
+        verbose: true
 
   linting:
     runs-on: ubuntu-latest
