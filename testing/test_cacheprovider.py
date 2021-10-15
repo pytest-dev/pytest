@@ -35,6 +35,17 @@ class TestNewAPI:
         val = config.cache.get("key/name", -2)
         assert val == -2
 
+    def test_cache_order(self, pytester: Pytester) -> None:
+        pytester.makeini("[pytest]")
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        cache = config.cache
+        pytest.raises(TypeError, lambda: cache.set("key/name", cache))
+        config.cache.set("key/name", 0)
+        config.cache._getvaluepath("key/name").write_bytes(b"123invalid")
+        val = config.cache.get("key/name", -2)
+        assert val == -2
+
     @pytest.mark.filterwarnings("ignore:could not create cache path")
     def test_cache_writefail_cachfile_silent(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")
@@ -1208,6 +1219,17 @@ def test_gitignore(pytester: Pytester) -> None:
     gitignore_path.write_text("custom")
     cache.set("something", "else")
     assert gitignore_path.read_text(encoding="UTF-8") == "custom"
+
+
+def test_preserve_keys_order(pytester: Pytester) -> None:
+    """Ensure keys order is preserved when saving dicts (#9205)."""
+    from _pytest.cacheprovider import Cache
+
+    config = pytester.parseconfig()
+    cache = Cache.for_config(config, _ispytest=True)
+    cache.set("foo", {"z": 1, "b": 2, "a": 3, "d": 10})
+    read_back = cache.get("foo", None)
+    assert list(read_back.items()) == [("z", 1), ("b", 2), ("a", 3), ("d", 10)]
 
 
 def test_does_not_create_boilerplate_in_existing_dirs(pytester: Pytester) -> None:
