@@ -14,6 +14,7 @@ from _pytest.compat import final
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.deprecated import check_ispytest
+from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
     from typing_extensions import Final
@@ -320,6 +321,16 @@ def FixtureRequest_fspath(self: pytest.FixtureRequest) -> LEGACY_PATH:
     return legacy_path(self.path)
 
 
+def TerminalReporter_startdir(self: TerminalReporter) -> LEGACY_PATH:
+    """The directory from which pytest was invoked.
+
+    Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+    :type: LEGACY_PATH
+    """
+    return legacy_path(self.startpath)
+
+
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
@@ -344,4 +355,9 @@ def pytest_configure(config: pytest.Config) -> None:
     # Add FixtureRequest.fspath property.
     mp.setattr(
         pytest.FixtureRequest, "fspath", property(FixtureRequest_fspath), raising=False
+    )
+
+    # Add TerminalReporter.startdir property.
+    mp.setattr(
+        TerminalReporter, "startdir", property(TerminalReporter_startdir), raising=False
     )
