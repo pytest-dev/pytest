@@ -240,6 +240,7 @@ default_plugins = essential_plugins + (
     "unittest",
     "capture",
     "skipping",
+    "legacypath",
     "tmpdir",
     "monkeypatch",
     "recwarn",
