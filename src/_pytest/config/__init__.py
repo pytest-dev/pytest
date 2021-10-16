@@ -49,7 +49,6 @@ from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
 from _pytest.compat import importlib_metadata
-from _pytest.compat import legacy_path
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -1369,6 +1368,12 @@ class Config:
             self._inicache[name] = val = self._getini(name)
             return val
 
+    # Meant for easy monkeypatching by legacypath plugin.
+    # Can be inlined back (with no cover removed) once legacypath is gone.
+    def _getini_unknown_type(self, name: str, type: str, value: Union[str, List[str]]):
+        msg = f"unknown configuration type: {type}"
+        raise ValueError(msg, value)  # pragma: no cover
+
     def _getini(self, name: str):
         try:
             description, type, default = self._parser._inidict[name]
@@ -1401,13 +1406,7 @@ class Config:
         #     a_line_list = ["tests", "acceptance"]
         #   in this case, we already have a list ready to use.
         #
-        if type == "pathlist":
-            # TODO: This assert is probably not valid in all cases.
-            assert self.inipath is not None
-            dp = self.inipath.parent
-            input_values = shlex.split(value) if isinstance(value, str) else value
-            return [legacy_path(str(dp / x)) for x in input_values]
-        elif type == "paths":
+        if type == "paths":
             # TODO: This assert is probably not valid in all cases.
             assert self.inipath is not None
             dp = self.inipath.parent
@@ -1422,9 +1421,12 @@ class Config:
                 return value
         elif type == "bool":
             return _strtobool(str(value).strip())
-        else:
-            assert type in [None, "string"]
+        elif type == "string":
             return value
+        elif type is None:
+            return value
+        else:
+            return self._getini_unknown_type(name, type, value)
 
     def _getconftest_pathlist(
         self, name: str, path: Path, rootpath: Path

@@ -1,4 +1,5 @@
 """Add backward compatibility support for the legacy py path type."""
+import shlex
 import subprocess
 from pathlib import Path
 from typing import List
@@ -372,6 +373,19 @@ def Session_stardir(self: pytest.Session) -> LEGACY_PATH:
     return legacy_path(self.startpath)
 
 
+def Config__getini_unknown_type(
+    self, name: str, type: str, value: Union[str, List[str]]
+):
+    if type == "pathlist":
+        # TODO: This assert is probably not valid in all cases.
+        assert self.inipath is not None
+        dp = self.inipath.parent
+        input_values = shlex.split(value) if isinstance(value, str) else value
+        return [legacy_path(str(dp / x)) for x in input_values]
+    else:
+        raise ValueError(f"unknown configuration type: {type}", value)
+
+
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
@@ -412,3 +426,6 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # Add Session.startdir property.
     mp.setattr(pytest.Session, "startdir", property(Session_stardir), raising=False)
+
+    # Add pathlist configuration type.
+    mp.setattr(pytest.Config, "_getini_unknown_type", Config__getini_unknown_type)

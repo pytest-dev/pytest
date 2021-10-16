@@ -94,3 +94,58 @@ class TestFixtureRequestSessionScoped:
             match="path not available in session-scoped context",
         ):
             session_request.fspath
+
+
+@pytest.mark.parametrize("config_type", ["ini", "pyproject"])
+def test_addini_paths(pytester: pytest.Pytester, config_type: str) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("paths", "my new ini value", type="pathlist")
+            parser.addini("abc", "abc value")
+    """
+    )
+    if config_type == "ini":
+        inipath = pytester.makeini(
+            """
+            [pytest]
+            paths=hello world/sub.py
+        """
+        )
+    elif config_type == "pyproject":
+        inipath = pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            paths=["hello", "world/sub.py"]
+        """
+        )
+    config = pytester.parseconfig()
+    values = config.getini("paths")
+    assert len(values) == 2
+    assert values[0] == inipath.parent.joinpath("hello")
+    assert values[1] == inipath.parent.joinpath("world/sub.py")
+    pytest.raises(ValueError, config.getini, "other")
+
+
+def test_override_ini_paths(pytester: pytest.Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("paths", "my new ini value", type="pathlist")"""
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        paths=blah.py"""
+    )
+    pytester.makepyfile(
+        r"""
+        def test_overriden(pytestconfig):
+            config_paths = pytestconfig.getini("paths")
+            print(config_paths)
+            for cpf in config_paths:
+                print('\nuser_path:%s' % cpf.basename)
+        """
+    )
+    result = pytester.runpytest("--override-ini", "paths=foo/bar1.py foo/bar2.py", "-s")
+    result.stdout.fnmatch_lines(["user_path:bar1.py", "user_path:bar2.py"])
