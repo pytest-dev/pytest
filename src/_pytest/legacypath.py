@@ -307,6 +307,14 @@ def tmpdir(tmp_path: Path) -> LEGACY_PATH:
     return legacy_path(tmp_path)
 
 
+def Cache_makedir(self: pytest.Cache, name: str) -> LEGACY_PATH:
+    """Return a directory path object with the given name.
+
+    Same as :func:`mkdir`, but returns a legacy py path instance.
+    """
+    return legacy_path(self.mkdir(name))
+
+
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
@@ -324,3 +332,6 @@ def pytest_configure(config: pytest.Config) -> None:
     else:
         _tmpdirhandler = TempdirFactory(tmp_path_factory, _ispytest=True)
         mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
+
+    # Add Cache.makedir().
+    mp.setattr(pytest.Cache, "makedir", Cache_makedir, raising=False)

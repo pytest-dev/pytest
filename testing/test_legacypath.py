@@ -67,3 +67,9 @@ def test_tmpdir_always_is_realpath(pytester: pytest.Pytester) -> None:
     )
     result = pytester.runpytest("-s", p, "--basetemp=%s/bt" % linktemp)
     assert not result.ret
+
+
+def test_cache_makedir(cache: pytest.Cache) -> None:
+    dir = cache.makedir("foo")  # type: ignore[attr-defined]
+    assert dir.exists()
+    dir.remove()

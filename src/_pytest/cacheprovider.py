@@ -20,8 +20,6 @@ from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -141,13 +139,6 @@ class Cache:
         res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
         res.mkdir(exist_ok=True, parents=True)
         return res
-
-    def makedir(self, name: str) -> LEGACY_PATH:
-        """Return a directory path object with the given name.
-
-        Same as :func:`mkdir`, but returns a legacy py path instance.
-        """
-        return legacy_path(self.mkdir(name))
 
     def _getvaluepath(self, key: str) -> Path:
         return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
