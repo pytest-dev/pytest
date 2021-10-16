@@ -331,6 +331,37 @@ def TerminalReporter_startdir(self: TerminalReporter) -> LEGACY_PATH:
     return legacy_path(self.startpath)
 
 
+def Config_invocation_dir(self: pytest.Config) -> LEGACY_PATH:
+    """The directory from which pytest was invoked.
+
+    Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`,
+    which is a :class:`pathlib.Path`.
+
+    :type: LEGACY_PATH
+    """
+    return legacy_path(str(self.invocation_params.dir))
+
+
+def Config_rootdir(self: pytest.Config) -> LEGACY_PATH:
+    """The path to the :ref:`rootdir <rootdir>`.
+
+    Prefer to use :attr:`rootpath`, which is a :class:`pathlib.Path`.
+
+    :type: LEGACY_PATH
+    """
+    return legacy_path(str(self.rootpath))
+
+
+def Config_inifile(self: pytest.Config) -> Optional[LEGACY_PATH]:
+    """The path to the :ref:`configfile <configfiles>`.
+
+    Prefer to use :attr:`inipath`, which is a :class:`pathlib.Path`.
+
+    :type: Optional[LEGACY_PATH]
+    """
+    return legacy_path(str(self.inipath)) if self.inipath else None
+
+
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
@@ -361,3 +392,10 @@ def pytest_configure(config: pytest.Config) -> None:
     mp.setattr(
         TerminalReporter, "startdir", property(TerminalReporter_startdir), raising=False
     )
+
+    # Add Config.{invocation_dir,rootdir,inifile} properties.
+    mp.setattr(
+        pytest.Config, "invocation_dir", property(Config_invocation_dir), raising=False
+    )
+    mp.setattr(pytest.Config, "rootdir", property(Config_rootdir), raising=False)
+    mp.setattr(pytest.Config, "inifile", property(Config_inifile), raising=False)

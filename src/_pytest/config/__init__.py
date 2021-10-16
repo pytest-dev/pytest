@@ -49,7 +49,6 @@ from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
 from _pytest.compat import importlib_metadata
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
@@ -951,17 +950,6 @@ class Config:
             self.cache: Optional[Cache] = None
 
     @property
-    def invocation_dir(self) -> LEGACY_PATH:
-        """The directory from which pytest was invoked.
-
-        Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`,
-        which is a :class:`pathlib.Path`.
-
-        :type: LEGACY_PATH
-        """
-        return legacy_path(str(self.invocation_params.dir))
-
-    @property
     def rootpath(self) -> Path:
         """The path to the :ref:`rootdir <rootdir>`.
 
@@ -972,16 +960,6 @@ class Config:
         return self._rootpath
 
     @property
-    def rootdir(self) -> LEGACY_PATH:
-        """The path to the :ref:`rootdir <rootdir>`.
-
-        Prefer to use :attr:`rootpath`, which is a :class:`pathlib.Path`.
-
-        :type: LEGACY_PATH
-        """
-        return legacy_path(str(self.rootpath))
-
-    @property
     def inipath(self) -> Optional[Path]:
         """The path to the :ref:`configfile <configfiles>`.
 
@@ -990,16 +968,6 @@ class Config:
         .. versionadded:: 6.1
         """
         return self._inipath
-
-    @property
-    def inifile(self) -> Optional[LEGACY_PATH]:
-        """The path to the :ref:`configfile <configfiles>`.
-
-        Prefer to use :attr:`inipath`, which is a :class:`pathlib.Path`.
-
-        :type: Optional[LEGACY_PATH]
-        """
-        return legacy_path(str(self.inipath)) if self.inipath else None
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
