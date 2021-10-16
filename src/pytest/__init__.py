@@ -60,7 +60,6 @@ from _pytest.recwarn import warns
 from _pytest.runner import CallInfo
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
-from _pytest.tmpdir import TempdirFactory
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
 from _pytest.warning_types import PytestCacheWarning
@@ -144,7 +143,6 @@ __all__ = [
     "StashKey",
     "version_tuple",
     "TempPathFactory",
-    "TempdirFactory",
     "UsageError",
     "WarningsRecorder",
     "warns",

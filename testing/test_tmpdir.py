@@ -118,29 +118,13 @@ def test_mktemp(pytester: Pytester, basename: str, is_ok: bool) -> None:
         result.stdout.fnmatch_lines("*ValueError*")
 
 
-def test_tmpdir_always_is_realpath(pytester: Pytester) -> None:
-    # the reason why tmpdir should be a realpath is that
+def test_tmp_path_always_is_realpath(pytester: Pytester, monkeypatch) -> None:
+    # the reason why tmp_path should be a realpath is that
     # when you cd to it and do "os.getcwd()" you will anyway
     # get the realpath.  Using the symlinked path can thus
     # easily result in path-inequality
     # XXX if that proves to be a problem, consider using
     # os.environ["PWD"]
-    realtemp = pytester.mkdir("myrealtemp")
-    linktemp = pytester.path.joinpath("symlinktemp")
-    attempt_symlink_to(linktemp, str(realtemp))
-    p = pytester.makepyfile(
-        """
-        def test_1(tmpdir):
-            import os
-            assert os.path.realpath(str(tmpdir)) == str(tmpdir)
-    """
-    )
-    result = pytester.runpytest("-s", p, "--basetemp=%s/bt" % linktemp)
-    assert not result.ret
-
-
-def test_tmp_path_always_is_realpath(pytester: Pytester, monkeypatch) -> None:
-    # for reasoning see: test_tmpdir_always_is_realpath test-case
     realtemp = pytester.mkdir("myrealtemp")
     linktemp = pytester.path.joinpath("symlinktemp")
     attempt_symlink_to(linktemp, str(realtemp))
@@ -421,10 +405,6 @@ def attempt_symlink_to(path, to_path):
         Path(path).symlink_to(Path(to_path))
     except OSError:
         pytest.skip("could not create symbolic link")
-
-
-def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
-    assert Path(tmpdir) == tmp_path
 
 
 def test_basetemp_with_read_only_files(pytester: Pytester) -> None:

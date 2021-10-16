@@ -1,10 +1,12 @@
 """Add backward compatibility support for the legacy py path type."""
 import subprocess
+from pathlib import Path
 from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
 
+import attr
 from iniconfig import SectionWrapper
 
 import pytest
@@ -252,3 +254,73 @@ def testdir(pytester: pytest.Pytester) -> Testdir:
     New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
     """
     return Testdir(pytester, _ispytest=True)
+
+
+@final
+@attr.s(init=False, auto_attribs=True)
+class TempdirFactory:
+    """Backward compatibility wrapper that implements :class:``_pytest.compat.LEGACY_PATH``
+    for :class:``TempPathFactory``."""
+
+    _tmppath_factory: pytest.TempPathFactory
+
+    def __init__(
+        self, tmppath_factory: pytest.TempPathFactory, *, _ispytest: bool = False
+    ) -> None:
+        check_ispytest(_ispytest)
+        self._tmppath_factory = tmppath_factory
+
+    def mktemp(self, basename: str, numbered: bool = True) -> LEGACY_PATH:
+        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``_pytest.compat.LEGACY_PATH`` object."""
+        return legacy_path(self._tmppath_factory.mktemp(basename, numbered).resolve())
+
+    def getbasetemp(self) -> LEGACY_PATH:
+        """Backward compat wrapper for ``_tmppath_factory.getbasetemp``."""
+        return legacy_path(self._tmppath_factory.getbasetemp().resolve())
+
+
+pytest.TempdirFactory = TempdirFactory  # type: ignore[attr-defined]
+
+
+@pytest.fixture(scope="session")
+def tmpdir_factory(request: pytest.FixtureRequest) -> TempdirFactory:
+    """Return a :class:`pytest.TempdirFactory` instance for the test session."""
+    # Set dynamically by pytest_configure().
+    return request.config._tmpdirhandler  # type: ignore
+
+
+@pytest.fixture
+def tmpdir(tmp_path: Path) -> LEGACY_PATH:
+    """Return a temporary directory path object which is unique to each test
+    function invocation, created as a sub directory of the base temporary
+    directory.
+
+    By default, a new base temporary directory is created each test session,
+    and old bases are removed after 3 sessions, to aid in debugging. If
+    ``--basetemp`` is used then it is cleared each session. See :ref:`base
+    temporary directory`.
+
+    The returned object is a `legacy_path`_ object.
+
+    .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
+    """
+    return legacy_path(tmp_path)
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    mp = pytest.MonkeyPatch()
+    config.add_cleanup(mp.undo)
+
+    # Create TmpdirFactory and attach it to the config object.
+    #
+    # This is to comply with existing plugins which expect the handler to be
+    # available at pytest_configure time, but ideally should be moved entirely
+    # to the tmpdir_factory session fixture.
+    try:
+        tmp_path_factory = config._tmp_path_factory  # type: ignore[attr-defined]
+    except AttributeError:
+        # tmpdir plugin is blocked.
+        pass
+    else:
+        _tmpdirhandler = TempdirFactory(tmp_path_factory, _ispytest=True)
+        mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
