@@ -1240,7 +1240,6 @@ _PLUGGY_DIR = Path(pluggy.__file__.rstrip("oc"))
 if _PLUGGY_DIR.name == "__init__.py":
     _PLUGGY_DIR = _PLUGGY_DIR.parent
 _PYTEST_DIR = Path(_pytest.__file__).parent
-_PY_DIR = Path(__import__("py").__file__).parent
 
 
 def filter_traceback(entry: TracebackEntry) -> bool:
@@ -1267,8 +1266,6 @@ def filter_traceback(entry: TracebackEntry) -> bool:
     if _PLUGGY_DIR in parents:
         return False
     if _PYTEST_DIR in parents:
-        return False
-    if _PY_DIR in parents:
         return False
 
     return True

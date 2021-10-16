@@ -12,7 +12,6 @@ from typing import List
 from typing import Tuple
 
 import pluggy
-import py
 
 import _pytest.config
 import _pytest.terminal
@@ -800,12 +799,11 @@ class TestTerminalFunctional:
         result.stdout.fnmatch_lines(
             [
                 "*===== test session starts ====*",
-                "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s"
+                "platform %s -- Python %s*pytest-%s**pluggy-%s"
                 % (
                     sys.platform,
                     verinfo,
                     pytest.__version__,
-                    py.__version__,
                     pluggy.__version__,
                 ),
                 "*test_header_trailer_info.py .*",
@@ -828,12 +826,11 @@ class TestTerminalFunctional:
         result = pytester.runpytest("--no-header")
         verinfo = ".".join(map(str, sys.version_info[:3]))
         result.stdout.no_fnmatch_line(
-            "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s"
+            "platform %s -- Python %s*pytest-%s**pluggy-%s"
             % (
                 sys.platform,
                 verinfo,
                 pytest.__version__,
-                py.__version__,
                 pluggy.__version__,
             )
         )

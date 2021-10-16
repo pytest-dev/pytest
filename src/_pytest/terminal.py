@@ -29,7 +29,6 @@ from typing import Union
 
 import attr
 import pluggy
-import py
 
 import _pytest._version
 from _pytest import nodes
@@ -704,8 +703,8 @@ class TerminalReporter:
             if pypy_version_info:
                 verinfo = ".".join(map(str, pypy_version_info[:3]))
                 msg += f"[pypy-{verinfo}-{pypy_version_info[3]}]"
-            msg += ", pytest-{}, py-{}, pluggy-{}".format(
-                _pytest._version.version, py.__version__, pluggy.__version__
+            msg += ", pytest-{}, pluggy-{}".format(
+                _pytest._version.version, pluggy.__version__
             )
             if (
                 self.verbosity > 0
