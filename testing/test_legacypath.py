@@ -6,6 +6,18 @@ from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir
 
 
+def test_item_fspath(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile("def test_func(): pass")
+    items, hookrec = pytester.inline_genitems()
+    assert len(items) == 1
+    (item,) = items
+    items2, hookrec = pytester.inline_genitems(item.nodeid)
+    (item2,) = items2
+    assert item2.name == item.name
+    assert item2.fspath == item.fspath  # type: ignore[attr-defined]
+    assert item2.path == item.path
+
+
 def test_testdir_testtmproot(testdir: Testdir) -> None:
     """Check test_tmproot is a py.path attribute for backward compatibility."""
     assert testdir.test_tmproot.check(dir=1)

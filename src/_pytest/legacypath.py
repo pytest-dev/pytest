@@ -15,6 +15,7 @@ from _pytest.compat import final
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.deprecated import check_ispytest
+from _pytest.nodes import Node
 from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
@@ -386,6 +387,15 @@ def Config__getini_unknown_type(
         raise ValueError(f"unknown configuration type: {type}", value)
 
 
+def Node_fspath(self: Node) -> LEGACY_PATH:
+    """(deprecated) returns a legacy_path copy of self.path"""
+    return legacy_path(self.path)
+
+
+def Node_fspath_set(self: Node, value: LEGACY_PATH) -> None:
+    self.path = Path(value)
+
+
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
@@ -429,3 +439,6 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # Add pathlist configuration type.
     mp.setattr(pytest.Config, "_getini_unknown_type", Config__getini_unknown_type)
+
+    # Add Node.fspath property.
+    mp.setattr(Node, "fspath", property(Node_fspath, Node_fspath_set), raising=False)
