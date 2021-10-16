@@ -73,3 +73,24 @@ def test_cache_makedir(cache: pytest.Cache) -> None:
     dir = cache.makedir("foo")  # type: ignore[attr-defined]
     assert dir.exists()
     dir.remove()
+
+
+def test_fixturerequest_getmodulepath(pytester: pytest.Pytester) -> None:
+    modcol = pytester.getmodulecol("def test_somefunc(): pass")
+    (item,) = pytester.genitems([modcol])
+    req = pytest.FixtureRequest(item, _ispytest=True)
+    assert req.path == modcol.path
+    assert req.fspath == modcol.fspath  # type: ignore[attr-defined]
+
+
+class TestFixtureRequestSessionScoped:
+    @pytest.fixture(scope="session")
+    def session_request(self, request):
+        return request
+
+    def test_session_scoped_unavailable_attributes(self, session_request):
+        with pytest.raises(
+            AttributeError,
+            match="path not available in session-scoped context",
+        ):
+            session_request.fspath

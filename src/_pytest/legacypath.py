@@ -315,6 +315,11 @@ def Cache_makedir(self: pytest.Cache, name: str) -> LEGACY_PATH:
     return legacy_path(self.mkdir(name))
 
 
+def FixtureRequest_fspath(self: pytest.FixtureRequest) -> LEGACY_PATH:
+    """(deprecated) The file system path of the test module which collected this test."""
+    return legacy_path(self.path)
+
+
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
@@ -335,3 +340,8 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # Add Cache.makedir().
     mp.setattr(pytest.Cache, "makedir", Cache_makedir, raising=False)
+
+    # Add FixtureRequest.fspath property.
+    mp.setattr(
+        pytest.FixtureRequest, "fspath", property(FixtureRequest_fspath), raising=False
+    )

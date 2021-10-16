@@ -46,8 +46,6 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
@@ -527,11 +525,6 @@ class FixtureRequest:
         if self.scope not in ("function", "class", "module"):
             raise AttributeError(f"module not available in {self.scope}-scoped context")
         return self._pyfuncitem.getparent(_pytest.python.Module).obj
-
-    @property
-    def fspath(self) -> LEGACY_PATH:
-        """(deprecated) The file system path of the test module which collected this test."""
-        return legacy_path(self.path)
 
     @property
     def path(self) -> Path:

@@ -967,7 +967,6 @@ class TestRequestBasic:
         (item,) = pytester.genitems([modcol])
         req = fixtures.FixtureRequest(item, _ispytest=True)
         assert req.path == modcol.path
-        assert req.fspath == modcol.fspath
 
     def test_request_fixturenames(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1098,12 +1097,11 @@ class TestRequestSessionScoped:
     def session_request(self, request):
         return request
 
-    @pytest.mark.parametrize("name", ["path", "fspath", "module"])
+    @pytest.mark.parametrize("name", ["path", "module"])
     def test_session_scoped_unavailable_attributes(self, session_request, name):
-        expected = "path" if name == "fspath" else name
         with pytest.raises(
             AttributeError,
-            match=f"{expected} not available in session-scoped context",
+            match=f"{name} not available in session-scoped context",
         ):
             getattr(session_request, name)
 
