@@ -362,6 +362,16 @@ def Config_inifile(self: pytest.Config) -> Optional[LEGACY_PATH]:
     return legacy_path(str(self.inipath)) if self.inipath else None
 
 
+def Session_stardir(self: pytest.Session) -> LEGACY_PATH:
+    """The path from which pytest was invoked.
+
+    Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
+
+    :type: LEGACY_PATH
+    """
+    return legacy_path(self.startpath)
+
+
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
@@ -399,3 +409,6 @@ def pytest_configure(config: pytest.Config) -> None:
     )
     mp.setattr(pytest.Config, "rootdir", property(Config_rootdir), raising=False)
     mp.setattr(pytest.Config, "inifile", property(Config_inifile), raising=False)
+
+    # Add Session.startdir property.
+    mp.setattr(pytest.Session, "startdir", property(Session_stardir), raising=False)
