@@ -193,7 +193,7 @@ class Cache:
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
-        data = json.dumps(value, indent=2, sort_keys=True)
+        data = json.dumps(value, indent=2)
         try:
             f = path.open("w")
         except OSError:
