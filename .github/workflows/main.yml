@@ -169,7 +169,7 @@ jobs:
       if: matrix.use_coverage && github.repository == 'pytest-dev/pytest'
       uses: codecov/codecov-action@v2
       with:
-        files: ./.coverage
+        files: ./.coverage,./coverage.xml
         fail_ci_if_error: true
         env_vars: OS,PYTHON
         name: ${{ matrix.name }}
