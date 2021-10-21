@@ -39,11 +39,11 @@ The py.test Development Team
 
 **Bug Fixes**
 
-* fix `#510`_: skip tests where one parameterize dimension was empty
+* fix :issue:`510`: skip tests where one parameterize dimension was empty
   thanks Alex Stapleton for the Report and `@RonnyPfannschmidt`_ for the PR
 
 * Fix Xfail does not work with condition keyword argument.
-  Thanks `@astraw38`_ for reporting the issue (`#1496`_) and `@tomviner`_
+  Thanks `@astraw38`_ for reporting the issue (:issue:`1496`) and `@tomviner`_
   for PR the (`#1524`_).
 
 * Fix win32 path issue when putting custom config file with absolute path
@@ -64,9 +64,7 @@ The py.test Development Team
   one per fixture name.
   Thanks to `@hackebrot`_ for the PR.
 
-.. _#510: https://github.com/pytest-dev/pytest/issues/510
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
-.. _#1496: https://github.com/pytest-dev/pytest/issues/1496
 .. _#1524: https://github.com/pytest-dev/pytest/pull/1524
 
 .. _@astraw38: https://github.com/astraw38

@@ -147,7 +147,7 @@ class MonkeyPatch:
 
         Useful in situations where it is desired to undo some patches before the test ends,
         such as mocking ``stdlib`` functions that might break pytest itself if mocked (for examples
-        of this see `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_.
+        of this see :issue:`3290`).
         """
         m = cls()
         try:

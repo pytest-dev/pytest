@@ -56,17 +56,17 @@ The py.test Development Team
 * ``pytest.mark.xfail`` now has a ``strict`` option which makes ``XPASS``
   tests to fail the test suite, defaulting to ``False``. There's also a
   ``xfail_strict`` ini option that can be used to configure it project-wise.
-  Thanks `@rabbbit`_ for the request and `@nicoddemus`_ for the PR (`#1355`_).
+  Thanks `@rabbbit`_ for the request and `@nicoddemus`_ for the PR (:issue:`1355`).
 
 * ``Parser.addini`` now supports options of type ``bool``. Thanks
   `@nicoddemus`_ for the PR.
 
 * New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
   in doctest output (similar to ``ALLOW_UNICODE``).
-  Thanks `@jaraco`_ for the request and `@nicoddemus`_ for the PR (`#1287`_).
+  Thanks `@jaraco`_ for the request and `@nicoddemus`_ for the PR (:issue:`1287`).
 
 * give a hint on KeyboardInterrupt to use the --fulltrace option to show the errors,
-  this fixes `#1366`_.
+  this fixes :issue:`1366`.
   Thanks to `@hpk42`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
 * catch IndexError exceptions when getting exception source location. This fixes
@@ -95,7 +95,7 @@ The py.test Development Team
 
 * Removed code and documentation for Python 2.5 or lower versions,
   including removal of the obsolete ``_pytest.assertion.oldinterpret`` module.
-  Thanks `@nicoddemus`_ for the PR (`#1226`_).
+  Thanks `@nicoddemus`_ for the PR (:issue:`1226`).
 
 * Comparisons now always show up in full when ``CI`` or ``BUILD_NUMBER`` is
   found in the environment, even when -vv isn't used.
@@ -109,40 +109,32 @@ The py.test Development Team
 
 * Collection only displays progress ("collecting X items") when in a terminal.
   This avoids cluttering the output when using ``--color=yes`` to obtain
-  colors in CI integrations systems (`#1397`_).
+  colors in CI integrations systems (:issue:`1397`).
 
 **Bug Fixes**
 
 * The ``-s`` and ``-c`` options should now work under ``xdist``;
   ``Config.fromdictargs`` now represents its input much more faithfully.
-  Thanks to `@bukzor`_ for the complete PR (`#680`_).
+  Thanks to `@bukzor`_ for the complete PR (:issue:`680`).
 
-* Fix (`#1290`_): support Python 3.5's ``@`` operator in assertion rewriting.
+* Fix (:issue:`1290`): support Python 3.5's ``@`` operator in assertion rewriting.
   Thanks `@Shinkenjoe`_ for report with test case and `@tomviner`_ for the PR.
 
-* Fix formatting utf-8 explanation messages (`#1379`_).
+* Fix formatting utf-8 explanation messages (:issue:`1379`).
   Thanks `@biern`_ for the PR.
 
 * Fix `traceback style docs`_ to describe all of the available options
   (auto/long/short/line/native/no), with ``auto`` being the default since v2.6.
   Thanks `@hackebrot`_ for the PR.
 
-* Fix (`#1422`_): junit record_xml_property doesn't allow multiple records
+* Fix (:issue:`1422`): junit record_xml_property doesn't allow multiple records
   with same name.
 
 
 .. _`traceback style docs`: https://pytest.org/en/stable/how-to/output.html#modifying-python-traceback-printing
 
-.. _#1422: https://github.com/pytest-dev/pytest/issues/1422
-.. _#1379: https://github.com/pytest-dev/pytest/issues/1379
-.. _#1366: https://github.com/pytest-dev/pytest/issues/1366
 .. _#1040: https://github.com/pytest-dev/pytest/pull/1040
-.. _#680: https://github.com/pytest-dev/pytest/issues/680
-.. _#1287: https://github.com/pytest-dev/pytest/pull/1287
-.. _#1226: https://github.com/pytest-dev/pytest/pull/1226
-.. _#1290: https://github.com/pytest-dev/pytest/pull/1290
-.. _#1355: https://github.com/pytest-dev/pytest/pull/1355
-.. _#1397: https://github.com/pytest-dev/pytest/issues/1397
+
 .. _@biern: https://github.com/biern
 .. _@MichaelAquilina: https://github.com/MichaelAquilina
 .. _@bukzor: https://github.com/bukzor

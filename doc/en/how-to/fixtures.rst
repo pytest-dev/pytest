@@ -1668,7 +1668,7 @@ into an ini-file:
             ...
 
     Currently this will not generate any error or warning, but this is intended
-    to be handled by `#3664 <https://github.com/pytest-dev/pytest/issues/3664>`_.
+    to be handled by :issue:`3664`.
 
 .. _`override fixtures`:
 

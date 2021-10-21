@@ -1247,8 +1247,7 @@ passed multiple times. The expected format is ``name=value``. For example::
     .. note::
 
       The default value of this option is planned to change to ``xfail`` in future releases
-      as this is considered less error prone, see `#3155 <https://github.com/pytest-dev/pytest/issues/3155>`_
-      for more details.
+      as this is considered less error prone, see :issue:`3155` for more details.
 
 
 .. confval:: faulthandler_timeout

@@ -199,8 +199,7 @@ the regular expression ``".*U.*mode is deprecated"``.
 
     Also pytest doesn't follow :pep:`506` suggestion of resetting all warning filters because
     it might break test suites that configure warning filters themselves
-    by calling :func:`warnings.simplefilter` (see issue `#2430 <https://github.com/pytest-dev/pytest/issues/2430>`_
-    for an example of that).
+    by calling :func:`warnings.simplefilter` (see :issue:`2430` for an example of that).
 
 
 .. _`ensuring a function triggers a deprecation warning`:
