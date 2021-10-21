@@ -19,7 +19,7 @@ scale to support complex functional testing for applications and libraries.
 
 **Pythons**: ``pytest`` requires: Python 3.6, 3.7, 3.8, 3.9, or PyPy3.
 
-**PyPI package name**: `pytest <https://pypi.org/project/pytest/>`_
+**PyPI package name**: :pypi:`pytest`
 
 **Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 

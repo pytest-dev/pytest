@@ -55,6 +55,7 @@ extensions = [
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
@@ -143,6 +144,11 @@ linkcheck_ignore = [
 
 # The number of worker threads to use when checking links (default=5).
 linkcheck_workers = 5
+
+
+extlinks = {
+    "pypi": ("https://pypi.org/project/%s/", "%s"),
+}
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -362,6 +368,14 @@ intersphinx_mapping = {
     "pluggy": ("https://pluggy.readthedocs.io/en/stable", None),
     "python": ("https://docs.python.org/3", None),
     "numpy": ("https://numpy.org/doc/stable", None),
+    "pip": ("https://pip.pypa.io/en/stable", None),
+    "tox": ("https://tox.wiki/en/stable", None),
+    "virtualenv": ("https://virtualenv.pypa.io/en/stable", None),
+    "django": (
+        "http://docs.djangoproject.com/en/stable",
+        "http://docs.djangoproject.com/en/stable/_objects",
+    ),
+    "setuptools": ("https://setuptools.pypa.io/en/stable", None),
 }
 
 

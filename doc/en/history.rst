@@ -4,8 +4,8 @@ History
 pytest has a long and interesting history. The `first commit
 <https://github.com/pytest-dev/pytest/commit/5992a8ef21424d7571305a8d7e2a3431ee7e1e23>`__
 in this repository is from January 2007, and even that commit alone already
-tells a lot: The repository originally was from the `py
-<https://pypi.org/project/py/>`__ library (later split off to pytest), and it
+tells a lot: The repository originally was from the :pypi:`py`
+library (later split off to pytest), and it
 originally was a SVN revision, migrated to Mercurial, and finally migrated to
 git.
 
@@ -99,9 +99,8 @@ project:
 -  It seemed to get rather quiet for a while, and little seemed to happen
    between October 2004 (removing ``py`` from PyPy) and January
    2007 (first commit in the now-pytest repository). However, there were
-   various discussions about features/ideas on the mailinglist, and `a
-   couple of
-   releases <https://pypi.org/project/py/0.8.0-alpha2/#history>`__ every
+   various discussions about features/ideas on the mailinglist, and
+   :pypi:`a couple of releases <py/0.8.0-alpha2/#history>` every
    couple of months:
 
    -  March 2006: py 0.8.0-alpha2

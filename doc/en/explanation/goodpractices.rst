@@ -8,7 +8,7 @@ Install package with pip
 -------------------------------------------------
 
 For development, we recommend you use :mod:`venv` for virtual environments and
-pip_ for installing your application and any dependencies,
+:doc:`pip:index` for installing your application and any dependencies,
 as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
 
@@ -254,17 +254,16 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     much less surprising.
 
 
-.. _pip: https://pypi.org/project/pip/
+.. _`buildout`: http://www.buildout.org/en/latest/
 
 .. _`use tox`:
 
 tox
-------
+---
 
 Once you are done with your work and want to make sure that your actual
-package passes all tests you may want to look into `tox <https://tox.readthedocs.io/>`_, the
-virtualenv test automation tool and its `pytest support
-<https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
+package passes all tests you may want to look into :doc:`tox <tox:index>`, the
+virtualenv test automation tool and its :doc:`pytest support <tox:example/pytest>`.
 tox helps you to setup virtualenv environments with pre-defined
 dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not

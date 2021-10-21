@@ -120,7 +120,7 @@ The option receives a ``name`` parameter, which can be:
 
 * A full module dotted name, for example ``myproject.plugins``. This dotted name must be importable.
 * The entry-point name of a plugin. This is the name passed to ``setuptools`` when the plugin is
-  registered. For example to early-load the `pytest-cov <https://pypi.org/project/pytest-cov/>`__ plugin you can use::
+  registered. For example to early-load the :pypi:`pytest-cov` plugin you can use::
 
     pytest -p pytest_cov
 

@@ -20,40 +20,38 @@ there is no need to activate it.
 
 Here is a little annotated list for some popular plugins:
 
-.. _`django`: https://www.djangoproject.com/
+* :pypi:`pytest-django`: write tests
+  for :std:doc:`django <django:index>` apps, using pytest integration.
 
-* `pytest-django <https://pypi.org/project/pytest-django/>`_: write tests
-  for `django`_ apps, using pytest integration.
-
-* `pytest-twisted <https://pypi.org/project/pytest-twisted/>`_: write tests
+* :pypi:`pytest-twisted`: write tests
   for `twisted <https://twistedmatrix.com/>`_ apps, starting a reactor and
   processing deferreds from test functions.
 
-* `pytest-cov <https://pypi.org/project/pytest-cov/>`__:
+* :pypi:`pytest-cov`:
   coverage reporting, compatible with distributed testing
 
-* `pytest-xdist <https://pypi.org/project/pytest-xdist/>`_:
+* :pypi:`pytest-xdist`:
   to distribute tests to CPUs and remote hosts, to run in boxed
   mode which allows to survive segmentation faults, to run in
   looponfailing mode, automatically re-running failing tests
   on file changes.
 
-* `pytest-instafail <https://pypi.org/project/pytest-instafail/>`_:
+* :pypi:`pytest-instafail`:
   to report failures while the test run is happening.
 
-* `pytest-bdd <https://pypi.org/project/pytest-bdd/>`_:
+* :pypi:`pytest-bdd`:
   to write tests using behaviour-driven testing.
 
-* `pytest-timeout <https://pypi.org/project/pytest-timeout/>`_:
+* :pypi:`pytest-timeout`:
   to timeout tests based on function marks or global definitions.
 
-* `pytest-pep8 <https://pypi.org/project/pytest-pep8/>`_:
+* :pypi:`pytest-pep8`:
   a ``--pep8`` option to enable PEP8 compliance checking.
 
-* `pytest-flakes <https://pypi.org/project/pytest-flakes/>`_:
+* :pypi:`pytest-flakes`:
   check source code with pyflakes.
 
-* `oejskit <https://pypi.org/project/oejskit/>`_:
+* :pypi:`oejskit`:
   a plugin to run javascript unittests in live browsers.
 
 To see a complete list of all plugins with their latest testing
