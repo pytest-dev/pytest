@@ -49,7 +49,7 @@ def pytest_configure(config: Config) -> None:
         import pytest
 
         old = pytest.xfail
-        config._cleanup.append(lambda: setattr(pytest, "xfail", old))
+        config.add_cleanup(lambda: setattr(pytest, "xfail", old))
 
         def nop(*args, **kwargs):
             pass
