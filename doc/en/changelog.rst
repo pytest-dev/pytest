@@ -1004,7 +1004,7 @@ Trivial/Internal Changes
 - `#7264 <https://github.com/pytest-dev/pytest/issues/7264>`_: The dependency on the ``wcwidth`` package has been removed.
 
 
-- `#7291 <https://github.com/pytest-dev/pytest/issues/7291>`_: Replaced ``py.iniconfig`` with `iniconfig <https://pypi.org/project/iniconfig/>`__.
+- `#7291 <https://github.com/pytest-dev/pytest/issues/7291>`_: Replaced ``py.iniconfig`` with :pypi:`iniconfig`.
 
 
 - `#7295 <https://github.com/pytest-dev/pytest/issues/7295>`_: ``src/_pytest/config/__init__.py`` now uses the ``warnings`` module to report warnings instead of ``sys.stderr.write``.
@@ -1795,7 +1795,7 @@ Removals
   For more information consult :std:doc:`deprecations` in the docs.
 
 
-- `#5565 <https://github.com/pytest-dev/pytest/issues/5565>`_: Removed unused support code for `unittest2 <https://pypi.org/project/unittest2/>`__.
+- `#5565 <https://github.com/pytest-dev/pytest/issues/5565>`_: Removed unused support code for :pypi:`unittest2`.
 
   The ``unittest2`` backport module is no longer
   necessary since Python 3.3+, and the small amount of code in pytest to support it also doesn't seem
@@ -2520,7 +2520,7 @@ Trivial/Internal Changes
 - `#4942 <https://github.com/pytest-dev/pytest/issues/4942>`_: ``logging.raiseExceptions`` is not set to ``False`` anymore.
 
 
-- `#5013 <https://github.com/pytest-dev/pytest/issues/5013>`_: pytest now depends on `wcwidth <https://pypi.org/project/wcwidth>`__ to properly track unicode character sizes for more precise terminal output.
+- `#5013 <https://github.com/pytest-dev/pytest/issues/5013>`_: pytest now depends on :pypi:`wcwidth` to properly track unicode character sizes for more precise terminal output.
 
 
 - `#5059 <https://github.com/pytest-dev/pytest/issues/5059>`_: pytester's ``Testdir.popen()`` uses ``stdout`` and ``stderr`` via keyword arguments with defaults now (``subprocess.PIPE``).
@@ -2618,9 +2618,7 @@ Features
 
 
 - `#4855 <https://github.com/pytest-dev/pytest/issues/4855>`_: The ``--pdbcls`` option handles classes via module attributes now (e.g.
-  ``pdb:pdb.Pdb`` with `pdb++`_), and its validation was improved.
-
-  .. _pdb++: https://pypi.org/project/pdbpp/
+  ``pdb:pdb.Pdb`` with :pypi:`pdbpp`), and its validation was improved.
 
 
 - `#4875 <https://github.com/pytest-dev/pytest/issues/4875>`_: The :confval:`testpaths` configuration option is now displayed next
@@ -2691,9 +2689,7 @@ Bug Fixes
   Previously they were loaded (imported) always, making e.g. the ``capfd`` fixture available.
 
 
-- `#4968 <https://github.com/pytest-dev/pytest/issues/4968>`_: The pdb ``quit`` command is handled properly when used after the ``debug`` command with `pdb++`_.
-
-  .. _pdb++: https://pypi.org/project/pdbpp/
+- `#4968 <https://github.com/pytest-dev/pytest/issues/4968>`_: The pdb ``quit`` command is handled properly when used after the ``debug`` command with :pypi:`pdbpp`.
 
 
 - `#4975 <https://github.com/pytest-dev/pytest/issues/4975>`_: Fix the interpretation of ``-qq`` option where it was being considered as ``-v`` instead.
@@ -3124,7 +3120,7 @@ Features
   will not issue the warning.
 
 
-- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <https://www.attrs.org/en/stable/>`__ or :mod:`dataclasses` (Python 3.7+, `backported to 3.6 <https://pypi.org/project/dataclasses>`__).
+- `#3632 <https://github.com/pytest-dev/pytest/issues/3632>`_: Richer equality comparison introspection on ``AssertionError`` for objects created using `attrs <https://www.attrs.org/en/stable/>`__ or :mod:`dataclasses` (Python 3.7+, :pypi:`backported to 3.6 <dataclasses>`).
 
 
 - `#4278 <https://github.com/pytest-dev/pytest/issues/4278>`_: ``CACHEDIR.TAG`` files are now created inside cache directories.
@@ -4865,8 +4861,7 @@ Features
   markers. Also, a ``caplog`` fixture is available that enables users to test
   the captured log during specific tests (similar to ``capsys`` for example).
   For more information, please see the :doc:`logging docs <how-to/logging>`. This feature was
-  introduced by merging the popular `pytest-catchlog
-  <https://pypi.org/project/pytest-catchlog/>`_ plugin, thanks to `Thomas Hisch
+  introduced by merging the popular :pypi:`pytest-catchlog` plugin, thanks to `Thomas Hisch
   <https://github.com/thisch>`_. Be advised that during the merging the
   backward compatibility interface with the defunct ``pytest-capturelog`` has
   been dropped. (`#2794 <https://github.com/pytest-dev/pytest/issues/2794>`_)
@@ -4943,7 +4938,7 @@ Bug Fixes
 Trivial/Internal Changes
 ------------------------
 
-- pytest now depends on `attrs <https://pypi.org/project/attrs/>`__ for internal
+- pytest now depends on :pypi:`attrs` for internal
   structures to ease code maintainability. (`#2641
   <https://github.com/pytest-dev/pytest/issues/2641>`_)
 
