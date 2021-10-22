@@ -2042,11 +2042,25 @@ def test_parse_warning_filter(
     assert parse_warning_filter(arg, escape=escape) == expected
 
 
-@pytest.mark.parametrize("arg", [":" * 5, "::::-1", "::::not-a-number"])
+@pytest.mark.parametrize(
+    "arg",
+    [
+        # Too much parts.
+        ":" * 5,
+        # Invalid action.
+        "FOO::",
+        # ImportError when importing the warning class.
+        "::test_parse_warning_filter_failure.NonExistentClass::",
+        # Class is not a Warning subclass.
+        "::list::",
+        # Negative line number.
+        "::::-1",
+        # Not a line number.
+        "::::not-a-number",
+    ],
+)
 def test_parse_warning_filter_failure(arg: str) -> None:
-    import warnings
-
-    with pytest.raises(warnings._OptionError):
+    with pytest.raises(pytest.UsageError):
         parse_warning_filter(arg, escape=True)
 
 

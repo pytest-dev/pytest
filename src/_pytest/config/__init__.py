@@ -13,9 +13,11 @@ import types
 import warnings
 from functools import lru_cache
 from pathlib import Path
+from textwrap import dedent
 from types import TracebackType
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import Generator
 from typing import IO
@@ -1612,17 +1614,54 @@ def parse_warning_filter(
 ) -> Tuple[str, str, Type[Warning], str, int]:
     """Parse a warnings filter string.
 
-    This is copied from warnings._setoption, but does not apply the filter,
-    only parses it, and makes the escaping optional.
+    This is copied from warnings._setoption with the following changes:
+
+    * Does not apply the filter.
+    * Escaping is optional.
+    * Raises UsageError so we get nice error messages on failure.
     """
+    __tracebackhide__ = True
+    error_template = dedent(
+        f"""\
+        while parsing the following warning configuration:
+
+          {arg}
+
+        This error occurred:
+
+        {{error}}
+        """
+    )
+
     parts = arg.split(":")
     if len(parts) > 5:
-        raise warnings._OptionError(f"too many fields (max 5): {arg!r}")
+        doc_url = (
+            "https://docs.python.org/3/library/warnings.html#describing-warning-filters"
+        )
+        error = dedent(
+            f"""\
+            Too many fields ({len(parts)}), expected at most 5 separated by colons:
+
+              action:message:category:module:line
+
+            For more information please consult: {doc_url}
+            """
+        )
+        raise UsageError(error_template.format(error=error))
+
     while len(parts) < 5:
         parts.append("")
     action_, message, category_, module, lineno_ = (s.strip() for s in parts)
-    action: str = warnings._getaction(action_)  # type: ignore[attr-defined]
-    category: Type[Warning] = warnings._getcategory(category_)  # type: ignore[attr-defined]
+    try:
+        action: str = warnings._getaction(action_)  # type: ignore[attr-defined]
+    except warnings._OptionError as e:
+        raise UsageError(error_template.format(error=str(e)))
+    try:
+        category: Type[Warning] = _resolve_warning_category(category_)
+    except Exception:
+        exc_info = ExceptionInfo.from_current()
+        exception_text = exc_info.getrepr(style="native")
+        raise UsageError(error_template.format(error=exception_text))
     if message and escape:
         message = re.escape(message)
     if module and escape:
@@ -1631,12 +1670,36 @@ def parse_warning_filter(
         try:
             lineno = int(lineno_)
             if lineno < 0:
-                raise ValueError
-        except (ValueError, OverflowError) as e:
-            raise warnings._OptionError(f"invalid lineno {lineno_!r}") from e
+                raise ValueError("number is negative")
+        except ValueError as e:
+            raise UsageError(
+                error_template.format(error=f"invalid lineno {lineno_!r}: {e}")
+            )
     else:
         lineno = 0
     return action, message, category, module, lineno
+
+
+def _resolve_warning_category(category: str) -> Type[Warning]:
+    """
+    Copied from warnings._getcategory, but changed so it lets exceptions (specially ImportErrors)
+    propagate so we can get access to their tracebacks (#9218).
+    """
+    __tracebackhide__ = True
+    if not category:
+        return Warning
+
+    if "." not in category:
+        import builtins as m
+
+        klass = category
+    else:
+        module, _, klass = category.rpartition(".")
+        m = __import__(module, None, None, [klass])
+    cat = getattr(m, klass)
+    if not issubclass(cat, Warning):
+        raise UsageError(f"{cat} is not a Warning subclass")
+    return cast(Type[Warning], cat)
 
 
 def apply_warning_filters(
