@@ -226,7 +226,7 @@ jobs:
 
     - name: Build package
       run: |
-        python setup.py sdist bdist_wheel
+        python -m build
 
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@master
