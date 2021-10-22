@@ -147,7 +147,7 @@ linkcheck_workers = 5
 
 
 extlinks = {
-    "pypi": ("https://pypi.org/project/%s/", "%s"),
+    "pypi": ("https://pypi.org/project/%s/", ""),
 }
 
 
