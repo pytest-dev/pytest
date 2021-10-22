@@ -7,6 +7,7 @@ from typing import Dict
 import _pytest._code
 import pytest
 from _pytest.config import ExitCode
+from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.pytester import Pytester
@@ -294,7 +295,7 @@ class TestFunction:
         from _pytest.fixtures import FixtureManager
 
         config = pytester.parseconfigure()
-        session = pytester.Session.from_config(config)
+        session = Session.from_config(config)
         session._fixturemanager = FixtureManager(session)
 
         return pytest.Function.from_parent(parent=session, **kwargs)

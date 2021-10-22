@@ -950,8 +950,6 @@ class Pytester:
                 f'example "{example_path}" is not found as a file or directory'
             )
 
-    Session = Session
-
     def getnode(
         self, config: Config, arg: Union[str, "os.PathLike[str]"]
     ) -> Optional[Union[Collector, Item]]:
@@ -1529,7 +1527,6 @@ class Testdir:
 
     CLOSE_STDIN: "Final" = Pytester.CLOSE_STDIN
     TimeoutExpired: "Final" = Pytester.TimeoutExpired
-    Session: "Final" = Pytester.Session
 
     def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
