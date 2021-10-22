@@ -934,7 +934,7 @@ class TestDebuggingBreakpoints:
             from _pytest.debugging import pytestPDB
 
             def pytest_configure(config):
-                config._cleanup.append(check_restored)
+                config.add_cleanup(check_restored)
 
             def check_restored():
                 assert sys.breakpointhook == sys.__breakpointhook__
@@ -983,7 +983,7 @@ class TestDebuggingBreakpoints:
             os.environ['PYTHONBREAKPOINT'] = '_pytest._CustomDebugger.set_trace'
 
             def pytest_configure(config):
-                config._cleanup.append(check_restored)
+                config.add_cleanup(check_restored)
 
             def check_restored():
                 assert sys.breakpointhook == sys.__breakpointhook__
