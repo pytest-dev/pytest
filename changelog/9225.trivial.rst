@@ -1,0 +1,1 @@
+Changed from setuptools to build on Python CI workflow, due to improve Python good build practices.
