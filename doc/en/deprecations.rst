@@ -18,6 +18,25 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _node-ctor-fspath-deprecation:
+
+``fspath`` argument for Node constructors replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
+the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
+:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
+is now deprecated.
+
+Plugins which construct nodes should pass the ``path`` argument, of type
+:class:`pathlib.Path`, instead of the ``fspath`` argument.
+
+Plugins which implement custom items and collectors are encouraged to replace
+``py.path.local`` ``fspath`` parameters with ``pathlib.Path`` parameters, and
+drop any other usage of the ``py`` library if possible.
+
 
 .. _legacy-path-hooks-deprecated:
 
