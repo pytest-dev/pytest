@@ -634,7 +634,6 @@ class FSCollector(Collector):
         **kw,
     ):
         """The public constructor."""
-        path, fspath = _imply_path(path, fspath=fspath)
         return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):
