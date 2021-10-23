@@ -210,9 +210,9 @@ class Node(metaclass=NodeMeta):
             self.session = parent.session
 
         #: Filesystem path where this node was collected from (can be None).
-        self.path = _imply_path_only(
-            path or getattr(parent, "path", None), fspath=fspath
-        )
+        if path is None and fspath is None:
+            path = getattr(parent, "path", None)
+        self.path = _imply_path_only(path, fspath=fspath)
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
