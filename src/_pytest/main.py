@@ -500,7 +500,7 @@ class Session(nodes.FSCollector):
     def startpath(self) -> Path:
         """The path from which pytest was invoked.
 
-        .. versionadded:: 6.3.0
+        .. versionadded:: 7.0.0
         """
         return self.config.invocation_params.dir
 

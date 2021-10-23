@@ -63,7 +63,7 @@ Implement the :func:`pytest_load_initial_conftests <_pytest.hookspec.pytest_load
 Diamond inheritance between :class:`pytest.File` and :class:`pytest.Item`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.3
+.. deprecated:: 7.0
 
 Inheriting from both Item and file at once has never been supported officially,
 however some plugins providing linting/code analysis have been using this as a hack.
@@ -90,7 +90,7 @@ scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
 Raising ``unittest.SkipTest`` during collection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.3
+.. deprecated:: 7.0
 
 Raising :class:`unittest.SkipTest` to skip collection of tests during the
 pytest collection phase is deprecated. Use :func:`pytest.skip` instead.
