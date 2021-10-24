@@ -162,7 +162,7 @@ linkcheck_workers = 5
 
 _repo = "https://github.com/pytest-dev/pytest"
 extlinks = {
-    "bpo": ("https://bugs.python.org/issue%s", "bpo-%s"),
+    "bpo": ("https://bugs.python.org/issue%s", "bpo-"),
     "pypi": ("https://pypi.org/project/%s/", ""),
     "issue": (f"{_repo}/issues/%s", "issue #"),
 }
