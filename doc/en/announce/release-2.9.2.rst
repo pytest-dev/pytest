@@ -40,10 +40,10 @@ The py.test Development Team
 **Bug Fixes**
 
 * fix :issue:`510`: skip tests where one parameterize dimension was empty
-  thanks Alex Stapleton for the Report and `@RonnyPfannschmidt`_ for the PR
+  thanks Alex Stapleton for the Report and :user:`RonnyPfannschmidt` for the PR
 
 * Fix Xfail does not work with condition keyword argument.
-  Thanks `@astraw38`_ for reporting the issue (:issue:`1496`) and `@tomviner`_
+  Thanks :user:`astraw38` for reporting the issue (:issue:`1496`) and :user:`tomviner`
   for PR the (:pull:`1524`).
 
 * Fix win32 path issue when putting custom config file with absolute path
@@ -51,24 +51,15 @@ The py.test Development Team
 
 * Fix maximum recursion depth detection when raised error class is not aware
   of unicode/encoded bytes.
-  Thanks `@prusse-martin`_ for the PR (:pull:`1506`).
+  Thanks :user:`prusse-martin` for the PR (:pull:`1506`).
 
 * Fix ``pytest.mark.skip`` mark when used in strict mode.
-  Thanks `@pquentin`_ for the PR and `@RonnyPfannschmidt`_ for
+  Thanks :user:`pquentin` for the PR and :user:`RonnyPfannschmidt` for
   showing how to fix the bug.
 
 * Minor improvements and fixes to the documentation.
-  Thanks `@omarkohl`_ for the PR.
+  Thanks :user:`omarkohl` for the PR.
 
 * Fix ``--fixtures`` to show all fixture definitions as opposed to just
   one per fixture name.
-  Thanks to `@hackebrot`_ for the PR.
-
-
-.. _@astraw38: https://github.com/astraw38
-.. _@hackebrot: https://github.com/hackebrot
-.. _@omarkohl: https://github.com/omarkohl
-.. _@pquentin: https://github.com/pquentin
-.. _@prusse-martin: https://github.com/prusse-martin
-.. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
-.. _@tomviner: https://github.com/tomviner
+  Thanks to :user:`hackebrot` for the PR.

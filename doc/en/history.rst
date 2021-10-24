@@ -20,7 +20,7 @@ project:
    born <https://morepypy.blogspot.com/2018/09/the-first-15-years-of-pypy.html>`__.
 -  Like that blog post mentioned, from very early on, there was a big
    focus on testing. There were various ``testsupport`` files on top of
-   unittest.py, and as early as June 2003, Holger Krekel (`@hpk42 <https://github.com/hpk42>`__)
+   unittest.py, and as early as June 2003, Holger Krekel (:user:`hpk42`)
    `refactored <https://mail.python.org/pipermail/pypy-dev/2003-June/000787.html>`__
    its test framework to clean things up (``pypy.tool.test``, but still
    on top of ``unittest.py``, with nothing pytest-like yet).
@@ -37,7 +37,7 @@ project:
    but that doesn’t seem like a complete test runner at all. What can be seen
    is that there were `various
    efforts <https://foss.heptapod.net/pypy/pypy/-/commits/branch/default?utf8=%E2%9C%93&search=utest>`__
-   by Laura Creighton and Samuele Pedroni (`@pedronis <https://github.com/pedronis>`__) at automatically
+   by Laura Creighton and Samuele Pedroni (:user:`pedronis`) at automatically
    converting existing tests to the new ``utest`` framework.
 -  Around the same time, for Europython 2004, @hpk42 `started a
    project <http://web.archive.org/web/20041020215353/http://codespeak.net/svn/user/hpk/talks/std-talk.txt>`__
