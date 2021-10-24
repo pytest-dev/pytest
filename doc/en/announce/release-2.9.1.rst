@@ -44,7 +44,7 @@ The py.test Development Team
   Thanks `@nicoddemus`_ for the PR.
 
 * Fix (:issue:`469`): junit parses report.nodeid incorrectly, when params IDs
-  contain ``::``. Thanks `@tomviner`_ for the PR (`#1431`_).
+  contain ``::``. Thanks `@tomviner`_ for the PR (:pull:`1431`).
 
 * Fix (:issue:`578`): SyntaxErrors
   containing non-ascii lines at the point of failure generated an internal
@@ -56,8 +56,6 @@ The py.test Development Team
 
 * Fix (:issue:`649`): parametrized test nodes cannot be specified to run on the command line.
 
-
-.. _#1431: https://github.com/pytest-dev/pytest/pull/1431
 
 .. _@asottile: https://github.com/asottile
 .. _@nicoddemus: https://github.com/nicoddemus

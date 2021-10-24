@@ -107,7 +107,7 @@ Here is a non-exhaustive list of issues fixed by the new implementation:
 
 * Marker transfer incompatible with inheritance (:issue:`535`).
 
-More details can be found in the `original PR <https://github.com/pytest-dev/pytest/pull/3317>`_.
+More details can be found in the :pull:`original PR <3317>`.
 
 .. note::
 
