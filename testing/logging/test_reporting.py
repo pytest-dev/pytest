@@ -1172,9 +1172,11 @@ def test_locationline_returns_best_relative_location(pytester: Pytester) -> None
     item.config.option.verbose = 2
 
     tr = TerminalReporter(item.config)
-    fspath = f"{pytester.path}/unique/path"
+    path_to_test = os.path.join("unique", "path")
+    fspath = os.path.join(pytester.path, path_to_test)
     nodeid = "nodeid::test"
+
     result = tr._locationline(nodeid, fspath, 1, "domain")
 
-    expected_result = f"{nodeid} <- unique/path "
+    expected_result = f"{nodeid} <- {path_to_test} "
     assert result == expected_result
