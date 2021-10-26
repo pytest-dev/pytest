@@ -1165,3 +1165,16 @@ def test_log_file_cli_subdirectories_are_successfully_created(
     result = pytester.runpytest("--log-file=foo/bar/logf.log")
     assert "logf.log" in os.listdir(expected)
     assert result.ret == ExitCode.OK
+
+
+def test_locationline_returns_best_relative_location(pytester: Pytester) -> None:
+    item = pytester.getitem("def test_func(): pass")
+    item.config.option.verbose = 2
+
+    tr = TerminalReporter(item.config)
+    fspath = f"{pytester.path}/unique/path"
+    nodeid = "nodeid::test"
+    result = tr._locationline(nodeid, fspath, 1, "domain")
+
+    expected_result = f"{nodeid} <- unique/path "
+    assert result == expected_result

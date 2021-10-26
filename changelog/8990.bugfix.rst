@@ -1,0 +1,1 @@
+TerminalReporter's ``_locationline()`` will now pass the correct type of input arg to  ``_pytest.pathlib.bestrelpath``. Previously it was passing in ``str`` which raised an exception.
