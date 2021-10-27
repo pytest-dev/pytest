@@ -1,1 +1,1 @@
-TerminalReporter's ``_locationline()`` will now pass the correct type of input arg to  ``_pytest.pathlib.bestrelpath``. Previously it was passing in ``str`` which raised an exception.
+Fix `pytest -vv` crashing with an internal exception `AttributeError: 'str' object has no attribute 'relative_to'` in some cases.
