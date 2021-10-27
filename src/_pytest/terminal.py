@@ -880,8 +880,7 @@ class TerminalReporter:
             if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
                 "\\", nodes.SEP
             ):
-                fs_path = Path(fspath)
-                res += " <- " + bestrelpath(self.startpath, fs_path)
+                res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"
         return res + " "
