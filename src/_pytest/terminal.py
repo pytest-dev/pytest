@@ -865,7 +865,7 @@ class TerminalReporter:
     def _locationline(
         self, nodeid: str, fspath: str, lineno: Optional[int], domain: str
     ) -> str:
-        def mkrel(nodeid) -> str:
+        def mkrel(nodeid: str) -> str:
             line = self.config.cwd_relative_nodeid(nodeid)
             if domain and line.endswith(domain):
                 line = line[: -len(domain)]
