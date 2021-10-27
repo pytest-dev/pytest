@@ -8,6 +8,7 @@ python:
         path: .
 
 build:
+  os: ubuntu-20.04
   apt_packages:
     - inkscape
 
