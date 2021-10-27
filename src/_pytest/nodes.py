@@ -28,6 +28,7 @@ from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
+from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -102,22 +103,17 @@ def _check_path(path: Path, fspath: LEGACY_PATH) -> None:
 
 
 def _imply_path(
-    path: Optional[Path], fspath: Optional[LEGACY_PATH]
-) -> Tuple[Path, LEGACY_PATH]:
-    if path is not None:
-        if fspath is not None:
-            _check_path(path, fspath)
-        else:
-            fspath = legacy_path(path)
-        return path, fspath
-    else:
-        assert fspath is not None
-        return Path(fspath), fspath
-
-
-# Optimization: use _imply_path_only over _imply_path when only need Path.
-# This is to avoid `legacy_path(path)` which is surprisingly heavy.
-def _imply_path_only(path: Optional[Path], fspath: Optional[LEGACY_PATH]) -> Path:
+    node_type: Type["Node"],
+    path: Optional[Path],
+    fspath: Optional[LEGACY_PATH],
+) -> Path:
+    if fspath is not None:
+        warnings.warn(
+            NODE_CTOR_FSPATH_ARG.format(
+                node_type_name=node_type.__name__,
+            ),
+            stacklevel=3,
+        )
     if path is not None:
         if fspath is not None:
             _check_path(path, fspath)
@@ -210,9 +206,9 @@ class Node(metaclass=NodeMeta):
             self.session = parent.session
 
         #: Filesystem path where this node was collected from (can be None).
-        self.path = _imply_path_only(
-            path or getattr(parent, "path", None), fspath=fspath
-        )
+        if path is None and fspath is None:
+            path = getattr(parent, "path", None)
+        self.path = _imply_path(type(self), path, fspath=fspath)
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -589,7 +585,7 @@ class FSCollector(Collector):
                 assert path is None
                 path = path_or_parent
 
-        path = _imply_path_only(path, fspath=fspath)
+        path = _imply_path(type(self), path, fspath=fspath)
         if name is None:
             name = path.name
             if parent is not None and parent.path != path:
@@ -634,7 +630,6 @@ class FSCollector(Collector):
         **kw,
     ):
         """The public constructor."""
-        path, fspath = _imply_path(path, fspath=fspath)
         return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):

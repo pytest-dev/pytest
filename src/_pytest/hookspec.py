@@ -272,12 +272,13 @@ def pytest_ignore_collect(
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param pathlib.Path fspath: The path to analyze.
-    :param LEGACY_PATH path: The path to analyze.
+    :param LEGACY_PATH path: The path to analyze (deprecated).
     :param pytest.Config config: The pytest config object.
 
-    .. versionchanged:: 6.3.0
+    .. versionchanged:: 7.0.0
         The ``fspath`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``path`` parameter.
+        equivalent of the ``path`` parameter. The ``path`` parameter
+        has been deprecated.
     """
 
 
@@ -289,11 +290,12 @@ def pytest_collect_file(
     The new node needs to have the specified ``parent`` as a parent.
 
     :param pathlib.Path fspath: The path to analyze.
-    :param LEGACY_PATH path: The path to collect.
+    :param LEGACY_PATH path: The path to collect (deprecated).
 
-    .. versionchanged:: 6.3.0
+    .. versionchanged:: 7.0.0
         The ``fspath`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``path`` parameter.
+        equivalent of the ``path`` parameter. The ``path`` parameter
+        has been deprecated.
     """
 
 
@@ -345,11 +347,13 @@ def pytest_pycollect_makemodule(
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param pathlib.Path fspath: The path of the module to collect.
-    :param legacy_path path: The path of the module to collect.
+    :param LEGACY_PATH path: The path of the module to collect (deprecated).
 
-    .. versionchanged:: 6.3.0
+    .. versionchanged:: 7.0.0
         The ``fspath`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter.
+
+        The ``path`` parameter has been deprecated in favor of ``fspath``.
     """
 
 
@@ -674,7 +678,7 @@ def pytest_report_header(
 
     :param pytest.Config config: The pytest config object.
     :param Path startpath: The starting dir.
-    :param LEGACY_PATH startdir: The starting dir.
+    :param LEGACY_PATH startdir: The starting dir (deprecated).
 
     .. note::
 
@@ -689,9 +693,10 @@ def pytest_report_header(
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
-    .. versionchanged:: 6.3.0
+    .. versionchanged:: 7.0.0
         The ``startpath`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``startdir`` parameter.
+        equivalent of the ``startdir`` parameter. The ``startdir`` parameter
+        has been deprecated.
     """
 
 
@@ -709,8 +714,8 @@ def pytest_report_collectionfinish(
     .. versionadded:: 3.2
 
     :param pytest.Config config: The pytest config object.
-    :param Path startpath: The starting path.
-    :param LEGACY_PATH startdir: The starting dir.
+    :param Path startpath: The starting dir.
+    :param LEGACY_PATH startdir: The starting dir (deprecated).
     :param items: List of pytest items that are going to be executed; this list should not be modified.
 
     .. note::
@@ -720,9 +725,10 @@ def pytest_report_collectionfinish(
         If you want to have your line(s) displayed first, use
         :ref:`trylast=True <plugin-hookorder>`.
 
-    .. versionchanged:: 6.3.0
+    .. versionchanged:: 7.0.0
         The ``startpath`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``startdir`` parameter.
+        equivalent of the ``startdir`` parameter. The ``startdir`` parameter
+        has been deprecated.
     """
 
 

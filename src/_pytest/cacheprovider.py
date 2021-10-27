@@ -128,7 +128,7 @@ class Cache:
         it to manage files to e.g. store/retrieve database dumps across test
         sessions.
 
-        .. versionadded:: 6.3
+        .. versionadded:: 7.0
 
         :param name:
             Must be a string not containing a ``/`` separator.

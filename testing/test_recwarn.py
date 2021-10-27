@@ -263,7 +263,7 @@ class TestWarns:
             with pytest.warns(RuntimeWarning):
                 warnings.warn("user", UserWarning)
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) was emitted. "
+            r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) were emitted. "
             r"The list of emitted warnings is: \[UserWarning\('user',?\)\]."
         )
 
@@ -271,7 +271,7 @@ class TestWarns:
             with pytest.warns(UserWarning):
                 warnings.warn("runtime", RuntimeWarning)
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) was emitted. "
+            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted. "
             r"The list of emitted warnings is: \[RuntimeWarning\('runtime',?\)\]."
         )
 
@@ -279,7 +279,7 @@ class TestWarns:
             with pytest.warns(UserWarning):
                 pass
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) was emitted. "
+            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted. "
             r"The list of emitted warnings is: \[\]."
         )
 
@@ -290,7 +290,7 @@ class TestWarns:
                 warnings.warn("import", ImportWarning)
 
         message_template = (
-            "DID NOT WARN. No warnings of type {0} was emitted. "
+            "DID NOT WARN. No warnings of type {0} were emitted. "
             "The list of emitted warnings is: {1}."
         )
         excinfo.match(

@@ -215,3 +215,16 @@ def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
             "*Please use pytest_load_initial_conftests hook instead.*",
         ]
     )
+
+
+def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
+    mod = pytester.getmodulecol("")
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape("The (fspath: py.path.local) argument to File is deprecated."),
+    ):
+        pytest.File.from_parent(
+            parent=mod.parent,
+            fspath=legacy_path("bla"),
+        )

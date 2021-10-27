@@ -4,8 +4,9 @@ from pathlib import Path
 from typing import Optional
 
 from ..compat import LEGACY_PATH
+from ..compat import legacy_path
 from ..deprecated import HOOK_LEGACY_PATH_ARG
-from _pytest.nodes import _imply_path
+from _pytest.nodes import _check_path
 
 # hookname: (Path, LEGACY_PATH)
 imply_paths_hooks = {
@@ -52,7 +53,15 @@ class PathAwareHookProxy:
                         ),
                         stacklevel=2,
                     )
-                path_value, fspath_value = _imply_path(path_value, fspath_value)
+                if path_value is not None:
+                    if fspath_value is not None:
+                        _check_path(path_value, fspath_value)
+                    else:
+                        fspath_value = legacy_path(path_value)
+                else:
+                    assert fspath_value is not None
+                    path_value = Path(fspath_value)
+
                 kw[path_var] = path_value
                 kw[fspath_var] = fspath_value
                 return hook(**kw)
