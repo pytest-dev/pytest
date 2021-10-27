@@ -192,7 +192,7 @@ def make_holder():
 def test_hookrecorder_basic(holder) -> None:
     pm = PytestPluginManager()
     pm.add_hookspecs(holder)
-    rec = HookRecorder(pm)
+    rec = HookRecorder(pm, _ispytest=True)
     pm.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123

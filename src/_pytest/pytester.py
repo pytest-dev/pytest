@@ -214,7 +214,20 @@ def get_public_names(values: Iterable[str]) -> List[str]:
     return [x for x in values if x[0] != "_"]
 
 
-class ParsedCall:
+@final
+class RecordedHookCall:
+    """A recorded call to a hook.
+
+    The arguments to the hook call are set as attributes.
+    For example:
+
+    .. code-block:: python
+
+        calls = hook_recorder.getcalls("pytest_runtest_setup")
+        # Suppose pytest_runtest_setup was called once with `item=an_item`.
+        assert calls[0].item is an_item
+    """
+
     def __init__(self, name: str, kwargs) -> None:
         self.__dict__.update(kwargs)
         self._name = name
@@ -222,7 +235,7 @@ class ParsedCall:
     def __repr__(self) -> str:
         d = self.__dict__.copy()
         del d["_name"]
-        return f"<ParsedCall {self._name!r}(**{d!r})>"
+        return f"<RecordedHookCall {self._name!r}(**{d!r})>"
 
     if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
@@ -230,20 +243,27 @@ class ParsedCall:
             ...
 
 
+@final
 class HookRecorder:
     """Record all hooks called in a plugin manager.
+
+    Hook recorders are created by :class:`Pytester`.
 
     This wraps all the hook calls in the plugin manager, recording each call
     before propagating the normal calls.
     """
 
-    def __init__(self, pluginmanager: PytestPluginManager) -> None:
+    def __init__(
+        self, pluginmanager: PytestPluginManager, *, _ispytest: bool = False
+    ) -> None:
+        check_ispytest(_ispytest)
+
         self._pluginmanager = pluginmanager
-        self.calls: List[ParsedCall] = []
+        self.calls: List[RecordedHookCall] = []
         self.ret: Optional[Union[int, ExitCode]] = None
 
         def before(hook_name: str, hook_impls, kwargs) -> None:
-            self.calls.append(ParsedCall(hook_name, kwargs))
+            self.calls.append(RecordedHookCall(hook_name, kwargs))
 
         def after(outcome, hook_name: str, hook_impls, kwargs) -> None:
             pass
@@ -253,7 +273,8 @@ class HookRecorder:
     def finish_recording(self) -> None:
         self._undo_wrapping()
 
-    def getcalls(self, names: Union[str, Iterable[str]]) -> List[ParsedCall]:
+    def getcalls(self, names: Union[str, Iterable[str]]) -> List[RecordedHookCall]:
+        """Get all recorded calls to hooks with the given names (or name)."""
         if isinstance(names, str):
             names = names.split()
         return [call for call in self.calls if call._name in names]
@@ -279,7 +300,7 @@ class HookRecorder:
             else:
                 fail(f"could not find {name!r} check {check!r}")
 
-    def popcall(self, name: str) -> ParsedCall:
+    def popcall(self, name: str) -> RecordedHookCall:
         __tracebackhide__ = True
         for i, call in enumerate(self.calls):
             if call._name == name:
@@ -289,7 +310,7 @@ class HookRecorder:
         lines.extend(["  %s" % x for x in self.calls])
         fail("\n".join(lines))
 
-    def getcall(self, name: str) -> ParsedCall:
+    def getcall(self, name: str) -> RecordedHookCall:
         values = self.getcalls(name)
         assert len(values) == 1, (name, values)
         return values[0]
@@ -507,8 +528,9 @@ rex_session_duration = re.compile(r"\d+\.\d\ds")
 rex_outcome = re.compile(r"(\d+) (\w+)")
 
 
+@final
 class RunResult:
-    """The result of running a command."""
+    """The result of running a command from :class:`~pytest.Pytester`."""
 
     def __init__(
         self,
@@ -527,13 +549,13 @@ class RunResult:
         self.errlines = errlines
         """List of lines captured from stderr."""
         self.stdout = LineMatcher(outlines)
-        """:class:`LineMatcher` of stdout.
+        """:class:`~pytest.LineMatcher` of stdout.
 
-        Use e.g. :func:`str(stdout) <LineMatcher.__str__()>` to reconstruct stdout, or the commonly used
-        :func:`stdout.fnmatch_lines() <LineMatcher.fnmatch_lines()>` method.
+        Use e.g. :func:`str(stdout) <pytest.LineMatcher.__str__()>` to reconstruct stdout, or the commonly used
+        :func:`stdout.fnmatch_lines() <pytest.LineMatcher.fnmatch_lines()>` method.
         """
         self.stderr = LineMatcher(errlines)
-        """:class:`LineMatcher` of stderr."""
+        """:class:`~pytest.LineMatcher` of stderr."""
         self.duration = duration
         """Duration in seconds."""
 
@@ -741,7 +763,7 @@ class Pytester:
 
     def make_hook_recorder(self, pluginmanager: PytestPluginManager) -> HookRecorder:
         """Create a new :py:class:`HookRecorder` for a PluginManager."""
-        pluginmanager.reprec = reprec = HookRecorder(pluginmanager)
+        pluginmanager.reprec = reprec = HookRecorder(pluginmanager, _ispytest=True)
         self._request.addfinalizer(reprec.finish_recording)
         return reprec
 
@@ -950,8 +972,6 @@ class Pytester:
                 f'example "{example_path}" is not found as a file or directory'
             )
 
-    Session = Session
-
     def getnode(
         self, config: Config, arg: Union[str, "os.PathLike[str]"]
     ) -> Optional[Union[Collector, Item]]:
@@ -1023,10 +1043,7 @@ class Pytester:
         for the result.
 
         :param source: The source code of the test module.
-
         :param cmdlineargs: Any extra command line arguments to use.
-
-        :returns: :py:class:`HookRecorder` instance of the result.
         """
         p = self.makepyfile(source)
         values = list(cmdlineargs) + [p]
@@ -1064,8 +1081,6 @@ class Pytester:
         :param no_reraise_ctrlc:
             Typically we reraise keyboard interrupts from the child run. If
             True, the KeyboardInterrupt exception is captured.
-
-        :returns: A :py:class:`HookRecorder` instance.
         """
         # (maybe a cpython bug?) the importlib cache sometimes isn't updated
         # properly between file creation and inline_run (especially if imports
@@ -1164,7 +1179,7 @@ class Pytester:
         self, *args: Union[str, "os.PathLike[str]"], **kwargs: Any
     ) -> RunResult:
         """Run pytest inline or in a subprocess, depending on the command line
-        option "--runpytest" and return a :py:class:`RunResult`."""
+        option "--runpytest" and return a :py:class:`~pytest.RunResult`."""
         new_args = self._ensure_basetemp(args)
         if self._method == "inprocess":
             return self.runpytest_inprocess(*new_args, **kwargs)
@@ -1506,7 +1521,7 @@ class LineComp:
     def assert_contains_lines(self, lines2: Sequence[str]) -> None:
         """Assert that ``lines2`` are contained (linearly) in :attr:`stringio`'s value.
 
-        Lines are matched using :func:`LineMatcher.fnmatch_lines`.
+        Lines are matched using :func:`LineMatcher.fnmatch_lines <pytest.LineMatcher.fnmatch_lines>`.
         """
         __tracebackhide__ = True
         val = self.stringio.getvalue()
@@ -1529,7 +1544,6 @@ class Testdir:
 
     CLOSE_STDIN: "Final" = Pytester.CLOSE_STDIN
     TimeoutExpired: "Final" = Pytester.TimeoutExpired
-    Session: "Final" = Pytester.Session
 
     def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
@@ -1734,6 +1748,7 @@ class Testdir:
         return str(self.tmpdir)
 
 
+@final
 class LineMatcher:
     """Flexible matching of text.
 

@@ -558,14 +558,17 @@ To use it, include in your topmost ``conftest.py`` file:
 .. autoclass:: pytest.Pytester()
     :members:
 
-.. autoclass:: _pytest.pytester.RunResult()
+.. autoclass:: pytest.RunResult()
     :members:
 
-.. autoclass:: _pytest.pytester.LineMatcher()
+.. autoclass:: pytest.LineMatcher()
     :members:
     :special-members: __str__
 
-.. autoclass:: _pytest.pytester.HookRecorder()
+.. autoclass:: pytest.HookRecorder()
+    :members:
+
+.. autoclass:: pytest.RecordedHookCall()
     :members:
 
 .. fixture:: testdir

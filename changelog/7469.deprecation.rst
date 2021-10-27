@@ -8,5 +8,6 @@ Directly constructing the following classes is now deprecated:
 - ``_pytest._code.ExceptionInfo``
 - ``_pytest.config.argparsing.Parser``
 - ``_pytest.config.argparsing.OptionGroup``
+- ``_pytest.pytester.HookRecorder``
 
-These have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 8.0.0.
+These constructors have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 8.
