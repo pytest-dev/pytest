@@ -231,7 +231,7 @@ def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
-        def mywriter(tags, args):
+        def mywriter(args):
             msg = " ".join(map(str, args))
             reporter.write_line("[traceconfig] " + msg)
 
@@ -511,7 +511,9 @@ class TerminalReporter:
         # Ensure that the path is printed before the
         # 1st test of a module starts running.
         if self.showlongtestinfo:
-            line = self._locationline(nodeid, *location)
+            line = self._locationline(
+                nodeid=nodeid, fspath=location[0], domain=location[-1]
+            )
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
@@ -550,7 +552,9 @@ class TerminalReporter:
             self._tw.write(letter, **markup)
         else:
             self._progress_nodeids_reported.add(rep.nodeid)
-            line = self._locationline(rep.nodeid, *rep.location)
+            line = self._locationline(
+                nodeid=rep.nodeid, fspath=rep.location[0], domain=rep.location[-1]
+            )
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
                 if rep.skipped or hasattr(report, "wasxfail"):
@@ -862,8 +866,8 @@ class TerminalReporter:
                     yellow=True,
                 )
 
-    def _locationline(self, nodeid, fspath, lineno, domain):
-        def mkrel(nodeid):
+    def _locationline(self, nodeid: str, fspath: str, domain: str) -> str:
+        def mkrel(nodeid) -> str:
             line = self.config.cwd_relative_nodeid(nodeid)
             if domain and line.endswith(domain):
                 line = line[: -len(domain)]
@@ -879,16 +883,13 @@ class TerminalReporter:
             if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
                 "\\", nodes.SEP
             ):
-                res += " <- " + bestrelpath(self.startpath, fspath)
+                res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"
         return res + " "
 
-    def _getfailureheadline(self, rep):
-        head_line = rep.head_line
-        if head_line:
-            return head_line
-        return "test session"  # XXX?
+    def _getfailureheadline(self, rep) -> str:
+        return rep.head_line or "test session"
 
     def _getcrashline(self, rep):
         try:
@@ -903,11 +904,7 @@ class TerminalReporter:
     # Summaries for sessionfinish.
     #
     def getreports(self, name: str):
-        values = []
-        for x in self.stats.get(name, []):
-            if not hasattr(x, "_pdbshown"):
-                values.append(x)
-        return values
+        return [x for x in self.stats.get(name, ()) if not hasattr(x, "_pdbshown")]
 
     def summary_warnings(self) -> None:
         if self.hasopt("w"):
