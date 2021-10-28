@@ -92,24 +92,28 @@ def iter_plugins():
         summary = escape_rst(info["summary"].replace("\n", ""))
         yield {
             "name": name,
-            "summary": summary,
+            "summary": summary.strip(),
             "last release": last_release,
             "status": status,
             "requires": requires,
         }
 
+
 def plugin_definitions(plugins):
     """Return RST for the plugin list that fits better on a vertical page."""
 
     for plugin in plugins:
-        yield dedent(f"""
+        yield dedent(
+            f"""
             {plugin['name']}
                *last release*: {plugin["last release"]},
                *status*: {plugin["status"]},
                *requires*: {plugin["requires"]}
 
                {plugin["summary"]}
-       """)
+            """
+        )
+
 
 def main():
     plugins = list(iter_plugins())
@@ -122,13 +126,13 @@ def main():
         f.write(f"This list contains {len(plugins)} plugins.\n\n")
         f.write(".. only:: not latex\n\n")
 
-        wcwidth # reference library that must exist for tabulate to work
+        wcwidth  # reference library that must exist for tabulate to work
         plugin_table = tabulate.tabulate(plugins, headers="keys", tablefmt="rst")
-        f.write(indent(plugin_table, '   '))
-        f.write('\n\n')
+        f.write(indent(plugin_table, "   "))
+        f.write("\n\n")
 
         f.write(".. only:: latex\n\n")
-        f.write(indent(''.join(plugin_definitions(plugins)), '  '))
+        f.write(indent("".join(plugin_definitions(plugins)), "  "))
 
 
 if __name__ == "__main__":
