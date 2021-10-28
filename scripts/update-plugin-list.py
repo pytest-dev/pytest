@@ -1,7 +1,8 @@
 import datetime
 import pathlib
 import re
-from textwrap import dedent, indent
+from textwrap import dedent
+from textwrap import indent
 
 import packaging.version
 import requests
