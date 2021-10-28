@@ -43,7 +43,8 @@ todo_include_todos = 1
 latex_engine = "lualatex"
 
 latex_elements = {
-    'preamble': dedent("""
+    "preamble": dedent(
+        r"""
         \directlua{
             luaotfload.add_fallback("fallbacks", {
                 "Noto Serif CJK SC:style=Regular;",
@@ -52,7 +53,8 @@ latex_elements = {
         }
 
         \setmainfont{FreeSerif}[RawFeature={fallback=fallbacks}]
-    """)
+        """
+    )
 }
 
 # -- General configuration -----------------------------------------------------
