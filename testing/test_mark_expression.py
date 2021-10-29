@@ -170,7 +170,6 @@ def test_valid_idents(ident: str) -> None:
 @pytest.mark.parametrize(
     "ident",
     (
-        "/",
         "^",
         "*",
         "=",
