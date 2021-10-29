@@ -6,7 +6,7 @@ expression: expr? EOF
 expr:       and_expr ('or' and_expr)*
 and_expr:   not_expr ('and' not_expr)*
 not_expr:   'not' not_expr | '(' expr ')' | ident
-ident:      (\w|:|\+|-|\.|\[|\]|\\|\/)+
+ident:      (\w|:|\+|-|\.|\[|\]|\\|/)+
 
 The semantics are:
 
