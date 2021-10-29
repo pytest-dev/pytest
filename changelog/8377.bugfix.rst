@@ -1,2 +1,2 @@
 The test selection options ``pytest -k`` and ``pytest -m`` now support matching
-names containing forwardslash (``\/``)characters.
+names containing forward slash (``/``) characters.
