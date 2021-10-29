@@ -111,6 +111,28 @@ class TestAssertionRewrite:
             assert imp.col_offset == 0
         assert isinstance(m.body[3], ast.Expr)
 
+    def test_location_is_set(self) -> None:
+        s = textwrap.dedent(
+            """
+
+        assert False, (
+
+            "Ouch"
+          )
+
+        """
+        )
+        m = rewrite(s)
+        for node in m.body:
+            if isinstance(node, ast.Import):
+                continue
+            for n in [node, *ast.iter_child_nodes(node)]:
+                assert n.lineno == 3
+                assert n.col_offset == 0
+                if sys.version_info >= (3, 8):
+                    assert n.end_lineno == 6
+                    assert n.end_col_offset == 3
+
     def test_dont_rewrite(self) -> None:
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
         m = rewrite(s)
@@ -772,6 +794,35 @@ class TestRewriteOnImport:
             % (z_fn,)
         )
         assert pytester.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 9),
+        reason="importlib.resources.files was introduced in 3.9",
+    )
+    def test_load_resource_via_files_with_rewrite(self, pytester: Pytester) -> None:
+        example = pytester.path.joinpath("demo") / "example"
+        init = pytester.path.joinpath("demo") / "__init__.py"
+        pytester.makepyfile(
+            **{
+                "demo/__init__.py": """
+                from importlib.resources import files
+
+                def load():
+                    return files(__name__)
+                """,
+                "test_load": f"""
+                pytest_plugins = ["demo"]
+
+                def test_load():
+                    from demo import load
+                    found = {{str(i) for i in load().iterdir() if i.name != "__pycache__"}}
+                    assert found == {{{str(example)!r}, {str(init)!r}}}
+                """,
+            }
+        )
+        example.mkdir()
+
+        assert pytester.runpytest("-vv").ret == ExitCode.OK
 
     def test_readonly(self, pytester: Pytester) -> None:
         sub = pytester.mkdir("testing")
@@ -1630,7 +1681,7 @@ def test_try_makedirs(monkeypatch, tmp_path: Path) -> None:
 
     # monkeypatch to simulate all error situations
     def fake_mkdir(p, exist_ok=False, *, exc):
-        assert isinstance(p, str)
+        assert isinstance(p, Path)
         raise exc
 
     monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=FileNotFoundError()))

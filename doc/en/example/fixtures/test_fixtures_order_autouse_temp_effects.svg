@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="862" height="502">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="862" height="502">
     <style>
         text {
             font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
@@ -39,7 +39,7 @@
         <path d="M11,251 A 240 240 0 0 1 491 251" id="testClassWith"/>
     </defs>
     <text class="class">
-        <textPath href="#testClassWith" startOffset="50%">TestWithAutouse</textPath>
+        <textPath xlink:href="#testClassWith" startOffset="50%">TestWithAutouse</textPath>
     </text>
     <mask id="autouseScope">
         <circle fill="white" r="249" cx="251" cy="251" />
@@ -79,7 +79,7 @@
         <path d="M 531,251 A 160 160 0 0 1 851 251" id="testClassWithout"/>
     </defs>
     <text class="class">
-        <textPath href="#testClassWithout" startOffset="50%">TestWithoutAutouse</textPath>
+        <textPath xlink:href="#testClassWithout" startOffset="50%">TestWithoutAutouse</textPath>
     </text>
 
     <!-- TestWithoutAutouse.test_req -->

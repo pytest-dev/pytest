@@ -136,7 +136,7 @@ def warns(
         ...     warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
-        Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
+        Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
 
     """
     __tracebackhide__ = True
@@ -274,7 +274,7 @@ class WarningsChecker(WarningsRecorder):
                 if not any(issubclass(r.category, self.expected_warning) for r in self):
                     __tracebackhide__ = True
                     fail(
-                        "DID NOT WARN. No warnings of type {} was emitted. "
+                        "DID NOT WARN. No warnings of type {} were emitted. "
                         "The list of emitted warnings is: {}.".format(
                             self.expected_warning, [each.message for each in self]
                         )
@@ -287,7 +287,7 @@ class WarningsChecker(WarningsRecorder):
                     else:
                         fail(
                             "DID NOT WARN. No warnings of type {} matching"
-                            " ('{}') was emitted. The list of emitted warnings"
+                            " ('{}') were emitted. The list of emitted warnings"
                             " is: {}.".format(
                                 self.expected_warning,
                                 self.match_expr,

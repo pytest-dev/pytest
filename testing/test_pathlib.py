@@ -121,7 +121,7 @@ class TestImportPath:
         module_c.write_text(
             dedent(
                 """
-            import py;
+            import pluggy;
             import otherdir.a
             value = otherdir.a.result
         """
@@ -131,7 +131,7 @@ class TestImportPath:
         module_d.write_text(
             dedent(
                 """
-            import py;
+            import pluggy;
             from otherdir import a
             value2 = a.result
         """

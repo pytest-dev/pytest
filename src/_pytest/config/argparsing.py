@@ -185,7 +185,7 @@ class Parser:
                 * ``paths``: a list of :class:`pathlib.Path`, separated as in a shell
                 * ``pathlist``: a list of ``py.path``, separated as in a shell
 
-            .. versionadded:: 6.3
+            .. versionadded:: 7.0
                 The ``paths`` variable type.
 
             Defaults to ``string`` if ``None`` or not passed.

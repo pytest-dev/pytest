@@ -10,7 +10,6 @@ A basic example for specifying tests in Yaml files
 --------------------------------------------------------------
 
 .. _`pytest-yamlwsgi`: http://bitbucket.org/aafshar/pytest-yamlwsgi/src/tip/pytest_yamlwsgi.py
-.. _`PyYAML`: https://pypi.org/project/PyYAML/
 
 Here is an example ``conftest.py`` (extracted from Ali Afshar's special purpose `pytest-yamlwsgi`_ plugin).   This ``conftest.py`` will  collect ``test*.yaml`` files and will execute the yaml-formatted content as custom tests:
 
@@ -22,7 +21,7 @@ You can create a simple example file:
 .. include:: nonpython/test_simple.yaml
     :literal:
 
-and if you installed `PyYAML`_ or a compatible YAML-parser you can
+and if you installed :pypi:`PyYAML` or a compatible YAML-parser you can
 now execute the test specification:
 
 .. code-block:: pytest

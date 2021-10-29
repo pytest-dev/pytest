@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="262" height="537">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="262" height="537">
     <style>
         text {
             font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
@@ -50,6 +50,6 @@
         <path d="M131,526 A 120 120 0 0 1 136 286" id="testClass"/>
     </defs>
     <text class="class">
-        <textPath href="#testClass" startOffset="50%">TestClass</textPath>
+        <textPath xlink:href="#testClass" startOffset="50%">TestClass</textPath>
     </text>
 </svg>

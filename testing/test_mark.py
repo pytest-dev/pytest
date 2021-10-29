@@ -15,9 +15,8 @@ from _pytest.pytester import Pytester
 
 class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
-    @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
-    def test_pytest_exists_in_namespace_all(self, attr: str, modulename: str) -> None:
-        module = sys.modules[modulename]
+    def test_pytest_exists_in_namespace_all(self, attr: str) -> None:
+        module = sys.modules["pytest"]
         assert attr in module.__all__  # type: ignore
 
     def test_pytest_mark_notcallable(self) -> None:
@@ -1112,7 +1111,7 @@ def test_pytest_param_id_allows_none_or_string(s) -> None:
     assert pytest.param(id=s)
 
 
-@pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)"))
+@pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)", "bogus="))
 def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     foo = pytester.makepyfile(
         """

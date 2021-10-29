@@ -1,6 +1,7 @@
 import re
 import sys
 import warnings
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -179,6 +180,13 @@ def test_hookproxy_warnings_for_fspath(tmp_path, hooktype, request):
 
     hooks.pytest_ignore_collect(config=request.config, fspath=tmp_path)
 
+    # Passing entirely *different* paths is an outright error.
+    with pytest.raises(ValueError, match=r"path.*fspath.*need to be equal"):
+        with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
+            hooks.pytest_ignore_collect(
+                config=request.config, path=path, fspath=Path("/bla/bla")
+            )
+
 
 def test_warns_none_is_deprecated():
     with pytest.warns(
@@ -207,3 +215,16 @@ def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
             "*Please use pytest_load_initial_conftests hook instead.*",
         ]
     )
+
+
+def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
+    mod = pytester.getmodulecol("")
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape("The (fspath: py.path.local) argument to File is deprecated."),
+    ):
+        pytest.File.from_parent(
+            parent=mod.parent,
+            fspath=legacy_path("bla"),
+        )

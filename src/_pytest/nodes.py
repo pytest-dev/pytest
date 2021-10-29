@@ -28,6 +28,7 @@ from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
+from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -93,24 +94,33 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
         yield nodeid
 
 
+def _check_path(path: Path, fspath: LEGACY_PATH) -> None:
+    if Path(fspath) != path:
+        raise ValueError(
+            f"Path({fspath!r}) != {path!r}\n"
+            "if both path and fspath are given they need to be equal"
+        )
+
+
 def _imply_path(
-    path: Optional[Path], fspath: Optional[LEGACY_PATH]
-) -> Tuple[Path, LEGACY_PATH]:
+    node_type: Type["Node"],
+    path: Optional[Path],
+    fspath: Optional[LEGACY_PATH],
+) -> Path:
+    if fspath is not None:
+        warnings.warn(
+            NODE_CTOR_FSPATH_ARG.format(
+                node_type_name=node_type.__name__,
+            ),
+            stacklevel=3,
+        )
     if path is not None:
         if fspath is not None:
-            if Path(fspath) != path:
-                raise ValueError(
-                    f"Path({fspath!r}) != {path!r}\n"
-                    "if both path and fspath are given they need to be equal"
-                )
-            assert Path(fspath) == path, f"{fspath} != {path}"
-        else:
-            fspath = legacy_path(path)
-        return path, fspath
-
+            _check_path(path, fspath)
+        return path
     else:
         assert fspath is not None
-        return Path(fspath), fspath
+        return Path(fspath)
 
 
 _NodeType = TypeVar("_NodeType", bound="Node")
@@ -123,7 +133,7 @@ class NodeMeta(type):
             "See "
             "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
             " for more details."
-        ).format(name=self.__name__)
+        ).format(name=f"{self.__module__}.{self.__name__}")
         fail(msg, pytrace=False)
 
     def _create(self, *k, **kw):
@@ -196,7 +206,9 @@ class Node(metaclass=NodeMeta):
             self.session = parent.session
 
         #: Filesystem path where this node was collected from (can be None).
-        self.path = _imply_path(path or getattr(parent, "path", None), fspath=fspath)[0]
+        if path is None and fspath is None:
+            path = getattr(parent, "path", None)
+        self.path = _imply_path(type(self), path, fspath=fspath)
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -573,7 +585,7 @@ class FSCollector(Collector):
                 assert path is None
                 path = path_or_parent
 
-        path, fspath = _imply_path(path, fspath=fspath)
+        path = _imply_path(type(self), path, fspath=fspath)
         if name is None:
             name = path.name
             if parent is not None and parent.path != path:
@@ -618,7 +630,6 @@ class FSCollector(Collector):
         **kw,
     ):
         """The public constructor."""
-        path, fspath = _imply_path(path, fspath=fspath)
         return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):
@@ -702,15 +713,13 @@ class Item(Node):
         if content:
             self._report_sections.append((when, key, content))
 
-    def reportinfo(self) -> Tuple[Union[LEGACY_PATH, str], Optional[int], str]:
-
-        # TODO: enable Path objects in reportinfo
-        return legacy_path(self.path), None, ""
+    def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
+        return self.path, None, ""
 
     @cached_property
     def location(self) -> Tuple[str, Optional[int], str]:
         location = self.reportinfo()
-        fspath = absolutepath(str(location[0]))
-        relfspath = self.session._node_location_to_relpath(fspath)
+        path = absolutepath(os.fspath(location[0]))
+        relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])

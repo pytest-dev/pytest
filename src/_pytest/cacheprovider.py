@@ -128,7 +128,7 @@ class Cache:
         it to manage files to e.g. store/retrieve database dumps across test
         sessions.
 
-        .. versionadded:: 6.3
+        .. versionadded:: 7.0
 
         :param name:
             Must be a string not containing a ``/`` separator.
@@ -193,7 +193,7 @@ class Cache:
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
-        data = json.dumps(value, indent=2, sort_keys=True)
+        data = json.dumps(value, indent=2)
         try:
             f = path.open("w")
         except OSError:

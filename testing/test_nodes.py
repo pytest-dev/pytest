@@ -6,6 +6,7 @@ from typing import Type
 import pytest
 from _pytest import nodes
 from _pytest.compat import legacy_path
+from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
 
@@ -38,6 +39,19 @@ def test_node_from_parent_disallowed_arguments() -> None:
         nodes.Node.from_parent(None, session=None)  # type: ignore[arg-type]
     with pytest.raises(TypeError, match="config is"):
         nodes.Node.from_parent(None, config=None)  # type: ignore[arg-type]
+
+
+def test_node_direct_construction_deprecated() -> None:
+    with pytest.raises(
+        OutcomeException,
+        match=(
+            "Direct construction of _pytest.nodes.Node has been deprecated, please "
+            "use _pytest.nodes.Node.from_parent.\nSee "
+            "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
+            " for more details."
+        ),
+    ):
+        nodes.Node(None, session=None)  # type: ignore[arg-type]
 
 
 def test_subclassing_both_item_and_collector_deprecated(

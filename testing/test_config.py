@@ -595,7 +595,7 @@ class TestConfigAPI:
     def test_getconftest_pathlist(self, pytester: Pytester, tmp_path: Path) -> None:
         somepath = tmp_path.joinpath("x", "y", "z")
         p = tmp_path.joinpath("conftest.py")
-        p.write_text(f"mylist = {['.', os.fspath(somepath)]}")
+        p.write_text(f"mylist = {['.', str(somepath)]}")
         config = pytester.parseconfigure(p)
         assert (
             config._getconftest_pathlist("notexist", path=tmp_path, rootpath=tmp_path)
@@ -2042,11 +2042,25 @@ def test_parse_warning_filter(
     assert parse_warning_filter(arg, escape=escape) == expected
 
 
-@pytest.mark.parametrize("arg", [":" * 5, "::::-1", "::::not-a-number"])
+@pytest.mark.parametrize(
+    "arg",
+    [
+        # Too much parts.
+        ":" * 5,
+        # Invalid action.
+        "FOO::",
+        # ImportError when importing the warning class.
+        "::test_parse_warning_filter_failure.NonExistentClass::",
+        # Class is not a Warning subclass.
+        "::list::",
+        # Negative line number.
+        "::::-1",
+        # Not a line number.
+        "::::not-a-number",
+    ],
+)
 def test_parse_warning_filter_failure(arg: str) -> None:
-    import warnings
-
-    with pytest.raises(warnings._OptionError):
+    with pytest.raises(pytest.UsageError):
         parse_warning_filter(arg, escape=True)
 
 

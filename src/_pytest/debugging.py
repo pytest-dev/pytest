@@ -88,7 +88,7 @@ def pytest_configure(config: Config) -> None:
             pytestPDB._config,
         ) = pytestPDB._saved.pop()
 
-    config._cleanup.append(fin)
+    config.add_cleanup(fin)
 
 
 class pytestPDB:

@@ -101,6 +101,14 @@ HOOK_LEGACY_PATH_ARG = UnformattedWarning(
     "#py-path-local-arguments-for-hooks-replaced-with-pathlib-path",
 )
 
+NODE_CTOR_FSPATH_ARG = UnformattedWarning(
+    PytestDeprecationWarning,
+    "The (fspath: py.path.local) argument to {node_type_name} is deprecated. "
+    "Please use the (path: pathlib.Path) argument instead.\n"
+    "See https://docs.pytest.org/en/latest/deprecations.html"
+    "#fspath-argument-for-node-constructors-replaced-with-pathlib-path",
+)
+
 WARNS_NONE_ARG = PytestDeprecationWarning(
     "Passing None to catch any warning has been deprecated, pass no arguments instead:\n"
     " Replace pytest.warns(None) by simply pytest.warns()."

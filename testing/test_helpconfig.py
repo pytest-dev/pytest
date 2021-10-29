@@ -105,7 +105,7 @@ def test_hookvalidation_optional(pytester: Pytester) -> None:
 
 def test_traceconfig(pytester: Pytester) -> None:
     result = pytester.runpytest("--traceconfig")
-    result.stdout.fnmatch_lines(["*using*pytest*py*", "*active plugins*"])
+    result.stdout.fnmatch_lines(["*using*pytest*", "*active plugins*"])
 
 
 def test_debug(pytester: Pytester) -> None:

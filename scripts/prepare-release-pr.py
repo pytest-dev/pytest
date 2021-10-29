@@ -54,8 +54,16 @@ def prepare_release_pr(
 
     check_call(["git", "checkout", f"origin/{base_branch}"])
 
+    changelog = Path("changelog")
+
+    features = list(changelog.glob("*.feature.rst"))
+    breaking = list(changelog.glob("*.breaking.rst"))
+    is_feature_release = bool(features or breaking)
+
     try:
-        version = find_next_version(base_branch, is_major, prerelease)
+        version = find_next_version(
+            base_branch, is_major, is_feature_release, prerelease
+        )
     except InvalidFeatureRelease as e:
         print(f"{Fore.RED}{e}")
         raise SystemExit(1)
@@ -80,9 +88,24 @@ def prepare_release_pr(
 
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
 
+    if prerelease:
+        template_name = "release.pre.rst"
+    elif is_feature_release:
+        template_name = "release.minor.rst"
+    else:
+        template_name = "release.patch.rst"
+
     # important to use tox here because we have changed branches, so dependencies
     # might have changed as well
-    cmdline = ["tox", "-e", "release", "--", version, "--skip-check-links"]
+    cmdline = [
+        "tox",
+        "-e",
+        "release",
+        "--",
+        version,
+        template_name,
+        "--skip-check-links",
+    ]
     print("Running", " ".join(cmdline))
     run(
         cmdline,
@@ -107,7 +130,9 @@ def prepare_release_pr(
     print(f"Pull request {Fore.CYAN}{pr.url}{Fore.RESET} created.")
 
 
-def find_next_version(base_branch: str, is_major: bool, prerelease: str) -> str:
+def find_next_version(
+    base_branch: str, is_major: bool, is_feature_release: bool, prerelease: str
+) -> str:
     output = check_output(["git", "tag"], encoding="UTF-8")
     valid_versions = []
     for v in output.splitlines():
@@ -117,12 +142,6 @@ def find_next_version(base_branch: str, is_major: bool, prerelease: str) -> str:
 
     valid_versions.sort()
     last_version = valid_versions[-1]
-
-    changelog = Path("changelog")
-
-    features = list(changelog.glob("*.feature.rst"))
-    breaking = list(changelog.glob("*.breaking.rst"))
-    is_feature_release = features or breaking
 
     if is_major:
         return f"{last_version[0]+1}.0.0{prerelease}"

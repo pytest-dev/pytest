@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="572" height="542">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="572" height="542">
     <style>
         text {
             font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
@@ -37,7 +37,7 @@
         <path d="M 26,271 A 260 260 0 0 1 546 271" id="testp"/>
     </defs>
     <text class="package">
-        <textPath href="#testp" startOffset="50%">tests</textPath>
+        <textPath xlink:href="#testp" startOffset="50%">tests</textPath>
     </text>
 
     <!-- subpackage -->
@@ -47,7 +47,7 @@
         <path d="M 56,271 A 130 130 0 0 1 316 271" id="subpackage"/>
     </defs>
     <text class="package">
-        <textPath href="#subpackage" startOffset="50%">subpackage</textPath>
+        <textPath xlink:href="#subpackage" startOffset="50%">subpackage</textPath>
     </text>
 
     <!-- test_subpackage.py -->
@@ -57,7 +57,7 @@
         <path d="M 106,311 A 80 80 0 0 1 266 311" id="testSubpackage"/>
     </defs>
     <text class="module">
-        <textPath href="#testSubpackage" startOffset="50%">test_subpackage.py</textPath>
+        <textPath xlink:href="#testSubpackage" startOffset="50%">test_subpackage.py</textPath>
     </text>
     <!-- innermost -->
     <line x1="186" x2="186" y1="271" y2="351"/>
@@ -102,7 +102,7 @@
         <path d="M 366,271 A 75 75 0 0 1 516 271" id="testTop"/>
     </defs>
     <text class="module">
-        <textPath href="#testTop" startOffset="50%">test_top.py</textPath>
+        <textPath xlink:href="#testTop" startOffset="50%">test_top.py</textPath>
     </text>
     <!-- innermost -->
     <line x1="441" x2="441" y1="306" y2="236"/>

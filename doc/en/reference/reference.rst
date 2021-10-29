@@ -558,14 +558,17 @@ To use it, include in your topmost ``conftest.py`` file:
 .. autoclass:: pytest.Pytester()
     :members:
 
-.. autoclass:: _pytest.pytester.RunResult()
+.. autoclass:: pytest.RunResult()
     :members:
 
-.. autoclass:: _pytest.pytester.LineMatcher()
+.. autoclass:: pytest.LineMatcher()
     :members:
     :special-members: __str__
 
-.. autoclass:: _pytest.pytester.HookRecorder()
+.. autoclass:: pytest.HookRecorder()
+    :members:
+
+.. autoclass:: pytest.RecordedHookCall()
     :members:
 
 .. fixture:: testdir
@@ -1196,18 +1199,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
-
-.. confval:: confcutdir
-
-   Sets a directory where search upwards for ``conftest.py`` files stops.
-   By default, pytest will stop searching for ``conftest.py`` files upwards
-   from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
-   or up to the file-system root.
-
-
 .. confval:: console_output_style
-
-
 
    Sets the console output style while running tests:
 

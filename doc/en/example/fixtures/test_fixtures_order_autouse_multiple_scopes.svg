@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="862" height="402">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="862" height="402">
     <style>
         text {
             font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
@@ -48,7 +48,7 @@
         <path d="M31,201 A 190 190 0 0 1 411 201" id="testClassWith"/>
     </defs>
     <text class="class">
-        <textPath href="#testClassWith" startOffset="50%">TestWithC1Request</textPath>
+        <textPath xlink:href="#testClassWith" startOffset="50%">TestWithC1Request</textPath>
     </text>
 
     <!-- TestWithoutC1Request -->
@@ -67,7 +67,7 @@
         <path d="M451,201 A 190 190 0 0 1 831 201" id="testClassWithout"/>
     </defs>
     <text class="class">
-        <textPath href="#testClassWithout" startOffset="50%">TestWithoutC1Request</textPath>
+        <textPath xlink:href="#testClassWithout" startOffset="50%">TestWithoutC1Request</textPath>
     </text>
 
     <rect class="autouse" width="862" height="40" x="1" y="181" />

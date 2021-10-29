@@ -18,17 +18,40 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _node-ctor-fspath-deprecation:
+
+``fspath`` argument for Node constructors replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
+the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
+:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
+is now deprecated.
+
+Plugins which construct nodes should pass the ``path`` argument, of type
+:class:`pathlib.Path`, instead of the ``fspath`` argument.
+
+Plugins which implement custom items and collectors are encouraged to replace
+``py.path.local`` ``fspath`` parameters with ``pathlib.Path`` parameters, and
+drop any other usage of the ``py`` library if possible.
+
+
+.. _legacy-path-hooks-deprecated:
 
 ``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to support the transition to :mod:`pathlib`, the following hooks now receive additional arguments:
+.. deprecated:: 7.0
 
-*  :func:`pytest_ignore_collect(fspath: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>`
-*  :func:`pytest_collect_file(fspath: pathlib.Path) <_pytest.hookspec.pytest_collect_file>`
-*  :func:`pytest_pycollect_makemodule(fspath: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>`
-*  :func:`pytest_report_header(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_header>`
-*  :func:`pytest_report_collectionfinish(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>`
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
+
+*  :func:`pytest_ignore_collect(fspath: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>` instead of ``path``
+*  :func:`pytest_collect_file(fspath: pathlib.Path) <_pytest.hookspec.pytest_collect_file>` instead of ``path``
+*  :func:`pytest_pycollect_makemodule(fspath: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>` instead of ``path``
+*  :func:`pytest_report_header(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_header>` instead of ``startdir``
+*  :func:`pytest_report_collectionfinish(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>` instead of ``startdir``
 
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
@@ -59,7 +82,7 @@ Implement the :func:`pytest_load_initial_conftests <_pytest.hookspec.pytest_load
 Diamond inheritance between :class:`pytest.File` and :class:`pytest.Item`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.3
+.. deprecated:: 7.0
 
 Inheriting from both Item and file at once has never been supported officially,
 however some plugins providing linting/code analysis have been using this as a hack.
@@ -86,7 +109,7 @@ scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
 Raising ``unittest.SkipTest`` during collection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.3
+.. deprecated:: 7.0
 
 Raising :class:`unittest.SkipTest` to skip collection of tests during the
 pytest collection phase is deprecated. Use :func:`pytest.skip` instead.

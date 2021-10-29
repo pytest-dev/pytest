@@ -115,8 +115,6 @@ Here is how you might run it::
 Writing your own plugin
 -----------------------
 
-.. _`setuptools`: https://pypi.org/project/setuptools/
-
 If you want to write a plugin, there are many real-life examples
 you can copy from:
 
@@ -150,7 +148,7 @@ Making your plugin installable by others
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
 that ``pytest`` finds your plugin module.  Entry points are
-a feature that is provided by `setuptools`_. pytest looks up
+a feature that is provided by :std:doc:`setuptools:index`. pytest looks up
 the ``pytest11`` entrypoint to discover its
 plugins and you can thus make your plugin available by defining
 it in your setuptools-invocation:

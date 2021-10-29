@@ -1210,6 +1210,17 @@ def test_gitignore(pytester: Pytester) -> None:
     assert gitignore_path.read_text(encoding="UTF-8") == "custom"
 
 
+def test_preserve_keys_order(pytester: Pytester) -> None:
+    """Ensure keys order is preserved when saving dicts (#9205)."""
+    from _pytest.cacheprovider import Cache
+
+    config = pytester.parseconfig()
+    cache = Cache.for_config(config, _ispytest=True)
+    cache.set("foo", {"z": 1, "b": 2, "a": 3, "d": 10})
+    read_back = cache.get("foo", None)
+    assert list(read_back.items()) == [("z", 1), ("b", 2), ("a", 3), ("d", 10)]
+
+
 def test_does_not_create_boilerplate_in_existing_dirs(pytester: Pytester) -> None:
     from _pytest.cacheprovider import Cache
 
