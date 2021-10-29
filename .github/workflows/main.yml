@@ -171,33 +171,6 @@ jobs:
         CODECOV_NAME: ${{ matrix.name }}
       run: bash scripts/upload-coverage.sh -F GHA,${{ runner.os }}
 
-  linting:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        persist-credentials: false
-
-    - uses: actions/setup-python@v2
-
-    - name: set PY
-      run: echo "name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')" >> $GITHUB_ENV
-
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pre-commit
-        key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install tox
-
-    - run: tox -e linting
-
   deploy:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'pytest-dev/pytest'
 
