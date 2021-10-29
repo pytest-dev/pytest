@@ -638,7 +638,7 @@ tmpdir
 
 :ref:`tmpdir and tmpdir_factory`
 
-.. autofunction:: _pytest.legacypath.tmpdir()
+.. autofunction:: _pytest.legacypath.LegacyTmpdirPlugin.tmpdir()
     :no-auto-options:
 
 
