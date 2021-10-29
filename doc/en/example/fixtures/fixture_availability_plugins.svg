@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="587" height="382">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="587" height="382">
     <style>
         text {
             font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
@@ -38,7 +38,7 @@
         <path d="M 411,86 A 75 75 0 0 1 561 86" id="pluginA"/>
     </defs>
     <text class="plugin">
-        <textPath href="#pluginA" startOffset="50%">plugin_a</textPath>
+        <textPath xlink:href="#pluginA" startOffset="50%">plugin_a</textPath>
     </text>
     <!-- scope order number -->
     <mask id="pluginAOrderMask">
@@ -55,7 +55,7 @@
         <path d="M 411,296 A 75 75 0 0 1 561 296" id="pluginB"/>
     </defs>
     <text class="plugin">
-        <textPath href="#pluginB" startOffset="50%">plugin_b</textPath>
+        <textPath xlink:href="#pluginB" startOffset="50%">plugin_b</textPath>
     </text>
     <!-- scope order number -->
     <mask id="pluginBOrderMask">
@@ -72,7 +72,7 @@
         <path d="M 11,191 A 180 180 0 0 1 371 191" id="testp"/>
     </defs>
     <text class="package">
-        <textPath href="#testp" startOffset="50%">tests</textPath>
+        <textPath xlink:href="#testp" startOffset="50%">tests</textPath>
     </text>
     <!-- scope order number -->
     <mask id="mainOrderMask">
@@ -89,7 +89,7 @@
         <path d="M 61,231 A 130 130 0 0 1 321 231" id="subpackage"/>
     </defs>
     <text class="package">
-        <textPath href="#subpackage" startOffset="50%">subpackage</textPath>
+        <textPath xlink:href="#subpackage" startOffset="50%">subpackage</textPath>
     </text>
     <!-- scope order number -->
     <mask id="subpackageOrderMask">
@@ -106,7 +106,7 @@
         <path d="M 111,271 A 80 80 0 0 1 271 271" id="testSubpackage"/>
     </defs>
     <text class="module">
-        <textPath href="#testSubpackage" startOffset="50%">test_subpackage.py</textPath>
+        <textPath xlink:href="#testSubpackage" startOffset="50%">test_subpackage.py</textPath>
     </text>
     <!-- scope order number -->
     <mask id="testSubpackageOrderMask">

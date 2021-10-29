@@ -793,7 +793,7 @@ def test_matchnodes_two_collections_same_file(pytester: Pytester) -> None:
     res.stdout.fnmatch_lines(["*1 passed*"])
 
 
-class TestNodekeywords:
+class TestNodeKeywords:
     def test_no_under(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
             """
@@ -858,6 +858,24 @@ class TestNodekeywords:
         for expression in ("specifictopic", "SPECIFICTOPIC", "SpecificTopic"):
             reprec = pytester.inline_run("-k " + expression)
             reprec.assertoutcome(passed=num_matching_tests, failed=0)
+
+    def test_duplicates_handled_correctly(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            pytestmark = pytest.mark.kw
+            class TestClass:
+                pytestmark = pytest.mark.kw
+                def test_method(self): pass
+                test_method.kw = 'method'
+        """,
+            "test_method",
+        )
+        assert item.parent is not None and item.parent.parent is not None
+        item.parent.parent.keywords["kw"] = "class"
+
+        assert item.keywords["kw"] == "method"
+        assert len(item.keywords) == len(set(item.keywords))
 
 
 COLLECTION_ERROR_PY_FILES = dict(

@@ -77,7 +77,7 @@ def create_new_paste(contents: Union[str, bytes]) -> str:
     from urllib.parse import urlencode
 
     params = {"code": contents, "lexer": "text", "expiry": "1week"}
-    url = "https://bpaste.net"
+    url = "https://bpa.st"
     try:
         response: str = (
             urlopen(url, data=urlencode(params).encode("ascii")).read().decode("utf-8")

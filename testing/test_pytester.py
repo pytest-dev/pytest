@@ -192,7 +192,7 @@ def make_holder():
 def test_hookrecorder_basic(holder) -> None:
     pm = PytestPluginManager()
     pm.add_hookspecs(holder)
-    rec = HookRecorder(pm)
+    rec = HookRecorder(pm, _ispytest=True)
     pm.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
@@ -861,3 +861,17 @@ def test_pytester_assert_outcomes_warnings(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_pytester_outcomes_deselected(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_one():
+            pass
+
+        def test_two():
+            pass
+        """
+    )
+    result = pytester.runpytest("-k", "test_one")
+    result.assert_outcomes(passed=1, deselected=1)

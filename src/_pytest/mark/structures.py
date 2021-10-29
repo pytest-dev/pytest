@@ -539,6 +539,8 @@ MARK_GEN = MarkGenerator(_ispytest=True)
 
 @final
 class NodeKeywords(MutableMapping[str, Any]):
+    __slots__ = ("node", "parent", "_markers")
+
     def __init__(self, node: "Node") -> None:
         self.node = node
         self.parent = node.parent
@@ -555,21 +557,39 @@ class NodeKeywords(MutableMapping[str, Any]):
     def __setitem__(self, key: str, value: Any) -> None:
         self._markers[key] = value
 
+    # Note: we could've avoided explicitly implementing some of the methods
+    # below and use the collections.abc fallback, but that would be slow.
+
+    def __contains__(self, key: object) -> bool:
+        return (
+            key in self._markers
+            or self.parent is not None
+            and key in self.parent.keywords
+        )
+
+    def update(  # type: ignore[override]
+        self,
+        other: Union[Mapping[str, Any], Iterable[Tuple[str, Any]]] = (),
+        **kwds: Any,
+    ) -> None:
+        self._markers.update(other)
+        self._markers.update(kwds)
+
     def __delitem__(self, key: str) -> None:
         raise ValueError("cannot delete key in keywords dict")
 
     def __iter__(self) -> Iterator[str]:
-        seen = self._seen()
-        return iter(seen)
-
-    def _seen(self) -> Set[str]:
-        seen = set(self._markers)
+        # Doesn't need to be fast.
+        yield from self._markers
         if self.parent is not None:
-            seen.update(self.parent.keywords)
-        return seen
+            for keyword in self.parent.keywords:
+                # self._marks and self.parent.keywords can have duplicates.
+                if keyword not in self._markers:
+                    yield keyword
 
     def __len__(self) -> int:
-        return len(self._seen())
+        # Doesn't need to be fast.
+        return sum(1 for keyword in self)
 
     def __repr__(self) -> str:
         return f"<NodeKeywords for node {self.node}>"

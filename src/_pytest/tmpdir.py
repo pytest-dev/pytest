@@ -199,11 +199,11 @@ def pytest_configure(config: Config) -> None:
     to the tmp_path_factory session fixture.
     """
     mp = MonkeyPatch()
-    tmppath_handler = TempPathFactory.from_config(config, _ispytest=True)
-    t = TempdirFactory(tmppath_handler, _ispytest=True)
-    config._cleanup.append(mp.undo)
-    mp.setattr(config, "_tmp_path_factory", tmppath_handler, raising=False)
-    mp.setattr(config, "_tmpdirhandler", t, raising=False)
+    config.add_cleanup(mp.undo)
+    _tmp_path_factory = TempPathFactory.from_config(config, _ispytest=True)
+    _tmpdirhandler = TempdirFactory(_tmp_path_factory, _ispytest=True)
+    mp.setattr(config, "_tmp_path_factory", _tmp_path_factory, raising=False)
+    mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
 
 
 @fixture(scope="session")

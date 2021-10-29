@@ -41,7 +41,11 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.pytester import HookRecorder
+from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
+from _pytest.pytester import RecordedHookCall
+from _pytest.pytester import RunResult
 from _pytest.pytester import Testdir
 from _pytest.python import Class
 from _pytest.python import Function
@@ -98,10 +102,12 @@ __all__ = [
     "freeze_includes",
     "Function",
     "hookimpl",
+    "HookRecorder",
     "hookspec",
     "importorskip",
     "Instance",
     "Item",
+    "LineMatcher",
     "LogCaptureFixture",
     "main",
     "mark",
@@ -129,7 +135,9 @@ __all__ = [
     "PytestUnraisableExceptionWarning",
     "PytestWarning",
     "raises",
+    "RecordedHookCall",
     "register_assert_rewrite",
+    "RunResult",
     "Session",
     "set_trace",
     "skip",

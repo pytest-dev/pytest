@@ -19,6 +19,7 @@ from typing import Callable
 from typing import Dict
 from typing import IO
 from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -63,7 +64,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         except ValueError:
             self.fnpats = ["test_*.py", "*_test.py"]
         self.session: Optional[Session] = None
-        self._rewritten_names: Set[str] = set()
+        self._rewritten_names: Dict[str, Path] = {}
         self._must_rewrite: Set[str] = set()
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
         # which might result in infinite recursion (#3506)
@@ -133,7 +134,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         fn = Path(module.__spec__.origin)
         state = self.config.stash[assertstate_key]
 
-        self._rewritten_names.add(module.__name__)
+        self._rewritten_names[module.__name__] = fn
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
@@ -275,6 +276,14 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         with open(pathname, "rb") as f:
             return f.read()
 
+    if sys.version_info >= (3, 9):
+
+        def get_resource_reader(self, name: str) -> importlib.abc.TraversableResources:  # type: ignore
+            from types import SimpleNamespace
+            from importlib.readers import FileReader
+
+            return FileReader(SimpleNamespace(path=self._rewritten_names[name]))
+
 
 def _write_pyc_fp(
     fp: IO[bytes], source_stat: os.stat_result, co: types.CodeType
@@ -333,7 +342,7 @@ else:
 
         try:
             _write_pyc_fp(fp, source_stat, co)
-            os.rename(proc_pyc, os.fspath(pyc))
+            os.rename(proc_pyc, pyc)
         except OSError as e:
             state.trace(f"error writing pyc file at {pyc}: {e}")
             # we ignore any failure to write the cache file
@@ -347,13 +356,12 @@ else:
 
 def _rewrite_test(fn: Path, config: Config) -> Tuple[os.stat_result, types.CodeType]:
     """Read and rewrite *fn* and return the code object."""
-    fn_ = os.fspath(fn)
-    stat = os.stat(fn_)
-    with open(fn_, "rb") as f:
-        source = f.read()
-    tree = ast.parse(source, filename=fn_)
-    rewrite_asserts(tree, source, fn_, config)
-    co = compile(tree, fn_, "exec", dont_inherit=True)
+    stat = os.stat(fn)
+    source = fn.read_bytes()
+    strfn = str(fn)
+    tree = ast.parse(source, filename=strfn)
+    rewrite_asserts(tree, source, strfn, config)
+    co = compile(tree, strfn, "exec", dont_inherit=True)
     return stat, co
 
 
@@ -365,14 +373,14 @@ def _read_pyc(
     Return rewritten code if successful or None if not.
     """
     try:
-        fp = open(os.fspath(pyc), "rb")
+        fp = open(pyc, "rb")
     except OSError:
         return None
     with fp:
         # https://www.python.org/dev/peps/pep-0552/
         has_flags = sys.version_info >= (3, 7)
         try:
-            stat_result = os.stat(os.fspath(source))
+            stat_result = os.stat(source)
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
             data = fp.read(16 if has_flags else 12)
@@ -539,19 +547,11 @@ BINOP_MAP = {
 }
 
 
-def set_location(node, lineno, col_offset):
-    """Set node location information recursively."""
-
-    def _fix(node, lineno, col_offset):
-        if "lineno" in node._attributes:
-            node.lineno = lineno
-        if "col_offset" in node._attributes:
-            node.col_offset = col_offset
-        for child in ast.iter_child_nodes(node):
-            _fix(child, lineno, col_offset)
-
-    _fix(node, lineno, col_offset)
-    return node
+def traverse_node(node: ast.AST) -> Iterator[ast.AST]:
+    """Recursively yield node and all its children in depth-first order."""
+    yield node
+    for child in ast.iter_child_nodes(node):
+        yield from traverse_node(child)
 
 
 @functools.lru_cache(maxsize=1)
@@ -862,7 +862,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     "assertion is always true, perhaps remove parentheses?"
                 ),
                 category=None,
-                filename=os.fspath(self.module_path),
+                filename=self.module_path,
                 lineno=assert_.lineno,
             )
 
@@ -954,9 +954,10 @@ class AssertionRewriter(ast.NodeVisitor):
             variables = [ast.Name(name, ast.Store()) for name in self.variables]
             clear = ast.Assign(variables, ast.NameConstant(None))
             self.statements.append(clear)
-        # Fix line numbers.
+        # Fix locations (line numbers/column offsets).
         for stmt in self.statements:
-            set_location(stmt, assert_.lineno, assert_.col_offset)
+            for node in traverse_node(stmt):
+                ast.copy_location(node, assert_)
         return self.statements
 
     def visit_Name(self, name: ast.Name) -> Tuple[ast.Name, str]:
@@ -1103,7 +1104,7 @@ def try_makedirs(cache_dir: Path) -> bool:
     Returns True if successful or if it already exists.
     """
     try:
-        os.makedirs(os.fspath(cache_dir), exist_ok=True)
+        os.makedirs(cache_dir, exist_ok=True)
     except (FileNotFoundError, NotADirectoryError, FileExistsError):
         # One of the path components was not a directory:
         # - we're in a zip file

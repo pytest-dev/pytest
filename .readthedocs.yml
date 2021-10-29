@@ -7,6 +7,10 @@ python:
       - method: pip
         path: .
 
+build:
+  apt_packages:
+    - inkscape
+
 formats:
   - epub
   - pdf

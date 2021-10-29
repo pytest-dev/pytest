@@ -248,8 +248,8 @@ through ``add_color_level()``. Example:
 Release notes
 ^^^^^^^^^^^^^
 
-This feature was introduced as a drop-in replacement for the `pytest-catchlog
-<https://pypi.org/project/pytest-catchlog/>`_ plugin and they conflict
+This feature was introduced as a drop-in replacement for the
+:pypi:`pytest-catchlog` plugin and they conflict
 with each other. The backward compatibility API with ``pytest-capturelog``
 has been dropped when this feature was introduced, so if for that reason you
 still need ``pytest-catchlog`` you can disable the internal feature by

@@ -183,9 +183,7 @@ together with the actual data, instead of listing them separately.
 A quick port of "testscenarios"
 ------------------------------------
 
-.. _`test scenarios`: https://pypi.org/project/testscenarios/
-
-Here is a quick port to run tests configured with `test scenarios`_,
+Here is a quick port to run tests configured with :pypi:`testscenarios`,
 an add-on from Robert Collins for the standard unittest framework. We
 only have to work a bit to construct the correct arguments for pytest's
 :py:func:`Metafunc.parametrize`:

@@ -19,7 +19,7 @@ class TestOEJSKITSpecials:
                     return MyCollector.from_parent(collector, name=name)
             class MyCollector(pytest.Collector):
                 def reportinfo(self):
-                    return self.fspath, 3, "xyz"
+                    return self.path, 3, "xyz"
         """
         )
         modcol = pytester.getmodulecol(
@@ -52,7 +52,7 @@ class TestOEJSKITSpecials:
                     return MyCollector.from_parent(collector, name=name)
             class MyCollector(pytest.Collector):
                 def reportinfo(self):
-                    return self.fspath, 3, "xyz"
+                    return self.path, 3, "xyz"
         """
         )
         modcol = pytester.getmodulecol(

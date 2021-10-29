@@ -8,27 +8,47 @@ Install package with pip
 -------------------------------------------------
 
 For development, we recommend you use :mod:`venv` for virtual environments and
-pip_ for installing your application and any dependencies,
+:doc:`pip:index` for installing your application and any dependencies,
 as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
 
-Next, place a ``setup.py`` file in the root of your package with the following minimum content:
+Next, place a ``pyproject.toml`` file in the root of your package:
 
-.. code-block:: python
+.. code-block:: toml
 
-    from setuptools import setup, find_packages
+    [build-system]
+    requires = ["setuptools>=42", "wheel"]
+    build-backend = "setuptools.build_meta"
 
-    setup(name="PACKAGENAME", packages=find_packages())
+and a ``setup.cfg`` file containing your package's metadata with the following minimum content:
 
-Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory:
+.. code-block:: ini
+
+    [metadata]
+    name = PACKAGENAME
+
+    [options]
+    packages = find:
+
+where ``PACKAGENAME`` is the name of your package.
+
+.. note::
+
+    If your pip version is older than ``21.3``, you'll also need a ``setup.py`` file:
+
+    .. code-block:: python
+
+        from setuptools import setup
+
+        setup()
+
+You can then install your package in "editable" mode by running from the same directory:
 
 .. code-block:: bash
 
      pip install -e .
 
 which lets you change your source code (both tests and application) and rerun tests at will.
-This is similar to running ``python setup.py develop`` or ``conda develop`` in that it installs
-your package using a symlink to your development code.
 
 .. _`test discovery`:
 .. _`Python test discovery`:
@@ -68,7 +88,8 @@ to keep tests separate from actual application code (often a good idea):
 
 .. code-block:: text
 
-    setup.py
+    pyproject.toml
+    setup.cfg
     mypkg/
         __init__.py
         app.py
@@ -82,7 +103,7 @@ This has the following benefits:
 
 * Your tests can run against an installed version after executing ``pip install .``.
 * Your tests can run against the local copy with an editable install after executing ``pip install --editable .``.
-* If you don't have a ``setup.py`` file and are relying on the fact that Python by default puts the current
+* If you don't use an editable install and are relying on the fact that Python by default puts the current
   directory in ``sys.path`` to import your package, you can execute ``python -m pytest`` to execute the tests against the
   local copy directly, without using ``pip``.
 
@@ -103,7 +124,8 @@ If you need to have test modules with the same name, you might add ``__init__.py
 
 .. code-block:: text
 
-    setup.py
+    pyproject.toml
+    setup.cfg
     mypkg/
         ...
     tests/
@@ -130,7 +152,8 @@ sub-directory of your root:
 
 .. code-block:: text
 
-    setup.py
+    pyproject.toml
+    setup.cfg
     src/
         mypkg/
             __init__.py
@@ -167,7 +190,8 @@ want to distribute them along with your application:
 
 .. code-block:: text
 
-    setup.py
+    pyproject.toml
+    setup.cfg
     mypkg/
         __init__.py
         app.py
@@ -191,11 +215,11 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 .. note::
 
-    You can use Python3 namespace packages (PEP420) for your application
+    You can use namespace packages (PEP420) for your application
     but pytest will still perform `test package name`_ discovery based on the
     presence of ``__init__.py`` files.  If you use one of the
     two recommended file system layouts above but leave away the ``__init__.py``
-    files from your directories it should just work on Python3.3 and above.  From
+    files from your directories, it should just work.  From
     "inlined tests", however, you will need to use absolute imports for
     getting at your application code.
 
@@ -230,21 +254,35 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     much less surprising.
 
 
-.. _`virtualenv`: https://pypi.org/project/virtualenv/
 .. _`buildout`: http://www.buildout.org/en/latest/
-.. _pip: https://pypi.org/project/pip/
 
 .. _`use tox`:
 
 tox
-------
+---
 
 Once you are done with your work and want to make sure that your actual
-package passes all tests you may want to look into `tox <https://tox.readthedocs.io/>`_, the
-virtualenv test automation tool and its `pytest support
-<https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
+package passes all tests you may want to look into :doc:`tox <tox:index>`, the
+virtualenv test automation tool and its :doc:`pytest support <tox:example/pytest>`.
 tox helps you to setup virtualenv environments with pre-defined
 dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
+
+Do not run via setuptools
+-------------------------
+
+Integration with setuptools is **not recommended**,
+i.e. you should not be using ``python setup.py test`` or ``pytest-runner``,
+and may stop working in the future.
+
+This is deprecated since it depends on deprecated features of setuptools
+and relies on features that break security mechanisms in pip.
+For example 'setup_requires' and 'tests_require' bypass ``pip --require-hashes``.
+For more information and migration instructions,
+see the `pytest-runner notice <https://github.com/pytest-dev/pytest-runner#deprecation-notice>`_.
+See also `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`_.
+
+setuptools intends to
+`remove the test command <https://github.com/pypa/setuptools/issues/931>`_.

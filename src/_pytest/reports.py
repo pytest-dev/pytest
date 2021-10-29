@@ -324,9 +324,9 @@ class TestReport(BaseReport):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
                 if excinfo.value._use_item_location:
-                    filename, line = item.reportinfo()[:2]
+                    path, line = item.reportinfo()[:2]
                     assert line is not None
-                    longrepr = str(filename), line + 1, r.message
+                    longrepr = os.fspath(path), line + 1, r.message
                 else:
                     longrepr = (str(r.path), r.lineno, r.message)
             else:

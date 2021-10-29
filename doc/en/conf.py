@@ -17,6 +17,7 @@
 # The short X.Y version.
 import ast
 import os
+import shutil
 import sys
 from typing import List
 from typing import TYPE_CHECKING
@@ -38,6 +39,10 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 todo_include_todos = 1
 
+# Use a different latex engine due to possible Unicode characters in the documentation:
+# https://docs.readthedocs.io/en/stable/guides/pdf-non-ascii-languages.html
+latex_engine = "xelatex"
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -50,12 +55,20 @@ extensions = [
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
     "sphinxcontrib_trio",
 ]
+
+# Building PDF docs on readthedocs requires inkscape for svg to pdf
+# conversion. The relevant plugin is not useful for normal HTML builds, but
+# it still raises warnings and fails CI if inkscape is not available. So
+# only use the plugin if inkscape is actually available.
+if shutil.which("inkscape"):
+    extensions.append("sphinxcontrib.inkscapeconverter")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -131,6 +144,11 @@ linkcheck_ignore = [
 
 # The number of worker threads to use when checking links (default=5).
 linkcheck_workers = 5
+
+
+extlinks = {
+    "pypi": ("https://pypi.org/project/%s/", ""),
+}
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -350,6 +368,14 @@ intersphinx_mapping = {
     "pluggy": ("https://pluggy.readthedocs.io/en/stable", None),
     "python": ("https://docs.python.org/3", None),
     "numpy": ("https://numpy.org/doc/stable", None),
+    "pip": ("https://pip.pypa.io/en/stable", None),
+    "tox": ("https://tox.wiki/en/stable", None),
+    "virtualenv": ("https://virtualenv.pypa.io/en/stable", None),
+    "django": (
+        "http://docs.djangoproject.com/en/stable",
+        "http://docs.djangoproject.com/en/stable/_objects",
+    ),
+    "setuptools": ("https://setuptools.pypa.io/en/stable", None),
 }
 
 

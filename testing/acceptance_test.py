@@ -3,7 +3,6 @@ import sys
 import types
 
 import attr
-import py
 
 import pytest
 from _pytest.compat import importlib_metadata
@@ -515,28 +514,10 @@ class TestInvocationVariants:
         assert result.ret == 0
 
     def test_pydoc(self, pytester: Pytester) -> None:
-        for name in ("py.test", "pytest"):
-            result = pytester.runpython_c(f"import {name};help({name})")
-            assert result.ret == 0
-            s = result.stdout.str()
-            assert "MarkGenerator" in s
-
-    def test_import_star_py_dot_test(self, pytester: Pytester) -> None:
-        p = pytester.makepyfile(
-            """
-            from py.test import *
-            #collect
-            #cmdline
-            #Item
-            # assert collect.Item is Item
-            # assert collect.Collector is Collector
-            main
-            skip
-            xfail
-        """
-        )
-        result = pytester.runpython(p)
+        result = pytester.runpython_c("import pytest;help(pytest)")
         assert result.ret == 0
+        s = result.stdout.str()
+        assert "MarkGenerator" in s
 
     def test_import_star_pytest(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -584,10 +565,6 @@ class TestInvocationVariants:
         res = pytester.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_equivalence_pytest_pydottest(self) -> None:
-        # Type ignored because `py.test` is not and will not be typed.
-        assert pytest.main == py.test.cmdline.main  # type: ignore[attr-defined]
 
     def test_invoke_with_invalid_type(self) -> None:
         with pytest.raises(

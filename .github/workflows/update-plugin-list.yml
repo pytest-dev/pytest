@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install packaging requests tabulate[widechars]
+          pip install packaging requests tabulate[widechars] tqdm
 
       - name: Update Plugin List
         run: python scripts/update-plugin-list.py
