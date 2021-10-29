@@ -66,14 +66,15 @@ class Parser:
     ) -> "OptionGroup":
         """Get (or create) a named option Group.
 
-        :name: Name of the option group.
-        :description: Long description for --help output.
-        :after: Name of another group, used for ordering --help output.
+        :param name: Name of the option group.
+        :param description: Long description for --help output.
+        :param after: Name of another group, used for ordering --help output.
+        :returns: The option group.
 
         The returned group object has an ``addoption`` method with the same
         signature as :func:`parser.addoption <pytest.Parser.addoption>` but
         will be shown in the respective group in the output of
-        ``pytest. --help``.
+        ``pytest --help``.
         """
         for group in self._groups:
             if group.name == name:
@@ -89,10 +90,11 @@ class Parser:
     def addoption(self, *opts: str, **attrs: Any) -> None:
         """Register a command line option.
 
-        :opts: Option names, can be short or long options.
-        :attrs: Same attributes which the ``add_argument()`` function of the
-           `argparse library <https://docs.python.org/library/argparse.html>`_
-           accepts.
+        :param opts:
+            Option names, can be short or long options.
+        :param attrs:
+            Same attributes as the argparse library's :py:func:`add_argument()
+            <argparse.ArgumentParser.add_argument>` function accepts.
 
         After command line parsing, options are available on the pytest config
         object via ``config.option.NAME`` where ``NAME`` is usually set
@@ -148,7 +150,10 @@ class Parser:
         args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> argparse.Namespace:
-        """Parse and return a namespace object with known arguments at this point."""
+        """Parse the known arguments at this point.
+
+        :returns: An argparse namespace object.
+        """
         return self.parse_known_and_unknown_args(args, namespace=namespace)[0]
 
     def parse_known_and_unknown_args(
@@ -156,8 +161,13 @@ class Parser:
         args: Sequence[Union[str, "os.PathLike[str]"]],
         namespace: Optional[argparse.Namespace] = None,
     ) -> Tuple[argparse.Namespace, List[str]]:
-        """Parse and return a namespace object with known arguments, and
-        the remaining arguments unknown at this point."""
+        """Parse the known arguments at this point, and also return the
+        remaining unknown arguments.
+
+        :returns:
+            A tuple containing an argparse namespace object for the known
+            arguments, and a list of the unknown arguments.
+        """
         optparser = self._getparser()
         strargs = [os.fspath(x) for x in args]
         return optparser.parse_known_args(strargs, namespace=namespace)
@@ -173,9 +183,9 @@ class Parser:
     ) -> None:
         """Register an ini-file option.
 
-        :name:
+        :param name:
             Name of the ini-variable.
-        :type:
+        :param type:
             Type of the variable. Can be:
 
                 * ``string``: a string
@@ -189,7 +199,7 @@ class Parser:
                 The ``paths`` variable type.
 
             Defaults to ``string`` if ``None`` or not passed.
-        :default:
+        :param default:
             Default value if no ini-file option exists but is queried.
 
         The value of ini-variables can be retrieved via a call to
@@ -354,24 +364,30 @@ class OptionGroup:
         self.options: List[Argument] = []
         self.parser = parser
 
-    def addoption(self, *optnames: str, **attrs: Any) -> None:
+    def addoption(self, *opts: str, **attrs: Any) -> None:
         """Add an option to this group.
 
         If a shortened version of a long option is specified, it will
         be suppressed in the help. ``addoption('--twowords', '--two-words')``
         results in help showing ``--two-words`` only, but ``--twowords`` gets
         accepted **and** the automatic destination is in ``args.twowords``.
+
+        :param opts:
+            Option names, can be short or long options.
+        :param attrs:
+            Same attributes as the argparse library's :py:func:`add_argument()
+            <argparse.ArgumentParser.add_argument>` function accepts.
         """
-        conflict = set(optnames).intersection(
+        conflict = set(opts).intersection(
             name for opt in self.options for name in opt.names()
         )
         if conflict:
             raise ValueError("option names %s already added" % conflict)
-        option = Argument(*optnames, **attrs)
+        option = Argument(*opts, **attrs)
         self._addoption_instance(option, shortupper=False)
 
-    def _addoption(self, *optnames: str, **attrs: Any) -> None:
-        option = Argument(*optnames, **attrs)
+    def _addoption(self, *opts: str, **attrs: Any) -> None:
+        option = Argument(*opts, **attrs)
         self._addoption_instance(option, shortupper=True)
 
     def _addoption_instance(self, option: "Argument", shortupper: bool = False) -> None:

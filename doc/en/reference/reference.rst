@@ -102,7 +102,7 @@ pytest.deprecated_call
 
 **Tutorial**: :ref:`ensuring_function_triggers`
 
-.. autofunction:: pytest.deprecated_call()
+.. autofunction:: pytest.deprecated_call([match])
     :with:
 
 pytest.register_assert_rewrite

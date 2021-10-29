@@ -38,6 +38,7 @@ release = ".".join(version.split(".")[:2])
 
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
+autodoc_typehints_description_target = "documented"
 todo_include_todos = 1
 
 latex_engine = "lualatex"

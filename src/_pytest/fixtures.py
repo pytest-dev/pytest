@@ -513,8 +513,8 @@ class FixtureRequest:
         return self._pyfuncitem.session  # type: ignore[no-any-return]
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        """Add finalizer/teardown function to be called after the last test
-        within the requesting test context finished execution."""
+        """Add finalizer/teardown function to be called without arguments after
+        the last test within the requesting test context finished execution."""
         # XXX usually this method is shadowed by fixturedef specific ones.
         self._addfinalizer(finalizer, scope=self.scope)
 
@@ -529,13 +529,16 @@ class FixtureRequest:
         on all function invocations.
 
         :param marker:
-            A :class:`pytest.MarkDecorator` object created by a call
-            to ``pytest.mark.NAME(...)``.
+            An object created by a call to ``pytest.mark.NAME(...)``.
         """
         self.node.add_marker(marker)
 
     def raiseerror(self, msg: Optional[str]) -> NoReturn:
-        """Raise a FixtureLookupError with the given message."""
+        """Raise a FixtureLookupError exception.
+
+        :param msg:
+            An optional custom error message.
+        """
         raise self._fixturemanager.FixtureLookupError(None, self, msg)
 
     def _fillfixtures(self) -> None:
@@ -557,6 +560,8 @@ class FixtureRequest:
         phase, but during the test teardown phase a fixture's value may not
         be available.
 
+        :param argname:
+            The fixture name.
         :raises pytest.FixtureLookupError:
             If the given fixture could not be found.
         """
@@ -768,8 +773,8 @@ class SubRequest(FixtureRequest):
         return f"<SubRequest {self.fixturename!r} for {self._pyfuncitem!r}>"
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        """Add finalizer/teardown function to be called after the last test
-        within the requesting test context finished execution."""
+        """Add finalizer/teardown function to be called without arguments after
+        the last test within the requesting test context finished execution."""
         self._fixturedef.addfinalizer(finalizer)
 
     def _schedule_finalizers(

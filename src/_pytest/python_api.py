@@ -798,15 +798,18 @@ def raises(
 def raises(
     expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
 ) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
-    r"""Assert that a code block/function call raises ``expected_exception``
-    or raise a failure exception otherwise.
+    r"""Assert that a code block/function call raises an exception.
 
-    :kwparam match:
+    :param typing.Type[E] | typing.Tuple[typing.Type[E], ...] expected_exception:
+        The excpected exception type, or a tuple if one of multiple possible
+        exception types are excepted.
+    :kwparam str | typing.Pattern[str] | None match:
         If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
-        representation of the exception using :py:func:`re.search`. To match a literal
-        string that may contain :std:ref:`special characters <re-syntax>`, the pattern can
-        first be escaped with :py:func:`re.escape`.
+        representation of the exception using :func:`re.search`.
+
+        To match a literal string that may contain :ref:`special characters
+        <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
 
         (This is only used when :py:func:`pytest.raises` is used as a context manager,
         and passed through to the function otherwise.
