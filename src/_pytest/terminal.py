@@ -231,7 +231,7 @@ def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
-        def mywriter(args):
+        def mywriter(tags, args):
             msg = " ".join(map(str, args))
             reporter.write_line("[traceconfig] " + msg)
 
@@ -511,9 +511,7 @@ class TerminalReporter:
         # Ensure that the path is printed before the
         # 1st test of a module starts running.
         if self.showlongtestinfo:
-            line = self._locationline(
-                nodeid=nodeid, fspath=location[0], domain=location[-1]
-            )
+            line = self._locationline(nodeid, *location)
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
@@ -552,9 +550,7 @@ class TerminalReporter:
             self._tw.write(letter, **markup)
         else:
             self._progress_nodeids_reported.add(rep.nodeid)
-            line = self._locationline(
-                nodeid=rep.nodeid, fspath=rep.location[0], domain=rep.location[-1]
-            )
+            line = self._locationline(rep.nodeid, *rep.location)
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
                 if rep.skipped or hasattr(report, "wasxfail"):
@@ -866,8 +862,10 @@ class TerminalReporter:
                     yellow=True,
                 )
 
-    def _locationline(self, nodeid: str, fspath: str, domain: str) -> str:
-        def mkrel(nodeid) -> str:
+    def _locationline(
+        self, nodeid: str, fspath: str, lineno: Optional[int], domain: str
+    ) -> str:
+        def mkrel(nodeid: str) -> str:
             line = self.config.cwd_relative_nodeid(nodeid)
             if domain and line.endswith(domain):
                 line = line[: -len(domain)]
