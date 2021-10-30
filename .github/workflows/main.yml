@@ -166,7 +166,7 @@ jobs:
       run: "tox -e ${{ matrix.tox_env }}-coverage"
 
     - name: Generate coverage report
-      if: " !matirx.use_coverage"
+      if: " !matrix.use_coverage"
       run: python -m coverage xml
 
     - name: Upload coverage to Codecov
