@@ -60,14 +60,17 @@ jobs:
             python: "3.6"
             os: windows-latest
             tox_env: "py36-xdist"
+            use_coverage: false
           - name: "windows-py37"
             python: "3.7"
             os: windows-latest
             tox_env: "py37-numpy"
+            use_coverage: false
           - name: "windows-py37-pluggy"
             python: "3.7"
             os: windows-latest
             tox_env: "py37-pluggymain-xdist"
+            use_coverage: false
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
@@ -77,15 +80,18 @@ jobs:
             python: "3.9"
             os: windows-latest
             tox_env: "py39-xdist"
+            use_coverage: false
           - name: "windows-py310"
             python: "3.10-dev"
             os: windows-latest
             tox_env: "py310-xdist"
+            use_coverage: false
 
           - name: "ubuntu-py36"
             python: "3.6"
             os: ubuntu-latest
             tox_env: "py36-xdist"
+            use_coverage: false
           - name: "ubuntu-py37"
             python: "3.7"
             os: ubuntu-latest
@@ -95,31 +101,38 @@ jobs:
             python: "3.7"
             os: ubuntu-latest
             tox_env: "py37-pluggymain-xdist"
+            use_coverage: false
           - name: "ubuntu-py37-freeze"
             python: "3.7"
             os: ubuntu-latest
             tox_env: "py37-freeze"
+            use_coverage: false
           - name: "ubuntu-py38"
             python: "3.8"
             os: ubuntu-latest
             tox_env: "py38-xdist"
+            use_coverage: false
           - name: "ubuntu-py39"
             python: "3.9"
             os: ubuntu-latest
             tox_env: "py39-xdist"
+            use_coverage: false
           - name: "ubuntu-py310"
             python: "3.10-dev"
             os: ubuntu-latest
             tox_env: "py310-xdist"
+            use_coverage: false
           - name: "ubuntu-pypy3"
             python: "pypy-3.7"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
+            use_coverage: false
 
           - name: "macos-py37"
             python: "3.7"
             os: macos-latest
             tox_env: "py37-xdist"
+            use_coverage: false
           - name: "macos-py38"
             python: "3.8"
             os: macos-latest
@@ -130,11 +143,13 @@ jobs:
             python: "3.7"
             os: ubuntu-latest
             tox_env: "plugins"
+            use_coverage: false
 
           - name: "docs"
             python: "3.7"
             os: ubuntu-latest
             tox_env: "docs"
+            use_coverage: false
           - name: "doctesting"
             python: "3.7"
             os: ubuntu-latest
