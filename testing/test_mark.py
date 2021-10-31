@@ -1,7 +1,10 @@
 import os
 import sys
-from typing import List, NamedTuple, Tuple, Any
+from typing import Any
+from typing import List
+from typing import NamedTuple
 from typing import Optional
+from typing import Tuple
 from unittest import mock
 
 import pytest
@@ -355,14 +358,10 @@ def test_parametrize_with_nested_paramsets(
     pytester: Pytester, pytester_internal_test_values: List[Any]
 ) -> None:
     """Test parametrize with nested pytest.param objects in value"""
-    case = NamedTuple(
-        "case",
-        [
-            ("expected_test_id", str),
-            ("expected_value", Tuple[Any, ...]),
-            ("expected_marks", Tuple[str, ...]),
-        ],
-    )
+    class case(NamedTuple):
+        expected_test_id: str
+        expected_value: Tuple[Any, ...]
+        expected_marks: Tuple[str, ...]
     cases = (
         case("1-nested_2-3", (1, 2, 3), ("parametrize",)),
         case("one_two_three", (1, 2, 3), ("parametrize",)),
@@ -383,7 +382,7 @@ def test_parametrize_with_nested_paramsets(
         """
         import pytest
         @pytest.mark.parametrize(
-            "a, b, c", 
+            "a, b, c",
             [
                 (1, pytest.param(2, id="nested_2"), pytest.param(3)),
                 pytest.param(1, pytest.param(2, id="nested_2"), pytest.param(3), id="one_two_three"),

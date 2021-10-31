@@ -1140,7 +1140,9 @@ class Metafunc:
                         normalized_values.append(*param_value.values)
                         if param_value.marks:
                             merged_marks.append(*param_value.marks)
-                param_set = ParameterSet(values=tuple(normalized_values), marks=merged_marks, id=None)
+                param_set = ParameterSet(
+                    values=tuple(normalized_values), marks=merged_marks, id=None
+                )
                 newcallspec = callspec.setmulti(
                     valtypes=arg_values_types,
                     argnames=argnames,
@@ -1404,8 +1406,10 @@ def _idvalset(
                 if val.id:
                     this_id.append(val.id)
                     continue
-                to_get_idval = (val.values[0] if len(val.values) == 1 else val.values)
-            this_id.append(_idval(to_get_idval, argname, idx, idfn, nodeid=nodeid, config=config))
+                to_get_idval = val.values[0] if len(val.values) == 1 else val.values
+            this_id.append(
+                _idval(to_get_idval, argname, idx, idfn, nodeid=nodeid, config=config)
+            )
         return "-".join(this_id)
     else:
         return _ascii_escaped_by_config(id, config)
