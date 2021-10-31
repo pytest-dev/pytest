@@ -351,7 +351,9 @@ def pytester_internal_test_values():
     del pytest.internal_test_values  # type: ignore[attr-defined]
 
 
-def test_parametrize_with_nested_paramsets(pytester: Pytester, pytester_internal_test_values: List[Any]) -> None:
+def test_parametrize_with_nested_paramsets(
+    pytester: Pytester, pytester_internal_test_values: List[Any]
+) -> None:
     """Test parametrize with nested pytest.param objects in value"""
     case = NamedTuple(
         "case",
@@ -365,7 +367,17 @@ def test_parametrize_with_nested_paramsets(pytester: Pytester, pytester_internal
         case("1-nested_2-3", (1, 2, 3), ("parametrize",)),
         case("one_two_three", (1, 2, 3), ("parametrize",)),
         case("1-nested_2-tuple_value", (1, 2, (3, 3)), ("parametrize",)),
-        case("1-2-3", (1, 2, 3), ("parametrize", "a", "b", "c", "all",)),
+        case(
+            "1-2-3",
+            (1, 2, 3),
+            (
+                "parametrize",
+                "a",
+                "b",
+                "c",
+                "all",
+            ),
+        ),
     )
     pytester.makepyfile(
         """
