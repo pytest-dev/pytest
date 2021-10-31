@@ -1126,9 +1126,21 @@ class Metafunc:
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
+        # If we parametrize the test using values that contained nested pytest.param objects,
+        # then we unpack them values and merge marks.
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
             for param_index, (param_id, param_set) in enumerate(zip(ids, parameters)):
+                normalized_values = []
+                merged_marks = list(param_set.marks) if param_set.marks else []
+                for param_value in param_set.values:
+                    if not isinstance(param_value, ParameterSet):
+                        normalized_values.append(param_value)
+                    else:
+                        normalized_values.append(*param_value.values)
+                        if param_value.marks:
+                            merged_marks.append(*param_value.marks)
+                param_set = ParameterSet(values=tuple(normalized_values), marks=merged_marks, id=None)
                 newcallspec = callspec.setmulti(
                     valtypes=arg_values_types,
                     argnames=argnames,
@@ -1385,10 +1397,15 @@ def _idvalset(
         return parameterset.id
     id = None if ids is None or idx >= len(ids) else ids[idx]
     if id is None:
-        this_id = [
-            _idval(val, argname, idx, idfn, nodeid=nodeid, config=config)
-            for val, argname in zip(parameterset.values, argnames)
-        ]
+        this_id = []
+        for val, argname in zip(parameterset.values, argnames):
+            to_get_idval = val
+            if isinstance(val, ParameterSet):
+                if val.id:
+                    this_id.append(val.id)
+                    continue
+                to_get_idval = (val.values[0] if len(val.values) == 1 else val.values)
+            this_id.append(_idval(to_get_idval, argname, idx, idfn, nodeid=nodeid, config=config))
         return "-".join(this_id)
     else:
         return _ascii_escaped_by_config(id, config)

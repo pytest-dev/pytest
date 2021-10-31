@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import List
+from typing import List, NamedTuple, Tuple, Any
 from typing import Optional
 from unittest import mock
 
@@ -342,6 +342,61 @@ def test_parametrize_with_module(pytester: Pytester) -> None:
     passed, skipped, fail = rec.listoutcomes()
     expected_id = "test_func[" + pytest.__name__ + "]"
     assert passed[0].nodeid.split("::")[-1] == expected_id
+
+
+@pytest.fixture()
+def pytester_internal_test_values():
+    pytest.internal_test_values = []  # type: ignore[attr-defined]
+    yield pytest.internal_test_values  # type: ignore[attr-defined]
+    del pytest.internal_test_values  # type: ignore[attr-defined]
+
+
+def test_parametrize_with_nested_paramsets(pytester: Pytester, pytester_internal_test_values: List[Any]) -> None:
+    """Test parametrize with nested pytest.param objects in value"""
+    case = NamedTuple(
+        "case",
+        [
+            ("expected_test_id", str),
+            ("expected_value", Tuple[Any, ...]),
+            ("expected_marks", Tuple[str, ...]),
+        ],
+    )
+    cases = (
+        case("1-nested_2-3", (1, 2, 3), ("parametrize",)),
+        case("one_two_three", (1, 2, 3), ("parametrize",)),
+        case("1-nested_2-tuple_value", (1, 2, (3, 3)), ("parametrize",)),
+        case("1-2-3", (1, 2, 3), ("parametrize", "a", "b", "c", "all",)),
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize(
+            "a, b, c", 
+            [
+                (1, pytest.param(2, id="nested_2"), pytest.param(3)),
+                pytest.param(1, pytest.param(2, id="nested_2"), pytest.param(3), id="one_two_three"),
+                (1, pytest.param(2, id="nested_2"), pytest.param((3, 3), id="tuple_value")),
+                pytest.param(
+                    pytest.param(1, marks=pytest.mark.a),
+                    pytest.param(2, marks=pytest.mark.b),
+                    pytest.param(3, marks=pytest.mark.c),
+                    marks=pytest.mark.all
+                ),
+            ]
+        )
+        def test_func(a, b, c):
+            pytest.internal_test_values.append((a, b, c))
+    """
+    )
+    rec = pytester.inline_run()
+    items = [x.item for x in rec.getcalls("pytest_itemcollected")]
+    passed, _, _ = rec.listoutcomes()
+    for i, case_ in enumerate(cases):
+        markers = {m.name for m in (items[i].iter_markers() or ())}
+        expected_id = "test_func[" + case_.expected_test_id + "]"
+        assert markers == set(case_.expected_marks)
+        assert passed[i].nodeid.split("::")[-1] == expected_id
+        assert pytester_internal_test_values[i] == case_.expected_value
 
 
 @pytest.mark.parametrize(

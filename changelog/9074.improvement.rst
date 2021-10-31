@@ -1,0 +1,17 @@
+Now ``pytest`` do unpack nested ``pytest.param`` values and merge their ids and marks.
+If parent ``pytest.param`` has an id - it rewrites nested ids.
+For example, now such a construction is possible::
+
+        @pytest.mark.parametrize(
+            "a,b,c", [
+                pytest.param(
+                    pytest.param(1, id="one", marks=pytest.mark.one),
+                    pytest.param(2, id="two", marks=pytest.mark.two),
+                    pytest.param(3, id="three", marks=pytest.mark.three),
+                    marks=pytest.mark.full
+                )
+            ]
+        )
+
+
+Earlier in this case the values ``a, b, c`` in test are a ``ParameterSet`` objects
