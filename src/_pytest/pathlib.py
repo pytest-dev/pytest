@@ -685,6 +685,8 @@ def bestrelpath(directory: Path, dest: Path) -> str:
 
     If no such path can be determined, returns dest.
     """
+    assert isinstance(directory, Path)
+    assert isinstance(dest, Path)
     if dest == directory:
         return os.curdir
     # Find the longest common directory.
