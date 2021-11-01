@@ -1170,6 +1170,41 @@ class TestDoctestSkips:
             ["*4: UnexpectedException*", "*5: DocTestFailure*", "*8: DocTestFailure*"]
         )
 
+    def test_skipping_wrapped_test(self, pytester):
+        """
+        Issue 8796: INTERNALERROR raised when skipping a decorated DocTest
+        through pytest_collection_modifyitems.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+            from _pytest.doctest import DoctestItem
+
+            def pytest_collection_modifyitems(config, items):
+                skip_marker = pytest.mark.skip()
+
+                for item in items:
+                    if isinstance(item, DoctestItem):
+                        item.add_marker(skip_marker)
+            """
+        )
+
+        pytester.makepyfile(
+            """
+            from contextlib import contextmanager
+
+            @contextmanager
+            def my_config_context():
+                '''
+                >>> import os
+                '''
+            """
+        )
+
+        result = pytester.runpytest("--doctest-modules")
+        assert "INTERNALERROR" not in result.stdout.str()
+        result.assert_outcomes(skipped=1)
+
 
 class TestDoctestAutoUseFixtures:
 
