@@ -862,8 +862,10 @@ class TerminalReporter:
                     yellow=True,
                 )
 
-    def _locationline(self, nodeid, fspath, lineno, domain):
-        def mkrel(nodeid):
+    def _locationline(
+        self, nodeid: str, fspath: str, lineno: Optional[int], domain: str
+    ) -> str:
+        def mkrel(nodeid: str) -> str:
             line = self.config.cwd_relative_nodeid(nodeid)
             if domain and line.endswith(domain):
                 line = line[: -len(domain)]
@@ -873,13 +875,12 @@ class TerminalReporter:
             return line
 
         # collect_fspath comes from testid which has a "/"-normalized path.
-
         if fspath:
             res = mkrel(nodeid)
             if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
                 "\\", nodes.SEP
             ):
-                res += " <- " + bestrelpath(self.startpath, fspath)
+                res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"
         return res + " "
