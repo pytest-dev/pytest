@@ -143,18 +143,22 @@ class BaseReport:
 
     @property
     def passed(self) -> bool:
+        """Whether the outcome is passed."""
         return self.outcome == "passed"
 
     @property
     def failed(self) -> bool:
+        """Whether the outcome is failed."""
         return self.outcome == "failed"
 
     @property
     def skipped(self) -> bool:
+        """Whether the outcome is skipped."""
         return self.outcome == "skipped"
 
     @property
     def fspath(self) -> str:
+        """The path portion of the reported node, as a string."""
         return self.nodeid.split("::")[0]
 
     @property
@@ -237,7 +241,10 @@ def _report_unserialization_failure(
 @final
 class TestReport(BaseReport):
     """Basic test report object (also used for setup and teardown calls if
-    they fail)."""
+    they fail).
+
+    Reports can contain arbitrary extra attributes.
+    """
 
     __test__ = False
 
@@ -354,7 +361,10 @@ class TestReport(BaseReport):
 
 @final
 class CollectReport(BaseReport):
-    """Collection report object."""
+    """Collection report object.
+
+    Reports can contain arbitrary extra attributes.
+    """
 
     when = "collect"
 

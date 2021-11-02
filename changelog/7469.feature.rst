@@ -16,6 +16,8 @@ The newly-exported types are:
 - ``pytest.RecordedHookCall`` for the :class:`RecordedHookCall <pytest.HookRecorder>` type returned from :class:`~pytest.HookRecorder`.
 - ``pytest.RunResult`` for the :class:`RunResult <pytest.RunResult>` type returned from :class:`~pytest.Pytester`.
 - ``pytest.LineMatcher`` for the :class:`LineMatcher <pytest.RunResult>` type used in :class:`~pytest.RunResult` and others.
+- ``pytest.TestReport`` for the :class:`TestReport <pytest.TestReport>` type used in various hooks.
+- ``pytest.CollectReport`` for the :class:`CollectReport <pytest.CollectReport>` type used in various hooks.
 
 Constructing most of them directly is not supported; they are only meant for use in type annotations.
 Doing so will emit a deprecation warning, and may become a hard-error in pytest 8.0.

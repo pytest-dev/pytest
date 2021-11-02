@@ -323,7 +323,8 @@ def pytest_deselected(items: Sequence["Item"]) -> None:
 
 @hookspec(firstresult=True)
 def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectReport]":
-    """Perform ``collector.collect()`` and return a CollectReport.
+    """Perform :func:`collector.collect() <pytest.Collector.collect>` and return
+    a :class:`~pytest.CollectReport`.
 
     Stops at first non-None result, see :ref:`firstresult`.
     """
@@ -522,19 +523,19 @@ def pytest_runtest_teardown(item: "Item", nextitem: Optional["Item"]) -> None:
 def pytest_runtest_makereport(
     item: "Item", call: "CallInfo[None]"
 ) -> Optional["TestReport"]:
-    """Called to create a :py:class:`_pytest.reports.TestReport` for each of
+    """Called to create a :class:`~pytest.TestReport` for each of
     the setup, call and teardown runtest phases of a test item.
 
     See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
 
-    :param CallInfo[None] call: The ``CallInfo`` for the phase.
+    :param call: The :class:`~pytest.CallInfo` for the phase.
 
     Stops at first non-None result, see :ref:`firstresult`.
     """
 
 
 def pytest_runtest_logreport(report: "TestReport") -> None:
-    """Process the :py:class:`_pytest.reports.TestReport` produced for each
+    """Process the :class:`~pytest.TestReport` produced for each
     of the setup, call and teardown runtest phases of an item.
 
     See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
@@ -555,7 +556,8 @@ def pytest_report_from_serializable(
     config: "Config",
     data: Dict[str, Any],
 ) -> Optional[Union["CollectReport", "TestReport"]]:
-    """Restore a report object previously serialized with pytest_report_to_serializable()."""
+    """Restore a report object previously serialized with
+    :func:`pytest_report_to_serializable`."""
 
 
 # -------------------------------------------------------------------------
@@ -753,7 +755,7 @@ def pytest_report_teststatus(
     for example ``"rerun", "R", ("RERUN", {"yellow": True})``.
 
     :param report: The report object whose status is to be returned.
-    :param pytest.Config config: The pytest config object.
+    :param config: The pytest config object.
 
     Stops at first non-None result, see :ref:`firstresult`.
     """
@@ -894,10 +896,10 @@ def pytest_exception_interact(
     interactively handled.
 
     May be called during collection (see :py:func:`pytest_make_collect_report`),
-    in which case ``report`` is a :py:class:`_pytest.reports.CollectReport`.
+    in which case ``report`` is a :class:`CollectReport`.
 
     May be called during runtest of an item (see :py:func:`pytest_runtest_protocol`),
-    in which case ``report`` is a :py:class:`_pytest.reports.TestReport`.
+    in which case ``report`` is a :class:`TestReport`.
 
     This hook is not called if the exception that was raised is an internal
     exception like ``skip.Exception``.

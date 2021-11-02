@@ -813,7 +813,7 @@ Collector
 CollectReport
 ~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.reports.CollectReport()
+.. autoclass:: pytest.CollectReport()
     :members:
     :show-inheritance:
     :inherited-members:
@@ -951,7 +951,7 @@ Session
 TestReport
 ~~~~~~~~~~
 
-.. autoclass:: _pytest.reports.TestReport()
+.. autoclass:: pytest.TestReport()
     :members:
     :show-inheritance:
     :inherited-members:
