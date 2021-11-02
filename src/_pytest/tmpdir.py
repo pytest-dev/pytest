@@ -13,8 +13,6 @@ from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
 from _pytest.compat import final
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
@@ -157,29 +155,6 @@ class TempPathFactory:
         return basetemp
 
 
-@final
-@attr.s(init=False, auto_attribs=True)
-class TempdirFactory:
-    """Backward compatibility wrapper that implements :class:``_pytest.compat.LEGACY_PATH``
-    for :class:``TempPathFactory``."""
-
-    _tmppath_factory: TempPathFactory
-
-    def __init__(
-        self, tmppath_factory: TempPathFactory, *, _ispytest: bool = False
-    ) -> None:
-        check_ispytest(_ispytest)
-        self._tmppath_factory = tmppath_factory
-
-    def mktemp(self, basename: str, numbered: bool = True) -> LEGACY_PATH:
-        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``_pytest.compat.LEGACY_PATH`` object."""
-        return legacy_path(self._tmppath_factory.mktemp(basename, numbered).resolve())
-
-    def getbasetemp(self) -> LEGACY_PATH:
-        """Backward compat wrapper for ``_tmppath_factory.getbasetemp``."""
-        return legacy_path(self._tmppath_factory.getbasetemp().resolve())
-
-
 def get_user() -> Optional[str]:
     """Return the current user name, or None if getuser() does not work
     in the current environment (see #1010)."""
@@ -201,16 +176,7 @@ def pytest_configure(config: Config) -> None:
     mp = MonkeyPatch()
     config.add_cleanup(mp.undo)
     _tmp_path_factory = TempPathFactory.from_config(config, _ispytest=True)
-    _tmpdirhandler = TempdirFactory(_tmp_path_factory, _ispytest=True)
     mp.setattr(config, "_tmp_path_factory", _tmp_path_factory, raising=False)
-    mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
-
-
-@fixture(scope="session")
-def tmpdir_factory(request: FixtureRequest) -> TempdirFactory:
-    """Return a :class:`pytest.TempdirFactory` instance for the test session."""
-    # Set dynamically by pytest_configure() above.
-    return request.config._tmpdirhandler  # type: ignore
 
 
 @fixture(scope="session")
@@ -226,24 +192,6 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
     MAXVAL = 30
     name = name[:MAXVAL]
     return factory.mktemp(name, numbered=True)
-
-
-@fixture
-def tmpdir(tmp_path: Path) -> LEGACY_PATH:
-    """Return a temporary directory path object which is unique to each test
-    function invocation, created as a sub directory of the base temporary
-    directory.
-
-    By default, a new base temporary directory is created each test session,
-    and old bases are removed after 3 sessions, to aid in debugging. If
-    ``--basetemp`` is used then it is cleared each session. See :ref:`base
-    temporary directory`.
-
-    The returned object is a `legacy_path`_ object.
-
-    .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
-    """
-    return legacy_path(tmp_path)
 
 
 @fixture

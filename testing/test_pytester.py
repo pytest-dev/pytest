@@ -17,7 +17,6 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
-from _pytest.pytester import Testdir
 
 
 def test_make_hook_recorder(pytester: Pytester) -> None:
@@ -814,19 +813,6 @@ def test_makefile_joins_absolute_path(pytester: Pytester) -> None:
     assert str(p1) == str(pytester.path / "absfile.py")
 
 
-def test_testtmproot(testdir) -> None:
-    """Check test_tmproot is a py.path attribute for backward compatibility."""
-    assert testdir.test_tmproot.check(dir=1)
-
-
-def test_testdir_makefile_dot_prefixes_extension_silently(
-    testdir: Testdir,
-) -> None:
-    """For backwards compat #8192"""
-    p1 = testdir.makefile("foo.bar", "")
-    assert ".foo.bar" in str(p1)
-
-
 def test_pytester_makefile_dot_prefixes_extension_with_warning(
     pytester: Pytester,
 ) -> None:
@@ -835,18 +821,6 @@ def test_pytester_makefile_dot_prefixes_extension_with_warning(
         match="pytester.makefile expects a file extension, try .foo.bar instead of foo.bar",
     ):
         pytester.makefile("foo.bar", "")
-
-
-def test_testdir_makefile_ext_none_raises_type_error(testdir) -> None:
-    """For backwards compat #8192"""
-    with pytest.raises(TypeError):
-        testdir.makefile(None, "")
-
-
-def test_testdir_makefile_ext_empty_string_makes_file(testdir) -> None:
-    """For backwards compat #8192"""
-    p1 = testdir.makefile("", "")
-    assert "test_testdir_makefile" in str(p1)
 
 
 @pytest.mark.filterwarnings("default")

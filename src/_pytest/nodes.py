@@ -24,7 +24,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import cached_property
 from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
@@ -237,15 +236,6 @@ class Node(metaclass=NodeMeta):
         self.stash = Stash()
         # Deprecated alias. Was never public. Can be removed in a few releases.
         self._store = self.stash
-
-    @property
-    def fspath(self) -> LEGACY_PATH:
-        """(deprecated) returns a legacy_path copy of self.path"""
-        return legacy_path(self.path)
-
-    @fspath.setter
-    def fspath(self, value: LEGACY_PATH) -> None:
-        self.path = Path(value)
 
     @classmethod
     def from_parent(cls, parent: "Node", **kw):
