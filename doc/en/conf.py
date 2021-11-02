@@ -19,6 +19,7 @@ import ast
 import os
 import shutil
 import sys
+from textwrap import dedent
 from typing import List
 from typing import TYPE_CHECKING
 
@@ -39,9 +40,22 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 todo_include_todos = 1
 
-# Use a different latex engine due to possible Unicode characters in the documentation:
-# https://docs.readthedocs.io/en/stable/guides/pdf-non-ascii-languages.html
-latex_engine = "xelatex"
+latex_engine = "lualatex"
+
+latex_elements = {
+    "preamble": dedent(
+        r"""
+        \directlua{
+            luaotfload.add_fallback("fallbacks", {
+                "Noto Serif CJK SC:style=Regular;",
+                "Symbola:Style=Regular;"
+            })
+        }
+
+        \setmainfont{FreeSerif}[RawFeature={fallback=fallbacks}]
+        """
+    )
+}
 
 # -- General configuration -----------------------------------------------------
 
@@ -446,3 +460,7 @@ def setup(app: "sphinx.application.Sphinx") -> None:
         )
 
     sphinx.pycode.parser.VariableCommentPicker.is_final = patched_is_final
+
+    # legacypath.py monkey-patches pytest.Testdir in. Import the file so
+    # that autodoc can discover references to it.
+    import _pytest.legacypath  # noqa: F401

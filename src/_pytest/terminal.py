@@ -37,8 +37,6 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -382,16 +380,6 @@ class TerminalReporter:
     @property
     def showlongtestinfo(self) -> bool:
         return self.verbosity > 0
-
-    @property
-    def startdir(self) -> LEGACY_PATH:
-        """The directory from which pytest was invoked.
-
-        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
-
-        :type: LEGACY_PATH
-        """
-        return legacy_path(self.startpath)
 
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
@@ -875,7 +863,6 @@ class TerminalReporter:
             return line
 
         # collect_fspath comes from testid which has a "/"-normalized path.
-
         if fspath:
             res = mkrel(nodeid)
             if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(

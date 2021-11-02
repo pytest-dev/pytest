@@ -635,14 +635,11 @@ class TestConfigAPI:
         pytest.raises(ValueError, config.getini, "other")
 
     @pytest.mark.parametrize("config_type", ["ini", "pyproject"])
-    @pytest.mark.parametrize("ini_type", ["paths", "pathlist"])
-    def test_addini_paths(
-        self, pytester: Pytester, config_type: str, ini_type: str
-    ) -> None:
+    def test_addini_paths(self, pytester: Pytester, config_type: str) -> None:
         pytester.makeconftest(
-            f"""
+            """
             def pytest_addoption(parser):
-                parser.addini("paths", "my new ini value", type="{ini_type}")
+                parser.addini("paths", "my new ini value", type="paths")
                 parser.addini("abc", "abc value")
         """
         )
@@ -1521,12 +1518,11 @@ class TestOverrideIniArgs:
         assert result.ret == 0
         result.stdout.fnmatch_lines(["custom_option:3.0"])
 
-    @pytest.mark.parametrize("ini_type", ["paths", "pathlist"])
-    def test_override_ini_paths(self, pytester: Pytester, ini_type: str) -> None:
+    def test_override_ini_paths(self, pytester: Pytester) -> None:
         pytester.makeconftest(
-            f"""
+            """
             def pytest_addoption(parser):
-                parser.addini("paths", "my new ini value", type="{ini_type}")"""
+                parser.addini("paths", "my new ini value", type="paths")"""
         )
         pytester.makeini(
             """
@@ -1534,15 +1530,12 @@ class TestOverrideIniArgs:
             paths=blah.py"""
         )
         pytester.makepyfile(
-            rf"""
+            r"""
             def test_overriden(pytestconfig):
                 config_paths = pytestconfig.getini("paths")
                 print(config_paths)
                 for cpf in config_paths:
-                    if "{ini_type}" == "pathlist":
-                        print('\nuser_path:%s' % cpf.basename)
-                    else:
-                        print('\nuser_path:%s' % cpf.name)
+                    print('\nuser_path:%s' % cpf.name)
             """
         )
         result = pytester.runpytest(

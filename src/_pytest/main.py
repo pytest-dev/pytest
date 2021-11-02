@@ -25,8 +25,6 @@ import attr
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -503,16 +501,6 @@ class Session(nodes.FSCollector):
         .. versionadded:: 7.0.0
         """
         return self.config.invocation_params.dir
-
-    @property
-    def stardir(self) -> LEGACY_PATH:
-        """The path from which pytest was invoked.
-
-        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
-
-        :type: LEGACY_PATH
-        """
-        return legacy_path(self.startpath)
 
     def _node_location_to_relpath(self, node_path: Path) -> str:
         # bestrelpath is a quite slow function.

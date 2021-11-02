@@ -144,6 +144,7 @@ def test_syntax_errors(expr: str, column: int, message: str) -> None:
         "a:::c",
         "a+-b",
         r"\nhe\\l\lo\n\t\rbye",
+        "a/b",
         "אבגד",
         "aaאבגדcc",
         "a[bcd]",
@@ -170,7 +171,6 @@ def test_valid_idents(ident: str) -> None:
 @pytest.mark.parametrize(
     "ident",
     (
-        "/",
         "^",
         "*",
         "=",

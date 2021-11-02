@@ -46,7 +46,6 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import RecordedHookCall
 from _pytest.pytester import RunResult
-from _pytest.pytester import Testdir
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Instance
@@ -61,7 +60,6 @@ from _pytest.recwarn import warns
 from _pytest.runner import CallInfo
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
-from _pytest.tmpdir import TempdirFactory
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
 from _pytest.warning_types import PytestCacheWarning
@@ -145,8 +143,6 @@ __all__ = [
     "StashKey",
     "version_tuple",
     "TempPathFactory",
-    "Testdir",
-    "TempdirFactory",
     "UsageError",
     "WarningsRecorder",
     "warns",
