@@ -873,8 +873,11 @@ class TerminalReporter:
             res = "[location]"
         return res + " "
 
-    def _getfailureheadline(self, rep) -> str:
-        return rep.head_line or "test session"
+    def _getfailureheadline(self, rep):
+        head_line = rep.head_line
+        if head_line:
+            return head_line
+        return "test session"  # XXX?
 
     def _getcrashline(self, rep):
         try:
