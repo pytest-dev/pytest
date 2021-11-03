@@ -34,10 +34,10 @@ if TYPE_CHECKING:
     from _pytest.nodes import Collector
     from _pytest.nodes import Item
     from _pytest.outcomes import Exit
+    from _pytest.python import Class
     from _pytest.python import Function
     from _pytest.python import Metafunc
     from _pytest.python import Module
-    from _pytest.python import PyCollector
     from _pytest.reports import CollectReport
     from _pytest.reports import TestReport
     from _pytest.runner import CallInfo
@@ -360,7 +360,7 @@ def pytest_pycollect_makemodule(
 
 @hookspec(firstresult=True)
 def pytest_pycollect_makeitem(
-    collector: "PyCollector", name: str, obj: object
+    collector: Union["Module", "Class"], name: str, obj: object
 ) -> Union[None, "Item", "Collector", List[Union["Item", "Collector"]]]:
     """Return a custom item/collector for a Python object in a module, or None.
 
