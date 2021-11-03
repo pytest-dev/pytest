@@ -57,6 +57,8 @@ from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
+from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
@@ -86,6 +88,7 @@ __all__ = [
     "cmdline",
     "collect",
     "Collector",
+    "CollectReport",
     "Config",
     "console_main",
     "deprecated_call",
@@ -143,6 +146,7 @@ __all__ = [
     "StashKey",
     "version_tuple",
     "TempPathFactory",
+    "TestReport",
     "UsageError",
     "WarningsRecorder",
     "warns",
