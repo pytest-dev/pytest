@@ -225,9 +225,7 @@ class Node(metaclass=NodeMeta):
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid
-            if self.name != "()":
-                self._nodeid += "::" + self.name
+            self._nodeid = self.parent.nodeid + "::" + self.name
 
         #: A place where plugins can store information on the node for their
         #: own use.

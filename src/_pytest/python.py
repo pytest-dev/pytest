@@ -273,19 +273,13 @@ class PyobjMixin(nodes.Node):
         return node.obj if node is not None else None
 
     @property
-    def instance(self):
-        """Python instance object this node was collected from (can be None)."""
-        node = self.getparent(Instance)
-        return node.obj if node is not None else None
-
-    @property
     def obj(self):
         """Underlying Python object."""
         obj = getattr(self, "_obj", None)
         if obj is None:
             self._obj = obj = self._getobj()
             # XXX evil hack
-            # used to avoid Instance collector marker duplication
+            # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
                 self.own_markers.extend(get_unpacked_marks(self.obj))
         return obj
@@ -307,8 +301,6 @@ class PyobjMixin(nodes.Node):
         chain.reverse()
         parts = []
         for node in chain:
-            if isinstance(node, Instance):
-                continue
             name = node.name
             if isinstance(node, Module):
                 name = os.path.splitext(name)[0]
@@ -407,8 +399,9 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
         # Avoid random getattrs and peek in the __dict__ instead.
         dicts = [getattr(self.obj, "__dict__", {})]
-        for basecls in self.obj.__class__.__mro__:
-            dicts.append(basecls.__dict__)
+        if isinstance(self.obj, type):
+            for basecls in self.obj.__mro__:
+                dicts.append(basecls.__dict__)
 
         # In each class, nodes should be definition ordered. Since Python 3.6,
         # __dict__ is definition ordered.
@@ -488,7 +481,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
                     self,
                     name=subname,
                     callspec=callspec,
-                    callobj=funcobj,
                     fixtureinfo=fixtureinfo,
                     keywords={callspec.id: True},
                     originalname=name,
@@ -773,6 +765,9 @@ class Class(PyCollector):
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
 
+    def newinstance(self):
+        return self.obj()
+
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         if not safe_getattr(self.obj, "__test__", True):
             return []
@@ -800,7 +795,9 @@ class Class(PyCollector):
         self._inject_setup_class_fixture()
         self._inject_setup_method_fixture()
 
-        return [Instance.from_parent(self, name="()")]
+        self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
+
+        return super().collect()
 
     def _inject_setup_class_fixture(self) -> None:
         """Inject a hidden autouse, class scoped fixture into the collected class object
@@ -871,25 +868,12 @@ class Class(PyCollector):
         self.obj.__pytest_setup_method = xunit_setup_method_fixture
 
 
-class Instance(PyCollector):
-    _ALLOW_MARKERS = False  # hack, destroy later
-    # Instances share the object with their parents in a way
-    # that duplicates markers instances if not taken out
-    # can be removed at node structure reorganization time.
-
-    def _getobj(self):
-        # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
-        assert self.parent is not None
-        obj = self.parent.obj  # type: ignore[attr-defined]
-        return obj()
-
-    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        self.session._fixturemanager.parsefactories(self)
-        return super().collect()
-
-    def newinstance(self):
-        self.obj = self._getobj()
-        return self.obj
+# Instance used to be a node type between Class and Function.  It has been
+# removed in pytest 7.0. Some plugins exist which reference `pytest.Instance`
+# only to ignore it; this dummy class keeps them working. This could probably
+# be removed at some point.
+class Instance:
+    pass
 
 
 def hasinit(obj: object) -> bool:
@@ -1674,9 +1658,23 @@ class Function(PyobjMixin, nodes.Item):
         """Underlying python 'function' object."""
         return getimfunc(self.obj)
 
+    @property
+    def instance(self):
+        """Python instance object the function is bound to.
+
+        Returns None if not a test method, e.g. for a standalone test function
+        or a staticmethod.
+        """
+        return getattr(self.obj, "__self__", None)
+
     def _getobj(self):
         assert self.parent is not None
-        return getattr(self.parent.obj, self.originalname)  # type: ignore[attr-defined]
+        if isinstance(self.parent, Class):
+            # Each Function gets a fresh class instance.
+            parent_obj = self.parent.newinstance()
+        else:
+            parent_obj = self.parent.obj  # type: ignore[attr-defined]
+        return getattr(parent_obj, self.originalname)
 
     @property
     def _pyfuncitem(self):
@@ -1688,9 +1686,6 @@ class Function(PyobjMixin, nodes.Item):
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self) -> None:
-        if isinstance(self.parent, Instance):
-            self.parent.newinstance()
-            self.obj = self._getobj()
         self._request._fillfixtures()
 
     def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:

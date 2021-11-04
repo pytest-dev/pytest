@@ -12,7 +12,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.pytester import Pytester
 from _pytest.python import Class
-from _pytest.python import Instance
+from _pytest.python import Function
 
 
 class TestModule:
@@ -585,7 +585,7 @@ class TestFunction:
                     pass
         """
         )
-        colitems = modcol.collect()[0].collect()[0].collect()
+        colitems = modcol.collect()[0].collect()
         assert colitems[0].name == "test1[a-c]"
         assert colitems[1].name == "test1[b-c]"
         assert colitems[2].name == "test2[a-c]"
@@ -1183,19 +1183,26 @@ class TestReportInfo:
         modcol = pytester.getmodulecol(
             """
             # lineno 0
-            class TestClass(object):
+            class TestClass:
                 def __getattr__(self, name):
                     return "this is not an int"
 
+                def __class_getattr__(cls, name):
+                    return "this is not an int"
+
                 def intest_foo(self):
+                    pass
+
+                def test_bar(self):
                     pass
         """
         )
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
-        instance = list(classcol.collect())[0]
-        assert isinstance(instance, Instance)
-        path, lineno, msg = instance.reportinfo()
+        path, lineno, msg = classcol.reportinfo()
+        func = list(classcol.collect())[0]
+        assert isinstance(func, Function)
+        path, lineno, msg = func.reportinfo()
 
 
 def test_customized_python_discovery(pytester: Pytester) -> None:

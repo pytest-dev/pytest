@@ -936,7 +936,7 @@ class TestPython:
 def test_mangle_test_address() -> None:
     from _pytest.junitxml import mangle_test_address
 
-    address = "::".join(["a/my.py.thing.py", "Class", "()", "method", "[a-1-::]"])
+    address = "::".join(["a/my.py.thing.py", "Class", "method", "[a-1-::]"])
     newnames = mangle_test_address(address)
     assert newnames == ["a.my.py.thing", "Class", "method", "[a-1-::]"]
 

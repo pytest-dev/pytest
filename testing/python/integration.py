@@ -5,6 +5,7 @@ from _pytest import runner
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker
 from _pytest.pytester import Pytester
+from _pytest.python import Function
 
 
 class TestOEJSKITSpecials:
@@ -475,3 +476,28 @@ class TestParameterize:
         )
         res = pytester.runpytest("--collect-only")
         res.stdout.fnmatch_lines(["*spam-2*", "*ham-2*"])
+
+
+def test_function_instance(pytester: Pytester) -> None:
+    items = pytester.getitems(
+        """
+        def test_func(): pass
+        class TestIt:
+            def test_method(self): pass
+            @classmethod
+            def test_class(cls): pass
+            @staticmethod
+            def test_static(): pass
+        """
+    )
+    assert len(items) == 3
+    assert isinstance(items[0], Function)
+    assert items[0].name == "test_func"
+    assert items[0].instance is None
+    assert isinstance(items[1], Function)
+    assert items[1].name == "test_method"
+    assert items[1].instance is not None
+    assert items[1].instance.__class__.__name__ == "TestIt"
+    assert isinstance(items[2], Function)
+    assert items[2].name == "test_static"
+    assert items[2].instance is None

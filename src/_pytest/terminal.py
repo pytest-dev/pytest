@@ -756,9 +756,6 @@ class TerminalReporter:
                     rep.toterminal(self._tw)
 
     def _printcollecteditems(self, items: Sequence[Item]) -> None:
-        # To print out items and their parent collectors
-        # we take care to leave out Instances aka ()
-        # because later versions are going to get rid of them anyway.
         if self.config.option.verbose < 0:
             if self.config.option.verbose < -1:
                 counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
@@ -778,8 +775,6 @@ class TerminalReporter:
                 stack.pop()
             for col in needed_collectors[len(stack) :]:
                 stack.append(col)
-                if col.name == "()":  # Skip Instances.
-                    continue
                 indent = (len(stack) - 1) * "  "
                 self._tw.line(f"{indent}{col}")
                 if self.config.option.verbose >= 1:

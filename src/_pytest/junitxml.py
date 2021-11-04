@@ -450,10 +450,6 @@ def pytest_unconfigure(config: Config) -> None:
 def mangle_test_address(address: str) -> List[str]:
     path, possible_open_bracket, params = address.partition("[")
     names = path.split("::")
-    try:
-        names.remove("()")
-    except ValueError:
-        pass
     # Convert file path to dotted path.
     names[0] = names[0].replace(nodes.SEP, ".")
     names[0] = re.sub(r"\.py$", "", names[0])
