@@ -18,18 +18,13 @@ def pytest_runtest_setup(item: Item) -> None:
     # see https://github.com/python/mypy/issues/2608
     func = item
 
-    if not call_optional(func.obj, "setup"):
-        # Call module level setup if there is no object level one.
-        assert func.parent is not None
-        call_optional(func.parent.obj, "setup")  # type: ignore[attr-defined]
+    call_optional(func.obj, "setup")
+    func.addfinalizer(lambda: call_optional(func.obj, "teardown"))
 
-    def teardown_nose() -> None:
-        if not call_optional(func.obj, "teardown"):
-            assert func.parent is not None
-            call_optional(func.parent.obj, "teardown")  # type: ignore[attr-defined]
-
-    # XXX This implies we only call teardown when setup worked.
-    func.addfinalizer(teardown_nose)
+    # NOTE: Module- and class-level fixtures are handled in python.py
+    # with `pluginmanager.has_plugin("nose")` checks.
+    # It would have been nicer to implement them outside of core, but
+    # it's not straightforward.
 
 
 def call_optional(obj: object, name: str) -> bool:

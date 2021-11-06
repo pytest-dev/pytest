@@ -165,28 +165,36 @@ def test_module_level_setup(pytester: Pytester) -> None:
         items = {}
 
         def setup():
-            items[1]=1
+            items.setdefault("setup", []).append("up")
 
         def teardown():
-            del items[1]
+            items.setdefault("setup", []).append("down")
 
         def setup2():
-            items[2] = 2
+            items.setdefault("setup2", []).append("up")
 
         def teardown2():
-            del items[2]
+            items.setdefault("setup2", []).append("down")
 
         def test_setup_module_setup():
-            assert items[1] == 1
+            assert items["setup"] == ["up"]
+
+        def test_setup_module_setup_again():
+            assert items["setup"] == ["up"]
 
         @with_setup(setup2, teardown2)
         def test_local_setup():
-            assert items[2] == 2
-            assert 1 not in items
+            assert items["setup"] == ["up"]
+            assert items["setup2"] == ["up"]
+
+        @with_setup(setup2, teardown2)
+        def test_local_setup_again():
+            assert items["setup"] == ["up"]
+            assert items["setup2"] == ["up", "down", "up"]
     """
     )
     result = pytester.runpytest("-p", "nose")
-    result.stdout.fnmatch_lines(["*2 passed*"])
+    result.stdout.fnmatch_lines(["*4 passed*"])
 
 
 def test_nose_style_setup_teardown(pytester: Pytester) -> None:
