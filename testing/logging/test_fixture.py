@@ -9,6 +9,19 @@ logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
 
 
+@pytest.fixture
+def cleanup_disabled_logging():
+    """Simple fixture that ensures that a test doesn't disable logging.
+
+    This is necessary because ``logging.disable()`` is global, so a test disabling logging
+    and not cleaning up after will break every test that runs after it.
+
+    This behavior was moved to a fixture so that logging will be un-disabled even if the test fails an assertion.
+    """
+    yield
+    logging.disable(logging.NOTSET)
+
+
 def test_fixture_help(pytester: Pytester) -> None:
     result = pytester.runpytest("--fixtures")
     result.stdout.fnmatch_lines(["*caplog*"])
@@ -29,7 +42,7 @@ def test_change_level(caplog):
     assert "CRITICAL" in caplog.text
 
 
-def test_change_level_logging_disabled(caplog):
+def test_change_level_logging_disabled(caplog, cleanup_disabled_logging):
     logging.disable(logging.CRITICAL)
     assert logging.root.manager.disable == logging.CRITICAL
     caplog.set_level(logging.WARNING)
@@ -44,9 +57,6 @@ def test_change_level_logging_disabled(caplog):
     assert "WARNING" in caplog.text
     assert "SUB_WARNING" not in caplog.text
     assert "SUB_CRITICAL" in caplog.text
-
-    # logging.disable needs to be reset because it's global and causes future tests will break.
-    logging.disable(logging.NOTSET)
 
 
 def test_change_level_undo(pytester: Pytester) -> None:
@@ -75,7 +85,9 @@ def test_change_level_undo(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("*log from test2*")
 
 
-def test_change_disabled_level_undo(pytester: Pytester) -> None:
+def test_change_disabled_level_undo(
+    pytester: Pytester, cleanup_disabled_logging
+) -> None:
     """Ensure that 'force_enable_logging' in 'set_level' is undone after the end of the test.
 
     Tests the logging output themselves (affected by disabled logging level).
@@ -102,9 +114,6 @@ def test_change_disabled_level_undo(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
     result.stdout.no_fnmatch_line("*log from test2*")
-
-    # logging.disable needs to be reset because it's global and causes future tests will break.
-    logging.disable(logging.NOTSET)
 
 
 def test_change_level_undos_handler_level(pytester: Pytester) -> None:
@@ -150,7 +159,7 @@ def test_with_statement(caplog):
     assert "CRITICAL" in caplog.text
 
 
-def test_with_statement_logging_disabled(caplog):
+def test_with_statement_logging_disabled(caplog, cleanup_disabled_logging):
     logging.disable(logging.CRITICAL)
     assert logging.root.manager.disable == logging.CRITICAL
     with caplog.at_level(logging.WARNING):
@@ -174,9 +183,6 @@ def test_with_statement_logging_disabled(caplog):
     assert "SUB_WARNING" not in caplog.text
     assert "SUB_CRITICAL" in caplog.text
     assert logging.root.manager.disable == logging.CRITICAL
-
-    # logging.disable needs to be reset because it's global and causes future tests will break.
-    logging.disable(logging.NOTSET)
 
 
 def test_log_access(caplog):

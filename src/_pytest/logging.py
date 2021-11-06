@@ -463,7 +463,7 @@ class LogCaptureFixture:
     ) -> int:
         """Enable the desired logging level if the level was disabled.
 
-        Only enables logging levels equal too and higher than the requested ``level``.
+        Only enables logging levels greater than or equal to the requested ``level``.
 
         Does nothing if the desired ``level`` wasn't disabled.
 
@@ -478,16 +478,17 @@ class LogCaptureFixture:
         original_disable_level: int = logger_obj.manager.disable  # type: ignore[attr-defined]
 
         if isinstance(level, str):
+            # Try to translate the level string to an int for `logging.disable()`
             level = logging.getLevelName(level)
 
         if not isinstance(level, int):
+            # The level provided was not valid, so just un-disable all logging.
             logging.disable(logging.NOTSET)
-            return original_disable_level
-        if logger_obj.isEnabledFor(level):
-            return original_disable_level
-
-        disable_level = max(level - 10, logging.NOTSET)
-        logging.disable(disable_level)
+        elif not logger_obj.isEnabledFor(level):
+            # Each level is `10` away from other levels.
+            # https://docs.python.org/3/library/logging.html#logging-levels
+            disable_level = max(level - 10, logging.NOTSET)
+            logging.disable(disable_level)
 
         return original_disable_level
 
