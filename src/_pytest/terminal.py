@@ -892,11 +892,7 @@ class TerminalReporter:
     # Summaries for sessionfinish.
     #
     def getreports(self, name: str):
-        values = []
-        for x in self.stats.get(name, []):
-            if not hasattr(x, "_pdbshown"):
-                values.append(x)
-        return values
+        return [x for x in self.stats.get(name, ()) if not hasattr(x, "_pdbshown")]
 
     def summary_warnings(self) -> None:
         if self.hasopt("w"):
