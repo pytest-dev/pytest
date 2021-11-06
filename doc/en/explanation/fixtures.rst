@@ -170,5 +170,5 @@ The reason pytest does not handle those signals to perform fixture cleanup is th
 and changing them might interfere with the code under execution.
 
 If fixtures in your suite need special care regarding termination in those scenarios,
-see `this comment <https://github.com/pytest-dev/pytest/issues/5243#issuecomment-491522595>`__ in the issue
+see :issue:`this comment <5243#issuecomment-491522595>` in the issue
 tracker for a possible workaround.

@@ -43,7 +43,7 @@ for critical bugs).
 Technical aspects
 ~~~~~~~~~~~~~~~~~
 
-(This section is a transcript from `#5275 <https://github.com/pytest-dev/pytest/issues/5275>`__).
+(This section is a transcript from :issue:`5275`).
 
 In this section we describe the technical aspects of the Python 2.7 and 3.4 support plan.
 

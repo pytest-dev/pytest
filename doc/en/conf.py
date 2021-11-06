@@ -160,8 +160,10 @@ linkcheck_ignore = [
 linkcheck_workers = 5
 
 
+_repo = "https://github.com/pytest-dev/pytest"
 extlinks = {
     "pypi": ("https://pypi.org/project/%s/", ""),
+    "issue": (f"{_repo}/issues/%s", "issue #"),
 }
 
 

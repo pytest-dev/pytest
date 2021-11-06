@@ -289,5 +289,4 @@ file:
     log_cli=true
     log_level=NOTSET
 
-More details about the discussion that lead to this changes can be read in
-issue `#3013 <https://github.com/pytest-dev/pytest/issues/3013>`_.
+More details about the discussion that lead to this changes can be read in :issue:`3013`.

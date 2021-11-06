@@ -30,15 +30,15 @@ c) true breakage: should only be considered when normal transition is unreasonab
 
    Examples for such upcoming changes:
 
-   * removal of ``pytest_runtest_protocol/nextitem`` - `#895`_
+   * removal of ``pytest_runtest_protocol/nextitem`` - :issue:`895`
    * rearranging of the node tree to include ``FunctionDefinition``
-   * rearranging of ``SetupState`` `#895`_
+   * rearranging of ``SetupState`` :issue:`895`
 
    True breakages must be announced first in an issue containing:
 
    * Detailed description of the change
    * Rationale
-   * Expected impact on users and plugin authors (example in `#895`_)
+   * Expected impact on users and plugin authors (example in :issue:`895`)
 
    After there's no hard *-1* on the issue it should be followed up by an initial proof-of-concept Pull Request.
 
@@ -75,6 +75,3 @@ Deprecation Roadmap
 Features currently deprecated and removed in previous releases can be found in :ref:`deprecations`.
 
 We track future deprecation and removal of features using milestones and the `deprecation <https://github.com/pytest-dev/pytest/issues?q=label%3A%22type%3A+deprecation%22>`_ and `removal <https://github.com/pytest-dev/pytest/labels/type%3A%20removal>`_ labels on GitHub.
-
-
-.. _`#895`: https://github.com/pytest-dev/pytest/issues/895

@@ -252,7 +252,7 @@ so that any attempts within tests to create http requests will fail.
                 m.setattr(functools, "partial", 3)
                 assert functools.partial == 3
 
-    See issue `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_ for details.
+    See :issue:`3290` for details.
 
 
 Monkeypatching environment variables

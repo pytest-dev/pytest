@@ -367,7 +367,7 @@ Becomes:
 
 
 If you still have concerns about this deprecation and future removal, please comment on
-`issue #3974 <https://github.com/pytest-dev/pytest/issues/3974>`__.
+:issue:`3974`.
 
 
 .. _raises-warns-exec:
