@@ -514,12 +514,17 @@ class Module(nodes.File, PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
+        has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_module = _get_first_non_fixture_func(
             self.obj, ("setUpModule", "setup_module")
         )
+        if setup_module is None and has_nose:
+            setup_module = _get_first_non_fixture_func(self.obj, ("setup",))
         teardown_module = _get_first_non_fixture_func(
             self.obj, ("tearDownModule", "teardown_module")
         )
+        if teardown_module is None and has_nose:
+            teardown_module = _get_first_non_fixture_func(self.obj, ("teardown",))
 
         if setup_module is None and teardown_module is None:
             return
@@ -750,13 +755,14 @@ def _call_with_optional_argument(func, arg) -> None:
         func()
 
 
-def _get_first_non_fixture_func(obj: object, names: Iterable[str]):
+def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> Optional[object]:
     """Return the attribute from the given object to be used as a setup/teardown
     xunit-style function, but only if not marked as a fixture to avoid calling it twice."""
     for name in names:
-        meth = getattr(obj, name, None)
+        meth: Optional[object] = getattr(obj, name, None)
         if meth is not None and fixtures.getfixturemarker(meth) is None:
             return meth
+    return None
 
 
 class Class(PyCollector):
@@ -832,8 +838,17 @@ class Class(PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        setup_method = _get_first_non_fixture_func(self.obj, ("setup_method",))
-        teardown_method = getattr(self.obj, "teardown_method", None)
+        has_nose = self.config.pluginmanager.has_plugin("nose")
+        setup_name = "setup_method"
+        setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
+        if setup_method is None and has_nose:
+            setup_name = "setup"
+            setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
+        teardown_name = "teardown_method"
+        teardown_method = getattr(self.obj, teardown_name, None)
+        if teardown_method is None and has_nose:
+            teardown_name = "teardown"
+            teardown_method = getattr(self.obj, teardown_name, None)
         if setup_method is None and teardown_method is None:
             return
 
@@ -846,11 +861,11 @@ class Class(PyCollector):
         def xunit_setup_method_fixture(self, request) -> Generator[None, None, None]:
             method = request.function
             if setup_method is not None:
-                func = getattr(self, "setup_method")
+                func = getattr(self, setup_name)
                 _call_with_optional_argument(func, method)
             yield
             if teardown_method is not None:
-                func = getattr(self, "teardown_method")
+                func = getattr(self, teardown_name)
                 _call_with_optional_argument(func, method)
 
         self.obj.__pytest_setup_method = xunit_setup_method_fixture
