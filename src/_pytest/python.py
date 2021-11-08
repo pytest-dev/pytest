@@ -1569,7 +1569,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if doc:
             write_docstring(tw, doc.split("\n\n")[0] if verbose <= 0 else doc)
         else:
-            tw.line(f"    no docstring available", red=True)
+            tw.line("    no docstring available", red=True)
         tw.line()
 
 
