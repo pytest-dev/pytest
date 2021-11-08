@@ -248,17 +248,15 @@ class Testdir:
 pytest.Testdir = Testdir  # type: ignore[attr-defined]
 
 
-class LegacyTestdirPlugin:
-    @staticmethod
-    @pytest.fixture
-    def testdir(pytester: pytest.Pytester) -> Testdir:
-        """
-        Identical to :fixture:`pytester`, and provides an instance whose methods return
-        legacy ``LEGACY_PATH`` objects instead when applicable.
+@pytest.fixture
+def testdir(pytester: pytest.Pytester) -> Testdir:
+    """
+    Identical to :fixture:`pytester`, and provides an instance whose methods return
+    legacy ``LEGACY_PATH`` objects instead when applicable.
 
-        New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
-        """
-        return Testdir(pytester, _ispytest=True)
+    New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
+    """
+    return Testdir(pytester, _ispytest=True)
 
 
 @final
@@ -287,31 +285,29 @@ class TempdirFactory:
 pytest.TempdirFactory = TempdirFactory  # type: ignore[attr-defined]
 
 
-class LegacyTmpdirPlugin:
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def tmpdir_factory(request: pytest.FixtureRequest) -> TempdirFactory:
-        """Return a :class:`pytest.TempdirFactory` instance for the test session."""
-        # Set dynamically by pytest_configure().
-        return request.config._tmpdirhandler  # type: ignore
+@pytest.fixture(scope="session")
+def tmpdir_factory(request: pytest.FixtureRequest) -> TempdirFactory:
+    """Return a :class:`pytest.TempdirFactory` instance for the test session."""
+    # Set dynamically by pytest_configure().
+    return request.config._tmpdirhandler  # type: ignore
 
-    @staticmethod
-    @pytest.fixture
-    def tmpdir(tmp_path: Path) -> LEGACY_PATH:
-        """Return a temporary directory path object which is unique to each test
-        function invocation, created as a sub directory of the base temporary
-        directory.
 
-        By default, a new base temporary directory is created each test session,
-        and old bases are removed after 3 sessions, to aid in debugging. If
-        ``--basetemp`` is used then it is cleared each session. See :ref:`base
-        temporary directory`.
+@pytest.fixture
+def tmpdir(tmp_path: Path) -> LEGACY_PATH:
+    """Return a temporary directory path object which is unique to each test
+    function invocation, created as a sub directory of the base temporary
+    directory.
 
-        The returned object is a `legacy_path`_ object.
+    By default, a new base temporary directory is created each test session,
+    and old bases are removed after 3 sessions, to aid in debugging. If
+    ``--basetemp`` is used then it is cleared each session. See :ref:`base
+    temporary directory`.
 
-        .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
-        """
-        return legacy_path(tmp_path)
+    The returned object is a `legacy_path`_ object.
+
+    .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
+    """
+    return legacy_path(tmp_path)
 
 
 def Cache_makedir(self: pytest.Cache, name: str) -> LEGACY_PATH:
@@ -404,25 +400,19 @@ def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
 
-    if config.pluginmanager.has_plugin("pytester"):
-        config.pluginmanager.register(LegacyTestdirPlugin, "legacypath-pytester")
-
-    if config.pluginmanager.has_plugin("tmpdir"):
-        # Create TmpdirFactory and attach it to the config object.
-        #
-        # This is to comply with existing plugins which expect the handler to be
-        # available at pytest_configure time, but ideally should be moved entirely
-        # to the tmpdir_factory session fixture.
-        try:
-            tmp_path_factory = config._tmp_path_factory  # type: ignore[attr-defined]
-        except AttributeError:
-            # tmpdir plugin is blocked.
-            pass
-        else:
-            _tmpdirhandler = TempdirFactory(tmp_path_factory, _ispytest=True)
-            mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
-
-        config.pluginmanager.register(LegacyTmpdirPlugin, "legacypath-tmpdir")
+    # Create TmpdirFactory and attach it to the config object.
+    #
+    # This is to comply with existing plugins which expect the handler to be
+    # available at pytest_configure time, but ideally should be moved entirely
+    # to the tmpdir_factory session fixture.
+    try:
+        tmp_path_factory = config._tmp_path_factory  # type: ignore[attr-defined]
+    except AttributeError:
+        # tmpdir plugin is blocked.
+        pass
+    else:
+        _tmpdirhandler = TempdirFactory(tmp_path_factory, _ispytest=True)
+        mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
 
     # Add Cache.makedir().
     mp.setattr(pytest.Cache, "makedir", Cache_makedir, raising=False)
