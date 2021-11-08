@@ -1,1 +1,0 @@
-The PDF documentation’s list of plugins doesn’t run off the page anymore.
