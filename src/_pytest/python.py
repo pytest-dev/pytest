@@ -83,6 +83,9 @@ if TYPE_CHECKING:
     from _pytest.scope import _ScopeName
 
 
+_PYTEST_DIR = Path(_pytest.__file__).parent
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
@@ -1443,6 +1446,16 @@ def idmaker(
     return resolved_ids
 
 
+def _pretty_fixture_path(func) -> str:
+    cwd = Path.cwd()
+    loc = Path(getlocation(func, str(cwd)))
+    prefix = Path("...", "_pytest")
+    try:
+        return str(prefix / loc.relative_to(_PYTEST_DIR))
+    except ValueError:
+        return bestrelpath(cwd, loc)
+
+
 def show_fixtures_per_test(config):
     from _pytest.main import wrap_session
 
@@ -1465,9 +1478,9 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
-        bestrel = get_best_relpath(fixture_def.func)
+        prettypath = _pretty_fixture_path(fixture_def.func)
         tw.write(f"{argname}", green=True)
-        tw.write(f" -- {bestrel}", yellow=True)
+        tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
         fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
@@ -1531,7 +1544,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 (
                     len(fixturedef.baseid),
                     fixturedef.func.__module__,
-                    bestrelpath(curdir, Path(loc)),
+                    _pretty_fixture_path(fixturedef.func),
                     fixturedef.argname,
                     fixturedef,
                 )
@@ -1539,7 +1552,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 
     available.sort()
     currentmodule = None
-    for baseid, module, bestrel, argname, fixturedef in available:
+    for baseid, module, prettypath, argname, fixturedef in available:
         if currentmodule != module:
             if not module.startswith("_pytest."):
                 tw.line()
@@ -1550,14 +1563,13 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         tw.write(f"{argname}", green=True)
         if fixturedef.scope != "function":
             tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
-        tw.write(f" -- {bestrel}", yellow=True)
+        tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
-        loc = getlocation(fixturedef.func, str(curdir))
         doc = inspect.getdoc(fixturedef.func)
         if doc:
             write_docstring(tw, doc.split("\n\n")[0] if verbose <= 0 else doc)
         else:
-            tw.line(f"    {loc}: no docstring available", red=True)
+            tw.line(f"    no docstring available", red=True)
         tw.line()
 
 
