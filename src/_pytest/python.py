@@ -175,7 +175,7 @@ def async_warn_and_skip(nodeid: str) -> None:
     msg += "  - pytest-trio\n"
     msg += "  - pytest-twisted"
     warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
-    skip(msg="async def function and no async plugin installed (see warnings)")
+    skip(reason="async def function and no async plugin installed (see warnings)")
 
 
 @hookimpl(trylast=True)

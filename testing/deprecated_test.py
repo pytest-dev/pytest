@@ -200,6 +200,64 @@ def test_warns_none_is_deprecated():
             pass
 
 
+class TestSkipMsgArgumentDeprecated:
+    def test_skip_with_msg_is_deprecated(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def test_skipping_msg():
+                pytest.skip(msg="skippedmsg")
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestDeprecationWarning: pytest.skip(msg=...) is now deprecated, "
+                "use pytest.skip(reason=...) instead",
+                '*pytest.skip(msg="skippedmsg")*',
+            ]
+        )
+        result.assert_outcomes(skipped=1, warnings=1)
+
+    def test_fail_with_msg_is_deprecated(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def test_failing_msg():
+                pytest.fail(msg="failedmsg")
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestDeprecationWarning: pytest.fail(msg=...) is now deprecated, "
+                "use pytest.fail(reason=...) instead",
+                '*pytest.fail(msg="failedmsg")',
+            ]
+        )
+        result.assert_outcomes(failed=1, warnings=1)
+
+    def test_exit_with_msg_is_deprecated(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def test_exit_msg():
+                pytest.exit(msg="exitmsg")
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestDeprecationWarning: pytest.exit(msg=...) is now deprecated, "
+                "use pytest.exit(reason=...) instead",
+            ]
+        )
+        result.assert_outcomes(warnings=1)
+
+
 def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
     pytester.makeconftest(
         """

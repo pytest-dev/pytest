@@ -20,9 +20,6 @@ from typing import Union
 import attr
 import py
 
-from _pytest.outcomes import fail
-from _pytest.outcomes import TEST_OUTCOME
-
 if TYPE_CHECKING:
     from typing import NoReturn
     from typing_extensions import Final
@@ -152,6 +149,8 @@ def getfuncargnames(
     try:
         parameters = signature(function).parameters
     except (ValueError, TypeError) as e:
+        from _pytest.outcomes import fail
+
         fail(
             f"Could not determine arguments of {function!r}: {e}",
             pytrace=False,
@@ -324,6 +323,8 @@ def safe_getattr(object: Any, name: str, default: Any) -> Any:
     are derived from BaseException instead of Exception (for more details
     check #2707).
     """
+    from _pytest.outcomes import TEST_OUTCOME
+
     try:
         return getattr(object, name, default)
     except TEST_OUTCOME:

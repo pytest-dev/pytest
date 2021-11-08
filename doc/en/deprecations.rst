@@ -56,6 +56,38 @@ In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
 
+Passing ``msg=`` to ``pytest.skip``, ``pytest.fail`` or ``pytest.exit``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+Passing the keyword argument ``msg`` to :func:`pytest.skip`, :func:`pytest.fail` or :func:`pytest.exit`
+is now deprecated and ``reason`` should be used instead.  This change is to bring consistency between these
+functions and the``@pytest.mark.skip`` and ``@pytest.mark.xfail`` markers which already accept a ``reason`` argument.
+
+.. code-block:: python
+
+    def test_fail_example():
+        # old
+        pytest.fail(msg="foo")
+        # new
+        pytest.fail(reason="bar")
+
+
+    def test_skip_example():
+        # old
+        pytest.skip(msg="foo")
+        # new
+        pytest.skip(reason="bar")
+
+
+    def test_exit_example():
+        # old
+        pytest.exit(msg="foo")
+        # new
+        pytest.exit(reason="bar")
+
+
 Implementing the ``pytest_cmdline_preparse`` hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

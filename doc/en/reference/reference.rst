@@ -22,12 +22,12 @@ pytest.fail
 
 **Tutorial**: :ref:`skipping`
 
-.. autofunction:: pytest.fail
+.. autofunction:: pytest.fail(reason, [pytrace=True, msg=None])
 
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.skip(msg, [allow_module_level=False])
+.. autofunction:: pytest.skip(reason, [allow_module_level=False, msg=None])
 
 .. _`pytest.importorskip ref`:
 
@@ -44,7 +44,7 @@ pytest.xfail
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.exit
+.. autofunction:: pytest.exit(reason, [returncode=False, msg=None])
 
 pytest.main
 ~~~~~~~~~~~

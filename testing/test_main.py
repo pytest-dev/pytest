@@ -70,7 +70,7 @@ def test_wrap_session_exit_sessionfinish(
         """
         import pytest
         def pytest_sessionfinish():
-            pytest.exit(msg="exit_pytest_sessionfinish", returncode={returncode})
+            pytest.exit(reason="exit_pytest_sessionfinish", returncode={returncode})
     """.format(
             returncode=returncode
         )

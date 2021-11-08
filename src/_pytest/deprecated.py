@@ -114,6 +114,11 @@ WARNS_NONE_ARG = PytestDeprecationWarning(
     " Replace pytest.warns(None) by simply pytest.warns()."
 )
 
+KEYWORD_MSG_ARG = UnformattedWarning(
+    PytestDeprecationWarning,
+    "pytest.{func}(msg=...) is now deprecated, use pytest.{func}(reason=...) instead",
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
