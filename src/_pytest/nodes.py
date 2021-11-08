@@ -669,7 +669,7 @@ class Item(Node):
         nodeid: Optional[str] = None,
         **kw,
     ) -> None:
-        # The first two arguments are intentionally passed postionally,
+        # The first two arguments are intentionally passed positionally,
         # to keep plugins who define a node type which inherits from
         # (pytest.Item, pytest.File) working (see issue #8435).
         # They can be made kwargs when the deprecation above is done.
