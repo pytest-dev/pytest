@@ -71,7 +71,7 @@ def test_subclassing_both_item_and_collector_deprecated(
         ),
     ):
 
-        class SoWrong(nodes.File, nodes.Item):
+        class SoWrong(nodes.Item, nodes.File):
             def __init__(self, fspath, parent):
                 """Legacy ctor with legacy call # don't wana see"""
                 super().__init__(fspath, parent)
