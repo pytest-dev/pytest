@@ -1397,7 +1397,7 @@ Bug Fixes
 - :issue:`5914`: pytester: fix :py:func:`~_pytest.pytester.LineMatcher.no_fnmatch_line` when used after positive matching.
 
 
-- :issue:`6082`: Fix line detection for doctest samples inside :py:class:`python:property` docstrings, as a workaround to `bpo-17446 <https://bugs.python.org/issue17446>`__.
+- :issue:`6082`: Fix line detection for doctest samples inside :py:class:`python:property` docstrings, as a workaround to :bpo:`17446`.
 
 
 - :issue:`6254`: Fix compatibility with pytest-parallel (regression in pytest 5.3.0).
