@@ -55,6 +55,26 @@ In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the
 
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
+Directly constructing internal classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+Directly constructing the following classes is now deprecated:
+
+- ``_pytest.mark.structures.Mark``
+- ``_pytest.mark.structures.MarkDecorator``
+- ``_pytest.mark.structures.MarkGenerator``
+- ``_pytest.python.Metafunc``
+- ``_pytest.runner.CallInfo``
+- ``_pytest._code.ExceptionInfo``
+- ``_pytest.config.argparsing.Parser``
+- ``_pytest.config.argparsing.OptionGroup``
+- ``_pytest.pytester.HookRecorder``
+
+These constructors have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 8.
+
+.. _cmdline-preparse-deprecated:
 
 Implementing the ``pytest_cmdline_preparse`` hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,18 +98,19 @@ Implement the :func:`pytest_load_initial_conftests <_pytest.hookspec.pytest_load
     ) -> None:
         ...
 
+.. _diamond-inheritance-deprecated:
 
-Diamond inheritance between :class:`pytest.File` and :class:`pytest.Item`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Diamond inheritance between :class:`pytest.Collector` and :class:`pytest.Item`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 7.0
 
-Inheriting from both Item and file at once has never been supported officially,
-however some plugins providing linting/code analysis have been using this as a hack.
+Defining a custom pytest node type which is both an :class:`pytest.Item <Item>` and a :class:`pytest.Collector <Collector>` (e.g. :class:`pytest.File <File>`) now issues a warning.
+It was never sanely supported and triggers hard to debug errors.
 
-This practice is now officially deprecated and a common way to fix this is `example pr fixing inheritance`_.
-
-
+Some plugins providing linting/code analysis have been using this as a hack.
+Instead, a separate collector node should be used, which collects the item. See
+:ref:`non-python tests` for an example, as well as an `example pr fixing inheritance`_.
 
 .. _example pr fixing inheritance: https://github.com/asmeurer/pytest-flakes/pull/40/files
 
@@ -100,7 +121,7 @@ Backward compatibilities in ``Parser.addoption``
 .. deprecated:: 2.4
 
 Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
-scheduled for removal in pytest 7 (deprecated since pytest 2.4.0):
+scheduled for removal in pytest 8 (deprecated since pytest 2.4.0):
 
 - ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.
 - ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
@@ -118,6 +139,16 @@ Note: This deprecation only relates to using `unittest.SkipTest` during test
 collection. You are probably not doing that. Ordinary usage of
 :class:`unittest.SkipTest` / :meth:`unittest.TestCase.skipTest` /
 :func:`unittest.skip` in unittest test cases is fully supported.
+
+Using ``pytest.warns(None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+:func:`pytest.warns(None) <pytest.warns>` is now deprecated because many people used
+it to mean "this code does not emit warnings", but it actually had the effect of
+checking that the code emits at least one warning of any type - like ``pytest.warns()``
+or ``pytest.warns(Warning)``.
 
 
 The ``--strict`` command-line option
