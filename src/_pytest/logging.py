@@ -119,14 +119,6 @@ class PercentStyleMultiline(logging.PercentStyle):
         self._auto_indent = self._get_auto_indent(auto_indent)
 
     @staticmethod
-    def _update_message(
-        record_dict: Dict[str, object], message: str
-    ) -> Dict[str, object]:
-        tmp = record_dict.copy()
-        tmp["message"] = message
-        return tmp
-
-    @staticmethod
     def _get_auto_indent(auto_indent_option: Union[int, str, bool, None]) -> int:
         """Determine the current auto indentation setting.
 
@@ -191,7 +183,7 @@ class PercentStyleMultiline(logging.PercentStyle):
 
             if auto_indent:
                 lines = record.message.splitlines()
-                formatted = self._fmt % self._update_message(record.__dict__, lines[0])
+                formatted = self._fmt % {**record.__dict__, "message": lines[0]}
 
                 if auto_indent < 0:
                     indentation = _remove_ansi_escape_sequences(formatted).find(
