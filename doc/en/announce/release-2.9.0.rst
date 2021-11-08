@@ -45,7 +45,7 @@ The py.test Development Team
 **New Features**
 
 * New ``pytest.mark.skip`` mark, which unconditionally skips marked tests.
-  Thanks `@MichaelAquilina`_ for the complete PR (`#1040`_).
+  Thanks `@MichaelAquilina`_ for the complete PR (:pull:`1040`).
 
 * ``--doctest-glob`` may now be passed multiple times in the command-line.
   Thanks `@jab`_ and `@nicoddemus`_ for the PR.
@@ -133,7 +133,6 @@ The py.test Development Team
 
 .. _`traceback style docs`: https://pytest.org/en/stable/how-to/output.html#modifying-python-traceback-printing
 
-.. _#1040: https://github.com/pytest-dev/pytest/pull/1040
 
 .. _@biern: https://github.com/biern
 .. _@MichaelAquilina: https://github.com/MichaelAquilina

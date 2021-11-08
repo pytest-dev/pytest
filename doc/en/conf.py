@@ -164,6 +164,7 @@ _repo = "https://github.com/pytest-dev/pytest"
 extlinks = {
     "pypi": ("https://pypi.org/project/%s/", ""),
     "issue": (f"{_repo}/issues/%s", "issue #"),
+    "pull": (f"{_repo}/pull/%s", "pull request #"),
 }
 
 
