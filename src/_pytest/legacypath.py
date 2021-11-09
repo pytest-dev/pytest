@@ -400,12 +400,10 @@ def Node_fspath_set(self: Node, value: LEGACY_PATH) -> None:
     self.path = Path(value)
 
 
+@pytest.hookimpl
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
-
-    if config.pluginmanager.has_plugin("pytester"):
-        config.pluginmanager.register(LegacyTestdirPlugin, "legacypath-pytester")
 
     if config.pluginmanager.has_plugin("tmpdir"):
         # Create TmpdirFactory and attach it to the config object.
@@ -452,3 +450,14 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # Add Node.fspath property.
     mp.setattr(Node, "fspath", property(Node_fspath, Node_fspath_set), raising=False)
+
+
+@pytest.hookimpl
+def pytest_plugin_registered(
+    plugin: object, manager: pytest.PytestPluginManager
+) -> None:
+    # pytester is not loaded by default and is commonly loaded from a conftest,
+    # so checking for it in `pytest_configure` is not enough.
+    is_pytester = plugin is manager.get_plugin("pytester")
+    if is_pytester and not manager.is_registered(LegacyTestdirPlugin):
+        manager.register(LegacyTestdirPlugin, "legacypath-pytester")
