@@ -1,0 +1,1 @@
+Added method :meth:`get_records_by_logger <_pytest.logging.LogCaptureFixture.get_records_by_logger>` to :class:`LogCaptureFixture <_pytest.logging.LogCaptureFixture>` as a convenience method to get records by the name of the logger.
