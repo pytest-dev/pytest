@@ -1,1 +1,1 @@
-Upgrade readthedocs configuration to use a [newer Ubuntu version](https://blog.readthedocs.com/new-build-specification/) with better unicode support for PDF docs.
+Upgrade readthedocs configuration to use a `newer Ubuntu version <https://blog.readthedocs.com/new-build-specification/>`__` with better unicode support for PDF docs.

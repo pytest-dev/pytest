@@ -1,1 +1,1 @@
-Fixed failing staticmethod test cases if they are inherited from a parent test class.
+Fixed failing ``staticmethod`` test cases if they are inherited from a parent test class.

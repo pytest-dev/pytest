@@ -1,2 +1,0 @@
-Included the module of the class in the error message about direct
-node construction (without using ``from_parent``).
