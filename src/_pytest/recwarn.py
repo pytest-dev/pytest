@@ -292,6 +292,15 @@ class WarningsChecker(WarningsRecorder):
 
         # only check if we're not currently handling an exception
         if exc_type is None and exc_val is None and exc_tb is None:
+            for w in self:
+                reemit = {DeprecationWarning, PendingDeprecationWarning}
+                if self.expected_warning is not None:
+                    reemit -= set(self.expected_warning)
+                if issubclass(w.category, tuple(reemit)):
+                    warnings.showwarning(
+                        w.message, w.category, w.filename, w.lineno, w.file, w.line
+                    )
+
             if self.expected_warning is not None:
                 if not any(issubclass(r.category, self.expected_warning) for r in self):
                     __tracebackhide__ = True

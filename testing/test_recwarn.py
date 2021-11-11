@@ -83,6 +83,20 @@ class TestWarningsRecorderChecker:
                     with rec:
                         pass  # can't enter twice
 
+    def test_no_suppress_deprecation_warnings(self) -> None:
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            with pytest.warns(DeprecationWarning), pytest.warns(
+                PendingDeprecationWarning
+            ):
+                with pytest.warns(UserWarning):
+                    warnings.warn("my warning", UserWarning)
+                    warnings.warn("some deprecation warning", DeprecationWarning)
+                    warnings.warn(
+                        "other deprecation warning", PendingDeprecationWarning
+                    )
+            assert len(record) == 0
+
 
 class TestDeprecatedCall:
     """test pytest.deprecated_call()"""
@@ -216,6 +230,14 @@ class TestDeprecatedCall:
         with pytest.raises(pytest.fail.Exception):
             with pytest.deprecated_call(match=r"must be \d+$"):
                 warnings.warn("this is not here", DeprecationWarning)
+
+    def test_suppress_deprecation_warnings(self) -> None:
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            with pytest.deprecated_call():
+                warnings.warn("some deprecation warning", DeprecationWarning)
+                warnings.warn("other deprecation warning", PendingDeprecationWarning)
+            assert len(record) == 0
 
 
 class TestWarns:
