@@ -185,6 +185,39 @@ def test_with_statement_logging_disabled(caplog, cleanup_disabled_logging):
     assert logging.root.manager.disable == logging.CRITICAL
 
 
+@pytest.mark.parametrize(
+    "level_str,expected_disable_level",
+    [
+        ("CRITICAL", logging.ERROR),
+        ("ERROR", logging.WARNING),
+        ("WARNING", logging.INFO),
+        ("INFO", logging.DEBUG),
+        ("DEBUG", logging.NOTSET),
+        ("NOTSET", logging.NOTSET),
+        ("NOTVALIDLEVEL", logging.NOTSET),
+    ],
+)
+def test_force_enable_logging_level_string(
+    caplog, cleanup_disabled_logging, level_str, expected_disable_level
+):
+    """Test force_enable_logging using a level string.
+
+    ``expected_disable_level`` is one level below ``level_str`` because the disabled log level
+    always needs to be *at least* one level lower than the level that caplog is trying to capture.
+    """
+    test_logger = logging.getLogger("test_str_level_force_enable")
+    # Emulate a testing environment where all logging is disabled.
+    logging.disable(logging.CRITICAL)
+    # Make sure all logging is disabled.
+    assert not test_logger.isEnabledFor(logging.CRITICAL)
+    # Un-disable logging for `level_str`.
+    caplog.force_enable_logging(level_str, test_logger)
+    # Make sure that the disabled level is now one below the requested logging level.
+    # We don't use `isEnabledFor` here because that also checks the level set by
+    # `logging.setLevel()` which is irrelevant to `logging.disable()`.
+    assert test_logger.manager.disable == expected_disable_level
+
+
 def test_log_access(caplog):
     caplog.set_level(logging.INFO)
     logger.info("boo %s", "arg")
