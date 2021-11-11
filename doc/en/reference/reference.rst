@@ -1660,8 +1660,8 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         python_functions = *_test
 
-   Note that this has no effect on methods that live on a ``unittest
-   .TestCase`` derived class, as ``unittest``'s own collection framework is used
+   Note that this has no effect on methods that live on a ``unittest.TestCase``
+   derived class, as ``unittest``'s own collection framework is used
    to collect those tests.
 
    See :ref:`change naming conventions` for more detailed examples.
