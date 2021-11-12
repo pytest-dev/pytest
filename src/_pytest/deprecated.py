@@ -119,6 +119,11 @@ KEYWORD_MSG_ARG = UnformattedWarning(
     "pytest.{func}(msg=...) is now deprecated, use pytest.{func}(reason=...) instead",
 )
 
+INSTANCE_COLLECTOR = PytestDeprecationWarning(
+    "The pytest.Instance collector type is deprecated and is no longer used. "
+    "See https://docs.pytest.org/en/latest/deprecations.html#the-pytest-instance-collector",
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):

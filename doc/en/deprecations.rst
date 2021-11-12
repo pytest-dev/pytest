@@ -18,6 +18,25 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+.. _instance-collector-deprecation:
+
+The ``pytest.Instance`` collector
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 7.0
+
+The ``pytest.Instance`` collector type has been removed.
+
+Previously, Python test methods were collected as :class:`~pytest.Class` -> ``Instance`` -> :class:`~pytest.Function`.
+Now :class:`~pytest.Class` collects the test methods directly.
+
+Most plugins which reference ``Instance`` do so in order to ignore or skip it,
+using a check such as ``if isinstance(node, Instance): return``.
+Such plugins should simply remove consideration of ``Instance`` on pytest>=7.
+However, to keep such uses working, a dummy type has been instanted in ``pytest.Instance`` and ``_pytest.python.Instance``,
+and importing it emits a deprecation warning. This will be removed in pytest 8.
+
+
 .. _node-ctor-fspath-deprecation:
 
 ``fspath`` argument for Node constructors replaced with ``pathlib.Path``

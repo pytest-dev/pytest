@@ -286,3 +286,21 @@ def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
             parent=mod.parent,
             fspath=legacy_path("bla"),
         )
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 7),
+    reason="This deprecation can only be emitted on python>=3.7",
+)
+def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape("The pytest.Instance collector type is deprecated"),
+    ):
+        pytest.Instance
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape("The pytest.Instance collector type is deprecated"),
+    ):
+        from _pytest.python import Instance  # noqa: F401
