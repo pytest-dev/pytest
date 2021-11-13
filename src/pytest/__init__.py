@@ -48,7 +48,6 @@ from _pytest.pytester import RecordedHookCall
 from _pytest.pytester import RunResult
 from _pytest.python import Class
 from _pytest.python import Function
-from _pytest.python import Instance
 from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
@@ -76,6 +75,7 @@ from _pytest.warning_types import PytestUnraisableExceptionWarning
 from _pytest.warning_types import PytestWarning
 
 set_trace = __pytestPDB.set_trace
+
 
 __all__ = [
     "__version__",
@@ -106,7 +106,6 @@ __all__ = [
     "HookRecorder",
     "hookspec",
     "importorskip",
-    "Instance",
     "Item",
     "LineMatcher",
     "LogCaptureFixture",
@@ -153,3 +152,12 @@ __all__ = [
     "xfail",
     "yield_fixture",
 ]
+
+
+def __getattr__(name: str) -> object:
+    if name == "Instance":
+        # The import emits a deprecation warning.
+        from _pytest.python import Instance
+
+        return Instance
+    raise AttributeError(f"module {__name__} has no attribute {name}")

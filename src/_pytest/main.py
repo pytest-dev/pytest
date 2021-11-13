@@ -781,9 +781,6 @@ class Session(nodes.FSCollector):
                                     submatchnodes.append(r)
                             if submatchnodes:
                                 work.append((submatchnodes, matchnames[1:]))
-                            # XXX Accept IDs that don't have "()" for class instances.
-                            elif len(rep.result) == 1 and rep.result[0].name == "()":
-                                work.append((rep.result, matchnames))
                         else:
                             # Report collection failures here to avoid failing to run some test
                             # specified in the command line because the module could not be

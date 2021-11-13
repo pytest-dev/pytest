@@ -979,7 +979,7 @@ class TestLastFailed:
                 "",
                 "<Module pkg1/test_1.py>",
                 "  <Class TestFoo>",
-                "      <Function test_fail>",
+                "    <Function test_fail>",
                 "  <Function test_other>",
                 "",
                 "*= 2/3 tests collected (1 deselected) in *",

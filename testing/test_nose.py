@@ -272,8 +272,10 @@ def test_nose_setup_ordering(pytester: Pytester) -> None:
         class TestClass(object):
             def setup(self):
                 assert visited
+                self.visited_cls = True
             def test_first(self):
-                pass
+                assert visited
+                assert self.visited_cls
         """
     )
     result = pytester.runpytest()

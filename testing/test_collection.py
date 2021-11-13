@@ -74,9 +74,7 @@ class TestCollector:
         )
         cls = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(cls, pytest.Class)
-        instance = pytester.collect_by_name(cls, "()")
-        assert isinstance(instance, pytest.Instance)
-        fn = pytester.collect_by_name(instance, "test_foo")
+        fn = pytester.collect_by_name(cls, "test_foo")
         assert isinstance(fn, pytest.Function)
 
         module_parent = fn.getparent(pytest.Module)
