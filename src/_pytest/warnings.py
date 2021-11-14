@@ -49,6 +49,8 @@ def catch_warnings_for_item(
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
+        warnings.filterwarnings("error", category=pytest.PytestRemovedIn7Warning)
+
         apply_warning_filters(config_filters, cmdline_filters)
 
         # apply filters from "filterwarnings" marks

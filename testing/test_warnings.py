@@ -518,11 +518,8 @@ class TestDeprecationWarningsByDefault:
 
 
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
-@pytest.mark.skip(
-    reason="This test should be enabled again before pytest 7.0 is released"
-)
-def test_deprecation_warning_as_error(pytester: Pytester, change_default) -> None:
-    """This ensures that PytestDeprecationWarnings raised by pytest are turned into errors.
+def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
+    """This ensures that PytestRemovedInXWarnings raised by pytest are turned into errors.
 
     This test should be enabled as part of each major release, and skipped again afterwards
     to ensure our deprecations are turning into warnings as expected.
@@ -531,7 +528,7 @@ def test_deprecation_warning_as_error(pytester: Pytester, change_default) -> Non
         """
         import warnings, pytest
         def test():
-            warnings.warn(pytest.PytestDeprecationWarning("some warning"))
+            warnings.warn(pytest.PytestRemovedIn7Warning("some warning"))
     """
     )
     if change_default == "ini":
@@ -539,12 +536,12 @@ def test_deprecation_warning_as_error(pytester: Pytester, change_default) -> Non
             """
             [pytest]
             filterwarnings =
-                ignore::pytest.PytestDeprecationWarning
+                ignore::pytest.PytestRemovedIn7Warning
         """
         )
 
     args = (
-        ("-Wignore::pytest.PytestDeprecationWarning",)
+        ("-Wignore::pytest.PytestRemovedIn7Warning",)
         if change_default == "cmdline"
         else ()
     )

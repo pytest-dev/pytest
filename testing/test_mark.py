@@ -831,7 +831,9 @@ class TestKeywordSelection:
             def test_three(): assert 1
         """
         )
-        reprec = pytester.inline_run("-k", "test_two:", threepass)
+        reprec = pytester.inline_run(
+            "-Wignore::pytest.PytestRemovedIn7Warning", "-k", "test_two:", threepass
+        )
         passed, skipped, failed = reprec.listoutcomes()
         assert len(passed) == 2
         assert not failed
