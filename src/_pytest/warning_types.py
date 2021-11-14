@@ -42,9 +42,22 @@ class PytestCollectionWarning(PytestWarning):
     __module__ = "pytest"
 
 
-@final
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """Warning class for features that will be removed in a future version."""
+
+    __module__ = "pytest"
+
+
+@final
+class PytestRemovedIn7Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 7."""
+
+    __module__ = "pytest"
+
+
+@final
+class PytestRemovedIn8Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 8."""
 
     __module__ = "pytest"
 

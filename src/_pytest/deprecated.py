@@ -11,6 +11,8 @@ in case of warnings which need to format their messages.
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.warning_types import PytestRemovedIn7Warning
+from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import UnformattedWarning
 
 # set of plugins which have been integrated into the core; we use this list to ignore
@@ -23,63 +25,66 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 
 
 FILLFUNCARGS = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn7Warning,
     "{name} is deprecated, use "
     "function._request._fillfixtures() instead if you cannot avoid reaching into internals.",
 )
 
 PYTEST_COLLECT_MODULE = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn7Warning,
     "pytest.collect.{name} was moved to pytest.{name}\n"
     "Please update to the new name.",
 )
 
+# This can be* removed pytest 8, but it's harmless and common, so no rush to remove.
+# * If you're in the future: "could have been".
 YIELD_FIXTURE = PytestDeprecationWarning(
     "@pytest.yield_fixture is deprecated.\n"
     "Use @pytest.fixture instead; they are the same."
 )
 
-MINUS_K_DASH = PytestDeprecationWarning(
+MINUS_K_DASH = PytestRemovedIn7Warning(
     "The `-k '-expr'` syntax to -k is deprecated.\nUse `-k 'not expr'` instead."
 )
 
-MINUS_K_COLON = PytestDeprecationWarning(
+MINUS_K_COLON = PytestRemovedIn7Warning(
     "The `-k 'expr:'` syntax to -k is deprecated.\n"
     "Please open an issue if you use this and want a replacement."
 )
 
-WARNING_CAPTURED_HOOK = PytestDeprecationWarning(
+WARNING_CAPTURED_HOOK = PytestRemovedIn7Warning(
     "The pytest_warning_captured is deprecated and will be removed in a future release.\n"
     "Please use pytest_warning_recorded instead."
 )
 
-WARNING_CMDLINE_PREPARSE_HOOK = PytestDeprecationWarning(
+WARNING_CMDLINE_PREPARSE_HOOK = PytestRemovedIn8Warning(
     "The pytest_cmdline_preparse hook is deprecated and will be removed in a future release. \n"
     "Please use pytest_load_initial_conftests hook instead."
 )
 
-FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestDeprecationWarning(
+FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestRemovedIn8Warning(
     "The gethookproxy() and isinitpath() methods of FSCollector and Package are deprecated; "
     "use self.session.gethookproxy() and self.session.isinitpath() instead. "
 )
 
-STRICT_OPTION = PytestDeprecationWarning(
+STRICT_OPTION = PytestRemovedIn8Warning(
     "The --strict option is deprecated, use --strict-markers instead."
 )
 
+# This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
-UNITTEST_SKIP_DURING_COLLECTION = PytestDeprecationWarning(
+UNITTEST_SKIP_DURING_COLLECTION = PytestRemovedIn8Warning(
     "Raising unittest.SkipTest to skip tests during collection is deprecated. "
     "Use pytest.skip() instead."
 )
 
-ARGUMENT_PERCENT_DEFAULT = PytestDeprecationWarning(
+ARGUMENT_PERCENT_DEFAULT = PytestRemovedIn8Warning(
     'pytest now uses argparse. "%default" should be changed to "%(default)s"',
 )
 
 ARGUMENT_TYPE_STR_CHOICE = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn8Warning,
     "`type` argument to addoption() is the string {typ!r}."
     " For choices this is optional and can be omitted, "
     " but when supplied should be a type (for example `str` or `int`)."
@@ -87,7 +92,7 @@ ARGUMENT_TYPE_STR_CHOICE = UnformattedWarning(
 )
 
 ARGUMENT_TYPE_STR = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn8Warning,
     "`type` argument to addoption() is the string {typ!r}, "
     " but when supplied should be a type (for example `str` or `int`)."
     " (options: {names})",
@@ -95,31 +100,31 @@ ARGUMENT_TYPE_STR = UnformattedWarning(
 
 
 HOOK_LEGACY_PATH_ARG = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn8Warning,
     "The ({pylib_path_arg}: py.path.local) argument is deprecated, please use ({pathlib_path_arg}: pathlib.Path)\n"
     "see https://docs.pytest.org/en/latest/deprecations.html"
     "#py-path-local-arguments-for-hooks-replaced-with-pathlib-path",
 )
 
 NODE_CTOR_FSPATH_ARG = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn8Warning,
     "The (fspath: py.path.local) argument to {node_type_name} is deprecated. "
     "Please use the (path: pathlib.Path) argument instead.\n"
     "See https://docs.pytest.org/en/latest/deprecations.html"
     "#fspath-argument-for-node-constructors-replaced-with-pathlib-path",
 )
 
-WARNS_NONE_ARG = PytestDeprecationWarning(
+WARNS_NONE_ARG = PytestRemovedIn8Warning(
     "Passing None to catch any warning has been deprecated, pass no arguments instead:\n"
     " Replace pytest.warns(None) by simply pytest.warns()."
 )
 
 KEYWORD_MSG_ARG = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn8Warning,
     "pytest.{func}(msg=...) is now deprecated, use pytest.{func}(reason=...) instead",
 )
 
-INSTANCE_COLLECTOR = PytestDeprecationWarning(
+INSTANCE_COLLECTOR = PytestRemovedIn8Warning(
     "The pytest.Instance collector type is deprecated and is no longer used. "
     "See https://docs.pytest.org/en/latest/deprecations.html#the-pytest-instance-collector",
 )

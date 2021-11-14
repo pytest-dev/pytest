@@ -115,7 +115,7 @@ def test_strict_option_is_deprecated(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "'unknown' not found in `markers` configuration option",
-            "*PytestDeprecationWarning: The --strict option is deprecated, use --strict-markers instead.",
+            "*PytestRemovedIn8Warning: The --strict option is deprecated, use --strict-markers instead.",
         ]
     )
 
@@ -154,7 +154,7 @@ def test_raising_unittest_skiptest_during_collection_is_deprecated(
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*PytestDeprecationWarning: Raising unittest.SkipTest*",
+            "*PytestRemovedIn8Warning: Raising unittest.SkipTest*",
         ]
     )
 
@@ -213,7 +213,7 @@ class TestSkipMsgArgumentDeprecated:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(
             [
-                "*PytestDeprecationWarning: pytest.skip(msg=...) is now deprecated, "
+                "*PytestRemovedIn8Warning: pytest.skip(msg=...) is now deprecated, "
                 "use pytest.skip(reason=...) instead",
                 '*pytest.skip(msg="skippedmsg")*',
             ]
@@ -232,7 +232,7 @@ class TestSkipMsgArgumentDeprecated:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(
             [
-                "*PytestDeprecationWarning: pytest.fail(msg=...) is now deprecated, "
+                "*PytestRemovedIn8Warning: pytest.fail(msg=...) is now deprecated, "
                 "use pytest.fail(reason=...) instead",
                 '*pytest.fail(msg="failedmsg")',
             ]
@@ -251,7 +251,7 @@ class TestSkipMsgArgumentDeprecated:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(
             [
-                "*PytestDeprecationWarning: pytest.exit(msg=...) is now deprecated, "
+                "*PytestRemovedIn8Warning: pytest.exit(msg=...) is now deprecated, "
                 "use pytest.exit(reason=...) instead",
             ]
         )
@@ -269,7 +269,7 @@ def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*PytestDeprecationWarning: The pytest_cmdline_preparse hook is deprecated*",
+            "*PytestRemovedIn8Warning: The pytest_cmdline_preparse hook is deprecated*",
             "*Please use pytest_load_initial_conftests hook instead.*",
         ]
     )
