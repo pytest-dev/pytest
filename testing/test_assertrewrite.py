@@ -1747,7 +1747,7 @@ class TestPyCacheDir:
                 "src/bar/__init__.py": "",
             }
         )
-        result = pytester.runpytest()
+        result = pytester.runpytest_inprocess()
         assert result.ret == 0
 
         test_foo = pytester.path.joinpath("src/test_foo.py")
