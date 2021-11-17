@@ -4,6 +4,7 @@ import glob
 import importlib
 import marshal
 import os
+import pprint
 import py_compile
 import stat
 import sys
@@ -1734,7 +1735,7 @@ class TestPyCacheDir:
     ) -> None:
         """Integration test for sys.pycache_prefix (#4730)."""
         pycache_prefix = tmp_path / "my/pycs"
-        monkeypatch.setattr(sys, "pycache_prefix", str(pycache_prefix))
+        monkeypatch.setattr(sys, "pycache_prefix", os.fspath(pycache_prefix))
         monkeypatch.setattr(sys, "dont_write_bytecode", False)
 
         pytester.makepyfile(
@@ -1748,6 +1749,8 @@ class TestPyCacheDir:
             }
         )
         result = pytester.runpytest()
+        pprint.pprint(list(tmp_path.glob("**")))
+
         assert result.ret == 0
 
         test_foo = pytester.path.joinpath("src/test_foo.py")
