@@ -1729,6 +1729,10 @@ class TestPyCacheDir:
     @pytest.mark.skipif(
         sys.version_info < (3, 8), reason="pycache_prefix not available in py<38"
     )
+    @pytest.mark.skipif(
+        sys.version_info[:2] == (3, 9) and sys.platform.startswith("win"),
+        reason="#9298",
+    )
     def test_sys_pycache_prefix_integration(
         self, tmp_path, monkeypatch, pytester: Pytester
     ) -> None:
