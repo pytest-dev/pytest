@@ -1749,7 +1749,7 @@ class TestPyCacheDir:
             }
         )
         result = pytester.runpytest()
-        pprint.pprint(list(tmp_path.glob("**")))
+        pprint.pprint(list(tmp_path.glob("**/*.*")))
 
         assert result.ret == 0
 
@@ -1761,12 +1761,16 @@ class TestPyCacheDir:
         # test file: rewritten, custom pytest cache tag
         test_foo_pyc = get_cache_dir(test_foo) / ("test_foo" + PYC_TAIL)
         assert test_foo_pyc.is_file()
+        assert 0, "lets fail on purpose to see paths in all platforms"
 
-        # normal file: not touched by pytest, normal cache tag
-        bar_init_pyc = get_cache_dir(bar_init) / "__init__.{cache_tag}.pyc".format(
-            cache_tag=sys.implementation.cache_tag
-        )
-        assert bar_init_pyc.is_file()
+        # # normal file: not touched by pytest, normal cache tag
+        # bar_init_pyc = (
+        #     get_cache_dir(  # type:ignore[unreachable]
+        #         bar_init
+        #     )
+        #     / f"__init__.{sys.implementation.cache_tag}.pyc"
+        # )
+        # assert bar_init_pyc.is_file()
 
 
 class TestReprSizeVerbosity:
