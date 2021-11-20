@@ -1150,7 +1150,8 @@ def get_cache_dir(file_path: Path) -> Path:
         #   path = '/home/user/proj/test_app.py'
         # we want:
         #   '/tmp/pycs/home/user/proj'
-        return Path(sys.pycache_prefix) / Path(*file_path.parts[1:-1])
+        # HACK skip some parts to check if long paths are a problem.
+        return Path(sys.pycache_prefix) / Path(*file_path.parts[1:-1:2])
     else:
         # classic pycache directory
         return file_path.parent / "__pycache__"
