@@ -328,7 +328,8 @@ if sys.platform == "win32":
         pyc: Path,
     ) -> bool:
         track_debug = getattr(sys, "TRACK_REWRITE", False)
-
+        if track_debug:
+            print(f"  write_pyc: parent exists? {pyc.parent.is_dir()}")
         try:
             with atomic_write(os.fspath(pyc), mode="wb", overwrite=True) as fp:
                 _write_pyc_fp(fp, source_stat, co)
