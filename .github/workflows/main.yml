@@ -56,18 +56,18 @@ jobs:
         ]
 
         include:
-          - name: "windows-py36"
-            python: "3.6"
-            os: windows-latest
-            tox_env: "py36-xdist"
-          - name: "windows-py37"
-            python: "3.7"
-            os: windows-latest
-            tox_env: "py37-numpy"
-          - name: "windows-py37-pluggy"
-            python: "3.7"
-            os: windows-latest
-            tox_env: "py37-pluggymain-xdist"
+#          - name: "windows-py36"
+#            python: "3.6"
+#            os: windows-latest
+#            tox_env: "py36-xdist"
+#          - name: "windows-py37"
+#            python: "3.7"
+#            os: windows-latest
+#            tox_env: "py37-numpy"
+#          - name: "windows-py37-pluggy"
+#            python: "3.7"
+#            os: windows-latest
+#            tox_env: "py37-pluggymain-xdist"
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
@@ -82,64 +82,64 @@ jobs:
             os: windows-latest
             tox_env: "py310-xdist"
 
-          - name: "ubuntu-py36"
-            python: "3.6"
-            os: ubuntu-latest
-            tox_env: "py36-xdist"
-          - name: "ubuntu-py37"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-lsof-numpy-pexpect"
-            use_coverage: true
-          - name: "ubuntu-py37-pluggy"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-pluggymain-xdist"
-          - name: "ubuntu-py37-freeze"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-freeze"
-          - name: "ubuntu-py38"
-            python: "3.8"
-            os: ubuntu-latest
-            tox_env: "py38-xdist"
-          - name: "ubuntu-py39"
-            python: "3.9"
-            os: ubuntu-latest
-            tox_env: "py39-xdist"
-          - name: "ubuntu-py310"
-            python: "3.10-dev"
-            os: ubuntu-latest
-            tox_env: "py310-xdist"
-          - name: "ubuntu-pypy3"
-            python: "pypy-3.7"
-            os: ubuntu-latest
-            tox_env: "pypy3-xdist"
-
-          - name: "macos-py37"
-            python: "3.7"
-            os: macos-latest
-            tox_env: "py37-xdist"
-          - name: "macos-py38"
-            python: "3.8"
-            os: macos-latest
-            tox_env: "py38-xdist"
-            use_coverage: true
-
-          - name: "plugins"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "plugins"
-
-          - name: "docs"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "docs"
-          - name: "doctesting"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "doctesting"
-            use_coverage: true
+#          - name: "ubuntu-py36"
+#            python: "3.6"
+#            os: ubuntu-latest
+#            tox_env: "py36-xdist"
+#          - name: "ubuntu-py37"
+#            python: "3.7"
+#            os: ubuntu-latest
+#            tox_env: "py37-lsof-numpy-pexpect"
+#            use_coverage: true
+#          - name: "ubuntu-py37-pluggy"
+#            python: "3.7"
+#            os: ubuntu-latest
+#            tox_env: "py37-pluggymain-xdist"
+#          - name: "ubuntu-py37-freeze"
+#            python: "3.7"
+#            os: ubuntu-latest
+#            tox_env: "py37-freeze"
+#          - name: "ubuntu-py38"
+#            python: "3.8"
+#            os: ubuntu-latest
+#            tox_env: "py38-xdist"
+#          - name: "ubuntu-py39"
+#            python: "3.9"
+#            os: ubuntu-latest
+#            tox_env: "py39-xdist"
+#          - name: "ubuntu-py310"
+#            python: "3.10-dev"
+#            os: ubuntu-latest
+#            tox_env: "py310-xdist"
+#          - name: "ubuntu-pypy3"
+#            python: "pypy-3.7"
+#            os: ubuntu-latest
+#            tox_env: "pypy3-xdist"
+#
+#          - name: "macos-py37"
+#            python: "3.7"
+#            os: macos-latest
+#            tox_env: "py37-xdist"
+#          - name: "macos-py38"
+#            python: "3.8"
+#            os: macos-latest
+#            tox_env: "py38-xdist"
+#            use_coverage: true
+#
+#          - name: "plugins"
+#            python: "3.7"
+#            os: ubuntu-latest
+#            tox_env: "plugins"
+#
+#          - name: "docs"
+#            python: "3.7"
+#            os: ubuntu-latest
+#            tox_env: "docs"
+#          - name: "doctesting"
+#            python: "3.7"
+#            os: ubuntu-latest
+#            tox_env: "doctesting"
+#            use_coverage: true
 
     steps:
     - uses: actions/checkout@v2
