@@ -31,28 +31,28 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py36",
-          "windows-py37",
-          "windows-py37-pluggy",
+#          "windows-py36",
+#          "windows-py37",
+#          "windows-py37-pluggy",
           "windows-py38",
           "windows-py39",
           "windows-py310",
 
-          "ubuntu-py36",
-          "ubuntu-py37",
-          "ubuntu-py37-pluggy",
-          "ubuntu-py37-freeze",
-          "ubuntu-py38",
-          "ubuntu-py39",
-          "ubuntu-py310",
-          "ubuntu-pypy3",
-
-          "macos-py37",
-          "macos-py38",
-
-          "docs",
-          "doctesting",
-          "plugins",
+#          "ubuntu-py36",
+#          "ubuntu-py37",
+#          "ubuntu-py37-pluggy",
+#          "ubuntu-py37-freeze",
+#          "ubuntu-py38",
+#          "ubuntu-py39",
+#          "ubuntu-py310",
+#          "ubuntu-pypy3",
+#
+#          "macos-py37",
+#          "macos-py38",
+#
+#          "docs",
+#          "doctesting",
+#          "plugins",
         ]
 
         include:
