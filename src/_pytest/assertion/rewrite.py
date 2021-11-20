@@ -327,15 +327,22 @@ if sys.platform == "win32":
         source_stat: os.stat_result,
         pyc: Path,
     ) -> bool:
+        track_debug = getattr(sys, "TRACK_REWRITE", False)
+
         try:
             with atomic_write(os.fspath(pyc), mode="wb", overwrite=True) as fp:
                 _write_pyc_fp(fp, source_stat, co)
         except OSError as e:
             state.trace(f"error writing pyc file at {pyc}: {e}")
+            if track_debug:
+                print(f"  write_pyc: error! {e}")
+
             # we ignore any failure to write the cache file
             # there are many reasons, permission-denied, pycache dir being a
             # file etc.
             return False
+        if track_debug:
+            print("  write_pyc: success")
         return True
 
 
