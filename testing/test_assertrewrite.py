@@ -1761,6 +1761,7 @@ class TestPyCacheDir:
 
         # test file: rewritten, custom pytest cache tag
         test_foo_pyc = get_cache_dir(test_foo) / ("test_foo" + PYC_TAIL)
+        print(f"** test pyc: {test_foo_pyc}")
         assert test_foo_pyc.is_file()
         assert 0, "lets fail on purpose to see paths in all platforms"
 
