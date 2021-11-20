@@ -146,6 +146,7 @@ jobs:
       with:
         fetch-depth: 0
         persist-credentials: false
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v2
