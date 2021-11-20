@@ -1737,6 +1737,7 @@ class TestPyCacheDir:
         pycache_prefix = tmp_path / "my/pycs"
         monkeypatch.setattr(sys, "pycache_prefix", os.fspath(pycache_prefix))
         monkeypatch.setattr(sys, "dont_write_bytecode", False)
+        monkeypatch.setattr(sys, "TRACK_REWRITE", True, raising=False)
 
         pytester.makepyfile(
             **{
@@ -1748,7 +1749,7 @@ class TestPyCacheDir:
                 "src/bar/__init__.py": "",
             }
         )
-        result = pytester.runpytest()
+        result = pytester.runpytest_inprocess("-s")
         pprint.pprint(list(tmp_path.glob("**/*.*")))
 
         assert result.ret == 0

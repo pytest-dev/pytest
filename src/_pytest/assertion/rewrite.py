@@ -146,19 +146,33 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         # atomic. POSIX's atomic rename comes in handy.
         write = not sys.dont_write_bytecode
         cache_dir = get_cache_dir(fn)
+        track_debug = getattr(sys, "TRACK_REWRITE", False)
+        if track_debug:
+            print("exec_module:")
+            print(f"  cache_dir: {cache_dir}")
+            print(f"  write (dont_write_bytecode): {write}")
         if write:
             ok = try_makedirs(cache_dir)
             if not ok:
                 write = False
+                if track_debug:
+                    print(f"  write: {write} (read-only dir!)")
                 state.trace(f"read only directory: {cache_dir}")
 
+        if track_debug:
+            print(f"  write (final): {write}")
         cache_name = fn.name[:-3] + PYC_TAIL
         pyc = cache_dir / cache_name
         # Notice that even if we're in a read-only directory, I'm going
         # to check for a cached pyc. This may not be optimal...
         co = _read_pyc(fn, pyc, state.trace)
+        if track_debug:
+            print(f"  co = {co}")
         if co is None:
             state.trace(f"rewriting {fn!r}")
+            if track_debug:
+                print(f"  rewriting {fn!r} to:")
+                print(f"    {pyc}")
             source_stat, co = _rewrite_test(fn, self.config)
             if write:
                 self._writing_pyc = True
