@@ -72,7 +72,7 @@ jobs:
             python: "3.8"
             os: windows-latest
             tox_env: "py38-unittestextras"
-            use_coverage: true
+            #use_coverage: true
           - name: "windows-py39"
             python: "3.9"
             os: windows-latest
