@@ -1,7 +1,7 @@
 **PytestRemovedIn7Warning deprecation warnings are now errors by default.**
 
 Following our plan to remove deprecated features with as little disruption as
-possible, all warnings of type ``PytestRemovedIn7Warning `` now generate errors
+possible, all warnings of type ``PytestRemovedIn7Warning`` now generate errors
 instead of warning messages by default.
 
 **The affected features will be effectively removed in pytest 7.1**, so please consult the
