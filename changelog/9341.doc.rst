@@ -1,0 +1,1 @@
+Various methods commonly used for :ref:`non-python tests` are now correctly documented in the reference docs. They were undocumented previously.
