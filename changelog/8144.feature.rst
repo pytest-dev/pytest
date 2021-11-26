@@ -5,3 +5,8 @@ The following hooks now receive an additional ``pathlib.Path`` argument, equival
 - :func:`pytest_pycollect_makemodule <_pytest.hookspec.pytest_pycollect_makemodule>` - The ``module_path`` parameter (equivalent to existing ``path`` parameter).
 - :func:`pytest_report_header <_pytest.hookspec.pytest_report_header>` - The ``start_path`` parameter (equivalent to existing ``startdir`` parameter).
 - :func:`pytest_report_collectionfinish <_pytest.hookspec.pytest_report_collectionfinish>` - The ``start_path`` parameter (equivalent to existing ``startdir`` parameter).
+
+.. note::
+    The name of the ``Node`` arguments and attributes (the new attribute being
+   ``path``) is **the opposite** of the situation for hooks (the old argument
+   being ``path``).

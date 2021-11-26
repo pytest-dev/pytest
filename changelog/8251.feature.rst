@@ -1,1 +1,6 @@
-Implement ``Node.path`` as a ``pathlib.Path``.
+Implement ``Node.path`` as a ``pathlib.Path``. This attribute gets set no matter whether ``path`` or (deprecated) ``fspath`` is passed to the constructor. It is a replacement for the ``fspath`` attribute (which represents the same path as ``py.path.local``). While ``fspath`` is not deprecated yet
+due to the ongoing migration of methods like :meth:`~_pytest.Item.reportinfo`, we expect to deprecate it in a future release.
+
+.. note::
+    The name of the attributes (old ``fspath``, new ``path``) is **the opposite**
+    of the situation for hooks.

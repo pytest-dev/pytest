@@ -1578,26 +1578,26 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
 class Function(PyobjMixin, nodes.Item):
     """An Item responsible for setting up and executing a Python test function.
 
-    param name:
+    :param name:
         The full function name, including any decorations like those
         added by parametrization (``my_func[my_param]``).
-    param parent:
+    :param parent:
         The parent Node.
-    param config:
+    :param config:
         The pytest Config object.
-    param callspec:
+    :param callspec:
         If given, this is function has been parametrized and the callspec contains
         meta information about the parametrization.
-    param callobj:
+    :param callobj:
         If given, the object which will be called when the Function is invoked,
         otherwise the callobj will be obtained from ``parent`` using ``originalname``.
-    param keywords:
+    :param keywords:
         Keywords bound to the function object for "-k" matching.
-    param session:
+    :param session:
         The pytest Session object.
-    param fixtureinfo:
+    :param fixtureinfo:
         Fixture information already resolved at this fixture node..
-    param originalname:
+    :param originalname:
         The attribute name to use for accessing the underlying function object.
         Defaults to ``name``. Set this if name is different from the original name,
         for example when it contains decorations like those added by parametrization
