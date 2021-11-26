@@ -696,7 +696,7 @@ class Item(Node):
 
     def runtest(self) -> None:
         """Run the test case for this item.
-        
+
         Must be implemented by subclasses.
 
         .. seealso:: :ref:`non-python tests`
