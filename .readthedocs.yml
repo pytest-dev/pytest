@@ -16,3 +16,4 @@ build:
 formats:
   - epub
   - pdf
+  - htmlzip
