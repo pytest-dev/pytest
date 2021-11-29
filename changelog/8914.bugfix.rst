@@ -1,0 +1,3 @@
+If fixtures had been indirectly parameterized via test function, e.g. using a
+``@pytest.mark.parametrize(indirect=True)`` marker, reordering of tests for the least possible fixture setup/teardown cycles
+did not work. Optimized test groups can now be determined given the user provided parameter type is hashable.

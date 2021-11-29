@@ -5,6 +5,7 @@ import sys
 import warnings
 from collections import defaultdict
 from collections import deque
+from collections.abc import Hashable
 from contextlib import suppress
 from pathlib import Path
 from types import TracebackType
@@ -238,6 +239,23 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
 _Key = Tuple[object, ...]
 
 
+@attr.s(auto_attribs=True, eq=False, slots=True)
+class SafeHashWrapper:
+    obj: Any
+
+    def __eq__(self, other: object) -> bool:
+        try:
+            res = self.obj == other
+            return bool(res)
+        except Exception:
+            return id(self.obj) == id(other)
+
+    def __hash__(self) -> int:
+        if isinstance(self.obj, Hashable):
+            return hash(self.obj)
+        return hash(id(self.obj))
+
+
 def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
     """Return list of keys for all parametrized arguments which match
     the specified scope."""
@@ -254,15 +272,19 @@ def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_K
         for argname, param_index in sorted(cs.indices.items()):
             if cs._arg2scope[argname] != scope:
                 continue
+            # param ends up inside a dict key, and therefore must be hashable.
+            # Parameter values are possibly unhashable (dicts, numpy arrays, ...).
+            # SafeHashWrapper makes them hashable by a fallback to their identity.
+            param = SafeHashWrapper(cs.params[argname])
             if scope is Scope.Session:
-                key: _Key = (argname, param_index)
+                key: _Key = (argname, param)
             elif scope is Scope.Package:
-                key = (argname, param_index, item.path.parent)
+                key = (argname, param, item.path.parent)
             elif scope is Scope.Module:
-                key = (argname, param_index, item.path)
+                key = (argname, param, item.path)
             elif scope is Scope.Class:
                 item_cls = item.cls  # type: ignore[attr-defined]
-                key = (argname, param_index, item.path, item_cls)
+                key = (argname, param, item.path, item_cls)
             else:
                 assert_never(scope)
             yield key

@@ -1308,6 +1308,34 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*4 passed*"])
 
+    def test_optimize_by_reorder_indirect(self, pytester: Pytester) -> None:
+        """Test reordering for minimal setup/teardown with indirectly parametrized fixtures. See #8914, #9350."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="session")
+            def fix(request):
+                print(f'prepare foo-%s' % request.param)
+                yield request.param
+                print(f'teardown foo-%s' % request.param)
+
+            @pytest.mark.parametrize("fix", ["data1", "data2"], indirect=True)
+            def test1(fix):
+                pass
+
+            @pytest.mark.parametrize("fix", ["data2", "data1"], indirect=True)
+            def test2(fix):
+                pass
+        """
+        )
+        result = pytester.runpytest("-s")
+        output = result.stdout.str()
+        assert output.count("prepare foo-data1") == 1
+        assert output.count("prepare foo-data2") == 1
+        assert output.count("teardown foo-data1") == 1
+        assert output.count("teardown foo-data2") == 1
+
     def test_funcarg_parametrized_and_used_twice(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
