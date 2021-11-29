@@ -5,3 +5,6 @@
 .. note::
     The name of the ``Node`` arguments and attributes (old ``fspath``, new ``path``) is **the opposite**
     of the situation for hooks (old ``path``, new ``fspath``).
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).

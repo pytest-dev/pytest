@@ -59,6 +59,9 @@ Plugins which implement custom items and collectors are encouraged to replace
 .. note::
     The name of the arguments (old ``fspath``, new ``path``) is **the opposite**
     of the situation for hooks, :ref:`outlined below <legacy-path-hooks-deprecated>`.
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
 
 Due to the ongoing migration of methods like :meth:`~_pytest.Item.reportinfo`
 which still is expected to return a ``py.path.local`` object, nodes still have
@@ -86,6 +89,9 @@ The accompanying ``py.path.local`` based paths have been deprecated: plugins whi
 .. note::
     The name of the arguments (old ``path``, new ``fspath``) is **the opposite**
     of the situation for the :class:`~_pytest.nodes.Node` class, :ref:`outlined above <node-ctor-fspath-deprecation>`.
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
 
 Directly constructing internal classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
