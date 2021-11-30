@@ -1,0 +1,1 @@
+`approx()` now uses strict equality when `type(expected) == bool`.

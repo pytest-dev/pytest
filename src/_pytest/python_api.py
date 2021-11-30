@@ -265,10 +265,16 @@ class ApproxMapping(ApproxBase):
                 max_abs_diff = max(
                     max_abs_diff, abs(approx_value.expected - other_value)
                 )
-                max_rel_diff = max(
-                    max_rel_diff,
-                    abs((approx_value.expected - other_value) / approx_value.expected),
-                )
+                try:
+                    max_rel_diff = max(
+                        max_rel_diff,
+                        abs(
+                            (approx_value.expected - other_value)
+                            / approx_value.expected
+                        ),
+                    )
+                except ZeroDivisionError:
+                    pass
                 different_ids.append(approx_key)
 
         message_data = [
@@ -395,8 +401,12 @@ class ApproxScalar(ApproxBase):
         # Don't show a tolerance for values that aren't compared using
         # tolerances, i.e. non-numerics and infinities. Need to call abs to
         # handle complex numbers, e.g. (inf + 1j).
-        if (not isinstance(self.expected, (Complex, Decimal))) or math.isinf(
-            abs(self.expected)  # type: ignore[arg-type]
+        if (
+            isinstance(self.expected, bool)
+            or (not isinstance(self.expected, (Complex, Decimal)))
+            or math.isinf(
+                abs(self.expected) or isinstance(self.expected, bool)  # type: ignore[arg-type]
+            )
         ):
             return str(self.expected)
 
@@ -424,17 +434,20 @@ class ApproxScalar(ApproxBase):
             # numpy<1.13.  See #3748.
             return all(self.__eq__(a) for a in asarray.flat)
 
-        # Short-circuit exact equality.
-        if actual == self.expected:
+        # Short-circuit exact equality, except for bool
+        if isinstance(self.expected, bool) and not isinstance(actual, bool):
+            return False
+        elif actual == self.expected:
             return True
 
         # If either type is non-numeric, fall back to strict equality.
         # NB: we need Complex, rather than just Number, to ensure that __abs__,
-        # __sub__, and __float__ are defined.
+        # __sub__, and __float__ are defined. Also, consider bool to be
+        # nonnumeric, even though it has the required arithmetic.
         if not (
             isinstance(self.expected, (Complex, Decimal))
             and isinstance(actual, (Complex, Decimal))
-        ):
+        ) or isinstance(self.expected, bool):
             return False
 
         # Allow the user to control whether NaNs are considered equal to each
