@@ -160,7 +160,7 @@ Tidelift will coordinate the fix and disclosure.
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2021.
+Copyright Holger Krekel and others, 2004.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 
