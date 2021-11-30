@@ -559,11 +559,11 @@ class TestApprox:
             assert approx(x, rel=5e-6, abs=0) == a
             assert approx(x, rel=5e-7, abs=0) != a
 
-    def test_bool(self):
-        assert True == approx(True)
-        assert False == approx(False)
-        assert True != approx(False)
-        assert True != approx(False, abs=2)
+    def test_expecting_bool(self):
+        assert True == approx(True)  # noqa: E712
+        assert False == approx(False)  # noqa: E712
+        assert True != approx(False)  # noqa: E712
+        assert True != approx(False, abs=2)  # noqa: E712
         assert 1 != approx(True)
 
     def test_list(self):

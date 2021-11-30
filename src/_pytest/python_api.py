@@ -444,10 +444,10 @@ class ApproxScalar(ApproxBase):
         # NB: we need Complex, rather than just Number, to ensure that __abs__,
         # __sub__, and __float__ are defined. Also, consider bool to be
         # nonnumeric, even though it has the required arithmetic.
-        if not (
+        if isinstance(self.expected, bool) or not (
             isinstance(self.expected, (Complex, Decimal))
             and isinstance(actual, (Complex, Decimal))
-        ) or isinstance(self.expected, bool):
+        ):
             return False
 
         # Allow the user to control whether NaNs are considered equal to each
