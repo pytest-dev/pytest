@@ -76,7 +76,9 @@ class BaseReport:
 
     def toterminal(self, out: TerminalWriter) -> None:
         if hasattr(self, "node"):
-            out.line(getworkerinfoline(self.node))
+            worker_info = getworkerinfoline(self.node)
+            if worker_info:
+                out.line(worker_info)
 
         longrepr = self.longrepr
         if longrepr is None:
