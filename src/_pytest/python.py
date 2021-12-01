@@ -204,7 +204,7 @@ def pytest_collect_file(file_path: Path, parent: nodes.Collector) -> Optional["M
                 return None
         ihook = parent.session.gethookproxy(file_path)
         module: Module = ihook.pytest_pycollect_makemodule(
-            fspath=file_path, parent=parent
+            module_path=file_path, parent=parent
         )
         return module
     return None
@@ -215,11 +215,11 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     return any(fnmatch_ex(pattern, path) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(fspath: Path, parent) -> "Module":
-    if fspath.name == "__init__.py":
-        pkg: Package = Package.from_parent(parent, path=fspath)
+def pytest_pycollect_makemodule(module_path: Path, parent) -> "Module":
+    if module_path.name == "__init__.py":
+        pkg: Package = Package.from_parent(parent, path=module_path)
         return pkg
-    mod: Module = Module.from_parent(parent, path=fspath)
+    mod: Module = Module.from_parent(parent, path=module_path)
     return mod
 
 

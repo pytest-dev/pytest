@@ -12,7 +12,7 @@ from _pytest.nodes import _check_path
 imply_paths_hooks = {
     "pytest_ignore_collect": ("collection_path", "path"),
     "pytest_collect_file": ("file_path", "path"),
-    "pytest_pycollect_makemodule": ("fspath", "path"),
+    "pytest_pycollect_makemodule": ("module_path", "path"),
     "pytest_report_header": ("startpath", "startdir"),
     "pytest_report_collectionfinish": ("startpath", "startdir"),
 }

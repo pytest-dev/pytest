@@ -809,9 +809,9 @@ class TestConftestCustomization:
             import pytest
             class MyModule(pytest.Module):
                 pass
-            def pytest_pycollect_makemodule(fspath, parent):
-                if fspath.name == "test_xyz.py":
-                    return MyModule.from_parent(path=fspath, parent=parent)
+            def pytest_pycollect_makemodule(module_path, parent):
+                if module_path.name == "test_xyz.py":
+                    return MyModule.from_parent(path=module_path, parent=parent)
         """
         )
         pytester.makepyfile("def test_some(): pass")

@@ -337,7 +337,7 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
 
 @hookspec(firstresult=True)
 def pytest_pycollect_makemodule(
-    fspath: Path, path: "LEGACY_PATH", parent
+    module_path: Path, path: "LEGACY_PATH", parent
 ) -> Optional["Module"]:
     """Return a Module collector or None for the given path.
 
@@ -347,11 +347,11 @@ def pytest_pycollect_makemodule(
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param pathlib.Path fspath: The path of the module to collect.
+    :param pathlib.Path module_path: The path of the module to collect.
     :param LEGACY_PATH path: The path of the module to collect (deprecated).
 
     .. versionchanged:: 7.0.0
-        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        The ``module_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter.
 
         The ``path`` parameter has been deprecated in favor of ``fspath``.
