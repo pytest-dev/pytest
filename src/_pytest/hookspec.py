@@ -674,12 +674,12 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
 
 
 def pytest_report_header(
-    config: "Config", startpath: Path, startdir: "LEGACY_PATH"
+    config: "Config", start_path: Path, startdir: "LEGACY_PATH"
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
     :param pytest.Config config: The pytest config object.
-    :param Path startpath: The starting dir.
+    :param Path start_path: The starting dir.
     :param LEGACY_PATH startdir: The starting dir (deprecated).
 
     .. note::
@@ -696,7 +696,7 @@ def pytest_report_header(
         :ref:`discovers plugins during startup <pluginorder>`.
 
     .. versionchanged:: 7.0.0
-        The ``startpath`` parameter was added as a :class:`pathlib.Path`
+        The ``start_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``startdir`` parameter. The ``startdir`` parameter
         has been deprecated.
     """

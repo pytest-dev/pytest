@@ -702,7 +702,7 @@ class TerminalReporter:
                 msg += " -- " + str(sys.executable)
             self.write_line(msg)
             lines = self.config.hook.pytest_report_header(
-                config=self.config, startpath=self.startpath
+                config=self.config, start_path=self.startpath
             )
             self._write_report_lines_from_hooks(lines)
 

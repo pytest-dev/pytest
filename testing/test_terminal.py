@@ -1461,8 +1461,8 @@ class TestGenericReporting:
         )
         pytester.mkdir("a").joinpath("conftest.py").write_text(
             """
-def pytest_report_header(config, startpath):
-    return ["line1", str(startpath)]
+def pytest_report_header(config, start_path):
+    return ["line1", str(start_path)]
 """
         )
         result = pytester.runpytest("a")
