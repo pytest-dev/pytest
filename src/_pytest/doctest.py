@@ -120,18 +120,18 @@ def pytest_unconfigure() -> None:
 
 
 def pytest_collect_file(
-    fspath: Path,
+    file_path: Path,
     parent: Collector,
 ) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
     config = parent.config
-    if fspath.suffix == ".py":
+    if file_path.suffix == ".py":
         if config.option.doctestmodules and not any(
-            (_is_setup_py(fspath), _is_main_py(fspath))
+            (_is_setup_py(file_path), _is_main_py(file_path))
         ):
-            mod: DoctestModule = DoctestModule.from_parent(parent, path=fspath)
+            mod: DoctestModule = DoctestModule.from_parent(parent, path=file_path)
             return mod
-    elif _is_doctest(config, fspath, parent):
-        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, path=fspath)
+    elif _is_doctest(config, file_path, parent):
+        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, path=file_path)
         return txt
     return None
 

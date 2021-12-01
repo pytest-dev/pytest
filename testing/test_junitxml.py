@@ -979,9 +979,9 @@ class TestNonPython:
         pytester.makeconftest(
             """
             import pytest
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".xyz":
-                    return MyItem.from_parent(name=fspath.name, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".xyz":
+                    return MyItem.from_parent(name=file_path.name, parent=parent)
             class MyItem(pytest.Item):
                 def runtest(self):
                     raise ValueError(42)
@@ -1430,9 +1430,9 @@ def test_fancy_items_regression(pytester: Pytester, run_and_parse: RunAndParse) 
                     NoFunItem.from_parent(name='b', parent=self),
                 ]
 
-        def pytest_collect_file(fspath, parent):
-            if fspath.suffix == '.py':
-                return FunCollector.from_parent(path=fspath, parent=parent)
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == '.py':
+                return FunCollector.from_parent(path=file_path, parent=parent)
     """
     )
 

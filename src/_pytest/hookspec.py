@@ -283,17 +283,17 @@ def pytest_ignore_collect(
 
 
 def pytest_collect_file(
-    fspath: Path, path: "LEGACY_PATH", parent: "Collector"
+    file_path: Path, path: "LEGACY_PATH", parent: "Collector"
 ) -> "Optional[Collector]":
     """Create a Collector for the given path, or None if not relevant.
 
     The new node needs to have the specified ``parent`` as a parent.
 
-    :param pathlib.Path fspath: The path to analyze.
+    :param pathlib.Path file_path: The path to analyze.
     :param LEGACY_PATH path: The path to collect (deprecated).
 
     .. versionchanged:: 7.0.0
-        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        The ``file_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter. The ``path`` parameter
         has been deprecated.
     """

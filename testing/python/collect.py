@@ -913,9 +913,9 @@ class TestConftestCustomization:
                         return Loader()
             sys.meta_path.append(Finder())
 
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".narf":
-                    return Module.from_parent(path=fspath, parent=parent)"""
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".narf":
+                    return Module.from_parent(path=file_path, parent=parent)"""
         )
         pytester.makefile(
             ".narf",

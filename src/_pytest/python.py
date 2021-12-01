@@ -195,15 +195,17 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     return True
 
 
-def pytest_collect_file(fspath: Path, parent: nodes.Collector) -> Optional["Module"]:
-    if fspath.suffix == ".py":
-        if not parent.session.isinitpath(fspath):
+def pytest_collect_file(file_path: Path, parent: nodes.Collector) -> Optional["Module"]:
+    if file_path.suffix == ".py":
+        if not parent.session.isinitpath(file_path):
             if not path_matches_patterns(
-                fspath, parent.config.getini("python_files") + ["__init__.py"]
+                file_path, parent.config.getini("python_files") + ["__init__.py"]
             ):
                 return None
-        ihook = parent.session.gethookproxy(fspath)
-        module: Module = ihook.pytest_pycollect_makemodule(fspath=fspath, parent=parent)
+        ihook = parent.session.gethookproxy(file_path)
+        module: Module = ihook.pytest_pycollect_makemodule(
+            fspath=file_path, parent=parent
+        )
         return module
     return None
 
@@ -705,7 +707,7 @@ class Package(Module):
                 else:
                     duplicate_paths.add(fspath)
 
-        return ihook.pytest_collect_file(fspath=fspath, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.path.parent
