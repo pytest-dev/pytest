@@ -414,6 +414,16 @@ class TestApprox:
         # than have a small amount of floating-point error.
         assert 0.1 + 0.2 == approx(0.3)
 
+    @pytest.mark.parametrize(
+        ("expected", "actual", "abs_tolerance"),
+        [
+            (12.3456785, 12.345678, 5e-7),
+            (51.500744, 51.5007435, 5e-7),
+        ],
+    )
+    def test_float_rounding(self, expected, actual, abs_tolerance):
+        assert actual == pytest.approx(expected, abs=abs_tolerance)
+
     def test_default_tolerances(self):
         # This tests the defaults as they are currently set.  If you change the
         # defaults, this test will fail but you should feel free to change it.

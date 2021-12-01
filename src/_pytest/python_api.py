@@ -3,6 +3,7 @@ import pprint
 from collections.abc import Sized
 from decimal import Decimal
 from numbers import Complex
+from numbers import Real
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -453,7 +454,16 @@ class ApproxScalar(ApproxBase):
             return False
 
         # Return true if the two numbers are within the tolerance.
-        result: bool = abs(self.expected - actual) <= self.tolerance
+        result: bool
+        if isinstance(self.expected, Real) and isinstance(actual, Real):
+            # Use three-way comparison instead of abs() to reduce float rounding errors.
+            result = (
+                self.expected - self.tolerance
+                <= actual
+                <= self.expected + self.tolerance
+            )
+        else:
+            result = abs(self.expected - actual) <= self.tolerance
         return result
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.
