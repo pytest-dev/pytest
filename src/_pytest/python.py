@@ -676,7 +676,7 @@ class Package(Module):
             return False
         fspath = Path(direntry.path)
         ihook = self.session.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
+        if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
@@ -693,7 +693,7 @@ class Package(Module):
         )
         ihook = self.session.gethookproxy(fspath)
         if not self.session.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
+            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
                 return ()
 
         if handle_dupes:

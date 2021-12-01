@@ -262,7 +262,7 @@ def pytest_collection_finish(session: "Session") -> None:
 
 @hookspec(firstresult=True)
 def pytest_ignore_collect(
-    fspath: Path, path: "LEGACY_PATH", config: "Config"
+    collection_path: Path, path: "LEGACY_PATH", config: "Config"
 ) -> Optional[bool]:
     """Return True to prevent considering this path for collection.
 
@@ -271,12 +271,12 @@ def pytest_ignore_collect(
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param pathlib.Path fspath: The path to analyze.
+    :param pathlib.Path collection_path : The path to analyze.
     :param LEGACY_PATH path: The path to analyze (deprecated).
     :param pytest.Config config: The pytest config object.
 
     .. versionchanged:: 7.0.0
-        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        The ``collection_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter. The ``path`` parameter
         has been deprecated.
     """

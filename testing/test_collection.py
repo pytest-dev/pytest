@@ -333,8 +333,8 @@ class TestCustomConftests:
     def test_ignore_collect_path(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(fspath, config):
-                return fspath.name.startswith("x") or fspath.name == "test_one.py"
+            def pytest_ignore_collect(collection_path, config):
+                return collection_path.name.startswith("x") or collection_path.name == "test_one.py"
         """
         )
         sub = pytester.mkdir("xy123")
@@ -349,7 +349,7 @@ class TestCustomConftests:
     def test_ignore_collect_not_called_on_argument(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(fspath, config):
+            def pytest_ignore_collect(collection_path, config):
                 return True
         """
         )
