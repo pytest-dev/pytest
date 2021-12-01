@@ -14,7 +14,7 @@ imply_paths_hooks = {
     "pytest_collect_file": ("file_path", "path"),
     "pytest_pycollect_makemodule": ("module_path", "path"),
     "pytest_report_header": ("start_path", "startdir"),
-    "pytest_report_collectionfinish": ("startpath", "startdir"),
+    "pytest_report_collectionfinish": ("start_path", "startdir"),
 }
 
 

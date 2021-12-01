@@ -1035,7 +1035,7 @@ class TestTerminalFunctional:
     def test_report_collectionfinish_hook(self, pytester: Pytester, params) -> None:
         pytester.makeconftest(
             """
-            def pytest_report_collectionfinish(config, startpath, items):
+            def pytest_report_collectionfinish(config, start_path, items):
                 return [f'hello from hook: {len(items)} items']
         """
         )

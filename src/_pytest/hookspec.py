@@ -704,7 +704,7 @@ def pytest_report_header(
 
 def pytest_report_collectionfinish(
     config: "Config",
-    startpath: Path,
+    start_path: Path,
     startdir: "LEGACY_PATH",
     items: Sequence["Item"],
 ) -> Union[str, List[str]]:
@@ -716,7 +716,7 @@ def pytest_report_collectionfinish(
     .. versionadded:: 3.2
 
     :param pytest.Config config: The pytest config object.
-    :param Path startpath: The starting dir.
+    :param Path start_path: The starting dir.
     :param LEGACY_PATH startdir: The starting dir (deprecated).
     :param items: List of pytest items that are going to be executed; this list should not be modified.
 
@@ -728,7 +728,7 @@ def pytest_report_collectionfinish(
         :ref:`trylast=True <plugin-hookorder>`.
 
     .. versionchanged:: 7.0.0
-        The ``startpath`` parameter was added as a :class:`pathlib.Path`
+        The ``start_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``startdir`` parameter. The ``startdir`` parameter
         has been deprecated.
     """

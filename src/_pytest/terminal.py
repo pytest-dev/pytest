@@ -738,7 +738,7 @@ class TerminalReporter:
 
         lines = self.config.hook.pytest_report_collectionfinish(
             config=self.config,
-            startpath=self.startpath,
+            start_path=self.startpath,
             items=session.items,
         )
         self._write_report_lines_from_hooks(lines)
