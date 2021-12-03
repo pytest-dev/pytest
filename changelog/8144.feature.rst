@@ -7,9 +7,9 @@ The following hooks now receive an additional ``pathlib.Path`` argument, equival
 - :func:`pytest_report_collectionfinish <_pytest.hookspec.pytest_report_collectionfinish>` - The ``start_path`` parameter (equivalent to existing ``startdir`` parameter).
 
 .. note::
-    The name of the ``Node`` arguments and attributes (the new attribute being
-    ``path``) is **the opposite** of the situation for hooks (the old argument
-    being ``path``).
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
+    new attribute being ``path``) is **the opposite** of the situation for hooks
+    (the old argument being ``path``).
 
     This is an unfortunate artifact due to historical reasons, which should be
     resolved in future versions as we slowly get rid of the :pypi:`py`

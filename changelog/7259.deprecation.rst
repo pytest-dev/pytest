@@ -3,8 +3,10 @@
 ``py.path.local`` arguments to Node constructors have been deprecated. See :ref:`the deprecation note <node-ctor-fspath-deprecation>` for full details.
 
 .. note::
-    The name of the ``Node`` arguments and attributes (old ``fspath``, new ``path``) is **the opposite**
-    of the situation for hooks (old ``path``, new ``fspath``).
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
+    new attribute being ``path``) is **the opposite** of the situation for hooks
+    (the old argument being ``path``).
+
     This is an unfortunate artifact due to historical reasons, which should be
     resolved in future versions as we slowly get rid of the :pypi:`py`
     dependency (see :issue:`9283` for a longer discussion).

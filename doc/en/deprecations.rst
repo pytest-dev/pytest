@@ -57,8 +57,11 @@ Plugins which implement custom items and collectors are encouraged to replace
 (``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
 
 .. note::
-    The name of the arguments (old ``fspath``, new ``path``) is **the opposite**
-    of the situation for hooks, :ref:`outlined below <legacy-path-hooks-deprecated>`.
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
+    new attribute being ``path``) is **the opposite** of the situation for
+    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
+    argument being ``path``).
+
     This is an unfortunate artifact due to historical reasons, which should be
     resolved in future versions as we slowly get rid of the :pypi:`py`
     dependency (see :issue:`9283` for a longer discussion).
@@ -87,8 +90,11 @@ In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
 .. note::
-    The name of the arguments (old ``path``, new ``fspath``) is **the opposite**
-    of the situation for the :class:`~_pytest.nodes.Node` class, :ref:`outlined above <node-ctor-fspath-deprecation>`.
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
+    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
+    being ``path``) is **the opposite** of the situation for hooks (the old
+    argument being ``path``).
+
     This is an unfortunate artifact due to historical reasons, which should be
     resolved in future versions as we slowly get rid of the :pypi:`py`
     dependency (see :issue:`9283` for a longer discussion).
