@@ -1317,7 +1317,7 @@ def test_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 pytest.xfail("Expected Failure")
 
-        def pytest_collect_file(fspath, parent):
+        def pytest_collect_file(file_path, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )
@@ -1391,7 +1391,7 @@ def test_mark_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 assert False
 
-        def pytest_collect_file(fspath, parent):
+        def pytest_collect_file(file_path, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )

@@ -262,7 +262,7 @@ def pytest_collection_finish(session: "Session") -> None:
 
 @hookspec(firstresult=True)
 def pytest_ignore_collect(
-    fspath: Path, path: "LEGACY_PATH", config: "Config"
+    collection_path: Path, path: "LEGACY_PATH", config: "Config"
 ) -> Optional[bool]:
     """Return True to prevent considering this path for collection.
 
@@ -271,29 +271,29 @@ def pytest_ignore_collect(
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param pathlib.Path fspath: The path to analyze.
+    :param pathlib.Path collection_path : The path to analyze.
     :param LEGACY_PATH path: The path to analyze (deprecated).
     :param pytest.Config config: The pytest config object.
 
     .. versionchanged:: 7.0.0
-        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        The ``collection_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter. The ``path`` parameter
         has been deprecated.
     """
 
 
 def pytest_collect_file(
-    fspath: Path, path: "LEGACY_PATH", parent: "Collector"
+    file_path: Path, path: "LEGACY_PATH", parent: "Collector"
 ) -> "Optional[Collector]":
     """Create a Collector for the given path, or None if not relevant.
 
     The new node needs to have the specified ``parent`` as a parent.
 
-    :param pathlib.Path fspath: The path to analyze.
+    :param pathlib.Path file_path: The path to analyze.
     :param LEGACY_PATH path: The path to collect (deprecated).
 
     .. versionchanged:: 7.0.0
-        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        The ``file_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter. The ``path`` parameter
         has been deprecated.
     """
@@ -337,7 +337,7 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
 
 @hookspec(firstresult=True)
 def pytest_pycollect_makemodule(
-    fspath: Path, path: "LEGACY_PATH", parent
+    module_path: Path, path: "LEGACY_PATH", parent
 ) -> Optional["Module"]:
     """Return a Module collector or None for the given path.
 
@@ -347,11 +347,11 @@ def pytest_pycollect_makemodule(
 
     Stops at first non-None result, see :ref:`firstresult`.
 
-    :param pathlib.Path fspath: The path of the module to collect.
+    :param pathlib.Path module_path: The path of the module to collect.
     :param LEGACY_PATH path: The path of the module to collect (deprecated).
 
     .. versionchanged:: 7.0.0
-        The ``fspath`` parameter was added as a :class:`pathlib.Path`
+        The ``module_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter.
 
         The ``path`` parameter has been deprecated in favor of ``fspath``.
@@ -674,12 +674,12 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
 
 
 def pytest_report_header(
-    config: "Config", startpath: Path, startdir: "LEGACY_PATH"
+    config: "Config", start_path: Path, startdir: "LEGACY_PATH"
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
     :param pytest.Config config: The pytest config object.
-    :param Path startpath: The starting dir.
+    :param Path start_path: The starting dir.
     :param LEGACY_PATH startdir: The starting dir (deprecated).
 
     .. note::
@@ -696,7 +696,7 @@ def pytest_report_header(
         :ref:`discovers plugins during startup <pluginorder>`.
 
     .. versionchanged:: 7.0.0
-        The ``startpath`` parameter was added as a :class:`pathlib.Path`
+        The ``start_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``startdir`` parameter. The ``startdir`` parameter
         has been deprecated.
     """
@@ -704,7 +704,7 @@ def pytest_report_header(
 
 def pytest_report_collectionfinish(
     config: "Config",
-    startpath: Path,
+    start_path: Path,
     startdir: "LEGACY_PATH",
     items: Sequence["Item"],
 ) -> Union[str, List[str]]:
@@ -716,7 +716,7 @@ def pytest_report_collectionfinish(
     .. versionadded:: 3.2
 
     :param pytest.Config config: The pytest config object.
-    :param Path startpath: The starting dir.
+    :param Path start_path: The starting dir.
     :param LEGACY_PATH startdir: The starting dir (deprecated).
     :param items: List of pytest items that are going to be executed; this list should not be modified.
 
@@ -728,7 +728,7 @@ def pytest_report_collectionfinish(
         :ref:`trylast=True <plugin-hookorder>`.
 
     .. versionchanged:: 7.0.0
-        The ``startpath`` parameter was added as a :class:`pathlib.Path`
+        The ``start_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``startdir`` parameter. The ``startdir`` parameter
         has been deprecated.
     """

@@ -1,2 +1,2 @@
-def pytest_ignore_collect(fspath):
+def pytest_ignore_collect(collection_path):
     return False

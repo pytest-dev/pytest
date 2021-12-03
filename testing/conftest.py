@@ -114,9 +114,9 @@ def dummy_yaml_custom_test(pytester: Pytester):
         """
         import pytest
 
-        def pytest_collect_file(parent, fspath):
-            if fspath.suffix == ".yaml" and fspath.name.startswith("test"):
-                return YamlFile.from_parent(path=fspath, parent=parent)
+        def pytest_collect_file(parent, file_path):
+            if file_path.suffix == ".yaml" and file_path.name.startswith("test"):
+                return YamlFile.from_parent(path=file_path, parent=parent)
 
         class YamlFile(pytest.File):
             def collect(self):

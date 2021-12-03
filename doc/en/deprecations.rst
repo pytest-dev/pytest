@@ -66,11 +66,11 @@ drop any other usage of the ``py`` library if possible.
 
 In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
 
-*  :func:`pytest_ignore_collect(fspath: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>` instead of ``path``
-*  :func:`pytest_collect_file(fspath: pathlib.Path) <_pytest.hookspec.pytest_collect_file>` instead of ``path``
-*  :func:`pytest_pycollect_makemodule(fspath: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>` instead of ``path``
-*  :func:`pytest_report_header(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_header>` instead of ``startdir``
-*  :func:`pytest_report_collectionfinish(startpath: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>` instead of ``startdir``
+*  :func:`pytest_ignore_collect(collection_path: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>` as equivalent to ``path``
+*  :func:`pytest_collect_file(file_path: pathlib.Path) <_pytest.hookspec.pytest_collect_file>` as equivalent to ``path``
+*  :func:`pytest_pycollect_makemodule(module_path: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>` as equivalent to ``path``
+*  :func:`pytest_report_header(start_path: pathlib.Path) <_pytest.hookspec.pytest_report_header>` as equivalent to ``startdir``
+*  :func:`pytest_report_collectionfinish(start_path: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>` as equivalent to ``startdir``
 
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 

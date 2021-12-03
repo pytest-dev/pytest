@@ -93,9 +93,9 @@ class TestCollector:
             import pytest
             class CustomFile(pytest.File):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".xxx":
-                    return CustomFile.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".xxx":
+                    return CustomFile.from_parent(path=file_path, parent=parent)
         """
         )
         node = pytester.getpathnode(hello)
@@ -269,10 +269,10 @@ class TestCollectPluginHookRelay:
         wascalled = []
 
         class Plugin:
-            def pytest_collect_file(self, fspath: Path) -> None:
-                if not fspath.name.startswith("."):
+            def pytest_collect_file(self, file_path: Path) -> None:
+                if not file_path.name.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
-                    wascalled.append(fspath)
+                    wascalled.append(file_path)
 
         pytester.makefile(".abc", "xyz")
         pytest.main(pytester.path, plugins=[Plugin()])
@@ -290,8 +290,8 @@ class TestPrunetraceback:
         pytester.makeconftest(
             """
             import pytest
-            def pytest_collect_file(fspath, parent):
-                return MyFile.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                return MyFile.from_parent(path=file_path, parent=parent)
             class MyError(Exception):
                 pass
             class MyFile(pytest.File):
@@ -333,8 +333,8 @@ class TestCustomConftests:
     def test_ignore_collect_path(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(fspath, config):
-                return fspath.name.startswith("x") or fspath.name == "test_one.py"
+            def pytest_ignore_collect(collection_path, config):
+                return collection_path.name.startswith("x") or collection_path.name == "test_one.py"
         """
         )
         sub = pytester.mkdir("xy123")
@@ -349,7 +349,7 @@ class TestCustomConftests:
     def test_ignore_collect_not_called_on_argument(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(fspath, config):
+            def pytest_ignore_collect(collection_path, config):
                 return True
         """
         )
@@ -417,9 +417,9 @@ class TestCustomConftests:
             import pytest
             class MyModule(pytest.Module):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".py":
-                    return MyModule.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".py":
+                    return MyModule.from_parent(path=file_path, parent=parent)
         """
         )
         pytester.mkdir("sub")
@@ -435,9 +435,9 @@ class TestCustomConftests:
             import pytest
             class MyModule1(pytest.Module):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".py":
-                    return MyModule1.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".py":
+                    return MyModule1.from_parent(path=file_path, parent=parent)
         """
         )
         conf1.replace(sub1.joinpath(conf1.name))
@@ -446,9 +446,9 @@ class TestCustomConftests:
             import pytest
             class MyModule2(pytest.Module):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".py":
-                    return MyModule2.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".py":
+                    return MyModule2.from_parent(path=file_path, parent=parent)
         """
         )
         conf2.replace(sub2.joinpath(conf2.name))
@@ -537,9 +537,9 @@ class TestSession:
             class SpecialFile(pytest.File):
                 def collect(self):
                     return [SpecialItem.from_parent(name="check", parent=self)]
-            def pytest_collect_file(fspath, parent):
-                if fspath.name == %r:
-                    return SpecialFile.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.name == %r:
+                    return SpecialFile.from_parent(path=file_path, parent=parent)
         """
             % p.name
         )
@@ -757,13 +757,13 @@ def test_matchnodes_two_collections_same_file(pytester: Pytester) -> None:
             config.pluginmanager.register(Plugin2())
 
         class Plugin2(object):
-            def pytest_collect_file(self, fspath, parent):
-                if fspath.suffix == ".abc":
-                    return MyFile2.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(self, file_path, parent):
+                if file_path.suffix == ".abc":
+                    return MyFile2.from_parent(path=file_path, parent=parent)
 
-        def pytest_collect_file(fspath, parent):
-            if fspath.suffix == ".abc":
-                return MyFile1.from_parent(path=fspath, parent=parent)
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".abc":
+                return MyFile1.from_parent(path=file_path, parent=parent)
 
         class MyFile1(pytest.File):
             def collect(self):

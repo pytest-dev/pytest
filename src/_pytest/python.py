@@ -195,15 +195,17 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     return True
 
 
-def pytest_collect_file(fspath: Path, parent: nodes.Collector) -> Optional["Module"]:
-    if fspath.suffix == ".py":
-        if not parent.session.isinitpath(fspath):
+def pytest_collect_file(file_path: Path, parent: nodes.Collector) -> Optional["Module"]:
+    if file_path.suffix == ".py":
+        if not parent.session.isinitpath(file_path):
             if not path_matches_patterns(
-                fspath, parent.config.getini("python_files") + ["__init__.py"]
+                file_path, parent.config.getini("python_files") + ["__init__.py"]
             ):
                 return None
-        ihook = parent.session.gethookproxy(fspath)
-        module: Module = ihook.pytest_pycollect_makemodule(fspath=fspath, parent=parent)
+        ihook = parent.session.gethookproxy(file_path)
+        module: Module = ihook.pytest_pycollect_makemodule(
+            module_path=file_path, parent=parent
+        )
         return module
     return None
 
@@ -213,11 +215,11 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     return any(fnmatch_ex(pattern, path) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(fspath: Path, parent) -> "Module":
-    if fspath.name == "__init__.py":
-        pkg: Package = Package.from_parent(parent, path=fspath)
+def pytest_pycollect_makemodule(module_path: Path, parent) -> "Module":
+    if module_path.name == "__init__.py":
+        pkg: Package = Package.from_parent(parent, path=module_path)
         return pkg
-    mod: Module = Module.from_parent(parent, path=fspath)
+    mod: Module = Module.from_parent(parent, path=module_path)
     return mod
 
 
@@ -676,7 +678,7 @@ class Package(Module):
             return False
         fspath = Path(direntry.path)
         ihook = self.session.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
+        if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
@@ -693,7 +695,7 @@ class Package(Module):
         )
         ihook = self.session.gethookproxy(fspath)
         if not self.session.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
+            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
                 return ()
 
         if handle_dupes:
@@ -705,7 +707,7 @@ class Package(Module):
                 else:
                     duplicate_paths.add(fspath)
 
-        return ihook.pytest_collect_file(fspath=fspath, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.path.parent

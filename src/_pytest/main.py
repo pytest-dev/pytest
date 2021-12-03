@@ -372,31 +372,31 @@ def _in_venv(path: Path) -> bool:
     return any(fname.name in activates for fname in bindir.iterdir())
 
 
-def pytest_ignore_collect(fspath: Path, config: Config) -> Optional[bool]:
+def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[bool]:
     ignore_paths = config._getconftest_pathlist(
-        "collect_ignore", path=fspath.parent, rootpath=config.rootpath
+        "collect_ignore", path=collection_path.parent, rootpath=config.rootpath
     )
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
     if excludeopt:
         ignore_paths.extend(absolutepath(x) for x in excludeopt)
 
-    if fspath in ignore_paths:
+    if collection_path in ignore_paths:
         return True
 
     ignore_globs = config._getconftest_pathlist(
-        "collect_ignore_glob", path=fspath.parent, rootpath=config.rootpath
+        "collect_ignore_glob", path=collection_path.parent, rootpath=config.rootpath
     )
     ignore_globs = ignore_globs or []
     excludeglobopt = config.getoption("ignore_glob")
     if excludeglobopt:
         ignore_globs.extend(absolutepath(x) for x in excludeglobopt)
 
-    if any(fnmatch.fnmatch(str(fspath), str(glob)) for glob in ignore_globs):
+    if any(fnmatch.fnmatch(str(collection_path), str(glob)) for glob in ignore_globs):
         return True
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
-    if not allow_in_venv and _in_venv(fspath):
+    if not allow_in_venv and _in_venv(collection_path):
         return True
     return None
 
@@ -557,7 +557,7 @@ class Session(nodes.FSCollector):
             return False
         fspath = Path(direntry.path)
         ihook = self.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
+        if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
@@ -574,7 +574,7 @@ class Session(nodes.FSCollector):
         )
         ihook = self.gethookproxy(fspath)
         if not self.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(fspath=fspath, config=self.config):
+            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
                 return ()
 
         if handle_dupes:
@@ -586,7 +586,7 @@ class Session(nodes.FSCollector):
                 else:
                     duplicate_paths.add(fspath)
 
-        return ihook.pytest_collect_file(fspath=fspath, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
 
     @overload
     def perform_collect(

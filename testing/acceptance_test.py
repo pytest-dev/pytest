@@ -303,9 +303,9 @@ class TestGeneralUsage:
             class MyCollector(pytest.File):
                 def collect(self):
                     return [MyItem.from_parent(name="xyz", parent=self)]
-            def pytest_collect_file(fspath, parent):
-                if fspath.name.startswith("conftest"):
-                    return MyCollector.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.name.startswith("conftest"):
+                    return MyCollector.from_parent(path=file_path, parent=parent)
         """
         )
         result = pytester.runpytest(c.name + "::" + "xyz")
