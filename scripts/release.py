@@ -20,7 +20,11 @@ def announce(version, template_name):
     stdout = check_output(["git", "log", f"{last_version}..HEAD", "--format=%aN"])
     stdout = stdout.decode("utf-8")
 
-    contributors = {name for name in stdout.splitlines() if not name.endswith("[bot]")}
+    contributors = {
+        name
+        for name in stdout.splitlines()
+        if not name.endswith("[bot]") and name != "pytest bot"
+    }
 
     template_text = (
         Path(__file__).parent.joinpath(template_name).read_text(encoding="UTF-8")
