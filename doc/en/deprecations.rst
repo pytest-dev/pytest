@@ -53,9 +53,24 @@ Plugins which construct nodes should pass the ``path`` argument, of type
 :class:`pathlib.Path`, instead of the ``fspath`` argument.
 
 Plugins which implement custom items and collectors are encouraged to replace
-``py.path.local`` ``fspath`` parameters with ``pathlib.Path`` parameters, and
-drop any other usage of the ``py`` library if possible.
+``fspath`` parameters (``py.path.local``) with ``path`` parameters
+(``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
 
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
+    new attribute being ``path``) is **the opposite** of the situation for
+    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
+
+Due to the ongoing migration of methods like :meth:`~_pytest.Item.reportinfo`
+which still is expected to return a ``py.path.local`` object, nodes still have
+both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
+no matter what argument was used in the constructor. We expect to deprecate the
+``fspath`` attribute in a future release.
 
 .. _legacy-path-hooks-deprecated:
 
@@ -73,6 +88,16 @@ In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the
 *  :func:`pytest_report_collectionfinish(start_path: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>` as equivalent to ``startdir``
 
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
+
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
+    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
+    being ``path``) is **the opposite** of the situation for hooks (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
 
 Directly constructing internal classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

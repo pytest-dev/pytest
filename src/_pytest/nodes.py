@@ -159,6 +159,13 @@ class Node(metaclass=NodeMeta):
     Collector subclasses have children; Items are leaf nodes.
     """
 
+    # Implemented in the legacypath plugin.
+    #: A ``LEGACY_PATH`` copy of the :attr:`path` attribute. Intended for usage
+    #: for methods not migrated to ``pathlib.Path`` yet, such as
+    #: :meth:`Item.reportinfo`. Will be deprecated in a future release, prefer
+    #: using :attr:`path` instead.
+    fspath: LEGACY_PATH
+
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
@@ -188,26 +195,26 @@ class Node(metaclass=NodeMeta):
         #: The parent collector node.
         self.parent = parent
 
-        #: The pytest config object.
         if config:
+            #: The pytest config object.
             self.config: Config = config
         else:
             if not parent:
                 raise TypeError("config or parent must be provided")
             self.config = parent.config
 
-        #: The pytest session this node is part of.
         if session:
+            #: The pytest session this node is part of.
             self.session = session
         else:
             if not parent:
                 raise TypeError("session or parent must be provided")
             self.session = parent.session
 
-        #: Filesystem path where this node was collected from (can be None).
         if path is None and fspath is None:
             path = getattr(parent, "path", None)
-        self.path = _imply_path(type(self), path, fspath=fspath)
+        #: Filesystem path where this node was collected from (can be None).
+        self.path: Path = _imply_path(type(self), path, fspath=fspath)
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -478,6 +485,8 @@ class Node(metaclass=NodeMeta):
     ) -> Union[str, TerminalRepr]:
         """Return a representation of a collection or test failure.
 
+        .. seealso:: :ref:`non-python tests`
+
         :param excinfo: Exception information for the failure.
         """
         return self._repr_failure_py(excinfo, style)
@@ -686,6 +695,12 @@ class Item(Node):
         self.user_properties: List[Tuple[str, object]] = []
 
     def runtest(self) -> None:
+        """Run the test case for this item.
+
+        Must be implemented by subclasses.
+
+        .. seealso:: :ref:`non-python tests`
+        """
         raise NotImplementedError("runtest must be implemented by Item subclass")
 
     def add_report_section(self, when: str, key: str, content: str) -> None:
@@ -706,6 +721,16 @@ class Item(Node):
             self._report_sections.append((when, key, content))
 
     def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
+        """Get location information for this item for test reports.
+
+        Returns a tuple with three elements:
+
+        - The path of the test (default ``self.path``)
+        - The line number of the test (default ``None``)
+        - A name of the test to be shown (default ``""``)
+
+        .. seealso:: :ref:`non-python tests`
+        """
         return self.path, None, ""
 
     @cached_property
