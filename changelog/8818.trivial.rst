@@ -1,1 +1,0 @@
-Ensure ``regendoc`` opts out of ``TOX_ENV`` cachedir selection to ensure independent example test runs.

@@ -27,22 +27,64 @@ now execute the test specification:
 .. code-block:: pytest
 
     nonpython $ pytest test_simple.yaml
-    =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
-    rootdir: /home/sweet/project/nonpython
-    collected 2 items
-
-    test_simple.yaml F.                                                  [100%]
-
-    ================================= FAILURES =================================
-    ______________________________ usecase: hello ______________________________
-    usecase execution failed
-       spec failed: 'some': 'other'
-       no further details known at this point.
-    ========================= short test summary info ==========================
-    FAILED test_simple.yaml::hello
-    ======================= 1 failed, 1 passed in 0.12s ========================
+    Traceback (most recent call last):
+      File "$PYTHON_PREFIX/bin/pytest", line 8, in <module>
+        sys.exit(console_main())
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 188, in console_main
+        code = main()
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 146, in main
+        config = _prepareconfig(args, plugins)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 325, in _prepareconfig
+        config = pluginmanager.hook.pytest_cmdline_parse(
+      File "$PYTHON_SITE/pluggy/_hooks.py", line 265, in __call__
+        return self._hookexec(self.name, self.get_hookimpls(), kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 80, in _hookexec
+        return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_callers.py", line 55, in _multicall
+        gen.send(outcome)
+      File "$PYTHON_SITE/_pytest/helpconfig.py", line 102, in pytest_cmdline_parse
+        config: Config = outcome.get_result()
+      File "$PYTHON_SITE/pluggy/_result.py", line 60, in get_result
+        raise ex[1].with_traceback(ex[2])
+      File "$PYTHON_SITE/pluggy/_callers.py", line 39, in _multicall
+        res = hook_impl.function(*args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1002, in pytest_cmdline_parse
+        self.parse(args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1290, in parse
+        self._preparse(args, addopts=addopts)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1192, in _preparse
+        self.hook.pytest_load_initial_conftests(
+      File "$PYTHON_SITE/pluggy/_hooks.py", line 265, in __call__
+        return self._hookexec(self.name, self.get_hookimpls(), kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 80, in _hookexec
+        return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_callers.py", line 60, in _multicall
+        return outcome.get_result()
+      File "$PYTHON_SITE/pluggy/_result.py", line 60, in get_result
+        raise ex[1].with_traceback(ex[2])
+      File "$PYTHON_SITE/pluggy/_callers.py", line 39, in _multicall
+        res = hook_impl.function(*args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1069, in pytest_load_initial_conftests
+        self.pluginmanager._set_initial_conftests(
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 512, in _set_initial_conftests
+        self._try_load_conftest(anchor, namespace.importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 520, in _try_load_conftest
+        self._getconftestmodules(anchor, importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 554, in _getconftestmodules
+        mod = self._importconftest(conftestpath, importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 609, in _importconftest
+        self.consider_conftest(mod)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 690, in consider_conftest
+        self.register(conftestmodule, name=conftestmodule.__file__)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 446, in register
+        ret: Optional[str] = super().register(plugin, name)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 114, in register
+        self._verify_hook(hook, hookimpl)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 232, in _verify_hook
+        raise PluginValidationError(
+    pluggy._manager.PluginValidationError: Plugin '/home/sweet/project/nonpython/conftest.py' for hook 'pytest_collect_file'
+    hookimpl definition: pytest_collect_file(parent, fspath)
+    Argument(s) {'fspath'} are declared in the hookimpl but can not be found in the hookspec
 
 .. regendoc:wipe
 
@@ -64,23 +106,64 @@ consulted when reporting in ``verbose`` mode:
 .. code-block:: pytest
 
     nonpython $ pytest -v
-    =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: .pytest_cache
-    rootdir: /home/sweet/project/nonpython
-    collecting ... collected 2 items
-
-    test_simple.yaml::hello FAILED                                       [ 50%]
-    test_simple.yaml::ok PASSED                                          [100%]
-
-    ================================= FAILURES =================================
-    ______________________________ usecase: hello ______________________________
-    usecase execution failed
-       spec failed: 'some': 'other'
-       no further details known at this point.
-    ========================= short test summary info ==========================
-    FAILED test_simple.yaml::hello
-    ======================= 1 failed, 1 passed in 0.12s ========================
+    Traceback (most recent call last):
+      File "$PYTHON_PREFIX/bin/pytest", line 8, in <module>
+        sys.exit(console_main())
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 188, in console_main
+        code = main()
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 146, in main
+        config = _prepareconfig(args, plugins)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 325, in _prepareconfig
+        config = pluginmanager.hook.pytest_cmdline_parse(
+      File "$PYTHON_SITE/pluggy/_hooks.py", line 265, in __call__
+        return self._hookexec(self.name, self.get_hookimpls(), kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 80, in _hookexec
+        return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_callers.py", line 55, in _multicall
+        gen.send(outcome)
+      File "$PYTHON_SITE/_pytest/helpconfig.py", line 102, in pytest_cmdline_parse
+        config: Config = outcome.get_result()
+      File "$PYTHON_SITE/pluggy/_result.py", line 60, in get_result
+        raise ex[1].with_traceback(ex[2])
+      File "$PYTHON_SITE/pluggy/_callers.py", line 39, in _multicall
+        res = hook_impl.function(*args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1002, in pytest_cmdline_parse
+        self.parse(args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1290, in parse
+        self._preparse(args, addopts=addopts)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1192, in _preparse
+        self.hook.pytest_load_initial_conftests(
+      File "$PYTHON_SITE/pluggy/_hooks.py", line 265, in __call__
+        return self._hookexec(self.name, self.get_hookimpls(), kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 80, in _hookexec
+        return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_callers.py", line 60, in _multicall
+        return outcome.get_result()
+      File "$PYTHON_SITE/pluggy/_result.py", line 60, in get_result
+        raise ex[1].with_traceback(ex[2])
+      File "$PYTHON_SITE/pluggy/_callers.py", line 39, in _multicall
+        res = hook_impl.function(*args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1069, in pytest_load_initial_conftests
+        self.pluginmanager._set_initial_conftests(
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 515, in _set_initial_conftests
+        self._try_load_conftest(current, namespace.importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 520, in _try_load_conftest
+        self._getconftestmodules(anchor, importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 554, in _getconftestmodules
+        mod = self._importconftest(conftestpath, importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 609, in _importconftest
+        self.consider_conftest(mod)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 690, in consider_conftest
+        self.register(conftestmodule, name=conftestmodule.__file__)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 446, in register
+        ret: Optional[str] = super().register(plugin, name)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 114, in register
+        self._verify_hook(hook, hookimpl)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 232, in _verify_hook
+        raise PluginValidationError(
+    pluggy._manager.PluginValidationError: Plugin '/home/sweet/project/nonpython/conftest.py' for hook 'pytest_collect_file'
+    hookimpl definition: pytest_collect_file(parent, fspath)
+    Argument(s) {'fspath'} are declared in the hookimpl but can not be found in the hookspec
 
 .. regendoc:wipe
 
@@ -90,15 +173,61 @@ interesting to just look at the collection tree:
 .. code-block:: pytest
 
     nonpython $ pytest --collect-only
-    =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
-    rootdir: /home/sweet/project/nonpython
-    collected 2 items
-
-    <Package nonpython>
-      <YamlFile test_simple.yaml>
-        <YamlItem hello>
-        <YamlItem ok>
-
-    ======================== 2 tests collected in 0.12s ========================
+    Traceback (most recent call last):
+      File "$PYTHON_PREFIX/bin/pytest", line 8, in <module>
+        sys.exit(console_main())
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 188, in console_main
+        code = main()
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 146, in main
+        config = _prepareconfig(args, plugins)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 325, in _prepareconfig
+        config = pluginmanager.hook.pytest_cmdline_parse(
+      File "$PYTHON_SITE/pluggy/_hooks.py", line 265, in __call__
+        return self._hookexec(self.name, self.get_hookimpls(), kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 80, in _hookexec
+        return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_callers.py", line 55, in _multicall
+        gen.send(outcome)
+      File "$PYTHON_SITE/_pytest/helpconfig.py", line 102, in pytest_cmdline_parse
+        config: Config = outcome.get_result()
+      File "$PYTHON_SITE/pluggy/_result.py", line 60, in get_result
+        raise ex[1].with_traceback(ex[2])
+      File "$PYTHON_SITE/pluggy/_callers.py", line 39, in _multicall
+        res = hook_impl.function(*args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1002, in pytest_cmdline_parse
+        self.parse(args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1290, in parse
+        self._preparse(args, addopts=addopts)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1192, in _preparse
+        self.hook.pytest_load_initial_conftests(
+      File "$PYTHON_SITE/pluggy/_hooks.py", line 265, in __call__
+        return self._hookexec(self.name, self.get_hookimpls(), kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 80, in _hookexec
+        return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+      File "$PYTHON_SITE/pluggy/_callers.py", line 60, in _multicall
+        return outcome.get_result()
+      File "$PYTHON_SITE/pluggy/_result.py", line 60, in get_result
+        raise ex[1].with_traceback(ex[2])
+      File "$PYTHON_SITE/pluggy/_callers.py", line 39, in _multicall
+        res = hook_impl.function(*args)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 1069, in pytest_load_initial_conftests
+        self.pluginmanager._set_initial_conftests(
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 515, in _set_initial_conftests
+        self._try_load_conftest(current, namespace.importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 520, in _try_load_conftest
+        self._getconftestmodules(anchor, importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 554, in _getconftestmodules
+        mod = self._importconftest(conftestpath, importmode, rootpath)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 609, in _importconftest
+        self.consider_conftest(mod)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 690, in consider_conftest
+        self.register(conftestmodule, name=conftestmodule.__file__)
+      File "$PYTHON_SITE/_pytest/config/__init__.py", line 446, in register
+        ret: Optional[str] = super().register(plugin, name)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 114, in register
+        self._verify_hook(hook, hookimpl)
+      File "$PYTHON_SITE/pluggy/_manager.py", line 232, in _verify_hook
+        raise PluginValidationError(
+    pluggy._manager.PluginValidationError: Plugin '/home/sweet/project/nonpython/conftest.py' for hook 'pytest_collect_file'
+    hookimpl definition: pytest_collect_file(parent, fspath)
+    Argument(s) {'fspath'} are declared in the hookimpl but can not be found in the hookspec
