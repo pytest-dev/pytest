@@ -1,3 +1,0 @@
-The ``pytest.Instance`` collector type has been removed.
-Importing ``pytest.Instance`` or ``_pytest.python.Instance`` returns a dummy type and emits a deprecation warning.
-See :ref:`instance-collector-deprecation` for details.

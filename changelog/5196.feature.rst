@@ -1,3 +1,0 @@
-Tests are now ordered by definition order in more cases.
-
-In a class hierarchy, tests from base classes are now consistently ordered before tests defined on their subclasses (reverse MRO order).

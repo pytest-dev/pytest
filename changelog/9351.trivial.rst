@@ -1,1 +1,0 @@
-Correct minor typos in doc/en/example/special.rst.

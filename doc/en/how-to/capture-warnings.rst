@@ -28,8 +28,7 @@ Running pytest now produces this output:
 
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 

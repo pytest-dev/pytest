@@ -1,3 +1,0 @@
-Fixed issue where pytest's ``faulthandler`` support would not dump traceback on crashes
-if the :mod:`faulthandler` module was already enabled during pytest startup (using
-``python -X dev -m pytest`` for example).

@@ -1,1 +1,0 @@
-Changed the command used to create sdist and wheel artifacts: using the build package instead of setup.py.

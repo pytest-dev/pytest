@@ -1,1 +1,0 @@
-``--version`` now writes version information to ``stdout`` rather than ``stderr``.
