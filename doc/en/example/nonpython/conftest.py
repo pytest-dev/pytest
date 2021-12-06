@@ -2,9 +2,9 @@
 import pytest
 
 
-def pytest_collect_file(parent, fspath):
-    if fspath.suffix == ".yaml" and fspath.name.startswith("test"):
-        return YamlFile.from_parent(parent, path=fspath)
+def pytest_collect_file(parent, file_path):
+    if file_path.suffix == ".yaml" and file_path.name.startswith("test"):
+        return YamlFile.from_parent(parent, path=file_path)
 
 
 class YamlFile(pytest.File):
