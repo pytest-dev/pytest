@@ -562,7 +562,6 @@ if sys.platform.startswith("win"):
     def _is_same(f1: str, f2: str) -> bool:
         return Path(f1) == Path(f2) or os.path.samefile(f1, f2)
 
-
 else:
 
     def _is_same(f1: str, f2: str) -> bool:

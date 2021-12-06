@@ -324,7 +324,6 @@ if sys.platform == "win32":
             return False
         return True
 
-
 else:
 
     def _write_pyc(
