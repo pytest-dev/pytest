@@ -1,1 +1,0 @@
-Added :confval:`pythonpath` setting that adds listed paths to :data:`sys.path` for the duration of the test session. If you currently use the pytest-pythonpath or pytest-srcpaths plugins, you should be able to replace them with built-in `pythonpath` setting.

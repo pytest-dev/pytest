@@ -1,5 +1,0 @@
-Drop a workaround for `pyreadline <https://github.com/pyreadline/pyreadline>`__ that made it work with ``--pdb``.
-
-The workaround was introduced in `#1281 <https://github.com/pytest-dev/pytest/pull/1281>`__ in 2015, however since then
-`pyreadline seems to have gone unmaintained <https://github.com/pyreadline/pyreadline/issues/58>`__, is `generating
-warnings <https://github.com/pytest-dev/pytest/issues/8847>`__, and will stop working on Python 3.10.

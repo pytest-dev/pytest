@@ -28,8 +28,7 @@ now execute the test specification:
 
     nonpython $ pytest test_simple.yaml
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project/nonpython
     collected 2 items
 
@@ -65,7 +64,7 @@ consulted when reporting in ``verbose`` mode:
 
     nonpython $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project/nonpython
     collecting ... collected 2 items
@@ -91,8 +90,7 @@ interesting to just look at the collection tree:
 
     nonpython $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project/nonpython
     collected 2 items
 

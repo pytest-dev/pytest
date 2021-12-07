@@ -1,1 +1,0 @@
-The end line number and end column offset are now properly set for rewritten assert statements.

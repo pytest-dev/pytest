@@ -1,2 +1,0 @@
-The nose compatibility module-level fixtures `setup()` and `teardown()` are now only called once per module, instead of for each test function.
-They are now called even if object-level `setup`/`teardown` is defined.
