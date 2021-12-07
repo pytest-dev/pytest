@@ -37,11 +37,6 @@ YIELD_FIXTURE = PytestDeprecationWarning(
     "Use @pytest.fixture instead; they are the same."
 )
 
-MINUS_K_COLON = PytestRemovedIn7Warning(
-    "The `-k 'expr:'` syntax to -k is deprecated.\n"
-    "Please open an issue if you use this and want a replacement."
-)
-
 WARNING_CMDLINE_PREPARSE_HOOK = PytestRemovedIn8Warning(
     "The pytest_cmdline_preparse hook is deprecated and will be removed in a future release. \n"
     "Please use pytest_load_initial_conftests hook instead."
