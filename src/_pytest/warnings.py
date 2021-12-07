@@ -63,14 +63,6 @@ def catch_warnings_for_item(
         yield
 
         for warning_message in log:
-            ihook.pytest_warning_captured.call_historic(
-                kwargs=dict(
-                    warning_message=warning_message,
-                    when=when,
-                    item=item,
-                    location=None,
-                )
-            )
             ihook.pytest_warning_recorded.call_historic(
                 kwargs=dict(
                     warning_message=warning_message,

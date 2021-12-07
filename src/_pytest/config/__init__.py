@@ -1330,14 +1330,6 @@ class Config:
         if records:
             frame = sys._getframe(stacklevel - 1)
             location = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
-            self.hook.pytest_warning_captured.call_historic(
-                kwargs=dict(
-                    warning_message=records[0],
-                    when="config",
-                    item=None,
-                    location=location,
-                )
-            )
             self.hook.pytest_warning_recorded.call_historic(
                 kwargs=dict(
                     warning_message=records[0],

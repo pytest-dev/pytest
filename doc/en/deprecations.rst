@@ -250,16 +250,6 @@ The ``yield_fixture`` function/decorator
 It has been so for a very long time, so can be search/replaced safely.
 
 
-The ``pytest_warning_captured`` hook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 6.0
-
-This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``.
-
-Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
-by a ``nodeid`` parameter.
-
 The ``pytest.collect`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -274,6 +264,19 @@ Removed Features
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+
+The ``pytest_warning_captured`` hook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.0
+.. versionremoved:: 7.0
+
+This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``.
+
+Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
+by a ``nodeid`` parameter.
+
 
 
 The ``pytest._fillfuncargs`` function

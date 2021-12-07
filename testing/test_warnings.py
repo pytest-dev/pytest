@@ -239,7 +239,7 @@ def test_filterwarnings_mark_registration(pytester: Pytester) -> None:
 
 
 @pytest.mark.filterwarnings("always::UserWarning")
-def test_warning_captured_hook(pytester: Pytester) -> None:
+def test_warning_recorded_hook(pytester: Pytester) -> None:
     pytester.makeconftest(
         """
         def pytest_configure(config):
@@ -276,9 +276,9 @@ def test_warning_captured_hook(pytester: Pytester) -> None:
     expected = [
         ("config warning", "config", ""),
         ("collect warning", "collect", ""),
-        ("setup warning", "runtest", "test_warning_captured_hook.py::test_func"),
-        ("call warning", "runtest", "test_warning_captured_hook.py::test_func"),
-        ("teardown warning", "runtest", "test_warning_captured_hook.py::test_func"),
+        ("setup warning", "runtest", "test_warning_recorded_hook.py::test_func"),
+        ("call warning", "runtest", "test_warning_recorded_hook.py::test_func"),
+        ("teardown warning", "runtest", "test_warning_recorded_hook.py::test_func"),
     ]
     for index in range(len(expected)):
         collected_result = collected[index]

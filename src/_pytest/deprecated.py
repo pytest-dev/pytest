@@ -46,11 +46,6 @@ MINUS_K_COLON = PytestRemovedIn7Warning(
     "Please open an issue if you use this and want a replacement."
 )
 
-WARNING_CAPTURED_HOOK = PytestRemovedIn7Warning(
-    "The pytest_warning_captured is deprecated and will be removed in a future release.\n"
-    "Please use pytest_warning_recorded instead."
-)
-
 WARNING_CMDLINE_PREPARSE_HOOK = PytestRemovedIn8Warning(
     "The pytest_cmdline_preparse hook is deprecated and will be removed in a future release. \n"
     "Please use pytest_load_initial_conftests hook instead."
