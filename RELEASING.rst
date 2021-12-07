@@ -152,7 +152,7 @@ Both automatic and manual processes described above follow the same steps from t
 
 #. Open a PR for ``cherry-pick-release`` and merge it once CI passes. No need to wait for approvals if there were no conflicts on the previous step.
 
-#. For major and minor releases, tag the release cherry-pick merge commit in main with
+#. For major and minor releases (or the first prerelease of it), tag the release cherry-pick merge commit in main with
    a dev tag for the next feature release::
 
        git checkout main
