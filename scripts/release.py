@@ -31,7 +31,9 @@ def announce(version, template_name, doc_version):
     )
 
     contributors_text = "\n".join(f"* {name}" for name in sorted(contributors)) + "\n"
-    text = template_text.format(version=version, contributors=contributors_text, doc_version=doc_version)
+    text = template_text.format(
+        version=version, contributors=contributors_text, doc_version=doc_version
+    )
 
     target = Path(__file__).parent.joinpath(f"../doc/en/announce/release-{version}.rst")
     target.write_text(text, encoding="UTF-8")
