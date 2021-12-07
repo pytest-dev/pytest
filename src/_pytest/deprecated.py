@@ -11,7 +11,6 @@ in case of warnings which need to format their messages.
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warning_types import PytestRemovedIn7Warning
 from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -23,12 +22,6 @@ DEPRECATED_EXTERNAL_PLUGINS = {
     "pytest_faulthandler",
 }
 
-
-PYTEST_COLLECT_MODULE = UnformattedWarning(
-    PytestRemovedIn7Warning,
-    "pytest.collect.{name} was moved to pytest.{name}\n"
-    "Please update to the new name.",
-)
 
 # This can be* removed pytest 8, but it's harmless and common, so no rush to remove.
 # * If you're in the future: "could have been".

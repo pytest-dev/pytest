@@ -10,13 +10,6 @@ from _pytest.pytester import Pytester
 from pytest import PytestDeprecationWarning
 
 
-@pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
-# false positive due to dynamic attribute
-def test_pytest_collect_module_deprecated(attribute) -> None:
-    with pytest.warns(DeprecationWarning, match=attribute):
-        getattr(pytest.collect, attribute)
-
-
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
 @pytest.mark.filterwarnings("default")
 def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:

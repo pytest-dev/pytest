@@ -250,20 +250,22 @@ The ``yield_fixture`` function/decorator
 It has been so for a very long time, so can be search/replaced safely.
 
 
-The ``pytest.collect`` module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 6.0
-
-The ``pytest.collect`` module is no longer part of the public API, all its names
-should now be imported from ``pytest`` directly instead.
-
-
 Removed Features
 ----------------
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+
+The ``pytest.collect`` module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.0
+.. versionremoved:: 7.0
+
+The ``pytest.collect`` module is no longer part of the public API, all its names
+should now be imported from ``pytest`` directly instead.
+
 
 
 The ``pytest_warning_captured`` hook

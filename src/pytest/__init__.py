@@ -1,6 +1,5 @@
 # PYTHON_ARGCOMPLETE_OK
 """pytest: unit and functional testing with Python."""
-from . import collect
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
@@ -86,7 +85,6 @@ __all__ = [
     "CaptureFixture",
     "Class",
     "cmdline",
-    "collect",
     "Collector",
     "CollectReport",
     "Config",
