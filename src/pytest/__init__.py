@@ -66,7 +66,6 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
-from _pytest.warning_types import PytestRemovedIn7Warning
 from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
@@ -125,7 +124,6 @@ __all__ = [
     "PytestConfigWarning",
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
-    "PytestRemovedIn7Warning",
     "PytestRemovedIn8Warning",
     "Pytester",
     "PytestPluginManager",

@@ -517,6 +517,7 @@ class TestDeprecationWarningsByDefault:
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
+@pytest.mark.skip("not relevant until pytest 8.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
     """This ensures that PytestRemovedInXWarnings raised by pytest are turned into errors.
@@ -528,7 +529,7 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
         """
         import warnings, pytest
         def test():
-            warnings.warn(pytest.PytestRemovedIn7Warning("some warning"))
+            warnings.warn(pytest.PytestRemovedIn8Warning("some warning"))
     """
     )
     if change_default == "ini":
@@ -536,12 +537,12 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
             """
             [pytest]
             filterwarnings =
-                ignore::pytest.PytestRemovedIn7Warning
+                ignore::pytest.PytestRemovedIn8Warning
         """
         )
 
     args = (
-        ("-Wignore::pytest.PytestRemovedIn7Warning",)
+        ("-Wignore::pytest.PytestRemovedIn8Warning",)
         if change_default == "cmdline"
         else ()
     )
