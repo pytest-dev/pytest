@@ -149,6 +149,11 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> Tuple[int, Optional[i
     values: List[int] = []
     for x in ast.walk(node):
         if isinstance(x, (ast.stmt, ast.ExceptHandler)):
+            # Before Python 3.8, the lineno of a decorated class or function pointed at the decorator.
+            # Since Python 3.8, the lineno points to the class/def, so need to include the decorators.
+            if isinstance(x, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                for d in x.decorator_list:
+                    values.append(d.lineno - 1)
             values.append(x.lineno - 1)
             for name in ("finalbody", "orelse"):
                 val: Optional[List[ast.stmt]] = getattr(x, name, None)
