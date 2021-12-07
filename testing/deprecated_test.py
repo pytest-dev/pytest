@@ -2,7 +2,6 @@ import re
 import sys
 import warnings
 from pathlib import Path
-from unittest import mock
 
 import pytest
 from _pytest import deprecated
@@ -26,30 +25,6 @@ def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:
 
     with pytest.warns(pytest.PytestConfigWarning):
         pytester.parseconfig("-p", plugin)
-
-
-def test_fillfuncargs_is_deprecated() -> None:
-    with pytest.warns(
-        pytest.PytestDeprecationWarning,
-        match=re.escape(
-            "pytest._fillfuncargs() is deprecated, use "
-            "function._request._fillfixtures() instead if you cannot avoid reaching into internals."
-        ),
-    ):
-        pytest._fillfuncargs(mock.Mock())
-
-
-def test_fillfixtures_is_deprecated() -> None:
-    import _pytest.fixtures
-
-    with pytest.warns(
-        pytest.PytestDeprecationWarning,
-        match=re.escape(
-            "_pytest.fixtures.fillfixtures() is deprecated, use "
-            "function._request._fillfixtures() instead if you cannot avoid reaching into internals."
-        ),
-    ):
-        _pytest.fixtures.fillfixtures(mock.Mock())
 
 
 def test_minus_k_dash_is_deprecated(pytester: Pytester) -> None:

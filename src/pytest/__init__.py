@@ -19,7 +19,6 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import OptionGroup
 from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
-from _pytest.fixtures import _fillfuncargs
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
@@ -81,7 +80,6 @@ set_trace = __pytestPDB.set_trace
 
 __all__ = [
     "__version__",
-    "_fillfuncargs",
     "approx",
     "Cache",
     "CallInfo",

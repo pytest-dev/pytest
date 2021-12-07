@@ -51,9 +51,6 @@ Here is a little annotated list for some popular plugins:
 * :pypi:`pytest-flakes`:
   check source code with pyflakes.
 
-* :pypi:`oejskit`:
-  a plugin to run javascript unittests in live browsers.
-
 To see a complete list of all plugins with their latest testing
 status against different pytest and Python versions, please visit
 :ref:`plugin-list`.

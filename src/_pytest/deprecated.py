@@ -24,12 +24,6 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 }
 
 
-FILLFUNCARGS = UnformattedWarning(
-    PytestRemovedIn7Warning,
-    "{name} is deprecated, use "
-    "function._request._fillfixtures() instead if you cannot avoid reaching into internals.",
-)
-
 PYTEST_COLLECT_MODULE = UnformattedWarning(
     PytestRemovedIn7Warning,
     "pytest.collect.{name} was moved to pytest.{name}\n"

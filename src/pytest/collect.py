@@ -15,7 +15,6 @@ COLLECT_FAKEMODULE_ATTRIBUTES = [
     "Item",
     "Class",
     "File",
-    "_fillfuncargs",
 ]
 
 

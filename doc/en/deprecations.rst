@@ -269,10 +269,18 @@ The ``pytest.collect`` module is no longer part of the public API, all its names
 should now be imported from ``pytest`` directly instead.
 
 
+Removed Features
+----------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
+
+
 The ``pytest._fillfuncargs`` function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 6.0
+.. versionremoved:: 7.0
 
 This function was kept for backward compatibility with an older plugin.
 
@@ -280,12 +288,6 @@ It's functionality is not meant to be used directly, but if you must replace
 it, use `function._request._fillfixtures()` instead, though note this is not
 a public API and may break in the future.
 
-
-Removed Features
-----------------
-
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
 
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
