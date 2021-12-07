@@ -127,7 +127,7 @@ Passing ``msg=`` to ``pytest.skip``, ``pytest.fail`` or ``pytest.exit``
 
 Passing the keyword argument ``msg`` to :func:`pytest.skip`, :func:`pytest.fail` or :func:`pytest.exit`
 is now deprecated and ``reason`` should be used instead.  This change is to bring consistency between these
-functions and the``@pytest.mark.skip`` and ``@pytest.mark.xfail`` markers which already accept a ``reason`` argument.
+functions and the ``@pytest.mark.skip`` and ``@pytest.mark.xfail`` markers which already accept a ``reason`` argument.
 
 .. code-block:: python
 
