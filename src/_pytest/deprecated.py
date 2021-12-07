@@ -37,10 +37,6 @@ YIELD_FIXTURE = PytestDeprecationWarning(
     "Use @pytest.fixture instead; they are the same."
 )
 
-MINUS_K_DASH = PytestRemovedIn7Warning(
-    "The `-k '-expr'` syntax to -k is deprecated.\nUse `-k 'not expr'` instead."
-)
-
 MINUS_K_COLON = PytestRemovedIn7Warning(
     "The `-k 'expr:'` syntax to -k is deprecated.\n"
     "Please open an issue if you use this and want a replacement."

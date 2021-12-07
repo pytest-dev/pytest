@@ -27,18 +27,6 @@ def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:
         pytester.parseconfig("-p", plugin)
 
 
-def test_minus_k_dash_is_deprecated(pytester: Pytester) -> None:
-    threepass = pytester.makepyfile(
-        test_threepass="""
-        def test_one(): assert 1
-        def test_two(): assert 1
-        def test_three(): assert 1
-    """
-    )
-    result = pytester.runpytest("-k=-test_two", threepass)
-    result.stdout.fnmatch_lines(["*The `-k '-expr'` syntax*deprecated*"])
-
-
 def test_minus_k_colon_is_deprecated(pytester: Pytester) -> None:
     threepass = pytester.makepyfile(
         test_threepass="""

@@ -24,7 +24,6 @@ from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import MINUS_K_COLON
-from _pytest.deprecated import MINUS_K_DASH
 from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
@@ -189,10 +188,6 @@ def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
     if not keywordexpr:
         return
 
-    if keywordexpr.startswith("-"):
-        # To be removed in pytest 8.0.0.
-        warnings.warn(MINUS_K_DASH, stacklevel=2)
-        keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
     if keywordexpr[-1:] == ":":
         # To be removed in pytest 8.0.0.
