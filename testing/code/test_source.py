@@ -618,6 +618,19 @@ def something():
     assert str(source) == "def func(): raise ValueError(42)"
 
 
+def test_decorator() -> None:
+    s = """\
+def foo(f):
+    pass
+
+@foo
+def bar():
+    pass
+    """
+    source = getstatement(3, s)
+    assert "@foo" in str(source)
+
+
 def XXX_test_expression_multiline() -> None:
     source = """\
 something
