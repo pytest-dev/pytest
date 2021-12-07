@@ -1,1 +1,0 @@
-Remove incorrect docs about ``confcutdir`` being a configuration option: it can only be set through the ``--confcutdir`` command-line option.

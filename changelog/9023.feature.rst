@@ -1,4 +1,0 @@
-
-Full diffs are now always shown for equality assertions of iterables when
-`CI` or ``BUILD_NUMBER`` is found in the environment, even when ``-v`` isn't
-used.

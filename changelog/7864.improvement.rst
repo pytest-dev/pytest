@@ -1,4 +1,0 @@
-Improved error messages when parsing warning filters.
-
-Previously pytest would show an internal traceback, which besides being ugly sometimes would hide the cause
-of the problem (for example an ``ImportError`` while importing a specific warning type).

@@ -1,1 +1,0 @@
-Fixed confusing error message when ``request.fspath`` / ``request.path`` was accessed from a session-scoped fixture.

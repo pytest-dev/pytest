@@ -2019,6 +2019,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             default value for --log-file-date-format
       log_auto_indent (string):
                             default value for --log-auto-indent
+      pythonpath (paths):   Add paths to sys.path
       faulthandler_timeout (string):
                             Dump the traceback of all threads if a test takes
                             more than TIMEOUT seconds to finish.
