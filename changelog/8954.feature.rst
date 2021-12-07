@@ -1,1 +1,0 @@
-``--debug`` flag now accepts a :class:`str` file to route debug logs into, remains defaulted to `pytestdebug.log`.

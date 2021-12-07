@@ -323,8 +323,7 @@ Example:
 
     $ pytest -ra
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
@@ -381,8 +380,7 @@ More than one character can be used, so for example to only see failed and skipp
 
     $ pytest -rfs
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
@@ -417,8 +415,7 @@ captured output:
 
     $ pytest -rpP
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
-    cachedir: .pytest_cache
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
