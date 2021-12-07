@@ -90,10 +90,13 @@ def prepare_release_pr(
 
     if prerelease:
         template_name = "release.pre.rst"
+        doc_version = release_branch
     elif is_feature_release:
         template_name = "release.minor.rst"
+        doc_version = ""  # unused in template
     else:
         template_name = "release.patch.rst"
+        doc_version = ""  # unused in template
 
     # important to use tox here because we have changed branches, so dependencies
     # might have changed as well
@@ -104,6 +107,7 @@ def prepare_release_pr(
         "--",
         version,
         template_name,
+        doc_version,
         "--skip-check-links",
     ]
     print("Running", " ".join(cmdline))

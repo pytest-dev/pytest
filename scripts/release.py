@@ -10,7 +10,7 @@ from colorama import Fore
 from colorama import init
 
 
-def announce(version, template_name):
+def announce(version, template_name, doc_version):
     """Generates a new release announcement entry in the docs."""
     # Get our list of authors
     stdout = check_output(["git", "describe", "--abbrev=0", "--tags"])
@@ -31,7 +31,9 @@ def announce(version, template_name):
     )
 
     contributors_text = "\n".join(f"* {name}" for name in sorted(contributors)) + "\n"
-    text = template_text.format(version=version, contributors=contributors_text)
+    text = template_text.format(
+        version=version, contributors=contributors_text, doc_version=doc_version
+    )
 
     target = Path(__file__).parent.joinpath(f"../doc/en/announce/release-{version}.rst")
     target.write_text(text, encoding="UTF-8")
@@ -82,9 +84,9 @@ def check_links():
     check_call(["tox", "-e", "docs-checklinks"])
 
 
-def pre_release(version, template_name, *, skip_check_links):
+def pre_release(version, template_name, doc_version, *, skip_check_links):
     """Generates new docs, release announcements and creates a local tag."""
-    announce(version, template_name)
+    announce(version, template_name, doc_version)
     regen(version)
     changelog(version, write_out=True)
     fix_formatting()
@@ -112,11 +114,15 @@ def main():
     parser.add_argument(
         "template_name", help="Name of template file to use for release announcement"
     )
+    parser.add_argument(
+        "doc_version", help="For prereleases, the version to link to in the docs"
+    )
     parser.add_argument("--skip-check-links", action="store_true", default=False)
     options = parser.parse_args()
     pre_release(
         options.version,
         options.template_name,
+        options.doc_version,
         skip_check_links=options.skip_check_links,
     )
 
