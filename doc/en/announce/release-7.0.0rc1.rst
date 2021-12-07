@@ -19,7 +19,7 @@ You can upgrade from PyPI via:
 
 Users are encouraged to take a look at the CHANGELOG carefully:
 
-    https://docs.pytest.org/en/stable/changelog.html
+    https://docs.pytest.org/en/7.0.x/changelog.html
 
 Thanks to all the contributors to this release:
 
