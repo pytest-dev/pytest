@@ -103,10 +103,6 @@ def test_getfuncargnames_staticmethod_partial():
 
 @pytest.mark.pytester_example_path("fixtures/fill_fixtures")
 class TestFillFixtures:
-    def test_fillfuncargs_exposed(self):
-        # used by oejskit, kept for compatibility
-        assert pytest._fillfuncargs == fixtures._fillfuncargs
-
     def test_funcarg_lookupfails(self, pytester: Pytester) -> None:
         pytester.copy_example()
         result = pytester.runpytest()  # "--collect-only")

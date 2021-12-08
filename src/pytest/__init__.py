@@ -1,6 +1,5 @@
 # PYTHON_ARGCOMPLETE_OK
 """pytest: unit and functional testing with Python."""
-from . import collect
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
@@ -19,7 +18,6 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import OptionGroup
 from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
-from _pytest.fixtures import _fillfuncargs
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
@@ -68,7 +66,6 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
-from _pytest.warning_types import PytestRemovedIn7Warning
 from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
@@ -81,14 +78,12 @@ set_trace = __pytestPDB.set_trace
 
 __all__ = [
     "__version__",
-    "_fillfuncargs",
     "approx",
     "Cache",
     "CallInfo",
     "CaptureFixture",
     "Class",
     "cmdline",
-    "collect",
     "Collector",
     "CollectReport",
     "Config",
@@ -129,7 +124,6 @@ __all__ = [
     "PytestConfigWarning",
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
-    "PytestRemovedIn7Warning",
     "PytestRemovedIn8Warning",
     "Pytester",
     "PytestPluginManager",

@@ -823,25 +823,6 @@ class TestKeywordSelection:
         assert len(dlist) == 1
         assert dlist[0].items[0].name == "test_1"
 
-    def test_select_starton(self, pytester: Pytester) -> None:
-        threepass = pytester.makepyfile(
-            test_threepass="""
-            def test_one(): assert 1
-            def test_two(): assert 1
-            def test_three(): assert 1
-        """
-        )
-        reprec = pytester.inline_run(
-            "-Wignore::pytest.PytestRemovedIn7Warning", "-k", "test_two:", threepass
-        )
-        passed, skipped, failed = reprec.listoutcomes()
-        assert len(passed) == 2
-        assert not failed
-        dlist = reprec.getcalls("pytest_deselected")
-        assert len(dlist) == 1
-        item = dlist[0].items[0]
-        assert item.name == "test_one"
-
     def test_keyword_extra(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """

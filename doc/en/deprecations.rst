@@ -250,29 +250,42 @@ The ``yield_fixture`` function/decorator
 It has been so for a very long time, so can be search/replaced safely.
 
 
+Removed Features
+----------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
+
+
+The ``pytest.collect`` module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.0
+.. versionremoved:: 7.0
+
+The ``pytest.collect`` module is no longer part of the public API, all its names
+should now be imported from ``pytest`` directly instead.
+
+
+
 The ``pytest_warning_captured`` hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 6.0
+.. versionremoved:: 7.0
 
 This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``.
 
 Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
 by a ``nodeid`` parameter.
 
-The ``pytest.collect`` module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 6.0
-
-The ``pytest.collect`` module is no longer part of the public API, all its names
-should now be imported from ``pytest`` directly instead.
 
 
 The ``pytest._fillfuncargs`` function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 6.0
+.. versionremoved:: 7.0
 
 This function was kept for backward compatibility with an older plugin.
 
@@ -280,12 +293,6 @@ It's functionality is not meant to be used directly, but if you must replace
 it, use `function._request._fillfixtures()` instead, though note this is not
 a public API and may break in the future.
 
-
-Removed Features
-----------------
-
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
 
 ``--no-print-logs`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

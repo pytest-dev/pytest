@@ -1,82 +1,8 @@
-from typing import Any
-
 import pytest
-from _pytest import runner
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker
 from _pytest.pytester import Pytester
 from _pytest.python import Function
-
-
-class TestOEJSKITSpecials:
-    def test_funcarg_non_pycollectobj(
-        self, pytester: Pytester, recwarn
-    ) -> None:  # rough jstests usage
-        pytester.makeconftest(
-            """
-            import pytest
-            def pytest_pycollect_makeitem(collector, name, obj):
-                if name == "MyClass":
-                    return MyCollector.from_parent(collector, name=name)
-            class MyCollector(pytest.Collector):
-                def reportinfo(self):
-                    return self.path, 3, "xyz"
-        """
-        )
-        modcol = pytester.getmodulecol(
-            """
-            import pytest
-            @pytest.fixture
-            def arg1(request):
-                return 42
-            class MyClass(object):
-                pass
-        """
-        )
-        # this hook finds funcarg factories
-        rep = runner.collect_one_node(collector=modcol)
-        # TODO: Don't treat as Any.
-        clscol: Any = rep.result[0]
-        clscol.obj = lambda arg1: None
-        clscol.funcargs = {}
-        pytest._fillfuncargs(clscol)
-        assert clscol.funcargs["arg1"] == 42
-
-    def test_autouse_fixture(
-        self, pytester: Pytester, recwarn
-    ) -> None:  # rough jstests usage
-        pytester.makeconftest(
-            """
-            import pytest
-            def pytest_pycollect_makeitem(collector, name, obj):
-                if name == "MyClass":
-                    return MyCollector.from_parent(collector, name=name)
-            class MyCollector(pytest.Collector):
-                def reportinfo(self):
-                    return self.path, 3, "xyz"
-        """
-        )
-        modcol = pytester.getmodulecol(
-            """
-            import pytest
-            @pytest.fixture(autouse=True)
-            def hello():
-                pass
-            @pytest.fixture
-            def arg1(request):
-                return 42
-            class MyClass(object):
-                pass
-        """
-        )
-        # this hook finds funcarg factories
-        rep = runner.collect_one_node(modcol)
-        # TODO: Don't treat as Any.
-        clscol: Any = rep.result[0]
-        clscol.obj = lambda: None
-        clscol.funcargs = {}
-        pytest._fillfuncargs(clscol)
-        assert not clscol.funcargs
 
 
 def test_wrapped_getfslineno() -> None:

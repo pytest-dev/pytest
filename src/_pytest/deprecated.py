@@ -11,7 +11,6 @@ in case of warnings which need to format their messages.
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warning_types import PytestRemovedIn7Warning
 from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -24,37 +23,11 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 }
 
 
-FILLFUNCARGS = UnformattedWarning(
-    PytestRemovedIn7Warning,
-    "{name} is deprecated, use "
-    "function._request._fillfixtures() instead if you cannot avoid reaching into internals.",
-)
-
-PYTEST_COLLECT_MODULE = UnformattedWarning(
-    PytestRemovedIn7Warning,
-    "pytest.collect.{name} was moved to pytest.{name}\n"
-    "Please update to the new name.",
-)
-
 # This can be* removed pytest 8, but it's harmless and common, so no rush to remove.
 # * If you're in the future: "could have been".
 YIELD_FIXTURE = PytestDeprecationWarning(
     "@pytest.yield_fixture is deprecated.\n"
     "Use @pytest.fixture instead; they are the same."
-)
-
-MINUS_K_DASH = PytestRemovedIn7Warning(
-    "The `-k '-expr'` syntax to -k is deprecated.\nUse `-k 'not expr'` instead."
-)
-
-MINUS_K_COLON = PytestRemovedIn7Warning(
-    "The `-k 'expr:'` syntax to -k is deprecated.\n"
-    "Please open an issue if you use this and want a replacement."
-)
-
-WARNING_CAPTURED_HOOK = PytestRemovedIn7Warning(
-    "The pytest_warning_captured is deprecated and will be removed in a future release.\n"
-    "Please use pytest_warning_recorded instead."
 )
 
 WARNING_CMDLINE_PREPARSE_HOOK = PytestRemovedIn8Warning(

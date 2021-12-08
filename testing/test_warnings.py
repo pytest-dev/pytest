@@ -239,7 +239,7 @@ def test_filterwarnings_mark_registration(pytester: Pytester) -> None:
 
 
 @pytest.mark.filterwarnings("always::UserWarning")
-def test_warning_captured_hook(pytester: Pytester) -> None:
+def test_warning_recorded_hook(pytester: Pytester) -> None:
     pytester.makeconftest(
         """
         def pytest_configure(config):
@@ -276,9 +276,9 @@ def test_warning_captured_hook(pytester: Pytester) -> None:
     expected = [
         ("config warning", "config", ""),
         ("collect warning", "collect", ""),
-        ("setup warning", "runtest", "test_warning_captured_hook.py::test_func"),
-        ("call warning", "runtest", "test_warning_captured_hook.py::test_func"),
-        ("teardown warning", "runtest", "test_warning_captured_hook.py::test_func"),
+        ("setup warning", "runtest", "test_warning_recorded_hook.py::test_func"),
+        ("call warning", "runtest", "test_warning_recorded_hook.py::test_func"),
+        ("teardown warning", "runtest", "test_warning_recorded_hook.py::test_func"),
     ]
     for index in range(len(expected)):
         collected_result = collected[index]
@@ -517,6 +517,7 @@ class TestDeprecationWarningsByDefault:
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
+@pytest.mark.skip("not relevant until pytest 8.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
     """This ensures that PytestRemovedInXWarnings raised by pytest are turned into errors.
@@ -528,7 +529,7 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
         """
         import warnings, pytest
         def test():
-            warnings.warn(pytest.PytestRemovedIn7Warning("some warning"))
+            warnings.warn(pytest.PytestRemovedIn8Warning("some warning"))
     """
     )
     if change_default == "ini":
@@ -536,12 +537,12 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
             """
             [pytest]
             filterwarnings =
-                ignore::pytest.PytestRemovedIn7Warning
+                ignore::pytest.PytestRemovedIn8Warning
         """
         )
 
     args = (
-        ("-Wignore::pytest.PytestRemovedIn7Warning",)
+        ("-Wignore::pytest.PytestRemovedIn8Warning",)
         if change_default == "cmdline"
         else ()
     )

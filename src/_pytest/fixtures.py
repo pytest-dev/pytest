@@ -52,7 +52,6 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import FILLFUNCARGS
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
@@ -73,7 +72,6 @@ if TYPE_CHECKING:
     from _pytest.scope import _ScopeName
     from _pytest.main import Session
     from _pytest.python import CallSpec2
-    from _pytest.python import Function
     from _pytest.python import Metafunc
 
 
@@ -350,41 +348,6 @@ def reorder_items_atscope(
                 items_done[item] = None
         ignore.add(slicing_argkey)
     return items_done
-
-
-def _fillfuncargs(function: "Function") -> None:
-    """Fill missing fixtures for a test function, old public API (deprecated)."""
-    warnings.warn(FILLFUNCARGS.format(name="pytest._fillfuncargs()"), stacklevel=2)
-    _fill_fixtures_impl(function)
-
-
-def fillfixtures(function: "Function") -> None:
-    """Fill missing fixtures for a test function (deprecated)."""
-    warnings.warn(
-        FILLFUNCARGS.format(name="_pytest.fixtures.fillfixtures()"), stacklevel=2
-    )
-    _fill_fixtures_impl(function)
-
-
-def _fill_fixtures_impl(function: "Function") -> None:
-    """Internal implementation to fill fixtures on the given function object."""
-    try:
-        request = function._request
-    except AttributeError:
-        # XXX this special code path is only expected to execute
-        # with the oejskit plugin.  It uses classes with funcargs
-        # and we thus have to work a bit to allow this.
-        fm = function.session._fixturemanager
-        assert function.parent is not None
-        fi = fm.getfixtureinfo(function.parent, function.obj, None)
-        function._fixtureinfo = fi
-        request = function._request = FixtureRequest(function, _ispytest=True)
-        fm.session._setupstate.setup(function)
-        request._fillfixtures()
-        # Prune out funcargs for jstests.
-        function.funcargs = {name: function.funcargs[name] for name in fi.argnames}
-    else:
-        request._fillfixtures()
 
 
 def get_direct_param_fixture_func(request):

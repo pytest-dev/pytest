@@ -758,7 +758,6 @@ Session related reporting hooks:
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_post_finalizer
-.. autofunction:: pytest_warning_captured
 .. autofunction:: pytest_warning_recorded
 
 Central hook for reporting about test execution:

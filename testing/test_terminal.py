@@ -682,9 +682,7 @@ class TestTerminalFunctional:
                     pass
            """
         )
-        result = pytester.runpytest(
-            "-Wignore::pytest.PytestRemovedIn7Warning", "-k", "test_two:", testpath
-        )
+        result = pytester.runpytest("-k", "test_t", testpath)
         result.stdout.fnmatch_lines(
             ["collected 3 items / 1 deselected / 2 selected", "*test_deselected.py ..*"]
         )

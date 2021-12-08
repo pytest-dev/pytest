@@ -13,7 +13,6 @@ from typing import Union
 
 from pluggy import HookspecMarker
 
-from _pytest.deprecated import WARNING_CAPTURED_HOOK
 from _pytest.deprecated import WARNING_CMDLINE_PREPARSE_HOOK
 
 if TYPE_CHECKING:
@@ -774,41 +773,6 @@ def pytest_terminal_summary(
 
     .. versionadded:: 4.2
         The ``config`` parameter.
-    """
-
-
-@hookspec(historic=True, warn_on_impl=WARNING_CAPTURED_HOOK)
-def pytest_warning_captured(
-    warning_message: "warnings.WarningMessage",
-    when: "Literal['config', 'collect', 'runtest']",
-    item: Optional["Item"],
-    location: Optional[Tuple[str, int, str]],
-) -> None:
-    """(**Deprecated**) Process a warning captured by the internal pytest warnings plugin.
-
-    .. deprecated:: 6.0
-
-    This hook is considered deprecated and will be removed in a future pytest version.
-    Use :func:`pytest_warning_recorded` instead.
-
-    :param warnings.WarningMessage warning_message:
-        The captured warning. This is the same object produced by :py:func:`warnings.catch_warnings`, and contains
-        the same attributes as the parameters of :py:func:`warnings.showwarning`.
-
-    :param str when:
-        Indicates when the warning was captured. Possible values:
-
-        * ``"config"``: during pytest configuration/initialization stage.
-        * ``"collect"``: during test collection.
-        * ``"runtest"``: during test execution.
-
-    :param pytest.Item|None item:
-        The item being executed if ``when`` is ``"runtest"``, otherwise ``None``.
-
-    :param tuple location:
-        When available, holds information about the execution context of the captured
-        warning (filename, linenumber, function). ``function`` evaluates to <module>
-        when the execution context is at the module level.
     """
 
 
