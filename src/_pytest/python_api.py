@@ -101,6 +101,7 @@ class ApproxBase:
         )
 
     def __bool__(self):
+        __tracebackhide__ = True
         raise AssertionError(
             "approx() is not supported in a boolean context.\nDid you mean: `assert a == approx(b)`?"
         )
