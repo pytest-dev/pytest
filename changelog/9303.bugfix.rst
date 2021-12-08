@@ -1,0 +1,2 @@
+`Parser.addoption` now throws a value error if an attempt is made at adding an option
+after the pre_parsing process without including a default.

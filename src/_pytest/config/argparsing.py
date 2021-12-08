@@ -362,6 +362,11 @@ class OptionGroup:
         results in help showing ``--two-words`` only, but ``--twowords`` gets
         accepted **and** the automatic destination is in ``args.twowords``.
         """
+        if getattr(self.parser, "after_preparse", False) and "default" not in attrs:
+            raise ValueError(
+                "Cannot add options without default after initial conftest discovery"
+            )
+
         conflict = set(optnames).intersection(
             name for opt in self.options for name in opt.names()
         )

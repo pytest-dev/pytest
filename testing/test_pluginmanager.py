@@ -78,6 +78,21 @@ class TestPytestPluginInteractions:
         )
         assert config.option.test123
 
+    def test_do_option_postinit_nodefault(self, pytester: Pytester) -> None:
+        config = pytester.parseconfigure()
+        assert not hasattr(config.option, "deadbeef")
+        p = pytester.makepyfile(
+            """
+            def pytest_addoption(parser):
+                parser.addoption('--deadbeef', action="store_true")
+        """
+        )
+        with pytest.raises(ValueError):
+            config.pluginmanager._importconftest(
+                p, importmode="prepend", rootpath=pytester.path
+            )
+        assert not hasattr(config.option, "deadbeef")
+
     def test_configure(self, pytester: Pytester) -> None:
         config = pytester.parseconfig()
         values = []
