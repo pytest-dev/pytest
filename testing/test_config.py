@@ -1268,6 +1268,7 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     expected = [
         "_pytest.config",
         m.__module__,
+        "_pytest.legacypath",
         "_pytest.pythonpath",
         "_pytest.capture",
         "_pytest.warnings",
