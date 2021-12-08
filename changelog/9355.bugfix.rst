@@ -1,1 +1,1 @@
-Fixed error message prints function decorators when using assert in Python 3.9 and above.
+Fixed error message prints function decorators when using assert in Python 3.8 and above.
