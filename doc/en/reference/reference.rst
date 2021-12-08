@@ -671,9 +671,13 @@ Bootstrapping hooks
 
 Bootstrapping hooks called for plugins registered early enough (internal and setuptools plugins).
 
+.. hook:: pytest_load_initial_conftests
 .. autofunction:: pytest_load_initial_conftests
+.. hook:: pytest_cmdline_preparse
 .. autofunction:: pytest_cmdline_preparse
+.. hook:: pytest_cmdline_parse
 .. autofunction:: pytest_cmdline_parse
+.. hook:: pytest_cmdline_main
 .. autofunction:: pytest_cmdline_main
 
 .. _`initialization-hooks`:
@@ -683,13 +687,20 @@ Initialization hooks
 
 Initialization hooks called for plugins and ``conftest.py`` files.
 
+.. hook:: pytest_addoption
 .. autofunction:: pytest_addoption
+.. hook:: pytest_addhooks
 .. autofunction:: pytest_addhooks
+.. hook:: pytest_configure
 .. autofunction:: pytest_configure
+.. hook:: pytest_unconfigure
 .. autofunction:: pytest_unconfigure
+.. hook:: pytest_sessionstart
 .. autofunction:: pytest_sessionstart
+.. hook:: pytest_sessionfinish
 .. autofunction:: pytest_sessionfinish
 
+.. hook:: pytest_plugin_registered
 .. autofunction:: pytest_plugin_registered
 
 Collection hooks
@@ -697,21 +708,29 @@ Collection hooks
 
 ``pytest`` calls the following hooks for collecting files and directories:
 
+.. hook:: pytest_collection
 .. autofunction:: pytest_collection
+.. hook:: pytest_ignore_collect
 .. autofunction:: pytest_ignore_collect
+.. hook:: pytest_collect_file
 .. autofunction:: pytest_collect_file
+.. hook:: pytest_pycollect_makemodule
 .. autofunction:: pytest_pycollect_makemodule
 
 For influencing the collection of objects in Python modules
 you can use the following hook:
 
+.. hook:: pytest_pycollect_makeitem
 .. autofunction:: pytest_pycollect_makeitem
+.. hook:: pytest_generate_tests
 .. autofunction:: pytest_generate_tests
+.. hook:: pytest_make_parametrize_id
 .. autofunction:: pytest_make_parametrize_id
 
 After collection is complete, you can modify the order of
 items, delete or otherwise amend the test items:
 
+.. hook:: pytest_collection_modifyitems
 .. autofunction:: pytest_collection_modifyitems
 
 .. note::
@@ -725,13 +744,21 @@ Test running (runtest) hooks
 
 All runtest related hooks receive a :py:class:`pytest.Item <pytest.Item>` object.
 
+.. hook:: pytest_runtestloop
 .. autofunction:: pytest_runtestloop
+.. hook:: pytest_runtest_protocol
 .. autofunction:: pytest_runtest_protocol
+.. hook:: pytest_runtest_logstart
 .. autofunction:: pytest_runtest_logstart
+.. hook:: pytest_runtest_logfinish
 .. autofunction:: pytest_runtest_logfinish
+.. hook:: pytest_runtest_setup
 .. autofunction:: pytest_runtest_setup
+.. hook:: pytest_runtest_call
 .. autofunction:: pytest_runtest_call
+.. hook:: pytest_runtest_teardown
 .. autofunction:: pytest_runtest_teardown
+.. hook:: pytest_runtest_makereport
 .. autofunction:: pytest_runtest_makereport
 
 For deeper understanding you may look at the default implementation of
@@ -740,6 +767,7 @@ in ``_pytest.pdb`` which interacts with ``_pytest.capture``
 and its input/output capturing in order to immediately drop
 into interactive debugging when a test failure occurs.
 
+.. hook:: pytest_pyfunc_call
 .. autofunction:: pytest_pyfunc_call
 
 Reporting hooks
@@ -747,26 +775,41 @@ Reporting hooks
 
 Session related reporting hooks:
 
+.. hook:: pytest_collectstart
 .. autofunction:: pytest_collectstart
+.. hook:: pytest_make_collect_report
 .. autofunction:: pytest_make_collect_report
+.. hook:: pytest_itemcollected
 .. autofunction:: pytest_itemcollected
+.. hook:: pytest_collectreport
 .. autofunction:: pytest_collectreport
+.. hook:: pytest_deselected
 .. autofunction:: pytest_deselected
+.. hook:: pytest_report_header
 .. autofunction:: pytest_report_header
+.. hook:: pytest_report_collectionfinish
 .. autofunction:: pytest_report_collectionfinish
+.. hook:: pytest_report_teststatus
 .. autofunction:: pytest_report_teststatus
+.. hook:: pytest_terminal_summary
 .. autofunction:: pytest_terminal_summary
+.. hook:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_setup
+.. hook:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_fixture_post_finalizer
+.. hook:: pytest_warning_recorded
 .. autofunction:: pytest_warning_recorded
 
 Central hook for reporting about test execution:
 
+.. hook:: pytest_runtest_logreport
 .. autofunction:: pytest_runtest_logreport
 
 Assertion related hooks:
 
+.. hook:: pytest_assertrepr_compare
 .. autofunction:: pytest_assertrepr_compare
+.. hook:: pytest_assertion_pass
 .. autofunction:: pytest_assertion_pass
 
 
@@ -776,9 +819,13 @@ Debugging/Interaction hooks
 There are few hooks which can be used for special
 reporting or interaction with exceptions:
 
+.. hook:: pytest_internalerror
 .. autofunction:: pytest_internalerror
+.. hook:: pytest_keyboard_interrupt
 .. autofunction:: pytest_keyboard_interrupt
+.. hook:: pytest_exception_interact
 .. autofunction:: pytest_exception_interact
+.. hook:: pytest_enter_pdb
 .. autofunction:: pytest_enter_pdb
 
 

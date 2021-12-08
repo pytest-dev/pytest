@@ -985,7 +985,7 @@ class CallSpec2:
 
 @final
 class Metafunc:
-    """Objects passed to the :func:`pytest_generate_tests <_pytest.hookspec.pytest_generate_tests>` hook.
+    """Objects passed to the :hook:`pytest_generate_tests` hook.
 
     They help to inspect a test function and to generate tests according to
     test configuration or values specified in the class or module where a
