@@ -13,6 +13,7 @@ from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import import_path
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestConfigWarning
 
 
 @pytest.fixture
@@ -73,9 +74,13 @@ class TestPytestPluginInteractions:
                     default=True)
         """
         )
-        config.pluginmanager._importconftest(
-            p, importmode="prepend", rootpath=pytester.path
-        )
+        with pytest.warns(PytestConfigWarning) as warn:
+            config.pluginmanager._importconftest(
+                p, importmode="prepend", rootpath=pytester.path
+            )
+
+        assert len(warn) == 1
+        assert str(warn[0].message).endswith("after configuration phase")
         assert config.option.test123
 
     def test_do_option_postinit_nodefault(self, pytester: Pytester) -> None:
@@ -87,7 +92,9 @@ class TestPytestPluginInteractions:
                 parser.addoption('--deadbeef', action="store_true")
         """
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            UsageError, match="^Cannot add options after initial conftest discovery$"
+        ):
             config.pluginmanager._importconftest(
                 p, importmode="prepend", rootpath=pytester.path
             )

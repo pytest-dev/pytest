@@ -22,6 +22,7 @@ from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
 from _pytest.deprecated import ARGUMENT_TYPE_STR
 from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 from _pytest.deprecated import check_ispytest
+from _pytest.warning_types import PytestConfigWarning
 
 if TYPE_CHECKING:
     from typing import NoReturn
@@ -363,9 +364,12 @@ class OptionGroup:
         accepted **and** the automatic destination is in ``args.twowords``.
         """
         if getattr(self.parser, "after_preparse", False) and "default" not in attrs:
-            raise ValueError(
-                "Cannot add options without default after initial conftest discovery"
+            raise UsageError("Cannot add options after initial conftest discovery")
+        elif getattr(self.parser, "after_preparse", False):
+            warn = ("Adding option {option} after configuration phase").format(
+                option=optnames
             )
+            warnings.warn(PytestConfigWarning(warn), stacklevel=3)
 
         conflict = set(optnames).intersection(
             name for opt in self.options for name in opt.names()

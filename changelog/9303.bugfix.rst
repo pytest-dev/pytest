@@ -1,2 +1,8 @@
 `Parser.addoption` now throws a value error if an attempt is made at adding an option
-after the pre_parsing process without including a default.
+after the pre_parsing process without including a default. If the user decides to
+provides a default a warning will be given since the option will not be available
+for use in the command line.
+
+This occurs if conftest files aren't in the root directory or any sub directory
+matching the `test*` regex. conftest files which match the previous statement
+will have their options added after the configuration and parsing phase.
