@@ -391,6 +391,13 @@ actual latest release). The procedure for this is:
    request, as described above. An exception to this is if the bug fix is not
    applicable to ``main`` anymore.
 
+Automatic method:
+
+Add a ``backport 1.2.x`` label to the PR you want to backport. This will create
+a backport PR against the ``1.2.x`` branch.
+
+Manual method:
+
 #. ``git checkout origin/1.2.x -b backport-XXXX`` # use the main PR number here
 
 #. Locate the merge commit on the PR, in the *merged* message, for example:
