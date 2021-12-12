@@ -1021,8 +1021,8 @@ class TestAssert_reprcompare_attrsclass:
         class SimpleDataObject:
             field_a = attr.ib()
 
-            def __eq__(self, other):
-                return self.field_a == other.field_a
+            def __eq__(self, other):  # pragma: no cover
+                return super().__eq__(other)
 
         left = SimpleDataObject(1)
         right = SimpleDataObject(2)
