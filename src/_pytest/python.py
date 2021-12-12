@@ -224,11 +224,15 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> "Module":
 
 
 @hookimpl(trylast=True)
-def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj: object):
+def pytest_pycollect_makeitem(
+    collector: Union["Module", "Class"], name: str, obj: object
+) -> Union[None, nodes.Item, nodes.Collector, List[Union[nodes.Item, nodes.Collector]]]:
+    assert isinstance(collector, (Class, Module)), type(collector)
     # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
-            return Class.from_parent(collector, name=name, obj=obj)
+            klass: Class = Class.from_parent(collector, name=name, obj=obj)
+            return klass
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it.
         obj = getattr(obj, "__func__", obj)
@@ -247,15 +251,16 @@ def pytest_pycollect_makeitem(collector: "PyCollector", name: str, obj: object):
             )
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
-                res = Function.from_parent(collector, name=name)
+                res: Function = Function.from_parent(collector, name=name)
                 reason = "yield tests were removed in pytest 4.0 - {name} will be ignored".format(
                     name=name
                 )
                 res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
                 res.warn(PytestCollectionWarning(reason))
+                return res
             else:
-                res = list(collector._genfunctions(name, obj))
-            return res
+                return list(collector._genfunctions(name, obj))
+    return None
 
 
 class PyobjMixin(nodes.Node):
