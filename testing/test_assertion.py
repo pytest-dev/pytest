@@ -1016,6 +1016,22 @@ class TestAssert_reprcompare_attrsclass:
         lines = callequal(left, right)
         assert lines is None
 
+    def test_attrs_with_auto_detect_and_custom_eq(self) -> None:
+        @attr.s(
+            auto_detect=True
+        )  # attr.s doesn’t ignore a custom eq if auto_detect=True
+        class SimpleDataObject:
+            field_a = attr.ib()
+
+            def __eq__(self, other):  # pragma: no cover
+                return super().__eq__(other)
+
+        left = SimpleDataObject(1)
+        right = SimpleDataObject(2)
+        # issue 9362
+        lines = callequal(left, right, verbose=2)
+        assert lines is None
+
     def test_attrs_with_custom_eq(self) -> None:
         @attr.define
         class SimpleDataObject:
