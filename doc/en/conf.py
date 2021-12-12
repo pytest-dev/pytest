@@ -445,6 +445,13 @@ def setup(app: "sphinx.application.Sphinx") -> None:
         indextemplate="pair: %s; global variable interpreted by pytest",
     )
 
+    app.add_crossref_type(
+        directivename="hook",
+        rolename="hook",
+        objname="pytest hook",
+        indextemplate="pair: %s; hook",
+    )
+
     configure_logging(app)
 
     # Make Sphinx mark classes with "final" when decorated with @final.

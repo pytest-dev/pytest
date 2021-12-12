@@ -163,7 +163,7 @@ def pytest_cmdline_preparse(config: "Config", args: List[str]) -> None:
     """(**Deprecated**) modify command line arguments before option parsing.
 
     This hook is considered deprecated and will be removed in a future pytest version. Consider
-    using :func:`pytest_load_initial_conftests` instead.
+    using :hook:`pytest_load_initial_conftests` instead.
 
     .. note::
         This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
@@ -467,7 +467,7 @@ def pytest_runtest_logstart(
 ) -> None:
     """Called at the start of running the runtest protocol for a single item.
 
-    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
+    See :hook:`pytest_runtest_protocol` for a description of the runtest protocol.
 
     :param str nodeid: Full node ID of the item.
     :param location: A tuple of ``(filename, lineno, testname)``.
@@ -479,7 +479,7 @@ def pytest_runtest_logfinish(
 ) -> None:
     """Called at the end of running the runtest protocol for a single item.
 
-    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
+    See :hook:`pytest_runtest_protocol` for a description of the runtest protocol.
 
     :param str nodeid: Full node ID of the item.
     :param location: A tuple of ``(filename, lineno, testname)``.
@@ -526,7 +526,7 @@ def pytest_runtest_makereport(
     """Called to create a :class:`~pytest.TestReport` for each of
     the setup, call and teardown runtest phases of a test item.
 
-    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
+    See :hook:`pytest_runtest_protocol` for a description of the runtest protocol.
 
     :param call: The :class:`~pytest.CallInfo` for the phase.
 
@@ -538,7 +538,7 @@ def pytest_runtest_logreport(report: "TestReport") -> None:
     """Process the :class:`~pytest.TestReport` produced for each
     of the setup, call and teardown runtest phases of an item.
 
-    See :func:`pytest_runtest_protocol` for a description of the runtest protocol.
+    See :hook:`pytest_runtest_protocol` for a description of the runtest protocol.
     """
 
 
@@ -557,7 +557,7 @@ def pytest_report_from_serializable(
     data: Dict[str, Any],
 ) -> Optional[Union["CollectReport", "TestReport"]]:
     """Restore a report object previously serialized with
-    :func:`pytest_report_to_serializable`."""
+    :hook:`pytest_report_to_serializable`."""
 
 
 # -------------------------------------------------------------------------
@@ -895,10 +895,10 @@ def pytest_exception_interact(
     """Called when an exception was raised which can potentially be
     interactively handled.
 
-    May be called during collection (see :py:func:`pytest_make_collect_report`),
+    May be called during collection (see :hook:`pytest_make_collect_report`),
     in which case ``report`` is a :class:`CollectReport`.
 
-    May be called during runtest of an item (see :py:func:`pytest_runtest_protocol`),
+    May be called during runtest of an item (see :hook:`pytest_runtest_protocol`),
     in which case ``report`` is a :class:`TestReport`.
 
     This hook is not called if the exception that was raised is an internal
