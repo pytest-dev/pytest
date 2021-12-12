@@ -460,7 +460,7 @@ def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
         fields_to_check = left._fields
     else:
         assert False
-        
+
     indent = "  "
     same = []
     diff = []
