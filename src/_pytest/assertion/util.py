@@ -149,9 +149,11 @@ def has_default_eq(
         return True
 
     code_filename = obj.__eq__.__code__.co_filename
+
     if isattrs(obj):
-        return "attrs eq generated" in code_filename
-    return code_filename == "<string>"  # dataclass
+        return "attrs generated eq" in code_filename
+
+    return code_filename == "<string>"  # data class
 
 
 def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[str]]:
