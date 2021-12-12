@@ -146,15 +146,14 @@ def has_default_eq(
     for dataclasses the default co_filename is <string>, for attrs class, the __eq__ should contain "attrs eq generated"
     """
     # inspired from https://github.com/willmcgugan/rich/blob/07d51ffc1aee6f16bd2e5a25b4e82850fb9ed778/rich/pretty.py#L68
-    if not hasattr(obj.__eq__, "__code__"):  # the obj does not have a code attribute
-        return True
+    if hasattr(obj.__eq__, "__code__") and hasattr(obj.__eq__.__code__, "co_filename"):
+        code_filename = obj.__eq__.__code__.co_filename
 
-    code_filename = obj.__eq__.__code__.co_filename
+        if isattrs(obj):
+            return "attrs generated eq" in code_filename
 
-    if isattrs(obj):
-        return "attrs generated eq" in code_filename
-
-    return code_filename == "<string>"  # data class
+        return code_filename == "<string>"  # data class
+    return True
 
 
 def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[str]]:
