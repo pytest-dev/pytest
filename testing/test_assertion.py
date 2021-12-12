@@ -899,6 +899,16 @@ class TestAssert_reprcompare_dataclass:
         result = pytester.runpytest(p, "-vv")
         result.assert_outcomes(failed=0, passed=1)
 
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
+    def test_data_classes_with_custom_eq(self, pytester: Pytester) -> None:
+        p = pytester.copy_example(
+            "dataclasses/test_compare_dataclasses_with_custom_eq.py"
+        )
+        # issue 9362
+        result = pytester.runpytest(p, "-vv")
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.no_re_match_line(".*Differing attributes.*")
+
 
 class TestAssert_reprcompare_attrsclass:
     def test_attrs(self) -> None:
@@ -982,7 +992,6 @@ class TestAssert_reprcompare_attrsclass:
         right = SimpleDataObject(1, "b")
 
         lines = callequal(left, right, verbose=2)
-        print(lines)
         assert lines is not None
         assert lines[2].startswith("Matching attributes:")
         assert "Omitting" not in lines[1]
@@ -1005,6 +1014,20 @@ class TestAssert_reprcompare_attrsclass:
         right = SimpleDataObjectTwo(1, "c")
 
         lines = callequal(left, right)
+        assert lines is None
+
+    def test_attrs_with_custom_eq(self) -> None:
+        @attr.define
+        class SimpleDataObject:
+            field_a = attr.ib()
+
+            def __eq__(self, other):
+                return self.field_a == other.field_a
+
+        left = SimpleDataObject(1)
+        right = SimpleDataObject(2)
+        # issue 9362
+        lines = callequal(left, right, verbose=2)
         assert lines is None
 
 
