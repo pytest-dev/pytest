@@ -156,7 +156,7 @@ Deprecations
   See :ref:`the deprecation note <diamond-inheritance-deprecated>` for full details.
 
 
-- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: :func:`pytest_cmdline_preparse <_pytest.hookspec.pytest_cmdline_preparse>` has been officially deprecated.  It will be removed in a future release.  Use :func:`pytest_load_initial_conftests <_pytest.hookspec.pytest_load_initial_conftests>` instead.
+- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: :hook:`pytest_cmdline_preparse` has been officially deprecated.  It will be removed in a future release.  Use :hook:`pytest_load_initial_conftests` instead.
 
   See :ref:`the deprecation note <cmdline-preparse-deprecated>` for full details.
 
@@ -203,11 +203,11 @@ Features
   - ``pytest.Mark`` for :class:`marks <pytest.Mark>`.
   - ``pytest.MarkDecorator`` for :class:`mark decorators <pytest.MarkDecorator>`.
   - ``pytest.MarkGenerator`` for the :class:`pytest.mark <pytest.MarkGenerator>` singleton.
-  - ``pytest.Metafunc`` for the :class:`metafunc <pytest.MarkGenerator>` argument to the :func:`pytest_generate_tests <pytest.hookspec.pytest_generate_tests>` hook.
+  - ``pytest.Metafunc`` for the :class:`metafunc <pytest.MarkGenerator>` argument to the :hook:`pytest_generate_tests` hook.
   - ``pytest.CallInfo`` for the :class:`CallInfo <pytest.CallInfo>` type passed to various hooks.
   - ``pytest.PytestPluginManager`` for :class:`PytestPluginManager <pytest.PytestPluginManager>`.
   - ``pytest.ExceptionInfo`` for the :class:`ExceptionInfo <pytest.ExceptionInfo>` type returned from :func:`pytest.raises` and passed to various hooks.
-  - ``pytest.Parser`` for the :class:`Parser <pytest.Parser>` type passed to the :func:`pytest_addoption <pytest.hookspec.pytest_addoption>` hook.
+  - ``pytest.Parser`` for the :class:`Parser <pytest.Parser>` type passed to the :hook:`pytest_addoption` hook.
   - ``pytest.OptionGroup`` for the :class:`OptionGroup <pytest.OptionGroup>` type returned from the :func:`parser.addgroup <pytest.Parser.getgroup>` method.
   - ``pytest.HookRecorder`` for the :class:`HookRecorder <pytest.HookRecorder>` type returned from :class:`~pytest.Pytester`.
   - ``pytest.RecordedHookCall`` for the :class:`RecordedHookCall <pytest.HookRecorder>` type returned from :class:`~pytest.HookRecorder`.
@@ -228,11 +228,11 @@ Features
 
 - `#8144 <https://github.com/pytest-dev/pytest/issues/8144>`_: The following hooks now receive an additional ``pathlib.Path`` argument, equivalent to an existing ``py.path.local`` argument:
 
-  - :func:`pytest_ignore_collect <_pytest.hookspec.pytest_ignore_collect>` - The ``collection_path`` parameter (equivalent to existing ``path`` parameter).
-  - :func:`pytest_collect_file <_pytest.hookspec.pytest_collect_file>` - The ``file_path`` parameter (equivalent to existing ``path`` parameter).
-  - :func:`pytest_pycollect_makemodule <_pytest.hookspec.pytest_pycollect_makemodule>` - The ``module_path`` parameter (equivalent to existing ``path`` parameter).
-  - :func:`pytest_report_header <_pytest.hookspec.pytest_report_header>` - The ``start_path`` parameter (equivalent to existing ``startdir`` parameter).
-  - :func:`pytest_report_collectionfinish <_pytest.hookspec.pytest_report_collectionfinish>` - The ``start_path`` parameter (equivalent to existing ``startdir`` parameter).
+  - :hook:`pytest_ignore_collect` - The ``collection_path`` parameter (equivalent to existing ``path`` parameter).
+  - :hook:`pytest_collect_file` - The ``file_path`` parameter (equivalent to existing ``path`` parameter).
+  - :hook:`pytest_pycollect_makemodule` - The ``module_path`` parameter (equivalent to existing ``path`` parameter).
+  - :hook:`pytest_report_header` - The ``start_path`` parameter (equivalent to existing ``startdir`` parameter).
+  - :hook:`pytest_report_collectionfinish` - The ``start_path`` parameter (equivalent to existing ``startdir`` parameter).
 
   .. note::
       The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
@@ -491,7 +491,7 @@ Trivial/Internal Changes
 - `#8913 <https://github.com/pytest-dev/pytest/issues/8913>`_: The private ``CallSpec2._arg2scopenum`` attribute has been removed after an internal refactoring.
 
 
-- `#8967 <https://github.com/pytest-dev/pytest/issues/8967>`_: :func:`pytest_assertion_pass <_pytest.hookspec.pytest_assertion_pass>` is no longer considered experimental and
+- `#8967 <https://github.com/pytest-dev/pytest/issues/8967>`_: :hook:`pytest_assertion_pass` is no longer considered experimental and
   future changes to it will be considered more carefully.
 
 
@@ -853,8 +853,8 @@ Deprecations
   if you use this and want a replacement.
 
 
-- :issue:`7255`: The :func:`pytest_warning_captured <_pytest.hookspec.pytest_warning_captured>` hook is deprecated in favor
-  of :func:`pytest_warning_recorded <_pytest.hookspec.pytest_warning_recorded>`, and will be removed in a future version.
+- :issue:`7255`: The :hook:`pytest_warning_captured` hook is deprecated in favor
+  of :hook:`pytest_warning_recorded`, and will be removed in a future version.
 
 
 - :issue:`7648`: The ``gethookproxy()`` and ``isinitpath()`` methods of ``FSCollector`` and ``Package`` are deprecated;
@@ -962,7 +962,7 @@ Trivial/Internal Changes
   process, pytest now ignores builtin attributes (like ``__class__``,
   ``__delattr__`` and ``__new__``) without consulting the :confval:`python_classes` and
   :confval:`python_functions` configuration options and without passing them to plugins
-  using the :func:`pytest_pycollect_makeitem <_pytest.hookspec.pytest_pycollect_makeitem>` hook.
+  using the :hook:`pytest_pycollect_makeitem` hook.
 
 
 pytest 6.0.2 (2020-09-04)
@@ -1751,7 +1751,7 @@ Bug Fixes
 - :issue:`6646`: Assertion rewriting hooks are (re)stored for the current item, which fixes them being still used after e.g. pytester's :func:`testdir.runpytest <_pytest.pytester.Testdir.runpytest>` etc.
 
 
-- :issue:`6660`: :py:func:`pytest.exit` is handled when emitted from the :func:`pytest_sessionfinish <_pytest.hookspec.pytest_sessionfinish>` hook.  This includes quitting from a debugger.
+- :issue:`6660`: :py:func:`pytest.exit` is handled when emitted from the :hook:`pytest_sessionfinish` hook.  This includes quitting from a debugger.
 
 
 - :issue:`6752`: When :py:func:`pytest.raises` is used as a function (as opposed to a context manager),
@@ -1863,7 +1863,7 @@ Improvements
 - :issue:`6231`: Improve check for misspelling of :ref:`pytest.mark.parametrize ref`.
 
 
-- :issue:`6257`: Handle :py:func:`pytest.exit` being used via :py:func:`~_pytest.hookspec.pytest_internalerror`, e.g. when quitting pdb from post mortem.
+- :issue:`6257`: Handle :func:`pytest.exit` being used via :hook:`pytest_internalerror`, e.g. when quitting pdb from post mortem.
 
 
 
@@ -2497,7 +2497,7 @@ Deprecations
 Features
 --------
 
-- :issue:`3457`: New :func:`~_pytest.hookspec.pytest_assertion_pass`
+- :issue:`3457`: New :hook:`pytest_assertion_pass`
   hook, called with context information when an assertion *passes*.
 
   This hook is still **experimental** so use it with caution.
@@ -5017,9 +5017,9 @@ Features
 - Console output falls back to "classic" mode when capturing is disabled (``-s``),
   otherwise the output gets garbled to the point of being useless. (:issue:`3038`)
 
-- New :func:`~_pytest.hookspec.pytest_runtest_logfinish`
+- New :hook:`pytest_runtest_logfinish`
   hook which is called when a test item has finished executing, analogous to
-  :func:`~_pytest.hookspec.pytest_runtest_logstart`.
+  :hook:`pytest_runtest_logstart`.
   (:issue:`3101`)
 
 - Improve performance when collecting tests using many fixtures. (:issue:`3107`)

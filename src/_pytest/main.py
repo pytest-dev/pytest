@@ -605,8 +605,7 @@ class Session(nodes.FSCollector):
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         """Perform the collection phase for this session.
 
-        This is called by the default
-        :func:`pytest_collection <_pytest.hookspec.pytest_collection>` hook
+        This is called by the default :hook:`pytest_collection` hook
         implementation; see the documentation of this hook for more details.
         For testing purposes, it may also be called directly on a fresh
         ``Session``.

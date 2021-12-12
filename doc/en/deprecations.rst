@@ -81,11 +81,11 @@ no matter what argument was used in the constructor. We expect to deprecate the
 
 In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
 
-*  :func:`pytest_ignore_collect(collection_path: pathlib.Path) <_pytest.hookspec.pytest_ignore_collect>` as equivalent to ``path``
-*  :func:`pytest_collect_file(file_path: pathlib.Path) <_pytest.hookspec.pytest_collect_file>` as equivalent to ``path``
-*  :func:`pytest_pycollect_makemodule(module_path: pathlib.Path) <_pytest.hookspec.pytest_pycollect_makemodule>` as equivalent to ``path``
-*  :func:`pytest_report_header(start_path: pathlib.Path) <_pytest.hookspec.pytest_report_header>` as equivalent to ``startdir``
-*  :func:`pytest_report_collectionfinish(start_path: pathlib.Path) <_pytest.hookspec.pytest_report_collectionfinish>` as equivalent to ``startdir``
+*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
+*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
+*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
+*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
+*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
 
 The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
@@ -157,8 +157,8 @@ Implementing the ``pytest_cmdline_preparse`` hook
 
 .. deprecated:: 7.0
 
-Implementing the :func:`pytest_cmdline_preparse <_pytest.hookspec.pytest_cmdline_preparse>` hook has been officially deprecated.
-Implement the :func:`pytest_load_initial_conftests <_pytest.hookspec.pytest_load_initial_conftests>` hook instead.
+Implementing the :hook:`pytest_cmdline_preparse` hook has been officially deprecated.
+Implement the :hook:`pytest_load_initial_conftests` hook instead.
 
 .. code-block:: python
 
@@ -331,8 +331,8 @@ at some point, depending on the plans for the plugins and number of users using 
 
 .. versionremoved:: 6.0
 
-The ``pytest_collect_directory`` has not worked properly for years (it was called
-but the results were ignored). Users may consider using :func:`pytest_collection_modifyitems <_pytest.hookspec.pytest_collection_modifyitems>` instead.
+The ``pytest_collect_directory`` hook has not worked properly for years (it was called
+but the results were ignored). Users may consider using :hook:`pytest_collection_modifyitems` instead.
 
 TerminalReporter.writer
 ~~~~~~~~~~~~~~~~~~~~~~~
