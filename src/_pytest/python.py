@@ -1146,6 +1146,8 @@ class CallSpec2:
     # arg name -> arg value which will be passed to a fixture of the same name
     # (indirect parametrization).
     params: Dict[str, object] = attr.Factory(dict)
+    # arg name -> parameter key.
+    param_keys: Dict[str, Hashable] = attr.Factory(dict)
     # arg name -> arg index.
     indices: Dict[str, int] = attr.Factory(dict)
     # Used for sorting parametrized resources.
@@ -1165,9 +1167,12 @@ class CallSpec2:
         marks: Iterable[Union[Mark, MarkDecorator]],
         scope: Scope,
         param_index: int,
+        param_set_keys: Dict[str, Hashable],
     ) -> "CallSpec2":
+        """Extend an existing callspec with new parameters during multiple invocation of Metafunc.parametrize."""
         funcargs = self.funcargs.copy()
         params = self.params.copy()
+        param_keys = self.param_keys.copy()
         indices = self.indices.copy()
         arg2scope = self._arg2scope.copy()
         for arg, val in zip(argnames, valset):
@@ -1181,10 +1186,12 @@ class CallSpec2:
             else:
                 assert_never(valtype_for_arg)
             indices[arg] = param_index
+            param_keys[arg] = param_set_keys[arg]
             arg2scope[arg] = scope
         return CallSpec2(
             funcargs=funcargs,
             params=params,
+            param_keys=param_keys,
             arg2scope=arg2scope,
             indices=indices,
             idlist=[*self._idlist, id],
@@ -1354,7 +1361,7 @@ class Metafunc:
             if generated_ids is not None:
                 ids = generated_ids
 
-        ids = self._resolve_parameter_set_ids(
+        ids, parameters_keys = self._resolve_parameter_set_ids(
             argnames, ids, parametersets, nodeid=self.definition.nodeid
         )
 
@@ -1367,17 +1374,18 @@ class Metafunc:
         # of all calls.
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
-            for param_index, (param_id, param_set) in enumerate(
-                zip(ids, parametersets)
+            for param_index, (param_id, parameterset, param_set_keys) in enumerate(
+                zip(ids, parametersets, parameters_keys)
             ):
                 newcallspec = callspec.setmulti(
                     valtypes=arg_values_types,
                     argnames=argnames,
-                    valset=param_set.values,
+                    valset=parameterset.values,
                     id=param_id,
-                    marks=param_set.marks,
+                    marks=parameterset.marks,
                     scope=scope_,
                     param_index=param_index,
+                    param_set_keys=param_set_keys,
                 )
                 newcalls.append(newcallspec)
         self._calls = newcalls
@@ -1393,9 +1401,8 @@ class Metafunc:
         ],
         parametersets: Sequence[ParameterSet],
         nodeid: str,
-    ) -> List[str]:
+    ) -> Tuple[List[str], List[Dict[str, Hashable]]]:
         """Resolve the actual ids for the given parameter sets.
-
         :param argnames:
             Argument names passed to ``parametrize()``.
         :param ids:
@@ -1407,7 +1414,9 @@ class Metafunc:
             The nodeid of the definition item that generated this
             parametrization.
         :returns:
-            List with ids for each parameter set given.
+            Tuple, where
+            1st entry is a list with ids for each parameter set given used to name test invocations, and
+            2nd entry is a list with keys to support distinction of parameters to support fixture reuse.
         """
         if ids is None:
             idfn = None
@@ -1421,7 +1430,9 @@ class Metafunc:
         id_maker = IdMaker(
             argnames, parametersets, idfn, ids_, self.config, nodeid=nodeid
         )
-        return id_maker.make_unique_parameterset_ids()
+        return id_maker.make_unique_parameterset_ids(), list(
+            id_maker.make_parameter_keys()
+        )
 
     def _validate_ids(
         self,
