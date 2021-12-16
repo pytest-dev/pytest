@@ -249,21 +249,21 @@ def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_K
         pass
     else:
         cs: CallSpec2 = callspec
-        # cs.indices.items() is random order of argnames.  Need to
+        # cs.param_keys.items() is random order of argnames.  Need to
         # sort this so that different calls to
         # get_parametrized_fixture_keys will be deterministic.
-        for argname, param_index in sorted(cs.indices.items()):
+        for argname, param_key in sorted(cs.param_keys.items()):
             if cs._arg2scope[argname] != scope:
                 continue
             if scope is Scope.Session:
-                key: _Key = (argname, param_index)
+                key: _Key = (argname, param_key)
             elif scope is Scope.Package:
-                key = (argname, param_index, item.path.parent)
+                key = (argname, param_key, item.path.parent)
             elif scope is Scope.Module:
-                key = (argname, param_index, item.path)
+                key = (argname, param_key, item.path)
             elif scope is Scope.Class:
                 item_cls = item.cls  # type: ignore[attr-defined]
-                key = (argname, param_index, item.path, item_cls)
+                key = (argname, param_key, item.path, item_cls)
             else:
                 assert_never(scope)
             yield key
