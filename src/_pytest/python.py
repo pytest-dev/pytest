@@ -9,6 +9,7 @@ import types
 import warnings
 from collections import Counter
 from collections import defaultdict
+from collections.abc import Hashable
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -929,6 +930,38 @@ def hasnew(obj: object) -> bool:
     return False
 
 
+@attr.s(auto_attribs=True, eq=False, slots=True)
+class SafeHashWrapper:
+    """Wrap an arbitrary type so that it becomes comparable with guaranteed constraints.
+
+    Constraints:
+    - SafeHashWrapper(a) == SafeHashWrapper(b) will never raise an exception
+    - SafeHashWrapper(a) == SafeHashWrapper(b) will always return bool
+      (oddly some inner types wouldn't, e.g. numpy.array([0]) == numpy.array([0]) returns List)
+    - SafeHashWrapper(a) is always hashable
+    - if SafeHashWrapper(a) == SafeHashWrapper(b),
+      then hash(SafeHashWrapper(a)) == hash(SafeHashWrapper(b))
+
+    It works by falling back to identity compare in case constraints couldn't be met otherwise.
+    """
+
+    obj: Any
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(self.obj, Hashable) and isinstance(other, Hashable):
+            try:
+                res = self.obj == other
+                return bool(res)
+            except Exception:
+                pass
+        return self.obj is other
+
+    def __hash__(self) -> int:
+        if isinstance(self.obj, Hashable):
+            return hash(self.obj)
+        return hash(id(self.obj))
+
+
 @final
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class IdMaker:
@@ -976,6 +1009,27 @@ class IdMaker:
                     id_suffixes[id] += 1
         return resolved_ids
 
+    def make_parameter_keys(self) -> Iterable[Dict[str, Hashable]]:
+        """Make hashable parameter keys for each ParameterSet.
+
+        For each ParameterSet, generates a dict mapping each parameter to its key.
+
+        This key will be considered (along with the arguments name) to determine
+        if parameters are the same in the sense of reorder_items() and the
+        FixtureDef cache. The key is guaranteed to be hashable and comparable.
+        It's not intended for printing and therefore not ASCII escaped.
+        """
+        for idx, parameterset in enumerate(self.parametersets):
+            if parameterset.id is not None:
+                # ID provided directly - pytest.param(..., id="...")
+                yield {argname: parameterset.id for argname in self.argnames}
+            elif self.ids and idx < len(self.ids) and self.ids[idx] is not None:
+                # ID provided in the IDs list - parametrize(..., ids=[...]).
+                yield {argname: self.ids[idx] for argname in self.argnames}
+            else:
+                # ID not provided - generate it.
+                yield self._parameter_keys_from_parameterset(parameterset, idx)
+
     def _resolve_ids(self) -> Iterable[str]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
         for idx, parameterset in enumerate(self.parametersets):
@@ -993,6 +1047,20 @@ class IdMaker:
                     self._idval(val, argname, idx)
                     for val, argname in zip(parameterset.values, self.argnames)
                 )
+
+    def _parameter_keys_from_parameterset(
+        self, parameterset: ParameterSet, idx: int
+    ) -> Dict[str, Hashable]:
+        """Make parameter keys for all parameters in a ParameterSet."""
+        param_keys: Dict[str, Hashable] = {}
+        for val, argname in zip(parameterset.values, self.argnames):
+            evaluated_id = self._idval_from_function(val, argname, idx)
+            if evaluated_id is not None:
+                param_keys[argname] = evaluated_id
+            else:
+                # Wrapping ensures val becomes comparable and hashable.
+                param_keys[argname] = SafeHashWrapper(val)
+        return param_keys
 
     def _idval(self, val: object, argname: str, idx: int) -> str:
         """Make an ID for a parameter in a ParameterSet."""
