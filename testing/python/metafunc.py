@@ -24,8 +24,7 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.pytester import Pytester
-from _pytest.python import _idval
-from _pytest.python import idmaker
+from _pytest.python import IdMaker
 from _pytest.scope import Scope
 
 
@@ -286,7 +285,7 @@ class TestMetafunc:
         deadline=400.0
     )  # very close to std deadline and CI boxes are not reliable in CPU power
     def test_idval_hypothesis(self, value) -> None:
-        escaped = _idval(value, "a", 6, None, nodeid=None, config=None)
+        escaped = IdMaker([], [], None, None, None, None)._idval(value, "a", 6)
         assert isinstance(escaped, str)
         escaped.encode("ascii")
 
@@ -308,7 +307,9 @@ class TestMetafunc:
             ),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, None, nodeid=None, config=None) == expected
+            assert (
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
+            )
 
     def test_unicode_idval_with_config(self) -> None:
         """Unit test for expected behavior to obtain ids with
@@ -336,7 +337,7 @@ class TestMetafunc:
             ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for val, config, expected in values:
-            actual = _idval(val, "a", 6, None, nodeid=None, config=config)
+            actual = IdMaker([], [], None, None, config, None)._idval(val, "a", 6)
             assert actual == expected
 
     def test_bytes_idval(self) -> None:
@@ -349,7 +350,9 @@ class TestMetafunc:
             ("αρά".encode(), r"\xce\xb1\xcf\x81\xce\xac"),
         ]
         for val, expected in values:
-            assert _idval(val, "a", 6, idfn=None, nodeid=None, config=None) == expected
+            assert (
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
+            )
 
     def test_class_or_function_idval(self) -> None:
         """Unit test for the expected behavior to obtain ids for parametrized
@@ -363,7 +366,9 @@ class TestMetafunc:
 
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
-            assert _idval(val, "a", 6, None, nodeid=None, config=None) == expected
+            assert (
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
+            )
 
     def test_notset_idval(self) -> None:
         """Test that a NOTSET value (used by an empty parameterset) generates
@@ -371,29 +376,43 @@ class TestMetafunc:
 
         Regression test for #7686.
         """
-        assert _idval(NOTSET, "a", 0, None, nodeid=None, config=None) == "a0"
+        assert IdMaker([], [], None, None, None, None)._idval(NOTSET, "a", 0) == "a0"
 
     def test_idmaker_autoname(self) -> None:
         """#250"""
-        result = idmaker(
-            ("a", "b"), [pytest.param("string", 1.0), pytest.param("st-ring", 2.0)]
-        )
+        result = IdMaker(
+            ("a", "b"),
+            [pytest.param("string", 1.0), pytest.param("st-ring", 2.0)],
+            None,
+            None,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["string-1.0", "st-ring-2.0"]
 
-        result = idmaker(
-            ("a", "b"), [pytest.param(object(), 1.0), pytest.param(object(), object())]
-        )
+        result = IdMaker(
+            ("a", "b"),
+            [pytest.param(object(), 1.0), pytest.param(object(), object())],
+            None,
+            None,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
-        result = idmaker(("a", "b"), [pytest.param({}, b"\xc3\xb4")])
+        result = IdMaker(
+            ("a", "b"), [pytest.param({}, b"\xc3\xb4")], None, None, None, None
+        ).make_unique_parameterset_ids()
         assert result == ["a0-\\xc3\\xb4"]
 
     def test_idmaker_with_bytes_regex(self) -> None:
-        result = idmaker(("a"), [pytest.param(re.compile(b"foo"), 1.0)])
+        result = IdMaker(
+            ("a"), [pytest.param(re.compile(b"foo"), 1.0)], None, None, None, None
+        ).make_unique_parameterset_ids()
         assert result == ["foo"]
 
     def test_idmaker_native_strings(self) -> None:
-        result = idmaker(
+        result = IdMaker(
             ("a", "b"),
             [
                 pytest.param(1.0, -1.1),
@@ -410,7 +429,11 @@ class TestMetafunc:
                 pytest.param(b"\xc3\xb4", "other"),
                 pytest.param(1.0j, -2.0j),
             ],
-        )
+            None,
+            None,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == [
             "1.0--1.1",
             "2--202",
@@ -428,7 +451,7 @@ class TestMetafunc:
         ]
 
     def test_idmaker_non_printable_characters(self) -> None:
-        result = idmaker(
+        result = IdMaker(
             ("s", "n"),
             [
                 pytest.param("\x00", 1),
@@ -438,23 +461,33 @@ class TestMetafunc:
                 pytest.param("\t", 5),
                 pytest.param(b"\t", 6),
             ],
-        )
+            None,
+            None,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4", "\\t-5", "\\t-6"]
 
     def test_idmaker_manual_ids_must_be_printable(self) -> None:
-        result = idmaker(
+        result = IdMaker(
             ("s",),
             [
                 pytest.param("x00", id="hello \x00"),
                 pytest.param("x05", id="hello \x05"),
             ],
-        )
+            None,
+            None,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["hello \\x00", "hello \\x05"]
 
     def test_idmaker_enum(self) -> None:
         enum = pytest.importorskip("enum")
         e = enum.Enum("Foo", "one, two")
-        result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
+        result = IdMaker(
+            ("a", "b"), [pytest.param(e.one, e.two)], None, None, None, None
+        ).make_unique_parameterset_ids()
         assert result == ["Foo.one-Foo.two"]
 
     def test_idmaker_idfn(self) -> None:
@@ -465,15 +498,18 @@ class TestMetafunc:
                 return repr(val)
             return None
 
-        result = idmaker(
+        result = IdMaker(
             ("a", "b"),
             [
                 pytest.param(10.0, IndexError()),
                 pytest.param(20, KeyError()),
                 pytest.param("three", [1, 2, 3]),
             ],
-            idfn=ids,
-        )
+            ids,
+            None,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["10.0-IndexError()", "20-KeyError()", "three-b2"]
 
     def test_idmaker_idfn_unique_names(self) -> None:
@@ -482,15 +518,18 @@ class TestMetafunc:
         def ids(val: object) -> str:
             return "a"
 
-        result = idmaker(
+        result = IdMaker(
             ("a", "b"),
             [
                 pytest.param(10.0, IndexError()),
                 pytest.param(20, KeyError()),
                 pytest.param("three", [1, 2, 3]),
             ],
-            idfn=ids,
-        )
+            ids,
+            None,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["a-a0", "a-a1", "a-a2"]
 
     def test_idmaker_with_idfn_and_config(self) -> None:
@@ -520,12 +559,9 @@ class TestMetafunc:
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
-            result = idmaker(
-                ("a",),
-                [pytest.param("string")],
-                idfn=lambda _: "ação",
-                config=config,
-            )
+            result = IdMaker(
+                ("a",), [pytest.param("string")], lambda _: "ação", None, config, None
+            ).make_unique_parameterset_ids()
             assert result == [expected]
 
     def test_idmaker_with_ids_and_config(self) -> None:
@@ -555,12 +591,9 @@ class TestMetafunc:
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
-            result = idmaker(
-                ("a",),
-                [pytest.param("string")],
-                ids=["ação"],
-                config=config,
-            )
+            result = IdMaker(
+                ("a",), [pytest.param("string")], None, ["ação"], config, None
+            ).make_unique_parameterset_ids()
             assert result == [expected]
 
     def test_parametrize_ids_exception(self, pytester: Pytester) -> None:
@@ -617,23 +650,36 @@ class TestMetafunc:
         )
 
     def test_idmaker_with_ids(self) -> None:
-        result = idmaker(
-            ("a", "b"), [pytest.param(1, 2), pytest.param(3, 4)], ids=["a", None]
-        )
+        result = IdMaker(
+            ("a", "b"),
+            [pytest.param(1, 2), pytest.param(3, 4)],
+            None,
+            ["a", None],
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["a", "3-4"]
 
     def test_idmaker_with_paramset_id(self) -> None:
-        result = idmaker(
+        result = IdMaker(
             ("a", "b"),
             [pytest.param(1, 2, id="me"), pytest.param(3, 4, id="you")],
-            ids=["a", None],
-        )
+            None,
+            ["a", None],
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["me", "you"]
 
     def test_idmaker_with_ids_unique_names(self) -> None:
-        result = idmaker(
-            ("a"), map(pytest.param, [1, 2, 3, 4, 5]), ids=["a", "a", "b", "c", "b"]
-        )
+        result = IdMaker(
+            ("a"),
+            list(map(pytest.param, [1, 2, 3, 4, 5])),
+            None,
+            ["a", "a", "b", "c", "b"],
+            None,
+            None,
+        ).make_unique_parameterset_ids()
         assert result == ["a0", "a1", "b0", "c", "b1"]
 
     def test_parametrize_indirect(self) -> None:
