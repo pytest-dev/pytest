@@ -5,6 +5,7 @@ import sys
 import warnings
 from collections import defaultdict
 from collections import deque
+from collections.abc import Hashable
 from contextlib import suppress
 from pathlib import Path
 from types import TracebackType
@@ -601,6 +602,7 @@ class FixtureRequest:
         except (AttributeError, ValueError):
             param = NOTSET
             param_index = 0
+            param_key = ""
             has_params = fixturedef.params is not None
             fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
             if has_params and fixtures_not_supported:
@@ -640,13 +642,14 @@ class FixtureRequest:
                 fail(msg, pytrace=False)
         else:
             param_index = funcitem.callspec.indices[argname]
+            param_key = funcitem.callspec.param_keys[argname]
             # If a parametrize invocation set a scope it will override
             # the static scope defined with the fixture function.
             with suppress(KeyError):
                 scope = funcitem.callspec._arg2scope[argname]
 
         subrequest = SubRequest(
-            self, scope, param, param_index, fixturedef, _ispytest=True
+            self, scope, param, param_index, param_key, fixturedef, _ispytest=True
         )
 
         # Check if a higher-level scoped fixture accesses a lower level one.
@@ -731,6 +734,7 @@ class SubRequest(FixtureRequest):
         scope: Scope,
         param: Any,
         param_index: int,
+        param_key: Hashable,
         fixturedef: "FixtureDef[object]",
         *,
         _ispytest: bool = False,
@@ -741,6 +745,7 @@ class SubRequest(FixtureRequest):
         if param is not NOTSET:
             self.param = param
         self.param_index = param_index
+        self.param_key = param_key
         self._scope = scope
         self._fixturedef = fixturedef
         self._pyfuncitem = request._pyfuncitem
