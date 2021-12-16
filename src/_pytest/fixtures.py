@@ -1017,10 +1017,10 @@ class FixtureDef(Generic[FixtureValue]):
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
-            # note: comparison with `==` can fail (or be expensive) for e.g.
-            # numpy arrays (#6497).
             cache_key = self.cached_result[1]
-            if my_cache_key is cache_key:
+            # Note: Comparison with `==` may be implemented as (possibly expensive)
+            # deep by-value comparison. See _pytest.python.SafeHashWrapper for details.
+            if my_cache_key == cache_key:
                 if self.cached_result[2] is not None:
                     _, val, tb = self.cached_result[2]
                     raise val.with_traceback(tb)
@@ -1037,7 +1037,7 @@ class FixtureDef(Generic[FixtureValue]):
         return result
 
     def cache_key(self, request: SubRequest) -> object:
-        return request.param_index if not hasattr(request, "param") else request.param
+        return request.param_key
 
     def __repr__(self) -> str:
         return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
