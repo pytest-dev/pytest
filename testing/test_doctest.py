@@ -80,7 +80,7 @@ class TestDoctests:
             '# Empty'
             def my_func():
                 ">>> magic = 42 "
-            def unuseful():
+            def useless():
                 '''
                 # This is a function
                 # >>> # it doesn't have any doctest
@@ -564,7 +564,7 @@ class TestDoctests:
                 >>> magic - 42
                 0
                 '''
-            def unuseful():
+            def useless():
                 pass
             def another():
                 '''

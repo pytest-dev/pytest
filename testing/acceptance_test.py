@@ -1281,7 +1281,7 @@ def test_tee_stdio_captures_and_live_prints(pytester: Pytester) -> None:
     reason="Windows raises `OSError: [Errno 22] Invalid argument` instead",
 )
 def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
-    """Ensure that the broken pipe error message is supressed.
+    """Ensure that the broken pipe error message is suppressed.
 
     In some Python versions, it reaches sys.unraisablehook, in others
     a BrokenPipeError exception is propagated, but either way it prints

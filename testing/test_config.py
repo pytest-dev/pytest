@@ -386,7 +386,7 @@ class TestParseIni:
             pytest.param(
                 """
                 [some_other_header]
-                required_plugins = wont be triggered
+                required_plugins = won't be triggered
                 [pytest]
                 """,
                 "1.5",
@@ -807,7 +807,7 @@ class TestConfigAPI:
         with pytest.raises(pytest.UsageError, match=exp_match):
             pytester.parseconfig("--confcutdir", pytester.path.joinpath("file"))
         with pytest.raises(pytest.UsageError, match=exp_match):
-            pytester.parseconfig("--confcutdir", pytester.path.joinpath("inexistant"))
+            pytester.parseconfig("--confcutdir", pytester.path.joinpath("inexistent"))
 
         p = pytester.mkdir("dir")
         config = pytester.parseconfig("--confcutdir", p)
