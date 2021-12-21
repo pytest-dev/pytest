@@ -1,7 +1,7 @@
 name: backport
 
 on:
-  pull_request:
+  pull_request_target:
     types: [labeled]
 
 # Set permissions at the job level.
