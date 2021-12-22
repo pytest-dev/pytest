@@ -92,7 +92,7 @@ class _NodeReporter:
         self.xml = xml
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
-        self.duration = 0
+        self.duration = 0.0
         self.properties: List[Tuple[str, str]] = []
         self.nodes: List[ET.Element] = []
         self.attrs: Dict[str, str] = {}

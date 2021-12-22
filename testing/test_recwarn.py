@@ -114,13 +114,13 @@ class TestDeprecatedCall:
         # Type ignored because `onceregistry` and `filters` are not
         # documented API.
         onceregistry = warnings.onceregistry.copy()  # type: ignore
-        filters = warnings.filters[:]  # type: ignore
+        filters = warnings.filters[:]
         warn = warnings.warn
         warn_explicit = warnings.warn_explicit
         self.test_deprecated_call_raises()
         self.test_deprecated_call()
         assert onceregistry == warnings.onceregistry  # type: ignore
-        assert filters == warnings.filters  # type: ignore
+        assert filters == warnings.filters
         assert warn is warnings.warn
         assert warn_explicit is warnings.warn_explicit
 

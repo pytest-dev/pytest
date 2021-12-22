@@ -14,7 +14,7 @@ def test_item_fspath(pytester: pytest.Pytester) -> None:
     items2, hookrec = pytester.inline_genitems(item.nodeid)
     (item2,) = items2
     assert item2.name == item.name
-    assert item2.fspath == item.fspath  # type: ignore[attr-defined]
+    assert item2.fspath == item.fspath
     assert item2.path == item.path
 
 

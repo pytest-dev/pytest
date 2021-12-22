@@ -332,8 +332,7 @@ def test_findsource(monkeypatch) -> None:
     lines = ["if 1:\n", "    def x():\n", "          pass\n"]
     co = compile("".join(lines), filename, "exec")
 
-    # Type ignored because linecache.cache is private.
-    monkeypatch.setitem(linecache.cache, filename, (1, None, lines, filename))  # type: ignore[attr-defined]
+    monkeypatch.setitem(linecache.cache, filename, (1, None, lines, filename))
 
     src, lineno = findsource(co)
     assert src is not None
