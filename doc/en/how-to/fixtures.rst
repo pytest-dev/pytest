@@ -1267,7 +1267,7 @@ So let's just do another run:
     ========================= short test summary info ==========================
     FAILED test_module.py::test_ehlo[smtp.gmail.com] - assert 0
     FAILED test_module.py::test_noop[smtp.gmail.com] - assert 0
-    FAILED test_module.py::test_ehlo[mail.python.org] - AssertionError: assert...
+    FAILED test_module.py::test_ehlo[mail.python.org] - AssertionError: asser...
     FAILED test_module.py::test_noop[mail.python.org] - assert 0
     4 failed in 0.12s
 

@@ -807,7 +807,7 @@ class TestConfigAPI:
         with pytest.raises(pytest.UsageError, match=exp_match):
             pytester.parseconfig("--confcutdir", pytester.path.joinpath("file"))
         with pytest.raises(pytest.UsageError, match=exp_match):
-            pytester.parseconfig("--confcutdir", pytester.path.joinpath("inexistent"))
+            pytester.parseconfig("--confcutdir", pytester.path.joinpath("nonexistent"))
 
         p = pytester.mkdir("dir")
         config = pytester.parseconfig("--confcutdir", p)
