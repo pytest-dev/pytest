@@ -321,7 +321,7 @@ Plugins often need to store data on :class:`~pytest.Item`\s in one hook
 implementation, and access it in another. One common solution is to just
 assign some private attribute directly on the item, but type-checkers like
 mypy frown upon this, and it may also cause conflicts with other plugins.
-So pytest offers a better way to do this, :attr:`_pytest.nodes.Node.stash <item.stash>`.
+So pytest offers a better way to do this, :attr:`item.stash <_pytest.nodes.Node.stash>`.
 
 To use the "stash" in your plugins, first create "stash keys" somewhere at the
 top level of your plugin:
