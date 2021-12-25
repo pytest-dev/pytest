@@ -913,8 +913,7 @@ class TestPDB:
 class TestDebuggingBreakpoints:
     def test_supports_breakpoint_module_global(self) -> None:
         """Test that supports breakpoint global marks on Python 3.7+."""
-        if sys.version_info >= (3, 7):
-            assert SUPPORTS_BREAKPOINT_BUILTIN is True
+        assert SUPPORTS_BREAKPOINT_BUILTIN is True
 
     @pytest.mark.skipif(
         not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"

@@ -4,7 +4,7 @@ import functools
 import inspect
 import os
 import sys
-from contextlib import contextmanager
+from contextlib import nullcontext as nullcontext  # noqa: F401
 from inspect import Parameter
 from inspect import signature
 from pathlib import Path
@@ -184,16 +184,6 @@ def getfuncargnames(
     if hasattr(function, "__wrapped__"):
         arg_names = arg_names[num_mock_patch_args(function) :]
     return arg_names
-
-
-if sys.version_info < (3, 7):
-
-    @contextmanager
-    def nullcontext():
-        yield
-
-else:
-    from contextlib import nullcontext as nullcontext  # noqa: F401
 
 
 def get_default_arg_names(function: Callable[..., Any]) -> Tuple[str, ...]:

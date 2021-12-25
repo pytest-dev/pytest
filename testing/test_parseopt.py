@@ -295,7 +295,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
-            universal_newlines=True,
+            text=True,
         ).stdout
     except (OSError, subprocess.CalledProcessError):
         pytest.skip("bash is not available")

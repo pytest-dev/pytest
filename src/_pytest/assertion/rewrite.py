@@ -293,9 +293,8 @@ def _write_pyc_fp(
     # import. However, there's little reason to deviate.
     fp.write(importlib.util.MAGIC_NUMBER)
     # https://www.python.org/dev/peps/pep-0552/
-    if sys.version_info >= (3, 7):
-        flags = b"\x00\x00\x00\x00"
-        fp.write(flags)
+    flags = b"\x00\x00\x00\x00"
+    fp.write(flags)
     # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
     mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
     size = source_stat.st_size & 0xFFFFFFFF
