@@ -11,6 +11,8 @@ import attr
 from iniconfig import SectionWrapper
 
 import pytest
+from _pytest._code import Code
+from _pytest._code import TracebackEntry
 from _pytest.compat import final
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
@@ -400,6 +402,19 @@ def Node_fspath_set(self: Node, value: LEGACY_PATH) -> None:
     self.path = Path(value)
 
 
+def Code_path(self: Code) -> Union[str, LEGACY_PATH]:
+    """Return a path object pointing to source code, or an ``str`` in
+    case of ``OSError`` / non-existing file."""
+    path = self.source_path
+    return path if isinstance(path, str) else legacy_path(path)
+
+
+def TracebackEntry_path(self: TracebackEntry) -> Union[str, LEGACY_PATH]:
+    """Path to the source code."""
+    path = self.source_path
+    return path if isinstance(path, str) else legacy_path(path)
+
+
 @pytest.hookimpl
 def pytest_configure(config: pytest.Config) -> None:
     mp = pytest.MonkeyPatch()
@@ -450,6 +465,12 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # Add Node.fspath property.
     mp.setattr(Node, "fspath", property(Node_fspath, Node_fspath_set), raising=False)
+
+    # Add Code.path property.
+    mp.setattr(Code, "path", property(Code_path), raising=False)
+
+    # Add TracebackEntry.path property.
+    mp.setattr(TracebackEntry, "path", property(TracebackEntry_path), raising=False)
 
 
 @pytest.hookimpl

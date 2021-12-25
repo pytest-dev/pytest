@@ -127,7 +127,9 @@ def filter_traceback_for_conftest_import_failure(
     Make a special case for importlib because we use it to import test modules and conftest files
     in _pytest.pathlib.import_path.
     """
-    return filter_traceback(entry) and "importlib" not in str(entry.path).split(os.sep)
+    return filter_traceback(entry) and "importlib" not in str(entry.source_path).split(
+        os.sep
+    )
 
 
 def main(

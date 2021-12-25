@@ -1,5 +1,6 @@
 import ast
 import inspect
+import os
 import re
 import sys
 import traceback
@@ -83,7 +84,7 @@ class Code:
         return self.raw.co_name
 
     @property
-    def path(self) -> Union[Path, str]:
+    def source_path(self) -> Union[Path, str]:
         """Return a path object pointing to source code, or an ``str`` in
         case of ``OSError`` / non-existing file."""
         if not self.raw.co_filename:
@@ -218,7 +219,7 @@ class TracebackEntry:
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self) -> str:
-        return "<TracebackEntry %s:%d>" % (self.frame.code.path, self.lineno + 1)
+        return "<TracebackEntry %s:%d>" % (self.frame.code.source_path, self.lineno + 1)
 
     @property
     def statement(self) -> "Source":
@@ -228,9 +229,9 @@ class TracebackEntry:
         return source.getstatement(self.lineno)
 
     @property
-    def path(self) -> Union[Path, str]:
+    def source_path(self) -> Union[Path, str]:
         """Path to the source code."""
-        return self.frame.code.path
+        return self.frame.code.source_path
 
     @property
     def locals(self) -> Dict[str, Any]:
@@ -251,7 +252,7 @@ class TracebackEntry:
             return None
         key = astnode = None
         if astcache is not None:
-            key = self.frame.code.path
+            key = self.frame.code.source_path
             if key is not None:
                 astnode = astcache.get(key, None)
         start = self.getfirstlinesource()
@@ -307,7 +308,7 @@ class TracebackEntry:
         # but changing it to do so would break certain plugins.  See
         # https://github.com/pytest-dev/pytest/pull/7535/ for details.
         return "  File %r:%d in %s\n  %s\n" % (
-            str(self.path),
+            str(self.source_path),
             self.lineno + 1,
             name,
             line,
@@ -343,10 +344,10 @@ class Traceback(List[TracebackEntry]):
 
     def cut(
         self,
-        path: Optional[Union[Path, str]] = None,
+        path: Optional[Union["os.PathLike[str]", str]] = None,
         lineno: Optional[int] = None,
         firstlineno: Optional[int] = None,
-        excludepath: Optional[Path] = None,
+        excludepath: Optional["os.PathLike[str]"] = None,
     ) -> "Traceback":
         """Return a Traceback instance wrapping part of this Traceback.
 
@@ -357,15 +358,17 @@ class Traceback(List[TracebackEntry]):
         for formatting reasons (removing some uninteresting bits that deal
         with handling of the exception/traceback).
         """
+        path_ = None if path is None else os.fspath(path)
+        excludepath_ = None if excludepath is None else os.fspath(excludepath)
         for x in self:
             code = x.frame.code
-            codepath = code.path
-            if path is not None and codepath != path:
+            codepath = code.source_path
+            if path is not None and str(codepath) != path_:
                 continue
             if (
                 excludepath is not None
                 and isinstance(codepath, Path)
-                and excludepath in codepath.parents
+                and excludepath_ in (str(p) for p in codepath.parents)  # type: ignore[operator]
             ):
                 continue
             if lineno is not None and x.lineno != lineno:
@@ -422,7 +425,7 @@ class Traceback(List[TracebackEntry]):
             # the strange metaprogramming in the decorator lib from pypi
             # which generates code objects that have hash/value equality
             # XXX needs a test
-            key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
+            key = entry.frame.code.source_path, id(entry.frame.code.raw), entry.lineno
             # print "checking for recursion at", key
             values = cache.setdefault(key, [])
             if values:
@@ -818,7 +821,7 @@ class FormattedExcinfo:
                 message = "in %s" % (entry.name)
             else:
                 message = excinfo and excinfo.typename or ""
-            entry_path = entry.path
+            entry_path = entry.source_path
             path = self._makepath(entry_path)
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
             localsrepr = self.repr_locals(entry.locals)
@@ -1227,7 +1230,7 @@ def getfslineno(obj: object) -> Tuple[Union[str, Path], int]:
                 pass
         return fspath, lineno
 
-    return code.path, code.firstlineno
+    return code.source_path, code.firstlineno
 
 
 # Relative paths that we use to filter traceback entries from appearing to the user;
@@ -1260,7 +1263,7 @@ def filter_traceback(entry: TracebackEntry) -> bool:
 
     # entry.path might point to a non-existing file, in which case it will
     # also return a str object. See #1133.
-    p = Path(entry.path)
+    p = Path(entry.source_path)
 
     parents = p.parents
     if _PLUGGY_DIR in parents:

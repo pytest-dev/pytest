@@ -151,7 +151,7 @@ class TestTraceback_f_g_h:
 
     def test_traceback_cut(self) -> None:
         co = _pytest._code.Code.from_function(f)
-        path, firstlineno = co.path, co.firstlineno
+        path, firstlineno = co.source_path, co.firstlineno
         assert isinstance(path, Path)
         traceback = self.excinfo.traceback
         newtraceback = traceback.cut(path=path, firstlineno=firstlineno)
@@ -166,9 +166,9 @@ class TestTraceback_f_g_h:
         basedir = Path(pytest.__file__).parent
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
         for x in newtraceback:
-            assert isinstance(x.path, Path)
-            assert basedir not in x.path.parents
-        assert newtraceback[-1].frame.code.path == p
+            assert isinstance(x.source_path, Path)
+            assert basedir not in x.source_path.parents
+        assert newtraceback[-1].frame.code.source_path == p
 
     def test_traceback_filter(self):
         traceback = self.excinfo.traceback
@@ -295,7 +295,7 @@ class TestTraceback_f_g_h:
         tb = excinfo.traceback
         entry = tb.getcrashentry()
         co = _pytest._code.Code.from_function(h)
-        assert entry.frame.code.path == co.path
+        assert entry.frame.code.source_path == co.source_path
         assert entry.lineno == co.firstlineno + 1
         assert entry.frame.code.name == "h"
 
@@ -312,7 +312,7 @@ class TestTraceback_f_g_h:
         tb = excinfo.traceback
         entry = tb.getcrashentry()
         co = _pytest._code.Code.from_function(g)
-        assert entry.frame.code.path == co.path
+        assert entry.frame.code.source_path == co.source_path
         assert entry.lineno == co.firstlineno + 2
         assert entry.frame.code.name == "g"
 
@@ -376,7 +376,7 @@ def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     for item in excinfo.traceback:
         print(item)  # XXX: for some reason jinja.Template.render is printed in full
         item.source  # shouldn't fail
-        if isinstance(item.path, Path) and item.path.name == "test.txt":
+        if isinstance(item.source_path, Path) and item.source_path.name == "test.txt":
             assert str(item.source) == "{{ h()}}:"
 
 
@@ -398,7 +398,7 @@ def test_codepath_Queue_example() -> None:
     except queue.Empty:
         excinfo = _pytest._code.ExceptionInfo.from_current()
     entry = excinfo.traceback[-1]
-    path = entry.path
+    path = entry.source_path
     assert isinstance(path, Path)
     assert path.name.lower() == "queue.py"
     assert path.exists()

@@ -24,7 +24,7 @@ def test_code_gives_back_name_for_not_existing_file() -> None:
     co_code = compile("pass\n", name, "exec")
     assert co_code.co_filename == name
     code = Code(co_code)
-    assert str(code.path) == name
+    assert str(code.source_path) == name
     assert code.fullsource is None
 
 
@@ -76,7 +76,7 @@ def test_getstatement_empty_fullsource() -> None:
 def test_code_from_func() -> None:
     co = Code.from_function(test_frame_getsourcelineno_myself)
     assert co.firstlineno
-    assert co.path
+    assert co.source_path
 
 
 def test_unicode_handling() -> None:

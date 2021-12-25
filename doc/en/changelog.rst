@@ -473,8 +473,8 @@ Trivial/Internal Changes
 
 - `#8174 <https://github.com/pytest-dev/pytest/issues/8174>`_: The following changes have been made to internal pytest types/functions:
 
-  - The ``path`` property of ``_pytest.code.Code`` returns ``Path`` instead of ``py.path.local``.
-  - The ``path`` property of ``_pytest.code.TracebackEntry`` returns ``Path`` instead of ``py.path.local``.
+  - ``_pytest.code.Code`` has a new attribute ``source_path`` which returns ``Path`` as an alternative to ``path`` which returns ``py.path.local``.
+  - ``_pytest.code.TracebackEntry`` has a new attribute ``source_path`` which returns ``Path`` as an alternative to ``path`` which returns ``py.path.local``.
   - The ``_pytest.code.getfslineno()`` function returns ``Path`` instead of ``py.path.local``.
   - The ``_pytest.python.path_matches_patterns()`` function takes ``Path`` instead of ``py.path.local``.
 

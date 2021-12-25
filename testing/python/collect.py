@@ -1102,7 +1102,7 @@ class TestTracebackCutting:
 
         assert tb is not None
         traceback = _pytest._code.Traceback(tb)
-        assert isinstance(traceback[-1].path, str)
+        assert isinstance(traceback[-1].source_path, str)
         assert not filter_traceback(traceback[-1])
 
     def test_filter_traceback_path_no_longer_valid(self, pytester: Pytester) -> None:
@@ -1132,7 +1132,7 @@ class TestTracebackCutting:
         assert tb is not None
         pytester.path.joinpath("filter_traceback_entry_as_str.py").unlink()
         traceback = _pytest._code.Traceback(tb)
-        assert isinstance(traceback[-1].path, str)
+        assert isinstance(traceback[-1].source_path, str)
         assert filter_traceback(traceback[-1])
 
 
