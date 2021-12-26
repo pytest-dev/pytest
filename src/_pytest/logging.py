@@ -4,6 +4,7 @@ import logging
 import os
 import re
 from contextlib import contextmanager
+from contextlib import nullcontext
 from io import StringIO
 from pathlib import Path
 from typing import AbstractSet
@@ -21,7 +22,6 @@ from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
 from _pytest.compat import final
-from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer

@@ -4,7 +4,6 @@ import functools
 import inspect
 import os
 import sys
-from contextlib import nullcontext as nullcontext  # noqa: F401
 from inspect import Parameter
 from inspect import signature
 from pathlib import Path
