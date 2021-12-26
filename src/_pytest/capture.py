@@ -112,7 +112,7 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
             buffering = -1
 
         return io.TextIOWrapper(
-            open(os.dup(f.fileno()), mode, buffering),  # type: ignore[arg-type]
+            open(os.dup(f.fileno()), mode, buffering),
             f.encoding,
             f.errors,
             f.newlines,
