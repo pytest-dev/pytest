@@ -23,6 +23,8 @@ from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
+from _pytest.legacypath import TempdirFactory
+from _pytest.legacypath import Testdir
 from _pytest.logging import LogCaptureFixture
 from _pytest.main import Session
 from _pytest.mark import Mark
@@ -142,7 +144,9 @@ __all__ = [
     "Stash",
     "StashKey",
     "version_tuple",
+    "TempdirFactory",
     "TempPathFactory",
+    "Testdir",
     "TestReport",
     "UsageError",
     "WarningsRecorder",
