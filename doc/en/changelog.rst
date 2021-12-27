@@ -173,6 +173,12 @@ Deprecations
   This was changed for consistency with :func:`pytest.mark.skip <pytest.mark.skip>` and  :func:`pytest.mark.xfail <pytest.mark.xfail>` which both accept
   ``reason`` as an argument.
 
+- `#8174 <https://github.com/pytest-dev/pytest/issues/8174>`_: The following changes have been made to types reachable through :attr:`pytest.ExceptionInfo.traceback`:
+
+  - The ``path`` property of ``_pytest.code.Code`` returns ``Path`` instead of ``py.path.local``.
+  - The ``path`` property of ``_pytest.code.TracebackEntry`` returns ``Path`` instead of ``py.path.local``.
+
+  There was no deprecation period for this change (sorry!).
 
 
 Features
@@ -473,10 +479,9 @@ Trivial/Internal Changes
 
 - `#8174 <https://github.com/pytest-dev/pytest/issues/8174>`_: The following changes have been made to internal pytest types/functions:
 
-  - The ``path`` property of ``_pytest.code.Code`` returns ``Path`` instead of ``py.path.local``.
-  - The ``path`` property of ``_pytest.code.TracebackEntry`` returns ``Path`` instead of ``py.path.local``.
   - The ``_pytest.code.getfslineno()`` function returns ``Path`` instead of ``py.path.local``.
   - The ``_pytest.python.path_matches_patterns()`` function takes ``Path`` instead of ``py.path.local``.
+  - The ``_pytest._code.Traceback.cut()`` function accepts any ``os.PathLike[str]``, not just ``py.path.local``.
 
 
 - `#8248 <https://github.com/pytest-dev/pytest/issues/8248>`_: Internal Restructure: let ``python.PyObjMixin`` inherit from ``nodes.Node`` to carry over typing information.
