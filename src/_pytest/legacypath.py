@@ -10,13 +10,26 @@ from typing import Union
 import attr
 from iniconfig import SectionWrapper
 
-import pytest
+from _pytest.cacheprovider import Cache
 from _pytest.compat import final
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
+from _pytest.config import Config
+from _pytest.config import hookimpl
+from _pytest.config import PytestPluginManager
 from _pytest.deprecated import check_ispytest
+from _pytest.fixtures import fixture
+from _pytest.fixtures import FixtureRequest
+from _pytest.main import Session
+from _pytest.monkeypatch import MonkeyPatch
+from _pytest.nodes import Collector
+from _pytest.nodes import Item
 from _pytest.nodes import Node
+from _pytest.pytester import HookRecorder
+from _pytest.pytester import Pytester
+from _pytest.pytester import RunResult
 from _pytest.terminal import TerminalReporter
+from _pytest.tmpdir import TempPathFactory
 
 if TYPE_CHECKING:
     from typing_extensions import Final
@@ -35,10 +48,10 @@ class Testdir:
 
     __test__ = False
 
-    CLOSE_STDIN: "Final" = pytest.Pytester.CLOSE_STDIN
-    TimeoutExpired: "Final" = pytest.Pytester.TimeoutExpired
+    CLOSE_STDIN: "Final" = Pytester.CLOSE_STDIN
+    TimeoutExpired: "Final" = Pytester.TimeoutExpired
 
-    def __init__(self, pytester: pytest.Pytester, *, _ispytest: bool = False) -> None:
+    def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
         self._pytester = pytester
 
@@ -64,10 +77,10 @@ class Testdir:
         self._pytester.plugins = plugins
 
     @property
-    def monkeypatch(self) -> pytest.MonkeyPatch:
+    def monkeypatch(self) -> MonkeyPatch:
         return self._pytester._monkeypatch
 
-    def make_hook_recorder(self, pluginmanager) -> pytest.HookRecorder:
+    def make_hook_recorder(self, pluginmanager) -> HookRecorder:
         """See :meth:`Pytester.make_hook_recorder`."""
         return self._pytester.make_hook_recorder(pluginmanager)
 
@@ -131,9 +144,7 @@ class Testdir:
         """See :meth:`Pytester.copy_example`."""
         return legacy_path(self._pytester.copy_example(name))
 
-    def getnode(
-        self, config: pytest.Config, arg
-    ) -> Optional[Union[pytest.Item, pytest.Collector]]:
+    def getnode(self, config: Config, arg) -> Optional[Union[Item, Collector]]:
         """See :meth:`Pytester.getnode`."""
         return self._pytester.getnode(config, arg)
 
@@ -141,9 +152,7 @@ class Testdir:
         """See :meth:`Pytester.getpathnode`."""
         return self._pytester.getpathnode(path)
 
-    def genitems(
-        self, colitems: List[Union[pytest.Item, pytest.Collector]]
-    ) -> List[pytest.Item]:
+    def genitems(self, colitems: List[Union[Item, Collector]]) -> List[Item]:
         """See :meth:`Pytester.genitems`."""
         return self._pytester.genitems(colitems)
 
@@ -165,19 +174,19 @@ class Testdir:
             *args, plugins=plugins, no_reraise_ctrlc=no_reraise_ctrlc
         )
 
-    def runpytest_inprocess(self, *args, **kwargs) -> pytest.RunResult:
+    def runpytest_inprocess(self, *args, **kwargs) -> RunResult:
         """See :meth:`Pytester.runpytest_inprocess`."""
         return self._pytester.runpytest_inprocess(*args, **kwargs)
 
-    def runpytest(self, *args, **kwargs) -> pytest.RunResult:
+    def runpytest(self, *args, **kwargs) -> RunResult:
         """See :meth:`Pytester.runpytest`."""
         return self._pytester.runpytest(*args, **kwargs)
 
-    def parseconfig(self, *args) -> pytest.Config:
+    def parseconfig(self, *args) -> Config:
         """See :meth:`Pytester.parseconfig`."""
         return self._pytester.parseconfig(*args)
 
-    def parseconfigure(self, *args) -> pytest.Config:
+    def parseconfigure(self, *args) -> Config:
         """See :meth:`Pytester.parseconfigure`."""
         return self._pytester.parseconfigure(*args)
 
@@ -196,8 +205,8 @@ class Testdir:
         )
 
     def collect_by_name(
-        self, modcol: pytest.Collector, name: str
-    ) -> Optional[Union[pytest.Item, pytest.Collector]]:
+        self, modcol: Collector, name: str
+    ) -> Optional[Union[Item, Collector]]:
         """See :meth:`Pytester.collect_by_name`."""
         return self._pytester.collect_by_name(modcol, name)
 
@@ -212,11 +221,11 @@ class Testdir:
         """See :meth:`Pytester.popen`."""
         return self._pytester.popen(cmdargs, stdout, stderr, stdin, **kw)
 
-    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN) -> pytest.RunResult:
+    def run(self, *cmdargs, timeout=None, stdin=CLOSE_STDIN) -> RunResult:
         """See :meth:`Pytester.run`."""
         return self._pytester.run(*cmdargs, timeout=timeout, stdin=stdin)
 
-    def runpython(self, script) -> pytest.RunResult:
+    def runpython(self, script) -> RunResult:
         """See :meth:`Pytester.runpython`."""
         return self._pytester.runpython(script)
 
@@ -224,7 +233,7 @@ class Testdir:
         """See :meth:`Pytester.runpython_c`."""
         return self._pytester.runpython_c(command)
 
-    def runpytest_subprocess(self, *args, timeout=None) -> pytest.RunResult:
+    def runpytest_subprocess(self, *args, timeout=None) -> RunResult:
         """See :meth:`Pytester.runpytest_subprocess`."""
         return self._pytester.runpytest_subprocess(*args, timeout=timeout)
 
@@ -245,13 +254,10 @@ class Testdir:
         return str(self.tmpdir)
 
 
-pytest.Testdir = Testdir  # type: ignore[attr-defined]
-
-
 class LegacyTestdirPlugin:
     @staticmethod
-    @pytest.fixture
-    def testdir(pytester: pytest.Pytester) -> Testdir:
+    @fixture
+    def testdir(pytester: Pytester) -> Testdir:
         """
         Identical to :fixture:`pytester`, and provides an instance whose methods return
         legacy ``LEGACY_PATH`` objects instead when applicable.
@@ -267,10 +273,10 @@ class TempdirFactory:
     """Backward compatibility wrapper that implements :class:``_pytest.compat.LEGACY_PATH``
     for :class:``TempPathFactory``."""
 
-    _tmppath_factory: pytest.TempPathFactory
+    _tmppath_factory: TempPathFactory
 
     def __init__(
-        self, tmppath_factory: pytest.TempPathFactory, *, _ispytest: bool = False
+        self, tmppath_factory: TempPathFactory, *, _ispytest: bool = False
     ) -> None:
         check_ispytest(_ispytest)
         self._tmppath_factory = tmppath_factory
@@ -284,19 +290,16 @@ class TempdirFactory:
         return legacy_path(self._tmppath_factory.getbasetemp().resolve())
 
 
-pytest.TempdirFactory = TempdirFactory  # type: ignore[attr-defined]
-
-
 class LegacyTmpdirPlugin:
     @staticmethod
-    @pytest.fixture(scope="session")
-    def tmpdir_factory(request: pytest.FixtureRequest) -> TempdirFactory:
+    @fixture(scope="session")
+    def tmpdir_factory(request: FixtureRequest) -> TempdirFactory:
         """Return a :class:`pytest.TempdirFactory` instance for the test session."""
         # Set dynamically by pytest_configure().
         return request.config._tmpdirhandler  # type: ignore
 
     @staticmethod
-    @pytest.fixture
+    @fixture
     def tmpdir(tmp_path: Path) -> LEGACY_PATH:
         """Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
@@ -314,7 +317,7 @@ class LegacyTmpdirPlugin:
         return legacy_path(tmp_path)
 
 
-def Cache_makedir(self: pytest.Cache, name: str) -> LEGACY_PATH:
+def Cache_makedir(self: Cache, name: str) -> LEGACY_PATH:
     """Return a directory path object with the given name.
 
     Same as :func:`mkdir`, but returns a legacy py path instance.
@@ -322,7 +325,7 @@ def Cache_makedir(self: pytest.Cache, name: str) -> LEGACY_PATH:
     return legacy_path(self.mkdir(name))
 
 
-def FixtureRequest_fspath(self: pytest.FixtureRequest) -> LEGACY_PATH:
+def FixtureRequest_fspath(self: FixtureRequest) -> LEGACY_PATH:
     """(deprecated) The file system path of the test module which collected this test."""
     return legacy_path(self.path)
 
@@ -337,7 +340,7 @@ def TerminalReporter_startdir(self: TerminalReporter) -> LEGACY_PATH:
     return legacy_path(self.startpath)
 
 
-def Config_invocation_dir(self: pytest.Config) -> LEGACY_PATH:
+def Config_invocation_dir(self: Config) -> LEGACY_PATH:
     """The directory from which pytest was invoked.
 
     Prefer to use :attr:`invocation_params.dir <InvocationParams.dir>`,
@@ -348,7 +351,7 @@ def Config_invocation_dir(self: pytest.Config) -> LEGACY_PATH:
     return legacy_path(str(self.invocation_params.dir))
 
 
-def Config_rootdir(self: pytest.Config) -> LEGACY_PATH:
+def Config_rootdir(self: Config) -> LEGACY_PATH:
     """The path to the :ref:`rootdir <rootdir>`.
 
     Prefer to use :attr:`rootpath`, which is a :class:`pathlib.Path`.
@@ -358,7 +361,7 @@ def Config_rootdir(self: pytest.Config) -> LEGACY_PATH:
     return legacy_path(str(self.rootpath))
 
 
-def Config_inifile(self: pytest.Config) -> Optional[LEGACY_PATH]:
+def Config_inifile(self: Config) -> Optional[LEGACY_PATH]:
     """The path to the :ref:`configfile <configfiles>`.
 
     Prefer to use :attr:`inipath`, which is a :class:`pathlib.Path`.
@@ -368,7 +371,7 @@ def Config_inifile(self: pytest.Config) -> Optional[LEGACY_PATH]:
     return legacy_path(str(self.inipath)) if self.inipath else None
 
 
-def Session_stardir(self: pytest.Session) -> LEGACY_PATH:
+def Session_stardir(self: Session) -> LEGACY_PATH:
     """The path from which pytest was invoked.
 
     Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
@@ -400,8 +403,10 @@ def Node_fspath_set(self: Node, value: LEGACY_PATH) -> None:
     self.path = Path(value)
 
 
-@pytest.hookimpl
-def pytest_configure(config: pytest.Config) -> None:
+@hookimpl
+def pytest_configure(config: Config) -> None:
+    import pytest
+
     mp = pytest.MonkeyPatch()
     config.add_cleanup(mp.undo)
 
@@ -452,10 +457,8 @@ def pytest_configure(config: pytest.Config) -> None:
     mp.setattr(Node, "fspath", property(Node_fspath, Node_fspath_set), raising=False)
 
 
-@pytest.hookimpl
-def pytest_plugin_registered(
-    plugin: object, manager: pytest.PytestPluginManager
-) -> None:
+@hookimpl
+def pytest_plugin_registered(plugin: object, manager: PytestPluginManager) -> None:
     # pytester is not loaded by default and is commonly loaded from a conftest,
     # so checking for it in `pytest_configure` is not enough.
     is_pytester = plugin is manager.get_plugin("pytester")
