@@ -477,3 +477,22 @@ def test_raises(pytester: Pytester) -> None:
             "* 1 failed, 2 passed *",
         ]
     )
+
+
+def test_nose_setup_skipped_if_non_callable(pytester: Pytester) -> None:
+    """Regression test for #9391."""
+    p = pytester.makepyfile(
+        __init__="",
+        setup="""
+        """,
+        teardown="""
+        """,
+        test_it="""
+        from . import setup, teardown
+
+        def test_it():
+            pass
+        """,
+    )
+    result = pytester.runpytest(p, "-p", "nose")
+    assert result.ret == 0
