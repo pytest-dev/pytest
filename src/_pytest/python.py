@@ -517,12 +517,18 @@ class Module(nodes.File, PyCollector):
             self.obj, ("setUpModule", "setup_module")
         )
         if setup_module is None and has_nose:
+            # The name "setup" is too common - only treat as fixture if callable.
             setup_module = _get_first_non_fixture_func(self.obj, ("setup",))
+            if not callable(setup_module):
+                setup_module = None
         teardown_module = _get_first_non_fixture_func(
             self.obj, ("tearDownModule", "teardown_module")
         )
         if teardown_module is None and has_nose:
             teardown_module = _get_first_non_fixture_func(self.obj, ("teardown",))
+            # Same as "setup" above - only treat as fixture if callable.
+            if not callable(teardown_module):
+                teardown_module = None
 
         if setup_module is None and teardown_module is None:
             return
