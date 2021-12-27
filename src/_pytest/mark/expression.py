@@ -190,7 +190,7 @@ class MatcherAdapter(Mapping[str, bool]):
 class Expression:
     """A compiled match expression as used by -k and -m.
 
-    The expression can be evaulated against different matchers.
+    The expression can be evaluated against different matchers.
     """
 
     __slots__ = ("code",)

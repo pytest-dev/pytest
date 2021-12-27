@@ -156,11 +156,11 @@ class ErrorsHelper:
 
     @property
     def raise_exception(self):
-        raise Exception("exception should be catched")
+        raise Exception("exception should be caught")
 
     @property
     def raise_fail_outcome(self):
-        pytest.fail("fail should be catched")
+        pytest.fail("fail should be caught")
 
 
 def test_helper_failures() -> None:

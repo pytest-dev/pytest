@@ -1288,7 +1288,7 @@ class Pytester:
     ) -> Optional[Union[Item, Collector]]:
         """Return the collection node for name from the module collection.
 
-        Searchs a module collection node for a collection node matching the
+        Searches a module collection node for a collection node matching the
         given name.
 
         :param modcol: A module collection node; see :py:meth:`getmodulecol`.
