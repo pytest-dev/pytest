@@ -1,5 +1,6 @@
 import ast
 import inspect
+import os
 import re
 import sys
 import traceback
@@ -343,10 +344,10 @@ class Traceback(List[TracebackEntry]):
 
     def cut(
         self,
-        path: Optional[Union[Path, str]] = None,
+        path: Optional[Union["os.PathLike[str]", str]] = None,
         lineno: Optional[int] = None,
         firstlineno: Optional[int] = None,
-        excludepath: Optional[Path] = None,
+        excludepath: Optional["os.PathLike[str]"] = None,
     ) -> "Traceback":
         """Return a Traceback instance wrapping part of this Traceback.
 
@@ -357,15 +358,17 @@ class Traceback(List[TracebackEntry]):
         for formatting reasons (removing some uninteresting bits that deal
         with handling of the exception/traceback).
         """
+        path_ = None if path is None else os.fspath(path)
+        excludepath_ = None if excludepath is None else os.fspath(excludepath)
         for x in self:
             code = x.frame.code
             codepath = code.path
-            if path is not None and codepath != path:
+            if path is not None and str(codepath) != path_:
                 continue
             if (
                 excludepath is not None
                 and isinstance(codepath, Path)
-                and excludepath in codepath.parents
+                and excludepath_ in (str(p) for p in codepath.parents)  # type: ignore[operator]
             ):
                 continue
             if lineno is not None and x.lineno != lineno:
