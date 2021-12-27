@@ -727,6 +727,11 @@ you can use the following hook:
 .. hook:: pytest_make_parametrize_id
 .. autofunction:: pytest_make_parametrize_id
 
+Hooks for influencing test skipping:
+
+.. hook:: pytest_markeval_namespace
+.. autofunction:: pytest_markeval_namespace
+
 After collection is complete, you can modify the order of
 items, delete or otherwise amend the test items:
 
@@ -791,6 +796,10 @@ Session related reporting hooks:
 .. autofunction:: pytest_report_collectionfinish
 .. hook:: pytest_report_teststatus
 .. autofunction:: pytest_report_teststatus
+.. hook:: pytest_report_to_serializable
+.. autofunction:: pytest_report_to_serializable
+.. hook:: pytest_report_from_serializable
+.. autofunction:: pytest_report_from_serializable
 .. hook:: pytest_terminal_summary
 .. autofunction:: pytest_terminal_summary
 .. hook:: pytest_fixture_setup
@@ -827,6 +836,8 @@ reporting or interaction with exceptions:
 .. autofunction:: pytest_exception_interact
 .. hook:: pytest_enter_pdb
 .. autofunction:: pytest_enter_pdb
+.. hook:: pytest_leave_pdb
+.. autofunction:: pytest_leave_pdb
 
 
 Objects
