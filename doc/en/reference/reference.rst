@@ -1825,7 +1825,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             functions containing extra names in their
                             'extra_keyword_matches' set, as well as functions
                             which have names assigned directly to them. The
-                            matching is case-insensitive.
+                            matching is case-insensitive. For the default
+                            windows terminal double quotes are preferred.
       -m MARKEXPR           only run tests matching given mark expression.
                             For example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
