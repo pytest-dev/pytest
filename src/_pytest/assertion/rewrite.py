@@ -513,7 +513,7 @@ def _call_assertion_pass(lineno: int, orig: str, expl: str) -> None:
 
 def _check_if_assertion_pass_impl() -> bool:
     """Check if any plugins implement the pytest_assertion_pass hook
-    in order not to generate explanation unecessarily (might be expensive)."""
+    in order not to generate explanation unnecessarily (might be expensive)."""
     return True if util._assertion_pass else False
 
 

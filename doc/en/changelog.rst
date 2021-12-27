@@ -538,7 +538,7 @@ Bug Fixes
   the ``tmp_path``/``tmpdir`` fixture). Now the directories are created with
   private permissions.
 
-  pytest used to silenty use a pre-existing ``/tmp/pytest-of-<username>`` directory,
+  pytest used to silently use a pre-existing ``/tmp/pytest-of-<username>`` directory,
   even if owned by another user. This means another user could pre-create such a
   directory and gain control of another user's temporary directory. Now such a
   condition results in an error.
@@ -1304,7 +1304,7 @@ Improvements
   is not displayed by default for passing tests. This change makes the mistake
   visible during testing.
 
-  You may supress this behavior temporarily or permanently by setting
+  You may suppress this behavior temporarily or permanently by setting
   ``logging.raiseExceptions = False``.
 
 
@@ -1759,7 +1759,7 @@ Bug Fixes
   it was swallowed and ignored (regression in pytest 5.1.0).
 
 
-- :issue:`6801`: Do not display empty lines inbetween traceback for unexpected exceptions with doctests.
+- :issue:`6801`: Do not display empty lines in between traceback for unexpected exceptions with doctests.
 
 
 - :issue:`6802`: The :fixture:`testdir fixture <testdir>` works within doctests now.
@@ -4628,7 +4628,7 @@ Bug Fixes
 - Fixed a bug where stdout and stderr were logged twice by junitxml when a test
   was marked xfail. (:issue:`3491`)
 
-- Fix ``usefixtures`` mark applyed to unittest tests by correctly instantiating
+- Fix ``usefixtures`` mark applied to unittest tests by correctly instantiating
   ``FixtureInfo``. (:issue:`3498`)
 
 - Fix assertion rewriter compatibility with libraries that monkey patch
@@ -8009,7 +8009,7 @@ Bug fixes:
   or through plugin hooks.  Also introduce a "--strict" option which
   will treat unregistered markers as errors
   allowing to avoid typos and maintain a well described set of markers
-  for your test suite.  See exaples at http://pytest.org/en/stable/how-to/mark.html
+  for your test suite.  See examples at http://pytest.org/en/stable/how-to/mark.html
   and its links.
 - issue50: introduce "-m marker" option to select tests based on markers
   (this is a stricter and more predictable version of '-k' in that "-m"
@@ -8321,7 +8321,7 @@ Bug fixes:
 - fix issue57 -f|--looponfail to work with xpassing tests (thanks Ronny)
 - fix issue92 collectonly reporter and --pastebin (thanks Benjamin Peterson)
 - fix py.code.compile(source) to generate unique filenames
-- fix assertion re-interp problems on PyPy, by defering code
+- fix assertion re-interp problems on PyPy, by deferring code
   compilation to the (overridable) Frame.eval class. (thanks Amaury Forgeot)
 - fix py.path.local.pyimport() to work with directories
 - streamline py.path.local.mkdtemp implementation and usage
@@ -8395,7 +8395,7 @@ Bug fixes:
 - improve support for raises and other dynamically compiled code by
   manipulating python's linecache.cache instead of the previous
   rather hacky way of creating custom code objects.  This makes
-  it seemlessly work on Jython and PyPy where it previously didn't.
+  it seamlessly work on Jython and PyPy where it previously didn't.
 
 - fix issue96: make capturing more resilient against Control-C
   interruptions (involved somewhat substantial refactoring

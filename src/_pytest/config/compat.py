@@ -23,7 +23,7 @@ class PathAwareHookProxy:
     this helper wraps around hook callers
     until pluggy supports fixingcalls, this one will do
 
-    it currently doesnt return full hook caller proxies for fixed hooks,
+    it currently doesn't return full hook caller proxies for fixed hooks,
     this may have to be changed later depending on bugs
     """
 
