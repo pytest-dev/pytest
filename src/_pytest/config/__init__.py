@@ -970,7 +970,7 @@ class Config:
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
-        use (usually coninciding with pytest_unconfigure)."""
+        use (usually coinciding with pytest_unconfigure)."""
         self._cleanup.append(func)
 
     def _do_configure(self) -> None:

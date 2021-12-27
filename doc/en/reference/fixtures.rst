@@ -208,7 +208,7 @@ the one defined in ``tests/test_top.py`` would be unavailable to it because it
 would have to step down a level (step inside a circle) to find it.
 
 The first fixture the test finds is the one that will be used, so
-:ref:`fixtures can be overriden <override fixtures>` if you need to change or
+:ref:`fixtures can be overridden <override fixtures>` if you need to change or
 extend what one does for a particular scope.
 
 You can also use the ``conftest.py`` file to implement

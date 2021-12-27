@@ -895,7 +895,7 @@ class FormattedExcinfo:
                 max_frames=max_frames,
                 total=len(traceback),
             )
-            # Type ignored because adding two instaces of a List subtype
+            # Type ignored because adding two instances of a List subtype
             # currently incorrectly has type List instead of the subtype.
             traceback = traceback[:max_frames] + traceback[-max_frames:]  # type: ignore
         else:

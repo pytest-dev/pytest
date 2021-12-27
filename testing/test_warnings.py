@@ -289,7 +289,7 @@ def test_warning_captured_hook(pytester: Pytester) -> None:
         assert collected_result[2] == expected_result[2], str(collected)
 
         # NOTE: collected_result[3] is location, which differs based on the platform you are on
-        #       thus, the best we can do here is assert the types of the paremeters match what we expect
+        #       thus, the best we can do here is assert the types of the parameters match what we expect
         #       and not try and preload it in the expected array
         if collected_result[3] is not None:
             assert type(collected_result[3][0]) is str, str(collected)
@@ -707,7 +707,7 @@ class TestStackLevel:
         pytester.parseconfig("--help")
 
         # with stacklevel=2 the warning should originate from config._preparse and is
-        # thrown by an errorneous conftest.py
+        # thrown by an erroneous conftest.py
         assert len(capwarn.captured) == 1
         warning, location = capwarn.captured.pop()
         file, _, func = location

@@ -287,7 +287,7 @@ class BaseFunctionalTests:
 
             def test_func():
                 import sys
-                # on python2 exc_info is keept till a function exits
+                # on python2 exc_info is kept till a function exits
                 # so we would end up calling test functions while
                 # sys.exc_info would return the indexerror
                 # from guessing the lastitem

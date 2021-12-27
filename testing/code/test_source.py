@@ -484,7 +484,7 @@ def test_source_with_decorator() -> None:
 
     src = inspect.getsource(deco_fixture)
     assert src == "    @pytest.fixture\n    def deco_fixture():\n        assert False\n"
-    # currenly Source does not unwrap decorators, testing the
+    # currently Source does not unwrap decorators, testing the
     # existing behavior here for explicitness, but perhaps we should revisit/change this
     # in the future
     assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
