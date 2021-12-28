@@ -28,8 +28,6 @@ filterwarnings = [
     "default:the imp module is deprecated in favour of importlib:DeprecationWarning:nose.*",
     # distutils is deprecated in 3.10, scheduled for removal in 3.12
     "ignore:The distutils package is deprecated:DeprecationWarning",
-    # produced by python3.6/site.py itself (3.6.7 on Travis, could not trigger it with 3.6.8)."
-    "ignore:.*U.*mode is deprecated:DeprecationWarning:(?!(pytest|_pytest))",
     # produced by pytest-xdist
     "ignore:.*type argument to addoption.*:DeprecationWarning",
     # produced on execnet (pytest-xdist)
