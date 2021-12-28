@@ -127,7 +127,7 @@ jobs:
             use_coverage: true
 
           - name: "plugins"
-            python: "3.7"
+            python: "3.9"
             os: ubuntu-latest
             tox_env: "plugins"
 
