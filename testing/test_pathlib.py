@@ -143,6 +143,10 @@ class TestImportPath:
         assert obj.x == 42  # type: ignore[attr-defined]
         assert obj.__name__ == "execfile"
 
+    def test_import_path_missing_file(self, path1: Path) -> None:
+        with pytest.raises(ImportPathMismatchError):
+            import_path(path1 / "sampledir", root=path1)
+
     def test_renamed_dir_creates_mismatch(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:

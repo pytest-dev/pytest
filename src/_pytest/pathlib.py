@@ -539,6 +539,9 @@ def import_path(
     ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
     if ignore != "1":
         module_file = mod.__file__
+        if module_file is None:
+            raise ImportPathMismatchError(module_name, module_file, path)
+
         if module_file.endswith((".pyc", ".pyo")):
             module_file = module_file[:-1]
         if module_file.endswith(os.path.sep + "__init__.py"):

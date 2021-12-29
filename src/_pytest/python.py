@@ -330,6 +330,7 @@ class PyobjMixin(nodes.Node):
         if isinstance(compat_co_firstlineno, int):
             # nose compatibility
             file_path = sys.modules[obj.__module__].__file__
+            assert file_path is not None
             if file_path.endswith(".pyc"):
                 file_path = file_path[:-1]
             path: Union["os.PathLike[str]", str] = file_path
