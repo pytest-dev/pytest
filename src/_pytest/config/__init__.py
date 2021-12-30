@@ -1429,6 +1429,7 @@ class Config:
             )
         except KeyError:
             return None
+        assert mod.__file__ is not None
         modpath = Path(mod.__file__).parent
         values: List[Path] = []
         for relroot in relroots:
@@ -1574,7 +1575,7 @@ def _strtobool(val: str) -> bool:
 @lru_cache(maxsize=50)
 def parse_warning_filter(
     arg: str, *, escape: bool
-) -> Tuple[str, str, Type[Warning], str, int]:
+) -> Tuple["warnings._ActionKind", str, Type[Warning], str, int]:
     """Parse a warnings filter string.
 
     This is copied from warnings._setoption with the following changes:
@@ -1616,7 +1617,7 @@ def parse_warning_filter(
         parts.append("")
     action_, message, category_, module, lineno_ = (s.strip() for s in parts)
     try:
-        action: str = warnings._getaction(action_)  # type: ignore[attr-defined]
+        action: "warnings._ActionKind" = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
         raise UsageError(error_template.format(error=str(e)))
     try:

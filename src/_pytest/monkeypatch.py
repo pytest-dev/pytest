@@ -55,7 +55,7 @@ def resolve(name: str) -> object:
     parts = name.split(".")
 
     used = parts.pop(0)
-    found = __import__(used)
+    found: object = __import__(used)
     for part in parts:
         used += "." + part
         try:

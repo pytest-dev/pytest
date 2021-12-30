@@ -114,6 +114,7 @@ class TestConftestValueAccessGlobal:
             "a", startdir, importmode="prepend", rootpath=Path(basedir)
         )
         assert value == 1.5
+        assert mod.__file__ is not None
         path = Path(mod.__file__)
         assert path.parent == basedir / "adir" / "b"
         assert path.stem == "conftest"
@@ -197,12 +198,14 @@ def test_conftestcutdir(pytester: Pytester) -> None:
     values = conftest._getconftestmodules(
         conf.parent, importmode="prepend", rootpath=pytester.path
     )
+    assert values[0].__file__ is not None
     assert values[0].__file__.startswith(str(conf))
     # and all sub paths get updated properly
     values = conftest._getconftestmodules(
         p, importmode="prepend", rootpath=pytester.path
     )
     assert len(values) == 1
+    assert values[0].__file__ is not None
     assert values[0].__file__.startswith(str(conf))
 
 
@@ -214,6 +217,7 @@ def test_conftestcutdir_inplace_considered(pytester: Pytester) -> None:
         conf.parent, importmode="prepend", rootpath=pytester.path
     )
     assert len(values) == 1
+    assert values[0].__file__ is not None
     assert values[0].__file__.startswith(str(conf))
 
 
