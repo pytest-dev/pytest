@@ -450,7 +450,6 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
 
 
 class TestImportLibMode:
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_importmode_importlib_with_dataclass(self, tmp_path: Path) -> None:
         """Ensure that importlib mode works with a module containing dataclasses (#7856)."""
         fn = tmp_path.joinpath("_src/tests/test_dataclass.py")

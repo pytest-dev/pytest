@@ -234,10 +234,6 @@ def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
         )
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7),
-    reason="This deprecation can only be emitted on python>=3.7",
-)
 def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
     with pytest.warns(
         pytest.PytestDeprecationWarning,

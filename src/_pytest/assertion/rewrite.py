@@ -100,9 +100,6 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             spec is None
             # this is a namespace package (without `__init__.py`)
             # there's nothing to rewrite there
-            # python3.6: `namespace`
-            # python3.7+: `None`
-            or spec.origin == "namespace"
             or spec.origin is None
             # we can only rewrite source files
             or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)

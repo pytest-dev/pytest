@@ -1123,9 +1123,6 @@ class TestAssertionRewriteHookDetails:
 
         assert _read_pyc(source, pyc) is None  # no error
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 7), reason="Only the Python 3.7 format for simplicity"
-    )
     def test_read_pyc_more_invalid(self, tmp_path: Path) -> None:
         from _pytest.assertion.rewrite import _read_pyc
 
