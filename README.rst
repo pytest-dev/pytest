@@ -100,7 +100,7 @@ Features
 - Can run `unittest <https://docs.pytest.org/en/stable/how-to/unittest.html>`_ (or trial),
   `nose <https://docs.pytest.org/en/stable/how-to/nose.html>`_ test suites out of the box
 
-- Python 3.6+ and PyPy3
+- Python 3.7+ or PyPy3
 
 - Rich plugin architecture, with over 850+ `external plugins <https://docs.pytest.org/en/latest/reference/plugin_list.html>`_ and thriving community
 

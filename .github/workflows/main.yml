@@ -31,14 +31,12 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py36",
           "windows-py37",
           "windows-py37-pluggy",
           "windows-py38",
           "windows-py39",
           "windows-py310",
 
-          "ubuntu-py36",
           "ubuntu-py37",
           "ubuntu-py37-pluggy",
           "ubuntu-py37-freeze",
@@ -56,10 +54,6 @@ jobs:
         ]
 
         include:
-          - name: "windows-py36"
-            python: "3.6"
-            os: windows-latest
-            tox_env: "py36-xdist"
           - name: "windows-py37"
             python: "3.7"
             os: windows-latest
@@ -82,10 +76,6 @@ jobs:
             os: windows-latest
             tox_env: "py310-xdist"
 
-          - name: "ubuntu-py36"
-            python: "3.6"
-            os: ubuntu-latest
-            tox_env: "py36-xdist"
           - name: "ubuntu-py37"
             python: "3.7"
             os: ubuntu-latest

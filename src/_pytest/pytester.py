@@ -128,7 +128,7 @@ class LsofFdLeakChecker:
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
-            universal_newlines=True,
+            text=True,
         ).stdout
 
         def isopen(line: str) -> bool:

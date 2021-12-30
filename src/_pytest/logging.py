@@ -3,8 +3,8 @@ import io
 import logging
 import os
 import re
-import sys
 from contextlib import contextmanager
+from contextlib import nullcontext
 from io import StringIO
 from pathlib import Path
 from typing import AbstractSet
@@ -22,7 +22,6 @@ from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
 from _pytest.compat import final
-from _pytest.compat import nullcontext
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
@@ -628,16 +627,7 @@ class LoggingPlugin:
 
         # https://github.com/python/mypy/issues/11193
         stream: io.TextIOWrapper = fpath.open(mode="w", encoding="UTF-8")  # type: ignore[assignment]
-        if sys.version_info >= (3, 7):
-            old_stream = self.log_file_handler.setStream(stream)
-        else:
-            old_stream = self.log_file_handler.stream
-            self.log_file_handler.acquire()
-            try:
-                self.log_file_handler.flush()
-                self.log_file_handler.stream = stream
-            finally:
-                self.log_file_handler.release()
+        old_stream = self.log_file_handler.setStream(stream)
         if old_stream:
             old_stream.close()
 

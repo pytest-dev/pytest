@@ -84,14 +84,14 @@ It is also possible to skip the whole module using
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on an interpreter earlier than Python3.6:
+when run on an interpreter earlier than Python3.10:
 
 .. code-block:: python
 
     import sys
 
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
+    @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
     def test_function():
         ...
 

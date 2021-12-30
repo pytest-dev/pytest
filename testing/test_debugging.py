@@ -8,14 +8,6 @@ from _pytest.debugging import _validate_usepdb_cls
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
-try:
-    # Type ignored for Python <= 3.6.
-    breakpoint  # type: ignore
-except NameError:
-    SUPPORTS_BREAKPOINT_BUILTIN = False
-else:
-    SUPPORTS_BREAKPOINT_BUILTIN = True
-
 
 _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")
 
@@ -911,14 +903,6 @@ class TestPDB:
 
 
 class TestDebuggingBreakpoints:
-    def test_supports_breakpoint_module_global(self) -> None:
-        """Test that supports breakpoint global marks on Python 3.7+."""
-        if sys.version_info >= (3, 7):
-            assert SUPPORTS_BREAKPOINT_BUILTIN is True
-
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     @pytest.mark.parametrize("arg", ["--pdb", ""])
     def test_sys_breakpointhook_configure_and_unconfigure(
         self, pytester: Pytester, arg: str
@@ -952,9 +936,6 @@ class TestDebuggingBreakpoints:
         result = pytester.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines(["*1 passed in *"])
 
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     def test_pdb_custom_cls(self, pytester: Pytester, custom_debugger_hook) -> None:
         p1 = pytester.makepyfile(
             """
@@ -969,9 +950,6 @@ class TestDebuggingBreakpoints:
         assert custom_debugger_hook == ["init", "set_trace"]
 
     @pytest.mark.parametrize("arg", ["--pdb", ""])
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     def test_environ_custom_class(
         self, pytester: Pytester, custom_debugger_hook, arg: str
     ) -> None:
@@ -1003,9 +981,6 @@ class TestDebuggingBreakpoints:
         result.stdout.fnmatch_lines(["*1 passed in *"])
 
     @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
-    @pytest.mark.skipif(
         not _ENVIRON_PYTHONBREAKPOINT == "",
         reason="Requires breakpoint() default value",
     )
@@ -1025,9 +1000,6 @@ class TestDebuggingBreakpoints:
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
 
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     def test_pdb_not_altered(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile(
             """

@@ -9,7 +9,7 @@ Get Started
 Install ``pytest``
 ----------------------------------------
 
-``pytest`` requires: Python 3.6, 3.7, 3.8, 3.9, or PyPy3.
+``pytest`` requires: Python 3.7+ or PyPy3.
 
 1. Run the following command in your command line:
 
