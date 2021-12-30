@@ -796,7 +796,6 @@ class TestAssert_reprcompare:
 
 
 class TestAssert_reprcompare_dataclass:
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses(self, pytester: Pytester) -> None:
         p = pytester.copy_example("dataclasses/test_compare_dataclasses.py")
         result = pytester.runpytest(p)
@@ -815,7 +814,6 @@ class TestAssert_reprcompare_dataclass:
             consecutive=True,
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_recursive_dataclasses(self, pytester: Pytester) -> None:
         p = pytester.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
         result = pytester.runpytest(p)
@@ -834,7 +832,6 @@ class TestAssert_reprcompare_dataclass:
             consecutive=True,
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_recursive_dataclasses_verbose(self, pytester: Pytester) -> None:
         p = pytester.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
         result = pytester.runpytest(p, "-vv")
@@ -867,7 +864,6 @@ class TestAssert_reprcompare_dataclass:
             consecutive=True,
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses_verbose(self, pytester: Pytester) -> None:
         p = pytester.copy_example("dataclasses/test_compare_dataclasses_verbose.py")
         result = pytester.runpytest(p, "-vv")
@@ -881,7 +877,6 @@ class TestAssert_reprcompare_dataclass:
             ]
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_dataclasses_with_attribute_comparison_off(
         self, pytester: Pytester
     ) -> None:
@@ -891,7 +886,6 @@ class TestAssert_reprcompare_dataclass:
         result = pytester.runpytest(p, "-vv")
         result.assert_outcomes(failed=0, passed=1)
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_comparing_two_different_data_classes(self, pytester: Pytester) -> None:
         p = pytester.copy_example(
             "dataclasses/test_compare_two_different_dataclasses.py"
@@ -899,7 +893,6 @@ class TestAssert_reprcompare_dataclass:
         result = pytester.runpytest(p, "-vv")
         result.assert_outcomes(failed=0, passed=1)
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="Dataclasses in Python3.7+")
     def test_data_classes_with_custom_eq(self, pytester: Pytester) -> None:
         p = pytester.copy_example(
             "dataclasses/test_compare_dataclasses_with_custom_eq.py"

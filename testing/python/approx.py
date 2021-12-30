@@ -1,5 +1,4 @@
 import operator
-import sys
 from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
@@ -810,7 +809,6 @@ class TestApprox:
         assert 1.0 != approx([None])
         assert None != approx([1.0])  # noqa: E711
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires ordered dicts")
     def test_nonnumeric_dict_repr(self):
         """Dicts with non-numerics and infinites have no tolerances"""
         x1 = {"foo": 1.0000005, "bar": None, "foobar": inf}
