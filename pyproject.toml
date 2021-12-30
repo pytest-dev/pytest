@@ -111,4 +111,4 @@ template = "changelog/_template.rst"
   showcontent = true
 
 [tool.black]
-target-version = ['py36']
+target-version = ['py37']

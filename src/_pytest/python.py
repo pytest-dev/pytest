@@ -414,7 +414,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
             for basecls in self.obj.__mro__:
                 dicts.append(basecls.__dict__)
 
-        # In each class, nodes should be definition ordered. Since Python 3.6,
+        # In each class, nodes should be definition ordered.
         # __dict__ is definition ordered.
         seen: Set[str] = set()
         dict_values: List[List[Union[nodes.Item, nodes.Collector]]] = []
@@ -894,8 +894,6 @@ class InstanceDummy:
     pass
 
 
-# Note: module __getattr__ only works on Python>=3.7. Unfortunately
-# we can't provide this deprecation warning on Python 3.6.
 def __getattr__(name: str) -> object:
     if name == "Instance":
         warnings.warn(INSTANCE_COLLECTOR, 2)

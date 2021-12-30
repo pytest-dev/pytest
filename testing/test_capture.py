@@ -1433,19 +1433,19 @@ def test_error_attribute_issue555(pytester: Pytester) -> None:
     not sys.platform.startswith("win"),
     reason="only on windows",
 )
-def test_py36_windowsconsoleio_workaround_non_standard_streams() -> None:
+def test_windowsconsoleio_workaround_non_standard_streams() -> None:
     """
-    Ensure _py36_windowsconsoleio_workaround function works with objects that
+    Ensure _windowsconsoleio_workaround function works with objects that
     do not implement the full ``io``-based stream protocol, for example execnet channels (#2666).
     """
-    from _pytest.capture import _py36_windowsconsoleio_workaround
+    from _pytest.capture import _windowsconsoleio_workaround
 
     class DummyStream:
         def write(self, s):
             pass
 
     stream = cast(TextIO, DummyStream())
-    _py36_windowsconsoleio_workaround(stream)
+    _windowsconsoleio_workaround(stream)
 
 
 def test_dontreadfrominput_has_encoding(pytester: Pytester) -> None:

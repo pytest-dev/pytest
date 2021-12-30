@@ -133,7 +133,7 @@ def test_is_generator_async_gen_syntax(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         from _pytest.compat import is_generator
-        def test_is_generator_py36():
+        def test_is_generator():
             async def foo():
                 yield
                 await foo()
