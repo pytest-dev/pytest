@@ -106,11 +106,6 @@ all other warnings into errors.
 When a warning matches more than one option in the list, the action for the last matching option
 is performed.
 
-Syntax
-------
-
-Both ``-W`` command-line option and ``filterwarnings`` ini option are based on Python's own
-
 
 .. _`filterwarnings`:
 
