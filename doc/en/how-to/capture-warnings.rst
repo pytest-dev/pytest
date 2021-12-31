@@ -46,7 +46,7 @@ Controlling warnings
 --------------------
 
 Similar to Python's `warning filter` and :option:`-W option <python:-W>` flag, pytest provides
-its own a ``-W`` flag to control which warnings are ignored, displayed, or turned into
+its own ``-W`` flag to control which warnings are ignored, displayed, or turned into
 errors. See the `warning filter` documentation for more
 advanced use-cases.
 
