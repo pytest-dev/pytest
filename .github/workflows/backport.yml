@@ -1,7 +1,13 @@
 name: backport
 
 on:
-  pull_request:
+  # Note that `pull_request_target` has security implications:
+  # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+  # In particular:
+  # - Only allow triggers that can be used only be trusted users
+  # - Don't execute any code from the target branch
+  # - Don't use cache
+  pull_request_target:
     types: [labeled]
 
 # Set permissions at the job level.
@@ -9,7 +15,7 @@ permissions: {}
 
 jobs:
   backport:
-    if: ${{ startsWith(github.event.label.name, 'backport ') }}
+    if: startsWith(github.event.label.name, 'backport ') && github.event.pull_request.merged
     runs-on: ubuntu-latest
     permissions:
       contents: write
