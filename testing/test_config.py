@@ -1264,15 +1264,16 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     m = My()
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
-    values = hc._nonwrappers + hc._wrappers
-    expected = [
+    assert [x.function.__module__ for x in hc._nonwrappers] == [
         "_pytest.config",
         m.__module__,
+        "_pytest.legacypath",
         "_pytest.pythonpath",
+    ]
+    assert [x.function.__module__ for x in hc._wrappers] == [
         "_pytest.capture",
         "_pytest.warnings",
     ]
-    assert [x.function.__module__ for x in values] == expected
 
 
 def test_get_plugin_specs_as_list() -> None:
