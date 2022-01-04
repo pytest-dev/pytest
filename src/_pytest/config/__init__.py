@@ -1126,12 +1126,12 @@ class Config:
             return
 
         def _get_files(dist):
-            #dist.files does not make sense for dists
-            #who are not stored on a filesystem
-            #at least pyoxidizer does throw a
-            #not implemented assertion in this case
+            # dist.files does not make sense for dists
+            # who are not stored on a filesystem
+            # at least pyoxidizer does throw a
+            # not implemented assertion in this case
             try:
-                return dist.files 
+                return dist.files
             except NotImplementedError:
                 return []
 
