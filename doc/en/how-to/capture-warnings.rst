@@ -42,8 +42,18 @@ Running pytest now produces this output:
     -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
     ======================= 1 passed, 1 warning in 0.12s =======================
 
-The ``-W`` flag can be passed to control which warnings will be displayed or even turn
-them into errors:
+Controlling warnings
+--------------------
+
+Similar to Python's `warning filter`_ and :option:`-W option <python:-W>` flag, pytest provides
+its own ``-W`` flag to control which warnings are ignored, displayed, or turned into
+errors. See the `warning filter`_ documentation for more
+advanced use-cases.
+
+.. _`warning filter`: https://docs.python.org/3/library/warnings.html#warning-filter
+
+This code sample shows how to treat any ``UserWarning`` category class of warning
+as an error:
 
 .. code-block:: pytest
 
@@ -96,9 +106,6 @@ all other warnings into errors.
 When a warning matches more than one option in the list, the action for the last matching option
 is performed.
 
-Both ``-W`` command-line option and ``filterwarnings`` ini option are based on Python's own
-:option:`-W option <python:-W>` and :func:`warnings.simplefilter`, so please refer to those sections in the Python
-documentation for other examples and advanced usage.
 
 .. _`filterwarnings`:
 
