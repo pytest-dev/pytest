@@ -1,0 +1,1 @@
+Ensure :attr:`pytest.Config.inifile` is available during the :func:`pytest_cmdline_main <_pytest.hookspec.pytest_cmdline_main>` hook (regression during ``7.0.0rc1``).

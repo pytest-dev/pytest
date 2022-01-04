@@ -161,3 +161,20 @@ def test_override_ini_paths(pytester: pytest.Pytester) -> None:
     )
     result = pytester.runpytest("--override-ini", "paths=foo/bar1.py foo/bar2.py", "-s")
     result.stdout.fnmatch_lines(["user_path:bar1.py", "user_path:bar2.py"])
+
+
+def test_inifile_from_cmdline_main_hook(pytester: pytest.Pytester) -> None:
+    """Ensure Config.inifile is available during pytest_cmdline_main (#9396)."""
+    p = pytester.makeini(
+        """
+        [pytest]
+        """
+    )
+    pytester.makeconftest(
+        """
+        def pytest_cmdline_main(config):
+            print("pytest_cmdline_main inifile =", config.inifile)
+        """
+    )
+    result = pytester.runpytest_subprocess("-s")
+    result.stdout.fnmatch_lines(f"*pytest_cmdline_main inifile = {p}")

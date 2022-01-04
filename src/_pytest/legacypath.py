@@ -403,14 +403,44 @@ def Node_fspath_set(self: Node, value: LEGACY_PATH) -> None:
     self.path = Path(value)
 
 
+@hookimpl(tryfirst=True)
+def pytest_load_initial_conftests(early_config: Config) -> None:
+    """Monkeypatch legacy path attributes in several classes, as early as possible."""
+    mp = MonkeyPatch()
+    early_config.add_cleanup(mp.undo)
+
+    # Add Cache.makedir().
+    mp.setattr(Cache, "makedir", Cache_makedir, raising=False)
+
+    # Add FixtureRequest.fspath property.
+    mp.setattr(FixtureRequest, "fspath", property(FixtureRequest_fspath), raising=False)
+
+    # Add TerminalReporter.startdir property.
+    mp.setattr(
+        TerminalReporter, "startdir", property(TerminalReporter_startdir), raising=False
+    )
+
+    # Add Config.{invocation_dir,rootdir,inifile} properties.
+    mp.setattr(Config, "invocation_dir", property(Config_invocation_dir), raising=False)
+    mp.setattr(Config, "rootdir", property(Config_rootdir), raising=False)
+    mp.setattr(Config, "inifile", property(Config_inifile), raising=False)
+
+    # Add Session.startdir property.
+    mp.setattr(Session, "startdir", property(Session_stardir), raising=False)
+
+    # Add pathlist configuration type.
+    mp.setattr(Config, "_getini_unknown_type", Config__getini_unknown_type)
+
+    # Add Node.fspath property.
+    mp.setattr(Node, "fspath", property(Node_fspath, Node_fspath_set), raising=False)
+
+
 @hookimpl
 def pytest_configure(config: Config) -> None:
-    import pytest
-
-    mp = pytest.MonkeyPatch()
-    config.add_cleanup(mp.undo)
-
+    """Installs the LegacyTmpdirPlugin if the ``tmpdir`` plugin is also installed."""
     if config.pluginmanager.has_plugin("tmpdir"):
+        mp = MonkeyPatch()
+        config.add_cleanup(mp.undo)
         # Create TmpdirFactory and attach it to the config object.
         #
         # This is to comply with existing plugins which expect the handler to be
@@ -426,35 +456,6 @@ def pytest_configure(config: Config) -> None:
             mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
 
         config.pluginmanager.register(LegacyTmpdirPlugin, "legacypath-tmpdir")
-
-    # Add Cache.makedir().
-    mp.setattr(pytest.Cache, "makedir", Cache_makedir, raising=False)
-
-    # Add FixtureRequest.fspath property.
-    mp.setattr(
-        pytest.FixtureRequest, "fspath", property(FixtureRequest_fspath), raising=False
-    )
-
-    # Add TerminalReporter.startdir property.
-    mp.setattr(
-        TerminalReporter, "startdir", property(TerminalReporter_startdir), raising=False
-    )
-
-    # Add Config.{invocation_dir,rootdir,inifile} properties.
-    mp.setattr(
-        pytest.Config, "invocation_dir", property(Config_invocation_dir), raising=False
-    )
-    mp.setattr(pytest.Config, "rootdir", property(Config_rootdir), raising=False)
-    mp.setattr(pytest.Config, "inifile", property(Config_inifile), raising=False)
-
-    # Add Session.startdir property.
-    mp.setattr(pytest.Session, "startdir", property(Session_stardir), raising=False)
-
-    # Add pathlist configuration type.
-    mp.setattr(pytest.Config, "_getini_unknown_type", Config__getini_unknown_type)
-
-    # Add Node.fspath property.
-    mp.setattr(Node, "fspath", property(Node_fspath, Node_fspath_set), raising=False)
 
 
 @hookimpl
