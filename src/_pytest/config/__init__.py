@@ -1115,7 +1115,6 @@ class Config:
                 self._mark_plugins_for_rewrite(hook)
         self._warn_about_missing_assertion(mode)
 
-
     def _mark_plugins_for_rewrite(self, hook) -> None:
         """Given an importhook, mark for rewrite any top-level
         modules or packages in the distribution package for
@@ -1137,9 +1136,11 @@ class Config:
             for name in _iter_rewritable_modules(package_files):
                 hook.mark_rewrite(name)
         except Exception as e:
-            apropriate_output_function("unexpected exception %s while marking plugins for assertion rewrites, see LINK TO HELPFULL DOCUMENTATION", e)
+            apropriate_output_function(
+                "unexpected exception %s while marking plugins for assertion rewrites, see LINK TO HELPFULL DOCUMENTATION",
+                e,
+            )
             raise e
-
 
     def _validate_args(self, args: List[str], via: str) -> List[str]:
         """Validate known args."""
