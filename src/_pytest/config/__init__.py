@@ -1115,35 +1115,31 @@ class Config:
                 self._mark_plugins_for_rewrite(hook)
         self._warn_about_missing_assertion(mode)
 
+
     def _mark_plugins_for_rewrite(self, hook) -> None:
         """Given an importhook, mark for rewrite any top-level
         modules or packages in the distribution package for
         all pytest plugins."""
-        self.pluginmanager.rewrite_hook = hook
+        try:
+            self.pluginmanager.rewrite_hook = hook
 
-        if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
-            # We don't autoload from setuptools entry points, no need to continue.
-            return
+            if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
+                # We don't autoload from setuptools entry points, no need to continue.
+                return
 
-        def _get_files(dist):
-            # dist.files does not make sense for dists
-            # who are not stored on a filesystem
-            # at least pyoxidizer does throw a
-            # not implemented assertion in this case
-            try:
-                return dist.files
-            except NotImplementedError:
-                return []
+            package_files = (
+                str(file)
+                for dist in importlib_metadata.distributions()
+                if any(ep.group == "pytest11" for ep in dist.entry_points)
+                for file in dist.files or []
+            )
 
-        package_files = (
-            str(file)
-            for dist in importlib_metadata.distributions()
-            if any(ep.group == "pytest11" for ep in dist.entry_points)
-            for file in _get_files(dist) or []
-        )
+            for name in _iter_rewritable_modules(package_files):
+                hook.mark_rewrite(name)
+        except Exception as e:
+            apropriate_output_function("unexpected exception %s while marking plugins for assertion rewrites, see LINK TO HELPFULL DOCUMENTATION", e)
+            raise e
 
-        for name in _iter_rewritable_modules(package_files):
-            hook.mark_rewrite(name)
 
     def _validate_args(self, args: List[str], via: str) -> List[str]:
         """Validate known args."""
