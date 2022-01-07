@@ -538,7 +538,7 @@ class PytestPluginManager(PluginManager):
         # Optimization: avoid repeated searches in the same directory.
         # Assumes always called with same importmode and rootpath.
         existing_clist = self._dirpath2confmods.get(directory)
-        if existing_clist:
+        if existing_clist is not None:
             return existing_clist
 
         # XXX these days we may rather want to use config.rootpath
