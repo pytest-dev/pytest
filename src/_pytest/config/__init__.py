@@ -592,15 +592,8 @@ class PytestPluginManager(PluginManager):
     def _importconftest(
         self, conftestpath: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> types.ModuleType:
-        # Use a resolved Path object as key to avoid loading the same conftest
-        # twice with build systems that create build directories containing
-        # symlinks to actual files.
-        # Using Path().resolve() is better than py.path.realpath because
-        # it resolves to the correct path/drive in case-insensitive file systems (#5792)
-        key = conftestpath.resolve()
-
         with contextlib.suppress(KeyError):
-            return self._conftestpath2mod[key]
+            return self._conftestpath2mod[conftestpath]
 
         pkgpath = resolve_package_path(conftestpath)
         if pkgpath is None:
@@ -616,7 +609,7 @@ class PytestPluginManager(PluginManager):
         self._check_non_top_pytest_plugins(mod, conftestpath)
 
         self._conftest_plugins.add(mod)
-        self._conftestpath2mod[key] = mod
+        self._conftestpath2mod[conftestpath] = mod
         dirpath = conftestpath.parent
         if dirpath in self._dirpath2confmods:
             for path, mods in self._dirpath2confmods.items():
