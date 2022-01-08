@@ -521,6 +521,19 @@ class PytestPluginManager(PluginManager):
         if not foundanchor:
             self._try_load_conftest(current, namespace.importmode, rootpath)
 
+    def _is_in_confcutdir(self, path: Path) -> bool:
+        """Whether a path is within the confcutdir.
+
+        When false, should not load conftest.
+        """
+        if self._confcutdir is None:
+            return True
+        try:
+            path.relative_to(self._confcutdir)
+        except ValueError:
+            return False
+        return True
+
     def _try_load_conftest(
         self, anchor: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> None:
@@ -552,14 +565,12 @@ class PytestPluginManager(PluginManager):
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir.
         clist = []
-        confcutdir_parents = self._confcutdir.parents if self._confcutdir else []
         for parent in reversed((directory, *directory.parents)):
-            if parent in confcutdir_parents:
-                continue
-            conftestpath = parent / "conftest.py"
-            if conftestpath.is_file():
-                mod = self._importconftest(conftestpath, importmode, rootpath)
-                clist.append(mod)
+            if self._is_in_confcutdir(parent):
+                conftestpath = parent / "conftest.py"
+                if conftestpath.is_file():
+                    mod = self._importconftest(conftestpath, importmode, rootpath)
+                    clist.append(mod)
         self._dirpath2confmods[directory] = clist
         return clist
 
