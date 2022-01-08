@@ -1,7 +1,6 @@
 """Command line options, ini-file and conftest.py processing."""
 import argparse
 import collections.abc
-import contextlib
 import copy
 import enum
 import inspect
@@ -353,8 +352,6 @@ class PytestPluginManager(PluginManager):
         # This includes the directory's own conftest modules as well
         # as those of its parent directories.
         self._dirpath2confmods: Dict[Path, List[types.ModuleType]] = {}
-        # The conftest module of a conftest path.
-        self._conftestpath2mod: Dict[Path, types.ModuleType] = {}
         # Cutoff directory above which conftests are no longer discovered.
         self._confcutdir: Optional[Path] = None
         # If set, conftest loading is skipped.
@@ -592,8 +589,9 @@ class PytestPluginManager(PluginManager):
     def _importconftest(
         self, conftestpath: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> types.ModuleType:
-        with contextlib.suppress(KeyError):
-            return self._conftestpath2mod[conftestpath]
+        existing = self.get_plugin(str(conftestpath))
+        if existing is not None:
+            return cast(types.ModuleType, existing)
 
         pkgpath = resolve_package_path(conftestpath)
         if pkgpath is None:
@@ -609,7 +607,6 @@ class PytestPluginManager(PluginManager):
         self._check_non_top_pytest_plugins(mod, conftestpath)
 
         self._conftest_plugins.add(mod)
-        self._conftestpath2mod[conftestpath] = mod
         dirpath = conftestpath.parent
         if dirpath in self._dirpath2confmods:
             for path, mods in self._dirpath2confmods.items():
