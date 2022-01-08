@@ -602,7 +602,7 @@ class PytestPluginManager(PluginManager):
         dirpath = conftestpath.parent
         if dirpath in self._dirpath2confmods:
             for path, mods in self._dirpath2confmods.items():
-                if path and dirpath in path.parents or path == dirpath:
+                if dirpath in path.parents or path == dirpath:
                     assert mod not in mods
                     mods.append(mod)
         self.trace(f"loading conftestmodule {mod!r}")
