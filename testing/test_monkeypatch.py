@@ -50,21 +50,24 @@ def test_setattr() -> None:
 
 class TestSetattrWithImportPath:
     def test_string_expression(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
-        assert os.path.abspath("123") == "hello2"
+        with monkeypatch.context() as mp:
+            mp.setattr("os.path.abspath", lambda x: "hello2")
+            assert os.path.abspath("123") == "hello2"
 
     def test_string_expression_class(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.setattr("_pytest.config.Config", 42)
-        import _pytest
+        with monkeypatch.context() as mp:
+            mp.setattr("_pytest.config.Config", 42)
+            import _pytest
 
-        assert _pytest.config.Config == 42  # type: ignore
+            assert _pytest.config.Config == 42  # type: ignore
 
     def test_unicode_string(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.setattr("_pytest.config.Config", 42)
-        import _pytest
+        with monkeypatch.context() as mp:
+            mp.setattr("_pytest.config.Config", 42)
+            import _pytest
 
-        assert _pytest.config.Config == 42  # type: ignore
-        monkeypatch.delattr("_pytest.config.Config")
+            assert _pytest.config.Config == 42  # type: ignore
+            mp.delattr("_pytest.config.Config")
 
     def test_wrong_target(self, monkeypatch: MonkeyPatch) -> None:
         with pytest.raises(TypeError):
@@ -80,14 +83,16 @@ class TestSetattrWithImportPath:
 
     def test_unknown_attr_non_raising(self, monkeypatch: MonkeyPatch) -> None:
         # https://github.com/pytest-dev/pytest/issues/746
-        monkeypatch.setattr("os.path.qweqwe", 42, raising=False)
-        assert os.path.qweqwe == 42  # type: ignore
+        with monkeypatch.context() as mp:
+            mp.setattr("os.path.qweqwe", 42, raising=False)
+            assert os.path.qweqwe == 42  # type: ignore
 
     def test_delattr(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.delattr("os.path.abspath")
-        assert not hasattr(os.path, "abspath")
-        monkeypatch.undo()
-        assert os.path.abspath
+        with monkeypatch.context() as mp:
+            mp.delattr("os.path.abspath")
+            assert not hasattr(os.path, "abspath")
+            mp.undo()
+            assert os.path.abspath
 
 
 def test_delattr() -> None:
