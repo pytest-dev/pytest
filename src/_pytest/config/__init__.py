@@ -546,7 +546,7 @@ class PytestPluginManager(PluginManager):
 
     def _getconftestmodules(
         self, path: Path, importmode: Union[str, ImportMode], rootpath: Path
-    ) -> List[types.ModuleType]:
+    ) -> Sequence[types.ModuleType]:
         if self._noconftest:
             return []
 
