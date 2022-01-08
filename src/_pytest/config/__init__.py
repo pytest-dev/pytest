@@ -345,14 +345,21 @@ class PytestPluginManager(PluginManager):
         import _pytest.assertion
 
         super().__init__("pytest")
-        # The objects are module objects, only used generically.
-        self._conftest_plugins: Set[types.ModuleType] = set()
 
-        # State related to local conftest plugins.
+        # -- State related to local conftest plugins.
+        # All loaded conftest modules.
+        self._conftest_plugins: Set[types.ModuleType] = set()
+        # All conftest modules applicable for a directory.
+        # This includes the directory's own conftest modules as well
+        # as those of its parent directories.
         self._dirpath2confmods: Dict[Path, List[types.ModuleType]] = {}
+        # The conftest module of a conftest path.
         self._conftestpath2mod: Dict[Path, types.ModuleType] = {}
+        # Cutoff directory above which conftests are no longer discovered.
         self._confcutdir: Optional[Path] = None
+        # If set, conftest loading is skipped.
         self._noconftest = False
+
         self._duplicatepaths: Set[Path] = set()
 
         # plugins that were explicitly skipped with pytest.skip
