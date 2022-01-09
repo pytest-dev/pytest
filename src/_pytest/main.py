@@ -376,7 +376,7 @@ def _in_venv(path: Path) -> bool:
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[bool]:
     ignore_paths = config._getconftest_pathlist(
-        "collect_ignore", path=collection_path.parent, rootpath=config.rootpath
+        "collect_ignore", path=collection_path.parent
     )
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
@@ -387,7 +387,7 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[boo
         return True
 
     ignore_globs = config._getconftest_pathlist(
-        "collect_ignore_glob", path=collection_path.parent, rootpath=config.rootpath
+        "collect_ignore_glob", path=collection_path.parent
     )
     ignore_globs = ignore_globs or []
     excludeglobopt = config.getoption("ignore_glob")
@@ -551,11 +551,16 @@ class Session(nodes.FSCollector):
         pm = self.config.pluginmanager
         # Check if we have the common case of running
         # hooks with all conftest.py files.
-        my_conftestmodules = pm._getconftestmodules(
+        #
+        # TODO: pytest relies on this call to load non-initial conftests. This
+        # is incidental. It will be better to load conftests at a more
+        # well-defined place.
+        pm._loadconftestmodules(
             path,
             self.config.getoption("importmode"),
             rootpath=self.config.rootpath,
         )
+        my_conftestmodules = pm._getconftestmodules(path)
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # One or more conftests are not in use at this fspath.
