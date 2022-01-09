@@ -89,7 +89,10 @@ NODE_CTOR_FSPATH_ARG = UnformattedWarning(
 
 WARNS_NONE_ARG = PytestRemovedIn8Warning(
     "Passing None to catch any warning has been deprecated, pass no arguments instead:\n"
-    " Replace pytest.warns(None) by simply pytest.warns()."
+    "Replace pytest.warns(None) by simply pytest.warns().\n"
+    "See https://docs.pytest.org/en/latest/deprecations.html"
+    "#using-pytest-warns-none"
+    " on asserting no warnings were emitted."
 )
 
 KEYWORD_MSG_ARG = UnformattedWarning(
