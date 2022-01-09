@@ -156,18 +156,6 @@ def pytest_cmdline_parse(
     """
 
 
-@hookspec(firstresult=True)
-def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
-    """Called for performing the main command line action. The default
-    implementation will invoke the configure hooks and runtest_mainloop.
-
-    Stops at first non-None result, see :ref:`firstresult`.
-
-    :param config: The pytest config object.
-    :returns: The exit code.
-    """
-
-
 def pytest_load_initial_conftests(
     early_config: "Config", parser: "Parser", args: List[str]
 ) -> None:
@@ -180,6 +168,18 @@ def pytest_load_initial_conftests(
     :param early_config: The pytest config object.
     :param args: Arguments passed on the command line.
     :param parser: To add command line options.
+    """
+
+
+@hookspec(firstresult=True)
+def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
+    """Called for performing the main command line action. The default
+    implementation will invoke the configure hooks and runtest_mainloop.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+
+    :param config: The pytest config object.
+    :returns: The exit code.
     """
 
 
