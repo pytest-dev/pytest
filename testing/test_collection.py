@@ -64,7 +64,7 @@ class TestCollector:
 
         assert pytester.collect_by_name(modcol, "doesnotexist") is None
 
-    def test_getparent(self, pytester: Pytester) -> None:
+    def test_getparent_and_accessors(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
             """
             class TestClass:
@@ -77,14 +77,21 @@ class TestCollector:
         fn = pytester.collect_by_name(cls, "test_foo")
         assert isinstance(fn, pytest.Function)
 
-        module_parent = fn.getparent(pytest.Module)
-        assert module_parent is modcol
+        assert fn.getparent(pytest.Module) is modcol
+        assert modcol.module is not None
+        assert modcol.cls is None
+        assert modcol.instance is None
 
-        function_parent = fn.getparent(pytest.Function)
-        assert function_parent is fn
+        assert fn.getparent(pytest.Class) is cls
+        assert cls.module is not None
+        assert cls.cls is not None
+        assert cls.instance is None
 
-        class_parent = fn.getparent(pytest.Class)
-        assert class_parent is cls
+        assert fn.getparent(pytest.Function) is fn
+        assert fn.module is not None
+        assert fn.cls is not None
+        assert fn.instance is not None
+        assert fn.function is not None
 
     def test_getcustomfile_roundtrip(self, pytester: Pytester) -> None:
         hello = pytester.makefile(".xxx", hello="world")
