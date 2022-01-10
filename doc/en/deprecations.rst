@@ -208,17 +208,15 @@ If custom subclasses of nodes like :class:`pytest.Item` override the
 .. code-block:: python
 
     class CustomItem(pytest.Item):
-
-         def __init__(self, name, parent, additional_arg):
-             super().__init__(name, parent)
-             self.additional_arg = additional_arg
+        def __init__(self, name, parent, additional_arg):
+            super().__init__(name, parent)
+            self.additional_arg = additional_arg
 
 should be turned into:
 
 .. code-block:: python
 
     class CustomItem(pytest.Item):
-
         def __init__(self, additional_arg, **kwargs):
             super().__init__(**kwargs)
             self.additional_arg = additional_arg
