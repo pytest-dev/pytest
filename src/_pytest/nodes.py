@@ -145,7 +145,9 @@ class NodeMeta(type):
 
             warnings.warn(
                 PytestDeprecationWarning(
-                    f"{self} is not using a cooperative constructor and only takes {set(known_kw)}"
+                    f"{self} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
+                    "See https://docs.pytest.org/en/stable/deprecations.html#constructors-of-custom-pytest-node-subclasses-should-take-kwargs"
+                    " for more details."
                 )
             )
 
