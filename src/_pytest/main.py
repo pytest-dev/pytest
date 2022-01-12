@@ -689,9 +689,8 @@ class Session(nodes.FSCollector):
             # No point in finding packages when collecting doctests.
             if not self.config.getoption("doctestmodules", False):
                 pm = self.config.pluginmanager
-                confcutdir = pm._confcutdir
                 for parent in (argpath, *argpath.parents):
-                    if confcutdir and parent in confcutdir.parents:
+                    if not pm._is_in_confcutdir(argpath):
                         break
 
                     if parent.is_dir():

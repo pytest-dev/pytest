@@ -146,10 +146,9 @@ def test_issue151_load_all_conftests(pytester: Pytester) -> None:
         p = pytester.mkdir(name)
         p.joinpath("conftest.py").touch()
 
-    conftest = PytestPluginManager()
-    conftest_setinitial(conftest, names)
-    d = list(conftest._conftestpath2mod.values())
-    assert len(d) == len(names)
+    pm = PytestPluginManager()
+    conftest_setinitial(pm, names)
+    assert len(set(pm.get_plugins()) - {pm}) == len(names)
 
 
 def test_conftest_global_import(pytester: Pytester) -> None:
@@ -192,7 +191,7 @@ def test_conftestcutdir(pytester: Pytester) -> None:
         conf.parent, importmode="prepend", rootpath=pytester.path
     )
     assert len(values) == 0
-    assert Path(conf) not in conftest._conftestpath2mod
+    assert not conftest.has_plugin(str(conf))
     # but we can still import a conftest directly
     conftest._importconftest(conf, importmode="prepend", rootpath=pytester.path)
     values = conftest._getconftestmodules(
@@ -226,15 +225,15 @@ def test_setinitial_conftest_subdirs(pytester: Pytester, name: str) -> None:
     sub = pytester.mkdir(name)
     subconftest = sub.joinpath("conftest.py")
     subconftest.touch()
-    conftest = PytestPluginManager()
-    conftest_setinitial(conftest, [sub.parent], confcutdir=pytester.path)
+    pm = PytestPluginManager()
+    conftest_setinitial(pm, [sub.parent], confcutdir=pytester.path)
     key = subconftest.resolve()
     if name not in ("whatever", ".dotdir"):
-        assert key in conftest._conftestpath2mod
-        assert len(conftest._conftestpath2mod) == 1
+        assert pm.has_plugin(str(key))
+        assert len(set(pm.get_plugins()) - {pm}) == 1
     else:
-        assert key not in conftest._conftestpath2mod
-        assert len(conftest._conftestpath2mod) == 0
+        assert not pm.has_plugin(str(key))
+        assert len(set(pm.get_plugins()) - {pm}) == 0
 
 
 def test_conftest_confcutdir(pytester: Pytester) -> None:
