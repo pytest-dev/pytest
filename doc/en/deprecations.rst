@@ -225,28 +225,7 @@ Using ``pytest.warns(None)``
 Its correct usage was checking that the code emits at least one warning of any type - like ``pytest.warns()``
 or ``pytest.warns(Warning)``.
 
-If you are looking to:
-
--  ensure that **no** warnings are emitted, consider using
-
-.. code-block:: python
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-
-- suppress warnings, you could use
-
-.. code-block:: python
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-
-- ensure that **any** warning is emitted, please use
-
-.. code-block:: python
-
-    with pytest.warns():
-        pass
+See https://docs.pytest.org/en/latest/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests for use cases.
 
 The ``--strict`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
