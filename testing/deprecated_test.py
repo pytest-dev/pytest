@@ -141,7 +141,7 @@ def test_warns_none_is_deprecated():
             "Passing None has been deprecated.\n"
             "See https://docs.pytest.org/en/latest/how-to/capture-warnings.html"
             "#additional-use-cases-of-warnings-in-tests"
-            " for alternativesin common use cases."
+            " for alternatives in common use cases."
         ),
     ):
         with pytest.warns(None):  # type: ignore[call-overload]

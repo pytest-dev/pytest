@@ -91,7 +91,7 @@ WARNS_NONE_ARG = PytestRemovedIn8Warning(
     "Passing None has been deprecated.\n"
     "See https://docs.pytest.org/en/latest/how-to/capture-warnings.html"
     "#additional-use-cases-of-warnings-in-tests"
-    " for alternativesin common use cases."
+    " for alternatives in common use cases."
 )
 
 KEYWORD_MSG_ARG = UnformattedWarning(
