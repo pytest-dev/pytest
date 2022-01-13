@@ -20,7 +20,7 @@ Configuration file formats
 --------------------------
 
 Many :ref:`pytest settings <ini options ref>` can be set in a *configuration file*, which
-by convention resides on the root of your repository.
+by convention resides in the root directory of your repository.
 
 A quick example of the configuration files supported by pytest:
 
