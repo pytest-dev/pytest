@@ -225,7 +225,7 @@ Using ``pytest.warns(None)``
 Its correct usage was checking that the code emits at least one warning of any type - like ``pytest.warns()``
 or ``pytest.warns(Warning)``.
 
-See :ref:`warns-use-cases` for examples.
+See :ref:`warns use cases` for examples.
 
 The ``--strict`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
