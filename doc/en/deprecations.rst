@@ -221,11 +221,11 @@ Using ``pytest.warns(None)``
 
 .. deprecated:: 7.0
 
-:func:`pytest.warns(None) <pytest.warns>` is now deprecated because many people used
-it to mean "this code does not emit warnings", but it actually had the effect of
-checking that the code emits at least one warning of any type - like ``pytest.warns()``
+:func:`pytest.warns(None) <pytest.warns>` is now deprecated because it was frequently misused.
+Its correct usage was checking that the code emits at least one warning of any type - like ``pytest.warns()``
 or ``pytest.warns(Warning)``.
 
+See :ref:`warns use cases` for examples.
 
 The ``--strict`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

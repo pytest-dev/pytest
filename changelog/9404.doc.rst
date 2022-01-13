@@ -1,0 +1,1 @@
+Added extra documentation on alternatives to common misuses of `pytest.warns(None)` ahead of its deprecation.
