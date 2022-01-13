@@ -351,6 +351,35 @@ warnings, or index into it to get a particular recorded warning.
 
 Full API: :class:`~_pytest.recwarn.WarningsRecorder`.
 
+.. _`warns use cases`:
+
+Additional use cases of warnings in tests
+-----------------------------------------
+
+Here are some use cases involving warnings that often come up in tests, and suggestions on how to deal with them:
+
+- To ensure that **any** warning is emitted, use:
+
+.. code-block:: python
+
+    with pytest.warns():
+        pass
+
+-  To ensure that **no** warnings are emitted, use:
+
+.. code-block:: python
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+- To suppress warnings, use:
+
+.. code-block:: python
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+
 .. _custom_failure_messages:
 
 Custom failure messages
