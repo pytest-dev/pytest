@@ -194,8 +194,10 @@ def test_warns_none_is_deprecated():
     with pytest.warns(
         PytestDeprecationWarning,
         match=re.escape(
-            "Passing None to catch any warning has been deprecated, pass no arguments instead:\n "
-            "Replace pytest.warns(None) by simply pytest.warns()."
+            "Passing None has been deprecated.\n"
+            "See https://docs.pytest.org/en/latest/how-to/capture-warnings.html"
+            "#additional-use-cases-of-warnings-in-tests"
+            " for alternatives in common use cases."
         ),
     ):
         with pytest.warns(None):  # type: ignore[call-overload]
