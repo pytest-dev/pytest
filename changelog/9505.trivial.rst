@@ -1,0 +1,2 @@
+Clarify where the configuration files are located. To avoid confusions documentation mentions
+that configuration file is located in the root of the repository.
