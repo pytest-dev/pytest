@@ -37,6 +37,7 @@ jobs:
           "windows-py38",
           "windows-py39",
           "windows-py310",
+          "windows-py311",
 
           "ubuntu-py37",
           "ubuntu-py37-pluggy",
@@ -44,6 +45,7 @@ jobs:
           "ubuntu-py38",
           "ubuntu-py39",
           "ubuntu-py310",
+          "ubuntu-py311",
           "ubuntu-pypy3",
 
           "macos-py37",
@@ -78,6 +80,10 @@ jobs:
             python: "3.10"
             os: windows-latest
             tox_env: "py310-xdist"
+          - name: "windows-py311"
+            python: "3.11.0-alpha.3"
+            os: windows-latest
+            tox_env: "py311"
 
           - name: "ubuntu-py37"
             python: "3.7"
@@ -104,6 +110,10 @@ jobs:
             python: "3.10"
             os: ubuntu-latest
             tox_env: "py310-xdist"
+          - name: "ubuntu-py311"
+            python: "3.11.0-alpha.3"
+            os: ubuntu-latest
+            tox_env: "py311"
           - name: "ubuntu-pypy3"
             python: "pypy-3.7"
             os: ubuntu-latest
