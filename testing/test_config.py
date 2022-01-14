@@ -1264,15 +1264,20 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     m = My()
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
-    assert [x.function.__module__ for x in hc._nonwrappers] == [
-        "_pytest.config",
-        m.__module__,
-        "_pytest.legacypath",
-        "_pytest.pythonpath",
+    hookimpls = [
+        (
+            hookimpl.function.__module__,
+            "wrapper" if hookimpl.hookwrapper else "nonwrapper",
+        )
+        for hookimpl in hc.get_hookimpls()
     ]
-    assert [x.function.__module__ for x in hc._wrappers] == [
-        "_pytest.capture",
-        "_pytest.warnings",
+    assert hookimpls == [
+        ("_pytest.config", "nonwrapper"),
+        (m.__module__, "nonwrapper"),
+        ("_pytest.legacypath", "nonwrapper"),
+        ("_pytest.pythonpath", "nonwrapper"),
+        ("_pytest.capture", "wrapper"),
+        ("_pytest.warnings", "wrapper"),
     ]
 
 
