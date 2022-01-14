@@ -905,7 +905,7 @@ File
 FixtureDef
 ~~~~~~~~~~
 
-.. autoclass:: _pytest.fixtures.FixtureDef()
+.. autoclass:: pytest.FixtureDef()
     :members:
     :show-inheritance:
 

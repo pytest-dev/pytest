@@ -1,0 +1,9 @@
+Fixture types are now exported so the may be used in pytest plugin hooks.
+
+  The newly-exported types are:
+
+  - ``pytest.FixtureDef`` for :class:`FixtureDef <pytest.FixtureDef>`
+  - ``pytest.SubRequest`` for ``_pytest.fixtures.SubRequest``  (derived from :class:`FixtureRequest <pytest.FixtureRequest`).
+
+
+  They are used by ``pytest_fixture_setup`` and ``pytest_fixture_post_finalizer`` hook definitions.
