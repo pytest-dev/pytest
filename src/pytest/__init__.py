@@ -19,8 +19,10 @@ from _pytest.config.argparsing import OptionGroup
 from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.fixtures import fixture
+from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import SubRequest
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
 from _pytest.legacypath import TempdirFactory
@@ -97,8 +99,10 @@ __all__ = [
     "fail",
     "File",
     "fixture",
+    "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",
+    "SubRequest",
     "freeze_includes",
     "Function",
     "hookimpl",
