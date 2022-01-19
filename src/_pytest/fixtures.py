@@ -992,8 +992,8 @@ class FixtureDef(Generic[FixtureValue]):
             if exc:
                 raise exc
         finally:
-            hook = self._fixturemanager.session.gethookproxy(request.node.path)
-            hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
+            ihook = request.node.ihook
+            ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
             # Even if finalization fails, we invalidate the cached fixture
             # value and remove all finalizers because they may be bound methods
             # which will keep instances alive.
@@ -1027,8 +1027,8 @@ class FixtureDef(Generic[FixtureValue]):
             self.finish(request)
             assert self.cached_result is None
 
-        hook = self._fixturemanager.session.gethookproxy(request.node.path)
-        result = hook.pytest_fixture_setup(fixturedef=self, request=request)
+        ihook = request.node.ihook
+        result = ihook.pytest_fixture_setup(fixturedef=self, request=request)
         return result
 
     def cache_key(self, request: SubRequest) -> object:
