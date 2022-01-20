@@ -1123,6 +1123,28 @@ class TestAssertionRewriteHookDetails:
 
         assert _read_pyc(source, pyc) is None  # no error
 
+    def test_read_pyc_success(self, tmp_path: Path, pytester: Pytester) -> None:
+        """
+        Ensure that the _rewrite_test() -> _write_pyc() produces a pyc file
+        that can be properly read with _read_pyc()
+        """
+        from _pytest.assertion import AssertionState
+        from _pytest.assertion.rewrite import _read_pyc
+        from _pytest.assertion.rewrite import _rewrite_test
+        from _pytest.assertion.rewrite import _write_pyc
+
+        config = pytester.parseconfig()
+        state = AssertionState(config, "rewrite")
+
+        fn = tmp_path / "source.py"
+        pyc = Path(str(fn) + "c")
+
+        fn.write_text("def test(): assert True")
+
+        source_stat, co = _rewrite_test(fn, config)
+        _write_pyc(state, co, source_stat, pyc)
+        assert _read_pyc(fn, pyc, state.trace) is not None
+
     @pytest.mark.skipif(
         sys.version_info < (3, 7), reason="Only the Python 3.7 format for simplicity"
     )
