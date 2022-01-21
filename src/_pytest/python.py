@@ -1121,7 +1121,7 @@ class Metafunc:
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-        argnames, parameters = ParameterSet._for_parametrize(
+        argnames, parametersets = ParameterSet._for_parametrize(
             argnames,
             argvalues,
             self.function,
@@ -1153,8 +1153,8 @@ class Metafunc:
             if generated_ids is not None:
                 ids = generated_ids
 
-        ids = self._resolve_arg_ids(
-            argnames, ids, parameters, nodeid=self.definition.nodeid
+        ids = self._resolve_parameter_set_ids(
+            argnames, ids, parametersets, nodeid=self.definition.nodeid
         )
 
         # Store used (possibly generated) ids with parametrize Marks.
@@ -1166,7 +1166,9 @@ class Metafunc:
         # of all calls.
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
-            for param_index, (param_id, param_set) in enumerate(zip(ids, parameters)):
+            for param_index, (param_id, param_set) in enumerate(
+                zip(ids, parametersets)
+            ):
                 newcallspec = callspec.setmulti(
                     valtypes=arg_values_types,
                     argnames=argnames,
@@ -1179,7 +1181,7 @@ class Metafunc:
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
-    def _resolve_arg_ids(
+    def _resolve_parameter_set_ids(
         self,
         argnames: Sequence[str],
         ids: Optional[
@@ -1188,18 +1190,23 @@ class Metafunc:
                 Callable[[Any], Optional[object]],
             ]
         ],
-        parameters: Sequence[ParameterSet],
+        parametersets: Sequence[ParameterSet],
         nodeid: str,
     ) -> List[str]:
-        """Resolve the actual ids for the given argnames, based on the ``ids`` parameter given
-        to ``parametrize``.
+        """Resolve the actual ids for the given parameter sets.
 
-        :param List[str] argnames: List of argument names passed to ``parametrize()``.
-        :param ids: The ids parameter of the parametrized call (see docs).
-        :param List[ParameterSet] parameters: The list of parameter values, same size as ``argnames``.
-        :param str str: The nodeid of the item that generated this parametrized call.
-        :rtype: List[str]
-        :returns: The list of ids for each argname given.
+        :param argnames:
+            Argument names passed to ``parametrize()``.
+        :param ids:
+            The `ids` parameter of the ``parametrize()`` call (see docs).
+        :param parametersets:
+            The parameter sets, each containing a set of values corresponding
+            to ``argnames``.
+        :param nodeid str:
+            The nodeid of the definition item that generated this
+            parametrization.
+        :returns:
+            List with ids for each parameter set given.
         """
         if ids is None:
             idfn = None
@@ -1209,8 +1216,8 @@ class Metafunc:
             ids_ = None
         else:
             idfn = None
-            ids_ = self._validate_ids(ids, parameters, self.function.__name__)
-        return idmaker(argnames, parameters, idfn, ids_, self.config, nodeid=nodeid)
+            ids_ = self._validate_ids(ids, parametersets, self.function.__name__)
+        return idmaker(argnames, parametersets, idfn, ids_, self.config, nodeid=nodeid)
 
     def _validate_ids(
         self,
