@@ -330,6 +330,14 @@ def _prepareconfig(
         raise
 
 
+def _get_directory(path: Path) -> Path:
+    """Get the directory of a path - itself if already a directory."""
+    if path.is_file():
+        return path.parent
+    else:
+        return path
+
+
 @final
 class PytestPluginManager(PluginManager):
     """A :py:class:`pluggy.PluginManager <pluggy.PluginManager>` with
@@ -356,6 +364,11 @@ class PytestPluginManager(PluginManager):
         self._confcutdir: Optional[Path] = None
         # If set, conftest loading is skipped.
         self._noconftest = False
+
+        # _getconftestmodules()'s call to _get_directory() causes a stat
+        # storm when it's called potentially thousands of times in a test
+        # session (#9478), often with the same path, so cache it.
+        self._get_directory = lru_cache(256)(_get_directory)
 
         self._duplicatepaths: Set[Path] = set()
 
@@ -547,10 +560,7 @@ class PytestPluginManager(PluginManager):
         if self._noconftest:
             return []
 
-        if path.is_file():
-            directory = path.parent
-        else:
-            directory = path
+        directory = self._get_directory(path)
 
         # Optimization: avoid repeated searches in the same directory.
         # Assumes always called with same importmode and rootpath.
