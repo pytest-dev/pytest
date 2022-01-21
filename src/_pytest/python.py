@@ -303,6 +303,9 @@ class PyobjMixin(nodes.Node):
             # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
                 self.own_markers.extend(get_unpacked_marks(self.obj))
+                # This assumes that `obj` is called before there is a chance
+                # to add custom keys to `self.keywords`, so no fear of overriding.
+                self.keywords.update((mark.name, mark) for mark in self.own_markers)
         return obj
 
     @obj.setter
@@ -1634,7 +1637,7 @@ class Function(PyobjMixin, nodes.Item):
         config: Optional[Config] = None,
         callspec: Optional[CallSpec2] = None,
         callobj=NOTSET,
-        keywords=None,
+        keywords: Optional[Mapping[str, Any]] = None,
         session: Optional[Session] = None,
         fixtureinfo: Optional[FuncFixtureInfo] = None,
         originalname: Optional[str] = None,
@@ -1655,31 +1658,20 @@ class Function(PyobjMixin, nodes.Item):
         # Note: when FunctionDefinition is introduced, we should change ``originalname``
         # to a readonly property that returns FunctionDefinition.name.
 
-        self.keywords.update(self.obj.__dict__)
         self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
-            # this is total hostile and a mess
-            # keywords are broken by design by now
-            # this will be redeemed later
-            for mark in callspec.marks:
-                # feel free to cry, this was broken for years before
-                # and keywords can't fix it per design
-                self.keywords[mark.name] = mark
-            self.own_markers.extend(normalize_mark_list(callspec.marks))
-        if keywords:
-            self.keywords.update(keywords)
+            self.own_markers.extend(callspec.marks)
 
         # todo: this is a hell of a hack
         # https://github.com/pytest-dev/pytest/issues/4569
-
-        self.keywords.update(
-            {
-                mark.name: True
-                for mark in self.iter_markers()
-                if mark.name not in self.keywords
-            }
-        )
+        # Note: the order of the updates is important here; indicates what
+        # takes priority (ctor argument over function attributes over markers).
+        # Take own_markers only; NodeKeywords handles parent traversal on its own.
+        self.keywords.update((mark.name, mark) for mark in self.own_markers)
+        self.keywords.update(self.obj.__dict__)
+        if keywords:
+            self.keywords.update(keywords)
 
         if fixtureinfo is None:
             fixtureinfo = self.session._fixturemanager.getfixtureinfo(
