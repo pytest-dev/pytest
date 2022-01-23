@@ -549,9 +549,11 @@ class TerminalReporter:
                             - len(" [100%]")
                             - 1
                         )
-                        formatted_reason = _format_trimmed(" ({})", reason, available_width)
+                        formatted_reason = _format_trimmed(
+                            " ({})", reason, available_width
+                        )
                     else:
-                        formatted_reason = " ({})".format(reason)
+                        formatted_reason = f" ({reason})"
 
                     if reason and formatted_reason is not None:
                         self._tw.write(formatted_reason)
