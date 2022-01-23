@@ -400,7 +400,6 @@ class TestTerminal:
         """
         )
 
-        long_reason = "cannot do foobar because baz is missing due to I don't know what"
         common_output = [
             "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
             "test_verbose_skip_reason.py::test_2 XPASS (456) *",
