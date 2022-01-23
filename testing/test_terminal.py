@@ -385,21 +385,49 @@ class TestTerminal:
 
             def test_10():
                 pytest.xfail("It's 🕙 o'clock")
+
+            @pytest.mark.skip(
+                reason="cannot do foobar because baz is missing due to I don't know what"
+            )
+            def test_long_skip():
+                pass
+
+            @pytest.mark.xfail(
+                reason="cannot do foobar because baz is missing due to I don't know what"
+            )
+            def test_long_xfail():
+                print(1 / 0)
         """
         )
+
+        common_output = [
+            "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
+            "test_verbose_skip_reason.py::test_2 XPASS (456) *",
+            "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
+            "test_verbose_skip_reason.py::test_4 XFAIL  *",
+            "test_verbose_skip_reason.py::test_5 SKIPPED (unconditional skip) *",
+            "test_verbose_skip_reason.py::test_6 XPASS  *",
+            "test_verbose_skip_reason.py::test_7 SKIPPED  *",
+            "test_verbose_skip_reason.py::test_8 SKIPPED (888 is great) *",
+            "test_verbose_skip_reason.py::test_9 XFAIL  *",
+            "test_verbose_skip_reason.py::test_10 XFAIL (It's 🕙 o'clock) *",
+        ]
+
         result = pytester.runpytest("-v")
         result.stdout.fnmatch_lines(
-            [
-                "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
-                "test_verbose_skip_reason.py::test_2 XPASS (456) *",
-                "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
-                "test_verbose_skip_reason.py::test_4 XFAIL  *",
-                "test_verbose_skip_reason.py::test_5 SKIPPED (unconditional skip) *",
-                "test_verbose_skip_reason.py::test_6 XPASS  *",
-                "test_verbose_skip_reason.py::test_7 SKIPPED  *",
-                "test_verbose_skip_reason.py::test_8 SKIPPED (888 is great) *",
-                "test_verbose_skip_reason.py::test_9 XFAIL  *",
-                "test_verbose_skip_reason.py::test_10 XFAIL (It's 🕙 o'clock) *",
+            common_output
+            + [
+                "test_verbose_skip_reason.py::test_long_skip SKIPPED (cannot *...) *",
+                "test_verbose_skip_reason.py::test_long_xfail XFAIL (cannot *...) *",
+            ]
+        )
+
+        result = pytester.runpytest("-vv")
+        result.stdout.fnmatch_lines(
+            common_output
+            + [
+                "test_verbose_skip_reason.py::test_long_skip SKIPPED (cannot do foobar because baz is missing due to I don't know what) *",
+                "test_verbose_skip_reason.py::test_long_xfail XFAIL (cannot do foobar because baz is missing due to I don't know what) *",
             ]
         )
 
