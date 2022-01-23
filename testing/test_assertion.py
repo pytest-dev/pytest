@@ -1026,7 +1026,7 @@ class TestAssert_reprcompare_attrsclass:
         assert lines is None
 
     def test_attrs_with_custom_eq(self) -> None:
-        @attr.define
+        @attr.define(slots=False)
         class SimpleDataObject:
             field_a = attr.ib()
 
