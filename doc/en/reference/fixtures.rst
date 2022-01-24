@@ -401,6 +401,9 @@ the graph would look like this:
 Because ``c`` can now be put above ``d`` in the graph, pytest can once again
 linearize the graph to this:
 
+.. image:: /example/fixtures/test_fixtures_order_autouse_flat.*
+    :align: center
+
 In this example, ``c`` makes ``b`` and ``a`` effectively autouse fixtures as
 well.
 
