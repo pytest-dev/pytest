@@ -217,7 +217,7 @@ should be turned into:
 .. code-block:: python
 
     class CustomItem(pytest.Item):
-        def __init__(self, additional_arg, **kwargs):
+        def __init__(self, *, additional_arg, **kwargs):
             super().__init__(**kwargs)
             self.additional_arg = additional_arg
 
