@@ -930,7 +930,7 @@ def _eval_scope_callable(
 
 @final
 class FixtureDef(Generic[FixtureValue]):
-    """A container for a factory definition."""
+    """A container for a fixture definition."""
 
     def __init__(
         self,
@@ -949,26 +949,52 @@ class FixtureDef(Generic[FixtureValue]):
         ] = None,
     ) -> None:
         self._fixturemanager = fixturemanager
+        # The "base" node ID for the fixture.
+        #
+        # This is a node ID prefix. A fixture is only available to a node (e.g.
+        # a `Function` item) if the fixture's baseid is a parent of the node's
+        # nodeid (see the `iterparentnodeids` function for what constitutes a
+        # "parent" and a "prefix" in this context).
+        #
+        # For a fixture found in a Collector's object (e.g. a `Module`s module,
+        # a `Class`'s class), the baseid is the Collector's nodeid.
+        #
+        # For a fixture found in a conftest plugin, the baseid is the conftest's
+        # directory path relative to the rootdir.
+        #
+        # For other plugins, the baseid is the empty string (always matches).
         self.baseid = baseid or ""
+        # Whether the fixture was found from a node or a conftest in the
+        # collection tree. Will be false for fixtures defined in non-conftest
+        # plugins.
         self.has_location = baseid is not None
+        # The fixture factory function.
         self.func = func
+        # The name by which the fixture may be requested.
         self.argname = argname
         if scope is None:
             scope = Scope.Function
         elif callable(scope):
             scope = _eval_scope_callable(scope, argname, fixturemanager.config)
-
         if isinstance(scope, str):
             scope = Scope.from_user(
                 scope, descr=f"Fixture '{func.__name__}'", where=baseid
             )
         self._scope = scope
+        # If the fixture is directly parametrized, the parameter values.
         self.params: Optional[Sequence[object]] = params
-        self.argnames: Tuple[str, ...] = getfuncargnames(
-            func, name=argname, is_method=unittest
-        )
-        self.unittest = unittest
+        # If the fixture is directly parametrized, a tuple of explicit IDs to
+        # assign to the parameter values, or a callable to generate an ID given
+        # a parameter value.
         self.ids = ids
+        # The names requested by the fixtures.
+        self.argnames = getfuncargnames(func, name=argname, is_method=unittest)
+        # Whether the fixture was collected from a unittest TestCase class.
+        # Note that it really only makes sense to define autouse fixtures in
+        # unittest TestCases.
+        self.unittest = unittest
+        # If the fixture was executed, the current value of the fixture.
+        # Can change if the fixture is executed with different parameters.
         self.cached_result: Optional[_FixtureCachedResult[FixtureValue]] = None
         self._finalizers: List[Callable[[], object]] = []
 
