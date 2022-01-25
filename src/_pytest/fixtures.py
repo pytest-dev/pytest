@@ -597,8 +597,17 @@ class FixtureRequest:
         funcitem = self._pyfuncitem
         scope = fixturedef._scope
         try:
-            param = funcitem.callspec.getparam(argname)
-        except (AttributeError, ValueError):
+            callspec = funcitem.callspec
+        except AttributeError:
+            callspec = None
+        if callspec is not None and argname in callspec.params:
+            param = callspec.params[argname]
+            param_index = callspec.indices[argname]
+            # If a parametrize invocation set a scope it will override
+            # the static scope defined with the fixture function.
+            with suppress(KeyError):
+                scope = callspec._arg2scope[argname]
+        else:
             param = NOTSET
             param_index = 0
             has_params = fixturedef.params is not None
@@ -638,12 +647,6 @@ class FixtureRequest:
                     )
                 )
                 fail(msg, pytrace=False)
-        else:
-            param_index = funcitem.callspec.indices[argname]
-            # If a parametrize invocation set a scope it will override
-            # the static scope defined with the fixture function.
-            with suppress(KeyError):
-                scope = funcitem.callspec._arg2scope[argname]
 
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
