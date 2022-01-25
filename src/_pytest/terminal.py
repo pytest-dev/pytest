@@ -542,15 +542,21 @@ class TerminalReporter:
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
                 if rep.skipped or hasattr(report, "wasxfail"):
-                    available_width = (
-                        (self._tw.fullwidth - self._tw.width_of_current_line)
-                        - len(" [100%]")
-                        - 1
-                    )
                     reason = _get_raw_skip_reason(rep)
-                    reason_ = _format_trimmed(" ({})", reason, available_width)
-                    if reason and reason_ is not None:
-                        self._tw.write(reason_)
+                    if self.config.option.verbose < 2:
+                        available_width = (
+                            (self._tw.fullwidth - self._tw.width_of_current_line)
+                            - len(" [100%]")
+                            - 1
+                        )
+                        formatted_reason = _format_trimmed(
+                            " ({})", reason, available_width
+                        )
+                    else:
+                        formatted_reason = f" ({reason})"
+
+                    if reason and formatted_reason is not None:
+                        self._tw.write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
             else:
