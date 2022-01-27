@@ -270,3 +270,5 @@ file:
 
 More details about the discussion that lead to this changes can be read in
 issue `#3013 <https://github.com/pytest-dev/pytest/issues/3013>`_.
+
+Log level table can be read at `logging-level <https://docs.python.org/3/library/logging.html#logging-levels>`_
