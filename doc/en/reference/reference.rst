@@ -9,6 +9,39 @@ This page contains the full reference to pytest's API.
     :depth: 3
     :local:
 
+Constants
+---------
+
+pytest.__version__
+~~~~~~~~~~~~~~~~~~
+
+The current pytest version, as a string::
+
+    >>> import pytest
+    >>> pytest.__version__
+    '7.0.0'
+
+
+.. _`version-tuple`:
+
+pytest.version_tuple
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 7.0
+
+The current pytest version, as a tuple::
+
+    >>> import pytest
+    >>> pytest.version_tuple
+    (7, 0, 0)
+
+For pre-releases, the last component will be a string with the prerelease version::
+
+    >>> import pytest
+    >>> pytest.version_tuple
+    (7, 0, '0rc1')
+
+
 Functions
 ---------
 
@@ -224,37 +257,6 @@ Marks a test function as *expected to fail*.
           unexpectedly passes then it will **fail** the test suite. This is particularly useful to mark functions
           that are always failing and there should be a clear indication if they unexpectedly start to pass (for example
           a new release of a library fixes a known bug).
-
-
-pytest.__version__
-~~~~~~~~~~~~~~~~~~
-
-The current pytest version, as a string::
-
-    >>> import pytest
-    >>> pytest.__version__
-    '7.0.0'
-
-
-.. _`version-tuple`:
-
-pytest.version_tuple
-~~~~~~~~~~~~~~~~~~~~
-
-.. versionadded:: 7.0
-
-The current pytest version, as a tuple::
-
-    >>> import pytest
-    >>> pytest.version_tuple
-    (7, 0, 0)
-
-For pre-releases, the last component will be a string with the prerelease version::
-
-    >>> import pytest
-    >>> pytest.version_tuple
-    (7, 0, '0rc1')
-
 
 
 Custom marks
