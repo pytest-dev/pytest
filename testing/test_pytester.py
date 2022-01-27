@@ -835,6 +835,8 @@ def test_pytester_assert_outcomes_warnings(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1, warnings=1)
+    # If warnings is not passed, it is not checked at all.
+    result.assert_outcomes(passed=1)
 
 
 def test_pytester_outcomes_deselected(pytester: Pytester) -> None:
@@ -849,3 +851,5 @@ def test_pytester_outcomes_deselected(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-k", "test_one")
     result.assert_outcomes(passed=1, deselected=1)
+    # If deselected is not passed, it is not checked at all.
+    result.assert_outcomes(passed=1)
