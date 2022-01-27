@@ -363,7 +363,7 @@ Here are some use cases involving warnings that often come up in tests, and sugg
 .. code-block:: python
 
     with pytest.warns():
-        pass
+        ...
 
 -  To ensure that **no** warnings are emitted, use:
 
@@ -371,6 +371,7 @@ Here are some use cases involving warnings that often come up in tests, and sugg
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        ...
 
 - To suppress warnings, use:
 
@@ -378,6 +379,7 @@ Here are some use cases involving warnings that often come up in tests, and sugg
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
+        ...
 
 
 .. _custom_failure_messages:
