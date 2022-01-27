@@ -18,8 +18,8 @@ class YamlFile(pytest.File):
 
 
 class YamlItem(pytest.Item):
-    def __init__(self, name, parent, spec):
-        super().__init__(name, parent)
+    def __init__(self, *, spec, **kwargs):
+        super().__init__(**kwargs)
         self.spec = spec
 
     def runtest(self):
