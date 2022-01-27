@@ -596,11 +596,15 @@ class RunResult:
         errors: int = 0,
         xpassed: int = 0,
         xfailed: int = 0,
-        warnings: int = 0,
-        deselected: int = 0,
+        warnings: Optional[int] = None,
+        deselected: Optional[int] = None,
     ) -> None:
-        """Assert that the specified outcomes appear with the respective
-        numbers (0 means it didn't occur) in the text output from a test run."""
+        """
+        Assert that the specified outcomes appear with the respective
+        numbers (0 means it didn't occur) in the text output from a test run.
+
+        ``warnings`` and ``deselected`` are only checked if not None.
+        """
         __tracebackhide__ = True
         from _pytest.pytester_assertions import assert_outcomes
 
