@@ -56,6 +56,10 @@ Plugins which implement custom items and collectors are encouraged to replace
 ``fspath`` parameters (``py.path.local``) with ``path`` parameters
 (``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
 
+If possible, plugins with custom items should use :ref:`cooperative
+constructors <uncooperative-constructors-deprecated>` to avoid hardcoding
+arguments they only pass on to the superclass.
+
 .. note::
     The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
     new attribute being ``path``) is **the opposite** of the situation for
@@ -190,6 +194,40 @@ Instead, a separate collector node should be used, which collects the item. See
 
 .. _example pr fixing inheritance: https://github.com/asmeurer/pytest-flakes/pull/40/files
 
+
+.. _uncooperative-constructors-deprecated:
+
+Constructors of custom :class:`pytest.Node` subclasses should take ``**kwargs``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+If custom subclasses of nodes like :class:`pytest.Item` override the
+``__init__`` method, they should take ``**kwargs``. Thus,
+
+.. code-block:: python
+
+    class CustomItem(pytest.Item):
+        def __init__(self, name, parent, additional_arg):
+            super().__init__(name, parent)
+            self.additional_arg = additional_arg
+
+should be turned into:
+
+.. code-block:: python
+
+    class CustomItem(pytest.Item):
+        def __init__(self, *, additional_arg, **kwargs):
+            super().__init__(**kwargs)
+            self.additional_arg = additional_arg
+
+to avoid hard-coding the arguments pytest can pass to the superclass.
+See :ref:`non-python tests` for a full example.
+
+For cases without conflicts, no deprecation warning is emitted. For cases with
+conflicts (such as :class:`pytest.File` now taking ``path`` instead of
+``fspath``, as :ref:`outlined above <node-ctor-fspath-deprecation>`), a
+deprecation warning is now raised.
 
 Backward compatibilities in ``Parser.addoption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
