@@ -533,7 +533,9 @@ class TestTrialUnittest:
                 # will crash both at test time and at teardown
         """
         )
-        result = testdir.runpytest("-vv", "-oconsole_output_style=classic")
+        result = testdir.runpytest(
+            "-vv", "-oconsole_output_style=classic", "-W", "ignore::DeprecationWarning"
+        )
         result.stdout.fnmatch_lines(
             [
                 "test_trial_error.py::TC::test_four FAILED",
