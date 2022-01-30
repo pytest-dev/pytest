@@ -201,7 +201,7 @@ means that it will be overwritten at each run tests session.
 
 You can also specify the logging level for the log file by passing
 ``--log-file-level``. This setting accepts the logging level names as seen in
-python's documentation(ie, uppercased level names) or an integer as the logging
+`python's documentation <https://docs.python.org/3/library/logging.html#logging-levels>`_ (ie, uppercased level names) or an integer as the logging
 level num.
 
 Additionally, you can also specify ``--log-file-format`` and
