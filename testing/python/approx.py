@@ -771,7 +771,7 @@ class TestApprox:
     def test_expected_value_type_error(self, x, name):
         with pytest.raises(
             TypeError,
-            match=fr"pytest.approx\(\) does not support nested {name}:",
+            match=rf"pytest.approx\(\) does not support nested {name}:",
         ):
             approx(x)
 

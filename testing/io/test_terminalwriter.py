@@ -56,7 +56,7 @@ def test_terminalwriter_not_unicode() -> None:
     file = io.TextIOWrapper(buffer, encoding="cp1252")
     tw = terminalwriter.TerminalWriter(file)
     tw.write("hello 🌀 wôrld אבג", flush=True)
-    assert buffer.getvalue() == br"hello \U0001f300 w\xf4rld \u05d0\u05d1\u05d2"
+    assert buffer.getvalue() == rb"hello \U0001f300 w\xf4rld \u05d0\u05d1\u05d2"
 
 
 win32 = int(sys.platform == "win32")
