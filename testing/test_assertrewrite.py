@@ -1313,7 +1313,7 @@ class TestIssue2121:
 
 
 @pytest.mark.skipif(
-    sys.maxsize <= (2 ** 31 - 1), reason="Causes OverflowError on 32bit systems"
+    sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
 )
 @pytest.mark.parametrize("offset", [-1, +1])
 def test_source_mtime_long_long(pytester: Pytester, offset) -> None:
@@ -1332,7 +1332,7 @@ def test_source_mtime_long_long(pytester: Pytester, offset) -> None:
     # use unsigned long timestamp which overflows signed long,
     # which was the cause of the bug
     # +1 offset also tests masking of 0xFFFFFFFF
-    timestamp = 2 ** 32 + offset
+    timestamp = 2**32 + offset
     os.utime(str(p), (timestamp, timestamp))
     result = pytester.runpytest()
     assert result.ret == 0
