@@ -88,7 +88,9 @@ def prepare_release_pr(
 
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
 
-    if prerelease:
+    if is_major:
+        template_name = "release.major.rst"
+    elif prerelease:
         template_name = "release.pre.rst"
     elif is_feature_release:
         template_name = "release.minor.rst"
