@@ -4,7 +4,7 @@ pytest-{version}
 The pytest team is proud to announce the {version} release!
 
 This release contains new features, improvements, and bug fixes,
-A full list of changes is available in the changelog:
+the full list of changes is available in the changelog:
 
     https://docs.pytest.org/en/stable/changelog.html
 
