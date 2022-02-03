@@ -31,6 +31,8 @@ with advance notice in the **Deprecations** section of releases.
 pytest 7.0.0 (2022-02-03)
 =========================
 
+(**Please see the full set of changes for this release also in the 7.0.0rc1 notes below**)
+
 Deprecations
 ------------
 
