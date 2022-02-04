@@ -121,6 +121,10 @@ the system temporary directory.  The base name will be ``pytest-NUM`` where
 ``NUM`` will be incremented with each test run.  Moreover, entries older
 than 3 temporary directories will be removed.
 
+The number of entries currently cannot be changed, but using the ``--basetemp``
+option will remove the directory before every run. Effectively meaning the tempfiles
+of only the most recent run will be kept.
+
 You can override the default temporary directory setting like this:
 
 .. code-block:: bash
