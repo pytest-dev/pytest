@@ -44,7 +44,9 @@ from _pytest.stash import StashKey
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
-if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 11):
+    from importlib.resources.readers import FileReader
+elif sys.version_info >= (3, 10):
     from importlib.readers import FileReader
 
 assertstate_key = StashKey["AssertionState"]()
