@@ -117,10 +117,10 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See
             :issue:`7767` for details.
 
-    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:292
+    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:295
         Return a :class:`pytest.TempdirFactory` instance for the test session.
 
-    tmpdir -- .../_pytest/legacypath.py:299
+    tmpdir -- .../_pytest/legacypath.py:302
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
