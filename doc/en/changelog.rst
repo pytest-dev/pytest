@@ -28,6 +28,51 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.0.0 (2022-02-03)
+=========================
+
+(**Please see the full set of changes for this release also in the 7.0.0rc1 notes below**)
+
+Deprecations
+------------
+
+- `#9488 <https://github.com/pytest-dev/pytest/issues/9488>`_: If custom subclasses of nodes like :class:`pytest.Item` override the
+  ``__init__`` method, they should take ``**kwargs``. See
+  :ref:`uncooperative-constructors-deprecated` for details.
+
+  Note that a deprection warning is only emitted when there is a conflict in the
+  arguments pytest expected to pass. This deprecation was already part of pytest
+  7.0.0rc1 but wasn't documented.
+
+
+
+Bug Fixes
+---------
+
+- `#9355 <https://github.com/pytest-dev/pytest/issues/9355>`_: Fixed error message prints function decorators when using assert in Python 3.8 and above.
+
+
+- `#9396 <https://github.com/pytest-dev/pytest/issues/9396>`_: Ensure :attr:`pytest.Config.inifile` is available during the :func:`pytest_cmdline_main <_pytest.hookspec.pytest_cmdline_main>` hook (regression during ``7.0.0rc1``).
+
+
+
+Improved Documentation
+----------------------
+
+- `#9404 <https://github.com/pytest-dev/pytest/issues/9404>`_: Added extra documentation on alternatives to common misuses of `pytest.warns(None)` ahead of its deprecation.
+
+
+- `#9505 <https://github.com/pytest-dev/pytest/issues/9505>`_: Clarify where the configuration files are located. To avoid confusions documentation mentions
+  that configuration file is located in the root of the repository.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#9521 <https://github.com/pytest-dev/pytest/issues/9521>`_: Add test coverage to assertion rewrite path.
+
+
 pytest 7.0.0rc1 (2021-12-06)
 ============================
 
