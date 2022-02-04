@@ -48,6 +48,8 @@ jobs:
 
           "macos-py37",
           "macos-py38",
+          "macos-py39",
+          "macos-py310",
 
           "docs",
           "doctesting",
@@ -116,6 +118,14 @@ jobs:
             os: macos-latest
             tox_env: "py38-xdist"
             use_coverage: true
+          - name: "macos-py39"
+            python: "3.9"
+            os: macos-latest
+            tox_env: "py39-xdist"
+          - name: "macos-py310"
+            python: "3.10"
+            os: macos-latest
+            tox_env: "py310-xdist"
 
           - name: "plugins"
             python: "3.9"
