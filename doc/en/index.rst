@@ -1,10 +1,11 @@
 :orphan:
 
-.. sidebar:: Next Open Trainings
+..
+    .. sidebar:: Next Open Trainings
 
-   - `Professional Testing with Python <https://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, February 1st to 3rd, 2022, Leipzig (Germany) and remote.
+       - `Professional Testing with Python <https://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, February 1st to 3rd, 2022, Leipzig (Germany) and remote.
 
-   Also see `previous talks and blogposts <talks.html>`_.
+       Also see `previous talks and blogposts <talks.html>`_.
 
 .. _features:
 
