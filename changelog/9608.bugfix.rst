@@ -1,1 +1,1 @@
-Fix invalid importing of ``importlib.reader`` in Python 3.9.
+Fix invalid importing of ``importlib.readers`` in Python 3.9.
