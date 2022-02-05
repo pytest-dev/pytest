@@ -72,16 +72,11 @@ def get_empty_parameterset_mark(
     return mark
 
 
-class ParameterSet(
-    NamedTuple(
-        "ParameterSet",
-        [
-            ("values", Sequence[Union[object, NotSetType]]),
-            ("marks", Collection[Union["MarkDecorator", "Mark"]]),
-            ("id", Optional[str]),
-        ],
-    )
-):
+class ParameterSet(NamedTuple):
+    values: Sequence[Union[object, NotSetType]]
+    marks: Collection[Union["MarkDecorator", "Mark"]]
+    id: Optional[str]
+
     @classmethod
     def param(
         cls,
