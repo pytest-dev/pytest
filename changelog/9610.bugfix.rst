@@ -1,0 +1,3 @@
+Restore `UnitTestFunction.obj` to return unbound rather than bound method.
+Fixes a crash during a failed teardown in unittest TestCases with non-default `__init__`.
+Regressed in pytest 7.0.0.
