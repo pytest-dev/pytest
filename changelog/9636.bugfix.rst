@@ -1,0 +1,2 @@
+Restore compatiblity to users of the pytest-pythonpath plugins by adding two ini options ``python_paths`` and ``site_dirs``.
+These options are immediately marked as deprecated. See :ref:`python_paths-site_dir-ini` for details.

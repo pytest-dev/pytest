@@ -18,6 +18,24 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+
+.. _python_paths-site_dir-ini:
+
+The ``python_paths`` and ``site_dirs`` ini options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0.1
+
+These two deprecations are relevant for users of the pytest-pythonpath plugin.
+In pytest 7.0.0, a built-in ``pythonpath`` plugin was added with similar functionality to pytest-pythonpath.
+In pytest 7.0.1, it was found that the built-in plugin prevents the external pytest-pythonpath from loading,
+so to compensate, the options from the pytest-pythonpath plugins are implemented, but are immediately deprecated.
+
+The ``python_paths`` ini option is deprecated. Use :confval:`pythonpath` instead.
+
+The ``site_dirs`` ini option is deprecated. There is no replacement. If you use it, let the pytest developers know.
+
+
 .. _instance-collector-deprecation:
 
 The ``pytest.Instance`` collector

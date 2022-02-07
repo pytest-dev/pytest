@@ -104,6 +104,17 @@ INSTANCE_COLLECTOR = PytestRemovedIn8Warning(
     "See https://docs.pytest.org/en/latest/deprecations.html#the-pytest-instance-collector",
 )
 
+PYTHON_PATHS_INI = PytestRemovedIn8Warning(
+    "The python_paths ini option is deprecated. Use the pythonpath ini option instead. "
+    "If you are using the pytest-pythonpath plugin, you can remove it - it is built-in since pytest 7.0.0. "
+    "See https://docs.pytest.org/en/latest/deprecations.html#python_paths-site_dir-ini",
+)
+
+SITE_DIRS_INI = PytestRemovedIn8Warning(
+    "The site_dirs ini option is deprecated. "
+    "See https://docs.pytest.org/en/latest/deprecations.html#python_paths-site_dir-ini",
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
