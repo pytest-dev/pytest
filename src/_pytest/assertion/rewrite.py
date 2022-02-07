@@ -43,7 +43,7 @@ from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
-    
+
 
 assertstate_key = StashKey["AssertionState"]()
 
@@ -280,7 +280,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                 from importlib.readers import FileReader
             else:
                 from importlib.resources.readers import FileReader
-                
+
             return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
 
 
