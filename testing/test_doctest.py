@@ -802,11 +802,12 @@ class TestDoctests:
         p = pytester.makepyfile(
             setup="""
             from setuptools import setup, find_packages
-            setup(name='sample',
-                  version='0.0',
-                  description='description',
-                  packages=find_packages()
-            )
+            if __name__ == '__main__':
+                setup(name='sample',
+                      version='0.0',
+                      description='description',
+                      packages=find_packages()
+                )
         """
         )
         result = pytester.runpytest(p, "--doctest-modules")
