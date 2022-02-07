@@ -84,7 +84,7 @@ def deprecated_call(
 
 @overload
 def warns(
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]] = ...,
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
 ) -> "WarningsChecker":
@@ -93,7 +93,7 @@ def warns(
 
 @overload
 def warns(
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any,
@@ -102,7 +102,7 @@ def warns(
 
 
 def warns(
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
+    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
     **kwargs: Any,
@@ -137,6 +137,14 @@ def warns(
         Traceback (most recent call last):
           ...
         Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+
+    Recording warnings
+    To record with func:pytest.warns without asserting anything about the warnings,
+    pass None as the expected warning type:
+        >>> with pytest.warns(None) as record:
+        ...     warnings.warn("user", UserWarning)
+        ...     warnings.warn("runtime", RuntimeWarning)
+        >>> assert len(record) == 2
 
     """
     __tracebackhide__ = True
