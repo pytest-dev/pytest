@@ -43,11 +43,7 @@ from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
-
-if sys.version_info >= (3, 11):
-    from importlib.resources.readers import FileReader
-elif sys.version_info >= (3, 10):
-    from importlib.readers import FileReader
+    
 
 assertstate_key = StashKey["AssertionState"]()
 
@@ -280,6 +276,11 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
     if sys.version_info >= (3, 10):
 
         def get_resource_reader(self, name: str) -> importlib.abc.TraversableResources:  # type: ignore
+            if sys.version_info < (3, 11):
+                from importlib.readers import FileReader
+            else:
+                from importlib.resources.readers import FileReader
+                
             return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
 
 
