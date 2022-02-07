@@ -773,7 +773,7 @@ class TestLastFailed:
         result = pytester.runpytest("--lf", "--lfnf", "none")
         result.stdout.fnmatch_lines(
             [
-                "collected 2 items / 2 deselected",
+                "collected 2 items / 2 deselected / 0 selected",
                 "run-last-failure: no previously failed tests, deselecting all items.",
                 "deselected=2",
                 "* 2 deselected in *",

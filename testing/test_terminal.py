@@ -783,6 +783,33 @@ class TestTerminalFunctional:
         result.stdout.no_fnmatch_line("*= 1 deselected =*")
         assert result.ret == 0
 
+    def test_selected_count_with_error(self, pytester: Pytester) -> None:
+        testpath = pytester.makepyfile(
+            test_selected_count_3="""
+                def test_one():
+                    pass
+                def test_two():
+                    pass
+                def test_three():
+                    pass
+            """,
+            test_selected_count_error="""
+                5/0
+                def test_foo():
+                    pass
+                def test_bar():
+                    pass
+            """,
+        )
+        result = pytester.runpytest("-k", "test_t")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 3 items / 1 error / 1 deselected / 2 selected",
+                "* ERROR collecting test_selected_count_error.py *",
+            ]
+        )
+        assert result.ret == ExitCode.INTERRUPTED
+
     def test_no_skip_summary_if_failure(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
