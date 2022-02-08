@@ -21,7 +21,7 @@ there is no need to activate it.
 Here is a little annotated list for some popular plugins:
 
 * :pypi:`pytest-django`: write tests
-  for :std:doc:`django <django:index>` apps, using pytest integration.
+  for `django <https://docs.djangoproject.com/>`_ apps, using pytest integration.
 
 * :pypi:`pytest-twisted`: write tests
   for `twisted <https://twistedmatrix.com/>`_ apps, starting a reactor and

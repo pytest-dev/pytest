@@ -16,7 +16,7 @@ Deprecated Features
 -------------------
 
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
-:class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
+:class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 .. _instance-collector-deprecation:
 

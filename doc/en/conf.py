@@ -382,7 +382,6 @@ texinfo_documents = [
 ]
 
 
-# Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     "pluggy": ("https://pluggy.readthedocs.io/en/stable", None),
     "python": ("https://docs.python.org/3", None),
@@ -390,10 +389,6 @@ intersphinx_mapping = {
     "pip": ("https://pip.pypa.io/en/stable", None),
     "tox": ("https://tox.wiki/en/stable", None),
     "virtualenv": ("https://virtualenv.pypa.io/en/stable", None),
-    "django": (
-        "http://docs.djangoproject.com/en/stable",
-        "http://docs.djangoproject.com/en/stable/_objects",
-    ),
     "setuptools": ("https://setuptools.pypa.io/en/stable", None),
 }
 
