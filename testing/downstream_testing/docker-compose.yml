@@ -1,0 +1,78 @@
+version: "3"
+services:
+  base_nodb:
+    build: .
+    environment:
+      - DS_NAME
+      - DS_YAML
+      - DS_JOBS
+      - DS_MATRIX_EXCLUDE
+    volumes:
+      - type: bind
+        source: /home/runner/work/pytest/pytest
+        target: /pytest
+        volume:
+          nocopy: true
+    profiles:
+      - nodb
+  
+  base_postgres:
+    build: .
+    environment:
+      - DS_NAME
+      - DS_YAML
+      - DS_JOBS
+      - DS_MATRIX_EXCLUDE
+      - TEST_DB_USER=$USER
+      - TEST_DB_PASSWORD=pytest_djang0
+      - TEST_DB_HOST=postgres_db
+    volumes:
+      - type: bind
+        source: /home/runner/work/pytest/pytest
+        target: /pytest
+        volume:
+          nocopy: true
+    depends_on:
+      - postgres_db
+    profiles:
+      - postgres
+  postgres_db:
+    image: "postgres:latest"
+    environment:
+      - POSTGRES_PASSWORD=pytest_djang0
+      - POSTGRES_USER=$USER
+    volumes:
+      - /etc/passwd:/etc/passwd:ro
+      - ./data/db:/var/lib/postgresql/data
+    profiles:
+      - postgres
+
+  base_mysql:
+    build: .
+    environment:
+      - DS_NAME
+      - DS_YAML
+      - DS_JOBS
+      - DS_MATRIX_EXCLUDE
+      - TEST_DB_USER=root
+      - TEST_DB_PASSWORD=root
+      - TEST_DB_HOST=mysql_db
+    volumes:
+      - type: bind
+        source: /home/runner/work/pytest/pytest
+        target: /pytest
+        volume:
+          nocopy: true
+    depends_on:
+      - mysql_db
+    profiles:
+      - mysql
+  mysql_db:
+    image: "mysql:latest"
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - ./data/db:/var/lib/mysql
+    profiles:
+      - mysql
