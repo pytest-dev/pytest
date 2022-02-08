@@ -784,7 +784,7 @@ class TestTerminalFunctional:
         assert result.ret == 0
 
     def test_selected_count_with_error(self, pytester: Pytester) -> None:
-        testpath = pytester.makepyfile(
+        pytester.makepyfile(
             test_selected_count_3="""
                 def test_one():
                     pass
