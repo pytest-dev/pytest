@@ -171,6 +171,12 @@ class TestResolveCollectionArgument:
                 invocation_path, "pkg::foo::bar", as_pypath=True
             )
 
+    def test_parametrized_name_with_colons(self, invocation_path: Path) -> None:
+        ret = resolve_collection_argument(
+            invocation_path, "src/pkg/test.py::test[a::b]"
+        )
+        assert ret == (invocation_path / "src/pkg/test.py", ["test[a::b]"])
+
     def test_does_not_exist(self, invocation_path: Path) -> None:
         """Given a file/module that does not exist raises UsageError."""
         with pytest.raises(
