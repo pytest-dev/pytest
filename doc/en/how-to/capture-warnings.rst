@@ -358,7 +358,7 @@ Additional use cases of warnings in tests
 
 Here are some use cases involving warnings that often come up in tests, and suggestions on how to deal with them:
 
-- To ensure that **any** warning is emitted, use:
+- To ensure that **at least one** warning is emitted, use:
 
 .. code-block:: python
 
