@@ -276,13 +276,15 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         with open(pathname, "rb") as f:
             return f.read()
 
-    if sys.version_info >= (3, 9):
+    if sys.version_info >= (3, 10):
 
         def get_resource_reader(self, name: str) -> importlib.abc.TraversableResources:  # type: ignore
-            from types import SimpleNamespace
-            from importlib.readers import FileReader
+            if sys.version_info < (3, 11):
+                from importlib.readers import FileReader
+            else:
+                from importlib.resources.readers import FileReader
 
-            return FileReader(SimpleNamespace(path=self._rewritten_names[name]))
+            return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
 
 
 def _write_pyc_fp(
