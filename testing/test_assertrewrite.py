@@ -13,10 +13,12 @@ from functools import partial
 from pathlib import Path
 from typing import cast
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Set
+from unittest import mock
 
 import _pytest._code
 import pytest
@@ -1376,7 +1378,7 @@ class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(
         self, pytestconfig, monkeypatch, pytester: Pytester
-    ) -> AssertionRewritingHook:
+    ) -> Generator[AssertionRewritingHook, None, None]:
         """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
         if PathFinder.find_spec has been called.
         """
@@ -1397,11 +1399,11 @@ class TestEarlyRewriteBailout:
 
         hook = AssertionRewritingHook(pytestconfig)
         # use default patterns, otherwise we inherit pytest's testing config
-        hook.fnpats[:] = ["test_*.py", "*_test.py"]
-        monkeypatch.setattr(hook, "_find_spec", spy_find_spec)
-        hook.set_session(StubSession())  # type: ignore[arg-type]
-        pytester.syspathinsert()
-        return hook
+        with mock.patch.object(hook, "fnpats", ["test_*.py", "*_test.py"]):
+            monkeypatch.setattr(hook, "_find_spec", spy_find_spec)
+            hook.set_session(StubSession())  # type: ignore[arg-type]
+            pytester.syspathinsert()
+            yield hook
 
     def test_basic(self, pytester: Pytester, hook: AssertionRewritingHook) -> None:
         """
@@ -1451,9 +1453,9 @@ class TestEarlyRewriteBailout:
             }
         )
         pytester.syspathinsert("tests")
-        hook.fnpats[:] = ["tests/**.py"]
-        assert hook.find_spec("file") is not None
-        assert self.find_spec_calls == ["file"]
+        with mock.patch.object(hook, "fnpats", ["tests/**.py"]):
+            assert hook.find_spec("file") is not None
+            assert self.find_spec_calls == ["file"]
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
