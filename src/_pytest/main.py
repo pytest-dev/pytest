@@ -871,7 +871,10 @@ def resolve_collection_argument(
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    strpath, *parts = str(arg).split("::")
+    base, squacket, rest = str(arg).partition("[")
+    strpath, *parts = base.split("::")
+    if parts:
+        parts[-1] = f"{parts[-1]}{squacket}{rest}"
     if as_pypath:
         strpath = search_pypath(strpath)
     fspath = invocation_path / strpath
