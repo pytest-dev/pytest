@@ -1275,7 +1275,7 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
         ("_pytest.config", "nonwrapper"),
         (m.__module__, "nonwrapper"),
         ("_pytest.legacypath", "nonwrapper"),
-        ("_pytest.pythonpath", "nonwrapper"),
+        ("_pytest.python_path", "nonwrapper"),
         ("_pytest.capture", "wrapper"),
         ("_pytest.warnings", "wrapper"),
     ]
