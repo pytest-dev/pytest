@@ -185,6 +185,15 @@ class TestCaseFunction(Function):
     _excinfo: Optional[List[_pytest._code.ExceptionInfo[BaseException]]] = None
     _testcase: Optional["unittest.TestCase"] = None
 
+    def _getobj(self):
+        assert self.parent is not None
+        # Unlike a regular Function in a Class, where `item.obj` returns
+        # a *bound* method (attached to an instance), TestCaseFunction's
+        # `obj` returns an *unbound* method (not attached to an instance).
+        # This inconsistency is probably not desirable, but needs some
+        # consideration before changing.
+        return getattr(self.parent.obj, self.originalname)  # type: ignore[attr-defined]
+
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
         self._explicit_tearDown: Optional[Callable[[], None]] = None
