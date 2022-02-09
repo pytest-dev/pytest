@@ -255,7 +255,7 @@ default_plugins = essential_plugins + (
     "warnings",
     "logging",
     "reports",
-    "pythonpath",
+    "python_path",
     *(["unraisableexception", "threadexception"] if sys.version_info >= (3, 8) else []),
     "faulthandler",
 )
