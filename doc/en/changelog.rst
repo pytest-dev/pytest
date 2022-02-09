@@ -28,6 +28,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.0.1 (2022-02-09)
+=========================
+
+Bug Fixes
+---------
+
+- `#9608 <https://github.com/pytest-dev/pytest/issues/9608>`_: Fix invalid importing of ``importlib.readers`` in Python 3.9.
+
+
+- `#9636 <https://github.com/pytest-dev/pytest/issues/9636>`_: The ``pythonpath`` plugin was renamed to ``python_path``. This avoids a conflict with the ``pytest-pythonpath`` plugin.
+
+
+- `#9642 <https://github.com/pytest-dev/pytest/issues/9642>`_: Fix running tests by id with ``::`` in the parametrize portion.
+
+
 pytest 7.0.0 (2022-02-03)
 =========================
 
