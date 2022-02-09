@@ -142,7 +142,7 @@ Both automatic and manual processes described above follow the same steps from t
 
    Wait for the deploy to complete, then make sure it is `available on PyPI <https://pypi.org/project/pytest>`_.
 
-#. Merge the PR.
+#. Merge the PR. **Make sure it's not squash-merged**, so that the tagged commit ends up in the main branch.
 
 #. Cherry-pick the CHANGELOG / announce files to the ``main`` branch::
 
