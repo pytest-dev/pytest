@@ -1,0 +1,2 @@
+Delay issuing a :class:`~pytest.PytestWarning` about diamond inheritance involving :class:`~pytest.Item` and
+:class:`~pytest.Collector` so it can be filtered using :ref:`standard warning filters <warnings>`.
