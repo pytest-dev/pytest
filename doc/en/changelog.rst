@@ -28,6 +28,30 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.0.1 (2022-02-11)
+=========================
+
+Bug Fixes
+---------
+
+- `#9608 <https://github.com/pytest-dev/pytest/issues/9608>`_: Fix invalid importing of ``importlib.readers`` in Python 3.9.
+
+
+- `#9610 <https://github.com/pytest-dev/pytest/issues/9610>`_: Restore `UnitTestFunction.obj` to return unbound rather than bound method.
+  Fixes a crash during a failed teardown in unittest TestCases with non-default `__init__`.
+  Regressed in pytest 7.0.0.
+
+
+- `#9636 <https://github.com/pytest-dev/pytest/issues/9636>`_: The ``pythonpath`` plugin was renamed to ``python_path``. This avoids a conflict with the ``pytest-pythonpath`` plugin.
+
+
+- `#9642 <https://github.com/pytest-dev/pytest/issues/9642>`_: Fix running tests by id with ``::`` in the parametrize portion.
+
+
+- `#9643 <https://github.com/pytest-dev/pytest/issues/9643>`_: Delay issuing a :class:`~pytest.PytestWarning` about diamond inheritance involving :class:`~pytest.Item` and
+  :class:`~pytest.Collector` so it can be filtered using :ref:`standard warning filters <warnings>`.
+
+
 pytest 7.0.0 (2022-02-03)
 =========================
 
