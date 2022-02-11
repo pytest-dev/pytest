@@ -1,4 +1,5 @@
 import enum
+import sys
 from functools import partial
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -91,6 +92,7 @@ def test_get_real_func_partial() -> None:
     assert get_real_func(partial(foo)) is foo
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 11), reason="couroutine removed")
 def test_is_generator_asyncio(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
