@@ -25,7 +25,7 @@ repos:
     hooks:
     -   id: autoflake
         name: autoflake
-        entry: autoflake --in-place --remove-unused-variables --remove-all-unused-imports
+        args: ["--in-place", "--remove-unused-variables", "--remove-all-unused-imports"]
         language: python
         files: \.py$
 -   repo: https://github.com/PyCQA/flake8
