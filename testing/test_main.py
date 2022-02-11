@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -44,16 +45,32 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
         assert result.ret == ExitCode.INTERNAL_ERROR
     assert result.stdout.lines[0] == "INTERNALERROR> Traceback (most recent call last):"
 
+    end_lines = (
+        result.stdout.lines[-4:]
+        if sys.version_info >= (3, 11)
+        else result.stdout.lines[-3:]
+    )
+
     if exc == SystemExit:
-        assert result.stdout.lines[-3:] == [
+        assert end_lines == [
             f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise SystemExit("boom")',
+            *(
+                ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
+                if sys.version_info >= (3, 11)
+                else ()
+            ),
             "INTERNALERROR> SystemExit: boom",
         ]
     else:
-        assert result.stdout.lines[-3:] == [
+        assert end_lines == [
             f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise ValueError("boom")',
+            *(
+                ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
+                if sys.version_info >= (3, 11)
+                else ()
+            ),
             "INTERNALERROR> ValueError: boom",
         ]
     if returncode is False:
