@@ -905,8 +905,6 @@ class InstanceDummy:
     only to ignore it; this dummy class keeps them working. This will be removed
     in pytest 8."""
 
-    pass
-
 
 def __getattr__(name: str) -> object:
     if name == "Instance":

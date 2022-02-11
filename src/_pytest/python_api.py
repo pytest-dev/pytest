@@ -131,7 +131,6 @@ class ApproxBase:
         # a numeric type.  For this reason, the default is to do nothing.  The
         # classes that deal with sequences should reimplement this method to
         # raise if there are any non-numeric elements in the sequence.
-        pass
 
 
 def _recursive_list_map(f, x):
