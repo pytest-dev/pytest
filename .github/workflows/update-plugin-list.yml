@@ -12,6 +12,7 @@ permissions: {}
 
 jobs:
   createPullRequest:
+    if: github.repository_owner == 'pytest-dev'
     runs-on: ubuntu-latest
     permissions:
       contents: write
