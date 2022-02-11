@@ -743,8 +743,8 @@ def test_run_result_repr() -> None:
 
     # known exit code
     r = pytester_mod.RunResult(1, outlines, errlines, duration=0.5)
-    assert (
-        repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
+    assert repr(r) == (
+        f"<RunResult ret={str(pytest.ExitCode.TESTS_FAILED)} len(stdout.lines)=3"
         " len(stderr.lines)=4 duration=0.50s>"
     )
 
