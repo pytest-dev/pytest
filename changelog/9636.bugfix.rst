@@ -1,1 +1,0 @@
-The ``pythonpath`` plugin was renamed to ``python_path``. This avoids a conflict with the ``pytest-pythonpath`` plugin.
