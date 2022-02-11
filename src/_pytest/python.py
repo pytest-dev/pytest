@@ -896,8 +896,6 @@ class InstanceDummy:
     only to ignore it; this dummy class keeps them working. This will be removed
     in pytest 8."""
 
-    pass
-
 
 # Note: module __getattr__ only works on Python>=3.7. Unfortunately
 # we can't provide this deprecation warning on Python 3.6.
