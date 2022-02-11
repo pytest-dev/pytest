@@ -488,10 +488,7 @@ class TestMetafunc:
         result = IdMaker(
             ("a", "b"), [pytest.param(e.one, e.two)], None, None, None, None
         ).make_unique_parameterset_ids()
-        if sys.version_info >= (3, 11):
-            assert result == ["one-two"]
-        else:
-            assert result == ["Foo.one-Foo.two"]
+        assert result == ["Foo.one-Foo.two"]
 
     def test_idmaker_idfn(self) -> None:
         """#351"""

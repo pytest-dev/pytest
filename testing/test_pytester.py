@@ -743,16 +743,10 @@ def test_run_result_repr() -> None:
 
     # known exit code
     r = pytester_mod.RunResult(1, outlines, errlines, duration=0.5)
-    if sys.version_info >= (3, 11):
-        assert (
-            repr(r) == "<RunResult ret=TESTS_FAILED len(stdout.lines)=3"
-            " len(stderr.lines)=4 duration=0.50s>"
-        )
-    else:
-        assert (
-            repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
-            " len(stderr.lines)=4 duration=0.50s>"
-        )
+    assert (
+        repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
+        " len(stderr.lines)=4 duration=0.50s>"
+    )
 
     # unknown exit code: just the number
     r = pytester_mod.RunResult(99, outlines, errlines, duration=0.5)
