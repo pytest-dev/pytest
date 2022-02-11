@@ -1,16 +1,13 @@
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
-import ast
 import inspect
 import linecache
 import sys
 import textwrap
 from pathlib import Path
-from types import CodeType
 from typing import Any
 from typing import Dict
-from typing import Optional
 
 import pytest
 from _pytest._code import Code

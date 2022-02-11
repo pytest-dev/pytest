@@ -20,6 +20,14 @@ repos:
     -   id: debug-statements
         exclude: _pytest/(debugging|hookspec).py
         language_version: python3
+-   repo: https://github.com/myint/autoflake
+    rev: v1.4
+    hooks:
+    -   id: autoflake
+        name: autoflake
+        entry: autoflake --in-place --remove-unused-variables --remove-all-unused-imports
+        language: python
+        files: \.py$
 -   repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:
