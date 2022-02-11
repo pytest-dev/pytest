@@ -81,7 +81,7 @@ jobs:
             os: windows-latest
             tox_env: "py310-xdist"
           - name: "windows-py311"
-            python: "3.11.0-alpha.4"
+            python: "3.11-dev"
             os: windows-latest
             tox_env: "py311"
 
@@ -111,7 +111,7 @@ jobs:
             os: ubuntu-latest
             tox_env: "py310-xdist"
           - name: "ubuntu-py311"
-            python: "3.11.0-alpha.4"
+            python: "3.11-dev"
             os: ubuntu-latest
             tox_env: "py311"
           - name: "ubuntu-pypy3"
