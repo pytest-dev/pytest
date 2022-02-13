@@ -441,3 +441,18 @@ Please read our :ref:`backwards-compatibility` to learn how we proceed about dep
 features.
 
 The full list of warnings is listed in :ref:`the reference documentation <warnings ref>`.
+
+
+.. _`resource-warnings`:
+
+Resource Warnings
+-----------------
+
+Additional information of the source of a :class:`ResourceWarning` can be obtained when captured by pytest if
+:mod:`tracemalloc` module is enabled.
+
+One convenient way to enable :mod:`tracemalloc` when running tests is to set the :envvar:`PYTHONTRACEMALLOC` to a large
+enough number of frames (say ``20``, but that number is application dependent).
+
+For more information, consult the `Python Development Mode <https://docs.python.org/3/library/devmode.html>`__
+section in the Python documentation.
