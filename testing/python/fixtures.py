@@ -1308,6 +1308,59 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*4 passed*"])
 
+    @pytest.mark.parametrize(
+        ("parametrize1", "parametrize2"),
+        [
+            (
+                '"fix", [1, 2], indirect=True',
+                '"fix", [2, 1], indirect=True',
+            ),
+            (
+                '"fix", [1, pytest.param({"data": 2}, id="2")], indirect=True',
+                '"fix", [pytest.param({"data": 2}, id="2"), 1], indirect=True',
+            ),
+            (
+                '"fix", [{"data": 1}, {"data": 2}], indirect=True, ids=lambda d: MyEnum(d["data"])',
+                '"fix", [{"data": 2}, {"data": 1}], indirect=True, ids=lambda d: MyEnum(d["data"])',
+            ),
+            (
+                '"fix", [{"data": 1}, {"data": 2}], indirect=True, ids=[1, "two"]',
+                '"fix", [{"data": 2}, {"data": 1}], indirect=True, ids=["two", 1]',
+            ),
+        ],
+    )
+    def test_reorder_and_cache(
+        self, pytester: Pytester, parametrize1, parametrize2
+    ) -> None:
+        """Test optimization for minimal setup/teardown with indirectly parametrized fixtures. See #8914, #9420."""
+        pytester.makepyfile(
+            f"""
+            import pytest
+            from enum import Enum
+            class MyEnum(Enum):
+                Id1 = 1
+                Id2 = 2
+            @pytest.fixture(scope="session")
+            def fix(request):
+                value = request.param["data"] if isinstance(request.param, dict) else request.param
+                print(f'prepare foo-%s' % value)
+                yield value
+                print(f'teardown foo-%s' % value)
+            @pytest.mark.parametrize({parametrize1})
+            def test1(fix):
+                pass
+            @pytest.mark.parametrize({parametrize2})
+            def test2(fix):
+                pass
+        """
+        )
+        result = pytester.runpytest("-s")
+        output = result.stdout.str()
+        assert output.count("prepare foo-1") == 1
+        assert output.count("prepare foo-2") == 1
+        assert output.count("teardown foo-1") == 1
+        assert output.count("teardown foo-2") == 1
+
     def test_funcarg_parametrized_and_used_twice(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
