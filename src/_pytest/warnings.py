@@ -92,9 +92,7 @@ def warning_record_to_str(warning_message: warnings.WarningMessage) -> str:
                 formatted_tb = "\n".join(tb.format())
                 # Use a leading new line to better separate the (large) output
                 # from the traceback to the previous warning text.
-                msg += (
-                    f"\nObject allocated at (most recent call first):\n{formatted_tb}"
-                )
+                msg += f"\nObject allocated at:\n{formatted_tb}"
             else:
                 # No need for a leading new line.
                 url = "https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings"

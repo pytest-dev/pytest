@@ -819,7 +819,7 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
     expected_extra = (
         [
             "*ResourceWarning* unclosed file*",
-            "*Object allocated at (most recent call first)*",
+            "*Object allocated at*",
         ]
         if has_tracemalloc
         else []
