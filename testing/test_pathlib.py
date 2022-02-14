@@ -559,15 +559,20 @@ class TestImportLibMode:
         result = module_name_from_path(Path("/home/foo/test_foo.py"), Path("/bar"))
         assert result == "home.foo.test_foo"
 
-    def test_insert_missing_modules(self) -> None:
-        modules = {"src.tests.foo": ModuleType("src.tests.foo")}
-        insert_missing_modules(modules, "src.tests.foo")
-        assert sorted(modules) == ["src", "src.tests", "src.tests.foo"]
+    def test_insert_missing_modules(
+        self, monkeypatch: MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        # Use 'xxx' and 'xxy' as parent names as they are unlikely to exist and
+        # don't end up being imported.
+        modules = {"xxx.tests.foo": ModuleType("xxx.tests.foo")}
+        insert_missing_modules(modules, "xxx.tests.foo")
+        assert sorted(modules) == ["xxx", "xxx.tests", "xxx.tests.foo"]
 
         mod = ModuleType("mod", doc="My Module")
-        modules = {"src": mod}
-        insert_missing_modules(modules, "src")
-        assert modules == {"src": mod}
+        modules = {"xxy": mod}
+        insert_missing_modules(modules, "xxy")
+        assert modules == {"xxy": mod}
 
         modules = {}
         insert_missing_modules(modules, "")
