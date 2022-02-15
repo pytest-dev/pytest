@@ -1238,8 +1238,6 @@ def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
             "    def check():",
             ">       assert 1 == 2",
             "E       assert 1 == 2",
-            "E         +1",
-            "E         -2",
             "",
             "pdb.py:2: AssertionError",
             "*= 1 failed in *",
