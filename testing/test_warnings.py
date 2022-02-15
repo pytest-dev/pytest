@@ -789,6 +789,10 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
     except ImportError:
         has_tracemalloc = False
 
+    # Explicitly disable PYTHONTRACEMALLOC in case pytest's test suite is running
+    # with it enabled.
+    monkeypatch.delenv("PYTHONTRACEMALLOC", raising=False)
+
     pytester.makepyfile(
         """
         def open_file(p):
