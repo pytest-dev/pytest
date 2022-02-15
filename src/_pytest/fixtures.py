@@ -939,10 +939,7 @@ class FixtureDef(Generic[FixtureValue]):
         params: Optional[Sequence[object]],
         unittest: bool = False,
         ids: Optional[
-            Union[
-                Tuple[Union[None, str, float, int, bool], ...],
-                Callable[[Any], Optional[object]],
-            ]
+            Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
         ] = None,
     ) -> None:
         self._fixturemanager = fixturemanager
@@ -1093,18 +1090,8 @@ def pytest_fixture_setup(
 
 
 def _ensure_immutable_ids(
-    ids: Optional[
-        Union[
-            Iterable[Union[None, str, float, int, bool]],
-            Callable[[Any], Optional[object]],
-        ]
-    ],
-) -> Optional[
-    Union[
-        Tuple[Union[None, str, float, int, bool], ...],
-        Callable[[Any], Optional[object]],
-    ]
-]:
+    ids: Optional[Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]]
+) -> Optional[Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]]:
     if ids is None:
         return None
     if callable(ids):
@@ -1148,9 +1135,8 @@ class FixtureFunctionMarker:
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]"
     params: Optional[Tuple[object, ...]] = attr.ib(converter=_params_converter)
     autouse: bool = False
-    ids: Union[
-        Tuple[Union[None, str, float, int, bool], ...],
-        Callable[[Any], Optional[object]],
+    ids: Optional[
+        Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
     ] = attr.ib(
         default=None,
         converter=_ensure_immutable_ids,
@@ -1191,10 +1177,7 @@ def fixture(
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
     ids: Optional[
-        Union[
-            Iterable[Union[None, str, float, int, bool]],
-            Callable[[Any], Optional[object]],
-        ]
+        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = ...,
 ) -> FixtureFunction:
@@ -1209,10 +1192,7 @@ def fixture(
     params: Optional[Iterable[object]] = ...,
     autouse: bool = ...,
     ids: Optional[
-        Union[
-            Iterable[Union[None, str, float, int, bool]],
-            Callable[[Any], Optional[object]],
-        ]
+        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = None,
 ) -> FixtureFunctionMarker:
@@ -1226,10 +1206,7 @@ def fixture(
     params: Optional[Iterable[object]] = None,
     autouse: bool = False,
     ids: Optional[
-        Union[
-            Iterable[Union[None, str, float, int, bool]],
-            Callable[[Any], Optional[object]],
-        ]
+        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = None,
     name: Optional[str] = None,
 ) -> Union[FixtureFunctionMarker, FixtureFunction]:
@@ -1271,7 +1248,7 @@ def fixture(
         the fixture.
 
     :param ids:
-        List of string ids each corresponding to the params so that they are
+        Sequence of ids each corresponding to the params so that they are
         part of the test id. If no ids are provided they will be generated
         automatically from the params.
 
