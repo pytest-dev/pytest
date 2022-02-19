@@ -1165,3 +1165,92 @@ def test_log_file_cli_subdirectories_are_successfully_created(
     result = pytester.runpytest("--log-file=foo/bar/logf.log")
     assert "logf.log" in os.listdir(expected)
     assert result.ret == ExitCode.OK
+
+
+def test_log_file_in_root_dir_when_pytest_invoked_in_subdir(pytester, monkeypatch):
+    """Issue #7336 - log_file should be relative to the config file when it contains the log_file option."""
+    pytester.makeini(
+        """
+        [pytest]
+        log_file = pytest.log
+        """
+    )
+
+    subdir = pytester.mkdir("subdir")
+    testfile = pytester.makepyfile(
+        """
+        def test_this():
+            pass
+        """
+    )
+    testfile.replace(subdir / testfile)
+
+    monkeypatch.chdir(subdir)
+    pytester.runpytest()
+    pytester.chdir()  # Restore the initial cwd.
+
+    files_in_root_dir = set(os.listdir())
+    assert {"pytest.log", "tox.ini"}.issubset(files_in_root_dir)
+
+
+def test_log_file_in_subdir_when_specified_and_pytest_invoked_in_subdir(
+    pytester, monkeypatch
+):
+    """Issue #7336 - log_file should be relative to the config file when it contains the log_file option."""
+    pytester.makeini(
+        """
+        [pytest]
+        log_file = subdir/pytest.log
+        """
+    )
+
+    subdir = pytester.mkdir("subdir")
+    testfile = pytester.makepyfile(
+        """
+        def test_this():
+            pass
+        """
+    )
+    testfile.replace(subdir / testfile)
+
+    monkeypatch.chdir(subdir)
+    pytester.runpytest()
+
+    files_in_subdir = set(os.listdir())
+    assert "pytest.log" in files_in_subdir
+    assert "tox.ini" not in files_in_subdir
+
+
+def test_log_file_relative_to_invocation_dir_when_passed_as_cmd_argument(
+    pytester, monkeypatch
+):
+    """PR #7350 comment related to issue #7350 (https://github.com/pytest-dev/pytest/pull/7350#pullrequestreview-429803796).
+
+    Log_file should be relative to the invocation dir when passed as a commandline argument.
+    """
+    pytester.makeini(
+        """
+        [pytest]
+        """
+    )
+
+    subdir = pytester.mkdir("subdir")
+    testfile = pytester.makepyfile(
+        """
+        def test_this():
+            pass
+        """
+    )
+    testfile.replace(subdir / testfile)
+
+    monkeypatch.chdir(subdir)
+    pytester.runpytest("--log-file", "pytest.log")
+
+    files_in_subdir = set(os.listdir())
+    assert "pytest.log" in files_in_subdir
+    assert "tox.ini" not in files_in_subdir
+
+    pytester.chdir()  # Restore the initial cwd.
+    files_in_root_dir = set(os.listdir())
+    assert "pytest.log" not in files_in_root_dir
+    assert "tox.ini" in files_in_root_dir
