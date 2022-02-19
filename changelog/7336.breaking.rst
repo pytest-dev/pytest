@@ -1,0 +1,1 @@
+The pytest ``log_file`` ini marker is now relative to the configs ``inifile`` directory, as it was always the intention. It was originally introduced as relative to the current working directory unintentionally.
