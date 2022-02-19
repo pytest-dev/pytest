@@ -1221,7 +1221,7 @@ def test_log_file_in_subdir_when_specified_and_pytest_invoked_in_subdir(
     assert "tox.ini" not in files_in_subdir
 
 
-def test_log_file_relative_to_invocation_dir_when_passed_as_cmd_argument(
+def test_log_file_relative_to_invocation_dir_when_passed_as_cli_argument(
     pytester, monkeypatch
 ):
     """PR #7350 comment related to issue #7350 (https://github.com/pytest-dev/pytest/pull/7350#pullrequestreview-429803796).

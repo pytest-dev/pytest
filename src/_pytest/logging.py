@@ -560,8 +560,8 @@ class LoggingPlugin:
             if not os.path.isdir(directory):
                 os.makedirs(directory)
 
-            # Log file should be relative to cwd when passed as a cmd argument and
-            # relative to the config file otherwise.
+            # Log file should be relative to invocation location when passed as a cli argument
+            # and relative to the config file otherwise.
             is_inifile_argument = "--log-file" not in config.invocation_params.args
             if config.inipath is not None and is_inifile_argument:
                 log_file = os.path.join(config.inipath.parent, log_file)
