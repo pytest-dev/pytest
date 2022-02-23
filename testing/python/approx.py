@@ -867,7 +867,10 @@ class TestApprox:
                 return 4
 
         expected = MySequence()
-        assert [1, 2, 3, 4] == approx(expected)
+        assert [1, 2, 3, 4] == approx(expected, abs=1e-4)
+
+        expected_repr = "approx([1 ± 1.0e-06, 2 ± 2.0e-06, 3 ± 3.0e-06, 4 ± 4.0e-06])"
+        assert repr(approx(expected)) == expected_repr
 
     def test_allow_ordered_sequences_only(self) -> None:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
