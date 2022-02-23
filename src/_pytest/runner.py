@@ -2,7 +2,6 @@
 import bdb
 import os
 import sys
-import warnings
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -28,7 +27,6 @@ from _pytest._code.code import TerminalRepr
 from _pytest.compat import final
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import UNITTEST_SKIP_DURING_COLLECTION
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.nodes import Node
@@ -379,11 +377,6 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
             # Type ignored because unittest is loaded dynamically.
             skip_exceptions.append(unittest.SkipTest)  # type: ignore
         if isinstance(call.excinfo.value, tuple(skip_exceptions)):
-            if unittest is not None and isinstance(
-                call.excinfo.value, unittest.SkipTest  # type: ignore[attr-defined]
-            ):
-                warnings.warn(UNITTEST_SKIP_DURING_COLLECTION, stacklevel=2)
-
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
             assert isinstance(r_, ExceptionChainRepr), repr(r_)
