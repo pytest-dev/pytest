@@ -241,19 +241,6 @@ scheduled for removal in pytest 8 (deprecated since pytest 2.4.0):
 - ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
 
 
-Raising ``unittest.SkipTest`` during collection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-Raising :class:`unittest.SkipTest` to skip collection of tests during the
-pytest collection phase is deprecated. Use :func:`pytest.skip` instead.
-
-Note: This deprecation only relates to using `unittest.SkipTest` during test
-collection. You are probably not doing that. Ordinary usage of
-:class:`unittest.SkipTest` / :meth:`unittest.TestCase.skipTest` /
-:func:`unittest.skip` in unittest test cases is fully supported.
-
 Using ``pytest.warns(None)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
