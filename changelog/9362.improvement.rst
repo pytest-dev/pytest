@@ -1,0 +1,1 @@
+pytest now avoids specialized assert formatting when it is detected that the default ``__eq__`` is overridden in ``attrs`` or ``dataclasses``.
