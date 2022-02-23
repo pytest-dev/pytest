@@ -211,7 +211,7 @@ Deprecations
   :class:`unittest.SkipTest` / :meth:`unittest.TestCase.skipTest` /
   :func:`unittest.skip` in unittest test cases is fully supported.
 
-  NOTE: This deprecation has been reverted in pytest 7.1.0.
+  .. note:: This deprecation has been reverted in pytest 7.1.0.
 
 
 - `#8315 <https://github.com/pytest-dev/pytest/issues/8315>`_: Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
