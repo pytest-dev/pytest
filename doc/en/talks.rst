@@ -11,6 +11,9 @@ Books
 - `Python Testing with pytest, by Brian Okken (2017)
   <https://pragprog.com/book/bopytest/python-testing-with-pytest>`_.
 
+- `Python Testing with pytest, Second Edition, by Brian Okken (2022)
+  <https://pragprog.com/titles/bopytest2/python-testing-with-pytest-second-edition>`_.
+
 Talks and blog postings
 ---------------------------------------------
 
