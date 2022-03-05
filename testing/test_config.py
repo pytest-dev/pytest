@@ -163,7 +163,17 @@ class TestParseIni:
         pytester.path.joinpath("pytest.ini").write_text("addopts = -x")
         result = pytester.runpytest()
         assert result.ret != 0
-        result.stderr.fnmatch_lines(["ERROR: *pytest.ini:1: no section header defined"])
+        result.stderr.fnmatch_lines("ERROR: *pytest.ini:1: no section header defined")
+
+    def test_toml_parse_error(self, pytester: Pytester) -> None:
+        pytester.makepyprojecttoml(
+            """
+            \\"
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret != 0
+        result.stderr.fnmatch_lines("ERROR: *pyproject.toml: Invalid statement*")
 
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, pytester: Pytester) -> None:
