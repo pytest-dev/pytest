@@ -35,7 +35,7 @@ Install ``pytest``
 Create your first test
 ----------------------------------------------------------
 
-Create a simple test function with just four lines of code:
+Create a Python file test_sample.py and write a simple test function with just four lines of code:
 
 .. code-block:: python
 
