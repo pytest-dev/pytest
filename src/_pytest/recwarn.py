@@ -291,6 +291,6 @@ class WarningsChecker(WarningsRecorder):
                         fail(
                             f"""\
 DID NOT WARN. No warnings of type {self.expected_warning} matching the regex were emitted.
-The regex is: {self.match_expr}
-The list of emitted warnings is: {found_str()}"""
+ Regex: {self.match_expr}
+ Emitted warnings: {found_str()}"""
                         )
