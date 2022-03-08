@@ -14,8 +14,8 @@ from typing import Sequence
 import _pytest._code
 from _pytest import outcomes
 from _pytest._io.saferepr import _pformat_dispatch
-from _pytest._io.saferepr import saferepr_unlimited
 from _pytest._io.saferepr import saferepr
+from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
 
 # The _reprcompare attribute on the util module is used by the new assertion
