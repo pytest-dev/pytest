@@ -1702,6 +1702,7 @@ def test_reprcompare_verbose_long() -> None:
     b = a.copy()
     b["v2"] += 10
     lines = callop("==", a, b, verbose=2)
+    assert lines is not None
     assert lines[0] == (
         "{'v0': 0, 'v1': 1, 'v2': 2, 'v3': 3, 'v4': 4, 'v5': 5, "
         "'v6': 6, 'v7': 7, 'v8': 8, 'v9': 9, 'v10': 10}"
