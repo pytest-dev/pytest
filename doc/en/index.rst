@@ -6,8 +6,6 @@
    - `PyConIT <https://pycon.it/en/talk/pytest-simple-rapid-and-fun-testing-with-python>`__, June 3rd 2022 (4h), Florence, Italy
    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote and Leipzig, Germany
 
-   Also see `previous talks and blogposts <talks.html>`_.
-
 ..
    -  `Europython <https://ep2022.europython.eu/>`__, July 11th to 17th (3h), Dublin, Ireland
    -  `CH Open Workshoptage <https://workshoptage.ch/>`__ (German), September 6th to 8th (1 day), Bern, Switzerland
