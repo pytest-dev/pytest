@@ -282,7 +282,7 @@ The ``pytest_warning_captured`` hook
 
 This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``.
 
-Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
+Use the ``pytest_warning_recorded`` hook instead, which replaces the ``item`` parameter
 by a ``nodeid`` parameter.
 
 The ``pytest.collect`` module
