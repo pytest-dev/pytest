@@ -17,6 +17,8 @@ Books
 Talks and blog postings
 ---------------------------------------------
 
+- `pytest: Simple, rapid and fun testing with Python, <https://youtu.be/cSJ-X3TbQ1c?t=15752>`_ (@ 4:22:32), Florian Bruhin, WeAreDevelopers World Congress 2021
+
 - Webinar: `pytest: Test Driven Development für Python (German) <https://bruhin.software/ins-pytest/>`_, Florian Bruhin, via mylearning.ch, 2020
 
 - Webinar: `Simplify Your Tests with Fixtures <https://blog.jetbrains.com/pycharm/2020/08/webinar-recording-simplify-your-tests-with-fixtures-with-oliver-bestwalter/>`_, Oliver Bestwalter, via JetBrains, 2020
