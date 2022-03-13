@@ -1,3 +1,0 @@
-More types are now accepted in the ``ids`` argument to ``@pytest.mark.parametrize``.
-Previously only `str`, `float`, `int` and `bool` were accepted;
-now `bytes`, `complex`, `re.Pattern`, `Enum` and anything with a `__name__` are also accepted.

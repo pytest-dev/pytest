@@ -1,1 +1,0 @@
-:fixture:`pytester` now requests a :fixture:`monkeypatch` fixture instead of creating one internally. This solves some issues with tests that involve pytest environment variables.

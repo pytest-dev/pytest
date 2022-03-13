@@ -155,7 +155,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >       assert [0, 1, 2] == [0, 1, 3]
     E       assert [0, 1, 2] == [0, 1, 3]
     E         At index 2 diff: 2 != 3
-    E         Use -v to get the full diff
+    E         Use -v to get more diff
 
     failure_demo.py:63: AssertionError
     ______________ TestSpecialisedExplanations.test_eq_list_long _______________
@@ -168,7 +168,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >       assert a == b
     E       assert [0, 0, 0, 0, 0, 0, ...] == [0, 0, 0, 0, 0, 0, ...]
     E         At index 100 diff: 1 != 2
-    E         Use -v to get the full diff
+    E         Use -v to get more diff
 
     failure_demo.py:68: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_dict _________________
@@ -215,7 +215,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     >       assert [1, 2] == [1, 2, 3]
     E       assert [1, 2] == [1, 2, 3]
     E         Right contains one more item: 3
-    E         Use -v to get the full diff
+    E         Use -v to get more diff
 
     failure_demo.py:77: AssertionError
     _________________ TestSpecialisedExplanations.test_in_list _________________
