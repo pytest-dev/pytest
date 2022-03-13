@@ -1,1 +1,0 @@
-When ``-vv`` is given on command line, show skipping and xfail reasons in full instead of truncating them to fit the terminal width.

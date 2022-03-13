@@ -1,4 +1,0 @@
-More information about the location of resources that led Python to raise :class:`ResourceWarning` can now
-be obtained by enabling :mod:`tracemalloc`.
-
-See :ref:`resource-warnings` for more information.

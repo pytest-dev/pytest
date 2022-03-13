@@ -1,3 +1,0 @@
-Fixed count of selected tests on terminal collection summary when there were errors or skipped modules.
-
-If there were errors or skipped modules on collection, pytest would mistakenly subtract those from the selected count.
