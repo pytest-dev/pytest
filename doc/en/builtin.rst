@@ -65,7 +65,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1365
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1334
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
@@ -134,7 +134,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
 
-    caplog -- .../_pytest/logging.py:483
+    caplog -- .../_pytest/logging.py:487
         Access and control log capturing.
 
         Captured logs are available through the following properties/methods::

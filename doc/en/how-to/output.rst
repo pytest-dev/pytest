@@ -84,7 +84,7 @@ Executing pytest normally gives us this output (we are skipping the header to fo
     >       assert fruits1 == fruits2
     E       AssertionError: assert ['banana', 'a...elon', 'kiwi'] == ['banana', 'a...elon', 'kiwi']
     E         At index 2 diff: 'grapes' != 'orange'
-    E         Use -v to get the full diff
+    E         Use -v to get more diff
 
     test_verbosity_example.py:8: AssertionError
     ____________________________ test_numbers_fail _____________________________
@@ -99,7 +99,7 @@ Executing pytest normally gives us this output (we are skipping the header to fo
     E         {'1': 1, '2': 2, '3': 3, '4': 4}
     E         Right contains 4 more items:
     E         {'10': 10, '20': 20, '30': 30, '40': 40}
-    E         Use -v to get the full diff
+    E         Use -v to get more diff
 
     test_verbosity_example.py:14: AssertionError
     ___________________________ test_long_text_fail ____________________________

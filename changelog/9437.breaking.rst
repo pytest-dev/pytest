@@ -1,1 +1,0 @@
-Dropped support for Python 3.6, which reached `end-of-life <https://devguide.python.org/#status-of-python-branches>`__ at 2021-12-23.

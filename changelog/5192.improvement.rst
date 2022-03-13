@@ -1,3 +1,0 @@
-Fixed test output for some data types where ``-v`` would show less information.
-
-Also, when showing diffs for sequences, ``-q`` would produce full diffs instead of the expected diff.

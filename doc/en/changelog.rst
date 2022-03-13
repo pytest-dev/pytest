@@ -28,6 +28,98 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.1.0 (2022-03-13)
+=========================
+
+Breaking Changes
+----------------
+
+- `#8838 <https://github.com/pytest-dev/pytest/issues/8838>`_: As per our policy, the following features have been deprecated in the 6.X series and are now
+  removed:
+
+  * ``pytest._fillfuncargs`` function.
+
+  * ``pytest_warning_captured`` hook - use ``pytest_warning_recorded`` instead.
+
+  * ``-k -foobar`` syntax - use ``-k 'not foobar'`` instead.
+
+  * ``-k foobar:`` syntax.
+
+  * ``pytest.collect`` module - import from ``pytest`` directly.
+
+  For more information consult
+  `Deprecations and Removals <https://docs.pytest.org/en/latest/deprecations.html>`__ in the docs.
+
+
+- `#9437 <https://github.com/pytest-dev/pytest/issues/9437>`_: Dropped support for Python 3.6, which reached `end-of-life <https://devguide.python.org/#status-of-python-branches>`__ at 2021-12-23.
+
+
+
+Improvements
+------------
+
+- `#5192 <https://github.com/pytest-dev/pytest/issues/5192>`_: Fixed test output for some data types where ``-v`` would show less information.
+
+  Also, when showing diffs for sequences, ``-q`` would produce full diffs instead of the expected diff.
+
+
+- `#9362 <https://github.com/pytest-dev/pytest/issues/9362>`_: pytest now avoids specialized assert formatting when it is detected that the default ``__eq__`` is overridden in ``attrs`` or ``dataclasses``.
+
+
+- `#9536 <https://github.com/pytest-dev/pytest/issues/9536>`_: When ``-vv`` is given on command line, show skipping and xfail reasons in full instead of truncating them to fit the terminal width.
+
+
+- `#9644 <https://github.com/pytest-dev/pytest/issues/9644>`_: More information about the location of resources that led Python to raise :class:`ResourceWarning` can now
+  be obtained by enabling :mod:`tracemalloc`.
+
+  See :ref:`resource-warnings` for more information.
+
+
+- `#9678 <https://github.com/pytest-dev/pytest/issues/9678>`_: More types are now accepted in the ``ids`` argument to ``@pytest.mark.parametrize``.
+  Previously only `str`, `float`, `int` and `bool` were accepted;
+  now `bytes`, `complex`, `re.Pattern`, `Enum` and anything with a `__name__` are also accepted.
+
+
+- `#9692 <https://github.com/pytest-dev/pytest/issues/9692>`_: :func:`pytest.approx` now raises a :class:`TypeError` when given an unordered sequence (such as :class:`set`).
+
+  Note that this implies that custom classes which only implement ``__iter__`` and ``__len__`` are no longer supported as they don't guarantee order.
+
+
+
+Bug Fixes
+---------
+
+- `#8242 <https://github.com/pytest-dev/pytest/issues/8242>`_: The deprecation of raising :class:`unittest.SkipTest` to skip collection of
+  tests during the pytest collection phase is reverted - this is now a supported
+  feature again.
+
+
+- `#9493 <https://github.com/pytest-dev/pytest/issues/9493>`_: Symbolic link components are no longer resolved in conftest paths.
+  This means that if a conftest appears twice in collection tree, using symlinks, it will be executed twice.
+  For example, given
+
+      tests/real/conftest.py
+      tests/real/test_it.py
+      tests/link -> tests/real
+
+  running ``pytest tests`` now imports the conftest twice, once as ``tests/real/conftest.py`` and once as ``tests/link/conftest.py``.
+  This is a fix to match a similar change made to test collection itself in pytest 6.0 (see :pull:`6523` for details).
+
+
+- `#9626 <https://github.com/pytest-dev/pytest/issues/9626>`_: Fixed count of selected tests on terminal collection summary when there were errors or skipped modules.
+
+  If there were errors or skipped modules on collection, pytest would mistakenly subtract those from the selected count.
+
+
+- `#9645 <https://github.com/pytest-dev/pytest/issues/9645>`_: Fixed regression where ``--import-mode=importlib`` used together with :envvar:`PYTHONPATH` or :confval:`pythonpath` would cause import errors in test suites.
+
+
+- `#9708 <https://github.com/pytest-dev/pytest/issues/9708>`_: :fixture:`pytester` now requests a :fixture:`monkeypatch` fixture instead of creating one internally. This solves some issues with tests that involve pytest environment variables.
+
+
+- `#9730 <https://github.com/pytest-dev/pytest/issues/9730>`_: Malformed ``pyproject.toml`` files now produce a clearer error message.
+
+
 pytest 7.0.1 (2022-02-11)
 =========================
 

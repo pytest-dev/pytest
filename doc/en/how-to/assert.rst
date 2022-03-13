@@ -201,7 +201,7 @@ if you run this module:
     E         '1'
     E         Extra items in the right set:
     E         '5'
-    E         Use -v to get the full diff
+    E         Use -v to get more diff
 
     test_assert2.py:4: AssertionError
     ========================= short test summary info ==========================
