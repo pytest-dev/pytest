@@ -110,7 +110,7 @@ def warns(
     r"""Assert that code raises a particular class of warning.
 
     Specifically, the parameter ``expected_warning`` can be a warning class or
-    sequence of warning classes, and the inside the ``with`` block must issue a warning of that class or
+    sequence of warning classes, and the code inside the ``with`` block must issue a warning of that class or
     classes.
 
     This helper produces a list of :class:`warnings.WarningMessage` objects,
