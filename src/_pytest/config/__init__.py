@@ -309,7 +309,9 @@ def _prepareconfig(
     elif isinstance(args, os.PathLike):
         args = [os.fspath(args)]
     elif not isinstance(args, list):
-        msg = "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
+        msg = (  # type:ignore[unreachable]
+            "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
+        )
         raise TypeError(msg.format(args, type(args)))
 
     config = get_config(args, plugins)
