@@ -832,7 +832,7 @@ class Pytester:
         return self._makefile(ext, args, kwargs)
 
     def makeconftest(self, source: str) -> Path:
-        """Write a contest.py file with 'source' as contents."""
+        """Write a conftest.py file with 'source' as contents."""
         return self.makepyfile(conftest=source)
 
     def makeini(self, source: str) -> Path:
