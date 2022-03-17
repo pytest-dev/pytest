@@ -1,1 +1,0 @@
-Fixed a regression in pytest 7.1.0 where some conftest.py files outside of the source tree (e.g. in the `site-packages` directory) were not picked up.
