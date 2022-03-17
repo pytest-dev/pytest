@@ -1,4 +1,5 @@
 import sys
+
 from distutils.core import setup
 
 if __name__ == "__main__":
