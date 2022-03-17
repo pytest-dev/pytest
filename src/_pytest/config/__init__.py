@@ -538,11 +538,7 @@ class PytestPluginManager(PluginManager):
         """
         if self._confcutdir is None:
             return True
-        try:
-            path.relative_to(self._confcutdir)
-        except ValueError:
-            return False
-        return True
+        return path not in self._confcutdir.parents
 
     def _try_load_conftest(
         self, anchor: Path, importmode: Union[str, ImportMode], rootpath: Path
