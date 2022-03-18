@@ -573,7 +573,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
         True
 
-    The comparision will be true if both mappings have the same keys and their
+    The comparison will be true if both mappings have the same keys and their
     respective values match the expected tolerances.
 
     **Tolerances**
