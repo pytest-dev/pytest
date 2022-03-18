@@ -16,9 +16,7 @@
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
 import ast
-import os
 import shutil
-import sys
 from textwrap import dedent
 from typing import List
 from typing import TYPE_CHECKING
@@ -65,7 +63,6 @@ latex_elements = {
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "pallets_sphinx_themes",
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -141,7 +138,7 @@ add_module_names = False
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
+# pygments_style = "sphinx"
 
 
 # A list of ignored prefixes for module index sorting.
@@ -172,17 +169,14 @@ extlinks = {
 
 # -- Options for HTML output ---------------------------------------------------
 
-sys.path.append(os.path.abspath("_themes"))
-html_theme_path = ["_themes"]
-
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "flask"
+html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {"index_logo": None}
+html_theme_options = {"sidebar_hide_name": True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -218,24 +212,6 @@ html_favicon = "img/favicon.png"
 
 # Custom sidebar templates, maps document names to template names.
 # html_sidebars = {}
-# html_sidebars = {'index': 'indexsidebar.html'}
-
-html_sidebars = {
-    "index": [
-        "slim_searchbox.html",
-        "sidebarintro.html",
-        "globaltoc.html",
-        "links.html",
-        "sourcelink.html",
-    ],
-    "**": [
-        "slim_searchbox.html",
-        "globaltoc.html",
-        "relations.html",
-        "links.html",
-        "sourcelink.html",
-    ],
-}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -395,8 +371,9 @@ intersphinx_mapping = {
 
 def configure_logging(app: "sphinx.application.Sphinx") -> None:
     """Configure Sphinx's WarningHandler to handle (expected) missing include."""
-    import sphinx.util.logging
     import logging
+
+    import sphinx.util.logging
 
     class WarnLogFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
