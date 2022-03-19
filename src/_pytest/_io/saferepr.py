@@ -114,6 +114,9 @@ def saferepr_unlimited(obj: object) -> str:
     will be represented with a short exception info.
 
     This function is a wrapper around simple repr.
+
+    Note: a cleaner solution would be to alter ``saferepr``this way
+    when maxsize=None, but that might affect some other code.
     """
     try:
         return repr(obj)
