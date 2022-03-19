@@ -28,6 +28,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.1.1 (2022-03-17)
+=========================
+
+Bug Fixes
+---------
+
+- `#9767 <https://github.com/pytest-dev/pytest/issues/9767>`_: Fixed a regression in pytest 7.1.0 where some conftest.py files outside of the source tree (e.g. in the `site-packages` directory) were not picked up.
+
+
 pytest 7.1.0 (2022-03-13)
 =========================
 
