@@ -1,0 +1,2 @@
+Unnecessary numpy import in `ApproxSequenceLike` is removed.
+Also Approx's `test_error_messages` is separated for numpy and native datatypes.
