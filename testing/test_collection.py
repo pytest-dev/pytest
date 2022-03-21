@@ -660,8 +660,7 @@ class Test_getinitialnodes:
         subdir = tmp_path.joinpath("subdir")
         x = ensure_file(subdir / "x.py")
         ensure_file(subdir / "__init__.py")
-        with subdir.cwd():
-            config = pytester.parseconfigure(x)
+        config = pytester.parseconfigure(x)
         col = pytester.getnode(config, x)
         assert col is not None
         assert col.name == "x.py"
@@ -1188,8 +1187,7 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
         """
         % (str(subdir),)
     )
-    with pytester.path.cwd():
-        result = pytester.runpytest()
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
     assert result.ret == 0
 
@@ -1200,8 +1198,7 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
         testpaths = .
     """
     )
-    with pytester.path.cwd():
-        result = pytester.runpytest("--collect-only")
+    result = pytester.runpytest("--collect-only")
     result.stdout.fnmatch_lines(["collected 1 item"])
 
 
@@ -1224,8 +1221,7 @@ def test_collect_pyargs_with_testpaths(
         )
     )
     monkeypatch.setenv("PYTHONPATH", str(pytester.path), prepend=os.pathsep)
-    with root.cwd():
-        result = pytester.runpytest_subprocess()
+    result = pytester.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*1 passed in*"])
 
 
