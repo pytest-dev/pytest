@@ -672,10 +672,11 @@ class ExceptionInfo(Generic[E]):
         If it matches `True` is returned, otherwise an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        msg = "Regex pattern {!r} does not match {!r}."
-        if regexp == str(self.value):
-            msg += " Did you mean to `re.escape()` the regex?"
-        assert re.search(regexp, str(self.value)), msg.format(regexp, str(self.value))
+        value = str(self.value)
+        msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
+        if regexp == value:
+            msg += "\n Did you mean to `re.escape()` the regex?"
+        assert re.search(regexp, value), msg
         # Return True to allow for "assert excinfo.match()".
         return True
 

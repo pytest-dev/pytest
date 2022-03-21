@@ -420,18 +420,20 @@ def test_match_raises_error(pytester: Pytester) -> None:
             excinfo.match(r'[123]+')
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("--tb=short")
     assert result.ret != 0
 
-    exc_msg = "Regex pattern '[[]123[]]+' does not match 'division by zero'."
-    result.stdout.fnmatch_lines([f"E * AssertionError: {exc_msg}"])
+    match = [
+        r"E .* AssertionError: Regex pattern did not match.",
+        r"E .* Regex: '\[123\]\+'",
+        r"E .* Input: 'division by zero'",
+    ]
+    result.stdout.re_match_lines(match)
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
 
     result = pytester.runpytest("--fulltrace")
     assert result.ret != 0
-    result.stdout.fnmatch_lines(
-        ["*__tracebackhide__ = True*", f"E * AssertionError: {exc_msg}"]
-    )
+    result.stdout.re_match_lines([r".*__tracebackhide__ = True.*", *match])
 
 
 class TestFormattedExcinfo:
