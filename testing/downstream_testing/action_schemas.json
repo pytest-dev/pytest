@@ -9,8 +9,24 @@
             "prefix": "py",
             "sub":
                 {
-                    "pattern": "\\-coverage$",
+                    "pattern": "-coverage$",
                     "replace": ""
+                }
+        },
+        "python_version": "python"
+    },
+    "pytest-html": {
+        "matrix": [
+            "matrix",
+            "include"
+        ],
+        "tox_cmd_build": {
+            "base": "name",
+            "prefix": "py",
+            "sub":
+                {
+                    "pattern": "(py\\d+)-\\w+",
+                    "replace": "\\1"
                 }
         },
         "python_version": "python"
