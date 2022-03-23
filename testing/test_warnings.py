@@ -1,4 +1,5 @@
 import os
+import sys
 import warnings
 from typing import List
 from typing import Optional
@@ -774,3 +775,57 @@ class TestStackLevel:
                 "*Unknown pytest.mark.unknown*",
             ]
         )
+
+
+def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Some platforms (notably PyPy) don't have tracemalloc.
+    # We choose to explicitly not skip this in case tracemalloc is not
+    # available, using `importorskip("tracemalloc")` for example,
+    # because we want to ensure the same code path does not break in those platforms.
+    try:
+        import tracemalloc  # noqa
+
+        has_tracemalloc = True
+    except ImportError:
+        has_tracemalloc = False
+
+    # Explicitly disable PYTHONTRACEMALLOC in case pytest's test suite is running
+    # with it enabled.
+    monkeypatch.delenv("PYTHONTRACEMALLOC", raising=False)
+
+    pytester.makepyfile(
+        """
+        def open_file(p):
+            f = p.open("r")
+            assert p.read_text() == "hello"
+
+        def test_resource_warning(tmp_path):
+            p = tmp_path.joinpath("foo.txt")
+            p.write_text("hello")
+            open_file(p)
+        """
+    )
+    result = pytester.run(sys.executable, "-Xdev", "-m", "pytest")
+    expected_extra = (
+        [
+            "*ResourceWarning* unclosed file*",
+            "*Enable tracemalloc to get traceback where the object was allocated*",
+            "*See https* for more info.",
+        ]
+        if has_tracemalloc
+        else []
+    )
+    result.stdout.fnmatch_lines([*expected_extra, "*1 passed*"])
+
+    monkeypatch.setenv("PYTHONTRACEMALLOC", "20")
+
+    result = pytester.run(sys.executable, "-Xdev", "-m", "pytest")
+    expected_extra = (
+        [
+            "*ResourceWarning* unclosed file*",
+            "*Object allocated at*",
+        ]
+        if has_tracemalloc
+        else []
+    )
+    result.stdout.fnmatch_lines([*expected_extra, "*1 passed*"])

@@ -1472,3 +1472,56 @@ def test_do_cleanups_on_teardown_failure(pytester: Pytester) -> None:
     passed, skipped, failed = reprec.countoutcomes()
     assert failed == 2
     assert passed == 1
+
+
+def test_traceback_pruning(pytester: Pytester) -> None:
+    """Regression test for #9610 - doesn't crash during traceback pruning."""
+    pytester.makepyfile(
+        """
+        import unittest
+
+        class MyTestCase(unittest.TestCase):
+            def __init__(self, test_method):
+                unittest.TestCase.__init__(self, test_method)
+
+        class TestIt(MyTestCase):
+            @classmethod
+            def tearDownClass(cls) -> None:
+                assert False
+
+            def test_it(self):
+                pass
+        """
+    )
+    reprec = pytester.inline_run()
+    passed, skipped, failed = reprec.countoutcomes()
+    assert passed == 1
+    assert failed == 1
+    assert reprec.ret == 1
+
+
+def test_raising_unittest_skiptest_during_collection(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import unittest
+
+        class TestIt(unittest.TestCase):
+            def test_it(self): pass
+            def test_it2(self): pass
+
+        raise unittest.SkipTest()
+
+        class TestIt2(unittest.TestCase):
+            def test_it(self): pass
+            def test_it2(self): pass
+        """
+    )
+    reprec = pytester.inline_run()
+    passed, skipped, failed = reprec.countoutcomes()
+    assert passed == 0
+    # Unittest reports one fake test for a skipped module.
+    assert skipped == 1
+    assert failed == 0
+    assert reprec.ret == ExitCode.NO_TESTS_COLLECTED

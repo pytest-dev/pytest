@@ -13,10 +13,12 @@ from functools import partial
 from pathlib import Path
 from typing import cast
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Set
+from unittest import mock
 
 import _pytest._code
 import pytest
@@ -202,16 +204,8 @@ class TestAssertionRewrite:
         def f4() -> None:
             assert sys == 42  # type: ignore[comparison-overlap]
 
-        verbose = request.config.getoption("verbose")
         msg = getmsg(f4, {"sys": sys})
-        if verbose > 0:
-            assert msg == (
-                "assert <module 'sys' (built-in)> == 42\n"
-                "  +<module 'sys' (built-in)>\n"
-                "  -42"
-            )
-        else:
-            assert msg == "assert sys == 42"
+        assert msg == "assert sys == 42"
 
         def f5() -> None:
             assert cls == 42  # type: ignore[name-defined]  # noqa: F821
@@ -222,20 +216,7 @@ class TestAssertionRewrite:
         msg = getmsg(f5, {"cls": X})
         assert msg is not None
         lines = msg.splitlines()
-        if verbose > 1:
-            assert lines == [
-                f"assert {X!r} == 42",
-                f"  +{X!r}",
-                "  -42",
-            ]
-        elif verbose > 0:
-            assert lines == [
-                "assert <class 'test_...e.<locals>.X'> == 42",
-                f"  +{X!r}",
-                "  -42",
-            ]
-        else:
-            assert lines == ["assert cls == 42"]
+        assert lines == ["assert cls == 42"]
 
     def test_assertrepr_compare_same_width(self, request) -> None:
         """Should use same width/truncation with same initial width."""
@@ -277,14 +258,11 @@ class TestAssertionRewrite:
         msg = getmsg(f, {"cls": Y})
         assert msg is not None
         lines = msg.splitlines()
-        if request.config.getoption("verbose") > 0:
-            assert lines == ["assert 3 == 2", "  +3", "  -2"]
-        else:
-            assert lines == [
-                "assert 3 == 2",
-                " +  where 3 = Y.foo",
-                " +    where Y = cls()",
-            ]
+        assert lines == [
+            "assert 3 == 2",
+            " +  where 3 = Y.foo",
+            " +    where Y = cls()",
+        ]
 
     def test_assert_already_has_message(self) -> None:
         def f():
@@ -661,10 +639,7 @@ class TestAssertionRewrite:
             assert len(values) == 11
 
         msg = getmsg(f)
-        if request.config.getoption("verbose") > 0:
-            assert msg == "assert 10 == 11\n  +10\n  -11"
-        else:
-            assert msg == "assert 10 == 11\n +  where 10 = len([0, 1, 2, 3, 4, 5, ...])"
+        assert msg == "assert 10 == 11\n +  where 10 = len([0, 1, 2, 3, 4, 5, ...])"
 
     def test_custom_reprcompare(self, monkeypatch) -> None:
         def my_reprcompare1(op, left, right) -> str:
@@ -730,10 +705,7 @@ class TestAssertionRewrite:
         msg = getmsg(f)
         assert msg is not None
         lines = util._format_lines([msg])
-        if request.config.getoption("verbose") > 0:
-            assert lines == ["assert 0 == 1\n  +0\n  -1"]
-        else:
-            assert lines == ["assert 0 == 1\n +  where 1 = \\n{ \\n~ \\n}.a"]
+        assert lines == ["assert 0 == 1\n +  where 1 = \\n{ \\n~ \\n}.a"]
 
     def test_custom_repr_non_ascii(self) -> None:
         def f() -> None:
@@ -1057,7 +1029,7 @@ class TestAssertionRewriteHookDetails:
                 e = OSError()
                 e.errno = 10
                 raise e
-                yield
+                yield  # type:ignore[unreachable]
 
             monkeypatch.setattr(
                 _pytest.assertion.rewrite, "atomic_write", atomic_write_failed
@@ -1376,7 +1348,7 @@ class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(
         self, pytestconfig, monkeypatch, pytester: Pytester
-    ) -> AssertionRewritingHook:
+    ) -> Generator[AssertionRewritingHook, None, None]:
         """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
         if PathFinder.find_spec has been called.
         """
@@ -1397,11 +1369,11 @@ class TestEarlyRewriteBailout:
 
         hook = AssertionRewritingHook(pytestconfig)
         # use default patterns, otherwise we inherit pytest's testing config
-        hook.fnpats[:] = ["test_*.py", "*_test.py"]
-        monkeypatch.setattr(hook, "_find_spec", spy_find_spec)
-        hook.set_session(StubSession())  # type: ignore[arg-type]
-        pytester.syspathinsert()
-        return hook
+        with mock.patch.object(hook, "fnpats", ["test_*.py", "*_test.py"]):
+            monkeypatch.setattr(hook, "_find_spec", spy_find_spec)
+            hook.set_session(StubSession())  # type: ignore[arg-type]
+            pytester.syspathinsert()
+            yield hook
 
     def test_basic(self, pytester: Pytester, hook: AssertionRewritingHook) -> None:
         """
@@ -1451,9 +1423,9 @@ class TestEarlyRewriteBailout:
             }
         )
         pytester.syspathinsert("tests")
-        hook.fnpats[:] = ["tests/**.py"]
-        assert hook.find_spec("file") is not None
-        assert self.find_spec_calls == ["file"]
+        with mock.patch.object(hook, "fnpats", ["tests/**.py"]):
+            assert hook.find_spec("file") is not None
+            assert self.find_spec_calls == ["file"]
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"

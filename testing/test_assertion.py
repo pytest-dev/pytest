@@ -83,7 +83,7 @@ class TestImportHookInstallation:
                 "E       assert {'failed': 1,... 'skipped': 0} == {'failed': 0,... 'skipped': 0}",
                 "E         Omitting 1 identical items, use -vv to show",
                 "E         Differing items:",
-                "E         Use -v to get the full diff",
+                "E         Use -v to get more diff",
             ]
         )
         # XXX: unstable output.
@@ -376,7 +376,7 @@ class TestAssert_reprcompare:
         assert diff == [
             "b'spam' == b'eggs'",
             "At index 0 diff: b's' != b'e'",
-            "Use -v to get the full diff",
+            "Use -v to get more diff",
         ]
 
     def test_bytes_diff_verbose(self) -> None:
@@ -444,10 +444,18 @@ class TestAssert_reprcompare:
         """
         expl = callequal(left, right, verbose=0)
         assert expl is not None
-        assert expl[-1] == "Use -v to get the full diff"
+        assert expl[-1] == "Use -v to get more diff"
         verbose_expl = callequal(left, right, verbose=1)
         assert verbose_expl is not None
         assert "\n".join(verbose_expl).endswith(textwrap.dedent(expected).strip())
+
+    def test_iterable_quiet(self) -> None:
+        expl = callequal([1, 2], [10, 2], verbose=-1)
+        assert expl == [
+            "[1, 2] == [10, 2]",
+            "At index 0 diff: 1 != 10",
+            "Use -v to get more diff",
+        ]
 
     def test_iterable_full_diff_ci(
         self, monkeypatch: MonkeyPatch, pytester: Pytester
@@ -466,7 +474,7 @@ class TestAssert_reprcompare:
 
         monkeypatch.delenv("CI", raising=False)
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["E         Use -v to get the full diff"])
+        result.stdout.fnmatch_lines(["E         Use -v to get more diff"])
 
     def test_list_different_lengths(self) -> None:
         expl = callequal([0, 1], [0, 1, 2])
@@ -699,32 +707,6 @@ class TestAssert_reprcompare:
         assert expl is not None
         assert len(expl) > 1
 
-    def test_repr_verbose(self) -> None:
-        class Nums:
-            def __init__(self, nums):
-                self.nums = nums
-
-            def __repr__(self):
-                return str(self.nums)
-
-        list_x = list(range(5000))
-        list_y = list(range(5000))
-        list_y[len(list_y) // 2] = 3
-        nums_x = Nums(list_x)
-        nums_y = Nums(list_y)
-
-        assert callequal(nums_x, nums_y) is None
-
-        expl = callequal(nums_x, nums_y, verbose=1)
-        assert expl is not None
-        assert "+" + repr(nums_x) in expl
-        assert "-" + repr(nums_y) in expl
-
-        expl = callequal(nums_x, nums_y, verbose=2)
-        assert expl is not None
-        assert "+" + repr(nums_x) in expl
-        assert "-" + repr(nums_y) in expl
-
     def test_list_bad_repr(self) -> None:
         class A:
             def __repr__(self):
@@ -851,8 +833,6 @@ class TestAssert_reprcompare_dataclass:
                 "E           ",
                 "E           Drill down into differing attribute a:",
                 "E             a: 10 != 20",
-                "E             +10",
-                "E             -20",
                 "E           ",
                 "E           Drill down into differing attribute b:",
                 "E             b: 'ten' != 'xxx'",
@@ -1026,7 +1006,7 @@ class TestAssert_reprcompare_attrsclass:
         assert lines is None
 
     def test_attrs_with_custom_eq(self) -> None:
-        @attr.define
+        @attr.define(slots=False)
         class SimpleDataObject:
             field_a = attr.ib()
 
@@ -1059,7 +1039,7 @@ class TestAssert_reprcompare_namedtuple:
             "  b: 'b' != 'c'",
             "  - c",
             "  + b",
-            "Use -v to get the full diff",
+            "Use -v to get more diff",
         ]
 
     def test_comparing_two_different_namedtuple(self) -> None:
@@ -1074,7 +1054,7 @@ class TestAssert_reprcompare_namedtuple:
         assert lines == [
             "NT1(a=1, b='b') == NT2(a=2, b='b')",
             "At index 0 diff: 1 != 2",
-            "Use -v to get the full diff",
+            "Use -v to get more diff",
         ]
 
 
@@ -1648,7 +1628,7 @@ def test_raise_unprintable_assertion_error(pytester: Pytester) -> None:
     )
 
 
-def test_raise_assertion_error_raisin_repr(pytester: Pytester) -> None:
+def test_raise_assertion_error_raising_repr(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         class RaisingRepr(object):
@@ -1659,9 +1639,15 @@ def test_raise_assertion_error_raisin_repr(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(
-        ["E       AssertionError: <unprintable AssertionError object>"]
-    )
+    if sys.version_info >= (3, 11):
+        # python 3.11 has native support for un-str-able exceptions
+        result.stdout.fnmatch_lines(
+            ["E       AssertionError: <exception str() failed>"]
+        )
+    else:
+        result.stdout.fnmatch_lines(
+            ["E       AssertionError: <unprintable AssertionError object>"]
+        )
 
 
 def test_issue_1944(pytester: Pytester) -> None:
@@ -1708,4 +1694,19 @@ def test_assertion_location_with_coverage(pytester: Pytester) -> None:
             "E       assert False",
             "*= 1 failed in*",
         ]
+    )
+
+
+def test_reprcompare_verbose_long() -> None:
+    a = {f"v{i}": i for i in range(11)}
+    b = a.copy()
+    b["v2"] += 10
+    lines = callop("==", a, b, verbose=2)
+    assert lines is not None
+    assert lines[0] == (
+        "{'v0': 0, 'v1': 1, 'v2': 2, 'v3': 3, 'v4': 4, 'v5': 5, "
+        "'v6': 6, 'v7': 7, 'v8': 8, 'v9': 9, 'v10': 10}"
+        " == "
+        "{'v0': 0, 'v1': 1, 'v2': 12, 'v3': 3, 'v4': 4, 'v5': 5, "
+        "'v6': 6, 'v7': 7, 'v8': 8, 'v9': 9, 'v10': 10}"
     )

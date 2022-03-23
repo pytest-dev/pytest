@@ -231,8 +231,6 @@ TESTCASES = [
         E         ['a']
         E         Drill down into differing attribute a:
         E           a: 1 != 2
-        E           +1
-        E           -2
         """,
         id="Compare data classes",
     ),

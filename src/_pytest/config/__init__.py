@@ -254,7 +254,7 @@ default_plugins = essential_plugins + (
     "warnings",
     "logging",
     "reports",
-    "pythonpath",
+    "python_path",
     *(["unraisableexception", "threadexception"] if sys.version_info >= (3, 8) else []),
     "faulthandler",
 )
@@ -309,7 +309,9 @@ def _prepareconfig(
     elif isinstance(args, os.PathLike):
         args = [os.fspath(args)]
     elif not isinstance(args, list):
-        msg = "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
+        msg = (  # type:ignore[unreachable]
+            "`args` parameter expected to be a list of strings, got: {!r} (type: {})"
+        )
         raise TypeError(msg.format(args, type(args)))
 
     config = get_config(args, plugins)
@@ -538,11 +540,7 @@ class PytestPluginManager(PluginManager):
         """
         if self._confcutdir is None:
             return True
-        try:
-            path.relative_to(self._confcutdir)
-        except ValueError:
-            return False
-        return True
+        return path not in self._confcutdir.parents
 
     def _try_load_conftest(
         self, anchor: Path, importmode: Union[str, ImportMode], rootpath: Path

@@ -11,8 +11,13 @@ Books
 - `Python Testing with pytest, by Brian Okken (2017)
   <https://pragprog.com/book/bopytest/python-testing-with-pytest>`_.
 
+- `Python Testing with pytest, Second Edition, by Brian Okken (2022)
+  <https://pragprog.com/titles/bopytest2/python-testing-with-pytest-second-edition>`_.
+
 Talks and blog postings
 ---------------------------------------------
+
+- `pytest: Simple, rapid and fun testing with Python, <https://youtu.be/cSJ-X3TbQ1c?t=15752>`_ (@ 4:22:32), Florian Bruhin, WeAreDevelopers World Congress 2021
 
 - Webinar: `pytest: Test Driven Development für Python (German) <https://bruhin.software/ins-pytest/>`_, Florian Bruhin, via mylearning.ch, 2020
 

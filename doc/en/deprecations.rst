@@ -16,7 +16,7 @@ Deprecated Features
 -------------------
 
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
-:class:`PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
+:class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 .. _instance-collector-deprecation:
 
@@ -241,19 +241,6 @@ scheduled for removal in pytest 8 (deprecated since pytest 2.4.0):
 - ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
 
 
-Raising ``unittest.SkipTest`` during collection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-Raising :class:`unittest.SkipTest` to skip collection of tests during the
-pytest collection phase is deprecated. Use :func:`pytest.skip` instead.
-
-Note: This deprecation only relates to using `unittest.SkipTest` during test
-collection. You are probably not doing that. Ordinary usage of
-:class:`unittest.SkipTest` / :meth:`unittest.TestCase.skipTest` /
-:func:`unittest.skip` in unittest test cases is fully supported.
-
 Using ``pytest.warns(None)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -314,7 +301,7 @@ The ``pytest_warning_captured`` hook
 
 This hook has an `item` parameter which cannot be serialized by ``pytest-xdist``.
 
-Use the ``pytest_warning_recored`` hook instead, which replaces the ``item`` parameter
+Use the ``pytest_warning_recorded`` hook instead, which replaces the ``item`` parameter
 by a ``nodeid`` parameter.
 
 

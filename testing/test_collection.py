@@ -651,7 +651,7 @@ class Test_getinitialnodes:
         for parent in col.listchain():
             assert parent.config is config
 
-    def test_pkgfile(self, pytester: Pytester) -> None:
+    def test_pkgfile(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
         """Verify nesting when a module is within a package.
         The parent chain should match: Module<x.py> -> Package<subdir> -> Session.
             Session's parent should always be None.
@@ -660,7 +660,8 @@ class Test_getinitialnodes:
         subdir = tmp_path.joinpath("subdir")
         x = ensure_file(subdir / "x.py")
         ensure_file(subdir / "__init__.py")
-        with subdir.cwd():
+        with monkeypatch.context() as mp:
+            mp.chdir(subdir)
             config = pytester.parseconfigure(x)
         col = pytester.getnode(config, x)
         assert col is not None
@@ -1188,8 +1189,7 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
         """
         % (str(subdir),)
     )
-    with pytester.path.cwd():
-        result = pytester.runpytest()
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
     assert result.ret == 0
 
@@ -1200,8 +1200,7 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
         testpaths = .
     """
     )
-    with pytester.path.cwd():
-        result = pytester.runpytest("--collect-only")
+    result = pytester.runpytest("--collect-only")
     result.stdout.fnmatch_lines(["collected 1 item"])
 
 
@@ -1224,7 +1223,8 @@ def test_collect_pyargs_with_testpaths(
         )
     )
     monkeypatch.setenv("PYTHONPATH", str(pytester.path), prepend=os.pathsep)
-    with root.cwd():
+    with monkeypatch.context() as mp:
+        mp.chdir(root)
         result = pytester.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*1 passed in*"])
 
@@ -1506,6 +1506,35 @@ class TestImportModeImportlib:
                 "* 1 failed in *",
             ]
         )
+
+    def test_using_python_path(self, pytester: Pytester) -> None:
+        """
+        Dummy modules created by insert_missing_modules should not get in
+        the way of modules that could be imported via python path (#9645).
+        """
+        pytester.makeini(
+            """
+            [pytest]
+            pythonpath = .
+            addopts = --import-mode importlib
+            """
+        )
+        pytester.makepyfile(
+            **{
+                "tests/__init__.py": "",
+                "tests/conftest.py": "",
+                "tests/subpath/__init__.py": "",
+                "tests/subpath/helper.py": "",
+                "tests/subpath/test_something.py": """
+                import tests.subpath.helper
+
+                def test_something():
+                    assert True
+                """,
+            }
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines("*1 passed in*")
 
 
 def test_does_not_crash_on_error_from_decorated_function(pytester: Pytester) -> None:

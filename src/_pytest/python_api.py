@@ -1,5 +1,6 @@
 import math
 import pprint
+from collections.abc import Collection
 from collections.abc import Sized
 from decimal import Decimal
 from numbers import Complex
@@ -8,7 +9,6 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Generic
-from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -131,7 +131,6 @@ class ApproxBase:
         # a numeric type.  For this reason, the default is to do nothing.  The
         # classes that deal with sequences should reimplement this method to
         # raise if there are any non-numeric elements in the sequence.
-        pass
 
 
 def _recursive_list_map(f, x):
@@ -307,12 +306,12 @@ class ApproxMapping(ApproxBase):
                 raise TypeError(msg.format(key, value, pprint.pformat(self.expected)))
 
 
-class ApproxSequencelike(ApproxBase):
+class ApproxSequenceLike(ApproxBase):
     """Perform approximate comparisons where the expected value is a sequence of numbers."""
 
     def __repr__(self) -> str:
         seq_type = type(self.expected)
-        if seq_type not in (tuple, list, set):
+        if seq_type not in (tuple, list):
             seq_type = list
         return "approx({!r})".format(
             seq_type(self._approx_scalar(x) for x in self.expected)
@@ -320,7 +319,6 @@ class ApproxSequencelike(ApproxBase):
 
     def _repr_compare(self, other_side: Sequence[float]) -> List[str]:
         import math
-        import numpy as np
 
         if len(self.expected) != len(other_side):
             return [
@@ -341,7 +339,7 @@ class ApproxSequencelike(ApproxBase):
                 abs_diff = abs(approx_value.expected - other_value)
                 max_abs_diff = max(max_abs_diff, abs_diff)
                 if other_value == 0.0:
-                    max_rel_diff = np.inf
+                    max_rel_diff = math.inf
                 else:
                     max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
                 different_ids.append(i)
@@ -516,7 +514,7 @@ class ApproxDecimal(ApproxScalar):
 
 
 def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
-    """Assert that two numbers (or two sets of numbers) are equal to each other
+    """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
     within some tolerance.
 
     Due to the :std:doc:`tutorial/floatingpoint`, numbers that we
@@ -548,14 +546,9 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> 0.1 + 0.2 == approx(0.3)
         True
 
-    The same syntax also works for sequences of numbers::
+    The same syntax also works for ordered sequences of numbers::
 
         >>> (0.1 + 0.2, 0.2 + 0.4) == approx((0.3, 0.6))
-        True
-
-    Dictionary *values*::
-
-        >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
         True
 
     ``numpy`` arrays::
@@ -569,6 +562,20 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> import numpy as np                                         # doctest: +SKIP
         >>> np.array([0.1, 0.2]) + np.array([0.2, 0.1]) == approx(0.3) # doctest: +SKIP
         True
+
+    Only ordered sequences are supported, because ``approx`` needs
+    to infer the relative position of the sequences without ambiguity. This means
+    ``sets`` and other unordered sequences are not supported.
+
+    Finally, dictionary *values* can also be compared::
+
+        >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
+        True
+
+    The comparison will be true if both mappings have the same keys and their
+    respective values match the expected tolerances.
+
+    **Tolerances**
 
     By default, ``approx`` considers numbers within a relative tolerance of
     ``1e-6`` (i.e. one part in a million) of its expected value to be equal.
@@ -709,12 +716,19 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         expected = _as_numpy_array(expected)
         cls = ApproxNumpy
     elif (
-        isinstance(expected, Iterable)
+        hasattr(expected, "__getitem__")
         and isinstance(expected, Sized)
         # Type ignored because the error is wrong -- not unreachable.
         and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
     ):
-        cls = ApproxSequencelike
+        cls = ApproxSequenceLike
+    elif (
+        isinstance(expected, Collection)
+        # Type ignored because the error is wrong -- not unreachable.
+        and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
+    ):
+        msg = f"pytest.approx() only supports ordered sequences, but got: {repr(expected)}"
+        raise TypeError(msg)
     else:
         cls = ApproxScalar
 

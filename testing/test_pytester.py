@@ -618,14 +618,9 @@ def test_linematcher_string_api() -> None:
 
 
 def test_pytest_addopts_before_pytester(request, monkeypatch: MonkeyPatch) -> None:
-    orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
-    pytester: Pytester = request.getfixturevalue("pytester")
+    _: Pytester = request.getfixturevalue("pytester")
     assert "PYTEST_ADDOPTS" not in os.environ
-    pytester._finalize()
-    assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
-    monkeypatch.undo()
-    assert os.environ.get("PYTEST_ADDOPTS") == orig
 
 
 def test_run_stdin(pytester: Pytester) -> None:
@@ -743,8 +738,8 @@ def test_run_result_repr() -> None:
 
     # known exit code
     r = pytester_mod.RunResult(1, outlines, errlines, duration=0.5)
-    assert (
-        repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
+    assert repr(r) == (
+        f"<RunResult ret={str(pytest.ExitCode.TESTS_FAILED)} len(stdout.lines)=3"
         " len(stderr.lines)=4 duration=0.50s>"
     )
 

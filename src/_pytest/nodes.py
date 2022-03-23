@@ -656,20 +656,6 @@ class Item(Node):
 
     nextitem = None
 
-    def __init_subclass__(cls) -> None:
-        problems = ", ".join(
-            base.__name__ for base in cls.__bases__ if issubclass(base, Collector)
-        )
-        if problems:
-            warnings.warn(
-                f"{cls.__name__} is an Item subclass and should not be a collector, "
-                f"however its bases {problems} are collectors.\n"
-                "Please split the Collectors and the Item into separate node types.\n"
-                "Pytest Doc example: https://docs.pytest.org/en/latest/example/nonpython.html\n"
-                "example pull request on a plugin: https://github.com/asmeurer/pytest-flakes/pull/40/",
-                PytestWarning,
-            )
-
     def __init__(
         self,
         name,
@@ -696,6 +682,37 @@ class Item(Node):
         #: A list of tuples (name, value) that holds user defined properties
         #: for this test.
         self.user_properties: List[Tuple[str, object]] = []
+
+        self._check_item_and_collector_diamond_inheritance()
+
+    def _check_item_and_collector_diamond_inheritance(self) -> None:
+        """
+        Check if the current type inherits from both File and Collector
+        at the same time, emitting a warning accordingly (#8447).
+        """
+        cls = type(self)
+
+        # We inject an attribute in the type to avoid issuing this warning
+        # for the same class more than once, which is not helpful.
+        # It is a hack, but was deemed acceptable in order to avoid
+        # flooding the user in the common case.
+        attr_name = "_pytest_diamond_inheritance_warning_shown"
+        if getattr(cls, attr_name, False):
+            return
+        setattr(cls, attr_name, True)
+
+        problems = ", ".join(
+            base.__name__ for base in cls.__bases__ if issubclass(base, Collector)
+        )
+        if problems:
+            warnings.warn(
+                f"{cls.__name__} is an Item subclass and should not be a collector, "
+                f"however its bases {problems} are collectors.\n"
+                "Please split the Collectors and the Item into separate node types.\n"
+                "Pytest Doc example: https://docs.pytest.org/en/latest/example/nonpython.html\n"
+                "example pull request on a plugin: https://github.com/asmeurer/pytest-flakes/pull/40/",
+                PytestWarning,
+            )
 
     def runtest(self) -> None:
         """Run the test case for this item.

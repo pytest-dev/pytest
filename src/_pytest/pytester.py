@@ -477,7 +477,9 @@ def LineMatcher_fixture(request: FixtureRequest) -> Type["LineMatcher"]:
 
 
 @fixture
-def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pytester":
+def pytester(
+    request: FixtureRequest, tmp_path_factory: TempPathFactory, monkeypatch: MonkeyPatch
+) -> "Pytester":
     """
     Facilities to write tests/configuration files, execute pytest in isolation, and match
     against expected output, perfect for black-box testing of pytest plugins.
@@ -488,7 +490,7 @@ def pytester(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> "Pyt
     It is particularly useful for testing plugins. It is similar to the :fixture:`tmp_path`
     fixture but provides methods which aid in testing pytest itself.
     """
-    return Pytester(request, tmp_path_factory, _ispytest=True)
+    return Pytester(request, tmp_path_factory, monkeypatch, _ispytest=True)
 
 
 @fixture
@@ -683,6 +685,7 @@ class Pytester:
         self,
         request: FixtureRequest,
         tmp_path_factory: TempPathFactory,
+        monkeypatch: MonkeyPatch,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -706,7 +709,7 @@ class Pytester:
         self._method = self._request.config.getoption("--runpytest")
         self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
 
-        self._monkeypatch = mp = MonkeyPatch()
+        self._monkeypatch = mp = monkeypatch
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self._test_tmproot))
         # Ensure no unexpected caching via tox.
         mp.delenv("TOX_ENV_DIR", raising=False)
@@ -738,7 +741,6 @@ class Pytester:
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
         self._cwd_snapshot.restore()
-        self._monkeypatch.undo()
 
     def __take_sys_modules_snapshot(self) -> SysModulesSnapshot:
         # Some zope modules used by twisted-related tests keep internal state
@@ -830,7 +832,7 @@ class Pytester:
         return self._makefile(ext, args, kwargs)
 
     def makeconftest(self, source: str) -> Path:
-        """Write a contest.py file with 'source' as contents."""
+        """Write a conftest.py file with 'source' as contents."""
         return self.makepyfile(conftest=source)
 
     def makeini(self, source: str) -> Path:

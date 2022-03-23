@@ -905,8 +905,6 @@ class InstanceDummy:
     only to ignore it; this dummy class keeps them working. This will be removed
     in pytest 8."""
 
-    pass
-
 
 def __getattr__(name: str) -> object:
     if name == "Instance":
@@ -942,7 +940,7 @@ class IdMaker:
     # ParameterSet.
     idfn: Optional[Callable[[Any], Optional[object]]]
     # Optionally, explicit IDs for ParameterSets by index.
-    ids: Optional[Sequence[Union[None, str]]]
+    ids: Optional[Sequence[Optional[object]]]
     # Optionally, the pytest config.
     # Used for controlling ASCII escaping, and for calling the
     # :hook:`pytest_make_parametrize_id` hook.
@@ -950,6 +948,9 @@ class IdMaker:
     # Optionally, the ID of the node being parametrized.
     # Used only for clearer error messages.
     nodeid: Optional[str]
+    # Optionally, the ID of the function being parametrized.
+    # Used only for clearer error messages.
+    func_name: Optional[str]
 
     def make_unique_parameterset_ids(self) -> List[str]:
         """Make a unique identifier for each ParameterSet, that may be used to
@@ -984,9 +985,7 @@ class IdMaker:
                 yield parameterset.id
             elif self.ids and idx < len(self.ids) and self.ids[idx] is not None:
                 # ID provided in the IDs list - parametrize(..., ids=[...]).
-                id = self.ids[idx]
-                assert id is not None
-                yield _ascii_escaped_by_config(id, self.config)
+                yield self._idval_from_value_required(self.ids[idx], idx)
             else:
                 # ID not provided - generate it.
                 yield "-".join(
@@ -1054,6 +1053,25 @@ class IdMaker:
             name: str = getattr(val, "__name__")
             return name
         return None
+
+    def _idval_from_value_required(self, val: object, idx: int) -> str:
+        """Like _idval_from_value(), but fails if the type is not supported."""
+        id = self._idval_from_value(val)
+        if id is not None:
+            return id
+
+        # Fail.
+        if self.func_name is not None:
+            prefix = f"In {self.func_name}: "
+        elif self.nodeid is not None:
+            prefix = f"In {self.nodeid}: "
+        else:
+            prefix = ""
+        msg = (
+            f"{prefix}ids contains unsupported value {saferepr(val)} (type: {type(val)!r}) at index {idx}. "
+            "Supported types are: str, bytes, int, float, complex, bool, enum, regex or anything with a __name__."
+        )
+        fail(msg, pytrace=False)
 
     @staticmethod
     def _idval_from_argname(argname: str, idx: int) -> str:
@@ -1184,10 +1202,7 @@ class Metafunc:
         argvalues: Iterable[Union[ParameterSet, Sequence[object], object]],
         indirect: Union[bool, Sequence[str]] = False,
         ids: Optional[
-            Union[
-                Iterable[Union[None, str, float, int, bool]],
-                Callable[[Any], Optional[object]],
-            ]
+            Union[Iterable[Optional[object]], Callable[[Any], Optional[object]]]
         ] = None,
         scope: "Optional[_ScopeName]" = None,
         *,
@@ -1318,10 +1333,7 @@ class Metafunc:
         self,
         argnames: Sequence[str],
         ids: Optional[
-            Union[
-                Iterable[Union[None, str, float, int, bool]],
-                Callable[[Any], Optional[object]],
-            ]
+            Union[Iterable[Optional[object]], Callable[[Any], Optional[object]]]
         ],
         parametersets: Sequence[ParameterSet],
         nodeid: str,
@@ -1351,16 +1363,22 @@ class Metafunc:
             idfn = None
             ids_ = self._validate_ids(ids, parametersets, self.function.__name__)
         id_maker = IdMaker(
-            argnames, parametersets, idfn, ids_, self.config, nodeid=nodeid
+            argnames,
+            parametersets,
+            idfn,
+            ids_,
+            self.config,
+            nodeid=nodeid,
+            func_name=self.function.__name__,
         )
         return id_maker.make_unique_parameterset_ids()
 
     def _validate_ids(
         self,
-        ids: Iterable[Union[None, str, float, int, bool]],
+        ids: Iterable[Optional[object]],
         parametersets: Sequence[ParameterSet],
         func_name: str,
-    ) -> List[Union[None, str]]:
+    ) -> List[Optional[object]]:
         try:
             num_ids = len(ids)  # type: ignore[arg-type]
         except TypeError:
@@ -1375,22 +1393,7 @@ class Metafunc:
             msg = "In {}: {} parameter sets specified, with different number of ids: {}"
             fail(msg.format(func_name, len(parametersets), num_ids), pytrace=False)
 
-        new_ids = []
-        for idx, id_value in enumerate(itertools.islice(ids, num_ids)):
-            if id_value is None or isinstance(id_value, str):
-                new_ids.append(id_value)
-            elif isinstance(id_value, (float, int, bool)):
-                new_ids.append(str(id_value))
-            else:
-                msg = (  # type: ignore[unreachable]
-                    "In {}: ids must be list of string/float/int/bool, "
-                    "found: {} (type: {!r}) at index {}"
-                )
-                fail(
-                    msg.format(func_name, saferepr(id_value), type(id_value), idx),
-                    pytrace=False,
-                )
-        return new_ids
+        return list(itertools.islice(ids, num_ids))
 
     def _resolve_arg_value_types(
         self,

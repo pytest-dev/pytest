@@ -1,4 +1,5 @@
 import inspect
+import sys
 import textwrap
 from pathlib import Path
 from typing import Callable
@@ -200,6 +201,7 @@ class TestDoctests:
                 "Traceback (most recent call last):",
                 '  File "*/doctest.py", line *, in __run',
                 "    *",
+                *((" *^^^^*",) if sys.version_info >= (3, 11) else ()),
                 '  File "<doctest test_doctest_unexpected_exception.txt[1]>", line 1, in <module>',
                 "ZeroDivisionError: division by zero",
                 "*/test_doctest_unexpected_exception.txt:2: UnexpectedException",
@@ -801,8 +803,8 @@ class TestDoctests:
         """
         p = pytester.makepyfile(
             setup="""
-            from setuptools import setup, find_packages
             if __name__ == '__main__':
+                from setuptools import setup, find_packages
                 setup(name='sample',
                       version='0.0',
                       description='description',

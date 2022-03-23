@@ -47,11 +47,6 @@ STRICT_OPTION = PytestRemovedIn8Warning(
 # This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
-UNITTEST_SKIP_DURING_COLLECTION = PytestRemovedIn8Warning(
-    "Raising unittest.SkipTest to skip tests during collection is deprecated. "
-    "Use pytest.skip() instead."
-)
-
 ARGUMENT_PERCENT_DEFAULT = PytestRemovedIn8Warning(
     'pytest now uses argparse. "%default" should be changed to "%(default)s"',
 )

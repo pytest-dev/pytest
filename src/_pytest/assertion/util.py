@@ -14,8 +14,8 @@ from typing import Sequence
 import _pytest._code
 from _pytest import outcomes
 from _pytest._io.saferepr import _pformat_dispatch
-from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -160,8 +160,8 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
     """Return specialised explanations for some operators/operands."""
     verbose = config.getoption("verbose")
     if verbose > 1:
-        left_repr = safeformat(left)
-        right_repr = safeformat(right)
+        left_repr = saferepr_unlimited(left)
+        right_repr = saferepr_unlimited(right)
     else:
         # XXX: "15 chars indentation" is wrong
         #      ("E       AssertionError: assert "); should use term width.
@@ -223,8 +223,6 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             explanation = _compare_eq_set(left, right, verbose)
         elif isdict(left) and isdict(right):
             explanation = _compare_eq_dict(left, right, verbose)
-        elif verbose > 0:
-            explanation = _compare_eq_verbose(left, right)
 
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left, right, verbose)
@@ -281,18 +279,6 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     return explanation
 
 
-def _compare_eq_verbose(left: Any, right: Any) -> List[str]:
-    keepends = True
-    left_lines = repr(left).splitlines(keepends)
-    right_lines = repr(right).splitlines(keepends)
-
-    explanation: List[str] = []
-    explanation += ["+" + line for line in left_lines]
-    explanation += ["-" + line for line in right_lines]
-
-    return explanation
-
-
 def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
     """Move opening/closing parenthesis/bracket to own lines."""
     opening = lines[0][:1]
@@ -308,8 +294,8 @@ def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
 def _compare_eq_iterable(
     left: Iterable[Any], right: Iterable[Any], verbose: int = 0
 ) -> List[str]:
-    if not verbose and not running_on_ci():
-        return ["Use -v to get the full diff"]
+    if verbose <= 0 and not running_on_ci():
+        return ["Use -v to get more diff"]
     # dynamic import to speedup pytest
     import difflib
 
