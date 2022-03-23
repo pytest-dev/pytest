@@ -39,8 +39,10 @@ jobs:
             jobs: "test"
             workflow_name: "main.yml"
             matrix_exclude: |
-              linting,docs py39-dj40-mysql_innodb-coverage py35-dj22-postgres-pytest54-coverage 
-              py39-dj40-mysql_innodb-coverage py35-dj22-postgres-pytest54-coverage py36-dj32-mysql_myisam-coverage
+              linting,docs y39-dj40-mysql_innodb-coverage py35-dj22-postgres-pytest54-coverage
+              py36-dj32-mysql_myisam-coverage py310-dj40-postgres-xdist-coverage
+              py310-dj32-postgres-xdist-coverage py39-dj32-postgres-xdist-coverage
+              py35-dj22-postgres-pytest54-coverage pypy3-dj22-postgres
 
     steps:
     - uses: actions/checkout@v2
