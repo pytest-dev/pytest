@@ -106,40 +106,6 @@ class DownstreamRunner:
         
         return self._yaml_tree
 
-    def apply_git_patches(self):
-        """ Apply any applicable git patches to the repo."""
-        if self.dry_run:
-            logger.info("Skipping all git patches (dry-run).")
-            return
-
-        working_dir = os.getcwd()
-        patches_dir = os.path.join(working_dir, "testing", "downstream_testing", "patches")
-        repo_dir = os.path.join(working_dir, self.repo)
-
-        for patch in os.listdir(patches_dir):
-            if patch.startswith(self.repo) and patch.endswith(".patch"):
-                patch_full_path = os.path.join(patches_dir, patch)
-                logger.info("Applying patch: %s", patch)
-                if not self.dry_run:
-                    if not os.getcwd() == repo_dir:
-                        os.chdir(repo_dir)
-                    try:
-                        git.config("user.email", "noreply@noreply.no")
-                        git.config("user.name", "pytest-dev")
-                        logger.info("%s", git.am(patch_full_path))
-                    except sh.ErrorReturnCode as err:
-                        logger.info(
-                            "Failed to apply '%s' to '%s': %s",
-                            patch,
-                            self.repo,
-                            str(err.stderr)
-                        )
-            else:
-                logger.info("Skipping patch: %s", patch)
-
-        if not os.getcwd() == working_dir:
-            os.chdir(working_dir)
-
     def inject_pytest_dep(self):
         """ Ensure pytest is a dependency in tox.ini to allow us to use the 'local'
             version of pytest.
@@ -258,7 +224,6 @@ class DownstreamRunner:
         return run
 
     def run(self):
-        self.apply_git_patches()
         self.inject_pytest_dep()
         run_steps = self.build_run()
         os.chdir(self.repo)
