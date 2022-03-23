@@ -1,9 +1,9 @@
-name: downstream_compose
+name: downstream_testing_2
 
 on:
   push:
     branches:
-      - downstream_compose
+      - downstream_testing_2
 
 jobs:
   downstream-ubuntu:
