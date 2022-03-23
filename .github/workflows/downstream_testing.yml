@@ -1,0 +1,62 @@
+name: downstream_compose
+
+on:
+  push:
+    branches:
+      - downstream_compose
+
+jobs:
+  downstream-ubuntu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "pytest-django"
+            repo: "pytest-dev/pytest-django"
+            docker_profile: "postgres"
+            jobs: "test"
+            workflow_name: "main.yml"
+            matrix_exclude: |
+              linting,docs py39-dj40-mysql_innodb-coverage py36-dj22-sqlite-xdist-coverage py37-dj22-sqlite-xdist-coverage
+              py38-dj32-sqlite-xdist-coverage py38-dj40-sqlite-xdist-coverage py39-djmain-sqlite-coverage 
+              py35-dj22-postgres-pytest54-coverage py35-dj22-sqlite_file-coverage py36-dj32-mysql_myisam-coverage
+          - name: "pytest-django"
+            repo: "pytest-dev/pytest-django"
+            docker_profile: "mysql"
+            jobs: "test"
+            workflow_name: "main.yml"
+            matrix_exclude: |
+              linting,docs py310-dj40-postgres-xdist-coverage py310-dj32-postgres-xdist-coverage
+              py39-dj32-postgres-xdist-coverage py35-dj22-postgres-pytest54-coverage pypy3-dj22-postgres
+              py36-dj22-sqlite-xdist-coverage py37-dj22-sqlite-xdist-coverage py38-dj32-sqlite-xdist-coverage
+              py38-dj40-sqlite-xdist-coverage py39-djmain-sqlite-coverage py35-dj22-sqlite_file-coverage
+          - name: "pytest-django"
+            repo: "pytest-dev/pytest-django"
+            docker_profile: "nodb"
+            jobs: "test"
+            workflow_name: "main.yml"
+            matrix_exclude: |
+              linting,docs py39-dj40-mysql_innodb-coverage py35-dj22-postgres-pytest54-coverage 
+              py39-dj40-mysql_innodb-coverage py35-dj22-postgres-pytest54-coverage py36-dj32-mysql_myisam-coverage
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Checkout ${{ matrix.name }}
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        repository: ${{ matrix.repo }}
+        path: ${{ matrix.name }}
+    - name: Run Downstream Tests
+      run: docker-compose -f ./testing/downstream_testing/docker-compose.yml --profile ${{ matrix.docker_profile }} up --exit-code-from base_${{ matrix.docker_profile }}
+      env:
+        DS_NAME: ${{ matrix.name }}
+        DS_YAML: ./${{ matrix.name }}/.github/workflows/${{ matrix.workflow_name }}
+        DS_JOBS: ${{ matrix.jobs }}
+        DS_MATRIX_EXCLUDE: ${{ matrix.matrix_exclude }}
+        DOCKER_BUILDKIT: 1

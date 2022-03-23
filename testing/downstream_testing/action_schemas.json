@@ -1,0 +1,18 @@
+{
+    "pytest-django": {
+        "matrix": [
+            "matrix",
+            "include"
+        ],
+        "tox_cmd_build": {
+            "base": "name",
+            "prefix": "py",
+            "sub":
+                {
+                    "pattern": "\\-coverage$",
+                    "replace": ""
+                }
+        },
+        "python_version": "python"
+    }
+}
