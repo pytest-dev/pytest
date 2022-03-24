@@ -43,7 +43,7 @@ jobs:
               linting,docs py39-dj40-mysql_innodb-coverage py35-dj22-postgres-pytest54-coverage
               py36-dj32-mysql_myisam-coverage py310-dj40-postgres-xdist-coverage
               py310-dj32-postgres-xdist-coverage py39-dj32-postgres-xdist-coverage
-              pypy3-dj22-postgres py36-dj22-sqlite-xdist-coverage
+              pypy3-dj22-postgres py36-dj22-sqlite-xdist-coverage py35-dj22-sqlite_file-coverage
 
           - name: "pytest-html"
             repo: "pytest-dev/pytest-html"
