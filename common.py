@@ -14,10 +14,10 @@ class Dictionary(dict):
         return self.get(keyname, "settings.ini中没有找到对应的keyname")
 
 
-class Conf(object):
-    '''
+class Conf:
+    """
     ConfigParser二次封装，在字典中获取value
-    '''
+    """
 
     def __init__(self):
         # 设置conf.ini路径
