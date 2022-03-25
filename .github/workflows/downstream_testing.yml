@@ -69,3 +69,4 @@ jobs:
         DS_YAML: ./${{ matrix.name }}/.github/workflows/${{ matrix.workflow_name }}
         DS_JOBS: ${{ matrix.jobs }}
         DS_MATRIX_EXCLUDE: ${{ matrix.matrix_exclude }}
+        DOCKER_BUILDKIT: 1
