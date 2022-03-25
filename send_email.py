@@ -60,7 +60,7 @@ class Sendemail:
 
 if __name__ == "__main__":
     title = "内核自动化测试报告"
-    mail_txt = "<p>点链接查看详细测试结果</p>http://10.20.33.147:43005/index.html#behaviors</p>"
+    mail_txt = "<p>点链接查看详细测试结果</p>http://xxx.xxx.xxx.xxx:43005/index.html#behaviors</p>"
     # mail_txt = "111111"
     sdm = Sendemail()
     sdm.send_email(title, mail_txt)
