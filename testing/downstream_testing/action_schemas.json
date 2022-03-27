@@ -42,7 +42,7 @@
             "sub":
                 {
                     "pattern": "(\\d|py\\d)\\.*(\\d+)",
-                    "replace": "py\\1\\2"
+                    "replace": "py\\1\\2 COV_CMD=''"
                 }
         },
         "python_version": "python-version"
