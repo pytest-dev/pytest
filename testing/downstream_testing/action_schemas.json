@@ -30,5 +30,21 @@
                 }
         },
         "python_version": "python"
+    },
+    "pytest-order": {
+        "matrix": [
+            "matrix",
+            "python-version"
+        ],
+        "tox_cmd_build": {
+            "base": "",
+            "prefix": "",
+            "sub":
+                {
+                    "pattern": "(\\d|py\\d)\\.*(\\d+)",
+                    "replace": "py\\1\\2"
+                }
+        },
+        "python_version": "python-version"
     }
 }

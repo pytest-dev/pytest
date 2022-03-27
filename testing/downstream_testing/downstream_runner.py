@@ -162,26 +162,43 @@ class DownstreamRunner:
             parsed_matrix = yaml_tree
             for key in self.matrix_schema["matrix"]:
                 parsed_matrix = parsed_matrix[key]
-                #logger.debug("%s", parsed_matrix)
+                
+            logger.debug("parsed_matrix: %s", parsed_matrix)
             if parsed_matrix != yaml_tree:
                 tox_base = self.matrix_schema["tox_cmd_build"]["base"]
                 tox_prefix = self.matrix_schema["tox_cmd_build"]["prefix"]
                 skip_matrices = []
-                for item in parsed_matrix:
-                    if (not item[tox_base].startswith(tox_prefix) or
-                        item[tox_base] in self.matrix_exclude
-                    ):
-                        skip_matrices.append(item)
-                        continue
-                    item["tox_cmd"] = re.sub(
-                        self.matrix_schema["tox_cmd_build"]["sub"]["pattern"],
-                        self.matrix_schema["tox_cmd_build"]["sub"]["replace"],
-                        item[tox_base]
-                    )
-                    #logger.debug("re.sub: %s", item[tox_base])
-                for matrice in skip_matrices:
-                    parsed_matrix.remove(matrice)
+                if isinstance(parsed_matrix, dict):
+                    for item in parsed_matrix:
+                        if (not item[tox_base].startswith(tox_prefix) or
+                            item[tox_base] in self.matrix_exclude
+                        ):
+                            skip_matrices.append(item)
+                            continue
+                        
+                        item["tox_cmd"] = re.sub(
+                            self.matrix_schema["tox_cmd_build"]["sub"]["pattern"],
+                            self.matrix_schema["tox_cmd_build"]["sub"]["replace"],
+                            item[tox_base]
+                        )
+                        #logger.debug("re.sub: %s", item[tox_base])
+                    
+                    for matrice in skip_matrices:
+                        parsed_matrix.remove(matrice)
                 
+                elif isinstance(parsed_matrix, list):
+                    new_parsed_matrix = []
+                    for item in parsed_matrix:
+                        if str(item) in self.matrix_exclude:
+                            continue
+                        tox_cmd = re.sub(
+                            self.matrix_schema["tox_cmd_build"]["sub"]["pattern"],
+                            self.matrix_schema["tox_cmd_build"]["sub"]["replace"],
+                            str(item)
+                        )
+                        new_parsed_matrix.append({"name": tox_cmd, "tox_cmd": tox_cmd})
+                    parsed_matrix = new_parsed_matrix
+                        
             return parsed_matrix
 
         if self._matrix is None:

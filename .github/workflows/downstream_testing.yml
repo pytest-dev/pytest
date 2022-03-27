@@ -52,6 +52,14 @@ jobs:
             workflow_name: "tests.yml"
             matrix_exclude: ""
 
+          - name: "pytest-order"
+            repo: "pytest-dev/pytest-order"
+            docker_profile: "nodb"
+            jobs: "test"
+            workflow_name: "pythontests.yml"
+            matrix_exclude: |
+              3.6
+
     steps:
     - uses: actions/checkout@v2
       with:
