@@ -647,10 +647,12 @@ class Session(nodes.FSCollector):
                 errors = []
                 for arg, collectors in self._notfound:
                     if cols:
-                        errors.append(f"not found: {arg}\n(no name {arg!r} in any of {collectors!r})")
+                        errors.append(
+                            f"not found: {arg}\n(no name {arg!r} in any of {collectors!r})"
+                        )
                     else:
                         errors.append(f"found no collectors for {arg}")
-                    
+
                 raise UsageError(*errors)
             if not genitems:
                 items = rep.result
