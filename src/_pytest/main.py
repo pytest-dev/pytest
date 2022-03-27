@@ -646,7 +646,7 @@ class Session(nodes.FSCollector):
             if self._notfound:
                 errors = []
                 for arg, collectors in self._notfound:
-                    if cols:
+                    if collectors:
                         errors.append(
                             f"not found: {arg}\n(no name {arg!r} in any of {collectors!r})"
                         )
