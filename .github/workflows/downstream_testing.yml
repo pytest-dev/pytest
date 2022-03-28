@@ -50,7 +50,7 @@ jobs:
             docker_profile: "nodb"
             jobs: "test_python"
             workflow_name: "tests.yml"
-            matrix_exclude: ""
+            matrix_exclude: py36-ubuntu
 
           - name: "pytest-order"
             repo: "pytest-dev/pytest-order"
