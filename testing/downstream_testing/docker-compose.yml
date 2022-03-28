@@ -7,6 +7,7 @@ services:
       - DS_YAML
       - DS_JOBS
       - DS_MATRIX_EXCLUDE
+      - COV_CMD
     volumes:
       - type: bind
         source: /home/runner/work/pytest/pytest
