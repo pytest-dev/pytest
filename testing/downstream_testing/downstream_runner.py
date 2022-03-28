@@ -122,12 +122,17 @@ class DownstreamRunner:
                 "src": "pytest-rerunfailures @ git+https://github.com/pytest-dev/pytest-rerunfailures.git",
                 "condition": lambda x: x.startswith("pytest-rerunfailures"),
                 "has_gen": lambda x: re.search(r"pytest-rerunfailures\w*:", x)
+            },
+            "pytest-xdist": {
+                "src": "pytest-xdist",
+                "condition": lambda x: x.startswith("pytest{") and x.endswith("pytest-xdist"),
+                "has_gen": lambda x: re.search(r"pytest\{.*\,7\d.*\}:", x)
             }
         }
         tox_source = configparser.ConfigParser()
         tox_source.read_file(open(ini_path))
         #updated_deps = set()
-        found_pytest = False
+        found_dep = []
         for section in tox_source.sections():
             updated_deps = set()
             section_deps = tox_source.get(section, "deps", fallback=None)
@@ -136,8 +141,9 @@ class DownstreamRunner:
                     for check_dep in DEPS:
                         if DEPS[check_dep]["condition"](dep):
                             has_gen = DEPS[check_dep]["has_gen"](dep)
-                            if has_gen is not None and not found_pytest:
-                                found_pytest = True
+                            if has_gen is not None and check_dep not in found_dep:
+                                #found_pytest = True
+                                found_dep.append(check_dep)
                                 updated_deps.add(f"!{has_gen.group()} {DEPS[check_dep]['src']}")
                 updated_deps = '\n'.join(updated_deps)
                 tox_source[section]["deps"] = f"{tox_source[section]['deps']}\n{updated_deps}"
