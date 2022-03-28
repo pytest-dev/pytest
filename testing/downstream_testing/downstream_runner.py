@@ -178,7 +178,7 @@ class DownstreamRunner:
                     for item in parsed_matrix:
                         if (not item[tox_base].startswith(tox_prefix) or
                             item[tox_base] in self.matrix_exclude or
-                            not item.get("os", "").startswith("ubuntu")
+                            not item.get("os", "ubuntu").startswith("ubuntu")
                         ):
                             skip_matrices.append(item)
                             continue
