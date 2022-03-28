@@ -168,10 +168,11 @@ class DownstreamRunner:
                 tox_base = self.matrix_schema["tox_cmd_build"]["base"]
                 tox_prefix = self.matrix_schema["tox_cmd_build"]["prefix"]
                 skip_matrices = []
-                if isinstance(parsed_matrix, dict):
+                if "include" in self.matrix_schema["matrix"]:
                     for item in parsed_matrix:
                         if (not item[tox_base].startswith(tox_prefix) or
-                            item[tox_base] in self.matrix_exclude
+                            item[tox_base] in self.matrix_exclude or
+                            not item.get("os", "").startswith("ubuntu")
                         ):
                             skip_matrices.append(item)
                             continue
@@ -181,12 +182,12 @@ class DownstreamRunner:
                             self.matrix_schema["tox_cmd_build"]["sub"]["replace"],
                             item[tox_base]
                         )
-                        #logger.debug("re.sub: %s", item[tox_base])
+                        logger.debug("re.sub: %s", item[tox_base])
                     
                     for matrice in skip_matrices:
                         parsed_matrix.remove(matrice)
                 
-                elif isinstance(parsed_matrix, list):
+                else:
                     new_parsed_matrix = []
                     for item in parsed_matrix:
                         if str(item) in self.matrix_exclude:
