@@ -186,8 +186,7 @@ class TestGeneralUsage:
         assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(
             [
-                f"ERROR: not found: {p2}",
-                f"(no name {str(p2)!r} in any of [[][]])",
+                f"ERROR: found no collectors for {p2}",
                 "",
             ]
         )
