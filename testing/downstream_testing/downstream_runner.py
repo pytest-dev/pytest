@@ -131,7 +131,6 @@ class DownstreamRunner:
         }
         tox_source = configparser.ConfigParser()
         tox_source.read_file(open(ini_path))
-        #updated_deps = set()
         found_dep = []
         for section in tox_source.sections():
             updated_deps = set()
@@ -142,9 +141,11 @@ class DownstreamRunner:
                         if DEPS[check_dep]["condition"](dep):
                             has_gen = DEPS[check_dep]["has_gen"](dep)
                             if has_gen is not None and check_dep not in found_dep:
-                                #found_pytest = True
                                 found_dep.append(check_dep)
                                 updated_deps.add(f"!{has_gen.group()} {DEPS[check_dep]['src']}")
+                
+                if not [item for item in updated_deps if pytest_dep in item]:
+                    updated_deps.add(pytest_dep)
                 updated_deps = '\n'.join(updated_deps)
                 tox_source[section]["deps"] = f"{tox_source[section]['deps']}\n{updated_deps}"
 
