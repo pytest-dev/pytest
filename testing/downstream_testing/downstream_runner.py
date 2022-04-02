@@ -75,18 +75,16 @@ def load_matrix_schema(repo):
     return schema
 
 class DownstreamRunner:
-    # TODO: actualize args vs **kwargs
-    def __init__(self, **kwargs):
-        self.yaml_source = kwargs.get("yaml_source", None)
-        if self.yaml_source == None:
-            raise SystemExit("No YAML source provided.")
+    def __init__(self, repo, yaml_source, jobs, matrix_exclude=None, dry_run=False):
+        self.repo = repo
+        self.yaml_source = yaml_source
+        self.matrix_exclude = matrix_exclude
+        self.job_names = jobs
+        self.dry_run = dry_run
+
         self._yaml_tree = None
-        self.repo = kwargs.get("repo")
-        self.matrix_exclude = kwargs.get("matrix_exclude")
-        self.job_names = kwargs.get("jobs")
         self._matrix = None
         self._steps = None
-        self.dry_run = kwargs.get("dry_run", False)
         self.matrix_schema = load_matrix_schema(self.repo)
 
 
@@ -263,13 +261,12 @@ if __name__ == "__main__":
     cli_args = parser.parse_args()
     if cli_args.dry_run:
         logger.setLevel("DEBUG")
-    runner_args = {
-        "repo": cli_args.repo,
-        "yaml_source": cli_args.source[0],
-        "jobs": cli_args.jobs,
-        "matrix_exclude": cli_args.matrix_exclude,
-        "dry_run": cli_args.dry_run,
-    }
-    runner = DownstreamRunner(**runner_args)
+    runner = DownstreamRunner(
+        cli_args.repo,
+        cli_args.source[0],
+        cli_args.jobs,
+        matrix_exclude=cli_args.matrix_exclude,
+        dry_run=cli_args.dry_run,
+    )
 
     runner.run()
