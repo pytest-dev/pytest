@@ -1,17 +1,13 @@
 import argparse
-from collections import namedtuple, UserDict
 import configparser
 import json
 import logging
 import os
 import os.path
-from pprint import pprint
 import re
 import shlex
 import subprocess
 
-import sh
-from sh.contrib import git
 import yaml
 
 logging.basicConfig(format="%(levelname)s | %(module)s.%(funcName)s | %(message)s", level="INFO")
