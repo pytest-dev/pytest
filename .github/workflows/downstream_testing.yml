@@ -21,7 +21,7 @@ jobs:
             workflow_name: "main.yml"
             matrix_exclude: |
               linting,docs py39-dj40-mysql_innodb-coverage py36-dj22-sqlite-xdist-coverage py37-dj22-sqlite-xdist-coverage
-              py38-dj32-sqlite-xdist-coverage py38-dj40-sqlite-xdist-coverage py39-djmain-sqlite-coverage 
+              py38-dj32-sqlite-xdist-coverage py38-dj40-sqlite-xdist-coverage py39-djmain-sqlite-coverage
               py35-dj22-postgres-pytest54-coverage py35-dj22-sqlite_file-coverage py36-dj32-mysql_myisam-coverage
           - name: "pytest-django"
             repo: "pytest-dev/pytest-django"

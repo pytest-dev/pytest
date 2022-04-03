@@ -2,58 +2,45 @@ import argparse
 import configparser
 import json
 import logging
-import os
 import os.path
 import re
 import shlex
 import subprocess
+from collections import UserDict
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 import yaml
 
-logging.basicConfig(format="%(levelname)s | %(module)s.%(funcName)s | %(message)s", level="INFO")
+logging.basicConfig(
+    format="%(levelname)s | %(module)s.%(funcName)s | %(message)s", level="INFO"
+)
 logger = logging.getLogger(__name__)
 
 
-parser = argparse.ArgumentParser(
-    description="downstream Actions runner"
-)
+parser = argparse.ArgumentParser(description="downstream Actions runner")
+parser.add_argument("repo", help="Name of the repo.")
+parser.add_argument("source", nargs=1, help="Path to source YAML file.")
+parser.add_argument("jobs", nargs="+", help="Job names to use.")
 parser.add_argument(
-    "repo",
-    #nargs=1,
-    help="Name of the repo."
-)
-parser.add_argument(
-    "source",
-    nargs=1,
-    help="Path to source YAML file."
-)
-parser.add_argument(
-    "jobs",
-    nargs="+",
-    help="Job names to use."
-)
-parser.add_argument(
-    "--matrix-exclude",
-    nargs="*",
-    default=[],
-    help="Exclude these matrix names."
+    "--matrix-exclude", nargs="*", default=[], help="Exclude these matrix names."
 )
 
 parser.add_argument(
     "--dry-run",
     action="store_true",
-    help="Do not run parsed downstream action. Only display the generated command list."
+    help="Do not run parsed downstream action. Only display the generated command list.",
 )
 
+
 def load_matrix_schema(repo):
-    """ Loads the matrix schema for `repo` """
+    """Loads the matrix schema for `repo`"""
     schema = None
     working_dir = os.getcwd()
     schema_path = os.path.join(
-        working_dir,
-        "testing",
-        "downstream_testing",
-        "action_schemas.json"
+        working_dir, "testing", "downstream_testing", "action_schemas.json"
     )
     logger.debug("loading schema: %s", schema_path)
     if os.path.exists(schema_path):
@@ -74,6 +61,66 @@ def load_matrix_schema(repo):
 
     return schema
 
+
+TOX_DEP_FILTERS = {
+    "pytest": {
+        "src": f"pytest @ file://{os.getcwd()}",
+        "condition": r"^pytest(?!\-)",
+        "has_gen": r"pytest\w*",
+    },
+    "pytest-rerunfailures": {
+        "src": "pytest-rerunfailures @ git+https://github.com/pytest-dev/pytest-rerunfailures.git",
+        "condition": r"^pytest-rerunfailures.*",
+        "has_gen": r"pytest-rerunfailures\w*:",
+    },
+    "pytest-xdist": {
+        "src": "pytest-xdist",
+        "condition": r"^pytest.*pytest-xdist",
+        "has_gen": r"pytest\{.*\,7\d.*\}",
+    },
+}
+
+
+class ToxDepFilter(UserDict[Any, Any]):
+    def __init__(self) -> None:
+        self.data = TOX_DEP_FILTERS
+
+    def matches_condition(self, match: str) -> Optional[str]:
+        """Checks if `match` matches any conditions"""
+        match_found = None
+        for key, val in self.data.items():
+            logger.debug(
+                "matches_condition: %s:%s -> %s",
+                key,
+                val,
+                re.search(val["condition"], match),
+            )
+            if re.search(val["condition"], match):
+                match_found = key
+                break
+
+        return match_found
+
+    def matches_gen_exp(self, dep: str, match: str) -> Optional[Any]:
+        """Checks if `match` matches `dep`['has_gen'] condition."""
+        logger.debug("matches_gen_exp: %s", re.match(self.data[dep]["has_gen"], match))
+        return re.match(self.data[dep]["has_gen"], match)
+
+    def filter_dep(self, match: str) -> Optional[Dict[Any, Any]]:
+        """Filters `match` based on conditions and returns the `src` dependency."""
+        filtered_match = None
+        dep_condition = self.matches_condition(match)
+        if dep_condition is not None:
+            dep_gen_exp = self.matches_gen_exp(dep_condition, match)
+            if dep_gen_exp:
+                filtered_match = {
+                    "src": self.data[dep_condition]["src"],
+                    "gen_exp": dep_gen_exp,
+                }
+        logger.debug("filter_dep: %s", filtered_match)
+        return filtered_match
+
+
 class DownstreamRunner:
     def __init__(self, repo, yaml_source, jobs, matrix_exclude=None, dry_run=False):
         self.repo = repo
@@ -87,61 +134,45 @@ class DownstreamRunner:
         self._steps = None
         self.matrix_schema = load_matrix_schema(self.repo)
 
-
     @property
     def yaml_tree(self):
-        """ The YAML tree built from the `yaml_source` file. """
+        """The YAML tree built from the `yaml_source` file."""
 
         with open(self.yaml_source) as f:
             self._yaml_tree = yaml.safe_load(f.read())
-        
-        if self._yaml_tree == None:
+
+        if self._yaml_tree is None:
             raise SystemExit("Supplied YAML source failed to parse.")
-        
+
         return self._yaml_tree
 
     def inject_pytest_dep(self):
-        """ Ensure pytest is a dependency in tox.ini to allow us to use the 'local'
-            version of pytest.
+        """Ensure pytest is a dependency in tox.ini to allow us to use the 'local'
+        version of pytest.
         """
         ini_path = self.repo + "/tox.ini"
         pytest_dep = f"pytest @ file://{os.getcwd()}"
-        DEPS = {
-            "pytest": {
-                "src": f"pytest @ file://{os.getcwd()}",
-                "condition": lambda x: x.startswith("pytest") and not x.startswith("pytest-"),
-                "has_gen": lambda x: re.search(r"pytest\w*:", x)
-            },
-            "pytest-rerunfailures": {
-                "src": "pytest-rerunfailures @ git+https://github.com/pytest-dev/pytest-rerunfailures.git",
-                "condition": lambda x: x.startswith("pytest-rerunfailures"),
-                "has_gen": lambda x: re.search(r"pytest-rerunfailures\w*:", x)
-            },
-            "pytest-xdist": {
-                "src": "pytest-xdist",
-                "condition": lambda x: x.startswith("pytest{") and x.endswith("pytest-xdist"),
-                "has_gen": lambda x: re.search(r"pytest\{.*\,7\d.*\}:", x)
-            }
-        }
         tox_source = configparser.ConfigParser()
         tox_source.read_file(open(ini_path))
         found_dep = []
-        for section in tox_source.sections():
-            updated_deps = set()
-            section_deps = tox_source.get(section, "deps", fallback=None)
-            if section_deps:
-                for dep in section_deps.split("\n"):
-                    for check_dep in DEPS:
-                        if DEPS[check_dep]["condition"](dep):
-                            has_gen = DEPS[check_dep]["has_gen"](dep)
-                            if has_gen is not None and check_dep not in found_dep:
-                                found_dep.append(check_dep)
-                                updated_deps.add(f"!{has_gen.group()} {DEPS[check_dep]['src']}")
-                
-                if not [item for item in updated_deps if pytest_dep in item]:
-                    updated_deps.add(pytest_dep)
-                updated_deps = '\n'.join(updated_deps)
-                tox_source[section]["deps"] = f"{tox_source[section]['deps']}\n{updated_deps}"
+        updated_deps = set()
+        section_deps = tox_source.get("testenv", "deps", fallback=None)
+        if section_deps:
+            tox_dep_filter = ToxDepFilter()
+            for dep in section_deps.split("\n"):
+                filtered_dep = tox_dep_filter.filter_dep(dep)
+                if filtered_dep and filtered_dep not in found_dep:
+                    found_dep.append(filtered_dep)
+                    updated_deps.add(
+                        f"!{filtered_dep['gen_exp']} {filtered_dep['src']}"
+                    )
+
+            if not [item for item in updated_deps if pytest_dep in item]:
+                updated_deps.add(pytest_dep)
+            final_deps = "\n".join(updated_deps)
+            tox_source["testenv"][
+                "deps"
+            ] = f"{tox_source['testenv']['deps']}\n{final_deps}"
 
         with open(ini_path, "w") as f:
             tox_source.write(f)
@@ -163,7 +194,7 @@ class DownstreamRunner:
             parsed_matrix = yaml_tree
             for key in self.matrix_schema["matrix"]:
                 parsed_matrix = parsed_matrix[key]
-                
+
             logger.debug("parsed_matrix: %s", parsed_matrix)
             if parsed_matrix != yaml_tree:
                 tox_base = self.matrix_schema["tox_cmd_build"]["base"]
@@ -171,23 +202,24 @@ class DownstreamRunner:
                 skip_matrices = []
                 if "include" in self.matrix_schema["matrix"]:
                     for item in parsed_matrix:
-                        if (not item[tox_base].startswith(tox_prefix) or
-                            item[tox_base] in self.matrix_exclude or
-                            not item.get("os", "ubuntu").startswith("ubuntu")
+                        if (
+                            not item[tox_base].startswith(tox_prefix)
+                            or item[tox_base] in self.matrix_exclude
+                            or not item.get("os", "ubuntu").startswith("ubuntu")
                         ):
                             skip_matrices.append(item)
                             continue
-                        
+
                         item["tox_cmd"] = re.sub(
                             self.matrix_schema["tox_cmd_build"]["sub"]["pattern"],
                             self.matrix_schema["tox_cmd_build"]["sub"]["replace"],
-                            item[tox_base]
+                            item[tox_base],
                         )
                         logger.debug("re.sub: %s", item[tox_base])
-                    
+
                     for matrice in skip_matrices:
                         parsed_matrix.remove(matrice)
-                
+
                 else:
                     new_parsed_matrix = []
                     for item in parsed_matrix:
@@ -196,11 +228,11 @@ class DownstreamRunner:
                         tox_cmd = re.sub(
                             self.matrix_schema["tox_cmd_build"]["sub"]["pattern"],
                             self.matrix_schema["tox_cmd_build"]["sub"]["replace"],
-                            str(item)
+                            str(item),
                         )
                         new_parsed_matrix.append({"name": tox_cmd, "tox_cmd": tox_cmd})
                     parsed_matrix = new_parsed_matrix
-                        
+
             return parsed_matrix
 
         if self._matrix is None:
@@ -209,7 +241,6 @@ class DownstreamRunner:
                 job_yaml = self.yaml_tree["jobs"][job]["strategy"]
                 parsed_matrix = parse_matrix(job_yaml)
                 matrix_items[job] = parsed_matrix
-                
 
             self._matrix = matrix_items
         logger.debug("matrix: %s", self._matrix)
@@ -218,7 +249,7 @@ class DownstreamRunner:
     @property
     def steps(self):
         if self._steps is None:
-            step_items = {}
+            step_items: Dict[str, List[Any]] = {}
             for job in self.job_names:
                 if job not in step_items:
                     step_items[job] = []
@@ -227,17 +258,14 @@ class DownstreamRunner:
                         step_items[job].append(item)
             self._steps = step_items
         return self._steps
-    
+
     def build_run(self):
         run = {}
         for job in self.job_names:
             logger.debug("job_name: %s", job)
             for matrix in self.matrix[job]:
                 logger.debug("matrix[job]: %s", matrix)
-                run[matrix["name"]] = [
-                    "pip install tox",
-                    f"tox -e {matrix['tox_cmd']}"
-                ]
+                run[matrix["name"]] = ["pip install tox", f"tox -e {matrix['tox_cmd']}"]
 
         logger.debug("built run: %s", run)
         return run
@@ -251,11 +279,8 @@ class DownstreamRunner:
                 cmd = shlex.split(step)
                 logger.info("--> running: '%s'", step)
                 if not self.dry_run:
-                    subprocess.run(
-                        cmd,
-                        encoding="utf-8",
-                        check=True
-                    )
+                    subprocess.run(cmd, encoding="utf-8", check=True)
+
 
 if __name__ == "__main__":
     cli_args = parser.parse_args()

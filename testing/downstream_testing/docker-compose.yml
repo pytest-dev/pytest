@@ -16,7 +16,7 @@ services:
           nocopy: true
     profiles:
       - nodb
-  
+
   base_postgres:
     build: .
     environment:
