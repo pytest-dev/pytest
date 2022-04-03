@@ -164,7 +164,7 @@ class DownstreamRunner:
                 if filtered_dep and filtered_dep not in found_dep:
                     found_dep.append(filtered_dep)
                     updated_deps.add(
-                        f"!{filtered_dep['gen_exp']} {filtered_dep['src']}"
+                        f"!{filtered_dep['gen_exp']}: {filtered_dep['src']}"
                     )
 
             if not [item for item in updated_deps if pytest_dep in item]:
