@@ -11,6 +11,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import TYPE_CHECKING
 
 import yaml
 
@@ -81,7 +82,13 @@ TOX_DEP_FILTERS = {
 }
 
 
-class ToxDepFilter(UserDict[Any, Any]):
+if TYPE_CHECKING:
+    _BaseUserDict = UserDict[Any, Any]
+else:
+    _BaseUserDict = UserDict
+
+
+class ToxDepFilter(_BaseUserDict):
     def __init__(self) -> None:
         self.data = TOX_DEP_FILTERS
 
@@ -89,12 +96,6 @@ class ToxDepFilter(UserDict[Any, Any]):
         """Checks if `match` matches any conditions"""
         match_found = None
         for key, val in self.data.items():
-            logger.debug(
-                "matches_condition: %s:%s -> %s",
-                key,
-                val,
-                re.search(val["condition"], match),
-            )
             if re.search(val["condition"], match):
                 match_found = key
                 break
@@ -103,7 +104,6 @@ class ToxDepFilter(UserDict[Any, Any]):
 
     def matches_gen_exp(self, dep: str, match: str) -> Optional[Any]:
         """Checks if `match` matches `dep`['has_gen'] condition."""
-        logger.debug("matches_gen_exp: %s", re.match(self.data[dep]["has_gen"], match))
         return re.match(self.data[dep]["has_gen"], match)
 
     def filter_dep(self, match: str) -> Optional[Dict[Any, Any]]:
@@ -115,9 +115,9 @@ class ToxDepFilter(UserDict[Any, Any]):
             if dep_gen_exp:
                 filtered_match = {
                     "src": self.data[dep_condition]["src"],
-                    "gen_exp": dep_gen_exp,
+                    "gen_exp": dep_gen_exp[0],
                 }
-        logger.debug("filter_dep: %s", filtered_match)
+                logger.debug("toxenv dependency updated: %s", filtered_match)
         return filtered_match
 
 
