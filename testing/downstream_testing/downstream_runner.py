@@ -161,8 +161,8 @@ class DownstreamRunner:
             tox_dep_filter = ToxDepFilter()
             for dep in section_deps.split("\n"):
                 filtered_dep = tox_dep_filter.filter_dep(dep)
-                if filtered_dep and filtered_dep not in found_dep:
-                    found_dep.append(filtered_dep)
+                if filtered_dep and filtered_dep["src"] not in found_dep:
+                    found_dep.append(filtered_dep["src"])
                     updated_deps.add(
                         f"!{filtered_dep['gen_exp']}: {filtered_dep['src']}"
                     )
