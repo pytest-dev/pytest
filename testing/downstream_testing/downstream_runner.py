@@ -28,7 +28,6 @@ parser.add_argument("jobs", nargs="+", help="Job names to use.")
 parser.add_argument(
     "--matrix-exclude", nargs="*", default=[], help="Exclude these matrix names."
 )
-
 parser.add_argument(
     "--dry-run",
     action="store_true",
@@ -64,11 +63,6 @@ def load_matrix_schema(repo):
 
 
 TOX_DEP_FILTERS = {
-    "pytest": {
-        "src": f"pytest @ file://{os.getcwd()}",
-        "condition": r"^pytest(?!\-)",
-        "has_gen": r"pytest\w*",
-    },
     "pytest-rerunfailures": {
         "src": "pytest-rerunfailures @ git+https://github.com/pytest-dev/pytest-rerunfailures.git",
         "condition": r"^pytest-rerunfailures.*",
@@ -78,6 +72,11 @@ TOX_DEP_FILTERS = {
         "src": "pytest-xdist",
         "condition": r"^pytest.*pytest-xdist",
         "has_gen": r"pytest\{.*\,7\d.*\}",
+    },
+    "pytest": {
+        "src": f"pytest @ file://{os.getcwd()}",
+        "condition": r"^pytest(?!\-)",
+        "has_gen": r"pytest\w*",
     },
 }
 
