@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import configparser
 import json
@@ -8,9 +10,8 @@ import shlex
 import subprocess
 from collections import UserDict
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Iterable
+from typing import Match
 from typing import TYPE_CHECKING
 
 import yaml
@@ -91,7 +92,7 @@ class ToxDepFilter(_BaseUserDict):
     def __init__(self) -> None:
         self.data = TOX_DEP_FILTERS
 
-    def matches_condition(self, match: str) -> Optional[str]:
+    def matches_condition(self, match: str) -> str | None:
         """Checks if `match` matches any conditions"""
         match_found = None
         for key, val in self.data.items():
@@ -101,11 +102,11 @@ class ToxDepFilter(_BaseUserDict):
 
         return match_found
 
-    def matches_gen_exp(self, dep: str, match: str) -> Optional[Any]:
+    def matches_gen_exp(self, dep: str, match: str) -> Match[str] | None:
         """Checks if `match` matches `dep`['has_gen'] condition."""
         return re.match(self.data[dep]["has_gen"], match)
 
-    def filter_dep(self, match: str) -> Optional[Dict[Any, Any]]:
+    def filter_dep(self, match: str) -> dict[Any, Any] | None:
         """Filters `match` based on conditions and returns the `src` dependency."""
         filtered_match = None
         dep_condition = self.matches_condition(match)
@@ -121,36 +122,44 @@ class ToxDepFilter(_BaseUserDict):
 
 
 class DownstreamRunner:
-    def __init__(self, repo, yaml_source, jobs, matrix_exclude=None, dry_run=False):
+    def __init__(
+        self,
+        repo: str,
+        yaml_source: str,
+        jobs: str,
+        matrix_exclude: str = "",
+        dry_run: bool = False,
+    ) -> None:
         self.repo = repo
         self.yaml_source = yaml_source
         self.matrix_exclude = matrix_exclude
         self.job_names = jobs
         self.dry_run = dry_run
 
-        self._yaml_tree = None
-        self._matrix = None
-        self._steps = None
+        self._yaml_tree: dict[str, Any] | None = None
+        self._matrix: dict[str, Any] | None = None
         self.matrix_schema = load_matrix_schema(self.repo)
 
     @property
-    def yaml_tree(self):
-        """The YAML tree built from the `yaml_source` file."""
-
-        with open(self.yaml_source) as f:
-            self._yaml_tree = yaml.safe_load(f.read())
-
+    def yaml_tree(self) -> dict[str, Any]:
+        """The YAML tree built from the `self.yaml_source` file."""
         if self._yaml_tree is None:
-            raise SystemExit("Supplied YAML source failed to parse.")
+            with open(self.yaml_source) as f:
+                _yaml_tree = yaml.safe_load(f.read())
+
+            if _yaml_tree is None:
+                raise SystemExit("Supplied YAML source failed to parse.")
+            else:
+                self._yaml_tree = _yaml_tree
 
         return self._yaml_tree
 
-    def inject_pytest_dep(self):
+    def inject_pytest_dep(self) -> None:
         """Ensure pytest is a dependency in tox.ini to allow us to use the 'local'
         version of pytest.
         """
         ini_path = self.repo + "/tox.ini"
-        pytest_dep = f"pytest @ file://{os.getcwd()}"
+        pytest_dep = TOX_DEP_FILTERS["pytest"]["src"]
         tox_source = configparser.ConfigParser()
         tox_source.read_file(open(ini_path))
         found_dep = []
@@ -176,26 +185,35 @@ class DownstreamRunner:
         with open(ini_path, "w") as f:
             tox_source.write(f)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(
             "DownstreamRunner("
             f"repo={self.repo}, "
             f"yaml_source={self.yaml_source}, "
             f"job_names={self.job_names}, "
             f"matrix={self.matrix}, "
-            f"steps={self.steps}"
             ")"
         )
 
     @property
-    def matrix(self):
-        def parse_matrix(yaml_tree):
-            parsed_matrix = yaml_tree
+    def matrix(self) -> dict[str, Iterable[dict[str, str]]]:
+        def parse_matrix(yaml_tree: dict[str, Any]) -> Iterable[Any]:
+            parsed_matrix = []  # type: ignore
+            pre_parsed: dict[str, Any] | Iterable[str | float] = yaml_tree
             for key in self.matrix_schema["matrix"]:
-                parsed_matrix = parsed_matrix[key]
+                if isinstance(pre_parsed, dict):
+                    pre_parsed = pre_parsed[key]
+            else:
+                if isinstance(pre_parsed, list):
+                    parsed_matrix = pre_parsed
+                else:
+                    msg_info = f"repo: {self.repo} | matrix schema: {self.matrix_schema} | parsed result: {pre_parsed}"
+                    raise TypeError(
+                        f"Parsed Actions matrix is invalid. Should be list/array. {msg_info}"
+                    )
 
             logger.debug("parsed_matrix: %s", parsed_matrix)
-            if parsed_matrix != yaml_tree:
+            if parsed_matrix:
                 tox_base = self.matrix_schema["tox_cmd_build"]["base"]
                 tox_prefix = self.matrix_schema["tox_cmd_build"]["prefix"]
                 skip_matrices = []
@@ -245,20 +263,7 @@ class DownstreamRunner:
         logger.debug("matrix: %s", self._matrix)
         return self._matrix
 
-    @property
-    def steps(self):
-        if self._steps is None:
-            step_items: Dict[str, List[Any]] = {}
-            for job in self.job_names:
-                if job not in step_items:
-                    step_items[job] = []
-                for item in self.yaml_tree["jobs"][job]["steps"]:
-                    if "run" in item:
-                        step_items[job].append(item)
-            self._steps = step_items
-        return self._steps
-
-    def build_run(self):
+    def build_run(self) -> dict[str, list[str]]:
         run = {}
         for job in self.job_names:
             logger.debug("job_name: %s", job)
@@ -269,7 +274,7 @@ class DownstreamRunner:
         logger.debug("built run: %s", run)
         return run
 
-    def run(self):
+    def run(self) -> None:
         self.inject_pytest_dep()
         run_steps = self.build_run()
         os.chdir(self.repo)
