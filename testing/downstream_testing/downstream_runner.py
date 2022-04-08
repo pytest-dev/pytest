@@ -15,7 +15,9 @@ from typing import Match
 from typing import TYPE_CHECKING
 
 import yaml
-from typing_extensions import TypedDict
+
+if TYPE_CHECKING:
+    from typing_extensions import TypedDict
 
 logging.basicConfig(
     format="%(levelname)s | %(module)s.%(funcName)s | %(message)s", level="INFO"
