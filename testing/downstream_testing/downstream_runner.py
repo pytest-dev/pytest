@@ -15,6 +15,7 @@ from typing import Match
 from typing import TYPE_CHECKING
 
 import yaml
+from typing_extensions import TypedDict
 
 logging.basicConfig(
     format="%(levelname)s | %(module)s.%(funcName)s | %(message)s", level="INFO"
@@ -35,32 +36,50 @@ parser.add_argument(
     help="Do not run parsed downstream action. Only display the generated command list.",
 )
 
+if TYPE_CHECKING:
+    _BaseUserDict = UserDict[Any, Any]
 
-def load_matrix_schema(repo):
+    class SchemaBase(TypedDict):
+        repo: str
+
+    class SchemaToxBase(TypedDict):
+        base: str
+        prefix: str
+        sub: dict[str, str]
+
+    class SchemaType(SchemaBase, total=False):
+        matrix: list[str]
+        tox_cmd_build: SchemaToxBase
+        python_version: str
+
+else:
+    _BaseUserDict = UserDict
+
+
+def load_matrix_schema(repo: str) -> SchemaType:
     """Loads the matrix schema for `repo`"""
-    schema = None
+    schema: SchemaType = {"repo": repo}
     working_dir = os.getcwd()
     schema_path = os.path.join(
         working_dir, "testing", "downstream_testing", "action_schemas.json"
     )
-    logger.debug("loading schema: %s", schema_path)
+    logger.debug("Loading schema: %s", schema_path)
     if os.path.exists(schema_path):
         with open(schema_path) as schema_file:
             try:
                 schema = json.load(schema_file)
-            except json.JSONDecodeError:
-                logger.error("failed to read action_schemas.json")
+            except json.JSONDecodeError as exc:
+                raise RuntimeError(f"Error decoding '{schema_path}'") from exc
     else:
-        logger.warning("action_schemas.json not found.")
+        raise FileNotFoundError(f"'{schema_path}' not found.")
 
-    if schema is not None and repo in schema:
-        schema = schema[repo]
+    if repo in schema:
         logger.debug("'%s' schema loaded: %s", repo, schema)
+        return schema[repo]  # type: ignore
     else:
-        schema = None
-        logger.warning("'%s' schema not found in actions_schema.json", repo)
-
-    return schema
+        raise RuntimeError(
+            f"'{repo}' schema definition not found in actions_schema.json"
+        )
 
 
 TOX_DEP_FILTERS = {
@@ -80,12 +99,6 @@ TOX_DEP_FILTERS = {
         "has_gen": r"pytest\w*",
     },
 }
-
-
-if TYPE_CHECKING:
-    _BaseUserDict = UserDict[Any, Any]
-else:
-    _BaseUserDict = UserDict
 
 
 class ToxDepFilter(_BaseUserDict):
@@ -138,7 +151,7 @@ class DownstreamRunner:
 
         self._yaml_tree: dict[str, Any] | None = None
         self._matrix: dict[str, Any] | None = None
-        self.matrix_schema = load_matrix_schema(self.repo)
+        self.matrix_schema: SchemaType = load_matrix_schema(self.repo)
 
     @property
     def yaml_tree(self) -> dict[str, Any]:
