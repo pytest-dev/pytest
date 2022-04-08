@@ -109,6 +109,10 @@ class ToxDepFilter(_BaseUserDict):
         """Checks if `match` matches any conditions"""
         match_found = None
         for key, val in self.data.items():
+            if "xdist" in match:
+                logging.debug(
+                    "matches_condition: %s", re.search(val["condition"], match)
+                )
             if re.search(val["condition"], match):
                 match_found = key
                 break
