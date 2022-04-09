@@ -437,8 +437,10 @@ def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
     if not has_default_eq(left):
         return []
     if isdatacls(left):
-        all_fields = left.__dataclass_fields__
-        fields_to_check = [field for field, info in all_fields.items() if info.compare]
+        import dataclasses
+
+        all_fields = dataclasses.fields(left)
+        fields_to_check = [info.name for info in all_fields if info.compare]
     elif isattrs(left):
         all_fields = left.__attrs_attrs__
         fields_to_check = [field.name for field in all_fields if getattr(field, "eq")]

@@ -882,6 +882,13 @@ class TestAssert_reprcompare_dataclass:
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.no_re_match_line(".*Differing attributes.*")
 
+    def test_data_classes_with_initvar(self, pytester: Pytester) -> None:
+        p = pytester.copy_example("dataclasses/test_compare_initvar.py")
+        # issue 9820
+        result = pytester.runpytest(p, "-vv")
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.no_re_match_line(".*AttributeError.*")
+
 
 class TestAssert_reprcompare_attrsclass:
     def test_attrs(self) -> None:
