@@ -145,8 +145,8 @@ class DownstreamRunner:
         self,
         repo: str,
         yaml_source: str,
-        jobs: str,
-        matrix_exclude: str = "",
+        jobs: Iterable[str],
+        matrix_exclude: Iterable[str] = (),
         dry_run: bool = False,
     ) -> None:
         self.repo = repo
