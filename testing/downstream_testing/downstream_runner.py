@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser(description="downstream Actions runner")
 parser.add_argument("repo", help="Name of the repo.")
-parser.add_argument("source", nargs=1, help="Path to source YAML file.")
+parser.add_argument("source", help="Path to source YAML file.")
 parser.add_argument("jobs", nargs="+", help="Job names to use.")
 parser.add_argument(
     "--matrix-exclude", nargs="*", default=[], help="Exclude these matrix names."
@@ -164,10 +164,15 @@ class DownstreamRunner:
         """The YAML tree built from the `self.yaml_source` file."""
         if self._yaml_tree is None:
             with open(self.yaml_source) as f:
-                _yaml_tree = yaml.safe_load(f.read())
+                try:
+                    _yaml_tree = yaml.safe_load(f.read())
+                except yaml.YAMLError as exc:
+                    raise RuntimeError(
+                        f"Error while parsing '{self.yaml_source}'."
+                    ) from exc
 
             if _yaml_tree is None:
-                raise SystemExit("Supplied YAML source failed to parse.")
+                raise RuntimeError(f"'{self.yaml_source}' failed to parse.")
             else:
                 self._yaml_tree = _yaml_tree
 
@@ -311,7 +316,7 @@ if __name__ == "__main__":
         logger.setLevel("DEBUG")
     runner = DownstreamRunner(
         cli_args.repo,
-        cli_args.source[0],
+        cli_args.source,
         cli_args.jobs,
         matrix_exclude=cli_args.matrix_exclude,
         dry_run=cli_args.dry_run,
