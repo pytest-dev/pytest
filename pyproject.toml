@@ -59,6 +59,8 @@ markers = [
     "slow",
     # experimental mark for all tests using pexpect
     "uses_pexpect",
+    # runs tests for ./testing/downstream_testing/downstream_runner.py
+    "downstream",
 ]
 
 
