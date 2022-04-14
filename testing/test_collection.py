@@ -51,7 +51,7 @@ class TestCollector:
 
         fn3 = pytester.collect_by_name(modcol, "test_fail")
         assert isinstance(fn3, pytest.Function)
-        assert not (fn1 == fn3)
+        assert fn1 != fn3
         assert fn1 != fn3
 
         for fn in fn1, fn2, fn3:
