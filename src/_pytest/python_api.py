@@ -450,26 +450,25 @@ class ApproxScalar(ApproxBase):
         # for compatibility with complex numbers.
         if math.isinf(abs(self.expected)):  # type: ignore[arg-type]
             return False
-    
-        tolerance = self.tolerance    
+
+        tolerance = self.tolerance
         expected = self.expected
-        
-        if (isinstance(self.expected, Decimal) and not isinstance(actual, Decimal)):
+
+        if isinstance(self.expected, Decimal) and not isinstance(actual, Decimal):
             try:
                 actual = Decimal(str(actual))
                 tolerance = Decimal(str(tolerance))
-            except TypeError: # 
+            except TypeError:  #
                 return False
-        elif (isinstance(actual, Decimal) and not isinstance(self.expected, Decimal)):
-            try :
+        elif isinstance(actual, Decimal) and not isinstance(self.expected, Decimal):
+            try:
                 expected = Decimal(str(expected))
                 tolerance = Decimal(str(tolerance))
             except TypeError:
                 return False
-            
 
         # Return true if the two numbers are within the tolerance.
-        result: bool = (abs(actual - expected) <= tolerance ) # type: ignore[arg-type]
+        result: bool = abs(actual - expected) <= tolerance  # type: ignore[arg-type]
         return result
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.
@@ -508,11 +507,11 @@ class ApproxScalar(ApproxBase):
         # we've made sure the user didn't ask for an absolute tolerance only,
         # because we don't want to raise errors about the relative tolerance if
         # we aren't even going to use it.
-        
+
         if isinstance(self.rel, Decimal):
             relative_tolerance = set_default(
                 self.rel, self.DEFAULT_RELATIVE_TOLERANCE
-            )*Decimal(str(abs(self.expected)))
+            ) * Decimal(str(abs(self.expected)))
         else:
             relative_tolerance = set_default(
                 self.rel, self.DEFAULT_RELATIVE_TOLERANCE

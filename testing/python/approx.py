@@ -568,14 +568,14 @@ class TestApprox:
         expected = [Decimal("1"), Decimal("2")]
 
         assert actual == approx(expected)
-        
+
         expected = [1, 2]
-        
+
         assert actual == approx(expected)
-        
+
         expected = [Decimal("1"), Decimal("2")]
         actual = [1.000001, 2.000001]
-        
+
         assert actual == approx(expected)
 
     def test_list_wrong_len(self):
@@ -618,14 +618,14 @@ class TestApprox:
         expected = {"b": Decimal("2"), "a": Decimal("1")}
 
         assert actual == approx(expected)
-        
+
         actual = {"a": 1.000001, "b": 2.000001}
-        
+
         assert actual == approx(expected)
-        
+
         actual = {"a": Decimal("1.000001"), "b": Decimal("2.000001")}
         expected = {"b": 2, "a": 1}
-        
+
         assert actual == approx(expected)
 
     def test_dict_wrong_len(self):
@@ -902,4 +902,3 @@ class TestApprox:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
         with pytest.raises(TypeError, match="only supports ordered sequences"):
             assert {1, 2, 3} == approx({1, 2, 3})
-    
