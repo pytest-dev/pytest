@@ -14,8 +14,8 @@ from typing import Sequence
 import _pytest._code
 from _pytest import outcomes
 from _pytest._io.saferepr import _pformat_dispatch
-from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
+from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -160,8 +160,8 @@ def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[
     """Return specialised explanations for some operators/operands."""
     verbose = config.getoption("verbose")
     if verbose > 1:
-        left_repr = safeformat(left)
-        right_repr = safeformat(right)
+        left_repr = saferepr_unlimited(left)
+        right_repr = saferepr_unlimited(right)
     else:
         # XXX: "15 chars indentation" is wrong
         #      ("E       AssertionError: assert "); should use term width.
@@ -437,8 +437,10 @@ def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
     if not has_default_eq(left):
         return []
     if isdatacls(left):
-        all_fields = left.__dataclass_fields__
-        fields_to_check = [field for field, info in all_fields.items() if info.compare]
+        import dataclasses
+
+        all_fields = dataclasses.fields(left)
+        fields_to_check = [info.name for info in all_fields if info.compare]
     elif isattrs(left):
         all_fields = left.__attrs_attrs__
         fields_to_check = [field.name for field in all_fields if getattr(field, "eq")]

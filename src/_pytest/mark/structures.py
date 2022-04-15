@@ -397,7 +397,7 @@ if TYPE_CHECKING:
     from _pytest.scope import _ScopeName
 
     class _SkipMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,misc]
+        @overload  # type: ignore[override,misc,no-overload-impl]
         def __call__(self, arg: Markable) -> Markable:
             ...
 
@@ -415,7 +415,7 @@ if TYPE_CHECKING:
             ...
 
     class _XfailMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,misc]
+        @overload  # type: ignore[override,misc,no-overload-impl]
         def __call__(self, arg: Markable) -> Markable:
             ...
 

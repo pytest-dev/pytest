@@ -1,4 +1,3 @@
-import re
 import warnings
 from typing import Optional
 
@@ -263,7 +262,7 @@ class TestWarns:
             with pytest.warns(RuntimeWarning):
                 warnings.warn("user", UserWarning)
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) were emitted. "
+            r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) were emitted.\n"
             r"The list of emitted warnings is: \[UserWarning\('user',?\)\]."
         )
 
@@ -271,15 +270,15 @@ class TestWarns:
             with pytest.warns(UserWarning):
                 warnings.warn("runtime", RuntimeWarning)
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted. "
-            r"The list of emitted warnings is: \[RuntimeWarning\('runtime',?\)\]."
+            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted.\n"
+            r"The list of emitted warnings is: \[RuntimeWarning\('runtime',?\)]."
         )
 
         with pytest.raises(pytest.fail.Exception) as excinfo:
             with pytest.warns(UserWarning):
                 pass
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted. "
+            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted.\n"
             r"The list of emitted warnings is: \[\]."
         )
 
@@ -289,17 +288,13 @@ class TestWarns:
                 warnings.warn("runtime", RuntimeWarning)
                 warnings.warn("import", ImportWarning)
 
-        message_template = (
-            "DID NOT WARN. No warnings of type {0} were emitted. "
-            "The list of emitted warnings is: {1}."
+        messages = [each.message for each in warninfo]
+        expected_str = (
+            f"DID NOT WARN. No warnings of type {warning_classes} were emitted.\n"
+            f"The list of emitted warnings is: {messages}."
         )
-        excinfo.match(
-            re.escape(
-                message_template.format(
-                    warning_classes, [each.message for each in warninfo]
-                )
-            )
-        )
+
+        assert str(excinfo.value) == expected_str
 
     def test_record(self) -> None:
         with pytest.warns(UserWarning) as record:

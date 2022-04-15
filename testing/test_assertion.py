@@ -882,6 +882,13 @@ class TestAssert_reprcompare_dataclass:
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.no_re_match_line(".*Differing attributes.*")
 
+    def test_data_classes_with_initvar(self, pytester: Pytester) -> None:
+        p = pytester.copy_example("dataclasses/test_compare_initvar.py")
+        # issue 9820
+        result = pytester.runpytest(p, "-vv")
+        result.assert_outcomes(failed=1, passed=0)
+        result.stdout.no_re_match_line(".*AttributeError.*")
+
 
 class TestAssert_reprcompare_attrsclass:
     def test_attrs(self) -> None:
@@ -1694,4 +1701,19 @@ def test_assertion_location_with_coverage(pytester: Pytester) -> None:
             "E       assert False",
             "*= 1 failed in*",
         ]
+    )
+
+
+def test_reprcompare_verbose_long() -> None:
+    a = {f"v{i}": i for i in range(11)}
+    b = a.copy()
+    b["v2"] += 10
+    lines = callop("==", a, b, verbose=2)
+    assert lines is not None
+    assert lines[0] == (
+        "{'v0': 0, 'v1': 1, 'v2': 2, 'v3': 3, 'v4': 4, 'v5': 5, "
+        "'v6': 6, 'v7': 7, 'v8': 8, 'v9': 9, 'v10': 10}"
+        " == "
+        "{'v0': 0, 'v1': 1, 'v2': 12, 'v3': 3, 'v4': 4, 'v5': 5, "
+        "'v6': 6, 'v7': 7, 'v8': 8, 'v9': 9, 'v10': 10}"
     )

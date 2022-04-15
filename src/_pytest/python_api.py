@@ -319,7 +319,6 @@ class ApproxSequenceLike(ApproxBase):
 
     def _repr_compare(self, other_side: Sequence[float]) -> List[str]:
         import math
-        import numpy as np
 
         if len(self.expected) != len(other_side):
             return [
@@ -340,7 +339,7 @@ class ApproxSequenceLike(ApproxBase):
                 abs_diff = abs(approx_value.expected - other_value)
                 max_abs_diff = max(max_abs_diff, abs_diff)
                 if other_value == 0.0:
-                    max_rel_diff = np.inf
+                    max_rel_diff = math.inf
                 else:
                     max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
                 different_ids.append(i)
@@ -573,7 +572,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
         True
 
-    The comparision will be true if both mappings have the same keys and their
+    The comparison will be true if both mappings have the same keys and their
     respective values match the expected tolerances.
 
     **Tolerances**

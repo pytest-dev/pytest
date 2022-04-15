@@ -1,3 +1,0 @@
-The deprecation of raising :class:`unittest.SkipTest` to skip collection of
-tests during the pytest collection phase is reverted - this is now a supported
-feature again.

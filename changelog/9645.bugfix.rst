@@ -1,1 +1,0 @@
-Fixed regression where ``--import-mode=importlib`` used together with :envvar:`PYTHONPATH` or :confval:`pythonpath` would cause import errors in test suites.

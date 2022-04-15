@@ -1,3 +1,0 @@
-:func:`pytest.approx` now raises a :class:`TypeError` when given an unordered sequence (such as :class:`set`).
-
-Note that this implies that custom classes which only implement ``__iter__`` and ``__len__`` are no longer supported as they don't guarantee order.
