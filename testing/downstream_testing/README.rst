@@ -34,87 +34,96 @@ Example ``actions_schema.json`` entry:
 
   .. code:: JSON
 
-    "pytest-django": {
-      "matrix": [
-        "matrix",
-        "include"
-      ],
-      "tox_cmd_build": {
-        "base": "name",
-        "prefix": "py",
-        "sub": {
-          "pattern": "-coverage$",
-          "replace": ""
+      "pytest-django": {
+        "matrix": [
+          "matrix",
+          "include"
+        ],
+        "tox_cmd_build": {
+          "base": "name",
+          "prefix": "py",
+          "sub": {
+            "pattern": "-coverage$",
+            "replace": ""
+          }
         }
       }
-    }
 
 Below are the steps to add a new plugin.
 
 1. Start by adding a new JSON object, with the name of the repo. ``"pytest-django": {}`` in the example above.
 
 2. Add an array named ``matrix``. Array items should point to the strategy matrix from the repo's GitHub Actions
-   YAML file. For instance, the ``pytest-django`` example above has a strategy matrix defined as follows:
+   YAML file. For instance, the ``pytest-django`` example above has a strategy matrix defined as follows
 
     .. code:: YAML
 
-      # pytest-django/.github/workflows/main.yml
-      jobs:
-        tests:
-          strategy:
-            fail-fast: false
-            matrix:
-              include:
-              - name: linting,docs
-                python: 3.8
-                allow_failure: false
+        # pytest-django/.github/workflows/main.yml
+        jobs:
+          tests:
+            strategy:
+              fail-fast: false
+              matrix:
+                include:
+                - name: linting,docs
+                  python: 3.8
+                  allow_failure: false
 
-              - name: py310-dj40-postgres-xdist-coverage
-                python: '3.10'
-                allow_failure: false
+                - name: py310-dj40-postgres-xdist-coverage
+                  python: '3.10'
+                  allow_failure: false
 
 
-  This makes ``["matrix", "include"]`` our target to parse the ``pytest-django`` strategy. This is a "combination"
-  strategy based on the use of ``include``.
+   This makes ``["matrix", "include"]`` our target to parse the ``pytest-django`` strategy. This is a "combination"
+   strategy based on the use of ``include``.
 
-  For non-combination strategies, use the matrix field that points to the appropriate choices. Using
-  ``pytest-order`` as a non-combination example:
+   For non-combination strategies, use the matrix field that points to the appropriate choices. Using
+   ``pytest-order`` as a non-combination example:
 
     .. code:: YAML
 
-      # pytest-order/.github/workflows/pythontests.yml
-      jobs:
-        test:
-          runs-on: ${{ matrix.os }}
-          strategy:
-            fail-fast: false
-            matrix:
-              os: [ubuntu-latest, windows-latest]
-              python-version: [3.6, 3.7, 3.8, 3.9, "3.10", pypy3]
+        # pytest-order/.github/workflows/pythontests.yml
+        jobs:
+          test:
+            runs-on: ${{ matrix.os }}
+            strategy:
+              fail-fast: false
+              matrix:
+                os: [ubuntu-latest, windows-latest]
+                python-version: [3.6, 3.7, 3.8, 3.9, "3.10", pypy3]
 
-  The corresponding entry in ``actions_schema.json`` points to ``["matrix", "python-version"]``:
+   The corresponding entry in ``actions_schema.json`` points to ``["matrix", "python-version"]``:
 
     .. code:: JSON
 
-      "pytest-order": {
-          "matrix": [
-              "matrix",
-              "python-version"
-          ],
+        "pytest-order": {
+            "matrix": [
+                "matrix",
+                "python-version"
+            ],
 
 3. Add a JSON object named ``tox_cmd_build``, with three items: ``base``, ``prefix``, and ``sub``.
 
-   - ``base``: For combination strategies (with ``include``), ``base`` is the field to be used as the basis
-      of the tox environment. For non-combination strategies, this field is an empty string. ``base: "name"``
-      in the ``pytest-django`` example above.
+   - ``base``:
 
-   - ``prefix``: For combination strategies, ``prefix`` is used to [dis]qualify entries in ``base``. For
-       non-combination strategies, this field is an emtpy string. ``prefix: "py"`` in the ``pytest-django``
+     - For combination strategies (with ``include``), ``base`` is the field to be used as the basis
+       of the tox environment.
+
+     - For non-combination strategies, this field is an empty string. ``base: "name"``
+       in the ``pytest-django`` example above.
+
+   - ``prefix``:
+
+     - For combination strategies, ``prefix`` is used to [dis]qualify entries in ``base``.
+
+     - For non-combination strategies, this field is an emtpy string. ``prefix: "py"`` in the ``pytest-django``
        example above.
 
-   - ``sub``: For both combination and non-combination strategies, this JSON object gives a RegEx matching
-      (``pattern``) and a substituition (``replace``) string. Since these are JSON strings, they cannot be
-      represented as a Python raw string (``r""``); ensure to properly escape characters.
+   - ``sub``:
+
+     - For both combination and non-combination strategies, this JSON object gives a RegEx matching
+       (``pattern``) and a substituition (``replace``) string. Since these are JSON strings, they cannot be
+       represented as a Python raw string (``r""``); ensure to properly escape characters.
 
 Any additions can be verified locally with the following process:
 
@@ -133,33 +142,33 @@ Any additions can be verified locally with the following process:
 
    .. code::
 
-      (.venv) ~/pytest:$> python -m testing.downstream_testing.downstream_runner pytest-order pytest-order/pytest-order.yml test --matrix-exclude 3.6 --dry-run
+       (.venv) ~/pytest:$> python -m testing.downstream_testing.downstream_runner pytest-order pytest-order/main.yml test --matrix-exclude 3.6 --dry-run
 
-      DEBUG | downstream_runner.load_matrix_schema | Loading schema: /home/sommersoft/Dev/pytest-dev/pytest/testing/downstream_testing/action_schemas.json
-      DEBUG | downstream_runner.load_matrix_schema | 'pytest-order' schema loaded: {'matrix': ['matrix', 'python-version'],
-      'tox_cmd_build': {'base': '', 'prefix': '', 'sub': {'pattern': '(\\d|py\\d)\\.*(\\d+)', 'replace': 'py\\1\\2'}}, 'python_version': 'python-version'}
-      DEBUG | downstream_runner.inject_pytest_dep | toxenv dependencies updated: {'!pytest{60,61,62,624,70}: pytest-xdist', '!pytest50: pytest @ file:///home/pytest'}
-      DEBUG | downstream_runner.build_run | job_name: test
-      DEBUG | downstream_runner.parse_matrix | parsed_matrix: [3.6, 3.7, 3.8, 3.9, '3.10', 'pypy3']
-      DEBUG | downstream_runner.matrix | matrix: {'test': [{'name': 'py37', 'tox_cmd': 'py37'}, {'name': 'py38', 'tox_cmd': 'py38'}, {'name': 'py39', 'tox_cmd': 'py39'},
-      {'name': 'py310', 'tox_cmd': 'py310'}, {'name': 'pypy3', 'tox_cmd': 'pypy3'}]}
-      DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py37', 'tox_cmd': 'py37'}
-      DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py38', 'tox_cmd': 'py38'}
-      DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py39', 'tox_cmd': 'py39'}
-      DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py310', 'tox_cmd': 'py310'}
-      DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'pypy3', 'tox_cmd': 'pypy3'}
-      DEBUG | downstream_runner.build_run | built run: {'py37': ['pip install tox', 'tox -e py37'], 'py38': ['pip install tox', 'tox -e py38'], 'py39': ['pip install tox',
-      'tox -e py39'], 'py310': ['pip install tox', 'tox -e py310'], 'pypy3': ['pip install tox', 'tox -e pypy3']}
-      INFO | downstream_runner.run | --> running: 'pip install tox'
-      INFO | downstream_runner.run | --> running: 'tox -e py37'
-      INFO | downstream_runner.run | --> running: 'pip install tox'
-      INFO | downstream_runner.run | --> running: 'tox -e py38'
-      INFO | downstream_runner.run | --> running: 'pip install tox'
-      INFO | downstream_runner.run | --> running: 'tox -e py39'
-      INFO | downstream_runner.run | --> running: 'pip install tox'
-      INFO | downstream_runner.run | --> running: 'tox -e py310'
-      INFO | downstream_runner.run | --> running: 'pip install tox'
-      INFO | downstream_runner.run | --> running: 'tox -e pypy3'
+       DEBUG | downstream_runner.load_matrix_schema | Loading schema: /home/pytest/testing/downstream_testing/action_schemas.json
+       DEBUG | downstream_runner.load_matrix_schema | 'pytest-order' schema loaded: {'matrix': ['matrix', 'python-version'],
+       'tox_cmd_build': {'base': '', 'prefix': '', 'sub': {'pattern': '(\\d|py\\d)\\.*(\\d+)', 'replace': 'py\\1\\2'}}, 'python_version': 'python-version'}
+       DEBUG | downstream_runner.inject_pytest_dep | toxenv dependencies updated: {'!pytest{60,61,62,624,70}: pytest-xdist', '!pytest50: pytest @ file:///home/pytest'}
+       DEBUG | downstream_runner.build_run | job_name: test
+       DEBUG | downstream_runner.parse_matrix | parsed_matrix: [3.6, 3.7, 3.8, 3.9, '3.10', 'pypy3']
+       DEBUG | downstream_runner.matrix | matrix: {'test': [{'name': 'py37', 'tox_cmd': 'py37'}, {'name': 'py38', 'tox_cmd': 'py38'}, {'name': 'py39', 'tox_cmd': 'py39'},
+       {'name': 'py310', 'tox_cmd': 'py310'}, {'name': 'pypy3', 'tox_cmd': 'pypy3'}]}
+       DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py37', 'tox_cmd': 'py37'}
+       DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py38', 'tox_cmd': 'py38'}
+       DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py39', 'tox_cmd': 'py39'}
+       DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py310', 'tox_cmd': 'py310'}
+       DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'pypy3', 'tox_cmd': 'pypy3'}
+       DEBUG | downstream_runner.build_run | built run: {'py37': ['pip install tox', 'tox -e py37'], 'py38': ['pip install tox', 'tox -e py38'], 'py39': ['pip install tox',
+       'tox -e py39'], 'py310': ['pip install tox', 'tox -e py310'], 'pypy3': ['pip install tox', 'tox -e pypy3']}
+       INFO | downstream_runner.run | --> running: 'pip install tox'
+       INFO | downstream_runner.run | --> running: 'tox -e py37'
+       INFO | downstream_runner.run | --> running: 'pip install tox'
+       INFO | downstream_runner.run | --> running: 'tox -e py38'
+       INFO | downstream_runner.run | --> running: 'pip install tox'
+       INFO | downstream_runner.run | --> running: 'tox -e py39'
+       INFO | downstream_runner.run | --> running: 'pip install tox'
+       INFO | downstream_runner.run | --> running: 'tox -e py310'
+       INFO | downstream_runner.run | --> running: 'pip install tox'
+       INFO | downstream_runner.run | --> running: 'tox -e pypy3'
 
 
 **pytest/.github/workflows/downstream_testing.yml:**
@@ -184,21 +193,21 @@ Add a new entry to the combination strategy matrix:
 
 .. code:: YAML
 
-  - name: "pytest-django"
-    repo: "pytest-dev/pytest-django"
-    docker_profile: "postgres"
-    jobs: "test"
-    workflow_name: "main.yml"
-    matrix_exclude: |
-      linting,docs py39-dj40-mysql_innodb-coverage ...
+    - name: "pytest-django"
+      repo: "pytest-dev/pytest-django"
+      docker_profile: "postgres"
+      jobs: "test"
+      workflow_name: "main.yml"
+      matrix_exclude: |
+        linting,docs py39-dj40-mysql_innodb-coverage ...
 
-  - name: "pytest-django"
-    repo: "pytest-dev/pytest-django"
-    docker_profile: "mysql"
-    jobs: "test"
-    workflow_name: "main.yml"
-    matrix_exclude: |
-      linting,docs py310-dj40-postgres-xdist-coverage ...
+    - name: "pytest-django"
+      repo: "pytest-dev/pytest-django"
+      docker_profile: "mysql"
+      jobs: "test"
+      workflow_name: "main.yml"
+      matrix_exclude: |
+        linting,docs py310-dj40-postgres-xdist-coverage ...
 
 .. epigraph::
   Example 1: using ``pytest-django``, which has a combination strategy matrix, we see two (of three) different
@@ -208,13 +217,13 @@ Add a new entry to the combination strategy matrix:
 
 .. code:: YAML
 
-  - name: "pytest-order"
-    repo: "pytest-dev/pytest-order"
-    docker_profile: "nodb"
-    jobs: "test"
-    workflow_name: "pythontests.yml"
-    matrix_exclude: |
-      3.6
+    - name: "pytest-order"
+      repo: "pytest-dev/pytest-order"
+      docker_profile: "nodb"
+      jobs: "test"
+      workflow_name: "pythontests.yml"
+      matrix_exclude: |
+        3.6
 
 .. epigraph::
   Example 2: using ``pytest-order``, which has a non-combination strategy matrix and requires no database.
