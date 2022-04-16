@@ -25,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-parser = argparse.ArgumentParser(description="downstream Actions runner")
+parser = argparse.ArgumentParser(description="pytest downstream plugins test runner")
 parser.add_argument("repo", help="Name of the repo.")
 parser.add_argument("source", help="Path to source YAML file.")
 parser.add_argument("jobs", nargs="+", help="Job names to use.")
@@ -35,7 +35,7 @@ parser.add_argument(
 parser.add_argument(
     "--dry-run",
     action="store_true",
-    help="Do not run parsed downstream action. Only display the generated command list.",
+    help="Do not run parsed downstream action. Only display the generated command list and debug information.",
 )
 
 if TYPE_CHECKING:
@@ -76,7 +76,7 @@ def load_matrix_schema(repo: str) -> SchemaType:
         raise FileNotFoundError(f"'{schema_path}' not found.")
 
     if repo in schema:
-        logger.debug("'%s' schema loaded: %s", repo, schema)
+        logger.debug("'%s' schema loaded: %s", repo, schema[repo])  # type: ignore
         return schema[repo]  # type: ignore
     else:
         raise RuntimeError(
@@ -108,7 +108,7 @@ class ToxDepFilter(_BaseUserDict):
         self.data = TOX_DEP_FILTERS
 
     def matches_condition(self, match: str) -> str | None:
-        """Checks if `match` matches any conditions"""
+        """Checks if ``match`` matches any conditions"""
         match_found = None
         for key, val in self.data.items():
             if "xdist" in match:
@@ -122,11 +122,11 @@ class ToxDepFilter(_BaseUserDict):
         return match_found
 
     def matches_gen_exp(self, dep: str, match: str) -> Match[str] | None:
-        """Checks if `match` matches `dep`['has_gen'] condition."""
+        """Checks if ``match`` matches ``dep``['has_gen'] condition."""
         return re.match(self.data[dep]["has_gen"], match)
 
     def filter_dep(self, match: str) -> dict[Any, Any] | None:
-        """Filters `match` based on conditions and returns the `src` dependency."""
+        """Filters ``match`` based on conditions and returns the ``src`` dependency."""
         filtered_match = None
         dep_condition = self.matches_condition(match)
         if dep_condition is not None:
@@ -136,7 +136,6 @@ class ToxDepFilter(_BaseUserDict):
                     "src": self.data[dep_condition]["src"],
                     "gen_exp": dep_gen_exp[0],
                 }
-                logger.debug("toxenv dependency updated: %s", filtered_match)
         return filtered_match
 
 
@@ -202,6 +201,7 @@ class DownstreamRunner:
             if not [item for item in updated_deps if pytest_dep in item]:
                 updated_deps.add(pytest_dep)
             final_deps = "\n".join(updated_deps)
+            logger.debug("toxenv dependencies updated: %s", updated_deps)
             tox_source["testenv"][
                 "deps"
             ] = f"{tox_source['testenv']['deps']}\n{final_deps}"
@@ -221,7 +221,12 @@ class DownstreamRunner:
 
     @property
     def matrix(self) -> dict[str, Iterable[dict[str, str]]]:
+        """Iterates over ``self.yaml_tree`` strategy matrix for each job in ``self.jobs``, and passes each
+        through ``parse_matrix``.
+        """
+
         def parse_matrix(yaml_tree: dict[str, Any]) -> Iterable[Any]:
+            """Parses `yaml_tree` strategy matrix using ``self.matrix_schema`` information."""
             parsed_matrix = []  # type: ignore
             pre_parsed: dict[str, Any] | Iterable[str | float] = yaml_tree
             for key in self.matrix_schema["matrix"]:
@@ -288,6 +293,7 @@ class DownstreamRunner:
         return self._matrix
 
     def build_run(self) -> dict[str, list[str]]:
+        """Builds the list of commands for all necessary jobs via ``self.matrix``."""
         run = {}
         for job in self.job_names:
             logger.debug("job_name: %s", job)
