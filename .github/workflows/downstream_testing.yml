@@ -70,7 +70,7 @@ jobs:
         fetch-depth: 0
         repository: ${{ matrix.repo }}
         path: ${{ matrix.name }}
-    - name: Run Downstream Tests - {{ matrix.name }}
+    - name: Run Downstream Tests - ${{ matrix.name }}
       run: docker-compose -f ./testing/downstream_testing/docker-compose.yml --profile ${{ matrix.docker_profile }} up --exit-code-from base_${{ matrix.docker_profile }}
       env:
         DS_NAME: ${{ matrix.name }}
@@ -79,6 +79,6 @@ jobs:
         DS_MATRIX_EXCLUDE: ${{ matrix.matrix_exclude }}
         DOCKER_BUILDKIT: 1
         COV_CMD: ""
-    - name: Test Results - {{ matrix.name }}
+    - name: Test Results - ${{ matrix.name }}
       if: ${{ always() }}
       run: docker logs base
