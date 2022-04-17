@@ -12,8 +12,7 @@
                     "pattern": "-coverage$",
                     "replace": ""
                 }
-        },
-        "python_version": "python"
+        }
     },
     "pytest-html": {
         "matrix": [
@@ -28,8 +27,7 @@
                     "pattern": "(py\\d+)-\\w+",
                     "replace": "\\1"
                 }
-        },
-        "python_version": "python"
+        }
     },
     "pytest-order": {
         "matrix": [
@@ -44,7 +42,6 @@
                     "pattern": "(\\d|py\\d)\\.*(\\d+)",
                     "replace": "py\\1\\2"
                 }
-        },
-        "python_version": "python-version"
+        }
     }
 }
