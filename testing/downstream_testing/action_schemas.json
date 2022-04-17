@@ -43,5 +43,20 @@
                     "replace": "py\\1\\2"
                 }
         }
+    },
+    "pytest-mock": {
+        "matrix": [
+            "matrix",
+            "python"
+        ],
+        "tox_cmd_build": {
+            "base": "",
+            "prefix": "",
+            "sub":
+                {
+                    "pattern": "(\\d|py\\d)\\.*(\\d+)",
+                    "replace": "py\\1\\2"
+                }
+        }
     }
 }

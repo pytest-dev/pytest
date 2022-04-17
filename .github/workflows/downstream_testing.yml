@@ -60,6 +60,13 @@ jobs:
             matrix_exclude: |
               3.6
 
+          - name: "pytest-mock"
+            repo: "pytest-dev/pytest-mock"
+            docker_profile: "nodb"
+            jobs: "test"
+            workflow_name: "test.yml"
+            matrix_exclude: ""
+
     steps:
     - uses: actions/checkout@v2
       with:
