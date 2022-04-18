@@ -196,7 +196,7 @@ want to distribute them along with your application:
         __init__.py
         app.py
         view.py
-        test/
+        tests/
             __init__.py
             test_app.py
             test_view.py
