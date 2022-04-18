@@ -299,7 +299,7 @@ class DownstreamRunner:
             logger.debug("job_name: %s", job)
             for matrix in self.matrix[job]:
                 logger.debug("matrix[job]: %s", matrix)
-                run[matrix["name"]] = ["pip install tox", f"tox -e {matrix['tox_cmd']}"]
+                run[matrix["name"]] = [f"tox -e {matrix['tox_cmd']}"]
 
         logger.debug("built run: %s", run)
         return run

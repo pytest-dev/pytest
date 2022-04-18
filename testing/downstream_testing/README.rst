@@ -20,7 +20,7 @@ Overview
 
   - The plugin's ``tox`` config is adjusted to ensure the local ``pytest`` is used.
 
-- Uses a static command set: ``pip install tox`` & ``tox -e {toxenv}``.
+- Uses a static command set: ``tox -e {toxenv}``.
 
 How To Add Additional Plugin(s)
 -------------------------------
@@ -157,17 +157,11 @@ Any additions can be verified locally with the following process:
        DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py39', 'tox_cmd': 'py39'}
        DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'py310', 'tox_cmd': 'py310'}
        DEBUG | downstream_runner.build_run | matrix[job]: {'name': 'pypy3', 'tox_cmd': 'pypy3'}
-       DEBUG | downstream_runner.build_run | built run: {'py37': ['pip install tox', 'tox -e py37'], 'py38': ['pip install tox', 'tox -e py38'], 'py39': ['pip install tox',
-       'tox -e py39'], 'py310': ['pip install tox', 'tox -e py310'], 'pypy3': ['pip install tox', 'tox -e pypy3']}
-       INFO | downstream_runner.run | --> running: 'pip install tox'
+       DEBUG | downstream_runner.build_run | built run: {'py37': ['tox -e py37'], 'py38': ['tox -e py38'], 'py39': ['tox -e py39'], 'py310': ['tox -e py310'], 'pypy3': ['tox -e pypy3']}
        INFO | downstream_runner.run | --> running: 'tox -e py37'
-       INFO | downstream_runner.run | --> running: 'pip install tox'
        INFO | downstream_runner.run | --> running: 'tox -e py38'
-       INFO | downstream_runner.run | --> running: 'pip install tox'
        INFO | downstream_runner.run | --> running: 'tox -e py39'
-       INFO | downstream_runner.run | --> running: 'pip install tox'
        INFO | downstream_runner.run | --> running: 'tox -e py310'
-       INFO | downstream_runner.run | --> running: 'pip install tox'
        INFO | downstream_runner.run | --> running: 'tox -e pypy3'
 
 
