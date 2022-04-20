@@ -161,6 +161,7 @@ def get_user() -> Optional[str]:
     try:
         # In some exotic environments, getpass may not be importable.
         import getpass
+
         return getpass.getuser()
     except (ImportError, KeyError):
         return None
