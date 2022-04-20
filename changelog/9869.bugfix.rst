@@ -1,0 +1,2 @@
+Increase ``stacklevel`` for the ``NODE_CTOR_FSPATH_ARG`` deprecation to point to the
+user's code, not pytest.
