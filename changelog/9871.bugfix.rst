@@ -1,0 +1,1 @@
+Handle ``ImportError`` for ``getpass`` import in ``_pytest.tempdir.get_user``
