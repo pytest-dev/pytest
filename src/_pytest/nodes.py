@@ -111,7 +111,7 @@ def _imply_path(
             NODE_CTOR_FSPATH_ARG.format(
                 node_type_name=node_type.__name__,
             ),
-            stacklevel=3,
+            stacklevel=6,
         )
     if path is not None:
         if fspath is not None:
