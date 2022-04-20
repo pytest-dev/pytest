@@ -1,0 +1,2 @@
+Fix a bizarre (and fortunately rare) bug where the `temp_path` fixture could raise
+an internal error while attempting to get the current user's username.
