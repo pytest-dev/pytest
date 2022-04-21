@@ -1293,8 +1293,7 @@ class TestBooleanCondition:
         result = pytester.runpytest("-rxs")
         result.stdout.fnmatch_lines(
             """
-            *XFAIL*
-            *True123*
+            *XFAIL*True123*
             *1 xfail*
         """
         )
