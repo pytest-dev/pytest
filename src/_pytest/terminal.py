@@ -1265,7 +1265,12 @@ class TerminalReporter:
 
 def _get_node_id_with_markup(tw: TerminalWriter, config: Config, rep: BaseReport):
     nodeid = config.cwd_relative_nodeid(rep.nodeid)
-    return nodeid
+    path, *parts = nodeid.split("::")
+    if parts:
+        parts_markup = tw.markup("::".join(parts), bold=True)
+        return path + "::" + parts_markup
+    else:
+        return path
 
 
 def _format_trimmed(format: str, msg: str, available_width: int) -> Optional[str]:
