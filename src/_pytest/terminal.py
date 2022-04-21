@@ -35,6 +35,7 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
+from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.compat import final
 from _pytest.config import _PluggyPlugin
@@ -1074,33 +1075,43 @@ class TerminalReporter:
         if not self.reportchars:
             return
 
-        def show_simple(stat, lines: List[str]) -> None:
+        def show_simple(lines: List[str], *, stat: str) -> None:
             failed = self.stats.get(stat, [])
             if not failed:
                 return
-            termwidth = self._tw.fullwidth
             config = self.config
             for rep in failed:
-                line = _get_line_with_reprcrash_message(config, rep, termwidth)
+                color = _color_for_type.get(stat, _color_for_type_default)
+                line = _get_line_with_reprcrash_message(
+                    config, rep, self._tw, {color: True}
+                )
                 lines.append(line)
 
         def show_xfailed(lines: List[str]) -> None:
             xfailed = self.stats.get("xfailed", [])
             for rep in xfailed:
                 verbose_word = rep._get_verbose_word(self.config)
-                pos = _get_pos(self.config, rep)
-                lines.append(f"{verbose_word} {pos}")
+                markup_word = self._tw.markup(
+                    verbose_word, **{_color_for_type["warnings"]: True}
+                )
+                nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
+                line = f"{markup_word} {nodeid}"
                 reason = rep.wasxfail
                 if reason:
-                    lines.append("  " + str(reason))
+                    line += " - " + str(reason)
+
+                lines.append(line)
 
         def show_xpassed(lines: List[str]) -> None:
             xpassed = self.stats.get("xpassed", [])
             for rep in xpassed:
                 verbose_word = rep._get_verbose_word(self.config)
-                pos = _get_pos(self.config, rep)
+                markup_word = self._tw.markup(
+                    verbose_word, **{_color_for_type["warnings"]: True}
+                )
+                nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
                 reason = rep.wasxfail
-                lines.append(f"{verbose_word} {pos} {reason}")
+                lines.append(f"{markup_word} {nodeid} {reason}")
 
         def show_skipped(lines: List[str]) -> None:
             skipped: List[CollectReport] = self.stats.get("skipped", [])
@@ -1108,24 +1119,27 @@ class TerminalReporter:
             if not fskips:
                 return
             verbose_word = skipped[0]._get_verbose_word(self.config)
+            markup_word = self._tw.markup(
+                verbose_word, **{_color_for_type["warnings"]: True}
+            )
+            prefix = "Skipped: "
             for num, fspath, lineno, reason in fskips:
-                if reason.startswith("Skipped: "):
-                    reason = reason[9:]
+                if reason.startswith(prefix):
+                    reason = reason[len(prefix) :]
                 if lineno is not None:
                     lines.append(
-                        "%s [%d] %s:%d: %s"
-                        % (verbose_word, num, fspath, lineno, reason)
+                        "%s [%d] %s:%d: %s" % (markup_word, num, fspath, lineno, reason)
                     )
                 else:
-                    lines.append("%s [%d] %s: %s" % (verbose_word, num, fspath, reason))
+                    lines.append("%s [%d] %s: %s" % (markup_word, num, fspath, reason))
 
         REPORTCHAR_ACTIONS: Mapping[str, Callable[[List[str]], None]] = {
             "x": show_xfailed,
             "X": show_xpassed,
-            "f": partial(show_simple, "failed"),
+            "f": partial(show_simple, stat="failed"),
             "s": show_skipped,
-            "p": partial(show_simple, "passed"),
-            "E": partial(show_simple, "error"),
+            "p": partial(show_simple, stat="passed"),
+            "E": partial(show_simple, stat="error"),
         }
 
         lines: List[str] = []
@@ -1135,7 +1149,7 @@ class TerminalReporter:
                 action(lines)
 
         if lines:
-            self.write_sep("=", "short test summary info")
+            self.write_sep("=", "short test summary info", cyan=True, bold=True)
             for line in lines:
                 self.write_line(line)
 
@@ -1249,7 +1263,7 @@ class TerminalReporter:
         return parts, main_color
 
 
-def _get_pos(config: Config, rep: BaseReport):
+def _get_node_id_with_markup(tw: TerminalWriter, config: Config, rep: BaseReport):
     nodeid = config.cwd_relative_nodeid(rep.nodeid)
     return nodeid
 
@@ -1280,13 +1294,14 @@ def _format_trimmed(format: str, msg: str, available_width: int) -> Optional[str
 
 
 def _get_line_with_reprcrash_message(
-    config: Config, rep: BaseReport, termwidth: int
+    config: Config, rep: BaseReport, tw: TerminalWriter, word_markup: Dict[str, bool]
 ) -> str:
     """Get summary line for a report, trying to add reprcrash message."""
     verbose_word = rep._get_verbose_word(config)
-    pos = _get_pos(config, rep)
+    word = tw.markup(verbose_word, **word_markup)
+    node = _get_node_id_with_markup(tw, config, rep)
 
-    line = f"{verbose_word} {pos}"
+    line = f"{word} {node}"
     line_width = wcswidth(line)
 
     try:
@@ -1295,7 +1310,7 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        available_width = termwidth - line_width
+        available_width = tw.fullwidth - line_width
         msg = _format_trimmed(" - {}", msg, available_width)
         if msg is not None:
             line += msg

@@ -2319,7 +2319,7 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
     def mock_get_pos(*args):
         return mocked_pos
 
-    monkeypatch.setattr(_pytest.terminal, "_get_pos", mock_get_pos)
+    monkeypatch.setattr(_pytest.terminal, "_get_node_id_with_markup", mock_get_pos)
 
     class config:
         pass
@@ -2333,10 +2333,16 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
                 pass
 
     def check(msg, width, expected):
+        class DummyTerminalWriter:
+            fullwidth = width
+
+            def markup(self, word: str, **markup: str):
+                return word
+
         __tracebackhide__ = True
         if msg:
             rep.longrepr.reprcrash.message = msg  # type: ignore
-        actual = _get_line_with_reprcrash_message(config, rep(), width)  # type: ignore
+        actual = _get_line_with_reprcrash_message(config, rep(), DummyTerminalWriter(), {})  # type: ignore
 
         assert actual == expected
         if actual != f"{mocked_verbose_word} {mocked_pos}":
