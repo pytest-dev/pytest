@@ -198,6 +198,9 @@ option names are:
 If you need to record the whole test suite logging calls to a file, you can pass
 ``--log-file=/path/to/log/file``. This log file is opened in write mode which
 means that it will be overwritten at each run tests session.
+Note that relative paths for the log-file location are always resolved relative
+to the current working directory, whether passed on the CLI or declared in a
+config file.
 
 You can also specify the logging level for the log file by passing
 ``--log-file-level``. This setting accepts the logging level names as seen in
