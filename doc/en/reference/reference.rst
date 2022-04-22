@@ -1514,7 +1514,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 
-    Sets a file name relative to the ``pytest.ini`` file where log messages should be written to, in addition
+    Sets a file name relative to the current working directory where log messages should be written to, in addition
     to the other logging facilities that are active.
 
     .. code-block:: ini
