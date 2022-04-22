@@ -158,9 +158,10 @@ class TempPathFactory:
 def get_user() -> Optional[str]:
     """Return the current user name, or None if getuser() does not work
     in the current environment (see #1010)."""
-    import getpass
-
     try:
+        # In some exotic environments, getpass may not be importable.
+        import getpass
+
         return getpass.getuser()
     except (ImportError, KeyError):
         return None
