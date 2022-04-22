@@ -9,6 +9,8 @@ services:
       - DS_JOBS
       - DS_MATRIX_EXCLUDE
       - COV_CMD
+      - PY_COLORS=1
+      - TOX_TESTENV_PASSENV=PY_COLORS
     volumes:
       - type: bind
         source: /home/runner/work/pytest/pytest
@@ -29,6 +31,8 @@ services:
       - TEST_DB_USER=$USER
       - TEST_DB_PASSWORD=pytest_djang0
       - TEST_DB_HOST=postgres_db
+      - PY_COLORS=1
+      - TOX_TESTENV_PASSENV=PY_COLORS
     volumes:
       - type: bind
         source: /home/runner/work/pytest/pytest
@@ -61,6 +65,8 @@ services:
       - TEST_DB_USER=root
       - TEST_DB_PASSWORD=root
       - TEST_DB_HOST=mysql_db
+      - PY_COLORS=1
+      - TOX_TESTENV_PASSENV=PY_COLORS
     volumes:
       - type: bind
         source: /home/runner/work/pytest/pytest
