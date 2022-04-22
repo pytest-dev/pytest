@@ -645,9 +645,14 @@ class Session(nodes.FSCollector):
             self.trace.root.indent -= 1
             if self._notfound:
                 errors = []
-                for arg, cols in self._notfound:
-                    line = f"(no name {arg!r} in any of {cols!r})"
-                    errors.append(f"not found: {arg}\n{line}")
+                for arg, collectors in self._notfound:
+                    if collectors:
+                        errors.append(
+                            f"not found: {arg}\n(no name {arg!r} in any of {collectors!r})"
+                        )
+                    else:
+                        errors.append(f"found no collectors for {arg}")
+
                 raise UsageError(*errors)
             if not genitems:
                 items = rep.result
