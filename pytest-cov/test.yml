@@ -1,0 +1,81 @@
+name: Test
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["pypy-3.6", "pypy-3.7", "3.6", "3.7", "3.8", "3.9", "3.10-dev"]
+        tox-extra-versions: [
+            "pytest46-xdist127",
+            "pytest46-xdist133",
+            "pytest54-xdist133",
+            "pytest62-xdist202",
+        ]
+        include:
+          # Add new helper variables to existing jobs
+          - {python-version: "pypy-3.6", tox-python-version: "pypy3"}
+          - {python-version: "pypy-3.7", tox-python-version: "pypy3"}
+          - {python-version: "3.6", tox-python-version: "py36"}
+          - {python-version: "3.7", tox-python-version: "py37"}
+          - {python-version: "3.8", tox-python-version: "py38"}
+          - {python-version: "3.9", tox-python-version: "py39"}
+          - {python-version: "3.10-dev", tox-python-version: "py310"}
+        exclude:
+          # Remove some jobs from the matrix
+          - {tox-extra-versions: "pytest46-xdist127", python-version: "3.8"}
+          - {tox-extra-versions: "pytest46-xdist127", python-version: "3.9"}
+          - {tox-extra-versions: "pytest46-xdist133", python-version: "3.9"}
+          - {tox-extra-versions: "pytest54-xdist133", python-version: "3.9"}
+          - {tox-extra-versions: "pytest46-xdist127", python-version: "3.10-dev"}
+          - {tox-extra-versions: "pytest46-xdist133", python-version: "3.10-dev"}
+          - {tox-extra-versions: "pytest54-xdist133", python-version: "3.10-dev"}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"
+
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key:
+            test-${{ matrix.python-version }}-v1-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            test-${{ matrix.python-version }}-v1-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install -U wheel
+          python -m pip install --progress-bar=off tox -rci/requirements.txt
+          virtualenv --version
+          pip --version
+          tox --version
+
+      - name: Tox tests
+        run: |
+          tox -v -e ${{ matrix.tox-python-version }}-${{ matrix.tox-extra-versions }}-coverage55
+
+  allgood:
+    needs: test
+    runs-on: ubuntu-latest
+    name: Test successful
+    steps:
+      - name: Success
+        run: echo Test successful
