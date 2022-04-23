@@ -86,7 +86,7 @@ def pytest_addoption(parser: Parser) -> None:
         "-W",
         "--pythonwarnings",
         action="append",
-        help="set which warnings to report, see -W option of python itself.",
+        help="set which warnings to report, see -W option of Python itself.",
     )
     parser.addini(
         "filterwarnings",
@@ -154,7 +154,7 @@ def pytest_addoption(parser: Parser) -> None:
     group.addoption(
         "--pyargs",
         action="store_true",
-        help="try to interpret all arguments as python packages.",
+        help="try to interpret all arguments as Python packages.",
     )
     group.addoption(
         "--ignore",
