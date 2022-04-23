@@ -221,7 +221,7 @@ def pytest_addoption(parser: Parser) -> None:
         type=validate_basetemp,
         metavar="dir",
         help=(
-            "base temporary directory for this test run."
+            "base temporary directory for this test run. "
             "(warning: this directory is removed if it exists)"
         ),
     )
