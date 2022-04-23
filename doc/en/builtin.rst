@@ -170,10 +170,10 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         See https://docs.python.org/library/how-to/capture-warnings.html for information
         on warning categories.
 
-    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:183
+    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:184
         Return a :class:`pytest.TempPathFactory` instance for the test session.
 
-    tmp_path -- .../_pytest/tmpdir.py:198
+    tmp_path -- .../_pytest/tmpdir.py:199
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
