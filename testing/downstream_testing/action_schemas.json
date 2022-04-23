@@ -58,5 +58,20 @@
                     "replace": "py\\1\\2"
                 }
         }
+    },
+    "pytest-cov": {
+        "matrix": [
+            "matrix",
+            "python-version"
+        ],
+        "tox_cmd_build": {
+            "base": "",
+            "prefix": "",
+            "sub":
+                {
+                    "pattern": "^\\d\\.(\\d+)(?:-dev)*",
+                    "replace": "py3\\1"
+                }
+        }
     }
 }

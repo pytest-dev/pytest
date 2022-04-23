@@ -67,6 +67,15 @@ jobs:
             workflow_name: "test.yml"
             matrix_exclude: ""
 
+          - name: "pytest-cov"
+            repo: "pytest-dev/pytest-cov"
+            docker_profile: "nodb"
+            jobs: "test"
+            workflow_name: "test.yml"
+            # Exclude pypy3 for now; stil working on a suitable regex substitution
+            matrix_exclude: |
+              3.6 pypy-3.6 pypy-3.7
+
     steps:
     - uses: actions/checkout@v2
       with:
