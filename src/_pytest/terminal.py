@@ -214,7 +214,8 @@ def pytest_addoption(parser: Parser) -> None:
         "--code-highlight",
         default="yes",
         choices=["yes", "no"],
-        help="Whether code should be highlighted (only if --color is also enabled)",
+        help="Whether code should be highlighted (only if --color is also enabled). "
+        "Default: yes",
     )
 
     parser.addini(
