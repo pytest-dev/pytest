@@ -88,4 +88,6 @@ jobs:
         COV_CMD: ""
     - name: Test Results - ${{ matrix.name }}
       if: ${{ always() }}
-      run: docker logs base
+      run: |
+        docker logs base -t &>docker.log
+        sort -b -k 1 docker.log
