@@ -28,6 +28,26 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.1.2 (2022-04-23)
+=========================
+
+Bug Fixes
+---------
+
+- `#9726 <https://github.com/pytest-dev/pytest/issues/9726>`_: An unnecessary ``numpy`` import inside :func:`pytest.approx` was removed.
+
+
+- `#9820 <https://github.com/pytest-dev/pytest/issues/9820>`_: Fix comparison of  ``dataclasses`` with ``InitVar``.
+
+
+- `#9869 <https://github.com/pytest-dev/pytest/issues/9869>`_: Increase ``stacklevel`` for the ``NODE_CTOR_FSPATH_ARG`` deprecation to point to the
+  user's code, not pytest.
+
+
+- `#9871 <https://github.com/pytest-dev/pytest/issues/9871>`_: Fix a bizarre (and fortunately rare) bug where the `temp_path` fixture could raise
+  an internal error while attempting to get the current user's username.
+
+
 pytest 7.1.1 (2022-03-17)
 =========================
 
