@@ -218,7 +218,7 @@ def pytest_addoption(parser: Parser) -> None:
 
     def add_option_ini(option, dest, default=None, type=None, **kwargs):
         parser.addini(
-            dest, default=default, type=type, help="default value for " + option
+            dest, default=default, type=type, help="Default value for " + option
         )
         group.addoption(option, dest=dest, **kwargs)
 
@@ -228,7 +228,7 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         metavar="LEVEL",
         help=(
-            "level of messages to catch/display.\n"
+            "Level of messages to catch/display.\n"
             "Not set by default, so it depends on the root/parent log handler's"
             ' effective level, where it is "WARNING" by default.'
         ),
@@ -237,58 +237,58 @@ def pytest_addoption(parser: Parser) -> None:
         "--log-format",
         dest="log_format",
         default=DEFAULT_LOG_FORMAT,
-        help="log format as used by the logging module.",
+        help="Log format used by the logging module",
     )
     add_option_ini(
         "--log-date-format",
         dest="log_date_format",
         default=DEFAULT_LOG_DATE_FORMAT,
-        help="log date format as used by the logging module.",
+        help="Log date format used by the logging module",
     )
     parser.addini(
         "log_cli",
         default=False,
         type="bool",
-        help='enable log display during test run (also known as "live logging").',
+        help='Enable log display during test run (also known as "live logging")',
     )
     add_option_ini(
-        "--log-cli-level", dest="log_cli_level", default=None, help="cli logging level."
+        "--log-cli-level", dest="log_cli_level", default=None, help="CLI logging level"
     )
     add_option_ini(
         "--log-cli-format",
         dest="log_cli_format",
         default=None,
-        help="log format as used by the logging module.",
+        help="Log format used by the logging module",
     )
     add_option_ini(
         "--log-cli-date-format",
         dest="log_cli_date_format",
         default=None,
-        help="log date format as used by the logging module.",
+        help="Log date format used by the logging module",
     )
     add_option_ini(
         "--log-file",
         dest="log_file",
         default=None,
-        help="path to a file when logging will be written to.",
+        help="Path to a file when logging will be written to",
     )
     add_option_ini(
         "--log-file-level",
         dest="log_file_level",
         default=None,
-        help="log file logging level.",
+        help="Log file logging level",
     )
     add_option_ini(
         "--log-file-format",
         dest="log_file_format",
         default=DEFAULT_LOG_FORMAT,
-        help="log format as used by the logging module.",
+        help="Log format used by the logging module",
     )
     add_option_ini(
         "--log-file-date-format",
         dest="log_file_date_format",
         default=DEFAULT_LOG_DATE_FORMAT,
-        help="log date format as used by the logging module.",
+        help="Log date format used by the logging module",
     )
     add_option_ini(
         "--log-auto-indent",

@@ -31,12 +31,12 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="runxfail",
         default=False,
-        help="report the results of xfail tests as if they were not marked",
+        help="Report the results of xfail tests as if they were not marked",
     )
 
     parser.addini(
         "xfail_strict",
-        "default for the strict parameter of xfail "
+        "Default for the strict parameter of xfail "
         "markers when not given explicitly (default: False)",
         default=False,
         type="bool",

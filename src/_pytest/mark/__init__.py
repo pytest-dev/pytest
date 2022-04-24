@@ -76,7 +76,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="keyword",
         default="",
         metavar="EXPRESSION",
-        help="only run tests which match the given substring expression. "
+        help="Only run tests which match the given substring expression. "
         "An expression is a Python evaluatable expression "
         "where all names are substring-matched against test names "
         "and their parent classes. Example: -k 'test_method or test_"
@@ -96,7 +96,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="markexpr",
         default="",
         metavar="MARKEXPR",
-        help="only run tests matching given mark expression.\n"
+        help="Only run tests matching given mark expression.\n"
         "For example: -m 'mark1 and not mark2'.",
     )
 
@@ -106,8 +106,8 @@ def pytest_addoption(parser: Parser) -> None:
         help="show markers (builtin, plugin and per-project ones).",
     )
 
-    parser.addini("markers", "markers for test functions", "linelist")
-    parser.addini(EMPTY_PARAMETERSET_OPTION, "default marker for empty parametersets")
+    parser.addini("markers", "Markers for test functions", "linelist")
+    parser.addini(EMPTY_PARAMETERSET_OPTION, "Default marker for empty parametersets")
 
 
 @hookimpl(tryfirst=True)

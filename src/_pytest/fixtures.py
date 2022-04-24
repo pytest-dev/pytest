@@ -1350,7 +1350,7 @@ def pytest_addoption(parser: Parser) -> None:
         "usefixtures",
         type="args",
         default=[],
-        help="list of default fixtures to be used with this project",
+        help="List of default fixtures to be used with this project",
     )
 
 

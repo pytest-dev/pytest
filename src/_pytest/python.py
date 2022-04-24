@@ -95,7 +95,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="showfixtures",
         default=False,
-        help="show available fixtures, sorted by plugin appearance "
+        help="Show available fixtures, sorted by plugin appearance "
         "(fixtures with leading '_' are only shown with '-v')",
     )
     group.addoption(
@@ -103,32 +103,32 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="show_fixtures_per_test",
         default=False,
-        help="show fixtures per test",
+        help="Show fixtures per test",
     )
     parser.addini(
         "python_files",
         type="args",
         # NOTE: default is also used in AssertionRewritingHook.
         default=["test_*.py", "*_test.py"],
-        help="glob-style file patterns for Python test module discovery",
+        help="Glob-style file patterns for Python test module discovery",
     )
     parser.addini(
         "python_classes",
         type="args",
         default=["Test"],
-        help="prefixes or glob names for Python test class discovery",
+        help="Prefixes or glob names for Python test class discovery",
     )
     parser.addini(
         "python_functions",
         type="args",
         default=["test"],
-        help="prefixes or glob names for Python test function and method discovery",
+        help="Prefixes or glob names for Python test function and method discovery",
     )
     parser.addini(
         "disable_test_id_escaping_and_forfeit_all_rights_to_community_support",
         type="bool",
         default=False,
-        help="disable string escape non-ascii characters, might cause unwanted "
+        help="Disable string escape non-ASCII characters, might cause unwanted "
         "side effects(use at your own risk)",
     )
 

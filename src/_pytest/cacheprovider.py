@@ -440,7 +440,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--last-failed",
         action="store_true",
         dest="lf",
-        help="rerun only the tests that failed "
+        help="Rerun only the tests that failed "
         "at the last run (or all if none failed)",
     )
     group.addoption(
@@ -448,7 +448,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--failed-first",
         action="store_true",
         dest="failedfirst",
-        help="run all tests, but run the last failures first.\n"
+        help="Run all tests, but run the last failures first.\n"
         "This may re-order tests and thus lead to "
         "repeated fixture setup/teardown.",
     )
@@ -457,7 +457,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--new-first",
         action="store_true",
         dest="newfirst",
-        help="run tests from new files first, then the rest of the tests "
+        help="Run tests from new files first, then the rest of the tests "
         "sorted by file mtime",
     )
     group.addoption(
@@ -466,7 +466,7 @@ def pytest_addoption(parser: Parser) -> None:
         nargs="?",
         dest="cacheshow",
         help=(
-            "show cache contents, don't perform collection or tests. "
+            "Show cache contents, don't perform collection or tests. "
             "Optional argument: glob (default: '*')."
         ),
     )
@@ -474,12 +474,12 @@ def pytest_addoption(parser: Parser) -> None:
         "--cache-clear",
         action="store_true",
         dest="cacheclear",
-        help="remove all cache contents at start of test run.",
+        help="Remove all cache contents at start of test run",
     )
     cache_dir_default = ".pytest_cache"
     if "TOX_ENV_DIR" in os.environ:
         cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], cache_dir_default)
-    parser.addini("cache_dir", default=cache_dir_default, help="cache directory path.")
+    parser.addini("cache_dir", default=cache_dir_default, help="Cache directory path")
     group.addoption(
         "--lfnf",
         "--last-failed-no-failures",
@@ -487,7 +487,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="last_failed_no_failures",
         choices=("all", "none"),
         default="all",
-        help="which tests to run with no previously (known) failures.",
+        help="Which tests to run with no previously (known) failures",
     )
 
 

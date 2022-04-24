@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "norecursedirs",
-        "directory patterns to avoid for recursion",
+        "Directory patterns to avoid for recursion",
         type="args",
         default=[
             "*.egg",
@@ -67,26 +67,26 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "testpaths",
-        "directories to search for tests when no files or directories are given in the "
-        "command line.",
+        "Directories to search for tests when no files or directories are given on the "
+        "command line",
         type="args",
         default=[],
     )
-    group = parser.getgroup("general", "running and selection options")
+    group = parser.getgroup("general", "Running and selection options")
     group._addoption(
         "-x",
         "--exitfirst",
         action="store_const",
         dest="maxfail",
         const=1,
-        help="exit instantly on first error or failed test.",
+        help="Exit instantly on first error or failed test",
     )
     group = parser.getgroup("pytest-warnings")
     group.addoption(
         "-W",
         "--pythonwarnings",
         action="append",
-        help="set which warnings to report, see -W option of Python itself.",
+        help="Set which warnings to report, see -W option of Python itself",
     )
     parser.addini(
         "filterwarnings",
@@ -102,37 +102,39 @@ def pytest_addoption(parser: Parser) -> None:
         type=int,
         dest="maxfail",
         default=0,
-        help="exit after first num failures or errors.",
+        help="Exit after first num failures or errors",
     )
     group._addoption(
         "--strict-config",
         action="store_true",
-        help="any warnings encountered while parsing the `pytest` section of the configuration file raise errors.",
+        help="Any warnings encountered while parsing the `pytest` section of the "
+        "configuration file raise errors",
     )
     group._addoption(
         "--strict-markers",
         action="store_true",
-        help="markers not registered in the `markers` section of the configuration file raise errors.",
+        help="Markers not registered in the `markers` section of the configuration "
+        "file raise errors",
     )
     group._addoption(
         "--strict",
         action="store_true",
-        help="(deprecated) alias to --strict-markers.",
+        help="(Deprecated) alias to --strict-markers",
     )
     group._addoption(
         "-c",
         metavar="file",
         type=str,
         dest="inifilename",
-        help="load configuration from `file` instead of trying to locate one of the implicit "
-        "configuration files.",
+        help="Load configuration from `file` instead of trying to locate one of the "
+        "implicit configuration files",
     )
     group._addoption(
         "--continue-on-collection-errors",
         action="store_true",
         default=False,
         dest="continue_on_collection_errors",
-        help="Force test execution even if collection errors occur.",
+        help="Force test execution even if collection errors occur",
     )
     group._addoption(
         "--rootdir",
@@ -149,30 +151,30 @@ def pytest_addoption(parser: Parser) -> None:
         "--collect-only",
         "--co",
         action="store_true",
-        help="only collect tests, don't execute them.",
+        help="Only collect tests, don't execute them",
     )
     group.addoption(
         "--pyargs",
         action="store_true",
-        help="try to interpret all arguments as Python packages.",
+        help="Try to interpret all arguments as Python packages",
     )
     group.addoption(
         "--ignore",
         action="append",
         metavar="path",
-        help="ignore path during collection (multi-allowed).",
+        help="Ignore path during collection (multi-allowed)",
     )
     group.addoption(
         "--ignore-glob",
         action="append",
         metavar="path",
-        help="ignore path pattern during collection (multi-allowed).",
+        help="Ignore path pattern during collection (multi-allowed)",
     )
     group.addoption(
         "--deselect",
         action="append",
         metavar="nodeid_prefix",
-        help="deselect item (via node id prefix) during collection (multi-allowed).",
+        help="Deselect item (via node id prefix) during collection (multi-allowed)",
     )
     group.addoption(
         "--confcutdir",
@@ -180,14 +182,14 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         metavar="dir",
         type=functools.partial(directory_arg, optname="--confcutdir"),
-        help="only load conftest.py's relative to specified dir.",
+        help="Only load conftest.py's relative to specified dir",
     )
     group.addoption(
         "--noconftest",
         action="store_true",
         dest="noconftest",
         default=False,
-        help="Don't load any conftest.py files.",
+        help="Don't load any conftest.py files",
     )
     group.addoption(
         "--keepduplicates",
@@ -195,7 +197,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="keepduplicates",
         default=False,
-        help="Keep duplicate tests.",
+        help="Keep duplicate tests",
     )
     group.addoption(
         "--collect-in-virtualenv",
@@ -209,8 +211,8 @@ def pytest_addoption(parser: Parser) -> None:
         default="prepend",
         choices=["prepend", "append", "importlib"],
         dest="importmode",
-        help="prepend/append to sys.path when importing test modules and conftest files, "
-        "default is to prepend.",
+        help="Prepend/append to sys.path when importing test modules and conftest "
+        "files. Default: prepend.",
     )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
@@ -221,8 +223,8 @@ def pytest_addoption(parser: Parser) -> None:
         type=validate_basetemp,
         metavar="dir",
         help=(
-            "base temporary directory for this test run. "
-            "(warning: this directory is removed if it exists)"
+            "Base temporary directory for this test run. "
+            "(Warning: this directory is removed if it exists.)"
         ),
     )
 

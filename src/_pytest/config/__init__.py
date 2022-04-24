@@ -1101,11 +1101,11 @@ class Config:
         self.inicfg = inicfg
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
-        self._parser.addini("addopts", "extra command line options", "args")
-        self._parser.addini("minversion", "minimally required pytest version")
+        self._parser.addini("addopts", "Extra command line options", "args")
+        self._parser.addini("minversion", "Minimally required pytest version")
         self._parser.addini(
             "required_plugins",
-            "plugins that must be present for pytest to run",
+            "Plugins that must be present for pytest to run",
             type="args",
             default=[],
         )
