@@ -59,7 +59,7 @@ else:
 
 
 def load_matrix_schema(repo: str) -> SchemaType:
-    """Loads the matrix schema for `repo`"""
+    """Loads the matrix schema for ``repo``"""
     schema: SchemaType = {"repo": repo}
     working_dir = os.getcwd()
     schema_path = os.path.join(
@@ -111,10 +111,6 @@ class ToxDepFilter(_BaseUserDict):
         """Checks if ``match`` matches any conditions"""
         match_found = None
         for key, val in self.data.items():
-            if "xdist" in match:
-                logging.debug(
-                    "matches_condition: %s", re.search(val["condition"], match)
-                )
             if re.search(val["condition"], match):
                 match_found = key
                 break
@@ -160,7 +156,7 @@ class DownstreamRunner:
 
     @property
     def yaml_tree(self) -> dict[str, Any]:
-        """The YAML tree built from the `self.yaml_source` file."""
+        """The YAML tree built from the ``self.yaml_source`` file."""
         if self._yaml_tree is None:
             with open(self.yaml_source) as f:
                 try:
@@ -179,7 +175,8 @@ class DownstreamRunner:
 
     def inject_pytest_dep(self) -> None:
         """Ensure pytest is a dependency in tox.ini to allow us to use the 'local'
-        version of pytest.
+        version of pytest. Also ensure other dependencies in ``TOX_DEP_FILTERS``
+        are defined appropriately.
         """
         ini_path = self.repo + "/tox.ini"
         pytest_dep = TOX_DEP_FILTERS["pytest"]["src"]
@@ -215,18 +212,18 @@ class DownstreamRunner:
             f"repo={self.repo}, "
             f"yaml_source={self.yaml_source}, "
             f"job_names={self.job_names}, "
-            f"matrix={self.matrix}, "
+            f"matrix={self._matrix}, "
             ")"
         )
 
     @property
     def matrix(self) -> dict[str, Iterable[dict[str, str]]]:
-        """Iterates over ``self.yaml_tree`` strategy matrix for each job in ``self.jobs``, and passes each
+        """Iterates over ``self.yaml_tree``'s strategy matrix for each job in ``self.jobs``, and passes each
         through ``parse_matrix``.
         """
 
         def parse_matrix(yaml_tree: dict[str, Any]) -> Iterable[Any]:
-            """Parses `yaml_tree` strategy matrix using ``self.matrix_schema`` information."""
+            """Parses ``yaml_tree`` strategy matrix using ``self.matrix_schema`` information."""
             parsed_matrix = []  # type: ignore
             pre_parsed: dict[str, Any] | Iterable[str | float] = yaml_tree
             for key in self.matrix_schema["matrix"]:

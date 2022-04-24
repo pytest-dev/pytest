@@ -57,8 +57,7 @@ jobs:
             docker_profile: "nodb"
             jobs: "test"
             workflow_name: "pythontests.yml"
-            matrix_exclude: |
-              3.6
+            matrix_exclude: 3.6
 
           - name: "pytest-mock"
             repo: "pytest-dev/pytest-mock"
@@ -81,7 +80,6 @@ jobs:
             docker_profile: "nodb"
             jobs: "build"
             workflow_name: "main.yml"
-            # Exclude pypy3 for now; stil working on a suitable regex substitution
             matrix_exclude: ""
 
     steps:
