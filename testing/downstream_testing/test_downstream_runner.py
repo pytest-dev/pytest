@@ -252,7 +252,6 @@ class TestDownstreamRunnerBuild:
         run = runner.build_run()
         assert run == {
             "py310-dj40-postgres-xdist-coverage": [
-                "pip install tox",
                 "tox -e py310-dj40-postgres-xdist",
             ]
         }
@@ -274,8 +273,8 @@ class TestDownstreamRunnerBuild:
 
         run = runner.build_run()
         assert run == {
-            "py310": ["pip install tox", "tox -e py310"],
-            "py38": ["pip install tox", "tox -e py38"],
-            "py39": ["pip install tox", "tox -e py39"],
-            "pypy3": ["pip install tox", "tox -e pypy3"],
+            "py310": ["tox -e py310"],
+            "py38": ["tox -e py38"],
+            "py39": ["tox -e py39"],
+            "pypy3": ["tox -e pypy3"],
         }
