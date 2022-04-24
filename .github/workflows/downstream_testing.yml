@@ -76,6 +76,14 @@ jobs:
             matrix_exclude: |
               3.6 pypy-3.6 pypy-3.7
 
+          - name: "pytest-bdd"
+            repo: "pytest-dev/pytest-bdd"
+            docker_profile: "nodb"
+            jobs: "build"
+            workflow_name: "main.yml"
+            # Exclude pypy3 for now; stil working on a suitable regex substitution
+            matrix_exclude: ""
+
     steps:
     - uses: actions/checkout@v2
       with:

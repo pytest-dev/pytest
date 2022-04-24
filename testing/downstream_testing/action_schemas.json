@@ -73,5 +73,20 @@
                     "replace": "py3\\1"
                 }
         }
+    },
+    "pytest-bdd": {
+        "matrix": [
+            "matrix",
+            "python-version"
+        ],
+        "tox_cmd_build": {
+            "base": "",
+            "prefix": "",
+            "sub":
+                {
+                    "pattern": "^\\d\\.(\\d+)",
+                    "replace": "py3\\1"
+                }
+        }
     }
 }
