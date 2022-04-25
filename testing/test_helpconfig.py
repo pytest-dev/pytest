@@ -30,8 +30,8 @@ def test_help(pytester: Pytester) -> None:
     assert result.ret == 0
     result.stdout.fnmatch_lines(
         """
-          -m MARKEXPR           Only run tests matching given mark expression.
-                                For example: -m 'mark1 and not mark2'.
+          -m MARKEXPR           Only run tests matching given mark expression. For
+                                example: -m 'mark1 and not mark2'.
         Reporting:
           --durations=N *
           -V, --version         Display pytest version and information about plugins.

@@ -2118,7 +2118,7 @@ class TestDebugOptions:
         result.stdout.fnmatch_lines(
             [
                 "*Store internal tracing debug information in this log*",
-                "*This file is opened with 'w' and truncated as a result*",
+                "*file. This file is opened with 'w' and truncated as a*",
                 "*Default: pytestdebug.log.",
             ]
         )
