@@ -65,7 +65,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="plugins",
         default=[],
         metavar="name",
-        help="Early-load given plugin module name or entry point (multi-allowed).\n"
+        help="Early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
         "`no:doctest`.",
     )
@@ -83,8 +83,8 @@ def pytest_addoption(parser: Parser) -> None:
         const="pytestdebug.log",
         dest="debug",
         metavar="DEBUG_FILE_NAME",
-        help="Store internal tracing debug information in this log file.\n"
-        "This file is opened with 'w' and truncated as a result, care advised.\n"
+        help="Store internal tracing debug information in this log file. "
+        "This file is opened with 'w' and truncated as a result, care advised. "
         "Default: pytestdebug.log.",
     )
     group._addoption(

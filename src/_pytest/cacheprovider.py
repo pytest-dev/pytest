@@ -448,7 +448,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--failed-first",
         action="store_true",
         dest="failedfirst",
-        help="Run all tests, but run the last failures first.\n"
+        help="Run all tests, but run the last failures first. "
         "This may re-order tests and thus lead to "
         "repeated fixture setup/teardown.",
     )

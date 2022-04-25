@@ -31,7 +31,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         default=False,
         dest="stepwise_skip",
-        help="Ignore the first failing test but stop on the next failing test.\n"
+        help="Ignore the first failing test but stop on the next failing test. "
         "Implicitly enables --stepwise.",
     )
 
