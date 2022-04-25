@@ -730,6 +730,11 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 It's a bit longer than yield fixtures and a bit more complex, but it
 does offer some nuances for when you're in a pinch.
 
+In addition you can use the remove_finalizer method to remove a finalizer you added
+to the teardown stage.
+The remove_finalizer method will remove the first finalizer match it finds and return True,
+if no match was found the function will return None.
+
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py

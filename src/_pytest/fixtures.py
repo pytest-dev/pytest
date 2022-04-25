@@ -760,6 +760,11 @@ class SubRequest(FixtureRequest):
         within the requesting test context finished execution."""
         self._fixturedef.addfinalizer(finalizer)
 
+    def remove_finalizer(self, finalizer: Callable[[], object]) -> None:
+        """Remove finalizer/teardown function to be called after the last test
+        within the requesting test context finished execution."""
+        return self._fixturedef.remove_finalizer(finalizer)
+
     def _schedule_finalizers(
         self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
     ) -> None:
@@ -1002,6 +1007,12 @@ class FixtureDef(Generic[FixtureValue]):
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._finalizers.append(finalizer)
+
+    def remove_finalizer(self, finalizer: Callable[[], object]) -> None:
+        for finalizer_index, finalizer_func in enumerate(self._finalizers):
+            if finalizer_func.__qualname__ == finalizer.__qualname__:
+                del self._finalizers[finalizer_index]
+                return True
 
     def finish(self, request: SubRequest) -> None:
         exc = None

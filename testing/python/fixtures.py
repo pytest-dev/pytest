@@ -857,11 +857,33 @@ class TestRequestBasic:
         parent = item.getparent(pytest.Module)
         assert parent is not None
         teardownlist = parent.obj.teardownlist
+        item.session._setupstate.teardown_exact(None)
+        assert teardownlist == [1]
+
+    def test_request_remove_finalizer(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            teardownlist = []
+            @pytest.fixture
+            def something(request):
+                request.addfinalizer(lambda: teardownlist.append(1))
+                request.remove_finalizer(lambda: teardownlist.append(1))
+            def test_func(something): pass
+        """
+        )
+        assert isinstance(item, Function)
+        item.session._setupstate.setup(item)
+        item._request._fillfixtures()
+        # successively check finalization calls
+        parent = item.getparent(pytest.Module)
+        assert parent is not None
+        teardownlist = parent.obj.teardownlist
         ss = item.session._setupstate
         assert not teardownlist
         ss.teardown_exact(None)
         print(ss.stack)
-        assert teardownlist == [1]
+        assert teardownlist == []
 
     def test_request_addfinalizer_failing_setup(self, pytester: Pytester) -> None:
         pytester.makepyfile(

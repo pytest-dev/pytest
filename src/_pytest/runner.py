@@ -503,6 +503,20 @@ class SetupState:
         assert node in self.stack, (node, self.stack)
         self.stack[node][0].append(finalizer)
 
+    def remove_finalizer(self, finalizer: Callable[[], object], node: Node) -> None:
+        """Remove a finalizer in the given node by name.
+
+        The node must be currently active in the stack.
+        The first finalizer by name will be removed.
+        """
+        assert node and not isinstance(node, tuple)
+        assert callable(finalizer)
+        assert node in self.stack, (node, self.stack)
+        for finalizer_index, finalizer_func in enumerate(self.stack[node][0]):
+            if finalizer_func.__qualname__ == finalizer.__qualname__:
+                del self.stack[node][0][finalizer_index]
+                return True
+
     def teardown_exact(self, nextitem: Optional[Item]) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
         also descends from.
