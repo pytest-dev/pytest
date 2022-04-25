@@ -49,7 +49,7 @@ Example ``actions_schema.json`` entry:
         }
       }
 
-Below are the steps to add a new plugin.
+**To add a new plugin, complete the following:**
 
 1. Start by adding a new JSON object, with the name of the repo. ``"pytest-django": {}`` in the example above.
 
@@ -107,17 +107,16 @@ Below are the steps to add a new plugin.
    - ``base``:
 
      - For combination strategies (with ``include``), ``base`` is the field to be used as the basis
-       of the tox environment.
+       of the tox environment. ``base: "name"`` in the ``pytest-django`` example above.
 
-     - For non-combination strategies, this field is an empty string. ``base: "name"``
-       in the ``pytest-django`` example above.
+     - For non-combination strategies, this field is an empty string.
 
    - ``prefix``:
 
      - For combination strategies, ``prefix`` is used to [dis]qualify entries in ``base``.
+       ``prefix: "py"`` in the ``pytest-django`` example above.
 
-     - For non-combination strategies, this field is an emtpy string. ``prefix: "py"`` in the ``pytest-django``
-       example above.
+     - For non-combination strategies, this field is an emtpy string.
 
    - ``sub``:
 
@@ -125,22 +124,22 @@ Below are the steps to add a new plugin.
        (``pattern``) and a substituition (``replace``) string. Since these are JSON strings, they cannot be
        represented as a Python raw string (``r""``); ensure to properly escape characters.
 
-Any additions can be verified locally with the following process:
+**Testing additions locally:**
 
-1. Have a local copy of a plugin's GitHub Actions workflow YAML file, as well as a ``tox.ini``. These should
-   be placed in a folder; recommended folder name is the repo name.
+1. Have a local copy of a plugin's GitHub Actions workflow YAML file, as well as the ``tox.ini``. These should
+   be placed in a sub-folder in ``pytest``; recommended folder name is the repo name.
 
    .. code:: shell
 
-     .
+     . pytest/
      .. pytest-order/
-     .... main.yml
-     .... tox.ini
+     ... main.yml
+     ... tox.ini
 
 2. Utilize the ``--dry-run`` flag to run the parsing and command step building, without actually executing
    the commands. This will provide debugging information.
 
-   .. code::
+   .. code:: shell
 
        (.venv) ~/pytest:$> python -m testing.downstream_testing.downstream_runner pytest-order pytest-order/main.yml test --matrix-exclude 3.6 --dry-run
 
