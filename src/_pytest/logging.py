@@ -228,8 +228,8 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         metavar="LEVEL",
         help=(
-            "Level of messages to catch/display.\n"
-            "Not set by default, so it depends on the root/parent log handler's"
+            "Level of messages to catch/display."
+            " Not set by default, so it depends on the root/parent log handler's"
             ' effective level, where it is "WARNING" by default.'
         ),
     )
