@@ -1761,6 +1761,8 @@ passed multiple times. The expected format is ``name=value``. For example::
    Sets list of directories that should be searched for tests when
    no specific directories, files or test ids are given in the command line when
    executing pytest from the :ref:`rootdir <rootdir>` directory.
+   File system paths may use shell-style wildcards, including the recursive
+   ``**`` pattern.
    Useful when all project tests are in a known location to speed up
    test collection and to avoid picking up undesired tests by accident.
 

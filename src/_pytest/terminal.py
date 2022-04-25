@@ -728,8 +728,8 @@ class TerminalReporter:
         if config.inipath:
             line += ", configfile: " + bestrelpath(config.rootpath, config.inipath)
 
-        testpaths: List[str] = config.getini("testpaths")
-        if config.invocation_params.dir == config.rootpath and config.args == testpaths:
+        if config.args_source == Config.ArgsSource.TESTPATHS:
+            testpaths: List[str] = config.getini("testpaths")
             line += ", testpaths: {}".format(", ".join(testpaths))
 
         result = [line]
