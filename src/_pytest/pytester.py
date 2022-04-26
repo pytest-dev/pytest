@@ -904,13 +904,13 @@ class Pytester:
 
         self._monkeypatch.syspath_prepend(str(path))
 
-    def mkdir(self, name: str) -> Path:
+    def mkdir(self, name: Union[str, "os.PathLike[str]"]) -> Path:
         """Create a new (sub)directory."""
         p = self.path / name
         p.mkdir()
         return p
 
-    def mkpydir(self, name: str) -> Path:
+    def mkpydir(self, name: Union[str, "os.PathLike[str]"]) -> Path:
         """Create a new python package.
 
         This creates a (sub)directory with an empty ``__init__.py`` file so it
