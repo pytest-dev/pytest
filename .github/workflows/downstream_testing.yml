@@ -36,6 +36,7 @@ jobs:
               linting,docs py310-dj40-postgres-xdist-coverage py310-dj32-postgres-xdist-coverage
               py39-dj32-postgres-xdist-coverage py38-dj32-sqlite-xdist-coverage
               py38-dj40-sqlite-xdist-coverage py39-djmain-sqlite-coverage pypy3-dj32-postgres
+              py36-dj32-mysql_myisam-coverage
           - name: "pytest-django"
             repo: "pytest-dev/pytest-django"
             docker_profile: "nodb"
