@@ -73,7 +73,6 @@ messages.  This is supported by the ``caplog`` fixture:
 
     def test_foo(caplog):
         caplog.set_level(logging.INFO)
-        pass
 
 By default the level is set on the root logger,
 however as a convenience it is also possible to set the log level of any
@@ -83,7 +82,6 @@ logger:
 
     def test_foo(caplog):
         caplog.set_level(logging.CRITICAL, logger="root.baz")
-        pass
 
 The log levels set are restored automatically at the end of the test.
 
@@ -161,9 +159,7 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
                 x.message for x in caplog.get_records(when) if x.levelno == logging.WARNING
             ]
             if messages:
-                pytest.fail(
-                    "warning messages encountered during testing: {}".format(messages)
-                )
+                pytest.fail(f"warning messages encountered during testing: {messages}")
 
 
 

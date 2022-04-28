@@ -663,6 +663,7 @@ as a complement to ``raises``. For example:
 .. code-block:: python
 
     from contextlib import contextmanager
+
     import pytest
 
 

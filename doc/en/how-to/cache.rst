@@ -199,7 +199,6 @@ across pytest invocations:
 
     # content of test_caching.py
     import pytest
-    import time
 
 
     def expensive_computation():

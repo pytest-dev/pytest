@@ -69,6 +69,7 @@ It is also possible to skip the whole module using
 .. code-block:: python
 
     import sys
+
     import pytest
 
     if not sys.platform.startswith("win"):
@@ -409,6 +410,7 @@ test instances when using parametrize:
 .. code-block:: python
 
     import sys
+
     import pytest
 
 

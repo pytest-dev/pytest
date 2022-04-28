@@ -194,7 +194,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
 .. code-block:: python
 
     def pytest_addhooks(pluginmanager):
-        """ This example assumes the hooks are grouped in the 'sample_hook' module. """
+        """This example assumes the hooks are grouped in the 'sample_hook' module."""
         from my_app.tests import sample_hook
 
         pluginmanager.add_hookspecs(sample_hook)
@@ -253,14 +253,14 @@ and use pytest_addoption as follows:
    # default value
    @hookspec(firstresult=True)
    def pytest_config_file_default_value():
-       """ Return the default value for the config file command line option. """
+       """Return the default value for the config file command line option."""
 
 
    # contents of myplugin.py
 
 
    def pytest_addhooks(pluginmanager):
-       """ This example assumes the hooks are grouped in the 'hooks' module. """
+       """This example assumes the hooks are grouped in the 'hooks' module."""
        from . import hooks
 
        pluginmanager.add_hookspecs(hooks)

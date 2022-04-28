@@ -238,7 +238,7 @@ file which provides an alternative explanation for ``Foo`` objects:
        if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
            return [
                "Comparing Foo instances:",
-               "   vals: {} != {}".format(left.val, right.val),
+               f"   vals: {left.val} != {right.val}",
            ]
 
 now, given this test module:

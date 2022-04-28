@@ -115,6 +115,7 @@ fixture definition:
     # content of test_unittest_db.py
 
     import unittest
+
     import pytest
 
 
@@ -194,9 +195,9 @@ creation of a per-test temporary directory:
 .. code-block:: python
 
     # content of test_unittest_cleandir.py
-    import os
-    import pytest
     import unittest
+
+    import pytest
 
 
     class MyTest(unittest.TestCase):

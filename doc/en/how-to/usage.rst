@@ -183,8 +183,9 @@ You can specify additional plugins to ``pytest.main``:
 .. code-block:: python
 
     # content of myinvoke.py
-    import pytest
     import sys
+
+    import pytest
 
 
     class MyPlugin:
