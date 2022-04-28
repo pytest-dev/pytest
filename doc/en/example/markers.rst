@@ -375,7 +375,7 @@ specifies via named environments:
         envnames = [mark.args[0] for mark in item.iter_markers(name="env")]
         if envnames:
             if item.config.getoption("-E") not in envnames:
-                pytest.skip("test requires env in {!r}".format(envnames))
+                pytest.skip(f"test requires env in {envnames!r}")
 
 A test file using this local plugin:
 
@@ -528,7 +528,7 @@ test function.  From a conftest file we can read it like this:
 
     def pytest_runtest_setup(item):
         for mark in item.iter_markers(name="glob"):
-            print("glob args={} kwargs={}".format(mark.args, mark.kwargs))
+            print(f"glob args={mark.args} kwargs={mark.kwargs}")
             sys.stdout.flush()
 
 Let's run this without capturing output and see what we get:
@@ -558,6 +558,7 @@ for your particular platform, you could use the following plugin:
     # content of conftest.py
     #
     import sys
+
     import pytest
 
     ALL = set("darwin linux win32".split())
@@ -567,7 +568,7 @@ for your particular platform, you could use the following plugin:
         supported_platforms = ALL.intersection(mark.name for mark in item.iter_markers())
         plat = sys.platform
         if supported_platforms and plat not in supported_platforms:
-            pytest.skip("cannot run on platform {}".format(plat))
+            pytest.skip(f"cannot run on platform {plat}")
 
 then tests will be skipped if they were specified for a different platform.
 Let's do a little test file to show how this looks like:

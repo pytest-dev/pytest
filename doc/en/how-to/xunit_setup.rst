@@ -32,7 +32,7 @@ which will usually be called once for all the functions:
 .. code-block:: python
 
     def setup_module(module):
-        """ setup any state specific to the execution of the given module."""
+        """setup any state specific to the execution of the given module."""
 
 
     def teardown_module(module):

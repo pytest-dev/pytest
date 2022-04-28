@@ -253,6 +253,7 @@ which works in a similar manner to :ref:`raises <assertraises>`:
 .. code-block:: python
 
     import warnings
+
     import pytest
 
 

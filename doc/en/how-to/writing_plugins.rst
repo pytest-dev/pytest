@@ -367,7 +367,7 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
         def _hello(name=None):
             if not name:
                 name = request.config.getoption("name")
-            return "Hello {name}!".format(name=name)
+            return f"Hello {name}!"
 
         return _hello
 
