@@ -899,6 +899,13 @@ def raises(
     """
     __tracebackhide__ = True
 
+    if expected_exception == ():
+        raise ValueError(
+            "Passing expected_exception=() is an error, because it's impossible to "
+            "raise an exception which is not an instance of any type. Raising exceptions "
+            "is already understood as failing the test, so you don't need any special "
+            "code to say 'this should never raise an exception'."
+        )
     if isinstance(expected_exception, type):
         excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:
