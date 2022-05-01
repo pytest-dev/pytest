@@ -1,5 +1,8 @@
 """Run testsuites written for nose."""
+import warnings
+
 from _pytest.config import hookimpl
+from _pytest.deprecated import NOSE_SUPPORT
 from _pytest.fixtures import getfixturemarker
 from _pytest.nodes import Item
 from _pytest.python import Function
@@ -38,5 +41,6 @@ def call_optional(obj: object, name: str) -> bool:
         return False
     # If there are any problems allow the exception to raise rather than
     # silently ignoring it.
+    warnings.warn(NOSE_SUPPORT, stacklevel=2)
     method()
     return True

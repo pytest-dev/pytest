@@ -15,8 +15,20 @@ should be used instead.
 Deprecated Features
 -------------------
 
+
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
+
+
+Support for tests written for nose
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.1.3
+
+Support for running tests written for nose is now deprecated.
+
+.. _node-ctor-fspath-deprecation:
+
 
 .. _instance-collector-deprecation:
 
@@ -37,7 +49,7 @@ However, to keep such uses working, a dummy type has been instanted in ``pytest.
 and importing it emits a deprecation warning. This will be removed in pytest 8.
 
 
-.. _node-ctor-fspath-deprecation:
+.. _support_for_tests_written_for_nose:
 
 ``fspath`` argument for Node constructors replaced with ``pathlib.Path``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
