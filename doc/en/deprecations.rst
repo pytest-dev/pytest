@@ -21,7 +21,7 @@ Below is a complete list of all pytest features which are considered deprecated.
 Support for tests written for nose
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 7.1.3
+.. deprecated:: 7.2.0
 
 Support for running tests written for nose is now deprecated.
 
