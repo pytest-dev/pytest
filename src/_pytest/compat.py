@@ -50,9 +50,11 @@ NOTSET: "Final" = NotSetType.token  # noqa: E305
 # fmt: on
 
 if sys.version_info >= (3, 8):
-    from importlib import metadata as importlib_metadata
+    import importlib.metadata
+
+    importlib_metadata = importlib.metadata
 else:
-    import importlib_metadata  # noqa: F401
+    import importlib_metadata as importlib_metadata  # noqa: F401
 
 
 def _format_args(func: Callable[..., Any]) -> str:
