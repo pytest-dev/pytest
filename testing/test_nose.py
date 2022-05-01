@@ -498,7 +498,7 @@ def test_nose_setup_skipped_if_non_callable(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-def test_nose_setup_is_deprecated(pytester: Pytester) -> None:
+def test_nose_setup_and_teardown_is_deprecated(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         from nose.tools import with_setup
