@@ -129,7 +129,8 @@ pytest also introduces new options:
   the precision you have written in the expected doctest output. The numbers are
   compared using :func:`pytest.approx` with relative tolerance equal to the
   precision. For example, the following output would only need to match to 2
-  decimal places according to ``pytest.approx(3.14, rel=10**-2)``::
+  decimal places when comparing ``3.14`` to
+  ``pytest.approx(math.pi, rel=10**-2)``::
 
       >>> math.pi
       3.14
