@@ -126,14 +126,16 @@ pytest also introduces new options:
   in expected doctest output.
 
 * ``NUMBER``: when enabled, floating-point numbers only need to match as far as
-  the precision you have written in the expected doctest output. For example,
-  the following output would only need to match to 2 decimal places::
+  the precision you have written in the expected doctest output. The numbers are
+  compared using :func:`pytest.approx` with relative tolerance equal to the
+  precision. For example, the following output would only need to match to 2
+  decimal places according to ``pytest.approx(3.14, rel=10**-2)``::
 
       >>> math.pi
       3.14
 
-  If you wrote ``3.1416`` then the actual output would need to match to 4
-  decimal places; and so on.
+  If you wrote ``3.1416`` then the actual output would need to match to
+  approximately 4 decimal places; and so on.
 
   This avoids false positives caused by limited floating-point precision, like
   this::
