@@ -1,0 +1,2 @@
+String representation for `ApproxSequenceLike` was failing on tuples, fixed by
+generalizing `_recursive_list_map` to all sequences. Renamed function to: `_recursive_sequence_map`.
