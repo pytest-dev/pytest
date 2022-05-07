@@ -176,8 +176,9 @@ logging records as they are emitted directly into the console.
 
 You can specify the logging level for which log records with equal or higher
 level are printed to the console by passing ``--log-cli-level``. This setting
-accepts the logging level names as seen in python's documentation or an integer
-as the logging level num.
+accepts the logging level names as seen in 
+`python's documentation <https://docs.python.org/3/library/logging.html#logging-levels>`_ 
+or an integer as the logging level num.
 
 Additionally, you can also specify ``--log-cli-format`` and
 ``--log-cli-date-format`` which mirror and default to ``--log-format`` and
