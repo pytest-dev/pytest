@@ -2,12 +2,14 @@ import operator
 from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
+from math import sqrt
 from operator import eq
 from operator import ne
 from typing import Optional
 
 import pytest
 from _pytest.pytester import Pytester
+from _pytest.python_api import _recursive_sequence_map
 from pytest import approx
 
 inf, nan = float("inf"), float("nan")
@@ -130,6 +132,32 @@ class TestApprox:
                 r"  Index \| Obtained\s+\| Expected   ",
                 rf"  1     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
                 rf"  3     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
+        assert_approx_raises_regex(
+            (1, 2.2, 4),
+            (1, 3.2, 4),
+            [
+                r"  comparison failed. Mismatched elements: 1 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected   ",
+                rf"  1     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
+        assert_approx_raises_regex(
+            range(0, 3),
+            range(1, 4),
+            [
+                r"  comparison failed. Mismatched elements: 3 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected   ",
+                rf"  0     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  1     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  2     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
             ],
         )
 
@@ -878,3 +906,17 @@ class TestApprox:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
         with pytest.raises(TypeError, match="only supports ordered sequences"):
             assert {1, 2, 3} == approx({1, 2, 3})
+
+
+class TestRecursiveSequenceMap:
+    def test_map_over_scalar(self):
+        assert _recursive_sequence_map(sqrt, 16) == 4
+
+    def test_map_over_list(self):
+        assert _recursive_sequence_map(sqrt, [4, 16, 25, 676]) == [2, 4, 5, 26]
+
+    def test_map_over_tuple(self):
+        assert _recursive_sequence_map(sqrt, (4, 16, 25, 676)) == (2, 4, 5, 26)
+
+    def test_map_over_range(self):
+        assert _recursive_sequence_map(lambda x: 2 * x, range(0, 5)) == range(0, 9, 2)
