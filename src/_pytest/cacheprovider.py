@@ -157,7 +157,7 @@ class Cache:
         """
         path = self._getvaluepath(key)
         try:
-            with path.open("r") as f:
+            with path.open("r", encoding="UTF-8") as f:
                 return json.load(f)
         except (ValueError, OSError):
             return default
@@ -184,9 +184,9 @@ class Cache:
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
-        data = json.dumps(value, indent=2)
+        data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
-            f = path.open("w")
+            f = path.open("w", encoding="UTF-8")
         except OSError:
             self.warn("cache could not write path {path}", path=path, _ispytest=True)
         else:
@@ -196,7 +196,7 @@ class Cache:
     def _ensure_supporting_files(self) -> None:
         """Create supporting files in the cache dir that are not really part of the cache."""
         readme_path = self._cachedir / "README.md"
-        readme_path.write_text(README_CONTENT)
+        readme_path.write_text(README_CONTENT, encoding="UTF-8")
 
         gitignore_path = self._cachedir.joinpath(".gitignore")
         msg = "# Created by pytest automatically.\n*\n"
