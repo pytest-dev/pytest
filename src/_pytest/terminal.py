@@ -5,6 +5,7 @@ This is a good source for looking at the various reporting hooks.
 import argparse
 import datetime
 import inspect
+import os
 import platform
 import sys
 import warnings
@@ -1295,8 +1296,11 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        available_width = termwidth - line_width
-        msg = _format_trimmed(" - {}", msg, available_width)
+        if not os.environ.get("CI", False):
+            available_width = termwidth - line_width
+            msg = _format_trimmed(" - {}", msg, available_width)
+        else:
+            msg = f" - {msg}"
         if msg is not None:
             line += msg
 

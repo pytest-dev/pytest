@@ -1139,7 +1139,19 @@ class TestTerminalFunctional:
         assert result.stdout.lines.count(expected) == 1
 
 
-def test_fail_extra_reporting(pytester: Pytester, monkeypatch) -> None:
+@pytest.mark.parametrize(
+    "use_CI",
+    (
+        (True, f"- AssertionError: {'this_failed'*100}"),
+        (False, "- AssertionError: this_failedt..."),
+    ),
+    ids=("on CI", "not on CI"),
+)
+def test_fail_extra_reporting(pytester: Pytester, monkeypatch, use_CI) -> None:
+    if use_CI[0]:
+        monkeypatch.setenv("CI", "true")
+    else:
+        monkeypatch.delenv("CI", raising=False)
     monkeypatch.setenv("COLUMNS", "80")
     pytester.makepyfile("def test_this(): assert 0, 'this_failed' * 100")
     result = pytester.runpytest("-rN")
@@ -1148,7 +1160,7 @@ def test_fail_extra_reporting(pytester: Pytester, monkeypatch) -> None:
     result.stdout.fnmatch_lines(
         [
             "*test summary*",
-            "FAILED test_fail_extra_reporting.py::test_this - AssertionError: this_failedt...",
+            f"FAILED test_fail_extra_reporting.py::test_this {use_CI[1]}",
         ]
     )
 
