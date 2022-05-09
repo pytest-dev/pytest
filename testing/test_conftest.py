@@ -553,7 +553,7 @@ class TestConftestVisibility:
             )
         )
         print("created directory structure:")
-        for x in pytester.path.rglob(""):
+        for x in pytester.path.glob("**/"):
             print("   " + str(x.relative_to(pytester.path)))
 
         return {"runner": runner, "package": package, "swc": swc, "snc": snc}
