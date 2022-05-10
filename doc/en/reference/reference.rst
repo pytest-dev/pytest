@@ -363,17 +363,6 @@ capsys
 .. autofunction:: _pytest.capture.capsys()
     :no-auto-options:
 
-    Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
-
-    Example:
-
-    .. code-block:: python
-
-        def test_output(capsys):
-            print("hello")
-            captured = capsys.readouterr()
-            assert captured.out == "hello\n"
-
 .. autoclass:: pytest.CaptureFixture()
     :members:
 
@@ -388,18 +377,6 @@ capsysbinary
 .. autofunction:: _pytest.capture.capsysbinary()
     :no-auto-options:
 
-    Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
-
-    Example:
-
-    .. code-block:: python
-
-        def test_output(capsysbinary):
-            print("hello")
-            captured = capsysbinary.readouterr()
-            assert captured.out == b"hello\n"
-
-
 .. fixture:: capfd
 
 capfd
@@ -409,18 +386,6 @@ capfd
 
 .. autofunction:: _pytest.capture.capfd()
     :no-auto-options:
-
-    Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
-
-    Example:
-
-    .. code-block:: python
-
-        def test_system_echo(capfd):
-            os.system('echo "hello"')
-            captured = capfd.readouterr()
-            assert captured.out == "hello\n"
-
 
 .. fixture:: capfdbinary
 
@@ -432,17 +397,6 @@ capfdbinary
 .. autofunction:: _pytest.capture.capfdbinary()
     :no-auto-options:
 
-    Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
-
-    Example:
-
-    .. code-block:: python
-
-        def test_system_echo(capfdbinary):
-            os.system('echo "hello"')
-            captured = capfdbinary.readouterr()
-            assert captured.out == b"hello\n"
-
 
 .. fixture:: doctest_namespace
 
@@ -452,16 +406,6 @@ doctest_namespace
 **Tutorial**: :ref:`doctest`
 
 .. autofunction:: _pytest.doctest.doctest_namespace()
-
-    Usually this fixture is used in conjunction with another ``autouse`` fixture:
-
-    .. code-block:: python
-
-        @pytest.fixture(autouse=True)
-        def add_np(doctest_namespace):
-            doctest_namespace["np"] = numpy
-
-    For more details: :ref:`doctest_namespace`.
 
 
 .. fixture:: request
@@ -599,12 +543,6 @@ recwarn
 
 .. autoclass:: pytest.WarningsRecorder()
     :members:
-
-Each recorded warning is an instance of :class:`warnings.WarningMessage`.
-
-.. note::
-    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
-    differently; see :ref:`ensuring_function_triggers`.
 
 
 .. fixture:: tmp_path
