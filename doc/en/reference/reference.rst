@@ -92,7 +92,7 @@ pytest.param
 pytest.raises
 ~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`assertraises`.
+**Tutorial**: :ref:`assertraises`
 
 .. autofunction:: pytest.raises(expected_exception: Exception [, *, match])
     :with: excinfo
@@ -100,7 +100,7 @@ pytest.raises
 pytest.deprecated_call
 ~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`ensuring_function_triggers`.
+**Tutorial**: :ref:`ensuring_function_triggers`
 
 .. autofunction:: pytest.deprecated_call()
     :with:
@@ -108,7 +108,7 @@ pytest.deprecated_call
 pytest.register_assert_rewrite
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`assertion-rewriting`.
+**Tutorial**: :ref:`assertion-rewriting`
 
 .. autofunction:: pytest.register_assert_rewrite
 
@@ -123,7 +123,7 @@ pytest.warns
 pytest.freeze_includes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`freezing-pytest`.
+**Tutorial**: :ref:`freezing-pytest`
 
 .. autofunction:: pytest.freeze_includes
 
@@ -143,7 +143,7 @@ fixtures or plugins.
 pytest.mark.filterwarnings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`filterwarnings`.
+**Tutorial**: :ref:`filterwarnings`
 
 Add warning filters to marked test items.
 
@@ -169,7 +169,7 @@ Add warning filters to marked test items.
 pytest.mark.parametrize
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-:ref:`parametrize`.
+**Tutorial**: :ref:`parametrize`
 
 This mark has the same signature as :py:meth:`pytest.Metafunc.parametrize`; see there.
 
@@ -179,7 +179,7 @@ This mark has the same signature as :py:meth:`pytest.Metafunc.parametrize`; see 
 pytest.mark.skip
 ~~~~~~~~~~~~~~~~
 
-:ref:`skip`.
+**Tutorial**: :ref:`skip`
 
 Unconditionally skip a test function.
 
@@ -193,7 +193,7 @@ Unconditionally skip a test function.
 pytest.mark.skipif
 ~~~~~~~~~~~~~~~~~~
 
-:ref:`skipif`.
+**Tutorial**: :ref:`skipif`
 
 Skip a test function if a condition is ``True``.
 
@@ -209,7 +209,7 @@ Skip a test function if a condition is ``True``.
 pytest.mark.usefixtures
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`usefixtures`.
+**Tutorial**: :ref:`usefixtures`
 
 Mark a test function as using the given fixture names.
 
@@ -231,7 +231,7 @@ Mark a test function as using the given fixture names.
 pytest.mark.xfail
 ~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`xfail`.
+**Tutorial**: :ref:`xfail`
 
 Marks a test function as *expected to fail*.
 
@@ -297,7 +297,7 @@ When :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>` or :meth:`Node.
 Fixtures
 --------
 
-**Tutorial**: :ref:`fixture`.
+**Tutorial**: :ref:`fixture`
 
 Fixtures are requested by test functions or other fixtures by declaring them as argument names.
 
@@ -338,7 +338,7 @@ For more details, consult the full :ref:`fixtures docs <fixture>`.
 config.cache
 ~~~~~~~~~~~~
 
-**Tutorial**: :ref:`cache`.
+**Tutorial**: :ref:`cache`
 
 The ``config.cache`` object allows other plugins and fixtures
 to store and retrieve values across test runs. To access it from fixtures
@@ -358,7 +358,7 @@ Under the hood, the cache plugin uses the simple
 capsys
 ~~~~~~
 
-:ref:`captures`.
+**Tutorial**: :ref:`captures`
 
 .. autofunction:: _pytest.capture.capsys()
     :no-auto-options:
@@ -383,7 +383,7 @@ capsys
 capsysbinary
 ~~~~~~~~~~~~
 
-:ref:`captures`.
+**Tutorial**: :ref:`captures`
 
 .. autofunction:: _pytest.capture.capsysbinary()
     :no-auto-options:
@@ -405,7 +405,7 @@ capsysbinary
 capfd
 ~~~~~~
 
-:ref:`captures`.
+**Tutorial**: :ref:`captures`
 
 .. autofunction:: _pytest.capture.capfd()
     :no-auto-options:
@@ -427,7 +427,7 @@ capfd
 capfdbinary
 ~~~~~~~~~~~~
 
-:ref:`captures`.
+**Tutorial**: :ref:`captures`
 
 .. autofunction:: _pytest.capture.capfdbinary()
     :no-auto-options:
@@ -449,7 +449,7 @@ capfdbinary
 doctest_namespace
 ~~~~~~~~~~~~~~~~~
 
-:ref:`doctest`.
+**Tutorial**: :ref:`doctest`
 
 .. autofunction:: _pytest.doctest.doctest_namespace()
 
@@ -469,7 +469,7 @@ doctest_namespace
 request
 ~~~~~~~
 
-:ref:`request example`.
+**Example**: :ref:`request example`
 
 The ``request`` fixture is a special fixture providing information of the requesting test function.
 
@@ -490,7 +490,7 @@ pytestconfig
 record_property
 ~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`record_property example`.
+**Tutorial**: :ref:`record_property example`
 
 .. autofunction:: _pytest.junitxml.record_property()
 
@@ -500,7 +500,7 @@ record_property
 record_testsuite_property
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`record_testsuite_property example`.
+**Tutorial**: :ref:`record_testsuite_property example`
 
 .. autofunction:: _pytest.junitxml.record_testsuite_property()
 
@@ -510,7 +510,7 @@ record_testsuite_property
 caplog
 ~~~~~~
 
-:ref:`logging`.
+**Tutorial**: :ref:`logging`
 
 .. autofunction:: _pytest.logging.caplog()
     :no-auto-options:
@@ -526,7 +526,7 @@ caplog
 monkeypatch
 ~~~~~~~~~~~
 
-:ref:`monkeypatching`.
+**Tutorial**: :ref:`monkeypatching`
 
 .. autofunction:: _pytest.monkeypatch.monkeypatch()
     :no-auto-options:
@@ -612,7 +612,7 @@ Each recorded warning is an instance of :class:`warnings.WarningMessage`.
 tmp_path
 ~~~~~~~~
 
-:ref:`tmp_path`
+**Tutorial**: :ref:`tmp_path`
 
 .. autofunction:: _pytest.tmpdir.tmp_path()
     :no-auto-options:
@@ -623,7 +623,7 @@ tmp_path
 tmp_path_factory
 ~~~~~~~~~~~~~~~~
 
-:ref:`tmp_path_factory example`
+**Tutorial**: :ref:`tmp_path_factory example`
 
 .. _`tmp_path_factory factory api`:
 
@@ -638,7 +638,7 @@ tmp_path_factory
 tmpdir
 ~~~~~~
 
-:ref:`tmpdir and tmpdir_factory`
+**Tutorial**: :ref:`tmpdir and tmpdir_factory`
 
 .. autofunction:: _pytest.legacypath.LegacyTmpdirPlugin.tmpdir()
     :no-auto-options:
@@ -649,7 +649,7 @@ tmpdir
 tmpdir_factory
 ~~~~~~~~~~~~~~
 
-:ref:`tmpdir and tmpdir_factory`
+**Tutorial**: :ref:`tmpdir and tmpdir_factory`
 
 ``tmpdir_factory`` is an instance of :class:`~pytest.TempdirFactory`:
 
@@ -662,7 +662,7 @@ tmpdir_factory
 Hooks
 -----
 
-:ref:`writing-plugins`.
+**Tutorial**: :ref:`writing-plugins`
 
 .. currentmodule:: _pytest.hookspec
 
