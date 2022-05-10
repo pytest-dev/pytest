@@ -19,8 +19,12 @@ class TestRaises:
         excinfo = pytest.raises(ValueError, int, "hello")
         assert "invalid literal" in str(excinfo.value)
 
+    def test_raises_does_not_allow_none(self):
+        with pytest.raises(ValueError, match="Expected an exception type or"):
+            pytest.raises(expected_exception=None)
+
     def test_raises_does_not_allow_empty_tuple(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Expected an exception type or"):
             pytest.raises(expected_exception=())
 
     def test_raises_callable_no_exception(self) -> None:
