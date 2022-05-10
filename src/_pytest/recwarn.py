@@ -158,7 +158,14 @@ def warns(
 class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
+    Each recorded warning is an instance of :class:`warnings.WarningMessage`.
+
     Adapted from `warnings.catch_warnings`.
+
+    .. note::
+        ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
+        differently; see :ref:`ensuring_function_triggers`.
+
     """
 
     def __init__(self, *, _ispytest: bool = False) -> None:

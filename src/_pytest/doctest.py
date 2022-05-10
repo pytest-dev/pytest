@@ -730,5 +730,16 @@ def _get_report_choice(key: str) -> int:
 @pytest.fixture(scope="session")
 def doctest_namespace() -> Dict[str, Any]:
     """Fixture that returns a :py:class:`dict` that will be injected into the
-    namespace of doctests."""
+    namespace of doctests.
+
+    Usually this fixture is used in conjunction with another ``autouse`` fixture:
+
+    .. code-block:: python
+
+        @pytest.fixture(autouse=True)
+        def add_np(doctest_namespace):
+            doctest_namespace["np"] = numpy
+
+    For more details: :ref:`doctest_namespace`.
+    """
     return dict()
