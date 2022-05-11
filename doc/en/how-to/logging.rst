@@ -180,8 +180,8 @@ logging records as they are emitted directly into the console.
 
 You can specify the logging level for which log records with equal or higher
 level are printed to the console by passing ``--log-cli-level``. This setting
-accepts the logging level names as seen in python's documentation or an integer
-as the logging level num.
+accepts the logging level names or numeric values as seen in
+:ref:`logging's documentation <python:levels>`.
 
 Additionally, you can also specify ``--log-cli-format`` and
 ``--log-cli-date-format`` which mirror and default to ``--log-format`` and
@@ -202,9 +202,8 @@ Note that relative paths for the log-file location, whether passed on the CLI or
 config file, are always resolved relative to the current working directory.
 
 You can also specify the logging level for the log file by passing
-``--log-file-level``. This setting accepts the logging level names as seen in
-python's documentation(ie, uppercased level names) or an integer as the logging
-level num.
+``--log-file-level``. This setting accepts the logging level names or numeric
+values as seen in :ref:`logging's documentation <python:levels>`.
 
 Additionally, you can also specify ``--log-file-format`` and
 ``--log-file-date-format`` which are equal to ``--log-format`` and
