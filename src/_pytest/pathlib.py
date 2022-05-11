@@ -707,8 +707,12 @@ def bestrelpath(directory: Path, dest: Path) -> str:
     # Can be the case for a relative path and an absolute path.
     if not base:
         return str(dest)
-    reldirectory = directory.relative_to(base)
-    reldest = dest.relative_to(base)
+    try:
+        reldirectory = directory.relative_to(base)
+        reldest = dest.relative_to(base)
+    except ValueError:
+        # GH 9894
+        return str(dest)
     return os.path.join(
         # Back from directory to base.
         *([os.pardir] * len(reldirectory.parts)),

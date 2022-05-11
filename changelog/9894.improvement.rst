@@ -1,0 +1,1 @@
+Suppress a potential pathlib relative_to() error, which is possible to be raised from ExceptionInfo.getexpr() when running Python from double-slashed path (like //usr/bin/python3) and single-slashed tests path.

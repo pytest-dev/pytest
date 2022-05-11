@@ -413,6 +413,11 @@ def test_bestrelpath() -> None:
     assert bestrelpath(curdir, curdir.parent) == ".."
     assert bestrelpath(curdir, Path("hello")) == "hello"
 
+    # GH 9894
+    directory = Path("/var/tmp/pytest-issue")
+    dest = Path("//usr/lib/python3.9/importlib/__init__.py")
+    assert bestrelpath(directory, dest) == str(dest)
+
 
 def test_commonpath() -> None:
     path = Path("/foo/bar/baz/path")
