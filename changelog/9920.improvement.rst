@@ -1,1 +1,1 @@
-Display full crash messages in ``short test summary info``, when runng in a CI environment. CI environment is detected based on the presence of a ``CI`` environment variable.
+Display full crash messages in ``short test summary info``, when runng in a CI environment.
