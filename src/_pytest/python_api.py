@@ -899,6 +899,12 @@ def raises(
     """
     __tracebackhide__ = True
 
+    if not expected_exception:
+        raise ValueError(
+            f"Expected an exception type or a tuple of exception types, but got `{expected_exception!r}`. "
+            f"Raising exceptions is already understood as failing the test, so you don't need "
+            f"any special code to say 'this should never raise an exception'."
+        )
     if isinstance(expected_exception, type):
         excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:
