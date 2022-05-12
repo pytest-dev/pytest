@@ -27,12 +27,15 @@ Almost all ``unittest`` features are supported:
 * ``setUpClass/tearDownClass``;
 * ``setUpModule/tearDownModule``;
 
+.. _`pytest-subtests`: https://github.com/pytest-dev/pytest-subtests
 .. _`load_tests protocol`: https://docs.python.org/3/library/unittest.html#load-tests-protocol
+
+Additionally, :ref:`subtests <python:subtests>` are supported by the
+`pytest-subtests`_ plugin.
 
 Up to this point pytest does not have support for the following features:
 
 * `load_tests protocol`_;
-* :ref:`subtests <python:subtests>`;
 
 Benefits out of the box
 -----------------------
