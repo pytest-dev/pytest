@@ -1292,3 +1292,14 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
 
     # Cleanup.
     popen.stderr.close()
+
+
+def test_function_return_non_none_warning(testdir) -> None:
+    testdir.makepyfile(
+        """
+        def test_stuff():
+            return "something"
+    """
+    )
+    res = testdir.runpytest()
+    res.stdout.fnmatch_lines(["*PytestReturnNotNoneWarning: Test function returning*"])
