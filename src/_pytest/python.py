@@ -77,10 +77,12 @@ from _pytest.pathlib import parts
 from _pytest.pathlib import visit
 from _pytest.scope import Scope
 from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
+
     from _pytest.scope import _ScopeName
 
 
@@ -192,6 +194,14 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
         async_warn_and_skip(pyfuncitem.nodeid)
+    elif result is not None:
+        warnings.warn(
+            PytestReturnNotNoneWarning(
+                "Test function returning {result}, do you mean to use `assert` instead or `return`?".format(
+                    result=result
+                )
+            )
+        )
     return True
 
 
