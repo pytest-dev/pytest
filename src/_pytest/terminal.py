@@ -37,6 +37,7 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
+from _pytest.assertion.util import running_on_ci
 from _pytest.compat import final
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -1315,8 +1316,11 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        available_width = tw.fullwidth - line_width
-        msg = _format_trimmed(" - {}", msg, available_width)
+        if not running_on_ci():
+            available_width = tw.fullwidth - line_width
+            msg = _format_trimmed(" - {}", msg, available_width)
+        else:
+            msg = f" - {msg}"
         if msg is not None:
             line += msg
 
