@@ -1,1 +1,1 @@
-Warns for test functions that return non-None. Now in `pytest_pyfunc_call` after the `async_warn_and_skip` it will check for if the return is something other than None.
+Warns for test functions that return non-None.

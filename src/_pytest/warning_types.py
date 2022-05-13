@@ -42,13 +42,6 @@ class PytestCollectionWarning(PytestWarning):
     __module__ = "pytest"
 
 
-@final
-class PytestReturnNotNoneWarning(PytestWarning):
-    """Warning emitted when a test function is returning value other than None."""
-
-    __module__ = "pytest"
-
-
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """Warning class for features that will be removed in a future version."""
 
@@ -58,6 +51,13 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
 @final
 class PytestRemovedIn8Warning(PytestDeprecationWarning):
     """Warning class for features that will be removed in pytest 8."""
+
+    __module__ = "pytest"
+
+
+@final
+class PytestReturnNotNoneWarning(PytestDeprecationWarning):
+    """Warning emitted when a test function is returning value other than None."""
 
     __module__ = "pytest"
 
