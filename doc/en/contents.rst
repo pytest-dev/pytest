@@ -85,7 +85,6 @@ Further topics
 
    backwards-compatibility
    deprecations
-   py27-py34-deprecation
 
    contributing
    development_guide
