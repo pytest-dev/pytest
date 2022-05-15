@@ -252,6 +252,16 @@ or ``pytest.warns(Warning)``.
 
 See :ref:`warns use cases` for examples.
 
+
+Returning non-None value in test functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+:class:`pytest.PytestReturnNotNoneWarning` will be warn if a test function return values other than None.
+It is to avoid typo of an `assert` statement as `return` in a test function makes it passes the test without warning or failing, regardless of if the test should have pass or not.
+
+
 The ``--strict`` command-line option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
