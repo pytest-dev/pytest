@@ -198,7 +198,7 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
         warnings.warn(
             PytestReturnNotNoneWarning(
                 f"Expected None, but the test returned {result!r}, which will be an error in a "
-                "future version of Pytest.  Did you mean to use `assert` instead of `return`?"
+                "future version of pytest.  Did you mean to use `assert` instead of `return`?"
             )
         )
     return True
