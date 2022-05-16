@@ -2618,7 +2618,8 @@ Important
 
 This release is a Python3.5+ only release.
 
-For more details, see our :std:doc:`Python 2.7 and 3.4 support plan <py27-py34-deprecation>`.
+For more details, see our `Python 2.7 and 3.4 support plan
+<https://docs.pytest.org/en/7.0.x/py27-py34-deprecation.html>`_.
 
 Removals
 --------
@@ -2842,7 +2843,11 @@ Features
 
 - :issue:`6870`: New ``Config.invocation_args`` attribute containing the unchanged arguments passed to ``pytest.main()``.
 
-  Remark: while this is technically a new feature and according to our :ref:`policy <what goes into 4.6.x releases>` it should not have been backported, we have opened an exception in this particular case because it fixes a serious interaction with ``pytest-xdist``, so it can also be considered a bugfix.
+  Remark: while this is technically a new feature and according to our
+  `policy <https://docs.pytest.org/en/7.0.x/py27-py34-deprecation.html#what-goes-into-4-6-x-releases>`_
+  it should not have been backported, we have opened an exception in this
+  particular case because it fixes a serious interaction with ``pytest-xdist``,
+  so it can also be considered a bugfix.
 
 Trivial/Internal Changes
 ------------------------
@@ -3014,7 +3019,8 @@ Important
 
 The ``4.6.X`` series will be the last series to support **Python 2 and Python 3.4**.
 
-For more details, see our :std:doc:`Python 2.7 and 3.4 support plan <py27-py34-deprecation>`.
+For more details, see our `Python 2.7 and 3.4 support plan
+<https://docs.pytest.org/en/7.0.x/py27-py34-deprecation.html>`_.
 
 
 Features

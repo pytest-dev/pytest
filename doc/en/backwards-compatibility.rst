@@ -77,3 +77,18 @@ Deprecation Roadmap
 Features currently deprecated and removed in previous releases can be found in :ref:`deprecations`.
 
 We track future deprecation and removal of features using milestones and the `deprecation <https://github.com/pytest-dev/pytest/issues?q=label%3A%22type%3A+deprecation%22>`_ and `removal <https://github.com/pytest-dev/pytest/labels/type%3A%20removal>`_ labels on GitHub.
+
+
+Python version support
+======================
+
+Released pytest versions support all Python versions that are actively maintained at the time of the release:
+
+==============  ===================
+pytest version  min. Python version
+==============  ===================
+7.1+            3.7+
+6.2 - 7.0       3.6+
+5.0 - 6.1       3.5+
+3.3 - 4.6       2.7, 3.4+
+==============  ===================
