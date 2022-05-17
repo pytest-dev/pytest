@@ -270,8 +270,8 @@ class LegacyTestdirPlugin:
 @final
 @attr.s(init=False, auto_attribs=True)
 class TempdirFactory:
-    """Backward compatibility wrapper that implements :class:``_pytest.compat.LEGACY_PATH``
-    for :class:``TempPathFactory``."""
+    """Backward compatibility wrapper that implements :class:`_pytest.compat.LEGACY_PATH`
+    for :class:`TempPathFactory`."""
 
     _tmppath_factory: TempPathFactory
 
