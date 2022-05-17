@@ -258,8 +258,33 @@ Returning non-None value in test functions
 
 .. deprecated:: 7.0
 
-:class:`pytest.PytestReturnNotNoneWarning` will be warn if a test function return values other than None.
-It is to avoid typo of an `assert` statement as `return` in a test function makes it passes the test without warning or failing, regardless of if the test should have pass or not.
+A :class:`pytest.PytestReturnNotNoneWarning` is now emitted if a test function returns something other than `None`. 
+
+This prevents a common mistake among beginners that expect that returning a `bool` would cause a test to pass or fail, for example:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(['a', 'b', 'result'], [
+      [1, 2, 5],
+      [2, 3, 8],
+      [5, 3, 18],
+    ])
+    def test_foo(a, b, result):
+        return foo(a, b) == result
+
+Given that pytest ignores the return value, this might be surprising that it will never fail.
+
+The proper fix is to change the `return` to an `assert`:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(['a', 'b', 'result'], [
+      [1, 2, 5],
+      [2, 3, 8],
+      [5, 3, 18],
+    ])
+    def test_foo(a, b, result):
+        assert foo(a, b) == result
 
 
 The ``--strict`` command-line option
