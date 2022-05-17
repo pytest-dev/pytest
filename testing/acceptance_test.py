@@ -1303,5 +1303,5 @@ def test_function_return_non_none_warning(testdir) -> None:
     )
     res = testdir.runpytest()
     res.stdout.fnmatch_lines(
-        ["*PytestReturnNotNoneWarning: Expected None, but the test returned*"]
+        ["*Did you mean to use `assert` instead of `return`?*"]
     )
