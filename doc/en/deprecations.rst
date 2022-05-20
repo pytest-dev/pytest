@@ -256,7 +256,7 @@ See :ref:`warns use cases` for examples.
 Returning non-None value in test functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 7.0
+.. deprecated:: 7.2
 
 A :class:`pytest.PytestReturnNotNoneWarning` is now emitted if a test function returns something other than `None`.
 
