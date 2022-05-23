@@ -548,11 +548,18 @@ class FixtureRequest:
         setup time, you may use this function to retrieve it inside a fixture
         or test function body.
 
+        This method can be used during the test setup phase or the test run
+        phase, but during the test teardown phase a fixture's value may not
+        be available.
+
         :raises pytest.FixtureLookupError:
             If the given fixture could not be found.
         """
         fixturedef = self._get_active_fixturedef(argname)
-        assert fixturedef.cached_result is not None
+        assert fixturedef.cached_result is not None, (
+            f'The fixture value for "{argname}" is not available.  '
+            "This can happen when the fixture has already been torn down."
+        )
         return fixturedef.cached_result[0]
 
     def _get_active_fixturedef(
