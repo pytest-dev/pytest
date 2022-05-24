@@ -27,8 +27,6 @@ scale to support complex functional testing for applications and libraries.
 
 **PyPI package name**: :pypi:`pytest`
 
-**Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
-
 
 A quick example
 ---------------
@@ -104,11 +102,6 @@ Bugs/Requests
 Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or request features.
 
 
-Changelog
----------
-
-Consult the :ref:`Changelog <changelog>` page for fixes and enhancements of each version.
-
 Support pytest
 --------------
 
@@ -141,13 +134,3 @@ Security
 pytest has never been associated with a security vulnerability, but in any case, to report a
 security vulnerability please use the `Tidelift security contact <https://tidelift.com/security>`_.
 Tidelift will coordinate the fix and disclosure.
-
-
-License
--------
-
-Copyright Holger Krekel and others, 2004.
-
-Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
-
-.. _`MIT`: https://github.com/pytest-dev/pytest/blob/main/LICENSE
