@@ -56,6 +56,13 @@ class PytestRemovedIn8Warning(PytestDeprecationWarning):
 
 
 @final
+class PytestReturnNotNoneWarning(PytestDeprecationWarning):
+    """Warning emitted when a test function is returning value other than None."""
+
+    __module__ = "pytest"
+
+
+@final
 class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     """Warning category used to denote experiments in pytest.
 
