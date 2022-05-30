@@ -223,15 +223,10 @@ def add_funcarg_pseudo_fixture_def(
 def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
     """Return fixturemarker or None if it doesn't exist or raised
     exceptions."""
-    try:
-        fixturemarker: Optional[FixtureFunctionMarker] = getattr(
-            obj, "_pytestfixturefunction", None
-        )
-    except TEST_OUTCOME:
-        # some objects raise errors like request (from flask import request)
-        # we don't expect them to be fixture functions
-        return None
-    return fixturemarker
+    return cast(
+        Optional[FixtureFunctionMarker],
+        safe_getattr(obj, "_pytestfixturefunction", None),
+    )
 
 
 # Parametrized fixture key, helper alias for code below.
