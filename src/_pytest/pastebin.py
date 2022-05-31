@@ -24,7 +24,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="pastebin",
         default=None,
         choices=["failed", "all"],
-        help="send failed|all info to bpaste.net pastebin service.",
+        help="Send failed|all info to bpaste.net pastebin service",
     )
 
 

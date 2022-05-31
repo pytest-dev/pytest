@@ -89,7 +89,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="lsof",
         default=False,
-        help="run FD checks if lsof is available",
+        help="Run FD checks if lsof is available",
     )
 
     parser.addoption(
@@ -98,13 +98,13 @@ def pytest_addoption(parser: Parser) -> None:
         dest="runpytest",
         choices=("inprocess", "subprocess"),
         help=(
-            "run pytest sub runs in tests using an 'inprocess' "
+            "Run pytest sub runs in tests using an 'inprocess' "
             "or 'subprocess' (python -m main) method"
         ),
     )
 
     parser.addini(
-        "pytester_example_dir", help="directory to take the pytester example files from"
+        "pytester_example_dir", help="Directory to take the pytester example files from"
     )
 
 

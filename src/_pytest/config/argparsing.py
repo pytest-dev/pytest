@@ -48,7 +48,7 @@ class Parser:
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-        self._anonymous = OptionGroup("custom options", parser=self, _ispytest=True)
+        self._anonymous = OptionGroup("Custom options", parser=self, _ispytest=True)
         self._groups: List[OptionGroup] = []
         self._processopt = processopt
         self._usage = usage

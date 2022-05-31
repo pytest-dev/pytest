@@ -46,21 +46,21 @@ def pytest_addoption(parser: Parser) -> None:
         "--pdb",
         dest="usepdb",
         action="store_true",
-        help="start the interactive Python debugger on errors or KeyboardInterrupt.",
+        help="Start the interactive Python debugger on errors or KeyboardInterrupt",
     )
     group._addoption(
         "--pdbcls",
         dest="usepdb_cls",
         metavar="modulename:classname",
         type=_validate_usepdb_cls,
-        help="specify a custom interactive Python debugger for use with --pdb."
+        help="Specify a custom interactive Python debugger for use with --pdb."
         "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
     )
     group._addoption(
         "--trace",
         dest="trace",
         action="store_true",
-        help="Immediately break when running each test.",
+        help="Immediately break when running each test",
     )
 
 

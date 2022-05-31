@@ -2117,8 +2117,8 @@ class TestDebugOptions:
         result = pytester.runpytest("-h")
         result.stdout.fnmatch_lines(
             [
-                "*store internal tracing debug information in this log*",
-                "*This file is opened with 'w' and truncated as a result*",
-                "*Defaults to 'pytestdebug.log'.",
+                "*Store internal tracing debug information in this log*",
+                "*file. This file is opened with 'w' and truncated as a*",
+                "*Default: pytestdebug.log.",
             ]
         )

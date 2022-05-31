@@ -66,26 +66,26 @@ CHECKER_CLASS: Optional[Type["doctest.OutputChecker"]] = None
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "doctest_optionflags",
-        "option flags for doctests",
+        "Option flags for doctests",
         type="args",
         default=["ELLIPSIS"],
     )
     parser.addini(
-        "doctest_encoding", "encoding used for doctest files", default="utf-8"
+        "doctest_encoding", "Encoding used for doctest files", default="utf-8"
     )
     group = parser.getgroup("collect")
     group.addoption(
         "--doctest-modules",
         action="store_true",
         default=False,
-        help="run doctests in all .py modules",
+        help="Run doctests in all .py modules",
         dest="doctestmodules",
     )
     group.addoption(
         "--doctest-report",
         type=str.lower,
         default="udiff",
-        help="choose another output format for diffs on doctest failure",
+        help="Choose another output format for diffs on doctest failure",
         choices=DOCTEST_REPORT_CHOICES,
         dest="doctestreport",
     )
@@ -94,21 +94,21 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         default=[],
         metavar="pat",
-        help="doctests file matching pattern, default: test*.txt",
+        help="Doctests file matching pattern, default: test*.txt",
         dest="doctestglob",
     )
     group.addoption(
         "--doctest-ignore-import-errors",
         action="store_true",
         default=False,
-        help="ignore doctest ImportErrors",
+        help="Ignore doctest ImportErrors",
         dest="doctest_ignore_import_errors",
     )
     group.addoption(
         "--doctest-continue-on-failure",
         action="store_true",
         default=False,
-        help="for a given doctest, continue to run after the first failure",
+        help="For a given doctest, continue to run after the first failure",
         dest="doctest_continue_on_failure",
     )
 

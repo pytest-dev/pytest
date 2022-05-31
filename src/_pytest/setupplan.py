@@ -15,8 +15,8 @@ def pytest_addoption(parser: Parser) -> None:
         "--setupplan",
         "--setup-plan",
         action="store_true",
-        help="show what fixtures and tests would be executed but "
-        "don't execute anything.",
+        help="Show what fixtures and tests would be executed but "
+        "don't execute anything",
     )
 
 

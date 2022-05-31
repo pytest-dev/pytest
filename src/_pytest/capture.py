@@ -42,14 +42,14 @@ def pytest_addoption(parser: Parser) -> None:
         default="fd",
         metavar="method",
         choices=["fd", "sys", "no", "tee-sys"],
-        help="per-test capturing method: one of fd|sys|no|tee-sys.",
+        help="Per-test capturing method: one of fd|sys|no|tee-sys",
     )
     group._addoption(
         "-s",
         action="store_const",
         const="no",
         dest="capture",
-        help="shortcut for --capture=no.",
+        help="Shortcut for --capture=no",
     )
 
 

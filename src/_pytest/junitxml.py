@@ -386,7 +386,7 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="path",
         type=functools.partial(filename_arg, optname="--junitxml"),
         default=None,
-        help="create junit-xml style report file at given path.",
+        help="Create junit-xml style report file at given path",
     )
     group.addoption(
         "--junitprefix",
@@ -394,7 +394,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store",
         metavar="str",
         default=None,
-        help="prepend prefix to classnames in junit-xml output",
+        help="Prepend prefix to classnames in junit-xml output",
     )
     parser.addini(
         "junit_suite_name", "Test suite name for JUnit report", default="pytest"
