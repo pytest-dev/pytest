@@ -666,6 +666,11 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         specialised test helpers in :std:doc:`numpy:reference/routines.testing`
         if you need support for comparisons, NaNs, or ULP-based tolerances.
 
+        To match strings using regex, you can use
+        `Matches <https://github.com/asottile/re-assert#re_assertmatchespattern-str-args-kwargs>`_
+        from the
+        `re_assert package <https://github.com/asottile/re-assert>`_.
+
     .. warning::
 
        .. versionchanged:: 3.2
