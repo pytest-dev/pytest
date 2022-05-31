@@ -173,10 +173,9 @@ This layout prevents a lot of common pitfalls and has many benefits, which are b
 `blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_.
 
 .. note::
-    The new ``--import-mode=importlib`` (see :ref:`import-modes`) doesn't have
+    The ``--import-mode=importlib`` option (see :ref:`import-modes`) does not have
     any of the drawbacks above because ``sys.path`` is not changed when importing
-    test modules, so users that run
-    into this issue are strongly encouraged to try it and report if the new option works well for them.
+    test modules, so users that run into this issue are strongly encouraged to try it.
 
     The ``src`` directory layout is still strongly recommended however.
 
