@@ -45,10 +45,19 @@ these values:
 
 * ``importlib``: new in pytest-6.0, this mode uses :mod:`importlib` to import test modules. This gives full control over the import process, and doesn't require changing :py:data:`sys.path`.
 
-  For this reason this doesn't require test module names to be unique, but also makes test
-  modules non-importable by each other.
+  For this reason this doesn't require test module names to be unique.
 
-  We intend to make ``importlib`` the default in future releases, depending on feedback.
+  One drawback however is that test modules are non-importable by each other. Also,  utility
+  modules in the tests directories are not automatically importable because the tests directory is no longer
+  added to :py:data:`sys.path`.
+
+  Initially we intended to make ``importlib`` the default in future releases, however it is clear now that
+  it has its own set of drawbacks so the default will remain ``prepend`` for the foreseeable future.
+
+.. seealso::
+
+    The :confval:`pythonpath` configuration variable.
+
 
 ``prepend`` and ``append`` import modes scenarios
 -------------------------------------------------
