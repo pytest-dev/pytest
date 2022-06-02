@@ -3,7 +3,7 @@
 How to monkeypatch/mock modules and environments
 ================================================================
 
-.. currentmodule:: _pytest.monkeypatch
+.. currentmodule:: pytest
 
 Sometimes tests need to invoke functionality which depends
 on global settings or which invokes code which cannot be easily
@@ -436,7 +436,7 @@ separate fixtures for each potential mock and reference them in the needed tests
             _ = app.create_connection_string()
 
 
-.. currentmodule:: _pytest.monkeypatch
+.. currentmodule:: pytest
 
 API Reference
 -------------
