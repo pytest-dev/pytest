@@ -18,6 +18,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import MutableMapping
+from typing import NoReturn
 from typing import Optional
 from typing import overload
 from typing import Sequence
@@ -67,7 +68,6 @@ from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from typing import Deque
-    from typing import NoReturn
 
     from _pytest.scope import _ScopeName
     from _pytest.main import Session
@@ -524,7 +524,7 @@ class FixtureRequest:
         """
         self.node.add_marker(marker)
 
-    def raiseerror(self, msg: Optional[str]) -> "NoReturn":
+    def raiseerror(self, msg: Optional[str]) -> NoReturn:
         """Raise a FixtureLookupError with the given message."""
         raise self._fixturemanager.FixtureLookupError(None, self, msg)
 
@@ -866,7 +866,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
         tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
 
 
-def fail_fixturefunc(fixturefunc, msg: str) -> "NoReturn":
+def fail_fixturefunc(fixturefunc, msg: str) -> NoReturn:
     fs, lineno = getfslineno(fixturefunc)
     location = f"{fs}:{lineno + 1}"
     source = _pytest._code.Source(fixturefunc)

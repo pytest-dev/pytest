@@ -8,6 +8,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Mapping
+from typing import NoReturn
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -36,7 +37,6 @@ from _pytest.nodes import Item
 from _pytest.outcomes import skip
 
 if TYPE_CHECKING:
-    from typing import NoReturn
     from typing_extensions import Literal
 
     from _pytest.runner import CallInfo
@@ -229,7 +229,7 @@ class BaseReport:
 
 def _report_unserialization_failure(
     type_name: str, report_class: Type[BaseReport], reportdict
-) -> "NoReturn":
+) -> NoReturn:
     url = "https://github.com/pytest-dev/pytest/issues"
     stream = StringIO()
     pprint("-" * 100, stream=stream)
