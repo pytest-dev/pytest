@@ -9,6 +9,7 @@ from typing import cast
 from typing import Dict
 from typing import List
 from typing import Mapping
+from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -24,7 +25,6 @@ from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 from _pytest.deprecated import check_ispytest
 
 if TYPE_CHECKING:
-    from typing import NoReturn
     from typing_extensions import Literal
 
 FILE_OR_DIR = "file_or_dir"
@@ -403,7 +403,7 @@ class MyOptionParser(argparse.ArgumentParser):
         # an usage error to provide more contextual information to the user.
         self.extra_info = extra_info if extra_info else {}
 
-    def error(self, message: str) -> "NoReturn":
+    def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
         msg = f"{self.prog}: error: {message}"
 

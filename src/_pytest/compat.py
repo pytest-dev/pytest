@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Generic
+from typing import NoReturn
 from typing import Optional
 from typing import Tuple
 from typing import TYPE_CHECKING
@@ -20,7 +21,6 @@ import attr
 import py
 
 if TYPE_CHECKING:
-    from typing import NoReturn
     from typing_extensions import Final
 
 
@@ -403,5 +403,5 @@ else:
 # previously.
 #
 # This also work for Enums (if you use `is` to compare) and Literals.
-def assert_never(value: "NoReturn") -> "NoReturn":
+def assert_never(value: NoReturn) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
