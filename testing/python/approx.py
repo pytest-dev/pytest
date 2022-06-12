@@ -147,20 +147,6 @@ class TestApprox:
             ],
         )
 
-        assert_approx_raises_regex(
-            range(0, 3),
-            range(1, 4),
-            [
-                r"  comparison failed. Mismatched elements: 3 / 3:",
-                rf"  Max absolute difference: {SOME_FLOAT}",
-                rf"  Max relative difference: {SOME_FLOAT}",
-                r"  Index \| Obtained\s+\| Expected   ",
-                rf"  0     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  1     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  2     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-            ],
-        )
-
         # Specific test for comparison with 0.0 (relative diff will be 'inf')
         assert_approx_raises_regex(
             [0.0],
@@ -912,11 +898,25 @@ class TestRecursiveSequenceMap:
     def test_map_over_scalar(self):
         assert _recursive_sequence_map(sqrt, 16) == 4
 
+    def test_map_over_empty_list(self):
+        assert _recursive_sequence_map(sqrt, []) == []
+
     def test_map_over_list(self):
         assert _recursive_sequence_map(sqrt, [4, 16, 25, 676]) == [2, 4, 5, 26]
 
     def test_map_over_tuple(self):
         assert _recursive_sequence_map(sqrt, (4, 16, 25, 676)) == (2, 4, 5, 26)
 
-    def test_map_over_range(self):
-        assert _recursive_sequence_map(lambda x: 2 * x, range(0, 5)) == range(0, 9, 2)
+    def test_map_over_nested_lists(self):
+        assert _recursive_sequence_map(sqrt, [4, [25, 64], [[49]]]) == [
+            2,
+            [5, 8],
+            [[7]],
+        ]
+
+    def test_map_over_mixed_sequence(self):
+        assert _recursive_sequence_map(sqrt, [4, (25, 64), [(49)]]) == [
+            2,
+            (5, 8),
+            [(7)],
+        ]

@@ -135,8 +135,8 @@ class ApproxBase:
 
 def _recursive_sequence_map(f, x):
     """Recursively map a function over a sequence of arbitary depth"""
-    if isinstance(x, Sequence):
-        seq_type = type(x)
+    seq_type = type(x)
+    if seq_type in (list, tuple):
         return seq_type(_recursive_sequence_map(f, xi) for xi in x)
     else:
         return f(x)
