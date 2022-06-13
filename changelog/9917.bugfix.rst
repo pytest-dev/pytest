@@ -1,2 +1,1 @@
-String representation for `ApproxSequenceLike` was failing on tuples. The bug was fixed by
-adding support for tuples to `_recursive_list_map`. Renamed that function to: `_recursive_sequence_map`.
+Fixed string representation for :func:`pytest.approx` when used to compare tuples.
