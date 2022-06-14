@@ -17,6 +17,8 @@ Books
 Talks and blog postings
 ---------------------------------------------
 
+- Training: `pytest - simple, rapid and fun testing with Python <https://www.youtube.com/watch?v=ofPHJrAOaTE>`_, Florian Bruhin, PyConDE 2022
+
 - `pytest: Simple, rapid and fun testing with Python, <https://youtu.be/cSJ-X3TbQ1c?t=15752>`_ (@ 4:22:32), Florian Bruhin, WeAreDevelopers World Congress 2021
 
 - Webinar: `pytest: Test Driven Development für Python (German) <https://bruhin.software/ins-pytest/>`_, Florian Bruhin, via mylearning.ch, 2020

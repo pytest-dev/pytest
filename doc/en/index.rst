@@ -2,15 +2,11 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `PyConDE <https://2022.pycon.de/program/W93DBJ/>`__, April 11th 2022 (3h), Berlin, Germany
-   - `PyConIT <https://pycon.it/en/talk/pytest-simple-rapid-and-fun-testing-with-python>`__, June 3rd 2022 (4h), Florence, Italy
+   - `Europython <https://ep2022.europython.eu/session/pytest-simple-rapid-and-fun-testing-with-python>`__, July 11th 2022 (3h), Dublin, Ireland
+   - `CH Open Workshop-Tage <https://workshoptage.ch/workshops/2022/pytest-professionelles-testen-nicht-nur-fuer-python/>`__ (German), September 8th 2022, Bern, Switzerland
    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote and Leipzig, Germany
 
    Also see :doc:`previous talks and blogposts <talks>`.
-
-..
-   -  `Europython <https://ep2022.europython.eu/>`__, July 11th to 17th (3h), Dublin, Ireland
-   -  `CH Open Workshoptage <https://workshoptage.ch/>`__ (German), September 6th to 8th (1 day), Bern, Switzerland
 
 .. _features:
 
