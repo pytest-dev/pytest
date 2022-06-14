@@ -1151,9 +1151,10 @@ Consult the :ref:`internal-warnings` section in the documentation for more infor
 Configuration Options
 ---------------------
 
-Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``pyproject.toml``, ``tox.ini`` or ``setup.cfg``
-file, usually located at the root of your repository. To see each file format in details, see
-:ref:`config file formats`.
+Here is a list of builtin configuration options that may be written in a ``pytest.ini`` (or ``.pytest.ini``),
+``pyproject.toml``, ``tox.ini``, or ``setup.cfg`` file, usually located at the root of your repository.
+
+To see each file format in details, see :ref:`config file formats`.
 
 .. warning::
     Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
