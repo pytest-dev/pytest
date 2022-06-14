@@ -96,6 +96,7 @@ def locate_config(
     and return a tuple of (rootdir, inifile, cfg-dict)."""
     config_names = [
         "pytest.ini",
+        ".pytest.ini",
         "pyproject.toml",
         "tox.ini",
         "setup.cfg",
