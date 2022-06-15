@@ -1,0 +1,1 @@
+Fixed ``caplog.get_records(when)`` still get the stage records after ``caplog.clear()``

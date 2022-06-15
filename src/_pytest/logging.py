@@ -335,6 +335,16 @@ class LogCaptureHandler(logging_StreamHandler):
         """Create a new log handler."""
         super().__init__(StringIO())
         self.records: List[logging.LogRecord] = []
+        self.set_when(None)
+
+    def set_when(self, when: Optional[str]) -> None:
+        """Prepare for the given test phase (setup/call/teardown)."""
+        self._when = when
+
+    def get_when(self) -> Optional[str]:
+        return self._when
+
+    when = property(get_when, set_when)
 
     def emit(self, record: logging.LogRecord) -> None:
         """Keep the log records in a list in addition to the log text."""
@@ -441,6 +451,7 @@ class LogCaptureFixture:
     def clear(self) -> None:
         """Reset the list of log records and the captured log text."""
         self.handler.reset()
+        self._item.stash[caplog_records_key][self.handler.when] = self.records
 
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
         """Set the level of a logger for the duration of a test.
@@ -695,6 +706,7 @@ class LoggingPlugin:
             level=self.log_level,
         ) as report_handler:
             caplog_handler.reset()
+            caplog_handler.set_when(when)
             report_handler.reset()
             item.stash[caplog_records_key][when] = caplog_handler.records
             item.stash[caplog_handler_key] = caplog_handler
