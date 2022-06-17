@@ -1318,6 +1318,7 @@ class Config:
             kwargs=dict(pluginmanager=self.pluginmanager)
         )
         self._preparse(args, addopts=addopts)
+        self.hook.pytest_modify_args(args=args)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.after_preparse = True  # type: ignore

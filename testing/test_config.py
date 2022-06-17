@@ -1296,6 +1296,17 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     ]
 
 
+def test_modify_args_hook(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_modify_args(args):
+            args.append("-h")
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["*pytest*", "*-h*"])
+
+
 def test_get_plugin_specs_as_list() -> None:
     def exp_match(val: object) -> str:
         return (

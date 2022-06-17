@@ -172,6 +172,13 @@ def pytest_cmdline_preparse(config: "Config", args: List[str]) -> None:
     """
 
 
+def pytest_modify_args(args: List[str]) -> None:
+    """Modify command line arguments before option parsing.
+    
+    :param List[str] args: Arguments passed on the command line.
+    """
+
+
 @hookspec(firstresult=True)
 def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
     """Called for performing the main command line action. The default
