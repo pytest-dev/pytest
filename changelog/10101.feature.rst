@@ -1,0 +1,2 @@
+Add an optional ``indirect`` argument for ``pytest.fixture`` to make all
+parametrizations of that fixture indirect by default.

@@ -372,6 +372,24 @@ test:
 This can be used, for example, to do more expensive setup at test run time in
 the fixture, rather than having to run those setup steps at collection time.
 
+It's also possible to configure this on the fixture level, making all tests
+using that fixture indirectly parametrized by default:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture(indirect=True)
+    def fixt(request):
+        return request.param * 3
+
+
+    @pytest.mark.parametrize("fixt", ["a", "b"])
+    def test_indirect(fixt):
+        assert len(fixt) == 3
+
+
 .. regendoc:wipe
 
 Apply indirect on particular arguments

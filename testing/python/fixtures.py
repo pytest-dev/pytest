@@ -4468,3 +4468,105 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines([expected])
     assert result.ret == ExitCode.TESTS_FAILED
+
+
+def test_fixture_indirect(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        @pytest.fixture(indirect=True)
+        def indirect_sum(request):
+            return sum(request.param)
+
+        @pytest.fixture
+        def indirect_reversed(request):
+            return list(reversed(request.param))
+        """
+    )
+
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("indirect_sum, indirect_reversed, direct_list",
+            [
+                ([1,2,3], [1,2,3], [1,2,3])
+            ],
+            indirect=["indirect_reversed"]
+        )
+        def test_indirect_sum(indirect_sum, indirect_reversed, direct_list):
+            assert indirect_sum == 6
+            assert indirect_reversed == [3, 2, 1]
+            assert direct_list == [1, 2, 3]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_indirect_always(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        @pytest.fixture(indirect=True)
+        def indirect_sum(request):
+            return sum(request.param)
+        """
+    )
+
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("indirect_sum",
+            [
+                ([1,2,3])
+            ],
+            indirect=[]
+        )
+        def test_indirect_sum(indirect_sum):
+            assert indirect_sum == 6
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_indirect_no_params(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        @pytest.fixture(indirect=True)
+        def indirect_skip(request):
+            pass
+        """
+    )
+
+    pytester.makepyfile(
+        """
+        import pytest
+        def test_indirect_skip(indirect_skip):
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(skipped=1)
+
+
+def test_fixture_indirect_default_params(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        @pytest.fixture(indirect=True, params=[1])
+        def indirect_default(request):
+            return request.param
+        """
+    )
+
+    pytester.makepyfile(
+        """
+        import pytest
+        def test_indirect_sum(indirect_default):
+            assert indirect_default == 1
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)

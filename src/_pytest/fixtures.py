@@ -212,6 +212,7 @@ def add_funcarg_pseudo_fixture_def(
                 func=get_direct_param_fixture_func,
                 scope=arg2scope[argname],
                 params=valuelist,
+                indirect=False,
                 unittest=False,
                 ids=None,
             )
@@ -943,6 +944,7 @@ class FixtureDef(Generic[FixtureValue]):
         func: "_FixtureFunc[FixtureValue]",
         scope: Union[Scope, "_ScopeName", Callable[[str, Config], "_ScopeName"], None],
         params: Optional[Sequence[object]],
+        indirect: bool = False,
         unittest: bool = False,
         ids: Optional[
             Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
@@ -987,6 +989,8 @@ class FixtureDef(Generic[FixtureValue]):
         # assign to the parameter values, or a callable to generate an ID given
         # a parameter value.
         self.ids = ids
+        # Whether the fixture should be always indirectly parametrized
+        self.indirect = indirect
         # The names requested by the fixtures.
         self.argnames = getfuncargnames(func, name=argname, is_method=unittest)
         # Whether the fixture was collected from a unittest TestCase class.
@@ -1174,6 +1178,7 @@ class FixtureFunctionMarker:
         converter=_ensure_immutable_ids,
     )
     name: Optional[str] = None
+    indirect: bool = False
 
     def __call__(self, function: FixtureFunction) -> FixtureFunction:
         if inspect.isclass(function):
@@ -1241,6 +1246,7 @@ def fixture(
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = None,
     name: Optional[str] = None,
+    indirect: bool = False,
 ) -> Union[FixtureFunctionMarker, FixtureFunction]:
     """Decorator to mark a fixture factory function.
 
@@ -1298,6 +1304,7 @@ def fixture(
         autouse=autouse,
         ids=ids,
         name=name,
+        indirect=indirect,
     )
 
     # Direct decoration.
@@ -1417,7 +1424,11 @@ class FixtureManager:
                 p_argnames, _ = ParameterSet._parse_parametrize_args(
                     *marker.args, **marker.kwargs
                 )
-                parametrize_argnames.extend(p_argnames)
+                for argname in p_argnames:
+                    fixturedefs = self.getfixturedefs(argname, node.nodeid) or []
+                    if any(f.indirect for f in fixturedefs):
+                        continue
+                    parametrize_argnames.append(argname)
 
         return parametrize_argnames
 
@@ -1614,9 +1625,13 @@ class FixtureManager:
                 func=obj,
                 scope=marker.scope,
                 params=marker.params,
+                indirect=marker.indirect,
                 unittest=unittest,
                 ids=marker.ids,
             )
+
+            if marker.indirect:
+                fixture_def.params = fixture_def.params or []
 
             faclist = self._arg2fixturedefs.setdefault(name, [])
             if fixture_def.has_location:

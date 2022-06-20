@@ -1194,8 +1194,8 @@ class Metafunc:
         #: Underlying Python test function.
         self.function = definition.obj
 
-        #: Set of fixture names required by the test function.
-        self.fixturenames = fixtureinfo.names_closure
+        #: Set of fixtures required by the test function
+        self.fixtureinfo = fixtureinfo
 
         #: Class object where the test function is defined in or ``None``.
         self.cls = cls
@@ -1204,6 +1204,10 @@ class Metafunc:
 
         # Result of parametrize().
         self._calls: List[CallSpec2] = []
+
+    @property
+    def fixturenames(self):
+        return self.fixtureinfo.names_closure
 
     def parametrize(
         self,
@@ -1300,7 +1304,22 @@ class Metafunc:
         else:
             scope_ = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
+        if not isinstance(indirect, (bool, Sequence)):
+            fail(
+                "In {func}: expected Sequence or boolean for indirect, got {type}".format(
+                    type=type(indirect).__name__, func=self.function.__name__
+                ),
+                pytrace=False,
+            )
+
         self._validate_if_using_arg_names(argnames, indirect)
+
+        if indirect is not True:  # False, or a list
+            indirect = list(indirect or [])
+            for argname in argnames:
+                fixturedefs = self.fixtureinfo.name2fixturedefs.get(argname, [])
+                if any(f.indirect for f in fixturedefs):
+                    indirect.append(argname)
 
         arg_values_types = self._resolve_arg_value_types(argnames, indirect)
 
@@ -1435,13 +1454,7 @@ class Metafunc:
                         pytrace=False,
                     )
                 valtypes[arg] = "params"
-        else:
-            fail(
-                "In {func}: expected Sequence or boolean for indirect, got {type}".format(
-                    type=type(indirect).__name__, func=self.function.__name__
-                ),
-                pytrace=False,
-            )
+
         return valtypes
 
     def _validate_if_using_arg_names(

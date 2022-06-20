@@ -22,6 +22,7 @@ from _pytest import python
 from _pytest.compat import _format_args
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
+from _pytest.fixtures import FixtureDef
 from _pytest.outcomes import fail
 from _pytest.pytester import Pytester
 from _pytest.python import IdMaker
@@ -34,7 +35,7 @@ class TestMetafunc:
         # on the funcarg level, so we don't need a full blown
         # initialization.
         class FuncFixtureInfoMock:
-            name2fixturedefs = None
+            name2fixturedefs: Dict[str, Sequence["FixtureDef[Any]"]] = {}
 
             def __init__(self, names):
                 self.names_closure = names
