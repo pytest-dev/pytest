@@ -410,5 +410,11 @@ def check_testcase_implements_trial_reporter(done: List[int] = []) -> None:
 
 
 def _is_skipped(obj) -> bool:
-    """Return True if the given object has been marked with @unittest.skip."""
-    return bool(getattr(obj, "__unittest_skip__", False))
+    """Return True if the given object has been marked with @unittest.skip.
+
+    Also return True if obj is a method of a skipped object.
+    """
+    skipped = bool(getattr(obj, "__unittest_skip__", False))
+    if isinstance(obj, types.MethodType):
+        skipped |= _is_skipped(obj.__self__)
+    return skipped

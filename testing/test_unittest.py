@@ -1265,12 +1265,24 @@ def test_pdb_teardown_skipped(
             def test_1(self):
                 pass
 
+        {mark}("skipped for other reasons")
+        class MyTestCase2(unittest.TestCase):
+
+            def setUp(self):
+                pytest.test_pdb_teardown_skipped.append("setUp:" + self.id())
+
+            def tearDown(self):
+                pytest.test_pdb_teardown_skipped.append("tearDown:" + self.id())
+
+            def test_2(self):
+                pass
+
     """.format(
             mark=mark
         )
     )
     result = pytester.runpytest_inprocess("--pdb")
-    result.stdout.fnmatch_lines("* 1 skipped in *")
+    result.stdout.fnmatch_lines("* 2 skipped in *")
     assert tracked == []
 
 
