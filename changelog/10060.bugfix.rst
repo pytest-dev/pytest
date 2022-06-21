@@ -1,0 +1,2 @@
+Fix regression where running with ``--pdb`` would call the ``tearDown`` methods of ``unittest.TestCase``
+subclasses tests that are skipped on the class level.
