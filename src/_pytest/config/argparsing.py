@@ -227,7 +227,7 @@ class Argument:
     _typ_map = {"int": int, "string": str, "float": float, "complex": complex}
 
     def __init__(self, *names: str, **attrs: Any) -> None:
-        """Store parms in private vars for use in add_argument."""
+        """Store params in private vars for use in add_argument."""
         self._attrs = attrs
         self._short_opts: List[str] = []
         self._long_opts: List[str] = []
