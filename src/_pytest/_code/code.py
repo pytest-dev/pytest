@@ -925,7 +925,9 @@ class FormattedExcinfo:
             seen.add(id(e))
             if isinstance(e, ExceptionGroup):
                 reprtraceback = ReprTracebackNative(
-                    traceback.format_exception(type(e), e, excinfo.traceback[0]._rawentry)
+                    traceback.format_exception(
+                        type(e), e, excinfo.traceback[0]._rawentry
+                    )
                 )
                 reprcrash = None
             elif excinfo_:
