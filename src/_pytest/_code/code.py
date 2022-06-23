@@ -68,6 +68,7 @@ try:
 except ModuleNotFoundError:
     pass  # No backport is installed
 
+
 class Code:
     """Wrapper around Python code objects."""
 
@@ -935,17 +936,19 @@ class FormattedExcinfo:
         while e is not None and id(e) not in seen:
             seen.add(id(e))
             if isinstance(e, ExceptionGroupTypes):
-                reprtraceback: Union[ReprTracebackNative, ReprTraceback] = ReprTracebackNative(
+                reprtraceback: Union[
+                    ReprTracebackNative, ReprTraceback
+                ] = ReprTracebackNative(
                     traceback.format_exception(
-                        type(excinfo.value), excinfo.value, excinfo.traceback[0]._rawentry
+                        type(excinfo.value),
+                        excinfo.value,
+                        excinfo.traceback[0]._rawentry,
                     )
                 )
                 reprcrash: Optional[ReprFileLocation] = None
             elif excinfo_:
                 reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash = (
-                    excinfo_._getreprcrash() if self.style != "value" else None
-                )
+                reprcrash = excinfo_._getreprcrash() if self.style != "value" else None
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
