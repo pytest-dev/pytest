@@ -1,0 +1,1 @@
+Showing inner exceptions in ``ExceptionGroups`` when using display options other than ``--tb=native``.
