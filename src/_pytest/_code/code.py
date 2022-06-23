@@ -923,7 +923,12 @@ class FormattedExcinfo:
         seen: Set[int] = set()
         while e is not None and id(e) not in seen:
             seen.add(id(e))
-            if excinfo_:
+            if isinstance(e, ExceptionGroup):
+                reprtraceback = ReprTracebackNative(
+                    traceback.format_exception(type(e), e, excinfo.traceback[0]._rawentry)
+                )
+                reprcrash = None
+            elif excinfo_:
                 reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash: Optional[ReprFileLocation] = (
                     excinfo_._getreprcrash() if self.style != "value" else None
