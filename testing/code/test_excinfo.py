@@ -1472,7 +1472,6 @@ def test_no_recursion_index_on_recursion_error():
     assert "maximum recursion" in str(excinfo.getrepr())
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires python3.11 or higher")
 def test_exceptiongroup(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
