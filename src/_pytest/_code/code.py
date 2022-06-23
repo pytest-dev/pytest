@@ -56,9 +56,9 @@ if TYPE_CHECKING:
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-ExceptionGroupTypes: tuple = ()
+ExceptionGroupTypes: tuple = ()  # type: ignore
 try:
-    ExceptionGroupTypes += (ExceptionGroup,)
+    ExceptionGroupTypes += (ExceptionGroup,)  # type: ignore
 except NameError:
     pass  # Is missing for `python<3.10`
 try:
@@ -67,7 +67,6 @@ try:
     ExceptionGroupTypes += (exceptiongroup.ExceptionGroup,)
 except ModuleNotFoundError:
     pass  # No backport is installed
-
 
 class Code:
     """Wrapper around Python code objects."""
@@ -936,15 +935,15 @@ class FormattedExcinfo:
         while e is not None and id(e) not in seen:
             seen.add(id(e))
             if isinstance(e, ExceptionGroupTypes):
-                reprtraceback = ReprTracebackNative(
+                reprtraceback: Union[ReprTracebackNative, ReprTraceback] = ReprTracebackNative(
                     traceback.format_exception(
-                        type(e), e, excinfo.traceback[0]._rawentry
+                        type(excinfo.value), excinfo.value, excinfo.traceback[0]._rawentry
                     )
                 )
-                reprcrash = None
+                reprcrash: Optional[ReprFileLocation] = None
             elif excinfo_:
                 reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash: Optional[ReprFileLocation] = (
+                reprcrash = (
                     excinfo_._getreprcrash() if self.style != "value" else None
                 )
             else:
