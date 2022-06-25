@@ -486,6 +486,7 @@ class FixtureRequest:
 
     @property
     def path(self) -> Path:
+        """Path where the test function was collected."""
         if self.scope not in ("function", "class", "module", "package"):
             raise AttributeError(f"path not available in {self.scope}-scoped context")
         # TODO: Remove ignore once _pyfuncitem is properly typed.
