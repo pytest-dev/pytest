@@ -244,7 +244,7 @@ class TestPDB:
             """
             def test_1():
                 import logging
-                logging.warn("get " + "rekt")
+                logging.warning("get " + "rekt")
                 assert False
         """
         )
@@ -263,7 +263,7 @@ class TestPDB:
             """
             def test_1():
                 import logging
-                logging.warn("get " + "rekt")
+                logging.warning("get " + "rekt")
                 assert False
         """
         )
