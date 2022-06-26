@@ -320,7 +320,9 @@ latex_domain_indices = False
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("how-to/usage", "pytest", "pytest usage", ["holger krekel at merlinux eu"], 1)]
+man_pages = [
+    ("how-to/usage", "pytest", "pytest usage", ["holger krekel at merlinux eu"], 1)
+]
 
 
 # -- Options for Epub output ---------------------------------------------------
