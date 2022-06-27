@@ -190,7 +190,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             return False
 
         # For matching the name it must be as if it was a filename.
-        path = PurePath(os.path.sep.join(parts) + ".py")
+        path = PurePath(*parts).with_suffix(".py")
 
         for pat in self.fnpats:
             # if the pattern contains subdirectories ("tests/**.py" for example) we can't bail out based
