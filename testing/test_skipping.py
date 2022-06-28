@@ -680,6 +680,41 @@ class TestXFail:
         result.stdout.fnmatch_lines(["*1 passed*"])
         assert result.ret == 0
 
+    @pytest.mark.parametrize("strict", [True, False])
+    def test_runxfail_with_empty_parameter_set_mark_xfail(self, testdir, strict):
+        testdir.makeini(
+            """
+            [pytest]
+            xfail_strict = %s
+        """
+            % strict
+        )
+
+        p = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                ('a', 'b'),
+                # no cases defined yet
+                (
+                ),
+            )
+            def test(a, b):
+                assert 1 == 1
+        """
+        )
+        result = testdir.runpytest(
+            p, "--runxfail", "-o", "empty_parameter_set_mark=xfail"
+        )
+
+        result.stdout.fnmatch_lines(["*1 failed*" if strict else "*1 passed*"])
+        if strict:
+            result.stdout.fnmatch_lines(
+                ["*XPASS(strict)] got empty parameter set ('a', 'b')*"]
+            )
+        assert result.ret == (1 if strict else 0)
+
     @pytest.mark.parametrize("strict_val", ["true", "false"])
     def test_strict_xfail_default_from_file(
         self, pytester: Pytester, strict_val

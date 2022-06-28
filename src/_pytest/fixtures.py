@@ -346,7 +346,7 @@ def reorder_items_atscope(
 
 
 def get_direct_param_fixture_func(request):
-    return request.param
+    return request.param if hasattr(request, "param") else None
 
 
 @attr.s(slots=True, auto_attribs=True)

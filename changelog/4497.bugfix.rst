@@ -1,0 +1,1 @@
+Fix the crash that occurred when pytest was invoked with `-o empty_parameter_set_mark=xfail` + `--runxfail`
