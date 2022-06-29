@@ -92,12 +92,8 @@ class TestRaises:
     def test_does_not_raise(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
-            from contextlib import contextmanager
+            from contextlib import nullcontext as does_not_raise
             import pytest
-
-            @contextmanager
-            def does_not_raise():
-                yield
 
             @pytest.mark.parametrize('example_input,expectation', [
                 (3, does_not_raise()),
@@ -117,12 +113,8 @@ class TestRaises:
     def test_does_not_raise_does_raise(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
-            from contextlib import contextmanager
+            from contextlib import nullcontext as does_not_raise
             import pytest
-
-            @contextmanager
-            def does_not_raise():
-                yield
 
             @pytest.mark.parametrize('example_input,expectation', [
                 (0, does_not_raise()),
