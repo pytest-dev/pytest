@@ -542,7 +542,11 @@ class DoctestModule(pytest.Module):
             )
         else:
             try:
-                module = import_path(self.path, root=self.config.rootpath)
+                module = import_path(
+                    self.path,
+                    root=self.config.rootpath,
+                    mode=self.config.getoption("importmode"),
+                )
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
                     pytest.skip("unable to import module %r" % self.path)
