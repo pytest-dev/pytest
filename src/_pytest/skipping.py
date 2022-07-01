@@ -6,6 +6,7 @@ import traceback
 from collections.abc import Mapping
 from contextvars import ContextVar
 from typing import Generator
+from typing import MutableMapping
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -306,19 +307,23 @@ def pytest_runtest_protocol(item: Item, nextitem: Optional[Item]) -> None:
     current_item_var.set(item)
 
 
-_not_passed = object()
+class _NotPassed:
+    pass
+
+
+_not_passed = _NotPassed()
 
 
 def expect_failure(
-    reason: str = _not_passed,
-    raises: Union[Type[BaseException], Tuple[Type[BaseException], ...]] = _not_passed,
-    strict: bool = _not_passed,
+    reason: str = "",
+    raises: Optional[
+        Union[Type[BaseException], Tuple[Type[BaseException], ...]]
+    ] = None,
+    strict: Union[bool, _NotPassed] = _not_passed,
 ) -> None:
-    kwargs = {}
-    if reason is not _not_passed:
-        kwargs["reason"] = reason
-    if raises is not _not_passed:
-        kwargs["raises"] = raises
-    if strict is not _not_passed:
+    kwargs: MutableMapping[str, bool] = {}
+    if not isinstance(strict, _NotPassed):
         kwargs["strict"] = strict
-    current_item_var.get().add_marker(MARK_GEN.xfail(**kwargs))
+    current_item_var.get().add_marker(
+        MARK_GEN.xfail(reason=reason, raises=raises, **kwargs)
+    )
