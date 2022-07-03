@@ -346,6 +346,10 @@ class TestApprox:
         assert 10 != approx(1, rel=1e-6, abs=1e-12)
         assert not (10 == approx(1, rel=1e-6, abs=1e-12))
 
+    def test_hash(self):
+        assert {1} == {approx(1, rel=1e-6, abs=1e-12)}
+        assert {1+1e-5} != {approx(1, rel=1e-6, abs=1e-12)}
+
     def test_exactly_equal(self):
         examples = [
             (2.0, 2.0),
