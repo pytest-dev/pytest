@@ -2,7 +2,6 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `Europython <https://ep2022.europython.eu/session/pytest-simple-rapid-and-fun-testing-with-python>`__, July 11th 2022 (3h), Dublin, Ireland
    - `CH Open Workshop-Tage <https://workshoptage.ch/workshops/2022/pytest-professionelles-testen-nicht-nur-fuer-python/>`__ (German), September 8th 2022, Bern, Switzerland
    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote and Leipzig, Germany
 
