@@ -1,1 +1,1 @@
-Fixed ``caplog.get_records(when)`` still get the stage records after ``caplog.clear()``
+ensure ``caplog.get_records(when)`` returns current/correct data after invoking ``caplog.clear()``
