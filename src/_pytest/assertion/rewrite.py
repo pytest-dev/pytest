@@ -303,7 +303,7 @@ def _write_pyc_fp(
 
 
 if sys.platform == "win32":
-    from atomicwrites import atomic_write
+    from _pytest.atomic_writes import atomic_write
 
     def _write_pyc(
         state: "AssertionState",

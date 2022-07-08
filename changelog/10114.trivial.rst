@@ -1,0 +1,1 @@
+Dropped the dependency to `atomicwrites <https://github.com/untitaker/python-atomicwrites>`__ library.
