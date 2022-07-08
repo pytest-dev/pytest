@@ -9,38 +9,12 @@ import os
 import sys
 import tempfile
 
-try:
-    import fcntl
-except ImportError:
-    fcntl = None
-
-# `fspath` was added in Python 3.6
-try:
-    from os import fspath
-except ImportError:
-    fspath = None
-
-__version__ = "1.4.1"
-
-
-PY2 = sys.version_info[0] == 2
-
-text_type = unicode if PY2 else str  # noqa
-
-
-def _path_to_unicode(x):
-    if not isinstance(x, text_type):
-        return x.decode(sys.getfilesystemencoding())
-    return x
-
-
-DEFAULT_MODE = "wb" if PY2 else "w"
-
 
 _proper_fsync = os.fsync
 
-
 if sys.platform != "win32":
+    import fcntl
+
     if hasattr(fcntl, "F_FULLFSYNC"):
 
         def _proper_fsync(fd):
@@ -85,18 +59,14 @@ else:
     def _replace_atomic(src, dst):
         _handle_errors(
             windll.kernel32.MoveFileExW(
-                _path_to_unicode(src),
-                _path_to_unicode(dst),
+                src,
+                dst,
                 _windows_default_flags | _MOVEFILE_REPLACE_EXISTING,
             )
         )
 
     def _move_atomic(src, dst):
-        _handle_errors(
-            windll.kernel32.MoveFileExW(
-                _path_to_unicode(src), _path_to_unicode(dst), _windows_default_flags
-            )
-        )
+        _handle_errors(windll.kernel32.MoveFileExW(src, dst, _windows_default_flags))
 
 
 def replace_atomic(src, dst):
@@ -143,7 +113,7 @@ class AtomicWriter:
     subclass.
     """
 
-    def __init__(self, path, mode=DEFAULT_MODE, overwrite=False, **open_kwargs):
+    def __init__(self, path, mode="w", overwrite=False, **open_kwargs):
         if "a" in mode:
             raise ValueError(
                 "Appending to an existing file is not supported, because that "
@@ -156,19 +126,13 @@ class AtomicWriter:
         if "w" not in mode:
             raise ValueError("AtomicWriters can only be written to.")
 
-        # Attempt to convert `path` to `str` or `bytes`
-        if fspath is not None:
-            path = fspath(path)
-
-        self._path = path
+        self._path = os.fspath(path)
         self._mode = mode
         self._overwrite = overwrite
         self._open_kwargs = open_kwargs
 
     def open(self):
-        """
-        Open the temporary file.
-        """
+        """Open the temporary file."""
         return self._open(self.get_fileobject)
 
     @contextlib.contextmanager
@@ -204,8 +168,10 @@ class AtomicWriter:
         return open(**kwargs)
 
     def sync(self, f):
-        """responsible for clearing as many file caches as possible before
-        commit"""
+        """
+        Responsible for clearing as many file caches as possible before
+        commit.
+        """
         f.flush()
         _proper_fsync(f.fileno())
 
