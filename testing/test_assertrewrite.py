@@ -1009,7 +1009,7 @@ class TestAssertionRewriteHookDetails:
         )
         assert pytester.runpytest().ret == 0
 
-    def test_write_pyc(self, pytester: Pytester, tmp_path, monkeypatch) -> None:
+    def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
 
@@ -1021,27 +1021,8 @@ class TestAssertionRewriteHookDetails:
         co = compile("1", "f.py", "single")
         assert _write_pyc(state, co, os.stat(source_path), pycpath)
 
-        if sys.platform == "win32":
-            from contextlib import contextmanager
-
-            @contextmanager
-            def atomic_write_failed(fn, mode="r", overwrite=False):
-                e = OSError()
-                e.errno = 10
-                raise e
-                yield
-
-            monkeypatch.setattr(
-                _pytest.assertion.rewrite, "atomic_write", atomic_write_failed
-            )
-        else:
-
-            def raise_oserror(*args):
-                raise OSError()
-
-            monkeypatch.setattr("os.rename", raise_oserror)
-
-        assert not _write_pyc(state, co, os.stat(source_path), pycpath)
+        with mock.patch.object(os, "replace", side_effect=OSError):
+            assert not _write_pyc(state, co, os.stat(source_path), pycpath)
 
     def test_resources_provider_for_loader(self, pytester: Pytester) -> None:
         """
