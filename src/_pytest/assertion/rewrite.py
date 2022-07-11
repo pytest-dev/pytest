@@ -281,7 +281,9 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             else:
                 from importlib.resources.readers import FileReader
 
-            return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
+            return FileReader(  # type:ignore[no-any-return]
+                types.SimpleNamespace(path=self._rewritten_names[name])
+            )
 
 
 def _write_pyc_fp(
