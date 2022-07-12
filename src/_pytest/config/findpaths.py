@@ -1,6 +1,5 @@
 import os
 import sys
-import warnings
 from pathlib import Path
 from typing import Dict
 from typing import Iterable
@@ -81,7 +80,7 @@ def _parse_cfg_file(path: Path) -> PARSE_RESULT:
 
 
 def _parse_pyproject_ini_options(
-    path: Path,
+    filepath: Path,
 ) -> PARSE_RESULT:
     """Load backward compatible ini options from pyproject.toml"""
 
