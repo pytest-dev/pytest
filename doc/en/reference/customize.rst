@@ -79,7 +79,7 @@ and can also be used to hold pytest configuration if they have a ``[pytest]`` se
 .. code-block:: ini
 
     # tox.ini
-    [pytest]
+    [tool:pytest]
     minversion = 6.0
     addopts = -ra -q
     testpaths =
@@ -90,26 +90,7 @@ and can also be used to hold pytest configuration if they have a ``[pytest]`` se
 setup.cfg
 ~~~~~~~~~
 
-``setup.cfg`` files are general purpose configuration files, used originally by :doc:`distutils <distutils/configfile>`, and can also be used to hold pytest configuration
-if they have a ``[tool:pytest]`` section.
-
-.. code-block:: ini
-
-    # setup.cfg
-    [tool:pytest]
-    minversion = 6.0
-    addopts = -ra -q
-    testpaths =
-        tests
-        integration
-
-.. warning::
-
-    Usage of ``setup.cfg`` is not recommended unless for very simple use cases. ``.cfg``
-    files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
-    down problems.
-    When possible, it is recommended to use the latter files, or ``pyproject.toml``, to hold your
-    pytest configuration.
+``setup.cfg`` file usage for pytest has been deprecated, its recommended to use ``tox.ini`` or ``pyproject.toml``
 
 
 .. _rootdir:
