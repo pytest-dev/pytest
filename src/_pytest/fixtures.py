@@ -345,7 +345,7 @@ def reorder_items_atscope(
     return items_done
 
 
-def get_direct_param_fixture_func(request):
+def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
     return request.param
 
 
@@ -407,6 +407,15 @@ class FixtureRequest:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index: Dict[str, int] = {}
         self._fixturemanager: FixtureManager = pyfuncitem.session._fixturemanager
+        # Notes on the type of `param`:
+        # -`request.param` is only defined in parametrized fixtures, and will raise
+        #   AttributeError otherwise. Python typing has no notion of "undefined", so
+        #   this cannot be reflected in the type.
+        # - Technically `param` is only (possibly) defined on SubRequest, not
+        #   FixtureRequest, but the typing of that is still in flux so this cheats.
+        # - In the future we might consider using a generic for the param type, but
+        #   for now just using Any.
+        self.param: Any
 
     @property
     def scope(self) -> "_ScopeName":
