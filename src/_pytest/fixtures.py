@@ -345,7 +345,7 @@ def reorder_items_atscope(
     return items_done
 
 
-def get_direct_param_fixture_func(request):
+def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
     return request.param
 
 
@@ -407,6 +407,7 @@ class FixtureRequest:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index: Dict[str, int] = {}
         self._fixturemanager: FixtureManager = pyfuncitem.session._fixturemanager
+        self.param: Any
 
     @property
     def scope(self) -> "_ScopeName":
