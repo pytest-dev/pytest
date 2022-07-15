@@ -1,1 +1,1 @@
-Explicit note that ``tmpdir`` fixture is discouraged in favour of ``tmp_path``.
+Explicit note that :fixture:`tmpdir` fixture is discouraged in favour of :fixture:`tmp_path`.
