@@ -110,15 +110,15 @@ def warns(
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
 
-    Specifically, the parameter ``expected_warning`` can be a warning class or
-    sequence of warning classes, and the code inside the ``with`` block must issue a warning of that class or
-    classes.
+    Specifically, the parameter ``expected_warning`` can be a warning class or sequence
+    of warning classes, and the code inside the ``with`` block must issue at least one
+    warning of that class or classes.
 
-    This helper produces a list of :class:`warnings.WarningMessage` objects,
-    one for each warning raised.
+    This helper produces a list of :class:`warnings.WarningMessage` objects, one for
+    each warning raised (regardless of whether it is an ``expected_warning`` or not).
 
-    This function can be used as a context manager, or any of the other ways
-    :func:`pytest.raises` can be used::
+    This function can be used as a context manager, which will capture all the raised
+    warnings inside it::
 
         >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
@@ -138,6 +138,11 @@ def warns(
         Traceback (most recent call last):
           ...
         Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+
+    **Using with** ``pytest.mark.parametrize``
+
+    When using :ref:`pytest.mark.parametrize ref` it is possible to parametrize tests
+    such that some runs raise a warning and others do not.
 
     """
     __tracebackhide__ = True

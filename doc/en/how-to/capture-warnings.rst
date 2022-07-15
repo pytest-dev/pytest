@@ -42,6 +42,8 @@ Running pytest now produces this output:
     -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
     ======================= 1 passed, 1 warning in 0.12s =======================
 
+.. _`controlling-warnings`:
+
 Controlling warnings
 --------------------
 
@@ -176,10 +178,13 @@ using an external system.
 DeprecationWarning and PendingDeprecationWarning
 ------------------------------------------------
 
-
 By default pytest will display ``DeprecationWarning`` and ``PendingDeprecationWarning`` warnings from
 user code and third-party libraries, as recommended by :pep:`565`.
 This helps users keep their code modern and avoid breakages when deprecated warnings are effectively removed.
+
+However, in the specific case where users capture any type of warnings in their test, either with
+:func:`pytest.warns`, :func:`pytest.deprecated_call` or using the :ref:`recwarn <recwarn>` fixture,
+no warning will be displayed at all.
 
 Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
 (such as third-party libraries), in which case you might use the warning filters options (ini or marks) to ignore
@@ -196,6 +201,9 @@ For example:
 
 This will ignore all warnings of type ``DeprecationWarning`` where the start of the message matches
 the regular expression ``".*U.*mode is deprecated"``.
+
+See :ref:`@pytest.mark.filterwarnings <filterwarnings>` and
+:ref:`Controlling warnings <controlling-warnings>` for more examples.
 
 .. note::
 
@@ -245,10 +253,10 @@ when called with a ``17`` argument.
 Asserting warnings with the warns function
 ------------------------------------------
 
-
-
 You can check that code raises a particular warning using :func:`pytest.warns`,
-which works in a similar manner to :ref:`raises <assertraises>`:
+which works in a similar manner to :ref:`raises <assertraises>` (except that
+:ref:`raises <assertraises>` does not capture all exceptions, only the
+``expected_exception``):
 
 .. code-block:: python
 
@@ -261,8 +269,8 @@ which works in a similar manner to :ref:`raises <assertraises>`:
         with pytest.warns(UserWarning):
             warnings.warn("my warning", UserWarning)
 
-The test will fail if the warning in question is not raised. The keyword
-argument ``match`` to assert that the exception matches a text or regex::
+The test will fail if the warning in question is not raised. Use the keyword
+argument ``match`` to assert that the warning matches a text or regex::
 
     >>> with warns(UserWarning, match='must be 0 or None'):
     ...     warnings.warn("value must be 0 or None", UserWarning)
@@ -359,20 +367,32 @@ Additional use cases of warnings in tests
 
 Here are some use cases involving warnings that often come up in tests, and suggestions on how to deal with them:
 
-- To ensure that **at least one** warning is emitted, use:
+- To ensure that **at least one** of the indicated warnings is issued, use:
 
 .. code-block:: python
 
-    with pytest.warns():
+    def test_warning():
+        with pytest.warns((RuntimeWarning, UserWarning)):
+            ...
+
+- To ensure that **only** certain warnings are issued, use:
+
+.. code-block:: python
+
+    def test_warning(recwarn):
         ...
+        assert len(recwarn) == 1
+        user_warning = recwarn.pop(UserWarning)
+        assert issubclass(user_warning.category, UserWarning)
 
 -  To ensure that **no** warnings are emitted, use:
 
 .. code-block:: python
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ...
+    def test_warning():
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            ...
 
 - To suppress warnings, use:
 
