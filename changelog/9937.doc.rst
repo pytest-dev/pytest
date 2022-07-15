@@ -1,0 +1,1 @@
+Explicit note that ``tmpdir`` fixture is discouraged in favour of ``tmp_path``.
