@@ -271,7 +271,14 @@ class LegacyTestdirPlugin:
 @attr.s(init=False, auto_attribs=True)
 class TempdirFactory:
     """Backward compatibility wrapper that implements :class:`py.path.local`
-    for :class:`TempPathFactory`."""
+    for :class:`TempPathFactory`.
+
+    .. note::
+        These days, it is preferred to use ``tmp_path_factory``.
+
+        :ref:`About the tmpdir and tmpdir_factory fixtures<tmpdir and tmpdir_factory>`.
+
+    """
 
     _tmppath_factory: TempPathFactory
 
@@ -311,6 +318,11 @@ class LegacyTmpdirPlugin:
         temporary directory`.
 
         The returned object is a `legacy_path`_ object.
+
+        .. note::
+            These days, it is preferred to use ``tmp_path``.
+
+            :ref:`About the tmpdir and tmpdir_factory fixtures<tmpdir and tmpdir_factory>`.
 
         .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
         """
