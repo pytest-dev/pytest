@@ -650,7 +650,7 @@ class Session(nodes.FSCollector):
                 for arg, collectors in self._notfound:
                     if collectors:
                         errors.append(
-                            f"coundn't collect: {arg}\n(no name {arg!r} in any of {collectors!r})"
+                            f"couldn't collect: {arg}\n(no name {arg!r} in any of {collectors!r})"
                         )
                     else:
                         errors.append(f"found no collectors for {arg}")
