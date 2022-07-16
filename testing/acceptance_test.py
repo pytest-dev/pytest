@@ -351,7 +351,7 @@ class TestGeneralUsage:
         )
         res = pytester.runpytest(p.name + "::" + "test_notfound")
         assert res.ret
-        res.stderr.fnmatch_lines(["*ERROR*not found*"])
+        res.stderr.fnmatch_lines(["*ERROR*couldn't collect*"])
 
     def test_docstring_on_hookspec(self) -> None:
         from _pytest import hookspec
