@@ -346,7 +346,7 @@ Custom marker and command line option to control test runs
 Plugins can provide custom markers and implement specific behaviour
 based on it. This is a self-contained example which adds a command
 line option and a parametrized test function marker to run tests
-specifies via named environments:
+specified via named environments:
 
 .. code-block:: python
 
