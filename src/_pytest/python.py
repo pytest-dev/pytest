@@ -177,6 +177,7 @@ def async_warn_and_skip(nodeid: str) -> None:
     )
     msg += "  - anyio\n"
     msg += "  - pytest-asyncio\n"
+    msg += "  - pytest-asyncio-cooperative\n"
     msg += "  - pytest-tornasync\n"
     msg += "  - pytest-trio\n"
     msg += "  - pytest-twisted"
