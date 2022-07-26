@@ -729,15 +729,66 @@ Here's how the previous example would look using the ``addfinalizer`` method:
         assert email in receiving_user.inbox
 
 
-It's a bit longer than yield fixtures and a bit more complex, but it
-does offer some nuances for when you're in a pinch.
+Here's how the previous example would look using the ``addfinalizer`` method:
+ It's a bit longer than yield fixtures and a bit more complex, but it
+ does offer some nuances for when you're in a pinch.
+
+Note on finalizer order
+""""""""""""""""""""""""
+
+Finalizers are executed in a first-in-last-out order, while operations after yield are executed sequentially.
+Consider the differences in the following examples:
+
+.. code-block:: python
+
+    import pytest
+    from functools import partial
+
+
+    @pytest.fixture
+    def fix_w_finalizers(request):
+        request.addfinalizer(partial(print, "finalizer_2"))
+        request.addfinalizer(partial(print, "finalizer_1"))
+
+    @pytest.fixture
+    def fix_w_yield():
+        yield
+        print("after_yield_1")
+        print("after_yield_2")
+
+
+    def test_foo(fix_w_finalizers):
+        print("test_foo")
+        pass
+
+
+    def test_bar(fix_w_yield):
+        print("test_bar")
+        pass
+
+
 
 .. code-block:: pytest
 
-   $ pytest -q test_emaillib.py
-   .                                                                    [100%]
-   1 passed in 0.12s
+    $ pytest test_module.py
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    collected 2 items
 
+    main.py
+    test_foo
+    .finalizer_1
+    finalizer_2
+
+    test_bar
+    .after_yield_1
+    after_yield_2
+
+
+.. code-block:: pytest
+   $ pytest -q test_emaillib.py
+  .                                                                    [100%]
+  1 passed in 0.12s
 .. _`safe teardowns`:
 
 Safe teardowns
