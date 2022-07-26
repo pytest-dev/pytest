@@ -680,8 +680,6 @@ So to make sure we don't run the finalizer code when we wouldn't need to, we
 would only add the finalizer once the fixture would have done something that
 we'd need to teardown.
 
-Here's how the previous example would look using the ``addfinalizer`` method:
-
 .. code-block:: python
 
     # content of test_emaillib.py
@@ -730,8 +728,8 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 
 
 Here's how the previous example would look using the ``addfinalizer`` method:
- It's a bit longer than yield fixtures and a bit more complex, but it
- does offer some nuances for when you're in a pinch.
+It's a bit longer than yield fixtures and a bit more complex, but it
+does offer some nuances for when you're in a pinch.
 
 Note on finalizer order
 """"""""""""""""""""""""
