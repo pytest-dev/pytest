@@ -786,6 +786,7 @@ Consider the differences in the following examples:
 
 
 .. code-block:: pytest
+
    $ pytest -q test_emaillib.py
   .                                                                    [100%]
   1 passed in 0.12s
