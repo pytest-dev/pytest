@@ -750,6 +750,7 @@ Consider the differences in the following examples:
         request.addfinalizer(partial(print, "finalizer_2"))
         request.addfinalizer(partial(print, "finalizer_1"))
 
+
     @pytest.fixture
     def fix_w_yield():
         yield
