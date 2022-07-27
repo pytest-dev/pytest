@@ -768,6 +768,32 @@ Consider the differences in the following examples:
         print("after_yield_2")
 
 
+.. code-block:: pytest
+
+    $ pytest test_module.py
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    collected 1 item
+
+    test_module.py test_bar
+    .after_yield_2
+    after_yield_1
+
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def fix_w_finalizers(request):
+        request.addfinalizer(partial(print, "finalizer_2"))
+        request.addfinalizer(partial(print, "finalizer_1"))
+
+
+    @pytest.fixture
+    def test_bar(fix_w_finalizers):
+        print("test_bar")
 
 
 .. code-block:: pytest
@@ -775,17 +801,11 @@ Consider the differences in the following examples:
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    collected 2 items
+    collected 1 item
 
-    main.py
-    test_foo
+    test_module.py test_bar
     .finalizer_1
     finalizer_2
-
-    test_bar
-    .after_yield_1
-    after_yield_2
-
 
 
 .. _`safe teardowns`:
