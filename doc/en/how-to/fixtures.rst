@@ -759,7 +759,6 @@ Consider the differences in the following examples:
 
     def test_foo(fix_w_finalizers):
         print("test_foo")
-        pass
 
 
     def test_bar(fix_w_yield):
