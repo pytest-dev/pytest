@@ -741,8 +741,8 @@ does offer some nuances for when you're in a pinch.
 Note on finalizer order
 """"""""""""""""""""""""
 
-Finalizers are executed in a first-in-last-out order, while operations after yield are executed sequentially.
-Consider the differences in the following examples:
+Finalizers are executed in a first-in-last-out order.
+For yield fixtures, the first fixture to run is the right-most one, i.e. the last test parameter.
 
 .. regendoc:wipe
 
@@ -751,7 +751,6 @@ Consider the differences in the following examples:
     import pytest
 
 
-    @pytest.fixture
     def test_bar(fix_w_yield1, fix_w_yield2):
         print("test_bar")
 
@@ -780,6 +779,9 @@ Consider the differences in the following examples:
     after_yield_1
 
 
+
+For finalizers, the first fixture to run is last call to `request.addfinalizer`.
+
 .. code-block:: python
 
     import pytest
@@ -791,7 +793,6 @@ Consider the differences in the following examples:
         request.addfinalizer(partial(print, "finalizer_1"))
 
 
-    @pytest.fixture
     def test_bar(fix_w_finalizers):
         print("test_bar")
 
@@ -806,6 +807,8 @@ Consider the differences in the following examples:
     test_module.py test_bar
     .finalizer_1
     finalizer_2
+
+This is so because yield fixtures use addfinalizer behind the scenes: when the fixture executes, addfinalizer registers a function that resumes the generator, which in turn calls the teardown code.
 
 
 .. _`safe teardowns`:
