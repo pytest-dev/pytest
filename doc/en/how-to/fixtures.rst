@@ -742,7 +742,7 @@ Note on finalizer order
 """"""""""""""""""""""""
 
 Finalizers are executed in a first-in-last-out order.
-For yield fixtures, the first fixture to run is the right-most one, i.e. the last test parameter.
+For yield fixtures, the first teardown code to run is from the right-most fixture, i.e. the last test parameter.
 
 .. regendoc:wipe
 
