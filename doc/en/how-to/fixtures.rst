@@ -738,6 +738,8 @@ Note on finalizer order
 Finalizers are executed in a first-in-last-out order, while operations after yield are executed sequentially.
 Consider the differences in the following examples:
 
+.. regendoc:wipe
+
 .. code-block:: python
 
     import pytest
