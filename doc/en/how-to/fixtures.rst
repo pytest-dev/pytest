@@ -808,7 +808,7 @@ For finalizers, the first fixture to run is last call to `request.addfinalizer`.
     .finalizer_1
     finalizer_2
 
-This is so because yield fixtures use addfinalizer behind the scenes: when the fixture executes, addfinalizer registers a function that resumes the generator, which in turn calls the teardown code.
+This is so because yield fixtures use `addfinalizer` behind the scenes: when the fixture executes, `addfinalizer` registers a function that resumes the generator, which in turn calls the teardown code.
 
 
 .. _`safe teardowns`:
