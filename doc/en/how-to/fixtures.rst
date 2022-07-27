@@ -763,7 +763,6 @@ Consider the differences in the following examples:
 
     def test_bar(fix_w_yield):
         print("test_bar")
-        pass
 
 
 
