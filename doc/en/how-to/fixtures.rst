@@ -732,6 +732,12 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 It's a bit longer than yield fixtures and a bit more complex, but it
 does offer some nuances for when you're in a pinch.
 
+.. code-block:: pytest
+
+   $ pytest -q test_emaillib.py
+  .                                                                    [100%]
+  1 passed in 0.12s
+
 Note on finalizer order
 """"""""""""""""""""""""
 
@@ -743,28 +749,24 @@ Consider the differences in the following examples:
 .. code-block:: python
 
     import pytest
-    from functools import partial
 
 
     @pytest.fixture
-    def fix_w_finalizers(request):
-        request.addfinalizer(partial(print, "finalizer_2"))
-        request.addfinalizer(partial(print, "finalizer_1"))
+    def test_bar(fix_w_yield1, fix_w_yield2):
+        print("test_bar")
 
 
     @pytest.fixture
-    def fix_w_yield():
+    def fix_w_yield1():
         yield
         print("after_yield_1")
+
+
+    @pytest.fixture
+    def fix_w_yield2():
+        yield
         print("after_yield_2")
 
-
-    def test_foo(fix_w_finalizers):
-        print("test_foo")
-
-
-    def test_bar(fix_w_yield):
-        print("test_bar")
 
 
 
@@ -785,11 +787,7 @@ Consider the differences in the following examples:
     after_yield_2
 
 
-.. code-block:: pytest
 
-   $ pytest -q test_emaillib.py
-  .                                                                    [100%]
-  1 passed in 0.12s
 .. _`safe teardowns`:
 
 Safe teardowns
