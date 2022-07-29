@@ -55,7 +55,6 @@ class PytestRemovedIn8Warning(PytestDeprecationWarning):
     __module__ = "pytest"
 
 
-@final
 class PytestReturnNotNoneWarning(PytestDeprecationWarning):
     """Warning emitted when a test function is returning value other than None."""
 
@@ -82,7 +81,7 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
 
 
 @final
-class PytestUnhandledCoroutineWarning(PytestWarning):
+class PytestUnhandledCoroutineWarning(PytestReturnNotNoneWarning):
     """Warning emitted for an unhandled coroutine.
 
     A coroutine was encountered when collecting test functions, but was not
