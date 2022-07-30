@@ -227,10 +227,11 @@ class DontReadFromInput:
     def truncate(self, size: int) -> None:
         raise UnsupportedOperation("cannont truncate stdin")
 
-    def write(self, byte) -> None:
+    def write(self, *args) -> None:
         raise UnsupportedOperation("cannot write to stdin")
 
-    writelines = write
+    def writelines(self, *args) -> None:
+        raise UnsupportedOperation("Cannot write to stdin")
 
     def writable(self) -> bool:
         return False
