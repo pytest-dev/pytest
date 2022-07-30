@@ -1780,6 +1780,18 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
+def test_filename_too_long(pytester: Pytester) -> None:
+    path_str = (
+        "this is an extremely long path that should cause the runtime to complain and give"
+        + " an error of the type UsageError despite make this path pretty long before I"
+        + " still have to keep going to make sure that this usage error pops so the code"
+        + " coverage captures it xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    )
+    paths = path_str.split(" ")
+    result = pytester.runpytest(os.path.join(*paths))
+    assert result.ret == ExitCode.USAGE_ERROR
+
+
 def test_help_formatter_uses_py_get_terminal_width(monkeypatch: MonkeyPatch) -> None:
     from _pytest.config.argparsing import DropShorterLongHelpFormatter
 
