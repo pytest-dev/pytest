@@ -1782,13 +1782,21 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
 
 def test_filename_too_long(pytester: Pytester) -> None:
     path_str = (
-        "this is an extremely long path that should cause the runtime to complain and give"
-        + " an error of the type UsageError despite make this path pretty long before I"
-        + " still have to keep going to make sure that this usage error pops so the code"
-        + " coverage captures it xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     )
-    paths = path_str.split(" ")
-    result = pytester.runpytest(os.path.join(*paths))
+    config = pytester.parseconfig()
+    config.known_args_namespace.file_or_dir.append(path_str)
+    pytest.raises(
+        UsageError,
+        config.pluginmanager._set_initial_conftests,
+        config.known_args_namespace,
+        rootpath=config.rootpath,
+    )
+    result = pytester.runpytest(path_str)
     assert result.ret == ExitCode.USAGE_ERROR
 
 
