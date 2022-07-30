@@ -532,10 +532,11 @@ class PytestPluginManager(PluginManager):
                 if anchor.exists():  # we found some file object
                     self._try_load_conftest(anchor, namespace.importmode, rootpath)
                     foundanchor = True
+                print(str(anchor))
             except OSError:
                 import pytest
 
-                raise pytest.UsageError(f"file or directory not found: {anchor}")
+                raise pytest.UsageError(f"filename is too long: {anchor}")
         if not foundanchor:
             self._try_load_conftest(current, namespace.importmode, rootpath)
 
