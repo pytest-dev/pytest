@@ -29,11 +29,11 @@ def test_hookspec_via_function_attributes_are_deprecated():
         def pytest_bad_hook(self):
             pass
 
-        pytest_bad_hook.historic = True  # type: ignore[attr-defined]
+        pytest_bad_hook.historic = False  # type: ignore[attr-defined]
 
     with pytest.warns(
         PytestDeprecationWarning,
-        match=r"Please use the pytest\.hookspec\(historic=True\) decorator",
+        match=r"Please use the pytest\.hookspec\(historic=False\) decorator",
     ) as recorder:
         pm.add_hookspecs(DeprecatedHookMarkerSpec)
     (record,) = recorder

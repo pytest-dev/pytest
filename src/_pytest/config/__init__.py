@@ -348,18 +348,21 @@ def _get_legacy_hook_marks(
     hook_type: str,
     opt_names: Tuple[str, ...],
 ) -> Dict[str, bool]:
-    known_marks = {m.name for m in getattr(method, "pytestmark", [])}
-    must_warn = False
-    opts = {}
+    known_marks: set[str] = {m.name for m in getattr(method, "pytestmark", [])}
+    must_warn: list[str] = []
+    opts: dict[str, bool] = {}
     for opt_name in opt_names:
+        opt_attr = getattr(method, opt_name, AttributeError)
+        if opt_attr is not AttributeError:
+            must_warn.append(f"{opt_name}={opt_attr}")
+        elif opt_name in known_marks:
+            must_warn.append(f"{opt_name}=True")
         if hasattr(method, opt_name) or opt_name in known_marks:
             opts[opt_name] = True
-            must_warn = True
         else:
             opts[opt_name] = False
     if must_warn:
-
-        hook_opts = ", ".join(f"{name}=True" for name, val in opts.items() if val)
+        hook_opts = ", ".join(must_warn)
         message = _pytest.deprecated.HOOK_LEGACY_MARKING.format(
             type=hook_type,
             fullname=method.__qualname__,  # type: ignore
