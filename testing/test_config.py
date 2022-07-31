@@ -113,7 +113,7 @@ class TestParseIni:
     @pytest.mark.parametrize(
         "section, name",
         [
-            ("tool:pytest", "setup.cfg"),
+            pytest.param("tool:pytest", "setup.cfg"),
             ("pytest", "tox.ini"),
             ("pytest", "pytest.ini"),
             ("pytest", ".pytest.ini"),
