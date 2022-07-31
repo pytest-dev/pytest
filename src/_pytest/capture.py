@@ -203,11 +203,38 @@ class DontReadFromInput:
     def fileno(self) -> int:
         raise UnsupportedOperation("redirected stdin is pseudofile, has no fileno()")
 
+    def flush(self) -> None:
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no flush()")
+
     def isatty(self) -> bool:
         return False
 
     def close(self) -> None:
         pass
+
+    def readable(self) -> bool:
+        return False
+
+    def seek(self, offset: int) -> int:
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no seek(int)")
+
+    def seekable(self) -> bool:
+        return False
+
+    def tell(self) -> int:
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no tell()")
+
+    def truncate(self, size: int) -> None:
+        raise UnsupportedOperation("cannont truncate stdin")
+
+    def write(self, *args) -> None:
+        raise UnsupportedOperation("cannot write to stdin")
+
+    def writelines(self, *args) -> None:
+        raise UnsupportedOperation("Cannot write to stdin")
+
+    def writable(self) -> bool:
+        return False
 
     @property
     def buffer(self):
