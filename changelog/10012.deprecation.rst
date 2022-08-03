@@ -1,1 +1,1 @@
- upgrade PytestUnhandledCoroutineWarning to PytestDeprecationWarning
+upgrade :class:`pytest.PytestUnhandledCoroutineWarning` it will raise an error in pytest 8
