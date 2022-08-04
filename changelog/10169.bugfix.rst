@@ -1,0 +1,2 @@
+Now catches `OSError` when `Path.exists` is given a file name
+that is too long
