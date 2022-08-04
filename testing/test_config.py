@@ -1780,24 +1780,25 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_filename_too_long(pytester: Pytester) -> None:
+def test_filename_too_long(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    """And OSError may be raised if filename is too long. This test ensures
+    the issue of that error not being caught does not regress."""
+
     path_str = (
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" * 50
     )
+
+    def FilePathTooLong(p):
+        if len(str(p)) >= 200:
+            raise OSError()
+
+    monkeypatch.setattr(Path, "exists", FilePathTooLong, raising=True)
+
     config = pytester.parseconfig()
     config.known_args_namespace.file_or_dir.append(path_str)
-    pytest.raises(
-        UsageError,
-        config.pluginmanager._set_initial_conftests,
-        config.known_args_namespace,
-        rootpath=config.rootpath,
+    config.pluginmanager._set_initial_conftests(
+        config.known_args_namespace, rootpath=config.rootpath
     )
-    result = pytester.runpytest(path_str)
-    assert result.ret == ExitCode.USAGE_ERROR
 
 
 def test_help_formatter_uses_py_get_terminal_width(monkeypatch: MonkeyPatch) -> None:
