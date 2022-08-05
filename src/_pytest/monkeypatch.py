@@ -45,9 +45,8 @@ def monkeypatch() -> Generator["MonkeyPatch", None, None]:
     fixture has finished. The ``raising`` parameter determines if a KeyError
     or AttributeError will be raised if the set/deletion operation has no target.
     """
-    mpatch = MonkeyPatch()
-    yield mpatch
-    mpatch.undo()
+    with MonkeyPatch.context() as mpatch:
+        yield mpatch
 
 
 def resolve(name: str) -> object:
