@@ -175,7 +175,8 @@ Back to fixtures
 everything that test needs to do its thing.
 
 At a basic level, test functions request fixtures by declaring them as
-arguments, as in the ``test_ehlo(smtp_connection):`` in the previous example.
+arguments, as ``my_fruit`` and ``fruit_basket`` in the 
+``test_my_fruit_in_basket(my_fruit, fruit_basket):`` example below.
 
 In pytest, "fixtures" are functions you define that serve this purpose. But they
 don't have to be limited to just the **arrange** steps. They can provide the
