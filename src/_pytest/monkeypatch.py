@@ -42,7 +42,8 @@ def monkeypatch() -> Generator["MonkeyPatch", None, None]:
         monkeypatch.chdir(path)
 
     All modifications will be undone after the requesting test function or
-    fixture has finished. The ``raising`` parameter determines if a KeyError
+    fixture has finished. It is possible to undo them earlier by calling
+    ``monkeypatch.undo()``. The ``raising`` parameter determines if a KeyError
     or AttributeError will be raised if the set/deletion operation has no target.
     """
     mpatch = MonkeyPatch()
