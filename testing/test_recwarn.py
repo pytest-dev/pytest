@@ -179,6 +179,7 @@ class TestDeprecatedCall:
         """
 
         def f():
+            warnings.warn(DeprecationWarning("hi"))
             raise ValueError("some exception")
 
         with pytest.raises(ValueError, match="some exception"):

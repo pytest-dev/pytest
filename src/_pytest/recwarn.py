@@ -280,24 +280,22 @@ class WarningsChecker(WarningsRecorder):
         def found_str():
             return pformat([record.message for record in self], indent=2)
 
-        # only check if we're not currently handling an exception
-        if exc_type is None and exc_val is None and exc_tb is None:
-            if self.expected_warning is not None:
-                if not any(issubclass(r.category, self.expected_warning) for r in self):
-                    __tracebackhide__ = True
+        if self.expected_warning is not None:
+            if not any(issubclass(r.category, self.expected_warning) for r in self):
+                __tracebackhide__ = True
+                fail(
+                    f"DID NOT WARN. No warnings of type {self.expected_warning} were emitted.\n"
+                    f"The list of emitted warnings is: {found_str()}."
+                )
+            elif self.match_expr is not None:
+                for r in self:
+                    if issubclass(r.category, self.expected_warning):
+                        if re.compile(self.match_expr).search(str(r.message)):
+                            break
+                else:
                     fail(
-                        f"DID NOT WARN. No warnings of type {self.expected_warning} were emitted.\n"
-                        f"The list of emitted warnings is: {found_str()}."
-                    )
-                elif self.match_expr is not None:
-                    for r in self:
-                        if issubclass(r.category, self.expected_warning):
-                            if re.compile(self.match_expr).search(str(r.message)):
-                                break
-                    else:
-                        fail(
-                            f"""\
+                        f"""\
 DID NOT WARN. No warnings of type {self.expected_warning} matching the regex were emitted.
  Regex: {self.match_expr}
  Emitted warnings: {found_str()}"""
-                        )
+                    )
