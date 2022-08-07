@@ -2,15 +2,10 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `PyConDE <https://2022.pycon.de/program/W93DBJ/>`__, April 11th 2022 (3h), Berlin, Germany
-   - `PyConIT <https://pycon.it/en/talk/pytest-simple-rapid-and-fun-testing-with-python>`__, June 3rd 2022 (4h), Florence, Italy
+   - `CH Open Workshop-Tage <https://workshoptage.ch/workshops/2022/pytest-professionelles-testen-nicht-nur-fuer-python/>`__ (German), September 8th 2022, Bern, Switzerland
    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote and Leipzig, Germany
 
    Also see :doc:`previous talks and blogposts <talks>`.
-
-..
-   -  `Europython <https://ep2022.europython.eu/>`__, July 11th to 17th (3h), Dublin, Ireland
-   -  `CH Open Workshoptage <https://workshoptage.ch/>`__ (German), September 6th to 8th (1 day), Bern, Switzerland
 
 .. _features:
 
@@ -26,8 +21,6 @@ scale to support complex functional testing for applications and libraries.
 ``pytest`` requires: Python 3.7+ or PyPy3.
 
 **PyPI package name**: :pypi:`pytest`
-
-**Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
 
 A quick example
@@ -104,11 +97,6 @@ Bugs/Requests
 Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or request features.
 
 
-Changelog
----------
-
-Consult the :ref:`Changelog <changelog>` page for fixes and enhancements of each version.
-
 Support pytest
 --------------
 
@@ -141,13 +129,3 @@ Security
 pytest has never been associated with a security vulnerability, but in any case, to report a
 security vulnerability please use the `Tidelift security contact <https://tidelift.com/security>`_.
 Tidelift will coordinate the fix and disclosure.
-
-
-License
--------
-
-Copyright Holger Krekel and others, 2004.
-
-Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
-
-.. _`MIT`: https://github.com/pytest-dev/pytest/blob/main/LICENSE

@@ -29,9 +29,11 @@ pytest.ini
 
 ``pytest.ini`` files take precedence over other files, even when empty.
 
+Alternatively, the hidden version ``.pytest.ini`` can be used.
+
 .. code-block:: ini
 
-    # pytest.ini
+    # pytest.ini or .pytest.ini
     [pytest]
     minversion = 6.0
     addopts = -ra -q

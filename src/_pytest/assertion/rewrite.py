@@ -190,7 +190,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             return False
 
         # For matching the name it must be as if it was a filename.
-        path = PurePath(os.path.sep.join(parts) + ".py")
+        path = PurePath(*parts).with_suffix(".py")
 
         for pat in self.fnpats:
             # if the pattern contains subdirectories ("tests/**.py" for example) we can't bail out based
@@ -281,7 +281,9 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             else:
                 from importlib.resources.readers import FileReader
 
-            return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
+            return FileReader(  # type:ignore[no-any-return]
+                types.SimpleNamespace(path=self._rewritten_names[name])
+            )
 
 
 def _write_pyc_fp(
@@ -302,53 +304,29 @@ def _write_pyc_fp(
     fp.write(marshal.dumps(co))
 
 
-if sys.platform == "win32":
-    from atomicwrites import atomic_write
-
-    def _write_pyc(
-        state: "AssertionState",
-        co: types.CodeType,
-        source_stat: os.stat_result,
-        pyc: Path,
-    ) -> bool:
-        try:
-            with atomic_write(os.fspath(pyc), mode="wb", overwrite=True) as fp:
-                _write_pyc_fp(fp, source_stat, co)
-        except OSError as e:
-            state.trace(f"error writing pyc file at {pyc}: {e}")
-            # we ignore any failure to write the cache file
-            # there are many reasons, permission-denied, pycache dir being a
-            # file etc.
-            return False
-        return True
-
-else:
-
-    def _write_pyc(
-        state: "AssertionState",
-        co: types.CodeType,
-        source_stat: os.stat_result,
-        pyc: Path,
-    ) -> bool:
-        proc_pyc = f"{pyc}.{os.getpid()}"
-        try:
-            fp = open(proc_pyc, "wb")
-        except OSError as e:
-            state.trace(f"error writing pyc file at {proc_pyc}: errno={e.errno}")
-            return False
-
-        try:
+def _write_pyc(
+    state: "AssertionState",
+    co: types.CodeType,
+    source_stat: os.stat_result,
+    pyc: Path,
+) -> bool:
+    proc_pyc = f"{pyc}.{os.getpid()}"
+    try:
+        with open(proc_pyc, "wb") as fp:
             _write_pyc_fp(fp, source_stat, co)
-            os.rename(proc_pyc, pyc)
-        except OSError as e:
-            state.trace(f"error writing pyc file at {pyc}: {e}")
-            # we ignore any failure to write the cache file
-            # there are many reasons, permission-denied, pycache dir being a
-            # file etc.
-            return False
-        finally:
-            fp.close()
-        return True
+    except OSError as e:
+        state.trace(f"error writing pyc file at {proc_pyc}: errno={e.errno}")
+        return False
+
+    try:
+        os.replace(proc_pyc, pyc)
+    except OSError as e:
+        state.trace(f"error writing pyc file at {pyc}: {e}")
+        # we ignore any failure to write the cache file
+        # there are many reasons, permission-denied, pycache dir being a
+        # file etc.
+        return False
+    return True
 
 
 def _rewrite_test(fn: Path, config: Config) -> Tuple[os.stat_result, types.CodeType]:

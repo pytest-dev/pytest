@@ -5,6 +5,7 @@ import warnings
 from typing import Any
 from typing import Callable
 from typing import cast
+from typing import NoReturn
 from typing import Optional
 from typing import Type
 from typing import TypeVar
@@ -14,7 +15,6 @@ from _pytest.deprecated import KEYWORD_MSG_ARG
 TYPE_CHECKING = False  # Avoid circular import through compat.
 
 if TYPE_CHECKING:
-    from typing import NoReturn
     from typing_extensions import Protocol
 else:
     # typing.Protocol is only available starting from Python 3.8. It is also
@@ -115,7 +115,7 @@ def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _E
 @_with_exception(Exit)
 def exit(
     reason: str = "", returncode: Optional[int] = None, *, msg: Optional[str] = None
-) -> "NoReturn":
+) -> NoReturn:
     """Exit testing process.
 
     :param reason:
@@ -146,7 +146,7 @@ def exit(
 @_with_exception(Skipped)
 def skip(
     reason: str = "", *, allow_module_level: bool = False, msg: Optional[str] = None
-) -> "NoReturn":
+) -> NoReturn:
     """Skip an executing test with the given message.
 
     This function should be called only during testing (setup, call or teardown) or
@@ -176,9 +176,7 @@ def skip(
 
 
 @_with_exception(Failed)
-def fail(
-    reason: str = "", pytrace: bool = True, msg: Optional[str] = None
-) -> "NoReturn":
+def fail(reason: str = "", pytrace: bool = True, msg: Optional[str] = None) -> NoReturn:
     """Explicitly fail an executing test with the given message.
 
     :param reason:
@@ -238,7 +236,7 @@ class XFailed(Failed):
 
 
 @_with_exception(XFailed)
-def xfail(reason: str = "") -> "NoReturn":
+def xfail(reason: str = "") -> NoReturn:
     """Imperatively xfail an executing test or setup function with the given reason.
 
     This function should be called only during testing (setup, call or teardown).

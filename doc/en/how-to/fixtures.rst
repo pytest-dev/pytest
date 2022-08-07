@@ -631,6 +631,7 @@ Here's what that might look like:
     def receiving_user(mail_admin):
         user = mail_admin.create_user()
         yield user
+        user.clear_mailbox()
         mail_admin.delete_user(user)
 
 

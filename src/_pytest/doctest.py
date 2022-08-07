@@ -66,26 +66,26 @@ CHECKER_CLASS: Optional[Type["doctest.OutputChecker"]] = None
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "doctest_optionflags",
-        "option flags for doctests",
+        "Option flags for doctests",
         type="args",
         default=["ELLIPSIS"],
     )
     parser.addini(
-        "doctest_encoding", "encoding used for doctest files", default="utf-8"
+        "doctest_encoding", "Encoding used for doctest files", default="utf-8"
     )
     group = parser.getgroup("collect")
     group.addoption(
         "--doctest-modules",
         action="store_true",
         default=False,
-        help="run doctests in all .py modules",
+        help="Run doctests in all .py modules",
         dest="doctestmodules",
     )
     group.addoption(
         "--doctest-report",
         type=str.lower,
         default="udiff",
-        help="choose another output format for diffs on doctest failure",
+        help="Choose another output format for diffs on doctest failure",
         choices=DOCTEST_REPORT_CHOICES,
         dest="doctestreport",
     )
@@ -94,21 +94,21 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         default=[],
         metavar="pat",
-        help="doctests file matching pattern, default: test*.txt",
+        help="Doctests file matching pattern, default: test*.txt",
         dest="doctestglob",
     )
     group.addoption(
         "--doctest-ignore-import-errors",
         action="store_true",
         default=False,
-        help="ignore doctest ImportErrors",
+        help="Ignore doctest ImportErrors",
         dest="doctest_ignore_import_errors",
     )
     group.addoption(
         "--doctest-continue-on-failure",
         action="store_true",
         default=False,
-        help="for a given doctest, continue to run after the first failure",
+        help="For a given doctest, continue to run after the first failure",
         dest="doctest_continue_on_failure",
     )
 
@@ -542,7 +542,11 @@ class DoctestModule(pytest.Module):
             )
         else:
             try:
-                module = import_path(self.path, root=self.config.rootpath)
+                module = import_path(
+                    self.path,
+                    root=self.config.rootpath,
+                    mode=self.config.getoption("importmode"),
+                )
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
                     pytest.skip("unable to import module %r" % self.path)
@@ -730,5 +734,16 @@ def _get_report_choice(key: str) -> int:
 @pytest.fixture(scope="session")
 def doctest_namespace() -> Dict[str, Any]:
     """Fixture that returns a :py:class:`dict` that will be injected into the
-    namespace of doctests."""
+    namespace of doctests.
+
+    Usually this fixture is used in conjunction with another ``autouse`` fixture:
+
+    .. code-block:: python
+
+        @pytest.fixture(autouse=True)
+        def add_np(doctest_namespace):
+            doctest_namespace["np"] = numpy
+
+    For more details: :ref:`doctest_namespace`.
+    """
     return dict()

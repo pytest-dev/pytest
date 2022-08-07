@@ -3,7 +3,7 @@
 How to monkeypatch/mock modules and environments
 ================================================================
 
-.. currentmodule:: _pytest.monkeypatch
+.. currentmodule:: pytest
 
 Sometimes tests need to invoke functionality which depends
 on global settings or which invokes code which cannot be easily
@@ -25,6 +25,7 @@ functionality in tests:
     monkeypatch.delenv(name, raising=True)
     monkeypatch.syspath_prepend(path)
     monkeypatch.chdir(path)
+    monkeypatch.context()
 
 All modifications will be undone after the requesting
 test function or fixture has finished. The ``raising``
@@ -54,6 +55,9 @@ during a test.
 
 5. Use :py:meth:`monkeypatch.syspath_prepend <MonkeyPatch.syspath_prepend>` to modify ``sys.path`` which will also
 call ``pkg_resources.fixup_namespace_packages`` and :py:func:`importlib.invalidate_caches`.
+
+6. Use :py:meth:`monkeypatch.context <MonkeyPatch.context>` to apply patches only in a specific scope, which can help
+control teardown of complex fixtures or patches to the stdlib.
 
 See the `monkeypatch blog post`_ for some introduction material
 and a discussion of its motivation.
@@ -436,7 +440,7 @@ separate fixtures for each potential mock and reference them in the needed tests
             _ = app.create_connection_string()
 
 
-.. currentmodule:: _pytest.monkeypatch
+.. currentmodule:: pytest
 
 API Reference
 -------------

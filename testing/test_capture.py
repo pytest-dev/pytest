@@ -897,6 +897,15 @@ def test_dontreadfrominput() -> None:
     iter_f = iter(f)
     pytest.raises(OSError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
+    pytest.raises(UnsupportedOperation, f.flush)
+    assert not f.readable()
+    pytest.raises(UnsupportedOperation, f.seek, 0)
+    assert not f.seekable()
+    pytest.raises(UnsupportedOperation, f.tell)
+    pytest.raises(UnsupportedOperation, f.truncate, 0)
+    pytest.raises(UnsupportedOperation, f.write, b"")
+    pytest.raises(UnsupportedOperation, f.writelines, [])
+    assert not f.writable()
     f.close()  # just for completeness
 
 

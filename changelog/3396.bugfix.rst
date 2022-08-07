@@ -1,0 +1,1 @@
+Doctests now respect the ``--import-mode`` flag.

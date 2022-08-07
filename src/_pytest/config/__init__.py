@@ -3,6 +3,7 @@ import argparse
 import collections.abc
 import copy
 import enum
+import glob
 import inspect
 import os
 import re
@@ -899,6 +900,19 @@ class Config:
         dir: Path
         """The directory from which :func:`pytest.main` was invoked."""
 
+    class ArgsSource(enum.Enum):
+        """Indicates the source of the test arguments.
+
+        .. versionadded:: 7.2
+        """
+
+        #: Command line arguments.
+        ARGS = enum.auto()
+        #: Invocation directory.
+        INCOVATION_DIR = enum.auto()
+        #: 'testpaths' configuration value.
+        TESTPATHS = enum.auto()
+
     def __init__(
         self,
         pluginmanager: PytestPluginManager,
@@ -1101,11 +1115,11 @@ class Config:
         self.inicfg = inicfg
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
-        self._parser.addini("addopts", "extra command line options", "args")
-        self._parser.addini("minversion", "minimally required pytest version")
+        self._parser.addini("addopts", "Extra command line options", "args")
+        self._parser.addini("minversion", "Minimally required pytest version")
         self._parser.addini(
             "required_plugins",
-            "plugins that must be present for pytest to run",
+            "Plugins that must be present for pytest to run",
             type="args",
             default=[],
         )
@@ -1308,15 +1322,25 @@ class Config:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.after_preparse = True  # type: ignore
         try:
+            source = Config.ArgsSource.ARGS
             args = self._parser.parse_setoption(
                 args, self.option, namespace=self.option
             )
             if not args:
                 if self.invocation_params.dir == self.rootpath:
-                    args = self.getini("testpaths")
+                    source = Config.ArgsSource.TESTPATHS
+                    testpaths: List[str] = self.getini("testpaths")
+                    if self.known_args_namespace.pyargs:
+                        args = testpaths
+                    else:
+                        args = []
+                        for path in testpaths:
+                            args.extend(sorted(glob.iglob(path, recursive=True)))
                 if not args:
+                    source = Config.ArgsSource.INCOVATION_DIR
                     args = [str(self.invocation_params.dir)]
             self.args = args
+            self.args_source = source
         except PrintHelp:
             pass
 

@@ -77,10 +77,12 @@ from _pytest.pathlib import parts
 from _pytest.pathlib import visit
 from _pytest.scope import Scope
 from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
+
     from _pytest.scope import _ScopeName
 
 
@@ -95,7 +97,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="showfixtures",
         default=False,
-        help="show available fixtures, sorted by plugin appearance "
+        help="Show available fixtures, sorted by plugin appearance "
         "(fixtures with leading '_' are only shown with '-v')",
     )
     group.addoption(
@@ -103,32 +105,32 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="show_fixtures_per_test",
         default=False,
-        help="show fixtures per test",
+        help="Show fixtures per test",
     )
     parser.addini(
         "python_files",
         type="args",
         # NOTE: default is also used in AssertionRewritingHook.
         default=["test_*.py", "*_test.py"],
-        help="glob-style file patterns for Python test module discovery",
+        help="Glob-style file patterns for Python test module discovery",
     )
     parser.addini(
         "python_classes",
         type="args",
         default=["Test"],
-        help="prefixes or glob names for Python test class discovery",
+        help="Prefixes or glob names for Python test class discovery",
     )
     parser.addini(
         "python_functions",
         type="args",
         default=["test"],
-        help="prefixes or glob names for Python test function and method discovery",
+        help="Prefixes or glob names for Python test function and method discovery",
     )
     parser.addini(
         "disable_test_id_escaping_and_forfeit_all_rights_to_community_support",
         type="bool",
         default=False,
-        help="disable string escape non-ascii characters, might cause unwanted "
+        help="Disable string escape non-ASCII characters, might cause unwanted "
         "side effects(use at your own risk)",
     )
 
@@ -192,6 +194,13 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
         async_warn_and_skip(pyfuncitem.nodeid)
+    elif result is not None:
+        warnings.warn(
+            PytestReturnNotNoneWarning(
+                f"Expected None, but {pyfuncitem.nodeid} returned {result!r}, which will be an error in a "
+                "future version of pytest.  Did you mean to use `assert` instead of `return`?"
+            )
+        )
     return True
 
 

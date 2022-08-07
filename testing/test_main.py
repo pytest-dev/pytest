@@ -47,7 +47,7 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
 
     end_lines = (
         result.stdout.lines[-4:]
-        if sys.version_info >= (3, 11)
+        if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
         else result.stdout.lines[-3:]
     )
 
@@ -57,7 +57,7 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
             'INTERNALERROR>     raise SystemExit("boom")',
             *(
                 ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
-                if sys.version_info >= (3, 11)
+                if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
                 else ()
             ),
             "INTERNALERROR> SystemExit: boom",
@@ -68,7 +68,7 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
             'INTERNALERROR>     raise ValueError("boom")',
             *(
                 ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
-                if sys.version_info >= (3, 11)
+                if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
                 else ()
             ),
             "INTERNALERROR> ValueError: boom",

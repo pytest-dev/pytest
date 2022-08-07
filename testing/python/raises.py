@@ -19,6 +19,16 @@ class TestRaises:
         excinfo = pytest.raises(ValueError, int, "hello")
         assert "invalid literal" in str(excinfo.value)
 
+    def test_raises_does_not_allow_none(self):
+        with pytest.raises(ValueError, match="Expected an exception type or"):
+            # We're testing that this invalid usage gives a helpful error,
+            # so we can ignore Mypy telling us that None is invalid.
+            pytest.raises(expected_exception=None)  # type: ignore
+
+    def test_raises_does_not_allow_empty_tuple(self):
+        with pytest.raises(ValueError, match="Expected an exception type or"):
+            pytest.raises(expected_exception=())
+
     def test_raises_callable_no_exception(self) -> None:
         class A:
             def __call__(self):
@@ -82,12 +92,8 @@ class TestRaises:
     def test_does_not_raise(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
-            from contextlib import contextmanager
+            from contextlib import nullcontext as does_not_raise
             import pytest
-
-            @contextmanager
-            def does_not_raise():
-                yield
 
             @pytest.mark.parametrize('example_input,expectation', [
                 (3, does_not_raise()),
@@ -107,12 +113,8 @@ class TestRaises:
     def test_does_not_raise_does_raise(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
-            from contextlib import contextmanager
+            from contextlib import nullcontext as does_not_raise
             import pytest
-
-            @contextmanager
-            def does_not_raise():
-                yield
 
             @pytest.mark.parametrize('example_input,expectation', [
                 (0, does_not_raise()),

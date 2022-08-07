@@ -244,28 +244,32 @@ class TestCollectFS:
         pytester.makeini(
             """
             [pytest]
-            testpaths = gui uts
+            testpaths = */tests
         """
         )
         tmp_path = pytester.path
-        ensure_file(tmp_path / "env" / "test_1.py").write_text("def test_env(): pass")
-        ensure_file(tmp_path / "gui" / "test_2.py").write_text("def test_gui(): pass")
-        ensure_file(tmp_path / "uts" / "test_3.py").write_text("def test_uts(): pass")
+        ensure_file(tmp_path / "a" / "test_1.py").write_text("def test_a(): pass")
+        ensure_file(tmp_path / "b" / "tests" / "test_2.py").write_text(
+            "def test_b(): pass"
+        )
+        ensure_file(tmp_path / "c" / "tests" / "test_3.py").write_text(
+            "def test_c(): pass"
+        )
 
         # executing from rootdir only tests from `testpaths` directories
         # are collected
         items, reprec = pytester.inline_genitems("-v")
-        assert [x.name for x in items] == ["test_gui", "test_uts"]
+        assert [x.name for x in items] == ["test_b", "test_c"]
 
         # check that explicitly passing directories in the command-line
         # collects the tests
-        for dirname in ("env", "gui", "uts"):
+        for dirname in ("a", "b", "c"):
             items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
             assert [x.name for x in items] == ["test_%s" % dirname]
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
-        for dirname in ("env", "gui", "uts"):
+        for dirname in ("a", "b", "c"):
             monkeypatch.chdir(pytester.path.joinpath(dirname))
             items, reprec = pytester.inline_genitems()
             assert [x.name for x in items] == ["test_%s" % dirname]

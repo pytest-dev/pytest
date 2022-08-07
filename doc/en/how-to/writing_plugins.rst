@@ -158,18 +158,20 @@ it in your setuptools-invocation:
     # sample ./setup.py file
     from setuptools import setup
 
+
+    name_of_plugin = "myproject"  # register plugin with this name
     setup(
         name="myproject",
         packages=["myproject"],
         # the following makes a plugin available to pytest
-        entry_points={"pytest11": ["name_of_plugin = myproject.pluginmodule"]},
+        entry_points={"pytest11": [f"{name_of_plugin} = myproject.pluginmodule"]},
         # custom PyPI classifier for pytest plugins
         classifiers=["Framework :: Pytest"],
     )
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
-:ref:`hooks <hook-reference>`.
+:ref:`hooks <hook-reference>`. Confirm registration with ``pytest --trace-config``
 
 .. note::
 

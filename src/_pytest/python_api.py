@@ -133,9 +133,11 @@ class ApproxBase:
         # raise if there are any non-numeric elements in the sequence.
 
 
-def _recursive_list_map(f, x):
-    if isinstance(x, list):
-        return [_recursive_list_map(f, xi) for xi in x]
+def _recursive_sequence_map(f, x):
+    """Recursively map a function over a sequence of arbitrary depth"""
+    if isinstance(x, (list, tuple)):
+        seq_type = type(x)
+        return seq_type(_recursive_sequence_map(f, xi) for xi in x)
     else:
         return f(x)
 
@@ -144,7 +146,9 @@ class ApproxNumpy(ApproxBase):
     """Perform approximate comparisons where the expected value is numpy array."""
 
     def __repr__(self) -> str:
-        list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
+        list_scalars = _recursive_sequence_map(
+            self._approx_scalar, self.expected.tolist()
+        )
         return f"approx({list_scalars!r})"
 
     def _repr_compare(self, other_side: "ndarray") -> List[str]:
@@ -164,7 +168,7 @@ class ApproxNumpy(ApproxBase):
             return value
 
         np_array_shape = self.expected.shape
-        approx_side_as_list = _recursive_list_map(
+        approx_side_as_seq = _recursive_sequence_map(
             self._approx_scalar, self.expected.tolist()
         )
 
@@ -179,7 +183,7 @@ class ApproxNumpy(ApproxBase):
         max_rel_diff = -math.inf
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
-            approx_value = get_value_from_nested_list(approx_side_as_list, index)
+            approx_value = get_value_from_nested_list(approx_side_as_seq, index)
             other_value = get_value_from_nested_list(other_side, index)
             if approx_value != other_value:
                 abs_diff = abs(approx_value.expected - other_value)
@@ -194,7 +198,7 @@ class ApproxNumpy(ApproxBase):
             (
                 str(index),
                 str(get_value_from_nested_list(other_side, index)),
-                str(get_value_from_nested_list(approx_side_as_list, index)),
+                str(get_value_from_nested_list(approx_side_as_seq, index)),
             )
             for index in different_ids
         ]
@@ -326,7 +330,7 @@ class ApproxSequenceLike(ApproxBase):
                 f"Lengths: {len(self.expected)} and {len(other_side)}",
             ]
 
-        approx_side_as_map = _recursive_list_map(self._approx_scalar, self.expected)
+        approx_side_as_map = _recursive_sequence_map(self._approx_scalar, self.expected)
 
         number_of_elements = len(approx_side_as_map)
         max_abs_diff = -math.inf
@@ -666,6 +670,11 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         specialised test helpers in :std:doc:`numpy:reference/routines.testing`
         if you need support for comparisons, NaNs, or ULP-based tolerances.
 
+        To match strings using regex, you can use
+        `Matches <https://github.com/asottile/re-assert#re_assertmatchespattern-str-args-kwargs>`_
+        from the
+        `re_assert package <https://github.com/asottile/re-assert>`_.
+
     .. warning::
 
        .. versionchanged:: 3.2
@@ -899,6 +908,12 @@ def raises(
     """
     __tracebackhide__ = True
 
+    if not expected_exception:
+        raise ValueError(
+            f"Expected an exception type or a tuple of exception types, but got `{expected_exception!r}`. "
+            f"Raising exceptions is already understood as failing the test, so you don't need "
+            f"any special code to say 'this should never raise an exception'."
+        )
     if isinstance(expected_exception, type):
         excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:

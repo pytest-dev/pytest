@@ -49,7 +49,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="count",
         default=0,
         dest="version",
-        help="display pytest version and information about plugins. "
+        help="Display pytest version and information about plugins. "
         "When given twice, also display information about plugins.",
     )
     group._addoption(
@@ -57,7 +57,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--help",
         action=HelpAction,
         dest="help",
-        help="show help message and configuration info",
+        help="Show help message and configuration info",
     )
     group._addoption(
         "-p",
@@ -65,7 +65,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="plugins",
         default=[],
         metavar="name",
-        help="early-load given plugin module name or entry point (multi-allowed).\n"
+        help="Early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
         "`no:doctest`.",
     )
@@ -74,7 +74,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--trace-config",
         action="store_true",
         default=False,
-        help="trace considerations of conftest.py files.",
+        help="Trace considerations of conftest.py files",
     )
     group.addoption(
         "--debug",
@@ -83,16 +83,17 @@ def pytest_addoption(parser: Parser) -> None:
         const="pytestdebug.log",
         dest="debug",
         metavar="DEBUG_FILE_NAME",
-        help="store internal tracing debug information in this log file.\n"
-        "This file is opened with 'w' and truncated as a result, care advised.\n"
-        "Defaults to 'pytestdebug.log'.",
+        help="Store internal tracing debug information in this log file. "
+        "This file is opened with 'w' and truncated as a result, care advised. "
+        "Default: pytestdebug.log.",
     )
     group._addoption(
         "-o",
         "--override-ini",
         dest="override_ini",
         action="append",
-        help='override ini option with "option=value" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.',
+        help='Override ini option with "option=value" style, '
+        "e.g. `-o xfail_strict=True -o cache_dir=cache`.",
     )
 
 
@@ -203,12 +204,12 @@ def showhelp(config: Config) -> None:
                     tw.line(indent + line)
 
     tw.line()
-    tw.line("environment variables:")
+    tw.line("Environment variables:")
     vars = [
-        ("PYTEST_ADDOPTS", "extra command line options"),
-        ("PYTEST_PLUGINS", "comma-separated plugins to load during startup"),
-        ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "set to disable plugin auto-loading"),
-        ("PYTEST_DEBUG", "set to enable debug tracing of pytest's internals"),
+        ("PYTEST_ADDOPTS", "Extra command line options"),
+        ("PYTEST_PLUGINS", "Comma-separated plugins to load during startup"),
+        ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "Set to disable plugin auto-loading"),
+        ("PYTEST_DEBUG", "Set to enable debug tracing of pytest's internals"),
     ]
     for name, help in vars:
         tw.line(f"  {name:<24} {help}")

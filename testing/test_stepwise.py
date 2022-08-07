@@ -277,4 +277,4 @@ def test_stepwise_skip_is_independent(pytester: Pytester) -> None:
 
 def test_sw_skip_help(pytester: Pytester) -> None:
     result = pytester.runpytest("-h")
-    result.stdout.fnmatch_lines("*implicitly enables --stepwise.")
+    result.stdout.fnmatch_lines("*Implicitly enables --stepwise.")

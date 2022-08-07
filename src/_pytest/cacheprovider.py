@@ -157,7 +157,7 @@ class Cache:
         """
         path = self._getvaluepath(key)
         try:
-            with path.open("r") as f:
+            with path.open("r", encoding="UTF-8") as f:
                 return json.load(f)
         except (ValueError, OSError):
             return default
@@ -184,9 +184,9 @@ class Cache:
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
-        data = json.dumps(value, indent=2)
+        data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
-            f = path.open("w")
+            f = path.open("w", encoding="UTF-8")
         except OSError:
             self.warn("cache could not write path {path}", path=path, _ispytest=True)
         else:
@@ -196,7 +196,7 @@ class Cache:
     def _ensure_supporting_files(self) -> None:
         """Create supporting files in the cache dir that are not really part of the cache."""
         readme_path = self._cachedir / "README.md"
-        readme_path.write_text(README_CONTENT)
+        readme_path.write_text(README_CONTENT, encoding="UTF-8")
 
         gitignore_path = self._cachedir.joinpath(".gitignore")
         msg = "# Created by pytest automatically.\n*\n"
@@ -440,7 +440,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--last-failed",
         action="store_true",
         dest="lf",
-        help="rerun only the tests that failed "
+        help="Rerun only the tests that failed "
         "at the last run (or all if none failed)",
     )
     group.addoption(
@@ -448,7 +448,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--failed-first",
         action="store_true",
         dest="failedfirst",
-        help="run all tests, but run the last failures first.\n"
+        help="Run all tests, but run the last failures first. "
         "This may re-order tests and thus lead to "
         "repeated fixture setup/teardown.",
     )
@@ -457,7 +457,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--new-first",
         action="store_true",
         dest="newfirst",
-        help="run tests from new files first, then the rest of the tests "
+        help="Run tests from new files first, then the rest of the tests "
         "sorted by file mtime",
     )
     group.addoption(
@@ -466,7 +466,7 @@ def pytest_addoption(parser: Parser) -> None:
         nargs="?",
         dest="cacheshow",
         help=(
-            "show cache contents, don't perform collection or tests. "
+            "Show cache contents, don't perform collection or tests. "
             "Optional argument: glob (default: '*')."
         ),
     )
@@ -474,12 +474,12 @@ def pytest_addoption(parser: Parser) -> None:
         "--cache-clear",
         action="store_true",
         dest="cacheclear",
-        help="remove all cache contents at start of test run.",
+        help="Remove all cache contents at start of test run",
     )
     cache_dir_default = ".pytest_cache"
     if "TOX_ENV_DIR" in os.environ:
         cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], cache_dir_default)
-    parser.addini("cache_dir", default=cache_dir_default, help="cache directory path.")
+    parser.addini("cache_dir", default=cache_dir_default, help="Cache directory path")
     group.addoption(
         "--lfnf",
         "--last-failed-no-failures",
@@ -487,7 +487,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="last_failed_no_failures",
         choices=("all", "none"),
         default="all",
-        help="which tests to run with no previously (known) failures.",
+        help="Which tests to run with no previously (known) failures",
     )
 
 

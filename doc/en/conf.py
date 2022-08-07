@@ -247,7 +247,7 @@ html_sidebars = {
 html_domain_indices = True
 
 # If false, no index is generated.
-html_use_index = True
+html_use_index = False
 
 # If true, the index is split into individual pages for each letter.
 # html_split_index = False
@@ -320,7 +320,9 @@ latex_domain_indices = False
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("usage", "pytest", "pytest usage", ["holger krekel at merlinux eu"], 1)]
+man_pages = [
+    ("how-to/usage", "pytest", "pytest usage", ["holger krekel at merlinux eu"], 1)
+]
 
 
 # -- Options for Epub output ---------------------------------------------------

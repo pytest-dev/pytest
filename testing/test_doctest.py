@@ -113,6 +113,28 @@ class TestDoctests:
         reprec = pytester.inline_run(p)
         reprec.assertoutcome(failed=1)
 
+    def test_importmode(self, pytester: Pytester):
+        p = pytester.makepyfile(
+            **{
+                "namespacepkg/innerpkg/__init__.py": "",
+                "namespacepkg/innerpkg/a.py": """
+                  def some_func():
+                    return 42
+                """,
+                "namespacepkg/innerpkg/b.py": """
+                  from namespacepkg.innerpkg.a import some_func
+                  def my_func():
+                    '''
+                    >>> my_func()
+                    42
+                    '''
+                    return some_func()
+                """,
+            }
+        )
+        reprec = pytester.inline_run(p, "--doctest-modules", "--import-mode=importlib")
+        reprec.assertoutcome(passed=1)
+
     def test_new_pattern(self, pytester: Pytester):
         p = pytester.maketxtfile(
             xdoc="""
@@ -201,7 +223,11 @@ class TestDoctests:
                 "Traceback (most recent call last):",
                 '  File "*/doctest.py", line *, in __run',
                 "    *",
-                *((" *^^^^*",) if sys.version_info >= (3, 11) else ()),
+                *(
+                    (" *^^^^*",)
+                    if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
+                    else ()
+                ),
                 '  File "<doctest test_doctest_unexpected_exception.txt[1]>", line 1, in <module>',
                 "ZeroDivisionError: division by zero",
                 "*/test_doctest_unexpected_exception.txt:2: UnexpectedException",

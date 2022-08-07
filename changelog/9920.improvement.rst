@@ -1,0 +1,1 @@
+Display full crash messages in ``short test summary info``, when runng in a CI environment.

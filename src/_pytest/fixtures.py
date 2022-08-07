@@ -18,6 +18,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import MutableMapping
+from typing import NoReturn
 from typing import Optional
 from typing import overload
 from typing import Sequence
@@ -67,7 +68,6 @@ from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from typing import Deque
-    from typing import NoReturn
 
     from _pytest.scope import _ScopeName
     from _pytest.main import Session
@@ -223,15 +223,10 @@ def add_funcarg_pseudo_fixture_def(
 def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
     """Return fixturemarker or None if it doesn't exist or raised
     exceptions."""
-    try:
-        fixturemarker: Optional[FixtureFunctionMarker] = getattr(
-            obj, "_pytestfixturefunction", None
-        )
-    except TEST_OUTCOME:
-        # some objects raise errors like request (from flask import request)
-        # we don't expect them to be fixture functions
-        return None
-    return fixturemarker
+    return cast(
+        Optional[FixtureFunctionMarker],
+        safe_getattr(obj, "_pytestfixturefunction", None),
+    )
 
 
 # Parametrized fixture key, helper alias for code below.
@@ -350,7 +345,7 @@ def reorder_items_atscope(
     return items_done
 
 
-def get_direct_param_fixture_func(request):
+def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
     return request.param
 
 
@@ -412,6 +407,15 @@ class FixtureRequest:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index: Dict[str, int] = {}
         self._fixturemanager: FixtureManager = pyfuncitem.session._fixturemanager
+        # Notes on the type of `param`:
+        # -`request.param` is only defined in parametrized fixtures, and will raise
+        #   AttributeError otherwise. Python typing has no notion of "undefined", so
+        #   this cannot be reflected in the type.
+        # - Technically `param` is only (possibly) defined on SubRequest, not
+        #   FixtureRequest, but the typing of that is still in flux so this cheats.
+        # - In the future we might consider using a generic for the param type, but
+        #   for now just using Any.
+        self.param: Any
 
     @property
     def scope(self) -> "_ScopeName":
@@ -491,6 +495,7 @@ class FixtureRequest:
 
     @property
     def path(self) -> Path:
+        """Path where the test function was collected."""
         if self.scope not in ("function", "class", "module", "package"):
             raise AttributeError(f"path not available in {self.scope}-scoped context")
         # TODO: Remove ignore once _pyfuncitem is properly typed.
@@ -529,7 +534,7 @@ class FixtureRequest:
         """
         self.node.add_marker(marker)
 
-    def raiseerror(self, msg: Optional[str]) -> "NoReturn":
+    def raiseerror(self, msg: Optional[str]) -> NoReturn:
         """Raise a FixtureLookupError with the given message."""
         raise self._fixturemanager.FixtureLookupError(None, self, msg)
 
@@ -548,11 +553,18 @@ class FixtureRequest:
         setup time, you may use this function to retrieve it inside a fixture
         or test function body.
 
+        This method can be used during the test setup phase or the test run
+        phase, but during the test teardown phase a fixture's value may not
+        be available.
+
         :raises pytest.FixtureLookupError:
             If the given fixture could not be found.
         """
         fixturedef = self._get_active_fixturedef(argname)
-        assert fixturedef.cached_result is not None
+        assert fixturedef.cached_result is not None, (
+            f'The fixture value for "{argname}" is not available.  '
+            "This can happen when the fixture has already been torn down."
+        )
         return fixturedef.cached_result[0]
 
     def _get_active_fixturedef(
@@ -864,7 +876,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
         tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
 
 
-def fail_fixturefunc(fixturefunc, msg: str) -> "NoReturn":
+def fail_fixturefunc(fixturefunc, msg: str) -> NoReturn:
     fs, lineno = getfslineno(fixturefunc)
     location = f"{fs}:{lineno + 1}"
     source = _pytest._code.Source(fixturefunc)
@@ -1350,7 +1362,7 @@ def pytest_addoption(parser: Parser) -> None:
         "usefixtures",
         type="args",
         default=[],
-        help="list of default fixtures to be used with this project",
+        help="List of default fixtures to be used with this project",
     )
 
 

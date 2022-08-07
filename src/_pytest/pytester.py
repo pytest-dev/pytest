@@ -89,7 +89,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="lsof",
         default=False,
-        help="run FD checks if lsof is available",
+        help="Run FD checks if lsof is available",
     )
 
     parser.addoption(
@@ -98,13 +98,13 @@ def pytest_addoption(parser: Parser) -> None:
         dest="runpytest",
         choices=("inprocess", "subprocess"),
         help=(
-            "run pytest sub runs in tests using an 'inprocess' "
+            "Run pytest sub runs in tests using an 'inprocess' "
             "or 'subprocess' (python -m main) method"
         ),
     )
 
     parser.addini(
-        "pytester_example_dir", help="directory to take the pytester example files from"
+        "pytester_example_dir", help="Directory to take the pytester example files from"
     )
 
 
@@ -904,13 +904,13 @@ class Pytester:
 
         self._monkeypatch.syspath_prepend(str(path))
 
-    def mkdir(self, name: str) -> Path:
+    def mkdir(self, name: Union[str, "os.PathLike[str]"]) -> Path:
         """Create a new (sub)directory."""
         p = self.path / name
         p.mkdir()
         return p
 
-    def mkpydir(self, name: str) -> Path:
+    def mkpydir(self, name: Union[str, "os.PathLike[str]"]) -> Path:
         """Create a new python package.
 
         This creates a (sub)directory with an empty ``__init__.py`` file so it
