@@ -3,8 +3,10 @@
 How to run tests written for nose
 =======================================
 
-``pytest`` has basic support for running tests written for nose_. This functionality has been
-deprecated and is likely to be removed in ``pytest 8.x``.
+``pytest`` has basic support for running tests written for nose_.
+
+.. warning::
+    This functionality has been deprecated and is likely to be removed in ``pytest 8.x``.
 
 .. _nosestyle:
 

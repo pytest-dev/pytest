@@ -21,8 +21,8 @@ def pytest_runtest_setup(item: Item) -> None:
     # see https://github.com/python/mypy/issues/2608
     func = item
 
-    call_optional(func.obj, "setup")
-    func.addfinalizer(lambda: call_optional(func.obj, "teardown"))
+    call_optional(func.obj, "setup", func.nodeid)
+    func.addfinalizer(lambda: call_optional(func.obj, "teardown", func.nodeid))
 
     # NOTE: Module- and class-level fixtures are handled in python.py
     # with `pluginmanager.has_plugin("nose")` checks.
@@ -30,7 +30,7 @@ def pytest_runtest_setup(item: Item) -> None:
     # it's not straightforward.
 
 
-def call_optional(obj: object, name: str) -> bool:
+def call_optional(obj: object, name: str, nodeid: str) -> bool:
     method = getattr(obj, name, None)
     if method is None:
         return False
@@ -41,6 +41,6 @@ def call_optional(obj: object, name: str) -> bool:
         return False
     # If there are any problems allow the exception to raise rather than
     # silently ignoring it.
-    warnings.warn(NOSE_SUPPORT, stacklevel=2)
+    warnings.warn(NOSE_SUPPORT.format(nodeid=nodeid, nose_method=name), stacklevel=2)
     method()
     return True

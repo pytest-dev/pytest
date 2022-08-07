@@ -515,6 +515,9 @@ def test_nose_setup_and_teardown_is_deprecated(pytester: Pytester) -> None:
         """
     )
     output = pytester.runpytest()
-    message = "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.*"
-    output.stdout.fnmatch_lines([message])
+    message = [
+        "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
+        "*test_nose_setup_and_teardown_is_deprecated.py::test_omits_warnings is using nose method: *",
+    ]
+    output.stdout.fnmatch_lines(message)
     output.assert_outcomes(passed=1, warnings=2)

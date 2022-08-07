@@ -23,7 +23,9 @@ Support for tests written for nose
 
 .. deprecated:: 7.2.0
 
-Support for running tests written for nose is now deprecated.
+Support for running tests written for `nose <https://nose.readthedocs.io/en/latest/>`__ is now deprecated.
+`nose` has been in maintenance mode-only for years, and maintaining the plugin is not trivial as it spills
+over the code base (see :issue:`9886` for more details).
 
 
 .. _instance-collector-deprecation:

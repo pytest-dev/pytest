@@ -22,8 +22,10 @@ DEPRECATED_EXTERNAL_PLUGINS = {
     "pytest_faulthandler",
 }
 
-NOSE_SUPPORT = PytestRemovedIn8Warning(
-    "Support for nose tests is deprecated and will be removed in a future release."
+NOSE_SUPPORT = UnformattedWarning(
+    PytestRemovedIn8Warning,
+    "Support for nose tests is deprecated and will be removed in a future release.\n"
+    "{nodeid} is using nose method: `{nose_method}`",
 )
 
 
