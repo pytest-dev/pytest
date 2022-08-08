@@ -6,6 +6,7 @@ from typing import TypeVar
 import attr
 
 from _pytest.compat import final
+from _pytest.compat import sealed
 
 
 class PytestWarning(UserWarning):
@@ -48,14 +49,15 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     __module__ = "pytest"
 
 
-@final
+@sealed
 class PytestRemovedIn8Warning(PytestDeprecationWarning):
     """Warning class for features that will be removed in pytest 8."""
 
     __module__ = "pytest"
 
 
-class PytestReturnNotNoneWarning(PytestDeprecationWarning):
+@sealed
+class PytestReturnNotNoneWarning(PytestRemovedIn8Warning):
     """Warning emitted when a test function is returning value other than None."""
 
     __module__ = "pytest"
