@@ -144,6 +144,9 @@ def warns(
     When using :ref:`pytest.mark.parametrize ref` it is possible to parametrize tests
     such that some runs raise a warning and others do not.
 
+    This could be achieved in the same way as with exceptions, see
+    :ref:`parametrizing_conditional_raising` for an example.
+
     """
     __tracebackhide__ = True
     if not args:
