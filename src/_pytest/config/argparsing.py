@@ -169,7 +169,7 @@ class Parser:
         type: Optional[
             "Literal['string', 'paths', 'pathlist', 'args', 'linelist', 'bool']"
         ] = None,
-        default=None,
+        default: Any = None,
     ) -> None:
         """Register an ini-file option.
 
