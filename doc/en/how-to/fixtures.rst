@@ -129,10 +129,11 @@ example would work if we did it by hand:
 
 .. code-block:: python
 
+    @pytest.fixture
     def first_entry():
         return "a"
 
-
+    @pytest.fixture
     def order(first_entry):
         return [first_entry]
 
