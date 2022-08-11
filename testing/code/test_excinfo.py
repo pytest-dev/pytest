@@ -1470,3 +1470,34 @@ def test_no_recursion_index_on_recursion_error():
     with pytest.raises(RuntimeError) as excinfo:
         RecursionDepthError().trigger
     assert "maximum recursion" in str(excinfo.getrepr())
+
+
+def test_exceptiongroup(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def f(): raise ValueError("From f()")
+        def g(): raise RuntimeError("From g()")
+
+        def main():
+            excs = []
+            for callback in [f, g]:
+                try:
+                    callback()
+                except Exception as err:
+                    excs.append(err)
+            if excs:
+                raise ExceptionGroup("Oops", excs)
+
+        def test():
+            main()
+    """
+    )
+    result = pytester.runpytest()
+    assert result.ret != 0
+
+    match = [
+        r"  | ExceptionGroup: Oops (2 sub-exceptions)",
+        r"    | ValueError: From f()",
+        r"    | RuntimeError: From g()",
+    ]
+    result.stdout.re_match_lines(match)
