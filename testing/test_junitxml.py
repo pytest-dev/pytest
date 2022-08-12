@@ -1625,6 +1625,28 @@ def test_escaped_skipreason_issue3533(
     snode.assert_attr(message="1 <> 2")
 
 
+def test_escaped_setup_teardown_error(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture()
+        def my_setup():
+            raise Exception("error: \033[31mred\033[m")
+
+        def test_esc(my_setup):
+            pass
+    """
+    )
+    _, dom = run_and_parse()
+    node = dom.find_first_by_tag("testcase")
+    snode = node.find_first_by_tag("error")
+    assert "#x1B[31mred#x1B[m" in snode["message"]
+    assert "#x1B[31mred#x1B[m" in snode.text
+
+
 @parametrize_families
 def test_logging_passing_tests_disabled_does_not_log_test_output(
     pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
