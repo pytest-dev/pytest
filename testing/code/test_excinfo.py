@@ -11,6 +11,11 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
+try:
+    import exceptiongroup  # noqa (referred to in strings)
+except ModuleNotFoundError:
+    pass
+
 import _pytest
 import pytest
 from _pytest._code.code import ExceptionChainRepr
@@ -22,7 +27,6 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
-
 
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
@@ -1472,32 +1476,84 @@ def test_no_recursion_index_on_recursion_error():
     assert "maximum recursion" in str(excinfo.getrepr())
 
 
-def test_exceptiongroup(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        def f(): raise ValueError("From f()")
-        def g(): raise RuntimeError("From g()")
+def _exceptiongroup_common(
+    pytester: Pytester,
+    outer_chain: str,
+    inner_chain: str,
+    native: bool,
+) -> None:
+    pre = "exceptiongroup." if not native else ""
+    pre2 = pre if sys.version_info < (3, 11) else ""
+    filestr = f"""
+    {"import exceptiongroup" if not native else ""}
+    import pytest
 
-        def main():
-            excs = []
-            for callback in [f, g]:
-                try:
-                    callback()
-                except Exception as err:
-                    excs.append(err)
-            if excs:
-                raise ExceptionGroup("Oops", excs)
+    def f(): raise ValueError("From f()")
+    def g(): raise BaseException("From g()")
 
-        def test():
-            main()
+    def inner(inner_chain):
+        excs = []
+        for callback in [f, g]:
+            try:
+                callback()
+            except BaseException as err:
+                excs.append(err)
+        if excs:
+            if inner_chain == "none":
+                raise {pre}BaseExceptionGroup("Oops", excs)
+            try:
+                raise SyntaxError()
+            except SyntaxError as e:
+                if inner_chain == "from":
+                    raise {pre}BaseExceptionGroup("Oops", excs) from e
+                else:
+                    raise {pre}BaseExceptionGroup("Oops", excs)
+
+    def outer(outer_chain, inner_chain):
+        try:
+            inner(inner_chain)
+        except {pre2}BaseExceptionGroup as e:
+            if outer_chain == "none":
+                raise
+            if outer_chain == "from":
+                raise IndexError() from e
+            else:
+                raise IndexError()
+
+
+    def test():
+        outer("{outer_chain}", "{inner_chain}")
     """
-    )
+    pytester.makepyfile(test_excgroup=filestr)
     result = pytester.runpytest()
-    assert result.ret != 0
-
-    match = [
-        r"  | ExceptionGroup: Oops (2 sub-exceptions)",
-        r"    | ValueError: From f()",
-        r"    | RuntimeError: From g()",
+    match_lines = [
+        rf"  \| {pre2}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
+        r"    \| ValueError: From f\(\)",
+        r"    \| BaseException: From g\(\)",
+        r"=* short test summary info =*",
     ]
-    result.stdout.re_match_lines(match)
+    if outer_chain in ("another", "from"):
+        match_lines.append(r"FAILED test_excgroup.py::test - IndexError")
+    else:
+        match_lines.append(
+            rf"FAILED test_excgroup.py::test - {pre2}BaseExceptionGroup: Oops \(2 su.*"
+        )
+    result.stdout.re_match_lines(match_lines)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11), reason="Native ExceptionGroup not implemented"
+)
+@pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
+@pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
+def test_native_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
+    _exceptiongroup_common(pytester, outer_chain, inner_chain, native=True)
+
+
+@pytest.mark.skipif(
+    "exceptiongroup" not in sys.modules, reason="exceptiongroup not installed"
+)
+@pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
+@pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
+def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
+    _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)

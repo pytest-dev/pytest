@@ -56,17 +56,18 @@ if TYPE_CHECKING:
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-ExceptionGroupTypes: tuple = ()  # type: ignore
-try:
-    ExceptionGroupTypes += (ExceptionGroup,)  # type: ignore
-except NameError:
-    pass  # Is missing for `python<3.10`
+ExceptionGroupTypes: Tuple[Type[BaseException], ...] = ()
+
+if sys.version_info >= (3, 11):
+    ExceptionGroupTypes = (BaseExceptionGroup,)  # type: ignore # noqa: F821
 try:
     import exceptiongroup
 
-    ExceptionGroupTypes += (exceptiongroup.ExceptionGroup,)
+    ExceptionGroupTypes += (exceptiongroup.BaseExceptionGroup,)
 except ModuleNotFoundError:
-    pass  # No backport is installed
+    # no backport installed - if <3.11 that means programs can't raise exceptiongroups
+    # so we don't need to handle it
+    pass
 
 
 class Code:
@@ -935,20 +936,22 @@ class FormattedExcinfo:
         seen: Set[int] = set()
         while e is not None and id(e) not in seen:
             seen.add(id(e))
-            if isinstance(e, ExceptionGroupTypes):
-                reprtraceback: Union[
-                    ReprTracebackNative, ReprTraceback
-                ] = ReprTracebackNative(
-                    traceback.format_exception(
-                        type(excinfo.value),
-                        excinfo.value,
-                        excinfo.traceback[0]._rawentry,
+            if excinfo_:
+                if isinstance(e, tuple(ExceptionGroupTypes)):
+                    reprtraceback: Union[
+                        ReprTracebackNative, ReprTraceback
+                    ] = ReprTracebackNative(
+                        traceback.format_exception(
+                            type(excinfo_.value),
+                            excinfo_.value,
+                            excinfo_.traceback[0]._rawentry,
+                        )
                     )
+                else:
+                    reprtraceback = self.repr_traceback(excinfo_)
+                reprcrash: Optional[ReprFileLocation] = (
+                    excinfo_._getreprcrash() if self.style != "value" else None
                 )
-                reprcrash: Optional[ReprFileLocation] = None
-            elif excinfo_:
-                reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash = excinfo_._getreprcrash() if self.style != "value" else None
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
