@@ -56,18 +56,14 @@ if TYPE_CHECKING:
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-ExceptionGroupTypes: Tuple[Type[BaseException], ...] = ()
-
-if sys.version_info >= (3, 11):
-    ExceptionGroupTypes = (BaseExceptionGroup,)  # type: ignore # noqa: F821
+BaseExceptionGroup: Optional[Type[BaseException]]
 try:
-    import exceptiongroup
-
-    ExceptionGroupTypes += (exceptiongroup.BaseExceptionGroup,)
-except ModuleNotFoundError:
-    # no backport installed - if <3.11 that means programs can't raise exceptiongroups
-    # so we don't need to handle it
-    pass
+    BaseExceptionGroup = BaseExceptionGroup  # type: ignore
+except NameError:
+    try:
+        from exceptiongroup import BaseExceptionGroup
+    except ModuleNotFoundError:
+        BaseExceptionGroup = None
 
 
 class Code:
@@ -937,7 +933,10 @@ class FormattedExcinfo:
         while e is not None and id(e) not in seen:
             seen.add(id(e))
             if excinfo_:
-                if isinstance(e, tuple(ExceptionGroupTypes)):
+                # Fall back to native traceback as a temporary workaround until
+                # full support for exception groups added to ExceptionInfo.
+                # See https://github.com/pytest-dev/pytest/issues/9159
+                if BaseExceptionGroup is not None and isinstance(e, BaseExceptionGroup):
                     reprtraceback: Union[
                         ReprTracebackNative, ReprTraceback
                     ] = ReprTracebackNative(

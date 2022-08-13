@@ -11,11 +11,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-try:
-    import exceptiongroup  # noqa (referred to in strings)
-except ModuleNotFoundError:
-    pass
-
 import _pytest
 import pytest
 from _pytest._code.code import ExceptionChainRepr
@@ -27,6 +22,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
+
 
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
@@ -1526,7 +1522,12 @@ def _exceptiongroup_common(
     """
     pytester.makepyfile(test_excgroup=filestr)
     result = pytester.runpytest()
-    match_lines = [
+    match_lines = []
+    if inner_chain in ("another", "from"):
+        match_lines.append(r"SyntaxError: <no detail available>")
+
+    match_lines += [
+        r"  + Exception Group Traceback (most recent call last):",
         rf"  \| {pre2}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
         r"    \| ValueError: From f\(\)",
         r"    \| BaseException: From g\(\)",
@@ -1550,10 +1551,8 @@ def test_native_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> 
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=True)
 
 
-@pytest.mark.skipif(
-    "exceptiongroup" not in sys.modules, reason="exceptiongroup not installed"
-)
 @pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
 @pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
 def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
+    pytest.importorskip("exceptiongroup")
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
