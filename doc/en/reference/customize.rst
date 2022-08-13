@@ -90,7 +90,7 @@ and can also be used to hold pytest configuration if they have a ``[pytest]`` se
 setup.cfg
 ~~~~~~~~~
 
-``setup.cfg`` files are general purpose configuration files, used originally by :doc:`distutils <distutils/configfile>`, and can also be used to hold pytest configuration
+``setup.cfg`` files are general purpose configuration files, used originally by :doc:`distutils <python:distutils/configfile>`, and can also be used to hold pytest configuration
 if they have a ``[tool:pytest]`` section.
 
 .. code-block:: ini

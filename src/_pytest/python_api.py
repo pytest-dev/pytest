@@ -521,7 +521,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
     within some tolerance.
 
-    Due to the :std:doc:`tutorial/floatingpoint`, numbers that we
+    Due to the :doc:`python:tutorial/floatingpoint`, numbers that we
     would intuitively expect to be equal are not always so::
 
         >>> 0.1 + 0.2 == 0.3

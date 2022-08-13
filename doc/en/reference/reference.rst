@@ -529,6 +529,7 @@ New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
 
 .. autoclass:: pytest.Testdir()
     :members:
+    :noindex: TimeoutExpired
 
 
 .. fixture:: recwarn
