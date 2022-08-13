@@ -119,7 +119,7 @@ class MonkeyPatch:
 
     Returned by the :fixture:`monkeypatch` fixture.
 
-    :versionchanged:: 6.2
+    .. versionchanged:: 6.2
         Can now also be used directly as `pytest.MonkeyPatch()`, for when
         the fixture is not available. In this case, use
         :meth:`with MonkeyPatch.context() as mp: <context>` or remember to call
@@ -342,7 +342,8 @@ class MonkeyPatch:
     def chdir(self, path: Union[str, "os.PathLike[str]"]) -> None:
         """Change the current working directory to the specified path.
 
-        Path can be a string or a path object.
+        :param path:
+            The path to change into.
         """
         if self._cwd is None:
             self._cwd = os.getcwd()

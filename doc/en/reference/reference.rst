@@ -102,7 +102,7 @@ pytest.deprecated_call
 
 **Tutorial**: :ref:`ensuring_function_triggers`
 
-.. autofunction:: pytest.deprecated_call()
+.. autofunction:: pytest.deprecated_call([match])
     :with:
 
 pytest.register_assert_rewrite
@@ -529,6 +529,7 @@ New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
 
 .. autoclass:: pytest.Testdir()
     :members:
+    :noindex: TimeoutExpired
 
 
 .. fixture:: recwarn

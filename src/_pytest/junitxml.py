@@ -354,7 +354,10 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
             record_testsuite_property("ARCH", "PPC")
             record_testsuite_property("STORAGE_TYPE", "CEPH")
 
-    ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.
+    :param name:
+        The property name.
+    :param value:
+        The property value. Will be converted to a string.
 
     .. warning::
 

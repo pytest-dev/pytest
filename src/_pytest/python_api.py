@@ -12,7 +12,6 @@ from typing import Generic
 from typing import List
 from typing import Mapping
 from typing import Optional
-from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import Tuple
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
 import _pytest._code
 from _pytest.compat import final
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import overload
 from _pytest.outcomes import fail
 
 
@@ -521,7 +521,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
     within some tolerance.
 
-    Due to the :std:doc:`tutorial/floatingpoint`, numbers that we
+    Due to the :doc:`python:tutorial/floatingpoint`, numbers that we
     would intuitively expect to be equal are not always so::
 
         >>> 0.1 + 0.2 == 0.3
@@ -786,7 +786,7 @@ def raises(
 
 
 @overload
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     func: Callable[..., Any],
     *args: Any,
@@ -795,18 +795,21 @@ def raises(
     ...
 
 
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
 ) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
-    r"""Assert that a code block/function call raises ``expected_exception``
-    or raise a failure exception otherwise.
+    r"""Assert that a code block/function call raises an exception.
 
-    :kwparam match:
+    :param typing.Type[E] | typing.Tuple[typing.Type[E], ...] expected_exception:
+        The excpected exception type, or a tuple if one of multiple possible
+        exception types are excepted.
+    :kwparam str | typing.Pattern[str] | None match:
         If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
-        representation of the exception using :py:func:`re.search`. To match a literal
-        string that may contain :std:ref:`special characters <re-syntax>`, the pattern can
-        first be escaped with :py:func:`re.escape`.
+        representation of the exception using :func:`re.search`.
+
+        To match a literal string that may contain :ref:`special characters
+        <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
 
         (This is only used when :py:func:`pytest.raises` is used as a context manager,
         and passed through to the function otherwise.

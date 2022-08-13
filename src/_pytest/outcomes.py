@@ -241,6 +241,9 @@ def xfail(reason: str = "") -> NoReturn:
 
     This function should be called only during testing (setup, call or teardown).
 
+    :param reason:
+        The message to show the user as reason for the xfail.
+
     .. note::
         It is better to use the :ref:`pytest.mark.xfail ref` marker when
         possible to declare a test to be xfailed under certain conditions
@@ -256,12 +259,12 @@ def importorskip(
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.
 
-    :param str modname:
+    :param modname:
         The name of the module to import.
-    :param str minversion:
+    :param minversion:
         If given, the imported module's ``__version__`` attribute must be at
         least this minimal version, otherwise the test is still skipped.
-    :param str reason:
+    :param reason:
         If given, this reason is shown as the message when the module cannot
         be imported.
 

@@ -37,6 +37,8 @@ from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
     logging_StreamHandler = logging.StreamHandler[StringIO]
+
+    from typing_extensions import Literal
 else:
     logging_StreamHandler = logging.StreamHandler
 
@@ -382,20 +384,19 @@ class LogCaptureFixture:
 
     @property
     def handler(self) -> LogCaptureHandler:
-        """Get the logging handler used by the fixture.
-
-        :rtype: LogCaptureHandler
-        """
+        """Get the logging handler used by the fixture."""
         return self._item.stash[caplog_handler_key]
 
-    def get_records(self, when: str) -> List[logging.LogRecord]:
+    def get_records(
+        self, when: "Literal['setup', 'call', 'teardown']"
+    ) -> List[logging.LogRecord]:
         """Get the logging records for one of the possible test phases.
 
-        :param str when:
-            Which test phase to obtain the records from. Valid values are: "setup", "call" and "teardown".
+        :param when:
+            Which test phase to obtain the records from.
+            Valid values are: "setup", "call" and "teardown".
 
         :returns: The list of captured records at the given stage.
-        :rtype: List[logging.LogRecord]
 
         .. versionadded:: 3.4
         """
@@ -452,8 +453,8 @@ class LogCaptureFixture:
             The levels of the loggers changed by this function will be
             restored to their initial values at the end of the test.
 
-        :param int level: The level.
-        :param str logger: The logger to update. If not given, the root logger.
+        :param level: The level.
+        :param logger: The logger to update. If not given, the root logger.
         """
         logger_obj = logging.getLogger(logger)
         # Save the original log-level to restore it during teardown.
@@ -471,8 +472,8 @@ class LogCaptureFixture:
         the end of the 'with' statement the level is restored to its original
         value.
 
-        :param int level: The level.
-        :param str logger: The logger to update. If not given, the root logger.
+        :param level: The level.
+        :param logger: The logger to update. If not given, the root logger.
         """
         logger_obj = logging.getLogger(logger)
         orig_level = logger_obj.level
