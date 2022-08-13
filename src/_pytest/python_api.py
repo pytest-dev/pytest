@@ -12,7 +12,6 @@ from typing import Generic
 from typing import List
 from typing import Mapping
 from typing import Optional
-from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import Tuple
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
 import _pytest._code
 from _pytest.compat import final
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import overload
 from _pytest.outcomes import fail
 
 
@@ -786,7 +786,7 @@ def raises(
 
 
 @overload
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     func: Callable[..., Any],
     *args: Any,
@@ -795,7 +795,7 @@ def raises(
     ...
 
 
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
 ) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
     r"""Assert that a code block/function call raises an exception.

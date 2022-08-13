@@ -20,6 +20,16 @@ from typing import Union
 import attr
 import py
 
+# fmt: off
+# Workaround for https://github.com/sphinx-doc/sphinx/issues/10351.
+# If `overload` is imported from `compat` instead of from `typing`,
+# Sphinx doesn't recognize it as `overload` and the API docs for
+# overloaded functions look good again. But type checkers handle
+# it fine.
+# fmt: on
+if True:
+    from typing import overload as overload
+
 if TYPE_CHECKING:
     from typing_extensions import Final
 
@@ -345,7 +355,6 @@ else:
 if sys.version_info >= (3, 8):
     from functools import cached_property as cached_property
 else:
-    from typing import overload
     from typing import Type
 
     class cached_property(Generic[_S, _T]):

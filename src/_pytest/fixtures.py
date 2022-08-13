@@ -20,7 +20,6 @@ from typing import List
 from typing import MutableMapping
 from typing import NoReturn
 from typing import Optional
-from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -48,6 +47,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
+from _pytest.compat import overload
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -1231,7 +1231,7 @@ def fixture(
 
 
 @overload
-def fixture(
+def fixture(  # noqa: F811
     fixture_function: None = ...,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
@@ -1245,7 +1245,7 @@ def fixture(
     ...
 
 
-def fixture(
+def fixture(  # noqa: F811
     fixture_function: Optional[FixtureFunction] = None,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = "function",
