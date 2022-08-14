@@ -1,0 +1,2 @@
+Added a system to run downstream plugin tests against current pytest, using GitHub Actions. Currently 
+constrained to pytest plugins that utilize GitHub Actions and ``tox`` to accomplish their own tests.
