@@ -14,18 +14,16 @@ environment variable, or to modify ``sys.path`` for importing.
 The ``monkeypatch`` fixture provides these helper methods for safely patching and mocking
 functionality in tests:
 
-.. code-block:: python
+* :meth:`monkeypatch.setattr(obj, name, value, raising=True) <pytest.MonkeyPatch.setattr>`
+* :meth:`monkeypatch.delattr(obj, name, raising=True) <pytest.MonkeyPatch.delattr>`
+* :meth:`monkeypatch.setitem(mapping, name, value) <pytest.MonkeyPatch.setitem>`
+* :meth:`monkeypatch.delitem(obj, name, raising=True) <pytest.MonkeyPatch.delitem>`
+* :meth:`monkeypatch.setenv(name, value, prepend=None) <pytest.MonkeyPatch.setenv>`
+* :meth:`monkeypatch.delenv(name, raising=True) <pytest.MonkeyPatch.delenv>`
+* :meth:`monkeypatch.syspath_prepend(path) <pytest.MonkeyPatch.syspath_prepend>`
+* :meth:`monkeypatch.chdir(path) <pytest.MonkeyPatch.chdir>`
+* :meth:`monkeypatch.context() <pytest.MonkeyPatch.context>`
 
-    monkeypatch.setattr(obj, name, value, raising=True)
-    monkeypatch.setattr("somemodule.obj.name", value, raising=True)
-    monkeypatch.delattr(obj, name, raising=True)
-    monkeypatch.setitem(mapping, name, value)
-    monkeypatch.delitem(obj, name, raising=True)
-    monkeypatch.setenv(name, value, prepend=None)
-    monkeypatch.delenv(name, raising=True)
-    monkeypatch.syspath_prepend(path)
-    monkeypatch.chdir(path)
-    monkeypatch.context()
 
 All modifications will be undone after the requesting
 test function or fixture has finished. The ``raising``
@@ -64,8 +62,8 @@ and a discussion of its motivation.
 
 .. _`monkeypatch blog post`: https://tetamap.wordpress.com//2009/03/03/monkeypatching-in-unit-tests-done-right/
 
-Simple example: monkeypatching functions
-----------------------------------------
+Monkeypatching functions
+------------------------
 
 Consider a scenario where you are working with user directories. In the context of
 testing, you do not want your test to depend on the running user. ``monkeypatch``

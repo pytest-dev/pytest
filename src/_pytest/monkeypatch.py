@@ -40,6 +40,7 @@ def monkeypatch() -> Generator["MonkeyPatch", None, None]:
     * :meth:`monkeypatch.delenv(name, raising=True) <pytest.MonkeyPatch.delenv>`
     * :meth:`monkeypatch.syspath_prepend(path) <pytest.MonkeyPatch.syspath_prepend>`
     * :meth:`monkeypatch.chdir(path) <pytest.MonkeyPatch.chdir>`
+    * :meth:`monkeypatch.context() <pytest.MonkeyPatch.context>`
 
     All modifications will be undone after the requesting test function or
     fixture has finished. The ``raising`` parameter determines if a :class:`KeyError`
@@ -186,16 +187,39 @@ class MonkeyPatch:
         value: object = notset,
         raising: bool = True,
     ) -> None:
-        """Set attribute value on target, memorizing the old value.
+        """
+        Set attribute value on target, memorizing the old value.
 
-        For convenience you can specify a string as ``target`` which
+        For example:
+
+        .. code-block:: python
+
+            import os
+
+            monkeypatch.setattr(os, "getcwd", lambda: "/")
+
+        The code above replaces the :func:`os.getcwd` function by a ``lambda`` which
+        always returns ``"/"``.
+
+        For convenience, you can specify a string as ``target`` which
         will be interpreted as a dotted import path, with the last part
-        being the attribute name. For example,
-        ``monkeypatch.setattr("os.getcwd", lambda: "/")``
-        would set the ``getcwd`` function of the ``os`` module.
+        being the attribute name:
 
-        Raises AttributeError if the attribute does not exist, unless
+        .. code-block:: python
+
+            monkeypatch.setattr("os.getcwd", lambda: "/")
+
+        Raises :class:`AttributeError` if the attribute does not exist, unless
         ``raising`` is set to False.
+
+        **Where to patch**
+
+        ``monkeypatch.setattr`` works by (temporarily) changing the object that a name points to with another one.
+        There can be many names pointing to any individual object, so for patching to work you must ensure
+        that you patch the name used by the system under test.
+
+        See the section *Where to patch* in the :mod:`unittest.mock` docs for a complete explanation, which
+        is meant for :func:`unittest.mock.patch` but applies to ``monkeypatch.setattr`` as well.
         """
         __tracebackhide__ = True
         import inspect
