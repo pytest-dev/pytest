@@ -3,7 +3,6 @@ requires = [
   # sync with setup.py until we discard non-pep-517/518
   "setuptools>=45.0",
   "setuptools-scm[toml]>=6.2.3",
-  "wheel",
 ]
 build-backend = "setuptools.build_meta"
 
