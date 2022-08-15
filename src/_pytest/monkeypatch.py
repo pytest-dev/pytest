@@ -218,8 +218,9 @@ class MonkeyPatch:
         There can be many names pointing to any individual object, so for patching to work you must ensure
         that you patch the name used by the system under test.
 
-        See the section :ref:`Where to patch <python:where-to-patch>` in the :mod:`unittest.mock` docs for a complete explanation, which
-        is meant for :func:`unittest.mock.patch` but applies to ``monkeypatch.setattr`` as well.
+        See the section :ref:`Where to patch <python:where-to-patch>` in the :mod:`unittest.mock`
+        docs for a complete explanation, which is meant for :func:`unittest.mock.patch` but
+        applies to ``monkeypatch.setattr`` as well.
         """
         __tracebackhide__ = True
         import inspect
