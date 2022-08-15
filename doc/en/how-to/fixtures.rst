@@ -733,8 +733,81 @@ does offer some nuances for when you're in a pinch.
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py
-   .                                                                    [100%]
-   1 passed in 0.12s
+  .                                                                    [100%]
+  1 passed in 0.12s
+
+Note on finalizer order
+""""""""""""""""""""""""
+
+Finalizers are executed in a first-in-last-out order.
+For yield fixtures, the first teardown code to run is from the right-most fixture, i.e. the last test parameter.
+
+.. regendoc:wipe
+
+.. code-block:: python
+
+    import pytest
+
+
+    def test_bar(fix_w_yield1, fix_w_yield2):
+        print("test_bar")
+
+
+    @pytest.fixture
+    def fix_w_yield1():
+        yield
+        print("after_yield_1")
+
+
+    @pytest.fixture
+    def fix_w_yield2():
+        yield
+        print("after_yield_2")
+
+
+.. code-block:: pytest
+
+    $ pytest test_module.py
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    collected 1 item
+
+    test_module.py test_bar
+    .after_yield_2
+    after_yield_1
+
+
+
+For finalizers, the first fixture to run is last call to `request.addfinalizer`.
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def fix_w_finalizers(request):
+        request.addfinalizer(partial(print, "finalizer_2"))
+        request.addfinalizer(partial(print, "finalizer_1"))
+
+
+    def test_bar(fix_w_finalizers):
+        print("test_bar")
+
+
+.. code-block:: pytest
+
+    $ pytest test_module.py
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    collected 1 item
+
+    test_module.py test_bar
+    .finalizer_1
+    finalizer_2
+
+This is so because yield fixtures use `addfinalizer` behind the scenes: when the fixture executes, `addfinalizer` registers a function that resumes the generator, which in turn calls the teardown code.
+
 
 .. _`safe teardowns`:
 
