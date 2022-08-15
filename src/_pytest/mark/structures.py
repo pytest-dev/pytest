@@ -126,12 +126,12 @@ class ParameterSet(NamedTuple):
 
     @staticmethod
     def _parse_parametrize_args(
-        argnames: Union[str, List[str], Tuple[str, ...]],
+        argnames: Union[str, Sequence[str]],
         argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
         *args,
         **kwargs,
-    ) -> Tuple[Union[List[str], Tuple[str, ...]], bool]:
-        if not isinstance(argnames, (tuple, list)):
+    ) -> Tuple[Sequence[str], bool]:
+        if isinstance(argnames, str):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
         else:
@@ -150,12 +150,12 @@ class ParameterSet(NamedTuple):
     @classmethod
     def _for_parametrize(
         cls,
-        argnames: Union[str, List[str], Tuple[str, ...]],
+        argnames: Union[str, Sequence[str]],
         argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
         func,
         config: Config,
         nodeid: str,
-    ) -> Tuple[Union[List[str], Tuple[str, ...]], List["ParameterSet"]]:
+    ) -> Tuple[Sequence[str], List["ParameterSet"]]:
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -434,7 +434,7 @@ if TYPE_CHECKING:
     class _ParametrizeMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self,
-            argnames: Union[str, List[str], Tuple[str, ...]],
+            argnames: Union[str, Sequence[str]],
             argvalues: Iterable[Union[ParameterSet, Sequence[object], object]],
             *,
             indirect: Union[bool, Sequence[str]] = ...,
