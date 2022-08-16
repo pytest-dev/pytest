@@ -115,6 +115,7 @@ jobs:
             python: "3.11-dev"
             os: ubuntu-latest
             tox_env: "py311"
+            use_coverage: true
           - name: "ubuntu-py311-exceptiongroup"
             python: "3.11-dev"
             os: ubuntu-latest
