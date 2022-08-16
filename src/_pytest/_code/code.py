@@ -56,14 +56,11 @@ if TYPE_CHECKING:
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-BaseExceptionGroup: Optional[Type[BaseException]]
+BaseExceptionGroup: Type[BaseException]
 try:
     BaseExceptionGroup = BaseExceptionGroup  # type: ignore
 except NameError:
-    try:
-        from exceptiongroup import BaseExceptionGroup
-    except ModuleNotFoundError:
-        BaseExceptionGroup = None
+    from exceptiongroup import BaseExceptionGroup
 
 
 class Code:
@@ -936,7 +933,7 @@ class FormattedExcinfo:
                 # Fall back to native traceback as a temporary workaround until
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
-                if BaseExceptionGroup is not None and isinstance(e, BaseExceptionGroup):
+                if isinstance(e, BaseExceptionGroup):
                     reprtraceback: Union[
                         ReprTracebackNative, ReprTraceback
                     ] = ReprTracebackNative(

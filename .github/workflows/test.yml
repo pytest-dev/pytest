@@ -46,6 +46,7 @@ jobs:
           "ubuntu-py39",
           "ubuntu-py310",
           "ubuntu-py311",
+          "ubuntu-py311-exceptiongroup",
           "ubuntu-pypy3",
 
           "macos-py37",
@@ -114,6 +115,10 @@ jobs:
             python: "3.11-dev"
             os: ubuntu-latest
             tox_env: "py311"
+          - name: "ubuntu-py311-exceptiongroup"
+            python: "3.11-dev"
+            os: ubuntu-latest
+            tox_env: "py311-exceptiongroup"
           - name: "ubuntu-pypy3"
             python: "pypy-3.7"
             os: ubuntu-latest

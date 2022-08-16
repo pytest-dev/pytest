@@ -1478,8 +1478,8 @@ def _exceptiongroup_common(
     inner_chain: str,
     native: bool,
 ) -> None:
-    pre = "exceptiongroup." if not native else ""
-    pre2 = pre if sys.version_info < (3, 11) else ""
+    pre_raise = "exceptiongroup." if not native else ""
+    pre_catch = pre_raise if sys.version_info < (3, 11) else ""
     filestr = f"""
     {"import exceptiongroup" if not native else ""}
     import pytest
@@ -1496,19 +1496,19 @@ def _exceptiongroup_common(
                 excs.append(err)
         if excs:
             if inner_chain == "none":
-                raise {pre}BaseExceptionGroup("Oops", excs)
+                raise {pre_raise}BaseExceptionGroup("Oops", excs)
             try:
                 raise SyntaxError()
             except SyntaxError as e:
                 if inner_chain == "from":
-                    raise {pre}BaseExceptionGroup("Oops", excs) from e
+                    raise {pre_raise}BaseExceptionGroup("Oops", excs) from e
                 else:
-                    raise {pre}BaseExceptionGroup("Oops", excs)
+                    raise {pre_raise}BaseExceptionGroup("Oops", excs)
 
     def outer(outer_chain, inner_chain):
         try:
             inner(inner_chain)
-        except {pre2}BaseExceptionGroup as e:
+        except {pre_catch}BaseExceptionGroup as e:
             if outer_chain == "none":
                 raise
             if outer_chain == "from":
@@ -1528,7 +1528,7 @@ def _exceptiongroup_common(
 
     match_lines += [
         r"  + Exception Group Traceback (most recent call last):",
-        rf"  \| {pre2}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
+        rf"  \| {pre_catch}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
         r"    \| ValueError: From f\(\)",
         r"    \| BaseException: From g\(\)",
         r"=* short test summary info =*",
@@ -1537,7 +1537,7 @@ def _exceptiongroup_common(
         match_lines.append(r"FAILED test_excgroup.py::test - IndexError")
     else:
         match_lines.append(
-            rf"FAILED test_excgroup.py::test - {pre2}BaseExceptionGroup: Oops \(2 su.*"
+            rf"FAILED test_excgroup.py::test - {pre_catch}BaseExceptionGroup: Oops \(2.*"
         )
     result.stdout.re_match_lines(match_lines)
 
@@ -1554,5 +1554,6 @@ def test_native_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> 
 @pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
 @pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
 def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
+    # with py>=3.11 does not depend on exceptiongroup, though there is a toxenv for it
     pytest.importorskip("exceptiongroup")
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
