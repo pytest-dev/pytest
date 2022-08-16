@@ -56,10 +56,7 @@ if TYPE_CHECKING:
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-BaseExceptionGroup: Type[BaseException]
-try:
-    BaseExceptionGroup = BaseExceptionGroup  # type: ignore
-except NameError:
+if sys.version_info[:2] < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 
