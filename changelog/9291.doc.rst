@@ -1,0 +1,1 @@
+Update documentation on how :func:`pytest.warns` affects :class:`DeprecationWarning`.
