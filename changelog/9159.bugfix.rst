@@ -1,0 +1,1 @@
+Showing inner exceptions by forcing native display in ``ExceptionGroups`` even when using display options other than ``--tb=native``. A temporary step before full implementation of pytest-native display for inner exceptions in ``ExceptionGroups``.
