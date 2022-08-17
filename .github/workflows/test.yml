@@ -114,6 +114,7 @@ jobs:
             python: "3.11-dev"
             os: ubuntu-latest
             tox_env: "py311"
+            use_coverage: true
           - name: "ubuntu-pypy3"
             python: "pypy-3.7"
             os: ubuntu-latest
