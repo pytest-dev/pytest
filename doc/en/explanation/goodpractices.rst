@@ -117,7 +117,6 @@ Here, your application root package resides in a sub-directory of your root:
 .. code-block:: text
 
     pyproject.toml
-    setup.cfg
     src/
         mypkg/
             __init__.py
@@ -139,7 +138,6 @@ want to distribute them along with your application:
 .. code-block:: text
 
     pyproject.toml
-    setup.cfg
     mypkg/
         __init__.py
         app.py
