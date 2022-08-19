@@ -276,7 +276,7 @@ class TestReport(BaseReport):
 
         #: A name -> value dictionary containing all keywords and
         #: markers associated with a test invocation.
-        self.keywords = keywords
+        self.keywords: Mapping[str, Any] = keywords
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
@@ -298,7 +298,7 @@ class TestReport(BaseReport):
         self.sections = list(sections)
 
         #: Time it took to run just the test.
-        self.duration = duration
+        self.duration: float = duration
 
         self.__dict__.update(extra)
 
@@ -309,7 +309,11 @@ class TestReport(BaseReport):
 
     @classmethod
     def from_item_and_call(cls, item: Item, call: "CallInfo[None]") -> "TestReport":
-        """Create and fill a TestReport with standard item and call info."""
+        """Create and fill a TestReport with standard item and call info.
+
+        :param item: The item.
+        :param call: The call info.
+        """
         when = call.when
         # Remove "collect" from the Literal type -- only for collection calls.
         assert when != "collect"

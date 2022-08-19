@@ -9,7 +9,6 @@ from typing import Generator
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import Type
@@ -17,6 +16,7 @@ from typing import TypeVar
 from typing import Union
 
 from _pytest.compat import final
+from _pytest.compat import overload
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import WARNS_NONE_ARG
 from _pytest.fixtures import fixture
@@ -47,11 +47,13 @@ def deprecated_call(
 
 
 @overload
-def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+def deprecated_call(  # noqa: F811
+    func: Callable[..., T], *args: Any, **kwargs: Any
+) -> T:
     ...
 
 
-def deprecated_call(
+def deprecated_call(  # noqa: F811
     func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
 ) -> Union["WarningsRecorder", Any]:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning``.
@@ -93,7 +95,7 @@ def warns(
 
 
 @overload
-def warns(
+def warns(  # noqa: F811
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
     func: Callable[..., T],
     *args: Any,
@@ -102,7 +104,7 @@ def warns(
     ...
 
 
-def warns(
+def warns(  # noqa: F811
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
@@ -110,15 +112,15 @@ def warns(
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
 
-    Specifically, the parameter ``expected_warning`` can be a warning class or
-    sequence of warning classes, and the code inside the ``with`` block must issue a warning of that class or
-    classes.
+    Specifically, the parameter ``expected_warning`` can be a warning class or sequence
+    of warning classes, and the code inside the ``with`` block must issue at least one
+    warning of that class or classes.
 
-    This helper produces a list of :class:`warnings.WarningMessage` objects,
-    one for each warning raised.
+    This helper produces a list of :class:`warnings.WarningMessage` objects, one for
+    each warning raised (regardless of whether it is an ``expected_warning`` or not).
 
-    This function can be used as a context manager, or any of the other ways
-    :func:`pytest.raises` can be used::
+    This function can be used as a context manager, which will capture all the raised
+    warnings inside it::
 
         >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
@@ -138,6 +140,14 @@ def warns(
         Traceback (most recent call last):
           ...
         Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+
+    **Using with** ``pytest.mark.parametrize``
+
+    When using :ref:`pytest.mark.parametrize ref` it is possible to parametrize tests
+    such that some runs raise a warning and others do not.
+
+    This could be achieved in the same way as with exceptions, see
+    :ref:`parametrizing_conditional_raising` for an example.
 
     """
     __tracebackhide__ = True

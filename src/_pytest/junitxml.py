@@ -231,7 +231,7 @@ class _NodeReporter:
             msg = f'failed on teardown with "{reason}"'
         else:
             msg = f'failed on setup with "{reason}"'
-        self._add_simple("error", msg, str(report.longrepr))
+        self._add_simple("error", bin_xml_escape(msg), str(report.longrepr))
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
@@ -354,7 +354,10 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
             record_testsuite_property("ARCH", "PPC")
             record_testsuite_property("STORAGE_TYPE", "CEPH")
 
-    ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.
+    :param name:
+        The property name.
+    :param value:
+        The property value. Will be converted to a string.
 
     .. warning::
 

@@ -56,6 +56,9 @@ if TYPE_CHECKING:
 
     _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
+
 
 class Code:
     """Wrapper around Python code objects."""
@@ -924,7 +927,21 @@ class FormattedExcinfo:
         while e is not None and id(e) not in seen:
             seen.add(id(e))
             if excinfo_:
-                reprtraceback = self.repr_traceback(excinfo_)
+                # Fall back to native traceback as a temporary workaround until
+                # full support for exception groups added to ExceptionInfo.
+                # See https://github.com/pytest-dev/pytest/issues/9159
+                if isinstance(e, BaseExceptionGroup):
+                    reprtraceback: Union[
+                        ReprTracebackNative, ReprTraceback
+                    ] = ReprTracebackNative(
+                        traceback.format_exception(
+                            type(excinfo_.value),
+                            excinfo_.value,
+                            excinfo_.traceback[0]._rawentry,
+                        )
+                    )
+                else:
+                    reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash: Optional[ReprFileLocation] = (
                     excinfo_._getreprcrash() if self.style != "value" else None
                 )

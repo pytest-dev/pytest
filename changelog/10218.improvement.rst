@@ -1,0 +1,5 @@
+``@pytest.mark.parametrize()`` (and similar functions) now accepts any ``Sequence[str]`` for the argument names,
+instead of just ``list[str]`` and ``tuple[str, ...]``.
+
+(Note that ``str``, which is itself a ``Sequence[str]``, is still treated as a
+comma-delimited name list, as before).

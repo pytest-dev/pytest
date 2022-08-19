@@ -38,6 +38,7 @@ release = ".".join(version.split(".")[:2])
 
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
+autodoc_typehints_description_target = "documented"
 todo_include_todos = 1
 
 latex_engine = "lualatex"
@@ -162,11 +163,11 @@ linkcheck_workers = 5
 
 _repo = "https://github.com/pytest-dev/pytest"
 extlinks = {
-    "bpo": ("https://bugs.python.org/issue%s", "bpo-"),
-    "pypi": ("https://pypi.org/project/%s/", ""),
-    "issue": (f"{_repo}/issues/%s", "issue #"),
-    "pull": (f"{_repo}/pull/%s", "pull request #"),
-    "user": ("https://github.com/%s", "@"),
+    "bpo": ("https://bugs.python.org/issue%s", "bpo-%s"),
+    "pypi": ("https://pypi.org/project/%s/", "%s"),
+    "issue": (f"{_repo}/issues/%s", "issue #%s"),
+    "pull": (f"{_repo}/pull/%s", "pull request #%s"),
+    "user": ("https://github.com/%s", "@%s"),
 }
 
 
@@ -419,8 +420,6 @@ def configure_logging(app: "sphinx.application.Sphinx") -> None:
 
 
 def setup(app: "sphinx.application.Sphinx") -> None:
-    # from sphinx.ext.autodoc import cut_lines
-    # app.connect('autodoc-process-docstring', cut_lines(4, what=['module']))
     app.add_crossref_type(
         "fixture",
         "fixture",

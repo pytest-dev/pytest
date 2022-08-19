@@ -68,6 +68,9 @@ repos:
           - packaging
           - tomli
           - types-pkg_resources
+            # for mypy running on python>=3.11 since exceptiongroup is only a dependency
+            # on <3.11
+          - exceptiongroup>=1.0.0rc8
 -   repo: local
     hooks:
     -   id: rst

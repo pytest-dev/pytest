@@ -1207,7 +1207,7 @@ class Metafunc:
 
     def parametrize(
         self,
-        argnames: Union[str, List[str], Tuple[str, ...]],
+        argnames: Union[str, Sequence[str]],
         argvalues: Iterable[Union[ParameterSet, Sequence[object], object]],
         indirect: Union[bool, Sequence[str]] = False,
         ids: Optional[

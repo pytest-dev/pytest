@@ -62,8 +62,8 @@ def param(
             assert eval(test_input) == expected
 
     :param values: Variable args of the values of the parameter set, in order.
-    :keyword marks: A single mark or a list of marks to be applied to this parameter set.
-    :keyword str id: The id to attribute to this parameter set.
+    :param marks: A single mark or a list of marks to be applied to this parameter set.
+    :param id: The id to attribute to this parameter set.
     """
     return ParameterSet.param(*values, marks=marks, id=id)
 
