@@ -96,8 +96,7 @@ This has the following benefits:
     See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
-For the most convenient experience,
-choose the ``import-lib`` :ref:`import mode <import-modes>`.
+For new projects, we recommend to use ``importlib`` :ref:`import mode <import-modes>` (see [1]_ for a detailed explanation).
 To this end, add the following to your ``pyproject.toml``:
 
 .. code-block:: toml
@@ -111,7 +110,7 @@ The default :ref:`import mode <import-modes>` ``prepend`` has several drawbacks 
 
 .. _`src-layout`:
 
-Generally, but especially if you use the default import mode,
+Generally, but especially if you use the default import mode ``prepend``,
 it is **strongly** suggested to use a ``src`` layout.
 Here, your application root package resides in a sub-directory of your root:
 
@@ -244,7 +243,7 @@ setuptools intends to
     The test files in the first example would be imported as
     ``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to ``sys.path``.
 
-    This results in a drawback compared to the import mode ``import-lib``:
+    This results in a drawback compared to the import mode ``importlib``:
     your test files must have **unique names**.
 
     If you need to have test modules with the same name,
