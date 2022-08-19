@@ -74,7 +74,6 @@ to keep tests separate from actual application code (often a good idea):
 .. code-block:: text
 
     pyproject.toml
-    setup.cfg
     mypkg/
         __init__.py
         app.py
@@ -245,7 +244,7 @@ setuptools intends to
     The test files in the first example would be imported as
     ``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to ``sys.path``.
 
-    This results in the following drawback compared to the import mode ``import-lib``:
+    This results in a drawback compared to the import mode ``import-lib``:
     your test files must have **unique names**.
 
     If you need to have test modules with the same name,
@@ -255,7 +254,6 @@ setuptools intends to
     .. code-block:: text
 
         pyproject.toml
-        setup.cfg
         mypkg/
             ...
         tests/
