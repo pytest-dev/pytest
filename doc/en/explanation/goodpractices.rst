@@ -17,7 +17,7 @@ Next, place a ``pyproject.toml`` file in the root of your package:
 .. code-block:: toml
 
     [build-system]
-    requires = ["setuptools>=42", "wheel"]
+    requires = ["setuptools >= 42"]
     build-backend = "setuptools.build_meta"
 
 and a ``setup.cfg`` file containing your package's metadata with the following minimum content:
