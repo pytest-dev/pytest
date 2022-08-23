@@ -74,10 +74,11 @@ to keep tests separate from actual application code (often a good idea):
 .. code-block:: text
 
     pyproject.toml
-    mypkg/
-        __init__.py
-        app.py
-        view.py
+    src/
+        mypkg/
+            __init__.py
+            app.py
+            view.py
     tests/
         test_app.py
         test_view.py
@@ -96,7 +97,8 @@ This has the following benefits:
     See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
-For new projects, we recommend to use ``importlib`` :ref:`import mode <import-modes>` (see [1]_ for a detailed explanation).
+For new projects, we recommend to use ``importlib`` :ref:`import mode <import-modes>`
+(see which-import-mode_ for a detailed explanation).
 To this end, add the following to your ``pyproject.toml``:
 
 .. code-block:: toml
@@ -106,26 +108,17 @@ To this end, add the following to your ``pyproject.toml``:
         "--import-mode=importlib",
     ]
 
-The default :ref:`import mode <import-modes>` ``prepend`` has several drawbacks [1]_.
-
-.. _`src-layout`:
+.. _src-layout:
 
 Generally, but especially if you use the default import mode ``prepend``,
 it is **strongly** suggested to use a ``src`` layout.
-Here, your application root package resides in a sub-directory of your root:
+Here, your application root package resides in a sub-directory of your root,
+i.e. ``src/mypkg/`` instead of ``mypkg``.
 
-.. code-block:: text
+This layout prevents a lot of common pitfalls and has many benefits,
+which are better explained in this excellent `blog post`_ by Ionel Cristian Mărieș.
 
-    pyproject.toml
-    src/
-        mypkg/
-            __init__.py
-            app.py
-            view.py
-    tests/...
-
-This layout prevents a lot of common pitfalls and has many benefits, which are better explained in this excellent
-`blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_.
+.. _blog post: https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>
 
 
 Tests as part of application code
@@ -138,7 +131,7 @@ want to distribute them along with your application:
 .. code-block:: text
 
     pyproject.toml
-    mypkg/
+    [src/]mypkg/
         __init__.py
         app.py
         view.py
@@ -200,6 +193,56 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     much less surprising.
 
 
+.. _which-import-mode:
+
+Choosing an import mode
+^^^^^^^^^^^^^^^^^^^^^^^
+
+For historical reasons, pytest defaults to the ``prepend`` :ref:`import mode <import-modes>`
+instead of the ``importlib`` import mode we recommend for new projects.
+The reason lies in the way the ``prepend`` mode works:
+
+Since there are no packages to derive a full package name from,
+``pytest`` will import your test files as *top-level* modules.
+The test files in the first example (:ref:`src layout <src-layout>`) would be imported as
+``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to ``sys.path``.
+
+This results in a drawback compared to the import mode ``importlib``:
+your test files must have **unique names**.
+
+If you need to have test modules with the same name,
+as a workaround you might add ``__init__.py`` files to your ``tests`` folder and subfolders,
+changing them to packages:
+
+.. code-block:: text
+
+    pyproject.toml
+    mypkg/
+        ...
+    tests/
+        __init__.py
+        foo/
+            __init__.py
+            test_view.py
+        bar/
+            __init__.py
+            test_view.py
+
+Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test_view``,
+allowing you to have modules with the same name.
+But now this introduces a subtle problem:
+in order to load the test modules from the ``tests`` directory,
+pytest prepends the root of the repository to ``sys.path``,
+which adds the side-effect that now ``mypkg`` is also importable.
+
+This is problematic if you are using a tool like tox_ to test your package in a virtual environment,
+because you want to test the *installed* version of your package,
+not the local code from the repository.
+
+The ``importlib`` import mode does not have any of the drawbacks above,
+because ``sys.path`` is not changed when importing test modules.
+
+
 .. _`buildout`: http://www.buildout.org/en/latest/
 
 .. _`use tox`:
@@ -232,46 +275,3 @@ See also `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`
 
 setuptools intends to
 `remove the test command <https://github.com/pypa/setuptools/issues/931>`_.
-
-
-.. [1] The default ``prepend`` :ref:`import mode <import-modes>` works as follows:
-
-    Since there are no packages to derive a full package name from,
-    ``pytest`` will import your test files as *top-level* modules.
-    The test files in the first example would be imported as
-    ``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to ``sys.path``.
-
-    This results in a drawback compared to the import mode ``importlib``:
-    your test files must have **unique names**.
-
-    If you need to have test modules with the same name,
-    as a workaround you might add ``__init__.py`` files to your ``tests`` folder and subfolders,
-    changing them to packages:
-
-    .. code-block:: text
-
-        pyproject.toml
-        mypkg/
-            ...
-        tests/
-            __init__.py
-            foo/
-                __init__.py
-                test_view.py
-            bar/
-                __init__.py
-                test_view.py
-
-    Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test_view``,
-    allowing you to have modules with the same name.
-    But now this introduces a subtle problem:
-    in order to load the test modules from the ``tests`` directory,
-    pytest prepends the root of the repository to ``sys.path``,
-    which adds the side-effect that now ``mypkg`` is also importable.
-
-    This is problematic if you are using a tool like `tox`_ to test your package in a virtual environment,
-    because you want to test the *installed* version of your package,
-    not the local code from the repository.
-
-    The ``importlib`` import mode does not have any of the drawbacks above,
-    because ``sys.path`` is not changed when importing test modules.
