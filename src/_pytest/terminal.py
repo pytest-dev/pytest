@@ -397,7 +397,7 @@ class TerminalReporter:
             self.currentfspath = fspath
             relfspath = bestrelpath(self.startpath, fspath)
             self._tw.line()
-            self._tw.write(relfspath + " ")
+            self._tw.write(relfspath + "\n")
         self._tw.write(res, flush=True, **markup)
 
     def write_ensure_prefix(self, prefix: str, extra: str = "", **kwargs) -> None:
