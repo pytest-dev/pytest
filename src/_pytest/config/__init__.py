@@ -833,7 +833,8 @@ def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
         if is_simple_module:
             module_name, _ = os.path.splitext(fn)
             # we ignore "setup.py" at the root of the distribution
-            if module_name != "setup":
+            # as well as editable installation finder modules made by setuptools
+            if module_name != "setup" and not module_name.startswith("__editable__"):
                 seen_some = True
                 yield module_name
         elif is_package:
