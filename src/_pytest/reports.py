@@ -455,7 +455,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     def serialize_repr_entry(
         entry: Union[ReprEntry, ReprEntryNative]
     ) -> Dict[str, Any]:
-        data = attr.asdict(entry)
+        data = attr.asdict(entry)  # type:ignore[arg-type]
         for key, value in data.items():
             if hasattr(value, "__dict__"):
                 data[key] = attr.asdict(value)
@@ -463,7 +463,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
         return entry_data
 
     def serialize_repr_traceback(reprtraceback: ReprTraceback) -> Dict[str, Any]:
-        result = attr.asdict(reprtraceback)
+        result = attr.asdict(reprtraceback)  # type:ignore[arg-type]
         result["reprentries"] = [
             serialize_repr_entry(x) for x in reprtraceback.reprentries
         ]
@@ -473,7 +473,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
         reprcrash: Optional[ReprFileLocation],
     ) -> Optional[Dict[str, Any]]:
         if reprcrash is not None:
-            return attr.asdict(reprcrash)
+            return attr.asdict(reprcrash)  # type:ignore[arg-type]
         else:
             return None
 
