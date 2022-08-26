@@ -1,1 +1,0 @@
-Type-annotate ``FixtureRequest.param`` as ``Any`` as a stop gap measure until :issue:`8073` is fixed.

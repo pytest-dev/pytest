@@ -28,6 +28,47 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.1.3 (2022-08-26)
+=========================
+
+Bug Fixes
+---------
+
+- `#10060 <https://github.com/pytest-dev/pytest/issues/10060>`_: When running with ``--pdb``, ``TestCase.tearDown`` is no longer called for tests when the *class* has been skipped via ``unittest.skip`` or ``pytest.mark.skip``.
+
+
+- `#10190 <https://github.com/pytest-dev/pytest/issues/10190>`_: Invalid XML characters in setup or teardown error messages are now properly escaped for JUnit XML reports.
+
+
+- `#10230 <https://github.com/pytest-dev/pytest/issues/10230>`_: Ignore ``.py`` files created by ``pyproject.toml``-based editable builds introduced in `pip 21.3 <https://pip.pypa.io/en/stable/news/#v21-3>`__.
+
+
+- `#3396 <https://github.com/pytest-dev/pytest/issues/3396>`_: Doctests now respect the ``--import-mode`` flag.
+
+
+- `#9514 <https://github.com/pytest-dev/pytest/issues/9514>`_: Type-annotate ``FixtureRequest.param`` as ``Any`` as a stop gap measure until :issue:`8073` is fixed.
+
+
+- `#9791 <https://github.com/pytest-dev/pytest/issues/9791>`_: Fixed a path handling code in ``rewrite.py`` that seems to work fine, but was incorrect and fails in some systems.
+
+
+- `#9917 <https://github.com/pytest-dev/pytest/issues/9917>`_: Fixed string representation for :func:`pytest.approx` when used to compare tuples.
+
+
+
+Improved Documentation
+----------------------
+
+- `#9937 <https://github.com/pytest-dev/pytest/issues/9937>`_: Explicit note that :fixture:`tmpdir` fixture is discouraged in favour of :fixture:`tmp_path`.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#10114 <https://github.com/pytest-dev/pytest/issues/10114>`_: Replace `atomicwrites <https://github.com/untitaker/python-atomicwrites>`__ dependency on windows with `os.replace`.
+
+
 pytest 7.1.2 (2022-04-23)
 =========================
 

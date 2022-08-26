@@ -733,6 +733,8 @@ does offer some nuances for when you're in a pinch.
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
   .                                                                    [100%]
   1 passed in 0.12s
 
@@ -770,12 +772,11 @@ For yield fixtures, the first teardown code to run is from the right-most fixtur
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    collected 1 item
+    rootdir: /home/sweet/project
+    collected 0 items
 
-    test_module.py test_bar
-    .after_yield_2
-    after_yield_1
-
+    ========================== no tests ran in 0.12s ===========================
+    ERROR: file or directory not found: test_module.py
 
 
 For finalizers, the first fixture to run is last call to `request.addfinalizer`.
@@ -800,11 +801,12 @@ For finalizers, the first fixture to run is last call to `request.addfinalizer`.
     $ pytest test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    collected 1 item
+    rootdir: /home/sweet/project
+    collected 0 items
 
-    test_module.py test_bar
-    .finalizer_1
-    finalizer_2
+    ========================== no tests ran in 0.12s ===========================
+    ERROR: file or directory not found: test_module.py
+
 
 This is so because yield fixtures use `addfinalizer` behind the scenes: when the fixture executes, `addfinalizer` registers a function that resumes the generator, which in turn calls the teardown code.
 
@@ -860,8 +862,21 @@ wouldn't be compact anymore).
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py
-   .                                                                    [100%]
-   1 passed in 0.12s
+
+   ================================== ERRORS ==================================
+   ____________________ ERROR collecting test_emaillib.py _____________________
+   ImportError while importing test module '/home/sweet/project/test_emaillib.py'.
+   Hint: make sure your test modules/packages have valid Python names.
+   Traceback:
+   /opt/hostedtoolcache/Python/3.8.13/x64/lib/python3.8/importlib/__init__.py:127: in import_module
+       return _bootstrap._gcd_import(name[level:], package, level)
+   test_emaillib.py:3: in <module>
+       from emaillib import Email, MailAdminClient
+   E   ModuleNotFoundError: No module named 'emaillib'
+   ========================= short test summary info ==========================
+   ERROR test_emaillib.py
+   !!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!
+   1 error in 0.12s
 
 .. _`safe fixture structure`:
 
@@ -1122,12 +1137,10 @@ again, nothing much has changed:
 .. code-block:: pytest
 
     $ pytest -s -q --tb=no test_module.py
-    FFfinalizing <smtplib.SMTP object at 0xdeadbeef0002> (smtp.gmail.com)
 
-    ========================= short test summary info ==========================
-    FAILED test_module.py::test_ehlo - assert 0
-    FAILED test_module.py::test_noop - assert 0
-    2 failed in 0.12s
+    no tests ran in 0.12s
+    ERROR: file or directory not found: test_module.py
+
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace:
@@ -1155,7 +1168,7 @@ Running it:
     E   AssertionError: (250, b'mail.python.org')
     E   assert 0
     ------------------------- Captured stdout teardown -------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef0003> (mail.python.org)
+    finalizing <smtplib.SMTP object at 0xdeadbeef0002> (mail.python.org)
     ========================= short test summary info ==========================
     FAILED test_anothersmtp.py::test_showhelo - AssertionError: (250, b'mail....
 
@@ -1286,63 +1299,10 @@ So let's just do another run:
 .. code-block:: pytest
 
     $ pytest -q test_module.py
-    FFFF                                                                 [100%]
-    ================================= FAILURES =================================
-    ________________________ test_ehlo[smtp.gmail.com] _________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0004>
+    no tests ran in 0.12s
+    ERROR: file or directory not found: test_module.py
 
-        def test_ehlo(smtp_connection):
-            response, msg = smtp_connection.ehlo()
-            assert response == 250
-            assert b"smtp.gmail.com" in msg
-    >       assert 0  # for demo purposes
-    E       assert 0
-
-    test_module.py:7: AssertionError
-    ________________________ test_noop[smtp.gmail.com] _________________________
-
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0004>
-
-        def test_noop(smtp_connection):
-            response, msg = smtp_connection.noop()
-            assert response == 250
-    >       assert 0  # for demo purposes
-    E       assert 0
-
-    test_module.py:13: AssertionError
-    ________________________ test_ehlo[mail.python.org] ________________________
-
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0005>
-
-        def test_ehlo(smtp_connection):
-            response, msg = smtp_connection.ehlo()
-            assert response == 250
-    >       assert b"smtp.gmail.com" in msg
-    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8\nCHUNKING'
-
-    test_module.py:6: AssertionError
-    -------------------------- Captured stdout setup ---------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef0004>
-    ________________________ test_noop[mail.python.org] ________________________
-
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0005>
-
-        def test_noop(smtp_connection):
-            response, msg = smtp_connection.noop()
-            assert response == 250
-    >       assert 0  # for demo purposes
-    E       assert 0
-
-    test_module.py:13: AssertionError
-    ------------------------- Captured stdout teardown -------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef0005>
-    ========================= short test summary info ==========================
-    FAILED test_module.py::test_ehlo[smtp.gmail.com] - assert 0
-    FAILED test_module.py::test_noop[smtp.gmail.com] - assert 0
-    FAILED test_module.py::test_ehlo[mail.python.org] - AssertionError: asser...
-    FAILED test_module.py::test_noop[mail.python.org] - assert 0
-    4 failed in 0.12s
 
 We see that our two test functions each ran twice, against the different
 ``smtp_connection`` instances.  Note also, that with the ``mail.python.org``
@@ -1405,25 +1365,31 @@ Running the above tests results in the following test IDs being used:
    =========================== test session starts ============================
    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
    rootdir: /home/sweet/project
-   collected 11 items
+   collected 6 items / 1 error
 
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
      <Function test_showhelo[mail.python.org]>
-   <Module test_emaillib.py>
-     <Function test_email_received>
    <Module test_ids.py>
      <Function test_a[spam]>
      <Function test_a[ham]>
      <Function test_b[eggs]>
      <Function test_b[1]>
-   <Module test_module.py>
-     <Function test_ehlo[smtp.gmail.com]>
-     <Function test_noop[smtp.gmail.com]>
-     <Function test_ehlo[mail.python.org]>
-     <Function test_noop[mail.python.org]>
 
-   ======================= 11 tests collected in 0.12s ========================
+   ================================== ERRORS ==================================
+   ____________________ ERROR collecting test_emaillib.py _____________________
+   ImportError while importing test module '/home/sweet/project/test_emaillib.py'.
+   Hint: make sure your test modules/packages have valid Python names.
+   Traceback:
+   /opt/hostedtoolcache/Python/3.8.13/x64/lib/python3.8/importlib/__init__.py:127: in import_module
+       return _bootstrap._gcd_import(name[level:], package, level)
+   test_emaillib.py:3: in <module>
+       from emaillib import Email, MailAdminClient
+   E   ModuleNotFoundError: No module named 'emaillib'
+   ========================= short test summary info ==========================
+   ERROR test_emaillib.py
+   !!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!
+   =================== 6 tests collected, 1 error in 0.12s ====================
 
 .. _`fixture-parametrize-marks`:
 
