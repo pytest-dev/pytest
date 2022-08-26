@@ -842,6 +842,9 @@ class TestConfigAPI:
             (["src/bar/__init__.py"], ["bar"]),
             (["src/bar/__init__.py", "setup.py"], ["bar"]),
             (["source/python/bar/__init__.py", "setup.py"], ["bar"]),
+            # editable installation finder modules
+            (["__editable___xyz_finder.py"], []),
+            (["bar/__init__.py", "__editable___xyz_finder.py"], ["bar"]),
         ],
     )
     def test_iter_rewritable_modules(self, names, expected) -> None:
