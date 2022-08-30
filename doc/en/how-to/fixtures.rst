@@ -769,12 +769,12 @@ For yield fixtures, the first teardown code to run is from the right-most fixtur
 
 .. code-block:: pytest
 
-    $ pytest test_module.py
+    $ pytest -s test_yield.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     collected 1 item
 
-    test_module.py test_bar
+    test_yield.py test_bar
     .after_yield_2
     after_yield_1
 
@@ -783,6 +783,8 @@ For yield fixtures, the first teardown code to run is from the right-most fixtur
 For finalizers, the first fixture to run is last call to `request.addfinalizer`.
 
 .. code-block:: python
+
+    from functools import partial
 
     import pytest
 
@@ -799,12 +801,12 @@ For finalizers, the first fixture to run is last call to `request.addfinalizer`.
 
 .. code-block:: pytest
 
-    $ pytest test_module.py
+    $ pytest -s test_finalizer.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     collected 1 item
 
-    test_module.py test_bar
+    test_finalizer.py test_bar
     .finalizer_1
     finalizer_2
 
