@@ -1,1 +1,0 @@
-Fixed a path handling code in ``rewrite.py`` that seems to work fine, but was incorrect and fails in some systems.

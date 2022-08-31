@@ -40,32 +40,86 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``text`` objects.
 
-    capsysbinary -- .../_pytest/capture.py:895
+        Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
+
+        Example:
+
+        .. code-block:: python
+
+            def test_output(capsys):
+                print("hello")
+                captured = capsys.readouterr()
+                assert captured.out == "hello\n"
+
+    capsysbinary -- .../_pytest/capture.py:906
         Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsysbinary.readouterr()``
         method calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``bytes`` objects.
 
-    capfd -- .../_pytest/capture.py:912
+        Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
+
+        Example:
+
+        .. code-block:: python
+
+            def test_output(capsysbinary):
+                print("hello")
+                captured = capsysbinary.readouterr()
+                assert captured.out == b"hello\n"
+
+    capfd -- .../_pytest/capture.py:934
         Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
         calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``text`` objects.
 
-    capfdbinary -- .../_pytest/capture.py:929
+        Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
+
+        Example:
+
+        .. code-block:: python
+
+            def test_system_echo(capfd):
+                os.system('echo "hello"')
+                captured = capfd.readouterr()
+                assert captured.out == "hello\n"
+
+    capfdbinary -- .../_pytest/capture.py:962
         Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
         calls, which return a ``(out, err)`` namedtuple.
         ``out`` and ``err`` will be ``byte`` objects.
 
-    doctest_namespace [session scope] -- .../_pytest/doctest.py:731
+        Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
+
+        Example:
+
+        .. code-block:: python
+
+            def test_system_echo(capfdbinary):
+                os.system('echo "hello"')
+                captured = capfdbinary.readouterr()
+                assert captured.out == b"hello\n"
+
+    doctest_namespace [session scope] -- .../_pytest/doctest.py:735
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1334
+        Usually this fixture is used in conjunction with another ``autouse`` fixture:
+
+        .. code-block:: python
+
+            @pytest.fixture(autouse=True)
+            def add_np(doctest_namespace):
+                doctest_namespace["np"] = numpy
+
+        For more details: :ref:`doctest_namespace`.
+
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1344
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
@@ -117,10 +171,10 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See
             :issue:`7767` for details.
 
-    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:295
+    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:302
         Return a :class:`pytest.TempdirFactory` instance for the test session.
 
-    tmpdir -- .../_pytest/legacypath.py:302
+    tmpdir -- .../_pytest/legacypath.py:309
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
@@ -131,6 +185,11 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         temporary directory`.
 
         The returned object is a `legacy_path`_ object.
+
+        .. note::
+            These days, it is preferred to use ``tmp_path``.
+
+            :ref:`About the tmpdir and tmpdir_factory fixtures<tmpdir and tmpdir_factory>`.
 
         .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
 
@@ -148,21 +207,26 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     monkeypatch -- .../_pytest/monkeypatch.py:29
         A convenient fixture for monkey-patching.
 
-        The fixture provides these methods to modify objects, dictionaries or
-        os.environ::
+        The fixture provides these methods to modify objects, dictionaries, or
+        :data:`os.environ`:
 
-            monkeypatch.setattr(obj, name, value, raising=True)
-            monkeypatch.delattr(obj, name, raising=True)
-            monkeypatch.setitem(mapping, name, value)
-            monkeypatch.delitem(obj, name, raising=True)
-            monkeypatch.setenv(name, value, prepend=None)
-            monkeypatch.delenv(name, raising=True)
-            monkeypatch.syspath_prepend(path)
-            monkeypatch.chdir(path)
+        * :meth:`monkeypatch.setattr(obj, name, value, raising=True) <pytest.MonkeyPatch.setattr>`
+        * :meth:`monkeypatch.delattr(obj, name, raising=True) <pytest.MonkeyPatch.delattr>`
+        * :meth:`monkeypatch.setitem(mapping, name, value) <pytest.MonkeyPatch.setitem>`
+        * :meth:`monkeypatch.delitem(obj, name, raising=True) <pytest.MonkeyPatch.delitem>`
+        * :meth:`monkeypatch.setenv(name, value, prepend=None) <pytest.MonkeyPatch.setenv>`
+        * :meth:`monkeypatch.delenv(name, raising=True) <pytest.MonkeyPatch.delenv>`
+        * :meth:`monkeypatch.syspath_prepend(path) <pytest.MonkeyPatch.syspath_prepend>`
+        * :meth:`monkeypatch.chdir(path) <pytest.MonkeyPatch.chdir>`
+        * :meth:`monkeypatch.context() <pytest.MonkeyPatch.context>`
 
         All modifications will be undone after the requesting test function or
-        fixture has finished. The ``raising`` parameter determines if a KeyError
-        or AttributeError will be raised if the set/deletion operation has no target.
+        fixture has finished. The ``raising`` parameter determines if a :class:`KeyError`
+        or :class:`AttributeError` will be raised if the set/deletion operation does not have the
+        specified target.
+
+        To undo modifications done by the fixture in a contained scope,
+        use :meth:`context() <pytest.MonkeyPatch.context>`.
 
     recwarn -- .../_pytest/recwarn.py:29
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.

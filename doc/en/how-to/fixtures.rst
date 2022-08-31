@@ -733,6 +733,8 @@ does offer some nuances for when you're in a pinch.
 .. code-block:: pytest
 
    $ pytest -q test_emaillib.py
+   .                                                                    [100%]
+   1 passed in 0.12s
   .                                                                    [100%]
   1 passed in 0.12s
 
@@ -770,6 +772,7 @@ For yield fixtures, the first teardown code to run is from the right-most fixtur
     $ pytest -s test_finalizers.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_finalizers.py test_bar
@@ -777,6 +780,7 @@ For yield fixtures, the first teardown code to run is from the right-most fixtur
     after_yield_1
 
 
+    ============================ 1 passed in 0.12s =============================
 
 For finalizers, the first fixture to run is last call to `request.addfinalizer`.
 
@@ -802,11 +806,15 @@ For finalizers, the first fixture to run is last call to `request.addfinalizer`.
     $ pytest -s test_finalizers.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_finalizers.py test_bar
     .finalizer_1
     finalizer_2
+
+
+    ============================ 1 passed in 0.12s =============================
 
 This is so because yield fixtures use `addfinalizer` behind the scenes: when the fixture executes, `addfinalizer` registers a function that resumes the generator, which in turn calls the teardown code.
 
@@ -1407,7 +1415,7 @@ Running the above tests results in the following test IDs being used:
    =========================== test session starts ============================
    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
    rootdir: /home/sweet/project
-   collected 11 items
+   collected 12 items
 
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
@@ -1427,7 +1435,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ======================= 11 tests collected in 0.12s ========================
+   ======================= 12 tests collected in 0.12s ========================
 
 .. _`fixture-parametrize-marks`:
 

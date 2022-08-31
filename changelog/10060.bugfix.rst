@@ -1,1 +1,0 @@
-When running with ``--pdb``, ``TestCase.tearDown`` is no longer called for tests when the *class* has been skipped via ``unittest.skip`` or ``pytest.mark.skip``.

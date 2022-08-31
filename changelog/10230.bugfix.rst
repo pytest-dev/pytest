@@ -1,1 +1,0 @@
-Ignore ``.py`` files created by ``pyproject.toml``-based editable builds introduced in `pip 21.3 <https://pip.pypa.io/en/stable/news/#v21-3>`__.
