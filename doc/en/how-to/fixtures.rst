@@ -742,10 +742,10 @@ Note on finalizer order
 Finalizers are executed in a first-in-last-out order.
 For yield fixtures, the first teardown code to run is from the right-most fixture, i.e. the last test parameter.
 
-.. regendoc:wipe
 
 .. code-block:: python
 
+    # content of test_finalizers.py
     import pytest
 
 
@@ -767,12 +767,12 @@ For yield fixtures, the first teardown code to run is from the right-most fixtur
 
 .. code-block:: pytest
 
-    $ pytest test_module.py
+    $ pytest -s test_finalizers.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     collected 1 item
 
-    test_module.py test_bar
+    test_finalizers.py test_bar
     .after_yield_2
     after_yield_1
 
@@ -782,6 +782,8 @@ For finalizers, the first fixture to run is last call to `request.addfinalizer`.
 
 .. code-block:: python
 
+    # content of test_finalizers.py
+    from functools import partial
     import pytest
 
 
@@ -797,12 +799,12 @@ For finalizers, the first fixture to run is last call to `request.addfinalizer`.
 
 .. code-block:: pytest
 
-    $ pytest test_module.py
+    $ pytest -s test_finalizers.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     collected 1 item
 
-    test_module.py test_bar
+    test_finalizers.py test_bar
     .finalizer_1
     finalizer_2
 
@@ -1412,6 +1414,8 @@ Running the above tests results in the following test IDs being used:
      <Function test_showhelo[mail.python.org]>
    <Module test_emaillib.py>
      <Function test_email_received>
+   <Module test_finalizers.py>
+     <Function test_bar>
    <Module test_ids.py>
      <Function test_a[spam]>
      <Function test_a[ham]>
