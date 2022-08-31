@@ -735,8 +735,6 @@ does offer some nuances for when you're in a pinch.
    $ pytest -q test_emaillib.py
    .                                                                    [100%]
    1 passed in 0.12s
-  .                                                                    [100%]
-  1 passed in 0.12s
 
 Note on finalizer order
 """"""""""""""""""""""""
