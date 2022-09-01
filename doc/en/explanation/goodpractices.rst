@@ -12,41 +12,26 @@ For development, we recommend you use :mod:`venv` for virtual environments and
 as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
 
-Next, place a ``pyproject.toml`` file in the root of your package:
+Create a ``pyproject.toml`` file in the root of your repository as described in
+:doc:`packaging:tutorials/packaging-projects`.
+The first few lines should look like this:
 
 .. code-block:: toml
 
     [build-system]
-    requires = ["setuptools>=42", "wheel"]
-    build-backend = "setuptools.build_meta"
-
-and a ``setup.cfg`` file containing your package's metadata with the following minimum content:
-
-.. code-block:: ini
+    requires = ["hatchling"]
+    build-backend = "hatchling.build"
 
     [metadata]
-    name = PACKAGENAME
-
-    [options]
-    packages = find:
+    name = "PACKAGENAME"
 
 where ``PACKAGENAME`` is the name of your package.
-
-.. note::
-
-    If your pip version is older than ``21.3``, you'll also need a ``setup.py`` file:
-
-    .. code-block:: python
-
-        from setuptools import setup
-
-        setup()
 
 You can then install your package in "editable" mode by running from the same directory:
 
 .. code-block:: bash
 
-     pip install -e .
+    pip install -e .
 
 which lets you change your source code (both tests and application) and rerun tests at will.
 
@@ -89,11 +74,11 @@ to keep tests separate from actual application code (often a good idea):
 .. code-block:: text
 
     pyproject.toml
-    setup.cfg
-    mypkg/
-        __init__.py
-        app.py
-        view.py
+    src/
+        mypkg/
+            __init__.py
+            app.py
+            view.py
     tests/
         test_app.py
         test_view.py
@@ -112,72 +97,28 @@ This has the following benefits:
     See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
-Note that this scheme has a drawback if you are using ``prepend`` :ref:`import mode <import-modes>`
-(which is the default): your test files must have **unique names**, because
-``pytest`` will import them as *top-level* modules since there are no packages
-to derive a full package name from. In other words, the test files in the example above will
-be imported as ``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to
-``sys.path``.
+For new projects, we recommend to use ``importlib`` :ref:`import mode <import-modes>`
+(see which-import-mode_ for a detailed explanation).
+To this end, add the following to your ``pyproject.toml``:
 
-If you need to have test modules with the same name, you might add ``__init__.py`` files to your
-``tests`` folder and subfolders, changing them to packages:
+.. code-block:: toml
 
-.. code-block:: text
+    [tool.pytest.ini_options]
+    addopts = [
+        "--import-mode=importlib",
+    ]
 
-    pyproject.toml
-    setup.cfg
-    mypkg/
-        ...
-    tests/
-        __init__.py
-        foo/
-            __init__.py
-            test_view.py
-        bar/
-            __init__.py
-            test_view.py
+.. _src-layout:
 
-Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test_view``, allowing
-you to have modules with the same name. But now this introduces a subtle problem: in order to load
-the test modules from the ``tests`` directory, pytest prepends the root of the repository to
-``sys.path``, which adds the side-effect that now ``mypkg`` is also importable.
+Generally, but especially if you use the default import mode ``prepend``,
+it is **strongly** suggested to use a ``src`` layout.
+Here, your application root package resides in a sub-directory of your root,
+i.e. ``src/mypkg/`` instead of ``mypkg``.
 
-This is problematic if you are using a tool like `tox`_ to test your package in a virtual environment,
-because you want to test the *installed* version of your package, not the local code from the repository.
+This layout prevents a lot of common pitfalls and has many benefits,
+which are better explained in this excellent `blog post`_ by Ionel Cristian Mărieș.
 
-.. _`src-layout`:
-
-In this situation, it is **strongly** suggested to use a ``src`` layout where application root package resides in a
-sub-directory of your root:
-
-.. code-block:: text
-
-    pyproject.toml
-    setup.cfg
-    src/
-        mypkg/
-            __init__.py
-            app.py
-            view.py
-    tests/
-        __init__.py
-        foo/
-            __init__.py
-            test_view.py
-        bar/
-            __init__.py
-            test_view.py
-
-
-This layout prevents a lot of common pitfalls and has many benefits, which are better explained in this excellent
-`blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_.
-
-.. note::
-    The ``--import-mode=importlib`` option (see :ref:`import-modes`) does not have
-    any of the drawbacks above because ``sys.path`` is not changed when importing
-    test modules, so users that run into this issue are strongly encouraged to try it.
-
-    The ``src`` directory layout is still strongly recommended however.
+.. _blog post: https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>
 
 
 Tests as part of application code
@@ -190,8 +131,7 @@ want to distribute them along with your application:
 .. code-block:: text
 
     pyproject.toml
-    setup.cfg
-    mypkg/
+    [src/]mypkg/
         __init__.py
         app.py
         view.py
@@ -251,6 +191,56 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     With ``--import-mode=importlib`` things are less convoluted because
     pytest doesn't need to change ``sys.path`` or ``sys.modules``, making things
     much less surprising.
+
+
+.. _which-import-mode:
+
+Choosing an import mode
+^^^^^^^^^^^^^^^^^^^^^^^
+
+For historical reasons, pytest defaults to the ``prepend`` :ref:`import mode <import-modes>`
+instead of the ``importlib`` import mode we recommend for new projects.
+The reason lies in the way the ``prepend`` mode works:
+
+Since there are no packages to derive a full package name from,
+``pytest`` will import your test files as *top-level* modules.
+The test files in the first example (:ref:`src layout <src-layout>`) would be imported as
+``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to ``sys.path``.
+
+This results in a drawback compared to the import mode ``importlib``:
+your test files must have **unique names**.
+
+If you need to have test modules with the same name,
+as a workaround you might add ``__init__.py`` files to your ``tests`` folder and subfolders,
+changing them to packages:
+
+.. code-block:: text
+
+    pyproject.toml
+    mypkg/
+        ...
+    tests/
+        __init__.py
+        foo/
+            __init__.py
+            test_view.py
+        bar/
+            __init__.py
+            test_view.py
+
+Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test_view``,
+allowing you to have modules with the same name.
+But now this introduces a subtle problem:
+in order to load the test modules from the ``tests`` directory,
+pytest prepends the root of the repository to ``sys.path``,
+which adds the side-effect that now ``mypkg`` is also importable.
+
+This is problematic if you are using a tool like tox_ to test your package in a virtual environment,
+because you want to test the *installed* version of your package,
+not the local code from the repository.
+
+The ``importlib`` import mode does not have any of the drawbacks above,
+because ``sys.path`` is not changed when importing test modules.
 
 
 .. _`buildout`: http://www.buildout.org/en/latest/
