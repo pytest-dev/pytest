@@ -393,6 +393,7 @@ intersphinx_mapping = {
     "tox": ("https://tox.wiki/en/stable", None),
     "virtualenv": ("https://virtualenv.pypa.io/en/stable", None),
     "setuptools": ("https://setuptools.pypa.io/en/stable", None),
+    "packaging": ("https://packaging.python.org/en/latest", None),
 }
 
 

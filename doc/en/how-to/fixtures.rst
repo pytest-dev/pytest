@@ -1766,8 +1766,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest
@@ -1782,8 +1780,6 @@ Given the tests file structure is:
                 assert username == 'username'
 
         subfolder/
-            __init__.py
-
             conftest.py
                 # content of tests/subfolder/conftest.py
                 import pytest
@@ -1792,8 +1788,8 @@ Given the tests file structure is:
                 def username(username):
                     return 'overridden-' + username
 
-            test_something.py
-                # content of tests/subfolder/test_something.py
+            test_something_else.py
+                # content of tests/subfolder/test_something_else.py
                 def test_username(username):
                     assert username == 'overridden-username'
 
@@ -1809,8 +1805,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest
@@ -1852,8 +1846,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest
@@ -1890,8 +1882,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest
