@@ -1,1 +1,0 @@
-Invalid XML characters in setup or teardown error messages are now properly escaped for JUnit XML reports.
