@@ -877,14 +877,16 @@ def resolve_collection_argument(
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    base, squacket, rest = str(arg).partition("[")
-    strpath, *parts = base.split("::")
-    if parts:
+    strpath, selection, rest = arg.partition("::")
+    test_name, squacket, rest = rest.partition("[")
+    parts = []
+
+    if test_name:
+        parts = test_name.split("::")
         parts[-1] = f"{parts[-1]}{squacket}{rest}"
     if as_pypath:
         strpath = search_pypath(strpath)
-    fspath = invocation_path / strpath
-    fspath = absolutepath(fspath)
+    fspath = absolutepath(invocation_path / strpath)
     if not fspath.exists():
         msg = (
             "module or package not found: {arg} (missing __init__.py?)"
@@ -892,7 +894,7 @@ def resolve_collection_argument(
             else "file or directory not found: {arg}"
         )
         raise UsageError(msg.format(arg=arg))
-    if parts and fspath.is_dir():
+    if selection and fspath.is_dir():
         msg = (
             "package argument cannot contain :: selection parts: {arg}"
             if as_pypath

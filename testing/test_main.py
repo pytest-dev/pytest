@@ -142,7 +142,7 @@ class TestResolveCollectionArgument:
         )
         assert resolve_collection_argument(invocation_path, "src/pkg/test.py::") == (
             invocation_path / "src/pkg/test.py",
-            [""],
+            [],
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar"
@@ -200,6 +200,12 @@ class TestResolveCollectionArgument:
             UsageError, match=re.escape("file or directory not found: foobar")
         ):
             resolve_collection_argument(invocation_path, "foobar")
+
+        with pytest.raises(
+            UsageError,
+            match=re.escape("file or directory not found: src/pkg/test.py[a::b]"),
+        ):
+            resolve_collection_argument(invocation_path, "src/pkg/test.py[a::b]")
 
         with pytest.raises(
             UsageError,
