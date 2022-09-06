@@ -333,6 +333,68 @@ For more details, consult the full :ref:`fixtures docs <fixture>`.
     :decorator:
 
 
+.. fixture:: capfd
+
+capfd
+~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capfd()
+    :no-auto-options:
+
+
+.. fixture:: capfdbinary
+
+capfdbinary
+~~~~~~~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capfdbinary()
+    :no-auto-options:
+
+
+.. fixture:: caplog
+
+caplog
+~~~~~~
+
+**Tutorial**: :ref:`logging`
+
+.. autofunction:: _pytest.logging.caplog()
+    :no-auto-options:
+
+    Returns a :class:`pytest.LogCaptureFixture` instance.
+
+.. autoclass:: pytest.LogCaptureFixture()
+    :members:
+
+
+.. fixture:: capsys
+
+capsys
+~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capsys()
+    :no-auto-options:
+
+.. autoclass:: pytest.CaptureFixture()
+    :members:
+
+.. fixture:: capsysbinary
+
+capsysbinary
+~~~~~~~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capsysbinary()
+    :no-auto-options:
+
+
 .. fixture:: cache
 
 config.cache
@@ -353,51 +415,6 @@ Under the hood, the cache plugin uses the simple
    :members:
 
 
-.. fixture:: capsys
-
-capsys
-~~~~~~
-
-**Tutorial**: :ref:`captures`
-
-.. autofunction:: _pytest.capture.capsys()
-    :no-auto-options:
-
-.. autoclass:: pytest.CaptureFixture()
-    :members:
-
-
-.. fixture:: capsysbinary
-
-capsysbinary
-~~~~~~~~~~~~
-
-**Tutorial**: :ref:`captures`
-
-.. autofunction:: _pytest.capture.capsysbinary()
-    :no-auto-options:
-
-.. fixture:: capfd
-
-capfd
-~~~~~~
-
-**Tutorial**: :ref:`captures`
-
-.. autofunction:: _pytest.capture.capfd()
-    :no-auto-options:
-
-.. fixture:: capfdbinary
-
-capfdbinary
-~~~~~~~~~~~~
-
-**Tutorial**: :ref:`captures`
-
-.. autofunction:: _pytest.capture.capfdbinary()
-    :no-auto-options:
-
-
 .. fixture:: doctest_namespace
 
 doctest_namespace
@@ -406,63 +423,6 @@ doctest_namespace
 **Tutorial**: :ref:`doctest`
 
 .. autofunction:: _pytest.doctest.doctest_namespace()
-
-
-.. fixture:: request
-
-request
-~~~~~~~
-
-**Example**: :ref:`request example`
-
-The ``request`` fixture is a special fixture providing information of the requesting test function.
-
-.. autoclass:: pytest.FixtureRequest()
-    :members:
-
-
-.. fixture:: pytestconfig
-
-pytestconfig
-~~~~~~~~~~~~
-
-.. autofunction:: _pytest.fixtures.pytestconfig()
-
-
-.. fixture:: record_property
-
-record_property
-~~~~~~~~~~~~~~~~~~~
-
-**Tutorial**: :ref:`record_property example`
-
-.. autofunction:: _pytest.junitxml.record_property()
-
-
-.. fixture:: record_testsuite_property
-
-record_testsuite_property
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Tutorial**: :ref:`record_testsuite_property example`
-
-.. autofunction:: _pytest.junitxml.record_testsuite_property()
-
-
-.. fixture:: caplog
-
-caplog
-~~~~~~
-
-**Tutorial**: :ref:`logging`
-
-.. autofunction:: _pytest.logging.caplog()
-    :no-auto-options:
-
-    Returns a :class:`pytest.LogCaptureFixture` instance.
-
-.. autoclass:: pytest.LogCaptureFixture()
-    :members:
 
 
 .. fixture:: monkeypatch
@@ -479,6 +439,14 @@ monkeypatch
 
 .. autoclass:: pytest.MonkeyPatch
     :members:
+
+
+.. fixture:: pytestconfig
+
+pytestconfig
+~~~~~~~~~~~~
+
+.. autofunction:: _pytest.fixtures.pytestconfig()
 
 
 .. fixture:: pytester
@@ -517,19 +485,25 @@ To use it, include in your topmost ``conftest.py`` file:
 .. autoclass:: pytest.RecordedHookCall()
     :members:
 
-.. fixture:: testdir
 
-testdir
-~~~~~~~
+.. fixture:: record_property
 
-Identical to :fixture:`pytester`, but provides an instance whose methods return
-legacy ``py.path.local`` objects instead when applicable.
+record_property
+~~~~~~~~~~~~~~~~~~~
 
-New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
+**Tutorial**: :ref:`record_property example`
 
-.. autoclass:: pytest.Testdir()
-    :members:
-    :noindex: TimeoutExpired
+.. autofunction:: _pytest.junitxml.record_property()
+
+
+.. fixture:: record_testsuite_property
+
+record_testsuite_property
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`record_testsuite_property example`
+
+.. autofunction:: _pytest.junitxml.record_testsuite_property()
 
 
 .. fixture:: recwarn
@@ -544,6 +518,34 @@ recwarn
 
 .. autoclass:: pytest.WarningsRecorder()
     :members:
+
+
+.. fixture:: request
+
+request
+~~~~~~~
+
+**Example**: :ref:`request example`
+
+The ``request`` fixture is a special fixture providing information of the requesting test function.
+
+.. autoclass:: pytest.FixtureRequest()
+    :members:
+
+
+.. fixture:: testdir
+
+testdir
+~~~~~~~
+
+Identical to :fixture:`pytester`, but provides an instance whose methods return
+legacy ``py.path.local`` objects instead when applicable.
+
+New code should avoid using :fixture:`testdir` in favor of :fixture:`pytester`.
+
+.. autoclass:: pytest.Testdir()
+    :members:
+    :noindex: TimeoutExpired
 
 
 .. fixture:: tmp_path
