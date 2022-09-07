@@ -2,7 +2,7 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `CH Open Workshop-Tage <https://workshoptage.ch/workshops/2022/pytest-professionelles-testen-nicht-nur-fuer-python/>`__ (German), September 8th 2022, Bern, Switzerland
+   - `enterPy <https://www.enterpy.de/>`__ (German), October 28th (separate workshop day), online
    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote and Leipzig, Germany
 
    Also see :doc:`previous talks and blogposts <talks>`.
