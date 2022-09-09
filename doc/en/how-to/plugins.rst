@@ -51,6 +51,9 @@ Here is a little annotated list for some popular plugins:
 * :pypi:`pytest-flakes`:
   check source code with pyflakes.
 
+* :pypi:`allure-pytest`:
+  report test results via `allure-framework <https://github.com/allure-framework/>`_.
+
 To see a complete list of all plugins with their latest testing
 status against different pytest and Python versions, please visit
 :ref:`plugin-list`.
