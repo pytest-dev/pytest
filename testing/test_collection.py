@@ -274,6 +274,30 @@ class TestCollectFS:
             items, reprec = pytester.inline_genitems()
             assert [x.name for x in items] == ["test_%s" % dirname]
 
+    @pytest.mark.parametrize("absolute", [True, False])
+    def test_recursive_symlinks(self, pytester, absolute):
+        """Make sure recursive symlinks won't cause multiple collection of the same file."""
+        directory = pytester.mkdir("dir")
+        ensure_file(directory / "test_recursive.py").write_text(
+            "def test_recursive(): pass"
+        )
+        symlink_or_skip(str(directory) if absolute else ".", "dir/link")
+
+        items, _ = pytester.inline_genitems()
+        assert len(items) == 1
+
+    def test_multiple_recursive_symlinks(self, pytester):
+        """Symlink points to recursive symlink. Should be resolved to the very end."""
+        directory = pytester.mkdir("dir")
+        ensure_file(directory / "test_recursive.py").write_text(
+            "def test_recursive(): pass"
+        )
+        symlink_or_skip(".", "dir/link")
+        symlink_or_skip("link", "dir/link2")
+
+        items, _ = pytester.inline_genitems()
+        assert len(items) == 1
+
 
 class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, pytester: Pytester) -> None:
