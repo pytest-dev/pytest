@@ -274,6 +274,7 @@ class TestCollectFS:
             items, reprec = pytester.inline_genitems()
             assert [x.name for x in items] == ["test_%s" % dirname]
 
+    @pytest.mark.xfail(sys.platform == "linux", reason="GitHub #624")
     @pytest.mark.parametrize("absolute", [True, False])
     def test_recursive_symlinks(self, pytester, absolute):
         """Make sure recursive symlinks won't cause multiple collection of the same file."""
@@ -286,6 +287,7 @@ class TestCollectFS:
         items, _ = pytester.inline_genitems()
         assert len(items) == 1
 
+    @pytest.mark.xfail(sys.platform == "linux", reason="GitHub #624")
     def test_multiple_recursive_symlinks(self, pytester):
         """Symlink points to recursive symlink. Should be resolved to the very end."""
         directory = pytester.mkdir("dir")
