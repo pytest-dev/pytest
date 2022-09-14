@@ -609,20 +609,33 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
     module_parts = module_name.split(".")
     while module_name:
         if module_name not in modules:
-            try:
-                # If sys.meta_path is empty, calling import_module will issue
-                # a warning and raise ModuleNotFoundError. To avoid the
-                # warning, we check sys.meta_path explicitly and raise the error
-                # ourselves to fall back to creating a dummy module.
-                if not sys.meta_path:
-                    raise ModuleNotFoundError
-                importlib.import_module(module_name)
-            except ModuleNotFoundError:
+            # try:
+            #     # If sys.meta_path is empty, calling import_module will issue
+            #     # a warning and raise ModuleNotFoundError. To avoid the
+            #     # warning, we check sys.meta_path explicitly and raise the error
+            #     # ourselves to fall back to creating a dummy module.
+            #     if not sys.meta_path:
+            #         raise ModuleNotFoundError
+            #     importlib.import_module(module_name)
+            # except ModuleNotFoundError:
+            #     module = ModuleType(
+            #         module_name,
+            #         doc="Empty module created by pytest's importmode=importlib.",
+            #     )
+            #     modules[module_name] = module
+            
+            # Instead of raising ModuleNotFoundError, replace with dummy directly.
+            if not sys.meta_path:
                 module = ModuleType(
                     module_name,
                     doc="Empty module created by pytest's importmode=importlib.",
                 )
                 modules[module_name] = module
+            else: 
+                importlib.import_module(module_name)
+            
+            
+                
         module_parts.pop(-1)
         module_name = ".".join(module_parts)
 
