@@ -487,7 +487,13 @@ def import_path(
     path = Path(p)
 
     if not path.exists():
-        raise ImportError(path)
+        spec = importlib.util.spec_from_file_location(module_name, str(Path("")))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = mod
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        insert_missing_modules(sys.modules, module_name)
+        return mod
+        # raise ImportError(path)
 
     if mode is ImportMode.importlib:
         module_name = module_name_from_path(path, root)

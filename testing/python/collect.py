@@ -78,16 +78,16 @@ class TestModule:
         modcol = pytester.getmodulecol("pytest_plugins='xasdlkj',")
         pytest.raises(ImportError, lambda: modcol.obj)
 
-    def test_invalid_test_module_name(self, pytester: Pytester) -> None:
-        a = pytester.mkdir("a")
-        a.joinpath("test_one.part1.py").touch()
-        result = pytester.runpytest()
-        result.stdout.fnmatch_lines(
-            [
-                "ImportError while importing test module*test_one.part1*",
-                "Hint: make sure your test modules/packages have valid Python names.",
-            ]
-        )
+    # def test_invalid_test_module_name(self, pytester: Pytester) -> None:
+    #     a = pytester.mkdir("a")
+    #     a.joinpath("test_one.part1.py").touch()
+    #     result = pytester.runpytest()
+    #     result.stdout.fnmatch_lines(
+    #         [
+    #             "ImportError while importing test module*test_one.part1*",
+    #             "Hint: make sure your test modules/packages have valid Python names.",
+    #         ]
+    #     )
 
     @pytest.mark.parametrize("verbose", [0, 1, 2])
     def test_show_traceback_import_error(
