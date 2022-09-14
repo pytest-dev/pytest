@@ -623,7 +623,7 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
             #         doc="Empty module created by pytest's importmode=importlib.",
             #     )
             #     modules[module_name] = module
-            
+
             # Instead of raising ModuleNotFoundError, replace with dummy directly.
             if not sys.meta_path:
                 module = ModuleType(
@@ -631,11 +631,9 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
                     doc="Empty module created by pytest's importmode=importlib.",
                 )
                 modules[module_name] = module
-            else: 
+            else:
                 importlib.import_module(module_name)
-            
-            
-                
+
         module_parts.pop(-1)
         module_name = ".".join(module_parts)
 
