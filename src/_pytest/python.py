@@ -639,12 +639,12 @@ class Module(nodes.File, PyCollector):
                 else exc_info.exconly()
             )
             formatted_tb = str(exc_repr)
-            raise self.CollectError(
-                "ImportError while importing test module '{path}'.\n"
-                "Hint: make sure your test modules/packages have valid Python names.\n"
-                "Traceback:\n"
-                "{traceback}".format(path=self.path, traceback=formatted_tb)
-            ) from e
+            # raise self.CollectError(
+            #     "ImportError while importing test module '{path}'.\n"
+            #     "Hint: make sure your test modules/packages have valid Python names.\n"
+            #     "Traceback:\n"
+            #     "{traceback}".format(path=self.path, traceback=formatted_tb)
+            # ) from e
         except skip.Exception as e:
             if e.allow_module_level:
                 raise
