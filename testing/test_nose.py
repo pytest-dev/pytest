@@ -496,28 +496,3 @@ def test_nose_setup_skipped_if_non_callable(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p, "-p", "nose")
     assert result.ret == 0
-
-
-def test_nose_setup_and_teardown_is_deprecated(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        from nose.tools import with_setup
-
-        def setup_fn_no_op():
-            ...
-
-        def teardown_fn_no_op():
-            ...
-
-        @with_setup(setup_fn_no_op, teardown_fn_no_op)
-        def test_omits_warnings():
-            ...
-        """
-    )
-    output = pytester.runpytest()
-    message = [
-        "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
-        "*test_nose_setup_and_teardown_is_deprecated.py::test_omits_warnings is using nose method: *",
-    ]
-    output.stdout.fnmatch_lines(message)
-    output.assert_outcomes(passed=1, warnings=2)

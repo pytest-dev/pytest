@@ -39,8 +39,12 @@ def call_optional(obj: object, name: str, nodeid: str) -> bool:
         return False
     if not callable(method):
         return False
+    # Warn about deprecation of this plugin.
+    method_name = getattr(method, "__name__", str(method))
+    warnings.warn(
+        NOSE_SUPPORT.format(nodeid=nodeid, method=method_name, stage=name), stacklevel=2
+    )
     # If there are any problems allow the exception to raise rather than
     # silently ignoring it.
-    warnings.warn(NOSE_SUPPORT.format(nodeid=nodeid, nose_method=name), stacklevel=2)
     method()
     return True
