@@ -24,9 +24,102 @@ Support for tests written for nose
 .. deprecated:: 7.2.0
 
 Support for running tests written for `nose <https://nose.readthedocs.io/en/latest/>`__ is now deprecated.
+
 `nose` has been in maintenance mode-only for years, and maintaining the plugin is not trivial as it spills
 over the code base (see :issue:`9886` for more details).
 
+setup/teardown
+^^^^^^^^^^^^^^
+
+One thing that might catch users by surprise is that plain ``setup`` and ``teardown`` methods are not pytest native,
+they are in fact part of the ``nose`` support.
+
+
+.. code-block:: python
+
+    class Test:
+        def setup(self):
+            self.resource = make_resource()
+
+        def teardown(self):
+            self.resource.close()
+
+        def test_foo(self):
+            ...
+
+        def test_bar(self):
+            ...
+
+
+
+Native pytest support uses ``setup_method`` and ``teardown_method`` (see :ref:`xunit-method-setup`), so the above should be changed to:
+
+.. code-block:: python
+
+    class Test:
+        def setup_method(self):
+            self.resource = make_resource()
+
+        def teardown_method(self):
+            self.resource.close()
+
+        def test_foo(self):
+            ...
+
+        def test_bar(self):
+            ...
+
+
+@with_setup
+^^^^^^^^^^^
+
+Code using `@with_setup <with-setup-nose>`_ will also need to be ported to a supported
+pytest style:
+
+.. code-block:: python
+
+    from nose.tools import with_setup
+
+
+    def setup_some_resource():
+        ...
+
+
+    def teardown_some_resource():
+        ...
+
+
+    @with_setup(setup_some_resource, teardown_some_resource)
+    def test_foo():
+        ...
+
+One way to do it is using a fixture:
+
+.. code-block:: python
+
+    import pytest
+
+
+    def setup_some_resource():
+        ...
+
+
+    def teardown_some_resource():
+        ...
+
+
+    @pytest.fixture
+    def some_resource():
+        setup_some_resource()
+        yield
+        teardown_some_resource()
+
+
+    def test_foo(some_resource):
+        ...
+
+
+.. _`with-setup-nose`: https://nose.readthedocs.io/en/latest/testing_tools.html?highlight=with_setup#nose.tools.with_setup
 
 .. _instance-collector-deprecation:
 
