@@ -94,7 +94,7 @@ Mark Lapierre discusses the `Pros and Cons of Quarantined Tests <https://dev.to/
 CI tools that rerun on failure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Azure Pipelines (the Azure cloud CI/CD tool, formerly Visual Studio Team Services or VSTS) has a feature to `identify flaky tests <https://docs.microsoft.com/en-us/azure/devops/release-notes/2017/dec-11-vsts#identify-flaky-tests>`_ and rerun failed tests.
+Azure Pipelines (the Azure cloud CI/CD tool, formerly Visual Studio Team Services or VSTS) has a feature to `identify flaky tests <https://docs.microsoft.com/en-us/previous-versions/azure/devops/2017/dec-11-vsts?view=tfs-2017#identify-flaky-tests>`_ and rerun failed tests.
 
 
 
