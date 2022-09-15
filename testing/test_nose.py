@@ -37,7 +37,7 @@ def test_setup_func_with_setup_decorator() -> None:
         def f(self):
             values.append(1)
 
-    call_optional(A(), "f")
+    call_optional(A(), "f", "A.f")
     assert not values
 
 
@@ -47,7 +47,7 @@ def test_setup_func_not_callable() -> None:
     class A:
         f = 1
 
-    call_optional(A(), "f")
+    call_optional(A(), "f", "A.f")
 
 
 def test_nose_setup_func(pytester: Pytester) -> None:
