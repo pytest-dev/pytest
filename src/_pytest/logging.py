@@ -8,11 +8,13 @@ from contextlib import nullcontext
 from io import StringIO
 from pathlib import Path
 from typing import AbstractSet
+from typing import cast
 from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
@@ -47,10 +49,97 @@ DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
 caplog_handler_key = StashKey["LogCaptureHandler"]()
 caplog_records_key = StashKey[Dict[str, List[logging.LogRecord]]]()
+_HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 
 
 def _remove_ansi_escape_sequences(text: str) -> str:
     return _ANSI_ESCAPE_SEQ.sub("", text)
+
+
+class CatchedLoggers:
+    """Add pytest handler to loggers on demand.
+
+    Usually it would be enough to simply add pytest handlers to the root logger at fixed stages and rely
+    on log propagation to capture logs from child loggers. However, if a user turns off propagation
+    for a child logger, we would miss their logs. The chin-ups here and in LoggerPropagateInterceptor
+    are mainly to capture child loggers with propagate = False, by instantly adding pytest handlers to
+    them.
+    """
+
+    __slots__ = ("handler", "level", "loggers")
+
+    def __init__(
+        self,
+        initial_set: Set[logging.Logger],
+        handler: _HandlerType,
+        level: Optional[int] = None,
+    ):
+        self.handler = handler
+        self.level = level
+        self.loggers: Dict[logging.Logger, Optional[int]] = {}
+        if self.level is not None:
+            self.handler.setLevel(self.level)
+        for logger in initial_set:
+            self.catch_logger(logger)
+
+    def catch_logger(self, logger: logging.Logger):
+        """Add pytest handler and adjust level of logger. Remember state to restore."""
+        if logger not in self.loggers:
+            logger.addHandler(self.handler)
+            if self.level is not None:
+                self.loggers[logger] = logger.level
+                logger.setLevel(min(logger.level, self.level))
+            else:
+                self.loggers[logger] = None
+
+    def release_logger(self, logger: logging.Logger):
+        """Restore log level and remove pytest handler."""
+        if logger in self.loggers:
+            logger.removeHandler(self.handler)
+            orig_level = self.loggers.get(logger)
+            if orig_level is not None:
+                logger.setLevel(orig_level)
+            del self.loggers[logger]
+
+    def release_all_loggers(self):
+        for logger in list(self.loggers.keys()):
+            self.release_logger(logger)
+
+
+class LoggerPropagateInterceptor:
+    """Descriptor to be patched into standard libs logging module.
+
+    It intercepts propagate = False assignments from user code.
+
+    While catching_logs is inactive, it tracks non-propagating loggers without side effects.
+    While catching_logs is active, it also adds and removes pytest handlers instantly.
+    """
+
+    non_propagating_loggers: Set[logging.Logger] = set()
+    catchers: Set[CatchedLoggers] = set()
+
+    def __init__(self):
+        for item in logging.getLogger().manager.loggerDict:
+            if isinstance(item, logging.Logger) and not item.propagate:
+                self.non_propagating_loggers.add(item)
+
+    def __set__(self, logger: logging.Logger, propagate: bool):
+        if propagate is False:
+            if self.catchers:
+                for catcher in self.catchers:
+                    catcher.catch_logger(logger)
+            self.non_propagating_loggers.add(logger)
+        elif propagate is True:
+            if self.catchers:
+                for catcher in self.catchers:
+                    catcher.release_logger(logger)
+            if logger in self.non_propagating_loggers:
+                self.non_propagating_loggers.remove(logger)
+        logger.__dict__["propagate"] = propagate
+
+
+# From now, we intercept each assignment to logger.propagate
+logging.Logger.propagate = cast(bool, LoggerPropagateInterceptor())
 
 
 class ColoredLevelFormatter(logging.Formatter):
@@ -299,34 +388,30 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-_HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
-
-
 # Not using @contextmanager for performance reasons.
 class catching_logs:
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("handler", "level", "orig_level")
+    __slots__ = ("handler", "level", "catcher")
 
     def __init__(self, handler: _HandlerType, level: Optional[int] = None) -> None:
         self.handler = handler
         self.level = level
+        self.catcher: Optional[CatchedLoggers] = None
 
     def __enter__(self):
-        root_logger = logging.getLogger()
-        if self.level is not None:
-            self.handler.setLevel(self.level)
-        root_logger.addHandler(self.handler)
-        if self.level is not None:
-            self.orig_level = root_logger.level
-            root_logger.setLevel(min(self.orig_level, self.level))
+        self.catcher = CatchedLoggers(
+            LoggerPropagateInterceptor.non_propagating_loggers | {logging.getLogger()},
+            self.handler,
+            self.level,
+        )
+        LoggerPropagateInterceptor.catchers.add(self.catcher)
         return self.handler
 
     def __exit__(self, type, value, traceback):
-        root_logger = logging.getLogger()
-        if self.level is not None:
-            root_logger.setLevel(self.orig_level)
-        root_logger.removeHandler(self.handler)
+        assert self.catcher
+        LoggerPropagateInterceptor.catchers.remove(self.catcher)
+        self.catcher.release_all_loggers()
 
 
 class LogCaptureHandler(logging_StreamHandler):

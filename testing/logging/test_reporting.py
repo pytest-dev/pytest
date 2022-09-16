@@ -1074,6 +1074,35 @@ def test_log_set_path(pytester: Pytester) -> None:
         assert "message from test 2" in content
 
 
+def test_log_propagation_false(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        import logging
+
+        logging.getLogger('foo').propagate = False
+
+        def test_log_file(request):
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            logging.getLogger().warning("log goes to root logger")
+            logging.getLogger('foo').warning("log goes to initially non-propagating logger")
+            logging.getLogger('foo.bar').propagate = False
+            logging.getLogger('foo.bar').warning("log goes to propagation-disabled-in-test logger")
+            assert False, "intentionally fail to trigger report logging output"
+    """
+    )
+
+    result = pytester.runpytest("-s")
+    result.stdout.re_match_lines(
+        [
+            "-+ Captured log call -+",
+            r"WARNING\s+root:test_log_propagation_false.py:8\s+log goes to root logger",
+            r"WARNING\s+foo:test_log_propagation_false.py:9\s+log goes to initially non-propagating logger",
+            r"WARNING\s+foo.bar:test_log_propagation_false.py:11\s+log goes to propagation-disabled-in-test logger",
+        ]
+    )
+
+
 def test_colored_captured_log(pytester: Pytester) -> None:
     """Test that the level names of captured log messages of a failing test
     are colored."""
