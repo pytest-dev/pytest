@@ -358,9 +358,9 @@ def _get_legacy_hook_marks(
         opt_attr = getattr(method, opt_name, AttributeError)
         if opt_attr is not AttributeError:
             must_warn.append(f"{opt_name}={opt_attr}")
+            opts[opt_name] = True
         elif opt_name in known_marks:
             must_warn.append(f"{opt_name}=True")
-        if hasattr(method, opt_name) or opt_name in known_marks:
             opts[opt_name] = True
         else:
             opts[opt_name] = False
