@@ -344,10 +344,13 @@ def _get_directory(path: Path) -> Path:
 
 
 def _get_legacy_hook_marks(
-    method: object,  # using object to avoid function type excess
+    method: Any,
     hook_type: str,
     opt_names: Tuple[str, ...],
 ) -> Dict[str, bool]:
+    if TYPE_CHECKING:
+        # abuse typeguard from importlib to avoid massive method type union thats lacking a alias
+        assert inspect.isroutine(method)
     known_marks: set[str] = {m.name for m in getattr(method, "pytestmark", [])}
     must_warn: list[str] = []
     opts: dict[str, bool] = {}
@@ -365,7 +368,7 @@ def _get_legacy_hook_marks(
         hook_opts = ", ".join(must_warn)
         message = _pytest.deprecated.HOOK_LEGACY_MARKING.format(
             type=hook_type,
-            fullname=method.__qualname__,  # type: ignore
+            fullname=method.__qualname__,
             hook_opts=hook_opts,
         )
         warn_explicit_for(cast(FunctionType, method), message)
