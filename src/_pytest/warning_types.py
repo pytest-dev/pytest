@@ -148,6 +148,12 @@ class UnformattedWarning(Generic[_W]):
 
 
 def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
+    """
+    Issue the warning :param:`message` for the definition of the given :param:`method`
+
+    this helps to log warnigns for functions defined prior to finding an issue with them
+    (like hook wrappers being marked in a legacy mechanism)
+    """
     lineno = method.__code__.co_firstlineno
     filename = inspect.getfile(method)
     module = method.__module__
