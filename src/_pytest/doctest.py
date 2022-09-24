@@ -23,7 +23,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
-import pytest
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
@@ -37,6 +36,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import OutcomeException
+from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.python import Module
@@ -452,7 +452,7 @@ def _check_all_skipped(test: "doctest.DocTest") -> None:
 
     all_skipped = all(x.options.get(doctest.SKIP, False) for x in test.examples)
     if all_skipped:
-        pytest.skip("all tests skipped by +SKIP option")
+        skip("all tests skipped by +SKIP option")
 
 
 def _is_mocked(obj: object) -> bool:
@@ -552,7 +552,7 @@ class DoctestModule(Module):
                 )
             except ImportError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
-                    pytest.skip("unable to import module %r" % self.path)
+                    skip("unable to import module %r" % self.path)
                 else:
                     raise
         # Uses internal doctest module parsing mechanism.
