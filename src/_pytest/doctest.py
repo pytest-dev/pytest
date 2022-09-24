@@ -32,6 +32,7 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -733,7 +734,7 @@ def _get_report_choice(key: str) -> int:
     }[key]
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def doctest_namespace() -> Dict[str, Any]:
     """Fixture that returns a :py:class:`dict` that will be injected into the
     namespace of doctests.
