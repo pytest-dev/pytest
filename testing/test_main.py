@@ -180,6 +180,10 @@ class TestResolveCollectionArgument:
             invocation_path / "src/pkg",
             [],
         )
+        assert resolve_collection_argument(invocation_path, "src/pkg/test.py::") == (
+            invocation_path / "src/pkg/test.py",
+            [],
+        )
 
         with pytest.raises(
             UsageError, match=r"package argument cannot contain :: selection parts"
@@ -206,6 +210,12 @@ class TestResolveCollectionArgument:
             match=re.escape("file or directory not found: src/pkg/test.py[a::b]"),
         ):
             resolve_collection_argument(invocation_path, "src/pkg/test.py[a::b]")
+
+        with pytest.raises(
+            UsageError,
+            match=re.escape("file or directory not found: src/pkg/test.py[foobar]"),
+        ):
+            resolve_collection_argument(invocation_path, "src/pkg/test.py[foobar]")
 
         with pytest.raises(
             UsageError,

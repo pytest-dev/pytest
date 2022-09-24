@@ -886,7 +886,8 @@ def resolve_collection_argument(
         parts[-1] = f"{parts[-1]}{squacket}{rest}"
     if as_pypath:
         strpath = search_pypath(strpath)
-    fspath = absolutepath(invocation_path / strpath)
+    fspath = invocation_path / strpath
+    fspath = absolutepath(fspath)
     if not fspath.exists():
         msg = (
             "module or package not found: {arg} (missing __init__.py?)"
