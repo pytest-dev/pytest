@@ -34,6 +34,7 @@ from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodes import Collector
+from _pytest.nodes import Item
 from _pytest.outcomes import OutcomeException
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
@@ -246,7 +247,7 @@ def _get_runner(
     )
 
 
-class DoctestItem(pytest.Item):
+class DoctestItem(Item):
     def __init__(
         self,
         name: str,
