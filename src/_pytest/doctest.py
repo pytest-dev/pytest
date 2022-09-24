@@ -38,6 +38,7 @@ from _pytest.nodes import Item
 from _pytest.outcomes import OutcomeException
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
+from _pytest.python import Module
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
@@ -412,7 +413,7 @@ def _get_continue_on_failure(config):
     return continue_on_failure
 
 
-class DoctestTextfile(pytest.Module):
+class DoctestTextfile(Module):
     obj = None
 
     def collect(self) -> Iterable[DoctestItem]:
@@ -492,7 +493,7 @@ def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
         inspect.unwrap = real_unwrap
 
 
-class DoctestModule(pytest.Module):
+class DoctestModule(Module):
     def collect(self) -> Iterable[DoctestItem]:
         import doctest
 
