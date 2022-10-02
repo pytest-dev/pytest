@@ -98,6 +98,14 @@ INSTANCE_COLLECTOR = PytestRemovedIn8Warning(
     "The pytest.Instance collector type is deprecated and is no longer used. "
     "See https://docs.pytest.org/en/latest/deprecations.html#the-pytest-instance-collector",
 )
+HOOK_LEGACY_MARKING = UnformattedWarning(
+    PytestDeprecationWarning,
+    "The hook{type} {fullname} uses old-style configuration options (marks or attributes).\n"
+    "Please use the pytest.hook{type}({hook_opts}) decorator instead\n"
+    " to configure the hooks.\n"
+    " See https://docs.pytest.org/en/latest/deprecations.html"
+    "#configuring-hook-specs-impls-using-markers",
+)
 
 # You want to make some `__init__` or function "private".
 #

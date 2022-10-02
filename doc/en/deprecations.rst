@@ -78,6 +78,50 @@ no matter what argument was used in the constructor. We expect to deprecate the
 
 .. _legacy-path-hooks-deprecated:
 
+Configuring hook specs/impls using markers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before pluggy, pytest's plugin library, was its own package and had a clear API,
+pytest just used ``pytest.mark`` to configure hooks.
+
+The :py:func:`pytest.hookimpl` and :py:func:`pytest.hookspec` decorators
+have been available since years and should be used instead.
+
+.. code-block:: python
+
+    @pytest.mark.tryfirst
+    def pytest_runtest_call():
+        ...
+
+
+    # or
+    def pytest_runtest_call():
+        ...
+
+
+    pytest_runtest_call.tryfirst = True
+
+should be changed to:
+
+.. code-block:: python
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_runtest_call():
+        ...
+
+Changed ``hookimpl`` attributes:
+
+* ``tryfirst``
+* ``trylast``
+* ``optionalhook``
+* ``hookwrapper``
+
+Changed ``hookwrapper`` attributes:
+
+* ``firstresult``
+* ``historic``
+
+
 ``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
