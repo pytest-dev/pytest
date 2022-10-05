@@ -6229,7 +6229,7 @@ Bug Fixes
   Thanks :user:`adborden` for the report and :user:`nicoddemus` for the PR.
 
 * Clean up unittest TestCase objects after tests are complete (:issue:`1649`).
-  Thanks :user:`d_b_w` for the report and PR.
+  Thanks :user:`d-b-w` for the report and PR.
 
 
 3.0.3 (2016-09-28)
@@ -6244,7 +6244,7 @@ Bug Fixes
   Thanks :user:`nicoddemus` for the PR.
 
 * Fix pkg_resources import error in Jython projects (:issue:`1853`).
-  Thanks :user:`raquel-ucl` for the PR.
+  Thanks :user:`raquelalegre` for the PR.
 
 * Got rid of ``AttributeError: 'Module' object has no attribute '_obj'`` exception
   in Python 3 (:issue:`1944`).
