@@ -9,7 +9,7 @@ Working with non-python tests
 A basic example for specifying tests in Yaml files
 --------------------------------------------------------------
 
-.. _`pytest-yamlwsgi`: http://bitbucket.org/aafshar/pytest-yamlwsgi/src/tip/pytest_yamlwsgi.py
+.. _`pytest-yamlwsgi`: https://pypi.org/project/pytest-yamlwsgi/
 
 Here is an example ``conftest.py`` (extracted from Ali Afshar's special purpose `pytest-yamlwsgi`_ plugin).   This ``conftest.py`` will  collect ``test*.yaml`` files and will execute the yaml-formatted content as custom tests:
 
