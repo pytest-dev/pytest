@@ -36,3 +36,11 @@ def test_pytest_warnings_repr_integration_test(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["E       pytest.PytestWarning: some warning"])
+
+
+@pytest.mark.filterwarnings("error")
+def test_warn_explicit_for_annotates_errors_with_location():
+    with pytest.raises(Warning, match="(?m)test\n at .*python_api.py:\\d+"):
+        warning_types.warn_explicit_for(
+            pytest.raises, warning_types.PytestWarning("test")  # type: ignore
+        )

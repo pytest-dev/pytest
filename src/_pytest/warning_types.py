@@ -158,12 +158,14 @@ def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
     filename = inspect.getfile(method)
     module = method.__module__
     mod_globals = method.__globals__
-
-    warnings.warn_explicit(
-        message,
-        type(message),
-        filename=filename,
-        module=module,
-        registry=mod_globals.setdefault("__warningregistry__", {}),
-        lineno=lineno,
-    )
+    try:
+        warnings.warn_explicit(
+            message,
+            type(message),
+            filename=filename,
+            module=module,
+            registry=mod_globals.setdefault("__warningregistry__", {}),
+            lineno=lineno,
+        )
+    except Warning as w:
+        raise type(w)(f"{w}\n at {filename}:{lineno}") from None
