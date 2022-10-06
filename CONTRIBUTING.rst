@@ -223,7 +223,7 @@ changes you want to review and merge.  Pull requests are stored on
 Once you send a pull request, we can discuss its potential modifications and
 even add more commits to it later on. There's an excellent tutorial on how Pull
 Requests work in the
-`GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_.
+`GitHub Help Center <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests>`_.
 
 Here is a simple overview, with pytest-specific bits:
 
