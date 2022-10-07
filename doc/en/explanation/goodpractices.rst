@@ -88,14 +88,6 @@ This has the following benefits:
 
 * Your tests can run against an installed version after executing ``pip install .``.
 * Your tests can run against the local copy with an editable install after executing ``pip install --editable .``.
-* If you don't use an editable install and are relying on the fact that Python by default puts the current
-  directory in ``sys.path`` to import your package, you can execute ``python -m pytest`` to execute the tests against the
-  local copy directly, without using ``pip``.
-
-.. note::
-
-    See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
-    ``python -m pytest``.
 
 For new projects, we recommend to use ``importlib`` :ref:`import mode <import-modes>`
 (see which-import-mode_ for a detailed explanation).
@@ -120,6 +112,32 @@ which are better explained in this excellent `blog post`_ by Ionel Cristian Măr
 
 .. _blog post: https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>
 
+.. note::
+
+    If you do not use an editable install and use the ``src`` layout as above you need to extend the Python's
+    search path for module files to execute the tests against the local copy directly. You can do it in an
+    ad-hoc manner by setting the ``PYTHONPATH`` environment variable:
+
+    .. code-block:: bash
+
+       PYTHONPATH=src pytest
+
+    or in a permanent manner by using the :confval:`pythonpath` configuration variable and adding the
+    following to your ``pyproject.toml``:
+
+    .. code-block:: toml
+
+        [tool.pytest.ini_options]
+        pythonpath = "src"
+
+.. note::
+
+    If you do not use an editable install and not use the ``src`` layout (``mypkg`` directly in the root
+    directory) you can rely on the fact that Python by default puts the current directory in ``sys.path`` to
+    import your package and run ``python -m pytest`` to execute the tests against the local copy directly.
+
+    See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
+    ``python -m pytest``.
 
 Tests as part of application code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
