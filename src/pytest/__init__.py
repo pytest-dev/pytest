@@ -18,6 +18,7 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import OptionGroup
 from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
+from _pytest.doctest import DoctestItem
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
@@ -92,6 +93,7 @@ __all__ = [
     "Config",
     "console_main",
     "deprecated_call",
+    "DoctestItem",
     "exit",
     "ExceptionInfo",
     "ExitCode",
