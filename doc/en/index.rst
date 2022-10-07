@@ -2,7 +2,7 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `Professionelles Testen für Python mit pytest <https://www.enterpy.de/veranstaltung-15409-se-0-professionelles-testen-fuer-python-mit-pytest.html>`_, part of `enterPy <https://www.enterpy.de/>`__ (German), October 28th (separate workshop day), online
+   - Professionelles Testen für Python mit pytest, part of `enterPy <https://www.enterpy.de/>`__ (German), `October 28th <https://www.enterpy.de/veranstaltung-15409-se-0-professionelles-testen-fuer-python-mit-pytest.html>`__ (sold out) and `November 4th <https://www.enterpy.de/veranstaltung-15557-se-0-professionelles-testen-fuer-python-mit-pytest-zusatztermin.html>`__, online
    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote and Leipzig, Germany
 
    Also see :doc:`previous talks and blogposts <talks>`.
