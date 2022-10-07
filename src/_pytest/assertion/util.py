@@ -241,6 +241,15 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
 
     explanation: List[str] = []
 
+    # if both are strings are truthy and normalize to the same string, but we're here,
+    # their byte representation is different. We convert to utf-8 and compare them as bytes.
+
+    if left and right and normalize("NFD", left) == normalize("NFD", right):
+        return [
+            "Strings are different but normalize to the same string. Comparing their utf-8 encoding.",
+            *_compare_eq_sequence(left.encode(), right.encode()),
+        ]
+
     if verbose < 1:
         i = 0  # just in case left or right has zero length
         for i in range(min(len(left), len(right))):
