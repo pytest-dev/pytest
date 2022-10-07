@@ -167,7 +167,7 @@ def warns(  # noqa: F811
             return func(*args[1:], **kwargs)
 
 
-class WarningsRecorder(warnings.catch_warnings):
+class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
     """A context manager to record raised warnings.
 
     Each recorded warning is an instance of :class:`warnings.WarningMessage`.
