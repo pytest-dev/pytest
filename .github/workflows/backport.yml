@@ -48,4 +48,4 @@ jobs:
           --title "${subject}" \
           --body "Backport of PR #${{ github.event.number }} to $target_branch branch. PR created by backport workflow."
       env:
-        GITHUB_TOKEN: ${{ secrets.CHATOPS }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
