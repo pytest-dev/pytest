@@ -512,12 +512,14 @@ class PytestPluginManager(PluginManager):
         config.addinivalue_line(
             "markers",
             "tryfirst: mark a hook implementation function such that the "
-            "plugin machinery will try to call it first/as early as possible.",
+            "plugin machinery will try to call it first/as early as possible. "
+            "DEPRECATED, use @pytest.hookimpl(tryfirst=True) instead.",
         )
         config.addinivalue_line(
             "markers",
             "trylast: mark a hook implementation function such that the "
-            "plugin machinery will try to call it last/as late as possible.",
+            "plugin machinery will try to call it last/as late as possible. "
+            "DEPRECATED, use @pytest.hookimpl(trylast=True) instead.",
         )
         self._configured = True
 
