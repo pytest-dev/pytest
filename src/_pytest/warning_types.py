@@ -168,4 +168,5 @@ def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
             lineno=lineno,
         )
     except Warning as w:
+        # If warnings are errors (e.g. -Werror), location information gets lost, so we add it to the message.
         raise type(w)(f"{w}\n at {filename}:{lineno}") from None
