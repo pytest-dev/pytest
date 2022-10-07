@@ -10,6 +10,7 @@ from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Sequence
+from unicodedata import normalize
 
 import _pytest._code
 from _pytest import outcomes
