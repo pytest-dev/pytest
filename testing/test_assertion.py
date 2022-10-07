@@ -776,6 +776,17 @@ class TestAssert_reprcompare:
         msg = "\n".join(expl)
         assert msg
 
+    def test_nfc_nfd_same_string(self) -> None:
+        # issue 3426
+        left = 'hyv\xe4'
+        right = 'hyva\u0308'
+        expl = callequal(left, right)
+        assert expl == [
+            "'hyvä' == 'hyvä'",
+            'Strings are different but normalize to the same string. Comparing their utf-8 encoding.',
+            "At index 3 diff: b'\\xc3' != b'a'"
+        ]
+
 
 class TestAssert_reprcompare_dataclass:
     def test_dataclasses(self, pytester: Pytester) -> None:
