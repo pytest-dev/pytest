@@ -62,6 +62,7 @@ class SafeRepr(reprlib.Repr):
                 s = ascii(x)
             else:
                 s = super().repr(x)
+
         except (KeyboardInterrupt, SystemExit):
             raise
         except BaseException as exc:
