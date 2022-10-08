@@ -1132,4 +1132,4 @@ def test_mark_mro():
 
     assert all_marks == [xfail("c").mark, xfail("a").mark, xfail("b").mark]
 
-    assert get_unpacked_marks(C, consider_mro=False) == [pytest.mark.xfail("c").mark]
+    assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
