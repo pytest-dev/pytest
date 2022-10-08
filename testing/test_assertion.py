@@ -787,6 +787,13 @@ class TestAssert_reprcompare:
             f"+ {str(left)}",
         ]
 
+        expl = callequal(left, right, verbose=2)
+        assert expl == [
+            "\"'hyv\\\\xe4'\" == \"'hyva\\\\u0308'\"",
+            f"- {str(right)}",
+            f"+ {str(left)}",
+        ]
+
 
 class TestAssert_reprcompare_dataclass:
     def test_dataclasses(self, pytester: Pytester) -> None:
