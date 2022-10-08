@@ -1112,23 +1112,24 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
 
 
 def test_mark_mro():
-    @pytest.mark.xfail("a")
+    xfail = pytest.mark.xfail
+
+    @xfail("a")
     class A:
         pass
 
-    @pytest.mark.xfail("b")
+    @xfail("b")
     class B:
         pass
 
-    @pytest.mark.xfail("c")
+    @xfail("c")
     class C(A, B):
         pass
 
     from _pytest.mark.structures import get_unpacked_marks
 
-    all_marks = list(get_unpacked_marks(C))
+    all_marks = get_unpacked_marks(C)
 
-    nk = [(x.name, x.args[0]) for x in all_marks]
-    assert nk == [("xfail", "c"), ("xfail", "a"), ("xfail", "b")]
+    assert all_marks == [xfail("c").mark, xfail("a").mark, xfail("b").mark]
 
-    assert list(get_unpacked_marks(C, consider_mro=False)) == []
+    assert get_unpacked_marks(C, consider_mro=False) == [pytest.mark.xfail("c").mark]
