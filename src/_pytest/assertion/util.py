@@ -163,6 +163,8 @@ def assertrepr_compare(
     """Return specialised explanations for some operators/operands."""
     verbose = config.getoption("verbose")
 
+    # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
+    # See issue #3246.
     use_ascii = (
         isinstance(left, str)
         and isinstance(right, str)
