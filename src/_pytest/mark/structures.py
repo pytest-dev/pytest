@@ -356,7 +356,7 @@ class MarkDecorator:
 
 
 def get_unpacked_marks(
-    obj: object | type,
+    obj: Union[object, type],
     consider_mro: bool = True,
 ) -> List[Mark]:
     """Obtain the unpacked marks that are stored on an object."""
