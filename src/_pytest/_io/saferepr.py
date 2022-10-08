@@ -94,7 +94,7 @@ def safeformat(obj: object) -> str:
 DEFAULT_REPR_MAX_SIZE = 240
 
 
-def saferepr(obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE) -> str:
+def saferepr(obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE, use_ascii: bool = False) -> str:
     """Return a size-limited safe repr-string for the given object.
 
     Failing __repr__ functions of user instances will be represented
@@ -104,10 +104,14 @@ def saferepr(obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE) -> str
     This function is a wrapper around the Repr/reprlib functionality of the
     stdlib.
     """
+
+    if use_ascii:
+        obj = ascii(obj)
+
     return SafeRepr(maxsize).repr(obj)
 
 
-def saferepr_unlimited(obj: object) -> str:
+def saferepr_unlimited(obj: object, use_ascii: bool = True) -> str:
     """Return an unlimited-size safe repr-string for the given object.
 
     As with saferepr, failing __repr__ functions of user instances
@@ -119,6 +123,8 @@ def saferepr_unlimited(obj: object) -> str:
     when maxsize=None, but that might affect some other code.
     """
     try:
+        if use_ascii:
+            obj = ascii(obj)
         return repr(obj)
     except Exception as exc:
         return _format_repr_exception(exc, obj)
