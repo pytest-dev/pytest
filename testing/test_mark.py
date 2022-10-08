@@ -1109,3 +1109,26 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     result = pytester.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_mark_mro():
+    @pytest.mark.xfail("a")
+    class A:
+        pass
+
+    @pytest.mark.xfail("b")
+    class B:
+        pass
+
+    @pytest.mark.xfail("c")
+    class C(A, B):
+        pass
+
+    from _pytest.mark.structures import get_unpacked_marks
+
+    all_marks = list(get_unpacked_marks(C))
+
+    nk = [(x.name, x.args[0]) for x in all_marks]
+    assert nk == [("xfail", "c"), ("xfail", "a"), ("xfail", "b")]
+
+    assert list(get_unpacked_marks(C, consider_mro=False)) == []

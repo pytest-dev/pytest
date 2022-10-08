@@ -1,0 +1,1 @@
+Consider the full mro when getting marks from classes.
