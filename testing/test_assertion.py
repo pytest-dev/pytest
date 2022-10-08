@@ -781,7 +781,11 @@ class TestAssert_reprcompare:
         left = "hyv\xe4"
         right = "hyva\u0308"
         expl = callequal(left, right)
-        assert expl == ['"\'hyv\\\\xe4\'" == "\'hyva\\\\u0308\'"', f'- {str(right)}', f'+ {str(left)}']
+        assert expl == [
+            "\"'hyv\\\\xe4'\" == \"'hyva\\\\u0308'\"",
+            f"- {str(right)}",
+            f"+ {str(left)}",
+        ]
 
 
 class TestAssert_reprcompare_dataclass:

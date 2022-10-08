@@ -94,7 +94,9 @@ def safeformat(obj: object) -> str:
 DEFAULT_REPR_MAX_SIZE = 240
 
 
-def saferepr(obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE, use_ascii: bool = False) -> str:
+def saferepr(
+    obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE, use_ascii: bool = False
+) -> str:
     """Return a size-limited safe repr-string for the given object.
 
     Failing __repr__ functions of user instances will be represented

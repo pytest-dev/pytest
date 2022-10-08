@@ -157,11 +157,17 @@ def has_default_eq(
     return True
 
 
-def assertrepr_compare(config, op: str, left: Any, right: Any, use_ascii: bool=False) -> Optional[List[str]]:
+def assertrepr_compare(
+    config, op: str, left: Any, right: Any, use_ascii: bool = False
+) -> Optional[List[str]]:
     """Return specialised explanations for some operators/operands."""
     verbose = config.getoption("verbose")
 
-    use_ascii = isinstance(left, str) and isinstance(right, str) and normalize("NFD", left) == normalize("NFD", right)
+    use_ascii = (
+        isinstance(left, str)
+        and isinstance(right, str)
+        and normalize("NFD", left) == normalize("NFD", right)
+    )
 
     if verbose > 1:
         left_repr = saferepr_unlimited(left, use_ascii=use_ascii)
