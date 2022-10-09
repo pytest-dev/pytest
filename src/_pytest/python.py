@@ -59,6 +59,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import INSTANCE_COLLECTOR
+from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
@@ -872,19 +873,23 @@ class Class(PyCollector):
         """Inject a hidden autouse, function scoped fixture into the collected class object
         that invokes setup_method/teardown_method if either or both are available.
 
-        Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
+        Using a fixture to invoke these methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
         has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_name = "setup_method"
         setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
+        emit_nose_setup_warning = False
         if setup_method is None and has_nose:
             setup_name = "setup"
+            emit_nose_setup_warning = True
             setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
         teardown_name = "teardown_method"
         teardown_method = getattr(self.obj, teardown_name, None)
+        emit_nose_teardown_warning = False
         if teardown_method is None and has_nose:
             teardown_name = "teardown"
+            emit_nose_teardown_warning = True
             teardown_method = getattr(self.obj, teardown_name, None)
         if setup_method is None and teardown_method is None:
             return
@@ -900,10 +905,24 @@ class Class(PyCollector):
             if setup_method is not None:
                 func = getattr(self, setup_name)
                 _call_with_optional_argument(func, method)
+                if emit_nose_setup_warning:
+                    warnings.warn(
+                        NOSE_SUPPORT_METHOD.format(
+                            nodeid=request.node.nodeid, method="setup"
+                        ),
+                        stacklevel=2,
+                    )
             yield
             if teardown_method is not None:
                 func = getattr(self, teardown_name)
                 _call_with_optional_argument(func, method)
+                if emit_nose_teardown_warning:
+                    warnings.warn(
+                        NOSE_SUPPORT_METHOD.format(
+                            nodeid=request.node.nodeid, method="teardown"
+                        ),
+                        stacklevel=2,
+                    )
 
         self.obj.__pytest_setup_method = xunit_setup_method_fixture
 
