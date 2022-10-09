@@ -276,7 +276,7 @@ deprecation warning is now raised.
 Applying a mark to a fixture function
 -------------------------------------
 
-.. deprecated:: 6.3
+.. deprecated:: 7.2
 
 Applying a mark to a fixture function is deprecated. Doing so has no effect, and will raise an error in the next version.
 
