@@ -18,10 +18,13 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
-Support for tests written for nose
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 7.2.0
+.. _nose-deprecation:
+
+Support for tests written for nose
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.2
 
 Support for running tests written for `nose <https://nose.readthedocs.io/en/latest/>`__ is now deprecated.
 

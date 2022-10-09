@@ -1,1 +1,10 @@
 The functionality for running tests written for ``nose`` has been officially deprecated.
+
+This includes:
+
+* Plain ``setup`` and ``teardown`` functions and methods: this might catch users by surprise, as ``setup()`` and ``teardown()`` are not pytest idioms, but part of the ``nose`` support.
+* Setup/teardown using the `@with_setup <with-setup-nose>`_ decorator.
+
+For more details, consult the :ref:`deprecation docs <nose-deprecation>`.
+
+.. _`with-setup-nose`: https://nose.readthedocs.io/en/latest/testing_tools.html?highlight=with_setup#nose.tools.with_setup
