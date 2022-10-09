@@ -157,8 +157,8 @@ it in your ``pyproject.toml`` file.
 
     # sample ./pyproject.toml file
     [build-system]
-    requires = ["setuptools"]
-    build-backend = "setuptools.build_meta"
+    requires = ["hatchling"]
+    build-backend = "hatchling.build"
 
     [project]
     name = "myproject"
