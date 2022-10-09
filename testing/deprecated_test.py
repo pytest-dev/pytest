@@ -233,7 +233,8 @@ def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
         from _pytest.python import Instance  # noqa: F401
 
 
-def test_nose_deprecated(pytester: Pytester) -> None:
+@pytest.mark.filterwarnings("default")
+def test_nose_deprecated_with_setup(pytester: Pytester) -> None:
     pytest.importorskip("nose")
     pytester.makepyfile(
         """
@@ -253,9 +254,39 @@ def test_nose_deprecated(pytester: Pytester) -> None:
     output = pytester.runpytest()
     message = [
         "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
-        "*test_nose_deprecated.py::test_omits_warnings is using nose method: `setup_fn_no_op` (setup)",
+        "*test_nose_deprecated_with_setup.py::test_omits_warnings is using nose method: `setup_fn_no_op` (setup)",
         "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
-        "*test_nose_deprecated.py::test_omits_warnings is using nose method: `teardown_fn_no_op` (teardown)",
+        "*test_nose_deprecated_with_setup.py::test_omits_warnings is using nose method: `teardown_fn_no_op` (teardown)",
+    ]
+    output.stdout.fnmatch_lines(message)
+    output.assert_outcomes(passed=1)
+
+
+@pytest.mark.filterwarnings("default")
+def test_nose_deprecated_setup_teardown(pytester: Pytester) -> None:
+    pytest.importorskip("nose")
+    pytester.makepyfile(
+        """
+        class Test:
+
+            def setup(self):
+                ...
+
+            def teardown(self):
+                ...
+
+            def test(self):
+                ...
+        """
+    )
+    output = pytester.runpytest()
+    message = [
+        "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
+        "*test_nose_deprecated_setup_teardown.py::Test::test is using nose-specific method: `setup(self)`",
+        "*To remove this warning, rename it to `setup_method(self)`",
+        "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
+        "*test_nose_deprecated_setup_teardown.py::Test::test is using nose-specific method: `teardown(self)`",
+        "*To remove this warning, rename it to `teardown_method(self)`",
     ]
     output.stdout.fnmatch_lines(message)
     output.assert_outcomes(passed=1)

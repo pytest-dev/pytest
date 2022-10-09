@@ -25,7 +25,7 @@ Support for tests written for nose
 
 Support for running tests written for `nose <https://nose.readthedocs.io/en/latest/>`__ is now deprecated.
 
-`nose` has been in maintenance mode-only for years, and maintaining the plugin is not trivial as it spills
+``nose`` has been in maintenance mode-only for years, and maintaining the plugin is not trivial as it spills
 over the code base (see :issue:`9886` for more details).
 
 setup/teardown
@@ -70,11 +70,12 @@ Native pytest support uses ``setup_method`` and ``teardown_method`` (see :ref:`x
             ...
 
 
+This is easy to do in an entire code base by doing a simple find/replace.
+
 @with_setup
 ^^^^^^^^^^^
 
-Code using `@with_setup <with-setup-nose>`_ will also need to be ported to a supported
-pytest style:
+Code using `@with_setup <with-setup-nose>`_ such as this:
 
 .. code-block:: python
 
@@ -93,7 +94,7 @@ pytest style:
     def test_foo():
         ...
 
-One way to do it is using a fixture:
+Will also need to be ported to a supported pytest style. One way to do it is using a fixture:
 
 .. code-block:: python
 
