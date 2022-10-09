@@ -1,7 +1,6 @@
 import math
 import pprint
-from collections.abc import Iterable
-from collections.abc import Mapping
+from collections.abc import Collection
 from collections.abc import Sized
 from decimal import Decimal
 from numbers import Complex
@@ -10,9 +9,11 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Generic
+from typing import List
+from typing import Mapping
 from typing import Optional
-from typing import overload
 from typing import Pattern
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
 import _pytest._code
 from _pytest.compat import final
 from _pytest.compat import STRING_TYPES
+from _pytest.compat import overload
 from _pytest.outcomes import fail
 
 
@@ -36,6 +38,32 @@ def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
             value, at_str
         )
     )
+
+
+def _compare_approx(
+    full_object: object,
+    message_data: Sequence[Tuple[str, str, str]],
+    number_of_elements: int,
+    different_ids: Sequence[object],
+    max_abs_diff: float,
+    max_rel_diff: float,
+) -> List[str]:
+    message_list = list(message_data)
+    message_list.insert(0, ("Index", "Obtained", "Expected"))
+    max_sizes = [0, 0, 0]
+    for index, obtained, expected in message_list:
+        max_sizes[0] = max(max_sizes[0], len(index))
+        max_sizes[1] = max(max_sizes[1], len(obtained))
+        max_sizes[2] = max(max_sizes[2], len(expected))
+    explanation = [
+        f"comparison failed. Mismatched elements: {len(different_ids)} / {number_of_elements}:",
+        f"Max absolute difference: {max_abs_diff}",
+        f"Max relative difference: {max_rel_diff}",
+    ] + [
+        f"{indexes:<{max_sizes[0]}} | {obtained:<{max_sizes[1]}} | {expected:<{max_sizes[2]}}"
+        for indexes, obtained, expected in message_list
+    ]
+    return explanation
 
 
 # builtin pytest.approx helper
@@ -60,9 +88,22 @@ class ApproxBase:
     def __repr__(self) -> str:
         raise NotImplementedError
 
+    def _repr_compare(self, other_side: Any) -> List[str]:
+        return [
+            "comparison failed",
+            f"Obtained: {other_side}",
+            f"Expected: {self}",
+        ]
+
     def __eq__(self, actual) -> bool:
         return all(
             a == self._approx_scalar(x) for a, x in self._yield_comparisons(actual)
+        )
+
+    def __bool__(self):
+        __tracebackhide__ = True
+        raise AssertionError(
+            "approx() is not supported in a boolean context.\nDid you mean: `assert a == approx(b)`?"
         )
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.
@@ -90,12 +131,13 @@ class ApproxBase:
         # a numeric type.  For this reason, the default is to do nothing.  The
         # classes that deal with sequences should reimplement this method to
         # raise if there are any non-numeric elements in the sequence.
-        pass
 
 
-def _recursive_list_map(f, x):
-    if isinstance(x, list):
-        return list(_recursive_list_map(f, xi) for xi in x)
+def _recursive_sequence_map(f, x):
+    """Recursively map a function over a sequence of arbitrary depth"""
+    if isinstance(x, (list, tuple)):
+        seq_type = type(x)
+        return seq_type(_recursive_sequence_map(f, xi) for xi in x)
     else:
         return f(x)
 
@@ -104,8 +146,70 @@ class ApproxNumpy(ApproxBase):
     """Perform approximate comparisons where the expected value is numpy array."""
 
     def __repr__(self) -> str:
-        list_scalars = _recursive_list_map(self._approx_scalar, self.expected.tolist())
+        list_scalars = _recursive_sequence_map(
+            self._approx_scalar, self.expected.tolist()
+        )
         return f"approx({list_scalars!r})"
+
+    def _repr_compare(self, other_side: "ndarray") -> List[str]:
+        import itertools
+        import math
+
+        def get_value_from_nested_list(
+            nested_list: List[Any], nd_index: Tuple[Any, ...]
+        ) -> Any:
+            """
+            Helper function to get the value out of a nested list, given an n-dimensional index.
+            This mimics numpy's indexing, but for raw nested python lists.
+            """
+            value: Any = nested_list
+            for i in nd_index:
+                value = value[i]
+            return value
+
+        np_array_shape = self.expected.shape
+        approx_side_as_seq = _recursive_sequence_map(
+            self._approx_scalar, self.expected.tolist()
+        )
+
+        if np_array_shape != other_side.shape:
+            return [
+                "Impossible to compare arrays with different shapes.",
+                f"Shapes: {np_array_shape} and {other_side.shape}",
+            ]
+
+        number_of_elements = self.expected.size
+        max_abs_diff = -math.inf
+        max_rel_diff = -math.inf
+        different_ids = []
+        for index in itertools.product(*(range(i) for i in np_array_shape)):
+            approx_value = get_value_from_nested_list(approx_side_as_seq, index)
+            other_value = get_value_from_nested_list(other_side, index)
+            if approx_value != other_value:
+                abs_diff = abs(approx_value.expected - other_value)
+                max_abs_diff = max(max_abs_diff, abs_diff)
+                if other_value == 0.0:
+                    max_rel_diff = math.inf
+                else:
+                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                different_ids.append(index)
+
+        message_data = [
+            (
+                str(index),
+                str(get_value_from_nested_list(other_side, index)),
+                str(get_value_from_nested_list(approx_side_as_seq, index)),
+            )
+            for index in different_ids
+        ]
+        return _compare_approx(
+            self.expected,
+            message_data,
+            number_of_elements,
+            different_ids,
+            max_abs_diff,
+            max_rel_diff,
+        )
 
     def __eq__(self, actual) -> bool:
         import numpy as np
@@ -121,7 +225,7 @@ class ApproxNumpy(ApproxBase):
         if not np.isscalar(actual) and actual.shape != self.expected.shape:
             return False
 
-        return ApproxBase.__eq__(self, actual)
+        return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
         import numpy as np
@@ -147,6 +251,44 @@ class ApproxMapping(ApproxBase):
             {k: self._approx_scalar(v) for k, v in self.expected.items()}
         )
 
+    def _repr_compare(self, other_side: Mapping[object, float]) -> List[str]:
+        import math
+
+        approx_side_as_map = {
+            k: self._approx_scalar(v) for k, v in self.expected.items()
+        }
+
+        number_of_elements = len(approx_side_as_map)
+        max_abs_diff = -math.inf
+        max_rel_diff = -math.inf
+        different_ids = []
+        for (approx_key, approx_value), other_value in zip(
+            approx_side_as_map.items(), other_side.values()
+        ):
+            if approx_value != other_value:
+                max_abs_diff = max(
+                    max_abs_diff, abs(approx_value.expected - other_value)
+                )
+                max_rel_diff = max(
+                    max_rel_diff,
+                    abs((approx_value.expected - other_value) / approx_value.expected),
+                )
+                different_ids.append(approx_key)
+
+        message_data = [
+            (str(key), str(other_side[key]), str(approx_side_as_map[key]))
+            for key in different_ids
+        ]
+
+        return _compare_approx(
+            self.expected,
+            message_data,
+            number_of_elements,
+            different_ids,
+            max_abs_diff,
+            max_rel_diff,
+        )
+
     def __eq__(self, actual) -> bool:
         try:
             if set(actual.keys()) != set(self.expected.keys()):
@@ -154,7 +296,7 @@ class ApproxMapping(ApproxBase):
         except AttributeError:
             return False
 
-        return ApproxBase.__eq__(self, actual)
+        return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
         for k in self.expected.keys():
@@ -168,15 +310,56 @@ class ApproxMapping(ApproxBase):
                 raise TypeError(msg.format(key, value, pprint.pformat(self.expected)))
 
 
-class ApproxSequencelike(ApproxBase):
+class ApproxSequenceLike(ApproxBase):
     """Perform approximate comparisons where the expected value is a sequence of numbers."""
 
     def __repr__(self) -> str:
         seq_type = type(self.expected)
-        if seq_type not in (tuple, list, set):
+        if seq_type not in (tuple, list):
             seq_type = list
         return "approx({!r})".format(
             seq_type(self._approx_scalar(x) for x in self.expected)
+        )
+
+    def _repr_compare(self, other_side: Sequence[float]) -> List[str]:
+        import math
+
+        if len(self.expected) != len(other_side):
+            return [
+                "Impossible to compare lists with different sizes.",
+                f"Lengths: {len(self.expected)} and {len(other_side)}",
+            ]
+
+        approx_side_as_map = _recursive_sequence_map(self._approx_scalar, self.expected)
+
+        number_of_elements = len(approx_side_as_map)
+        max_abs_diff = -math.inf
+        max_rel_diff = -math.inf
+        different_ids = []
+        for i, (approx_value, other_value) in enumerate(
+            zip(approx_side_as_map, other_side)
+        ):
+            if approx_value != other_value:
+                abs_diff = abs(approx_value.expected - other_value)
+                max_abs_diff = max(max_abs_diff, abs_diff)
+                if other_value == 0.0:
+                    max_rel_diff = math.inf
+                else:
+                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                different_ids.append(i)
+
+        message_data = [
+            (str(i), str(other_side[i]), str(approx_side_as_map[i]))
+            for i in different_ids
+        ]
+
+        return _compare_approx(
+            self.expected,
+            message_data,
+            number_of_elements,
+            different_ids,
+            max_abs_diff,
+            max_rel_diff,
         )
 
     def __eq__(self, actual) -> bool:
@@ -185,7 +368,7 @@ class ApproxSequencelike(ApproxBase):
                 return False
         except TypeError:
             return False
-        return ApproxBase.__eq__(self, actual)
+        return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
         return zip(actual, self.expected)
@@ -212,7 +395,6 @@ class ApproxScalar(ApproxBase):
 
         For example, ``1.0 ± 1e-6``, ``(3+4j) ± 5e-6 ∠ ±180°``.
         """
-
         # Don't show a tolerance for values that aren't compared using
         # tolerances, i.e. non-numerics and infinities. Need to call abs to
         # handle complex numbers, e.g. (inf + 1j).
@@ -336,16 +518,14 @@ class ApproxDecimal(ApproxScalar):
 
 
 def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
-    """Assert that two numbers (or two sets of numbers) are equal to each other
+    """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
     within some tolerance.
 
-    Due to the `intricacies of floating-point arithmetic`__, numbers that we
+    Due to the :doc:`python:tutorial/floatingpoint`, numbers that we
     would intuitively expect to be equal are not always so::
 
         >>> 0.1 + 0.2 == 0.3
         False
-
-    __ https://docs.python.org/3/tutorial/floatingpoint.html
 
     This problem is commonly encountered when writing tests, e.g. when making
     sure that floating-point values are what you expect them to be.  One way to
@@ -370,14 +550,9 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> 0.1 + 0.2 == approx(0.3)
         True
 
-    The same syntax also works for sequences of numbers::
+    The same syntax also works for ordered sequences of numbers::
 
         >>> (0.1 + 0.2, 0.2 + 0.4) == approx((0.3, 0.6))
-        True
-
-    Dictionary *values*::
-
-        >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
         True
 
     ``numpy`` arrays::
@@ -391,6 +566,20 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> import numpy as np                                         # doctest: +SKIP
         >>> np.array([0.1, 0.2]) + np.array([0.2, 0.1]) == approx(0.3) # doctest: +SKIP
         True
+
+    Only ordered sequences are supported, because ``approx`` needs
+    to infer the relative position of the sequences without ambiguity. This means
+    ``sets`` and other unordered sequences are not supported.
+
+    Finally, dictionary *values* can also be compared::
+
+        >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
+        True
+
+    The comparison will be true if both mappings have the same keys and their
+    respective values match the expected tolerances.
+
+    **Tolerances**
 
     By default, ``approx`` considers numbers within a relative tolerance of
     ``1e-6`` (i.e. one part in a million) of its expected value to be equal.
@@ -451,27 +640,22 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       both ``a`` and ``b``, this test is symmetric (i.e.  neither ``a`` nor
       ``b`` is a "reference value").  You have to specify an absolute tolerance
       if you want to compare to ``0.0`` because there is no tolerance by
-      default.  `More information...`__
-
-      __ https://docs.python.org/3/library/math.html#math.isclose
+      default.  More information: :py:func:`math.isclose`.
 
     - ``numpy.isclose(a, b, rtol=1e-5, atol=1e-8)``: True if the difference
       between ``a`` and ``b`` is less that the sum of the relative tolerance
       w.r.t. ``b`` and the absolute tolerance.  Because the relative tolerance
       is only calculated w.r.t. ``b``, this test is asymmetric and you can
       think of ``b`` as the reference value.  Support for comparing sequences
-      is provided by ``numpy.allclose``.  `More information...`__
-
-      __ https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
+      is provided by :py:func:`numpy.allclose`.  More information:
+      :std:doc:`numpy:reference/generated/numpy.isclose`.
 
     - ``unittest.TestCase.assertAlmostEqual(a, b)``: True if ``a`` and ``b``
       are within an absolute tolerance of ``1e-7``.  No relative tolerance is
-      considered and the absolute tolerance cannot be changed, so this function
-      is not appropriate for very large or very small numbers.  Also, it's only
-      available in subclasses of ``unittest.TestCase`` and it's ugly because it
-      doesn't follow PEP8.  `More information...`__
-
-      __ https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertAlmostEqual
+      considered , so this function is not appropriate for very large or very
+      small numbers.  Also, it's only available in subclasses of ``unittest.TestCase``
+      and it's ugly because it doesn't follow PEP8.  More information:
+      :py:meth:`unittest.TestCase.assertAlmostEqual`.
 
     - ``a == pytest.approx(b, rel=1e-6, abs=1e-12)``: True if the relative
       tolerance is met w.r.t. ``b`` or if the absolute tolerance is met.
@@ -480,11 +664,22 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
       special case that you explicitly specify an absolute tolerance but not a
       relative tolerance, only the absolute tolerance is considered.
 
+    .. note::
+
+        ``approx`` can handle numpy arrays, but we recommend the
+        specialised test helpers in :std:doc:`numpy:reference/routines.testing`
+        if you need support for comparisons, NaNs, or ULP-based tolerances.
+
+        To match strings using regex, you can use
+        `Matches <https://github.com/asottile/re-assert#re_assertmatchespattern-str-args-kwargs>`_
+        from the
+        `re_assert package <https://github.com/asottile/re-assert>`_.
+
     .. warning::
 
        .. versionchanged:: 3.2
 
-       In order to avoid inconsistent behavior, ``TypeError`` is
+       In order to avoid inconsistent behavior, :py:exc:`TypeError` is
        raised for ``>``, ``>=``, ``<`` and ``<=`` comparisons.
        The example below illustrates the problem::
 
@@ -494,9 +689,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
        In the second example one expects ``approx(0.1).__le__(0.1 + 1e-10)``
        to be called. But instead, ``approx(0.1).__lt__(0.1 + 1e-10)`` is used to
        comparison. This is because the call hierarchy of rich comparisons
-       follows a fixed behavior. `More information...`__
-
-       __ https://docs.python.org/3/reference/datamodel.html#object.__ge__
+       follows a fixed behavior. More information: :py:meth:`object.__ge__`
 
     .. versionchanged:: 3.7.1
        ``approx`` raises ``TypeError`` when it encounters a dict value or
@@ -532,12 +725,19 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         expected = _as_numpy_array(expected)
         cls = ApproxNumpy
     elif (
-        isinstance(expected, Iterable)
+        hasattr(expected, "__getitem__")
         and isinstance(expected, Sized)
         # Type ignored because the error is wrong -- not unreachable.
         and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
     ):
-        cls = ApproxSequencelike
+        cls = ApproxSequenceLike
+    elif (
+        isinstance(expected, Collection)
+        # Type ignored because the error is wrong -- not unreachable.
+        and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
+    ):
+        msg = f"pytest.approx() only supports ordered sequences, but got: {repr(expected)}"
+        raise TypeError(msg)
     else:
         cls = ApproxScalar
 
@@ -586,7 +786,7 @@ def raises(
 
 
 @overload
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     func: Callable[..., Any],
     *args: Any,
@@ -595,25 +795,26 @@ def raises(
     ...
 
 
-def raises(
+def raises(  # noqa: F811
     expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
 ) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
-    r"""Assert that a code block/function call raises ``expected_exception``
-    or raise a failure exception otherwise.
+    r"""Assert that a code block/function call raises an exception.
 
-    :kwparam match:
+    :param typing.Type[E] | typing.Tuple[typing.Type[E], ...] expected_exception:
+        The excpected exception type, or a tuple if one of multiple possible
+        exception types are excepted.
+    :kwparam str | typing.Pattern[str] | None match:
         If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
-        representation of the exception using ``re.search``. To match a literal
-        string that may contain `special characters`__, the pattern can
-        first be escaped with ``re.escape``.
+        representation of the exception using :func:`re.search`.
 
-        (This is only used when ``pytest.raises`` is used as a context manager,
+        To match a literal string that may contain :ref:`special characters
+        <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
+
+        (This is only used when :py:func:`pytest.raises` is used as a context manager,
         and passed through to the function otherwise.
-        When using ``pytest.raises`` as a function, you can use:
+        When using :py:func:`pytest.raises` as a function, you can use:
         ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
-
-        __ https://docs.python.org/3/library/re.html#regular-expression-syntax
 
     .. currentmodule:: _pytest._code
 
@@ -710,6 +911,12 @@ def raises(
     """
     __tracebackhide__ = True
 
+    if not expected_exception:
+        raise ValueError(
+            f"Expected an exception type or a tuple of exception types, but got `{expected_exception!r}`. "
+            f"Raising exceptions is already understood as failing the test, so you don't need "
+            f"any special code to say 'this should never raise an exception'."
+        )
     if isinstance(expected_exception, type):
         excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:
@@ -733,9 +940,7 @@ def raises(
     else:
         func = args[0]
         if not callable(func):
-            raise TypeError(
-                "{!r} object (type: {}) must be callable".format(func, type(func))
-            )
+            raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         try:
             func(*args[1:], **kwargs)
         except expected_exception as e:

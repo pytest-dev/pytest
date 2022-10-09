@@ -21,7 +21,7 @@ from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
-from _pytest.store import Store
+from _pytest.stash import Stash
 
 
 @pytest.fixture(scope="session")
@@ -936,7 +936,7 @@ class TestPython:
 def test_mangle_test_address() -> None:
     from _pytest.junitxml import mangle_test_address
 
-    address = "::".join(["a/my.py.thing.py", "Class", "()", "method", "[a-1-::]"])
+    address = "::".join(["a/my.py.thing.py", "Class", "method", "[a-1-::]"])
     newnames = mangle_test_address(address)
     assert newnames == ["a.my.py.thing", "Class", "method", "[a-1-::]"]
 
@@ -951,7 +951,7 @@ def test_dont_configure_on_workers(tmp_path: Path) -> None:
         def __init__(self):
             self.pluginmanager = self
             self.option = self
-            self._store = Store()
+            self.stash = Stash()
 
         def getini(self, name):
             return "pytest"
@@ -979,9 +979,9 @@ class TestNonPython:
         pytester.makeconftest(
             """
             import pytest
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".xyz":
-                    return MyItem.from_parent(name=fspath.name, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".xyz":
+                    return MyItem.from_parent(name=file_path.name, parent=parent)
             class MyItem(pytest.Item):
                 def runtest(self):
                     raise ValueError(42)
@@ -1388,7 +1388,7 @@ def test_runs_twice(pytester: Pytester, run_and_parse: RunAndParse) -> None:
 
     result, dom = run_and_parse(f, f)
     result.stdout.no_fnmatch_line("*INTERNALERROR*")
-    first, second = [x["classname"] for x in dom.find_by_tag("testcase")]
+    first, second = (x["classname"] for x in dom.find_by_tag("testcase"))
     assert first == second
 
 
@@ -1406,7 +1406,7 @@ def test_runs_twice_xdist(
 
     result, dom = run_and_parse(f, "--dist", "each", "--tx", "2*popen")
     result.stdout.no_fnmatch_line("*INTERNALERROR*")
-    first, second = [x["classname"] for x in dom.find_by_tag("testcase")]
+    first, second = (x["classname"] for x in dom.find_by_tag("testcase"))
     assert first == second
 
 
@@ -1430,9 +1430,9 @@ def test_fancy_items_regression(pytester: Pytester, run_and_parse: RunAndParse) 
                     NoFunItem.from_parent(name='b', parent=self),
                 ]
 
-        def pytest_collect_file(fspath, parent):
-            if fspath.suffix == '.py':
-                return FunCollector.from_parent(path=fspath, parent=parent)
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == '.py':
+                return FunCollector.from_parent(path=file_path, parent=parent)
     """
     )
 
@@ -1623,6 +1623,28 @@ def test_escaped_skipreason_issue3533(
     snode = node.find_first_by_tag("skipped")
     assert "1 <> 2" in snode.text
     snode.assert_attr(message="1 <> 2")
+
+
+def test_escaped_setup_teardown_error(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture()
+        def my_setup():
+            raise Exception("error: \033[31mred\033[m")
+
+        def test_esc(my_setup):
+            pass
+    """
+    )
+    _, dom = run_and_parse()
+    node = dom.find_first_by_tag("testcase")
+    snode = node.find_first_by_tag("error")
+    assert "#x1B[31mred#x1B[m" in snode["message"]
+    assert "#x1B[31mred#x1B[m" in snode.text
 
 
 @parametrize_families

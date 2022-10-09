@@ -42,14 +42,14 @@ def pytest_addoption(parser: Parser) -> None:
         default="fd",
         metavar="method",
         choices=["fd", "sys", "no", "tee-sys"],
-        help="per-test capturing method: one of fd|sys|no|tee-sys.",
+        help="Per-test capturing method: one of fd|sys|no|tee-sys",
     )
     group._addoption(
         "-s",
         action="store_const",
         const="no",
         dest="capture",
-        help="shortcut for --capture=no.",
+        help="Shortcut for --capture=no",
     )
 
 
@@ -68,32 +68,8 @@ def _colorama_workaround() -> None:
             pass
 
 
-def _readline_workaround() -> None:
-    """Ensure readline is imported so that it attaches to the correct stdio
-    handles on Windows.
-
-    Pdb uses readline support where available--when not running from the Python
-    prompt, the readline module is not imported until running the pdb REPL.  If
-    running pytest with the --pdb option this means the readline module is not
-    imported until after I/O capture has been started.
-
-    This is a problem for pyreadline, which is often used to implement readline
-    support on Windows, as it does not attach to the correct handles for stdout
-    and/or stdin if they have been redirected by the FDCapture mechanism.  This
-    workaround ensures that readline is imported before I/O capture is setup so
-    that it can attach to the actual stdin/out for the console.
-
-    See https://github.com/pytest-dev/pytest/pull/1281.
-    """
-    if sys.platform.startswith("win32"):
-        try:
-            import readline  # noqa: F401
-        except ImportError:
-            pass
-
-
-def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
-    """Workaround for Windows Unicode console handling on Python>=3.6.
+def _windowsconsoleio_workaround(stream: TextIO) -> None:
+    """Workaround for Windows Unicode console handling.
 
     Python 3.6 implemented Unicode console handling for Windows. This works
     by reading/writing to the raw console handle using
@@ -136,7 +112,7 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
             buffering = -1
 
         return io.TextIOWrapper(
-            open(os.dup(f.fileno()), mode, buffering),  # type: ignore[arg-type]
+            open(os.dup(f.fileno()), mode, buffering),
             f.encoding,
             f.errors,
             f.newlines,
@@ -152,9 +128,8 @@ def _py36_windowsconsoleio_workaround(stream: TextIO) -> None:
 def pytest_load_initial_conftests(early_config: Config):
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
-        _py36_windowsconsoleio_workaround(sys.stdout)
+        _windowsconsoleio_workaround(sys.stdout)
     _colorama_workaround()
-    _readline_workaround()
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
@@ -228,11 +203,38 @@ class DontReadFromInput:
     def fileno(self) -> int:
         raise UnsupportedOperation("redirected stdin is pseudofile, has no fileno()")
 
+    def flush(self) -> None:
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no flush()")
+
     def isatty(self) -> bool:
         return False
 
     def close(self) -> None:
         pass
+
+    def readable(self) -> bool:
+        return False
+
+    def seek(self, offset: int) -> int:
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no seek(int)")
+
+    def seekable(self) -> bool:
+        return False
+
+    def tell(self) -> int:
+        raise UnsupportedOperation("redirected stdin is pseudofile, has no tell()")
+
+    def truncate(self, size: int) -> None:
+        raise UnsupportedOperation("cannont truncate stdin")
+
+    def write(self, *args) -> None:
+        raise UnsupportedOperation("cannot write to stdin")
+
+    def writelines(self, *args) -> None:
+        raise UnsupportedOperation("Cannot write to stdin")
+
+    def writable(self) -> bool:
+        return False
 
     @property
     def buffer(self):
@@ -363,7 +365,7 @@ class FDCaptureBinary:
         except OSError:
             # FD capturing is conceptually simple -- create a temporary file,
             # redirect the FD to it, redirect back when done. But when the
-            # target FD is invalid it throws a wrench into this loveley scheme.
+            # target FD is invalid it throws a wrench into this lovely scheme.
             #
             # Tests themselves shouldn't care if the FD is valid, FD capturing
             # should work regardless of external circumstances. So falling back
@@ -379,7 +381,7 @@ class FDCaptureBinary:
         self.targetfd_save = os.dup(targetfd)
 
         if targetfd == 0:
-            self.tmpfile = open(os.devnull)
+            self.tmpfile = open(os.devnull, encoding="utf-8")
             self.syscapture = SysCapture(targetfd)
         else:
             self.tmpfile = EncodedFile(
@@ -618,14 +620,8 @@ class MultiCapture(Generic[AnyStr]):
         return self._state == "started"
 
     def readouterr(self) -> CaptureResult[AnyStr]:
-        if self.out:
-            out = self.out.snap()
-        else:
-            out = ""
-        if self.err:
-            err = self.err.snap()
-        else:
-            err = ""
+        out = self.out.snap() if self.out else ""
+        err = self.err.snap() if self.err else ""
         return CaptureResult(out, err)
 
 
@@ -907,11 +903,22 @@ class CaptureFixture(Generic[AnyStr]):
 
 @fixture
 def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
-    """Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+    r"""Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsys.readouterr()`` method
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``text`` objects.
+
+    Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_output(capsys):
+            print("hello")
+            captured = capsys.readouterr()
+            assert captured.out == "hello\n"
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[str](SysCapture, request, _ispytest=True)
@@ -924,11 +931,22 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
 
 @fixture
 def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
-    """Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+    r"""Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsysbinary.readouterr()``
     method calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``bytes`` objects.
+
+    Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_output(capsysbinary):
+            print("hello")
+            captured = capsysbinary.readouterr()
+            assert captured.out == b"hello\n"
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[bytes](SysCaptureBinary, request, _ispytest=True)
@@ -941,11 +959,22 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
 
 @fixture
 def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
-    """Enable text capturing of writes to file descriptors ``1`` and ``2``.
+    r"""Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``text`` objects.
+
+    Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_system_echo(capfd):
+            os.system('echo "hello"')
+            captured = capfd.readouterr()
+            assert captured.out == "hello\n"
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[str](FDCapture, request, _ispytest=True)
@@ -958,11 +987,23 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
 
 @fixture
 def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
-    """Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
+    r"""Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``byte`` objects.
+
+    Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_system_echo(capfdbinary):
+            os.system('echo "hello"')
+            captured = capfdbinary.readouterr()
+            assert captured.out == b"hello\n"
+
     """
     capman = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[bytes](FDCaptureBinary, request, _ispytest=True)

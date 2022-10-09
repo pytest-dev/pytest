@@ -17,7 +17,6 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
-from _pytest.pytester import Testdir
 
 
 def test_make_hook_recorder(pytester: Pytester) -> None:
@@ -192,7 +191,7 @@ def make_holder():
 def test_hookrecorder_basic(holder) -> None:
     pm = PytestPluginManager()
     pm.add_hookspecs(holder)
-    rec = HookRecorder(pm)
+    rec = HookRecorder(pm, _ispytest=True)
     pm.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
@@ -619,14 +618,9 @@ def test_linematcher_string_api() -> None:
 
 
 def test_pytest_addopts_before_pytester(request, monkeypatch: MonkeyPatch) -> None:
-    orig = os.environ.get("PYTEST_ADDOPTS", None)
     monkeypatch.setenv("PYTEST_ADDOPTS", "--orig-unused")
-    pytester: Pytester = request.getfixturevalue("pytester")
+    _: Pytester = request.getfixturevalue("pytester")
     assert "PYTEST_ADDOPTS" not in os.environ
-    pytester._finalize()
-    assert os.environ.get("PYTEST_ADDOPTS") == "--orig-unused"
-    monkeypatch.undo()
-    assert os.environ.get("PYTEST_ADDOPTS") == orig
 
 
 def test_run_stdin(pytester: Pytester) -> None:
@@ -744,8 +738,8 @@ def test_run_result_repr() -> None:
 
     # known exit code
     r = pytester_mod.RunResult(1, outlines, errlines, duration=0.5)
-    assert (
-        repr(r) == "<RunResult ret=ExitCode.TESTS_FAILED len(stdout.lines)=3"
+    assert repr(r) == (
+        f"<RunResult ret={str(pytest.ExitCode.TESTS_FAILED)} len(stdout.lines)=3"
         " len(stderr.lines)=4 duration=0.50s>"
     )
 
@@ -814,19 +808,6 @@ def test_makefile_joins_absolute_path(pytester: Pytester) -> None:
     assert str(p1) == str(pytester.path / "absfile.py")
 
 
-def test_testtmproot(testdir) -> None:
-    """Check test_tmproot is a py.path attribute for backward compatibility."""
-    assert testdir.test_tmproot.check(dir=1)
-
-
-def test_testdir_makefile_dot_prefixes_extension_silently(
-    testdir: Testdir,
-) -> None:
-    """For backwards compat #8192"""
-    p1 = testdir.makefile("foo.bar", "")
-    assert ".foo.bar" in str(p1)
-
-
 def test_pytester_makefile_dot_prefixes_extension_with_warning(
     pytester: Pytester,
 ) -> None:
@@ -837,13 +818,33 @@ def test_pytester_makefile_dot_prefixes_extension_with_warning(
         pytester.makefile("foo.bar", "")
 
 
-def test_testdir_makefile_ext_none_raises_type_error(testdir) -> None:
-    """For backwards compat #8192"""
-    with pytest.raises(TypeError):
-        testdir.makefile(None, "")
+@pytest.mark.filterwarnings("default")
+def test_pytester_assert_outcomes_warnings(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import warnings
+
+        def test_with_warning():
+            warnings.warn(UserWarning("some custom warning"))
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, warnings=1)
+    # If warnings is not passed, it is not checked at all.
+    result.assert_outcomes(passed=1)
 
 
-def test_testdir_makefile_ext_empty_string_makes_file(testdir) -> None:
-    """For backwards compat #8192"""
-    p1 = testdir.makefile("", "")
-    assert "test_testdir_makefile" in str(p1)
+def test_pytester_outcomes_deselected(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_one():
+            pass
+
+        def test_two():
+            pass
+        """
+    )
+    result = pytester.runpytest("-k", "test_one")
+    result.assert_outcomes(passed=1, deselected=1)
+    # If deselected is not passed, it is not checked at all.
+    result.assert_outcomes(passed=1)

@@ -1,6 +1,8 @@
 import pytest
 from _pytest._io.saferepr import _pformat_dispatch
+from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
+from _pytest._io.saferepr import saferepr_unlimited
 
 
 def test_simple_repr():
@@ -12,6 +14,13 @@ def test_maxsize():
     s = saferepr("x" * 50, maxsize=25)
     assert len(s) == 25
     expected = repr("x" * 10 + "..." + "x" * 10)
+    assert s == expected
+
+
+def test_no_maxsize():
+    text = "x" * DEFAULT_REPR_MAX_SIZE * 10
+    s = saferepr(text, maxsize=None)
+    expected = repr(text)
     assert s == expected
 
 
@@ -170,4 +179,24 @@ def test_broken_getattribute():
 
     assert saferepr(SomeClass()).startswith(
         "<[RuntimeError() raised in repr()] SomeClass object at 0x"
+    )
+
+
+def test_saferepr_unlimited():
+    dict5 = {f"v{i}": i for i in range(5)}
+    assert saferepr_unlimited(dict5) == "{'v0': 0, 'v1': 1, 'v2': 2, 'v3': 3, 'v4': 4}"
+
+    dict_long = {f"v{i}": i for i in range(1_000)}
+    r = saferepr_unlimited(dict_long)
+    assert "..." not in r
+    assert "\n" not in r
+
+
+def test_saferepr_unlimited_exc():
+    class A:
+        def __repr__(self):
+            raise ValueError(42)
+
+    assert saferepr_unlimited(A()).startswith(
+        "<[ValueError(42) raised in repr()] A object at 0x"
     )

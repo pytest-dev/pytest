@@ -1,0 +1,1 @@
+Some coloring has been added to the short test summary.

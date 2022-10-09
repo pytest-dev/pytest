@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -44,16 +45,32 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
         assert result.ret == ExitCode.INTERNAL_ERROR
     assert result.stdout.lines[0] == "INTERNALERROR> Traceback (most recent call last):"
 
+    end_lines = (
+        result.stdout.lines[-4:]
+        if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
+        else result.stdout.lines[-3:]
+    )
+
     if exc == SystemExit:
-        assert result.stdout.lines[-3:] == [
+        assert end_lines == [
             f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise SystemExit("boom")',
+            *(
+                ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
+                if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
+                else ()
+            ),
             "INTERNALERROR> SystemExit: boom",
         ]
     else:
-        assert result.stdout.lines[-3:] == [
+        assert end_lines == [
             f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise ValueError("boom")',
+            *(
+                ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
+                if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
+                else ()
+            ),
             "INTERNALERROR> ValueError: boom",
         ]
     if returncode is False:
@@ -70,7 +87,7 @@ def test_wrap_session_exit_sessionfinish(
         """
         import pytest
         def pytest_sessionfinish():
-            pytest.exit(msg="exit_pytest_sessionfinish", returncode={returncode})
+            pytest.exit(reason="exit_pytest_sessionfinish", returncode={returncode})
     """.format(
             returncode=returncode
         )
@@ -170,6 +187,12 @@ class TestResolveCollectionArgument:
             resolve_collection_argument(
                 invocation_path, "pkg::foo::bar", as_pypath=True
             )
+
+    def test_parametrized_name_with_colons(self, invocation_path: Path) -> None:
+        ret = resolve_collection_argument(
+            invocation_path, "src/pkg/test.py::test[a::b]"
+        )
+        assert ret == (invocation_path / "src/pkg/test.py", ["test[a::b]"])
 
     def test_does_not_exist(self, invocation_path: Path) -> None:
         """Given a file/module that does not exist raises UsageError."""

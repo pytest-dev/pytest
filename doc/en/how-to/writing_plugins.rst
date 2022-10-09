@@ -115,8 +115,6 @@ Here is how you might run it::
 Writing your own plugin
 -----------------------
 
-.. _`setuptools`: https://pypi.org/project/setuptools/
-
 If you want to write a plugin, there are many real-life examples
 you can copy from:
 
@@ -150,7 +148,7 @@ Making your plugin installable by others
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
 that ``pytest`` finds your plugin module.  Entry points are
-a feature that is provided by `setuptools`_. pytest looks up
+a feature that is provided by :std:doc:`setuptools:index`. pytest looks up
 the ``pytest11`` entrypoint to discover its
 plugins and you can thus make your plugin available by defining
 it in your setuptools-invocation:
@@ -160,18 +158,20 @@ it in your setuptools-invocation:
     # sample ./setup.py file
     from setuptools import setup
 
+
+    name_of_plugin = "myproject"  # register plugin with this name
     setup(
         name="myproject",
         packages=["myproject"],
         # the following makes a plugin available to pytest
-        entry_points={"pytest11": ["name_of_plugin = myproject.pluginmodule"]},
+        entry_points={"pytest11": [f"{name_of_plugin} = myproject.pluginmodule"]},
         # custom PyPI classifier for pytest plugins
         classifiers=["Framework :: Pytest"],
     )
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
-:ref:`hooks <hook-reference>`.
+:ref:`hooks <hook-reference>`. Confirm registration with ``pytest --trace-config``
 
 .. note::
 
@@ -337,7 +337,7 @@ testing directory:
 Alternatively you can invoke pytest with the ``-p pytester`` command line
 option.
 
-This will allow you to use the :py:class:`pytester <_pytest.pytester.Pytester>`
+This will allow you to use the :py:class:`pytester <pytest.Pytester>`
 fixture for testing your plugin code.
 
 Let's demonstrate what you can do with the plugin with an example. Imagine we
@@ -369,7 +369,7 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
         def _hello(name=None):
             if not name:
                 name = request.config.getoption("name")
-            return "Hello {name}!".format(name=name)
+            return f"Hello {name}!"
 
         return _hello
 
@@ -416,7 +416,12 @@ return a result object, with which we can assert the tests' outcomes.
         result.assert_outcomes(passed=4)
 
 
-Additionally it is possible to copy examples for an example folder before running pytest on it.
+Additionally it is possible to copy examples to the ``pytester``'s isolated environment
+before running pytest on it. This way we can abstract the tested logic to separate files,
+which is especially useful for longer tests and/or longer ``conftest.py`` files.
+
+Note that for ``pytester.copy_example`` to work we need to set `pytester_example_dir`
+in our ``pytest.ini`` to tell pytest where to look for example files.
 
 .. code-block:: ini
 
@@ -442,9 +447,8 @@ Additionally it is possible to copy examples for an example folder before runnin
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR, configfile: pytest.ini
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project, configfile: pytest.ini
     collected 2 items
 
     test_example.py ..                                                   [100%]

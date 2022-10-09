@@ -153,7 +153,7 @@ Fixtures are reusable
 ^^^^^^^^^^^^^^^^^^^^^
 
 One of the things that makes pytest's fixture system so powerful, is that it
-gives us the ability to define a generic setup step that can reused over and
+gives us the ability to define a generic setup step that can be reused over and
 over, just like a normal function would be used. Two different tests can request
 the same fixture and have pytest give each test their own result from that
 fixture.
@@ -398,8 +398,9 @@ access the fixture function:
 .. code-block:: python
 
     # content of conftest.py
-    import pytest
     import smtplib
+
+    import pytest
 
 
     @pytest.fixture(scope="module")
@@ -432,9 +433,8 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
 
     $ pytest test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_module.py FF                                                    [100%]
@@ -442,7 +442,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0001>
 
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
@@ -454,7 +454,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     test_module.py:7: AssertionError
     ________________________________ test_noop _________________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0001>
 
         def test_noop(smtp_connection):
             response, msg = smtp_connection.noop()
@@ -610,9 +610,9 @@ Here's what that might look like:
 .. code-block:: python
 
     # content of test_emaillib.py
-    import pytest
-
     from emaillib import Email, MailAdminClient
+
+    import pytest
 
 
     @pytest.fixture
@@ -631,6 +631,7 @@ Here's what that might look like:
     def receiving_user(mail_admin):
         user = mail_admin.create_user()
         yield user
+        user.clear_mailbox()
         mail_admin.delete_user(user)
 
 
@@ -684,9 +685,9 @@ Here's how the previous example would look using the ``addfinalizer`` method:
 .. code-block:: python
 
     # content of test_emaillib.py
-    import pytest
-
     from emaillib import Email, MailAdminClient
+
+    import pytest
 
 
     @pytest.fixture
@@ -737,6 +738,87 @@ does offer some nuances for when you're in a pinch.
    .                                                                    [100%]
    1 passed in 0.12s
 
+Note on finalizer order
+""""""""""""""""""""""""
+
+Finalizers are executed in a first-in-last-out order.
+For yield fixtures, the first teardown code to run is from the right-most fixture, i.e. the last test parameter.
+
+
+.. code-block:: python
+
+    # content of test_finalizers.py
+    import pytest
+
+
+    def test_bar(fix_w_yield1, fix_w_yield2):
+        print("test_bar")
+
+
+    @pytest.fixture
+    def fix_w_yield1():
+        yield
+        print("after_yield_1")
+
+
+    @pytest.fixture
+    def fix_w_yield2():
+        yield
+        print("after_yield_2")
+
+
+.. code-block:: pytest
+
+    $ pytest -s test_finalizers.py
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
+    collected 1 item
+
+    test_finalizers.py test_bar
+    .after_yield_2
+    after_yield_1
+
+
+    ============================ 1 passed in 0.12s =============================
+
+For finalizers, the first fixture to run is last call to `request.addfinalizer`.
+
+.. code-block:: python
+
+    # content of test_finalizers.py
+    from functools import partial
+    import pytest
+
+
+    @pytest.fixture
+    def fix_w_finalizers(request):
+        request.addfinalizer(partial(print, "finalizer_2"))
+        request.addfinalizer(partial(print, "finalizer_1"))
+
+
+    def test_bar(fix_w_finalizers):
+        print("test_bar")
+
+
+.. code-block:: pytest
+
+    $ pytest -s test_finalizers.py
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
+    collected 1 item
+
+    test_finalizers.py test_bar
+    .finalizer_1
+    finalizer_2
+
+
+    ============================ 1 passed in 0.12s =============================
+
+This is so because yield fixtures use `addfinalizer` behind the scenes: when the fixture executes, `addfinalizer` registers a function that resumes the generator, which in turn calls the teardown code.
+
+
 .. _`safe teardowns`:
 
 Safe teardowns
@@ -753,9 +835,9 @@ above):
 .. code-block:: python
 
     # content of test_emaillib.py
-    import pytest
-
     from emaillib import Email, MailAdminClient
+
+    import pytest
 
 
     @pytest.fixture
@@ -1031,8 +1113,9 @@ read an optional server URL from the test module which uses our fixture:
 .. code-block:: python
 
     # content of conftest.py
-    import pytest
     import smtplib
+
+    import pytest
 
 
     @pytest.fixture(scope="module")
@@ -1040,7 +1123,7 @@ read an optional server URL from the test module which uses our fixture:
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
         smtp_connection = smtplib.SMTP(server, 587, timeout=5)
         yield smtp_connection
-        print("finalizing {} ({})".format(smtp_connection, server))
+        print(f"finalizing {smtp_connection} ({server})")
         smtp_connection.close()
 
 We use the ``request.module`` attribute to optionally obtain an
@@ -1050,7 +1133,7 @@ again, nothing much has changed:
 .. code-block:: pytest
 
     $ pytest -s -q --tb=no test_module.py
-    FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
+    FFfinalizing <smtplib.SMTP object at 0xdeadbeef0002> (smtp.gmail.com)
 
     ========================= short test summary info ==========================
     FAILED test_module.py::test_ehlo - assert 0
@@ -1083,7 +1166,7 @@ Running it:
     E   AssertionError: (250, b'mail.python.org')
     E   assert 0
     ------------------------- Captured stdout teardown -------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef> (mail.python.org)
+    finalizing <smtplib.SMTP object at 0xdeadbeef0003> (mail.python.org)
     ========================= short test summary info ==========================
     FAILED test_anothersmtp.py::test_showhelo - AssertionError: (250, b'mail....
 
@@ -1194,15 +1277,16 @@ through the special :py:class:`request <FixtureRequest>` object:
 .. code-block:: python
 
     # content of conftest.py
-    import pytest
     import smtplib
+
+    import pytest
 
 
     @pytest.fixture(scope="module", params=["smtp.gmail.com", "mail.python.org"])
     def smtp_connection(request):
         smtp_connection = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp_connection
-        print("finalizing {}".format(smtp_connection))
+        print(f"finalizing {smtp_connection}")
         smtp_connection.close()
 
 The main change is the declaration of ``params`` with
@@ -1218,7 +1302,7 @@ So let's just do another run:
     ================================= FAILURES =================================
     ________________________ test_ehlo[smtp.gmail.com] _________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0004>
 
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
@@ -1230,7 +1314,7 @@ So let's just do another run:
     test_module.py:7: AssertionError
     ________________________ test_noop[smtp.gmail.com] _________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0004>
 
         def test_noop(smtp_connection):
             response, msg = smtp_connection.noop()
@@ -1241,7 +1325,7 @@ So let's just do another run:
     test_module.py:13: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0005>
 
         def test_ehlo(smtp_connection):
             response, msg = smtp_connection.ehlo()
@@ -1251,10 +1335,10 @@ So let's just do another run:
 
     test_module.py:6: AssertionError
     -------------------------- Captured stdout setup ---------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef>
+    finalizing <smtplib.SMTP object at 0xdeadbeef0004>
     ________________________ test_noop[mail.python.org] ________________________
 
-    smtp_connection = <smtplib.SMTP object at 0xdeadbeef>
+    smtp_connection = <smtplib.SMTP object at 0xdeadbeef0005>
 
         def test_noop(smtp_connection):
             response, msg = smtp_connection.noop()
@@ -1264,7 +1348,7 @@ So let's just do another run:
 
     test_module.py:13: AssertionError
     ------------------------- Captured stdout teardown -------------------------
-    finalizing <smtplib.SMTP object at 0xdeadbeef>
+    finalizing <smtplib.SMTP object at 0xdeadbeef0005>
     ========================= short test summary info ==========================
     FAILED test_module.py::test_ehlo[smtp.gmail.com] - assert 0
     FAILED test_module.py::test_noop[smtp.gmail.com] - assert 0
@@ -1331,16 +1415,17 @@ Running the above tests results in the following test IDs being used:
 
    $ pytest --collect-only
    =========================== test session starts ============================
-   platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-   cachedir: $PYTHON_PREFIX/.pytest_cache
-   rootdir: $REGENDOC_TMPDIR
-   collected 11 items
+   platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+   rootdir: /home/sweet/project
+   collected 12 items
 
    <Module test_anothersmtp.py>
      <Function test_showhelo[smtp.gmail.com]>
      <Function test_showhelo[mail.python.org]>
    <Module test_emaillib.py>
      <Function test_email_received>
+   <Module test_finalizers.py>
+     <Function test_bar>
    <Module test_ids.py>
      <Function test_a[spam]>
      <Function test_a[ham]>
@@ -1352,7 +1437,7 @@ Running the above tests results in the following test IDs being used:
      <Function test_ehlo[mail.python.org]>
      <Function test_noop[mail.python.org]>
 
-   ======================= 11 tests collected in 0.12s ========================
+   ======================= 12 tests collected in 0.12s ========================
 
 .. _`fixture-parametrize-marks`:
 
@@ -1384,9 +1469,9 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 3 items
 
     test_fixture_marks.py::test_data[0] PASSED                           [ 33%]
@@ -1434,9 +1519,9 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 2 items
 
     test_appsetup.py::test_smtp_connection_exists[smtp.gmail.com] PASSED [ 50%]
@@ -1505,7 +1590,7 @@ to show the setup/teardown flow:
 
 
     def test_2(otherarg, modarg):
-        print("  RUN test2 with otherarg {} and modarg {}".format(otherarg, modarg))
+        print(f"  RUN test2 with otherarg {otherarg} and modarg {modarg}")
 
 
 Let's run the tests in verbose mode and with looking at the print-output:
@@ -1514,9 +1599,9 @@ Let's run the tests in verbose mode and with looking at the print-output:
 
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
     collecting ... collected 8 items
 
     test_module.py::test_0[1]   SETUP otherarg 1
@@ -1577,9 +1662,9 @@ Use fixtures in classes and modules with ``usefixtures``
 Sometimes test functions do not directly need access to a fixture object.
 For example, tests may require to operate with an empty directory as the
 current working directory but otherwise do not care for the concrete
-directory.  Here is how you can use the standard `tempfile
-<http://docs.python.org/library/tempfile.html>`_ and pytest fixtures to
-achieve it.  We separate the creation of the fixture into a conftest.py
+directory.  Here is how you can use the standard :mod:`tempfile`
+and pytest fixtures to
+achieve it.  We separate the creation of the fixture into a :file:`conftest.py`
 file:
 
 .. code-block:: python
@@ -1606,6 +1691,7 @@ and declare its use in a test module via a ``usefixtures`` marker:
 
     # content of test_setenv.py
     import os
+
     import pytest
 
 
@@ -1685,8 +1771,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest
@@ -1701,8 +1785,6 @@ Given the tests file structure is:
                 assert username == 'username'
 
         subfolder/
-            __init__.py
-
             conftest.py
                 # content of tests/subfolder/conftest.py
                 import pytest
@@ -1711,8 +1793,8 @@ Given the tests file structure is:
                 def username(username):
                     return 'overridden-' + username
 
-            test_something.py
-                # content of tests/subfolder/test_something.py
+            test_something_else.py
+                # content of tests/subfolder/test_something_else.py
                 def test_username(username):
                     assert username == 'overridden-username'
 
@@ -1728,8 +1810,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest
@@ -1771,8 +1851,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest
@@ -1809,8 +1887,6 @@ Given the tests file structure is:
 ::
 
     tests/
-        __init__.py
-
         conftest.py
             # content of tests/conftest.py
             import pytest

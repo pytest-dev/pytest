@@ -6,7 +6,7 @@ expression: expr? EOF
 expr:       and_expr ('or' and_expr)*
 and_expr:   not_expr ('and' not_expr)*
 not_expr:   'not' not_expr | '(' expr ')' | ident
-ident:      (\w|:|\+|-|\.|\[|\])+
+ident:      (\w|:|\+|-|\.|\[|\]|\\|/)+
 
 The semantics are:
 
@@ -21,14 +21,11 @@ import types
 from typing import Callable
 from typing import Iterator
 from typing import Mapping
+from typing import NoReturn
 from typing import Optional
 from typing import Sequence
-from typing import TYPE_CHECKING
 
 import attr
-
-if TYPE_CHECKING:
-    from typing import NoReturn
 
 
 __all__ = [
@@ -47,11 +44,11 @@ class TokenType(enum.Enum):
     EOF = "end of input"
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class Token:
-    type = attr.ib(type=TokenType)
-    value = attr.ib(type=str)
-    pos = attr.ib(type=int)
+    type: TokenType
+    value: str
+    pos: int
 
 
 class ParseError(Exception):
@@ -88,7 +85,7 @@ class Scanner:
                 yield Token(TokenType.RPAREN, ")", pos)
                 pos += 1
             else:
-                match = re.match(r"(:?\w|:|\+|-|\.|\[|\])+", input[pos:])
+                match = re.match(r"(:?\w|:|\+|-|\.|\[|\]|\\|/)+", input[pos:])
                 if match:
                     value = match.group(0)
                     if value == "or":
@@ -103,7 +100,7 @@ class Scanner:
                 else:
                     raise ParseError(
                         pos + 1,
-                        'unexpected character "{}"'.format(input[pos]),
+                        f'unexpected character "{input[pos]}"',
                     )
         yield Token(TokenType.EOF, "", pos)
 
@@ -117,7 +114,7 @@ class Scanner:
             self.reject((type,))
         return None
 
-    def reject(self, expected: Sequence[TokenType]) -> "NoReturn":
+    def reject(self, expected: Sequence[TokenType]) -> NoReturn:
         raise ParseError(
             self.current.pos + 1,
             "expected {}; got {}".format(
@@ -190,7 +187,7 @@ class MatcherAdapter(Mapping[str, bool]):
 class Expression:
     """A compiled match expression as used by -k and -m.
 
-    The expression can be evaulated against different matchers.
+    The expression can be evaluated against different matchers.
     """
 
     __slots__ = ("code",)

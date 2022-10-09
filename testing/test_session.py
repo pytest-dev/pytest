@@ -227,7 +227,7 @@ class TestNewSession(SessionTests):
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished)
-        assert len(started) == 8
+        assert len(started) == 6
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 
@@ -333,6 +333,54 @@ def test_sessionfinish_with_start(pytester: Pytester) -> None:
     )
     res = pytester.runpytest("--collect-only")
     assert res.ret == ExitCode.NO_TESTS_COLLECTED
+
+
+def test_collection_args_do_not_duplicate_modules(pytester: Pytester) -> None:
+    """Test that when multiple collection args are specified on the command line
+    for the same module, only a single Module collector is created.
+
+    Regression test for #723, #3358.
+    """
+    pytester.makepyfile(
+        **{
+            "d/test_it": """
+                def test_1(): pass
+                def test_2(): pass
+                """
+        }
+    )
+
+    result = pytester.runpytest(
+        "--collect-only",
+        "d/test_it.py::test_1",
+        "d/test_it.py::test_2",
+    )
+    result.stdout.fnmatch_lines(
+        [
+            "<Module d/test_it.py>",
+            "  <Function test_1>",
+            "  <Function test_2>",
+        ],
+        consecutive=True,
+    )
+
+    # Different, but related case.
+    result = pytester.runpytest(
+        "--collect-only",
+        "--keep-duplicates",
+        "d",
+        "d",
+    )
+    result.stdout.fnmatch_lines(
+        [
+            "<Module d/test_it.py>",
+            "  <Function test_1>",
+            "  <Function test_2>",
+            "  <Function test_1>",
+            "  <Function test_2>",
+        ],
+        consecutive=True,
+    )
 
 
 @pytest.mark.parametrize("path", ["root", "{relative}/root", "{environment}/root"])

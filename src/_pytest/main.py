@@ -12,7 +12,6 @@ from typing import FrozenSet
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -25,8 +24,7 @@ import attr
 import _pytest._code
 from _pytest import nodes
 from _pytest.compat import final
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
+from _pytest.compat import overload
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -53,7 +51,7 @@ if TYPE_CHECKING:
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "norecursedirs",
-        "directory patterns to avoid for recursion",
+        "Directory patterns to avoid for recursion",
         type="args",
         default=[
             "*.egg",
@@ -69,26 +67,26 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "testpaths",
-        "directories to search for tests when no files or directories are given in the "
-        "command line.",
+        "Directories to search for tests when no files or directories are given on the "
+        "command line",
         type="args",
         default=[],
     )
-    group = parser.getgroup("general", "running and selection options")
+    group = parser.getgroup("general", "Running and selection options")
     group._addoption(
         "-x",
         "--exitfirst",
         action="store_const",
         dest="maxfail",
         const=1,
-        help="exit instantly on first error or failed test.",
+        help="Exit instantly on first error or failed test",
     )
     group = parser.getgroup("pytest-warnings")
     group.addoption(
         "-W",
         "--pythonwarnings",
         action="append",
-        help="set which warnings to report, see -W option of python itself.",
+        help="Set which warnings to report, see -W option of Python itself",
     )
     parser.addini(
         "filterwarnings",
@@ -104,37 +102,39 @@ def pytest_addoption(parser: Parser) -> None:
         type=int,
         dest="maxfail",
         default=0,
-        help="exit after first num failures or errors.",
+        help="Exit after first num failures or errors",
     )
     group._addoption(
         "--strict-config",
         action="store_true",
-        help="any warnings encountered while parsing the `pytest` section of the configuration file raise errors.",
+        help="Any warnings encountered while parsing the `pytest` section of the "
+        "configuration file raise errors",
     )
     group._addoption(
         "--strict-markers",
         action="store_true",
-        help="markers not registered in the `markers` section of the configuration file raise errors.",
+        help="Markers not registered in the `markers` section of the configuration "
+        "file raise errors",
     )
     group._addoption(
         "--strict",
         action="store_true",
-        help="(deprecated) alias to --strict-markers.",
+        help="(Deprecated) alias to --strict-markers",
     )
     group._addoption(
         "-c",
         metavar="file",
         type=str,
         dest="inifilename",
-        help="load configuration from `file` instead of trying to locate one of the implicit "
-        "configuration files.",
+        help="Load configuration from `file` instead of trying to locate one of the "
+        "implicit configuration files",
     )
     group._addoption(
         "--continue-on-collection-errors",
         action="store_true",
         default=False,
         dest="continue_on_collection_errors",
-        help="Force test execution even if collection errors occur.",
+        help="Force test execution even if collection errors occur",
     )
     group._addoption(
         "--rootdir",
@@ -151,30 +151,30 @@ def pytest_addoption(parser: Parser) -> None:
         "--collect-only",
         "--co",
         action="store_true",
-        help="only collect tests, don't execute them.",
+        help="Only collect tests, don't execute them",
     )
     group.addoption(
         "--pyargs",
         action="store_true",
-        help="try to interpret all arguments as python packages.",
+        help="Try to interpret all arguments as Python packages",
     )
     group.addoption(
         "--ignore",
         action="append",
         metavar="path",
-        help="ignore path during collection (multi-allowed).",
+        help="Ignore path during collection (multi-allowed)",
     )
     group.addoption(
         "--ignore-glob",
         action="append",
         metavar="path",
-        help="ignore path pattern during collection (multi-allowed).",
+        help="Ignore path pattern during collection (multi-allowed)",
     )
     group.addoption(
         "--deselect",
         action="append",
         metavar="nodeid_prefix",
-        help="deselect item (via node id prefix) during collection (multi-allowed).",
+        help="Deselect item (via node id prefix) during collection (multi-allowed)",
     )
     group.addoption(
         "--confcutdir",
@@ -182,14 +182,14 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         metavar="dir",
         type=functools.partial(directory_arg, optname="--confcutdir"),
-        help="only load conftest.py's relative to specified dir.",
+        help="Only load conftest.py's relative to specified dir",
     )
     group.addoption(
         "--noconftest",
         action="store_true",
         dest="noconftest",
         default=False,
-        help="Don't load any conftest.py files.",
+        help="Don't load any conftest.py files",
     )
     group.addoption(
         "--keepduplicates",
@@ -197,7 +197,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="keepduplicates",
         default=False,
-        help="Keep duplicate tests.",
+        help="Keep duplicate tests",
     )
     group.addoption(
         "--collect-in-virtualenv",
@@ -211,8 +211,8 @@ def pytest_addoption(parser: Parser) -> None:
         default="prepend",
         choices=["prepend", "append", "importlib"],
         dest="importmode",
-        help="prepend/append to sys.path when importing test modules and conftest files, "
-        "default is to prepend.",
+        help="Prepend/append to sys.path when importing test modules and conftest "
+        "files. Default: prepend.",
     )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
@@ -223,8 +223,8 @@ def pytest_addoption(parser: Parser) -> None:
         type=validate_basetemp,
         metavar="dir",
         help=(
-            "base temporary directory for this test run."
-            "(warning: this directory is removed if it exists)"
+            "Base temporary directory for this test run. "
+            "(Warning: this directory is removed if it exists.)"
         ),
     )
 
@@ -241,10 +241,7 @@ def validate_basetemp(path: str) -> str:
         """Return whether query is an ancestor of base."""
         if base == query:
             return True
-        for parent in base.parents:
-            if parent == query:
-                return True
-        return False
+        return query in base.parents
 
     # check if path is an ancestor of cwd
     if is_ancestor(Path.cwd(), Path(path).absolute()):
@@ -294,7 +291,7 @@ def wrap_session(
             except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
-                sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
+                sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
             else:
                 if isinstance(excinfo.value, SystemExit):
                     sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
@@ -311,7 +308,7 @@ def wrap_session(
             except exit.Exception as exc:
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
-                sys.stderr.write("{}: {}\n".format(type(exc).__name__, exc))
+                sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
         config._ensure_unconfigure()
     return session.exitstatus
 
@@ -377,29 +374,31 @@ def _in_venv(path: Path) -> bool:
     return any(fname.name in activates for fname in bindir.iterdir())
 
 
-def pytest_ignore_collect(fspath: Path, config: Config) -> Optional[bool]:
-    ignore_paths = config._getconftest_pathlist("collect_ignore", path=fspath.parent)
+def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[bool]:
+    ignore_paths = config._getconftest_pathlist(
+        "collect_ignore", path=collection_path.parent, rootpath=config.rootpath
+    )
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
     if excludeopt:
         ignore_paths.extend(absolutepath(x) for x in excludeopt)
 
-    if fspath in ignore_paths:
+    if collection_path in ignore_paths:
         return True
 
     ignore_globs = config._getconftest_pathlist(
-        "collect_ignore_glob", path=fspath.parent
+        "collect_ignore_glob", path=collection_path.parent, rootpath=config.rootpath
     )
     ignore_globs = ignore_globs or []
     excludeglobopt = config.getoption("ignore_glob")
     if excludeglobopt:
         ignore_globs.extend(absolutepath(x) for x in excludeglobopt)
 
-    if any(fnmatch.fnmatch(str(fspath), str(glob)) for glob in ignore_globs):
+    if any(fnmatch.fnmatch(str(collection_path), str(glob)) for glob in ignore_globs):
         return True
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
-    if not allow_in_venv and _in_venv(fspath):
+    if not allow_in_venv and _in_venv(collection_path):
         return True
     return None
 
@@ -443,9 +442,9 @@ class Failed(Exception):
     """Signals a stop as failed test run."""
 
 
-@attr.s
+@attr.s(slots=True, auto_attribs=True)
 class _bestrelpath_cache(Dict[Path, str]):
-    path = attr.ib(type=Path)
+    path: Path
 
     def __missing__(self, path: Path) -> str:
         r = bestrelpath(self.path, path)
@@ -485,7 +484,7 @@ class Session(nodes.FSCollector):
 
     @classmethod
     def from_config(cls, config: Config) -> "Session":
-        session: Session = cls._create(config)
+        session: Session = cls._create(config=config)
         return session
 
     def __repr__(self) -> str:
@@ -501,19 +500,9 @@ class Session(nodes.FSCollector):
     def startpath(self) -> Path:
         """The path from which pytest was invoked.
 
-        .. versionadded:: 6.3.0
+        .. versionadded:: 7.0.0
         """
         return self.config.invocation_params.dir
-
-    @property
-    def stardir(self) -> LEGACY_PATH:
-        """The path from which pytest was invoked.
-
-        Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
-
-        :type: LEGACY_PATH
-        """
-        return legacy_path(self.startpath)
 
     def _node_location_to_relpath(self, node_path: Path) -> str:
         # bestrelpath is a quite slow function.
@@ -539,19 +528,27 @@ class Session(nodes.FSCollector):
     pytest_collectreport = pytest_runtest_logreport
 
     def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
-        return Path(path) in self._initialpaths
+        # Optimization: Path(Path(...)) is much slower than isinstance.
+        path_ = path if isinstance(path, Path) else Path(path)
+        return path_ in self._initialpaths
 
     def gethookproxy(self, fspath: "os.PathLike[str]"):
+        # Optimization: Path(Path(...)) is much slower than isinstance.
+        path = fspath if isinstance(fspath, Path) else Path(fspath)
+        pm = self.config.pluginmanager
         # Check if we have the common case of running
         # hooks with all conftest.py files.
-        pm = self.config.pluginmanager
         my_conftestmodules = pm._getconftestmodules(
-            Path(fspath), self.config.getoption("importmode")
+            path,
+            self.config.getoption("importmode"),
+            rootpath=self.config.rootpath,
         )
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         if remove_mods:
             # One or more conftests are not in use at this fspath.
-            proxy = FSHookProxy(pm, remove_mods)
+            from .config.compat import PathAwareHookProxy
+
+            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook
@@ -561,9 +558,8 @@ class Session(nodes.FSCollector):
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
-        path = legacy_path(fspath)
         ihook = self.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(fspath=fspath, path=path, config=self.config):
+        if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
             return False
         norecursepatterns = self.config.getini("norecursedirs")
         if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
@@ -573,7 +569,6 @@ class Session(nodes.FSCollector):
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
-        path = legacy_path(fspath)
         assert (
             fspath.is_file()
         ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
@@ -581,9 +576,7 @@ class Session(nodes.FSCollector):
         )
         ihook = self.gethookproxy(fspath)
         if not self.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(
-                fspath=fspath, path=path, config=self.config
-            ):
+            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
                 return ()
 
         if handle_dupes:
@@ -595,7 +588,7 @@ class Session(nodes.FSCollector):
                 else:
                     duplicate_paths.add(fspath)
 
-        return ihook.pytest_collect_file(fspath=fspath, path=path, parent=self)  # type: ignore[no-any-return]
+        return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
 
     @overload
     def perform_collect(
@@ -604,18 +597,17 @@ class Session(nodes.FSCollector):
         ...
 
     @overload
-    def perform_collect(
+    def perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         ...
 
-    def perform_collect(
+    def perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]] = None, genitems: bool = True
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         """Perform the collection phase for this session.
 
-        This is called by the default
-        :func:`pytest_collection <_pytest.hookspec.pytest_collection>` hook
+        This is called by the default :hook:`pytest_collection` hook
         implementation; see the documentation of this hook for more details.
         For testing purposes, it may also be called directly on a fresh
         ``Session``.
@@ -655,9 +647,14 @@ class Session(nodes.FSCollector):
             self.trace.root.indent -= 1
             if self._notfound:
                 errors = []
-                for arg, cols in self._notfound:
-                    line = f"(no name {arg!r} in any of {cols!r})"
-                    errors.append(f"not found: {arg}\n{line}")
+                for arg, collectors in self._notfound:
+                    if collectors:
+                        errors.append(
+                            f"not found: {arg}\n(no name {arg!r} in any of {collectors!r})"
+                        )
+                    else:
+                        errors.append(f"found no collectors for {arg}")
+
                 raise UsageError(*errors)
             if not genitems:
                 items = rep.result
@@ -699,9 +696,8 @@ class Session(nodes.FSCollector):
             # No point in finding packages when collecting doctests.
             if not self.config.getoption("doctestmodules", False):
                 pm = self.config.pluginmanager
-                confcutdir = pm._confcutdir
                 for parent in (argpath, *argpath.parents):
-                    if confcutdir and parent in confcutdir.parents:
+                    if not pm._is_in_confcutdir(argpath):
                         break
 
                     if parent.is_dir():
@@ -716,7 +712,7 @@ class Session(nodes.FSCollector):
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
             if argpath.is_dir():
-                assert not names, "invalid arg {!r}".format((argpath, names))
+                assert not names, f"invalid arg {(argpath, names)!r}"
 
                 seen_dirs: Set[Path] = set()
                 for direntry in visit(str(argpath), self._recurse):
@@ -790,9 +786,6 @@ class Session(nodes.FSCollector):
                                     submatchnodes.append(r)
                             if submatchnodes:
                                 work.append((submatchnodes, matchnames[1:]))
-                            # XXX Accept IDs that don't have "()" for class instances.
-                            elif len(rep.result) == 1 and rep.result[0].name == "()":
-                                work.append((rep.result, matchnames))
                         else:
                             # Report collection failures here to avoid failing to run some test
                             # specified in the command line because the module could not be
@@ -884,7 +877,10 @@ def resolve_collection_argument(
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    strpath, *parts = str(arg).split("::")
+    base, squacket, rest = str(arg).partition("[")
+    strpath, *parts = base.split("::")
+    if parts:
+        parts[-1] = f"{parts[-1]}{squacket}{rest}"
     if as_pypath:
         strpath = search_pypath(strpath)
     fspath = invocation_path / strpath

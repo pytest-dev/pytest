@@ -32,7 +32,7 @@ which will usually be called once for all the functions:
 .. code-block:: python
 
     def setup_module(module):
-        """ setup any state specific to the execution of the given module."""
+        """setup any state specific to the execution of the given module."""
 
 
     def teardown_module(module):
@@ -115,5 +115,3 @@ Remarks:
 
   Now the xunit-style functions are integrated with the fixture mechanism and obey the proper
   scope rules of fixtures involved in the call.
-
-.. _`unittest.py module`: http://docs.python.org/library/unittest.html

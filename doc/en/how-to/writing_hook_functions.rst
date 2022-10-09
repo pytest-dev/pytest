@@ -194,7 +194,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
 .. code-block:: python
 
     def pytest_addhooks(pluginmanager):
-        """ This example assumes the hooks are grouped in the 'sample_hook' module. """
+        """This example assumes the hooks are grouped in the 'sample_hook' module."""
         from my_app.tests import sample_hook
 
         pluginmanager.add_hookspecs(sample_hook)
@@ -253,17 +253,17 @@ and use pytest_addoption as follows:
    # default value
    @hookspec(firstresult=True)
    def pytest_config_file_default_value():
-       """ Return the default value for the config file command line option. """
+       """Return the default value for the config file command line option."""
 
 
    # contents of myplugin.py
 
 
    def pytest_addhooks(pluginmanager):
-       """ This example assumes the hooks are grouped in the 'hooks' module. """
-       from . import hook
+       """This example assumes the hooks are grouped in the 'hooks' module."""
+       from . import hooks
 
-       pluginmanager.add_hookspecs(hook)
+       pluginmanager.add_hookspecs(hooks)
 
 
    def pytest_addoption(parser, pluginmanager):
@@ -311,3 +311,42 @@ declaring the hook functions directly in your plugin module, for example:
 
 This has the added benefit of allowing you to conditionally install hooks
 depending on which plugins are installed.
+
+.. _plugin-stash:
+
+Storing data on items across hook functions
+-------------------------------------------
+
+Plugins often need to store data on :class:`~pytest.Item`\s in one hook
+implementation, and access it in another. One common solution is to just
+assign some private attribute directly on the item, but type-checkers like
+mypy frown upon this, and it may also cause conflicts with other plugins.
+So pytest offers a better way to do this, :attr:`item.stash <_pytest.nodes.Node.stash>`.
+
+To use the "stash" in your plugins, first create "stash keys" somewhere at the
+top level of your plugin:
+
+.. code-block:: python
+
+    been_there_key = pytest.StashKey[bool]()
+    done_that_key = pytest.StashKey[str]()
+
+then use the keys to stash your data at some point:
+
+.. code-block:: python
+
+    def pytest_runtest_setup(item: pytest.Item) -> None:
+        item.stash[been_there_key] = True
+        item.stash[done_that_key] = "no"
+
+and retrieve them at another point:
+
+.. code-block:: python
+
+    def pytest_runtest_teardown(item: pytest.Item) -> None:
+        if not item.stash[been_there_key]:
+            print("Oh?")
+        item.stash[done_that_key] = "yes!"
+
+Stashes are available on all node types (like :class:`~pytest.Class`,
+:class:`~pytest.Session`) and also on :class:`~pytest.Config`, if needed.

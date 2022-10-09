@@ -21,7 +21,7 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
-from _pytest.store import StoreKey
+from _pytest.stash import StashKey
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -31,12 +31,12 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="runxfail",
         default=False,
-        help="report the results of xfail tests as if they were not marked",
+        help="Report the results of xfail tests as if they were not marked",
     )
 
     parser.addini(
         "xfail_strict",
-        "default for the strict parameter of xfail "
+        "Default for the strict parameter of xfail "
         "markers when not given explicitly (default: False)",
         default=False,
         type="bool",
@@ -49,7 +49,7 @@ def pytest_configure(config: Config) -> None:
         import pytest
 
         old = pytest.xfail
-        config._cleanup.append(lambda: setattr(pytest, "xfail", old))
+        config.add_cleanup(lambda: setattr(pytest, "xfail", old))
 
         def nop(*args, **kwargs):
             pass
@@ -68,7 +68,7 @@ def pytest_configure(config: Config) -> None:
         "skipif(condition, ..., *, reason=...): "
         "skip the given test function if any of the conditions evaluate to True. "
         "Example: skipif(sys.platform == 'win32') skips the test if we are on the win32 platform. "
-        "See https://docs.pytest.org/en/stable/reference.html#pytest-mark-skipif",
+        "See https://docs.pytest.org/en/stable/reference/reference.html#pytest-mark-skipif",
     )
     config.addinivalue_line(
         "markers",
@@ -78,7 +78,7 @@ def pytest_configure(config: Config) -> None:
         "and run=False if you don't even want to execute the test function. "
         "If only specific exception(s) are expected, you can list them in "
         "raises, and if the test fails in other ways, it will be reported as "
-        "a true failure. See https://docs.pytest.org/en/stable/reference.html#pytest-mark-xfail",
+        "a true failure. See https://docs.pytest.org/en/stable/reference/reference.html#pytest-mark-xfail",
     )
 
 
@@ -157,11 +157,11 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
     return result, reason
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class Skip:
     """The result of evaluate_skip_marks()."""
 
-    reason = attr.ib(type=str, default="unconditional skip")
+    reason: str = "unconditional skip"
 
 
 def evaluate_skip_marks(item: Item) -> Optional[Skip]:
@@ -192,14 +192,14 @@ def evaluate_skip_marks(item: Item) -> Optional[Skip]:
     return None
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class Xfail:
     """The result of evaluate_xfail_marks()."""
 
-    reason = attr.ib(type=str)
-    run = attr.ib(type=bool)
-    strict = attr.ib(type=bool)
-    raises = attr.ib(type=Optional[Tuple[Type[BaseException], ...]])
+    reason: str
+    run: bool
+    strict: bool
+    raises: Optional[Tuple[Type[BaseException], ...]]
 
 
 def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:
@@ -228,7 +228,7 @@ def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:
 
 
 # Saves the xfail mark evaluation. Can be refreshed during call if None.
-xfailed_key = StoreKey[Optional[Xfail]]()
+xfailed_key = StashKey[Optional[Xfail]]()
 
 
 @hookimpl(tryfirst=True)
@@ -237,16 +237,16 @@ def pytest_runtest_setup(item: Item) -> None:
     if skipped:
         raise skip.Exception(skipped.reason, _use_item_location=True)
 
-    item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
+    item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
     if xfailed and not item.config.option.runxfail and not xfailed.run:
         xfail("[NOTRUN] " + xfailed.reason)
 
 
 @hookimpl(hookwrapper=True)
 def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
-    xfailed = item._store.get(xfailed_key, None)
+    xfailed = item.stash.get(xfailed_key, None)
     if xfailed is None:
-        item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
+        item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
 
     if xfailed and not item.config.option.runxfail and not xfailed.run:
         xfail("[NOTRUN] " + xfailed.reason)
@@ -254,16 +254,16 @@ def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
     yield
 
     # The test run may have added an xfail mark dynamically.
-    xfailed = item._store.get(xfailed_key, None)
+    xfailed = item.stash.get(xfailed_key, None)
     if xfailed is None:
-        item._store[xfailed_key] = xfailed = evaluate_xfail_marks(item)
+        item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
 
 
 @hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
     outcome = yield
     rep = outcome.get_result()
-    xfailed = item._store.get(xfailed_key, None)
+    xfailed = item.stash.get(xfailed_key, None)
     if item.config.option.runxfail:
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):

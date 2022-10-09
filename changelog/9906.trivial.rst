@@ -1,0 +1,1 @@
+Made ``_pytest.compat`` re-export ``importlib_metadata`` in the eyes of type checkers.

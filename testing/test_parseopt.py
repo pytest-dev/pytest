@@ -14,12 +14,12 @@ from _pytest.pytester import Pytester
 
 @pytest.fixture
 def parser() -> parseopt.Parser:
-    return parseopt.Parser()
+    return parseopt.Parser(_ispytest=True)
 
 
 class TestParser:
     def test_no_help_by_default(self) -> None:
-        parser = parseopt.Parser(usage="xyz")
+        parser = parseopt.Parser(usage="xyz", _ispytest=True)
         pytest.raises(UsageError, lambda: parser.parse(["-h"]))
 
     def test_custom_prog(self, parser: parseopt.Parser) -> None:
@@ -90,13 +90,13 @@ class TestParser:
         assert groups_names == list("132")
 
     def test_group_addoption(self) -> None:
-        group = parseopt.OptionGroup("hello")
+        group = parseopt.OptionGroup("hello", _ispytest=True)
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
         assert isinstance(group.options[0], parseopt.Argument)
 
     def test_group_addoption_conflict(self) -> None:
-        group = parseopt.OptionGroup("hello again")
+        group = parseopt.OptionGroup("hello again", _ispytest=True)
         group.addoption("--option1", "--option-1", action="store_true")
         with pytest.raises(ValueError) as err:
             group.addoption("--option1", "--option-one", action="store_true")
@@ -188,7 +188,7 @@ class TestParser:
             elif option.type is str:
                 option.default = "world"
 
-        parser = parseopt.Parser(processopt=defaultget)
+        parser = parseopt.Parser(processopt=defaultget, _ispytest=True)
         parser.addoption("--this", dest="this", type=int, action="store")
         parser.addoption("--hello", dest="hello", type=str, action="store")
         parser.addoption("--no", dest="no", action="store_true")
@@ -295,7 +295,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
-            universal_newlines=True,
+            text=True,
         ).stdout
     except (OSError, subprocess.CalledProcessError):
         pytest.skip("bash is not available")

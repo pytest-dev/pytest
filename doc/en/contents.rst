@@ -28,7 +28,7 @@ How-to guides
    how-to/fixtures
    how-to/mark
    how-to/parametrize
-   how-to/tmpdir
+   how-to/tmp_path
    how-to/monkeypatch
    how-to/doctest
    how-to/cache
@@ -85,7 +85,6 @@ Further topics
 
    backwards-compatibility
    deprecations
-   py27-py34-deprecation
 
    contributing
    development_guide
@@ -95,9 +94,9 @@ Further topics
    license
    contact
 
+   history
    historical-notes
    talks
-   projects
 
 
 .. only:: html

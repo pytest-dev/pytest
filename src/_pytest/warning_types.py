@@ -1,3 +1,6 @@
+import inspect
+import warnings
+from types import FunctionType
 from typing import Any
 from typing import Generic
 from typing import Type
@@ -42,9 +45,21 @@ class PytestCollectionWarning(PytestWarning):
     __module__ = "pytest"
 
 
-@final
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """Warning class for features that will be removed in a future version."""
+
+    __module__ = "pytest"
+
+
+@final
+class PytestRemovedIn8Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 8."""
+
+    __module__ = "pytest"
+
+
+class PytestReturnNotNoneWarning(PytestDeprecationWarning):
+    """Warning emitted when a test function is returning value other than None."""
 
     __module__ = "pytest"
 
@@ -69,7 +84,7 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
 
 
 @final
-class PytestUnhandledCoroutineWarning(PytestWarning):
+class PytestUnhandledCoroutineWarning(PytestReturnNotNoneWarning):
     """Warning emitted for an unhandled coroutine.
 
     A coroutine was encountered when collecting test functions, but was not
@@ -116,7 +131,7 @@ _W = TypeVar("_W", bound=PytestWarning)
 
 
 @final
-@attr.s
+@attr.s(auto_attribs=True)
 class UnformattedWarning(Generic[_W]):
     """A warning meant to be formatted during runtime.
 
@@ -124,9 +139,34 @@ class UnformattedWarning(Generic[_W]):
     as opposed to a direct message.
     """
 
-    category = attr.ib(type=Type["_W"])
-    template = attr.ib(type=str)
+    category: Type["_W"]
+    template: str
 
     def format(self, **kwargs: Any) -> _W:
         """Return an instance of the warning category, formatted with given kwargs."""
         return self.category(self.template.format(**kwargs))
+
+
+def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
+    """
+    Issue the warning :param:`message` for the definition of the given :param:`method`
+
+    this helps to log warnigns for functions defined prior to finding an issue with them
+    (like hook wrappers being marked in a legacy mechanism)
+    """
+    lineno = method.__code__.co_firstlineno
+    filename = inspect.getfile(method)
+    module = method.__module__
+    mod_globals = method.__globals__
+    try:
+        warnings.warn_explicit(
+            message,
+            type(message),
+            filename=filename,
+            module=module,
+            registry=mod_globals.setdefault("__warningregistry__", {}),
+            lineno=lineno,
+        )
+    except Warning as w:
+        # If warnings are errors (e.g. -Werror), location information gets lost, so we add it to the message.
+        raise type(w)(f"{w}\n at {filename}:{lineno}") from None

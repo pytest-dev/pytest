@@ -153,6 +153,22 @@ to do this is by loading these data in a fixture for use by your tests.
 This makes use of the automatic caching mechanisms of pytest.
 
 Another good approach is by adding the data files in the ``tests`` folder.
-There are also community plugins available to help managing this aspect of
-testing, e.g. `pytest-datadir <https://pypi.org/project/pytest-datadir/>`__
-and `pytest-datafiles <https://pypi.org/project/pytest-datafiles/>`__.
+There are also community plugins available to help to manage this aspect of
+testing, e.g. :pypi:`pytest-datadir` and :pypi:`pytest-datafiles`.
+
+.. _fixtures-signal-cleanup:
+
+A note about fixture cleanup
+----------------------------
+
+pytest does not do any special processing for :data:`SIGTERM <signal.SIGTERM>` and
+:data:`SIGQUIT <signal.SIGQUIT>` signals (:data:`SIGINT <signal.SIGINT>` is handled naturally
+by the Python runtime via :class:`KeyboardInterrupt`), so fixtures that manage external resources which are important
+to be cleared when the Python process is terminated (by those signals) might leak resources.
+
+The reason pytest does not handle those signals to perform fixture cleanup is that signal handlers are global,
+and changing them might interfere with the code under execution.
+
+If fixtures in your suite need special care regarding termination in those scenarios,
+see :issue:`this comment <5243#issuecomment-491522595>` in the issue
+tracker for a possible workaround.

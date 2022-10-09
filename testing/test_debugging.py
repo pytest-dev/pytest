@@ -8,14 +8,6 @@ from _pytest.debugging import _validate_usepdb_cls
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
-try:
-    # Type ignored for Python <= 3.6.
-    breakpoint  # type: ignore
-except NameError:
-    SUPPORTS_BREAKPOINT_BUILTIN = False
-else:
-    SUPPORTS_BREAKPOINT_BUILTIN = True
-
 
 _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")
 
@@ -252,7 +244,7 @@ class TestPDB:
             """
             def test_1():
                 import logging
-                logging.warn("get " + "rekt")
+                logging.warning("get " + "rekt")
                 assert False
         """
         )
@@ -271,7 +263,7 @@ class TestPDB:
             """
             def test_1():
                 import logging
-                logging.warn("get " + "rekt")
+                logging.warning("get " + "rekt")
                 assert False
         """
         )
@@ -361,6 +353,7 @@ class TestPDB:
         result = pytester.runpytest_subprocess("--pdb", ".")
         result.stdout.fnmatch_lines(["-> import unknown"])
 
+    @pytest.mark.xfail(reason="#10042")
     def test_pdb_interaction_capturing_simple(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile(
             """
@@ -529,6 +522,7 @@ class TestPDB:
         assert "BdbQuit" not in rest
         assert "UNEXPECTED EXCEPTION" not in rest
 
+    @pytest.mark.xfail(reason="#10042")
     def test_pdb_interaction_capturing_twice(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile(
             """
@@ -564,6 +558,7 @@ class TestPDB:
         assert "1 failed" in rest
         self.flush(child)
 
+    @pytest.mark.xfail(reason="#10042")
     def test_pdb_with_injected_do_debug(self, pytester: Pytester) -> None:
         """Simulates pdbpp, which injects Pdb into do_debug, and uses
         self.__class__ in do_continue.
@@ -911,14 +906,6 @@ class TestPDB:
 
 
 class TestDebuggingBreakpoints:
-    def test_supports_breakpoint_module_global(self) -> None:
-        """Test that supports breakpoint global marks on Python 3.7+."""
-        if sys.version_info >= (3, 7):
-            assert SUPPORTS_BREAKPOINT_BUILTIN is True
-
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     @pytest.mark.parametrize("arg", ["--pdb", ""])
     def test_sys_breakpointhook_configure_and_unconfigure(
         self, pytester: Pytester, arg: str
@@ -934,7 +921,7 @@ class TestDebuggingBreakpoints:
             from _pytest.debugging import pytestPDB
 
             def pytest_configure(config):
-                config._cleanup.append(check_restored)
+                config.add_cleanup(check_restored)
 
             def check_restored():
                 assert sys.breakpointhook == sys.__breakpointhook__
@@ -952,9 +939,6 @@ class TestDebuggingBreakpoints:
         result = pytester.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines(["*1 passed in *"])
 
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     def test_pdb_custom_cls(self, pytester: Pytester, custom_debugger_hook) -> None:
         p1 = pytester.makepyfile(
             """
@@ -969,9 +953,6 @@ class TestDebuggingBreakpoints:
         assert custom_debugger_hook == ["init", "set_trace"]
 
     @pytest.mark.parametrize("arg", ["--pdb", ""])
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     def test_environ_custom_class(
         self, pytester: Pytester, custom_debugger_hook, arg: str
     ) -> None:
@@ -983,7 +964,7 @@ class TestDebuggingBreakpoints:
             os.environ['PYTHONBREAKPOINT'] = '_pytest._CustomDebugger.set_trace'
 
             def pytest_configure(config):
-                config._cleanup.append(check_restored)
+                config.add_cleanup(check_restored)
 
             def check_restored():
                 assert sys.breakpointhook == sys.__breakpointhook__
@@ -1002,9 +983,6 @@ class TestDebuggingBreakpoints:
         result = pytester.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines(["*1 passed in *"])
 
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
     @pytest.mark.skipif(
         not _ENVIRON_PYTHONBREAKPOINT == "",
         reason="Requires breakpoint() default value",
@@ -1025,9 +1003,7 @@ class TestDebuggingBreakpoints:
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
 
-    @pytest.mark.skipif(
-        not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin"
-    )
+    @pytest.mark.xfail(reason="#10042")
     def test_pdb_not_altered(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile(
             """
@@ -1187,6 +1163,7 @@ def test_quit_with_swallowed_SystemExit(pytester: Pytester) -> None:
 
 
 @pytest.mark.parametrize("fixture", ("capfd", "capsys"))
+@pytest.mark.xfail(reason="#10042")
 def test_pdb_suspends_fixture_capturing(pytester: Pytester, fixture: str) -> None:
     """Using "-s" with pytest should suspend/resume fixture capturing."""
     p1 = pytester.makepyfile(

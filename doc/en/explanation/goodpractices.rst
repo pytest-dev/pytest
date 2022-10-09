@@ -7,28 +7,33 @@ Good Integration Practices
 Install package with pip
 -------------------------------------------------
 
-For development, we recommend you use venv_ for virtual environments and
-pip_ for installing your application and any dependencies,
+For development, we recommend you use :mod:`venv` for virtual environments and
+:doc:`pip:index` for installing your application and any dependencies,
 as well as the ``pytest`` package itself.
 This ensures your code and dependencies are isolated from your system Python installation.
 
-Next, place a ``setup.py`` file in the root of your package with the following minimum content:
+Create a ``pyproject.toml`` file in the root of your repository as described in
+:doc:`packaging:tutorials/packaging-projects`.
+The first few lines should look like this:
 
-.. code-block:: python
+.. code-block:: toml
 
-    from setuptools import setup, find_packages
+    [build-system]
+    requires = ["hatchling"]
+    build-backend = "hatchling.build"
 
-    setup(name="PACKAGENAME", packages=find_packages())
+    [metadata]
+    name = "PACKAGENAME"
 
-Where ``PACKAGENAME`` is the name of your package. You can then install your package in "editable" mode by running from the same directory:
+where ``PACKAGENAME`` is the name of your package.
+
+You can then install your package in "editable" mode by running from the same directory:
 
 .. code-block:: bash
 
-     pip install -e .
+    pip install -e .
 
 which lets you change your source code (both tests and application) and rerun tests at will.
-This is similar to running ``python setup.py develop`` or ``conda develop`` in that it installs
-your package using a symlink to your development code.
 
 .. _`test discovery`:
 .. _`Python test discovery`:
@@ -68,11 +73,12 @@ to keep tests separate from actual application code (often a good idea):
 
 .. code-block:: text
 
-    setup.py
-    mypkg/
-        __init__.py
-        app.py
-        view.py
+    pyproject.toml
+    src/
+        mypkg/
+            __init__.py
+            app.py
+            view.py
     tests/
         test_app.py
         test_view.py
@@ -82,81 +88,56 @@ This has the following benefits:
 
 * Your tests can run against an installed version after executing ``pip install .``.
 * Your tests can run against the local copy with an editable install after executing ``pip install --editable .``.
-* If you don't have a ``setup.py`` file and are relying on the fact that Python by default puts the current
-  directory in ``sys.path`` to import your package, you can execute ``python -m pytest`` to execute the tests against the
-  local copy directly, without using ``pip``.
+
+For new projects, we recommend to use ``importlib`` :ref:`import mode <import-modes>`
+(see which-import-mode_ for a detailed explanation).
+To this end, add the following to your ``pyproject.toml``:
+
+.. code-block:: toml
+
+    [tool.pytest.ini_options]
+    addopts = [
+        "--import-mode=importlib",
+    ]
+
+.. _src-layout:
+
+Generally, but especially if you use the default import mode ``prepend``,
+it is **strongly** suggested to use a ``src`` layout.
+Here, your application root package resides in a sub-directory of your root,
+i.e. ``src/mypkg/`` instead of ``mypkg``.
+
+This layout prevents a lot of common pitfalls and has many benefits,
+which are better explained in this excellent `blog post`_ by Ionel Cristian Mărieș.
+
+.. _blog post: https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>
 
 .. note::
+
+    If you do not use an editable install and use the ``src`` layout as above you need to extend the Python's
+    search path for module files to execute the tests against the local copy directly. You can do it in an
+    ad-hoc manner by setting the ``PYTHONPATH`` environment variable:
+
+    .. code-block:: bash
+
+       PYTHONPATH=src pytest
+
+    or in a permanent manner by using the :confval:`pythonpath` configuration variable and adding the
+    following to your ``pyproject.toml``:
+
+    .. code-block:: toml
+
+        [tool.pytest.ini_options]
+        pythonpath = "src"
+
+.. note::
+
+    If you do not use an editable install and not use the ``src`` layout (``mypkg`` directly in the root
+    directory) you can rely on the fact that Python by default puts the current directory in ``sys.path`` to
+    import your package and run ``python -m pytest`` to execute the tests against the local copy directly.
 
     See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
-
-Note that this scheme has a drawback if you are using ``prepend`` :ref:`import mode <import-modes>`
-(which is the default): your test files must have **unique names**, because
-``pytest`` will import them as *top-level* modules since there are no packages
-to derive a full package name from. In other words, the test files in the example above will
-be imported as ``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to
-``sys.path``.
-
-If you need to have test modules with the same name, you might add ``__init__.py`` files to your
-``tests`` folder and subfolders, changing them to packages:
-
-.. code-block:: text
-
-    setup.py
-    mypkg/
-        ...
-    tests/
-        __init__.py
-        foo/
-            __init__.py
-            test_view.py
-        bar/
-            __init__.py
-            test_view.py
-
-Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test_view``, allowing
-you to have modules with the same name. But now this introduces a subtle problem: in order to load
-the test modules from the ``tests`` directory, pytest prepends the root of the repository to
-``sys.path``, which adds the side-effect that now ``mypkg`` is also importable.
-
-This is problematic if you are using a tool like `tox`_ to test your package in a virtual environment,
-because you want to test the *installed* version of your package, not the local code from the repository.
-
-.. _`src-layout`:
-
-In this situation, it is **strongly** suggested to use a ``src`` layout where application root package resides in a
-sub-directory of your root:
-
-.. code-block:: text
-
-    setup.py
-    src/
-        mypkg/
-            __init__.py
-            app.py
-            view.py
-    tests/
-        __init__.py
-        foo/
-            __init__.py
-            test_view.py
-        bar/
-            __init__.py
-            test_view.py
-
-
-This layout prevents a lot of common pitfalls and has many benefits, which are better explained in this excellent
-`blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_.
-
-.. note::
-    The new ``--import-mode=importlib`` (see :ref:`import-modes`) doesn't have
-    any of the drawbacks above because ``sys.path`` and ``sys.modules`` are not changed when importing
-    test modules, so users that run
-    into this issue are strongly encouraged to try it and report if the new option works well for them.
-
-    The ``src`` directory layout is still strongly recommended however.
-
 
 Tests as part of application code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -167,12 +148,12 @@ want to distribute them along with your application:
 
 .. code-block:: text
 
-    setup.py
-    mypkg/
+    pyproject.toml
+    [src/]mypkg/
         __init__.py
         app.py
         view.py
-        test/
+        tests/
             __init__.py
             test_app.py
             test_view.py
@@ -191,11 +172,11 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
 
 .. note::
 
-    You can use Python3 namespace packages (PEP420) for your application
+    You can use namespace packages (PEP420) for your application
     but pytest will still perform `test package name`_ discovery based on the
     presence of ``__init__.py`` files.  If you use one of the
     two recommended file system layouts above but leave away the ``__init__.py``
-    files from your directories it should just work on Python3.3 and above.  From
+    files from your directories, it should just work.  From
     "inlined tests", however, you will need to use absolute imports for
     getting at your application code.
 
@@ -230,23 +211,85 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     much less surprising.
 
 
-.. _`virtualenv`: https://pypi.org/project/virtualenv/
-.. _`buildout`: http://www.buildout.org/
-.. _pip: https://pypi.org/project/pip/
+.. _which-import-mode:
+
+Choosing an import mode
+^^^^^^^^^^^^^^^^^^^^^^^
+
+For historical reasons, pytest defaults to the ``prepend`` :ref:`import mode <import-modes>`
+instead of the ``importlib`` import mode we recommend for new projects.
+The reason lies in the way the ``prepend`` mode works:
+
+Since there are no packages to derive a full package name from,
+``pytest`` will import your test files as *top-level* modules.
+The test files in the first example (:ref:`src layout <src-layout>`) would be imported as
+``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to ``sys.path``.
+
+This results in a drawback compared to the import mode ``importlib``:
+your test files must have **unique names**.
+
+If you need to have test modules with the same name,
+as a workaround you might add ``__init__.py`` files to your ``tests`` folder and subfolders,
+changing them to packages:
+
+.. code-block:: text
+
+    pyproject.toml
+    mypkg/
+        ...
+    tests/
+        __init__.py
+        foo/
+            __init__.py
+            test_view.py
+        bar/
+            __init__.py
+            test_view.py
+
+Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test_view``,
+allowing you to have modules with the same name.
+But now this introduces a subtle problem:
+in order to load the test modules from the ``tests`` directory,
+pytest prepends the root of the repository to ``sys.path``,
+which adds the side-effect that now ``mypkg`` is also importable.
+
+This is problematic if you are using a tool like tox_ to test your package in a virtual environment,
+because you want to test the *installed* version of your package,
+not the local code from the repository.
+
+The ``importlib`` import mode does not have any of the drawbacks above,
+because ``sys.path`` is not changed when importing test modules.
+
+
+.. _`buildout`: http://www.buildout.org/en/latest/
 
 .. _`use tox`:
 
 tox
-------
+---
 
 Once you are done with your work and want to make sure that your actual
-package passes all tests you may want to look into `tox`_, the
-virtualenv test automation tool and its `pytest support
-<https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
+package passes all tests you may want to look into :doc:`tox <tox:index>`, the
+virtualenv test automation tool and its :doc:`pytest support <tox:example/pytest>`.
 tox helps you to setup virtualenv environments with pre-defined
 dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
 
-.. _`venv`: https://docs.python.org/3/library/venv.html
+Do not run via setuptools
+-------------------------
+
+Integration with setuptools is **not recommended**,
+i.e. you should not be using ``python setup.py test`` or ``pytest-runner``,
+and may stop working in the future.
+
+This is deprecated since it depends on deprecated features of setuptools
+and relies on features that break security mechanisms in pip.
+For example 'setup_requires' and 'tests_require' bypass ``pip --require-hashes``.
+For more information and migration instructions,
+see the `pytest-runner notice <https://github.com/pytest-dev/pytest-runner#deprecation-notice>`_.
+See also `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`_.
+
+setuptools intends to
+`remove the test command <https://github.com/pypa/setuptools/issues/931>`_.

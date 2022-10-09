@@ -162,7 +162,7 @@ class TestTraceback_f_g_h:
     def test_traceback_cut_excludepath(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("def f(): raise ValueError")
         with pytest.raises(ValueError) as excinfo:
-            import_path(p).f()  # type: ignore[attr-defined]
+            import_path(p, root=pytester.path).f()  # type: ignore[attr-defined]
         basedir = Path(pytest.__file__).parent
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
         for x in newtraceback:
@@ -420,18 +420,20 @@ def test_match_raises_error(pytester: Pytester) -> None:
             excinfo.match(r'[123]+')
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("--tb=short")
     assert result.ret != 0
 
-    exc_msg = "Regex pattern '[[]123[]]+' does not match 'division by zero'."
-    result.stdout.fnmatch_lines([f"E * AssertionError: {exc_msg}"])
+    match = [
+        r"E .* AssertionError: Regex pattern did not match.",
+        r"E .* Regex: '\[123\]\+'",
+        r"E .* Input: 'division by zero'",
+    ]
+    result.stdout.re_match_lines(match)
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
 
     result = pytester.runpytest("--fulltrace")
     assert result.ret != 0
-    result.stdout.fnmatch_lines(
-        ["*__tracebackhide__ = True*", f"E * AssertionError: {exc_msg}"]
-    )
+    result.stdout.re_match_lines([r".*__tracebackhide__ = True.*", *match])
 
 
 class TestFormattedExcinfo:
@@ -443,7 +445,7 @@ class TestFormattedExcinfo:
             tmp_path.joinpath("__init__.py").touch()
             modpath.write_text(source)
             importlib.invalidate_caches()
-            return import_path(modpath)
+            return import_path(modpath, root=tmp_path)
 
         return importasmod
 
@@ -455,7 +457,7 @@ class TestFormattedExcinfo:
                 pass
             """
         ).strip()
-        pr.flow_marker = "|"
+        pr.flow_marker = "|"  # type: ignore[misc]
         lines = pr.get_source(source, 0)
         assert len(lines) == 2
         assert lines[0] == "|   def f(x):"
@@ -1397,6 +1399,29 @@ def test_cwd_deleted(pytester: Pytester) -> None:
     result.stderr.no_fnmatch_line("*INTERNALERROR*")
 
 
+def test_regression_nagative_line_index(pytester: Pytester) -> None:
+    """
+    With Python 3.10 alphas, there was an INTERNALERROR reported in
+    https://github.com/pytest-dev/pytest/pull/8227
+    This test ensures it does not regress.
+    """
+    pytester.makepyfile(
+        """
+        import ast
+        import pytest
+
+
+        def test_literal_eval():
+            with pytest.raises(ValueError, match="^$"):
+                ast.literal_eval("pytest")
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["* 1 failed in *"])
+    result.stdout.no_fnmatch_line("*INTERNALERROR*")
+    result.stderr.no_fnmatch_line("*INTERNALERROR*")
+
+
 @pytest.mark.usefixtures("limited_recursion_depth")
 def test_exception_repr_extraction_error_on_recursion():
     """
@@ -1445,3 +1470,90 @@ def test_no_recursion_index_on_recursion_error():
     with pytest.raises(RuntimeError) as excinfo:
         RecursionDepthError().trigger
     assert "maximum recursion" in str(excinfo.getrepr())
+
+
+def _exceptiongroup_common(
+    pytester: Pytester,
+    outer_chain: str,
+    inner_chain: str,
+    native: bool,
+) -> None:
+    pre_raise = "exceptiongroup." if not native else ""
+    pre_catch = pre_raise if sys.version_info < (3, 11) else ""
+    filestr = f"""
+    {"import exceptiongroup" if not native else ""}
+    import pytest
+
+    def f(): raise ValueError("From f()")
+    def g(): raise BaseException("From g()")
+
+    def inner(inner_chain):
+        excs = []
+        for callback in [f, g]:
+            try:
+                callback()
+            except BaseException as err:
+                excs.append(err)
+        if excs:
+            if inner_chain == "none":
+                raise {pre_raise}BaseExceptionGroup("Oops", excs)
+            try:
+                raise SyntaxError()
+            except SyntaxError as e:
+                if inner_chain == "from":
+                    raise {pre_raise}BaseExceptionGroup("Oops", excs) from e
+                else:
+                    raise {pre_raise}BaseExceptionGroup("Oops", excs)
+
+    def outer(outer_chain, inner_chain):
+        try:
+            inner(inner_chain)
+        except {pre_catch}BaseExceptionGroup as e:
+            if outer_chain == "none":
+                raise
+            if outer_chain == "from":
+                raise IndexError() from e
+            else:
+                raise IndexError()
+
+
+    def test():
+        outer("{outer_chain}", "{inner_chain}")
+    """
+    pytester.makepyfile(test_excgroup=filestr)
+    result = pytester.runpytest()
+    match_lines = []
+    if inner_chain in ("another", "from"):
+        match_lines.append(r"SyntaxError: <no detail available>")
+
+    match_lines += [
+        r"  + Exception Group Traceback (most recent call last):",
+        rf"  \| {pre_catch}BaseExceptionGroup: Oops \(2 sub-exceptions\)",
+        r"    \| ValueError: From f\(\)",
+        r"    \| BaseException: From g\(\)",
+        r"=* short test summary info =*",
+    ]
+    if outer_chain in ("another", "from"):
+        match_lines.append(r"FAILED test_excgroup.py::test - IndexError")
+    else:
+        match_lines.append(
+            rf"FAILED test_excgroup.py::test - {pre_catch}BaseExceptionGroup: Oops \(2.*"
+        )
+    result.stdout.re_match_lines(match_lines)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11), reason="Native ExceptionGroup not implemented"
+)
+@pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
+@pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
+def test_native_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
+    _exceptiongroup_common(pytester, outer_chain, inner_chain, native=True)
+
+
+@pytest.mark.parametrize("outer_chain", ["none", "from", "another"])
+@pytest.mark.parametrize("inner_chain", ["none", "from", "another"])
+def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
+    # with py>=3.11 does not depend on exceptiongroup, though there is a toxenv for it
+    pytest.importorskip("exceptiongroup")
+    _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)

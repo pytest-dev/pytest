@@ -3,7 +3,6 @@ import sys
 import types
 
 import attr
-import py
 
 import pytest
 from _pytest.compat import importlib_metadata
@@ -187,8 +186,7 @@ class TestGeneralUsage:
         assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(
             [
-                f"ERROR: not found: {p2}",
-                "(no name {!r} in any of [[][]])".format(str(p2)),
+                f"ERROR: found no collectors for {p2}",
                 "",
             ]
         )
@@ -304,9 +302,9 @@ class TestGeneralUsage:
             class MyCollector(pytest.File):
                 def collect(self):
                     return [MyItem.from_parent(name="xyz", parent=self)]
-            def pytest_collect_file(fspath, parent):
-                if fspath.name.startswith("conftest"):
-                    return MyCollector.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.name.startswith("conftest"):
+                    return MyCollector.from_parent(path=file_path, parent=parent)
         """
         )
         result = pytester.runpytest(c.name + "::" + "xyz")
@@ -515,28 +513,10 @@ class TestInvocationVariants:
         assert result.ret == 0
 
     def test_pydoc(self, pytester: Pytester) -> None:
-        for name in ("py.test", "pytest"):
-            result = pytester.runpython_c(f"import {name};help({name})")
-            assert result.ret == 0
-            s = result.stdout.str()
-            assert "MarkGenerator" in s
-
-    def test_import_star_py_dot_test(self, pytester: Pytester) -> None:
-        p = pytester.makepyfile(
-            """
-            from py.test import *
-            #collect
-            #cmdline
-            #Item
-            # assert collect.Item is Item
-            # assert collect.Collector is Collector
-            main
-            skip
-            xfail
-        """
-        )
-        result = pytester.runpython(p)
+        result = pytester.runpython_c("import pytest;help(pytest)")
         assert result.ret == 0
+        s = result.stdout.str()
+        assert "MarkGenerator" in s
 
     def test_import_star_pytest(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -584,10 +564,6 @@ class TestInvocationVariants:
         res = pytester.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
-
-    def test_equivalence_pytest_pydottest(self) -> None:
-        # Type ignored because `py.test` is not and will not be typed.
-        assert pytest.main == py.test.cmdline.main  # type: ignore[attr-defined]
 
     def test_invoke_with_invalid_type(self) -> None:
         with pytest.raises(
@@ -1173,7 +1149,7 @@ def test_usage_error_code(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestUnhandledCoroutineWarning")
 def test_warn_on_async_function(pytester: Pytester) -> None:
     # In the below we .close() the coroutine only to avoid
     # "RuntimeWarning: coroutine 'test_2' was never awaited"
@@ -1206,7 +1182,7 @@ def test_warn_on_async_function(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestUnhandledCoroutineWarning")
 def test_warn_on_async_gen_function(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_async="""
@@ -1261,8 +1237,6 @@ def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
             "    def check():",
             ">       assert 1 == 2",
             "E       assert 1 == 2",
-            "E         +1",
-            "E         -2",
             "",
             "pdb.py:2: AssertionError",
             "*= 1 failed in *",
@@ -1304,7 +1278,7 @@ def test_tee_stdio_captures_and_live_prints(pytester: Pytester) -> None:
     reason="Windows raises `OSError: [Errno 22] Invalid argument` instead",
 )
 def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
-    """Ensure that the broken pipe error message is supressed.
+    """Ensure that the broken pipe error message is suppressed.
 
     In some Python versions, it reaches sys.unraisablehook, in others
     a BrokenPipeError exception is propagated, but either way it prints
@@ -1318,3 +1292,14 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
 
     # Cleanup.
     popen.stderr.close()
+
+
+def test_function_return_non_none_warning(testdir) -> None:
+    testdir.makepyfile(
+        """
+        def test_stuff():
+            return "something"
+    """
+    )
+    res = testdir.runpytest()
+    res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])

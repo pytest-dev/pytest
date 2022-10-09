@@ -3,15 +3,14 @@ import enum
 import functools
 import inspect
 import os
-import re
 import sys
-from contextlib import contextmanager
 from inspect import Parameter
 from inspect import signature
 from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Generic
+from typing import NoReturn
 from typing import Optional
 from typing import Tuple
 from typing import TYPE_CHECKING
@@ -21,11 +20,17 @@ from typing import Union
 import attr
 import py
 
-from _pytest.outcomes import fail
-from _pytest.outcomes import TEST_OUTCOME
+# fmt: off
+# Workaround for https://github.com/sphinx-doc/sphinx/issues/10351.
+# If `overload` is imported from `compat` instead of from `typing`,
+# Sphinx doesn't recognize it as `overload` and the API docs for
+# overloaded functions look good again. But type checkers handle
+# it fine.
+# fmt: on
+if True:
+    from typing import overload as overload
 
 if TYPE_CHECKING:
-    from typing import NoReturn
     from typing_extensions import Final
 
 
@@ -55,17 +60,15 @@ NOTSET: "Final" = NotSetType.token  # noqa: E305
 # fmt: on
 
 if sys.version_info >= (3, 8):
-    from importlib import metadata as importlib_metadata
+    import importlib.metadata
+
+    importlib_metadata = importlib.metadata
 else:
-    import importlib_metadata  # noqa: F401
+    import importlib_metadata as importlib_metadata  # noqa: F401
 
 
 def _format_args(func: Callable[..., Any]) -> str:
     return str(signature(func))
-
-
-# The type of re.compile objects is not exposed in Python.
-REGEX_TYPE = type(re.compile(""))
 
 
 def is_generator(func: object) -> bool:
@@ -157,6 +160,8 @@ def getfuncargnames(
     try:
         parameters = signature(function).parameters
     except (ValueError, TypeError) as e:
+        from _pytest.outcomes import fail
+
         fail(
             f"Could not determine arguments of {function!r}: {e}",
             pytrace=False,
@@ -190,17 +195,6 @@ def getfuncargnames(
     if hasattr(function, "__wrapped__"):
         arg_names = arg_names[num_mock_patch_args(function) :]
     return arg_names
-
-
-if sys.version_info < (3, 7):
-
-    @contextmanager
-    def nullcontext():
-        yield
-
-
-else:
-    from contextlib import nullcontext as nullcontext  # noqa: F401
 
 
 def get_default_arg_names(function: Callable[..., Any]) -> Tuple[str, ...]:
@@ -329,6 +323,8 @@ def safe_getattr(object: Any, name: str, default: Any) -> Any:
     are derived from BaseException instead of Exception (for more details
     check #2707).
     """
+    from _pytest.outcomes import TEST_OUTCOME
+
     try:
         return getattr(object, name, default)
     except TEST_OUTCOME:
@@ -359,7 +355,6 @@ else:
 if sys.version_info >= (3, 8):
     from functools import cached_property as cached_property
 else:
-    from typing import overload
     from typing import Type
 
     class cached_property(Generic[_S, _T]):
@@ -417,5 +412,5 @@ else:
 # previously.
 #
 # This also work for Enums (if you use `is` to compare) and Literals.
-def assert_never(value: "NoReturn") -> "NoReturn":
-    assert False, "Unhandled value: {} ({})".format(value, type(value).__name__)
+def assert_never(value: NoReturn) -> NoReturn:
+    assert False, f"Unhandled value: {value} ({type(value).__name__})"

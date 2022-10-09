@@ -1,25 +1,31 @@
 # PYTHON_ARGCOMPLETE_OK
 """pytest: unit and functional testing with Python."""
-from . import collect
 from _pytest import __version__
+from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
 from _pytest.config import cmdline
+from _pytest.config import Config
 from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
+from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
+from _pytest.config.argparsing import OptionGroup
+from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
-from _pytest.fixtures import _fillfuncargs
+from _pytest.doctest import DoctestItem
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import yield_fixture
 from _pytest.freeze_support import freeze_includes
+from _pytest.legacypath import TempdirFactory
+from _pytest.legacypath import Testdir
 from _pytest.logging import LogCaptureFixture
 from _pytest.main import Session
 from _pytest.mark import Mark
@@ -36,11 +42,13 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.pytester import HookRecorder
+from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
-from _pytest.pytester import Testdir
+from _pytest.pytester import RecordedHookCall
+from _pytest.pytester import RunResult
 from _pytest.python import Class
 from _pytest.python import Function
-from _pytest.python import Instance
 from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
@@ -49,8 +57,11 @@ from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
+from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
-from _pytest.tmpdir import TempdirFactory
+from _pytest.stash import Stash
+from _pytest.stash import StashKey
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
 from _pytest.warning_types import PytestCacheWarning
@@ -58,6 +69,8 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
+from _pytest.warning_types import PytestRemovedIn8Warning
+from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
@@ -66,19 +79,21 @@ from _pytest.warning_types import PytestWarning
 
 set_trace = __pytestPDB.set_trace
 
+
 __all__ = [
     "__version__",
-    "_fillfuncargs",
     "approx",
     "Cache",
     "CallInfo",
     "CaptureFixture",
     "Class",
     "cmdline",
-    "collect",
     "Collector",
+    "CollectReport",
+    "Config",
     "console_main",
     "deprecated_call",
+    "DoctestItem",
     "exit",
     "ExceptionInfo",
     "ExitCode",
@@ -90,10 +105,11 @@ __all__ = [
     "freeze_includes",
     "Function",
     "hookimpl",
+    "HookRecorder",
     "hookspec",
     "importorskip",
-    "Instance",
     "Item",
+    "LineMatcher",
     "LogCaptureFixture",
     "main",
     "mark",
@@ -103,31 +119,51 @@ __all__ = [
     "Metafunc",
     "Module",
     "MonkeyPatch",
+    "OptionGroup",
     "Package",
     "param",
+    "Parser",
     "PytestAssertRewriteWarning",
     "PytestCacheWarning",
     "PytestCollectionWarning",
     "PytestConfigWarning",
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
+    "PytestRemovedIn8Warning",
+    "PytestReturnNotNoneWarning",
     "Pytester",
+    "PytestPluginManager",
     "PytestUnhandledCoroutineWarning",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
     "PytestUnraisableExceptionWarning",
     "PytestWarning",
     "raises",
+    "RecordedHookCall",
     "register_assert_rewrite",
+    "RunResult",
     "Session",
     "set_trace",
     "skip",
+    "Stash",
+    "StashKey",
+    "version_tuple",
+    "TempdirFactory",
     "TempPathFactory",
     "Testdir",
-    "TempdirFactory",
+    "TestReport",
     "UsageError",
     "WarningsRecorder",
     "warns",
     "xfail",
     "yield_fixture",
 ]
+
+
+def __getattr__(name: str) -> object:
+    if name == "Instance":
+        # The import emits a deprecation warning.
+        from _pytest.python import Instance
+
+        return Instance
+    raise AttributeError(f"module {__name__} has no attribute {name}")

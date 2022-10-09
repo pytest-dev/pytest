@@ -15,9 +15,8 @@ from _pytest.pytester import Pytester
 
 class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
-    @pytest.mark.parametrize("modulename", ["py.test", "pytest"])
-    def test_pytest_exists_in_namespace_all(self, attr: str, modulename: str) -> None:
-        module = sys.modules[modulename]
+    def test_pytest_exists_in_namespace_all(self, attr: str) -> None:
+        module = sys.modules["pytest"]
         assert attr in module.__all__  # type: ignore
 
     def test_pytest_mark_notcallable(self) -> None:
@@ -824,23 +823,6 @@ class TestKeywordSelection:
         assert len(dlist) == 1
         assert dlist[0].items[0].name == "test_1"
 
-    def test_select_starton(self, pytester: Pytester) -> None:
-        threepass = pytester.makepyfile(
-            test_threepass="""
-            def test_one(): assert 1
-            def test_two(): assert 1
-            def test_three(): assert 1
-        """
-        )
-        reprec = pytester.inline_run("-k", "test_two:", threepass)
-        passed, skipped, failed = reprec.listoutcomes()
-        assert len(passed) == 2
-        assert not failed
-        dlist = reprec.getcalls("pytest_deselected")
-        assert len(dlist) == 1
-        item = dlist[0].items[0]
-        assert item.name == "test_one"
-
     def test_keyword_extra(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
@@ -1112,7 +1094,7 @@ def test_pytest_param_id_allows_none_or_string(s) -> None:
     assert pytest.param(id=s)
 
 
-@pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)", "bogus/"))
+@pytest.mark.parametrize("expr", ("NOT internal_err", "NOT (internal_err)", "bogus="))
 def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     foo = pytester.makepyfile(
         """

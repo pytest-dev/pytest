@@ -3,7 +3,7 @@
 How to monkeypatch/mock modules and environments
 ================================================================
 
-.. currentmodule:: _pytest.monkeypatch
+.. currentmodule:: pytest
 
 Sometimes tests need to invoke functionality which depends
 on global settings or which invokes code which cannot be easily
@@ -14,17 +14,16 @@ environment variable, or to modify ``sys.path`` for importing.
 The ``monkeypatch`` fixture provides these helper methods for safely patching and mocking
 functionality in tests:
 
-.. code-block:: python
+* :meth:`monkeypatch.setattr(obj, name, value, raising=True) <pytest.MonkeyPatch.setattr>`
+* :meth:`monkeypatch.delattr(obj, name, raising=True) <pytest.MonkeyPatch.delattr>`
+* :meth:`monkeypatch.setitem(mapping, name, value) <pytest.MonkeyPatch.setitem>`
+* :meth:`monkeypatch.delitem(obj, name, raising=True) <pytest.MonkeyPatch.delitem>`
+* :meth:`monkeypatch.setenv(name, value, prepend=None) <pytest.MonkeyPatch.setenv>`
+* :meth:`monkeypatch.delenv(name, raising=True) <pytest.MonkeyPatch.delenv>`
+* :meth:`monkeypatch.syspath_prepend(path) <pytest.MonkeyPatch.syspath_prepend>`
+* :meth:`monkeypatch.chdir(path) <pytest.MonkeyPatch.chdir>`
+* :meth:`monkeypatch.context() <pytest.MonkeyPatch.context>`
 
-    monkeypatch.setattr(obj, name, value, raising=True)
-    monkeypatch.setattr("somemodule.obj.name", value, raising=True)
-    monkeypatch.delattr(obj, name, raising=True)
-    monkeypatch.setitem(mapping, name, value)
-    monkeypatch.delitem(obj, name, raising=True)
-    monkeypatch.setenv(name, value, prepend=False)
-    monkeypatch.delenv(name, raising=True)
-    monkeypatch.syspath_prepend(path)
-    monkeypatch.chdir(path)
 
 All modifications will be undone after the requesting
 test function or fixture has finished. The ``raising``
@@ -55,13 +54,16 @@ during a test.
 5. Use :py:meth:`monkeypatch.syspath_prepend <MonkeyPatch.syspath_prepend>` to modify ``sys.path`` which will also
 call ``pkg_resources.fixup_namespace_packages`` and :py:func:`importlib.invalidate_caches`.
 
+6. Use :py:meth:`monkeypatch.context <MonkeyPatch.context>` to apply patches only in a specific scope, which can help
+control teardown of complex fixtures or patches to the stdlib.
+
 See the `monkeypatch blog post`_ for some introduction material
 and a discussion of its motivation.
 
-.. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+.. _`monkeypatch blog post`: https://tetamap.wordpress.com//2009/03/03/monkeypatching-in-unit-tests-done-right/
 
-Simple example: monkeypatching functions
-----------------------------------------
+Monkeypatching functions
+------------------------
 
 Consider a scenario where you are working with user directories. In the context of
 testing, you do not want your test to depend on the running user. ``monkeypatch``
@@ -252,7 +254,7 @@ so that any attempts within tests to create http requests will fail.
                 m.setattr(functools, "partial", 3)
                 assert functools.partial == 3
 
-    See issue `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_ for details.
+    See :issue:`3290` for details.
 
 
 Monkeypatching environment variables
@@ -436,7 +438,7 @@ separate fixtures for each potential mock and reference them in the needed tests
             _ = app.create_connection_string()
 
 
-.. currentmodule:: _pytest.monkeypatch
+.. currentmodule:: pytest
 
 API Reference
 -------------

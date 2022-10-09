@@ -56,9 +56,8 @@ them in turn:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_expectation.py ..F                                              [100%]
@@ -110,7 +109,41 @@ the simple test function.  And as usual with test function arguments,
 you can see the ``input`` and ``output`` values in the traceback.
 
 Note that you could also use the parametrize marker on a class or a module
-(see :ref:`mark`) which would invoke several functions with the argument sets.
+(see :ref:`mark`) which would invoke several functions with the argument sets,
+for instance:
+
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.mark.parametrize("n,expected", [(1, 2), (3, 4)])
+    class TestClass:
+        def test_simple_case(self, n, expected):
+            assert n + 1 == expected
+
+        def test_weird_simple_case(self, n, expected):
+            assert (n * 1) + 1 == expected
+
+
+To parametrize all tests in a module, you can assign to the :globalvar:`pytestmark` global variable:
+
+
+.. code-block:: python
+
+    import pytest
+
+    pytestmark = pytest.mark.parametrize("n,expected", [(1, 2), (3, 4)])
+
+
+    class TestClass:
+        def test_simple_case(self, n, expected):
+            assert n + 1 == expected
+
+        def test_weird_simple_case(self, n, expected):
+            assert (n * 1) + 1 == expected
+
 
 It is also possible to mark individual test instances within parametrize,
 for example with the builtin ``mark.xfail``:
@@ -134,9 +167,8 @@ Let's run this:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 3 items
 
     test_expectation.py ..x                                              [100%]
@@ -234,8 +266,8 @@ Let's also run with a stringinput that will lead to a failing test:
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
     E       AssertionError: assert False
-    E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
-    E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
+    E        +  where False = <built-in method isalpha of str object at 0xdeadbeef0001>()
+    E        +    where <built-in method isalpha of str object at 0xdeadbeef0001> = '!'.isalpha
 
     test_strings.py:4: AssertionError
     ========================= short test summary info ==========================
@@ -253,7 +285,7 @@ list:
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:2
+    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at /home/sweet/project/test_strings.py:2
     1 skipped in 0.12s
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across

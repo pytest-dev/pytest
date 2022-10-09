@@ -1,7 +1,7 @@
 import os
 import shutil
-import sys
 from pathlib import Path
+from typing import Generator
 from typing import List
 
 import pytest
@@ -44,52 +44,54 @@ class TestNewAPI:
         assert cache is not None
         cache.set("test/broken", [])
 
-    @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
+    @pytest.fixture
+    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path, None, None]:
+        cache_dir = pytester.path.joinpath(".pytest_cache")
+        cache_dir.mkdir()
+        mode = cache_dir.stat().st_mode
+        cache_dir.chmod(0)
+        if os.access(cache_dir, os.W_OK):
+            pytest.skip("Failed to make cache dir unwritable")
+
+        yield cache_dir
+        cache_dir.chmod(mode)
+
     @pytest.mark.filterwarnings(
         "ignore:could not create cache path:pytest.PytestWarning"
     )
-    def test_cache_writefail_permissions(self, pytester: Pytester) -> None:
+    def test_cache_writefail_permissions(
+        self, unwritable_cache_dir: Path, pytester: Pytester
+    ) -> None:
         pytester.makeini("[pytest]")
-        cache_dir = pytester.path.joinpath(".pytest_cache")
-        cache_dir.mkdir()
-        mode = cache_dir.stat().st_mode
-        cache_dir.chmod(0)
-        try:
-            config = pytester.parseconfigure()
-            cache = config.cache
-            assert cache is not None
-            cache.set("test/broken", [])
-        finally:
-            cache_dir.chmod(mode)
+        config = pytester.parseconfigure()
+        cache = config.cache
+        assert cache is not None
+        cache.set("test/broken", [])
 
-    @pytest.mark.skipif(sys.platform.startswith("win"), reason="no chmod on windows")
     @pytest.mark.filterwarnings("default")
     def test_cache_failure_warns(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
+        self,
+        pytester: Pytester,
+        monkeypatch: MonkeyPatch,
+        unwritable_cache_dir: Path,
     ) -> None:
         monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-        cache_dir = pytester.path.joinpath(".pytest_cache")
-        cache_dir.mkdir()
-        mode = cache_dir.stat().st_mode
-        cache_dir.chmod(0)
-        try:
-            pytester.makepyfile("def test_error(): raise Exception")
-            result = pytester.runpytest()
-            assert result.ret == 1
-            # warnings from nodeids, lastfailed, and stepwise
-            result.stdout.fnmatch_lines(
-                [
-                    # Validate location/stacklevel of warning from cacheprovider.
-                    "*= warnings summary =*",
-                    "*/cacheprovider.py:*",
-                    "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
-                    "{}/v/cache/nodeids".format(cache_dir),
-                    '    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))',
-                    "*1 failed, 3 warnings in*",
-                ]
-            )
-        finally:
-            cache_dir.chmod(mode)
+
+        pytester.makepyfile("def test_error(): raise Exception")
+        result = pytester.runpytest()
+        assert result.ret == 1
+        # warnings from nodeids, lastfailed, and stepwise
+        result.stdout.fnmatch_lines(
+            [
+                # Validate location/stacklevel of warning from cacheprovider.
+                "*= warnings summary =*",
+                "*/cacheprovider.py:*",
+                "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
+                f"{unwritable_cache_dir}/v/cache/nodeids",
+                '    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))',
+                "*1 failed, 3 warnings in*",
+            ]
+        )
 
     def test_config_cache(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -771,7 +773,7 @@ class TestLastFailed:
         result = pytester.runpytest("--lf", "--lfnf", "none")
         result.stdout.fnmatch_lines(
             [
-                "collected 2 items / 2 deselected",
+                "collected 2 items / 2 deselected / 0 selected",
                 "run-last-failure: no previously failed tests, deselecting all items.",
                 "deselected=2",
                 "* 2 deselected in *",
@@ -977,7 +979,7 @@ class TestLastFailed:
                 "",
                 "<Module pkg1/test_1.py>",
                 "  <Class TestFoo>",
-                "      <Function test_fail>",
+                "    <Function test_fail>",
                 "  <Function test_other>",
                 "",
                 "*= 2/3 tests collected (1 deselected) in *",
@@ -1206,6 +1208,17 @@ def test_gitignore(pytester: Pytester) -> None:
     gitignore_path.write_text("custom")
     cache.set("something", "else")
     assert gitignore_path.read_text(encoding="UTF-8") == "custom"
+
+
+def test_preserve_keys_order(pytester: Pytester) -> None:
+    """Ensure keys order is preserved when saving dicts (#9205)."""
+    from _pytest.cacheprovider import Cache
+
+    config = pytester.parseconfig()
+    cache = Cache.for_config(config, _ispytest=True)
+    cache.set("foo", {"z": 1, "b": 2, "a": 3, "d": 10})
+    read_back = cache.get("foo", None)
+    assert list(read_back.items()) == [("z", 1), ("b", 2), ("a", 3), ("d", 10)]
 
 
 def test_does_not_create_boilerplate_in_existing_dirs(pytester: Pytester) -> None:

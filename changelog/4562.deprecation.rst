@@ -1,0 +1,4 @@
+Deprecate configuring hook specs/impls using attributes/marks.
+
+Instead use :py:func:`pytest.hookimpl` and :py:func:`pytest.hookspec`.
+For more details, see the :ref:`docs <legacy-path-hooks-deprecated>`.

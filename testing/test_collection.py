@@ -64,7 +64,7 @@ class TestCollector:
 
         assert pytester.collect_by_name(modcol, "doesnotexist") is None
 
-    def test_getparent(self, pytester: Pytester) -> None:
+    def test_getparent_and_accessors(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
             """
             class TestClass:
@@ -74,19 +74,24 @@ class TestCollector:
         )
         cls = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(cls, pytest.Class)
-        instance = pytester.collect_by_name(cls, "()")
-        assert isinstance(instance, pytest.Instance)
-        fn = pytester.collect_by_name(instance, "test_foo")
+        fn = pytester.collect_by_name(cls, "test_foo")
         assert isinstance(fn, pytest.Function)
 
-        module_parent = fn.getparent(pytest.Module)
-        assert module_parent is modcol
+        assert fn.getparent(pytest.Module) is modcol
+        assert modcol.module is not None
+        assert modcol.cls is None
+        assert modcol.instance is None
 
-        function_parent = fn.getparent(pytest.Function)
-        assert function_parent is fn
+        assert fn.getparent(pytest.Class) is cls
+        assert cls.module is not None
+        assert cls.cls is not None
+        assert cls.instance is None
 
-        class_parent = fn.getparent(pytest.Class)
-        assert class_parent is cls
+        assert fn.getparent(pytest.Function) is fn
+        assert fn.module is not None
+        assert fn.cls is not None
+        assert fn.instance is not None
+        assert fn.function is not None
 
     def test_getcustomfile_roundtrip(self, pytester: Pytester) -> None:
         hello = pytester.makefile(".xxx", hello="world")
@@ -95,9 +100,9 @@ class TestCollector:
             import pytest
             class CustomFile(pytest.File):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".xxx":
-                    return CustomFile.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".xxx":
+                    return CustomFile.from_parent(path=file_path, parent=parent)
         """
         )
         node = pytester.getpathnode(hello)
@@ -239,28 +244,32 @@ class TestCollectFS:
         pytester.makeini(
             """
             [pytest]
-            testpaths = gui uts
+            testpaths = */tests
         """
         )
         tmp_path = pytester.path
-        ensure_file(tmp_path / "env" / "test_1.py").write_text("def test_env(): pass")
-        ensure_file(tmp_path / "gui" / "test_2.py").write_text("def test_gui(): pass")
-        ensure_file(tmp_path / "uts" / "test_3.py").write_text("def test_uts(): pass")
+        ensure_file(tmp_path / "a" / "test_1.py").write_text("def test_a(): pass")
+        ensure_file(tmp_path / "b" / "tests" / "test_2.py").write_text(
+            "def test_b(): pass"
+        )
+        ensure_file(tmp_path / "c" / "tests" / "test_3.py").write_text(
+            "def test_c(): pass"
+        )
 
         # executing from rootdir only tests from `testpaths` directories
         # are collected
         items, reprec = pytester.inline_genitems("-v")
-        assert [x.name for x in items] == ["test_gui", "test_uts"]
+        assert [x.name for x in items] == ["test_b", "test_c"]
 
         # check that explicitly passing directories in the command-line
         # collects the tests
-        for dirname in ("env", "gui", "uts"):
+        for dirname in ("a", "b", "c"):
             items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
             assert [x.name for x in items] == ["test_%s" % dirname]
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
-        for dirname in ("env", "gui", "uts"):
+        for dirname in ("a", "b", "c"):
             monkeypatch.chdir(pytester.path.joinpath(dirname))
             items, reprec = pytester.inline_genitems()
             assert [x.name for x in items] == ["test_%s" % dirname]
@@ -271,10 +280,10 @@ class TestCollectPluginHookRelay:
         wascalled = []
 
         class Plugin:
-            def pytest_collect_file(self, fspath: Path) -> None:
-                if not fspath.name.startswith("."):
+            def pytest_collect_file(self, file_path: Path) -> None:
+                if not file_path.name.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
-                    wascalled.append(fspath)
+                    wascalled.append(file_path)
 
         pytester.makefile(".abc", "xyz")
         pytest.main(pytester.path, plugins=[Plugin()])
@@ -292,8 +301,8 @@ class TestPrunetraceback:
         pytester.makeconftest(
             """
             import pytest
-            def pytest_collect_file(fspath, parent):
-                return MyFile.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                return MyFile.from_parent(path=file_path, parent=parent)
             class MyError(Exception):
                 pass
             class MyFile(pytest.File):
@@ -335,8 +344,8 @@ class TestCustomConftests:
     def test_ignore_collect_path(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(fspath, config):
-                return fspath.name.startswith("x") or fspath.name == "test_one.py"
+            def pytest_ignore_collect(collection_path, config):
+                return collection_path.name.startswith("x") or collection_path.name == "test_one.py"
         """
         )
         sub = pytester.mkdir("xy123")
@@ -351,7 +360,7 @@ class TestCustomConftests:
     def test_ignore_collect_not_called_on_argument(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
-            def pytest_ignore_collect(fspath, config):
+            def pytest_ignore_collect(collection_path, config):
                 return True
         """
         )
@@ -419,9 +428,9 @@ class TestCustomConftests:
             import pytest
             class MyModule(pytest.Module):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".py":
-                    return MyModule.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".py":
+                    return MyModule.from_parent(path=file_path, parent=parent)
         """
         )
         pytester.mkdir("sub")
@@ -437,9 +446,9 @@ class TestCustomConftests:
             import pytest
             class MyModule1(pytest.Module):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".py":
-                    return MyModule1.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".py":
+                    return MyModule1.from_parent(path=file_path, parent=parent)
         """
         )
         conf1.replace(sub1.joinpath(conf1.name))
@@ -448,9 +457,9 @@ class TestCustomConftests:
             import pytest
             class MyModule2(pytest.Module):
                 pass
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".py":
-                    return MyModule2.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".py":
+                    return MyModule2.from_parent(path=file_path, parent=parent)
         """
         )
         conf2.replace(sub2.joinpath(conf2.name))
@@ -539,9 +548,9 @@ class TestSession:
             class SpecialFile(pytest.File):
                 def collect(self):
                     return [SpecialItem.from_parent(name="check", parent=self)]
-            def pytest_collect_file(fspath, parent):
-                if fspath.name == %r:
-                    return SpecialFile.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(file_path, parent):
+                if file_path.name == %r:
+                    return SpecialFile.from_parent(path=file_path, parent=parent)
         """
             % p.name
         )
@@ -614,8 +623,6 @@ class TestSession:
         items2, hookrec = pytester.inline_genitems(item.nodeid)
         (item2,) = items2
         assert item2.name == item.name
-        with pytest.warns(DeprecationWarning):
-            assert item2.fspath == item.fspath
         assert item2.path == item.path
 
     def test_find_byid_without_instance_parents(self, pytester: Pytester) -> None:
@@ -648,7 +655,7 @@ class Test_getinitialnodes:
         for parent in col.listchain():
             assert parent.config is config
 
-    def test_pkgfile(self, pytester: Pytester) -> None:
+    def test_pkgfile(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
         """Verify nesting when a module is within a package.
         The parent chain should match: Module<x.py> -> Package<subdir> -> Session.
             Session's parent should always be None.
@@ -657,7 +664,8 @@ class Test_getinitialnodes:
         subdir = tmp_path.joinpath("subdir")
         x = ensure_file(subdir / "x.py")
         ensure_file(subdir / "__init__.py")
-        with subdir.cwd():
+        with monkeypatch.context() as mp:
+            mp.chdir(subdir)
             config = pytester.parseconfigure(x)
         col = pytester.getnode(config, x)
         assert col is not None
@@ -761,13 +769,13 @@ def test_matchnodes_two_collections_same_file(pytester: Pytester) -> None:
             config.pluginmanager.register(Plugin2())
 
         class Plugin2(object):
-            def pytest_collect_file(self, fspath, parent):
-                if fspath.suffix == ".abc":
-                    return MyFile2.from_parent(path=fspath, parent=parent)
+            def pytest_collect_file(self, file_path, parent):
+                if file_path.suffix == ".abc":
+                    return MyFile2.from_parent(path=file_path, parent=parent)
 
-        def pytest_collect_file(fspath, parent):
-            if fspath.suffix == ".abc":
-                return MyFile1.from_parent(path=fspath, parent=parent)
+        def pytest_collect_file(file_path, parent):
+            if file_path.suffix == ".abc":
+                return MyFile1.from_parent(path=file_path, parent=parent)
 
         class MyFile1(pytest.File):
             def collect(self):
@@ -794,7 +802,7 @@ def test_matchnodes_two_collections_same_file(pytester: Pytester) -> None:
     res.stdout.fnmatch_lines(["*1 passed*"])
 
 
-class TestNodekeywords:
+class TestNodeKeywords:
     def test_no_under(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
             """
@@ -859,6 +867,54 @@ class TestNodekeywords:
         for expression in ("specifictopic", "SPECIFICTOPIC", "SpecificTopic"):
             reprec = pytester.inline_run("-k " + expression)
             reprec.assertoutcome(passed=num_matching_tests, failed=0)
+
+    def test_duplicates_handled_correctly(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            pytestmark = pytest.mark.kw
+            class TestClass:
+                pytestmark = pytest.mark.kw
+                def test_method(self): pass
+                test_method.kw = 'method'
+        """,
+            "test_method",
+        )
+        assert item.parent is not None and item.parent.parent is not None
+        item.parent.parent.keywords["kw"] = "class"
+
+        assert item.keywords["kw"] == "method"
+        assert len(item.keywords) == len(set(item.keywords))
+
+    def test_unpacked_marks_added_to_keywords(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            pytestmark = pytest.mark.foo
+            class TestClass:
+                pytestmark = pytest.mark.bar
+                def test_method(self): pass
+                test_method.pytestmark = pytest.mark.baz
+        """,
+            "test_method",
+        )
+        assert isinstance(item, pytest.Function)
+        cls = item.getparent(pytest.Class)
+        assert cls is not None
+        mod = item.getparent(pytest.Module)
+        assert mod is not None
+
+        assert item.keywords["foo"] == pytest.mark.foo.mark
+        assert item.keywords["bar"] == pytest.mark.bar.mark
+        assert item.keywords["baz"] == pytest.mark.baz.mark
+
+        assert cls.keywords["foo"] == pytest.mark.foo.mark
+        assert cls.keywords["bar"] == pytest.mark.bar.mark
+        assert "baz" not in cls.keywords
+
+        assert mod.keywords["foo"] == pytest.mark.foo.mark
+        assert "bar" not in mod.keywords
+        assert "baz" not in mod.keywords
 
 
 COLLECTION_ERROR_PY_FILES = dict(
@@ -1137,8 +1193,7 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
         """
         % (str(subdir),)
     )
-    with pytester.path.cwd():
-        result = pytester.runpytest()
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
     assert result.ret == 0
 
@@ -1149,8 +1204,7 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
         testpaths = .
     """
     )
-    with pytester.path.cwd():
-        result = pytester.runpytest("--collect-only")
+    result = pytester.runpytest("--collect-only")
     result.stdout.fnmatch_lines(["collected 1 item"])
 
 
@@ -1173,7 +1227,8 @@ def test_collect_pyargs_with_testpaths(
         )
     )
     monkeypatch.setenv("PYTHONPATH", str(pytester.path), prepend=os.pathsep)
-    with root.cwd():
+    with monkeypatch.context() as mp:
+        mp.chdir(root)
         result = pytester.runpytest_subprocess()
     result.stdout.fnmatch_lines(["*1 passed in*"])
 
@@ -1225,7 +1280,7 @@ def test_collect_symlink_dir(pytester: Pytester) -> None:
     """A symlinked directory is collected."""
     dir = pytester.mkdir("dir")
     dir.joinpath("test_it.py").write_text("def test_it(): pass", "utf-8")
-    pytester.path.joinpath("symlink_dir").symlink_to(dir)
+    symlink_or_skip(pytester.path.joinpath("symlink_dir"), dir)
     result = pytester.runpytest()
     result.assert_outcomes(passed=2)
 
@@ -1455,6 +1510,35 @@ class TestImportModeImportlib:
                 "* 1 failed in *",
             ]
         )
+
+    def test_using_python_path(self, pytester: Pytester) -> None:
+        """
+        Dummy modules created by insert_missing_modules should not get in
+        the way of modules that could be imported via python path (#9645).
+        """
+        pytester.makeini(
+            """
+            [pytest]
+            pythonpath = .
+            addopts = --import-mode importlib
+            """
+        )
+        pytester.makepyfile(
+            **{
+                "tests/__init__.py": "",
+                "tests/conftest.py": "",
+                "tests/subpath/__init__.py": "",
+                "tests/subpath/helper.py": "",
+                "tests/subpath/test_something.py": """
+                import tests.subpath.helper
+
+                def test_something():
+                    assert True
+                """,
+            }
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines("*1 passed in*")
 
 
 def test_does_not_crash_on_error_from_decorated_function(pytester: Pytester) -> None:

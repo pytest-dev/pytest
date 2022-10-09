@@ -23,8 +23,8 @@ make use of pytest's capabilities.
 Supported nose Idioms
 ----------------------
 
-* setup and teardown at module/class/method level
-* SkipTest exceptions and markers
+* ``setup()`` and ``teardown()`` at module/class/method level: any function or method called ``setup`` will be called during the setup phase for each test, same for ``teardown``.
+* ``SkipTest`` exceptions and markers
 * setup/teardown decorators
 * ``__test__`` attribute on modules/classes/functions
 * general usage of nose utilities
@@ -39,14 +39,13 @@ Unsupported idioms / known issues
   both support ``setup_class, teardown_class, setup_method, teardown_method``
   it doesn't seem useful to duplicate the unittest-API like nose does.
   If you however rather think pytest should support the unittest-spelling on
-  plain classes please post `to this issue
-  <https://github.com/pytest-dev/pytest/issues/377/>`_.
+  plain classes please post to :issue:`377`.
 
 - nose imports test modules with the same import path (e.g.
   ``tests.test_mode``) but different file system paths
   (e.g. ``tests/test_mode.py`` and ``other/tests/test_mode.py``)
   by extending sys.path/import semantics.   pytest does not do that
-  but there is discussion in `#268 <https://github.com/pytest-dev/pytest/issues/268>`_ for adding some support.  Note that
+  but there is discussion in :issue:`268` for adding some support.  Note that
   `nose2 choose to avoid this sys.path/import hackery <https://nose2.readthedocs.io/en/latest/differences.html#test-discovery-and-loading>`_.
 
   If you place a conftest.py file in the root directory of your project

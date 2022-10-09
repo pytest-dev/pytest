@@ -441,10 +441,8 @@ class TestXFail:
         result = pytester.runpytest(p, "-rx")
         result.stdout.fnmatch_lines(
             [
-                "*test_one*test_this*",
-                "*NOTRUN*noway",
-                "*test_one*test_this_true*",
-                "*NOTRUN*condition:*True*",
+                "*test_one*test_this - reason: *NOTRUN* noway",
+                "*test_one*test_this_true - reason: *NOTRUN* condition: True",
                 "*1 passed*",
             ]
         )
@@ -461,9 +459,7 @@ class TestXFail:
         """
         )
         result = pytester.runpytest(p, "-rx")
-        result.stdout.fnmatch_lines(
-            ["*test_one*test_this*", "*NOTRUN*hello", "*1 xfailed*"]
-        )
+        result.stdout.fnmatch_lines(["*test_one*test_this*NOTRUN*hello", "*1 xfailed*"])
 
     def test_xfail_xpass(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -489,7 +485,7 @@ class TestXFail:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
         result = pytester.runpytest(p, "-rx")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*", "*reason:*hello*"])
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*reason:*hello*"])
         result = pytester.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines(["*1 pass*"])
 
@@ -507,7 +503,7 @@ class TestXFail:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
         result = pytester.runpytest(p, "-rx")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*", "*reason:*hello*"])
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*reason:*hello*"])
         result = pytester.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines(
             """
@@ -543,7 +539,7 @@ class TestXFail:
         """
         )
         result = pytester.runpytest(p, "-rxX")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*", "*NOTRUN*"])
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*NOTRUN*"])
 
     def test_dynamic_xfail_set_during_funcarg_setup(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -622,7 +618,7 @@ class TestXFail:
         """
         )
         result = pytester.runpytest(p, "-rxX")
-        result.stdout.fnmatch_lines(["*XFAIL*", "*unsupported feature*"])
+        result.stdout.fnmatch_lines(["*XFAIL*unsupported feature*"])
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict", [True, False])
@@ -876,7 +872,8 @@ class TestSkip:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "*TypeError: __init__() got multiple values for argument 'reason' - maybe you meant pytest.mark.skipif?"
+                "*TypeError: *__init__() got multiple values for argument 'reason'"
+                " - maybe you meant pytest.mark.skipif?"
             ]
         )
 
@@ -1144,19 +1141,30 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
         markline = markline[5:]
     elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
         markline = markline[4:]
-    result.stdout.fnmatch_lines(
-        [
+
+    if sys.version_info[:2] >= (3, 10):
+        expected = [
             "*ERROR*test_nameerror*",
-            "*evaluating*skipif*condition*",
             "*asd*",
-            "*ERROR*test_syntax*",
-            "*evaluating*xfail*condition*",
-            "    syntax error",
-            markline,
-            "SyntaxError: invalid syntax",
-            "*1 pass*2 errors*",
+            "",
+            "During handling of the above exception, another exception occurred:",
         ]
-    )
+    else:
+        expected = [
+            "*ERROR*test_nameerror*",
+        ]
+
+    expected += [
+        "*evaluating*skipif*condition*",
+        "*asd*",
+        "*ERROR*test_syntax*",
+        "*evaluating*xfail*condition*",
+        "    syntax error",
+        markline,
+        "SyntaxError: invalid syntax",
+        "*1 pass*2 errors*",
+    ]
+    result.stdout.fnmatch_lines(expected)
 
 
 def test_xfail_skipif_with_globals(pytester: Pytester) -> None:
@@ -1173,7 +1181,7 @@ def test_xfail_skipif_with_globals(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest("-rsx")
-    result.stdout.fnmatch_lines(["*SKIP*x == 3*", "*XFAIL*test_boolean*", "*x == 3*"])
+    result.stdout.fnmatch_lines(["*SKIP*x == 3*", "*XFAIL*test_boolean*x == 3*"])
 
 
 def test_default_markers(pytester: Pytester) -> None:
@@ -1285,8 +1293,7 @@ class TestBooleanCondition:
         result = pytester.runpytest("-rxs")
         result.stdout.fnmatch_lines(
             """
-            *XFAIL*
-            *True123*
+            *XFAIL*True123*
             *1 xfail*
         """
         )
@@ -1303,7 +1310,7 @@ def test_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 pytest.xfail("Expected Failure")
 
-        def pytest_collect_file(fspath, parent):
+        def pytest_collect_file(file_path, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )
@@ -1327,7 +1334,7 @@ def test_module_level_skip_error(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
-        ["*Using pytest.skip outside of a test is not allowed*"]
+        ["*Using pytest.skip outside of a test will skip the entire module*"]
     )
 
 
@@ -1377,7 +1384,7 @@ def test_mark_xfail_item(pytester: Pytester) -> None:
             def runtest(self):
                 assert False
 
-        def pytest_collect_file(fspath, parent):
+        def pytest_collect_file(file_path, parent):
             return MyItem.from_parent(name="foo", parent=parent)
     """
     )
@@ -1430,3 +1437,92 @@ def test_relpath_rootdir(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         ["SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip"]
     )
+
+
+def test_skip_using_reason_works_ok(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_skipping_reason():
+            pytest.skip(reason="skippedreason")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.no_fnmatch_line("*PytestDeprecationWarning*")
+    result.assert_outcomes(skipped=1)
+
+
+def test_fail_using_reason_works_ok(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_failing_reason():
+            pytest.fail(reason="failedreason")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.no_fnmatch_line("*PytestDeprecationWarning*")
+    result.assert_outcomes(failed=1)
+
+
+def test_fail_fails_with_msg_and_reason(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_fail_both_arguments():
+            pytest.fail(reason="foo", msg="bar")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        "*UsageError: Passing both ``reason`` and ``msg`` to pytest.fail(...) is not permitted.*"
+    )
+    result.assert_outcomes(failed=1)
+
+
+def test_skip_fails_with_msg_and_reason(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_skip_both_arguments():
+            pytest.skip(reason="foo", msg="bar")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        "*UsageError: Passing both ``reason`` and ``msg`` to pytest.skip(...) is not permitted.*"
+    )
+    result.assert_outcomes(failed=1)
+
+
+def test_exit_with_msg_and_reason_fails(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_exit_both_arguments():
+            pytest.exit(reason="foo", msg="bar")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines(
+        "*UsageError: cannot pass reason and msg to exit(), `msg` is deprecated, use `reason`.*"
+    )
+    result.assert_outcomes(failed=1)
+
+
+def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        def test_exit_reason_only():
+            pytest.exit(reason="foo")
+        """
+    )
+    result = pytester.runpytest(p)
+    result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")

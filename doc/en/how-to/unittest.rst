@@ -27,13 +27,15 @@ Almost all ``unittest`` features are supported:
 * ``setUpClass/tearDownClass``;
 * ``setUpModule/tearDownModule``;
 
+.. _`pytest-subtests`: https://github.com/pytest-dev/pytest-subtests
 .. _`load_tests protocol`: https://docs.python.org/3/library/unittest.html#load-tests-protocol
-.. _`subtests`: https://docs.python.org/3/library/unittest.html#distinguishing-test-iterations-using-subtests
+
+Additionally, :ref:`subtests <python:subtests>` are supported by the
+`pytest-subtests`_ plugin.
 
 Up to this point pytest does not have support for the following features:
 
 * `load_tests protocol`_;
-* `subtests`_;
 
 Benefits out of the box
 -----------------------
@@ -47,9 +49,9 @@ in most cases without having to modify existing code:
 * :ref:`maxfail`;
 * :ref:`--pdb <pdb-option>` command-line option for debugging on test failures
   (see :ref:`note <pdb-unittest-note>` below);
-* Distribute tests to multiple CPUs using the `pytest-xdist <https://pypi.org/project/pytest-xdist/>`_ plugin;
-* Use :ref:`plain assert-statements <assert>` instead of ``self.assert*`` functions (`unittest2pytest
-  <https://pypi.org/project/unittest2pytest/>`__ is immensely helpful in this);
+* Distribute tests to multiple CPUs using the :pypi:`pytest-xdist` plugin;
+* Use :ref:`plain assert-statements <assert>` instead of ``self.assert*`` functions
+  (:pypi:`unittest2pytest` is immensely helpful in this);
 
 
 pytest features in ``unittest.TestCase`` subclasses
@@ -116,6 +118,7 @@ fixture definition:
     # content of test_unittest_db.py
 
     import unittest
+
     import pytest
 
 
@@ -137,9 +140,8 @@ the ``self.db`` values in the traceback:
 
     $ pytest test_unittest_db.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 2 items
 
     test_unittest_db.py FF                                               [100%]
@@ -152,7 +154,7 @@ the ``self.db`` values in the traceback:
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db  # fail for demo purposes
-    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
+    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef0001>
     E       assert 0
 
     test_unittest_db.py:10: AssertionError
@@ -162,7 +164,7 @@ the ``self.db`` values in the traceback:
 
         def test_method2(self):
     >       assert 0, self.db  # fail for demo purposes
-    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
+    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef0001>
     E       assert 0
 
     test_unittest_db.py:13: AssertionError
@@ -196,9 +198,9 @@ creation of a per-test temporary directory:
 .. code-block:: python
 
     # content of test_unittest_cleandir.py
-    import os
-    import pytest
     import unittest
+
+    import pytest
 
 
     class MyTest(unittest.TestCase):

@@ -1,0 +1,1 @@
+Added shell-style wildcard support to ``testpaths``.

@@ -103,10 +103,6 @@ def test_getfuncargnames_staticmethod_partial():
 
 @pytest.mark.pytester_example_path("fixtures/fill_fixtures")
 class TestFillFixtures:
-    def test_fillfuncargs_exposed(self):
-        # used by oejskit, kept for compatibility
-        assert pytest._fillfuncargs == fixtures._fillfuncargs
-
     def test_funcarg_lookupfails(self, pytester: Pytester) -> None:
         pytester.copy_example()
         result = pytester.runpytest()  # "--collect-only")
@@ -967,8 +963,6 @@ class TestRequestBasic:
         (item,) = pytester.genitems([modcol])
         req = fixtures.FixtureRequest(item, _ispytest=True)
         assert req.path == modcol.path
-        with pytest.warns(pytest.PytestDeprecationWarning):
-            assert req.fspath == modcol.fspath
 
     def test_request_fixturenames(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1092,6 +1086,20 @@ class TestRequestBasic:
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+class TestRequestSessionScoped:
+    @pytest.fixture(scope="session")
+    def session_request(self, request):
+        return request
+
+    @pytest.mark.parametrize("name", ["path", "module"])
+    def test_session_scoped_unavailable_attributes(self, session_request, name):
+        with pytest.raises(
+            AttributeError,
+            match=f"{name} not available in session-scoped context",
+        ):
+            getattr(session_request, name)
 
 
 class TestRequestMarking:
@@ -2069,9 +2077,9 @@ class TestAutouseManagement:
         reprec = pytester.inline_run("-v", "-s", "--confcutdir", pytester.path)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
-        values = config.pluginmanager._getconftestmodules(p, importmode="prepend")[
-            0
-        ].values
+        values = config.pluginmanager._getconftestmodules(
+            p, importmode="prepend", rootpath=pytester.path
+        )[0].values
         assert values == ["fin_a1", "fin_a2", "fin_b1", "fin_b2"] * 2
 
     def test_scope_ordering(self, pytester: Pytester) -> None:
@@ -3334,9 +3342,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]]",
+                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path",
+                "tmp_path -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3345,9 +3353,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]] -- *tmpdir.py*",
+                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -- *tmpdir.py*",
+                "tmp_path -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3367,9 +3375,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmp_path
+            *tmp_path -- *
             *fixtures defined from*
-            *arg1*
+            *arg1 -- test_show_fixtures_testmodule.py:6*
             *hello world*
         """
         )
@@ -3429,10 +3437,10 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_trimmed_doc *
-                arg2
+                arg2 -- test_show_fixtures_trimmed_doc.py:10
                     line1
                     line2
-                arg1
+                arg1 -- test_show_fixtures_trimmed_doc.py:3
                     line1
                     line2
                 """
@@ -3458,7 +3466,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc *
-                fixture1
+                fixture1 -- test_show_fixtures_indented_doc.py:3
                     line1
                         indented line
                 """
@@ -3486,7 +3494,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc_first_line_unindented *
-                fixture1
+                fixture1 -- test_show_fixtures_indented_doc_first_line_unindented.py:3
                     line1
                     line2
                         indented line
@@ -3514,7 +3522,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_in_class *
-                fixture1
+                fixture1 -- test_show_fixtures_indented_in_class.py:4
                     line1
                     line2
                         indented line
@@ -3554,11 +3562,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from test_a *
-            fix_a
+            fix_a -- test_a.py:4
                 Fixture A
 
             * fixtures defined from test_b *
-            fix_b
+            fix_b -- test_b.py:4
                 Fixture B
         """
         )
@@ -3594,11 +3602,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from conftest *
-            arg1
+            arg1 -- conftest.py:3
                 Hello World in conftest.py
 
             * fixtures defined from test_show_fixtures_with_same_name *
-            arg1
+            arg1 -- test_show_fixtures_with_same_name.py:3
                 Hi from test module
         """
         )

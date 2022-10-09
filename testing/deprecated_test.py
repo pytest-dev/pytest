@@ -1,17 +1,13 @@
 import re
+import sys
 import warnings
-from unittest import mock
+from pathlib import Path
 
 import pytest
 from _pytest import deprecated
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
-
-
-@pytest.mark.parametrize("attribute", pytest.collect.__all__)  # type: ignore
-# false positive due to dynamic attribute
-def test_pytest_collect_module_deprecated(attribute) -> None:
-    with pytest.warns(DeprecationWarning, match=attribute):
-        getattr(pytest.collect, attribute)
+from pytest import PytestDeprecationWarning
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
@@ -24,52 +20,52 @@ def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:
         pytester.parseconfig("-p", plugin)
 
 
-def test_fillfuncargs_is_deprecated() -> None:
-    with pytest.warns(
-        pytest.PytestDeprecationWarning,
-        match=re.escape(
-            "pytest._fillfuncargs() is deprecated, use "
-            "function._request._fillfixtures() instead if you cannot avoid reaching into internals."
-        ),
-    ):
-        pytest._fillfuncargs(mock.Mock())
+def test_hookspec_via_function_attributes_are_deprecated():
+    from _pytest.config import PytestPluginManager
 
+    pm = PytestPluginManager()
 
-def test_fillfixtures_is_deprecated() -> None:
-    import _pytest.fixtures
+    class DeprecatedHookMarkerSpec:
+        def pytest_bad_hook(self):
+            pass
+
+        pytest_bad_hook.historic = False  # type: ignore[attr-defined]
 
     with pytest.warns(
-        pytest.PytestDeprecationWarning,
-        match=re.escape(
-            "_pytest.fixtures.fillfixtures() is deprecated, use "
-            "function._request._fillfixtures() instead if you cannot avoid reaching into internals."
-        ),
-    ):
-        _pytest.fixtures.fillfixtures(mock.Mock())
-
-
-def test_minus_k_dash_is_deprecated(pytester: Pytester) -> None:
-    threepass = pytester.makepyfile(
-        test_threepass="""
-        def test_one(): assert 1
-        def test_two(): assert 1
-        def test_three(): assert 1
-    """
+        PytestDeprecationWarning,
+        match=r"Please use the pytest\.hookspec\(historic=False\) decorator",
+    ) as recorder:
+        pm.add_hookspecs(DeprecatedHookMarkerSpec)
+    (record,) = recorder
+    assert (
+        record.lineno
+        == DeprecatedHookMarkerSpec.pytest_bad_hook.__code__.co_firstlineno
     )
-    result = pytester.runpytest("-k=-test_two", threepass)
-    result.stdout.fnmatch_lines(["*The `-k '-expr'` syntax*deprecated*"])
+    assert record.filename == __file__
 
 
-def test_minus_k_colon_is_deprecated(pytester: Pytester) -> None:
-    threepass = pytester.makepyfile(
-        test_threepass="""
-        def test_one(): assert 1
-        def test_two(): assert 1
-        def test_three(): assert 1
-    """
+def test_hookimpl_via_function_attributes_are_deprecated():
+    from _pytest.config import PytestPluginManager
+
+    pm = PytestPluginManager()
+
+    class DeprecatedMarkImplPlugin:
+        def pytest_runtest_call(self):
+            pass
+
+        pytest_runtest_call.tryfirst = True  # type: ignore[attr-defined]
+
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=r"Please use the pytest.hookimpl\(tryfirst=True\)",
+    ) as recorder:
+        pm.register(DeprecatedMarkImplPlugin())
+    (record,) = recorder
+    assert (
+        record.lineno
+        == DeprecatedMarkImplPlugin.pytest_runtest_call.__code__.co_firstlineno
     )
-    result = pytester.runpytest("-k", "test_two:", threepass)
-    result.stdout.fnmatch_lines(["*The `-k 'expr:'` syntax*deprecated*"])
+    assert record.filename == __file__
 
 
 def test_fscollector_gethookproxy_isinitpath(pytester: Pytester) -> None:
@@ -111,7 +107,7 @@ def test_strict_option_is_deprecated(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "'unknown' not found in `markers` configuration option",
-            "*PytestDeprecationWarning: The --strict option is deprecated, use --strict-markers instead.",
+            "*PytestRemovedIn8Warning: The --strict option is deprecated, use --strict-markers instead.",
         ]
     )
 
@@ -138,18 +134,148 @@ def test_private_is_deprecated() -> None:
     PrivateInit(10, _ispytest=True)
 
 
-def test_raising_unittest_skiptest_during_collection_is_deprecated(
-    pytester: Pytester,
-) -> None:
-    pytester.makepyfile(
+@pytest.mark.parametrize("hooktype", ["hook", "ihook"])
+def test_hookproxy_warnings_for_pathlib(tmp_path, hooktype, request):
+    path = legacy_path(tmp_path)
+
+    PATH_WARN_MATCH = r".*path: py\.path\.local\) argument is deprecated, please use \(collection_path: pathlib\.Path.*"
+    if hooktype == "ihook":
+        hooks = request.node.ihook
+    else:
+        hooks = request.config.hook
+
+    with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
+        l1 = sys._getframe().f_lineno
+        hooks.pytest_ignore_collect(
+            config=request.config, path=path, collection_path=tmp_path
+        )
+        l2 = sys._getframe().f_lineno
+
+    (record,) = r
+    assert record.filename == __file__
+    assert l1 < record.lineno < l2
+
+    hooks.pytest_ignore_collect(config=request.config, collection_path=tmp_path)
+
+    # Passing entirely *different* paths is an outright error.
+    with pytest.raises(ValueError, match=r"path.*fspath.*need to be equal"):
+        with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
+            hooks.pytest_ignore_collect(
+                config=request.config, path=path, collection_path=Path("/bla/bla")
+            )
+
+
+def test_warns_none_is_deprecated():
+    with pytest.warns(
+        PytestDeprecationWarning,
+        match=re.escape(
+            "Passing None has been deprecated.\n"
+            "See https://docs.pytest.org/en/latest/how-to/capture-warnings.html"
+            "#additional-use-cases-of-warnings-in-tests"
+            " for alternatives in common use cases."
+        ),
+    ):
+        with pytest.warns(None):  # type: ignore[call-overload]
+            pass
+
+
+class TestSkipMsgArgumentDeprecated:
+    def test_skip_with_msg_is_deprecated(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def test_skipping_msg():
+                pytest.skip(msg="skippedmsg")
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn8Warning: pytest.skip(msg=...) is now deprecated, "
+                "use pytest.skip(reason=...) instead",
+                '*pytest.skip(msg="skippedmsg")*',
+            ]
+        )
+        result.assert_outcomes(skipped=1, warnings=1)
+
+    def test_fail_with_msg_is_deprecated(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def test_failing_msg():
+                pytest.fail(msg="failedmsg")
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn8Warning: pytest.fail(msg=...) is now deprecated, "
+                "use pytest.fail(reason=...) instead",
+                '*pytest.fail(msg="failedmsg")',
+            ]
+        )
+        result.assert_outcomes(failed=1, warnings=1)
+
+    def test_exit_with_msg_is_deprecated(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            def test_exit_msg():
+                pytest.exit(msg="exitmsg")
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn8Warning: pytest.exit(msg=...) is now deprecated, "
+                "use pytest.exit(reason=...) instead",
+            ]
+        )
+        result.assert_outcomes(warnings=1)
+
+
+def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
+    pytester.makeconftest(
         """
-        import unittest
-        raise unittest.SkipTest()
+        def pytest_cmdline_preparse(config, args):
+            ...
+
         """
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*PytestDeprecationWarning: Raising unittest.SkipTest*",
+            "*PytestRemovedIn8Warning: The pytest_cmdline_preparse hook is deprecated*",
+            "*Please use pytest_load_initial_conftests hook instead.*",
         ]
     )
+
+
+def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
+    mod = pytester.getmodulecol("")
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape("The (fspath: py.path.local) argument to File is deprecated."),
+    ):
+        pytest.File.from_parent(
+            parent=mod.parent,
+            fspath=legacy_path("bla"),
+        )
+
+
+def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape("The pytest.Instance collector type is deprecated"),
+    ):
+        pytest.Instance
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape("The pytest.Instance collector type is deprecated"),
+    ):
+        from _pytest.python import Instance  # noqa: F401

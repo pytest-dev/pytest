@@ -41,10 +41,7 @@ EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
 def istestfunc(func) -> bool:
-    return (
-        hasattr(func, "__call__")
-        and getattr(func, "__name__", "<lambda>") != "<lambda>"
-    )
+    return callable(func) and getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 
 def get_empty_parameterset_mark(
@@ -76,16 +73,11 @@ def get_empty_parameterset_mark(
     return mark
 
 
-class ParameterSet(
-    NamedTuple(
-        "ParameterSet",
-        [
-            ("values", Sequence[Union[object, NotSetType]]),
-            ("marks", Collection[Union["MarkDecorator", "Mark"]]),
-            ("id", Optional[str]),
-        ],
-    )
-):
+class ParameterSet(NamedTuple):
+    values: Sequence[Union[object, NotSetType]]
+    marks: Collection[Union["MarkDecorator", "Mark"]]
+    id: Optional[str]
+
     @classmethod
     def param(
         cls,
@@ -100,9 +92,7 @@ class ParameterSet(
 
         if id is not None:
             if not isinstance(id, str):
-                raise TypeError(
-                    "Expected id to be a string, got {}: {!r}".format(type(id), id)
-                )
+                raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
             id = ascii_escaped(id)
         return cls(values, marks, id)
 
@@ -137,12 +127,12 @@ class ParameterSet(
 
     @staticmethod
     def _parse_parametrize_args(
-        argnames: Union[str, List[str], Tuple[str, ...]],
+        argnames: Union[str, Sequence[str]],
         argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
         *args,
         **kwargs,
-    ) -> Tuple[Union[List[str], Tuple[str, ...]], bool]:
-        if not isinstance(argnames, (tuple, list)):
+    ) -> Tuple[Sequence[str], bool]:
+        if isinstance(argnames, str):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
         else:
@@ -161,12 +151,12 @@ class ParameterSet(
     @classmethod
     def _for_parametrize(
         cls,
-        argnames: Union[str, List[str], Tuple[str, ...]],
+        argnames: Union[str, Sequence[str]],
         argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
         func,
         config: Config,
         nodeid: str,
-    ) -> Tuple[Union[List[str], Tuple[str, ...]], List["ParameterSet"]]:
+    ) -> Tuple[Sequence[str], List["ParameterSet"]]:
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -335,9 +325,6 @@ class MarkDecorator:
         """:meta private:"""
         return self.name  # for backward-compat (2.4.1 had this attr)
 
-    def __repr__(self) -> str:
-        return f"<MarkDecorator {self.mark!r}>"
-
     def with_args(self, *args: object, **kwargs: object) -> "MarkDecorator":
         """Return a MarkDecorator with extra arguments added.
 
@@ -369,7 +356,7 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
-def get_unpacked_marks(obj) -> List[Mark]:
+def get_unpacked_marks(obj: object) -> Iterable[Mark]:
     """Obtain the unpacked marks that are stored on an object."""
     mark_list = getattr(obj, "pytestmark", [])
     if not isinstance(mark_list, list):
@@ -377,19 +364,21 @@ def get_unpacked_marks(obj) -> List[Mark]:
     return normalize_mark_list(mark_list)
 
 
-def normalize_mark_list(mark_list: Iterable[Union[Mark, MarkDecorator]]) -> List[Mark]:
-    """Normalize marker decorating helpers to mark objects.
-
-    :type List[Union[Mark, Markdecorator]] mark_list:
-    :rtype: List[Mark]
+def normalize_mark_list(
+    mark_list: Iterable[Union[Mark, MarkDecorator]]
+) -> Iterable[Mark]:
     """
-    extracted = [
-        getattr(mark, "mark", mark) for mark in mark_list
-    ]  # unpack MarkDecorator
-    for mark in extracted:
-        if not isinstance(mark, Mark):
-            raise TypeError(f"got {mark!r} instead of Mark")
-    return [x for x in extracted if isinstance(x, Mark)]
+    Normalize an iterable of Mark or MarkDecorator objects into a list of marks
+    by retrieving the `mark` attribute on MarkDecorator instances.
+
+    :param mark_list: marks to normalize
+    :returns: A new list of the extracted Mark objects
+    """
+    for mark in mark_list:
+        mark_obj = getattr(mark, "mark", mark)
+        if not isinstance(mark_obj, Mark):
+            raise TypeError(f"got {repr(mark_obj)} instead of Mark")
+        yield mark_obj
 
 
 def store_mark(obj, mark: Mark) -> None:
@@ -403,16 +392,16 @@ def store_mark(obj, mark: Mark) -> None:
     if hasattr(obj, "_pytestfixturefunction"):
         warnings.warn(MARKED_FIXTURE, stacklevel=2)
 
-    obj.pytestmark = get_unpacked_marks(obj) + [mark]
+    obj.pytestmark = [*get_unpacked_marks(obj), mark]
 
 
 # Typing for builtin pytest marks. This is cheating; it gives builtin marks
 # special privilege, and breaks modularity. But practicality beats purity...
 if TYPE_CHECKING:
-    from _pytest.fixtures import _Scope
+    from _pytest.scope import _ScopeName
 
     class _SkipMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,misc]
+        @overload  # type: ignore[override,misc,no-overload-impl]
         def __call__(self, arg: Markable) -> Markable:
             ...
 
@@ -430,7 +419,7 @@ if TYPE_CHECKING:
             ...
 
     class _XfailMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,misc]
+        @overload  # type: ignore[override,misc,no-overload-impl]
         def __call__(self, arg: Markable) -> Markable:
             ...
 
@@ -449,7 +438,7 @@ if TYPE_CHECKING:
     class _ParametrizeMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self,
-            argnames: Union[str, List[str], Tuple[str, ...]],
+            argnames: Union[str, Sequence[str]],
             argvalues: Iterable[Union[ParameterSet, Sequence[object], object]],
             *,
             indirect: Union[bool, Sequence[str]] = ...,
@@ -459,7 +448,7 @@ if TYPE_CHECKING:
                     Callable[[Any], Optional[object]],
                 ]
             ] = ...,
-            scope: Optional[_Scope] = ...,
+            scope: Optional[_ScopeName] = ...,
         ) -> MarkDecorator:
             ...
 
@@ -536,7 +525,7 @@ class MarkGenerator:
                 warnings.warn(
                     "Unknown pytest.mark.%s - is this a typo?  You can register "
                     "custom marks to avoid this warning - for details, see "
-                    "https://docs.pytest.org/en/stable/mark.html" % name,
+                    "https://docs.pytest.org/en/stable/how-to/mark.html" % name,
                     PytestUnknownMarkWarning,
                     2,
                 )
@@ -549,6 +538,8 @@ MARK_GEN = MarkGenerator(_ispytest=True)
 
 @final
 class NodeKeywords(MutableMapping[str, Any]):
+    __slots__ = ("node", "parent", "_markers")
+
     def __init__(self, node: "Node") -> None:
         self.node = node
         self.parent = node.parent
@@ -565,21 +556,39 @@ class NodeKeywords(MutableMapping[str, Any]):
     def __setitem__(self, key: str, value: Any) -> None:
         self._markers[key] = value
 
+    # Note: we could've avoided explicitly implementing some of the methods
+    # below and use the collections.abc fallback, but that would be slow.
+
+    def __contains__(self, key: object) -> bool:
+        return (
+            key in self._markers
+            or self.parent is not None
+            and key in self.parent.keywords
+        )
+
+    def update(  # type: ignore[override]
+        self,
+        other: Union[Mapping[str, Any], Iterable[Tuple[str, Any]]] = (),
+        **kwds: Any,
+    ) -> None:
+        self._markers.update(other)
+        self._markers.update(kwds)
+
     def __delitem__(self, key: str) -> None:
         raise ValueError("cannot delete key in keywords dict")
 
     def __iter__(self) -> Iterator[str]:
-        seen = self._seen()
-        return iter(seen)
-
-    def _seen(self) -> Set[str]:
-        seen = set(self._markers)
+        # Doesn't need to be fast.
+        yield from self._markers
         if self.parent is not None:
-            seen.update(self.parent.keywords)
-        return seen
+            for keyword in self.parent.keywords:
+                # self._marks and self.parent.keywords can have duplicates.
+                if keyword not in self._markers:
+                    yield keyword
 
     def __len__(self) -> int:
-        return len(self._seen())
+        # Doesn't need to be fast.
+        return sum(1 for keyword in self)
 
     def __repr__(self) -> str:
         return f"<NodeKeywords for node {self.node}>"

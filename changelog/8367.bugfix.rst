@@ -1,1 +1,0 @@
-Fix ``Class.from_parent`` so it forwards extra keyword arguments to the constructor.

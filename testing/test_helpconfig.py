@@ -7,16 +7,22 @@ def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = pytester.runpytest("--version", "--version")
     assert result.ret == 0
-    result.stderr.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
+    result.stdout.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
     if pytestconfig.pluginmanager.list_plugin_distinfo():
-        result.stderr.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
+        result.stdout.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
 
 
 def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     result = pytester.runpytest("--version")
     assert result.ret == 0
-    result.stderr.fnmatch_lines([f"pytest {pytest.__version__}"])
+    result.stdout.fnmatch_lines([f"pytest {pytest.__version__}"])
+
+
+def test_versions():
+    """Regression check for the public version attributes in pytest."""
+    assert isinstance(pytest.__version__, str)
+    assert isinstance(pytest.version_tuple, tuple)
 
 
 def test_help(pytester: Pytester) -> None:
@@ -24,11 +30,11 @@ def test_help(pytester: Pytester) -> None:
     assert result.ret == 0
     result.stdout.fnmatch_lines(
         """
-          -m MARKEXPR           only run tests matching given mark expression.
-                                For example: -m 'mark1 and not mark2'.
-        reporting:
+          -m MARKEXPR           Only run tests matching given mark expression. For
+                                example: -m 'mark1 and not mark2'.
+        Reporting:
           --durations=N *
-          -V, --version         display pytest version and information about plugins.
+          -V, --version         Display pytest version and information about plugins.
                                 When given twice, also display information about
                                 plugins.
         *setup.cfg*
@@ -65,9 +71,9 @@ def test_empty_help_param(pytester: Pytester) -> None:
     assert result.ret == 0
     lines = [
         "  required_plugins (args):",
-        "                        plugins that must be present for pytest to run*",
+        "                        Plugins that must be present for pytest to run*",
         "  test_ini (bool):*",
-        "environment variables:",
+        "Environment variables:",
     ]
     result.stdout.fnmatch_lines(lines, consecutive=True)
 
@@ -99,7 +105,7 @@ def test_hookvalidation_optional(pytester: Pytester) -> None:
 
 def test_traceconfig(pytester: Pytester) -> None:
     result = pytester.runpytest("--traceconfig")
-    result.stdout.fnmatch_lines(["*using*pytest*py*", "*active plugins*"])
+    result.stdout.fnmatch_lines(["*using*pytest*", "*active plugins*"])
 
 
 def test_debug(pytester: Pytester) -> None:

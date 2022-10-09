@@ -16,17 +16,19 @@ Core pytest functionality
    fixtures
    mark
    parametrize
-   tmpdir
+   tmp_path
    monkeypatch
    doctest
    cache
 
-test output and outcomes
+Test output and outcomes
 ----------------------------
 
 .. toctree::
    :maxdepth: 1
 
+   failures
+   output
    logging
    capture-stdout-stderr
    capture-warnings

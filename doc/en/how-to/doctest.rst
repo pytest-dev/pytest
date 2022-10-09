@@ -4,7 +4,7 @@ How to run doctests
 =========================================================
 
 By default, all files matching the ``test*.txt`` pattern will
-be run through the python standard ``doctest`` module.  You
+be run through the python standard :mod:`doctest` module.  You
 can change the pattern by issuing:
 
 .. code-block:: bash
@@ -30,9 +30,8 @@ then you can just invoke ``pytest`` directly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 1 item
 
     test_example.txt .                                                   [100%]
@@ -59,9 +58,8 @@ and functions, including from test modules:
 
     $ pytest --doctest-modules
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
-    cachedir: $PYTHON_PREFIX/.pytest_cache
-    rootdir: $REGENDOC_TMPDIR
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    rootdir: /home/sweet/project
     collected 2 items
 
     mymodule.py .                                                        [ 50%]
@@ -92,10 +90,12 @@ that will be used for those doctest files using the
     [pytest]
     doctest_encoding = latin1
 
+.. _using doctest options:
+
 Using 'doctest' options
 -----------------------
 
-Python's standard ``doctest`` module provides some `options <https://docs.python.org/3/library/doctest.html#option-flags>`__
+Python's standard :mod:`doctest` module provides some :ref:`options <python:option-flags-and-directives>`
 to configure the strictness of doctest tests. In pytest, you can enable those flags using the
 configuration file.
 
@@ -126,14 +126,17 @@ pytest also introduces new options:
   in expected doctest output.
 
 * ``NUMBER``: when enabled, floating-point numbers only need to match as far as
-  the precision you have written in the expected doctest output. For example,
-  the following output would only need to match to 2 decimal places::
+  the precision you have written in the expected doctest output. The numbers are
+  compared using :func:`pytest.approx` with relative tolerance equal to the
+  precision. For example, the following output would only need to match to 2
+  decimal places when comparing ``3.14`` to
+  ``pytest.approx(math.pi, rel=10**-2)``::
 
       >>> math.pi
       3.14
 
-  If you wrote ``3.1416`` then the actual output would need to match to 4
-  decimal places; and so on.
+  If you wrote ``3.1416`` then the actual output would need to match to
+  approximately 4 decimal places; and so on.
 
   This avoids false positives caused by limited floating-point precision, like
   this::
@@ -239,7 +242,6 @@ which can then be used in your doctests directly:
         >>> len(a)
         10
         """
-        pass
 
 Note that like the normal ``conftest.py``, the fixtures are discovered in the directory tree conftest is in.
 Meaning that if you put your doctest with your source code, the relevant conftest.py needs to be in the same directory tree.
@@ -252,7 +254,7 @@ For the same reasons one might want to skip normal tests, it is also possible to
 tests inside doctests.
 
 To skip a single check inside a doctest you can use the standard
-`doctest.SKIP <https://docs.python.org/3/library/doctest.html#doctest.SKIP>`__ directive:
+:data:`doctest.SKIP` directive:
 
 .. code-block:: python
 

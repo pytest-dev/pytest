@@ -1,6 +1,7 @@
 import os
 import stat
 import sys
+import warnings
 from pathlib import Path
 from typing import Callable
 from typing import cast
@@ -117,29 +118,13 @@ def test_mktemp(pytester: Pytester, basename: str, is_ok: bool) -> None:
         result.stdout.fnmatch_lines("*ValueError*")
 
 
-def test_tmpdir_always_is_realpath(pytester: Pytester) -> None:
-    # the reason why tmpdir should be a realpath is that
+def test_tmp_path_always_is_realpath(pytester: Pytester, monkeypatch) -> None:
+    # the reason why tmp_path should be a realpath is that
     # when you cd to it and do "os.getcwd()" you will anyway
     # get the realpath.  Using the symlinked path can thus
     # easily result in path-inequality
     # XXX if that proves to be a problem, consider using
     # os.environ["PWD"]
-    realtemp = pytester.mkdir("myrealtemp")
-    linktemp = pytester.path.joinpath("symlinktemp")
-    attempt_symlink_to(linktemp, str(realtemp))
-    p = pytester.makepyfile(
-        """
-        def test_1(tmpdir):
-            import os
-            assert os.path.realpath(str(tmpdir)) == str(tmpdir)
-    """
-    )
-    result = pytester.runpytest("-s", p, "--basetemp=%s/bt" % linktemp)
-    assert not result.ret
-
-
-def test_tmp_path_always_is_realpath(pytester: Pytester, monkeypatch) -> None:
-    # for reasoning see: test_tmpdir_always_is_realpath test-case
     realtemp = pytester.mkdir("myrealtemp")
     linktemp = pytester.path.joinpath("symlinktemp")
     attempt_symlink_to(linktemp, str(realtemp))
@@ -400,11 +385,13 @@ class TestRmRf:
             assert fn.is_file()
 
         # ignored function
-        with pytest.warns(None) as warninfo:
-            exc_info4 = (None, PermissionError(), None)
-            on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
-            assert fn.is_file()
-        assert not [x.message for x in warninfo]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pytest.warns(None) as warninfo:  # type: ignore[call-overload]
+                exc_info4 = (None, PermissionError(), None)
+                on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
+                assert fn.is_file()
+            assert not [x.message for x in warninfo]
 
         exc_info5 = (None, PermissionError(), None)
         on_rm_rf_error(os.unlink, str(fn), exc_info5, start_path=tmp_path)
@@ -418,10 +405,6 @@ def attempt_symlink_to(path, to_path):
         Path(path).symlink_to(Path(to_path))
     except OSError:
         pytest.skip("could not create symbolic link")
-
-
-def test_tmpdir_equals_tmp_path(tmpdir, tmp_path):
-    assert Path(tmpdir) == tmp_path
 
 
 def test_basetemp_with_read_only_files(pytester: Pytester) -> None:
@@ -454,3 +437,44 @@ def test_tmp_path_factory_handles_invalid_dir_characters(
     monkeypatch.setattr(tmp_path_factory, "_given_basetemp", None)
     p = tmp_path_factory.getbasetemp()
     assert "pytest-of-unknown" in str(p)
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+def test_tmp_path_factory_create_directory_with_safe_permissions(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Verify that pytest creates directories under /tmp with private permissions."""
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    basetemp = tmp_factory.getbasetemp()
+
+    # No world-readable permissions.
+    assert (basetemp.stat().st_mode & 0o077) == 0
+    # Parent too (pytest-of-foo).
+    assert (basetemp.parent.stat().st_mode & 0o077) == 0
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+def test_tmp_path_factory_fixes_up_world_readable_permissions(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Verify that if a /tmp/pytest-of-foo directory already exists with
+    world-readable permissions, it is fixed.
+
+    pytest used to mkdir with such permissions, that's why we fix it up.
+    """
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    basetemp = tmp_factory.getbasetemp()
+
+    # Before - simulate bad perms.
+    os.chmod(basetemp.parent, 0o777)
+    assert (basetemp.parent.stat().st_mode & 0o077) != 0
+
+    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    basetemp = tmp_factory.getbasetemp()
+
+    # After - fixed.
+    assert (basetemp.parent.stat().st_mode & 0o077) == 0

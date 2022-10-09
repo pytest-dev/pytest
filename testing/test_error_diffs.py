@@ -4,8 +4,6 @@ Tests and examples for correct "+/-" usage in error diffs.
 See https://github.com/pytest-dev/pytest/issues/3333 for details.
 
 """
-import sys
-
 import pytest
 from _pytest.pytester import Pytester
 
@@ -210,68 +208,61 @@ TESTCASES = [
         """,
         id='Test "not in" string',
     ),
+    pytest.param(
+        """
+        from dataclasses import dataclass
+
+        @dataclass
+        class A:
+            a: int
+            b: str
+
+        def test_this():
+            result =   A(1, 'spam')
+            expected = A(2, 'spam')
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+        E       AssertionError: assert A(a=1, b='spam') == A(a=2, b='spam')
+        E         Matching attributes:
+        E         ['b']
+        E         Differing attributes:
+        E         ['a']
+        E         Drill down into differing attribute a:
+        E           a: 1 != 2
+        """,
+        id="Compare data classes",
+    ),
+    pytest.param(
+        """
+        import attr
+
+        @attr.s(auto_attribs=True)
+        class A:
+            a: int
+            b: str
+
+        def test_this():
+            result =   A(1, 'spam')
+            expected = A(1, 'eggs')
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+        E       AssertionError: assert A(a=1, b='spam') == A(a=1, b='eggs')
+        E         Matching attributes:
+        E         ['a']
+        E         Differing attributes:
+        E         ['b']
+        E         Drill down into differing attribute b:
+        E           b: 'spam' != 'eggs'
+        E           - eggs
+        E           + spam
+        """,
+        id="Compare attrs classes",
+    ),
 ]
-if sys.version_info[:2] >= (3, 7):
-    TESTCASES.extend(
-        [
-            pytest.param(
-                """
-                from dataclasses import dataclass
-
-                @dataclass
-                class A:
-                    a: int
-                    b: str
-
-                def test_this():
-                    result =   A(1, 'spam')
-                    expected = A(2, 'spam')
-                    assert result == expected
-                """,
-                """
-                >       assert result == expected
-                E       AssertionError: assert A(a=1, b='spam') == A(a=2, b='spam')
-                E         Matching attributes:
-                E         ['b']
-                E         Differing attributes:
-                E         ['a']
-                E         Drill down into differing attribute a:
-                E           a: 1 != 2
-                E           +1
-                E           -2
-                """,
-                id="Compare data classes",
-            ),
-            pytest.param(
-                """
-                import attr
-
-                @attr.s(auto_attribs=True)
-                class A:
-                    a: int
-                    b: str
-
-                def test_this():
-                    result =   A(1, 'spam')
-                    expected = A(1, 'eggs')
-                    assert result == expected
-                """,
-                """
-                >       assert result == expected
-                E       AssertionError: assert A(a=1, b='spam') == A(a=1, b='eggs')
-                E         Matching attributes:
-                E         ['a']
-                E         Differing attributes:
-                E         ['b']
-                E         Drill down into differing attribute b:
-                E           b: 'spam' != 'eggs'
-                E           - eggs
-                E           + spam
-                """,
-                id="Compare attrs classes",
-            ),
-        ]
-    )
 
 
 @pytest.mark.parametrize("code, expected", TESTCASES)

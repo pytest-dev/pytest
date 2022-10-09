@@ -7,11 +7,12 @@ from typing import Dict
 import _pytest._code
 import pytest
 from _pytest.config import ExitCode
+from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.pytester import Pytester
 from _pytest.python import Class
-from _pytest.python import Instance
+from _pytest.python import Function
 
 
 class TestModule:
@@ -294,7 +295,7 @@ class TestFunction:
         from _pytest.fixtures import FixtureManager
 
         config = pytester.parseconfigure()
-        session = pytester.Session.from_config(config)
+        session = Session.from_config(config)
         session._fixturemanager = FixtureManager(session)
 
         return pytest.Function.from_parent(parent=session, **kwargs)
@@ -584,7 +585,7 @@ class TestFunction:
                     pass
         """
         )
-        colitems = modcol.collect()[0].collect()[0].collect()
+        colitems = modcol.collect()[0].collect()
         assert colitems[0].name == "test1[a-c]"
         assert colitems[1].name == "test1[b-c]"
         assert colitems[2].name == "test2[a-c]"
@@ -770,6 +771,36 @@ class TestSorting:
         assert len(colitems) == 2
         assert [item.name for item in colitems] == ["test_b", "test_a"]
 
+    def test_ordered_by_definition_order(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
+            class Test1:
+                def test_foo(): pass
+                def test_bar(): pass
+            class Test2:
+                def test_foo(): pass
+                test_bar = Test1.test_bar
+            class Test3(Test2):
+                def test_baz(): pass
+            """
+        )
+        result = pytester.runpytest("--collect-only")
+        result.stdout.fnmatch_lines(
+            [
+                "*Class Test1*",
+                "*Function test_foo*",
+                "*Function test_bar*",
+                "*Class Test2*",
+                # previously the order was flipped due to Test1.test_bar reference
+                "*Function test_foo*",
+                "*Function test_bar*",
+                "*Class Test3*",
+                "*Function test_foo*",
+                "*Function test_bar*",
+                "*Function test_baz*",
+            ]
+        )
+
 
 class TestConftestCustomization:
     def test_pytest_pycollect_module(self, pytester: Pytester) -> None:
@@ -778,9 +809,9 @@ class TestConftestCustomization:
             import pytest
             class MyModule(pytest.Module):
                 pass
-            def pytest_pycollect_makemodule(fspath, parent):
-                if fspath.name == "test_xyz.py":
-                    return MyModule.from_parent(path=fspath, parent=parent)
+            def pytest_pycollect_makemodule(module_path, parent):
+                if module_path.name == "test_xyz.py":
+                    return MyModule.from_parent(path=module_path, parent=parent)
         """
         )
         pytester.makepyfile("def test_some(): pass")
@@ -882,9 +913,9 @@ class TestConftestCustomization:
                         return Loader()
             sys.meta_path.append(Finder())
 
-            def pytest_collect_file(fspath, parent):
-                if fspath.suffix == ".narf":
-                    return Module.from_parent(path=fspath, parent=parent)"""
+            def pytest_collect_file(file_path, parent):
+                if file_path.suffix == ".narf":
+                    return Module.from_parent(path=file_path, parent=parent)"""
         )
         pytester.makefile(
             ".narf",
@@ -1124,8 +1155,8 @@ class TestReportInfo:
 
     def test_func_reportinfo(self, pytester: Pytester) -> None:
         item = pytester.getitem("def test_func(): pass")
-        fspath, lineno, modpath = item.reportinfo()
-        assert str(fspath) == str(item.path)
+        path, lineno, modpath = item.reportinfo()
+        assert os.fspath(path) == str(item.path)
         assert lineno == 0
         assert modpath == "test_func"
 
@@ -1139,8 +1170,8 @@ class TestReportInfo:
         )
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
-        fspath, lineno, msg = classcol.reportinfo()
-        assert str(fspath) == str(modcol.path)
+        path, lineno, msg = classcol.reportinfo()
+        assert os.fspath(path) == str(modcol.path)
         assert lineno == 1
         assert msg == "TestClass"
 
@@ -1152,19 +1183,26 @@ class TestReportInfo:
         modcol = pytester.getmodulecol(
             """
             # lineno 0
-            class TestClass(object):
+            class TestClass:
                 def __getattr__(self, name):
                     return "this is not an int"
 
+                def __class_getattr__(cls, name):
+                    return "this is not an int"
+
                 def intest_foo(self):
+                    pass
+
+                def test_bar(self):
                     pass
         """
         )
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
-        instance = list(classcol.collect())[0]
-        assert isinstance(instance, Instance)
-        fspath, lineno, msg = instance.reportinfo()
+        path, lineno, msg = classcol.reportinfo()
+        func = list(classcol.collect())[0]
+        assert isinstance(func, Function)
+        path, lineno, msg = func.reportinfo()
 
 
 def test_customized_python_discovery(pytester: Pytester) -> None:
@@ -1237,7 +1275,7 @@ def test_unorderable_types(pytester: Pytester) -> None:
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
-@pytest.mark.filterwarnings("default")
+@pytest.mark.filterwarnings("default::pytest.PytestCollectionWarning")
 def test_dont_collect_non_function_callable(pytester: Pytester) -> None:
     """Test for issue https://github.com/pytest-dev/pytest/issues/331
 

@@ -73,7 +73,6 @@ messages.  This is supported by the ``caplog`` fixture:
 
     def test_foo(caplog):
         caplog.set_level(logging.INFO)
-        pass
 
 By default the level is set on the root logger,
 however as a convenience it is also possible to set the log level of any
@@ -83,7 +82,6 @@ logger:
 
     def test_foo(caplog):
         caplog.set_level(logging.CRITICAL, logger="root.baz")
-        pass
 
 The log levels set are restored automatically at the end of the test.
 
@@ -161,13 +159,11 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
                 x.message for x in caplog.get_records(when) if x.levelno == logging.WARNING
             ]
             if messages:
-                pytest.fail(
-                    "warning messages encountered during testing: {}".format(messages)
-                )
+                pytest.fail(f"warning messages encountered during testing: {messages}")
 
 
 
-The full API is available at :class:`_pytest.logging.LogCaptureFixture`.
+The full API is available at :class:`pytest.LogCaptureFixture`.
 
 
 .. _live_logs:
@@ -180,8 +176,8 @@ logging records as they are emitted directly into the console.
 
 You can specify the logging level for which log records with equal or higher
 level are printed to the console by passing ``--log-cli-level``. This setting
-accepts the logging level names as seen in python's documentation or an integer
-as the logging level num.
+accepts the logging level names or numeric values as seen in
+:ref:`logging's documentation <python:levels>`.
 
 Additionally, you can also specify ``--log-cli-format`` and
 ``--log-cli-date-format`` which mirror and default to ``--log-format`` and
@@ -198,11 +194,12 @@ option names are:
 If you need to record the whole test suite logging calls to a file, you can pass
 ``--log-file=/path/to/log/file``. This log file is opened in write mode which
 means that it will be overwritten at each run tests session.
+Note that relative paths for the log-file location, whether passed on the CLI or declared in a
+config file, are always resolved relative to the current working directory.
 
 You can also specify the logging level for the log file by passing
-``--log-file-level``. This setting accepts the logging level names as seen in
-python's documentation(ie, uppercased level names) or an integer as the logging
-level num.
+``--log-file-level``. This setting accepts the logging level names or numeric
+values as seen in :ref:`logging's documentation <python:levels>`.
 
 Additionally, you can also specify ``--log-file-format`` and
 ``--log-file-date-format`` which are equal to ``--log-format`` and
@@ -219,13 +216,37 @@ option names are:
 You can call ``set_log_path()`` to customize the log_file path dynamically. This functionality
 is considered **experimental**.
 
+.. _log_colors:
+
+Customizing Colors
+^^^^^^^^^^^^^^^^^^
+
+Log levels are colored if colored terminal output is enabled. Changing
+from default colors or putting color on custom log levels is supported
+through ``add_color_level()``. Example:
+
+.. code-block:: python
+
+    @pytest.hookimpl
+    def pytest_configure(config):
+        logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
+
+        # Change color on existing log level
+        logging_plugin.log_cli_handler.formatter.add_color_level(logging.INFO, "cyan")
+
+        # Add color to a custom log level (a custom log level `SPAM` is already set up)
+        logging_plugin.log_cli_handler.formatter.add_color_level(logging.SPAM, "blue")
+.. warning::
+
+    This feature and its API are considered **experimental** and might change
+    between releases without a deprecation notice.
 .. _log_release_notes:
 
 Release notes
 ^^^^^^^^^^^^^
 
-This feature was introduced as a drop-in replacement for the `pytest-catchlog
-<https://pypi.org/project/pytest-catchlog/>`_ plugin and they conflict
+This feature was introduced as a drop-in replacement for the
+:pypi:`pytest-catchlog` plugin and they conflict
 with each other. The backward compatibility API with ``pytest-capturelog``
 has been dropped when this feature was introduced, so if for that reason you
 still need ``pytest-catchlog`` you can disable the internal feature by
@@ -265,5 +286,4 @@ file:
     log_cli=true
     log_level=NOTSET
 
-More details about the discussion that lead to this changes can be read in
-issue `#3013 <https://github.com/pytest-dev/pytest/issues/3013>`_.
+More details about the discussion that lead to this changes can be read in :issue:`3013`.

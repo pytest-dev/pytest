@@ -20,8 +20,7 @@ Configuration file formats
 --------------------------
 
 Many :ref:`pytest settings <ini options ref>` can be set in a *configuration file*, which
-by convention resides on the root of your repository or in your
-tests folder.
+by convention resides in the root directory of your repository.
 
 A quick example of the configuration files supported by pytest:
 
@@ -30,9 +29,11 @@ pytest.ini
 
 ``pytest.ini`` files take precedence over other files, even when empty.
 
+Alternatively, the hidden version ``.pytest.ini`` can be used.
+
 .. code-block:: ini
 
-    # pytest.ini
+    # pytest.ini or .pytest.ini
     [pytest]
     minversion = 6.0
     addopts = -ra -q
@@ -89,7 +90,7 @@ and can also be used to hold pytest configuration if they have a ``[pytest]`` se
 setup.cfg
 ~~~~~~~~~
 
-``setup.cfg`` files are general purpose configuration files, used originally by `distutils <https://docs.python.org/3/distutils/configfile.html>`__, and can also be used to hold pytest configuration
+``setup.cfg`` files are general purpose configuration files, used originally by :doc:`distutils <python:distutils/configfile>`, and can also be used to hold pytest configuration
 if they have a ``[tool:pytest]`` section.
 
 .. code-block:: ini
@@ -145,6 +146,8 @@ Finding the ``rootdir``
 
 Here is the algorithm which finds the rootdir from ``args``:
 
+- If ``-c`` is passed in the command-line, use that as configuration file, and its directory as ``rootdir``.
+
 - Determine the common ancestor directory for the specified ``args`` that are
   recognised as paths that exist in the file system. If no such paths are
   found, the common ancestor directory is set to the current working directory.
@@ -160,7 +163,7 @@ Here is the algorithm which finds the rootdir from ``args``:
   ``setup.cfg`` in each of the specified ``args`` and upwards. If one is
   matched, it becomes the ``configfile`` and its directory becomes the ``rootdir``.
 
-- If no ``configfile`` was found, use the already determined common ancestor as root
+- If no ``configfile`` was found and no configuration argument is passed, use the already determined common ancestor as root
   directory. This allows the use of pytest in structures that are not part of
   a package and don't have any particular configuration file.
 
@@ -177,12 +180,12 @@ Files will only be matched for configuration if:
 The files are considered in the order above. Options from multiple ``configfiles`` candidates
 are never merged - the first match wins.
 
-The internal :class:`Config <_pytest.config.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
+The :class:`Config <pytest.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
 will subsequently carry these attributes:
 
-- :attr:`config.rootpath <_pytest.config.Config.rootpath>`: the determined root directory, guaranteed to exist.
+- :attr:`config.rootpath <pytest.Config.rootpath>`: the determined root directory, guaranteed to exist.
 
-- :attr:`config.inipath <_pytest.config.Config.inipath>`: the determined ``configfile``, may be ``None``
+- :attr:`config.inipath <pytest.Config.inipath>`: the determined ``configfile``, may be ``None``
   (it is named ``inipath`` for historical reasons).
 
 .. versionadded:: 6.1
@@ -224,7 +227,7 @@ check for configuration files as follows:
     Custom pytest plugin commandline arguments may include a path, as in
     ``pytest --log-output ../../test.log args``. Then ``args`` is mandatory,
     otherwise pytest uses the folder of test.log for rootdir determination
-    (see also `issue 1435 <https://github.com/pytest-dev/pytest/issues/1435>`_).
+    (see also :issue:`1435`).
     A dot ``.`` for referencing to the current working directory is also
     possible.
 
@@ -237,3 +240,11 @@ Builtin configuration file options
 ----------------------------------------------
 
 For the full list of options consult the :ref:`reference documentation <ini options ref>`.
+
+Syntax highlighting theme customization
+---------------------------------------
+
+The syntax highlighting themes used by pytest can be customized using two environment variables:
+
+- :envvar:`PYTEST_THEME` sets a `pygment style <https://pygments.org/docs/styles/>`_ to use.
+- :envvar:`PYTEST_THEME_MODE` sets this style to *light* or *dark*.

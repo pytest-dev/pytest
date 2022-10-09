@@ -1,2 +1,0 @@
-Added :meth:`cache.mkdir() <pytest.Cache.mkdir>`, which is similar to the existing :meth:`cache.makedir() <pytest.Cache.makedir>`,
-but returns a :class:`pathlib.Path` instead of a legacy ``py.path.local``.

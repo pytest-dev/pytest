@@ -27,14 +27,13 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
 from _pytest.python import Class
 from _pytest.python import Function
-from _pytest.python import PyCollector
+from _pytest.python import Module
 from _pytest.runner import CallInfo
+from _pytest.scope import Scope
 
 if TYPE_CHECKING:
     import unittest
     import twisted.trial.unittest
-
-    from _pytest.fixtures import _Scope
 
     _SysExcInfoType = Union[
         Tuple[Type[BaseException], BaseException, types.TracebackType],
@@ -43,7 +42,7 @@ if TYPE_CHECKING:
 
 
 def pytest_pycollect_makeitem(
-    collector: PyCollector, name: str, obj: object
+    collector: Union[Module, Class], name: str, obj: object
 ) -> Optional["UnitTestCase"]:
     # Has unittest been imported and is obj a subclass of its TestCase?
     try:
@@ -102,7 +101,7 @@ class UnitTestCase(Class):
             "setUpClass",
             "tearDownClass",
             "doClassCleanups",
-            scope="class",
+            scope=Scope.Class,
             pass_self=False,
         )
         if class_fixture:
@@ -113,7 +112,7 @@ class UnitTestCase(Class):
             "setup_method",
             "teardown_method",
             None,
-            scope="function",
+            scope=Scope.Function,
             pass_self=True,
         )
         if method_fixture:
@@ -125,7 +124,7 @@ def _make_xunit_fixture(
     setup_name: str,
     teardown_name: str,
     cleanup_name: Optional[str],
-    scope: "_Scope",
+    scope: Scope,
     pass_self: bool,
 ):
     setup = getattr(obj, setup_name, None)
@@ -141,7 +140,7 @@ def _make_xunit_fixture(
             pass
 
     @pytest.fixture(
-        scope=scope,
+        scope=scope.value,
         autouse=True,
         # Use a unique name to speed up lookup.
         name=f"_unittest_{setup_name}_fixture_{obj.__qualname__}",
@@ -185,6 +184,15 @@ class TestCaseFunction(Function):
     nofuncargs = True
     _excinfo: Optional[List[_pytest._code.ExceptionInfo[BaseException]]] = None
     _testcase: Optional["unittest.TestCase"] = None
+
+    def _getobj(self):
+        assert self.parent is not None
+        # Unlike a regular Function in a Class, where `item.obj` returns
+        # a *bound* method (attached to an instance), TestCaseFunction's
+        # `obj` returns an *unbound* method (not attached to an instance).
+        # This inconsistency is probably not desirable, but needs some
+        # consideration before changing.
+        return getattr(self.parent.obj, self.originalname)  # type: ignore[attr-defined]
 
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
@@ -308,7 +316,10 @@ class TestCaseFunction(Function):
             # Arguably we could always postpone tearDown(), but this changes the moment where the
             # TestCase instance interacts with the results object, so better to only do it
             # when absolutely needed.
-            if self.config.getoption("usepdb") and not _is_skipped(self.obj):
+            # We need to consider if the test itself is skipped, or the whole class.
+            assert isinstance(self.parent, UnitTestCase)
+            skipped = _is_skipped(self.obj) or _is_skipped(self.parent.obj)
+            if self.config.getoption("usepdb") and not skipped:
                 self._explicit_tearDown = self._testcase.tearDown
                 setattr(self._testcase, "tearDown", lambda *args: None)
 
@@ -323,7 +334,7 @@ class TestCaseFunction(Function):
     def _prunetraceback(
         self, excinfo: _pytest._code.ExceptionInfo[BaseException]
     ) -> None:
-        Function._prunetraceback(self, excinfo)
+        super()._prunetraceback(excinfo)
         traceback = excinfo.traceback.filter(
             lambda x: not x.frame.f_globals.get("__unittest")
         )

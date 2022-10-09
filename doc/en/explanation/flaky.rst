@@ -28,7 +28,7 @@ Flaky tests sometimes appear when a test suite is run in parallel (such as use o
 Overly strict assertion
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Overly strict assertions can cause problems with floating point comparison as well as timing issues. `pytest.approx <https://docs.pytest.org/en/stable/reference.html#pytest-approx>`_ is useful here.
+Overly strict assertions can cause problems with floating point comparison as well as timing issues. :func:`pytest.approx` is useful here.
 
 
 Pytest features
@@ -94,7 +94,7 @@ Mark Lapierre discusses the `Pros and Cons of Quarantined Tests <https://dev.to/
 CI tools that rerun on failure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Azure Pipelines (the Azure cloud CI/CD tool, formerly Visual Studio Team Services or VSTS) has a feature to `identify flaky tests <https://docs.microsoft.com/en-us/azure/devops/release-notes/2017/dec-11-vsts#identify-flaky-tests>`_ and rerun failed tests.
+Azure Pipelines (the Azure cloud CI/CD tool, formerly Visual Studio Team Services or VSTS) has a feature to `identify flaky tests <https://docs.microsoft.com/en-us/previous-versions/azure/devops/2017/dec-11-vsts?view=tfs-2017#identify-flaky-tests>`_ and rerun failed tests.
 
 
 
@@ -113,7 +113,7 @@ Resources
 
 * `Eradicating Non-Determinism in Tests <https://martinfowler.com/articles/nonDeterminism.html>`_ by Martin Fowler, 2011
 * `No more flaky tests on the Go team <https://www.thoughtworks.com/insights/blog/no-more-flaky-tests-go-team>`_ by Pavan Sudarshan, 2012
-* `The Build That Cried Broken: Building Trust in your Continuous Integration Tests <https://www.youtube.com/embed/VotJqV4n8ig>`_ talk (video) by `Angie Jones <http://angiejones.tech/>`_ at SeleniumConf Austin 2017
+* `The Build That Cried Broken: Building Trust in your Continuous Integration Tests <https://www.youtube.com/embed/VotJqV4n8ig>`_ talk (video) by `Angie Jones <https://angiejones.tech/>`_ at SeleniumConf Austin 2017
 * `Test and Code Podcast: Flaky Tests and How to Deal with Them <https://testandcode.com/50>`_ by Brian Okken and Anthony Shaw, 2018
 * Microsoft:
 

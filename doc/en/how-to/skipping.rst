@@ -69,6 +69,7 @@ It is also possible to skip the whole module using
 .. code-block:: python
 
     import sys
+
     import pytest
 
     if not sys.platform.startswith("win"):
@@ -84,14 +85,14 @@ It is also possible to skip the whole module using
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on an interpreter earlier than Python3.6:
+when run on an interpreter earlier than Python3.10:
 
 .. code-block:: python
 
     import sys
 
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
+    @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
     def test_function():
         ...
 
@@ -369,11 +370,14 @@ Here is a simple test file with the several usages:
 
 Running it with the report-on-xfail option gives this output:
 
+.. FIXME: Use $ instead of ! again to re-enable regendoc once it's fixed:
+   https://github.com/pytest-dev/pytest/issues/8807
+
 .. code-block:: pytest
 
-    example $ pytest -rx xfail_demo.py
+    ! pytest -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-0.x.y
+    platform linux -- Python 3.x.y, pytest-6.x.y, py-1.x.y, pluggy-1.x.y
     cachedir: $PYTHON_PREFIX/.pytest_cache
     rootdir: $REGENDOC_TMPDIR/example
     collected 7 items
@@ -406,6 +410,7 @@ test instances when using parametrize:
 .. code-block:: python
 
     import sys
+
     import pytest
 
 

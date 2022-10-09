@@ -116,7 +116,7 @@ fixture (``inner``) from a scope it wasn't defined in:
 From the tests' perspectives, they have no problem seeing each of the fixtures
 they're dependent on:
 
-.. image:: /example/fixtures/test_fixtures_request_different_scope.svg
+.. image:: /example/fixtures/test_fixtures_request_different_scope.*
     :align: center
 
 So when they run, ``outer`` will have no problem finding ``inner``, because
@@ -193,7 +193,7 @@ For example, given a test file structure like this:
 
 The boundaries of the scopes can be visualized like this:
 
-.. image:: /example/fixtures/fixture_availability.svg
+.. image:: /example/fixtures/fixture_availability.*
     :align: center
 
 The directories become their own sort of scope where fixtures that are defined
@@ -208,7 +208,7 @@ the one defined in ``tests/test_top.py`` would be unavailable to it because it
 would have to step down a level (step inside a circle) to find it.
 
 The first fixture the test finds is the one that will be used, so
-:ref:`fixtures can be overriden <override fixtures>` if you need to change or
+:ref:`fixtures can be overridden <override fixtures>` if you need to change or
 extend what one does for a particular scope.
 
 You can also use the ``conftest.py`` file to implement
@@ -319,7 +319,7 @@ The test will pass because the larger scoped fixtures are executing first.
 
 The order breaks down to this:
 
-.. image:: /example/fixtures/test_fixtures_order_scope.svg
+.. image:: /example/fixtures/test_fixtures_order_scope.*
     :align: center
 
 Fixtures of the same order execute based on dependencies
@@ -337,13 +337,13 @@ For example:
 
 If we map out what depends on what, we get something that look like this:
 
-.. image:: /example/fixtures/test_fixtures_order_dependencies.svg
+.. image:: /example/fixtures/test_fixtures_order_dependencies.*
     :align: center
 
 The rules provided by each fixture (as to what fixture(s) each one has to come
 after) are comprehensive enough that it can be flattened to this:
 
-.. image:: /example/fixtures/test_fixtures_order_dependencies_flat.svg
+.. image:: /example/fixtures/test_fixtures_order_dependencies_flat.*
     :align: center
 
 Enough information has to be provided through these requests in order for pytest
@@ -354,7 +354,7 @@ could go with any one of those interpretations at any point.
 
 For example, if ``d`` didn't request ``c``, i.e.the graph would look like this:
 
-.. image:: /example/fixtures/test_fixtures_order_dependencies_unclear.svg
+.. image:: /example/fixtures/test_fixtures_order_dependencies_unclear.*
     :align: center
 
 Because nothing requested ``c`` other than ``g``, and ``g`` also requests ``f``,
@@ -395,11 +395,14 @@ So if the test file looked like this:
 
 the graph would look like this:
 
-.. image:: /example/fixtures/test_fixtures_order_autouse.svg
+.. image:: /example/fixtures/test_fixtures_order_autouse.*
     :align: center
 
 Because ``c`` can now be put above ``d`` in the graph, pytest can once again
 linearize the graph to this:
+
+.. image:: /example/fixtures/test_fixtures_order_autouse_flat.*
+    :align: center
 
 In this example, ``c`` makes ``b`` and ``a`` effectively autouse fixtures as
 well.
@@ -410,15 +413,15 @@ example, consider this file:
 
 .. literalinclude:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.py
 
-Even though nothing in ``TestClassWithC1Request`` is requesting ``c1``, it still
+Even though nothing in ``TestClassWithoutC1Request`` is requesting ``c1``, it still
 is executed for the tests inside it anyway:
 
-.. image:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.svg
+.. image:: /example/fixtures/test_fixtures_order_autouse_multiple_scopes.*
     :align: center
 
 But just because one autouse fixture requested a non-autouse fixture, that
 doesn't mean the non-autouse fixture becomes an autouse fixture for all contexts
-that it can apply to. It only effectively becomes an auotuse fixture for the
+that it can apply to. It only effectively becomes an autouse fixture for the
 contexts the real autouse fixture (the one that requested the non-autouse
 fixture) can apply to.
 
@@ -428,7 +431,7 @@ For example, take a look at this test file:
 
 It would break down to something like this:
 
-.. image:: /example/fixtures/test_fixtures_order_autouse_temp_effects.svg
+.. image:: /example/fixtures/test_fixtures_order_autouse_temp_effects.*
     :align: center
 
 For ``test_req`` and ``test_no_req`` inside ``TestClassWithAutouse``, ``c3``

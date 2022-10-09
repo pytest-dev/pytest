@@ -1,6 +1,7 @@
 """Record warnings during test function execution."""
 import re
 import warnings
+from pprint import pformat
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -8,7 +9,6 @@ from typing import Generator
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import Type
@@ -16,7 +16,9 @@ from typing import TypeVar
 from typing import Union
 
 from _pytest.compat import final
+from _pytest.compat import overload
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import WARNS_NONE_ARG
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 
@@ -28,7 +30,7 @@ T = TypeVar("T")
 def recwarn() -> Generator["WarningsRecorder", None, None]:
     """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
-    See http://docs.python.org/library/warnings.html for information
+    See https://docs.pytest.org/en/latest/how-to/capture-warnings.html for information
     on warning categories.
     """
     wrec = WarningsRecorder(_ispytest=True)
@@ -45,11 +47,13 @@ def deprecated_call(
 
 
 @overload
-def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+def deprecated_call(  # noqa: F811
+    func: Callable[..., T], *args: Any, **kwargs: Any
+) -> T:
     ...
 
 
-def deprecated_call(
+def deprecated_call(  # noqa: F811
     func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
 ) -> Union["WarningsRecorder", Any]:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning``.
@@ -83,7 +87,7 @@ def deprecated_call(
 
 @overload
 def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
 ) -> "WarningsChecker":
@@ -91,8 +95,8 @@ def warns(
 
 
 @overload
-def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+def warns(  # noqa: F811
+    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any,
@@ -100,23 +104,23 @@ def warns(
     ...
 
 
-def warns(
-    expected_warning: Optional[Union[Type[Warning], Tuple[Type[Warning], ...]]],
+def warns(  # noqa: F811
+    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
     **kwargs: Any,
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
 
-    Specifically, the parameter ``expected_warning`` can be a warning class or
-    sequence of warning classes, and the inside the ``with`` block must issue a warning of that class or
-    classes.
+    Specifically, the parameter ``expected_warning`` can be a warning class or sequence
+    of warning classes, and the code inside the ``with`` block must issue at least one
+    warning of that class or classes.
 
-    This helper produces a list of :class:`warnings.WarningMessage` objects,
-    one for each warning raised.
+    This helper produces a list of :class:`warnings.WarningMessage` objects, one for
+    each warning raised (regardless of whether it is an ``expected_warning`` or not).
 
-    This function can be used as a context manager, or any of the other ways
-    :func:`pytest.raises` can be used::
+    This function can be used as a context manager, which will capture all the raised
+    warnings inside it::
 
         >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
@@ -135,31 +139,45 @@ def warns(
         ...     warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
-        Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
+        Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+
+    **Using with** ``pytest.mark.parametrize``
+
+    When using :ref:`pytest.mark.parametrize ref` it is possible to parametrize tests
+    such that some runs raise a warning and others do not.
+
+    This could be achieved in the same way as with exceptions, see
+    :ref:`parametrizing_conditional_raising` for an example.
 
     """
     __tracebackhide__ = True
     if not args:
         if kwargs:
-            msg = "Unexpected keyword arguments passed to pytest.warns: "
-            msg += ", ".join(sorted(kwargs))
-            msg += "\nUse context-manager form instead?"
-            raise TypeError(msg)
+            argnames = ", ".join(sorted(kwargs))
+            raise TypeError(
+                f"Unexpected keyword arguments passed to pytest.warns: {argnames}"
+                "\nUse context-manager form instead?"
+            )
         return WarningsChecker(expected_warning, match_expr=match, _ispytest=True)
     else:
         func = args[0]
         if not callable(func):
-            raise TypeError(
-                "{!r} object (type: {}) must be callable".format(func, type(func))
-            )
+            raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         with WarningsChecker(expected_warning, _ispytest=True):
             return func(*args[1:], **kwargs)
 
 
-class WarningsRecorder(warnings.catch_warnings):
+class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
     """A context manager to record raised warnings.
 
+    Each recorded warning is an instance of :class:`warnings.WarningMessage`.
+
     Adapted from `warnings.catch_warnings`.
+
+    .. note::
+        ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
+        differently; see :ref:`ensuring_function_triggers`.
+
     """
 
     def __init__(self, *, _ispytest: bool = False) -> None:
@@ -192,7 +210,7 @@ class WarningsRecorder(warnings.catch_warnings):
             if issubclass(w.category, cls):
                 return self._list.pop(i)
         __tracebackhide__ = True
-        raise AssertionError("%r not found in warning list" % cls)
+        raise AssertionError(f"{cls!r} not found in warning list")
 
     def clear(self) -> None:
         """Clear the list of recorded warnings."""
@@ -203,7 +221,7 @@ class WarningsRecorder(warnings.catch_warnings):
     def __enter__(self) -> "WarningsRecorder":  # type: ignore
         if self._entered:
             __tracebackhide__ = True
-            raise RuntimeError("Cannot enter %r twice" % self)
+            raise RuntimeError(f"Cannot enter {self!r} twice")
         _list = super().__enter__()
         # record=True means it's None.
         assert _list is not None
@@ -219,7 +237,7 @@ class WarningsRecorder(warnings.catch_warnings):
     ) -> None:
         if not self._entered:
             __tracebackhide__ = True
-            raise RuntimeError("Cannot exit %r without entering first" % self)
+            raise RuntimeError(f"Cannot exit {self!r} without entering first")
 
         super().__exit__(exc_type, exc_val, exc_tb)
 
@@ -234,7 +252,7 @@ class WarningsChecker(WarningsRecorder):
         self,
         expected_warning: Optional[
             Union[Type[Warning], Tuple[Type[Warning], ...]]
-        ] = None,
+        ] = Warning,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
         *,
         _ispytest: bool = False,
@@ -244,6 +262,7 @@ class WarningsChecker(WarningsRecorder):
 
         msg = "exceptions must be derived from Warning, not %s"
         if expected_warning is None:
+            warnings.warn(WARNS_NONE_ARG, stacklevel=4)
             expected_warning_tup = None
         elif isinstance(expected_warning, tuple):
             for exc in expected_warning:
@@ -268,16 +287,17 @@ class WarningsChecker(WarningsRecorder):
 
         __tracebackhide__ = True
 
+        def found_str():
+            return pformat([record.message for record in self], indent=2)
+
         # only check if we're not currently handling an exception
         if exc_type is None and exc_val is None and exc_tb is None:
             if self.expected_warning is not None:
                 if not any(issubclass(r.category, self.expected_warning) for r in self):
                     __tracebackhide__ = True
                     fail(
-                        "DID NOT WARN. No warnings of type {} was emitted. "
-                        "The list of emitted warnings is: {}.".format(
-                            self.expected_warning, [each.message for each in self]
-                        )
+                        f"DID NOT WARN. No warnings of type {self.expected_warning} were emitted.\n"
+                        f"The list of emitted warnings is: {found_str()}."
                     )
                 elif self.match_expr is not None:
                     for r in self:
@@ -286,11 +306,8 @@ class WarningsChecker(WarningsRecorder):
                                 break
                     else:
                         fail(
-                            "DID NOT WARN. No warnings of type {} matching"
-                            " ('{}') was emitted. The list of emitted warnings"
-                            " is: {}.".format(
-                                self.expected_warning,
-                                self.match_expr,
-                                [each.message for each in self],
-                            )
+                            f"""\
+DID NOT WARN. No warnings of type {self.expected_warning} matching the regex were emitted.
+ Regex: {self.match_expr}
+ Emitted warnings: {found_str()}"""
                         )

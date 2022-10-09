@@ -1,4 +1,3 @@
-import re
 import warnings
 from typing import Optional
 
@@ -25,6 +24,17 @@ def test_recwarn_functional(pytester: Pytester) -> None:
     )
     reprec = pytester.inline_run()
     reprec.assertoutcome(passed=1)
+
+
+@pytest.mark.filterwarnings("")
+def test_recwarn_captures_deprecation_warning(recwarn: WarningsRecorder) -> None:
+    """
+    Check that recwarn can capture DeprecationWarning by default
+    without custom filterwarnings (see #8666).
+    """
+    warnings.warn(DeprecationWarning("some deprecation"))
+    assert len(recwarn) == 1
+    assert recwarn.pop(DeprecationWarning)
 
 
 class TestWarningsRecorderChecker:
@@ -103,13 +113,13 @@ class TestDeprecatedCall:
         # Type ignored because `onceregistry` and `filters` are not
         # documented API.
         onceregistry = warnings.onceregistry.copy()  # type: ignore
-        filters = warnings.filters[:]  # type: ignore
+        filters = warnings.filters[:]
         warn = warnings.warn
         warn_explicit = warnings.warn_explicit
         self.test_deprecated_call_raises()
         self.test_deprecated_call()
         assert onceregistry == warnings.onceregistry  # type: ignore
-        assert filters == warnings.filters  # type: ignore
+        assert filters == warnings.filters
         assert warn is warnings.warn
         assert warn_explicit is warnings.warn_explicit
 
@@ -252,7 +262,7 @@ class TestWarns:
             with pytest.warns(RuntimeWarning):
                 warnings.warn("user", UserWarning)
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) was emitted. "
+            r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) were emitted.\n"
             r"The list of emitted warnings is: \[UserWarning\('user',?\)\]."
         )
 
@@ -260,15 +270,15 @@ class TestWarns:
             with pytest.warns(UserWarning):
                 warnings.warn("runtime", RuntimeWarning)
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) was emitted. "
-            r"The list of emitted warnings is: \[RuntimeWarning\('runtime',?\)\]."
+            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted.\n"
+            r"The list of emitted warnings is: \[RuntimeWarning\('runtime',?\)]."
         )
 
         with pytest.raises(pytest.fail.Exception) as excinfo:
             with pytest.warns(UserWarning):
                 pass
         excinfo.match(
-            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) was emitted. "
+            r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted.\n"
             r"The list of emitted warnings is: \[\]."
         )
 
@@ -278,17 +288,13 @@ class TestWarns:
                 warnings.warn("runtime", RuntimeWarning)
                 warnings.warn("import", ImportWarning)
 
-        message_template = (
-            "DID NOT WARN. No warnings of type {0} was emitted. "
-            "The list of emitted warnings is: {1}."
+        messages = [each.message for each in warninfo]
+        expected_str = (
+            f"DID NOT WARN. No warnings of type {warning_classes} were emitted.\n"
+            f"The list of emitted warnings is: {messages}."
         )
-        excinfo.match(
-            re.escape(
-                message_template.format(
-                    warning_classes, [each.message for each in warninfo]
-                )
-            )
-        )
+
+        assert str(excinfo.value) == expected_str
 
     def test_record(self) -> None:
         with pytest.warns(UserWarning) as record:
@@ -298,13 +304,25 @@ class TestWarns:
         assert str(record[0].message) == "user"
 
     def test_record_only(self) -> None:
-        with pytest.warns(None) as record:
+        with pytest.warns() as record:
             warnings.warn("user", UserWarning)
             warnings.warn("runtime", RuntimeWarning)
 
         assert len(record) == 2
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
+
+    def test_record_only_none_deprecated_warn(self) -> None:
+        # This should become an error when WARNS_NONE_ARG is removed in Pytest 8.0
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pytest.warns(None) as record:  # type: ignore[call-overload]
+                warnings.warn("user", UserWarning)
+                warnings.warn("runtime", RuntimeWarning)
+
+            assert len(record) == 2
+            assert str(record[0].message) == "user"
+            assert str(record[1].message) == "runtime"
 
     def test_record_by_subclass(self) -> None:
         with pytest.warns(Warning) as record:

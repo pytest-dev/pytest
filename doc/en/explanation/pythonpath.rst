@@ -11,19 +11,19 @@ Import modes
 pytest as a testing framework needs to import test modules and ``conftest.py`` files for execution.
 
 Importing files in Python (at least until recently) is a non-trivial processes, often requiring
-changing `sys.path <https://docs.python.org/3/library/sys.html#sys.path>`__. Some aspects of the
+changing :data:`sys.path`. Some aspects of the
 import process can be controlled through the ``--import-mode`` command-line flag, which can assume
 these values:
 
 * ``prepend`` (default): the directory path containing each module will be inserted into the *beginning*
-  of ``sys.path`` if not already there, and then imported with the `__import__ <https://docs.python.org/3/library/functions.html#__import__>`__ builtin.
+  of :py:data:`sys.path` if not already there, and then imported with the :func:`__import__ <__import__>` builtin.
 
   This requires test module names to be unique when the test directory tree is not arranged in
-  packages, because the modules will put in ``sys.modules`` after importing.
+  packages, because the modules will put in :py:data:`sys.modules` after importing.
 
   This is the classic mechanism, dating back from the time Python 2 was still supported.
 
-* ``append``: the directory containing each module is appended to the end of ``sys.path`` if not already
+* ``append``: the directory containing each module is appended to the end of :py:data:`sys.path` if not already
   there, and imported with ``__import__``.
 
   This better allows to run test modules against installed versions of a package even if the
@@ -41,17 +41,23 @@ these values:
   we advocate for using :ref:`src <src-layout>` layouts.
 
   Same as ``prepend``, requires test module names to be unique when the test directory tree is
-  not arranged in packages, because the modules will put in ``sys.modules`` after importing.
+  not arranged in packages, because the modules will put in :py:data:`sys.modules` after importing.
 
-* ``importlib``: new in pytest-6.0, this mode uses `importlib <https://docs.python.org/3/library/importlib.html>`__ to import test modules. This gives full control over the import process, and doesn't require
-  changing ``sys.path`` or ``sys.modules`` at all.
+* ``importlib``: new in pytest-6.0, this mode uses :mod:`importlib` to import test modules. This gives full control over the import process, and doesn't require changing :py:data:`sys.path`.
 
-  For this reason this doesn't require test module names to be unique at all, but also makes test
-  modules non-importable by each other. This was made possible in previous modes, for tests not residing
-  in Python packages, because of the side-effects of changing ``sys.path`` and ``sys.modules``
-  mentioned above. Users which require this should turn their tests into proper packages instead.
+  For this reason this doesn't require test module names to be unique.
 
-  We intend to make ``importlib`` the default in future releases.
+  One drawback however is that test modules are non-importable by each other. Also,  utility
+  modules in the tests directories are not automatically importable because the tests directory is no longer
+  added to :py:data:`sys.path`.
+
+  Initially we intended to make ``importlib`` the default in future releases, however it is clear now that
+  it has its own set of drawbacks so the default will remain ``prepend`` for the foreseeable future.
+
+.. seealso::
+
+    The :confval:`pythonpath` configuration variable.
+
 
 ``prepend`` and ``append`` import modes scenarios
 -------------------------------------------------
@@ -133,4 +139,4 @@ Running pytest with ``pytest [...]`` instead of ``python -m pytest [...]`` yield
 equivalent behaviour, except that the latter will add the current directory to ``sys.path``, which
 is standard ``python`` behavior.
 
-See also :ref:`cmdline`.
+See also :ref:`invoke-python`.

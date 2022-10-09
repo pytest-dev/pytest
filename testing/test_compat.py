@@ -1,4 +1,5 @@
 import enum
+import sys
 from functools import partial
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -91,6 +92,7 @@ def test_get_real_func_partial() -> None:
     assert get_real_func(partial(foo)) is foo
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 11), reason="couroutine removed")
 def test_is_generator_asyncio(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
@@ -133,7 +135,7 @@ def test_is_generator_async_gen_syntax(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         from _pytest.compat import is_generator
-        def test_is_generator_py36():
+        def test_is_generator():
             async def foo():
                 yield
                 await foo()
@@ -156,11 +158,11 @@ class ErrorsHelper:
 
     @property
     def raise_exception(self):
-        raise Exception("exception should be catched")
+        raise Exception("exception should be caught")
 
     @property
     def raise_fail_outcome(self):
-        pytest.fail("fail should be catched")
+        pytest.fail("fail should be caught")
 
 
 def test_helper_failures() -> None:
