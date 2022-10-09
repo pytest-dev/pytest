@@ -147,10 +147,11 @@ Making your plugin installable by others
 
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
-that ``pytest`` finds your plugin module.  Entry points are
-a feature that is provided by :std:doc:`setuptools:index`. pytest looks up
-the ``pytest11`` entrypoint to discover its
-plugins and you can thus make your plugin available by defining
+that ``pytest`` finds your plugin module. Entry points are
+a feature that is provided by :std:doc:`setuptools <setuptools:index>`.
+
+pytest looks up the ``pytest11`` entrypoint to discover its
+plugins, thus you can make your plugin available by defining
 it in your ``pyproject.toml`` file.
 
 .. sourcecode:: toml
