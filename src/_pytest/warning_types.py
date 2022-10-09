@@ -48,7 +48,6 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     __module__ = "pytest"
 
 
-@sealed
 class PytestRemovedIn8Warning(PytestDeprecationWarning):
     """Warning class for features that will be removed in pytest 8."""
 
