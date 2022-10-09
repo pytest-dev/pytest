@@ -1133,6 +1133,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestReturnNotNoneWarning
   :show-inheritance:
 
+.. autoclass:: pytest.PytestRemovedIn8Warning
+  :show-inheritance:
+
 .. autoclass:: pytest.PytestUnhandledCoroutineWarning
    :show-inheritance:
 
