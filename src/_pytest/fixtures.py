@@ -53,9 +53,7 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import FILLFUNCARGS
 from _pytest.deprecated import MARKED_FIXTURE
-from _pytest.deprecated import NODE_FSPATH
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
