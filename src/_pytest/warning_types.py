@@ -54,7 +54,6 @@ class PytestRemovedIn8Warning(PytestDeprecationWarning):
     __module__ = "pytest"
 
 
-@sealed
 class PytestReturnNotNoneWarning(PytestRemovedIn8Warning):
     """Warning emitted when a test function is returning value other than None."""
 
