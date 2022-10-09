@@ -151,23 +151,28 @@ that ``pytest`` finds your plugin module.  Entry points are
 a feature that is provided by :std:doc:`setuptools:index`. pytest looks up
 the ``pytest11`` entrypoint to discover its
 plugins and you can thus make your plugin available by defining
-it in your setuptools-invocation:
+it in your ``pyproject.toml`` file.
 
-.. sourcecode:: python
+.. sourcecode:: toml
 
-    # sample ./setup.py file
-    from setuptools import setup
+    # sample ./pyproject.toml file
+    [build-system]
+    requires = ["setuptools"]
+    build-backend = "setuptools.build_meta"
 
+    [project]
+    name = "myproject"
+    classifiers = [
+        "Framework :: Pytest",
+    ]
 
-    name_of_plugin = "myproject"  # register plugin with this name
-    setup(
-        name="myproject",
-        packages=["myproject"],
-        # the following makes a plugin available to pytest
-        entry_points={"pytest11": [f"{name_of_plugin} = myproject.pluginmodule"]},
-        # custom PyPI classifier for pytest plugins
-        classifiers=["Framework :: Pytest"],
-    )
+    [tool.setuptools]
+    packages = ["myproject"]
+
+    [project.entry_points]
+    pytest11 = [
+        "myproject = myproject.pluginmodule",
+    ]
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
