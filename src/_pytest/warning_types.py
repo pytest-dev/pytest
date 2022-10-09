@@ -6,7 +6,6 @@ from typing import TypeVar
 import attr
 
 from _pytest.compat import final
-from _pytest.compat import sealed
 
 
 class PytestWarning(UserWarning):
