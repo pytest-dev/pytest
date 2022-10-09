@@ -342,12 +342,6 @@ else:
         return f
 
 
-# TODO: sealed classes are not supported yet
-# https://github.com/mypyc/mypyc/issues/846
-def sealed(f: _T) -> _T:
-    return f
-
-
 if sys.version_info >= (3, 8):
     from functools import cached_property as cached_property
 else:
