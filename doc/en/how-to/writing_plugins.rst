@@ -147,27 +147,33 @@ Making your plugin installable by others
 
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
-that ``pytest`` finds your plugin module.  Entry points are
-a feature that is provided by :std:doc:`setuptools:index`. pytest looks up
-the ``pytest11`` entrypoint to discover its
-plugins and you can thus make your plugin available by defining
-it in your setuptools-invocation:
+that ``pytest`` finds your plugin module. Entry points are
+a feature that is provided by :std:doc:`setuptools <setuptools:index>`.
 
-.. sourcecode:: python
+pytest looks up the ``pytest11`` entrypoint to discover its
+plugins, thus you can make your plugin available by defining
+it in your ``pyproject.toml`` file.
 
-    # sample ./setup.py file
-    from setuptools import setup
+.. sourcecode:: toml
 
+    # sample ./pyproject.toml file
+    [build-system]
+    requires = ["hatchling"]
+    build-backend = "hatchling.build"
 
-    name_of_plugin = "myproject"  # register plugin with this name
-    setup(
-        name="myproject",
-        packages=["myproject"],
-        # the following makes a plugin available to pytest
-        entry_points={"pytest11": [f"{name_of_plugin} = myproject.pluginmodule"]},
-        # custom PyPI classifier for pytest plugins
-        classifiers=["Framework :: Pytest"],
-    )
+    [project]
+    name = "myproject"
+    classifiers = [
+        "Framework :: Pytest",
+    ]
+
+    [tool.setuptools]
+    packages = ["myproject"]
+
+    [project.entry_points]
+    pytest11 = [
+        "myproject = myproject.pluginmodule",
+    ]
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define

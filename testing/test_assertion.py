@@ -776,6 +776,24 @@ class TestAssert_reprcompare:
         msg = "\n".join(expl)
         assert msg
 
+    def test_nfc_nfd_same_string(self) -> None:
+        # issue 3426
+        left = "hyv\xe4"
+        right = "hyva\u0308"
+        expl = callequal(left, right)
+        assert expl == [
+            r"'hyv\xe4' == 'hyva\u0308'",
+            f"- {str(right)}",
+            f"+ {str(left)}",
+        ]
+
+        expl = callequal(left, right, verbose=2)
+        assert expl == [
+            r"'hyv\xe4' == 'hyva\u0308'",
+            f"- {str(right)}",
+            f"+ {str(left)}",
+        ]
+
 
 class TestAssert_reprcompare_dataclass:
     def test_dataclasses(self, pytester: Pytester) -> None:
