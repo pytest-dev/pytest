@@ -279,3 +279,35 @@ def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
         match=re.escape("The pytest.Instance collector type is deprecated"),
     ):
         from _pytest.python import Instance  # noqa: F401
+
+
+def test_fixture_disallow_on_marked_functions():
+    """Test that applying @pytest.fixture to a marked function warns (#3364)."""
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=r"Marks applied to fixtures have no effect",
+    ) as record:
+
+        @pytest.fixture
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+    assert len(record) == 1
+
+
+def test_fixture_disallow_marks_on_fixtures():
+    """Test that applying a mark to a fixture warns (#3364)."""
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=r"Marks applied to fixtures have no effect",
+    ) as record:
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        @pytest.fixture
+        def foo():
+            raise NotImplementedError()
+
+    assert len(record) == 2
