@@ -278,7 +278,18 @@ Applying a mark to a fixture function
 
 .. deprecated:: 7.2
 
-Applying a mark to a fixture function is deprecated. Doing so has no effect, and will raise an error in the next version.
+Applying a mark to a fixture function never had any effect, but it is a common user error.
+
+.. code-block:: python
+    
+    @pytest.mark.usefixtures("clean_database")
+    @pytest.fixture
+    def user() -> User:
+        ...
+
+Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
+
+Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
 
 
 Backward compatibilities in ``Parser.addoption``
