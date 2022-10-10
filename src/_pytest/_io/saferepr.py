@@ -41,7 +41,7 @@ class SafeRepr(reprlib.Repr):
     information on exceptions raised during the call.
     """
 
-    def __init__(self, maxsize: Optional[int]) -> None:
+    def __init__(self, maxsize: Optional[int], use_ascii: bool = False) -> None:
         """
         :param maxsize:
             If not None, will truncate the resulting repr to that specific size, using ellipsis
@@ -54,10 +54,15 @@ class SafeRepr(reprlib.Repr):
         # truncation.
         self.maxstring = maxsize if maxsize is not None else 1_000_000_000
         self.maxsize = maxsize
+        self.use_ascii = use_ascii
 
     def repr(self, x: object) -> str:
         try:
-            s = super().repr(x)
+            if self.use_ascii:
+                s = ascii(x)
+            else:
+                s = super().repr(x)
+
         except (KeyboardInterrupt, SystemExit):
             raise
         except BaseException as exc:
@@ -94,7 +99,9 @@ def safeformat(obj: object) -> str:
 DEFAULT_REPR_MAX_SIZE = 240
 
 
-def saferepr(obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE) -> str:
+def saferepr(
+    obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE, use_ascii: bool = False
+) -> str:
     """Return a size-limited safe repr-string for the given object.
 
     Failing __repr__ functions of user instances will be represented
@@ -104,10 +111,11 @@ def saferepr(obj: object, maxsize: Optional[int] = DEFAULT_REPR_MAX_SIZE) -> str
     This function is a wrapper around the Repr/reprlib functionality of the
     stdlib.
     """
-    return SafeRepr(maxsize).repr(obj)
+
+    return SafeRepr(maxsize, use_ascii).repr(obj)
 
 
-def saferepr_unlimited(obj: object) -> str:
+def saferepr_unlimited(obj: object, use_ascii: bool = True) -> str:
     """Return an unlimited-size safe repr-string for the given object.
 
     As with saferepr, failing __repr__ functions of user instances
@@ -119,6 +127,8 @@ def saferepr_unlimited(obj: object) -> str:
     when maxsize=None, but that might affect some other code.
     """
     try:
+        if use_ascii:
+            return ascii(obj)
         return repr(obj)
     except Exception as exc:
         return _format_repr_exception(exc, obj)

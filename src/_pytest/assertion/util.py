@@ -10,6 +10,7 @@ from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Sequence
+from unicodedata import normalize
 
 import _pytest._code
 from _pytest import outcomes
@@ -156,20 +157,32 @@ def has_default_eq(
     return True
 
 
-def assertrepr_compare(config, op: str, left: Any, right: Any) -> Optional[List[str]]:
+def assertrepr_compare(
+    config, op: str, left: Any, right: Any, use_ascii: bool = False
+) -> Optional[List[str]]:
     """Return specialised explanations for some operators/operands."""
     verbose = config.getoption("verbose")
+
+    # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
+    # See issue #3246.
+    use_ascii = (
+        isinstance(left, str)
+        and isinstance(right, str)
+        and normalize("NFD", left) == normalize("NFD", right)
+    )
+
     if verbose > 1:
-        left_repr = saferepr_unlimited(left)
-        right_repr = saferepr_unlimited(right)
+        left_repr = saferepr_unlimited(left, use_ascii=use_ascii)
+        right_repr = saferepr_unlimited(right, use_ascii=use_ascii)
     else:
         # XXX: "15 chars indentation" is wrong
         #      ("E       AssertionError: assert "); should use term width.
         maxsize = (
             80 - 15 - len(op) - 2
         ) // 2  # 15 chars indentation, 1 space around op
-        left_repr = saferepr(left, maxsize=maxsize)
-        right_repr = saferepr(right, maxsize=maxsize)
+
+        left_repr = saferepr(left, maxsize=maxsize, use_ascii=use_ascii)
+        right_repr = saferepr(right, maxsize=maxsize, use_ascii=use_ascii)
 
     summary = f"{left_repr} {op} {right_repr}"
 
