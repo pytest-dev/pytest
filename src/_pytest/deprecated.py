@@ -107,7 +107,10 @@ HOOK_LEGACY_MARKING = UnformattedWarning(
     "#configuring-hook-specs-impls-using-markers",
 )
 
-MARKED_FIXTURE = PytestDeprecationWarning("Marks applied to fixtures have no effect")
+MARKED_FIXTURE = PytestDeprecationWarning(
+    "Marks applied to fixtures have no effect\n"
+    "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
+)
 
 # You want to make some `__init__` or function "private".
 #
