@@ -294,6 +294,9 @@ def test_fixture_disallow_on_marked_functions():
         def foo():
             raise NotImplementedError()
 
+    # it's only possible to get one warning here because you're already prevented
+    # from applying @fixture twice
+    # ValueError("fixture is being applied more than once to the same function")
     assert len(record) == 1
 
 
@@ -310,4 +313,20 @@ def test_fixture_disallow_marks_on_fixtures():
         def foo():
             raise NotImplementedError()
 
-    assert len(record) == 2
+    assert len(record) == 2  # one for each mark decorator
+
+
+def test_fixture_disallowed_between_marks():
+    """Test that applying a mark to a fixture warns (#3364)."""
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=r"Marks applied to fixtures have no effect",
+    ) as record:
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.fixture
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+    assert len(record) == 2  # one for each mark decorator
