@@ -281,7 +281,6 @@ Applying a mark to a fixture function
 Applying a mark to a fixture function never had any effect, but it is a common user error.
 
 .. code-block:: python
-    
     @pytest.mark.usefixtures("clean_database")
     @pytest.fixture
     def user() -> User:
