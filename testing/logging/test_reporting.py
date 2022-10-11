@@ -1173,20 +1173,16 @@ def test_suppress_loggers(testdir):
         import logging
         import os
         suppressed_log = logging.getLogger('suppressed')
-        other_log = logging.getLogger('other')
-        normal_log = logging.getLogger('normal')
+        test_log = logging.getLogger('test')
         def test_logger_propagation(caplog):
             with caplog.at_level(logging.DEBUG):
                 suppressed_log.warning("no log; no stderr")
-                other_log.info("no log")
-                normal_log.debug("Unsuppressed!")
+                test_log.debug("Visible text!")
                 print(os.linesep)
-                assert caplog.record_tuples == [('normal', 10, 'Unsuppressed!')]
+                assert caplog.record_tuples == [('test', 10, 'Visible text!')]
          """
     )
-    result = testdir.runpytest(
-        "--suppress-logger=suppressed", "--suppress-logger=other", "-s"
-    )
+    result = testdir.runpytest("--suppress-logger=suppressed", "-s")
     assert result.ret == ExitCode.OK
     assert not result.stderr.lines
 
@@ -1202,23 +1198,23 @@ def test_log_suppressing_works_with_log_cli(testdir):
     testdir.makepyfile(
         """
     import logging
-    log = logging.getLogger('mylog')
     suppressed_log = logging.getLogger('suppressed')
+    test_log = logging.getLogger('test')
+
     def test_log_cli_works(caplog):
-        log.info("hello world")
-        suppressed_log.warning("Hello World")
+        test_log.info("Visible text!")
+        suppressed_log.warning("This string will be suppressed.")
     """
     )
     result = testdir.runpytest(
         "--log-cli-level=DEBUG",
         "--suppress-logger=suppressed",
-        "--suppress-logger=mylog",
     )
     assert result.ret == ExitCode.OK
-    result.stdout.no_fnmatch_line(
-        "INFO     mylog:test_log_suppressing_works_with_log_cli.py:5 hello world"
+    result.stdout.fnmatch_lines(
+        "INFO     test:test_log_suppressing_works_with_log_cli.py:6 Visible text!"
     )
     result.stdout.no_fnmatch_line(
-        "WARNING  suppressed:test_log_suppressing_works_with_log_cli.py:6 Hello World"
+        "WARNING  suppressed:test_log_suppressing_works_with_log_cli.py:7 This string will be suppressed."
     )
     assert not result.stderr.lines

@@ -302,7 +302,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         default=[],
         dest="suppress_logger",
-        help="Suppress logger by name",
+        help="Suppress loggers by name",
     )
 
 
@@ -610,7 +610,6 @@ class LoggingPlugin:
         for name in logger_names_to_suppress:
             logger = logging.getLogger(name)
             logger.addFilter(lambda _: 0)
-
 
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # Color option doesn't exist if terminal plugin is disabled.
