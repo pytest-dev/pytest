@@ -1165,3 +1165,60 @@ def test_log_file_cli_subdirectories_are_successfully_created(
     result = pytester.runpytest("--log-file=foo/bar/logf.log")
     assert "logf.log" in os.listdir(expected)
     assert result.ret == ExitCode.OK
+
+
+def test_suppress_loggers(testdir):
+    testdir.makepyfile(
+        """
+        import logging
+        import os
+        suppressed_log = logging.getLogger('suppressed')
+        other_log = logging.getLogger('other')
+        normal_log = logging.getLogger('normal')
+        def test_logger_propagation(caplog):
+            with caplog.at_level(logging.DEBUG):
+                suppressed_log.warning("no log; no stderr")
+                other_log.info("no log")
+                normal_log.debug("Unsuppressed!")
+                print(os.linesep)
+                assert caplog.record_tuples == [('normal', 10, 'Unsuppressed!')]
+         """
+    )
+    result = testdir.runpytest(
+        "--suppress-logger=suppressed", "--suppress-logger=other", "-s"
+    )
+    assert result.ret == ExitCode.OK
+    assert not result.stderr.lines
+
+
+def test_suppress_loggers_help(testdir):
+    result = testdir.runpytest("-h")
+    result.stdout.fnmatch_lines(
+        ["  --suppress-logger=SUPPRESS_LOGGER", "*Suppress loggers by name*"]
+    )
+
+
+def test_log_suppressing_works_with_log_cli(testdir):
+    testdir.makepyfile(
+        """
+    import logging
+    log = logging.getLogger('mylog')
+    suppressed_log = logging.getLogger('suppressed')
+    def test_log_cli_works(caplog):
+        log.info("hello world")
+        suppressed_log.warning("Hello World")
+    """
+    )
+    result = testdir.runpytest(
+        "--log-cli-level=DEBUG",
+        "--suppress-logger=suppressed",
+        "--suppress-logger=mylog",
+    )
+    assert result.ret == ExitCode.OK
+    result.stdout.no_fnmatch_line(
+        "INFO     mylog:test_log_suppressing_works_with_log_cli.py:5 hello world"
+    )
+    result.stdout.no_fnmatch_line(
+        "WARNING  suppressed:test_log_suppressing_works_with_log_cli.py:6 Hello World"
+    )
+    assert not result.stderr.lines
