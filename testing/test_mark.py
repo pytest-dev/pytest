@@ -1111,7 +1111,7 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_mark_mro():
+def test_mark_mro() -> None:
     xfail = pytest.mark.xfail
 
     @xfail("a")

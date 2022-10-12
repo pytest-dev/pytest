@@ -357,9 +357,15 @@ class MarkDecorator:
 
 def get_unpacked_marks(
     obj: Union[object, type],
+    *,
     consider_mro: bool = True,
 ) -> List[Mark]:
-    """Obtain the unpacked marks that are stored on an object."""
+    """Obtain the unpacked marks that are stored on an object.
+    
+    If obj is a class and consider_mro is true, return marks applied to
+    this class and all of its super-classes in MRO order. If consider_mro
+    is false, only return marks applied directly to this class.
+    """
     if isinstance(obj, type):
         if not consider_mro:
             mark_lists = [obj.__dict__.get("pytestmark", [])]
