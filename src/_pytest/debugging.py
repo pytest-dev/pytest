@@ -3,6 +3,7 @@ import argparse
 import functools
 import sys
 import types
+import unittest
 from typing import Any
 from typing import Callable
 from typing import Generator
@@ -293,7 +294,9 @@ class PdbInvoke:
             sys.stdout.write(out)
             sys.stdout.write(err)
         assert call.excinfo is not None
-        _enter_pdb(node, call.excinfo, report)
+
+        if not isinstance(call.excinfo.value, unittest.SkipTest):
+            _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
         tb = _postmortem_traceback(excinfo)

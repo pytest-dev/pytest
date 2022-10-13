@@ -123,6 +123,18 @@ class TestPDB:
         )
         assert rep.skipped
         assert len(pdblist) == 0
+        
+    def test_pdb_on_raise_skiptest(self, pytester, pdblist) -> None:
+        rep = runpdb_and_get_report(
+            pytester,
+            """
+            import unittest
+            
+            raise unittest.SkipTest("This is a common way to skip an entire file.")
+        """,
+        )
+        assert rep.skipped
+        assert len(pdblist) == 0
 
     def test_pdb_on_BdbQuit(self, pytester, pdblist) -> None:
         rep = runpdb_and_get_report(
