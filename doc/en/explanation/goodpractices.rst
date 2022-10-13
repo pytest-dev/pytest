@@ -22,7 +22,7 @@ The first few lines should look like this:
     requires = ["hatchling"]
     build-backend = "hatchling.build"
 
-    [metadata]
+    [project]
     name = "PACKAGENAME"
 
 where ``PACKAGENAME`` is the name of your package.
