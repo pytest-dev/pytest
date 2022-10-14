@@ -179,6 +179,12 @@ def pytest_addoption(parser: Parser) -> None:
         help="Show locals in tracebacks (disabled by default)",
     )
     group._addoption(
+        "--no-showlocals",
+        action="store_false",
+        dest="showlocals",
+        help="Hide locals in tracebacks (negate --showlocals passed through addopts)",
+    )
+    group._addoption(
         "--tb",
         metavar="style",
         action="store",
