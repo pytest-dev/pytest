@@ -998,6 +998,22 @@ class TestTerminalFunctional:
             ]
         )
 
+    def test_noshowlocals_addopts_override(self, pytester: Pytester) -> None:
+        pytester.makeini("[pytest]\naddopts=--showlocals")
+        p1 = pytester.makepyfile(
+            """
+            def test_noshowlocals():
+                x = 3
+                y = "x" * 5000
+                assert 0
+        """
+        )
+
+        # Override global --showlocals for py.test via arg
+        result = pytester.runpytest(p1, "--no-showlocals")
+        result.stdout.no_fnmatch_line("x* = 3")
+        result.stdout.no_fnmatch_line("y* = 'xxxxxx*")
+
     def test_showlocals_short(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile(
             """

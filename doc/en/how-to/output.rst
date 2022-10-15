@@ -12,8 +12,9 @@ Examples for modifying traceback printing:
 
 .. code-block:: bash
 
-    pytest --showlocals # show local variables in tracebacks
-    pytest -l           # show local variables (shortcut)
+    pytest --showlocals     # show local variables in tracebacks
+    pytest -l               # show local variables (shortcut)
+    pytest --no-showlocals  # hide local variables (if addopts enables them)
 
     pytest --tb=auto    # (default) 'long' tracebacks for the first and last
                          # entry, but 'short' style for the other entries
