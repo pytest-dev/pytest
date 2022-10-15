@@ -20,9 +20,18 @@ def pdb_env(request):
         pytester._monkeypatch.setenv("PDBPP_HIJACK_PDB", "0")
 
 
-def runpdb_and_get_report(pytester: Pytester, source: str):
+def runpdb(pytester: Pytester, source: str):
     p = pytester.makepyfile(source)
-    result = pytester.runpytest_inprocess("--pdb", p)
+    return pytester.runpytest_inprocess("--pdb", p)
+
+
+def runpdb_and_get_stdout(pytester: Pytester, source: str):
+    result = runpdb(pytester, source)
+    return result.stdout.str()
+
+
+def runpdb_and_get_report(pytester: Pytester, source: str):
+    result = runpdb(pytester, source)
     reports = result.reprec.getreports("pytest_runtest_logreport")  # type: ignore[attr-defined]
     assert len(reports) == 3, reports  # setup/call/teardown
     return reports[1]
@@ -123,6 +132,16 @@ class TestPDB:
         )
         assert rep.skipped
         assert len(pdblist) == 0
+
+    def test_pdb_on_top_level_raise_skiptest(self, pytester, pdblist) -> None:
+        stdout = runpdb_and_get_stdout(
+            pytester,
+            """
+            import unittest
+            raise unittest.SkipTest("This is a common way to skip an entire file.")
+        """,
+        )
+        assert "entering PDB" not in stdout, stdout
 
     def test_pdb_on_BdbQuit(self, pytester, pdblist) -> None:
         rep = runpdb_and_get_report(
