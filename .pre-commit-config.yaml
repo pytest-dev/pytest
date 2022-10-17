@@ -23,7 +23,7 @@ repos:
         exclude: _pytest/(debugging|hookspec).py
         language_version: python3
 -   repo: https://github.com/PyCQA/autoflake
-    rev: v1.7.3
+    rev: v1.7.6
     hooks:
     -   id: autoflake
         name: autoflake
@@ -39,7 +39,7 @@ repos:
           - flake8-typing-imports==1.12.0
           - flake8-docstrings==1.5.0
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.8.4
+    rev: v3.8.5
     hooks:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py37-plus]
@@ -49,7 +49,7 @@ repos:
     -   id: pyupgrade
         args: [--py37-plus]
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.0.0
+    rev: v2.1.0
     hooks:
     -   id: setup-cfg-fmt
         args: ["--max-py-version=3.10", "--include-version-classifiers"]
