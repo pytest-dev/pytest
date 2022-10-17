@@ -1182,7 +1182,7 @@ def test_disable_loggers(testdir):
                 assert caplog.record_tuples == [('test', 10, 'Visible text!')]
          """
     )
-    result = testdir.runpytest("--logger-disabled=disabled", "-s")
+    result = testdir.runpytest("--logger-disable=disabled", "-s")
     assert result.ret == ExitCode.OK
     assert not result.stderr.lines
 
@@ -1204,7 +1204,7 @@ def test_disable_loggers_does_not_propagate(testdir):
     """
     )
 
-    result = testdir.runpytest("--logger-disabled=parent.child", "-s")
+    result = testdir.runpytest("--logger-disable=parent.child", "-s")
     assert result.ret == ExitCode.OK
     assert not result.stderr.lines
 
@@ -1212,7 +1212,7 @@ def test_disable_loggers_does_not_propagate(testdir):
 def test_disabled_loggers_help(testdir):
     result = testdir.runpytest("-h")
     result.stdout.fnmatch_lines(
-        ["  --logger-disabled=LOGGER_DISABLED", "*Disable loggers by name*"]
+        ["  --logger-disable=LOGGER_DISABLE", "*Disable loggers by name*"]
     )
 
 
@@ -1230,7 +1230,7 @@ def test_log_disabling_works_with_log_cli(testdir):
     )
     result = testdir.runpytest(
         "--log-cli-level=DEBUG",
-        "--logger-disabled=disabled",
+        "--logger-disable=disabled",
     )
     assert result.ret == ExitCode.OK
     result.stdout.fnmatch_lines(

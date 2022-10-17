@@ -298,10 +298,10 @@ def pytest_addoption(parser: Parser) -> None:
         help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
     )
     group.addoption(
-        "--logger-disabled",
+        "--logger-disable",
         action="append",
         default=[],
-        dest="logger_disabled",
+        dest="logger_disable",
         help="Disable loggers by name",
     )
 
@@ -601,7 +601,7 @@ class LoggingPlugin:
             get_option_ini(config, "log_auto_indent"),
         )
         self.log_cli_handler.setFormatter(log_cli_formatter)
-        self._disable_logger(loggers_to_disable=config.option.logger_disabled)
+        self._disable_logger(loggers_to_disable=config.option.logger_disable)
 
     def _disable_logger(self, loggers_to_disable: List[str]) -> None:
         if not loggers_to_disable:
@@ -610,7 +610,7 @@ class LoggingPlugin:
         logger_names_to_suppress = set(loggers_to_disable)
         for name in logger_names_to_suppress:
             logger = logging.getLogger(name)
-            logger.addFilter(lambda _: 0)
+            logger.disabled = True
 
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # Color option doesn't exist if terminal plugin is disabled.
