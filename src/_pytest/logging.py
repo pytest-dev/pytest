@@ -298,11 +298,11 @@ def pytest_addoption(parser: Parser) -> None:
         help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
     )
     group.addoption(
-        "--suppress-logger",
+        "--logger-disabled",
         action="append",
         default=[],
-        dest="suppress_logger",
-        help="Suppress loggers by name",
+        dest="logger_disabled",
+        help="Disable loggers by name",
     )
 
 
@@ -601,12 +601,13 @@ class LoggingPlugin:
             get_option_ini(config, "log_auto_indent"),
         )
         self.log_cli_handler.setFormatter(log_cli_formatter)
+        self._disable_logger(loggers_to_disable=config.option.logger_disabled)
 
-        if config.option.suppress_logger:
-            self._suppress_loggers()
+    def _disable_logger(self, loggers_to_disable: List[str]) -> None:
+        if not loggers_to_disable:
+            return
 
-    def _suppress_loggers(self) -> None:
-        logger_names_to_suppress = set(self._config.option.suppress_logger)
+        logger_names_to_suppress = set(loggers_to_disable)
         for name in logger_names_to_suppress:
             logger = logging.getLogger(name)
             logger.addFilter(lambda _: 0)

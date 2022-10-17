@@ -1167,54 +1167,76 @@ def test_log_file_cli_subdirectories_are_successfully_created(
     assert result.ret == ExitCode.OK
 
 
-def test_suppress_loggers(testdir):
+def test_disable_loggers(testdir):
     testdir.makepyfile(
         """
         import logging
         import os
-        suppressed_log = logging.getLogger('suppressed')
+        disabled_log = logging.getLogger('disabled')
         test_log = logging.getLogger('test')
         def test_logger_propagation(caplog):
             with caplog.at_level(logging.DEBUG):
-                suppressed_log.warning("no log; no stderr")
+                disabled_log.warning("no log; no stderr")
                 test_log.debug("Visible text!")
                 print(os.linesep)
                 assert caplog.record_tuples == [('test', 10, 'Visible text!')]
          """
     )
-    result = testdir.runpytest("--suppress-logger=suppressed", "-s")
+    result = testdir.runpytest("--logger-disabled=disabled", "-s")
     assert result.ret == ExitCode.OK
     assert not result.stderr.lines
 
 
-def test_suppress_loggers_help(testdir):
-    result = testdir.runpytest("-h")
-    result.stdout.fnmatch_lines(
-        ["  --suppress-logger=SUPPRESS_LOGGER", "*Suppress loggers by name*"]
-    )
-
-
-def test_log_suppressing_works_with_log_cli(testdir):
+def test_disable_loggers_does_not_propagate(testdir):
     testdir.makepyfile(
         """
     import logging
-    suppressed_log = logging.getLogger('suppressed')
+    import os
+
+    parent_logger = logging.getLogger("parent")
+    child_logger = parent_logger.getChild("child")
+
+    def test_logger_propagation_to_parent(caplog):
+            with caplog.at_level(logging.DEBUG):
+                child_logger.warning("some message")
+                print(os.linesep)
+                assert not caplog.record_tuples
+    """
+    )
+
+    result = testdir.runpytest("--logger-disabled=parent.child", "-s")
+    assert result.ret == ExitCode.OK
+    assert not result.stderr.lines
+
+
+def test_disabled_loggers_help(testdir):
+    result = testdir.runpytest("-h")
+    result.stdout.fnmatch_lines(
+        ["  --logger-disabled=LOGGER_DISABLED", "*Disable loggers by name*"]
+    )
+
+
+def test_log_disabling_works_with_log_cli(testdir):
+    testdir.makepyfile(
+        """
+    import logging
+    disabled_log = logging.getLogger('disabled')
     test_log = logging.getLogger('test')
 
     def test_log_cli_works(caplog):
         test_log.info("Visible text!")
-        suppressed_log.warning("This string will be suppressed.")
+        disabled_log.warning("This string will be suppressed.")
     """
     )
     result = testdir.runpytest(
         "--log-cli-level=DEBUG",
-        "--suppress-logger=suppressed",
+        "--logger-disabled=disabled",
     )
     assert result.ret == ExitCode.OK
     result.stdout.fnmatch_lines(
-        "INFO     test:test_log_suppressing_works_with_log_cli.py:6 Visible text!"
+        "INFO     test:test_log_disabling_works_with_log_cli.py:6 Visible text!"
     )
     result.stdout.no_fnmatch_line(
-        "WARNING  suppressed:test_log_suppressing_works_with_log_cli.py:7 This string will be suppressed."
+        "WARNING  disabled:test_log_disabling_works_with_log_cli.py:7 This string will be suppressed."
     )
     assert not result.stderr.lines
