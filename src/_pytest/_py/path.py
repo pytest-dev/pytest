@@ -330,13 +330,6 @@ class PathBase:
         """return new path object with 'other' added to the basename"""
         return self.new(basename=self.basename + str(other))
 
-    def __cmp__(self, other):
-        """return sort value (-1, 0, +1)."""
-        try:
-            return cmp(self.strpath, other.strpath)
-        except AttributeError:
-            return cmp(str(self), str(other))  # self.path, other.path)
-
     def __lt__(self, other):
         try:
             return self.strpath < other.strpath
