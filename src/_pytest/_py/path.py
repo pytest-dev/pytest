@@ -27,48 +27,6 @@ from . import error
 # Moved from local.py.
 iswin32 = sys.platform == "win32" or (getattr(os, "_name", False) == "nt")
 
-try:
-    # FileNotFoundError might happen in py34, and is not available with py27.
-    import_errors = (ImportError, FileNotFoundError)
-except NameError:
-    import_errors = (ImportError,)
-
-try:
-    from os import fspath
-except ImportError:
-
-    def fspath(path):
-        """
-        Return the string representation of the path.
-        If str or bytes is passed in, it is returned unchanged.
-        This code comes from PEP 519, modified to support earlier versions of
-        python.
-
-        This is required for python < 3.6.
-        """
-        if isinstance(path, (str, bytes)):
-            return path
-
-        # Work from the object's type to match method resolution of other magic
-        # methods.
-        path_type = type(path)
-        try:
-            return path_type.__fspath__(path)
-        except AttributeError:
-            if hasattr(path_type, "__fspath__"):
-                raise
-            try:
-                import pathlib
-            except import_errors:
-                pass
-            else:
-                if isinstance(path, pathlib.PurePath):
-                    return str(path)
-
-            raise TypeError(
-                "expected str, bytes or os.PathLike object, not " + path_type.__name__
-            )
-
 
 class Checkers:
     _depend_on_existence = "exists", "link", "dir", "file"
@@ -157,7 +115,7 @@ class PathBase:
     Checkers = Checkers
 
     def __div__(self, other):
-        return self.join(fspath(other))
+        return self.join(os.fspath(other))
 
     __truediv__ = __div__  # py3k
 
@@ -640,7 +598,7 @@ class LocalPath(FSBase):
             self.strpath = error.checked_call(os.getcwd)
         else:
             try:
-                path = fspath(path)
+                path = os.fspath(path)
             except TypeError:
                 raise ValueError(
                     "can only pass None, Path instances "
@@ -657,9 +615,9 @@ class LocalPath(FSBase):
         return hash(s)
 
     def __eq__(self, other):
-        s1 = fspath(self)
+        s1 = os.fspath(self)
         try:
-            s2 = fspath(other)
+            s2 = os.fspath(other)
         except TypeError:
             return False
         if iswin32:
@@ -674,14 +632,14 @@ class LocalPath(FSBase):
         return not (self == other)
 
     def __lt__(self, other):
-        return fspath(self) < fspath(other)
+        return os.fspath(self) < os.fspath(other)
 
     def __gt__(self, other):
-        return fspath(self) > fspath(other)
+        return os.fspath(self) > os.fspath(other)
 
     def samefile(self, other):
         """return True if 'other' references the same file as 'self'."""
-        other = fspath(other)
+        other = os.fspath(other)
         if not isabs(other):
             other = abspath(other)
         if self == other:
@@ -820,7 +778,7 @@ class LocalPath(FSBase):
         of the args is an absolute path.
         """
         sep = self.sep
-        strargs = [fspath(arg) for arg in args]
+        strargs = [os.fspath(arg) for arg in args]
         strpath = self.strpath
         if kwargs.get("abs"):
             newargs = []
@@ -945,7 +903,7 @@ class LocalPath(FSBase):
 
     def rename(self, target):
         """rename this path to target."""
-        target = fspath(target)
+        target = os.fspath(target)
         return error.checked_call(os.rename, self.strpath, target)
 
     def dump(self, obj, bin=1):
@@ -961,7 +919,7 @@ class LocalPath(FSBase):
     def mkdir(self, *args):
         """create & return the directory joined with args."""
         p = self.join(*args)
-        error.checked_call(os.mkdir, fspath(p))
+        error.checked_call(os.mkdir, os.fspath(p))
         return p
 
     def write_binary(self, data, ensure=False):
