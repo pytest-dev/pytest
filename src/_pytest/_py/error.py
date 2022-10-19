@@ -5,7 +5,6 @@ create errno-specific classes for IO or os calls.
 import errno
 import os
 import sys
-from types import ModuleType
 
 
 class Error(EnvironmentError):
@@ -39,7 +38,7 @@ _winerrnomap = {
 }
 
 
-class ErrorMaker(ModuleType):
+class ErrorMaker:
     """lazily provides Exception classes for each possible POSIX errno
     (as defined per the 'errno' module).  All such instances
     subclass EnvironmentError.
@@ -97,5 +96,8 @@ class ErrorMaker(ModuleType):
             __tracebackhide__ = True
 
 
-error = ErrorMaker("_pytest._py.error")
-sys.modules[error.__name__] = error
+_error_maker = ErrorMaker()
+
+
+def __getattr__(attr):
+    return getattr(_error_maker, attr)
