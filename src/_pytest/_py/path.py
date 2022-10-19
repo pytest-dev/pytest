@@ -124,268 +124,6 @@ class NeverRaised(Exception):
     pass
 
 
-class PathBase:
-    """shared implementation for filesystem path objects."""
-
-    def __div__(self, other):
-        return self.join(os.fspath(other))
-
-    __truediv__ = __div__  # py3k
-
-    @property
-    def basename(self):
-        """Basename part of path."""
-        return self._getbyspec("basename")[0]
-
-    @property
-    def dirname(self):
-        """Dirname part of path."""
-        return self._getbyspec("dirname")[0]
-
-    @property
-    def purebasename(self):
-        """Pure base name of the path."""
-        return self._getbyspec("purebasename")[0]
-
-    @property
-    def ext(self):
-        """Extension of the path (including the '.')."""
-        return self._getbyspec("ext")[0]
-
-    def dirpath(self, *args, **kwargs):
-        """Return the directory path joined with any given path arguments."""
-        return self.new(basename="").join(*args, **kwargs)
-
-    def read_binary(self):
-        """Read and return a bytestring from reading the path."""
-        with self.open("rb") as f:
-            return f.read()
-
-    def read_text(self, encoding):
-        """Read and return a Unicode string from reading the path."""
-        with self.open("r", encoding=encoding) as f:
-            return f.read()
-
-    def read(self, mode="r"):
-        """Read and return a bytestring from reading the path."""
-        with self.open(mode) as f:
-            return f.read()
-
-    def readlines(self, cr=1):
-        """Read and return a list of lines from the path. if cr is False, the
-        newline will be removed from the end of each line."""
-        mode = "r"
-
-        if not cr:
-            content = self.read(mode)
-            return content.split("\n")
-        else:
-            f = self.open(mode)
-            try:
-                return f.readlines()
-            finally:
-                f.close()
-
-    def load(self):
-        """(deprecated) return object unpickled from self.read()"""
-        f = self.open("rb")
-        try:
-            import pickle
-
-            return error.checked_call(pickle.load, f)
-        finally:
-            f.close()
-
-    def move(self, target):
-        """Move this path to target."""
-        if target.relto(self):
-            raise error.EINVAL(target, "cannot move path into a subdirectory of itself")
-        try:
-            self.rename(target)
-        except error.EXDEV:  # invalid cross-device link
-            self.copy(target)
-            self.remove()
-
-    def __repr__(self):
-        """Return a string representation of this path."""
-        return repr(str(self))
-
-    def check(self, **kw):
-        """Check a path for existence and properties.
-
-        Without arguments, return True if the path exists, otherwise False.
-
-        valid checkers::
-
-            file=1    # is a file
-            file=0    # is not a file (may not even exist)
-            dir=1     # is a dir
-            link=1    # is a link
-            exists=1  # exists
-
-        You can specify multiple checker definitions, for example::
-
-            path.check(file=1, link=1)  # a link pointing to a file
-        """
-        if not kw:
-            kw = {"exists": 1}
-        return Checkers(self)._evaluate(kw)
-
-    def fnmatch(self, pattern):
-        """Return true if the basename/fullname matches the glob-'pattern'.
-
-        valid pattern characters::
-
-            *       matches everything
-            ?       matches any single character
-            [seq]   matches any character in seq
-            [!seq]  matches any char not in seq
-
-        If the pattern contains a path-separator then the full path
-        is used for pattern matching and a '*' is prepended to the
-        pattern.
-
-        if the pattern doesn't contain a path-separator the pattern
-        is only matched against the basename.
-        """
-        return FNMatcher(pattern)(self)
-
-    def relto(self, relpath):
-        """Return a string which is the relative part of the path
-        to the given 'relpath'.
-        """
-        if not isinstance(relpath, (str, PathBase)):
-            raise TypeError(f"{relpath!r}: not a string or path object")
-        strrelpath = str(relpath)
-        if strrelpath and strrelpath[-1] != self.sep:
-            strrelpath += self.sep
-        # assert strrelpath[-1] == self.sep
-        # assert strrelpath[-2] != self.sep
-        strself = self.strpath
-        if sys.platform == "win32" or getattr(os, "_name", None) == "nt":
-            if os.path.normcase(strself).startswith(os.path.normcase(strrelpath)):
-                return strself[len(strrelpath) :]
-        elif strself.startswith(strrelpath):
-            return strself[len(strrelpath) :]
-        return ""
-
-    def ensure_dir(self, *args):
-        """Ensure the path joined with args is a directory."""
-        return self.ensure(*args, **{"dir": True})
-
-    def bestrelpath(self, dest):
-        """Return a string which is a relative path from self
-        (assumed to be a directory) to dest such that
-        self.join(bestrelpath) == dest and if not such
-        path can be determined return dest.
-        """
-        try:
-            if self == dest:
-                return os.curdir
-            base = self.common(dest)
-            if not base:  # can be the case on windows
-                return str(dest)
-            self2base = self.relto(base)
-            reldest = dest.relto(base)
-            if self2base:
-                n = self2base.count(self.sep) + 1
-            else:
-                n = 0
-            lst = [os.pardir] * n
-            if reldest:
-                lst.append(reldest)
-            target = dest.sep.join(lst)
-            return target
-        except AttributeError:
-            return str(dest)
-
-    def exists(self):
-        return self.check()
-
-    def isdir(self):
-        return self.check(dir=1)
-
-    def isfile(self):
-        return self.check(file=1)
-
-    def parts(self, reverse=False):
-        """Return a root-first list of all ancestor directories
-        plus the path itself.
-        """
-        current = self
-        lst = [self]
-        while 1:
-            last = current
-            current = current.dirpath()
-            if last == current:
-                break
-            lst.append(current)
-        if not reverse:
-            lst.reverse()
-        return lst
-
-    def common(self, other):
-        """Return the common part shared with the other path
-        or None if there is no common part.
-        """
-        last = None
-        for x, y in zip(self.parts(), other.parts()):
-            if x != y:
-                return last
-            last = x
-        return last
-
-    def __add__(self, other):
-        """Return new path object with 'other' added to the basename"""
-        return self.new(basename=self.basename + str(other))
-
-    def __lt__(self, other):
-        try:
-            return self.strpath < other.strpath
-        except AttributeError:
-            return str(self) < str(other)
-
-    def visit(self, fil=None, rec=None, ignore=NeverRaised, bf=False, sort=False):
-        """Yields all paths below the current one
-
-        fil is a filter (glob pattern or callable), if not matching the
-        path will not be yielded, defaulting to None (everything is
-        returned)
-
-        rec is a filter (glob pattern or callable) that controls whether
-        a node is descended, defaulting to None
-
-        ignore is an Exception class that is ignoredwhen calling dirlist()
-        on any of the paths (by default, all exceptions are reported)
-
-        bf if True will cause a breadthfirst search instead of the
-        default depthfirst. Default: False
-
-        sort if True will sort entries within each directory level.
-        """
-        yield from Visitor(fil, rec, ignore, bf, sort).gen(self)
-
-    def _sortlist(self, res, sort):
-        if sort:
-            if hasattr(sort, "__call__"):
-                warnings.warn(
-                    DeprecationWarning(
-                        "listdir(sort=callable) is deprecated and breaks on python3"
-                    ),
-                    stacklevel=3,
-                )
-                res.sort(sort)
-            else:
-                res.sort()
-
-    def samefile(self, other):
-        """Return True if other refers to the same stat object as self."""
-        return self.strpath == str(other)
-
-    def __fspath__(self):
-        return self.strpath
-
-
 class Visitor:
     def __init__(self, fil, rec, ignore, bf, sort):
         if isinstance(fil, str):
@@ -507,7 +245,7 @@ def getgroupid(group):
     return group
 
 
-class LocalPath(PathBase):
+class LocalPath:
     """Object oriented interface to os.path and other local filesystem
     related information.
     """
@@ -577,6 +315,225 @@ class LocalPath(PathBase):
                 n = reldest.count(self.sep)
                 target = self.sep.join(("..",) * n + (relsource,))
                 error.checked_call(os.symlink, target, self.strpath)
+
+    def __div__(self, other):
+        return self.join(os.fspath(other))
+
+    __truediv__ = __div__  # py3k
+
+    @property
+    def basename(self):
+        """Basename part of path."""
+        return self._getbyspec("basename")[0]
+
+    @property
+    def dirname(self):
+        """Dirname part of path."""
+        return self._getbyspec("dirname")[0]
+
+    @property
+    def purebasename(self):
+        """Pure base name of the path."""
+        return self._getbyspec("purebasename")[0]
+
+    @property
+    def ext(self):
+        """Extension of the path (including the '.')."""
+        return self._getbyspec("ext")[0]
+
+    def read_binary(self):
+        """Read and return a bytestring from reading the path."""
+        with self.open("rb") as f:
+            return f.read()
+
+    def read_text(self, encoding):
+        """Read and return a Unicode string from reading the path."""
+        with self.open("r", encoding=encoding) as f:
+            return f.read()
+
+    def read(self, mode="r"):
+        """Read and return a bytestring from reading the path."""
+        with self.open(mode) as f:
+            return f.read()
+
+    def readlines(self, cr=1):
+        """Read and return a list of lines from the path. if cr is False, the
+        newline will be removed from the end of each line."""
+        mode = "r"
+
+        if not cr:
+            content = self.read(mode)
+            return content.split("\n")
+        else:
+            f = self.open(mode)
+            try:
+                return f.readlines()
+            finally:
+                f.close()
+
+    def load(self):
+        """(deprecated) return object unpickled from self.read()"""
+        f = self.open("rb")
+        try:
+            import pickle
+
+            return error.checked_call(pickle.load, f)
+        finally:
+            f.close()
+
+    def move(self, target):
+        """Move this path to target."""
+        if target.relto(self):
+            raise error.EINVAL(target, "cannot move path into a subdirectory of itself")
+        try:
+            self.rename(target)
+        except error.EXDEV:  # invalid cross-device link
+            self.copy(target)
+            self.remove()
+
+    def fnmatch(self, pattern):
+        """Return true if the basename/fullname matches the glob-'pattern'.
+
+        valid pattern characters::
+
+            *       matches everything
+            ?       matches any single character
+            [seq]   matches any character in seq
+            [!seq]  matches any char not in seq
+
+        If the pattern contains a path-separator then the full path
+        is used for pattern matching and a '*' is prepended to the
+        pattern.
+
+        if the pattern doesn't contain a path-separator the pattern
+        is only matched against the basename.
+        """
+        return FNMatcher(pattern)(self)
+
+    def relto(self, relpath):
+        """Return a string which is the relative part of the path
+        to the given 'relpath'.
+        """
+        if not isinstance(relpath, (str, LocalPath)):
+            raise TypeError(f"{relpath!r}: not a string or path object")
+        strrelpath = str(relpath)
+        if strrelpath and strrelpath[-1] != self.sep:
+            strrelpath += self.sep
+        # assert strrelpath[-1] == self.sep
+        # assert strrelpath[-2] != self.sep
+        strself = self.strpath
+        if sys.platform == "win32" or getattr(os, "_name", None) == "nt":
+            if os.path.normcase(strself).startswith(os.path.normcase(strrelpath)):
+                return strself[len(strrelpath) :]
+        elif strself.startswith(strrelpath):
+            return strself[len(strrelpath) :]
+        return ""
+
+    def ensure_dir(self, *args):
+        """Ensure the path joined with args is a directory."""
+        return self.ensure(*args, **{"dir": True})
+
+    def bestrelpath(self, dest):
+        """Return a string which is a relative path from self
+        (assumed to be a directory) to dest such that
+        self.join(bestrelpath) == dest and if not such
+        path can be determined return dest.
+        """
+        try:
+            if self == dest:
+                return os.curdir
+            base = self.common(dest)
+            if not base:  # can be the case on windows
+                return str(dest)
+            self2base = self.relto(base)
+            reldest = dest.relto(base)
+            if self2base:
+                n = self2base.count(self.sep) + 1
+            else:
+                n = 0
+            lst = [os.pardir] * n
+            if reldest:
+                lst.append(reldest)
+            target = dest.sep.join(lst)
+            return target
+        except AttributeError:
+            return str(dest)
+
+    def exists(self):
+        return self.check()
+
+    def isdir(self):
+        return self.check(dir=1)
+
+    def isfile(self):
+        return self.check(file=1)
+
+    def parts(self, reverse=False):
+        """Return a root-first list of all ancestor directories
+        plus the path itself.
+        """
+        current = self
+        lst = [self]
+        while 1:
+            last = current
+            current = current.dirpath()
+            if last == current:
+                break
+            lst.append(current)
+        if not reverse:
+            lst.reverse()
+        return lst
+
+    def common(self, other):
+        """Return the common part shared with the other path
+        or None if there is no common part.
+        """
+        last = None
+        for x, y in zip(self.parts(), other.parts()):
+            if x != y:
+                return last
+            last = x
+        return last
+
+    def __add__(self, other):
+        """Return new path object with 'other' added to the basename"""
+        return self.new(basename=self.basename + str(other))
+
+    def visit(self, fil=None, rec=None, ignore=NeverRaised, bf=False, sort=False):
+        """Yields all paths below the current one
+
+        fil is a filter (glob pattern or callable), if not matching the
+        path will not be yielded, defaulting to None (everything is
+        returned)
+
+        rec is a filter (glob pattern or callable) that controls whether
+        a node is descended, defaulting to None
+
+        ignore is an Exception class that is ignoredwhen calling dirlist()
+        on any of the paths (by default, all exceptions are reported)
+
+        bf if True will cause a breadthfirst search instead of the
+        default depthfirst. Default: False
+
+        sort if True will sort entries within each directory level.
+        """
+        yield from Visitor(fil, rec, ignore, bf, sort).gen(self)
+
+    def _sortlist(self, res, sort):
+        if sort:
+            if hasattr(sort, "__call__"):
+                warnings.warn(
+                    DeprecationWarning(
+                        "listdir(sort=callable) is deprecated and breaks on python3"
+                    ),
+                    stacklevel=3,
+                )
+                res.sort(sort)
+            else:
+                res.sort()
+
+    def __fspath__(self):
+        return self.strpath
 
     def __hash__(self):
         s = self.strpath
@@ -740,7 +697,7 @@ class LocalPath(PathBase):
             if args:
                 path = path.join(*args)
             return path
-        return super().dirpath(*args, **kwargs)
+        return self.new(basename="").join(*args, **kwargs)
 
     def join(self, *args, **kwargs):
         """Return a new path by appending all 'args' as path
@@ -792,6 +749,22 @@ class LocalPath(PathBase):
         return islink(self.strpath)
 
     def check(self, **kw):
+        """Check a path for existence and properties.
+
+        Without arguments, return True if the path exists, otherwise False.
+
+        valid checkers::
+
+            file=1    # is a file
+            file=0    # is not a file (may not even exist)
+            dir=1     # is a dir
+            link=1    # is a link
+            exists=1  # exists
+
+        You can specify multiple checker definitions, for example::
+
+            path.check(file=1, link=1)  # a link pointing to a file
+        """
         if not kw:
             return exists(self.strpath)
         if len(kw) == 1:
@@ -799,7 +772,9 @@ class LocalPath(PathBase):
                 return not kw["dir"] ^ isdir(self.strpath)
             if "file" in kw:
                 return not kw["file"] ^ isfile(self.strpath)
-        return super().check(**kw)
+        if not kw:
+            kw = {"exists": 1}
+        return Checkers(self)._evaluate(kw)
 
     _patternchars = set("*?[" + os.path.sep)
 
