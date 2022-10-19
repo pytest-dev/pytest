@@ -18,6 +18,7 @@ from typing import TypeVar
 from typing import Union
 
 import attr
+
 import py
 
 # fmt: off
