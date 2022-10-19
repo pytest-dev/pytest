@@ -1,14 +1,23 @@
-"""
-create errno-specific classes for IO or os calls.
+"""create errno-specific classes for IO or os calls."""
+from __future__ import annotations
 
-"""
 import errno
 import os
 import sys
+from typing import Callable
+from typing import TYPE_CHECKING
+from typing import TypeVar
+
+if TYPE_CHECKING:
+    from typing_extensions import ParamSpec
+
+    P = ParamSpec("P")
+
+R = TypeVar("R")
 
 
 class Error(EnvironmentError):
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "{}.{} {!r}: {} ".format(
             self.__class__.__module__,
             self.__class__.__name__,
@@ -17,7 +26,7 @@ class Error(EnvironmentError):
             # repr(self.args)
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = "[{}]: {}".format(
             self.__class__.__doc__,
             " ".join(map(str, self.args)),
@@ -44,10 +53,9 @@ class ErrorMaker:
     subclass EnvironmentError.
     """
 
-    Error = Error
-    _errno2class = {}
+    _errno2class: dict[int, type[Error]] = {}
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> type[Error]:
         if name[0] == "_":
             raise AttributeError(name)
         eno = getattr(errno, name)
@@ -55,12 +63,12 @@ class ErrorMaker:
         setattr(self, name, cls)
         return cls
 
-    def _geterrnoclass(self, eno):
+    def _geterrnoclass(self, eno: int) -> type[Error]:
         try:
             return self._errno2class[eno]
         except KeyError:
             clsname = errno.errorcode.get(eno, "UnknownErrno%d" % (eno,))
-            errorcls = type(Error)(
+            errorcls = type(
                 clsname,
                 (Error,),
                 {"__module__": "py.error", "__doc__": os.strerror(eno)},
@@ -68,36 +76,34 @@ class ErrorMaker:
             self._errno2class[eno] = errorcls
             return errorcls
 
-    def checked_call(self, func, *args, **kwargs):
-        """call a function and raise an errno-exception if applicable."""
+    def checked_call(
+        self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
+    ) -> R:
+        """Call a function and raise an errno-exception if applicable."""
         __tracebackhide__ = True
         try:
             return func(*args, **kwargs)
-        except self.Error:
+        except Error:
             raise
-        except OSError:
-            cls, value, tb = sys.exc_info()
+        except OSError as value:
             if not hasattr(value, "errno"):
                 raise
-            __tracebackhide__ = False
             errno = value.errno
-            try:
-                if not isinstance(value, WindowsError):
-                    raise NameError
-            except NameError:
-                # we are not on Windows, or we got a proper OSError
-                cls = self._geterrnoclass(errno)
-            else:
+            if sys.platform == "win32":
                 try:
                     cls = self._geterrnoclass(_winerrnomap[errno])
                 except KeyError:
                     raise value
+            else:
+                # we are not on Windows, or we got a proper OSError
+                cls = self._geterrnoclass(errno)
+
             raise cls(f"{func.__name__}{args!r}")
-            __tracebackhide__ = True
 
 
 _error_maker = ErrorMaker()
+checked_call = _error_maker.checked_call
 
 
-def __getattr__(attr):
-    return getattr(_error_maker, attr)
+def __getattr__(attr: str) -> type[Error]:
+    return getattr(_error_maker, attr)  # type: ignore[no-any-return]
