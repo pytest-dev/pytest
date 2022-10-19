@@ -1,6 +1,4 @@
-"""
-local path implementation.
-"""
+"""local path implementation."""
 from __future__ import annotations
 
 import atexit
@@ -124,45 +122,45 @@ class PathBase:
 
     @property
     def basename(self):
-        """basename part of path."""
+        """Basename part of path."""
         return self._getbyspec("basename")[0]
 
     @property
     def dirname(self):
-        """dirname part of path."""
+        """Dirname part of path."""
         return self._getbyspec("dirname")[0]
 
     @property
     def purebasename(self):
-        """pure base name of the path."""
+        """Pure base name of the path."""
         return self._getbyspec("purebasename")[0]
 
     @property
     def ext(self):
-        """extension of the path (including the '.')."""
+        """Extension of the path (including the '.')."""
         return self._getbyspec("ext")[0]
 
     def dirpath(self, *args, **kwargs):
-        """return the directory path joined with any given path arguments."""
+        """Return the directory path joined with any given path arguments."""
         return self.new(basename="").join(*args, **kwargs)
 
     def read_binary(self):
-        """read and return a bytestring from reading the path."""
+        """Read and return a bytestring from reading the path."""
         with self.open("rb") as f:
             return f.read()
 
     def read_text(self, encoding):
-        """read and return a Unicode string from reading the path."""
+        """Read and return a Unicode string from reading the path."""
         with self.open("r", encoding=encoding) as f:
             return f.read()
 
     def read(self, mode="r"):
-        """read and return a bytestring from reading the path."""
+        """Read and return a bytestring from reading the path."""
         with self.open(mode) as f:
             return f.read()
 
     def readlines(self, cr=1):
-        """read and return a list of lines from the path. if cr is False, the
+        """Read and return a list of lines from the path. if cr is False, the
         newline will be removed from the end of each line."""
         mode = "r"
 
@@ -187,7 +185,7 @@ class PathBase:
             f.close()
 
     def move(self, target):
-        """move this path to target."""
+        """Move this path to target."""
         if target.relto(self):
             raise error.EINVAL(target, "cannot move path into a subdirectory of itself")
         try:
@@ -197,11 +195,11 @@ class PathBase:
             self.remove()
 
     def __repr__(self):
-        """return a string representation of this path."""
+        """Return a string representation of this path."""
         return repr(str(self))
 
     def check(self, **kw):
-        """check a path for existence and properties.
+        """Check a path for existence and properties.
 
         Without arguments, return True if the path exists, otherwise False.
 
@@ -222,7 +220,7 @@ class PathBase:
         return self.Checkers(self)._evaluate(kw)
 
     def fnmatch(self, pattern):
-        """return true if the basename/fullname matches the glob-'pattern'.
+        """Return true if the basename/fullname matches the glob-'pattern'.
 
         valid pattern characters::
 
@@ -241,7 +239,7 @@ class PathBase:
         return FNMatcher(pattern)(self)
 
     def relto(self, relpath):
-        """return a string which is the relative part of the path
+        """Return a string which is the relative part of the path
         to the given 'relpath'.
         """
         if not isinstance(relpath, (str, PathBase)):
@@ -260,11 +258,11 @@ class PathBase:
         return ""
 
     def ensure_dir(self, *args):
-        """ensure the path joined with args is a directory."""
+        """Ensure the path joined with args is a directory."""
         return self.ensure(*args, **{"dir": True})
 
     def bestrelpath(self, dest):
-        """return a string which is a relative path from self
+        """Return a string which is a relative path from self
         (assumed to be a directory) to dest such that
         self.join(bestrelpath) == dest and if not such
         path can be determined return dest.
@@ -281,10 +279,10 @@ class PathBase:
                 n = self2base.count(self.sep) + 1
             else:
                 n = 0
-            l = [os.pardir] * n
+            lst = [os.pardir] * n
             if reldest:
-                l.append(reldest)
-            target = dest.sep.join(l)
+                lst.append(reldest)
+            target = dest.sep.join(lst)
             return target
         except AttributeError:
             return str(dest)
@@ -299,23 +297,23 @@ class PathBase:
         return self.check(file=1)
 
     def parts(self, reverse=False):
-        """return a root-first list of all ancestor directories
+        """Return a root-first list of all ancestor directories
         plus the path itself.
         """
         current = self
-        l = [self]
+        lst = [self]
         while 1:
             last = current
             current = current.dirpath()
             if last == current:
                 break
-            l.append(current)
+            lst.append(current)
         if not reverse:
-            l.reverse()
-        return l
+            lst.reverse()
+        return lst
 
     def common(self, other):
-        """return the common part shared with the other path
+        """Return the common part shared with the other path
         or None if there is no common part.
         """
         last = None
@@ -326,7 +324,7 @@ class PathBase:
         return last
 
     def __add__(self, other):
-        """return new path object with 'other' added to the basename"""
+        """Return new path object with 'other' added to the basename"""
         return self.new(basename=self.basename + str(other))
 
     def __lt__(self, other):
@@ -336,7 +334,7 @@ class PathBase:
             return str(self) < str(other)
 
     def visit(self, fil=None, rec=None, ignore=NeverRaised, bf=False, sort=False):
-        """yields all paths below the current one
+        """Yields all paths below the current one
 
         fil is a filter (glob pattern or callable), if not matching the
         path will not be yielded, defaulting to None (everything is
@@ -369,7 +367,7 @@ class PathBase:
                 res.sort()
 
     def samefile(self, other):
-        """return True if other refers to the same stat object as self."""
+        """Return True if other refers to the same stat object as self."""
         return self.strpath == str(other)
 
     def __fspath__(self):
@@ -462,7 +460,7 @@ class Stat:
 
     @property
     def group(self):
-        """return group name of file."""
+        """Return group name of file."""
         if iswin32:
             raise NotImplementedError("XXX win32")
         import grp
@@ -483,7 +481,7 @@ class Stat:
 
 class PosixPath(PathBase):
     def chown(self, user, group, rec=0):
-        """change ownership to the given user and group.
+        """Change ownership to the given user and group.
         user and group may be specified by a number or
         by a name.  if rec is True change ownership
         recursively.
@@ -497,15 +495,15 @@ class PosixPath(PathBase):
         error.checked_call(os.chown, str(self), uid, gid)
 
     def readlink(self):
-        """return value of a symbolic link."""
+        """Return value of a symbolic link."""
         return error.checked_call(os.readlink, self.strpath)
 
     def mklinkto(self, oldname):
-        """posix style hard link to another name."""
+        """Posix style hard link to another name."""
         error.checked_call(os.link, str(oldname), str(self))
 
     def mksymlinkto(self, value, absolute=1):
-        """create a symbolic link with the given value (pointing to another name)."""
+        """Create a symbolic link with the given value (pointing to another name)."""
         if absolute:
             error.checked_call(os.symlink, str(value), self.strpath)
         else:
@@ -538,7 +536,7 @@ FSBase = not iswin32 and PosixPath or PathBase
 
 
 class LocalPath(FSBase):
-    """object oriented interface to os.path and other local filesystem
+    """Object oriented interface to os.path and other local filesystem
     related information.
     """
 
@@ -625,7 +623,7 @@ class LocalPath(FSBase):
         return os.fspath(self) > os.fspath(other)
 
     def samefile(self, other):
-        """return True if 'other' references the same file as 'self'."""
+        """Return True if 'other' references the same file as 'self'."""
         other = os.fspath(other)
         if not isabs(other):
             other = abspath(other)
@@ -636,7 +634,7 @@ class LocalPath(FSBase):
         return error.checked_call(os.path.samefile, self.strpath, other)
 
     def remove(self, rec=1, ignore_errors=False):
-        """remove a file or directory (or a directory tree if rec=1).
+        """Remove a file or directory (or a directory tree if rec=1).
         if ignore_errors is True, errors while removing directories will
         be ignored.
         """
@@ -658,7 +656,7 @@ class LocalPath(FSBase):
             error.checked_call(os.remove, self.strpath)
 
     def computehash(self, hashtype="md5", chunksize=524288):
-        """return hexdigest of hashvalue for this file."""
+        """Return hexdigest of hashvalue for this file."""
         try:
             try:
                 import hashlib as mod
@@ -680,7 +678,7 @@ class LocalPath(FSBase):
             f.close()
 
     def new(self, **kw):
-        """create a modified version of this path.
+        """Create a modified version of this path.
         the following keyword arguments modify various path parts::
 
           a:/some/path/to/a/file.ext
@@ -720,7 +718,7 @@ class LocalPath(FSBase):
         return obj
 
     def _getbyspec(self, spec):
-        """see new for what 'spec' can be."""
+        """See new for what 'spec' can be."""
         res = []
         parts = self.strpath.split(self.sep)
 
@@ -750,7 +748,7 @@ class LocalPath(FSBase):
         return res
 
     def dirpath(self, *args, **kwargs):
-        """return the directory path joined with any given path arguments."""
+        """Return the directory path joined with any given path arguments."""
         if not kwargs:
             path = object.__new__(self.__class__)
             path.strpath = dirname(self.strpath)
@@ -760,7 +758,7 @@ class LocalPath(FSBase):
         return super().dirpath(*args, **kwargs)
 
     def join(self, *args, **kwargs):
-        """return a new path by appending all 'args' as path
+        """Return a new path by appending all 'args' as path
         components.  if abs=1 is used restart from root if any
         of the args is an absolute path.
         """
@@ -790,7 +788,7 @@ class LocalPath(FSBase):
         return obj
 
     def open(self, mode="r", ensure=False, encoding=None):
-        """return an opened file with the given mode.
+        """Return an opened file with the given mode.
 
         If ensure is True, create parent directories if needed.
         """
@@ -821,7 +819,7 @@ class LocalPath(FSBase):
     _patternchars = set("*?[" + os.path.sep)
 
     def listdir(self, fil=None, sort=None):
-        """list directory contents, possibly filter by the given fil func
+        """List directory contents, possibly filter by the given fil func
         and possibly sorted.
         """
         if fil is None and sort is None:
@@ -844,15 +842,15 @@ class LocalPath(FSBase):
         return res
 
     def size(self):
-        """return size of the underlying file object"""
+        """Return size of the underlying file object"""
         return self.stat().size
 
     def mtime(self):
-        """return last modification time of the path."""
+        """Return last modification time of the path."""
         return self.stat().mtime
 
     def copy(self, target, mode=False, stat=False):
-        """copy path to target.
+        """Copy path to target.
 
         If mode is True, will copy copy permission from path to target.
         If stat is True, copy permission, last modification
@@ -889,12 +887,12 @@ class LocalPath(FSBase):
                     copystat(x, newx)
 
     def rename(self, target):
-        """rename this path to target."""
+        """Rename this path to target."""
         target = os.fspath(target)
         return error.checked_call(os.rename, self.strpath, target)
 
     def dump(self, obj, bin=1):
-        """pickle object into path location"""
+        """Pickle object into path location"""
         f = self.open("wb")
         import pickle
 
@@ -904,13 +902,13 @@ class LocalPath(FSBase):
             f.close()
 
     def mkdir(self, *args):
-        """create & return the directory joined with args."""
+        """Create & return the directory joined with args."""
         p = self.join(*args)
         error.checked_call(os.mkdir, os.fspath(p))
         return p
 
     def write_binary(self, data, ensure=False):
-        """write binary data into path.   If ensure is True create
+        """Write binary data into path.   If ensure is True create
         missing parent directories.
         """
         if ensure:
@@ -919,7 +917,7 @@ class LocalPath(FSBase):
             f.write(data)
 
     def write_text(self, data, encoding, ensure=False):
-        """write text data into path using the specified encoding.
+        """Write text data into path using the specified encoding.
         If ensure is True create missing parent directories.
         """
         if ensure:
@@ -928,7 +926,7 @@ class LocalPath(FSBase):
             f.write(data)
 
     def write(self, data, mode="w", ensure=False):
-        """write data into path.   If ensure is True create
+        """Write data into path.   If ensure is True create
         missing parent directories.
         """
         if ensure:
@@ -965,7 +963,7 @@ class LocalPath(FSBase):
         return self
 
     def ensure(self, *args, **kwargs):
-        """ensure that an args-joined path exists (by default as
+        """Ensure that an args-joined path exists (by default as
         a file). if you specify a keyword argument 'dir=True'
         then the path is forced to be a directory path.
         """
@@ -980,7 +978,7 @@ class LocalPath(FSBase):
 
     def stat(self, raising=True):
         """Return an os.stat() tuple."""
-        if raising == True:
+        if raising:
             return Stat(self, error.checked_call(os.stat, self.strpath))
         try:
             return Stat(self, os.stat(self.strpath))
@@ -994,7 +992,7 @@ class LocalPath(FSBase):
         return Stat(self, error.checked_call(os.lstat, self.strpath))
 
     def setmtime(self, mtime=None):
-        """set modification time for the given path.  if 'mtime' is None
+        """Set modification time for the given path.  if 'mtime' is None
         (the default) then the file's mtime is set to current time.
 
         Note that the resolution for 'mtime' is platform dependent.
@@ -1007,7 +1005,7 @@ class LocalPath(FSBase):
             return error.checked_call(os.utime, self.strpath, (self.atime(), mtime))
 
     def chdir(self):
-        """change directory to self and return old current directory"""
+        """Change directory to self and return old current directory"""
         try:
             old = self.__class__()
         except error.ENOENT:
@@ -1030,22 +1028,22 @@ class LocalPath(FSBase):
                 old.chdir()
 
     def realpath(self):
-        """return a new path which contains no symbolic links."""
+        """Return a new path which contains no symbolic links."""
         return self.__class__(os.path.realpath(self.strpath))
 
     def atime(self):
-        """return last access time of the path."""
+        """Return last access time of the path."""
         return self.stat().atime
 
     def __repr__(self):
         return "local(%r)" % self.strpath
 
     def __str__(self):
-        """return string representation of the Path."""
+        """Return string representation of the Path."""
         return self.strpath
 
     def chmod(self, mode, rec=0):
-        """change permissions to the given mode. If mode is an
+        """Change permissions to the given mode. If mode is an
         integer it directly encodes the os-specific modes.
         if rec is True perform recursively.
         """
@@ -1057,7 +1055,7 @@ class LocalPath(FSBase):
         error.checked_call(os.chmod, self.strpath, mode)
 
     def pypkgpath(self):
-        """return the Python package path by looking for the last
+        """Return the Python package path by looking for the last
         directory upwards which still contains an __init__.py.
         Return None if a pkgpath can not be determined.
         """
@@ -1082,7 +1080,7 @@ class LocalPath(FSBase):
                     sys.path.insert(0, s)
 
     def pyimport(self, modname=None, ensuresyspath=True):
-        """return path as an imported python module.
+        """Return path as an imported python module.
 
         If modname is None, look for the containing package
         and construct an according module name.
@@ -1166,13 +1164,13 @@ class LocalPath(FSBase):
                 try:
                     with open(str(self), "rb") as f:
                         exec(f.read(), mod.__dict__)
-                except:
+                except BaseException:
                     del sys.modules[modname]
                     raise
                 return mod
 
     def sysexec(self, *argv, **popen_opts):
-        """return stdout text from executing a system child process,
+        """Return stdout text from executing a system child process,
         where the 'self' path points to executable.
         The process is directly invoked and not through a system shell.
         """
@@ -1199,7 +1197,7 @@ class LocalPath(FSBase):
 
     @classmethod
     def sysfind(cls, name, checker=None, paths=None):
-        """return a path object found by looking at the systems
+        """Return a path object found by looking at the systems
         underlying PATH specification. If the checker is not None
         it will be invoked to filter matching paths.  If a binary
         cannot be found, None is returned
@@ -1260,7 +1258,7 @@ class LocalPath(FSBase):
     # """
     @classmethod
     def get_temproot(cls):
-        """return the system's temporary directory
+        """Return the system's temporary directory
         (where tempfiles are usually created in)
         """
         import tempfile
@@ -1269,7 +1267,7 @@ class LocalPath(FSBase):
 
     @classmethod
     def mkdtemp(cls, rootdir=None):
-        """return a Path object pointing to a fresh new temporary directory
+        """Return a Path object pointing to a fresh new temporary directory
         (which we created ourself).
         """
         import tempfile
@@ -1282,7 +1280,7 @@ class LocalPath(FSBase):
     def make_numbered_dir(
         cls, prefix="session-", rootdir=None, keep=3, lock_timeout=172800
     ):  # two days
-        """return unique directory with a number greater than the current
+        """Return unique directory with a number greater than the current
         maximum one.  The number is assumed to start directly after prefix.
         if keep is true directories with a number less than (maxnum-keep)
         will be removed. If .lock files are used (lock_timeout non-zero),
@@ -1294,7 +1292,7 @@ class LocalPath(FSBase):
         nprefix = prefix.lower()
 
         def parse_num(path):
-            """parse the number out of a path (if it matches the prefix)"""
+            """Parse the number out of a path (if it matches the prefix)"""
             nbasename = path.basename.lower()
             if nbasename.startswith(nprefix):
                 try:
@@ -1303,7 +1301,7 @@ class LocalPath(FSBase):
                     pass
 
         def create_lockfile(path):
-            """exclusively create lockfile. Throws when failed"""
+            """Exclusively create lockfile. Throws when failed"""
             mypid = os.getpid()
             lockfile = path.join(".lock")
             if hasattr(lockfile, "mksymlinkto"):
@@ -1317,7 +1315,7 @@ class LocalPath(FSBase):
             return lockfile
 
         def atexit_remove_lockfile(lockfile):
-            """ensure lockfile is removed at process exit"""
+            """Ensure lockfile is removed at process exit"""
             mypid = os.getpid()
 
             def try_remove_lockfile():
@@ -1366,7 +1364,7 @@ class LocalPath(FSBase):
             break
 
         def get_mtime(path):
-            """read file modification time"""
+            """Read file modification time"""
             try:
                 return path.lstat().mtime
             except error.Error:
@@ -1375,7 +1373,7 @@ class LocalPath(FSBase):
         garbage_prefix = prefix + "garbage-"
 
         def is_garbage(path):
-            """check if path denotes directory scheduled for removal"""
+            """Check if path denotes directory scheduled for removal"""
             bn = path.basename
             return bn.startswith(garbage_prefix)
 
@@ -1408,14 +1406,14 @@ class LocalPath(FSBase):
                         garbage_path.remove(rec=1)
                     except KeyboardInterrupt:
                         raise
-                    except:  # this might be error.Error, WindowsError ...
+                    except Exception:  # this might be error.Error, WindowsError ...
                         pass
                 if is_garbage(path):
                     try:
                         path.remove(rec=1)
                     except KeyboardInterrupt:
                         raise
-                    except:  # this might be error.Error, WindowsError ...
+                    except Exception:  # this might be error.Error, WindowsError ...
                         pass
 
         # make link...
@@ -1442,14 +1440,14 @@ class LocalPath(FSBase):
 
 
 def copymode(src, dest):
-    """copy permission from src to dst."""
+    """Copy permission from src to dst."""
     import shutil
 
     shutil.copymode(src, dest)
 
 
 def copystat(src, dest):
-    """copy permission,  last modification time,
+    """Copy permission,  last modification time,
     last access time, and flags from src to dst."""
     import shutil
 
