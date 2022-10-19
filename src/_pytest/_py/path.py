@@ -491,43 +491,6 @@ class Stat:
         return S_ISLNK(self._osstatresult.st_mode)
 
 
-class PosixPath(PathBase):
-    def chown(self, user, group, rec=0):
-        """Change ownership to the given user and group.
-        user and group may be specified by a number or
-        by a name.  if rec is True change ownership
-        recursively.
-        """
-        uid = getuserid(user)
-        gid = getgroupid(group)
-        if rec:
-            for x in self.visit(rec=lambda x: x.check(link=0)):
-                if x.check(link=0):
-                    error.checked_call(os.chown, str(x), uid, gid)
-        error.checked_call(os.chown, str(self), uid, gid)
-
-    def readlink(self):
-        """Return value of a symbolic link."""
-        return error.checked_call(os.readlink, self.strpath)
-
-    def mklinkto(self, oldname):
-        """Posix style hard link to another name."""
-        error.checked_call(os.link, str(oldname), str(self))
-
-    def mksymlinkto(self, value, absolute=1):
-        """Create a symbolic link with the given value (pointing to another name)."""
-        if absolute:
-            error.checked_call(os.symlink, str(value), self.strpath)
-        else:
-            base = self.common(value)
-            # with posix local paths '/' is always a common base
-            relsource = self.__class__(value).relto(base)
-            reldest = self.relto(base)
-            n = reldest.count(self.sep)
-            target = self.sep.join(("..",) * n + (relsource,))
-            error.checked_call(os.symlink, target, self.strpath)
-
-
 def getuserid(user):
     import pwd
 
@@ -544,10 +507,7 @@ def getgroupid(group):
     return group
 
 
-FSBase = not iswin32 and PosixPath or PathBase
-
-
-class LocalPath(FSBase):
+class LocalPath(PathBase):
     """Object oriented interface to os.path and other local filesystem
     related information.
     """
@@ -580,6 +540,43 @@ class LocalPath(FSBase):
             if expanduser:
                 path = os.path.expanduser(path)
             self.strpath = abspath(path)
+
+    if sys.platform != "win32":
+
+        def chown(self, user, group, rec=0):
+            """Change ownership to the given user and group.
+            user and group may be specified by a number or
+            by a name.  if rec is True change ownership
+            recursively.
+            """
+            uid = getuserid(user)
+            gid = getgroupid(group)
+            if rec:
+                for x in self.visit(rec=lambda x: x.check(link=0)):
+                    if x.check(link=0):
+                        error.checked_call(os.chown, str(x), uid, gid)
+            error.checked_call(os.chown, str(self), uid, gid)
+
+        def readlink(self):
+            """Return value of a symbolic link."""
+            return error.checked_call(os.readlink, self.strpath)
+
+        def mklinkto(self, oldname):
+            """Posix style hard link to another name."""
+            error.checked_call(os.link, str(oldname), str(self))
+
+        def mksymlinkto(self, value, absolute=1):
+            """Create a symbolic link with the given value (pointing to another name)."""
+            if absolute:
+                error.checked_call(os.symlink, str(value), self.strpath)
+            else:
+                base = self.common(value)
+                # with posix local paths '/' is always a common base
+                relsource = self.__class__(value).relto(base)
+                reldest = self.relto(base)
+                n = reldest.count(self.sep)
+                target = self.sep.join(("..",) * n + (relsource,))
+                error.checked_call(os.symlink, target, self.strpath)
 
     def __hash__(self):
         s = self.strpath
