@@ -109,6 +109,8 @@ class Checkers:
         return str(self.path).endswith(arg)
 
     def _evaluate(self, kw):
+        from .._code.source import getrawcode
+
         for name, value in kw.items():
             invert = False
             meth = None
@@ -124,7 +126,7 @@ class Checkers:
             if meth is None:
                 raise TypeError(f"no {name!r} checker available for {self.path!r}")
             try:
-                if py.code.getrawcode(meth).co_argcount > 1:
+                if getrawcode(meth).co_argcount > 1:
                     if (not meth(value)) ^ invert:
                         return False
                 else:
