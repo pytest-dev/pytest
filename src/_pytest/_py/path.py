@@ -35,12 +35,6 @@ class Checkers:
     def __init__(self, path):
         self.path = path
 
-    def dir(self):
-        raise NotImplementedError
-
-    def file(self):
-        raise NotImplementedError
-
     def dotfile(self):
         return self.path.basename.startswith(".")
 
@@ -48,9 +42,6 @@ class Checkers:
         if not arg.startswith("."):
             arg = "." + arg
         return self.path.ext == arg
-
-    def exists(self):
-        raise NotImplementedError
 
     def basename(self, arg):
         return self.path.basename == arg
@@ -105,6 +96,29 @@ class Checkers:
                             return False
         return True
 
+    def _stat(self):
+        try:
+            return self._statcache
+        except AttributeError:
+            try:
+                self._statcache = self.path.stat()
+            except error.ELOOP:
+                self._statcache = self.path.lstat()
+            return self._statcache
+
+    def dir(self):
+        return S_ISDIR(self._stat().mode)
+
+    def file(self):
+        return S_ISREG(self._stat().mode)
+
+    def exists(self):
+        return self._stat()
+
+    def link(self):
+        st = self.path.lstat()
+        return S_ISLNK(st.mode)
+
 
 class NeverRaised(Exception):
     pass
@@ -112,8 +126,6 @@ class NeverRaised(Exception):
 
 class PathBase:
     """shared implementation for filesystem path objects."""
-
-    Checkers = Checkers
 
     def __div__(self, other):
         return self.join(os.fspath(other))
@@ -217,7 +229,7 @@ class PathBase:
         """
         if not kw:
             kw = {"exists": 1}
-        return self.Checkers(self)._evaluate(kw)
+        return Checkers(self)._evaluate(kw)
 
     def fnmatch(self, pattern):
         """Return true if the basename/fullname matches the glob-'pattern'.
@@ -544,30 +556,6 @@ class LocalPath(FSBase):
         """raised on pyimport() if there is a mismatch of __file__'s"""
 
     sep = os.sep
-
-    class Checkers(Checkers):
-        def _stat(self):
-            try:
-                return self._statcache
-            except AttributeError:
-                try:
-                    self._statcache = self.path.stat()
-                except error.ELOOP:
-                    self._statcache = self.path.lstat()
-                return self._statcache
-
-        def dir(self):
-            return S_ISDIR(self._stat().mode)
-
-        def file(self):
-            return S_ISREG(self._stat().mode)
-
-        def exists(self):
-            return self._stat()
-
-        def link(self):
-            st = self.path.lstat()
-            return S_ISLNK(st.mode)
 
     def __init__(self, path=None, expanduser=False):
         """Initialize and return a local Path instance.
