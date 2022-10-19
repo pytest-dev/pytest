@@ -1,8 +1,11 @@
 """
 local path implementation.
 """
+from __future__ import annotations
+
 import atexit
 import fnmatch
+import importlib.util
 import io
 import os
 import posixpath
@@ -438,11 +441,6 @@ class FNMatcher:
 
 def map_as_list(func, iter):
     return list(map(func, iter))
-
-
-ALLOW_IMPORTLIB_MODE = sys.version_info > (3, 5)
-if ALLOW_IMPORTLIB_MODE:
-    import importlib
 
 
 class Stat:
@@ -1110,8 +1108,6 @@ class LocalPath(FSBase):
         if ensuresyspath == "importlib":
             if modname is None:
                 modname = self.purebasename
-            if not ALLOW_IMPORTLIB_MODE:
-                raise ImportError("Can't use importlib due to old version of Python")
             spec = importlib.util.spec_from_file_location(modname, str(self))
             if spec is None:
                 raise ImportError(
