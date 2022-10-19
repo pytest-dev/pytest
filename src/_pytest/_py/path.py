@@ -119,29 +119,25 @@ class PathBase:
 
     __truediv__ = __div__  # py3k
 
+    @property
     def basename(self):
         """basename part of path."""
         return self._getbyspec("basename")[0]
 
-    basename = property(basename, None, None, basename.__doc__)
-
+    @property
     def dirname(self):
         """dirname part of path."""
         return self._getbyspec("dirname")[0]
 
-    dirname = property(dirname, None, None, dirname.__doc__)
-
+    @property
     def purebasename(self):
         """pure base name of the path."""
         return self._getbyspec("purebasename")[0]
 
-    purebasename = property(purebasename, None, None, purebasename.__doc__)
-
+    @property
     def ext(self):
         """extension of the path (including the '.')."""
         return self._getbyspec("ext")[0]
-
-    ext = property(ext, None, None, ext.__doc__)
 
     def dirpath(self, *args, **kwargs):
         """return the directory path joined with any given path arguments."""
@@ -1205,6 +1201,7 @@ class LocalPath(FSBase):
             )
         return stdout
 
+    @classmethod
     def sysfind(cls, name, checker=None, paths=None):
         """return a path object found by looking at the systems
         underlying PATH specification. If the checker is not None
@@ -1251,8 +1248,7 @@ class LocalPath(FSBase):
                         pass
         return None
 
-    sysfind = classmethod(sysfind)
-
+    @classmethod
     def _gethomedir(cls):
         try:
             x = os.environ["HOME"]
@@ -1262,8 +1258,6 @@ class LocalPath(FSBase):
             except KeyError:
                 return None
         return cls(x)
-
-    _gethomedir = classmethod(_gethomedir)
 
     # """
     # special class constructors for local filesystem paths
@@ -1288,6 +1282,7 @@ class LocalPath(FSBase):
             rootdir = cls.get_temproot()
         return cls(error.checked_call(tempfile.mkdtemp, dir=str(rootdir)))
 
+    @classmethod
     def make_numbered_dir(
         cls, prefix="session-", rootdir=None, keep=3, lock_timeout=172800
     ):  # two days
@@ -1448,8 +1443,6 @@ class LocalPath(FSBase):
             pass
 
         return udir
-
-    make_numbered_dir = classmethod(make_numbered_dir)
 
 
 def copymode(src, dest):
