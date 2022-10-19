@@ -428,9 +428,9 @@ class PathBase:
 
 class Visitor:
     def __init__(self, fil, rec, ignore, bf, sort):
-        if isinstance(fil, py.builtin._basestring):
+        if isinstance(fil, str):
             fil = FNMatcher(fil)
-        if isinstance(rec, py.builtin._basestring):
+        if isinstance(rec, str):
             self.rec = FNMatcher(rec)
         elif not hasattr(rec, "__call__") and rec:
             self.rec = lambda path: True
@@ -882,7 +882,7 @@ class LocalPath(FSBase):
         if fil is None and sort is None:
             names = error.checked_call(os.listdir, self.strpath)
             return map_as_list(self._fastjoin, names)
-        if isinstance(fil, py.builtin._basestring):
+        if isinstance(fil, str):
             if not self._patternchars.intersection(fil):
                 child = self._fastjoin(fil)
                 if exists(child.strpath):
@@ -989,14 +989,14 @@ class LocalPath(FSBase):
         if ensure:
             self.dirpath().ensure(dir=1)
         if "b" in mode:
-            if not py.builtin._isbytes(data):
+            if not isinstance(data, bytes):
                 raise ValueError("can only process bytes")
         else:
-            if not py.builtin._istext(data):
-                if not py.builtin._isbytes(data):
+            if not isinstance(data, str):
+                if not isinstance(data, bytes):
                     data = str(data)
                 else:
-                    data = py.builtin._totext(data, sys.getdefaultencoding())
+                    data = data.decode(sys.getdefaultencoding())
         f = self.open(mode)
         try:
             f.write(data)
@@ -1221,7 +1221,8 @@ class LocalPath(FSBase):
                 mod.__file__ = str(self)
                 sys.modules[modname] = mod
                 try:
-                    py.builtin.execfile(str(self), mod.__dict__)
+                    with open(str(self), "rb") as f:
+                        exec(f.read(), mod.__dict__)
                 except:
                     del sys.modules[modname]
                     raise
@@ -1239,12 +1240,12 @@ class LocalPath(FSBase):
         proc = Popen([str(self)] + argv, **popen_opts)
         stdout, stderr = proc.communicate()
         ret = proc.wait()
-        if py.builtin._isbytes(stdout):
-            stdout = py.builtin._totext(stdout, sys.getdefaultencoding())
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode(sys.getdefaultencoding())
         if ret != 0:
-            if py.builtin._isbytes(stderr):
-                stderr = py.builtin._totext(stderr, sys.getdefaultencoding())
-            raise py.process.cmdexec.Error(
+            if isinstance(stderr, bytes):
+                stderr = stderr.decode(sys.getdefaultencoding())
+            raise RuntimeError(
                 ret,
                 ret,
                 str(self),
@@ -1262,7 +1263,7 @@ class LocalPath(FSBase):
         but may work on cygwin.
         """
         if isabs(name):
-            p = py.path.local(name)
+            p = local(name)
             if p.check(file=1):
                 return p
         else:
@@ -1288,7 +1289,7 @@ class LocalPath(FSBase):
 
             for x in paths:
                 for addext in tryadd:
-                    p = py.path.local(x).join(name, abs=True) + addext
+                    p = local(x).join(name, abs=True) + addext
                     try:
                         if p.check(file=1):
                             if checker:
@@ -1323,7 +1324,7 @@ class LocalPath(FSBase):
         """
         import tempfile
 
-        return py.path.local(tempfile.gettempdir())
+        return local(tempfile.gettempdir())
 
     @classmethod
     def mkdtemp(cls, rootdir=None):
