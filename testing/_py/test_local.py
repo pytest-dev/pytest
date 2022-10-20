@@ -909,8 +909,12 @@ class TestExecution:
             assert out.find(x.basename) != -1
 
     def test_sysexec_failing(self):
+        try:
+            from py._process.cmdexec import ExecutionFailed  # py library
+        except ImportError:
+            ExecutionFailed = RuntimeError  # py vendored
         x = local.sysfind("false")
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ExecutionFailed):
             x.sysexec("aksjdkasjd")
 
     def test_make_numbered_dir(self, tmpdir):
@@ -1146,7 +1150,10 @@ def test_pypkgdir_unimportable(tmpdir):
 
 
 def test_isimportable():
-    from py.path import isimportable
+    try:
+        from py.path import isimportable  # py vendored version
+    except ImportError:
+        from py._path.local import isimportable  # py library
 
     assert not isimportable("")
     assert isimportable("x")
