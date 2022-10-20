@@ -2,6 +2,7 @@ import multiprocessing
 import os
 import sys
 import time
+from unittest import mock
 
 import pytest
 from py import error
@@ -978,6 +979,12 @@ class TestExecution:
 
 
 class TestImport:
+    @pytest.fixture(autouse=True)
+    def preserve_sys(self):
+        with mock.patch.dict(sys.modules):
+            with mock.patch.object(sys, "path", list(sys.path)):
+                yield
+
     def test_pyimport(self, path1):
         obj = path1.join("execfile.py").pyimport()
         assert obj.x == 42
