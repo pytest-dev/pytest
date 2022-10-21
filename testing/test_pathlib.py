@@ -91,6 +91,12 @@ class TestImportPath:
         yield path
         assert path.joinpath("samplefile").exists()
 
+    @pytest.fixture(autouse=True)
+    def preserve_sys(self):
+        with unittest.mock.patch.dict(sys.modules):
+            with unittest.mock.patch.object(sys, "path", list(sys.path)):
+                yield
+
     def setuptestfs(self, path: Path) -> None:
         # print "setting up test fs for", repr(path)
         samplefile = path / "samplefile"

@@ -66,7 +66,7 @@ jobs:
           - name: "windows-py37-pluggy"
             python: "3.7"
             os: windows-latest
-            tox_env: "py37-pluggymain-xdist"
+            tox_env: "py37-pluggymain-pylib-xdist"
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
@@ -93,7 +93,7 @@ jobs:
           - name: "ubuntu-py37-pluggy"
             python: "3.7"
             os: ubuntu-latest
-            tox_env: "py37-pluggymain-xdist"
+            tox_env: "py37-pluggymain-pylib-xdist"
           - name: "ubuntu-py37-freeze"
             python: "3.7"
             os: ubuntu-latest
