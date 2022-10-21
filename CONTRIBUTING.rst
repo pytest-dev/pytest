@@ -243,6 +243,11 @@ Here is a simple overview, with pytest-specific bits:
    Given we have "major.minor.micro" version numbers, bug fixes will usually
    be released in micro releases whereas features will be released in
    minor releases and incompatible changes in major releases.
+   
+   You will need the tags to test locally, so be sure you have the tags from the main repository. If you suspect you don't, set the main repository as upstream and fetch the tags::
+   
+     $ git remote add upstream https://github.com/pytest-dev/pytest
+     $ git fetch upstream --tags
 
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
