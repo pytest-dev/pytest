@@ -385,7 +385,7 @@ them.
 Backporting bug fixes for the next patch release
 ------------------------------------------------
 
-Pytest makes feature release every few weeks or months. In between, patch releases
+Pytest makes a feature release every few weeks or months. In between, patch releases
 are made to the previous feature release, containing bug fixes only. The bug fixes
 usually fix regressions, but may be any change that should reach users before the
 next feature release.
@@ -394,7 +394,7 @@ Suppose for example that the latest release was 1.2.3, and you want to include
 a bug fix in 1.2.4 (check https://github.com/pytest-dev/pytest/releases for the
 actual latest release). The procedure for this is:
 
-#. First, make sure the bug is fixed the ``main`` branch, with a regular pull
+#. First, make sure the bug is fixed in the ``main`` branch, with a regular pull
    request, as described above. An exception to this is if the bug fix is not
    applicable to ``main`` anymore.
 
