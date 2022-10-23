@@ -59,6 +59,7 @@ Specific loggers can be disabled via ``--log-disable={logger_name}``.
 This argument can be passed multiple times:
 
 .. code-block:: bash
+
     pytest --log-disable=main --log-disable=testing
 
 Further it is possible to disable reporting of captured content (stdout,
