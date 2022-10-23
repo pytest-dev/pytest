@@ -357,8 +357,10 @@ def make_numbered_dir_with_cleanup(
     for i in range(10):
         try:
             p = make_numbered_dir(root, prefix, mode)
-            lock_path = create_cleanup_lock(p)
-            register_cleanup_lock_removal(lock_path)
+            # Do not lock the current dir when keep is 0
+            if keep != 0:
+                lock_path = create_cleanup_lock(p)
+                register_cleanup_lock_removal(lock_path)
         except Exception as exc:
             e = exc
         else:

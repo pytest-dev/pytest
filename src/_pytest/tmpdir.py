@@ -154,10 +154,13 @@ class TempPathFactory:
                         )
                     if (rootdir_stat.st_mode & 0o077) != 0:
                         os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
+            keep = self._retention_count
+            if self._retention_policy == "none":
+                keep = 0
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-",
                 root=rootdir,
-                keep=self._retention_count,
+                keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
             )
