@@ -232,7 +232,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--tmp-path-retention-count",
         dest="tmp_path_retention_count",
         default=3,
-        type="int",
+        type=int,
         metavar="num",
         help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
     )
