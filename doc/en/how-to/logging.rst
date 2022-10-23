@@ -55,6 +55,12 @@ These options can also be customized through ``pytest.ini`` file:
     log_format = %(asctime)s %(levelname)s %(message)s
     log_date_format = %Y-%m-%d %H:%M:%S
 
+Specific loggers can be disabled via ``--log-disable={logger_name}``.
+This argument can be passed multiple times:
+
+.. code-block:: bash
+    pytest --log-disable=main --log-disable=testing
+
 Further it is possible to disable reporting of captured content (stdout,
 stderr and logs) on failed tests completely with:
 
