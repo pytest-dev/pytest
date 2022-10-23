@@ -34,6 +34,8 @@ def test_tmp_path_fixture(pytester: Pytester) -> None:
 @attr.s
 class FakeConfig:
     basetemp = attr.ib()
+    tmp_path_retention_count = attr.ib(default=3)
+    tmp_path_retention_policy = attr.ib(default="failed")
 
     @property
     def trace(self):
@@ -446,7 +448,7 @@ def test_tmp_path_factory_create_directory_with_safe_permissions(
     """Verify that pytest creates directories under /tmp with private permissions."""
     # Use the test's tmp_path as the system temproot (/tmp).
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(None, 3, "fail", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # No world-readable permissions.
@@ -466,14 +468,14 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
     """
     # Use the test's tmp_path as the system temproot (/tmp).
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(None, 3, "fail", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # Before - simulate bad perms.
     os.chmod(basetemp.parent, 0o777)
     assert (basetemp.parent.stat().st_mode & 0o077) != 0
 
-    tmp_factory = TempPathFactory(None, lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(None, 3, "fail", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # After - fixed.
