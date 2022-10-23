@@ -1,1 +1,0 @@
-Assertion failures with strings in NFC and NFD forms that normalize to the same string now have a dedicated error message detailing the issue, and their utf-8 representation is expresed instead.

@@ -140,7 +140,7 @@ the ``self.db`` values in the traceback:
 
     $ pytest test_unittest_db.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -157,7 +157,7 @@ the ``self.db`` values in the traceback:
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef0001>
     E       assert 0
 
-    test_unittest_db.py:10: AssertionError
+    test_unittest_db.py:11: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
 
     self = <test_unittest_db.MyTest testMethod=test_method2>
@@ -167,7 +167,7 @@ the ``self.db`` values in the traceback:
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef0001>
     E       assert 0
 
-    test_unittest_db.py:13: AssertionError
+    test_unittest_db.py:14: AssertionError
     ========================= short test summary info ==========================
     FAILED test_unittest_db.py::MyTest::test_method1 - AssertionError: <conft...
     FAILED test_unittest_db.py::MyTest::test_method2 - AssertionError: <conft...

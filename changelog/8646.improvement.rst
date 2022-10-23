@@ -1,2 +1,0 @@
-Improve :py:func:`pytest.raises`. Previously passing an empty tuple would give a confusing
-error. We now raise immediately with a more helpful message.

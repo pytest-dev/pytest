@@ -86,7 +86,7 @@ If you then run it with ``--lf``:
 
     $ pytest --lf
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
     run-last-failure: rerun previous 2 failures
@@ -132,7 +132,7 @@ of ``FF`` and dots):
 
     $ pytest --ff
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 50 items
     run-last-failure: rerun previous 2 failures first
@@ -233,7 +233,7 @@ If you run this command for the first time, you can see the print statement:
     >       assert mydata == 23
     E       assert 42 == 23
 
-    test_caching.py:20: AssertionError
+    test_caching.py:19: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     running expensive computation...
     ========================= short test summary info ==========================
@@ -256,7 +256,7 @@ the cache and nothing will be printed:
     >       assert mydata == 23
     E       assert 42 == 23
 
-    test_caching.py:20: AssertionError
+    test_caching.py:19: AssertionError
     ========================= short test summary info ==========================
     FAILED test_caching.py::test_function - assert 42 == 23
     1 failed in 0.12s
@@ -274,7 +274,7 @@ You can always peek at the content of the cache using the
 
     $ pytest --cache-show
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     cachedir: /home/sweet/project/.pytest_cache
     --------------------------- cache values for '*' ---------------------------
@@ -296,7 +296,7 @@ filtering:
 
     $ pytest --cache-show example/*
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     cachedir: /home/sweet/project/.pytest_cache
     ----------------------- cache values for 'example/*' -----------------------
