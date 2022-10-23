@@ -31,14 +31,14 @@ class TempPathFactory:
     _given_basetemp = attr.ib(type=Optional[Path])
     _trace = attr.ib()
     _basetemp = attr.ib(type=Optional[Path])
-    _retention_count = attr.ib(type=Optional[int])
-    _retention_policy = attr.ib(type=Optional[str])
+    _retention_count = attr.ib(type=int)
+    _retention_policy = attr.ib(type=str)
 
     def __init__(
         self,
         given_basetemp: Optional[Path],
-        retention_count: Optional[int],
-        retention_policy: Optional[str],
+        retention_count: int,
+        retention_policy: str,
         trace,
         basetemp: Optional[Path] = None,
         *,
@@ -157,7 +157,7 @@ class TempPathFactory:
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-",
                 root=rootdir,
-                keep=3,
+                keep=self._retention_count,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
             )
