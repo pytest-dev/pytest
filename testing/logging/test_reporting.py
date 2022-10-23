@@ -1200,6 +1200,8 @@ def test_disable_loggers_does_not_propagate(testdir):
                 parent_logger.warning("some parent logger message")
                 child_logger.warning("some child logger message")
                 assert len(caplog.record_tuples) == 1
+                assert caplog.record_tuples[0][0] == "parent"
+                assert caplog.record_tuples[0][2] == "some parent logger message"
     """
     )
 
