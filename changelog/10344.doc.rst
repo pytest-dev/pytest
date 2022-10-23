@@ -1,1 +1,0 @@
-Update information on writing plugins to use ``pyproject.toml`` instead of ``setup.py``.

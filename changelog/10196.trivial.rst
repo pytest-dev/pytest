@@ -1,1 +1,0 @@
-:class:`~pytest.PytestReturnNotNoneWarning` is now a subclass of :class:`~pytest.PytestRemovedIn8Warning`: the plan is to make returning non-``None`` from tests an error in the future.

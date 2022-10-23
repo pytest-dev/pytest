@@ -246,9 +246,9 @@ You can ask which markers exist for your test suite - the list includes our just
 
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see https://docs.pytest.org/en/stable/explanation/fixtures.html#usefixtures
 
-    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible. DEPRECATED, use @pytest.hookimpl(tryfirst=True) instead.
 
-    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible. DEPRECATED, use @pytest.hookimpl(trylast=True) instead.
 
 
 For an example on how to add and work with markers from a plugin, see
@@ -438,9 +438,9 @@ The ``--markers`` option always gives you a list of available markers:
 
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see https://docs.pytest.org/en/stable/explanation/fixtures.html#usefixtures
 
-    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible. DEPRECATED, use @pytest.hookimpl(tryfirst=True) instead.
 
-    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible. DEPRECATED, use @pytest.hookimpl(trylast=True) instead.
 
 
 .. _`passing callables to custom markers`:
@@ -611,7 +611,7 @@ then you will see two tests skipped and two executed tests as expected:
     test_plat.py s.s.                                                    [100%]
 
     ========================= short test summary info ==========================
-    SKIPPED [2] conftest.py:12: cannot run on platform linux
+    SKIPPED [2] conftest.py:13: cannot run on platform linux
     ======================= 2 passed, 2 skipped in 0.12s =======================
 
 Note that if you specify a platform via the marker-command line option like this:
