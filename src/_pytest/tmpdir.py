@@ -31,10 +31,14 @@ class TempPathFactory:
     _given_basetemp = attr.ib(type=Optional[Path])
     _trace = attr.ib()
     _basetemp = attr.ib(type=Optional[Path])
+    _retention_count = attr.ib(type=Optional[int])
+    _retention_policy = attr.ib(type=Optional[str])
 
     def __init__(
         self,
         given_basetemp: Optional[Path],
+        retention_count: Optional[int],
+        retention_policy: Optional[str],
         trace,
         basetemp: Optional[Path] = None,
         *,
@@ -49,6 +53,8 @@ class TempPathFactory:
             # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012).
             self._given_basetemp = Path(os.path.abspath(str(given_basetemp)))
         self._trace = trace
+        self._retention_count = retention_count
+        self._retention_policy = retention_policy
         self._basetemp = basetemp
 
     @classmethod
@@ -66,6 +72,8 @@ class TempPathFactory:
         return cls(
             given_basetemp=config.option.basetemp,
             trace=config.trace.get("tmpdir"),
+            retention_count=config.option.tmp_path_retention_count,
+            retention_policy=config.option.tmp_path_retention_policy,
             _ispytest=True,
         )
 
