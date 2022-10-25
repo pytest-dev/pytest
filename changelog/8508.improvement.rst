@@ -1,2 +1,0 @@
-Introduce multiline display for warning matching  via :py:func:`pytest.warns` and
-enhance match comparison for :py:func:`_pytest._code.ExceptionInfo.match` as returned by :py:func:`pytest.raises`.

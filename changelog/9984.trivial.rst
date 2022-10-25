@@ -1,4 +1,0 @@
-Improve the error message when we attempt to access a fixture that has been
-torn down.
-Add an additional sentence to the docstring explaining when it's not a good
-idea to call getfixturevalue.

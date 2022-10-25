@@ -1,1 +1,0 @@
-Do not break into pdb when ``raise unittest.SkipTest()`` appears top-level in a file.

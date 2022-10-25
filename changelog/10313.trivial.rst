@@ -1,3 +1,0 @@
-Made ``_pytest.doctest.DoctestItem`` export ``pytest.DoctestItem`` for
-type check and runtime purposes. Made `_pytest.doctest` use internal APIs
-to avoid circular imports.
