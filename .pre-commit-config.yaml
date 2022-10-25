@@ -52,7 +52,7 @@ repos:
     rev: v2.1.0
     hooks:
     -   id: setup-cfg-fmt
-        args: ["--max-py-version=3.10", "--include-version-classifiers"]
+        args: ["--max-py-version=3.11", "--include-version-classifiers"]
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
     hooks:
