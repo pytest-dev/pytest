@@ -57,6 +57,7 @@ Deprecations
 
   .. _`with-setup-nose`: https://nose.readthedocs.io/en/latest/testing_tools.html?highlight=with_setup#nose.tools.with_setup
 
+- `#7337 <https://github.com/pytest-dev/pytest/issues/7337>`_: A deprecation warning is now emitted if a test function returns something other than `None`. This prevents a common mistake among beginners that expect that returning a `bool` (for example `return foo(a, b) == result`) would cause a test to pass or fail, instead of using `assert`. The plan is to make returning non-`None` from tests an error in the future.
 
 
 Features
@@ -79,10 +80,7 @@ Improvements
 - `#10381 <https://github.com/pytest-dev/pytest/issues/10381>`_: The ``--no-showlocals`` flag has been added. This can be passed directly to tests to override ``--showlocals`` declared through ``addopts``.
 
 
-- `#3426 <https://github.com/pytest-dev/pytest/issues/3426>`_: Assertion failures with strings in NFC and NFD forms that normalize to the same string now have a dedicated error message detailing the issue, and their utf-8 representation is expresed instead.
-
-
-- `#7337 <https://github.com/pytest-dev/pytest/issues/7337>`_: A warning is now emitted if a test function returns something other than `None`. This prevents a common mistake among beginners that expect that returning a `bool` (for example `return foo(a, b) == result`) would cause a test to pass or fail, instead of using `assert`.
+- `#3426 <https://github.com/pytest-dev/pytest/issues/3426>`_: Assertion failures with strings in NFC and NFD forms that normalize to the same string now have a dedicated error message detailing the issue, and their utf-8 representation is expressed instead.
 
 
 - `#8508 <https://github.com/pytest-dev/pytest/issues/8508>`_: Introduce multiline display for warning matching  via :py:func:`pytest.warns` and
@@ -95,7 +93,7 @@ Improvements
 
 - `#9741 <https://github.com/pytest-dev/pytest/issues/9741>`_: On Python 3.11, use the standard library's :mod:`tomllib` to parse TOML.
 
-  :mod:`tomli`` is no longer a dependency on Python 3.11.
+  :mod:`tomli` is no longer a dependency on Python 3.11.
 
 
 - `#9742 <https://github.com/pytest-dev/pytest/issues/9742>`_: Display assertion message without escaped newline characters with ``-vv``.
@@ -110,7 +108,7 @@ Improvements
 - `#9883 <https://github.com/pytest-dev/pytest/issues/9883>`_: Normalize the help description of all command-line options.
 
 
-- `#9920 <https://github.com/pytest-dev/pytest/issues/9920>`_: Display full crash messages in ``short test summary info``, when runng in a CI environment.
+- `#9920 <https://github.com/pytest-dev/pytest/issues/9920>`_: Display full crash messages in ``short test summary info``, when running in a CI environment.
 
 
 - `#9987 <https://github.com/pytest-dev/pytest/issues/9987>`_: Added support for hidden configuration file by allowing ``.pytest.ini`` as an alternative to ``pytest.ini``.
@@ -156,9 +154,6 @@ Improved Documentation
 Trivial/Internal Changes
 ------------------------
 
-- `#10196 <https://github.com/pytest-dev/pytest/issues/10196>`_: :class:`~pytest.PytestReturnNotNoneWarning` is now a subclass of :class:`~pytest.PytestRemovedIn8Warning`: the plan is to make returning non-``None`` from tests an error in the future.
-
-
 - `#10313 <https://github.com/pytest-dev/pytest/issues/10313>`_: Made ``_pytest.doctest.DoctestItem`` export ``pytest.DoctestItem`` for
   type check and runtime purposes. Made `_pytest.doctest` use internal APIs
   to avoid circular imports.
@@ -173,7 +168,7 @@ Trivial/Internal Changes
 - `#9984 <https://github.com/pytest-dev/pytest/issues/9984>`_: Improve the error message when we attempt to access a fixture that has been
   torn down.
   Add an additional sentence to the docstring explaining when it's not a good
-  idea to call getfixturevalue.
+  idea to call ``getfixturevalue``.
 
 
 pytest 7.1.3 (2022-08-31)
