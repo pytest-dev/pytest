@@ -1,6 +1,6 @@
 pallets-sphinx-themes
 pluggy>=1.0
-pygments-pytest>=2.2.0
+pygments-pytest>=2.3.0
 sphinx-removed-in>=0.2.0
 sphinx>=5,<6
 sphinxcontrib-trio
