@@ -1759,12 +1759,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
     $ pytest --help
     usage: pytest [options] [file_or_dir] [file_or_dir] [...]
 
-    Positional arguments:
+    positional arguments:
       file_or_dir
 
-    General:
+    general:
       -k EXPRESSION         Only run tests which match the given substring
-                            expression. An expression is a python evaluatable
+                            expression. An expression is a Python evaluatable
                             expression where all names are substring-matched
                             against test names and their parent classes.
                             Example: -k 'test_method or test_other' matches all
@@ -1778,9 +1778,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             'extra_keyword_matches' set, as well as functions
                             which have names assigned directly to them. The
                             matching is case-insensitive.
-      -m MARKEXPR           Only run tests matching given mark expression.
-                            For example: -m 'mark1 and not mark2'.
-      --markers             Show markers (builtin, plugin and per-project ones)
+      -m MARKEXPR           Only run tests matching given mark expression. For
+                            example: -m 'mark1 and not mark2'.
+      --markers             show markers (builtin, plugin and per-project ones).
       -x, --exitfirst       Exit instantly on first error or failed test
       --fixtures, --funcargs
                             Show available fixtures, sorted by plugin appearance
@@ -1790,18 +1790,18 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             KeyboardInterrupt
       --pdbcls=modulename:classname
                             Specify a custom interactive Python debugger for use
-                            with --pdb. For example:
+                            with --pdb.For example:
                             --pdbcls=IPython.terminal.debugger:TerminalPdb
       --trace               Immediately break when running each test
-      --capture=method      Per-test capturing method: one of fd|sys|no|tee-sys.
-      -s                    Shortcut for --capture=no.
+      --capture=method      Per-test capturing method: one of fd|sys|no|tee-sys
+      -s                    Shortcut for --capture=no
       --runxfail            Report the results of xfail tests as if they were
                             not marked
       --lf, --last-failed   Rerun only the tests that failed at the last run (or
                             all if none failed)
-      --ff, --failed-first  Run all tests, but run the last failures first
-                            This may re-order tests and thus lead to repeated
-                            fixture setup/teardown
+      --ff, --failed-first  Run all tests, but run the last failures first. This
+                            may re-order tests and thus lead to repeated fixture
+                            setup/teardown.
       --nf, --new-first     Run tests from new files first, then the rest of the
                             tests sorted by file mtime
       --cache-show=[CACHESHOW]
@@ -1815,11 +1815,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             test next time
       --sw-skip, --stepwise-skip
                             Ignore the first failing test but stop on the next
-                            failing test.
-                            implicitly enables --stepwise.
+                            failing test. Implicitly enables --stepwise.
 
     Reporting:
-      --durations=N         show N slowest setup/test durations (N=0 for all)
+      --durations=N         Show N slowest setup/test durations (N=0 for all)
       --durations-min=N     Minimal duration in seconds for inclusion in slowest
                             list. Default: 0.005.
       -v, --verbose         Increase verbosity
@@ -1836,8 +1835,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --disable-warnings, --disable-pytest-warnings
                             Disable warnings summary
       -l, --showlocals      Show locals in tracebacks (disabled by default)
+      --no-showlocals       Hide locals in tracebacks (negate --showlocals
+                            passed through addopts)
       --tb=style            Traceback print mode
-                            (auto/long/short/line/native/no).
+                            (auto/long/short/line/native/no)
       --show-capture={no,stdout,stderr,log,all}
                             Controls how captured stdout/stderr/log is shown on
                             failed tests. Default: all.
@@ -1863,15 +1864,14 @@ All the command-line flags can be obtained by running ``pytest --help``::
       -c file               Load configuration from `file` instead of trying to
                             locate one of the implicit configuration files
       --continue-on-collection-errors
-                            Force test execution even if collection errors
-                            occur
+                            Force test execution even if collection errors occur
       --rootdir=ROOTDIR     Define root directory for tests. Can be relative
                             path: 'root_dir', './root_dir',
                             'root_dir/another_dir/'; absolute path:
                             '/home/user/root_dir'; path with variables:
                             '$HOME/root_dir'.
 
-    Collection:
+    collection:
       --collect-only, --co  Only collect tests, don't execute them
       --pyargs              Try to interpret all arguments as Python packages
       --ignore=path         Ignore path during collection (multi-allowed)
@@ -1899,27 +1899,24 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             For a given doctest, continue to run after the first
                             failure
 
-    Test session debugging and configuration:
-      --basetemp=dir        Base temporary directory for this test run. (Warning:
-                            this directory is removed if it exists.)
+    test session debugging and configuration:
+      --basetemp=dir        Base temporary directory for this test run.
+                            (Warning: this directory is removed if it exists.)
       -V, --version         Display pytest version and information about
                             plugins. When given twice, also display information
                             about plugins.
       -h, --help            Show help message and configuration info
       -p name               Early-load given plugin module name or entry point
-                            (multi-allowed)
-                            To avoid loading of plugins, use the `no:` prefix,
-                            e.g. `no:doctest`
+                            (multi-allowed). To avoid loading of plugins, use
+                            the `no:` prefix, e.g. `no:doctest`.
       --trace-config        Trace considerations of conftest.py files
       --debug=[DEBUG_FILE_NAME]
                             Store internal tracing debug information in this log
-                            file.
-                            This file is opened with 'w' and truncated as a
-                            result, care advised.
-                            Default: pytestdebug.log.
+                            file. This file is opened with 'w' and truncated as
+                            a result, care advised. Default: pytestdebug.log.
       -o OVERRIDE_INI, --override-ini=OVERRIDE_INI
                             Override ini option with "option=value" style, e.g.
-                            `-o xfail_strict=True -o cache_dir=cache`
+                            `-o xfail_strict=True -o cache_dir=cache`.
       --assert=MODE         Control assertion debugging tools.
                             'plain' performs no assertion debugging.
                             'rewrite' (the default) rewrites assert statements
@@ -1930,11 +1927,11 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --setup-plan          Show what fixtures and tests would be executed but
                             don't execute anything
 
-    Logging:
-      --log-level=LEVEL     Level of messages to catch/display.
-                            Not set by default, so it depends on the root/parent
-                            log handler's effective level, where it is "WARNING"
-                            by default.
+    logging:
+      --log-level=LEVEL     Level of messages to catch/display. Not set by
+                            default, so it depends on the root/parent log
+                            handler's effective level, where it is "WARNING" by
+                            default.
       --log-format=LOG_FORMAT
                             Log format used by the logging module
       --log-date-format=LOG_DATE_FORMAT
@@ -1963,7 +1960,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Default marker for empty parametersets
       norecursedirs (args): Directory patterns to avoid for recursion
       testpaths (args):     Directories to search for tests when no files or
-                            directories are given in the command line
+                            directories are given on the command line
       filterwarnings (linelist):
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after

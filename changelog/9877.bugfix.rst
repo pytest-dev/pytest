@@ -1,1 +1,0 @@
-Ensure ``caplog.get_records(when)`` returns current/correct data after invoking ``caplog.clear()``.
