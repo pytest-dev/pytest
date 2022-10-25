@@ -1,1 +1,0 @@
-The documentation is now built using Sphinx 5.x (up from 3.x previously).
