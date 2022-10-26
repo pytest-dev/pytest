@@ -1,10 +1,13 @@
 """Support for providing temporary directories to test functions."""
+import atexit
 import os
 import re
 import sys
 import tempfile
 from pathlib import Path
+from shutil import rmtree
 from typing import Optional
+from typing import Union
 
 import attr
 
@@ -14,6 +17,7 @@ from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
 from _pytest.compat import final
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
@@ -225,3 +229,23 @@ def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path
     """
 
     return _mk_tmp(request, tmp_path_factory)
+
+
+def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
+    tmp_path_factory: TempPathFactory = session.config._tmp_path_factory
+    policy = tmp_path_factory._retention_policy
+
+    if (
+        exitstatus == 0
+        and policy == "failed"
+        and tmp_path_factory._given_basetemp is None
+    ):
+        # Register to remove the base directory before starting cleanup_numbered_dir
+        if tmp_path_factory._basetemp is None:
+            return
+
+        def cleanup_passed_dir(passed_dir: Path):
+            if passed_dir.exists():
+                rmtree(passed_dir)
+
+        atexit.register(cleanup_passed_dir, tmp_path_factory._basetemp)

@@ -339,6 +339,8 @@ def cleanup_numbered_dir(
     root: Path, prefix: str, keep: int, consider_lock_dead_if_created_before: float
 ) -> None:
     """Cleanup for lock driven numbered directories."""
+    if not root.exists():
+        return
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
@@ -357,7 +359,7 @@ def make_numbered_dir_with_cleanup(
     for i in range(10):
         try:
             p = make_numbered_dir(root, prefix, mode)
-            # Do not lock the current dir when keep is 0
+            # Only lock the current dir when keep is not 0
             if keep != 0:
                 lock_path = create_cleanup_lock(p)
                 register_cleanup_lock_removal(lock_path)
