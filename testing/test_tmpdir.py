@@ -277,12 +277,12 @@ class TestNumberedDir:
 
         assert not lock.exists()
 
-    def _do_cleanup(self, tmp_path: Path) -> None:
+    def _do_cleanup(self, tmp_path: Path, keep: int = 2) -> None:
         self.test_make(tmp_path)
         cleanup_numbered_dir(
             root=tmp_path,
             prefix=self.PREFIX,
-            keep=2,
+            keep=keep,
             consider_lock_dead_if_created_before=0,
         )
 
@@ -290,6 +290,11 @@ class TestNumberedDir:
         self._do_cleanup(tmp_path)
         a, b = (x for x in tmp_path.iterdir() if not x.is_symlink())
         print(a, b)
+
+    def test_cleanup_keep_0(self, tmp_path: Path):
+        self._do_cleanup(tmp_path, 0)
+        dir_num = len(list(tmp_path.iterdir()))
+        assert dir_num == 0
 
     def test_cleanup_locked(self, tmp_path):
         p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
