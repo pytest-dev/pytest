@@ -232,20 +232,22 @@ def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path
 
 
 def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
+    """After each session, remove base directory if all the tests passed,
+    the policy is "failed", and the basetemp is not specified by a user.
+    """
     tmp_path_factory: TempPathFactory = session.config._tmp_path_factory
+    if tmp_path_factory._basetemp is None:
+        return
     policy = tmp_path_factory._retention_policy
-
     if (
         exitstatus == 0
         and policy == "failed"
         and tmp_path_factory._given_basetemp is None
     ):
-        # Register to remove the base directory before starting cleanup_numbered_dir
-        if tmp_path_factory._basetemp is None:
-            return
 
         def cleanup_passed_dir(passed_dir: Path):
             if passed_dir.exists():
                 rmtree(passed_dir)
 
+        # Register to remove the base directory before starting cleanup_numbered_dir
         atexit.register(cleanup_passed_dir, tmp_path_factory._basetemp)
