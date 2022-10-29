@@ -1,11 +1,11 @@
 """Support for providing temporary directories to test functions."""
-import atexit
 import os
 import re
 import sys
 import tempfile
 from pathlib import Path
 from shutil import rmtree
+from typing import Generator
 from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 import attr
 from _pytest.config.argparsing import Parser
 
+from pytest import hookimpl
 
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
@@ -31,8 +32,6 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
-
-RetentionPolicy = Literal["all", "failed", "none"]
 
 
 @final
@@ -253,7 +252,9 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 
 
 @fixture
-def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path:
+def tmp_path(
+    request: FixtureRequest, tmp_path_factory: TempPathFactory
+) -> Generator[Path, None, None]:
     """Return a temporary directory path object which is unique to each test
     function invocation, created as a sub directory of the base temporary
     directory.
@@ -266,7 +267,23 @@ def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path
     The returned object is a :class:`pathlib.Path` object.
     """
 
-    return _mk_tmp(request, tmp_path_factory)
+    path = _mk_tmp(request, tmp_path_factory)
+    yield path
+
+    # Remove the tmpdir if the policy is "failed" and the test passed.
+    tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
+    policy = tmp_path_factory._retention_policy
+    if policy == "failed" and request.node.result_call.passed:
+        rmtree(path)
+
+    # remove dead symlink
+    basetemp = tmp_path_factory._basetemp
+    if basetemp is None:
+        return
+    for left_dir in basetemp.iterdir():
+        if left_dir.is_symlink():
+            if not left_dir.resolve().exists():
+                left_dir.unlink()
 
 
 def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
@@ -282,10 +299,14 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
         and policy == "failed"
         and tmp_path_factory._given_basetemp is None
     ):
-
-        def cleanup_passed_dir(passed_dir: Path):
-            if passed_dir.exists():
-                rmtree(passed_dir)
-
         # Register to remove the base directory before starting cleanup_numbered_dir
-        atexit.register(cleanup_passed_dir, tmp_path_factory._basetemp)
+        passed_dir = tmp_path_factory._basetemp
+        if passed_dir.exists():
+            rmtree(passed_dir)
+
+
+@hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    result = outcome.get_result()
+    setattr(item, "result_" + result.when, result)
