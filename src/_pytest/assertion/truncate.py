@@ -62,13 +62,13 @@ def _truncate_explanation(
     # Append useful message to explanation
     truncated_line_count = len(input_lines) - len(truncated_explanation)
     truncated_line_count += 1  # Account for the part-truncated final line
-    msg = "...Full output truncated"
-    if truncated_line_count == 1:
-        msg += f" ({truncated_line_count} line hidden)"
-    else:
-        msg += f" ({truncated_line_count} lines hidden)"
-    msg += f", {USAGE_MSG}"
-    truncated_explanation.extend(["", str(msg)])
+    truncated_explanation.extend(
+        [
+            "",  # Line break
+            f"...Full output truncated ({truncated_line_count} line"
+            f"{'' if truncated_line_count == 1 else 's'} hidden), {USAGE_MSG}",
+        ]
+    )
     return truncated_explanation
 
 
