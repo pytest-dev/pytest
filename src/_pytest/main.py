@@ -228,23 +228,6 @@ def pytest_addoption(parser: Parser) -> None:
         ),
     )
 
-    group.addoption(
-        "--tmp-path-retention-count",
-        dest="tmp_path_retention_count",
-        default=3,
-        type=int,
-        metavar="num",
-        help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
-    )
-
-    group.addoption(
-        "--tmp-path-retention-policy",
-        default="failed",
-        choices=["all", "failed", "none"],
-        dest="tmp_path_retention_policy",
-        help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome.",
-    )
-
 
 def validate_basetemp(path: str) -> str:
     # GH 7119

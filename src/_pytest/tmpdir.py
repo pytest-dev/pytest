@@ -7,9 +7,16 @@ import tempfile
 from pathlib import Path
 from shutil import rmtree
 from typing import Optional
+from typing import TYPE_CHECKING
 from typing import Union
 
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
+
 import attr
+from _pytest.config.argparsing import Parser
+
 
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
@@ -22,6 +29,8 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
+
+RetentionPolicy = Literal["all", "failed", "none"]
 
 
 @final
@@ -36,13 +45,13 @@ class TempPathFactory:
     _trace = attr.ib()
     _basetemp = attr.ib(type=Optional[Path])
     _retention_count = attr.ib(type=int)
-    _retention_policy = attr.ib(type=str)
+    _retention_policy = attr.ib(type=RetentionPolicy)
 
     def __init__(
         self,
         given_basetemp: Optional[Path],
         retention_count: int,
-        retention_policy: str,
+        retention_policy: RetentionPolicy,
         trace,
         basetemp: Optional[Path] = None,
         *,
@@ -73,11 +82,23 @@ class TempPathFactory:
         :meta private:
         """
         check_ispytest(_ispytest)
+        count = int(config.getini("tmp_path_retention_count"))
+        if count < 0:
+            raise ValueError(
+                f"tmp_path_retention_count must be >= 0. Current input: {count}."
+            )
+
+        policy = config.getini("tmp_path_retention_policy")
+        if policy not in ("all", "failed", "none"):
+            raise ValueError(
+                f"tmp_path_retention_policy must be either all, failed, none. Current intput: {policy}."
+            )
+
         return cls(
             given_basetemp=config.option.basetemp,
             trace=config.trace.get("tmpdir"),
-            retention_count=config.option.tmp_path_retention_count,
-            retention_policy=config.option.tmp_path_retention_policy,
+            retention_count=count,
+            retention_policy=policy,
             _ispytest=True,
         )
 
@@ -197,6 +218,21 @@ def pytest_configure(config: Config) -> None:
     config.add_cleanup(mp.undo)
     _tmp_path_factory = TempPathFactory.from_config(config, _ispytest=True)
     mp.setattr(config, "_tmp_path_factory", _tmp_path_factory, raising=False)
+
+
+def pytest_addoption(parser: Parser) -> None:
+    parser.addini(
+        "tmp_path_retention_count",
+        help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
+        default=3,
+    )
+
+    parser.addini(
+        "tmp_path_retention_policy",
+        help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome. "
+        "(all/failed/none)",
+        default="failed",
+    )
 
 
 @fixture(scope="session")
