@@ -92,6 +92,50 @@ class TestConfigTmpPath:
         assert mytemp.exists()
         assert not mytemp.joinpath("hello").exists()
 
+    def test_policy_failed_removes_only_passed_dir(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_1(tmp_path):
+                assert 0 == 0
+            def test_2(tmp_path):
+                assert 0 == 1
+        """
+        )
+
+        pytester.inline_run(p)
+        root = pytester._test_tmproot
+
+        for child in root.iterdir():
+            base_dir = list(
+                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
+            )
+            assert len(base_dir) == 1
+            test_dir = list(
+                filter(
+                    lambda x: x.is_dir() and not x.is_symlink(), base_dir[0].iterdir()
+                )
+            )
+            # Check only the failed one remains
+            assert len(test_dir) == 1
+            assert test_dir[0].name == "test_20"
+
+    def test_policy_failed_removes_basedir_when_all_passed(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_1(tmp_path):
+                assert 0 == 0
+        """
+        )
+
+        pytester.inline_run(p)
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            base_dir = filter(lambda x: not x.is_symlink(), child.iterdir())
+            # Check the base dir itself is gone
+            assert len(list(base_dir)) == 0
+
 
 testdata = [
     ("mypath", True),
