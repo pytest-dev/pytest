@@ -1,1 +1,2 @@
 Added `--tmp-path-retention-count` and `--tmp-path-retention-policy` options to control how directories created by the `tmp_path` fixture are kept.
+The default behavior has changed to remove all directories if all tests passed.
