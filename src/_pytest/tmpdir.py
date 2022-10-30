@@ -19,8 +19,6 @@ if TYPE_CHECKING:
 import attr
 from _pytest.config.argparsing import Parser
 
-from pytest import hookimpl
-
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
@@ -28,6 +26,7 @@ from .pathlib import rm_rf
 from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import hookimpl
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
