@@ -275,7 +275,12 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
     if sys.version_info >= (3, 10):
 
-        def get_resource_reader(self, name: str) -> importlib.abc.TraversableResources:  # type: ignore
+        if sys.version_info >= (3, 12):
+            from importlib.resources.abc import TraversableResources
+        else:
+            from importlib.abc import TraversableResources
+
+        def get_resource_reader(self, name: str) -> TraversableResources:  # type: ignore
             if sys.version_info < (3, 11):
                 from importlib.readers import FileReader
             else:
