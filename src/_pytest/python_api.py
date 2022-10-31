@@ -801,7 +801,7 @@ def raises(  # noqa: F811
     r"""Assert that a code block/function call raises an exception.
 
     :param typing.Type[E] | typing.Tuple[typing.Type[E], ...] expected_exception:
-        The excpected exception type, or a tuple if one of multiple possible
+        The expected exception type, or a tuple if one of multiple possible
         exception types are excepted.
     :kwparam str | typing.Pattern[str] | None match:
         If specified, a string containing a regular expression,
