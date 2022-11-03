@@ -273,7 +273,9 @@ def tmp_path(
     tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
     policy = tmp_path_factory._retention_policy
     if policy == "failed" and request.node.result_call.passed:
-        rmtree(path)
+        # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
+        # permissions, etc, in which case we ignore it.
+        rmtree(path, ignore_errors=True)
 
     # remove dead symlink
     basetemp = tmp_path_factory._basetemp
@@ -298,10 +300,11 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
         and policy == "failed"
         and tmp_path_factory._given_basetemp is None
     ):
-        # Register to remove the base directory before starting cleanup_numbered_dir
         passed_dir = tmp_path_factory._basetemp
         if passed_dir.exists():
-            rmtree(passed_dir)
+            # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
+            # permissions, etc, in which case we ignore it.
+            rmtree(passed_dir, ignore_errors=True)
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
