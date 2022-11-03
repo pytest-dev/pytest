@@ -23,6 +23,7 @@ from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
+from .pathlib import cleanup_dead_symlink
 from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -281,10 +282,7 @@ def tmp_path(
     basetemp = tmp_path_factory._basetemp
     if basetemp is None:
         return
-    for left_dir in basetemp.iterdir():
-        if left_dir.is_symlink():
-            if not left_dir.resolve().exists():
-                left_dir.unlink()
+    cleanup_dead_symlink(basetemp)
 
 
 def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
