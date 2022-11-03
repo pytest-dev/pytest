@@ -1,2 +1,2 @@
-Added `--tmp-path-retention-count` and `--tmp-path-retention-policy` options to control how directories created by the `tmp_path` fixture are kept.
-The default behavior has changed to remove all directories if all tests passed.
+Added :confval:`tmp_path_retention_count` and :confval:`tmp_path_retention_policy` configuration options to control how directories created by the :fixture:`tmp_path` fixture are kept.
+The default behavior has changed to keep only directories for failed tests, equivalent to `tmp_path_retention_policy="failed"`.
