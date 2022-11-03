@@ -132,6 +132,9 @@ class TestConfigTmpPath:
         pytester.inline_run(p)
         root = pytester._test_tmproot
         for child in root.iterdir():
+            # This symlink will be deleted by cleanup_numbered_dir **after**
+            # the test finishes because it's triggered by atexit.
+            # So it has to be ignored here.
             base_dir = filter(lambda x: not x.is_symlink(), child.iterdir())
             # Check the base dir itself is gone
             assert len(list(base_dir)) == 0
