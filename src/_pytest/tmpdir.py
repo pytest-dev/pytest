@@ -272,7 +272,7 @@ def tmp_path(
     # Remove the tmpdir if the policy is "failed" and the test passed.
     tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
     policy = tmp_path_factory._retention_policy
-    if policy == "failed" and request.node.result_call.passed:
+    if policy == "failed" and request.node._tmp_path_result_call.passed:
         # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
         # permissions, etc, in which case we ignore it.
         rmtree(path, ignore_errors=True)
@@ -311,4 +311,4 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
 def pytest_runtest_makereport(item, call):
     outcome = yield
     result = outcome.get_result()
-    setattr(item, "result_" + result.when, result)
+    setattr(item, "_tmp_path_result_" + result.when, result)
