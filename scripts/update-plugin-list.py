@@ -90,7 +90,9 @@ def iter_plugins():
                 last_release = release_date.strftime("%b %d, %Y")
                 break
         name = f':pypi:`{info["name"]}`'
-        summary = escape_rst(info["summary"].replace("\n", ""))
+        summary = ""
+        if info["summary"]:
+            summary = escape_rst(info["summary"].replace("\n", ""))
         yield {
             "name": name,
             "summary": summary.strip(),
