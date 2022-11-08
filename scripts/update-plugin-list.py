@@ -78,7 +78,7 @@ def iter_plugins():
         requires = "N/A"
         if info["requires_dist"]:
             for requirement in info["requires_dist"]:
-                if requirement == "pytest" or "pytest " in requirement:
+                if re.match(r"pytest(?![-.\w])", requirement):
                     requires = requirement
                     break
         releases = response.json()["releases"]
