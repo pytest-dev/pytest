@@ -1664,15 +1664,7 @@ def test_raise_assertion_error_raising_repr(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    if sys.version_info >= (3, 11):
-        # python 3.11 has native support for un-str-able exceptions
-        result.stdout.fnmatch_lines(
-            ["E       AssertionError: <exception str() failed>"]
-        )
-    else:
-        result.stdout.fnmatch_lines(
-            ["E       AssertionError: <unprintable AssertionError object>"]
-        )
+    result.stdout.fnmatch_lines(["E       AssertionError: <exception str() failed>"])
 
 
 def test_issue_1944(pytester: Pytester) -> None:
