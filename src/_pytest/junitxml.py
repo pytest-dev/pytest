@@ -561,32 +561,6 @@ class LogXML:
                 reporter = self._opentestcase(report)
                 reporter.append_pass(report)
                 reporter.write_captured_output(report)
-
-            if report.when == "teardown":
-                reporter = self._opentestcase(report)
-                reporter.write_captured_output(report)
-
-                for propname, propvalue in report.user_properties:
-                    reporter.add_property(propname, str(propvalue))
-
-                self.finalize(report)
-                report_wid = getattr(report, "worker_id", None)
-                report_ii = getattr(report, "item_index", None)
-                close_report = next(
-                    (
-                        rep
-                        for rep in self.open_reports
-                        if (
-                            rep.nodeid == report.nodeid
-                            and getattr(rep, "item_index", None) == report_ii
-                            and getattr(rep, "worker_id", None) == report_wid
-                        )
-                    ),
-                    None,
-                )
-                if close_report:
-                    self.open_reports.remove(close_report)
-
         elif report.failed:
             if report.when == "teardown":
                 # The following vars are needed when xdist plugin is used.
@@ -621,6 +595,30 @@ class LogXML:
             reporter = self._opentestcase(report)
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
+        if report.when == "teardown":
+            reporter = self._opentestcase(report)
+            reporter.write_captured_output(report)
+
+            for propname, propvalue in report.user_properties:
+                reporter.add_property(propname, str(propvalue))
+
+            self.finalize(report)
+            report_wid = getattr(report, "worker_id", None)
+            report_ii = getattr(report, "item_index", None)
+            close_report = next(
+                (
+                    rep
+                    for rep in self.open_reports
+                    if (
+                        rep.nodeid == report.nodeid
+                        and getattr(rep, "item_index", None) == report_ii
+                        and getattr(rep, "worker_id", None) == report_wid
+                    )
+                ),
+                None,
+            )
+            if close_report:
+                self.open_reports.remove(close_report)
 
     def update_testcase_duration(self, report: TestReport) -> None:
         """Accumulate total duration for nodeid from given report and update
