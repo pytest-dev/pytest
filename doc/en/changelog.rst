@@ -137,6 +137,8 @@ Bug Fixes
 - `#9877 <https://github.com/pytest-dev/pytest/issues/9877>`_: Ensure ``caplog.get_records(when)`` returns current/correct data after invoking ``caplog.clear()``.
 
 
+- `#10491 <https://github.com/pytest-dev/pytest/issues/10491>`_: Method ``pytest_runtest_logreport`` generated report in case test passed or test failed and ``when=='call'``.
+
 
 Improved Documentation
 ----------------------
