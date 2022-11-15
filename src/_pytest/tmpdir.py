@@ -4,16 +4,30 @@ import re
 import sys
 import tempfile
 from pathlib import Path
+from shutil import rmtree
+from typing import Generator
 from typing import Optional
+from typing import TYPE_CHECKING
+from typing import Union
+
+if TYPE_CHECKING:
+    from typing_extensions import Literal
+
+    RetentionType = Literal["all", "failed", "none"]
+
 
 import attr
+from _pytest.config.argparsing import Parser
 
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
+from .pathlib import cleanup_dead_symlink
 from _pytest.compat import final
 from _pytest.config import Config
+from _pytest.config import ExitCode
+from _pytest.config import hookimpl
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
@@ -31,10 +45,14 @@ class TempPathFactory:
     _given_basetemp = attr.ib(type=Optional[Path])
     _trace = attr.ib()
     _basetemp = attr.ib(type=Optional[Path])
+    _retention_count = attr.ib(type=int)
+    _retention_policy = attr.ib(type="RetentionType")
 
     def __init__(
         self,
         given_basetemp: Optional[Path],
+        retention_count: int,
+        retention_policy: "RetentionType",
         trace,
         basetemp: Optional[Path] = None,
         *,
@@ -49,6 +67,8 @@ class TempPathFactory:
             # Path.absolute() exists, but it is not public (see https://bugs.python.org/issue25012).
             self._given_basetemp = Path(os.path.abspath(str(given_basetemp)))
         self._trace = trace
+        self._retention_count = retention_count
+        self._retention_policy = retention_policy
         self._basetemp = basetemp
 
     @classmethod
@@ -63,9 +83,23 @@ class TempPathFactory:
         :meta private:
         """
         check_ispytest(_ispytest)
+        count = int(config.getini("tmp_path_retention_count"))
+        if count < 0:
+            raise ValueError(
+                f"tmp_path_retention_count must be >= 0. Current input: {count}."
+            )
+
+        policy = config.getini("tmp_path_retention_policy")
+        if policy not in ("all", "failed", "none"):
+            raise ValueError(
+                f"tmp_path_retention_policy must be either all, failed, none. Current intput: {policy}."
+            )
+
         return cls(
             given_basetemp=config.option.basetemp,
             trace=config.trace.get("tmpdir"),
+            retention_count=count,
+            retention_policy=policy,
             _ispytest=True,
         )
 
@@ -146,10 +180,13 @@ class TempPathFactory:
                         )
                     if (rootdir_stat.st_mode & 0o077) != 0:
                         os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
+            keep = self._retention_count
+            if self._retention_policy == "none":
+                keep = 0
             basetemp = make_numbered_dir_with_cleanup(
                 prefix="pytest-",
                 root=rootdir,
-                keep=3,
+                keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
             )
@@ -184,6 +221,21 @@ def pytest_configure(config: Config) -> None:
     mp.setattr(config, "_tmp_path_factory", _tmp_path_factory, raising=False)
 
 
+def pytest_addoption(parser: Parser) -> None:
+    parser.addini(
+        "tmp_path_retention_count",
+        help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
+        default=3,
+    )
+
+    parser.addini(
+        "tmp_path_retention_policy",
+        help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome. "
+        "(all/failed/none)",
+        default="failed",
+    )
+
+
 @fixture(scope="session")
 def tmp_path_factory(request: FixtureRequest) -> TempPathFactory:
     """Return a :class:`pytest.TempPathFactory` instance for the test session."""
@@ -200,7 +252,9 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 
 
 @fixture
-def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path:
+def tmp_path(
+    request: FixtureRequest, tmp_path_factory: TempPathFactory
+) -> Generator[Path, None, None]:
     """Return a temporary directory path object which is unique to each test
     function invocation, created as a sub directory of the base temporary
     directory.
@@ -213,4 +267,46 @@ def tmp_path(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Path
     The returned object is a :class:`pathlib.Path` object.
     """
 
-    return _mk_tmp(request, tmp_path_factory)
+    path = _mk_tmp(request, tmp_path_factory)
+    yield path
+
+    # Remove the tmpdir if the policy is "failed" and the test passed.
+    tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
+    policy = tmp_path_factory._retention_policy
+    if policy == "failed" and request.node._tmp_path_result_call.passed:
+        # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
+        # permissions, etc, in which case we ignore it.
+        rmtree(path, ignore_errors=True)
+
+    # remove dead symlink
+    basetemp = tmp_path_factory._basetemp
+    if basetemp is None:
+        return
+    cleanup_dead_symlink(basetemp)
+
+
+def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
+    """After each session, remove base directory if all the tests passed,
+    the policy is "failed", and the basetemp is not specified by a user.
+    """
+    tmp_path_factory: TempPathFactory = session.config._tmp_path_factory
+    if tmp_path_factory._basetemp is None:
+        return
+    policy = tmp_path_factory._retention_policy
+    if (
+        exitstatus == 0
+        and policy == "failed"
+        and tmp_path_factory._given_basetemp is None
+    ):
+        passed_dir = tmp_path_factory._basetemp
+        if passed_dir.exists():
+            # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
+            # permissions, etc, in which case we ignore it.
+            rmtree(passed_dir, ignore_errors=True)
+
+
+@hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    result = outcome.get_result()
+    setattr(item, "_tmp_path_result_" + result.when, result)

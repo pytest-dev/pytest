@@ -1723,6 +1723,40 @@ passed multiple times. The expected format is ``name=value``. For example::
    directories when executing from the root directory.
 
 
+.. confval:: tmp_path_retention_count
+
+
+
+   How many sessions should we keep the `tmp_path` directories,
+   according to `tmp_path_retention_policy`.
+
+   .. code-block:: ini
+
+        [pytest]
+        tmp_path_retention_count = 3
+
+    Default: 3
+
+
+.. confval:: tmp_path_retention_policy
+
+
+
+   Controls which directories created by the `tmp_path` fixture are kept around,
+   based on test outcome.
+
+    * `all`: retains directories for all tests, regardless of the outcome.
+    * `failed`: retains directories only for tests with outcome `error` or `failed`.
+    * `none`: directories are always removed after each test ends, regardless of the outcome.
+
+   .. code-block:: ini
+
+        [pytest]
+        tmp_path_retention_policy = "all"
+
+    Default: failed
+
+
 .. confval:: usefixtures
 
     List of fixtures that will be applied to all test functions; this is semantically the same to apply
