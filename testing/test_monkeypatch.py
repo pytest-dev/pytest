@@ -92,7 +92,7 @@ class TestSetattrWithImportPath:
             mp.delattr("os.path.abspath")
             assert not hasattr(os.path, "abspath")
             mp.undo()
-            assert os.path.abspath
+            assert os.path.abspath  # type:ignore[truthy-function]
 
 
 def test_delattr() -> None:
