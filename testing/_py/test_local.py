@@ -803,7 +803,7 @@ class TestLocalPath(CommonFSTests):
         # depending on how the paths are used), but > 4096 (which is the
         # Linux' limitation) - the behaviour of paths with names > 4096 chars
         # is undetermined
-        newfilename = "/test" * 60
+        newfilename = "/test" * 60  # type:ignore[unreachable]
         l1 = tmpdir.join(newfilename)
         l1.ensure(file=True)
         l1.write("foo")
@@ -1344,8 +1344,8 @@ class TestPOSIXLocalPath:
         assert realpath.basename == "file"
 
     def test_owner(self, path1, tmpdir):
-        from pwd import getpwuid
-        from grp import getgrgid
+        from pwd import getpwuid  # type:ignore[attr-defined]
+        from grp import getgrgid  # type:ignore[attr-defined]
 
         stat = path1.stat()
         assert stat.path == path1
