@@ -738,7 +738,7 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
 # -------------------------------------------------------------------------
 
 
-def pytest_report_header(
+def pytest_report_header(  # type:ignore[empty-body]
     config: "Config", start_path: Path, startdir: "LEGACY_PATH"
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
@@ -767,7 +767,7 @@ def pytest_report_header(
     """
 
 
-def pytest_report_collectionfinish(
+def pytest_report_collectionfinish(  # type:ignore[empty-body]
     config: "Config",
     start_path: Path,
     startdir: "LEGACY_PATH",
@@ -800,7 +800,7 @@ def pytest_report_collectionfinish(
 
 
 @hookspec(firstresult=True)
-def pytest_report_teststatus(
+def pytest_report_teststatus(  # type:ignore[empty-body]
     report: Union["CollectReport", "TestReport"], config: "Config"
 ) -> Tuple[str, str, Union[str, Mapping[str, bool]]]:
     """Return result-category, shortletter and verbose word for status
@@ -880,7 +880,9 @@ def pytest_warning_recorded(
 # -------------------------------------------------------------------------
 
 
-def pytest_markeval_namespace(config: "Config") -> Dict[str, Any]:
+def pytest_markeval_namespace(  # type:ignore[empty-body]
+    config: "Config",
+) -> Dict[str, Any]:
     """Called when constructing the globals dictionary used for
     evaluating string conditions in xfail/skipif markers.
 

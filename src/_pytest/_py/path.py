@@ -24,6 +24,7 @@ from stat import S_ISLNK
 from stat import S_ISREG
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import overload
 from typing import TYPE_CHECKING
 
@@ -146,7 +147,7 @@ class Visitor:
         self.fil = fil
         self.ignore = ignore
         self.breadthfirst = bf
-        self.optsort = sort and sorted or (lambda x: x)
+        self.optsort = cast(Callable[[Any], Any], sorted) if sort else (lambda x: x)
 
     def gen(self, path):
         try:
@@ -224,7 +225,7 @@ class Stat:
             raise NotImplementedError("XXX win32")
         import pwd
 
-        entry = error.checked_call(pwd.getpwuid, self.uid)
+        entry = error.checked_call(pwd.getpwuid, self.uid)  # type:ignore[attr-defined]
         return entry[0]
 
     @property
@@ -234,7 +235,7 @@ class Stat:
             raise NotImplementedError("XXX win32")
         import grp
 
-        entry = error.checked_call(grp.getgrgid, self.gid)
+        entry = error.checked_call(grp.getgrgid, self.gid)  # type:ignore[attr-defined]
         return entry[0]
 
     def isdir(self):
@@ -252,7 +253,7 @@ def getuserid(user):
     import pwd
 
     if not isinstance(user, int):
-        user = pwd.getpwnam(user)[2]
+        user = pwd.getpwnam(user)[2]  # type:ignore[attr-defined]
     return user
 
 
@@ -260,7 +261,7 @@ def getgroupid(group):
     import grp
 
     if not isinstance(group, int):
-        group = grp.getgrnam(group)[2]
+        group = grp.getgrnam(group)[2]  # type:ignore[attr-defined]
     return group
 
 
