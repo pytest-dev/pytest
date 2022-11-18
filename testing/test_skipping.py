@@ -1439,6 +1439,27 @@ def test_relpath_rootdir(pytester: Pytester) -> None:
     )
 
 
+def test_skip_from_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        **{
+            "tests/test_1.py": """
+        import pytest
+        def test_pass(arg):
+            pass
+        @pytest.fixture
+        def arg():
+            condition = True
+            if condition:
+                pytest.skip("Fixture conditional skip")
+            """,
+        }
+    )
+    result = pytester.runpytest("-rs", "tests/test_1.py", "--rootdir=tests")
+    result.stdout.fnmatch_lines(
+        ["SKIPPED [[]1[]] tests/test_1.py:2: Fixture conditional skip"]
+    )
+
+
 def test_skip_using_reason_works_ok(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """

@@ -58,6 +58,7 @@ from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
+from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -1129,6 +1130,10 @@ def pytest_fixture_setup(
     except TEST_OUTCOME:
         exc_info = sys.exc_info()
         assert exc_info[0] is not None
+        if isinstance(
+            exc_info[1], skip.Exception
+        ) and not fixturefunc.__name__.startswith("xunit_setup"):
+            exc_info[1]._use_item_location = True  # type: ignore[attr-defined]
         fixturedef.cached_result = (None, my_cache_key, exc_info)
         raise
     fixturedef.cached_result = (result, my_cache_key, None)
