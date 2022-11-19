@@ -5,10 +5,14 @@ import sys
 import tempfile
 from pathlib import Path
 from shutil import rmtree
+from typing import Dict
 from typing import Generator
 from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
+
+from _pytest.nodes import Item
+from _pytest.stash import StashKey
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -32,6 +36,8 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
+
+tmppath_result_key = StashKey[Dict[str, bool]]()
 
 
 @final
@@ -273,10 +279,15 @@ def tmp_path(
     # Remove the tmpdir if the policy is "failed" and the test passed.
     tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
     policy = tmp_path_factory._retention_policy
-    if policy == "failed" and request.node._tmp_path_result_call.passed:
+    result_dict = request.node.stash[tmppath_result_key]
+
+    # "call" might be skipped so check if it exists first
+    if "call" not in result_dict or (policy == "failed" and result_dict["call"]):
         # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
         # permissions, etc, in which case we ignore it.
         rmtree(path, ignore_errors=True)
+
+    del request.node.stash[tmppath_result_key]
 
     # remove dead symlink
     basetemp = tmp_path_factory._basetemp
@@ -306,7 +317,11 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item: Item, call):
     outcome = yield
     result = outcome.get_result()
-    setattr(item, "_tmp_path_result_" + result.when, result)
+
+    if tmppath_result_key not in item.stash:
+        item.stash[tmppath_result_key] = {result.when: result.passed}
+    else:
+        item.stash[tmppath_result_key][result.when] = result.passed

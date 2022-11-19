@@ -12,6 +12,7 @@ import attr
 import pytest
 from _pytest import pathlib
 from _pytest.config import Config
+from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import create_cleanup_lock
@@ -138,6 +139,24 @@ class TestConfigTmpPath:
             base_dir = filter(lambda x: not x.is_symlink(), child.iterdir())
             # Check the base dir itself is gone
             assert len(list(base_dir)) == 0
+
+    # issue #10502
+    def test_delete_dir_when_skipped_from_fixture(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt(tmp_path):
+                pytest.skip()
+
+            def test_fixt(fixt):
+                pass
+        """
+        )
+
+        reprec = pytester.inline_run(p)
+        assert reprec.ret == ExitCode.OK
 
 
 testdata = [
