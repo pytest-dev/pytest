@@ -203,7 +203,7 @@ def determine_setup(
                     else:
                         cwd = Path.cwd()
                     rootdir = get_common_ancestor([cwd, ancestor])
-                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == "/"
+                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == os.sep
                     if is_fs_root:
                         rootdir = ancestor
     if rootdir_cmd_arg:
