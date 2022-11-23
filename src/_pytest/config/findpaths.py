@@ -203,8 +203,7 @@ def determine_setup(
                     else:
                         cwd = Path.cwd()
                     rootdir = get_common_ancestor([cwd, ancestor])
-                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == "/"
-                    if is_fs_root:
+                    if is_fs_root(rootdir):
                         rootdir = ancestor
     if rootdir_cmd_arg:
         rootdir = absolutepath(os.path.expandvars(rootdir_cmd_arg))
@@ -216,3 +215,11 @@ def determine_setup(
             )
     assert rootdir is not None
     return rootdir, inipath, inicfg or {}
+
+
+def is_fs_root(p: Path) -> bool:
+    r"""
+    Return True if the given path is pointing to the root of the
+    file system ("/" on Unix and "C:\\" on Windows for example).
+    """
+    return os.path.splitdrive(str(p))[1] == os.sep
