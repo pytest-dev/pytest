@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from textwrap import dedent
 
@@ -5,6 +6,7 @@ import pytest
 from _pytest.config import UsageError
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import get_dirs_from_args
+from _pytest.config.findpaths import is_fs_root
 from _pytest.config.findpaths import load_config_dict_from_file
 
 
@@ -133,3 +135,18 @@ def test_get_dirs_from_args(tmp_path):
     assert get_dirs_from_args(
         [str(fn), str(tmp_path / "does_not_exist"), str(d), option, xdist_rsync_option]
     ) == [fn.parent, d]
+
+
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        pytest.param(
+            f"e:{os.sep}", True, marks=pytest.mark.skipif("sys.platform != 'win32'")
+        ),
+        (f"{os.sep}", True),
+        (f"e:{os.sep}projects", False),
+        (f"{os.sep}projects", False),
+    ],
+)
+def test_is_fs_root(path: Path, expected: bool) -> None:
+    assert is_fs_root(Path(path)) is expected
