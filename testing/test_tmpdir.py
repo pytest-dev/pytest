@@ -139,6 +139,70 @@ class TestConfigTmpPath:
             # Check the base dir itself is gone
             assert len(list(base_dir)) == 0
 
+    # issue #10502
+    def test_policy_failed_removes_dir_when_skipped_from_fixture(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt(tmp_path):
+                pytest.skip()
+
+            def test_fixt(fixt):
+                pass
+        """
+        )
+        pytester.inline_run(p)
+
+        # Check if the whole directory is removed
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            base_dir = list(
+                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
+            )
+            assert len(base_dir) == 0
+
+    # issue #10502
+    def test_policy_all_keeps_dir_when_skipped_from_fixture(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixt(tmp_path):
+                pytest.skip()
+
+            def test_fixt(fixt):
+                pass
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "all"
+        """
+        )
+        pytester.inline_run(p)
+
+        # Check if the whole directory is kept
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            base_dir = list(
+                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
+            )
+            assert len(base_dir) == 1
+            test_dir = list(
+                filter(
+                    lambda x: x.is_dir() and not x.is_symlink(), base_dir[0].iterdir()
+                )
+            )
+            assert len(test_dir) == 1
+
 
 testdata = [
     ("mypath", True),
