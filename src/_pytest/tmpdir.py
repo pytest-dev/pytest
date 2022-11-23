@@ -281,8 +281,7 @@ def tmp_path(
     policy = tmp_path_factory._retention_policy
     result_dict = request.node.stash[tmppath_result_key]
 
-    # "call" might be skipped so check if it exists first
-    if "call" not in result_dict or (policy == "failed" and result_dict["call"]):
+    if policy == "failed" and result_dict.get("call", True):
         # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
         # permissions, etc, in which case we ignore it.
         rmtree(path, ignore_errors=True)
