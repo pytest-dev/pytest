@@ -140,11 +140,13 @@ def test_get_dirs_from_args(tmp_path):
 @pytest.mark.parametrize(
     "path, expected",
     [
-        (Path(f"e:{os.sep}"), True),
-        (Path(f"{os.sep}"), True),
-        (Path(f"e:{os.sep}projects"), False),
-        (Path(f"{os.sep}projects"), False),
+        pytest.param(
+            f"e:{os.sep}", True, marks=pytest.mark.skipif("sys.platform != 'win32'")
+        ),
+        (f"{os.sep}", True),
+        (f"e:{os.sep}projects", False),
+        (f"{os.sep}projects", False),
     ],
 )
 def test_is_fs_root(path: Path, expected: bool) -> None:
-    assert is_fs_root(path) is expected
+    assert is_fs_root(Path(path)) is expected
