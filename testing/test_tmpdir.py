@@ -166,7 +166,7 @@ class TestConfigTmpPath:
             assert len(base_dir) == 0
 
     # issue #10502
-    def test_policy_none_keeps_dir_when_skipped_from_fixture(
+    def test_policy_all_keeps_dir_when_skipped_from_fixture(
         self, pytester: Pytester
     ) -> None:
         p = pytester.makepyfile(
@@ -184,7 +184,7 @@ class TestConfigTmpPath:
         pytester.makepyprojecttoml(
             """
             [tool.pytest.ini_options]
-            tmp_path_retention_policy = "none"
+            tmp_path_retention_policy = "all"
         """
         )
         pytester.inline_run(p)
