@@ -37,6 +37,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.callback import Callback
 
 tmppath_result_key = StashKey[Dict[str, bool]]()
 
@@ -77,6 +78,7 @@ class TempPathFactory:
         self._retention_count = retention_count
         self._retention_policy = retention_policy
         self._basetemp = basetemp
+        self._lock_and_dir_removal_callback = Callback()
 
     @classmethod
     def from_config(
@@ -196,6 +198,7 @@ class TempPathFactory:
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
+                register=self._lock_and_dir_removal_callback.register,
             )
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
@@ -314,6 +317,8 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
             # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
             # permissions, etc, in which case we ignore it.
             rmtree(passed_dir, ignore_errors=True)
+
+    tmp_path_factory._lock_and_dir_removal_callback.execute()
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
