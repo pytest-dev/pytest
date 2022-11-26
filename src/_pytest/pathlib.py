@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import atexit
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -260,10 +259,8 @@ def create_cleanup_lock(p: Path) -> Path:
         return lock_path
 
 
-def register_cleanup_lock_removal(
-    lock_path: Path, register: Any = atexit.register
-) -> Any:
-    """Register a cleanup function for removing a lock, by default on atexit."""
+def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
+    """Register a cleanup function for removing a lock."""
     pid = os.getpid()
 
     def cleanup_on_exit(lock_path: Path = lock_path, original_pid: int = pid) -> None:
@@ -375,13 +372,29 @@ def cleanup_numbered_dir(
 
 
 def make_numbered_dir_with_cleanup(
+    *,
     root: Path,
     prefix: str,
+    mode: int,
     keep: int,
     lock_timeout: float,
-    mode: int,
+    register: Any,
 ) -> Path:
-    """Create a numbered dir with a cleanup lock and remove old ones."""
+    """Create a numbered dir and register its cleanup.
+
+    Similar to make_numbered_dir, but also maintains a lock file indicating that
+    the directory is currently in use, and registers the cleanup of the lock and
+    of stale numbered directories.
+
+    :param keep:
+        The number of sessions to retain the directory.
+    :param lock_timeout:
+        In case of a crash, the lock remains "stuck". The timeout is a time
+        limit after which the lock is considered stale and can be removed.
+    :param register:
+        Called as register(cleanup_func, params...). Should schedule to call
+        passed cleanup functions on session finish.
+    """
     e = None
     for i in range(10):
         try:
@@ -389,13 +402,13 @@ def make_numbered_dir_with_cleanup(
             # Only lock the current dir when keep is not 0
             if keep != 0:
                 lock_path = create_cleanup_lock(p)
-                register_cleanup_lock_removal(lock_path)
+                register_cleanup_lock_removal(lock_path, register)
         except Exception as exc:
             e = exc
         else:
             consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
             # Register a cleanup for program exit
-            atexit.register(
+            register(
                 cleanup_numbered_dir,
                 root,
                 prefix,
