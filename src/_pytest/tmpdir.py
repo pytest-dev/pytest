@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 from _pytest.nodes import Item
+from _pytest.reports import CollectReport
 from _pytest.stash import StashKey
-from pytest import CollectReport
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
