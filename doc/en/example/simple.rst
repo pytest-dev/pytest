@@ -895,7 +895,7 @@ here is a little example implemented via a local plugin:
 
     import pytest
 
-    your_unique_key = StashKey[Dict[str, bool]]()
+    phase_report_key = StashKey[Dict[str, CollectReport]]()
 
 
     @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -906,7 +906,7 @@ here is a little example implemented via a local plugin:
 
         # store test results for each phase of a call, which can
         # be "setup", "call", "teardown"
-        item.stash.setdefault(your_unique_key, {})[rep.when] = rep
+        item.stash.setdefault(phase_report_key, {})[rep.when] = rep
 
 
     @pytest.fixture
@@ -914,13 +914,13 @@ here is a little example implemented via a local plugin:
         yield
         # request.node is an "item" because we use the default
         # "function" scope
-        result = request.node.stash[your_unique_key]
-        if not result.get("setup", False):
-            print("setting up a test failed!", request.node.nodeid)
-        elif not result.get("call", False):
-            print("executing test failed", request.node.nodeid)
-        elif not result("teardown", False):
-            print("tear down test failed", request.node.nodeid)
+        report = request.node.stash[phase_report_key]
+        if ("setup" not in report) or report["setup"].failed:
+            print("setting up a test failed or skipped", request.node.nodeid)
+        elif ("call" not in report) or report["call"].failed:
+            print("executing test failed or skipped", request.node.nodeid)
+        elif ("teardown" not in report) or report["teardown"].failed:
+            print("tear down test failed or skipped", request.node.nodeid)
 
 
 if you then have failing tests:
