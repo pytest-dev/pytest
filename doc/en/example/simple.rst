@@ -915,12 +915,10 @@ here is a little example implemented via a local plugin:
         # request.node is an "item" because we use the default
         # "function" scope
         report = request.node.stash[phase_report_key]
-        if ("setup" not in report) or report["setup"].failed:
+        if report["setup"].failed:
             print("setting up a test failed or skipped", request.node.nodeid)
         elif ("call" not in report) or report["call"].failed:
             print("executing test failed or skipped", request.node.nodeid)
-        elif ("teardown" not in report) or report["teardown"].failed:
-            print("tear down test failed or skipped", request.node.nodeid)
 
 
 if you then have failing tests:
