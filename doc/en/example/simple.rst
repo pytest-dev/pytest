@@ -895,6 +895,8 @@ here is a little example implemented via a local plugin:
 
     import pytest
 
+    phase_report_key = StashKey[Dict[str, CollectReport]]()
+
 
     @pytest.hookimpl(tryfirst=True, hookwrapper=True)
     def pytest_runtest_makereport(item, call):
@@ -902,10 +904,9 @@ here is a little example implemented via a local plugin:
         outcome = yield
         rep = outcome.get_result()
 
-        # set a report attribute for each phase of a call, which can
+        # store test results for each phase of a call, which can
         # be "setup", "call", "teardown"
-
-        setattr(item, "rep_" + rep.when, rep)
+        item.stash.setdefault(phase_report_key, {})[rep.when] = rep
 
 
     @pytest.fixture
@@ -913,11 +914,11 @@ here is a little example implemented via a local plugin:
         yield
         # request.node is an "item" because we use the default
         # "function" scope
-        if request.node.rep_setup.failed:
-            print("setting up a test failed!", request.node.nodeid)
-        elif request.node.rep_setup.passed:
-            if request.node.rep_call.failed:
-                print("executing test failed", request.node.nodeid)
+        report = request.node.stash[phase_report_key]
+        if report["setup"].failed:
+            print("setting up a test failed or skipped", request.node.nodeid)
+        elif ("call" not in report) or report["call"].failed:
+            print("executing test failed or skipped", request.node.nodeid)
 
 
 if you then have failing tests:
