@@ -906,10 +906,7 @@ here is a little example implemented via a local plugin:
 
         # store test results for each phase of a call, which can
         # be "setup", "call", "teardown"
-        if your_unique_key not in item.stash:
-            item.stash[your_unique_key] = {rep.when: rep.passed}
-        else:
-            item.stash[your_unique_key][rep.when] = rep.passed
+        item.stash.setdefault(your_unique_key, {})[rep.when] = rep
 
 
     @pytest.fixture
