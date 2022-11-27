@@ -13,6 +13,7 @@ from typing import Union
 
 from _pytest.nodes import Item
 from _pytest.stash import StashKey
+from pytest import CollectReport
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -318,9 +319,7 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
 @hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item: Item, call):
     outcome = yield
-    result = outcome.get_result()
+    result: CollectReport = outcome.get_result()
 
-    if tmppath_result_key not in item.stash:
-        item.stash[tmppath_result_key] = {result.when: result.passed}
-    else:
-        item.stash[tmppath_result_key][result.when] = result.passed
+    empty: Dict[str, bool] = {}
+    item.stash.setdefault(tmppath_result_key, empty)[result.when] = result.passed
