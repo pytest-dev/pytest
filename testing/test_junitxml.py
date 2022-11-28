@@ -932,6 +932,37 @@ class TestPython:
             assert "hello-stdout call" in systemout.toxml()
             assert "hello-stdout teardown" in systemout.toxml()
 
+    @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
+    def test_call_failed_stdout(
+        self, pytester: Pytester, run_and_parse: RunAndParse, junit_logging: str
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
+                yield
+                sys.stdout.write('hello-stdout teardown')
+                raise ValueError()
+            def test_function(arg):
+                sys.stdout.write('hello-stdout call')
+                raise ValueError()
+        """
+        )
+        result, dom = run_and_parse("-o", "junit_logging=%s" % junit_logging)
+        node = dom.find_first_by_tag("testsuite")
+        pnode = node.find_first_by_tag("testcase")
+        if junit_logging == "no":
+            assert not node.find_by_tag(
+                "system-out"
+            ), "system-out should not be generated"
+        if junit_logging == "system-out":
+            systemout = pnode.find_first_by_tag("system-out")
+            assert systemout
+            assert "hello-stdout call" in systemout.toxml()
+
 
 def test_mangle_test_address() -> None:
     from _pytest.junitxml import mangle_test_address
