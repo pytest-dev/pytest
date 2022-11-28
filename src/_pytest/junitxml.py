@@ -560,8 +560,6 @@ class LogXML:
             if report.when == "call":  # ignore setup/teardown
                 reporter = self._opentestcase(report)
                 reporter.append_pass(report)
-                if not self.log_passing_tests:
-                    reporter.write_captured_output(report)
         elif report.failed:
             if report.when == "teardown":
                 # The following vars are needed when xdist plugin is used.
