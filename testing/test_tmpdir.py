@@ -131,7 +131,7 @@ class TestConfigTmpPath:
         """
         )
         p_failed = pytester.makepyfile(
-            """
+            another_file_name="""
             def test_1(tmp_path):
                 assert 0 == 1
         """
