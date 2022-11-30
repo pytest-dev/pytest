@@ -735,6 +735,20 @@ class Test_genitems:
         assert s.endswith("test_example_items1.testone")
         print(s)
 
+    def test_classmethod_is_discovered(self, pytester: Pytester) -> None:
+        """Test that classmethods are discovered"""
+        p = pytester.makepyfile(
+            """
+            class TestCase:
+                @classmethod
+                def test_classmethod(cls) -> None:
+                    pass
+            """
+        )
+        items, reprec = pytester.inline_genitems(p)
+        ids = [x.getmodpath() for x in items]  # type: ignore[attr-defined]
+        assert ids == ["TestCase.test_classmethod"]
+
     def test_class_and_functions_discovery_using_glob(self, pytester: Pytester) -> None:
         """Test that Python_classes and Python_functions config options work
         as prefixes and glob-like patterns (#600)."""

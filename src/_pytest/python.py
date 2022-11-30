@@ -403,7 +403,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
     def istestfunction(self, obj: object, name: str) -> bool:
         if self.funcnamefilter(name) or self.isnosetest(obj):
-            if isinstance(obj, staticmethod):
+            if isinstance(obj, staticmethod) or isinstance(obj, classmethod):
                 # staticmethods need to be unwrapped.
                 obj = safe_getattr(obj, "__func__", False)
             return callable(obj) and fixtures.getfixturemarker(obj) is None
