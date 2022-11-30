@@ -1,4 +1,3 @@
-import atexit
 import contextlib
 import fnmatch
 import importlib.util
@@ -244,7 +243,7 @@ def create_cleanup_lock(p: Path) -> Path:
         return lock_path
 
 
-def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
+def register_cleanup_lock_removal(lock_path: Path, register):
     """Register a cleanup function for removing a lock, by default on atexit."""
     pid = os.getpid()
 
@@ -362,7 +361,7 @@ def make_numbered_dir_with_cleanup(
     keep: int,
     lock_timeout: float,
     mode: int,
-    register=atexit.register,
+    register,
 ) -> Path:
     """Create a numbered dir with a cleanup lock and remove old ones."""
     e = None
