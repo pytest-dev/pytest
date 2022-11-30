@@ -121,7 +121,7 @@ class TestConfigTmpPath:
             # Check the base dir itself is gone without depending on test results
             assert base_dir == []
 
-    @pytest.mark.parametrize("policy", ["failed", "all"])
+    @pytest.mark.parametrize("policy", ['"failed"', '"all"'])
     @pytest.mark.parametrize("count", [0, 1, 3])
     def test_retention_count(self, pytester: Pytester, policy, count) -> None:
         p = pytester.makepyfile(
