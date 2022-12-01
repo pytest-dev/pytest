@@ -131,10 +131,13 @@ The default base temporary directory
 
 Temporary directories are by default created as sub-directories of
 the system temporary directory.  The base name will be ``pytest-NUM`` where
-``NUM`` will be incremented with each test run.  Moreover, entries older
-than 3 temporary directories will be removed.
+``NUM`` will be incremented with each test run.
+By default, only the directories of failed tests will be kept.
+Also only the last 3 directries will remain at most.
+This behavior can be configured with :confval:`tmp_path_retention_count` and
+:confval:`tmp_path_retention_policy`.
 
-The number of entries currently cannot be changed, but using the ``--basetemp``
+Using the ``--basetemp``
 option will remove the directory before every run, effectively meaning the temporary directories
 of only the most recent run will be kept.
 
