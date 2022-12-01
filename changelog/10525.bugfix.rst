@@ -1,0 +1,1 @@
+Make classmethods discoverable. Same logic as staticmethods.
