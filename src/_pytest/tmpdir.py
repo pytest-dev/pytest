@@ -267,8 +267,10 @@ def tmp_path(
     directory.
 
     By default, a new base temporary directory is created each test session,
-    and old bases are removed after 3 sessions, to aid in debugging. If
-    ``--basetemp`` is used then it is cleared each session. See :ref:`base
+    and only the base of failed session is kept. Also it only keeps the last 3 bases
+    at most. This can be configured with :confval:`tmp_path_retention_count` and
+    :confval:`tmp_path_retention_policy`.
+    If ``--basetemp`` is used then it is cleared each session. See :ref:`base
     temporary directory`.
 
     The returned object is a :class:`pathlib.Path` object.
