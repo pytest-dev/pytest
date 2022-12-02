@@ -1,1 +1,1 @@
-Make classmethods discoverable. Same logic as staticmethods.
+Test methods decorated with ``@classmethod`` can now be discovered as tests, following the same rules as normal methods. This fills the gap that ``@staticmethod``s were discoverable as tests but not ``@classmethod``s.
