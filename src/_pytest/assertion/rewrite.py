@@ -180,7 +180,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             for initial_path in self.session._initialpaths:
                 # Make something as c:/projects/my_project/path.py ->
                 #     ['c:', 'projects', 'my_project', 'path.py']
-                parts = str(initial_path).split(os.path.sep)
+                parts = str(initial_path).split(os.sep)
                 # add 'path' to basenames to be checked.
                 self._basenames_to_check_rewrite.add(os.path.splitext(parts[-1])[0])
 

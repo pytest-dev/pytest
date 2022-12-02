@@ -796,7 +796,7 @@ class LocalPath:
             kw = {"exists": 1}
         return Checkers(self)._evaluate(kw)
 
-    _patternchars = set("*?[" + os.path.sep)
+    _patternchars = set("*?[" + os.sep)
 
     def listdir(self, fil=None, sort=None):
         """List directory contents, possibly filter by the given fil func
@@ -1128,7 +1128,7 @@ class LocalPath:
                 modfile = modfile[:-1]
             elif modfile.endswith("$py.class"):
                 modfile = modfile[:-9] + ".py"
-            if modfile.endswith(os.path.sep + "__init__.py"):
+            if modfile.endswith(os.sep + "__init__.py"):
                 if self.basename != "__init__.py":
                     modfile = modfile[:-12]
             try:
