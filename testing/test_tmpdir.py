@@ -100,7 +100,7 @@ class TestConfigTmpPath:
         """
         )
         p_failed = pytester.makepyfile(
-            """
+            another_file_name="""
             def test_1(tmp_path):
                 assert 0 == 1
         """
@@ -185,23 +185,6 @@ class TestConfigTmpPath:
             # Check only the failed one remains
             assert len(test_dir) == 1
             assert test_dir[0].name == "test_20"
-
-    def test_policy_failed_removes_basedir_when_all_passed(
-        self, pytester: Pytester
-    ) -> None:
-        p = pytester.makepyfile(
-            """
-            def test_1(tmp_path):
-                assert 0 == 0
-        """
-        )
-
-        pytester.inline_run(p)
-        root = pytester._test_tmproot
-        for child in root.iterdir():
-            base_dir = list(child.iterdir())
-            # Check the base dir itself is gone
-            assert base_dir == []
 
     # issue #10502
     def test_policy_failed_removes_dir_when_skipped_from_fixture(
