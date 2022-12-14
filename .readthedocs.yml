@@ -2,9 +2,12 @@ version: 2
 
 python:
    install:
-      - requirements: doc/en/requirements.txt
-      - method: pip
-        path: .
+     # Install pytest first, then doc/en/requirements.txt.
+     # This order is important to honor any pins in doc/en/requirements.txt
+     # when the pinned library is also a dependency of pytest.
+     - method: pip
+       path: .
+     - requirements: doc/en/requirements.txt
 
 build:
   os: ubuntu-20.04

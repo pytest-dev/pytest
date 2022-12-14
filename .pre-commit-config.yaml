@@ -2,7 +2,7 @@ default_language_version:
     python: "3.10"
 repos:
 -   repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 22.12.0
     hooks:
     -   id: black
         args: [--safe, --quiet]
@@ -44,7 +44,7 @@ repos:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py37-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.1.0
+    rev: v3.3.1
     hooks:
     -   id: pyupgrade
         args: [--py37-plus]
