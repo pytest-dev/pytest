@@ -1,0 +1,1 @@
+``assert_truncate_level`` option added to be able to get the full diff without using ``-vv``.

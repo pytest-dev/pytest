@@ -1290,6 +1290,16 @@ class TestTruncateExplanation:
             ]
         )
 
+        # test assert_truncate_level ini option.
+        result = pytester.runpytest("-o", "assert_truncate_level=1")
+        result.stdout.fnmatch_lines(
+            ["E         ...Full output truncated (2 lines hidden), use '-vv' to show"]
+        )
+        result = pytester.runpytest("-o", "assert_truncate_level=0")
+        result.stdout.fnmatch_lines(["* 6*"])
+        result = pytester.runpytest("-v", "-o", "assert_truncate_level=0")
+        result.stdout.fnmatch_lines(["* 6*"])
+
         result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(["* 6*"])
 
@@ -1689,7 +1699,9 @@ def test_raise_assertion_error_raising_repr(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["E       AssertionError: <exception str() failed>"])
+    result.stdout.fnmatch_lines(
+        ["E       AssertionError: <unprintable AssertionError object>"]
+    )
 
 
 def test_issue_1944(pytester: Pytester) -> None:

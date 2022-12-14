@@ -256,6 +256,17 @@ def pytest_addoption(parser: Parser) -> None:
         default="progress",
     )
 
+    # Experimental.
+    parser.addini(
+        "assert_truncate_level",
+        help=(
+            "Truncate explanations of assertion failures?  "
+            '("auto" (when verbosity < 2, and not running on CI), '
+            "or minimum verbosity level to trigger it (i.e. 0 for no truncation)."
+        ),
+        default="auto",
+    )
+
 
 def pytest_configure(config: Config) -> None:
     reporter = TerminalReporter(config, sys.stdout)

@@ -270,6 +270,10 @@ situations, for example you are shown even fixtures that start with ``_`` if you
 Using higher verbosity levels (``-vvv``, ``-vvvv``, ...) is supported, but has no effect in pytest itself at the moment,
 however some plugins might make use of higher verbosity.
 
+By default for verbosity inferior to ``-vv`` really long output are truncated. It's also possible to
+control the truncation directly using the ``assert_truncate_level`` option. You can use ``assert_truncate_level=0``
+to get the full diff regardless of the verbosity level.
+
 .. _`pytest.detailed_failed_tests_usage`:
 
 Producing a detailed summary report

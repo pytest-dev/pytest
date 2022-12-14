@@ -25,9 +25,12 @@ def truncate_if_required(
 
 
 def _should_truncate_item(item: Item) -> bool:
-    """Whether or not this test item is eligible for truncation."""
+    """Whether this test item is eligible for truncation."""
+    level = item.config.getini("assert_truncate_level")
     verbose = item.config.option.verbose
-    return verbose < 2 and not util.running_on_ci()
+    if level == "auto":
+        return verbose < 2 and not util.running_on_ci()
+    return bool(int(level) > verbose)
 
 
 def _truncate_explanation(
