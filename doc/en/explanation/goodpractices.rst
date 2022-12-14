@@ -270,8 +270,8 @@ tox
 
 Once you are done with your work and want to make sure that your actual
 package passes all tests you may want to look into :doc:`tox <tox:index>`, the
-virtualenv test automation tool and its :doc:`pytest support <tox:example/pytest>`.
-tox helps you to setup virtualenv environments with pre-defined
+virtualenv test automation tool.
+``tox`` helps you to setup virtualenv environments with pre-defined
 dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
