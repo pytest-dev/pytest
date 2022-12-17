@@ -807,9 +807,9 @@ class TestAssert_reprcompare_dataclass:
                 "E         ['field_b']",
                 "E         ",
                 "E         Drill down into differing attribute field_b:",
-                "E           field_b: 'b' != 'c'...",
-                "E         ",
-                "E         ...Full output truncated (3 lines hidden), use '-vv' to show",
+                "E           field_b: 'b' != 'c'",
+                "E           - c",
+                "E           + b",
             ],
             consecutive=True,
         )
@@ -827,7 +827,7 @@ class TestAssert_reprcompare_dataclass:
                 "E         Drill down into differing attribute g:",
                 "E           g: S(a=10, b='ten') != S(a=20, b='xxx')...",
                 "E         ",
-                "E         ...Full output truncated (52 lines hidden), use '-vv' to show",
+                "E         ...Full output truncated (51 lines hidden), use '-vv' to show",
             ],
             consecutive=True,
         )
@@ -1188,30 +1188,55 @@ class TestTruncateExplanation:
     def test_truncates_at_8_lines_when_given_list_of_empty_strings(self) -> None:
         expl = ["" for x in range(50)]
         result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        assert len(result) != len(expl)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
-        assert "43 lines hidden" in result[-1]
+        assert "42 lines hidden" in result[-1]
         last_line_before_trunc_msg = result[-self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self) -> None:
-        expl = ["a" for x in range(100)]
+        total_lines = 100
+        expl = ["a" for x in range(total_lines)]
         result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
-        assert "93 lines hidden" in result[-1]
+        assert f"{total_lines - 8} lines hidden" in result[-1]
         last_line_before_trunc_msg = result[-self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
+    def test_truncates_at_8_lines_when_there_is_one_line_to_remove(self) -> None:
+        """The number of line in the result is 9, the same number as if we truncated."""
+        expl = ["a" for x in range(9)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        assert result == expl
+        assert "truncated" not in result[-1]
+
+    def test_truncates_edgecase_when_truncation_message_makes_the_result_longer_for_chars(
+        self,
+    ) -> None:
+        line = "a" * 10
+        expl = [line, line]
+        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
+        assert result == [line, line]
+
+    def test_truncates_edgecase_when_truncation_message_makes_the_result_longer_for_lines(
+        self,
+    ) -> None:
+        line = "a" * 10
+        expl = [line, line]
+        result = truncate._truncate_explanation(expl, max_lines=1, max_chars=100)
+        assert result == [line, line]
+
     def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self) -> None:
-        expl = ["a" * 80 for x in range(16)]
+        expl = [chr(97 + x) * 80 for x in range(16)]
         result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
-        assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
+        assert len(result) == 16 - 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
-        assert "9 lines hidden" in result[-1]
+        assert "8 lines hidden" in result[-1]
         last_line_before_trunc_msg = result[-self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
@@ -1240,7 +1265,7 @@ class TestTruncateExplanation:
 
         line_count = 7
         line_len = 100
-        expected_truncated_lines = 2
+        expected_truncated_lines = 1
         pytester.makepyfile(
             r"""
             def test_many_lines():
@@ -1261,7 +1286,7 @@ class TestTruncateExplanation:
                 "*+ 1*",
                 "*+ 3*",
                 "*+ 5*",
-                "*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
+                "*truncated (%d line hidden)*use*-vv*" % expected_truncated_lines,
             ]
         )
 
