@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import tempfile
+from contextlib import ExitStack
 from pathlib import Path
 from shutil import rmtree
 from typing import Dict
@@ -77,6 +78,7 @@ class TempPathFactory:
         self._retention_count = retention_count
         self._retention_policy = retention_policy
         self._basetemp = basetemp
+        self._exit_stack = ExitStack()
 
     @classmethod
     def from_config(
@@ -196,6 +198,7 @@ class TempPathFactory:
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
+                register=self._exit_stack.callback,
             )
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
@@ -303,19 +306,23 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
     the policy is "failed", and the basetemp is not specified by a user.
     """
     tmp_path_factory: TempPathFactory = session.config._tmp_path_factory
-    if tmp_path_factory._basetemp is None:
-        return
-    policy = tmp_path_factory._retention_policy
-    if (
-        exitstatus == 0
-        and policy == "failed"
-        and tmp_path_factory._given_basetemp is None
-    ):
-        passed_dir = tmp_path_factory._basetemp
-        if passed_dir.exists():
-            # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
-            # permissions, etc, in which case we ignore it.
-            rmtree(passed_dir, ignore_errors=True)
+
+    # tmporal directory cleanup, which is registered to
+    # this ExitStack, will be executed at the end of this scope
+    with tmp_path_factory._exit_stack:
+        if tmp_path_factory._basetemp is None:
+            return
+        policy = tmp_path_factory._retention_policy
+        if (
+            exitstatus == 0
+            and policy == "failed"
+            and tmp_path_factory._given_basetemp is None
+        ):
+            passed_dir = tmp_path_factory._basetemp
+            if passed_dir.exists():
+                # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
+                # permissions, etc, in which case we ignore it.
+                rmtree(passed_dir, ignore_errors=True)
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
