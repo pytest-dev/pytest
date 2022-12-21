@@ -11,7 +11,7 @@ on:
 permissions: {}
 
 jobs:
-  createPullRequest:
+  update-plugin-list:
     if: github.repository_owner == 'pytest-dev'
     runs-on: ubuntu-latest
     permissions:
