@@ -1754,7 +1754,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         tmp_path_retention_policy = "all"
 
-    Default: failed
+    Default: all
 
 
 .. confval:: usefixtures
