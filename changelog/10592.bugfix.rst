@@ -1,0 +1,1 @@
+Fix the bug "--cache-show --help" triggers an internal error
