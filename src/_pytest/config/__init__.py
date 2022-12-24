@@ -1074,12 +1074,6 @@ class Config:
                 )
 
             raise
-        except PrintHelp:
-            self._parser._getparser().print_help()
-            sys.stdout.write(
-                "\nNOTE: displaying only minimal help due to UsageError.\n\n"
-            )
-            raise UsageError
 
         return self
 
@@ -1374,7 +1368,7 @@ class Config:
             self.args = args
             self.args_source = source
         except PrintHelp:
-            raise
+            pass
 
     def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
         """Issue and handle a warning during the "configure" stage.
