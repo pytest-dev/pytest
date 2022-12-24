@@ -1507,7 +1507,7 @@ of what we've gone over so far.
 
 All that's needed is stepping up to a larger scope, then having the **act**
 step defined as an autouse fixture, and finally, making sure all the fixtures
-are targetting that highler level scope.
+are targetting that higher level scope.
 
 Let's pull :ref:`an example from above <safe fixture structure>`, and tweak it a
 bit. Let's say that in addition to checking for a welcome message in the header,
