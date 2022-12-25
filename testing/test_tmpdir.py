@@ -46,7 +46,7 @@ class FakeConfig:
         if name == "tmp_path_retention_count":
             return 3
         elif name == "tmp_path_retention_policy":
-            return "failed"
+            return "all"
         else:
             assert False
 
@@ -101,6 +101,12 @@ class TestConfigTmpPath:
                 assert 0 == 1
         """
         )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
+        """
+        )
 
         pytester.inline_run(p)
         root = pytester._test_tmproot
@@ -126,6 +132,12 @@ class TestConfigTmpPath:
             """
             def test_1(tmp_path):
                 assert 0 == 0
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
         """
         )
 
@@ -155,6 +167,13 @@ class TestConfigTmpPath:
                 pass
         """
         )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "failed"
+        """
+        )
+
         pytester.inline_run(p)
 
         # Check if the whole directory is removed
@@ -570,7 +589,7 @@ def test_tmp_path_factory_create_directory_with_safe_permissions(
     """Verify that pytest creates directories under /tmp with private permissions."""
     # Use the test's tmp_path as the system temproot (/tmp).
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(None, 3, "failed", lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # No world-readable permissions.
@@ -590,14 +609,14 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
     """
     # Use the test's tmp_path as the system temproot (/tmp).
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(None, 3, "failed", lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # Before - simulate bad perms.
     os.chmod(basetemp.parent, 0o777)
     assert (basetemp.parent.stat().st_mode & 0o077) != 0
 
-    tmp_factory = TempPathFactory(None, 3, "failed", lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # After - fixed.
