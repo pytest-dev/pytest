@@ -1,4 +1,5 @@
 """Support for providing temporary directories to test functions."""
+import atexit
 import os
 import re
 import sys
@@ -285,17 +286,21 @@ def tmp_path(
     result_dict = request.node.stash[tmppath_result_key]
 
     if policy == "failed" and result_dict.get("call", True):
-        # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
-        # permissions, etc, in which case we ignore it.
-        rmtree(path, ignore_errors=True)
+
+        def remove_path_and_dead_symlink():
+            # ignore_errors is required because the base directory has already been gone here
+            # when all the testcase is passed
+            rmtree(path, ignore_errors=True)
+
+            # remove dead symlink
+            basetemp = tmp_path_factory._basetemp
+            if basetemp is None:
+                return
+            cleanup_dead_symlink(basetemp)
+
+        atexit.register(remove_path_and_dead_symlink)
 
     del request.node.stash[tmppath_result_key]
-
-    # remove dead symlink
-    basetemp = tmp_path_factory._basetemp
-    if basetemp is None:
-        return
-    cleanup_dead_symlink(basetemp)
 
 
 def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
@@ -313,9 +318,7 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
     ):
         passed_dir = tmp_path_factory._basetemp
         if passed_dir.exists():
-            # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
-            # permissions, etc, in which case we ignore it.
-            rmtree(passed_dir, ignore_errors=True)
+            atexit.register(rmtree, passed_dir)
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
