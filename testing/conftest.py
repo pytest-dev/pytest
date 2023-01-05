@@ -157,6 +157,7 @@ def color_mapping():
             "number": "\x1b[94m",
             "str": "\x1b[33m",
             "print": "\x1b[96m",
+            "endline": "\x1b[90m\x1b[39;49;00m",
         }
         RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
