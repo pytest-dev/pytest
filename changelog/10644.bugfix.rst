@@ -1,0 +1,3 @@
+`monkeypatch.setattr` no longer leaves a leftover item in the target's dictionary after cleanup when patching an inherited attribute of a non-class object. This fixes a bug where a `__get__` descriptor's dynamic lookup was blocked and replaced by a cached static lookup after `monkeypatch` teardown.
+
+Previously `monkeypatch.setattr` avoided leaving leftover items in the target's dictionary when patching class objects but not when patching non-class objects.

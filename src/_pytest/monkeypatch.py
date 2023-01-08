@@ -223,7 +223,6 @@ class MonkeyPatch:
         applies to ``monkeypatch.setattr`` as well.
         """
         __tracebackhide__ = True
-        import inspect
 
         if isinstance(value, Notset):
             if not isinstance(target, str):
@@ -246,9 +245,10 @@ class MonkeyPatch:
         if raising and oldval is notset:
             raise AttributeError(f"{target!r} has no attribute {name!r}")
 
-        # avoid class descriptors like staticmethod/classmethod
-        if inspect.isclass(target):
-            oldval = target.__dict__.get(name, notset)
+        # Prevent `undo` from polluting `vars(target)` with an object that was not in it
+        # before monkeypatching, such as inherited attributes or the results of
+        # descriptor binding.
+        oldval = vars(target).get(name, notset)
         self._setattr.append((target, name, oldval))
         setattr(target, name, value)
 
