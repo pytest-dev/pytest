@@ -1,0 +1,1 @@
+Fix a race condition when creating junitxml reports, which could occur when multiple instances of pytest execute in parallel.

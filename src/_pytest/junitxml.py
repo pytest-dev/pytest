@@ -645,8 +645,8 @@ class LogXML:
 
     def pytest_sessionfinish(self) -> None:
         dirname = os.path.dirname(os.path.abspath(self.logfile))
-        if not os.path.isdir(dirname):
-            os.makedirs(dirname)
+        # exist_ok avoids filesystem race conditions between checking path existence and requesting creation
+        os.makedirs(dirname, exist_ok=True)
 
         with open(self.logfile, "w", encoding="utf-8") as logfile:
             suite_stop_time = timing.time()
