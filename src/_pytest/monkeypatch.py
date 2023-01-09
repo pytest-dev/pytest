@@ -281,7 +281,7 @@ class MonkeyPatch:
 
         if not hasattr(target, name):
             if raising:
-                raise AttributeError(name)
+                raise AttributeError(f"{target!r} has no attribute {name!r}")
         else:
             oldval = getattr(target, name, notset)
             # Avoid class descriptors like staticmethod/classmethod.
