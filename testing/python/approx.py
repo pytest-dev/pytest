@@ -630,6 +630,19 @@ class TestApprox:
     def test_dict_vs_other(self):
         assert 1 != approx({"a": 0})
 
+    def test_dict_for_div_by_zero(self, assert_approx_raises_regex):
+        assert_approx_raises_regex(
+            {"foo": 42.0},
+            {"foo": 0.0},
+            [
+                r"  comparison failed. Mismatched elements: 1 / 1:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                r"  Max relative difference: inf",
+                r"  Index \| Obtained\s+\| Expected   ",
+                rf"  foo   | {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
     def test_numpy_array(self):
         np = pytest.importorskip("numpy")
 
