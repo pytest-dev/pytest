@@ -697,6 +697,7 @@ class PytestPluginManager(PluginManager):
                     parg = opt[2:]
                 else:
                     continue
+                parg = parg.strip()
                 if exclude_only and not parg.startswith("no:"):
                     continue
                 self.consider_pluginarg(parg)
