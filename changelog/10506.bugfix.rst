@@ -1,1 +1,0 @@
-Fix bug where sometimes pytest would use the file system root directory as :ref:`rootdir <rootdir>` on Windows.

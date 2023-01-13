@@ -504,9 +504,9 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ pytest -rs -q multipython.py
    sssssssssssssssssssssssssss                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [9] multipython.py:29: 'python3.5' not found
-   SKIPPED [9] multipython.py:29: 'python3.6' not found
-   SKIPPED [9] multipython.py:29: 'python3.7' not found
+   SKIPPED [9] multipython.py:69: 'python3.5' not found
+   SKIPPED [9] multipython.py:69: 'python3.6' not found
+   SKIPPED [9] multipython.py:69: 'python3.7' not found
    27 skipped in 0.12s
 
 Indirect parametrization of optional implementations/imports
@@ -574,7 +574,7 @@ If you run this with reporting for skips enabled:
     test_module.py .s                                                    [100%]
 
     ========================= short test summary info ==========================
-    SKIPPED [1] conftest.py:12: could not import 'opt2': No module named 'opt2'
+    SKIPPED [1] test_module.py:3: could not import 'opt2': No module named 'opt2'
     ======================= 1 passed, 1 skipped in 0.12s =======================
 
 You'll see that we don't have an ``opt2`` module and thus the second test run
