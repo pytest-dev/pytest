@@ -1,0 +1,3 @@
+Allow ``-p`` arguments to include spaces (eg: ``-p no:logging`` instead of
+``-pno:logging``). Mostly useful in the ``addopts`` section of the configuration
+file.
