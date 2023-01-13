@@ -48,6 +48,10 @@ def pytest_configure(config: Config) -> None:
 def pytest_sessionfinish(session: Session) -> None:
     if not session.config.getoption("stepwise"):
         assert session.config.cache is not None
+        if hasattr(session.config, "workerinput"):
+            # Do not update cache if this process is a xdist worker to prevent
+            # race conditions (#10641).
+            return
         # Clear the list of failing tests if the plugin is not active.
         session.config.cache.set(STEPWISE_CACHE_DIR, [])
 
@@ -119,4 +123,8 @@ class StepwisePlugin:
         return None
 
     def pytest_sessionfinish(self) -> None:
+        if hasattr(self.config, "workerinput"):
+            # Do not update cache if this process is a xdist worker to prevent
+            # race conditions (#10641).
+            return
         self.cache.set(STEPWISE_CACHE_DIR, self.lastfailed)
