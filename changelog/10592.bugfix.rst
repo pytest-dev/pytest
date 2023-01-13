@@ -1,1 +1,1 @@
-Fix the bug "--cache-show --help" triggers an internal error
+Fixed crash if `--cache-show` and `--help` are passed at the same time.
