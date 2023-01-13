@@ -1809,6 +1809,10 @@ def test_config_does_not_load_blocked_plugin_from_args(pytester: Pytester) -> No
     result.stderr.fnmatch_lines(["*: error: unrecognized arguments: -s"])
     assert result.ret == ExitCode.USAGE_ERROR
 
+    result = pytester.runpytest(str(p), "-p no:capture", "-s")
+    result.stderr.fnmatch_lines(["*: error: unrecognized arguments: -s"])
+    assert result.ret == ExitCode.USAGE_ERROR
+
 
 def test_invocation_args(pytester: Pytester) -> None:
     """Ensure that Config.invocation_* arguments are correctly defined"""
