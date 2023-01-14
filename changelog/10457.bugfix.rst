@@ -1,1 +1,0 @@
-If a test is skipped from inside a fixture, the test summary now shows the test location instead of the fixture location.
