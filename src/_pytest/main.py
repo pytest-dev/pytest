@@ -619,7 +619,7 @@ class Session(nodes.FSCollector):
         and ``session.items`` is empty.
         """
         if args is None:
-            args = self.config.args
+            args = self.config.args if hasattr(self.config, "args") else ()
 
         self.trace("perform_collect", self, args)
         self.trace.root.indent += 1

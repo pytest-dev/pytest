@@ -737,8 +737,10 @@ class TerminalReporter:
 
         if config.inipath:
             line += ", configfile: " + bestrelpath(config.rootpath, config.inipath)
-
-        if config.args_source == Config.ArgsSource.TESTPATHS:
+        if (
+            hasattr(config, "args_source")
+            and config.args_source == Config.ArgsSource.TESTPATHS
+        ):
             testpaths: List[str] = config.getini("testpaths")
             line += ", testpaths: {}".format(", ".join(testpaths))
 
