@@ -28,6 +28,27 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.2.1 (2023-01-13)
+=========================
+
+Bug Fixes
+---------
+
+- `#10452 <https://github.com/pytest-dev/pytest/issues/10452>`_: Fix 'importlib.abc.TraversableResources' deprecation warning in Python 3.12.
+
+
+- `#10457 <https://github.com/pytest-dev/pytest/issues/10457>`_: If a test is skipped from inside a fixture, the test summary now shows the test location instead of the fixture location.
+
+
+- `#10506 <https://github.com/pytest-dev/pytest/issues/10506>`_: Fix bug where sometimes pytest would use the file system root directory as :ref:`rootdir <rootdir>` on Windows.
+
+
+- `#10607 <https://github.com/pytest-dev/pytest/issues/10607>`_: Fix a race condition when creating junitxml reports, which could occur when multiple instances of pytest execute in parallel.
+
+
+- `#10641 <https://github.com/pytest-dev/pytest/issues/10641>`_: Fix a race condition when creating or updating the stepwise plugin's cache, which could occur when multiple xdist worker nodes try to simultaneously update the stepwise plugin's cache.
+
+
 pytest 7.2.0 (2022-10-23)
 =========================
 
