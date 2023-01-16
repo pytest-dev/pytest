@@ -1,3 +1,4 @@
+import dataclasses
 import itertools
 import re
 import sys
@@ -12,7 +13,6 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
-import attr
 import hypothesis
 from hypothesis import strategies
 
@@ -39,14 +39,14 @@ class TestMetafunc:
             def __init__(self, names):
                 self.names_closure = names
 
-        @attr.s
+        @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
-            obj = attr.ib()
-            _nodeid = attr.ib()
+            _nodeid: str
+            obj: object
 
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
-        definition: Any = DefinitionMock._create(func, "mock::nodeid")
+        definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
@@ -140,9 +140,9 @@ class TestMetafunc:
         """Unit test for _find_parametrized_scope (#3941)."""
         from _pytest.python import _find_parametrized_scope
 
-        @attr.s
+        @dataclasses.dataclass
         class DummyFixtureDef:
-            _scope = attr.ib()
+            _scope: Scope
 
         fixtures_defs = cast(
             Dict[str, Sequence[fixtures.FixtureDef[object]]],

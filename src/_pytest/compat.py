@@ -1,4 +1,5 @@
 """Python version compatibility code."""
+import dataclasses
 import enum
 import functools
 import inspect
@@ -16,8 +17,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-
-import attr
 
 import py
 
@@ -253,7 +252,7 @@ def ascii_escaped(val: Union[bytes, str]) -> str:
     return _translate_non_printable(ret)
 
 
-@attr.s
+@dataclasses.dataclass
 class _PytestWrapper:
     """Dummy wrapper around a function object for internal use only.
 
@@ -262,7 +261,7 @@ class _PytestWrapper:
     decorator to issue warnings when the fixture function is called directly.
     """
 
-    obj = attr.ib()
+    obj: Any
 
 
 def get_real_func(obj):

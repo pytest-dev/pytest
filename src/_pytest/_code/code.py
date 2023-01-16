@@ -1,4 +1,5 @@
 import ast
+import dataclasses
 import inspect
 import os
 import re
@@ -32,7 +33,6 @@ from typing import TypeVar
 from typing import Union
 from weakref import ref
 
-import attr
 import pluggy
 
 import _pytest
@@ -445,7 +445,7 @@ E = TypeVar("E", bound=BaseException, covariant=True)
 
 
 @final
-@attr.s(repr=False, init=False, auto_attribs=True)
+@dataclasses.dataclass
 class ExceptionInfo(Generic[E]):
     """Wraps sys.exc_info() objects and offers help for navigating the traceback."""
 
@@ -649,12 +649,12 @@ class ExceptionInfo(Generic[E]):
         """
         if style == "native":
             return ReprExceptionInfo(
-                ReprTracebackNative(
+                reprtraceback=ReprTracebackNative(
                     traceback.format_exception(
                         self.type, self.value, self.traceback[0]._rawentry
                     )
                 ),
-                self._getreprcrash(),
+                reprcrash=self._getreprcrash(),
             )
 
         fmt = FormattedExcinfo(
@@ -684,7 +684,7 @@ class ExceptionInfo(Generic[E]):
         return True
 
 
-@attr.s(auto_attribs=True)
+@dataclasses.dataclass
 class FormattedExcinfo:
     """Presenting information about failing Functions and Generators."""
 
@@ -699,8 +699,8 @@ class FormattedExcinfo:
     funcargs: bool = False
     truncate_locals: bool = True
     chain: bool = True
-    astcache: Dict[Union[str, Path], ast.AST] = attr.ib(
-        factory=dict, init=False, repr=False
+    astcache: Dict[Union[str, Path], ast.AST] = dataclasses.field(
+        default_factory=dict, init=False, repr=False
     )
 
     def _getindent(self, source: "Source") -> int:
@@ -978,7 +978,7 @@ class FormattedExcinfo:
         return ExceptionChainRepr(repr_chain)
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class TerminalRepr:
     def __str__(self) -> str:
         # FYI this is called from pytest-xdist's serialization of exception
@@ -996,14 +996,14 @@ class TerminalRepr:
 
 
 # This class is abstract -- only subclasses are instantiated.
-@attr.s(eq=False)
+@dataclasses.dataclass(eq=False)
 class ExceptionRepr(TerminalRepr):
     # Provided by subclasses.
-    reprcrash: Optional["ReprFileLocation"]
     reprtraceback: "ReprTraceback"
-
-    def __attrs_post_init__(self) -> None:
-        self.sections: List[Tuple[str, str, str]] = []
+    reprcrash: Optional["ReprFileLocation"]
+    sections: List[Tuple[str, str, str]] = dataclasses.field(
+        init=False, default_factory=list
+    )
 
     def addsection(self, name: str, content: str, sep: str = "-") -> None:
         self.sections.append((name, content, sep))
@@ -1014,16 +1014,23 @@ class ExceptionRepr(TerminalRepr):
             tw.line(content)
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ExceptionChainRepr(ExceptionRepr):
     chain: Sequence[Tuple["ReprTraceback", Optional["ReprFileLocation"], Optional[str]]]
 
-    def __attrs_post_init__(self) -> None:
-        super().__attrs_post_init__()
+    def __init__(
+        self,
+        chain: Sequence[
+            Tuple["ReprTraceback", Optional["ReprFileLocation"], Optional[str]]
+        ],
+    ) -> None:
         # reprcrash and reprtraceback of the outermost (the newest) exception
         # in the chain.
-        self.reprtraceback = self.chain[-1][0]
-        self.reprcrash = self.chain[-1][1]
+        super().__init__(
+            reprtraceback=chain[-1][0],
+            reprcrash=chain[-1][1],
+        )
+        self.chain = chain
 
     def toterminal(self, tw: TerminalWriter) -> None:
         for element in self.chain:
@@ -1034,7 +1041,7 @@ class ExceptionChainRepr(ExceptionRepr):
         super().toterminal(tw)
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ReprExceptionInfo(ExceptionRepr):
     reprtraceback: "ReprTraceback"
     reprcrash: "ReprFileLocation"
@@ -1044,7 +1051,7 @@ class ReprExceptionInfo(ExceptionRepr):
         super().toterminal(tw)
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ReprTraceback(TerminalRepr):
     reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]]
     extraline: Optional[str]
@@ -1073,12 +1080,12 @@ class ReprTraceback(TerminalRepr):
 
 class ReprTracebackNative(ReprTraceback):
     def __init__(self, tblines: Sequence[str]) -> None:
-        self.style = "native"
         self.reprentries = [ReprEntryNative(tblines)]
         self.extraline = None
+        self.style = "native"
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ReprEntryNative(TerminalRepr):
     lines: Sequence[str]
 
@@ -1088,7 +1095,7 @@ class ReprEntryNative(TerminalRepr):
         tw.write("".join(self.lines))
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ReprEntry(TerminalRepr):
     lines: Sequence[str]
     reprfuncargs: Optional["ReprFuncArgs"]
@@ -1168,11 +1175,14 @@ class ReprEntry(TerminalRepr):
         )
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ReprFileLocation(TerminalRepr):
-    path: str = attr.ib(converter=str)
+    path: str
     lineno: int
     message: str
+
+    def __post_init__(self) -> None:
+        self.path = str(self.path)
 
     def toterminal(self, tw: TerminalWriter) -> None:
         # Filename and lineno output for each entry, using an output format
@@ -1185,7 +1195,7 @@ class ReprFileLocation(TerminalRepr):
         tw.line(f":{self.lineno}: {msg}")
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ReprLocals(TerminalRepr):
     lines: Sequence[str]
 
@@ -1194,7 +1204,7 @@ class ReprLocals(TerminalRepr):
             tw.line(indent + line)
 
 
-@attr.s(eq=False, auto_attribs=True)
+@dataclasses.dataclass(eq=False)
 class ReprFuncArgs(TerminalRepr):
     args: Sequence[Tuple[str, object]]
 

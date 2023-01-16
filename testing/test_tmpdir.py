@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import stat
 import sys
@@ -6,8 +7,7 @@ from pathlib import Path
 from typing import Callable
 from typing import cast
 from typing import List
-
-import attr
+from typing import Union
 
 import pytest
 from _pytest import pathlib
@@ -31,9 +31,9 @@ def test_tmp_path_fixture(pytester: Pytester) -> None:
     results.stdout.fnmatch_lines(["*1 passed*"])
 
 
-@attr.s
+@dataclasses.dataclass
 class FakeConfig:
-    basetemp = attr.ib()
+    basetemp: Union[str, Path]
 
     @property
     def trace(self):
@@ -56,7 +56,7 @@ class FakeConfig:
 
 
 class TestTmpPathHandler:
-    def test_mktemp(self, tmp_path):
+    def test_mktemp(self, tmp_path: Path) -> None:
         config = cast(Config, FakeConfig(tmp_path))
         t = TempPathFactory.from_config(config, _ispytest=True)
         tmp = t.mktemp("world")
@@ -67,7 +67,9 @@ class TestTmpPathHandler:
         assert str(tmp2.relative_to(t.getbasetemp())).startswith("this")
         assert tmp2 != tmp
 
-    def test_tmppath_relative_basetemp_absolute(self, tmp_path, monkeypatch):
+    def test_tmppath_relative_basetemp_absolute(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
         """#4425"""
         monkeypatch.chdir(tmp_path)
         config = cast(Config, FakeConfig("hello"))

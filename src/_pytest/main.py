@@ -1,5 +1,6 @@
 """Core implementation of the testing process: init, session, runtest loop."""
 import argparse
+import dataclasses
 import fnmatch
 import functools
 import importlib
@@ -18,8 +19,6 @@ from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
-
-import attr
 
 import _pytest._code
 from _pytest import nodes
@@ -442,8 +441,10 @@ class Failed(Exception):
     """Signals a stop as failed test run."""
 
 
-@attr.s(slots=True, auto_attribs=True)
+@dataclasses.dataclass
 class _bestrelpath_cache(Dict[Path, str]):
+    __slots__ = ("path",)
+
     path: Path
 
     def __missing__(self, path: Path) -> str:
