@@ -1192,26 +1192,10 @@ class FixtureFunctionMarker:
     ] = None
     name: Optional[str] = None
 
-    def __init__(
-        self,
-        *,
-        scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]",
-        params: Optional[Iterable[object]],
-        autouse: bool,
-        ids: Optional[
-            Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
-        ],
-        name: Optional[str] = None,
-    ) -> None:
-        object.__setattr__(self, "scope", scope)
-        object.__setattr__(
-            self, "params", tuple(params) if params is not None else None
-        )
-        object.__setattr__(self, "autouse", autouse)
-        object.__setattr__(
-            self, "ids", None if ids is None else ids if callable(ids) else tuple(ids)
-        )
-        object.__setattr__(self, "name", name)
+    _ispytest: dataclasses.InitVar[bool] = False
+
+    def __post_init__(self, _ispytest: bool) -> None:
+        check_ispytest(_ispytest)
 
     def __call__(self, function: FixtureFunction) -> FixtureFunction:
         if inspect.isclass(function):
@@ -1332,10 +1316,11 @@ def fixture(  # noqa: F811
     """
     fixture_marker = FixtureFunctionMarker(
         scope=scope,
-        params=params,
+        params=tuple(params) if params is not None else None,
         autouse=autouse,
-        ids=ids,
+        ids=None if ids is None else ids if callable(ids) else tuple(ids),
         name=name,
+        _ispytest=True,
     )
 
     # Direct decoration.
