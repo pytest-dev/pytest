@@ -998,6 +998,7 @@ class Config:
         self.hook.pytest_addoption.call_historic(
             kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
         )
+        self.args_source = Config.ArgsSource.ARGS
 
         if TYPE_CHECKING:
             from _pytest.cacheprovider import Cache
@@ -1368,7 +1369,7 @@ class Config:
             self.args = args
             self.args_source = source
         except PrintHelp:
-            pass
+            self.args = []
 
     def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
         """Issue and handle a warning during the "configure" stage.
