@@ -1,1 +1,1 @@
-Check if ``Config.args`` and ``Config.args_source`` exist.
+Fix crash if ``--fixtures`` and ``--help`` are passed at the same time.
