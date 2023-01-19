@@ -1,0 +1,2 @@
+Fix :py:func:`pytest.raises` to return a 'ContextManager' so that type-checkers could narrow
+:code:`pytest.raises(...) if ... else nullcontext()` down to 'ContextManager' rather than 'object'.

@@ -8,7 +8,7 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
-from typing import Generic
+from typing import ContextManager
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -957,7 +957,7 @@ raises.Exception = fail.Exception  # type: ignore
 
 
 @final
-class RaisesContext(Generic[E]):
+class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
     def __init__(
         self,
         expected_exception: Union[Type[E], Tuple[Type[E], ...]],
