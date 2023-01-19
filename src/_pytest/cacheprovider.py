@@ -32,7 +32,6 @@ from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.reports import TestReport
 
-
 README_CONTENT = """\
 # pytest cache directory #
 
@@ -492,7 +491,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
-    if config.option.cacheshow:
+    if config.option.cacheshow and not config.option.help:
         from _pytest.main import wrap_session
 
         return wrap_session(config, cacheshow)
