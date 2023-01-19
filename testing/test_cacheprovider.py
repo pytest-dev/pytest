@@ -1249,3 +1249,8 @@ def test_cachedir_tag(pytester: Pytester) -> None:
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
     assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT
+
+
+def test_clioption_with_cacheshow_and_help(pytester: Pytester) -> None:
+    result = pytester.runpytest("--cache-show", "--help")
+    assert result.ret == 0
