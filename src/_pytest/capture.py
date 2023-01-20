@@ -507,7 +507,7 @@ else:
     class CaptureResult(
         collections.namedtuple("CaptureResult", ["out", "err"]), Generic[AnyStr]
     ):
-        __doc__ = """The result of :method:`CaptureFixture.readouterr`."""
+        """The result of :method:`CaptureFixture.readouterr`."""
 
 
 class MultiCapture(Generic[AnyStr]):
