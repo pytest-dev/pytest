@@ -890,7 +890,7 @@ def test_dontreadfrominput() -> None:
     from _pytest.capture import DontReadFromInput
 
     f = DontReadFromInput()
-    assert f.buffer is f
+    assert f.buffer is f  # type: ignore[comparison-overlap]
     assert not f.isatty()
     pytest.raises(OSError, f.read)
     pytest.raises(OSError, f.readlines)
@@ -906,7 +906,10 @@ def test_dontreadfrominput() -> None:
     pytest.raises(UnsupportedOperation, f.write, b"")
     pytest.raises(UnsupportedOperation, f.writelines, [])
     assert not f.writable()
+    assert isinstance(f.encoding, str)
     f.close()  # just for completeness
+    with f:
+        pass
 
 
 def test_captureresult() -> None:

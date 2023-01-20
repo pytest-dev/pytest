@@ -6,14 +6,20 @@ import os
 import sys
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
+from types import TracebackType
 from typing import Any
 from typing import AnyStr
+from typing import BinaryIO
 from typing import Generator
 from typing import Generic
+from typing import Iterable
+from typing import Iterator
+from typing import List
 from typing import NamedTuple
 from typing import Optional
 from typing import TextIO
 from typing import Tuple
+from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -185,19 +191,27 @@ class TeeCaptureIO(CaptureIO):
         return self._other.write(s)
 
 
-class DontReadFromInput:
-    encoding = None
+class DontReadFromInput(TextIO):
+    @property
+    def encoding(self) -> str:
+        return sys.__stdin__.encoding
 
-    def read(self, *args):
+    def read(self, size: int = -1) -> str:
         raise OSError(
             "pytest: reading from stdin while output is captured!  Consider using `-s`."
         )
 
     readline = read
-    readlines = read
-    __next__ = read
 
-    def __iter__(self):
+    def __next__(self) -> str:
+        return self.readline()
+
+    def readlines(self, hint: Optional[int] = -1) -> List[str]:
+        raise OSError(
+            "pytest: reading from stdin while output is captured!  Consider using `-s`."
+        )
+
+    def __iter__(self) -> Iterator[str]:
         return self
 
     def fileno(self) -> int:
@@ -215,7 +229,7 @@ class DontReadFromInput:
     def readable(self) -> bool:
         return False
 
-    def seek(self, offset: int) -> int:
+    def seek(self, offset: int, whence: int = 0) -> int:
         raise UnsupportedOperation("redirected stdin is pseudofile, has no seek(int)")
 
     def seekable(self) -> bool:
@@ -224,21 +238,33 @@ class DontReadFromInput:
     def tell(self) -> int:
         raise UnsupportedOperation("redirected stdin is pseudofile, has no tell()")
 
-    def truncate(self, size: int) -> None:
+    def truncate(self, size: Optional[int] = None) -> int:
         raise UnsupportedOperation("cannont truncate stdin")
 
-    def write(self, *args) -> None:
+    def write(self, data: str) -> int:
         raise UnsupportedOperation("cannot write to stdin")
 
-    def writelines(self, *args) -> None:
+    def writelines(self, lines: Iterable[str]) -> None:
         raise UnsupportedOperation("Cannot write to stdin")
 
     def writable(self) -> bool:
         return False
 
-    @property
-    def buffer(self):
+    def __enter__(self) -> "DontReadFromInput":
         return self
+
+    def __exit__(
+        self,
+        type: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        pass
+
+    @property
+    def buffer(self) -> BinaryIO:
+        # The str/bytes doesn't actually matter in this type, so OK to fake.
+        return self  # type: ignore[return-value]
 
 
 # Capture classes.
