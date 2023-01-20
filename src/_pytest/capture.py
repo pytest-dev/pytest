@@ -1,6 +1,6 @@
 """Per-test stdout/stderr capturing mechanism."""
+import collections
 import contextlib
-import functools
 import io
 import os
 import sys
@@ -10,7 +10,7 @@ from typing import Any
 from typing import AnyStr
 from typing import Generator
 from typing import Generic
-from typing import Iterator
+from typing import NamedTuple
 from typing import Optional
 from typing import TextIO
 from typing import Tuple
@@ -492,59 +492,19 @@ class FDCapture(FDCaptureBinary):
 # MultiCapture
 
 
-# This class was a namedtuple, but due to mypy limitation[0] it could not be
-# made generic, so was replaced by a regular class which tries to emulate the
-# pertinent parts of a namedtuple. If the mypy limitation is ever lifted, can
-# make it a namedtuple again.
-# [0]: https://github.com/python/mypy/issues/685
-@final
-@functools.total_ordering
-class CaptureResult(Generic[AnyStr]):
-    """The result of :method:`CaptureFixture.readouterr`."""
+# Generic NamedTuple only supported since Python 3.11.
+if sys.version_info >= (3, 11) or TYPE_CHECKING:
 
-    __slots__ = ("out", "err")
+    @final
+    class CaptureResult(NamedTuple, Generic[AnyStr]):
+        """The result of :method:`CaptureFixture.readouterr`."""
 
-    def __init__(self, out: AnyStr, err: AnyStr) -> None:
-        self.out: AnyStr = out
-        self.err: AnyStr = err
+        out: AnyStr
+        err: AnyStr
 
-    def __len__(self) -> int:
-        return 2
-
-    def __iter__(self) -> Iterator[AnyStr]:
-        return iter((self.out, self.err))
-
-    def __getitem__(self, item: int) -> AnyStr:
-        return tuple(self)[item]
-
-    def _replace(
-        self, *, out: Optional[AnyStr] = None, err: Optional[AnyStr] = None
-    ) -> "CaptureResult[AnyStr]":
-        return CaptureResult(
-            out=self.out if out is None else out, err=self.err if err is None else err
-        )
-
-    def count(self, value: AnyStr) -> int:
-        return tuple(self).count(value)
-
-    def index(self, value) -> int:
-        return tuple(self).index(value)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, (CaptureResult, tuple)):
-            return NotImplemented
-        return tuple(self) == tuple(other)
-
-    def __hash__(self) -> int:
-        return hash(tuple(self))
-
-    def __lt__(self, other: object) -> bool:
-        if not isinstance(other, (CaptureResult, tuple)):
-            return NotImplemented
-        return tuple(self) < tuple(other)
-
-    def __repr__(self) -> str:
-        return f"CaptureResult(out={self.out!r}, err={self.err!r})"
+else:
+    CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
+    CaptureResult.__doc__ = """The result of :method:`CaptureFixture.readouterr`."""
 
 
 class MultiCapture(Generic[AnyStr]):
