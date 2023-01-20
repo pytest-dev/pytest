@@ -518,10 +518,10 @@ class TestImportLibMode:
         fn1.write_text(
             dedent(
                 """
-                import attr
+                import dataclasses
                 import pickle
 
-                @attr.s(auto_attribs=True)
+                @dataclasses.dataclass
                 class Data:
                     x: int = 42
                 """
@@ -533,10 +533,10 @@ class TestImportLibMode:
         fn2.write_text(
             dedent(
                 """
-                import attr
+                import dataclasses
                 import pickle
 
-                @attr.s(auto_attribs=True)
+                @dataclasses.dataclass
                 class Data:
                     x: str = ""
                 """

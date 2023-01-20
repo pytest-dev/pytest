@@ -1,4 +1,5 @@
 import collections.abc
+import dataclasses
 import inspect
 import warnings
 from typing import Any
@@ -19,8 +20,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-
-import attr
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
@@ -191,8 +190,10 @@ class ParameterSet(NamedTuple):
 
 
 @final
-@attr.s(frozen=True, init=False, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class Mark:
+    """A pytest mark."""
+
     #: Name of the mark.
     name: str
     #: Positional arguments of the mark decorator.
@@ -201,9 +202,11 @@ class Mark:
     kwargs: Mapping[str, Any]
 
     #: Source Mark for ids with parametrize Marks.
-    _param_ids_from: Optional["Mark"] = attr.ib(default=None, repr=False)
+    _param_ids_from: Optional["Mark"] = dataclasses.field(default=None, repr=False)
     #: Resolved/generated ids with parametrize Marks.
-    _param_ids_generated: Optional[Sequence[str]] = attr.ib(default=None, repr=False)
+    _param_ids_generated: Optional[Sequence[str]] = dataclasses.field(
+        default=None, repr=False
+    )
 
     def __init__(
         self,
@@ -261,7 +264,7 @@ class Mark:
 Markable = TypeVar("Markable", bound=Union[Callable[..., object], type])
 
 
-@attr.s(init=False, auto_attribs=True)
+@dataclasses.dataclass
 class MarkDecorator:
     """A decorator for applying a mark on test functions and classes.
 

@@ -1,4 +1,5 @@
 """Python test discovery, setup and run of test functions."""
+import dataclasses
 import enum
 import fnmatch
 import inspect
@@ -26,8 +27,6 @@ from typing import Set
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
-
-import attr
 
 import _pytest
 from _pytest import fixtures
@@ -956,9 +955,19 @@ def hasnew(obj: object) -> bool:
 
 
 @final
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@dataclasses.dataclass(frozen=True)
 class IdMaker:
     """Make IDs for a parametrization."""
+
+    __slots__ = (
+        "argnames",
+        "parametersets",
+        "idfn",
+        "ids",
+        "config",
+        "nodeid",
+        "func_name",
+    )
 
     # The argnames of the parametrization.
     argnames: Sequence[str]
@@ -1109,7 +1118,7 @@ class IdMaker:
 
 
 @final
-@attr.s(frozen=True, slots=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class CallSpec2:
     """A planned parameterized invocation of a test function.
 
@@ -1120,18 +1129,18 @@ class CallSpec2:
 
     # arg name -> arg value which will be passed to the parametrized test
     # function (direct parameterization).
-    funcargs: Dict[str, object] = attr.Factory(dict)
+    funcargs: Dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg value which will be passed to a fixture of the same name
     # (indirect parametrization).
-    params: Dict[str, object] = attr.Factory(dict)
+    params: Dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
-    indices: Dict[str, int] = attr.Factory(dict)
+    indices: Dict[str, int] = dataclasses.field(default_factory=dict)
     # Used for sorting parametrized resources.
-    _arg2scope: Dict[str, Scope] = attr.Factory(dict)
+    _arg2scope: Dict[str, Scope] = dataclasses.field(default_factory=dict)
     # Parts which will be added to the item's name in `[..]` separated by "-".
-    _idlist: List[str] = attr.Factory(list)
+    _idlist: List[str] = dataclasses.field(default_factory=list)
     # Marks which will be applied to the item.
-    marks: List[Mark] = attr.Factory(list)
+    marks: List[Mark] = dataclasses.field(default_factory=list)
 
     def setmulti(
         self,
@@ -1163,9 +1172,9 @@ class CallSpec2:
         return CallSpec2(
             funcargs=funcargs,
             params=params,
-            arg2scope=arg2scope,
             indices=indices,
-            idlist=[*self._idlist, id],
+            _arg2scope=arg2scope,
+            _idlist=[*self._idlist, id],
             marks=[*self.marks, *normalize_mark_list(marks)],
         )
 

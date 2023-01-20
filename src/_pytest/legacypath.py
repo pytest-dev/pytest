@@ -1,4 +1,5 @@
 """Add backward compatibility support for the legacy py path type."""
+import dataclasses
 import shlex
 import subprocess
 from pathlib import Path
@@ -7,7 +8,6 @@ from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
 
-import attr
 from iniconfig import SectionWrapper
 
 from _pytest.cacheprovider import Cache
@@ -268,7 +268,7 @@ class LegacyTestdirPlugin:
 
 
 @final
-@attr.s(init=False, auto_attribs=True)
+@dataclasses.dataclass
 class TempdirFactory:
     """Backward compatibility wrapper that implements :class:`py.path.local`
     for :class:`TempPathFactory`.

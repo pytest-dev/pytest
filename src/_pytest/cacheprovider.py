@@ -1,6 +1,7 @@
 """Implementation of the cache provider."""
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
+import dataclasses
 import json
 import os
 from pathlib import Path
@@ -11,8 +12,6 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Union
-
-import attr
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
@@ -52,10 +51,12 @@ Signature: 8a477f597d28d172789f06886806bc55
 
 
 @final
-@attr.s(init=False, auto_attribs=True)
+@dataclasses.dataclass
 class Cache:
-    _cachedir: Path = attr.ib(repr=False)
-    _config: Config = attr.ib(repr=False)
+    """Instance of the `cache` fixture."""
+
+    _cachedir: Path = dataclasses.field(repr=False)
+    _config: Config = dataclasses.field(repr=False)
 
     # Sub-directory under cache-dir for directories created by `mkdir()`.
     _CACHE_PREFIX_DIRS = "d"

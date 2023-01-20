@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import re
 import sys
@@ -9,8 +10,6 @@ from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import Union
-
-import attr
 
 import _pytest._code
 import pytest
@@ -423,11 +422,11 @@ class TestParseIni:
         This test installs a mock "myplugin-1.5" which is used in the parametrized test cases.
         """
 
-        @attr.s
+        @dataclasses.dataclass
         class DummyEntryPoint:
-            name = attr.ib()
-            module = attr.ib()
-            group = "pytest11"
+            name: str
+            module: str
+            group: str = "pytest11"
 
             def load(self):
                 __import__(self.module)
@@ -437,11 +436,11 @@ class TestParseIni:
             DummyEntryPoint("myplugin1", "myplugin1_module"),
         ]
 
-        @attr.s
+        @dataclasses.dataclass
         class DummyDist:
-            entry_points = attr.ib()
-            files = ()
-            version = plugin_version
+            entry_points: object
+            files: object = ()
+            version: str = plugin_version
 
             @property
             def metadata(self):

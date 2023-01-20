@@ -1,8 +1,7 @@
+import dataclasses
 import os
 import sys
 import types
-
-import attr
 
 import pytest
 from _pytest.compat import importlib_metadata
@@ -115,11 +114,11 @@ class TestGeneralUsage:
 
         loaded = []
 
-        @attr.s
+        @dataclasses.dataclass
         class DummyEntryPoint:
-            name = attr.ib()
-            module = attr.ib()
-            group = "pytest11"
+            name: str
+            module: str
+            group: str = "pytest11"
 
             def load(self):
                 __import__(self.module)
@@ -132,10 +131,10 @@ class TestGeneralUsage:
             DummyEntryPoint("mycov", "mycov_module"),
         ]
 
-        @attr.s
+        @dataclasses.dataclass
         class DummyDist:
-            entry_points = attr.ib()
-            files = ()
+            entry_points: object
+            files: object = ()
 
         def my_dists():
             return (DummyDist(entry_points),)
@@ -1037,14 +1036,14 @@ def test_fixture_values_leak(pytester: Pytester) -> None:
     """
     pytester.makepyfile(
         """
-        import attr
+        import dataclasses
         import gc
         import pytest
         import weakref
 
-        @attr.s
-        class SomeObj(object):
-            name = attr.ib()
+        @dataclasses.dataclass
+        class SomeObj:
+            name: str
 
         fix_of_test1_ref = None
         session_ref = None

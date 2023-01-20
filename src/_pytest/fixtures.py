@@ -1,3 +1,4 @@
+import dataclasses
 import functools
 import inspect
 import os
@@ -27,8 +28,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-
-import attr
 
 import _pytest
 from _pytest import nodes
@@ -103,7 +102,7 @@ _FixtureCachedResult = Union[
 ]
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class PseudoFixtureDef(Generic[FixtureValue]):
     cached_result: "_FixtureCachedResult[FixtureValue]"
     _scope: Scope
@@ -350,8 +349,10 @@ def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
     return request.param
 
 
-@attr.s(slots=True, auto_attribs=True)
+@dataclasses.dataclass
 class FuncFixtureInfo:
+    __slots__ = ("argnames", "initialnames", "names_closure", "name2fixturedefs")
+
     # Original function argument names.
     argnames: Tuple[str, ...]
     # Argnames that function immediately requires. These include argnames +
@@ -1181,18 +1182,20 @@ def wrap_function_to_error_out_if_called_directly(
 
 
 @final
-@attr.s(frozen=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class FixtureFunctionMarker:
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]"
-    params: Optional[Tuple[object, ...]] = attr.ib(converter=_params_converter)
+    params: Optional[Tuple[object, ...]]
     autouse: bool = False
     ids: Optional[
         Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
-    ] = attr.ib(
-        default=None,
-        converter=_ensure_immutable_ids,
-    )
+    ] = None
     name: Optional[str] = None
+
+    _ispytest: dataclasses.InitVar[bool] = False
+
+    def __post_init__(self, _ispytest: bool) -> None:
+        check_ispytest(_ispytest)
 
     def __call__(self, function: FixtureFunction) -> FixtureFunction:
         if inspect.isclass(function):
@@ -1313,10 +1316,11 @@ def fixture(  # noqa: F811
     """
     fixture_marker = FixtureFunctionMarker(
         scope=scope,
-        params=params,
+        params=tuple(params) if params is not None else None,
         autouse=autouse,
-        ids=ids,
+        ids=None if ids is None else ids if callable(ids) else tuple(ids),
         name=name,
+        _ispytest=True,
     )
 
     # Direct decoration.

@@ -1,3 +1,4 @@
+import dataclasses
 import inspect
 import warnings
 from types import FunctionType
@@ -5,8 +6,6 @@ from typing import Any
 from typing import Generic
 from typing import Type
 from typing import TypeVar
-
-import attr
 
 from _pytest.compat import final
 
@@ -130,7 +129,7 @@ _W = TypeVar("_W", bound=PytestWarning)
 
 
 @final
-@attr.s(auto_attribs=True)
+@dataclasses.dataclass
 class UnformattedWarning(Generic[_W]):
     """A warning meant to be formatted during runtime.
 

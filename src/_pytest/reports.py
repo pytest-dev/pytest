@@ -1,3 +1,4 @@
+import dataclasses
 import os
 from io import StringIO
 from pprint import pprint
@@ -15,8 +16,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-
-import attr
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
@@ -459,15 +458,15 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     def serialize_repr_entry(
         entry: Union[ReprEntry, ReprEntryNative]
     ) -> Dict[str, Any]:
-        data = attr.asdict(entry)
+        data = dataclasses.asdict(entry)
         for key, value in data.items():
             if hasattr(value, "__dict__"):
-                data[key] = attr.asdict(value)
+                data[key] = dataclasses.asdict(value)
         entry_data = {"type": type(entry).__name__, "data": data}
         return entry_data
 
     def serialize_repr_traceback(reprtraceback: ReprTraceback) -> Dict[str, Any]:
-        result = attr.asdict(reprtraceback)
+        result = dataclasses.asdict(reprtraceback)
         result["reprentries"] = [
             serialize_repr_entry(x) for x in reprtraceback.reprentries
         ]
@@ -477,7 +476,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
         reprcrash: Optional[ReprFileLocation],
     ) -> Optional[Dict[str, Any]]:
         if reprcrash is not None:
-            return attr.asdict(reprcrash)
+            return dataclasses.asdict(reprcrash)
         else:
             return None
 
@@ -594,7 +593,10 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
                 ExceptionChainRepr, ReprExceptionInfo
             ] = ExceptionChainRepr(chain)
         else:
-            exception_info = ReprExceptionInfo(reprtraceback, reprcrash)
+            exception_info = ReprExceptionInfo(
+                reprtraceback=reprtraceback,
+                reprcrash=reprcrash,
+            )
 
         for section in reportdict["longrepr"]["sections"]:
             exception_info.addsection(*section)

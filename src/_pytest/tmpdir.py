@@ -1,10 +1,12 @@
 """Support for providing temporary directories to test functions."""
+import dataclasses
 import os
 import re
 import sys
 import tempfile
 from pathlib import Path
 from shutil import rmtree
+from typing import Any
 from typing import Dict
 from typing import Generator
 from typing import Optional
@@ -21,7 +23,6 @@ if TYPE_CHECKING:
     RetentionType = Literal["all", "failed", "none"]
 
 
-import attr
 from _pytest.config.argparsing import Parser
 
 from .pathlib import LOCK_TIMEOUT
@@ -42,18 +43,19 @@ tmppath_result_key = StashKey[Dict[str, bool]]()
 
 
 @final
-@attr.s(init=False)
+@dataclasses.dataclass
 class TempPathFactory:
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option.
     """
 
-    _given_basetemp = attr.ib(type=Optional[Path])
-    _trace = attr.ib()
-    _basetemp = attr.ib(type=Optional[Path])
-    _retention_count = attr.ib(type=int)
-    _retention_policy = attr.ib(type="RetentionType")
+    _given_basetemp: Optional[Path]
+    # pluggy TagTracerSub, not currently exposed, so Any.
+    _trace: Any
+    _basetemp: Optional[Path]
+    _retention_count: int
+    _retention_policy: "RetentionType"
 
     def __init__(
         self,

@@ -1,5 +1,6 @@
 """Basic collect and runtest protocol implementations."""
 import bdb
+import dataclasses
 import os
 import sys
 from typing import Callable
@@ -13,8 +14,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-
-import attr
 
 from .reports import BaseReport
 from .reports import CollectErrorRepr
@@ -268,7 +267,7 @@ TResult = TypeVar("TResult", covariant=True)
 
 
 @final
-@attr.s(repr=False, init=False, auto_attribs=True)
+@dataclasses.dataclass
 class CallInfo(Generic[TResult]):
     """Result/Exception info of a function invocation."""
 

@@ -15,6 +15,7 @@ The semantics are:
 - or/and/not evaluate according to the usual boolean semantics.
 """
 import ast
+import dataclasses
 import enum
 import re
 import types
@@ -24,8 +25,6 @@ from typing import Mapping
 from typing import NoReturn
 from typing import Optional
 from typing import Sequence
-
-import attr
 
 
 __all__ = [
@@ -44,8 +43,9 @@ class TokenType(enum.Enum):
     EOF = "end of input"
 
 
-@attr.s(frozen=True, slots=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class Token:
+    __slots__ = ("type", "value", "pos")
     type: TokenType
     value: str
     pos: int

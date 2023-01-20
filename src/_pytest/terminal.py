@@ -3,6 +3,7 @@
 This is a good source for looking at the various reporting hooks.
 """
 import argparse
+import dataclasses
 import datetime
 import inspect
 import platform
@@ -27,7 +28,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import attr
 import pluggy
 
 import _pytest._version
@@ -287,7 +287,7 @@ def pytest_report_teststatus(report: BaseReport) -> Tuple[str, str, str]:
     return outcome, letter, outcome.upper()
 
 
-@attr.s(auto_attribs=True)
+@dataclasses.dataclass
 class WarningReport:
     """Simple structure to hold warnings information captured by ``pytest_warning_recorded``.
 
