@@ -509,6 +509,8 @@ else:
     ):
         """The result of :method:`CaptureFixture.readouterr`."""
 
+        __slots__ = ()
+
 
 class MultiCapture(Generic[AnyStr]):
     _state = None
