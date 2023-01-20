@@ -503,8 +503,11 @@ if sys.version_info >= (3, 11) or TYPE_CHECKING:
         err: AnyStr
 
 else:
-    CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
-    CaptureResult.__doc__ = """The result of :method:`CaptureFixture.readouterr`."""
+
+    class CaptureResult(
+        collections.namedtuple("CaptureResult", ["out", "err"]), Generic[AnyStr]
+    ):
+        __doc__ = """The result of :method:`CaptureFixture.readouterr`."""
 
 
 class MultiCapture(Generic[AnyStr]):
