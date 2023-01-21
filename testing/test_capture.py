@@ -1352,6 +1352,7 @@ def test_capsys_results_accessible_by_attribute(capsys: CaptureFixture[str]) -> 
 
 def test_fdcapture_tmpfile_remains_the_same() -> None:
     cap = StdCaptureFD(out=False, err=True)
+    assert isinstance(cap.err, capture.FDCapture)
     try:
         cap.start_capturing()
         capfile = cap.err.tmpfile
