@@ -858,7 +858,9 @@ class CaptureFixture(Generic[AnyStr]):
     @contextlib.contextmanager
     def disabled(self) -> Generator[None, None, None]:
         """Temporarily disable capturing while inside the ``with`` block."""
-        capmanager = self.request.config.pluginmanager.getplugin("capturemanager")
+        capmanager: CaptureManager = self.request.config.pluginmanager.getplugin(
+            "capturemanager"
+        )
         with capmanager.global_and_fixture_disabled():
             yield
 
@@ -885,7 +887,7 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
             captured = capsys.readouterr()
             assert captured.out == "hello\n"
     """
-    capman = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[str](SysCapture, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
@@ -913,7 +915,7 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
             captured = capsysbinary.readouterr()
             assert captured.out == b"hello\n"
     """
-    capman = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[bytes](SysCaptureBinary, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
@@ -941,7 +943,7 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
             captured = capfd.readouterr()
             assert captured.out == "hello\n"
     """
-    capman = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[str](FDCapture, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
@@ -970,7 +972,7 @@ def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, N
             assert captured.out == b"hello\n"
 
     """
-    capman = request.config.pluginmanager.getplugin("capturemanager")
+    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture[bytes](FDCaptureBinary, request, _ispytest=True)
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
