@@ -3338,6 +3338,10 @@ class TestShowFixtures:
         config = pytester.parseconfigure("--funcargs")
         assert config.option.showfixtures
 
+    def test_show_help(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("--fixtures", "--help")
+        assert not result.ret
+
     def test_show_fixtures(self, pytester: Pytester) -> None:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
