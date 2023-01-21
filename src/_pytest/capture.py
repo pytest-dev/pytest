@@ -36,6 +36,7 @@ from _pytest.nodes import File
 from _pytest.nodes import Item
 
 if TYPE_CHECKING:
+    from typing_extensions import Final
     from typing_extensions import Literal
 
     _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
@@ -723,7 +724,7 @@ class CaptureManager:
     """
 
     def __init__(self, method: "_CaptureMethod") -> None:
-        self._method = method
+        self._method: Final = method
         self._global_capturing: Optional[MultiCapture[str]] = None
         self._capture_fixture: Optional[CaptureFixture[Any]] = None
 
