@@ -998,6 +998,8 @@ class Config:
         self.hook.pytest_addoption.call_historic(
             kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
         )
+        self.args_source = Config.ArgsSource.ARGS
+        self.args: List[str] = []
 
         if TYPE_CHECKING:
             from _pytest.cacheprovider import Cache
@@ -1337,8 +1339,8 @@ class Config:
 
     def parse(self, args: List[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
-        assert not hasattr(
-            self, "args"
+        assert (
+            self.args == []
         ), "can only parse cmdline args at most once per Config object"
         self.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=self.pluginmanager)
