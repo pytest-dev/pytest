@@ -306,9 +306,29 @@ class CaptureBase(abc.ABC, Generic[AnyStr]):
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
 
 
-class NoCapture:
-    EMPTY_BUFFER = None
-    __init__ = start = done = suspend = resume = lambda *args: None
+class NoCapture(CaptureBase[str]):
+    EMPTY_BUFFER = ""
+
+    def __init__(self, fd: int) -> None:
+        pass
+
+    def start(self) -> None:
+        pass
+
+    def done(self) -> None:
+        pass
+
+    def suspend(self) -> None:
+        pass
+
+    def resume(self) -> None:
+        pass
+
+    def snap(self) -> str:
+        return ""
+
+    def writeorg(self, data: str) -> None:
+        pass
 
 
 class SysCaptureBase(CaptureBase[AnyStr]):
@@ -439,7 +459,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
 
         if targetfd == 0:
             self.tmpfile = open(os.devnull, encoding="utf-8")
-            self.syscapture = SysCapture(targetfd)
+            self.syscapture: CaptureBase[str] = SysCapture(targetfd)
         else:
             self.tmpfile = EncodedFile(
                 TemporaryFile(buffering=0),
@@ -451,7 +471,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             if targetfd in patchsysdict:
                 self.syscapture = SysCapture(targetfd, self.tmpfile)
             else:
-                self.syscapture = NoCapture()
+                self.syscapture = NoCapture(targetfd)
 
         self._state = "initialized"
 

@@ -1052,6 +1052,7 @@ class TestFDCapture:
                 )
             )
             # Should not crash with missing "_old".
+            assert isinstance(cap.syscapture, capture.SysCapture)
             assert repr(cap.syscapture) == (
                 "<SysCapture stdout _old=<UNSET> _state='done' tmpfile={!r}>".format(
                     cap.syscapture.tmpfile
