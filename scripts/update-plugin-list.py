@@ -81,8 +81,20 @@ def iter_plugins():
                 if re.match(r"pytest(?![-.\w])", requirement):
                     requires = requirement
                     break
+
+        def version_sort_key(version_string):
+            """
+            Return the sort key for the given version string
+            returned by the API.
+            """
+            try:
+                return packaging.version.parse(version_string)
+            except packaging.version.InvalidVersion:
+                # Use a hard-coded pre-release version.
+                return packaging.version.Version("0.0.0alpha")
+
         releases = response.json()["releases"]
-        for release in sorted(releases, key=packaging.version.parse, reverse=True):
+        for release in sorted(releases, key=version_sort_key, reverse=True):
             if releases[release]:
                 release_date = datetime.date.fromisoformat(
                     releases[release][-1]["upload_time_iso_8601"].split("T")[0]
@@ -124,7 +136,7 @@ def main():
     reference_dir = pathlib.Path("doc", "en", "reference")
 
     plugin_list = reference_dir / "plugin_list.rst"
-    with plugin_list.open("w") as f:
+    with plugin_list.open("w", encoding="UTF-8") as f:
         f.write(FILE_HEAD)
         f.write(f"This list contains {len(plugins)} plugins.\n\n")
         f.write(".. only:: not latex\n\n")
