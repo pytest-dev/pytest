@@ -890,7 +890,7 @@ def test_dontreadfrominput() -> None:
     from _pytest.capture import DontReadFromInput
 
     f = DontReadFromInput()
-    assert f.buffer is f
+    assert f.buffer is f  # type: ignore[comparison-overlap]
     assert not f.isatty()
     pytest.raises(OSError, f.read)
     pytest.raises(OSError, f.readlines)
@@ -906,7 +906,10 @@ def test_dontreadfrominput() -> None:
     pytest.raises(UnsupportedOperation, f.write, b"")
     pytest.raises(UnsupportedOperation, f.writelines, [])
     assert not f.writable()
+    assert isinstance(f.encoding, str)
     f.close()  # just for completeness
+    with f:
+        pass
 
 
 def test_captureresult() -> None:
@@ -1049,6 +1052,7 @@ class TestFDCapture:
                 )
             )
             # Should not crash with missing "_old".
+            assert isinstance(cap.syscapture, capture.SysCapture)
             assert repr(cap.syscapture) == (
                 "<SysCapture stdout _old=<UNSET> _state='done' tmpfile={!r}>".format(
                     cap.syscapture.tmpfile
@@ -1349,6 +1353,7 @@ def test_capsys_results_accessible_by_attribute(capsys: CaptureFixture[str]) -> 
 
 def test_fdcapture_tmpfile_remains_the_same() -> None:
     cap = StdCaptureFD(out=False, err=True)
+    assert isinstance(cap.err, capture.FDCapture)
     try:
         cap.start_capturing()
         capfile = cap.err.tmpfile
