@@ -496,3 +496,24 @@ def test_nose_setup_skipped_if_non_callable(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p, "-p", "nose")
     assert result.ret == 0
+
+
+@pytest.mark.parametrize("fixture_name", ("teardown", "teardown_class"))
+def test_teardown_fixture_not_called_directly(fixture_name, pytester: Pytester) -> None:
+    """Regression test for #10597."""
+    p = pytester.makepyfile(
+        f"""
+        import pytest
+
+        class TestHello:
+
+            @pytest.fixture
+            def {fixture_name}(self):
+                yield
+
+            def test_hello(self, {fixture_name}):
+                assert True
+        """
+    )
+    result = pytester.runpytest(p, "-p", "nose")
+    assert result.ret == 0
