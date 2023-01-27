@@ -1,1 +1,1 @@
-Fix nose teardown fixture regressions.
+Fix bug where a fixture method named ``teardown`` would be called as part of ``nose`` teardown stage.
