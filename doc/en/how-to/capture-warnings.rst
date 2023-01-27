@@ -276,6 +276,9 @@ first be escaped with ``re.escape``.
 
 Some examples:
 
+.. code-block: python
+
+
     >>> with warns(UserWarning, match='must be 0 or None'):
     ...     warnings.warn("value must be 0 or None", UserWarning)
 
