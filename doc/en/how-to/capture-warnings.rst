@@ -276,23 +276,27 @@ first be escaped with ``re.escape``.
 
 Some examples:
 
-.. code-block: python
+.. code-block:: pycon
 
 
-    >>> with warns(UserWarning, match='must be 0 or None'):
+    >>> with warns(UserWarning, match="must be 0 or None"):
     ...     warnings.warn("value must be 0 or None", UserWarning)
+    ...
 
-    >>> with warns(UserWarning, match=r'must be \d+$'):
+    >>> with warns(UserWarning, match=r"must be \d+$"):
     ...     warnings.warn("value must be 42", UserWarning)
+    ...
 
-    >>> with warns(UserWarning, match=r'must be \d+$'):
+    >>> with warns(UserWarning, match=r"must be \d+$"):
     ...     warnings.warn("this is not here", UserWarning)
+    ...
     Traceback (most recent call last):
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
 
-    >>> with warns(UserWarning, match=re.escape('issue with foo() func')):
+    >>> with warns(UserWarning, match=re.escape("issue with foo() func")):
     ...     warnings.warn("issue with foo() func")
+    ...
 
 You can also call :func:`pytest.warns` on a function or code string:
 
