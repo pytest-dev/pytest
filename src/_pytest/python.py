@@ -848,7 +848,7 @@ class Class(PyCollector):
         other fixtures (#517).
         """
         setup_class = _get_first_non_fixture_func(self.obj, ("setup_class",))
-        teardown_class = getattr(self.obj, "teardown_class", None)
+        teardown_class = _get_first_non_fixture_func(self.obj, ("teardown_class",))
         if setup_class is None and teardown_class is None:
             return
 
@@ -885,12 +885,12 @@ class Class(PyCollector):
             emit_nose_setup_warning = True
             setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
         teardown_name = "teardown_method"
-        teardown_method = getattr(self.obj, teardown_name, None)
+        teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
         emit_nose_teardown_warning = False
         if teardown_method is None and has_nose:
             teardown_name = "teardown"
             emit_nose_teardown_warning = True
-            teardown_method = getattr(self.obj, teardown_name, None)
+            teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
         if setup_method is None and teardown_method is None:
             return
 
