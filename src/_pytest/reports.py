@@ -271,6 +271,8 @@ class TestReport(BaseReport):
         #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
         #: collected one e.g. if a method is inherited from a different module.
+        #: The filesystempath may be relative to ``config.rootdir``.
+        #: The line number is 0-based.
         self.location: Tuple[str, Optional[int], str] = location
 
         #: A name -> value dictionary containing all keywords and
@@ -406,7 +408,9 @@ class CollectReport(BaseReport):
         self.__dict__.update(extra)
 
     @property
-    def location(self):
+    def location(  # type:ignore[override]
+        self,
+    ) -> Optional[Tuple[str, Optional[int], str]]:
         return (self.fspath, None, self.fspath)
 
     def __repr__(self) -> str:

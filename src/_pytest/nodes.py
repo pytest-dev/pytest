@@ -511,7 +511,7 @@ def get_fslocation_from_item(node: "Node") -> Tuple[Union[str, Path], Optional[i
     * "obj": a Python object that the node wraps.
     * "fspath": just a path
 
-    :rtype: A tuple of (str|Path, int) with filename and line number.
+    :rtype: A tuple of (str|Path, int) with filename and 0-based line number.
     """
     # See Item.location.
     location: Optional[Tuple[str, Optional[int], str]] = getattr(node, "location", None)
@@ -755,7 +755,7 @@ class Item(Node):
         Returns a tuple with three elements:
 
         - The path of the test (default ``self.path``)
-        - The line number of the test (default ``None``)
+        - The 0-based line number of the test (default ``None``)
         - A name of the test to be shown (default ``""``)
 
         .. seealso:: :ref:`non-python tests`
@@ -764,6 +764,11 @@ class Item(Node):
 
     @cached_property
     def location(self) -> Tuple[str, Optional[int], str]:
+        """
+        Returns a tuple of ``(relfspath, lineno, testname)`` for this item
+        where ``relfspath`` is file path relative to ``config.rootpath``
+        and lineno is a 0-based line number.
+        """
         location = self.reportinfo()
         path = absolutepath(os.fspath(location[0]))
         relfspath = self.session._node_location_to_relpath(path)
