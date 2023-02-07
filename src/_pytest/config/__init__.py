@@ -62,7 +62,6 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
 if TYPE_CHECKING:
-
     from _pytest._code.code import _TracebackStyle
     from _pytest.terminal import TerminalReporter
     from .argparsing import Argument
@@ -1067,7 +1066,6 @@ class Config:
         try:
             self.parse(args)
         except UsageError:
-
             # Handle --version and --help here in a minimal fashion.
             # This gets done via helpconfig normally, but its
             # pytest_cmdline_main is not called in case of errors.

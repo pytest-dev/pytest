@@ -906,6 +906,7 @@ def test_makereport_getsource_dynamic_code(
 def test_store_except_info_on_error() -> None:
     """Test that upon test failure, the exception info is stored on
     sys.last_traceback and friends."""
+
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
     class ItemMightRaise:
         nodeid = "item_that_raises"

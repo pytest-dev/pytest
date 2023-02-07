@@ -572,7 +572,6 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
         and "reprcrash" in reportdict["longrepr"]
         and "reprtraceback" in reportdict["longrepr"]
     ):
-
         reprtraceback = deserialize_repr_traceback(
             reportdict["longrepr"]["reprtraceback"]
         )
