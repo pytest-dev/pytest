@@ -109,6 +109,18 @@ When a warning matches more than one option in the list, the action for the last
 is performed.
 
 
+.. note::
+
+    The ``-W`` flag and the ``filterwarnings`` ini option use warning filters that are
+    similar in structure, but each configuration option interprets its filter
+    differently. For example, *message* in ``filterwarnings`` is a string containing a
+    regular expression that the start of the warning message must match,
+    case-insensitively, while *message* in ``-W`` is a literal string that the start of
+    the warning message must contain (case-insensitively), ignoring any whitespace at
+    the start or end of message. Consult the `warning filter`_ documentation for more
+    details.
+
+
 .. _`filterwarnings`:
 
 ``@pytest.mark.filterwarnings``
