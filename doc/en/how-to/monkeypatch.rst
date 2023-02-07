@@ -135,10 +135,10 @@ This can be done in our test file by defining a class to represent ``r``.
     # this is the previous code block example
     import app
 
+
     # custom class to be the mock return value
     # will override the requests.Response returned from requests.get
     class MockResponse:
-
         # mock json() method always returns a specific testing dictionary
         @staticmethod
         def json():
@@ -146,7 +146,6 @@ This can be done in our test file by defining a class to represent ``r``.
 
 
     def test_get_json(monkeypatch):
-
         # Any arguments may be passed and mock_get() will always return our
         # mocked object, which only has the .json() method.
         def mock_get(*args, **kwargs):
@@ -180,6 +179,7 @@ This mock can be shared across tests using a ``fixture``:
 
     # app.py that includes the get_json() function
     import app
+
 
     # custom class to be the mock return value of requests.get()
     class MockResponse:
@@ -358,7 +358,6 @@ For testing purposes we can patch the ``DEFAULT_CONFIG`` dictionary to specific 
 
 
     def test_connection(monkeypatch):
-
         # Patch the values of DEFAULT_CONFIG to specific
         # testing values only for this test.
         monkeypatch.setitem(app.DEFAULT_CONFIG, "user", "test_user")
@@ -383,7 +382,6 @@ You can use the :py:meth:`monkeypatch.delitem <MonkeyPatch.delitem>` to remove v
 
 
     def test_missing_user(monkeypatch):
-
         # patch the DEFAULT_CONFIG t be missing the 'user' key
         monkeypatch.delitem(app.DEFAULT_CONFIG, "user", raising=False)
 
@@ -403,6 +401,7 @@ separate fixtures for each potential mock and reference them in the needed tests
 
     # app.py with the connection string function
     import app
+
 
     # all of the mocks are moved into separated fixtures
     @pytest.fixture
@@ -425,7 +424,6 @@ separate fixtures for each potential mock and reference them in the needed tests
 
     # tests reference only the fixture mocks that are needed
     def test_connection(mock_test_user, mock_test_database):
-
         expected = "User Id=test_user; Location=test_db;"
 
         result = app.create_connection_string()
@@ -433,7 +431,6 @@ separate fixtures for each potential mock and reference them in the needed tests
 
 
     def test_missing_user(mock_missing_default_user):
-
         with pytest.raises(KeyError):
             _ = app.create_connection_string()
 
