@@ -2,7 +2,7 @@ default_language_version:
     python: "3.10"
 repos:
 -   repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.1.0
     hooks:
     -   id: black
         args: [--safe, --quiet]
@@ -10,7 +10,7 @@ repos:
     rev: 1.13.0
     hooks:
     -   id: blacken-docs
-        additional_dependencies: [black==22.12.0]
+        additional_dependencies: [black==23.1.0]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -23,7 +23,7 @@ repos:
         exclude: _pytest/(debugging|hookspec).py
         language_version: python3
 -   repo: https://github.com/PyCQA/autoflake
-    rev: v2.0.0
+    rev: v2.0.1
     hooks:
     -   id: autoflake
         name: autoflake

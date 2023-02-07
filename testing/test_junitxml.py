@@ -253,7 +253,6 @@ class TestPython:
         duration_report: str,
         run_and_parse: RunAndParse,
     ) -> None:
-
         # mock LogXML.node_reporter so it always sets a known duration to each test report object
         original_node_reporter = LogXML.node_reporter
 
@@ -603,7 +602,6 @@ class TestPython:
         node.assert_attr(failures=3, tests=3)
 
         for index, char in enumerate("<&'"):
-
             tnode = node.find_nth_by_tag("testcase", index)
             tnode.assert_attr(
                 classname="test_failure_escape", name="test_func[%s]" % char
