@@ -114,3 +114,7 @@ template = "changelog/_template.rst"
 
 [tool.black]
 target-version = ['py37']
+
+[tool.check-wheel-contents]
+# W009: Wheel contains multiple toplevel library entries
+ignore = "W009"
