@@ -115,6 +115,7 @@ template = "changelog/_template.rst"
 [tool.black]
 target-version = ['py37']
 
+# check-wheel-contents is executed by the build-and-inspect-python-package action.
 [tool.check-wheel-contents]
 # W009: Wheel contains multiple toplevel library entries
 ignore = "W009"
