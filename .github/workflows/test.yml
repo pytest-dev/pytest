@@ -194,10 +194,10 @@ jobs:
         fail_ci_if_error: true
         files: ./coverage.xml
         verbose: true
-        
+
   check-package:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v1.5        
+      uses: hynek/build-and-inspect-python-package@v1.5
