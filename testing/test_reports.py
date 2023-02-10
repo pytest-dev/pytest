@@ -6,6 +6,7 @@ from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
 from _pytest.config import Config
 from _pytest.pytester import Pytester
+from _pytest.python_api import approx
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 
@@ -414,6 +415,26 @@ class TestReportSerialization:
         result = pytester.runpytest_subprocess(".")
         result.stdout.fnmatch_lines(["E   *Error: No module named 'unknown'"])
         result.stdout.no_fnmatch_line("ERROR  - *ConftestImportFailure*")
+
+    def test_report_timestamps_match_duration(self, pytester: Pytester, mock_timing):
+        reprec = pytester.inline_runsource(
+            """
+            import pytest
+            from _pytest import timing
+            @pytest.fixture
+            def fixture_():
+                timing.sleep(5)
+                yield
+                timing.sleep(5)
+            def test_1(fixture_): timing.sleep(10)
+        """
+        )
+        reports = reprec.getreports("pytest_runtest_logreport")
+        assert len(reports) == 3
+        for report in reports:
+            data = report._to_json()
+            loaded_report = TestReport._from_json(data)
+            assert loaded_report.stop - loaded_report.start == approx(report.duration)
 
 
 class TestHooks:

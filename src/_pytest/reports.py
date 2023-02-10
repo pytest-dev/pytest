@@ -262,6 +262,8 @@ class TestReport(BaseReport):
         when: "Literal['setup', 'call', 'teardown']",
         sections: Iterable[Tuple[str, str]] = (),
         duration: float = 0,
+        start: float = 0,
+        stop: float = 0,
         user_properties: Optional[Iterable[Tuple[str, object]]] = None,
         **extra,
     ) -> None:
@@ -299,6 +301,11 @@ class TestReport(BaseReport):
         #: Time it took to run just the test.
         self.duration: float = duration
 
+        #: The system time when the call started, in seconds since the epoch.
+        self.start: float = start
+        #: The system time when the call ended, in seconds since the epoch.
+        self.stop: float = stop
+
         self.__dict__.update(extra)
 
     def __repr__(self) -> str:
@@ -317,6 +324,8 @@ class TestReport(BaseReport):
         # Remove "collect" from the Literal type -- only for collection calls.
         assert when != "collect"
         duration = call.duration
+        start = call.start
+        stop = call.stop
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []
@@ -361,6 +370,8 @@ class TestReport(BaseReport):
             when,
             sections,
             duration,
+            start,
+            stop,
             user_properties=item.user_properties,
         )
 
