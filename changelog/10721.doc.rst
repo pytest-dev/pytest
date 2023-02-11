@@ -1,13 +1,1 @@
-replace
-```[project.entry_points]
-pytest11 = [
-    "myproject = myproject.pluginmodule",
-]```
-with
-```
-[project.entry-points.pytest11]
-myproject = "myproject.pluginmodule"```
-
-also,remove
-```[tool.setuptools]
-packages = ["myproject"]```
+originally written for setuptools, and then changed the backend to hatchling and now doc updated for `project entry points`
