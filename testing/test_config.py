@@ -74,7 +74,7 @@ class TestParseIni:
             % p1.name,
         )
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*, configfile: setup.cfg, *", "* 1 passed in *"])
+        result.stdout.fnmatch_lines(["configfile: setup.cfg", "* 1 passed in *"])
         assert result.ret == 0
 
     def test_append_parse_args(
