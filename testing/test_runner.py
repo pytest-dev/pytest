@@ -473,6 +473,7 @@ class TestSessionReports:
         assert not rep.skipped
         assert rep.passed
         locinfo = rep.location
+        assert locinfo is not None
         assert locinfo[0] == col.path.name
         assert not locinfo[1]
         assert locinfo[2] == col.path.name
