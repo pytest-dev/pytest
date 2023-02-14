@@ -126,7 +126,7 @@ class _NodeReporter:
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
             "file": testreport.location[0],
-            "status":testreport.outcome
+            "status": testreport.outcome,
         }
         if testreport.location[1] is not None:
             attrs["line"] = str(testreport.location[1])
