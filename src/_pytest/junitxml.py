@@ -75,7 +75,7 @@ def merge_family(left, right) -> None:
 
 
 families = {}
-families["_base"] = {"testcase": ["classname", "name"]}
+families["_base"] = {"testcase": ["classname", "name", "status"]}
 families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
 
 # xUnit 1.x inherits legacy attributes.
@@ -126,6 +126,7 @@ class _NodeReporter:
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
             "file": testreport.location[0],
+            "status":testreport.outcome
         }
         if testreport.location[1] is not None:
             attrs["line"] = str(testreport.location[1])
@@ -667,6 +668,7 @@ class LogXML:
                 errors=str(self.stats["error"]),
                 failures=str(self.stats["failure"]),
                 skipped=str(self.stats["skipped"]),
+                passed=str(self.stats["passed"]),
                 tests=str(numtests),
                 time="%.3f" % suite_time_delta,
                 timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
