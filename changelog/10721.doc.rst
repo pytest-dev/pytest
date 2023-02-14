@@ -1,1 +1,1 @@
-originally written for setuptools, and then changed the backend to hatchling and now doc updated for `project entry points`
+Fixed entry-points declaration in the documentation example using Hatch.
