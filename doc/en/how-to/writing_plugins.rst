@@ -167,13 +167,8 @@ it in your ``pyproject.toml`` file.
         "Framework :: Pytest",
     ]
 
-    [tool.setuptools]
-    packages = ["myproject"]
-
-    [project.entry_points]
-    pytest11 = [
-        "myproject = myproject.pluginmodule",
-    ]
+    [project.entry-points.pytest11]
+    myproject = "myproject.pluginmodule"
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
