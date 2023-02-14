@@ -18,6 +18,11 @@ on:
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
+# Cancel running jobs for the same workflow and branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Set permissions at the job level.
 permissions: {}
 
@@ -189,3 +194,10 @@ jobs:
         fail_ci_if_error: true
         files: ./coverage.xml
         verbose: true
+
+  check-package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build and Check Package
+      uses: hynek/build-and-inspect-python-package@v1.5
