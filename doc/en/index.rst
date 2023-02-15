@@ -2,7 +2,7 @@
 
 .. sidebar:: Next Open Trainings
 
-   - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote and Leipzig, Germany
+   - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 7th to 9th 2023 (3 day in-depth training), Remote
 
    Also see :doc:`previous talks and blogposts <talks>`.
 
