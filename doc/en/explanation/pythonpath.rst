@@ -16,7 +16,7 @@ import process can be controlled through the ``--import-mode`` command-line flag
 these values:
 
 * ``prepend`` (default): the directory path containing each module will be inserted into the *beginning*
-  of :py:data:`sys.path` if not already there, and then imported with the :func:`__import__ <__import__>` builtin.
+  of :py:data:`sys.path` if not already there, and then imported with the :func:`importlib.import_module <importlib.import_module>` function.
 
   This requires test module names to be unique when the test directory tree is not arranged in
   packages, because the modules will put in :py:data:`sys.modules` after importing.
@@ -24,7 +24,7 @@ these values:
   This is the classic mechanism, dating back from the time Python 2 was still supported.
 
 * ``append``: the directory containing each module is appended to the end of :py:data:`sys.path` if not already
-  there, and imported with ``__import__``.
+  there, and imported with ``importlib.import_module``.
 
   This better allows to run test modules against installed versions of a package even if the
   package under test has the same import root. For example:
@@ -43,7 +43,7 @@ these values:
   Same as ``prepend``, requires test module names to be unique when the test directory tree is
   not arranged in packages, because the modules will put in :py:data:`sys.modules` after importing.
 
-* ``importlib``: new in pytest-6.0, this mode uses :mod:`importlib` to import test modules. This gives full control over the import process, and doesn't require changing :py:data:`sys.path`.
+* ``importlib``: new in pytest-6.0, this mode uses more fine control mechanisms provided by :mod:`importlib` to import test modules. This gives full control over the import process, and doesn't require changing :py:data:`sys.path`.
 
   For this reason this doesn't require test module names to be unique.
 
