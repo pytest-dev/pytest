@@ -464,14 +464,14 @@ def import_path(
 
     * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
       `__init__.py` files into account) will be put at the *start* of `sys.path` before
-      being imported with `__import__.
+      being imported with `importlib.import_module`.
 
     * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
       to the end of `sys.path`, if not already in `sys.path`.
 
     * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
-      to import the module, which avoids having to use `__import__` and muck with `sys.path`
-      at all. It effectively allows having same-named test modules in different places.
+      to import the module, which avoids having to muck with `sys.path` at all. It effectively
+      allows having same-named test modules in different places.
 
     :param root:
         Used as an anchor when mode == ImportMode.importlib to obtain
