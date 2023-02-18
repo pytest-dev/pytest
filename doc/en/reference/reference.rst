@@ -1049,7 +1049,7 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alterative to BUILD_NUMBER variable.
+When set (regardless of value), pytest acknowledges that is running in a CI process. Alterative to ``BUILD_NUMBER`` variable.
 
 .. envvar:: BUILD_NUMBER
 

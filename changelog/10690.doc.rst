@@ -1,1 +1,1 @@
-Add CI and BUILD_NUMBER environment variables in documentation
+Added `CI` and `BUILD_NUMBER` environment variables to the documentation.
