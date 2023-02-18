@@ -24,7 +24,7 @@ these values:
   This is the classic mechanism, dating back from the time Python 2 was still supported.
 
 * ``append``: the directory containing each module is appended to the end of :py:data:`sys.path` if not already
-  there, and imported with ``importlib.import_module``.
+  there, and imported with :func:`importlib.import_module <importlib.import_module>`.
 
   This better allows to run test modules against installed versions of a package even if the
   package under test has the same import root. For example:
