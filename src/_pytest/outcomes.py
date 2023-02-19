@@ -157,8 +157,11 @@ def skip(
         The message to show the user as reason for the skip.
 
     :param allow_module_level:
-        Allows this function to be called at module level, skipping the rest
-        of the module. Defaults to False.
+        Allows this function to be called at module level.
+        Raising the skip exception in a module will stop the execution of the module.
+        Additionally, the module will no longer be collected.
+
+        Defaults to False.
 
     :param msg:
         Same as ``reason``, but deprecated. Will be removed in a future version, use ``reason`` instead.
