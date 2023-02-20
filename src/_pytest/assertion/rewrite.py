@@ -666,7 +666,7 @@ class AssertionRewriter(ast.NodeVisitor):
         if doc is not None and self.is_rewrite_disabled(doc):
             return
         pos = 0
-        lineno = 1
+        item = None
         for item in mod.body:
             if (
                 expect_docstring
@@ -937,6 +937,17 @@ class AssertionRewriter(ast.NodeVisitor):
                 ast.copy_location(node, assert_)
         return self.statements
 
+    def visit_NamedExpr(self, name: ast.NamedExpr) -> Tuple[ast.NamedExpr, str]:
+        # Display the repr of the target name if it's a local variable or
+        # _should_repr_global_name() thinks it's acceptable.
+        locs = ast.Call(self.builtin("locals"), [], [])
+        target_id = name.target.id  # type: ignore[attr-defined]
+        inlocs = ast.Compare(ast.Str(target_id), [ast.In()], [locs])
+        dorepr = self.helper("_should_repr_global_name", name)
+        test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
+        expr = ast.IfExp(test, self.display(name), ast.Str(target_id))
+        return name, self.explanation_param(expr)
+
     def visit_Name(self, name: ast.Name) -> Tuple[ast.Name, str]:
         # Display the repr of the name if it's a local variable or
         # _should_repr_global_name() thinks it's acceptable.
@@ -1050,7 +1061,7 @@ class AssertionRewriter(ast.NodeVisitor):
         results = [left_res]
         for i, op, next_operand in it:
             next_res, next_expl = self.visit(next_operand)
-            if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
+            if isinstance(next_operand, (ast.Compare, ast.BoolOp, ast.NamedExpr)):
                 next_expl = f"({next_expl})"
             results.append(next_res)
             sym = BINOP_MAP[op.__class__]
@@ -1072,6 +1083,7 @@ class AssertionRewriter(ast.NodeVisitor):
             res: ast.expr = ast.BoolOp(ast.And(), load_names)
         else:
             res = load_names[0]
+
         return res, self.explanation_param(self.pop_format_context(expl_call))
 
 
