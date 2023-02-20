@@ -230,7 +230,7 @@ def pytest_addoption(parser: Parser) -> None:
         "console_output_style",
         help='Console output: "classic", or with additional progress information '
         '("progress" (percentage) | "count" | "progress-even-when-capture-no" (forces '
-        'progress even when capture=no)',
+        "progress even when capture=no)",
         default="progress",
     )
 
