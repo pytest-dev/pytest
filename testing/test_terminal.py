@@ -2213,6 +2213,24 @@ class TestProgressOutputStyle:
         output = pytester.runpytest("--capture=no")
         output.stdout.no_fnmatch_line("*%]*")
 
+    def test_capture_no_progress_enabled(
+        self, many_tests_files, pytester: Pytester
+    ) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = progress-even-when-capture-no
+        """
+        )
+        output = pytester.runpytest("-s")
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py \.{10} \s+ \[ 50%\]",
+                r"test_foo.py \.{5} \s+ \[ 75%\]",
+                r"test_foobar.py \.{5} \s+ \[100%\]",
+            ]
+        )
+
 
 class TestProgressWithTeardown:
     """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
