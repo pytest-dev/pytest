@@ -44,6 +44,11 @@ from _pytest.stash import StashKey
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
+if sys.version_info > (3, 8):
+    namedExpr = ast.NamedExpr
+else:
+    namedExpr = ast.Expr
+
 
 assertstate_key = StashKey["AssertionState"]()
 
@@ -937,7 +942,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 ast.copy_location(node, assert_)
         return self.statements
 
-    def visit_NamedExpr(self, name: ast.NamedExpr) -> Tuple[ast.NamedExpr, str]:
+    def visit_NamedExpr(self, name: namedExpr) -> Tuple[namedExpr, str]:
         # Display the repr of the target name if it's a local variable or
         # _should_repr_global_name() thinks it's acceptable.
         locs = ast.Call(self.builtin("locals"), [], [])
@@ -1061,7 +1066,7 @@ class AssertionRewriter(ast.NodeVisitor):
         results = [left_res]
         for i, op, next_operand in it:
             next_res, next_expl = self.visit(next_operand)
-            if isinstance(next_operand, (ast.Compare, ast.BoolOp, ast.NamedExpr)):
+            if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = f"({next_expl})"
             results.append(next_res)
             sym = BINOP_MAP[op.__class__]

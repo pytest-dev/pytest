@@ -1265,6 +1265,9 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="walrus operator not available in py<38"
+)
 class TestIssue10743:
     def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
         pytester.makepyfile(
