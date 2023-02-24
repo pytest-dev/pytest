@@ -1,0 +1,1 @@
+Fix temp_path fixture always raising OSError on emscripten due to missing getuid

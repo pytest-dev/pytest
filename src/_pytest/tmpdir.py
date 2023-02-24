@@ -176,7 +176,7 @@ class TempPathFactory:
             # Also, to keep things private, fixup any world-readable temp
             # rootdir's permissions. Historically 0o755 was used, so we can't
             # just error out on this, at least for a while.
-            if sys.platform != "win32":
+            if sys.platform != "win32" and sys.platform != "emscripten":
                 uid = os.getuid()
                 rootdir_stat = rootdir.stat()
                 # getuid shouldn't fail, but cpython defines such a case.
