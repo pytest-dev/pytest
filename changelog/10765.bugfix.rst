@@ -1,1 +1,1 @@
-Fix temp_path fixture always raising OSError on emscripten due to missing getuid
+Fixed :fixture:`temp_path` fixture always raising :class:`OSError` on ``emscripten`` platform due to missing :func:`os.getuid`.
