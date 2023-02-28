@@ -159,7 +159,7 @@ def skip(
     :param allow_module_level:
         Allows this function to be called at module level.
         Raising the skip exception at module level will stop
-        the execution of the module and prevent the collection of all tests in the module, 
+        the execution of the module and prevent the collection of all tests in the module,
         even those defined before the `skip` call.
 
         Defaults to False.
