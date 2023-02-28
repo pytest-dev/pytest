@@ -2,7 +2,6 @@
 import dataclasses
 import os
 import re
-import sys
 import tempfile
 from pathlib import Path
 from shutil import rmtree
@@ -30,7 +29,7 @@ from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
 from .pathlib import cleanup_dead_symlink
-from _pytest.compat import final
+from _pytest.compat import final, get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -176,19 +175,16 @@ class TempPathFactory:
             # Also, to keep things private, fixup any world-readable temp
             # rootdir's permissions. Historically 0o755 was used, so we can't
             # just error out on this, at least for a while.
-            if sys.platform != "win32" and sys.platform != "emscripten":
-                uid = os.getuid()
+            uid = get_user_id()
+            if uid is not None:
                 rootdir_stat = rootdir.stat()
-                # getuid shouldn't fail, but cpython defines such a case.
-                # Let's hope for the best.
-                if uid != -1:
-                    if rootdir_stat.st_uid != uid:
-                        raise OSError(
-                            f"The temporary directory {rootdir} is not owned by the current user. "
-                            "Fix this and try again."
-                        )
-                    if (rootdir_stat.st_mode & 0o077) != 0:
-                        os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
+                if rootdir_stat.st_uid != uid:
+                    raise OSError(
+                        f"The temporary directory {rootdir} is not owned by the current user. "
+                        "Fix this and try again."
+                    )
+                if (rootdir_stat.st_mode & 0o077) != 0:
+                    os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0
