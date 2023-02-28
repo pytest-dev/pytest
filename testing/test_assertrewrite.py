@@ -1374,8 +1374,7 @@ class TestIssue10743:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        # This is not optimal as error message but it depends on how the rewrite is structured
-        result.stdout.fnmatch_lines(["*AssertionError: assert 'hello' == 'hello'"])
+        result.stdout.fnmatch_lines(["*AssertionError: assert 'Hello' == 'hello'"])
 
     def test_assertion_walrus_operator_boolean_composite(
         self, pytester: Pytester
@@ -1385,7 +1384,7 @@ class TestIssue10743:
             def test_walrus_operator_change_boolean_value():
                 a = True
                 assert a and True and ((a := False) is False) and (a is False) and ((a := None) is None)
-
+                assert a is None
         """
         )
         result = pytester.runpytest()
@@ -1403,8 +1402,7 @@ class TestIssue10743:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        # This is not optimal as error message but it depends on how the rewrite is structured
-        result.stdout.fnmatch_lines(["*assert not (False)"])
+        result.stdout.fnmatch_lines(["*assert not (True and False is False)"])
 
     def test_assertion_walrus_operator_boolean_none_fails(
         self, pytester: Pytester
@@ -1418,8 +1416,7 @@ class TestIssue10743:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        # This is not optimal as error message but it depends on how the rewrite is structured
-        result.stdout.fnmatch_lines(["*assert not (None)"])
+        result.stdout.fnmatch_lines(["*assert not (True and None is None)"])
 
 
 @pytest.mark.skipif(
