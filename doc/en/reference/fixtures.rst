@@ -335,7 +335,7 @@ For example:
 
 .. literalinclude:: /example/fixtures/test_fixtures_order_dependencies.py
 
-If we map out what depends on what, we get something that look like this:
+If we map out what depends on what, we get something that looks like this:
 
 .. image:: /example/fixtures/test_fixtures_order_dependencies.*
     :align: center
