@@ -1418,6 +1418,23 @@ class TestIssue10743:
         assert result.ret == 1
         result.stdout.fnmatch_lines(["*assert not (True and None is None)"])
 
+    def test_assertion_walrus_operator_value_changes_cleared_after_each_test(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_walrus_operator_change_value():
+                a = True
+                assert (a := None) is None
+
+            def test_walrus_operator_not_override_value():
+                a = True
+                assert a is True
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
 
 @pytest.mark.skipif(
     sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
