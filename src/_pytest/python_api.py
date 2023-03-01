@@ -808,7 +808,7 @@ def raises(  # noqa: F811
 
     :param typing.Type[E] | typing.Tuple[typing.Type[E], ...] expected_exception:
         The expected exception type, or a tuple if one of multiple possible
-        exception types are excepted.
+        exception types are expected.
     :kwparam str | typing.Pattern[str] | None match:
         If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
@@ -924,10 +924,10 @@ def raises(  # noqa: F811
             f"any special code to say 'this should never raise an exception'."
         )
     if isinstance(expected_exception, type):
-        excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
+        expected_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:
-        excepted_exceptions = expected_exception
-    for exc in excepted_exceptions:
+        expected_exceptions = expected_exception
+    for exc in expected_exceptions:
         if not isinstance(exc, type) or not issubclass(exc, BaseException):
             msg = "expected exception must be a BaseException type, not {}"  # type: ignore[unreachable]
             not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
