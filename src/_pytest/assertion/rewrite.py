@@ -44,7 +44,7 @@ from _pytest.stash import StashKey
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
-if sys.version_info > (3, 8):
+if sys.version_info >= (3, 8):
     namedExpr = ast.NamedExpr
 else:
     namedExpr = ast.Expr
