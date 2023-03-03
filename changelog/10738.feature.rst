@@ -1,1 +1,1 @@
-Added ``PYTEST_TMPDIR_FILE_MASK`` environment variable which controls the file permissions of any files or directories created by the ``tmp_path`` fixtures.
+Added ``PYTEST_TMPDIR_FILE_MODE`` environment variable which controls the file permissions of any files or directories created by the ``tmp_path`` fixtures.
