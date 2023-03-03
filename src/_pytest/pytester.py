@@ -82,6 +82,8 @@ IGNORE_PAM = [  # filenames added when obtaining details about the current user
     "/var/lib/sss/mc/passwd"
 ]
 
+TMPDIR_FILE_MODE = int(os.getenv("PYTEST_TMPDIR_FILE_MODE", "0o700"), 8)
+
 
 def pytest_addoption(parser: Parser) -> None:
     parser.addoption(
@@ -1502,7 +1504,9 @@ class Pytester:
             The result.
         """
         __tracebackhide__ = True
-        p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
+        p = make_numbered_dir(
+            root=self.path, prefix="runpytest-", mode=TMPDIR_FILE_MODE
+        )
         args = ("--basetemp=%s" % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
@@ -1521,7 +1525,7 @@ class Pytester:
         The pexpect child is returned.
         """
         basetemp = self.path / "temp-pexpect"
-        basetemp.mkdir(mode=0o700)
+        basetemp.mkdir(mode=TMPDIR_FILE_MODE)
         invoke = " ".join(map(str, self._getpytestargs()))
         cmd = f"{invoke} --basetemp={basetemp} {string}"
         return self.spawn(cmd, expect_timeout=expect_timeout)

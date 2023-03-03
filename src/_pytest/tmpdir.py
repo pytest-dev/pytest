@@ -41,6 +41,8 @@ from _pytest.monkeypatch import MonkeyPatch
 
 tmppath_result_key = StashKey[Dict[str, bool]]()
 
+TMPDIR_FILE_MODE = int(os.getenv("PYTEST_TMPDIR_FILE_MODE", "0o700"), 8)
+
 
 @final
 @dataclasses.dataclass
@@ -136,9 +138,11 @@ class TempPathFactory:
         basename = self._ensure_relative_to_basetemp(basename)
         if not numbered:
             p = self.getbasetemp().joinpath(basename)
-            p.mkdir(mode=0o700)
+            p.mkdir(mode=TMPDIR_FILE_MODE)
         else:
-            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename, mode=0o700)
+            p = make_numbered_dir(
+                root=self.getbasetemp(), prefix=basename, mode=TMPDIR_FILE_MODE
+            )
             self._trace("mktemp", p)
         return p
 
@@ -155,7 +159,7 @@ class TempPathFactory:
             basetemp = self._given_basetemp
             if basetemp.exists():
                 rm_rf(basetemp)
-            basetemp.mkdir(mode=0o700)
+            basetemp.mkdir(mode=TMPDIR_FILE_MODE)
             basetemp = basetemp.resolve()
         else:
             from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
@@ -165,11 +169,11 @@ class TempPathFactory:
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
             try:
-                rootdir.mkdir(mode=0o700, exist_ok=True)
+                rootdir.mkdir(mode=TMPDIR_FILE_MODE, exist_ok=True)
             except OSError:
                 # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
                 rootdir = temproot.joinpath("pytest-of-unknown")
-                rootdir.mkdir(mode=0o700, exist_ok=True)
+                rootdir.mkdir(mode=TMPDIR_FILE_MODE, exist_ok=True)
             # Because we use exist_ok=True with a predictable name, make sure
             # we are the owners, to prevent any funny business (on unix, where
             # temproot is usually shared).
@@ -197,7 +201,7 @@ class TempPathFactory:
                 root=rootdir,
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
-                mode=0o700,
+                mode=TMPDIR_FILE_MODE,
             )
         assert basetemp is not None, basetemp
         self._basetemp = basetemp

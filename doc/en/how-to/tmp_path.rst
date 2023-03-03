@@ -155,4 +155,16 @@ When distributing tests on the local machine using ``pytest-xdist``, care is tak
 automatically configure a basetemp directory for the sub processes such that all temporary
 data lands below a single per-test run basetemp directory.
 
+
+.. _`file permissions`:
+
+File permissions
+----------------
+
+Any file or directory created by the above fixtures are by default created with private permissions (file mask 700).
+
+You can override the file mask by setting the :envvar:`PYTEST_TMPDIR_FILE_MODE` environment variable as an octal string, the default being `0o700`.
+
+This is for example useful in cases where created files or directories have to be shared by docker containers etc.
+
 .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
