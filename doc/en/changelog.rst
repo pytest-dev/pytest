@@ -28,6 +28,42 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.2.2 (2023-03-03)
+=========================
+
+Bug Fixes
+---------
+
+- `#10533 <https://github.com/pytest-dev/pytest/issues/10533>`_: Fixed :func:`pytest.approx` handling of dictionaries containing one or more values of `0.0`.
+
+
+- `#10592 <https://github.com/pytest-dev/pytest/issues/10592>`_: Fixed crash if `--cache-show` and `--help` are passed at the same time.
+
+
+- `#10597 <https://github.com/pytest-dev/pytest/issues/10597>`_: Fixed bug where a fixture method named ``teardown`` would be called as part of ``nose`` teardown stage.
+
+
+- `#10626 <https://github.com/pytest-dev/pytest/issues/10626>`_: Fixed crash if ``--fixtures`` and ``--help`` are passed at the same time.
+
+
+- `#10660 <https://github.com/pytest-dev/pytest/issues/10660>`_: Fixed :py:func:`pytest.raises` to return a 'ContextManager' so that type-checkers could narrow
+  :code:`pytest.raises(...) if ... else nullcontext()` down to 'ContextManager' rather than 'object'.
+
+
+
+Improved Documentation
+----------------------
+
+- `#10690 <https://github.com/pytest-dev/pytest/issues/10690>`_: Added `CI` and `BUILD_NUMBER` environment variables to the documentation.
+
+
+- `#10721 <https://github.com/pytest-dev/pytest/issues/10721>`_: Fixed entry-points declaration in the documentation example using Hatch.
+
+
+- `#10753 <https://github.com/pytest-dev/pytest/issues/10753>`_: Changed wording of the module level skip to be very explicit
+  about not collecting tests and not executing the rest of the module.
+
+
 pytest 7.2.1 (2023-01-13)
 =========================
 

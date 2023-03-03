@@ -1,1 +1,0 @@
-Fixed :func:`pytest.approx` handling of dictionaries containing one or more values of `0.0`.

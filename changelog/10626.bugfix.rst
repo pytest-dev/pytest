@@ -1,1 +1,0 @@
-Fixed crash if ``--fixtures`` and ``--help`` are passed at the same time.
