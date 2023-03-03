@@ -693,7 +693,14 @@ class TestInvocationVariants:
 
         # mixed module and filenames:
         monkeypatch.chdir("world")
-        result = pytester.runpytest("--pyargs", "-v", "ns_pkg.hello", "ns_pkg/world")
+
+        # pgk_resources.declare_namespace has been deprecated in favor of implicit namespace packages.
+        # While we could change the test to use implicit namespace packages, seems better
+        # to still ensure the old declaration via declare_namespace still works.
+        ignore_w = r"-Wignore:Deprecated call to `pkg_resources.declare_namespace"
+        result = pytester.runpytest(
+            "--pyargs", "-v", "ns_pkg.hello", "ns_pkg/world", ignore_w
+        )
         assert result.ret == 0
         result.stdout.fnmatch_lines(
             [
