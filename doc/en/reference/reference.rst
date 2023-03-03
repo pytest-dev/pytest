@@ -1090,7 +1090,7 @@ Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code 
 
 Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
 
-.. envar:: PYTEST_TMPDIR_FILE_MODE
+.. envvar:: PYTEST_TMPDIR_FILE_MODE
 
 Sets the file mode of any temporary files or directories. Defaults to `0o700`. See :fixture:`tmp_path` :fixture:`tmp_path_factory`.
 
