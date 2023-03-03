@@ -51,8 +51,6 @@ _IGNORED_WINERRORS = (
     1921,  # ERROR_CANT_RESOLVE_FILENAME - fix for broken symlink pointing to itself
 )
 
-TMPDIR_FILE_MODE = int(os.getenv("PYTEST_TMPDIR_FILE_MODE", "0o700"), 8)
-
 
 def _ignore_error(exception):
     return (
@@ -208,8 +206,9 @@ def _force_symlink(
         pass
 
 
-def make_numbered_dir(root: Path, prefix: str, mode: int = TMPDIR_FILE_MODE) -> Path:
+def make_numbered_dir(root: Path, prefix: str, mode: Union[int, None] = None) -> Path:
     """Create a directory with an increased number as suffix for the given prefix."""
+    mode = mode or tmpdir_file_mode()
     for i in range(10):
         # try up to 10 times to create the folder
         max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
@@ -748,3 +747,7 @@ def copytree(source: Path, target: Path) -> None:
             shutil.copyfile(x, newx)
         elif x.is_dir():
             newx.mkdir(exist_ok=True)
+
+
+def tmpdir_file_mode() -> int:
+    return int(os.getenv("PYTEST_TMPDIR_FILE_MODE", "700"), 8)

@@ -62,6 +62,7 @@ from _pytest.outcomes import skip
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import copytree
 from _pytest.pathlib import make_numbered_dir
+from _pytest.pathlib import tmpdir_file_mode
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
@@ -81,8 +82,6 @@ pytest_plugins = ["pytester_assertions"]
 IGNORE_PAM = [  # filenames added when obtaining details about the current user
     "/var/lib/sss/mc/passwd"
 ]
-
-TMPDIR_FILE_MODE = int(os.getenv("PYTEST_TMPDIR_FILE_MODE", "0o700"), 8)
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -1505,7 +1504,7 @@ class Pytester:
         """
         __tracebackhide__ = True
         p = make_numbered_dir(
-            root=self.path, prefix="runpytest-", mode=TMPDIR_FILE_MODE
+            root=self.path, prefix="runpytest-", mode=tmpdir_file_mode()
         )
         args = ("--basetemp=%s" % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
@@ -1525,7 +1524,7 @@ class Pytester:
         The pexpect child is returned.
         """
         basetemp = self.path / "temp-pexpect"
-        basetemp.mkdir(mode=TMPDIR_FILE_MODE)
+        basetemp.mkdir(mode=tmpdir_file_mode())
         invoke = " ".join(map(str, self._getpytestargs()))
         cmd = f"{invoke} --basetemp={basetemp} {string}"
         return self.spawn(cmd, expect_timeout=expect_timeout)

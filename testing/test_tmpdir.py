@@ -631,7 +631,7 @@ def test_tmp_path_factory_user_specified_permissions(
     """Verify that pytest creates directories under /tmp with user specified permissions."""
     # Use the test's tmp_path as the system temproot (/tmp).
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    monkeypatch.setenv("PYTEST_TMPDIR_FILE_MODE", "0o777")
+    monkeypatch.setenv("PYTEST_TMPDIR_FILE_MODE", "777")
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 

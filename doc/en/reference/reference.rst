@@ -1092,7 +1092,7 @@ Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
 
 .. envvar:: PYTEST_TMPDIR_FILE_MODE
 
-Sets the file mode of any temporary files or directories. Defaults to `0o700`. See :fixture:`tmp_path` :fixture:`tmp_path_factory`.
+Sets the file mode of any temporary files or directories. Defaults to `700`. See :fixture:`tmp_path` :fixture:`tmp_path_factory`.
 
 .. envvar:: PY_COLORS
 

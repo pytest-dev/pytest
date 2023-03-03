@@ -163,7 +163,7 @@ File permissions
 
 Any file or directory created by the above fixtures are by default created with private permissions (file mask 700).
 
-You can override the file mask by setting the :envvar:`PYTEST_TMPDIR_FILE_MODE` environment variable as an octal string, the default being `0o700`.
+You can override the file mask by setting the :envvar:`PYTEST_TMPDIR_FILE_MODE` environment variable as an octal string, the default being `700`.
 
 This is for example useful in cases where created files or directories have to be shared by docker containers etc.
 

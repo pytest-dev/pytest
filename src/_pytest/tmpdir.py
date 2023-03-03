@@ -30,6 +30,7 @@ from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
 from .pathlib import cleanup_dead_symlink
+from .pathlib import tmpdir_file_mode
 from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -40,8 +41,6 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
 
 tmppath_result_key = StashKey[Dict[str, bool]]()
-
-TMPDIR_FILE_MODE = int(os.getenv("PYTEST_TMPDIR_FILE_MODE", "0o700"), 8)
 
 
 @final
@@ -138,10 +137,10 @@ class TempPathFactory:
         basename = self._ensure_relative_to_basetemp(basename)
         if not numbered:
             p = self.getbasetemp().joinpath(basename)
-            p.mkdir(mode=TMPDIR_FILE_MODE)
+            p.mkdir(mode=tmpdir_file_mode())
         else:
             p = make_numbered_dir(
-                root=self.getbasetemp(), prefix=basename, mode=TMPDIR_FILE_MODE
+                root=self.getbasetemp(), prefix=basename, mode=tmpdir_file_mode()
             )
             self._trace("mktemp", p)
         return p
@@ -159,7 +158,7 @@ class TempPathFactory:
             basetemp = self._given_basetemp
             if basetemp.exists():
                 rm_rf(basetemp)
-            basetemp.mkdir(mode=TMPDIR_FILE_MODE)
+            basetemp.mkdir(mode=tmpdir_file_mode())
             basetemp = basetemp.resolve()
         else:
             from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
@@ -169,11 +168,11 @@ class TempPathFactory:
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
             try:
-                rootdir.mkdir(mode=TMPDIR_FILE_MODE, exist_ok=True)
+                rootdir.mkdir(mode=tmpdir_file_mode(), exist_ok=True)
             except OSError:
                 # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
                 rootdir = temproot.joinpath("pytest-of-unknown")
-                rootdir.mkdir(mode=TMPDIR_FILE_MODE, exist_ok=True)
+                rootdir.mkdir(mode=tmpdir_file_mode(), exist_ok=True)
             # Because we use exist_ok=True with a predictable name, make sure
             # we are the owners, to prevent any funny business (on unix, where
             # temproot is usually shared).
@@ -201,7 +200,7 @@ class TempPathFactory:
                 root=rootdir,
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
-                mode=TMPDIR_FILE_MODE,
+                mode=tmpdir_file_mode(),
             )
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
