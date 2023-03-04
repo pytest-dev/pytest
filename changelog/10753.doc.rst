@@ -1,2 +1,0 @@
-Change wording of the module level skip to be very explicit
-about not collecting and not executing the rest of the module.
