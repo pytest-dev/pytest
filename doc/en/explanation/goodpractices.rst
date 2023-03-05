@@ -24,8 +24,9 @@ The first few lines should look like this:
 
     [project]
     name = "PACKAGENAME"
+    version = "PACKAGEVERSION"
 
-where ``PACKAGENAME`` is the name of your package.
+where ``PACKAGENAME`` and ``PACKAGEVERSION`` are the name and version of your package respectively.
 
 You can then install your package in "editable" mode by running from the same directory:
 
