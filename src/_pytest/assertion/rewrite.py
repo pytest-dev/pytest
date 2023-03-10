@@ -44,9 +44,13 @@ from _pytest.stash import StashKey
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
+if sys.version_info >= (3, 8):
+    namedExpr = ast.NamedExpr
+else:
+    namedExpr = ast.Expr
+
 
 assertstate_key = StashKey["AssertionState"]()
-
 
 # pytest caches rewritten pycs in pycache dirs
 PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
@@ -636,8 +640,12 @@ class AssertionRewriter(ast.NodeVisitor):
        .push_format_context() and .pop_format_context() which allows
        to build another %-formatted string while already building one.
 
-    This state is reset on every new assert statement visited and used
-    by the other visitors.
+    :variables_overwrite: A dict filled with references to variables
+       that change value within an assert. This happens when a variable is
+       reassigned with the walrus operator
+
+    This state, except the variables_overwrite,  is reset on every new assert
+    statement visited and used by the other visitors.
     """
 
     def __init__(
@@ -653,6 +661,7 @@ class AssertionRewriter(ast.NodeVisitor):
         else:
             self.enable_assertion_pass_hook = False
         self.source = source
+        self.variables_overwrite: Dict[str, str] = {}
 
     def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""
@@ -667,7 +676,7 @@ class AssertionRewriter(ast.NodeVisitor):
         if doc is not None and self.is_rewrite_disabled(doc):
             return
         pos = 0
-        lineno = 1
+        item = None
         for item in mod.body:
             if (
                 expect_docstring
@@ -938,6 +947,18 @@ class AssertionRewriter(ast.NodeVisitor):
                 ast.copy_location(node, assert_)
         return self.statements
 
+    def visit_NamedExpr(self, name: namedExpr) -> Tuple[namedExpr, str]:
+        # This method handles the 'walrus operator' repr of the target
+        # name if it's a local variable or _should_repr_global_name()
+        # thinks it's acceptable.
+        locs = ast.Call(self.builtin("locals"), [], [])
+        target_id = name.target.id  # type: ignore[attr-defined]
+        inlocs = ast.Compare(ast.Str(target_id), [ast.In()], [locs])
+        dorepr = self.helper("_should_repr_global_name", name)
+        test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
+        expr = ast.IfExp(test, self.display(name), ast.Str(target_id))
+        return name, self.explanation_param(expr)
+
     def visit_Name(self, name: ast.Name) -> Tuple[ast.Name, str]:
         # Display the repr of the name if it's a local variable or
         # _should_repr_global_name() thinks it's acceptable.
@@ -964,6 +985,20 @@ class AssertionRewriter(ast.NodeVisitor):
                 # cond is set in a prior loop iteration below
                 self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
                 self.expl_stmts = fail_inner
+                # Check if the left operand is a namedExpr and the value has already been visited
+                if (
+                    isinstance(v, ast.Compare)
+                    and isinstance(v.left, namedExpr)
+                    and v.left.target.id
+                    in [
+                        ast_expr.id
+                        for ast_expr in boolop.values[:i]
+                        if hasattr(ast_expr, "id")
+                    ]
+                ):
+                    pytest_temp = self.variable()
+                    self.variables_overwrite[v.left.target.id] = pytest_temp
+                    v.left.target.id = pytest_temp
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
@@ -1039,6 +1074,9 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def visit_Compare(self, comp: ast.Compare) -> Tuple[ast.expr, str]:
         self.push_format_context()
+        # We first check if we have overwritten a variable in the previous assert
+        if isinstance(comp.left, ast.Name) and comp.left.id in self.variables_overwrite:
+            comp.left.id = self.variables_overwrite[comp.left.id]
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
             left_expl = f"({left_expl})"
@@ -1050,6 +1088,13 @@ class AssertionRewriter(ast.NodeVisitor):
         syms = []
         results = [left_res]
         for i, op, next_operand in it:
+            if (
+                isinstance(next_operand, namedExpr)
+                and isinstance(left_res, ast.Name)
+                and next_operand.target.id == left_res.id
+            ):
+                next_operand.target.id = self.variable()
+                self.variables_overwrite[left_res.id] = next_operand.target.id
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = f"({next_expl})"
@@ -1073,6 +1118,7 @@ class AssertionRewriter(ast.NodeVisitor):
             res: ast.expr = ast.BoolOp(ast.And(), load_names)
         else:
             res = load_names[0]
+
         return res, self.explanation_param(self.pop_format_context(expl_call))
 
 

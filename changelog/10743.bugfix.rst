@@ -1,0 +1,1 @@
+The assertion rewriting mechanism now works correctly when assertion expressions contain the walrus operator.
