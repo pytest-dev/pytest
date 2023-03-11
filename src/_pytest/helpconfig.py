@@ -164,7 +164,8 @@ def showhelp(config: Config) -> None:
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:"
+        "[pytest] ini-options in the first "
+        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 
