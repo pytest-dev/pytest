@@ -1996,7 +1996,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Auto-indent multiline messages passed to the logging
                             module. Accepts true|on, false|off or an integer.
 
-    [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:
+    [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
       markers (linelist):   Markers for test functions
       empty_parameter_set_mark (string):
