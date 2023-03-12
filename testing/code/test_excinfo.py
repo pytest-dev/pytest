@@ -294,6 +294,7 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, f)
         tb = excinfo.traceback
         entry = tb.getcrashentry()
+        assert entry is not None
         co = _pytest._code.Code.from_function(h)
         assert entry.frame.code.path == co.path
         assert entry.lineno == co.firstlineno + 1

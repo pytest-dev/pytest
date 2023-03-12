@@ -650,13 +650,18 @@ class ExceptionInfo(Generic[E]):
             Added the ``chain`` parameter.
         """
         if style == "native":
+            r = self._getreprcrash()
+            if r is None:
+                raise ValueError(
+                    "There should always be a non-hidden traceback entry for the top level function."
+                )
             return ReprExceptionInfo(
                 reprtraceback=ReprTracebackNative(
                     traceback.format_exception(
                         self.type, self.value, self.traceback[0]._rawentry
                     )
                 ),
-                reprcrash=self._getreprcrash(),
+                reprcrash=r,
             )
 
         fmt = FormattedExcinfo(
