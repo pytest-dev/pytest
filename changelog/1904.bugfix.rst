@@ -1,0 +1,1 @@
+Correctly handle ``__tracebackhide__`` for chained exceptions.
