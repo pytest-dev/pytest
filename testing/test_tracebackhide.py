@@ -1,4 +1,7 @@
 def test_tbh_chained(testdir):
+    """
+    Ensure chained exceptions whose frames contain "__tracebackhide__" are not shown (#1904).
+    """
     p = testdir.makepyfile(
         """
         import pytest
