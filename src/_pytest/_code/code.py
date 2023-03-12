@@ -650,18 +650,13 @@ class ExceptionInfo(Generic[E]):
             Added the ``chain`` parameter.
         """
         if style == "native":
-            r = self._getreprcrash()
-            if r is None:
-                raise ValueError(
-                    "There should always be a non-hidden traceback entry for the top level function."
-                )
             return ReprExceptionInfo(
                 reprtraceback=ReprTracebackNative(
                     traceback.format_exception(
                         self.type, self.value, self.traceback[0]._rawentry
                     )
                 ),
-                reprcrash=r,
+                reprcrash=self._getreprcrash(),
             )
 
         fmt = FormattedExcinfo(
@@ -1056,7 +1051,7 @@ class ExceptionChainRepr(ExceptionRepr):
 @dataclasses.dataclass(eq=False)
 class ReprExceptionInfo(ExceptionRepr):
     reprtraceback: "ReprTraceback"
-    reprcrash: "ReprFileLocation"
+    reprcrash: Optional["ReprFileLocation"]
 
     def toterminal(self, tw: TerminalWriter) -> None:
         self.reprtraceback.toterminal(tw)
