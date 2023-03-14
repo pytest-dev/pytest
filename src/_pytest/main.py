@@ -35,6 +35,7 @@ from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import ensure_extended_length_path
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import visit
 from _pytest.reports import CollectReport
@@ -714,6 +715,7 @@ class Session(nodes.FSCollector):
             # Let the Package collector deal with subnodes, don't collect here.
             if argpath.is_dir():
                 assert not names, f"invalid arg {(argpath, names)!r}"
+                argpath = ensure_extended_length_path(Path(argpath))
 
                 seen_dirs: Set[Path] = set()
                 for direntry in visit(str(argpath), self._recurse):
