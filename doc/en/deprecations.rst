@@ -1052,7 +1052,7 @@ that are then turned into proper test methods. Example:
 .. code-block:: python
 
     def check(x, y):
-        assert x ** x == y
+        assert x**x == y
 
 
     def test_squared():
@@ -1067,7 +1067,7 @@ This form of test function doesn't support fixtures properly, and users should s
 
     @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
     def test_squared(x, y):
-        assert x ** x == y
+        assert x**x == y
 
 .. _internal classes accessed through node deprecated:
 

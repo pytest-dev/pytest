@@ -1236,7 +1236,6 @@ class TestDoctestSkips:
 
 
 class TestDoctestAutoUseFixtures:
-
     SCOPES = ["module", "session", "class", "function"]
 
     def test_doctest_module_session_fixture(self, pytester: Pytester):
@@ -1379,7 +1378,6 @@ class TestDoctestAutoUseFixtures:
 
 
 class TestDoctestNamespaceFixture:
-
     SCOPES = ["module", "session", "class", "function"]
 
     @pytest.mark.parametrize("scope", SCOPES)

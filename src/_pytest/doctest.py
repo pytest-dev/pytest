@@ -531,7 +531,6 @@ class DoctestModule(Module):
                 if _is_mocked(obj):
                     return
                 with _patch_unwrap_mock_aware():
-
                     # Type ignored because this is a private function.
                     super()._find(  # type:ignore[misc]
                         tests, obj, name, module, source_lines, globs, seen

@@ -879,7 +879,6 @@ class TestDurations:
         )
 
     def test_calls_show_2(self, pytester: Pytester, mock_timing) -> None:
-
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=2")
         assert result.ret == 0

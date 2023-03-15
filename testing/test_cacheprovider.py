@@ -494,7 +494,6 @@ class TestLastFailed:
     def test_lastfailed_collectfailure(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
-
         pytester.makepyfile(
             test_maybe="""
             import os

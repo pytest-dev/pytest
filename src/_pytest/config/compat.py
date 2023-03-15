@@ -43,7 +43,6 @@ class PathAwareHookProxy:
 
             @_wraps(hook)
             def fixed_hook(**kw):
-
                 path_value: Optional[Path] = kw.pop(path_var, None)
                 fspath_value: Optional[LEGACY_PATH] = kw.pop(fspath_var, None)
                 if fspath_value is not None:

@@ -790,7 +790,8 @@ def _call_with_optional_argument(func, arg) -> None:
 
 def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> Optional[object]:
     """Return the attribute from the given object to be used as a setup/teardown
-    xunit-style function, but only if not marked as a fixture to avoid calling it twice."""
+    xunit-style function, but only if not marked as a fixture to avoid calling it twice.
+    """
     for name in names:
         meth: Optional[object] = getattr(obj, name, None)
         if meth is not None and fixtures.getfixturemarker(meth) is None:
