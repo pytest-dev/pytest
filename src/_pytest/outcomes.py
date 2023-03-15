@@ -223,7 +223,6 @@ def _resolve_msg_to_reason(
     """
     __tracebackhide__ = True
     if msg is not None:
-
         if reason:
             from pytest import UsageError
 

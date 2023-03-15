@@ -253,7 +253,6 @@ class NoCapture:
 
 
 class SysCaptureBinary:
-
     EMPTY_BUFFER = b""
 
     def __init__(self, fd: int, tmpfile=None, *, tee: bool = False) -> None:

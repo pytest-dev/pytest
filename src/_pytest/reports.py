@@ -337,6 +337,10 @@ class TestReport(BaseReport):
             elif isinstance(excinfo.value, skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
+                if r is None:
+                    raise ValueError(
+                        "There should always be a traceback entry for skipping a test."
+                    )
                 if excinfo.value._use_item_location:
                     path, line = item.reportinfo()[:2]
                     assert line is not None
@@ -573,7 +577,6 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
         and "reprcrash" in reportdict["longrepr"]
         and "reprtraceback" in reportdict["longrepr"]
     ):
-
         reprtraceback = deserialize_repr_traceback(
             reportdict["longrepr"]["reprtraceback"]
         )

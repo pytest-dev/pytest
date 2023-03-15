@@ -196,7 +196,6 @@ def mock_timing(monkeypatch: MonkeyPatch):
 
     @attr.s
     class MockTiming:
-
         _current_time = attr.ib(default=1590150050.0)
 
         def sleep(self, seconds):

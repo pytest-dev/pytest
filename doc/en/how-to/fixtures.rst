@@ -1237,7 +1237,6 @@ If the data created by the factory requires managing, the fixture can take care 
 
     @pytest.fixture
     def make_customer_record():
-
         created_records = []
 
         def _make_customer_record(name):
