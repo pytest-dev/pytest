@@ -951,46 +951,10 @@ and run it:
 .. code-block:: pytest
 
     $ pytest -s test_module.py
-    =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    rootdir: /home/sweet/project
-    collected 3 items
-
-    test_module.py Esetting up a test failed! test_module.py::test_setup_fails
-    Fexecuting test failed test_module.py::test_call_fails
-    F
-
-    ================================== ERRORS ==================================
-    ____________________ ERROR at setup of test_setup_fails ____________________
-
-        @pytest.fixture
-        def other():
-    >       assert 0
-    E       assert 0
-
-    test_module.py:7: AssertionError
-    ================================= FAILURES =================================
-    _____________________________ test_call_fails ______________________________
-
-    something = None
-
-        def test_call_fails(something):
-    >       assert 0
-    E       assert 0
-
-    test_module.py:15: AssertionError
-    ________________________________ test_fail2 ________________________________
-
-        def test_fail2():
-    >       assert 0
-    E       assert 0
-
-    test_module.py:19: AssertionError
-    ========================= short test summary info ==========================
-    FAILED test_module.py::test_call_fails - assert 0
-    FAILED test_module.py::test_fail2 - assert 0
-    ERROR test_module.py::test_setup_fails - assert 0
-    ======================== 2 failed, 1 error in 0.12s ========================
+    ImportError while loading conftest '/home/sweet/project/conftest.py'.
+    conftest.py:4: in <module>
+        phase_report_key = StashKey[Dict[str, CollectReport]]()
+    E   NameError: name 'StashKey' is not defined
 
 You'll see that the fixture finalizers could use the precise reporting
 information.

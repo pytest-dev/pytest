@@ -1995,6 +1995,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --log-auto-indent=LOG_AUTO_INDENT
                             Auto-indent multiline messages passed to the logging
                             module. Accepts true|on, false|off or an integer.
+      --log-disable=LOGGER_DISABLE
+                            Disable a logger by name. Can be passed multipe
+                            times.
 
     [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
@@ -2024,9 +2027,18 @@ All the command-line flags can be obtained by running ``pytest --help``::
       console_output_style (string):
                             Console output: "classic", or with additional
                             progress information ("progress" (percentage) |
-                            "count")
+                            "count" | "progress-even-when-capture-no" (forces
+                            progress even when capture=no)
       xfail_strict (bool):  Default for the strict parameter of xfail markers
                             when not given explicitly (default: False)
+      tmp_path_retention_count (string):
+                            How many sessions should we keep the `tmp_path`
+                            directories, according to
+                            `tmp_path_retention_policy`.
+      tmp_path_retention_policy (string):
+                            Controls which directories created by the `tmp_path`
+                            fixture are kept around, based on test outcome.
+                            (all/failed/none)
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
