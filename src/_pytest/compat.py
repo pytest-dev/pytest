@@ -94,19 +94,13 @@ def is_async_function(func: object) -> bool:
     return iscoroutinefunction(func) or inspect.isasyncgenfunction(func)
 
 
-def getlocation(function, curdir: str | None = None) -> str:
 class CodeLocation(NamedTuple):
     path: Path
     lineno: int
 
-
-# TODO: integrate after pytest 3.6.0 has been dropped
-def CodeLocation__str__(self: CodeLocation) -> str:
-    """Python 3.6.0 hack for NamedTuple __str__"""
-    return f"{self.path}:{self.lineno}"
-
-
-setattr(CodeLocation, "__str__", CodeLocation__str__)
+    def __str__(self: CodeLocation) -> str:
+        """Python 3.6.0 hack for NamedTuple __str__"""
+        return f"{self.path}:{self.lineno}"
 
 
 def getlocation(

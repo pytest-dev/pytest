@@ -1554,7 +1554,7 @@ def _ascii_escaped_by_config(val: Union[str, bytes], config: Optional[Config]) -
 
 def _pretty_fixture_path(func) -> str:
     cwd = Path.cwd()
-    loc = Path(getlocation(func, str(cwd)))
+    loc = Path(str(getlocation(func, relative_to=cwd, allow_escape=False)))
     prefix = Path("...", "_pytest")
     try:
         return str(prefix / loc.relative_to(_PYTEST_DIR))
@@ -1577,7 +1577,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     verbose = config.getvalue("verbose")
 
     def get_best_relpath(func):
-        return getlocation(func, curdir)
+        return getlocation(func, relative_to=curdir, allow_escape=False)
 
     def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
         argname = fixture_def.argname
