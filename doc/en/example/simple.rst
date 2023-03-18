@@ -892,8 +892,9 @@ here is a little example implemented via a local plugin:
 .. code-block:: python
 
     # content of conftest.py
-
+    from typing import Dict
     import pytest
+    from pytest import StashKey, CollectReport
 
     phase_report_key = StashKey[Dict[str, CollectReport]]()
 
@@ -956,8 +957,8 @@ and run it:
     rootdir: /home/sweet/project
     collected 3 items
 
-    test_module.py Esetting up a test failed! test_module.py::test_setup_fails
-    Fexecuting test failed test_module.py::test_call_fails
+    test_module.py Esetting up a test failed or skipped test_module.py::test_setup_fails
+    Fexecuting test failed or skipped test_module.py::test_call_fails
     F
 
     ================================== ERRORS ==================================

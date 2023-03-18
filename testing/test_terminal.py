@@ -909,7 +909,7 @@ class TestTerminalFunctional:
         # with configfile
         pytester.makeini("""[pytest]""")
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0", "configfile: tox.ini"])
 
         # with testpaths option, and not passing anything in the command-line
         pytester.makeini(
@@ -920,12 +920,12 @@ class TestTerminalFunctional:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            ["rootdir: *test_header0, configfile: tox.ini, testpaths: tests, gui"]
+            ["rootdir: *test_header0", "configfile: tox.ini", "testpaths: tests, gui"]
         )
 
         # with testpaths option, passing directory in command-line: do not show testpaths then
         result = pytester.runpytest("tests")
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0", "configfile: tox.ini"])
 
     def test_header_absolute_testpath(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
@@ -944,9 +944,9 @@ class TestTerminalFunctional:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "rootdir: *absolute_testpath0, configfile: pyproject.toml, testpaths: {}".format(
-                    tests
-                )
+                "rootdir: *absolute_testpath0",
+                "configfile: pyproject.toml",
+                f"testpaths: {tests}",
             ]
         )
 

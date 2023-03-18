@@ -148,7 +148,8 @@ The test collection would look like this:
     $ pytest --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    rootdir: /home/sweet/project, configfile: pytest.ini
+    rootdir: /home/sweet/project
+    configfile: pytest.ini
     collected 2 items
 
     <Module check_myapp.py>
@@ -209,7 +210,8 @@ You can always peek at the collection tree without running tests like this:
     . $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    rootdir: /home/sweet/project, configfile: pytest.ini
+    rootdir: /home/sweet/project
+    configfile: pytest.ini
     collected 3 items
 
     <Module CWD/pythoncollection.py>
@@ -290,7 +292,8 @@ file will be left out:
     $ pytest --collect-only
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    rootdir: /home/sweet/project, configfile: pytest.ini
+    rootdir: /home/sweet/project
+    configfile: pytest.ini
     collected 0 items
 
     ======================= no tests collected in 0.12s ========================
