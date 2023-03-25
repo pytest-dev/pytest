@@ -1,4 +1,5 @@
 """Python version compatibility code."""
+# mypy: ignore-errors
 from __future__ import annotations
 
 import dataclasses
