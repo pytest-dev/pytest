@@ -982,7 +982,7 @@ class TestMetafunc:
         assert metafunc._calls[1].params == dict(x=3, y=4)
         assert metafunc._calls[1].funcargs == {}
         assert metafunc._calls[1].id == "3-4"
-    
+
     def test_parametrize_with_duplicate_values(self) -> None:
         metafunc = self.Metafunc(lambda x, y: None)
         metafunc.parametrize(("x", "y"), [(1, 2), (3, 4), (1, 5), (2, 2)])

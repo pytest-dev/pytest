@@ -38,7 +38,6 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
-from _pytest.compat import assert_never
 from _pytest.compat import final
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
@@ -59,12 +58,12 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import INSTANCE_COLLECTOR
 from _pytest.deprecated import NOSE_SUPPORT_METHOD
-from _pytest.fixtures import (FixtureDef,
-                              FixtureRequest,
-                              FuncFixtureInfo,
-                              get_scope_node,
-                              name2pseudofixturedef_key,
-                              resolve_unique_values_and_their_indices_in_parametersets,)
+from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import FuncFixtureInfo
+from _pytest.fixtures import get_scope_node
+from _pytest.fixtures import name2pseudofixturedef_key
+from _pytest.fixtures import resolve_unique_values_and_their_indices_in_parametersets
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
@@ -81,7 +80,6 @@ from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.pathlib import visit
 from _pytest.scope import Scope
-from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
@@ -505,7 +503,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
-
             # Direct parametrization may have shadowed some fixtures
             # so make sure we update what the function really needs.
             fixtureinfo.prune_dependency_tree()
@@ -1336,7 +1333,12 @@ class Metafunc:
         ids = self._resolve_parameter_set_ids(
             argnames, ids, parametersets, nodeid=self.definition.nodeid
         )
-        params_values, param_indices_list = resolve_unique_values_and_their_indices_in_parametersets(argnames, parametersets)
+        (
+            params_values,
+            param_indices_list,
+        ) = resolve_unique_values_and_their_indices_in_parametersets(
+            argnames, parametersets
+        )
         # Store used (possibly generated) ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
@@ -1377,19 +1379,20 @@ class Metafunc:
                     params=params_values[argname],
                     unittest=False,
                     ids=None,
-                    is_pseudo=True
+                    is_pseudo=True,
                 )
                 arg2fixturedefs[argname] = [fixturedef]
                 if name2pseudofixturedef is not None:
                     name2pseudofixturedef[argname] = fixturedef
-
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
-            for param_id, param_set, param_indices in zip(ids, parametersets, param_indices_list):
+            for param_id, param_set, param_indices in zip(
+                ids, parametersets, param_indices_list
+            ):
                 newcallspec = callspec.setmulti(
                     argnames=argnames,
                     valset=param_set.values,

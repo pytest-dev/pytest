@@ -72,7 +72,6 @@ if TYPE_CHECKING:
 
     from _pytest.scope import _ScopeName
     from _pytest.main import Session
-    from _pytest.python import CallSpec2
     from _pytest.python import Metafunc
 
 
@@ -152,7 +151,7 @@ def resolve_unique_values_and_their_indices_in_parametersets(
     parametersets: Sequence[ParameterSet],
 ) -> Tuple[Dict[str, List[object]], List[Tuple[int]]]:
     """Resolve unique values and their indices in parameter sets. The index of a value
-    is determined by when it appears in the possible values for the first time. 
+    is determined by when it appears in the possible values for the first time.
     For example, given ``argnames`` and ``parametersets`` below, the result would be:
 
     ::
@@ -161,7 +160,7 @@ def resolve_unique_values_and_their_indices_in_parametersets(
         parametersets = [("a1", "b1", "c1"), ("a1", "b2", "c1"), ("a1", "b3", "c2")]
         result[0] = {"A": ["a1"], "B": ["b1", "b2", "b3"], "C": ["c1", "c2"]}
         result[1] = [(0, 0, 0), (0, 1, 0), (0, 2, 1)]
-    
+
     result is used in reordering `indirect`ly parametrized with multiple
     parameters or directly parametrized tests to keep items using the same fixture or
     pseudo-fixture values respectively, close together.
@@ -175,7 +174,9 @@ def resolve_unique_values_and_their_indices_in_parametersets(
         Tuple of unique parameter values and their indices in parametersets.
     """
     indices = []
-    argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(dict)
+    argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(
+        dict
+    )
     argvalues_count: Dict[str, int] = defaultdict(lambda: 0)
     unique_values: Dict[str, List[object]] = defaultdict(list)
     for i, argname in enumerate(argnames):
@@ -183,13 +184,17 @@ def resolve_unique_values_and_their_indices_in_parametersets(
         for parameterset in parametersets:
             value = parameterset.values[i]
             try:
-                argname_indices.append(argname_value_indices_for_hashable_ones[argname][value])
-            except KeyError: # New unique value
-                argname_value_indices_for_hashable_ones[argname][value] = argvalues_count[argname]
+                argname_indices.append(
+                    argname_value_indices_for_hashable_ones[argname][value]
+                )
+            except KeyError:  # New unique value
+                argname_value_indices_for_hashable_ones[argname][
+                    value
+                ] = argvalues_count[argname]
                 argname_indices.append(argvalues_count[argname])
                 argvalues_count[argname] += 1
                 unique_values[argname].append(value)
-            except TypeError: # `value` is not hashable
+            except TypeError:  # `value` is not hashable
                 argname_indices.append(argvalues_count[argname])
                 argvalues_count[argname] += 1
                 unique_values[argname].append(value)
@@ -222,7 +227,7 @@ class FixtureArgKey:
 def get_fixture_arg_key(item: nodes.Item, argname: str, scope: Scope) -> FixtureArgKey:
     param_index = None
     param_value = None
-    if hasattr(item, 'callspec') and argname in item.callspec.params:
+    if hasattr(item, "callspec") and argname in item.callspec.params:
         # Fixture is parametrized.
         if isinstance(item.callspec.params[argname], Hashable):
             param_value = item.callspec.params[argname]
@@ -242,21 +247,21 @@ def get_fixture_arg_key(item: nodes.Item, argname: str, scope: Scope) -> Fixture
         item_cls = item.cls  # type: ignore[attr-defined]
     else:
         item_cls = None
-    
+
     return FixtureArgKey(argname, param_index, param_value, scoped_item_path, item_cls)
-    
+
 
 def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[FixtureArgKey]:
     """Return list of keys for all parametrized arguments which match
     the specified scope."""
     assert scope is not Scope.Function
-    if hasattr(item, '_fixtureinfo'):
+    if hasattr(item, "_fixtureinfo"):
         # sort this so that different calls to
         # get_fixture_keys will be deterministic.
         for argname, fixture_def in sorted(item._fixtureinfo.name2fixturedefs.items()):
             # In the case item is parametrized on the `argname` with
             # a scope, it overrides that of the fixture.
-            if hasattr(item, 'callspec') and argname in item.callspec._arg2scope:
+            if hasattr(item, "callspec") and argname in item.callspec._arg2scope:
                 if item.callspec._arg2scope[argname] != scope:
                     continue
             elif fixture_def[-1]._scope != scope:
@@ -291,13 +296,19 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
     for scope in reversed(HIGH_SCOPES):
         for key in items_by_argkey[scope]:
             last_item_dependent_on_key = items_by_argkey[scope][key].pop()
-            fixturedef = last_item_dependent_on_key._fixtureinfo.name2fixturedefs[key.argname][-1]
+            fixturedef = last_item_dependent_on_key._fixtureinfo.name2fixturedefs[
+                key.argname
+            ][-1]
             if fixturedef.is_pseudo:
                 continue
             last_item_dependent_on_key.teardown = functools.partial(
-                lambda other_finalizers, new_finalizer: [finalizer() for finalizer in (new_finalizer, other_finalizers)],
+                lambda other_finalizers, new_finalizer: [
+                    finalizer() for finalizer in (new_finalizer, other_finalizers)
+                ],
                 last_item_dependent_on_key.teardown,
-                functools.partial(fixturedef.finish, last_item_dependent_on_key._request)
+                functools.partial(
+                    fixturedef.finish, last_item_dependent_on_key._request
+                ),
             )
     return reordered_items
 
@@ -307,7 +318,7 @@ def fix_cache_order(
     argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
     items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
     ignore: Set[Optional[FixtureArgKey]],
-    current_scope: Scope
+    current_scope: Scope,
 ) -> None:
     for scope in HIGH_SCOPES:
         if current_scope < scope:
