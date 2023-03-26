@@ -665,9 +665,10 @@ class Session(nodes.FSCollector):
                         self.items.extend(self.genitems(node))
 
             self.config.pluginmanager.check_pending()
-            hook.pytest_collection_modifyitems(
-                session=self, config=self.config, items=items
-            )
+            if genitems:
+                hook.pytest_collection_modifyitems(
+                    session=self, config=self.config, items=items
+                )
         finally:
             hook.pytest_collection_finish(session=self)
 

@@ -59,7 +59,12 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import INSTANCE_COLLECTOR
 from _pytest.deprecated import NOSE_SUPPORT_METHOD
-from _pytest.fixtures import FuncFixtureInfo
+from _pytest.fixtures import (FixtureDef,
+                              FixtureRequest,
+                              FuncFixtureInfo,
+                              get_scope_node,
+                              name2pseudofixturedef_key,
+                              resolve_unique_values_and_their_indices_in_parametersets,)
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
@@ -76,6 +81,7 @@ from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.pathlib import visit
 from _pytest.scope import Scope
+from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
@@ -496,17 +502,12 @@ class PyCollector(PyobjMixin, nodes.Collector):
         if cls is not None and hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
         self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
-
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
-            # Add funcargs() as fixturedefs to fixtureinfo.arg2fixturedefs.
-            fm = self.session._fixturemanager
-            fixtures.add_funcarg_pseudo_fixture_def(self, metafunc, fm)
 
-            # Add_funcarg_pseudo_fixture_def may have shadowed some fixtures
-            # with direct parametrization, so make sure we update what the
-            # function really needs.
+            # Direct parametrization may have shadowed some fixtures
+            # so make sure we update what the function really needs.
             fixtureinfo.prune_dependency_tree()
 
             for callspec in metafunc._calls:
@@ -1146,32 +1147,23 @@ class CallSpec2:
     def setmulti(
         self,
         *,
-        valtypes: Mapping[str, "Literal['params', 'funcargs']"],
         argnames: Iterable[str],
         valset: Iterable[object],
         id: str,
         marks: Iterable[Union[Mark, MarkDecorator]],
         scope: Scope,
-        param_index: int,
+        param_indices: Tuple[int],
     ) -> "CallSpec2":
-        funcargs = self.funcargs.copy()
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = self._arg2scope.copy()
-        for arg, val in zip(argnames, valset):
-            if arg in params or arg in funcargs:
+        for arg, val, param_index in zip(argnames, valset, param_indices):
+            if arg in params:
                 raise ValueError(f"duplicate {arg!r}")
-            valtype_for_arg = valtypes[arg]
-            if valtype_for_arg == "params":
-                params[arg] = val
-            elif valtype_for_arg == "funcargs":
-                funcargs[arg] = val
-            else:
-                assert_never(valtype_for_arg)
+            params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
         return CallSpec2(
-            funcargs=funcargs,
             params=params,
             indices=indices,
             _arg2scope=arg2scope,
@@ -1188,6 +1180,10 @@ class CallSpec2:
     @property
     def id(self) -> str:
         return "-".join(self._idlist)
+
+
+def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
+    return request.param
 
 
 @final
@@ -1331,8 +1327,6 @@ class Metafunc:
 
         self._validate_if_using_arg_names(argnames, indirect)
 
-        arg_values_types = self._resolve_arg_value_types(argnames, indirect)
-
         # Use any already (possibly) generated ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from:
             generated_ids = _param_mark._param_ids_from._param_ids_generated
@@ -1342,27 +1336,67 @@ class Metafunc:
         ids = self._resolve_parameter_set_ids(
             argnames, ids, parametersets, nodeid=self.definition.nodeid
         )
-
+        params_values, param_indices_list = resolve_unique_values_and_their_indices_in_parametersets(argnames, parametersets)
         # Store used (possibly generated) ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
+
+        # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
+        # artificial FixtureDef's so that later at test execution time we can rely
+        # on a proper FixtureDef to exist for fixture setup.
+        arg2fixturedefs = self._arg2fixturedefs
+        node = None
+        if scope_ is not Scope.Function:
+            node = get_scope_node(self.definition.parent, scope_)
+            if node is None:
+                assert scope_ is Scope.Class and isinstance(
+                    self.definition.parent, _pytest.python.Module
+                )
+                # Use module-level collector for class-scope (for now).
+                node = self.definition.parent
+        if node is None:
+            name2pseudofixturedef = None
+        else:
+            default: Dict[str, FixtureDef[Any]] = {}
+            name2pseudofixturedef = node.stash.setdefault(
+                name2pseudofixturedef_key, default
+            )
+        arg_values_types = self._resolve_arg_value_types(argnames, indirect)
+        for argname in argnames:
+            if arg_values_types[argname] == "params":
+                continue
+            if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
+                arg2fixturedefs[argname] = [name2pseudofixturedef[argname]]
+            else:
+                fixturedef = FixtureDef(
+                    fixturemanager=self.definition.session._fixturemanager,
+                    baseid="",
+                    argname=argname,
+                    func=get_direct_param_fixture_func,
+                    scope=scope_,
+                    params=params_values[argname],
+                    unittest=False,
+                    ids=None,
+                    is_pseudo=True
+                )
+                arg2fixturedefs[argname] = [fixturedef]
+                if name2pseudofixturedef is not None:
+                    name2pseudofixturedef[argname] = fixturedef
+
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
-            for param_index, (param_id, param_set) in enumerate(
-                zip(ids, parametersets)
-            ):
+            for param_id, param_set, param_indices in zip(ids, parametersets, param_indices_list):
                 newcallspec = callspec.setmulti(
-                    valtypes=arg_values_types,
                     argnames=argnames,
                     valset=param_set.values,
                     id=param_id,
                     marks=param_set.marks,
                     scope=scope_,
-                    param_index=param_index,
+                    param_indices=param_indices,
                 )
                 newcalls.append(newcallspec)
         self._calls = newcalls

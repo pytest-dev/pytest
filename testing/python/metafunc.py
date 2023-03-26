@@ -34,10 +34,18 @@ class TestMetafunc:
         # on the funcarg level, so we don't need a full blown
         # initialization.
         class FuncFixtureInfoMock:
-            name2fixturedefs = None
+            name2fixturedefs = {}
 
             def __init__(self, names):
                 self.names_closure = names
+
+        @dataclasses.dataclass
+        class FixtureManagerMock:
+            config: Any
+
+        @dataclasses.dataclass
+        class SessionMock:
+            _fixturemanager: FixtureManagerMock
 
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
@@ -47,6 +55,8 @@ class TestMetafunc:
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
+        definition.session = SessionMock(FixtureManagerMock({}))
+
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
@@ -99,7 +109,7 @@ class TestMetafunc:
         # When the input is an iterator, only len(args) are taken,
         # so the bad Exc isn't reached.
         metafunc.parametrize("x", [1, 2], ids=gen())  # type: ignore[arg-type]
-        assert [(x.funcargs, x.id) for x in metafunc._calls] == [
+        assert [(x.params, x.id) for x in metafunc._calls] == [
             ({"x": 1}, "0"),
             ({"x": 2}, "2"),
         ]
@@ -726,8 +736,10 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x, y", [("a", "b")], indirect=["x"])
-        assert metafunc._calls[0].funcargs == dict(y="b")
-        assert metafunc._calls[0].params == dict(x="a")
+        assert metafunc._calls[0].params == dict(x="a", y="b")
+        # Since `y` is a direct parameter, its pseudo-fixture would
+        # be registered.
+        assert list(metafunc._arg2fixturedefs.keys()) == ["y"]
 
     def test_parametrize_indirect_list_all(self) -> None:
         """#714"""
@@ -739,6 +751,7 @@ class TestMetafunc:
         metafunc.parametrize("x, y", [("a", "b")], indirect=["x", "y"])
         assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[0].params == dict(x="a", y="b")
+        assert list(metafunc._arg2fixturedefs.keys()) == []
 
     def test_parametrize_indirect_list_empty(self) -> None:
         """#714"""
@@ -748,8 +761,9 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x, y", [("a", "b")], indirect=[])
-        assert metafunc._calls[0].funcargs == dict(x="a", y="b")
-        assert metafunc._calls[0].params == {}
+        assert metafunc._calls[0].params == dict(x="a", y="b")
+        assert metafunc._calls[0].funcargs == {}
+        assert list(metafunc._arg2fixturedefs.keys()) == ["x", "y"]
 
     def test_parametrize_indirect_wrong_type(self) -> None:
         def func(x, y):
@@ -943,9 +957,11 @@ class TestMetafunc:
         metafunc = self.Metafunc(lambda x: None)
         metafunc.parametrize("x", [1, 2])
         assert len(metafunc._calls) == 2
-        assert metafunc._calls[0].funcargs == dict(x=1)
+        assert metafunc._calls[0].params == dict(x=1)
+        assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[0].id == "1"
-        assert metafunc._calls[1].funcargs == dict(x=2)
+        assert metafunc._calls[1].params == dict(x=2)
+        assert metafunc._calls[1].funcargs == {}
         assert metafunc._calls[1].id == "2"
 
     def test_parametrize_onearg_indirect(self) -> None:
@@ -960,10 +976,21 @@ class TestMetafunc:
         metafunc = self.Metafunc(lambda x, y: None)
         metafunc.parametrize(("x", "y"), [(1, 2), (3, 4)])
         assert len(metafunc._calls) == 2
-        assert metafunc._calls[0].funcargs == dict(x=1, y=2)
+        assert metafunc._calls[0].params == dict(x=1, y=2)
+        assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[0].id == "1-2"
-        assert metafunc._calls[1].funcargs == dict(x=3, y=4)
+        assert metafunc._calls[1].params == dict(x=3, y=4)
+        assert metafunc._calls[1].funcargs == {}
         assert metafunc._calls[1].id == "3-4"
+    
+    def test_parametrize_with_duplicate_values(self) -> None:
+        metafunc = self.Metafunc(lambda x, y: None)
+        metafunc.parametrize(("x", "y"), [(1, 2), (3, 4), (1, 5), (2, 2)])
+        assert len(metafunc._calls) == 4
+        assert metafunc._calls[0].indices == dict(x=0, y=0)
+        assert metafunc._calls[1].indices == dict(x=1, y=1)
+        assert metafunc._calls[2].indices == dict(x=0, y=2)
+        assert metafunc._calls[3].indices == dict(x=2, y=0)
 
     def test_parametrize_multiple_times(self, pytester: Pytester) -> None:
         pytester.makepyfile(

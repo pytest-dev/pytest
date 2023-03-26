@@ -15,6 +15,7 @@ from typing import cast
 from typing import Dict
 from typing import Generator
 from typing import Generic
+from typing import Hashable
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -146,78 +147,58 @@ def get_scope_node(
         assert_never(scope)
 
 
+def resolve_unique_values_and_their_indices_in_parametersets(
+    argnames: Sequence[str],
+    parametersets: Sequence[ParameterSet],
+) -> Tuple[Dict[str, List[object]], List[Tuple[int]]]:
+    """Resolve unique values and their indices in parameter sets. The index of a value
+    is determined by when it appears in the possible values for the first time. 
+    For example, given ``argnames`` and ``parametersets`` below, the result would be:
+
+    ::
+
+        argnames = ["A", "B", "C"]
+        parametersets = [("a1", "b1", "c1"), ("a1", "b2", "c1"), ("a1", "b3", "c2")]
+        result[0] = {"A": ["a1"], "B": ["b1", "b2", "b3"], "C": ["c1", "c2"]}
+        result[1] = [(0, 0, 0), (0, 1, 0), (0, 2, 1)]
+    
+    result is used in reordering `indirect`ly parametrized with multiple
+    parameters or directly parametrized tests to keep items using the same fixture or
+    pseudo-fixture values respectively, close together.
+
+    :param argnames:
+        Argument names passed to ``parametrize()``.
+    :param parametersets:
+        The parameter sets, each containing a set of values corresponding
+        to ``argnames``.
+    :returns:
+        Tuple of unique parameter values and their indices in parametersets.
+    """
+    indices = []
+    argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(dict)
+    argvalues_count: Dict[str, int] = defaultdict(lambda: 0)
+    unique_values: Dict[str, List[object]] = defaultdict(list)
+    for i, argname in enumerate(argnames):
+        argname_indices = []
+        for parameterset in parametersets:
+            value = parameterset.values[i]
+            try:
+                argname_indices.append(argname_value_indices_for_hashable_ones[argname][value])
+            except KeyError: # New unique value
+                argname_value_indices_for_hashable_ones[argname][value] = argvalues_count[argname]
+                argname_indices.append(argvalues_count[argname])
+                argvalues_count[argname] += 1
+                unique_values[argname].append(value)
+            except TypeError: # `value` is not hashable
+                argname_indices.append(argvalues_count[argname])
+                argvalues_count[argname] += 1
+                unique_values[argname].append(value)
+        indices.append(argname_indices)
+    return unique_values, list(zip(*indices))
+
+
 # Used for storing artificial fixturedefs for direct parametrization.
 name2pseudofixturedef_key = StashKey[Dict[str, "FixtureDef[Any]"]]()
-
-
-def add_funcarg_pseudo_fixture_def(
-    collector: nodes.Collector, metafunc: "Metafunc", fixturemanager: "FixtureManager"
-) -> None:
-    # This function will transform all collected calls to functions
-    # if they use direct funcargs (i.e. direct parametrization)
-    # because we want later test execution to be able to rely on
-    # an existing FixtureDef structure for all arguments.
-    # XXX we can probably avoid this algorithm  if we modify CallSpec2
-    # to directly care for creating the fixturedefs within its methods.
-    if not metafunc._calls[0].funcargs:
-        # This function call does not have direct parametrization.
-        return
-    # Collect funcargs of all callspecs into a list of values.
-    arg2params: Dict[str, List[object]] = {}
-    arg2scope: Dict[str, Scope] = {}
-    for callspec in metafunc._calls:
-        for argname, argvalue in callspec.funcargs.items():
-            assert argname not in callspec.params
-            callspec.params[argname] = argvalue
-            arg2params_list = arg2params.setdefault(argname, [])
-            callspec.indices[argname] = len(arg2params_list)
-            arg2params_list.append(argvalue)
-            if argname not in arg2scope:
-                scope = callspec._arg2scope.get(argname, Scope.Function)
-                arg2scope[argname] = scope
-        callspec.funcargs.clear()
-
-    # Register artificial FixtureDef's so that later at test execution
-    # time we can rely on a proper FixtureDef to exist for fixture setup.
-    arg2fixturedefs = metafunc._arg2fixturedefs
-    for argname, valuelist in arg2params.items():
-        # If we have a scope that is higher than function, we need
-        # to make sure we only ever create an according fixturedef on
-        # a per-scope basis. We thus store and cache the fixturedef on the
-        # node related to the scope.
-        scope = arg2scope[argname]
-        node = None
-        if scope is not Scope.Function:
-            node = get_scope_node(collector, scope)
-            if node is None:
-                assert scope is Scope.Class and isinstance(
-                    collector, _pytest.python.Module
-                )
-                # Use module-level collector for class-scope (for now).
-                node = collector
-        if node is None:
-            name2pseudofixturedef = None
-        else:
-            default: Dict[str, FixtureDef[Any]] = {}
-            name2pseudofixturedef = node.stash.setdefault(
-                name2pseudofixturedef_key, default
-            )
-        if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
-            arg2fixturedefs[argname] = [name2pseudofixturedef[argname]]
-        else:
-            fixturedef = FixtureDef(
-                fixturemanager=fixturemanager,
-                baseid="",
-                argname=argname,
-                func=get_direct_param_fixture_func,
-                scope=arg2scope[argname],
-                params=valuelist,
-                unittest=False,
-                ids=None,
-            )
-            arg2fixturedefs[argname] = [fixturedef]
-            if name2pseudofixturedef is not None:
-                name2pseudofixturedef[argname] = fixturedef
 
 
 def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
@@ -229,38 +210,58 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
     )
 
 
-# Parametrized fixture key, helper alias for code below.
-_Key = Tuple[object, ...]
+@dataclasses.dataclass(frozen=True)
+class FixtureArgKey:
+    argname: str
+    param_index: Optional[int]
+    param_value: Optional[Hashable]
+    scoped_item_path: Optional[Path]
+    item_cls: Optional[type]
 
 
-def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
+def get_fixture_arg_key(item: nodes.Item, argname: str, scope: Scope) -> FixtureArgKey:
+    param_index = None
+    param_value = None
+    if hasattr(item, 'callspec') and argname in item.callspec.params:
+        # Fixture is parametrized.
+        if isinstance(item.callspec.params[argname], Hashable):
+            param_value = item.callspec.params[argname]
+        else:
+            param_index = item.callspec.indices[argname]
+
+    if scope is Scope.Session:
+        scoped_item_path = None
+    elif scope is Scope.Package:
+        scoped_item_path = item.path.parent
+    elif scope in (Scope.Module, Scope.Class):
+        scoped_item_path = item.path
+    else:
+        assert_never(scope)
+
+    if scope is Scope.Class and type(item).__name__ != "DoctestItem":
+        item_cls = item.cls  # type: ignore[attr-defined]
+    else:
+        item_cls = None
+    
+    return FixtureArgKey(argname, param_index, param_value, scoped_item_path, item_cls)
+    
+
+def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[FixtureArgKey]:
     """Return list of keys for all parametrized arguments which match
     the specified scope."""
     assert scope is not Scope.Function
-    try:
-        callspec = item.callspec  # type: ignore[attr-defined]
-    except AttributeError:
-        pass
-    else:
-        cs: CallSpec2 = callspec
-        # cs.indices.items() is random order of argnames.  Need to
+    if hasattr(item, '_fixtureinfo'):
         # sort this so that different calls to
-        # get_parametrized_fixture_keys will be deterministic.
-        for argname, param_index in sorted(cs.indices.items()):
-            if cs._arg2scope[argname] != scope:
+        # get_fixture_keys will be deterministic.
+        for argname, fixture_def in sorted(item._fixtureinfo.name2fixturedefs.items()):
+            # In the case item is parametrized on the `argname` with
+            # a scope, it overrides that of the fixture.
+            if hasattr(item, 'callspec') and argname in item.callspec._arg2scope:
+                if item.callspec._arg2scope[argname] != scope:
+                    continue
+            elif fixture_def[-1]._scope != scope:
                 continue
-            if scope is Scope.Session:
-                key: _Key = (argname, param_index)
-            elif scope is Scope.Package:
-                key = (argname, param_index, item.path.parent)
-            elif scope is Scope.Module:
-                key = (argname, param_index, item.path)
-            elif scope is Scope.Class:
-                item_cls = item.cls  # type: ignore[attr-defined]
-                key = (argname, param_index, item.path, item_cls)
-            else:
-                assert_never(scope)
-            yield key
+            yield get_fixture_arg_key(item, argname, scope)
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
@@ -270,44 +271,66 @@ def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_K
 
 
 def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]] = {}
-    items_by_argkey: Dict[Scope, Dict[_Key, Deque[nodes.Item]]] = {}
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]] = {}
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, Deque[nodes.Item]]] = {}
     for scope in HIGH_SCOPES:
-        d: Dict[nodes.Item, Dict[_Key, None]] = {}
+        d: Dict[nodes.Item, Dict[FixtureArgKey, None]] = {}
         argkeys_cache[scope] = d
-        item_d: Dict[_Key, Deque[nodes.Item]] = defaultdict(deque)
+        item_d: Dict[FixtureArgKey, Deque[nodes.Item]] = defaultdict(deque)
         items_by_argkey[scope] = item_d
         for item in items:
-            keys = dict.fromkeys(get_parametrized_fixture_keys(item, scope), None)
+            keys = dict.fromkeys(get_fixture_keys(item, scope), None)
             if keys:
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
     items_dict = dict.fromkeys(items, None)
-    return list(
+    reordered_items = list(
         reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, Scope.Session)
     )
+    for scope in reversed(HIGH_SCOPES):
+        for key in items_by_argkey[scope]:
+            last_item_dependent_on_key = items_by_argkey[scope][key].pop()
+            fixturedef = last_item_dependent_on_key._fixtureinfo.name2fixturedefs[key.argname][-1]
+            if fixturedef.is_pseudo:
+                continue
+            last_item_dependent_on_key.teardown = functools.partial(
+                lambda other_finalizers, new_finalizer: [finalizer() for finalizer in (new_finalizer, other_finalizers)],
+                last_item_dependent_on_key.teardown,
+                functools.partial(fixturedef.finish, last_item_dependent_on_key._request)
+            )
+    return reordered_items
 
 
 def fix_cache_order(
     item: nodes.Item,
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]],
-    items_by_argkey: Dict[Scope, Dict[_Key, "Deque[nodes.Item]"]],
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
+    ignore: Set[Optional[FixtureArgKey]],
+    current_scope: Scope
 ) -> None:
     for scope in HIGH_SCOPES:
+        if current_scope < scope:
+            continue
         for key in argkeys_cache[scope].get(item, []):
+            if key in ignore:
+                continue
             items_by_argkey[scope][key].appendleft(item)
+            # Make sure last dependent item on a key
+            # remains updated while reordering.
+            if items_by_argkey[scope][key][-1] == item:
+                items_by_argkey[scope][key].pop()
 
 
 def reorder_items_atscope(
     items: Dict[nodes.Item, None],
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]],
-    items_by_argkey: Dict[Scope, Dict[_Key, "Deque[nodes.Item]"]],
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
     scope: Scope,
 ) -> Dict[nodes.Item, None]:
     if scope is Scope.Function or len(items) < 3:
         return items
-    ignore: Set[Optional[_Key]] = set()
+    ignore: Set[Optional[FixtureArgKey]] = set()
     items_deque = deque(items)
     items_done: Dict[nodes.Item, None] = {}
     scoped_items_by_argkey = items_by_argkey[scope]
@@ -332,7 +355,7 @@ def reorder_items_atscope(
                     i for i in scoped_items_by_argkey[slicing_argkey] if i in items
                 ]
                 for i in reversed(matching_items):
-                    fix_cache_order(i, argkeys_cache, items_by_argkey)
+                    fix_cache_order(i, argkeys_cache, items_by_argkey, ignore, scope)
                     items_deque.appendleft(i)
                 break
         if no_argkey_group:
@@ -343,10 +366,6 @@ def reorder_items_atscope(
                 items_done[item] = None
         ignore.add(slicing_argkey)
     return items_done
-
-
-def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
-    return request.param
 
 
 @dataclasses.dataclass
@@ -891,7 +910,7 @@ def fail_fixturefunc(fixturefunc, msg: str) -> NoReturn:
 
 
 def call_fixture_func(
-    fixturefunc: "_FixtureFunc[FixtureValue]", request: FixtureRequest, kwargs
+    fixturefunc: "_FixtureFunc[FixtureValue]", request: SubRequest, kwargs
 ) -> FixtureValue:
     if is_generator(fixturefunc):
         fixturefunc = cast(
@@ -963,6 +982,7 @@ class FixtureDef(Generic[FixtureValue]):
         ids: Optional[
             Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
         ] = None,
+        is_pseudo: bool = False,
     ) -> None:
         self._fixturemanager = fixturemanager
         # The "base" node ID for the fixture.
@@ -1013,6 +1033,9 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: Optional[_FixtureCachedResult[FixtureValue]] = None
         self._finalizers: List[Callable[[], object]] = []
+
+        # Whether fixture is a pseudo-fixture made in direct parametrizations.
+        self.is_pseudo = is_pseudo
 
     @property
     def scope(self) -> "_ScopeName":
@@ -1572,6 +1595,9 @@ class FixtureManager:
             # another fixture, while requesting the super fixture, keep going
             # in case the super fixture is parametrized (#1953).
             for fixturedef in reversed(fixture_defs):
+                # Skip pseudo-fixtures
+                if fixturedef.is_pseudo:
+                    continue
                 # Fixture is parametrized, apply it and stop.
                 if fixturedef.params is not None:
                     metafunc.parametrize(

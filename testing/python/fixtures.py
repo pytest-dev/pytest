@@ -12,6 +12,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+from _pytest.scope import HIGH_SCOPES
 
 
 def test_getfuncargnames_functions():
@@ -4472,3 +4473,497 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines([expected])
     assert result.ret == ExitCode.TESTS_FAILED
+
+
+def test_teardown_high_scope_fixture_at_last_dependent_item_simple(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.fixture(scope='module', params=[None])
+        def fixture():
+            yield
+            print("Tearing down fixture!")
+
+        def test_0(fixture):
+            pass
+        
+        def test_1(fixture):
+            print("Running test_1!")
+        
+        def test_2():
+            print("Running test_2!")
+        """
+    )
+    result = pytester.runpytest("-s")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*Running test_1!*",
+        "*Tearing down fixture!*",
+        "*Running test_2!*",
+    ])
+
+
+def test_teardown_high_scope_fixture_at_last_dependent_item_simple_2(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.fixture(scope='module', params=[None])
+        def fixture1():
+            yield
+            print("Tearing down fixture!")
+        
+        @pytest.fixture(scope='module', params=[None])
+        def fixture2():
+            yield
+            print("Tearing down fixture!")
+
+        def test_0(fixture1):
+            pass
+        
+        def test_1(fixture1, fixture2):
+            print("Running test_1!")
+        
+        def test_2():
+            print("Running test_2!")
+        """
+    )
+    result = pytester.runpytest("-s")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*Running test_1!*",
+        "*Tearing down fixture!*",
+        "*Tearing down fixture!*",
+        "*Running test_2!*",
+    ])
+
+
+def test_teardown_high_scope_fixture_at_last_dependent_item_complex(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        **{
+            "tests/conftest.py": "import pytest\n"
+            + "\n".join(
+                [
+                    textwrap.dedent(f"""
+                        @pytest.fixture(scope='{scope.value}', params=[None])
+                        def {scope.value}_scope_fixture(request):
+                            yield None
+                            print("Tearing down {scope.value}_scope_fixture")
+                    """)
+                    for scope in HIGH_SCOPES
+                ]
+            ),
+            "tests/test_module_a.py": """
+            class TestClass:
+                def test_class1(self, class_scope_fixture):
+                    pass
+
+                def test_class2(self):
+                    print("class_scope_fixture should have been torn down")
+
+                def test_class3(self, class_scope_fixture):
+                    print("class_scope_fixture should'nt have been torn down")
+
+                def teardown_class(self):
+                    print("Tearing down TestClass")
+
+            def test_module1(module_scope_fixture):
+                pass
+
+
+            def test_module2():
+                print("module_scope_fixture should have been torn down")
+
+            def teardown_module():
+                print("Tearing down test_module_a")
+
+            def test_package1(package_scope_fixture):
+                pass
+        """,
+            "tests/test_module_b.py": """
+            import pytest
+
+            def test_package2():
+                print("package_scope_fixture should have been torn down")
+
+            def test_session1(session_scope_fixture):
+                pass
+
+            def test_session2():
+                print("session_scope_fixture should have been torn down")
+
+            def test_session3(session_scope_fixture):
+                print("session_scope_fixture should'nt have been torn down")
+
+        """,
+            "tests/__init__.py": """
+            def teardown_module():
+                print("Tearing down package tests")
+            """,
+        }
+    )
+    result = pytester.runpytest("-s")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        [
+            "*class_scope_fixture should'nt have been torn down*",
+            "*Tearing down class_scope_fixture*",
+            "*class_scope_fixture should have been torn down*",
+            "*Tearing down TestClass*",
+            "*Tearing down module_scope_fixture*",
+            "*module_scope_fixture should have been torn down*",
+            "*Tearing down test_module_a*",
+            "*Tearing down package_scope_fixture*",
+            "*package_scope_fixture should have been torn down*",
+            "*session_scope_fixture should'nt have been torn down*",
+            "*Tearing down session_scope_fixture*",
+            "*session_scope_fixture should have been torn down*",
+            "*Tearing down package tests*",
+        ]
+    )
+
+
+def test_reorder_with_nonparametrized_fixtures(pytester: Pytester):
+    path = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def a():
+            return "a"
+
+        @pytest.fixture(scope='module')
+        def b():
+            return "b"
+
+        def test_0(a):
+            pass
+
+        def test_1(b):
+            pass
+
+        def test_2(a):
+            pass
+        
+        def test_3(b):
+            pass
+            
+        def test_4(b):
+            pass
+        """
+    )
+    result = pytester.runpytest(path, "-q", "--collect-only")
+    result.stdout.fnmatch_lines([f"*test_{i}*" for i in [0, 2, 1, 3, 4]])
+
+
+def test_reorder_with_both_parametrized_and_nonparametrized_fixtures(pytester: Pytester):
+    path = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module',params=[None])
+        def parametrized():
+            yield
+
+        @pytest.fixture(scope='module')
+        def nonparametrized():
+            yield
+
+        def test_0(parametrized, nonparametrized):
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(nonparametrized):
+            pass
+        """
+    )
+    result = pytester.runpytest(path, "-q", "--collect-only")
+    result.stdout.fnmatch_lines([f"*test_{i}*" for i in [0, 2, 1]])
+
+
+def test_add_new_test_dependent_on_a_fixuture_and_use_nfplugin(pytester: Pytester):
+    test_module_string = """
+    import pytest
+
+    @pytest.fixture(scope='module')
+    def fixture():
+        yield
+        print("Tearing down fixture!")
+
+    def test_0(fixture):
+        pass
+
+    def test_1():
+        print("Running test_1!")
+    """
+    path = pytester.makepyfile(test_module_string)
+    result = pytester.runpytest(path, "-s")
+    result.stdout.fnmatch_lines([
+        "*Tearing down fixture!*",
+        "*Running test_1!*"
+    ])
+    test_module_string += """
+    def test_2(fixture):
+        pass
+    """
+    path = pytester.makepyfile(test_module_string)
+    result = pytester.runpytest(path, "--new-first", "-s")
+    result.stdout.fnmatch_lines([
+        "*Tearing down fixture!*",
+        "*Running test_1!*",
+        "*Tearing down fixture!*",
+    ])
+
+
+def test_last_dependent_test_on_a_fixture_is_in_last_failed_using_lfplugin(pytester: Pytester):
+    test_module_string = """
+    import pytest
+
+    @pytest.fixture(scope='module')
+    def fixture():
+        yield
+        print("Tearing down fixture!")
+
+    def test_0(fixture):
+        print("Running test_0!")
+        assert {0}
+
+    def test_1(fixture):
+        print("Running test_1!")
+        assert True
+    
+    def test_2():
+        print("Running test_2!")
+        assert {0}
+    """
+    path = pytester.makepyfile(test_module_string.format("False"))
+    result = pytester.runpytest(path)
+    path = pytester.makepyfile(test_module_string.format("True"))
+    result = pytester.runpytest(path, "--last-failed", "-s")
+    result.stdout.fnmatch_lines([
+        "*Running test_0!*",
+        "*Running test_2!*",
+        "*Tearing down fixture!*",
+    ])
+
+
+@pytest.mark.xfail(reason="We do not attempt to tear down early the fixture that is overridden and also is used")
+def test_early_teardown_of_overridden_and_being_used_fixture(pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+            
+            @pytest.fixture(scope='module')
+            def fixture0():
+                yield None
+                print("Tearing down higher-level fixture0")
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+            
+            @pytest.fixture(scope='module')
+            def fixture0(fixture0):
+                yield None
+                print("Tearing down lower-level fixture0")
+
+            def test_0(fixture0):
+                pass
+            
+            def test_1():
+                print("Both `fixture0`s should have been torn down")
+            """
+        )
+        result = pytester.runpytest("-s")
+        result.stdout.fnmatch_lines([
+            "*Tearing down lower-level fixture0*",
+            "*Tearing down higher-level fixture0*",
+            "*Both `fixture0`s should have been torn down*",
+        ])
+
+
+def test_basing_fixture_argkeys_on_param_values_rather_than_on_param_indices(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def fixture1(request):
+            yield request.param
+            print(f"Tearing down fixture1 with param value `{request.param}`")
+
+        @pytest.mark.parametrize("fixture1",[1, 0],indirect=True)
+        def test_0(fixture1):
+            pass
+
+        @pytest.mark.parametrize("fixture1",[2, 1],indirect=True)
+        def test_1(fixture1):
+            pass
+
+        def test_2():
+            print("fixture1 should have been torn down 3 times")
+        
+        @pytest.mark.parametrize("param", [0,1,2], scope='module')
+        def test_3(param):
+            pass
+        
+        @pytest.mark.parametrize("param", [2,1,0], scope='module')
+        def test_4(param):
+            pass
+    """)
+    result = pytester.runpytest("--collect-only")
+    result.stdout.re_match_lines([
+        r"  <Function test_0\[1\]>",
+        r"  <Function test_1\[1\]>",
+        r"  <Function test_0\[0\]>",
+        r"  <Function test_1\[2\]>",
+        r"  <Function test_2>",
+        r"  <Function test_3\[0\]>",
+        r"  <Function test_4\[0\]>",
+        r"  <Function test_3\[1\]>",
+        r"  <Function test_4\[1\]>",
+        r"  <Function test_3\[2\]>",
+        r"  <Function test_4\[2\]>",
+    ])
+    result = pytester.runpytest("-s")
+    result.stdout.fnmatch_lines([
+        "*Tearing down fixture1 with param value `1`*",
+        "*Tearing down fixture1 with param value `0`*",
+        "*Tearing down fixture1 with param value `2`*",
+        "*fixture1 should have been torn down 3 times*",
+    ])
+
+
+def test_basing_fixture_argkeys_on_param_values_rather_than_on_param_indices_2(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def fixture1(request):
+            yield request.param
+            print(f"Tearing down fixture1 with param value `{request.param}`")
+
+        @pytest.fixture(scope='module')
+        def fixture2(request):
+            yield request.param
+            print(f"Tearing down fixture2 with param value `{request.param}`")
+
+        @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect=True)
+        def test_1(fixture1, fixture2):
+            pass
+
+        @pytest.mark.parametrize("fixture1, fixture2", [("c", 4), ("a", 3)], indirect=True)
+        def test_2(fixture1, fixture2):
+            pass
+        
+        def test_3():
+            print("All fixtures should have been torn down")
+        
+        @pytest.mark.parametrize("param1, param2", [("a", 0), ("b", 1), ("a", 2)], scope='module')
+        def test_4(param1, param2):
+            pass
+        
+        @pytest.mark.parametrize("param1, param2", [("c", 4), ("a", 3)], scope='module')
+        def test_5(param1, param2):
+            pass
+    """)
+    result = pytester.runpytest("--collect-only")
+    result.stdout.re_match_lines([
+        r"  <Function test_1\[a-0\]>",
+        r"  <Function test_1\[a-2\]>",
+        r"  <Function test_2\[a-3\]>",
+        r"  <Function test_1\[b-1\]>",
+        r"  <Function test_2\[c-4\]>",
+        r"  <Function test_3>",
+        r"  <Function test_4\[a-0\]>",
+        r"  <Function test_4\[a-2\]>",
+        r"  <Function test_5\[a-3\]>",
+        r"  <Function test_4\[b-1\]>",
+        r"  <Function test_5\[c-4\]>",
+    ])
+    result = pytester.runpytest("-s")
+    result.stdout.fnmatch_lines([
+        "*Tearing down fixture2 with param value `0`*",
+        "*Tearing down fixture2 with param value `2`*",
+        "*Tearing down fixture2 with param value `3`*",
+        "*Tearing down fixture1 with param value `a`*",
+        "*Tearing down fixture2 with param value `1`*",
+        "*Tearing down fixture1 with param value `b`*",
+        "*Tearing down fixture2 with param value `4`*",
+        "*Tearing down fixture1 with param value `c`*",
+        "*All fixtures should have been torn down*",
+    ])
+
+
+def test_early_teardown_when_an_item_is_the_last_dependent_on_multiple_fixtures(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def fixture1():
+            yield None
+            print("Tearing down fixture1")
+        
+        @pytest.fixture(scope='module')
+        def fixture2():
+            yield None
+            print(f"Tearing down fixture2")
+
+        @pytest.fixture(scope='module')
+        def fixture3():
+            yield None
+            print(f"Tearing down fixture3")
+
+        def test_0(fixture1):
+            print("No fixture should have been torn down")
+
+        def test_1(fixture1, fixture2):
+            print("No fixture should have been torn down")
+
+        def test_2(fixture1, fixture2, fixture3):
+            print("No fixture should have been torn down")
+
+        def test_3(fixture1, fixture2, fixture3):
+            print("No fixture should have been torn down")
+        
+        def test_4():
+            print("All fixtures should have been torn down")
+    """)
+    result = pytester.runpytest("-s")
+    result.stdout.fnmatch_lines([
+        "*No fixture should have been torn down*",
+        "*No fixture should have been torn down*",
+        "*No fixture should have been torn down*",
+        "*No fixture should have been torn down*",
+        "*Tearing down fixture3*",
+        "*Tearing down fixture2*",
+        "*Tearing down fixture1*",
+        "*All fixtures should have been torn down*",
+    ])
+
+
+def test_early_teardown_does_not_occur_for_pseudo_fixtures(pytester: Pytester) -> None:
+    """
+    Check that early teardown does not occur for pseudo fixtures which are created in
+    directly parametrized tests with high scopes.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("param", [0,1,2], scope='module')
+        def test_0(param):
+            pass
+        
+        @pytest.mark.parametrize("param", [0,1,2], scope='module')
+        def test_1(param):
+            pass
+        """
+    )
+    items = pytester.inline_run().getcalls("pytest_collection_finish")[0].session.items
+    import functools
+    assert not any([isinstance(item.teardown, functools.partial) for item in items])
