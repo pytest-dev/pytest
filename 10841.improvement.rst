@@ -1,0 +1,1 @@
+only create <system-out> in junit.xml once for each test.

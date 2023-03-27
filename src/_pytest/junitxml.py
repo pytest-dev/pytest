@@ -186,9 +186,18 @@ class _NodeReporter:
         return "\n".join([header.center(80, "-"), content, ""])
 
     def _write_content(self, report: TestReport, content: str, jheader: str) -> None:
-        tag = ET.Element(jheader)
-        tag.text = bin_xml_escape(content)
-        self.append(tag)
+        exists = False
+        for elem in next(iter(self.xml.node_reporters.values())).nodes:
+            if jheader in elem.tag:
+                exists = True
+                tag = elem
+                tag.text = (
+                    tag.text + bin_xml_escape(content) if tag.text is not None else None
+                )
+        if not exists:
+            tag = ET.Element(jheader)
+            tag.text = bin_xml_escape(content)
+            self.append(tag)
 
     def append_pass(self, report: TestReport) -> None:
         self.add_stats("passed")
