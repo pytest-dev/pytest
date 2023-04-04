@@ -1,0 +1,1 @@
+pytest should no longer crash on AST with pathological position attributes.
