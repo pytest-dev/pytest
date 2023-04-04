@@ -1562,6 +1562,6 @@ def test_raising_unittest_skiptest_during_collection(
     passed, skipped, failed = reprec.countoutcomes()
     assert passed == 0
     # Unittest reports one fake test for a skipped module.
-    assert skipped == 1
-    assert failed == 0
-    assert reprec.ret == ExitCode.NO_TESTS_COLLECTED
+    assert skipped == 0
+    assert failed == 1
+    assert reprec.ret == ExitCode.INTERRUPTED

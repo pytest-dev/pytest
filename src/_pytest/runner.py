@@ -375,10 +375,6 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
         outcome: Literal["passed", "skipped", "failed"] = "passed"
     else:
         skip_exceptions = [Skipped]
-        unittest = sys.modules.get("unittest")
-        if unittest is not None:
-            # Type ignored because unittest is loaded dynamically.
-            skip_exceptions.append(unittest.SkipTest)  # type: ignore
         if isinstance(call.excinfo.value, tuple(skip_exceptions)):
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
