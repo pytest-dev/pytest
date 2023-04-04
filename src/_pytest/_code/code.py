@@ -743,7 +743,7 @@ class FormattedExcinfo:
     ) -> List[str]:
         """Return formatted and marked up source lines."""
         lines = []
-        if source is None or line_index >= len(source.lines):
+        if source is None or line_index >= len(source.lines) or line_index < -len(source.lines):
             source = Source("???")
             line_index = 0
         if line_index < 0:
