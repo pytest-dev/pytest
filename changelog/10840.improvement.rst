@@ -1,0 +1,1 @@
+pytest should no longer crash on AST with pathological position attributes, for example testing AST produced by `Hylang <https://github.com/hylang/hy>__`.

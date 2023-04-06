@@ -461,6 +461,24 @@ class TestFormattedExcinfo:
         assert lines[0] == "|   def f(x):"
         assert lines[1] == "        pass"
 
+    def test_repr_source_out_of_bounds(self):
+        pr = FormattedExcinfo()
+        source = _pytest._code.Source(
+            """\
+            def f(x):
+                pass
+            """
+        ).strip()
+        pr.flow_marker = "|"  # type: ignore[misc]
+
+        lines = pr.get_source(source, 100)
+        assert len(lines) == 1
+        assert lines[0] == "|   ???"
+
+        lines = pr.get_source(source, -100)
+        assert len(lines) == 1
+        assert lines[0] == "|   ???"
+
     def test_repr_source_excinfo(self) -> None:
         """Check if indentation is right."""
         try:
