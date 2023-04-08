@@ -1,1 +1,0 @@
-pytest no longer depends on the `attrs` package (don't worry, nice diffs for attrs classes are still supported).

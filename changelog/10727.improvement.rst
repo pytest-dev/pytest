@@ -1,1 +1,0 @@
-Split the report header for ``rootdir``, ``config file`` and ``testpaths`` so each has its own line.
