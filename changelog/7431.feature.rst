@@ -1,1 +1,0 @@
-``--log-disable`` CLI option added to disable individual loggers.
