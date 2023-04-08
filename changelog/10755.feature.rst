@@ -1,1 +1,0 @@
-:confval:`console_output_style` now supports ``progress-even-when-capture-no`` to force the use of the progress output even when capture is disabled. This is useful in large test suites where capture may have significant performance impact.

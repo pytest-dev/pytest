@@ -1,1 +1,0 @@
-Added ``start`` and ``stop`` timestamps to ``TestReport`` objects.

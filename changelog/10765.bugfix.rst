@@ -1,1 +1,0 @@
-Fixed :fixture:`tmp_path` fixture always raising :class:`OSError` on ``emscripten`` platform due to missing :func:`os.getuid`.
