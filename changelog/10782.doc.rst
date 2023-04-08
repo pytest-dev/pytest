@@ -1,1 +1,0 @@
-Fixed the minimal example in :ref:`goodpractices`: ``pip install -e .`` requires a ``version`` entry in ``pyproject.toml`` to run successfully.
