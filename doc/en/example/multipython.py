@@ -8,7 +8,7 @@ import textwrap
 
 import pytest
 
-pythonlist = ["python3.5", "python3.6", "python3.7"]
+pythonlist = ["python3.9", "python3.10", "python3.11"]
 
 
 @pytest.fixture(params=pythonlist)
