@@ -95,7 +95,12 @@ Improved Documentation
 Trivial/Internal Changes
 ------------------------
 
-- `#10669 <https://github.com/pytest-dev/pytest/issues/10669>`_: pytest no longer depends on the `attrs` package (don't worry, nice diffs for attrs classes are still supported).
+- `#10669 <https://github.com/pytest-dev/pytest/issues/10669>`_: pytest no longer directly depends on the `attrs <https://www.attrs.org/en/stable/>`__ package. While
+  we at pytest all love the package dearly and would like to thank the ``attrs`` team for many years of cooperation and support,
+  it makes sense for ``pytest`` to have as little external dependencies as possible, as this helps downstream projects.
+  With that in mind, we have replaced the pytest's limited internal usage to use the standard library's ``dataclasses`` instead.
+
+  Nice diffs for ``attrs`` classes are still supported though.
 
 
 pytest 7.2.2 (2023-03-03)
