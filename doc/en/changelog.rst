@@ -100,7 +100,7 @@ Trivial/Internal Changes
   it makes sense for ``pytest`` to have as little external dependencies as possible, as this helps downstream projects.
   With that in mind, we have replaced the pytest's limited internal usage to use the standard library's ``dataclasses`` instead.
 
-  Nice diffs for ``attrs`` classes are still supported thought.
+  Nice diffs for ``attrs`` classes are still supported though.
 
 
 pytest 7.2.2 (2023-03-03)
