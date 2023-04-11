@@ -298,6 +298,9 @@ class TestCaseFunction(Function):
     def stopTest(self, testcase: "unittest.TestCase") -> None:
         pass
 
+    def addDuration(self, testcase: "unittest.TestCase", elapsed: float) -> None:
+        pass
+
     def runtest(self) -> None:
         from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
 
