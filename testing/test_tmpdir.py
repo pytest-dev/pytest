@@ -512,20 +512,20 @@ class TestRmRf:
 
         # unknown exception
         with pytest.warns(pytest.PytestWarning):
-            exc_info1 = (None, RuntimeError(), None)
+            exc_info1 = (RuntimeError, RuntimeError(), None)
             on_rm_rf_error(os.unlink, str(fn), exc_info1, start_path=tmp_path)
             assert fn.is_file()
 
         # we ignore FileNotFoundError
-        exc_info2 = (None, FileNotFoundError(), None)
+        exc_info2 = (FileNotFoundError, FileNotFoundError(), None)
         assert not on_rm_rf_error(None, str(fn), exc_info2, start_path=tmp_path)
 
         # unknown function
         with pytest.warns(
             pytest.PytestWarning,
-            match=r"^\(rm_rf\) unknown function None when removing .*foo.txt:\nNone: ",
+            match=r"^\(rm_rf\) unknown function None when removing .*foo.txt:\n<class 'PermissionError'>: ",
         ):
-            exc_info3 = (None, PermissionError(), None)
+            exc_info3 = (PermissionError, PermissionError(), None)
             on_rm_rf_error(None, str(fn), exc_info3, start_path=tmp_path)
             assert fn.is_file()
 
@@ -533,12 +533,12 @@ class TestRmRf:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.warns(None) as warninfo:  # type: ignore[call-overload]
-                exc_info4 = (None, PermissionError(), None)
+                exc_info4 = PermissionError()
                 on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
                 assert fn.is_file()
             assert not [x.message for x in warninfo]
 
-        exc_info5 = (None, PermissionError(), None)
+        exc_info5 = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info5, start_path=tmp_path)
         assert not fn.is_file()
 
