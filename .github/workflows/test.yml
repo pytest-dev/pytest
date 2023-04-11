@@ -43,6 +43,7 @@ jobs:
           "windows-py39",
           "windows-py310",
           "windows-py311",
+          "windows-py312",
 
           "ubuntu-py37",
           "ubuntu-py37-pluggy",
@@ -51,12 +52,13 @@ jobs:
           "ubuntu-py39",
           "ubuntu-py310",
           "ubuntu-py311",
+          "ubuntu-py312",
           "ubuntu-pypy3",
 
           "macos-py37",
-          "macos-py38",
           "macos-py39",
           "macos-py310",
+          "macos-py312",
 
           "docs",
           "doctesting",
@@ -86,9 +88,13 @@ jobs:
             os: windows-latest
             tox_env: "py310-xdist"
           - name: "windows-py311"
-            python: "3.11-dev"
+            python: "3.11"
             os: windows-latest
             tox_env: "py311"
+          - name: "windows-py312"
+            python: "3.12-dev"
+            os: windows-latest
+            tox_env: "py312"
 
           - name: "ubuntu-py37"
             python: "3.7"
@@ -116,9 +122,14 @@ jobs:
             os: ubuntu-latest
             tox_env: "py310-xdist"
           - name: "ubuntu-py311"
-            python: "3.11-dev"
+            python: "3.11"
             os: ubuntu-latest
             tox_env: "py311"
+            use_coverage: true
+          - name: "ubuntu-py312"
+            python: "3.12-dev"
+            os: ubuntu-latest
+            tox_env: "py312"
             use_coverage: true
           - name: "ubuntu-pypy3"
             python: "pypy-3.7"
@@ -129,19 +140,19 @@ jobs:
             python: "3.7"
             os: macos-latest
             tox_env: "py37-xdist"
-          - name: "macos-py38"
-            python: "3.8"
-            os: macos-latest
-            tox_env: "py38-xdist"
-            use_coverage: true
           - name: "macos-py39"
             python: "3.9"
             os: macos-latest
             tox_env: "py39-xdist"
+            use_coverage: true
           - name: "macos-py310"
             python: "3.10"
             os: macos-latest
             tox_env: "py310-xdist"
+          - name: "macos-py312"
+            python: "3.12-dev"
+            os: macos-latest
+            tox_env: "py312-xdist"
 
           - name: "plugins"
             python: "3.9"
