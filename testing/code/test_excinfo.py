@@ -11,7 +11,7 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import _pytest
+import _pytest._code
 import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
@@ -290,7 +290,7 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, fail)
         assert excinfo.traceback.recursionindex() is None
 
-    def test_traceback_getcrashentry(self):
+    def test_getreprcrash(self):
         def i():
             __tracebackhide__ = True
             raise ValueError
@@ -306,15 +306,13 @@ class TestTraceback_f_g_h:
             g()
 
         excinfo = pytest.raises(ValueError, f)
-        tb = excinfo.traceback
-        entry = tb.getcrashentry(excinfo)
-        assert entry is not None
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
         co = _pytest._code.Code.from_function(h)
-        assert entry.frame.code.path == co.path
-        assert entry.lineno == co.firstlineno + 1
-        assert entry.frame.code.name == "h"
+        assert reprcrash.path == str(co.path)
+        assert reprcrash.lineno == co.firstlineno + 1 + 1
 
-    def test_traceback_getcrashentry_empty(self):
+    def test_getreprcrash_empty(self):
         def g():
             __tracebackhide__ = True
             raise ValueError
@@ -324,7 +322,7 @@ class TestTraceback_f_g_h:
             g()
 
         excinfo = pytest.raises(ValueError, f)
-        assert excinfo.traceback.getcrashentry(excinfo) is None
+        assert excinfo._getreprcrash() is None
 
 
 def test_excinfo_exconly():

@@ -414,17 +414,6 @@ class Traceback(List[TracebackEntry]):
             fn = _excinfo_or_fn
         return Traceback(filter(fn, self))
 
-    def getcrashentry(
-        self, excinfo: Optional["ExceptionInfo[BaseException]"]
-    ) -> Optional[TracebackEntry]:
-        """Return last non-hidden traceback entry that lead to the exception of
-        a traceback, or None if all hidden."""
-        for i in range(-1, -len(self) - 1, -1):
-            entry = self[i]
-            if not entry.ishidden(excinfo):
-                return entry
-        return None
-
     def recursionindex(self) -> Optional[int]:
         """Return the index of the frame/TracebackEntry where recursion originates if
         appropriate, None if no recursion occurred."""
@@ -628,12 +617,15 @@ class ExceptionInfo(Generic[E]):
         return isinstance(self.value, exc)
 
     def _getreprcrash(self) -> Optional["ReprFileLocation"]:
-        exconly = self.exconly(tryshort=True)
-        entry = self.traceback.getcrashentry(self)
-        if entry is None:
-            return None
-        path, lineno = entry.frame.code.raw.co_filename, entry.lineno
-        return ReprFileLocation(path, lineno + 1, exconly)
+        # Find last non-hidden traceback entry that led to the exception of the
+        # traceback, or None if all hidden.
+        for i in range(-1, -len(self.traceback) - 1, -1):
+            entry = self.traceback[i]
+            if not entry.ishidden(self):
+                path, lineno = entry.frame.code.raw.co_filename, entry.lineno
+                exconly = self.exconly(tryshort=True)
+                return ReprFileLocation(path, lineno + 1, exconly)
+        return None
 
     def getrepr(
         self,
