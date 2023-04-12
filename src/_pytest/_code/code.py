@@ -469,22 +469,41 @@ class ExceptionInfo(Generic[E]):
         self._traceback = traceback
 
     @classmethod
-    def from_exc_info(
+    def from_exception(
         cls,
-        exc_info: Tuple[Type[E], E, TracebackType],
+        # Ignoring error: "Cannot use a covariant type variable as a parameter".
+        # This is OK to ignore because this class is (conceptually) readonly.
+        # See https://github.com/python/mypy/issues/7049.
+        exception: E,  # type: ignore[misc]
         exprinfo: Optional[str] = None,
     ) -> "ExceptionInfo[E]":
-        """Return an ExceptionInfo for an existing exc_info tuple.
+        """Return an ExceptionInfo for an existing exception.
 
-        .. warning::
-
-            Experimental API
+        The exception must have a non-``None`` ``__traceback__`` attribute,
+        otherwise this function fails with an assertion error. This means that
+        the exception must have been raised, or added a traceback with the
+        :py:meth:`~BaseException.with_traceback()` method.
 
         :param exprinfo:
             A text string helping to determine if we should strip
             ``AssertionError`` from the output. Defaults to the exception
             message/``__str__()``.
+
+        .. versionadded:: 7.4
         """
+        assert (
+            exception.__traceback__
+        ), "Exceptions passed to ExcInfo.from_exception(...) must have a non-None __traceback__."
+        exc_info = (type(exception), exception, exception.__traceback__)
+        return cls.from_exc_info(exc_info, exprinfo)
+
+    @classmethod
+    def from_exc_info(
+        cls,
+        exc_info: Tuple[Type[E], E, TracebackType],
+        exprinfo: Optional[str] = None,
+    ) -> "ExceptionInfo[E]":
+        """Like :func:`from_exception`, but using old-style exc_info tuple."""
         _striptext = ""
         if exprinfo is None and isinstance(exc_info[1], AssertionError):
             exprinfo = getattr(exc_info[1], "msg", None)
@@ -965,21 +984,13 @@ class FormattedExcinfo:
 
             if e.__cause__ is not None and self.chain:
                 e = e.__cause__
-                excinfo_ = (
-                    ExceptionInfo.from_exc_info((type(e), e, e.__traceback__))
-                    if e.__traceback__
-                    else None
-                )
+                excinfo_ = ExceptionInfo.from_exception(e) if e.__traceback__ else None
                 descr = "The above exception was the direct cause of the following exception:"
             elif (
                 e.__context__ is not None and not e.__suppress_context__ and self.chain
             ):
                 e = e.__context__
-                excinfo_ = (
-                    ExceptionInfo.from_exc_info((type(e), e, e.__traceback__))
-                    if e.__traceback__
-                    else None
-                )
+                excinfo_ = ExceptionInfo.from_exception(e) if e.__traceback__ else None
                 descr = "During handling of the above exception, another exception occurred:"
             else:
                 e = None
