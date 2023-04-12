@@ -186,7 +186,7 @@ class TestTraceback_f_g_h:
 
     def test_traceback_filter(self):
         traceback = self.excinfo.traceback
-        ntraceback = traceback.filter()
+        ntraceback = traceback.filter(self.excinfo)
         assert len(ntraceback) == len(traceback) - 1
 
     @pytest.mark.parametrize(
@@ -217,7 +217,7 @@ class TestTraceback_f_g_h:
 
         excinfo = pytest.raises(ValueError, h)
         traceback = excinfo.traceback
-        ntraceback = traceback.filter()
+        ntraceback = traceback.filter(excinfo)
         print(f"old: {traceback!r}")
         print(f"new: {ntraceback!r}")
 
@@ -307,7 +307,7 @@ class TestTraceback_f_g_h:
 
         excinfo = pytest.raises(ValueError, f)
         tb = excinfo.traceback
-        entry = tb.getcrashentry()
+        entry = tb.getcrashentry(excinfo)
         assert entry is not None
         co = _pytest._code.Code.from_function(h)
         assert entry.frame.code.path == co.path
@@ -324,7 +324,7 @@ class TestTraceback_f_g_h:
             g()
 
         excinfo = pytest.raises(ValueError, f)
-        assert excinfo.traceback.getcrashentry() is None
+        assert excinfo.traceback.getcrashentry(excinfo) is None
 
 
 def test_excinfo_exconly():
@@ -626,7 +626,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1)
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         p = FormattedExcinfo()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
 
@@ -659,7 +659,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1, "m" * 90, 5, 13, "z" * 120)
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
         reprfuncargs = p.repr_args(entry)
@@ -686,7 +686,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1, "a", "b", c="d")
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
         reprfuncargs = p.repr_args(entry)
@@ -960,7 +960,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -994,7 +994,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.f)
         tmp_path.joinpath("mod.py").unlink()
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -1026,7 +1026,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.f)
         tmp_path.joinpath("mod.py").write_text("asdf")
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -1123,7 +1123,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         excinfo.traceback[1].set_repr_style("short")
         excinfo.traceback[2].set_repr_style("short")
         r = excinfo.getrepr(style="long")
@@ -1391,7 +1391,7 @@ raise ValueError()
         with pytest.raises(TypeError) as excinfo:
             mod.f()
         # previously crashed with `AttributeError: list has no attribute get`
-        excinfo.traceback.filter()
+        excinfo.traceback.filter(excinfo)
 
 
 @pytest.mark.parametrize("style", ["short", "long"])

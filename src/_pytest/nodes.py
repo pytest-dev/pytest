@@ -560,7 +560,7 @@ class Collector(Node):
             ntraceback = traceback.cut(path=self.path)
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
-            excinfo.traceback = ntraceback.filter()
+            excinfo.traceback = ntraceback.filter(excinfo)
 
 
 def _check_initialpaths_for_relpath(session: "Session", path: Path) -> Optional[str]:

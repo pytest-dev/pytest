@@ -1814,7 +1814,7 @@ class Function(PyobjMixin, nodes.Item):
                     if not ntraceback:
                         ntraceback = traceback
 
-            excinfo.traceback = ntraceback.filter()
+            excinfo.traceback = ntraceback.filter(excinfo)
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame.
             if self.config.getoption("tbstyle", "auto") == "auto":

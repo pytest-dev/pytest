@@ -339,7 +339,7 @@ class TestCaseFunction(Function):
     ) -> None:
         super()._prunetraceback(excinfo)
         traceback = excinfo.traceback.filter(
-            lambda x: not x.frame.f_globals.get("__unittest")
+            lambda x: not x.frame.f_globals.get("__unittest"),
         )
         if traceback:
             excinfo.traceback = traceback
