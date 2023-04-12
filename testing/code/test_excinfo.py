@@ -294,7 +294,6 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, f)
         tb = excinfo.traceback
         entry = tb.getcrashentry()
-        assert entry is not None
         co = _pytest._code.Code.from_function(h)
         assert entry.frame.code.path == co.path
         assert entry.lineno == co.firstlineno + 1
@@ -312,7 +311,10 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, f)
         tb = excinfo.traceback
         entry = tb.getcrashentry()
-        assert entry is None
+        co = _pytest._code.Code.from_function(g)
+        assert entry.frame.code.path == co.path
+        assert entry.lineno == co.firstlineno + 2
+        assert entry.frame.code.name == "g"
 
 
 def test_excinfo_exconly():
@@ -1573,3 +1575,20 @@ def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
     # with py>=3.11 does not depend on exceptiongroup, though there is a toxenv for it
     pytest.importorskip("exceptiongroup")
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
+
+
+def test_all_entries_hidden_doesnt_crash(pytester: Pytester) -> None:
+    """Regression test for #10903.
+
+    We're not really sure what should be *displayed* here, so this test
+    just verified that at least it doesn't crash.
+    """
+    pytester.makepyfile(
+        """
+        def test():
+            __tracebackhide__ = True
+            1 / 0
+    """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 1
