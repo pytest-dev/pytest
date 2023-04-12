@@ -294,6 +294,7 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, f)
         tb = excinfo.traceback
         entry = tb.getcrashentry()
+        assert entry is not None
         co = _pytest._code.Code.from_function(h)
         assert entry.frame.code.path == co.path
         assert entry.lineno == co.firstlineno + 1
@@ -309,12 +310,7 @@ class TestTraceback_f_g_h:
             g()
 
         excinfo = pytest.raises(ValueError, f)
-        tb = excinfo.traceback
-        entry = tb.getcrashentry()
-        co = _pytest._code.Code.from_function(g)
-        assert entry.frame.code.path == co.path
-        assert entry.lineno == co.firstlineno + 2
-        assert entry.frame.code.name == "g"
+        assert excinfo.traceback.getcrashentry() is None
 
 
 def test_excinfo_exconly():
@@ -1577,12 +1573,9 @@ def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
 
 
-def test_all_entries_hidden_doesnt_crash(pytester: Pytester) -> None:
-    """Regression test for #10903.
-
-    We're not really sure what should be *displayed* here, so this test
-    just verified that at least it doesn't crash.
-    """
+@pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
+def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
+    """Regression test for #10903."""
     pytester.makepyfile(
         """
         def test():
@@ -1590,5 +1583,9 @@ def test_all_entries_hidden_doesnt_crash(pytester: Pytester) -> None:
             1 / 0
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("--tb", tbstyle)
     assert result.ret == 1
+    if tbstyle != "line":
+        result.stdout.fnmatch_lines(["*ZeroDivisionError: division by zero"])
+    if tbstyle not in ("line", "native"):
+        result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])

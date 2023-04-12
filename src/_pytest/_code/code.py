@@ -411,13 +411,14 @@ class Traceback(List[TracebackEntry]):
         """
         return Traceback(filter(fn, self), self._excinfo)
 
-    def getcrashentry(self) -> TracebackEntry:
-        """Return last non-hidden traceback entry that lead to the exception of a traceback."""
+    def getcrashentry(self) -> Optional[TracebackEntry]:
+        """Return last non-hidden traceback entry that lead to the exception of
+        a traceback, or None if all hidden."""
         for i in range(-1, -len(self) - 1, -1):
             entry = self[i]
             if not entry.ishidden():
                 return entry
-        return self[-1]
+        return None
 
     def recursionindex(self) -> Optional[int]:
         """Return the index of the frame/TracebackEntry where recursion originates if
@@ -598,9 +599,11 @@ class ExceptionInfo(Generic[E]):
         """
         return isinstance(self.value, exc)
 
-    def _getreprcrash(self) -> "ReprFileLocation":
+    def _getreprcrash(self) -> Optional["ReprFileLocation"]:
         exconly = self.exconly(tryshort=True)
         entry = self.traceback.getcrashentry()
+        if entry is None:
+            return None
         path, lineno = entry.frame.code.raw.co_filename, entry.lineno
         return ReprFileLocation(path, lineno + 1, exconly)
 
@@ -647,7 +650,9 @@ class ExceptionInfo(Generic[E]):
             return ReprExceptionInfo(
                 reprtraceback=ReprTracebackNative(
                     traceback.format_exception(
-                        self.type, self.value, self.traceback[0]._rawentry
+                        self.type,
+                        self.value,
+                        self.traceback[0]._rawentry if self.traceback else None,
                     )
                 ),
                 reprcrash=self._getreprcrash(),
@@ -803,12 +808,16 @@ class FormattedExcinfo:
 
     def repr_traceback_entry(
         self,
-        entry: TracebackEntry,
+        entry: Optional[TracebackEntry],
         excinfo: Optional[ExceptionInfo[BaseException]] = None,
     ) -> "ReprEntry":
         lines: List[str] = []
-        style = entry._repr_style if entry._repr_style is not None else self.style
-        if style in ("short", "long"):
+        style = (
+            entry._repr_style
+            if entry is not None and entry._repr_style is not None
+            else self.style
+        )
+        if style in ("short", "long") and entry is not None:
             source = self._getentrysource(entry)
             if source is None:
                 source = Source("???")
@@ -857,17 +866,21 @@ class FormattedExcinfo:
         else:
             extraline = None
 
+        if not traceback:
+            if extraline is None:
+                extraline = "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
+            entries = [self.repr_traceback_entry(None, excinfo)]
+            return ReprTraceback(entries, extraline, style=self.style)
+
         last = traceback[-1]
-        entries = []
         if self.style == "value":
-            reprentry = self.repr_traceback_entry(last, excinfo)
-            entries.append(reprentry)
+            entries = [self.repr_traceback_entry(last, excinfo)]
             return ReprTraceback(entries, None, style=self.style)
 
-        for index, entry in enumerate(traceback):
-            einfo = (last == entry) and excinfo or None
-            reprentry = self.repr_traceback_entry(entry, einfo)
-            entries.append(reprentry)
+        entries = [
+            self.repr_traceback_entry(entry, excinfo if last == entry else None)
+            for entry in traceback
+        ]
         return ReprTraceback(entries, extraline, style=self.style)
 
     def _truncate_recursive_traceback(
@@ -924,6 +937,7 @@ class FormattedExcinfo:
         seen: Set[int] = set()
         while e is not None and id(e) not in seen:
             seen.add(id(e))
+
             if excinfo_:
                 # Fall back to native traceback as a temporary workaround until
                 # full support for exception groups added to ExceptionInfo.
@@ -950,8 +964,8 @@ class FormattedExcinfo:
                     traceback.format_exception(type(e), e, None)
                 )
                 reprcrash = None
-
             repr_chain += [(reprtraceback, reprcrash, descr)]
+
             if e.__cause__ is not None and self.chain:
                 e = e.__cause__
                 excinfo_ = (
@@ -1042,7 +1056,7 @@ class ExceptionChainRepr(ExceptionRepr):
 @dataclasses.dataclass(eq=False)
 class ReprExceptionInfo(ExceptionRepr):
     reprtraceback: "ReprTraceback"
-    reprcrash: "ReprFileLocation"
+    reprcrash: Optional["ReprFileLocation"]
 
     def toterminal(self, tw: TerminalWriter) -> None:
         self.reprtraceback.toterminal(tw)
@@ -1147,8 +1161,8 @@ class ReprEntry(TerminalRepr):
 
     def toterminal(self, tw: TerminalWriter) -> None:
         if self.style == "short":
-            assert self.reprfileloc is not None
-            self.reprfileloc.toterminal(tw)
+            if self.reprfileloc:
+                self.reprfileloc.toterminal(tw)
             self._write_entry_lines(tw)
             if self.reprlocals:
                 self.reprlocals.toterminal(tw, indent=" " * 8)
