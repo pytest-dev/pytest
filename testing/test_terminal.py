@@ -1539,6 +1539,18 @@ class TestGenericReporting:
         s = result.stdout.str()
         assert "def test_func2" not in s
 
+    def test_tb_crashline_pytrace_false(self, pytester: Pytester, option) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            def test_func1():
+                pytest.fail('test_func1', pytrace=False)
+        """
+        )
+        result = pytester.runpytest("--tb=line")
+        s = result.stdout.str()
+        assert "None" not in s
+
     def test_pytest_report_header(self, pytester: Pytester, option) -> None:
         pytester.makeconftest(
             """

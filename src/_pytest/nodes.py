@@ -445,7 +445,7 @@ class Node(metaclass=NodeMeta):
         if isinstance(excinfo.value, ConftestImportFailure):
             excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)
         if isinstance(excinfo.value, fail.Exception):
-            if not excinfo.value.pytrace:
+            if not excinfo.value.pytrace and style != "line":
                 style = "value"
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()

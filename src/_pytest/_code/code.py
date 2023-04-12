@@ -627,7 +627,7 @@ class ExceptionInfo(Generic[E]):
             Ignored if ``style=="native"``.
 
         :param str style:
-            long|short|no|native|value traceback style.
+            long|short|line|no|native|value traceback style.
 
         :param bool abspath:
             If paths should be changed to absolute or left unchanged.
