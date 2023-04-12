@@ -35,6 +35,7 @@ from _pytest._code import filter_traceback
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
@@ -1819,8 +1820,12 @@ class Function(PyobjMixin, nodes.Item):
             # only show a single-line message for each frame.
             if self.config.getoption("tbstyle", "auto") == "auto":
                 if len(excinfo.traceback) > 2:
-                    for entry in excinfo.traceback[1:-1]:
-                        entry.set_repr_style("short")
+                    excinfo.traceback = Traceback(
+                        entry
+                        if i == 0 or i == len(excinfo.traceback) - 1
+                        else entry.with_repr_style("short")
+                        for i, entry in enumerate(excinfo.traceback)
+                    )
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override]

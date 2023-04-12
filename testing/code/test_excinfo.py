@@ -1122,8 +1122,10 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.f)
         excinfo.traceback = excinfo.traceback.filter(excinfo)
-        excinfo.traceback[1].set_repr_style("short")
-        excinfo.traceback[2].set_repr_style("short")
+        excinfo.traceback = _pytest._code.Traceback(
+            entry if i not in (1, 2) else entry.with_repr_style("short")
+            for i, entry in enumerate(excinfo.traceback)
+        )
         r = excinfo.getrepr(style="long")
         r.toterminal(tw_mock)
         for line in tw_mock.lines:

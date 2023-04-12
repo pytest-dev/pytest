@@ -49,6 +49,7 @@ from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 
 if TYPE_CHECKING:
+    from typing_extensions import Final
     from typing_extensions import Literal
     from typing_extensions import SupportsIndex
 
@@ -197,17 +198,19 @@ class TracebackEntry:
     def __init__(
         self,
         rawentry: TracebackType,
+        repr_style: Optional['Literal["short", "long"]'] = None,
     ) -> None:
-        self._rawentry = rawentry
-        self._repr_style: Optional['Literal["short", "long"]'] = None
+        self._rawentry: "Final" = rawentry
+        self._repr_style: "Final" = repr_style
+
+    def with_repr_style(
+        self, repr_style: Optional['Literal["short", "long"]']
+    ) -> "TracebackEntry":
+        return TracebackEntry(self._rawentry, repr_style)
 
     @property
     def lineno(self) -> int:
         return self._rawentry.tb_lineno - 1
-
-    def set_repr_style(self, mode: "Literal['short', 'long']") -> None:
-        assert mode in ("short", "long")
-        self._repr_style = mode
 
     @property
     def frame(self) -> Frame:
