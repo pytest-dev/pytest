@@ -476,10 +476,6 @@ class ExceptionInfo(Generic[E]):
     ) -> "ExceptionInfo[E]":
         """Return an ExceptionInfo for an existing exc_info tuple.
 
-        .. warning::
-
-            Experimental API
-
         :param exprinfo:
             A text string helping to determine if we should strip
             ``AssertionError`` from the output. Defaults to the exception
