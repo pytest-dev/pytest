@@ -82,6 +82,7 @@ Bug Fixes
 
 
 - `#1904 <https://github.com/pytest-dev/pytest/issues/1904>`_: Correctly handle ``__tracebackhide__`` for chained exceptions.
+  NOTE: This change was reverted in version 7.3.1.
 
 
 
