@@ -53,6 +53,20 @@ def test_excinfo_from_exc_info_simple() -> None:
     assert info.type == ValueError
 
 
+def test_excinfo_from_exception_simple() -> None:
+    try:
+        raise ValueError
+    except ValueError as e:
+        assert e.__traceback__ is not None
+        info = _pytest._code.ExceptionInfo.from_exception(e)
+    assert info.type == ValueError
+
+
+def test_excinfo_from_exception_missing_traceback_assertion() -> None:
+    with pytest.raises(AssertionError, match=r"must have.*__traceback__"):
+        _pytest._code.ExceptionInfo.from_exception(ValueError())
+
+
 def test_excinfo_getstatement():
     def g():
         raise ValueError
