@@ -305,14 +305,14 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
         and policy == "failed"
         and tmp_path_factory._given_basetemp is None
     ):
-        if basetemp.exists():
+        if basetemp.is_dir():
             # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
             # permissions, etc, in which case we ignore it.
             rmtree(basetemp, ignore_errors=True)
-            return
 
     # Remove dead symlinks.
-    cleanup_dead_symlinks(basetemp)
+    if basetemp.is_dir():
+        cleanup_dead_symlinks(basetemp)
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
