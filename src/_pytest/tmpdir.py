@@ -299,20 +299,19 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
     if basetemp is None:
         return
 
-    # Remove dead symlinks.
-    cleanup_dead_symlinks(basetemp)
-
     policy = tmp_path_factory._retention_policy
     if (
         exitstatus == 0
         and policy == "failed"
         and tmp_path_factory._given_basetemp is None
     ):
-        passed_dir = basetemp
-        if passed_dir.exists():
+        if basetemp.exists():
             # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
             # permissions, etc, in which case we ignore it.
             rmtree(passed_dir, ignore_errors=True)
+    
+    # Remove dead symlinks.
+    cleanup_dead_symlinks(basetemp)
 
 
 @hookimpl(tryfirst=True, hookwrapper=True)
