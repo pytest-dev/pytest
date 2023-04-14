@@ -353,7 +353,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
             yield path
 
 
-def cleanup_dead_symlink(root: Path):
+def cleanup_dead_symlinks(root: Path):
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
             if not left_dir.resolve().exists():
@@ -371,7 +371,7 @@ def cleanup_numbered_dir(
     for path in root.glob("garbage-*"):
         try_cleanup(path, consider_lock_dead_if_created_before)
 
-    cleanup_dead_symlink(root)
+    cleanup_dead_symlinks(root)
 
 
 def make_numbered_dir_with_cleanup(
