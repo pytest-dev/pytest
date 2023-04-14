@@ -309,7 +309,7 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
             # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
             # permissions, etc, in which case we ignore it.
             rmtree(passed_dir, ignore_errors=True)
-    
+
     # Remove dead symlinks.
     cleanup_dead_symlinks(basetemp)
 
