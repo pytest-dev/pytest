@@ -28,6 +28,29 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.3.1 (2023-04-14)
+=========================
+
+Improvements
+------------
+
+- `#10875 <https://github.com/pytest-dev/pytest/issues/10875>`_: Python 3.12 support: fixed ``RuntimeError: TestResult has no addDuration method`` when running ``unittest`` tests.
+
+
+- `#10890 <https://github.com/pytest-dev/pytest/issues/10890>`_: Python 3.12 support: fixed ``shutil.rmtree(onerror=...)`` deprecation warning when using :fixture:`tmp_path`.
+
+
+
+Bug Fixes
+---------
+
+- `#10896 <https://github.com/pytest-dev/pytest/issues/10896>`_: Fixed performance regression related to :fixture:`tmp_path` and the new :confval:`tmp_path_retention_policy` option.
+
+
+- `#10903 <https://github.com/pytest-dev/pytest/issues/10903>`_: Fix crash ``INTERNALERROR IndexError: list index out of range`` which happens when displaying an exception where all entries are hidden.
+  This reverts the change "Correctly handle ``__tracebackhide__`` for chained exceptions." introduced in version 7.3.0.
+
+
 pytest 7.3.0 (2023-04-08)
 =========================
 
@@ -82,6 +105,7 @@ Bug Fixes
 
 
 - `#1904 <https://github.com/pytest-dev/pytest/issues/1904>`_: Correctly handle ``__tracebackhide__`` for chained exceptions.
+  NOTE: This change was reverted in version 7.3.1.
 
 
 

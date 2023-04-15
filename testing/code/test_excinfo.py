@@ -53,6 +53,20 @@ def test_excinfo_from_exc_info_simple() -> None:
     assert info.type == ValueError
 
 
+def test_excinfo_from_exception_simple() -> None:
+    try:
+        raise ValueError
+    except ValueError as e:
+        assert e.__traceback__ is not None
+        info = _pytest._code.ExceptionInfo.from_exception(e)
+    assert info.type == ValueError
+
+
+def test_excinfo_from_exception_missing_traceback_assertion() -> None:
+    with pytest.raises(AssertionError, match=r"must have.*__traceback__"):
+        _pytest._code.ExceptionInfo.from_exception(ValueError())
+
+
 def test_excinfo_getstatement():
     def g():
         raise ValueError
@@ -310,9 +324,7 @@ class TestTraceback_f_g_h:
             g()
 
         excinfo = pytest.raises(ValueError, f)
-        tb = excinfo.traceback
-        entry = tb.getcrashentry()
-        assert entry is None
+        assert excinfo.traceback.getcrashentry() is None
 
 
 def test_excinfo_exconly():
@@ -1573,3 +1585,21 @@ def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
     # with py>=3.11 does not depend on exceptiongroup, though there is a toxenv for it
     pytest.importorskip("exceptiongroup")
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
+
+
+@pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
+def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
+    """Regression test for #10903."""
+    pytester.makepyfile(
+        """
+        def test():
+            __tracebackhide__ = True
+            1 / 0
+    """
+    )
+    result = pytester.runpytest("--tb", tbstyle)
+    assert result.ret == 1
+    if tbstyle != "line":
+        result.stdout.fnmatch_lines(["*ZeroDivisionError: division by zero"])
+    if tbstyle not in ("line", "native"):
+        result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])
