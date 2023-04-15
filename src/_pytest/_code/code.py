@@ -977,9 +977,7 @@ class FormattedExcinfo:
                     )
                 else:
                     reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash: Optional[ReprFileLocation] = (
-                    excinfo_._getreprcrash() if self.style != "value" else None
-                )
+                reprcrash = excinfo_._getreprcrash()
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
