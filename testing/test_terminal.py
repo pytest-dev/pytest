@@ -1548,7 +1548,7 @@ class TestGenericReporting:
         """
         )
         result = pytester.runpytest("--tb=line")
-        s = result.stdout.str()
+        result.stdout.str()
         bn = p.name
         result.stdout.fnmatch_lines(["*%s:3: Failed: test_func1" % bn])
 
