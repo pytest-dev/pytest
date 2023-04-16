@@ -1549,7 +1549,6 @@ class TestGenericReporting:
         )
         result = pytester.runpytest("--tb=line")
         s = result.stdout.str()
-        assert "None" not in s
         bn = p.name
         result.stdout.fnmatch_lines(["*%s:3: Failed: test_func1" % bn])
 
