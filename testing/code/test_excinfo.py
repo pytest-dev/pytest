@@ -1603,3 +1603,48 @@ def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
         result.stdout.fnmatch_lines(["*ZeroDivisionError: division by zero"])
     if tbstyle not in ("line", "native"):
         result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])
+
+
+def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) -> None:
+    """Hidden entries of chained exceptions are not shown (#1904)."""
+    p = pytester.makepyfile(
+        """
+        def g1():
+            __tracebackhide__ = True
+            str.does_not_exist
+
+        def f3():
+            __tracebackhide__ = True
+            1 / 0
+
+        def f2():
+            try:
+                f3()
+            except Exception:
+                g1()
+
+        def f1():
+            __tracebackhide__ = True
+            f2()
+
+        def test():
+            f1()
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*.py:11: in f2",
+            "    f3()",
+            "E   ZeroDivisionError: division by zero",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "*.py:20: in test",
+            "    f1()",
+            "*.py:13: in f2",
+            "    g1()",
+            "E   AttributeError:*'does_not_exist'",
+        ],
+        consecutive=True,
+    )

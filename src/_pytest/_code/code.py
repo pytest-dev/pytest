@@ -635,7 +635,9 @@ class ExceptionInfo(Generic[E]):
         showlocals: bool = False,
         style: "_TracebackStyle" = "long",
         abspath: bool = False,
-        tbfilter: bool = True,
+        tbfilter: Union[
+            bool, Callable[["ExceptionInfo[BaseException]"], Traceback]
+        ] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
         chain: bool = True,
@@ -652,9 +654,15 @@ class ExceptionInfo(Generic[E]):
         :param bool abspath:
             If paths should be changed to absolute or left unchanged.
 
-        :param bool tbfilter:
-            Hide entries that contain a local variable ``__tracebackhide__==True``.
-            Ignored if ``style=="native"``.
+        :param tbfilter:
+            A filter for traceback entries.
+
+            * If false, don't hide any entries.
+            * If true, hide internal entries and entries that contain a local
+              variable ``__tracebackhide__ = True``.
+            * If a callable, delegates the filtering to the callable.
+
+            Ignored if ``style`` is ``"native"``.
 
         :param bool funcargs:
             Show fixtures ("funcargs" for legacy purposes) per traceback entry.
@@ -719,7 +727,7 @@ class FormattedExcinfo:
     showlocals: bool = False
     style: "_TracebackStyle" = "long"
     abspath: bool = True
-    tbfilter: bool = True
+    tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]] = True
     funcargs: bool = False
     truncate_locals: bool = True
     chain: bool = True
@@ -881,7 +889,9 @@ class FormattedExcinfo:
 
     def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> "ReprTraceback":
         traceback = excinfo.traceback
-        if self.tbfilter:
+        if callable(self.tbfilter):
+            traceback = self.tbfilter(excinfo)
+        elif self.tbfilter:
             traceback = traceback.filter(excinfo)
 
         if isinstance(excinfo.value, RecursionError):

@@ -450,10 +450,13 @@ class Node(metaclass=NodeMeta):
                 style = "value"
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
+
+        tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]]
         if self.config.getoption("fulltrace", False):
             style = "long"
+            tbfilter = False
         else:
-            excinfo.traceback = self._traceback_filter(excinfo)
+            tbfilter = self._traceback_filter
             if style == "auto":
                 style = "long"
         # XXX should excinfo.getrepr record all data and toterminal() process it?
@@ -484,7 +487,7 @@ class Node(metaclass=NodeMeta):
             abspath=abspath,
             showlocals=self.config.getoption("showlocals", False),
             style=style,
-            tbfilter=False,  # pruned already, or in --fulltrace mode.
+            tbfilter=tbfilter,
             truncate_locals=truncate_locals,
         )
 
