@@ -8,7 +8,7 @@ pytest-flakes==4.0.5
 pytest-html==3.2.0
 pytest-mock==3.10.0
 pytest-rerunfailures==11.1.2
-pytest-sugar==0.9.5
+pytest-sugar==0.9.7
 pytest-trio==0.7.0
 pytest-twisted==1.14.0
 twisted==22.8.0
