@@ -19,8 +19,10 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: deploy
     permissions:
       contents: write
+      id-token: write # for pypi oidc publish
 
     steps:
     - uses: actions/checkout@v3
@@ -39,8 +41,6 @@ jobs:
 
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.pypi_token }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
