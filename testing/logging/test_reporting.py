@@ -1167,8 +1167,8 @@ def test_log_file_cli_subdirectories_are_successfully_created(
     assert result.ret == ExitCode.OK
 
 
-def test_disable_loggers(testdir):
-    testdir.makepyfile(
+def test_disable_loggers(pytester: Pytester) -> None:
+    pytester.makepyfile(
         """
         import logging
         import os
@@ -1181,13 +1181,13 @@ def test_disable_loggers(testdir):
                 assert caplog.record_tuples == [('test', 10, 'Visible text!')]
          """
     )
-    result = testdir.runpytest("--log-disable=disabled", "-s")
+    result = pytester.runpytest("--log-disable=disabled", "-s")
     assert result.ret == ExitCode.OK
     assert not result.stderr.lines
 
 
-def test_disable_loggers_does_not_propagate(testdir):
-    testdir.makepyfile(
+def test_disable_loggers_does_not_propagate(pytester: Pytester) -> None:
+    pytester.makepyfile(
         """
     import logging
     import os
@@ -1205,13 +1205,13 @@ def test_disable_loggers_does_not_propagate(testdir):
     """
     )
 
-    result = testdir.runpytest("--log-disable=parent.child", "-s")
+    result = pytester.runpytest("--log-disable=parent.child", "-s")
     assert result.ret == ExitCode.OK
     assert not result.stderr.lines
 
 
-def test_log_disabling_works_with_log_cli(testdir):
-    testdir.makepyfile(
+def test_log_disabling_works_with_log_cli(pytester: Pytester) -> None:
+    pytester.makepyfile(
         """
     import logging
     disabled_log = logging.getLogger('disabled')
@@ -1222,7 +1222,7 @@ def test_log_disabling_works_with_log_cli(testdir):
         disabled_log.warning("This string will be suppressed.")
     """
     )
-    result = testdir.runpytest(
+    result = pytester.runpytest(
         "--log-cli-level=DEBUG",
         "--log-disable=disabled",
     )
