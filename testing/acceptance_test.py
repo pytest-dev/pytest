@@ -1299,12 +1299,12 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     popen.stderr.close()
 
 
-def test_function_return_non_none_warning(testdir) -> None:
-    testdir.makepyfile(
+def test_function_return_non_none_warning(pytester: Pytester) -> None:
+    pytester.makepyfile(
         """
         def test_stuff():
             return "something"
     """
     )
-    res = testdir.runpytest()
+    res = pytester.runpytest()
     res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])
