@@ -69,27 +69,27 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
     # The root Session node - always present.
     yield ""
 
-    if nodeid == '':
+    if nodeid == "":
         return
 
-    if nodeid.startswith('::'):
+    if nodeid.startswith("::"):
         # Weird case of '::x' (no path)
         yield nodeid
         return
 
-    path, sep, node = nodeid.partition('::')
+    path, sep, node = nodeid.partition("::")
 
     sections = path.split(SEP)
     for i, _ in enumerate(sections, start=1):
         yield SEP.join(sections[:i])
 
-    if sep == '':
+    if sep == "":
         # Only a path
         return
 
-    nodes = node.split('::')
+    nodes = node.split("::")
     for i, _ in enumerate(nodes, start=1):
-        yield '::'.join([path] + nodes[:i])
+        yield "::".join([path] + nodes[:i])
 
 
 def _check_path(path: Path, fspath: LEGACY_PATH) -> None:
