@@ -66,31 +66,30 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
 
     Note that / components are only considered until the first ::.
     """
-    pos = 0
-    first_colons: Optional[int] = nodeid.find("::")
-    if first_colons == -1:
-        first_colons = None
     # The root Session node - always present.
     yield ""
-    # Eagerly consume SEP parts until first colons.
-    while True:
-        at = nodeid.find(SEP, pos, first_colons)
-        if at == -1:
-            break
-        if at > 0:
-            yield nodeid[:at]
-        pos = at + len(SEP)
-    # Eagerly consume :: parts.
-    while True:
-        at = nodeid.find("::", pos)
-        if at == -1:
-            break
-        if at > 0:
-            yield nodeid[:at]
-        pos = at + len("::")
-    # The node ID itself.
-    if nodeid:
+
+    if nodeid == '':
+        return
+
+    if nodeid.startswith('::'):
+        # Weird case of '::x' (no path)
         yield nodeid
+        return
+
+    path, sep, node = nodeid.partition('::')
+
+    sections = path.split(SEP)
+    for i, _ in enumerate(sections, start=1):
+        yield SEP.join(sections[:i])
+
+    if sep == '':
+        # Only a path
+        return
+
+    nodes = node.split('::')
+    for i, _ in enumerate(nodes, start=1):
+        yield '::'.join([path] + nodes[:i])
 
 
 def _check_path(path: Path, fspath: LEGACY_PATH) -> None:
