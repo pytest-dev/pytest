@@ -1653,6 +1653,11 @@ class FixtureManager:
                 faclist.insert(i, fixture_def)
             if marker.autouse:
                 autousenames.append(name)
+                if marker.scope == "class":
+                    for parentnodeid in nodes.iterparentnodeids(nodeid):
+                        basenames = self._nodeid_autousenames.get(parentnodeid)
+                        if basenames:
+                            autousenames.append(str(basenames))
 
         if autousenames:
             self._nodeid_autousenames.setdefault(nodeid or "", []).extend(autousenames)
