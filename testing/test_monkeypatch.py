@@ -425,9 +425,7 @@ def test_context_classmethod() -> None:
     assert A.x == 1
 
 
-@pytest.mark.filterwarnings(
-    "ignore:Deprecated call to `pkg_resources.declare_namespace"
-)
+@pytest.mark.filterwarnings(r"ignore:.*\bpkg_resources\b:DeprecationWarning")
 def test_syspath_prepend_with_namespace_packages(
     pytester: Pytester, monkeypatch: MonkeyPatch
 ) -> None:
