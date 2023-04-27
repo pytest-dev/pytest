@@ -11,14 +11,13 @@ automatically. Packages classified as inactive are excluded.
    creating a PDF, because otherwise the table gets far too wide for the
    page.
 
-This list contains 1244 plugins.
+This list contains 1243 plugins.
 
 .. only:: not latex
 
    ===============================================  ========================================================================================================================================================================================================  ==============  =====================  ================================================
    name                                             summary                                                                                                                                                                                                   last release    status                 requires
    ===============================================  ========================================================================================================================================================================================================  ==============  =====================  ================================================
-   :pypi:`flake8-pytest-style`                      A flake8 plugin checking common style issues or inconsistencies with pytest-based tests.                                                                                                                  Feb 15, 2023    N/A                    N/A
    :pypi:`pytest-abq`                               Pytest integration for the ABQ universal test runner.                                                                                                                                                     Apr 07, 2023    N/A                    N/A
    :pypi:`pytest-abstracts`                         A contextmanager pytest fixture for handling multiple mock abstracts                                                                                                                                      May 25, 2022    N/A                    N/A
    :pypi:`pytest-accept`                            A pytest-plugin for updating doctest outputs                                                                                                                                                              Dec 21, 2022    N/A                    pytest (>=6,<8)
@@ -1266,13 +1265,6 @@ This list contains 1244 plugins.
 
 .. only:: latex
 
-
-  :pypi:`flake8-pytest-style`
-     *last release*: Feb 15, 2023,
-     *status*: N/A,
-     *requires*: N/A
-
-     A flake8 plugin checking common style issues or inconsistencies with pytest-based tests.
 
   :pypi:`pytest-abq`
      *last release*: Apr 07, 2023,
