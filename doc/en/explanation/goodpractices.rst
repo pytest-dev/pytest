@@ -294,3 +294,16 @@ See also `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`
 
 setuptools intends to
 `remove the test command <https://github.com/pypa/setuptools/issues/931>`_.
+
+Checking with flake8-pytest-style
+---------------------------------
+
+In order to ensure that ``pytest`` is being used correctly in your project,
+it can be helpful to use the `flake8-pytest-style <https://github.com/m-burst/flake8-pytest-style>`_ plugin.
+
+This plugin checks for common mistakes and coding style violations in ``pytest`` code,
+such as incorrect use of fixtures, test function names, and markers.
+By using this plugin, you can catch these errors early in the development process
+and ensure that your ``pytest`` code is consistent and easy to maintain.
+
+Examples of the errors that can be detected by the plugin can be found on its `PyPI page <https://pypi.org/project/flake8-pytest-style/>`_.
