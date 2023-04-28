@@ -310,4 +310,4 @@ A list of the lints detected by flake8-pytest-style can be found on its `PyPI pa
 
 .. note::
 
-    ``flake8-pytest-style`` is not an official ``pytest`` project.
+    flake8-pytest-style is not an official pytest project. Some of the rules enforce certain style choices, such as using `@pytest.fixture()` over `@pytest.fixture`, but you can configure the plugin to fit your preferred style.
