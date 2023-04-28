@@ -27,7 +27,7 @@ def pytest_configure(config: Config) -> None:
     import faulthandler
 
     stderr_fd_copy = os.dup(get_stderr_fileno())
-    config.stash[fault_handler_stderr_key] = open(stderr_fd_copy, "w")
+    config.stash[fault_handler_stderr_key] = open(stderr_fd_copy, "w", encoding=sys.stderr.encoding)
     config.stash[fault_handler_originally_enabled_key] = faulthandler.is_enabled()
     faulthandler.enable(file=config.stash[fault_handler_stderr_key])
 
