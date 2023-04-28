@@ -298,16 +298,16 @@ setuptools intends to
 Checking with flake8-pytest-style
 ---------------------------------
 
-In order to ensure that ``pytest`` is being used correctly in your project,
-it can be helpful to use the `flake8-pytest-style <https://github.com/m-burst/flake8-pytest-style>`_ plugin.
+In order to ensure that pytest is being used correctly in your project,
+it can be helpful to use the `flake8-pytest-style <https://github.com/m-burst/flake8-pytest-style>`_ flake8 plugin.
 
-This plugin checks for common mistakes and coding style violations in ``pytest`` code,
+flake8-pytest-style checks for common mistakes and coding style violations in pytest code,
 such as incorrect use of fixtures, test function names, and markers.
 By using this plugin, you can catch these errors early in the development process
-and ensure that your ``pytest`` code is consistent and easy to maintain.
+and ensure that your pytest code is consistent and easy to maintain.
 
-Examples of the errors that can be detected by the plugin can be found on its `PyPI page <https://pypi.org/project/flake8-pytest-style/>`_.
+A list of the lints detected by flake8-pytest-style can be found on its `PyPI page <https://pypi.org/project/flake8-pytest-style/>`_.
 
 .. note::
 
-    Disclaimer: ``flake8-pytest-style`` is not an official ``pytest`` project.
+    ``flake8-pytest-style`` is not an official ``pytest`` project.
