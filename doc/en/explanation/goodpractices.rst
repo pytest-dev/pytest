@@ -307,3 +307,7 @@ By using this plugin, you can catch these errors early in the development proces
 and ensure that your ``pytest`` code is consistent and easy to maintain.
 
 Examples of the errors that can be detected by the plugin can be found on its `PyPI page <https://pypi.org/project/flake8-pytest-style/>`_.
+
+.. note::
+
+    Disclaimer: ``flake8-pytest-style`` is not an official ``pytest`` project.
