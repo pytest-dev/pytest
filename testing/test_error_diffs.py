@@ -272,7 +272,7 @@ TESTCASES = [
         """,
         """
         >       assert result == desired
-        E       AssertionError: assert 'spam    bacon\\n    eggs love' == 'spam bacon eggs love'
+        E       AssertionError: assert 'spam\\tbacon\\n\\teggs love' == 'spam bacon eggs love'
         E         - spam bacon eggs love
         E         + spam    bacon
         E         +     eggs love
