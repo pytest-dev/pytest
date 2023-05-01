@@ -1,1 +1,1 @@
-Added :func:`TerminalReporter.wrap_write() <pytest.TerminalReporter.wrap_write>`, which improves verbose output by performing text wrapping on skip and xfail reasons.
+Added :func:`TerminalReporter.wrap_write() <pytest.TerminalReporter.wrap_write>`, which improves verbose output by performing text wrapping on skip and xfail reasons while leaving a clear margin for progress output.
