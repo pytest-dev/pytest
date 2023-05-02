@@ -289,6 +289,8 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         line.strip("\n")
         for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
     ]
+    for i in range(len(explanation)):
+        explanation[i] = explanation[i].replace("    ", "\t")
     return explanation
 
 
