@@ -291,8 +291,8 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     ]
     for i in range(len(explanation)):
         if "?    " not in explanation[i]:  # dont replace diff message tab
-            explanation[i] = explanation[i].replace("+     ", "+ \t")
-            explanation[i] = explanation[i].replace("    ", "\t")
+            explanation[i] = explanation[i].replace("+     ", "+ \\t")
+            explanation[i] = explanation[i].replace("    ", "\\t")
     return explanation
 
 

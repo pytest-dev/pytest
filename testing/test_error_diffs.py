@@ -274,8 +274,8 @@ TESTCASES = [
         >       assert result == desired
         E       AssertionError: assert 'spam    bacon\\n    eggs love' == 'spam bacon eggs love'
         E         - spam bacon eggs love
-        E         + spam\tbacon
-        E         + \teggs love
+        E         + spam\\tbacon
+        E         + \\teggs love
         """,
         id='Test "not in" string',
     ),
