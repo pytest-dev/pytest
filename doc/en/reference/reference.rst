@@ -1996,7 +1996,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Auto-indent multiline messages passed to the logging
                             module. Accepts true|on, false|off or an integer.
       --log-disable=LOGGER_DISABLE
-                            Disable a logger by name. Can be passed multipe
+                            Disable a logger by name. Can be passed multiple
                             times.
 
     [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
