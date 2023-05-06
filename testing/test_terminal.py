@@ -387,13 +387,13 @@ class TestTerminal:
                 pytest.xfail("It's 🕙 o'clock")
 
             @pytest.mark.skip(
-                reason="cannot do foobar because baz is missing due to I don't know what"
+                reason="1 cannot do foobar because baz is missing due to I don't know what"
             )
             def test_long_skip():
                 pass
 
             @pytest.mark.xfail(
-                reason="cannot do foobar because baz is missing due to I don't know what"
+                reason="2 cannot do foobar because baz is missing due to I don't know what"
             )
             def test_long_xfail():
                 print(1 / 0)
@@ -417,8 +417,8 @@ class TestTerminal:
         result.stdout.fnmatch_lines(
             common_output
             + [
-                "test_verbose_skip_reason.py::test_long_skip SKIPPED (cannot *...) *",
-                "test_verbose_skip_reason.py::test_long_xfail XFAIL (cannot *...) *",
+                "test_verbose_skip_reason.py::test_long_skip SKIPPED (1 cannot *...) *",
+                "test_verbose_skip_reason.py::test_long_xfail XFAIL (2 cannot *...) *",
             ]
         )
 
@@ -428,12 +428,14 @@ class TestTerminal:
             + [
                 (
                     "test_verbose_skip_reason.py::test_long_skip SKIPPED"
-                    " (cannot do foobar because baz is missing due to I don't know what) *"
+                    " (1 cannot do foobar"
                 ),
+                "because baz is missing due to I don't know what) *",
                 (
                     "test_verbose_skip_reason.py::test_long_xfail XFAIL"
-                    " (cannot do foobar because baz is missing due to I don't know what) *"
+                    " (2 cannot do foobar"
                 ),
+                "because baz is missing due to I don't know what) *",
             ]
         )
 

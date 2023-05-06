@@ -302,7 +302,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="append",
         default=[],
         dest="logger_disable",
-        help="Disable a logger by name. Can be passed multipe times.",
+        help="Disable a logger by name. Can be passed multiple times.",
     )
 
 
