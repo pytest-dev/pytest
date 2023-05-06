@@ -277,7 +277,7 @@ TESTCASES = [
         E         + spam\\tbacon
         E         + \\teggs love
         """,
-        id='Test "not in" string',
+        id="Test tab repr in diff",
     ),
 ]
 
