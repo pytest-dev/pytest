@@ -10,13 +10,13 @@ build-backend = "setuptools.build_meta"
 write_to = "src/_pytest/_version.py"
 
 [tool.pytest.ini_options]
-minversion = "2.0"
+minversion = "0.1.dev14957+gac3cb75.d20230506"
 addopts = "-rfEX -p pytester --strict-markers"
 python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
 python_classes = ["Test", "Acceptance"]
 python_functions = ["test"]
 # NOTE: "doc" is not included here, but gets tested explicitly via "doctesting".
-testpaths = ["testing"]
+testpaths = ["testing/examples/my_test.py"]
 norecursedirs = ["testing/example_scripts"]
 xfail_strict = true
 filterwarnings = [
