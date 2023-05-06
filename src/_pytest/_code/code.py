@@ -1169,7 +1169,6 @@ class ReprEntry(TerminalRepr):
                 else:
                     indents.append(line[:indent_size])
                     source_lines.append(line[indent_size:])
-        # print(source_lines)
         tw._write_source(source_lines, indents)
 
         # failure lines are always completely red and bold
@@ -1184,7 +1183,6 @@ class ReprEntry(TerminalRepr):
         for line in failure_lines:
             line_list = line.split()
             # multiline case seems to be an issue with just an added ','
-            # print(line_list)
             # These are edge cases for empty lists
             if len(line_list) == 3 and line_list[2] == "," and line_list[1] == "-":
                 line = line.replace(",", "[]")
@@ -1200,7 +1198,6 @@ class ReprEntry(TerminalRepr):
                 extra_wp_i = line_list.index("+") + 1
                 line_list.pop(extra_wp_i)
                 line = "".join(line_list)
-            # print(line)
             tw.line(line, bold=True, red=True)
 
     def toterminal(self, tw: TerminalWriter) -> None:
