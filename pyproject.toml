@@ -16,7 +16,7 @@ python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
 python_classes = ["Test", "Acceptance"]
 python_functions = ["test"]
 # NOTE: "doc" is not included here, but gets tested explicitly via "doctesting".
-testpaths = ["testing/examples/my_test.py"]
+testpaths = ["testing"]
 norecursedirs = ["testing"]
 xfail_strict = true
 filterwarnings = [
