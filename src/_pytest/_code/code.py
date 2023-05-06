@@ -1158,6 +1158,10 @@ class ReprEntry(TerminalRepr):
             if is_failure_line:
                 # from this point on all lines are considered part of the failure
                 failure_lines.extend(self.lines[index:])
+
+                for line in self.lines[index:]:
+                    print(line)
+
                 break
             else:
                 if self.style == "value":
@@ -1180,6 +1184,8 @@ class ReprEntry(TerminalRepr):
         for line in failure_lines:
             line_list = line.split()
             # multiline case seems to be an issue with just an added ','
+            # print(line_list)
+            # These are edge cases for empty lists
             if len(line_list) == 3 and line_list[2] == "," and line_list[1] == "-":
                 line = line.replace(",", "[]")
                 # This is to remove the extra whitespace between '-' and '[]'
@@ -1187,6 +1193,14 @@ class ReprEntry(TerminalRepr):
                 extra_wp_i = line_list.index("-") + 1
                 line_list.pop(extra_wp_i)
                 line = "".join(line_list)
+            elif len(line_list) == 3 and line_list[2] == "," and line_list[1] == "+":
+                line = line.replace(",", "[]")
+                # This is to remove the extra whitespace between '+' and '[]'
+                line_list = list(line)
+                extra_wp_i = line_list.index("+") + 1
+                line_list.pop(extra_wp_i)
+                line = "".join(line_list)
+            # print(line)
             tw.line(line, bold=True, red=True)
 
     def toterminal(self, tw: TerminalWriter) -> None:
