@@ -1158,10 +1158,6 @@ class ReprEntry(TerminalRepr):
             if is_failure_line:
                 # from this point on all lines are considered part of the failure
                 failure_lines.extend(self.lines[index:])
-
-                for line in self.lines[index:]:
-                    print(line)
-
                 break
             else:
                 if self.style == "value":
