@@ -8,6 +8,7 @@ import datetime
 import inspect
 import platform
 import sys
+import textwrap
 import warnings
 from collections import Counter
 from functools import partial
@@ -426,6 +427,28 @@ class TerminalReporter:
             self._tw.line()
             self.currentfspath = None
 
+    def wrap_write(
+        self,
+        content: str,
+        *,
+        flush: bool = False,
+        margin: int = 8,
+        line_sep: str = "\n",
+        **markup: bool,
+    ) -> None:
+        """Wrap message with margin for progress info."""
+        width_of_current_line = self._tw.width_of_current_line
+        wrapped = line_sep.join(
+            textwrap.wrap(
+                " " * width_of_current_line + content,
+                width=self._screen_width - margin,
+                drop_whitespace=True,
+                replace_whitespace=False,
+            ),
+        )
+        wrapped = wrapped[width_of_current_line:]
+        self._tw.write(wrapped, flush=flush, **markup)
+
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
         self._tw.write(content, flush=flush, **markup)
 
@@ -572,7 +595,7 @@ class TerminalReporter:
                         formatted_reason = f" ({reason})"
 
                     if reason and formatted_reason is not None:
-                        self._tw.write(formatted_reason)
+                        self.wrap_write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
             else:
