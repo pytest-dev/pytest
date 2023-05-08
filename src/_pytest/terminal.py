@@ -11,6 +11,7 @@ import sys
 import textwrap
 import warnings
 from collections import Counter
+from collections import namedtuple
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -548,10 +549,11 @@ class TerminalReporter:
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
-        res: Tuple[
-            str, str, Union[str, Tuple[str, Mapping[str, bool]]]
-        ] = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
-        category, letter, word = res
+        Res = namedtuple("Res", ["category", "letter", "word"])
+        res = Res(
+            *self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
+        )
+        category, letter, word = res.category, res.letter, res.word
         if not isinstance(word, tuple):
             markup = None
         else:
