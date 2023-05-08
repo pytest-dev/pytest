@@ -1,0 +1,1 @@
+Update test log report annotation to named tuple and fixed inconsistency in docs for `pytest_report_teststatus` hook.
