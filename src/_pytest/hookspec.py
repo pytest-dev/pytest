@@ -806,7 +806,7 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 @hookspec(firstresult=True)
 def pytest_report_teststatus(  # type:ignore[empty-body]
     report: Union["CollectReport", "TestReport"], config: "Config"
-) -> Tuple[str, str, Union[str, Mapping[str, bool]]]:
+) -> Tuple[str, str, Union[str, Tuple[str, Mapping[str, bool]]]]:
     """Return result-category, shortletter and verbose word for status
     reporting.
 
