@@ -35,11 +35,12 @@ Pytest supports several ways to run and select tests from the command-line.
 
 .. code-block:: bash
 
-    pytest -k "MyClass and not method"
+    pytest -k 'MyClass and not method'
 
 This will run tests which contain names that match the given *string expression* (case-insensitive),
 which can include Python operators that use filenames, class names and function names as variables.
 The example above will run ``TestMyClass.test_something``  but not ``TestMyClass.test_method_simple``.
+Use ``"`` instead of ``''`` in expression when running this on Windows
 
 .. _nodeids:
 
