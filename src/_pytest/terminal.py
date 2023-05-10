@@ -11,7 +11,6 @@ import sys
 import textwrap
 import warnings
 from collections import Counter
-from collections import namedtuple
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -22,6 +21,7 @@ from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -546,11 +546,16 @@ class TerminalReporter:
             self.write_fspath_result(nodeid, "")
             self.flush()
 
+    class TestStatus(NamedTuple):
+        category: str
+        letter: str
+        word: Union[str, Tuple[str, Mapping[str, bool]]]
+
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
-        Res = namedtuple("Res", ["category", "letter", "word"])
-        res = Res(
+
+        res = self.TestStatus(
             *self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         )
         category, letter, word = res.category, res.letter, res.word
