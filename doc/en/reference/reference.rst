@@ -1744,7 +1744,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         tmp_path_retention_count = 3
 
-    Default: 3
+   Default: ``3``
 
 
 .. confval:: tmp_path_retention_policy
@@ -1763,7 +1763,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         tmp_path_retention_policy = "all"
 
-    Default: all
+   Default: ``all``
 
 
 .. confval:: usefixtures
