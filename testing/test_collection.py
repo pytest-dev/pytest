@@ -1247,6 +1247,29 @@ def test_collect_pyargs_with_testpaths(
     result.stdout.fnmatch_lines(["*1 passed in*"])
 
 
+def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
+    """The testpaths ini option should load conftests in those paths as 'initial' (#10987)."""
+    p = pytester.mkdir("some_path")
+    p.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """
+            def pytest_sessionstart(session):
+                raise Exception("pytest_sessionstart hook is successfully run")
+            """
+        )
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        testpaths = some_path
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        "INTERNALERROR* Exception: pytest_sessionstart hook is successfully run"
+    )
+
+
 def test_collect_symlink_file_arg(pytester: Pytester) -> None:
     """Collect a direct symlink works even if it does not match python_files (#4325)."""
     real = pytester.makepyfile(

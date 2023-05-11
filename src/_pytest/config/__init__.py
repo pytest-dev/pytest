@@ -526,7 +526,10 @@ class PytestPluginManager(PluginManager):
     # Internal API for local conftest plugin handling.
     #
     def _set_initial_conftests(
-        self, namespace: argparse.Namespace, rootpath: Path
+        self,
+        namespace: argparse.Namespace,
+        rootpath: Path,
+        testpaths_ini: Sequence[str],
     ) -> None:
         """Load initial conftest files given a preparsed "namespace".
 
@@ -543,7 +546,7 @@ class PytestPluginManager(PluginManager):
         )
         self._noconftest = namespace.noconftest
         self._using_pyargs = namespace.pyargs
-        testpaths = namespace.file_or_dir
+        testpaths = namespace.file_or_dir + testpaths_ini
         foundanchor = False
         for testpath in testpaths:
             path = str(testpath)
@@ -552,7 +555,20 @@ class PytestPluginManager(PluginManager):
             if i != -1:
                 path = path[:i]
             anchor = absolutepath(current / path)
-            if anchor.exists():  # we found some file object
+
+            # On Python 3.7 on Windows, anchor.exists() might raise
+            # if the anchor contains glob characters (for example "*//tests"), specially
+            # in the case of the 'testpaths' ini option.
+            # Using an explicit version check to remove this code later once
+            # Python 3.7 is dropped.
+            if sys.version_info[:2] == (3, 7):
+                try:
+                    anchor_exists = anchor.exists()
+                except OSError:  # pragma: no cover
+                    anchor_exists = False
+            else:
+                anchor_exists = anchor.exists()
+            if anchor_exists:  # We found some file object.
                 self._try_load_conftest(anchor, namespace.importmode, rootpath)
                 foundanchor = True
         if not foundanchor:
@@ -1131,7 +1147,9 @@ class Config:
     @hookimpl(trylast=True)
     def pytest_load_initial_conftests(self, early_config: "Config") -> None:
         self.pluginmanager._set_initial_conftests(
-            early_config.known_args_namespace, rootpath=early_config.rootpath
+            early_config.known_args_namespace,
+            rootpath=early_config.rootpath,
+            testpaths_ini=self.getini("testpaths"),
         )
 
     def _initini(self, args: Sequence[str]) -> None:
