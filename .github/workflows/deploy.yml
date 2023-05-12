@@ -16,7 +16,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: deploy
     steps:
     - uses: actions/checkout@v3
       with:
@@ -30,9 +29,8 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: deploy
     permissions:
-      id-token: write # for pypi oidc publish
+      id-token: write
     steps:
     - name: Download Package
       uses: actions/download-artifact@v3
@@ -40,7 +38,7 @@ jobs:
         name: Packages
         path: dist
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@v1.8.5
 
   release-notes:
 
@@ -50,7 +48,6 @@ jobs:
     needs: [deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: deploy
     permissions:
       contents: write
     steps:
