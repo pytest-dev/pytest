@@ -1247,6 +1247,48 @@ def test_collect_pyargs_with_testpaths(
     result.stdout.fnmatch_lines(["*1 passed in*"])
 
 
+def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
+    """The testpaths ini option should load conftests in those paths as 'initial' (#10987)."""
+    p = pytester.mkdir("some_path")
+    p.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """
+            def pytest_sessionstart(session):
+                raise Exception("pytest_sessionstart hook successfully run")
+            """
+        )
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        testpaths = some_path
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        "INTERNALERROR* Exception: pytest_sessionstart hook successfully run"
+    )
+
+
+def test_large_option_breaks_initial_conftests(pytester: Pytester) -> None:
+    """Long option values do not break initial conftests handling (#10169)."""
+    option_value = "x" * 1024 * 1000
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addoption("--xx", default=None)
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        def test_foo(request):
+            assert request.config.getoption("xx") == {option_value!r}
+        """
+    )
+    result = pytester.runpytest(f"--xx={option_value}")
+    assert result.ret == 0
+
+
 def test_collect_symlink_file_arg(pytester: Pytester) -> None:
     """Collect a direct symlink works even if it does not match python_files (#4325)."""
     real = pytester.makepyfile(

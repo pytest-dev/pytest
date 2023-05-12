@@ -35,7 +35,7 @@ def conftest_setinitial(
             self.importmode = "prepend"
 
     namespace = cast(argparse.Namespace, Namespace())
-    conftest._set_initial_conftests(namespace, rootpath=Path(args[0]))
+    conftest._set_initial_conftests(namespace, rootpath=Path(args[0]), testpaths_ini=[])
 
 
 @pytest.mark.usefixtures("_sys_snapshot")
