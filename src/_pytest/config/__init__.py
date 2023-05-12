@@ -556,19 +556,13 @@ class PytestPluginManager(PluginManager):
                 path = path[:i]
             anchor = absolutepath(current / path)
 
-            # On Python 3.7 on Windows, anchor.exists() might raise
-            # if the anchor contains glob characters (for example "*//tests"), specially
-            # in the case of the 'testpaths' ini option.
-            # Using an explicit version check to remove this code later once
-            # Python 3.7 is dropped.
-            if sys.version_info[:2] == (3, 7):
-                try:
-                    anchor_exists = anchor.exists()
-                except OSError:  # pragma: no cover
-                    anchor_exists = False
-            else:
+            # Ensure we do not break if what appears to be an anchor
+            # is in fact a very long option (#10169).
+            try:
                 anchor_exists = anchor.exists()
-            if anchor_exists:  # We found some file object.
+            except OSError:  # pragma: no cover
+                anchor_exists = False
+            if anchor_exists:
                 self._try_load_conftest(anchor, namespace.importmode, rootpath)
                 foundanchor = True
         if not foundanchor:
