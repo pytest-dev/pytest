@@ -1,0 +1,1 @@
+:confval:`testpaths` is now honored to load root ``conftests``.
