@@ -47,10 +47,6 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import RecordedHookCall
 from _pytest.pytester import RunResult
-from _pytest.python import Class
-from _pytest.python import Function
-from _pytest.python import Module
-from _pytest.python import Package
 from _pytest.python_api import approx
 from _pytest.python_api import raises
 from _pytest.recwarn import deprecated_call
@@ -85,7 +81,6 @@ __all__ = [
     "Cache",
     "CallInfo",
     "CaptureFixture",
-    "Class",
     "cmdline",
     "Collector",
     "CollectReport",
@@ -102,7 +97,6 @@ __all__ = [
     "FixtureLookupError",
     "FixtureRequest",
     "freeze_includes",
-    "Function",
     "hookimpl",
     "HookRecorder",
     "hookspec",
@@ -115,10 +109,8 @@ __all__ = [
     "Mark",
     "MarkDecorator",
     "MarkGenerator",
-    "Module",
     "MonkeyPatch",
     "OptionGroup",
-    "Package",
     "param",
     "Parser",
     "PytestAssertRewriteWarning",

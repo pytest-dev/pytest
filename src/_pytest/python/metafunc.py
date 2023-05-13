@@ -15,8 +15,8 @@ from typing import Sequence
 from typing import TYPE_CHECKING
 from typing import Union
 
+from . import nodes
 from _pytest import fixtures
-from _pytest import python
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
 from _pytest.compat import assert_never
@@ -300,7 +300,7 @@ class Metafunc:
 
     def __init__(
         self,
-        definition: "python.FunctionDefinition",
+        definition: nodes.FunctionDefinition,
         fixtureinfo: fixtures.FuncFixtureInfo,
         config: Config,
         cls=None,
