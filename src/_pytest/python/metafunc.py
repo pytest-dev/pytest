@@ -12,9 +12,8 @@ from typing import Mapping
 from typing import Optional
 from typing import Pattern
 from typing import Sequence
+from typing import TYPE_CHECKING
 from typing import Union
-
-from typing_extensions import Literal
 
 from _pytest import fixtures
 from _pytest import python
@@ -32,8 +31,11 @@ from _pytest.mark import MarkDecorator
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import normalize_mark_list
 from _pytest.outcomes import fail
-from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
+
+if TYPE_CHECKING:
+    from _pytest.scope import _ScopeName
+    from typing_extensions import Literal
 
 
 @final
