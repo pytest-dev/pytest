@@ -4,6 +4,7 @@ import re
 import sys
 import warnings
 from contextlib import contextmanager
+import typing
 from typing import Any
 from typing import Generator
 from typing import List
@@ -129,7 +130,7 @@ class MonkeyPatch:
 
     def __init__(self) -> None:
         self._setattr: List[Tuple[object, str, object]] = []
-        self._setitem: List[Tuple[Union[MutableMapping[Any, Any], "TypedDict[Any, Any]", object, object]] = []
+        self._setitem: List[Tuple[Union[MutableMapping[Any, Any], "typing.TypedDict[Any, Any]"], object, object]] = []
         self._cwd: Optional[str] = None
         self._savesyspath: Optional[List[str]] = None
 
@@ -290,12 +291,12 @@ class MonkeyPatch:
             self._setattr.append((target, name, oldval))
             delattr(target, name)
 
-    def setitem(self, dic: Union[MutableMapping[K, V], "TypedDict[K, V]"], name: K, value: V) -> None:
+    def setitem(self, dic: Union[MutableMapping[K, V], "typing.TypedDict[K, V]"], name: K, value: V) -> None:
         """Set dictionary entry ``name`` to value."""
         self._setitem.append((dic, name, dic.get(name, notset)))
         dic[name] = value
 
-    def delitem(self, dic: Union[MutableMapping[K, V], "TypedDict[K, V"], name: K, raising: bool = True) -> None:
+    def delitem(self, dic: Union[MutableMapping[K, V], "typing.TypedDict[K, V]"], name: K, raising: bool = True) -> None:
         """Delete ``name`` from dict.
 
         Raises ``KeyError`` if it doesn't exist, unless ``raising`` is set to
