@@ -49,7 +49,6 @@ from _pytest.pytester import RecordedHookCall
 from _pytest.pytester import RunResult
 from _pytest.python import Class
 from _pytest.python import Function
-from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
@@ -116,7 +115,6 @@ __all__ = [
     "Mark",
     "MarkDecorator",
     "MarkGenerator",
-    "Metafunc",
     "Module",
     "MonkeyPatch",
     "OptionGroup",

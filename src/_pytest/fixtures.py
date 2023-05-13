@@ -71,9 +71,7 @@ if TYPE_CHECKING:
 
     from _pytest.scope import _ScopeName
     from _pytest.main import Session
-    from _pytest.python import CallSpec2
-    from _pytest.python import Metafunc
-
+    from _pytest.python.metafunc import CallSpec2, Metafunc
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
 FixtureValue = TypeVar("FixtureValue")
