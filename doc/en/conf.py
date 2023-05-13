@@ -15,6 +15,8 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
+from __future__ import annotations
+
 import os
 import shutil
 import sys
@@ -438,7 +440,7 @@ intersphinx_mapping = {
 }
 
 
-def configure_logging(app: "sphinx.application.Sphinx") -> None:
+def configure_logging(app: sphinx.application.Sphinx) -> None:
     """Configure Sphinx's WarningHandler to handle (expected) missing include."""
     import sphinx.util.logging
     import logging
@@ -461,7 +463,7 @@ def configure_logging(app: "sphinx.application.Sphinx") -> None:
     warn_handler[0].filters.insert(0, WarnLogFilter())
 
 
-def setup(app: "sphinx.application.Sphinx") -> None:
+def setup(app: sphinx.application.Sphinx) -> None:
     app.add_crossref_type(
         "fixture",
         "fixture",

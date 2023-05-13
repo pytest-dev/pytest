@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import inspect
 import warnings
@@ -5,7 +7,6 @@ from types import FunctionType
 from typing import Any
 from typing import final
 from typing import Generic
-from typing import Type
 from typing import TypeVar
 
 
@@ -72,7 +73,7 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     __module__ = "pytest"
 
     @classmethod
-    def simple(cls, apiname: str) -> "PytestExperimentalApiWarning":
+    def simple(cls, apiname: str) -> PytestExperimentalApiWarning:
         return cls(
             "{apiname} is an experimental api that may change over time".format(
                 apiname=apiname
@@ -136,7 +137,7 @@ class UnformattedWarning(Generic[_W]):
     as opposed to a direct message.
     """
 
-    category: Type["_W"]
+    category: type[_W]
     template: str
 
     def format(self, **kwargs: Any) -> _W:

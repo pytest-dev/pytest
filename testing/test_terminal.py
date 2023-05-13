@@ -1,4 +1,6 @@
 """Terminal reporting of the full testing process."""
+from __future__ import annotations
+
 import collections
 import os
 import sys
@@ -7,9 +9,6 @@ from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
 from typing import cast
-from typing import Dict
-from typing import List
-from typing import Tuple
 
 import pluggy
 
@@ -1943,9 +1942,9 @@ def tr() -> TerminalReporter:
 )
 def test_summary_stats(
     tr: TerminalReporter,
-    exp_line: List[Tuple[str, Dict[str, bool]]],
+    exp_line: list[tuple[str, dict[str, bool]]],
     exp_color: str,
-    stats_arg: Dict[str, List[object]],
+    stats_arg: dict[str, list[object]],
 ) -> None:
     tr.stats = stats_arg
 

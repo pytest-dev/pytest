@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import argparse
 import os
 import re
 import sys
 from pathlib import Path
-from typing import Optional
 
 import pytest
 from _pytest.config import ExitCode
@@ -81,7 +82,7 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
 
 @pytest.mark.parametrize("returncode", (None, 42))
 def test_wrap_session_exit_sessionfinish(
-    returncode: Optional[int], pytester: Pytester
+    returncode: int | None, pytester: Pytester
 ) -> None:
     pytester.makeconftest(
         """

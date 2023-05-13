@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import textwrap
 from collections import ChainMap
 from collections import Counter

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import os
 import re
@@ -5,7 +7,6 @@ import shutil
 import sys
 from pathlib import Path
 from typing import Generator
-from typing import Optional
 from unittest import mock
 
 import pytest
@@ -165,7 +166,7 @@ def test_attr_hasmarkup() -> None:
     assert "\x1b[0m" in s
 
 
-def assert_color(expected: bool, default: Optional[bool] = None) -> None:
+def assert_color(expected: bool, default: bool | None = None) -> None:
     file = io.StringIO()
     if default is None:
         default = not expected

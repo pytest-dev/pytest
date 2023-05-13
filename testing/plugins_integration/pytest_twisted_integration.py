@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest_twisted
 from twisted.internet.task import deferLater
 

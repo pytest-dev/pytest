@@ -1,8 +1,9 @@
 """Submit failure or test session information to a pastebin service."""
+from __future__ import annotations
+
 import tempfile
 from io import StringIO
 from typing import IO
-from typing import Union
 
 import pytest
 from _pytest.config import Config
@@ -66,7 +67,7 @@ def pytest_unconfigure(config: Config) -> None:
         tr.write_line("pastebin session-log: %s\n" % pastebinurl)
 
 
-def create_new_paste(contents: Union[str, bytes]) -> str:
+def create_new_paste(contents: str | bytes) -> str:
     """Create a new paste using the bpaste.net service.
 
     :contents: Paste contents string.

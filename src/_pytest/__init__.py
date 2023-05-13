@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __all__ = ["__version__", "version_tuple"]
 
 try:

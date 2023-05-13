@@ -1,11 +1,14 @@
-# mypy: disable-error-code="attr-defined"
-# mypy: disallow-untyped-defs
+from __future__ import annotations
+
 import logging
 from typing import Iterator
 
 import pytest
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
+
+# mypy: disable-error-code="attr-defined"
+# mypy: disallow-untyped-defs
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")

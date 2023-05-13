@@ -1,7 +1,6 @@
+from __future__ import annotations
+
 import warnings
-from typing import List
-from typing import Optional
-from typing import Type
 
 import pytest
 from _pytest.pytester import Pytester
@@ -50,7 +49,7 @@ class TestSubclassWarningPop:
         pass
 
     @staticmethod
-    def raise_warnings_from_list(_warnings: List[Type[Warning]]):
+    def raise_warnings_from_list(_warnings: list[type[Warning]]):
         for warn in _warnings:
             warnings.warn(f"Warning {warn().__repr__()}", warn)
 
@@ -130,7 +129,7 @@ class TestWarningsRecorderChecker:
 class TestDeprecatedCall:
     """test pytest.deprecated_call()"""
 
-    def dep(self, i: int, j: Optional[int] = None) -> int:
+    def dep(self, i: int, j: int | None = None) -> int:
         if i == 0:
             warnings.warn("is deprecated", DeprecationWarning, stacklevel=1)
         return 42

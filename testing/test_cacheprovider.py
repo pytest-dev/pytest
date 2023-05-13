@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import os
 import shutil
 from pathlib import Path
 from typing import Generator
-from typing import List
 
 import pytest
 from _pytest.config import ExitCode
@@ -677,7 +678,7 @@ class TestLastFailed:
         else:
             assert "rerun previous" in result.stdout.str()
 
-    def get_cached_last_failed(self, pytester: Pytester) -> List[str]:
+    def get_cached_last_failed(self, pytester: Pytester) -> list[str]:
         config = pytester.parseconfigure()
         assert config.cache is not None
         return sorted(config.cache.get("cache/lastfailed", {}))

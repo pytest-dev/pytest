@@ -1,4 +1,6 @@
 """Monkeypatching and mocking functionality."""
+from __future__ import annotations
+
 import os
 import re
 import sys
@@ -7,14 +9,10 @@ from contextlib import contextmanager
 from typing import Any
 from typing import final
 from typing import Generator
-from typing import List
 from typing import Mapping
 from typing import MutableMapping
-from typing import Optional
 from typing import overload
-from typing import Tuple
 from typing import TypeVar
-from typing import Union
 
 from _pytest.fixtures import fixture
 from _pytest.warning_types import PytestWarning
@@ -27,7 +25,7 @@ V = TypeVar("V")
 
 
 @fixture
-def monkeypatch() -> Generator["MonkeyPatch", None, None]:
+def monkeypatch() -> Generator[MonkeyPatch, None, None]:
     """A convenient fixture for monkey-patching.
 
     The fixture provides these methods to modify objects, dictionaries, or
@@ -96,7 +94,7 @@ def annotated_getattr(obj: object, name: str, ann: str) -> object:
     return obj
 
 
-def derive_importpath(import_path: str, raising: bool) -> Tuple[str, object]:
+def derive_importpath(import_path: str, raising: bool) -> tuple[str, object]:
     if not isinstance(import_path, str) or "." not in import_path:
         raise TypeError(f"must be absolute import path string, not {import_path!r}")
     module, attr = import_path.rsplit(".", 1)
@@ -129,14 +127,14 @@ class MonkeyPatch:
     """
 
     def __init__(self) -> None:
-        self._setattr: List[Tuple[object, str, object]] = []
-        self._setitem: List[Tuple[Mapping[Any, Any], object, object]] = []
-        self._cwd: Optional[str] = None
-        self._savesyspath: Optional[List[str]] = None
+        self._setattr: list[tuple[object, str, object]] = []
+        self._setitem: list[tuple[Mapping[Any, Any], object, object]] = []
+        self._cwd: str | None = None
+        self._savesyspath: list[str] | None = None
 
     @classmethod
     @contextmanager
-    def context(cls) -> Generator["MonkeyPatch", None, None]:
+    def context(cls) -> Generator[MonkeyPatch, None, None]:
         """Context manager that returns a new :class:`MonkeyPatch` object
         which undoes any patching done inside the ``with`` block upon exit.
 
@@ -183,8 +181,8 @@ class MonkeyPatch:
 
     def setattr(
         self,
-        target: Union[str, object],
-        name: Union[object, str],
+        target: str | object,
+        name: object | str,
         value: object = notset,
         raising: bool = True,
     ) -> None:
@@ -255,8 +253,8 @@ class MonkeyPatch:
 
     def delattr(
         self,
-        target: Union[object, str],
-        name: Union[str, Notset] = notset,
+        target: object | str,
+        name: str | Notset = notset,
         raising: bool = True,
     ) -> None:
         """Delete attribute ``name`` from ``target``.
@@ -311,7 +309,7 @@ class MonkeyPatch:
             # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
             del dic[name]  # type: ignore[attr-defined]
 
-    def setenv(self, name: str, value: str, prepend: Optional[str] = None) -> None:
+    def setenv(self, name: str, value: str, prepend: str | None = None) -> None:
         """Set environment variable ``name`` to ``value``.
 
         If ``prepend`` is a character, read the current environment variable
@@ -367,7 +365,7 @@ class MonkeyPatch:
 
         invalidate_caches()
 
-    def chdir(self, path: Union[str, "os.PathLike[str]"]) -> None:
+    def chdir(self, path: str | os.PathLike[str]) -> None:
         """Change the current working directory to the specified path.
 
         :param path:

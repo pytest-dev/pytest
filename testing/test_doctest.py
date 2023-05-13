@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import inspect
 import sys
 import textwrap
 from pathlib import Path
 from typing import Callable
-from typing import Optional
 
 import pytest
 from _pytest.doctest import _get_checker
@@ -1571,7 +1572,7 @@ class Broken:
     "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
 )
 def test_warning_on_unwrap_of_broken_object(
-    stop: Optional[Callable[[object], object]]
+    stop: Callable[[object], object] | None
 ) -> None:
     bad_instance = Broken()
     assert inspect.unwrap.__module__ == "inspect"

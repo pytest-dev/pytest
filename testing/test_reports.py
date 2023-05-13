@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from typing import Sequence
-from typing import Union
 
 import pytest
 from _pytest._code.code import ExceptionChainRepr
@@ -295,9 +296,9 @@ class TestReportSerialization:
 
         reprec = pytester.inline_run()
         if report_class is TestReport:
-            reports: Union[
-                Sequence[TestReport], Sequence[CollectReport]
-            ] = reprec.getreports("pytest_runtest_logreport")
+            reports: (
+                Sequence[TestReport] | Sequence[CollectReport]
+            ) = reprec.getreports("pytest_runtest_logreport")
             # we have 3 reports: setup/call/teardown
             assert len(reports) == 3
             # get the call report

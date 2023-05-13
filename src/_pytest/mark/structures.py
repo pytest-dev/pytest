@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections.abc
 import dataclasses
 import inspect
@@ -8,16 +10,11 @@ from typing import Collection
 from typing import final
 from typing import Iterable
 from typing import Iterator
-from typing import List
 from typing import Mapping
 from typing import MutableMapping
 from typing import NamedTuple
-from typing import Optional
 from typing import overload
 from typing import Sequence
-from typing import Set
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -45,7 +42,7 @@ def istestfunc(func) -> bool:
 
 def get_empty_parameterset_mark(
     config: Config, argnames: Sequence[str], func
-) -> "MarkDecorator":
+) -> MarkDecorator:
     from ..nodes import Collector
 
     fs, lineno = getfslineno(func)
@@ -73,17 +70,17 @@ def get_empty_parameterset_mark(
 
 
 class ParameterSet(NamedTuple):
-    values: Sequence[Union[object, NotSetType]]
-    marks: Collection[Union["MarkDecorator", "Mark"]]
-    id: Optional[str]
+    values: Sequence[object | NotSetType]
+    marks: Collection[MarkDecorator | Mark]
+    id: str | None
 
     @classmethod
     def param(
         cls,
         *values: object,
-        marks: Union["MarkDecorator", Collection[Union["MarkDecorator", "Mark"]]] = (),
-        id: Optional[str] = None,
-    ) -> "ParameterSet":
+        marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
+        id: str | None = None,
+    ) -> ParameterSet:
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
         else:
@@ -98,9 +95,9 @@ class ParameterSet(NamedTuple):
     @classmethod
     def extract_from(
         cls,
-        parameterset: Union["ParameterSet", Sequence[object], object],
+        parameterset: ParameterSet | Sequence[object] | object,
         force_tuple: bool = False,
-    ) -> "ParameterSet":
+    ) -> ParameterSet:
         """Extract from an object or objects.
 
         :param parameterset:
@@ -126,11 +123,11 @@ class ParameterSet(NamedTuple):
 
     @staticmethod
     def _parse_parametrize_args(
-        argnames: Union[str, Sequence[str]],
-        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        argnames: str | Sequence[str],
+        argvalues: Iterable[ParameterSet | Sequence[object] | object],
         *args,
         **kwargs,
-    ) -> Tuple[Sequence[str], bool]:
+    ) -> tuple[Sequence[str], bool]:
         if isinstance(argnames, str):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -140,9 +137,9 @@ class ParameterSet(NamedTuple):
 
     @staticmethod
     def _parse_parametrize_parameters(
-        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        argvalues: Iterable[ParameterSet | Sequence[object] | object],
         force_tuple: bool,
-    ) -> List["ParameterSet"]:
+    ) -> list[ParameterSet]:
         return [
             ParameterSet.extract_from(x, force_tuple=force_tuple) for x in argvalues
         ]
@@ -150,12 +147,12 @@ class ParameterSet(NamedTuple):
     @classmethod
     def _for_parametrize(
         cls,
-        argnames: Union[str, Sequence[str]],
-        argvalues: Iterable[Union["ParameterSet", Sequence[object], object]],
+        argnames: str | Sequence[str],
+        argvalues: Iterable[ParameterSet | Sequence[object] | object],
         func,
         config: Config,
         nodeid: str,
-    ) -> Tuple[Sequence[str], List["ParameterSet"]]:
+    ) -> tuple[Sequence[str], list[ParameterSet]]:
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -198,24 +195,24 @@ class Mark:
     #: Name of the mark.
     name: str
     #: Positional arguments of the mark decorator.
-    args: Tuple[Any, ...]
+    args: tuple[Any, ...]
     #: Keyword arguments of the mark decorator.
     kwargs: Mapping[str, Any]
 
     #: Source Mark for ids with parametrize Marks.
-    _param_ids_from: Optional["Mark"] = dataclasses.field(default=None, repr=False)
+    _param_ids_from: Mark | None = dataclasses.field(default=None, repr=False)
     #: Resolved/generated ids with parametrize Marks.
-    _param_ids_generated: Optional[Sequence[str]] = dataclasses.field(
+    _param_ids_generated: Sequence[str] | None = dataclasses.field(
         default=None, repr=False
     )
 
     def __init__(
         self,
         name: str,
-        args: Tuple[Any, ...],
+        args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
-        param_ids_from: Optional["Mark"] = None,
-        param_ids_generated: Optional[Sequence[str]] = None,
+        param_ids_from: Mark | None = None,
+        param_ids_generated: Sequence[str] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -231,7 +228,7 @@ class Mark:
     def _has_param_ids(self) -> bool:
         return "ids" in self.kwargs or len(self.args) >= 4
 
-    def combined_with(self, other: "Mark") -> "Mark":
+    def combined_with(self, other: Mark) -> Mark:
         """Return a new Mark which is a combination of this
         Mark and another Mark.
 
@@ -243,7 +240,7 @@ class Mark:
         assert self.name == other.name
 
         # Remember source of ids with parametrize Marks.
-        param_ids_from: Optional[Mark] = None
+        param_ids_from: Mark | None = None
         if self.name == "parametrize":
             if other._has_param_ids():
                 param_ids_from = other
@@ -314,7 +311,7 @@ class MarkDecorator:
         return self.mark.name
 
     @property
-    def args(self) -> Tuple[Any, ...]:
+    def args(self) -> tuple[Any, ...]:
         """Alias for mark.args."""
         return self.mark.args
 
@@ -328,7 +325,7 @@ class MarkDecorator:
         """:meta private:"""
         return self.name  # for backward-compat (2.4.1 had this attr)
 
-    def with_args(self, *args: object, **kwargs: object) -> "MarkDecorator":
+    def with_args(self, *args: object, **kwargs: object) -> MarkDecorator:
         """Return a MarkDecorator with extra arguments added.
 
         Unlike calling the MarkDecorator, with_args() can be used even
@@ -345,7 +342,7 @@ class MarkDecorator:
         pass
 
     @overload
-    def __call__(self, *args: object, **kwargs: object) -> "MarkDecorator":
+    def __call__(self, *args: object, **kwargs: object) -> MarkDecorator:
         pass
 
     def __call__(self, *args: object, **kwargs: object):
@@ -360,10 +357,10 @@ class MarkDecorator:
 
 
 def get_unpacked_marks(
-    obj: Union[object, type],
+    obj: object | type,
     *,
     consider_mro: bool = True,
-) -> List[Mark]:
+) -> list[Mark]:
     """Obtain the unpacked marks that are stored on an object.
 
     If obj is a class and consider_mro is true, return marks applied to
@@ -392,9 +389,7 @@ def get_unpacked_marks(
     return list(normalize_mark_list(mark_list))
 
 
-def normalize_mark_list(
-    mark_list: Iterable[Union[Mark, MarkDecorator]]
-) -> Iterable[Mark]:
+def normalize_mark_list(mark_list: Iterable[Mark | MarkDecorator]) -> Iterable[Mark]:
     """
     Normalize an iterable of Mark or MarkDecorator objects into a list of marks
     by retrieving the `mark` attribute on MarkDecorator instances.
@@ -437,14 +432,14 @@ if TYPE_CHECKING:
             ...
 
         @overload
-        def __call__(self, reason: str = ...) -> "MarkDecorator":
+        def __call__(self, reason: str = ...) -> MarkDecorator:
             ...
 
     class _SkipifMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self,
-            condition: Union[str, bool] = ...,
-            *conditions: Union[str, bool],
+            condition: str | bool = ...,
+            *conditions: str | bool,
             reason: str = ...,
         ) -> MarkDecorator:
             ...
@@ -457,13 +452,11 @@ if TYPE_CHECKING:
         @overload
         def __call__(
             self,
-            condition: Union[str, bool] = False,
-            *conditions: Union[str, bool],
+            condition: str | bool = False,
+            *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: Union[
-                None, Type[BaseException], Tuple[Type[BaseException], ...]
-            ] = ...,
+            raises: type[BaseException] | tuple[type[BaseException], ...] | None = ...,
             strict: bool = ...,
         ) -> MarkDecorator:
             ...
@@ -471,17 +464,16 @@ if TYPE_CHECKING:
     class _ParametrizeMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
             self,
-            argnames: Union[str, Sequence[str]],
-            argvalues: Iterable[Union[ParameterSet, Sequence[object], object]],
+            argnames: str | Sequence[str],
+            argvalues: Iterable[ParameterSet | Sequence[object] | object],
             *,
-            indirect: Union[bool, Sequence[str]] = ...,
-            ids: Optional[
-                Union[
-                    Iterable[Union[None, str, float, int, bool]],
-                    Callable[[Any], Optional[object]],
-                ]
-            ] = ...,
-            scope: Optional[_ScopeName] = ...,
+            indirect: bool | Sequence[str] = ...,
+            ids: None
+            | (
+                Iterable[None | str | float | int | bool]
+                | Callable[[Any], object | None]
+            ) = ...,
+            scope: _ScopeName | None = ...,
         ) -> MarkDecorator:
             ...
 
@@ -521,8 +513,8 @@ class MarkGenerator:
 
     def __init__(self, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
-        self._config: Optional[Config] = None
-        self._markers: Set[str] = set()
+        self._config: Config | None = None
+        self._markers: set[str] = set()
 
     def __getattr__(self, name: str) -> MarkDecorator:
         """Generate a new :class:`MarkDecorator` with the given name."""
@@ -573,7 +565,7 @@ MARK_GEN = MarkGenerator(_ispytest=True)
 class NodeKeywords(MutableMapping[str, Any]):
     __slots__ = ("node", "parent", "_markers")
 
-    def __init__(self, node: "Node") -> None:
+    def __init__(self, node: Node) -> None:
         self.node = node
         self.parent = node.parent
         self._markers = {node.name: True}
@@ -601,7 +593,7 @@ class NodeKeywords(MutableMapping[str, Any]):
 
     def update(  # type: ignore[override]
         self,
-        other: Union[Mapping[str, Any], Iterable[Tuple[str, Any]]] = (),
+        other: Mapping[str, Any] | Iterable[tuple[str, Any]] = (),
         **kwds: Any,
     ) -> None:
         self._markers.update(other)

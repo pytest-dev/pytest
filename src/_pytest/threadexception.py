@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import threading
 import traceback
 import warnings
@@ -5,8 +7,6 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import Generator
-from typing import Optional
-from typing import Type
 
 import pytest
 
@@ -34,22 +34,22 @@ class catch_threading_exception:
     """
 
     def __init__(self) -> None:
-        self.args: Optional["threading.ExceptHookArgs"] = None
-        self._old_hook: Optional[Callable[["threading.ExceptHookArgs"], Any]] = None
+        self.args: threading.ExceptHookArgs | None = None
+        self._old_hook: Callable[[threading.ExceptHookArgs], Any] | None = None
 
-    def _hook(self, args: "threading.ExceptHookArgs") -> None:
+    def _hook(self, args: threading.ExceptHookArgs) -> None:
         self.args = args
 
-    def __enter__(self) -> "catch_threading_exception":
+    def __enter__(self) -> catch_threading_exception:
         self._old_hook = threading.excepthook
         threading.excepthook = self._hook
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         assert self._old_hook is not None
         threading.excepthook = self._old_hook

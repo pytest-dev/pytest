@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import os
 import subprocess
 import sys
 import time
 from types import ModuleType
-from typing import List
 
 import _pytest.pytester as pytester_mod
 import pytest
@@ -226,7 +227,7 @@ class TestInlineRunModulesCleanup:
 
     def spy_factory(self):
         class SysModulesSnapshotSpy:
-            instances: List["SysModulesSnapshotSpy"] = []  # noqa: F821
+            instances: list[SysModulesSnapshotSpy] = []  # noqa: F821
 
             def __init__(self, preserve=None) -> None:
                 SysModulesSnapshotSpy.instances.append(self)
@@ -398,7 +399,7 @@ class TestSysPathsSnapshot:
         original_data = list(getattr(sys, path_type))
         original_other = getattr(sys, other_path_type)
         original_other_data = list(original_other)
-        new: List[object] = []
+        new: list[object] = []
         snapshot = SysPathsSnapshot()
         monkeypatch.setattr(sys, path_type, new)
         snapshot.restore()

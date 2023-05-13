@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import os
 import pprint
 import shutil
 import sys
 import textwrap
 from pathlib import Path
-from typing import List
 
 import pytest
 from _pytest.config import ExitCode
@@ -515,7 +516,7 @@ class TestSession:
         assert len(colitems) == 1
         assert colitems[0].path == topdir
 
-    def get_reported_items(self, hookrec: HookRecorder) -> List[Item]:
+    def get_reported_items(self, hookrec: HookRecorder) -> list[Item]:
         """Return pytest.Item instances reported by the pytest_collectreport hook"""
         calls = hookrec.getcalls("pytest_collectreport")
         return [

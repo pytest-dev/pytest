@@ -1,4 +1,6 @@
 """Discover and run std-library "unittest" style tests."""
+from __future__ import annotations
+
 import sys
 import traceback
 import types
@@ -6,8 +8,6 @@ from typing import Any
 from typing import Callable
 from typing import Generator
 from typing import Iterable
-from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
@@ -42,8 +42,8 @@ if TYPE_CHECKING:
 
 
 def pytest_pycollect_makeitem(
-    collector: Union[Module, Class], name: str, obj: object
-) -> Optional["UnitTestCase"]:
+    collector: Module | Class, name: str, obj: object
+) -> UnitTestCase | None:
     # Has unittest been imported and is obj a subclass of its TestCase?
     try:
         ut = sys.modules["unittest"]
@@ -62,7 +62,7 @@ class UnitTestCase(Class):
     # to declare that our children do not support funcargs.
     nofuncargs = True
 
-    def collect(self) -> Iterable[Union[Item, Collector]]:
+    def collect(self) -> Iterable[Item | Collector]:
         from unittest import TestLoader
 
         cls = self.obj
@@ -123,7 +123,7 @@ def _make_xunit_fixture(
     obj: type,
     setup_name: str,
     teardown_name: str,
-    cleanup_name: Optional[str],
+    cleanup_name: str | None,
     scope: Scope,
     pass_self: bool,
 ):
@@ -182,8 +182,8 @@ def _make_xunit_fixture(
 
 class TestCaseFunction(Function):
     nofuncargs = True
-    _excinfo: Optional[List[_pytest._code.ExceptionInfo[BaseException]]] = None
-    _testcase: Optional["unittest.TestCase"] = None
+    _excinfo: list[_pytest._code.ExceptionInfo[BaseException]] | None = None
+    _testcase: unittest.TestCase | None = None
 
     def _getobj(self):
         assert self.parent is not None
@@ -196,7 +196,7 @@ class TestCaseFunction(Function):
 
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
-        self._explicit_tearDown: Optional[Callable[[], None]] = None
+        self._explicit_tearDown: Callable[[], None] | None = None
         assert self.parent is not None
         self._testcase = self.parent.obj(self.name)  # type: ignore[attr-defined]
         self._obj = getattr(self._testcase, self.name)
@@ -210,10 +210,10 @@ class TestCaseFunction(Function):
         self._testcase = None
         self._obj = None
 
-    def startTest(self, testcase: "unittest.TestCase") -> None:
+    def startTest(self, testcase: unittest.TestCase) -> None:
         pass
 
-    def _addexcinfo(self, rawexcinfo: "_SysExcInfoType") -> None:
+    def _addexcinfo(self, rawexcinfo: _SysExcInfoType) -> None:
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
@@ -247,7 +247,7 @@ class TestCaseFunction(Function):
         self.__dict__.setdefault("_excinfo", []).append(excinfo)
 
     def addError(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: unittest.TestCase, rawexcinfo: _SysExcInfoType
     ) -> None:
         try:
             if isinstance(rawexcinfo[1], exit.Exception):
@@ -257,11 +257,11 @@ class TestCaseFunction(Function):
         self._addexcinfo(rawexcinfo)
 
     def addFailure(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: unittest.TestCase, rawexcinfo: _SysExcInfoType
     ) -> None:
         self._addexcinfo(rawexcinfo)
 
-    def addSkip(self, testcase: "unittest.TestCase", reason: str) -> None:
+    def addSkip(self, testcase: unittest.TestCase, reason: str) -> None:
         try:
             raise pytest.skip.Exception(reason, _use_item_location=True)
         except skip.Exception:
@@ -269,8 +269,8 @@ class TestCaseFunction(Function):
 
     def addExpectedFailure(
         self,
-        testcase: "unittest.TestCase",
-        rawexcinfo: "_SysExcInfoType",
+        testcase: unittest.TestCase,
+        rawexcinfo: _SysExcInfoType,
         reason: str = "",
     ) -> None:
         try:
@@ -280,8 +280,8 @@ class TestCaseFunction(Function):
 
     def addUnexpectedSuccess(
         self,
-        testcase: "unittest.TestCase",
-        reason: Optional["twisted.trial.unittest.Todo"] = None,
+        testcase: unittest.TestCase,
+        reason: twisted.trial.unittest.Todo | None = None,
     ) -> None:
         msg = "Unexpected success"
         if reason:
@@ -292,13 +292,13 @@ class TestCaseFunction(Function):
         except fail.Exception:
             self._addexcinfo(sys.exc_info())
 
-    def addSuccess(self, testcase: "unittest.TestCase") -> None:
+    def addSuccess(self, testcase: unittest.TestCase) -> None:
         pass
 
-    def stopTest(self, testcase: "unittest.TestCase") -> None:
+    def stopTest(self, testcase: unittest.TestCase) -> None:
         pass
 
-    def addDuration(self, testcase: "unittest.TestCase", elapsed: float) -> None:
+    def addDuration(self, testcase: unittest.TestCase, elapsed: float) -> None:
         pass
 
     def runtest(self) -> None:
@@ -409,7 +409,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     return res
 
 
-def check_testcase_implements_trial_reporter(done: List[int] = []) -> None:
+def check_testcase_implements_trial_reporter(done: list[int] = []) -> None:
     if done:
         return
     from zope.interface import classImplements

@@ -1,4 +1,6 @@
 """Discover and run doctests in modules and test files."""
+from __future__ import annotations
+
 import bdb
 import functools
 import inspect
@@ -12,17 +14,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import Dict
 from typing import Generator
 from typing import Iterable
-from typing import List
-from typing import Optional
 from typing import Pattern
 from typing import Sequence
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
-from typing import Union
 
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
@@ -64,7 +60,7 @@ DOCTEST_REPORT_CHOICES = (
 # Lazy definition of runner class
 RUNNER_CLASS = None
 # Lazy definition of output checker class
-CHECKER_CLASS: Optional[Type["doctest.OutputChecker"]] = None
+CHECKER_CLASS: type[doctest.OutputChecker] | None = None
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -126,7 +122,7 @@ def pytest_unconfigure() -> None:
 def pytest_collect_file(
     file_path: Path,
     parent: Collector,
-) -> Optional[Union["DoctestModule", "DoctestTextfile"]]:
+) -> DoctestModule | DoctestTextfile | None:
     config = parent.config
     if file_path.suffix == ".py":
         if config.option.doctestmodules and not any(
@@ -160,7 +156,7 @@ def _is_main_py(path: Path) -> bool:
 
 class ReprFailDoctest(TerminalRepr):
     def __init__(
-        self, reprlocation_lines: Sequence[Tuple[ReprFileLocation, Sequence[str]]]
+        self, reprlocation_lines: Sequence[tuple[ReprFileLocation, Sequence[str]]]
     ) -> None:
         self.reprlocation_lines = reprlocation_lines
 
@@ -172,12 +168,12 @@ class ReprFailDoctest(TerminalRepr):
 
 
 class MultipleDoctestFailures(Exception):
-    def __init__(self, failures: Sequence["doctest.DocTestFailure"]) -> None:
+    def __init__(self, failures: Sequence[doctest.DocTestFailure]) -> None:
         super().__init__()
         self.failures = failures
 
 
-def _init_runner_class() -> Type["doctest.DocTestRunner"]:
+def _init_runner_class() -> type[doctest.DocTestRunner]:
     import doctest
 
     class PytestDoctestRunner(doctest.DebugRunner):
@@ -189,8 +185,8 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
 
         def __init__(
             self,
-            checker: Optional["doctest.OutputChecker"] = None,
-            verbose: Optional[bool] = None,
+            checker: doctest.OutputChecker | None = None,
+            verbose: bool | None = None,
             optionflags: int = 0,
             continue_on_failure: bool = True,
         ) -> None:
@@ -200,8 +196,8 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
         def report_failure(
             self,
             out,
-            test: "doctest.DocTest",
-            example: "doctest.Example",
+            test: doctest.DocTest,
+            example: doctest.Example,
             got: str,
         ) -> None:
             failure = doctest.DocTestFailure(test, example, got)
@@ -213,9 +209,9 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
         def report_unexpected_exception(
             self,
             out,
-            test: "doctest.DocTest",
-            example: "doctest.Example",
-            exc_info: Tuple[Type[BaseException], BaseException, types.TracebackType],
+            test: doctest.DocTest,
+            example: doctest.Example,
+            exc_info: tuple[type[BaseException], BaseException, types.TracebackType],
         ) -> None:
             if isinstance(exc_info[1], OutcomeException):
                 raise exc_info[1]
@@ -231,11 +227,11 @@ def _init_runner_class() -> Type["doctest.DocTestRunner"]:
 
 
 def _get_runner(
-    checker: Optional["doctest.OutputChecker"] = None,
-    verbose: Optional[bool] = None,
+    checker: doctest.OutputChecker | None = None,
+    verbose: bool | None = None,
     optionflags: int = 0,
     continue_on_failure: bool = True,
-) -> "doctest.DocTestRunner":
+) -> doctest.DocTestRunner:
     # We need this in order to do a lazy import on doctest
     global RUNNER_CLASS
     if RUNNER_CLASS is None:
@@ -254,9 +250,9 @@ class DoctestItem(Item):
     def __init__(
         self,
         name: str,
-        parent: "Union[DoctestTextfile, DoctestModule]",
-        runner: "doctest.DocTestRunner",
-        dtest: "doctest.DocTest",
+        parent: DoctestTextfile | DoctestModule,
+        runner: doctest.DocTestRunner,
+        dtest: doctest.DocTest,
     ) -> None:
         super().__init__(name, parent)
         self.runner = runner
@@ -273,18 +269,18 @@ class DoctestItem(Item):
     @classmethod
     def from_parent(  # type: ignore
         cls,
-        parent: "Union[DoctestTextfile, DoctestModule]",
+        parent: DoctestTextfile | DoctestModule,
         *,
         name: str,
-        runner: "doctest.DocTestRunner",
-        dtest: "doctest.DocTest",
+        runner: doctest.DocTestRunner,
+        dtest: doctest.DocTest,
     ):
         # incompatible signature due to imposed limits on subclass
         """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
 
     def _initrequest(self) -> None:
-        self.funcargs: Dict[str, object] = {}
+        self.funcargs: dict[str, object] = {}
         self._request = TopRequest(self, _ispytest=True)  # type: ignore[arg-type]
 
     def setup(self) -> None:
@@ -297,7 +293,7 @@ class DoctestItem(Item):
     def runtest(self) -> None:
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
-        failures: List["doctest.DocTestFailure"] = []
+        failures: list[doctest.DocTestFailure] = []
         # Type ignored because we change the type of `out` from what
         # doctest expects.
         self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
@@ -319,12 +315,12 @@ class DoctestItem(Item):
     def repr_failure(  # type: ignore[override]
         self,
         excinfo: ExceptionInfo[BaseException],
-    ) -> Union[str, TerminalRepr]:
+    ) -> str | TerminalRepr:
         import doctest
 
-        failures: Optional[
-            Sequence[Union[doctest.DocTestFailure, doctest.UnexpectedException]]
-        ] = None
+        failures: None | (
+            Sequence[doctest.DocTestFailure | doctest.UnexpectedException]
+        ) = None
         if isinstance(
             excinfo.value, (doctest.DocTestFailure, doctest.UnexpectedException)
         ):
@@ -380,11 +376,11 @@ class DoctestItem(Item):
             reprlocation_lines.append((reprlocation, lines))
         return ReprFailDoctest(reprlocation_lines)
 
-    def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
+    def reportinfo(self) -> tuple[os.PathLike[str] | str, int | None, str]:
         return self.path, self.dtest.lineno, "[doctest] %s" % self.name
 
 
-def _get_flag_lookup() -> Dict[str, int]:
+def _get_flag_lookup() -> dict[str, int]:
     import doctest
 
     return dict(
@@ -450,7 +446,7 @@ class DoctestTextfile(Module):
             )
 
 
-def _check_all_skipped(test: "doctest.DocTest") -> None:
+def _check_all_skipped(test: doctest.DocTest) -> None:
     """Raise pytest.skip() if all examples in the given DocTest have the SKIP
     option set."""
     import doctest
@@ -476,7 +472,7 @@ def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
     real_unwrap = inspect.unwrap
 
     def _mock_aware_unwrap(
-        func: Callable[..., Any], *, stop: Optional[Callable[[Any], Any]] = None
+        func: Callable[..., Any], *, stop: Callable[[Any], Any] | None = None
     ) -> Any:
         try:
             if stop is None or stop is _is_mocked:
@@ -593,7 +589,7 @@ class DoctestModule(Module):
                 )
 
 
-def _init_checker_class() -> Type["doctest.OutputChecker"]:
+def _init_checker_class() -> type[doctest.OutputChecker]:
     import doctest
     import re
 
@@ -661,8 +657,8 @@ def _init_checker_class() -> Type["doctest.OutputChecker"]:
                 return got
             offset = 0
             for w, g in zip(wants, gots):
-                fraction: Optional[str] = w.group("fraction")
-                exponent: Optional[str] = w.group("exponent1")
+                fraction: str | None = w.group("fraction")
+                exponent: str | None = w.group("exponent1")
                 if exponent is None:
                     exponent = w.group("exponent2")
                 precision = 0 if fraction is None else len(fraction)
@@ -681,7 +677,7 @@ def _init_checker_class() -> Type["doctest.OutputChecker"]:
     return LiteralsOutputChecker
 
 
-def _get_checker() -> "doctest.OutputChecker":
+def _get_checker() -> doctest.OutputChecker:
     """Return a doctest.OutputChecker subclass that supports some
     additional options:
 
@@ -740,7 +736,7 @@ def _get_report_choice(key: str) -> int:
 
 
 @fixture(scope="session")
-def doctest_namespace() -> Dict[str, Any]:
+def doctest_namespace() -> dict[str, Any]:
     """Fixture that returns a :py:class:`dict` that will be injected into the
     namespace of doctests.
 

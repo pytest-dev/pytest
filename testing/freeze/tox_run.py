@@ -2,6 +2,8 @@
 Called by tox.ini: uses the generated executable to run the tests in ./tests/
 directory.
 """
+from __future__ import annotations
+
 if __name__ == "__main__":
     import os
     import sys

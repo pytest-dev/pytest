@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import os
 import shutil
 import sys
 import types
-from typing import List
 
 import pytest
 from _pytest.config import Config
@@ -111,7 +112,7 @@ class TestPytestPluginInteractions:
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
 
-        values: List[str] = []
+        values: list[str] = []
         pytestpm.trace.root.setwriter(values.append)
         undo = pytestpm.enable_tracing()
         try:

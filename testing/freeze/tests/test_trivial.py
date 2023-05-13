@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def test_upper():
     assert "foo".upper() == "FOO"
 

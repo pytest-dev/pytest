@@ -1,11 +1,12 @@
 """Exception classes and constants handling test outcomes as well as
 functions creating them."""
+from __future__ import annotations
+
 import sys
 from typing import Any
 from typing import Callable
 from typing import cast
 from typing import NoReturn
-from typing import Optional
 from typing import Protocol
 from typing import Type
 from typing import TypeVar
@@ -15,7 +16,7 @@ class OutcomeException(BaseException):
     """OutcomeException and its subclass instances indicate and contain info
     about test and collection outcomes."""
 
-    def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
+    def __init__(self, msg: str | None = None, pytrace: bool = True) -> None:
         if msg is not None and not isinstance(msg, str):
             error_msg = (  # type: ignore[unreachable]
                 "{} expected string as 'msg' parameter, got '{}' instead.\n"
@@ -44,7 +45,7 @@ class Skipped(OutcomeException):
 
     def __init__(
         self,
-        msg: Optional[str] = None,
+        msg: str | None = None,
         pytrace: bool = True,
         allow_module_level: bool = False,
         *,
@@ -67,7 +68,7 @@ class Exit(Exception):
     """Raised for immediate program exits (no tracebacks/summaries)."""
 
     def __init__(
-        self, msg: str = "unknown reason", returncode: Optional[int] = None
+        self, msg: str = "unknown reason", returncode: int | None = None
     ) -> None:
         self.msg = msg
         self.returncode = returncode
@@ -101,7 +102,7 @@ def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _E
 @_with_exception(Exit)
 def exit(
     reason: str = "",
-    returncode: Optional[int] = None,
+    returncode: int | None = None,
 ) -> NoReturn:
     """Exit testing process.
 
@@ -191,7 +192,7 @@ def xfail(reason: str = "") -> NoReturn:
 
 
 def importorskip(
-    modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
+    modname: str, minversion: str | None = None, reason: str | None = None
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.

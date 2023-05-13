@@ -1,13 +1,14 @@
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
+from __future__ import annotations
+
 import inspect
 import linecache
 import sys
 import textwrap
 from pathlib import Path
 from typing import Any
-from typing import Dict
 
 import pytest
 from _pytest._code import Code
@@ -335,7 +336,7 @@ def test_findsource(monkeypatch) -> None:
     assert src is not None
     assert "if 1:" in str(src)
 
-    d: Dict[str, Any] = {}
+    d: dict[str, Any] = {}
     eval(co, d)
     src, lineno = findsource(d["x"])
     assert src is not None

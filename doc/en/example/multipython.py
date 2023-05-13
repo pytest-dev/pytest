@@ -1,5 +1,7 @@
 """Module containing a parametrized tests testing cross-python serialization
 via the pickle module."""
+from __future__ import annotations
+
 import shutil
 import subprocess
 import textwrap

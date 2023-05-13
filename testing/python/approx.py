@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import operator
 from contextlib import contextmanager
 from decimal import Decimal
@@ -5,7 +7,6 @@ from fractions import Fraction
 from math import sqrt
 from operator import eq
 from operator import ne
-from typing import Optional
 
 import pytest
 from _pytest.pytester import Pytester
@@ -415,9 +416,7 @@ class TestApprox:
             (-1e100, -1e100),
         ],
     )
-    def test_negative_tolerance(
-        self, rel: Optional[float], abs: Optional[float]
-    ) -> None:
+    def test_negative_tolerance(self, rel: float | None, abs: float | None) -> None:
         # Negative tolerances are not allowed.
         with pytest.raises(ValueError):
             1.1 == approx(1, rel, abs)

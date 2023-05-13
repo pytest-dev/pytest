@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 import email.message
 import io
-from typing import List
-from typing import Union
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -10,8 +10,8 @@ from _pytest.pytester import Pytester
 
 class TestPasteCapture:
     @pytest.fixture
-    def pastebinlist(self, monkeypatch, request) -> List[Union[str, bytes]]:
-        pastebinlist: List[Union[str, bytes]] = []
+    def pastebinlist(self, monkeypatch, request) -> list[str | bytes]:
+        pastebinlist: list[str | bytes] = []
         plugin = request.config.pluginmanager.getplugin("pastebin")
         monkeypatch.setattr(plugin, "create_new_paste", pastebinlist.append)
         return pastebinlist

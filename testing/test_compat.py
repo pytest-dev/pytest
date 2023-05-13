@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import enum
 import sys
 from functools import cached_property
 from functools import partial
 from functools import wraps
 from typing import TYPE_CHECKING
-from typing import Union
 
 import pytest
 from _pytest.compat import _PytestWrapper
@@ -214,7 +215,7 @@ def test_cached_property() -> None:
 
 
 def test_assert_never_union() -> None:
-    x: Union[int, str] = 10
+    x: int | str = 10
 
     if isinstance(x, int):
         pass

@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 import os
 import sys
 import warnings
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 import pytest
 from _pytest.fixtures import FixtureRequest
@@ -659,8 +658,8 @@ class TestStackLevel:
     @pytest.fixture
     def capwarn(self, pytester: Pytester):
         class CapturedWarnings:
-            captured: List[
-                Tuple[warnings.WarningMessage, Optional[Tuple[str, int, str]]]
+            captured: list[
+                tuple[warnings.WarningMessage, tuple[str, int, str] | None]
             ] = []
 
             @classmethod

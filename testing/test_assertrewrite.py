@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import errno
 import glob
@@ -12,12 +14,8 @@ import zipfile
 from functools import partial
 from pathlib import Path
 from typing import cast
-from typing import Dict
 from typing import Generator
-from typing import List
 from typing import Mapping
-from typing import Optional
-from typing import Set
 from unittest import mock
 
 import _pytest._code
@@ -44,13 +42,13 @@ def rewrite(src: str) -> ast.Module:
 
 
 def getmsg(
-    f, extra_ns: Optional[Mapping[str, object]] = None, *, must_pass: bool = False
-) -> Optional[str]:
+    f, extra_ns: Mapping[str, object] | None = None, *, must_pass: bool = False
+) -> str | None:
     """Rewrite the assertions in f, run it, and get the failure message."""
     src = "\n".join(_pytest._code.Code.from_function(f).source().lines)
     mod = rewrite(src)
     code = compile(mod, "<test>", "exec")
-    ns: Dict[str, object] = {}
+    ns: dict[str, object] = {}
     if extra_ns is not None:
         ns.update(extra_ns)
     exec(code, ns)
@@ -1638,8 +1636,8 @@ class TestEarlyRewriteBailout:
         """
         import importlib.machinery
 
-        self.find_spec_calls: List[str] = []
-        self.initial_paths: Set[Path] = set()
+        self.find_spec_calls: list[str] = []
+        self.initial_paths: set[Path] = set()
 
         class StubSession:
             _initialpaths = self.initial_paths
@@ -2056,7 +2054,7 @@ class TestReprSizeVerbosity:
     )
     def test_get_maxsize_for_saferepr(self, verbose: int, expected_size) -> None:
         class FakeConfig:
-            def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+            def get_verbosity(self, verbosity_type: str | None = None) -> int:
                 return verbose
 
         config = FakeConfig()

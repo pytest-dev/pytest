@@ -1,4 +1,6 @@
 """Add backward compatibility support for the legacy py path type."""
+from __future__ import annotations
+
 import dataclasses
 import os
 import shlex
@@ -6,10 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Final
 from typing import final
-from typing import List
-from typing import Optional
 from typing import TYPE_CHECKING
-from typing import Union
 
 from iniconfig import SectionWrapper
 
@@ -45,7 +44,7 @@ LEGACY_PATH = py.path. local
 # fmt: on
 
 
-def legacy_path(path: Union[str, "os.PathLike[str]"]) -> LEGACY_PATH:
+def legacy_path(path: str | os.PathLike[str]) -> LEGACY_PATH:
     """Internal wrapper to prepare lazy proxies for legacy_path instances"""
     return LEGACY_PATH(path)
 
@@ -61,8 +60,8 @@ class Testdir:
 
     __test__ = False
 
-    CLOSE_STDIN: "Final" = Pytester.CLOSE_STDIN
-    TimeoutExpired: "Final" = Pytester.TimeoutExpired
+    CLOSE_STDIN: Final = Pytester.CLOSE_STDIN
+    TimeoutExpired: Final = Pytester.TimeoutExpired
 
     def __init__(self, pytester: Pytester, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
@@ -156,7 +155,7 @@ class Testdir:
         """See :meth:`Pytester.copy_example`."""
         return legacy_path(self._pytester.copy_example(name))
 
-    def getnode(self, config: Config, arg) -> Optional[Union[Item, Collector]]:
+    def getnode(self, config: Config, arg) -> Item | Collector | None:
         """See :meth:`Pytester.getnode`."""
         return self._pytester.getnode(config, arg)
 
@@ -164,7 +163,7 @@ class Testdir:
         """See :meth:`Pytester.getpathnode`."""
         return self._pytester.getpathnode(path)
 
-    def genitems(self, colitems: List[Union[Item, Collector]]) -> List[Item]:
+    def genitems(self, colitems: list[Item | Collector]) -> list[Item]:
         """See :meth:`Pytester.genitems`."""
         return self._pytester.genitems(colitems)
 
@@ -216,9 +215,7 @@ class Testdir:
             source, configargs=configargs, withinit=withinit
         )
 
-    def collect_by_name(
-        self, modcol: Collector, name: str
-    ) -> Optional[Union[Item, Collector]]:
+    def collect_by_name(self, modcol: Collector, name: str) -> Item | Collector | None:
         """See :meth:`Pytester.collect_by_name`."""
         return self._pytester.collect_by_name(modcol, name)
 
@@ -249,13 +246,11 @@ class Testdir:
         """See :meth:`Pytester.runpytest_subprocess`."""
         return self._pytester.runpytest_subprocess(*args, timeout=timeout)
 
-    def spawn_pytest(
-        self, string: str, expect_timeout: float = 10.0
-    ) -> "pexpect.spawn":
+    def spawn_pytest(self, string: str, expect_timeout: float = 10.0) -> pexpect.spawn:
         """See :meth:`Pytester.spawn_pytest`."""
         return self._pytester.spawn_pytest(string, expect_timeout=expect_timeout)
 
-    def spawn(self, cmd: str, expect_timeout: float = 10.0) -> "pexpect.spawn":
+    def spawn(self, cmd: str, expect_timeout: float = 10.0) -> pexpect.spawn:
         """See :meth:`Pytester.spawn`."""
         return self._pytester.spawn(cmd, expect_timeout=expect_timeout)
 
@@ -385,7 +380,7 @@ def Config_rootdir(self: Config) -> LEGACY_PATH:
     return legacy_path(str(self.rootpath))
 
 
-def Config_inifile(self: Config) -> Optional[LEGACY_PATH]:
+def Config_inifile(self: Config) -> LEGACY_PATH | None:
     """The path to the :ref:`configfile <configfiles>`.
 
     Prefer to use :attr:`inipath`, which is a :class:`pathlib.Path`.
@@ -405,9 +400,7 @@ def Session_stardir(self: Session) -> LEGACY_PATH:
     return legacy_path(self.startpath)
 
 
-def Config__getini_unknown_type(
-    self, name: str, type: str, value: Union[str, List[str]]
-):
+def Config__getini_unknown_type(self, name: str, type: str, value: str | list[str]):
     if type == "pathlist":
         # TODO: This assert is probably not valid in all cases.
         assert self.inipath is not None

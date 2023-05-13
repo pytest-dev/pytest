@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import contextlib
 import fnmatch
@@ -24,16 +26,9 @@ from pathlib import PurePath
 from posixpath import sep as posix_sep
 from types import ModuleType
 from typing import Callable
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
-from typing import Union
 
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
@@ -70,10 +65,10 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
 def on_rm_rf_error(
     func,
     path: str,
-    excinfo: Union[
-        BaseException,
-        Tuple[Type[BaseException], BaseException, Optional[types.TracebackType]],
-    ],
+    excinfo: (
+        BaseException
+        | tuple[type[BaseException], BaseException, types.TracebackType | None]
+    ),
     *,
     start_path: Path,
 ) -> bool:
@@ -203,9 +198,7 @@ def parse_num(maybe_num) -> int:
         return -1
 
 
-def _force_symlink(
-    root: Path, target: Union[str, PurePath], link_to: Union[str, Path]
-) -> None:
+def _force_symlink(root: Path, target: str | PurePath, link_to: str | Path) -> None:
     """Helper to create the current symlink.
 
     It's full of race conditions that are reasonably OK to ignore
@@ -417,7 +410,7 @@ def resolve_from_str(input: str, rootpath: Path) -> Path:
         return rootpath.joinpath(input)
 
 
-def fnmatch_ex(pattern: str, path: Union[str, "os.PathLike[str]"]) -> bool:
+def fnmatch_ex(pattern: str, path: str | os.PathLike[str]) -> bool:
     """A port of FNMatcher from py.path.common which works with PurePath() instances.
 
     The difference between this algorithm and PurePath.match() is that the
@@ -453,7 +446,7 @@ def fnmatch_ex(pattern: str, path: Union[str, "os.PathLike[str]"]) -> bool:
     return fnmatch.fnmatch(name, pattern)
 
 
-def parts(s: str) -> Set[str]:
+def parts(s: str) -> set[str]:
     parts = s.split(sep)
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
 
@@ -484,9 +477,9 @@ class ImportPathMismatchError(ImportError):
 
 
 def import_path(
-    p: Union[str, "os.PathLike[str]"],
+    p: str | os.PathLike[str],
     *,
-    mode: Union[str, ImportMode] = ImportMode.prepend,
+    mode: str | ImportMode = ImportMode.prepend,
     root: Path,
 ) -> ModuleType:
     """Import and return a module from the given path, which can be a file (a module) or
@@ -631,7 +624,7 @@ def module_name_from_path(path: Path, root: Path) -> str:
     return ".".join(path_parts)
 
 
-def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> None:
+def insert_missing_modules(modules: dict[str, ModuleType], module_name: str) -> None:
     """
     Used by ``import_path`` to create intermediate modules when using mode=importlib.
 
@@ -640,8 +633,8 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
     otherwise "src.tests.test_foo" is not importable by ``__import__``.
     """
     module_parts = module_name.split(".")
-    child_module: Union[ModuleType, None] = None
-    module: Union[ModuleType, None] = None
+    child_module: ModuleType | None = None
+    module: ModuleType | None = None
     child_name: str = ""
     while module_name:
         if module_name not in modules:
@@ -672,7 +665,7 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
         module_name = ".".join(module_parts)
 
 
-def resolve_package_path(path: Path) -> Optional[Path]:
+def resolve_package_path(path: Path) -> Path | None:
     """Return the Python package path by looking for the last
     directory upwards which still contains an __init__.py.
 
@@ -690,9 +683,9 @@ def resolve_package_path(path: Path) -> Optional[Path]:
 
 
 def scandir(
-    path: Union[str, "os.PathLike[str]"],
-    sort_key: Callable[["os.DirEntry[str]"], object] = lambda entry: entry.name,
-) -> List["os.DirEntry[str]"]:
+    path: str | os.PathLike[str],
+    sort_key: Callable[[os.DirEntry[str]], object] = lambda entry: entry.name,
+) -> list[os.DirEntry[str]]:
     """Scan a directory recursively, in breadth-first order.
 
     The returned entries are sorted according to the given key.
@@ -715,8 +708,8 @@ def scandir(
 
 
 def visit(
-    path: Union[str, "os.PathLike[str]"], recurse: Callable[["os.DirEntry[str]"], bool]
-) -> Iterator["os.DirEntry[str]"]:
+    path: str | os.PathLike[str], recurse: Callable[[os.DirEntry[str]], bool]
+) -> Iterator[os.DirEntry[str]]:
     """Walk a directory recursively, in breadth-first order.
 
     The `recurse` predicate determines whether a directory is recursed.
@@ -730,7 +723,7 @@ def visit(
             yield from visit(entry.path, recurse)
 
 
-def absolutepath(path: Union[Path, str]) -> Path:
+def absolutepath(path: Path | str) -> Path:
     """Convert a path to an absolute path using os.path.abspath.
 
     Prefer this over Path.resolve() (see #6523).
@@ -739,7 +732,7 @@ def absolutepath(path: Union[Path, str]) -> Path:
     return Path(os.path.abspath(str(path)))
 
 
-def commonpath(path1: Path, path2: Path) -> Optional[Path]:
+def commonpath(path1: Path, path2: Path) -> Path | None:
     """Return the common part shared with the other path, or None if there is
     no common part.
 

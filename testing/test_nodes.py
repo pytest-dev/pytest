@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 import re
 import warnings
 from pathlib import Path
 from typing import cast
-from typing import List
-from typing import Type
 
 import pytest
 from _pytest import nodes
@@ -30,7 +30,7 @@ from _pytest.warning_types import PytestWarning
         ("a/b::c/d::e[/test]", ["", "a", "a/b", "a/b::c/d", "a/b::c/d::e[/test]"]),
     ),
 )
-def test_iterparentnodeids(nodeid: str, expected: List[str]) -> None:
+def test_iterparentnodeids(nodeid: str, expected: list[str]) -> None:
     result = list(nodes.iterparentnodeids(nodeid))
     assert result == expected
 
@@ -94,7 +94,7 @@ def test_subclassing_both_item_and_collector_deprecated(
     "warn_type, msg", [(DeprecationWarning, "deprecated"), (PytestWarning, "pytest")]
 )
 def test_node_warn_is_no_longer_only_pytest_warnings(
-    pytester: Pytester, warn_type: Type[Warning], msg: str
+    pytester: Pytester, warn_type: type[Warning], msg: str
 ) -> None:
     items = pytester.getitems(
         """

@@ -1,8 +1,9 @@
-from typing import List
+from __future__ import annotations
+
 from unittest import IsolatedAsyncioTestCase
 
 
-teardowns: List[None] = []
+teardowns: list[None] = []
 
 
 class AsyncArguments(IsolatedAsyncioTestCase):

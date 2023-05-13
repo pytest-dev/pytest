@@ -1,11 +1,12 @@
 """Issue #7110"""
+from __future__ import annotations
+
 import asyncio
-from typing import List
 
 import asynctest
 
 
-teardowns: List[None] = []
+teardowns: list[None] = []
 
 
 class Test(asynctest.TestCase):

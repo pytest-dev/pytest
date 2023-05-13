@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import os
 import stat
@@ -6,8 +8,6 @@ import warnings
 from pathlib import Path
 from typing import Callable
 from typing import cast
-from typing import List
-from typing import Union
 
 import pytest
 from _pytest import pathlib
@@ -33,7 +33,7 @@ def test_tmp_path_fixture(pytester: Pytester) -> None:
 
 @dataclasses.dataclass
 class FakeConfig:
-    basetemp: Union[str, Path]
+    basetemp: str | Path
 
     @property
     def trace(self):
@@ -396,7 +396,7 @@ class TestNumberedDir:
     def test_lock_register_cleanup_removal(self, tmp_path: Path) -> None:
         lock = create_cleanup_lock(tmp_path)
 
-        registry: List[Callable[..., None]] = []
+        registry: list[Callable[..., None]] = []
         register_cleanup_lock_removal(lock, register=registry.append)
 
         (cleanup_func,) = registry

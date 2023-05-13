@@ -1,4 +1,6 @@
 """Per-test stdout/stderr capturing mechanism."""
+from __future__ import annotations
+
 import abc
 import collections
 import contextlib
@@ -17,15 +19,10 @@ from typing import Generator
 from typing import Generic
 from typing import Iterable
 from typing import Iterator
-from typing import List
 from typing import Literal
 from typing import NamedTuple
-from typing import Optional
 from typing import TextIO
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
-from typing import Union
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -211,7 +208,7 @@ class DontReadFromInput(TextIO):
     def __next__(self) -> str:
         return self.readline()
 
-    def readlines(self, hint: Optional[int] = -1) -> List[str]:
+    def readlines(self, hint: int | None = -1) -> list[str]:
         raise OSError(
             "pytest: reading from stdin while output is captured!  Consider using `-s`."
         )
@@ -243,7 +240,7 @@ class DontReadFromInput(TextIO):
     def tell(self) -> int:
         raise UnsupportedOperation("redirected stdin is pseudofile, has no tell()")
 
-    def truncate(self, size: Optional[int] = None) -> int:
+    def truncate(self, size: int | None = None) -> int:
         raise UnsupportedOperation("cannot truncate stdin")
 
     def write(self, data: str) -> int:
@@ -255,14 +252,14 @@ class DontReadFromInput(TextIO):
     def writable(self) -> bool:
         return False
 
-    def __enter__(self) -> "DontReadFromInput":
+    def __enter__(self) -> DontReadFromInput:
         return self
 
     def __exit__(
         self,
-        type: Optional[Type[BaseException]],
-        value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        type: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         pass
 
@@ -337,7 +334,7 @@ class NoCapture(CaptureBase[str]):
 
 class SysCaptureBase(CaptureBase[AnyStr]):
     def __init__(
-        self, fd: int, tmpfile: Optional[TextIO] = None, *, tee: bool = False
+        self, fd: int, tmpfile: TextIO | None = None, *, tee: bool = False
     ) -> None:
         name = patchsysdict[fd]
         self._old: TextIO = getattr(sys, name)
@@ -368,7 +365,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
             self.tmpfile,
         )
 
-    def _assert_state(self, op: str, states: Tuple[str, ...]) -> None:
+    def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
         assert (
             self._state in states
         ), "cannot {} in state {!r}: expected one of {}".format(
@@ -455,7 +452,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             # Further complications are the need to support suspend() and the
             # possibility of FD reuse (e.g. the tmpfile getting the very same
             # target FD). The following approach is robust, I believe.
-            self.targetfd_invalid: Optional[int] = os.open(os.devnull, os.O_RDWR)
+            self.targetfd_invalid: int | None = os.open(os.devnull, os.O_RDWR)
             os.dup2(self.targetfd_invalid, targetfd)
         else:
             self.targetfd_invalid = None
@@ -488,7 +485,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             self.tmpfile,
         )
 
-    def _assert_state(self, op: str, states: Tuple[str, ...]) -> None:
+    def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
         assert (
             self._state in states
         ), "cannot {} in state {!r}: expected one of {}".format(
@@ -609,13 +606,13 @@ class MultiCapture(Generic[AnyStr]):
 
     def __init__(
         self,
-        in_: Optional[CaptureBase[AnyStr]],
-        out: Optional[CaptureBase[AnyStr]],
-        err: Optional[CaptureBase[AnyStr]],
+        in_: CaptureBase[AnyStr] | None,
+        out: CaptureBase[AnyStr] | None,
+        err: CaptureBase[AnyStr] | None,
     ) -> None:
-        self.in_: Optional[CaptureBase[AnyStr]] = in_
-        self.out: Optional[CaptureBase[AnyStr]] = out
-        self.err: Optional[CaptureBase[AnyStr]] = err
+        self.in_: CaptureBase[AnyStr] | None = in_
+        self.out: CaptureBase[AnyStr] | None = out
+        self.err: CaptureBase[AnyStr] | None = err
 
     def __repr__(self) -> str:
         return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
@@ -635,7 +632,7 @@ class MultiCapture(Generic[AnyStr]):
         if self.err:
             self.err.start()
 
-    def pop_outerr_to_orig(self) -> Tuple[AnyStr, AnyStr]:
+    def pop_outerr_to_orig(self) -> tuple[AnyStr, AnyStr]:
         """Pop current snapshot out/err capture and flush to orig streams."""
         out, err = self.readouterr()
         if out:
@@ -728,15 +725,15 @@ class CaptureManager:
 
     def __init__(self, method: _CaptureMethod) -> None:
         self._method: Final = method
-        self._global_capturing: Optional[MultiCapture[str]] = None
-        self._capture_fixture: Optional[CaptureFixture[Any]] = None
+        self._global_capturing: MultiCapture[str] | None = None
+        self._capture_fixture: CaptureFixture[Any] | None = None
 
     def __repr__(self) -> str:
         return "<CaptureManager _method={!r} _global_capturing={!r} _capture_fixture={!r}>".format(
             self._method, self._global_capturing, self._capture_fixture
         )
 
-    def is_capturing(self) -> Union[str, bool]:
+    def is_capturing(self) -> str | bool:
         if self.is_globally_capturing():
             return "global"
         if self._capture_fixture:
@@ -784,7 +781,7 @@ class CaptureManager:
 
     # Fixture Control
 
-    def set_fixture(self, capture_fixture: "CaptureFixture[Any]") -> None:
+    def set_fixture(self, capture_fixture: CaptureFixture[Any]) -> None:
         if self._capture_fixture:
             current_fixture = self._capture_fixture.request.fixturename
             requested_fixture = capture_fixture.request.fixturename
@@ -901,15 +898,15 @@ class CaptureFixture(Generic[AnyStr]):
 
     def __init__(
         self,
-        captureclass: Type[CaptureBase[AnyStr]],
+        captureclass: type[CaptureBase[AnyStr]],
         request: SubRequest,
         *,
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-        self.captureclass: Type[CaptureBase[AnyStr]] = captureclass
+        self.captureclass: type[CaptureBase[AnyStr]] = captureclass
         self.request = request
-        self._capture: Optional[MultiCapture[AnyStr]] = None
+        self._capture: MultiCapture[AnyStr] | None = None
         self._captured_out: AnyStr = self.captureclass.EMPTY_BUFFER
         self._captured_err: AnyStr = self.captureclass.EMPTY_BUFFER
 

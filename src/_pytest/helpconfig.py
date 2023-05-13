@@ -1,11 +1,10 @@
 """Version info, help messages, tracing configuration."""
+from __future__ import annotations
+
 import os
 import sys
 from argparse import Action
 from typing import Generator
-from typing import List
-from typing import Optional
-from typing import Union
 
 import pytest
 from _pytest.config import Config
@@ -147,7 +146,7 @@ def showversion(config: Config) -> None:
         sys.stdout.write(f"pytest {pytest.__version__}\n")
 
 
-def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
+def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.version > 0:
         showversion(config)
         return 0
@@ -162,7 +161,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
 def showhelp(config: Config) -> None:
     import textwrap
 
-    reporter: Optional[TerminalReporter] = config.pluginmanager.get_plugin(
+    reporter: TerminalReporter | None = config.pluginmanager.get_plugin(
         "terminalreporter"
     )
     assert reporter is not None
@@ -239,7 +238,7 @@ def showhelp(config: Config) -> None:
 conftest_options = [("pytest_plugins", "list of plugin names to load")]
 
 
-def getpluginversioninfo(config: Config) -> List[str]:
+def getpluginversioninfo(config: Config) -> list[str]:
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
     if plugininfo:
@@ -251,7 +250,7 @@ def getpluginversioninfo(config: Config) -> List[str]:
     return lines
 
 
-def pytest_report_header(config: Config) -> List[str]:
+def pytest_report_header(config: Config) -> list[str]:
     lines = []
     if config.option.debug or config.option.traceconfig:
         lines.append(f"using: pytest-{pytest.__version__}")

@@ -1,4 +1,6 @@
 """Record warnings during test function execution."""
+from __future__ import annotations
+
 import re
 import warnings
 from pprint import pformat
@@ -8,14 +10,9 @@ from typing import Callable
 from typing import final
 from typing import Generator
 from typing import Iterator
-from typing import List
-from typing import Optional
 from typing import overload
 from typing import Pattern
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
-from typing import Union
 
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
@@ -26,7 +23,7 @@ T = TypeVar("T")
 
 
 @fixture
-def recwarn() -> Generator["WarningsRecorder", None, None]:
+def recwarn() -> Generator[WarningsRecorder, None, None]:
     """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
     See https://docs.pytest.org/en/latest/how-to/capture-warnings.html for information
@@ -39,9 +36,7 @@ def recwarn() -> Generator["WarningsRecorder", None, None]:
 
 
 @overload
-def deprecated_call(
-    *, match: Optional[Union[str, Pattern[str]]] = ...
-) -> "WarningsRecorder":
+def deprecated_call(*, match: str | Pattern[str] | None = ...) -> WarningsRecorder:
     ...
 
 
@@ -53,8 +48,8 @@ def deprecated_call(  # noqa: F811
 
 
 def deprecated_call(  # noqa: F811
-    func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
-) -> Union["WarningsRecorder", Any]:
+    func: Callable[..., Any] | None = None, *args: Any, **kwargs: Any
+) -> WarningsRecorder | Any:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning`` or ``FutureWarning``.
 
     This function can be used as a context manager::
@@ -88,16 +83,16 @@ def deprecated_call(  # noqa: F811
 
 @overload
 def warns(
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
+    expected_warning: type[Warning] | tuple[type[Warning], ...] = ...,
     *,
-    match: Optional[Union[str, Pattern[str]]] = ...,
-) -> "WarningsChecker":
+    match: str | Pattern[str] | None = ...,
+) -> WarningsChecker:
     ...
 
 
 @overload
 def warns(  # noqa: F811
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
+    expected_warning: type[Warning] | tuple[type[Warning], ...],
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any,
@@ -106,11 +101,11 @@ def warns(  # noqa: F811
 
 
 def warns(  # noqa: F811
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
+    expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
     *args: Any,
-    match: Optional[Union[str, Pattern[str]]] = None,
+    match: str | Pattern[str] | None = None,
     **kwargs: Any,
-) -> Union["WarningsChecker", Any]:
+) -> WarningsChecker | Any:
     r"""Assert that code raises a particular class of warning.
 
     Specifically, the parameter ``expected_warning`` can be a warning class or tuple
@@ -187,18 +182,18 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         # Type ignored due to the way typeshed handles warnings.catch_warnings.
         super().__init__(record=True)  # type: ignore[call-arg]
         self._entered = False
-        self._list: List[warnings.WarningMessage] = []
+        self._list: list[warnings.WarningMessage] = []
 
     @property
-    def list(self) -> List["warnings.WarningMessage"]:
+    def list(self) -> list[warnings.WarningMessage]:
         """The list of recorded warnings."""
         return self._list
 
-    def __getitem__(self, i: int) -> "warnings.WarningMessage":
+    def __getitem__(self, i: int) -> warnings.WarningMessage:
         """Get a recorded warning by index."""
         return self._list[i]
 
-    def __iter__(self) -> Iterator["warnings.WarningMessage"]:
+    def __iter__(self) -> Iterator[warnings.WarningMessage]:
         """Iterate through the recorded warnings."""
         return iter(self._list)
 
@@ -206,12 +201,12 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         """The number of recorded warnings."""
         return len(self._list)
 
-    def pop(self, cls: Type[Warning] = Warning) -> "warnings.WarningMessage":
+    def pop(self, cls: type[Warning] = Warning) -> warnings.WarningMessage:
         """Pop the first recorded warning which is an instance of ``cls``,
         but not an instance of a child class of any other match.
         Raises ``AssertionError`` if there is no match.
         """
-        best_idx: Optional[int] = None
+        best_idx: int | None = None
         for i, w in enumerate(self._list):
             if w.category == cls:
                 return self._list.pop(i)  # exact match, stop looking
@@ -231,7 +226,7 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
     # Type ignored because it doesn't exactly warnings.catch_warnings.__enter__
     # -- it returns a List but we only emulate one.
-    def __enter__(self) -> "WarningsRecorder":  # type: ignore
+    def __enter__(self) -> WarningsRecorder:  # type: ignore
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError(f"Cannot enter {self!r} twice")
@@ -244,9 +239,9 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if not self._entered:
             __tracebackhide__ = True
@@ -263,8 +258,8 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 class WarningsChecker(WarningsRecorder):
     def __init__(
         self,
-        expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
-        match_expr: Optional[Union[str, Pattern[str]]] = None,
+        expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
+        match_expr: str | Pattern[str] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -295,9 +290,9 @@ class WarningsChecker(WarningsRecorder):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         super().__exit__(exc_type, exc_val, exc_tb)
 

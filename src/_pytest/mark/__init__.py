@@ -1,11 +1,11 @@
 """Generic mechanism for marking and selecting python functions."""
+from __future__ import annotations
+
 import dataclasses
 from typing import AbstractSet
 from typing import Collection
-from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
-from typing import Union
 
 from .expression import Expression
 from .expression import ParseError
@@ -42,8 +42,8 @@ old_mark_config_key = StashKey[Optional[Config]]()
 
 def param(
     *values: object,
-    marks: Union[MarkDecorator, Collection[Union[MarkDecorator, Mark]]] = (),
-    id: Optional[str] = None,
+    marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
+    id: str | None = None,
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
@@ -110,7 +110,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 @hookimpl(tryfirst=True)
-def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
+def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     import _pytest.config
 
     if config.option.markers:
@@ -149,7 +149,7 @@ class KeywordMatcher:
     _names: AbstractSet[str]
 
     @classmethod
-    def from_item(cls, item: "Item") -> "KeywordMatcher":
+    def from_item(cls, item: Item) -> KeywordMatcher:
         mapped_names = set()
 
         # Add the names of the current item and any parent items,
@@ -189,7 +189,7 @@ class KeywordMatcher:
         return False
 
 
-def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
+def deselect_by_keyword(items: list[Item], config: Config) -> None:
     keywordexpr = config.option.keyword.lstrip()
     if not keywordexpr:
         return
@@ -221,7 +221,7 @@ class MarkMatcher:
     own_mark_names: AbstractSet[str]
 
     @classmethod
-    def from_item(cls, item: "Item") -> "MarkMatcher":
+    def from_item(cls, item: Item) -> MarkMatcher:
         mark_names = {mark.name for mark in item.iter_markers()}
         return cls(mark_names)
 
@@ -229,14 +229,14 @@ class MarkMatcher:
         return name in self.own_mark_names
 
 
-def deselect_by_mark(items: "List[Item]", config: Config) -> None:
+def deselect_by_mark(items: list[Item], config: Config) -> None:
     matchexpr = config.option.markexpr
     if not matchexpr:
         return
 
     expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'")
-    remaining: List[Item] = []
-    deselected: List[Item] = []
+    remaining: list[Item] = []
+    deselected: list[Item] = []
     for item in items:
         if expr.evaluate(MarkMatcher.from_item(item)):
             remaining.append(item)
@@ -254,7 +254,7 @@ def _parse_expression(expr: str, exc_message: str) -> Expression:
         raise UsageError(f"{exc_message}: {expr}: {e}") from None
 
 
-def pytest_collection_modifyitems(items: "List[Item]", config: Config) -> None:
+def pytest_collection_modifyitems(items: list[Item], config: Config) -> None:
     deselect_by_keyword(items, config)
     deselect_by_mark(items, config)
 

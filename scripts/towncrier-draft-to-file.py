@@ -1,6 +1,9 @@
-# mypy: disallow-untyped-defs
+from __future__ import annotations
+
 import sys
 from subprocess import call
+
+# mypy: disallow-untyped-defs
 
 
 def main() -> int:

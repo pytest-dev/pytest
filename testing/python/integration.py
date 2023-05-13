@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker
