@@ -4405,7 +4405,7 @@ def test_fixture_named_request(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*'request' is a reserved word for fixtures, use another name:",
-            "  *test_fixture_named_request.py:5",
+            "  *test_fixture_named_request.py:7",
         ]
     )
 
