@@ -434,7 +434,23 @@ class FixtureRequest:
     @property
     def node(self):
         """Underlying collection node (depends on current request scope)."""
-        return self._getscopeitem(self._scope)
+        scope = self._scope
+        if scope is Scope.Function:
+            # This might also be a non-function Item despite its attribute name.
+            node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
+        elif scope is Scope.Package:
+            # FIXME: _fixturedef is not defined on FixtureRequest (this class),
+            # but on FixtureRequest (a subclass).
+            node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
+        else:
+            node = get_scope_node(self._pyfuncitem, scope)
+        if node is None and scope is Scope.Class:
+            # Fallback to function item itself.
+            node = self._pyfuncitem
+        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
+            scope, self._pyfuncitem
+        )
+        return node
 
     def _getnextfixturedef(self, argname: str) -> "FixtureDef[Any]":
         fixturedefs = self._arg2fixturedefs.get(argname, None)
@@ -518,11 +534,7 @@ class FixtureRequest:
         """Add finalizer/teardown function to be called without arguments after
         the last test within the requesting test context finished execution."""
         # XXX usually this method is shadowed by fixturedef specific ones.
-        self._addfinalizer(finalizer, scope=self.scope)
-
-    def _addfinalizer(self, finalizer: Callable[[], object], scope) -> None:
-        node = self._getscopeitem(scope)
-        node.addfinalizer(finalizer)
+        self.node.addfinalizer(finalizer)
 
     def applymarker(self, marker: Union[str, MarkDecorator]) -> None:
         """Apply a marker to a single test function invocation.
@@ -716,28 +728,6 @@ class FixtureRequest:
             args = _format_args(factory)
             lines.append("%s:%d:  def %s%s" % (p, lineno + 1, factory.__name__, args))
         return lines
-
-    def _getscopeitem(
-        self, scope: Union[Scope, "_ScopeName"]
-    ) -> Union[nodes.Item, nodes.Collector]:
-        if isinstance(scope, str):
-            scope = Scope(scope)
-        if scope is Scope.Function:
-            # This might also be a non-function Item despite its attribute name.
-            node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
-        elif scope is Scope.Package:
-            # FIXME: _fixturedef is not defined on FixtureRequest (this class),
-            # but on FixtureRequest (a subclass).
-            node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
-        else:
-            node = get_scope_node(self._pyfuncitem, scope)
-        if node is None and scope is Scope.Class:
-            # Fallback to function item itself.
-            node = self._pyfuncitem
-        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
-            scope, self._pyfuncitem
-        )
-        return node
 
     def __repr__(self) -> str:
         return "<FixtureRequest for %r>" % (self.node)
