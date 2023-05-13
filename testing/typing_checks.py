@@ -32,14 +32,19 @@ def check_parametrize_ids_callable(func) -> None:
 
 
 # Issue #10999.
-@pytest.mark.skipif(sys.version_info < (3, 8), reason="TypedDict introduced in Python 3.8")
+@pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="TypedDict introduced in Python 3.8"
+)
 def check_monkeypatch_typeddict(monkeypatch: MonkeyPatch) -> None:
     from typing import TypedDict
 
-    Foo = TypedDict("Foo", {"x": int, "y": float})
+    class Foo(TypedDict):
+        x: int
+        y: float
     a: Foo = {"x": 1, "y": 3.14}
     monkeypatch.setitem("x", 2)
     monkeypatch.delitem("y")
+
 
 def check_raises_is_a_context_manager(val: bool) -> None:
     with pytest.raises(RuntimeError) if val else contextlib.nullcontext() as excinfo:
