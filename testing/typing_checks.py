@@ -41,6 +41,7 @@ def check_monkeypatch_typeddict(monkeypatch: MonkeyPatch) -> None:
     class Foo(TypedDict):
         x: int
         y: float
+
     a: Foo = {"x": 1, "y": 3.14}
     monkeypatch.setitem("x", 2)
     monkeypatch.delitem("y")

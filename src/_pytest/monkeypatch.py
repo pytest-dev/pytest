@@ -295,7 +295,11 @@ class MonkeyPatch:
         self._setitem.append((dic, name, dic.get(name, notset)))
         dic[name] = value
 
-    def delitem(self, dic: Mapping[K, V], name: K, raising: bool = True,
+    def delitem(
+        self,
+        dic: Mapping[K, V],
+        name: K,
+        raising: bool = True,
     ) -> None:
         """Delete ``name`` from dict.
 
