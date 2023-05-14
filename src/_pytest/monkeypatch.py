@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from typing import Any
 from typing import Generator
 from typing import List
+from typing import Mapping
 from typing import MutableMapping
 from typing import Optional
 from typing import overload
@@ -129,7 +130,7 @@ class MonkeyPatch:
 
     def __init__(self) -> None:
         self._setattr: List[Tuple[object, str, object]] = []
-        self._setitem: List[Tuple[MutableMapping[Any, Any], object, object]] = []
+        self._setitem: List[Tuple[Mapping[Any, Any], object, object]] = []
         self._cwd: Optional[str] = None
         self._savesyspath: Optional[List[str]] = None
 
@@ -290,12 +291,13 @@ class MonkeyPatch:
             self._setattr.append((target, name, oldval))
             delattr(target, name)
 
-    def setitem(self, dic: MutableMapping[K, V], name: K, value: V) -> None:
+    def setitem(self, dic: Mapping[K, V], name: K, value: V) -> None:
         """Set dictionary entry ``name`` to value."""
         self._setitem.append((dic, name, dic.get(name, notset)))
-        dic[name] = value
+        # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+        dic[name] = value  # type: ignore[index]
 
-    def delitem(self, dic: MutableMapping[K, V], name: K, raising: bool = True) -> None:
+    def delitem(self, dic: Mapping[K, V], name: K, raising: bool = True) -> None:
         """Delete ``name`` from dict.
 
         Raises ``KeyError`` if it doesn't exist, unless ``raising`` is set to
@@ -306,7 +308,8 @@ class MonkeyPatch:
                 raise KeyError(name)
         else:
             self._setitem.append((dic, name, dic.get(name, notset)))
-            del dic[name]
+            # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+            del dic[name]  # type: ignore[attr-defined]
 
     def setenv(self, name: str, value: str, prepend: Optional[str] = None) -> None:
         """Set environment variable ``name`` to ``value``.
@@ -401,11 +404,13 @@ class MonkeyPatch:
         for dictionary, key, value in reversed(self._setitem):
             if value is notset:
                 try:
-                    del dictionary[key]
+                    # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+                    del dictionary[key]  # type: ignore[attr-defined]
                 except KeyError:
                     pass  # Was already deleted, so we have the desired state.
             else:
-                dictionary[key] = value
+                # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+                dictionary[key] = value  # type: ignore[index]
         self._setitem[:] = []
         if self._savesyspath is not None:
             sys.path[:] = self._savesyspath

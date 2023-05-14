@@ -1,0 +1,1 @@
+The `monkeypatch` `setitem`/`delitem` type annotations now allow `TypedDict` arguments.
