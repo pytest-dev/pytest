@@ -294,7 +294,8 @@ class MonkeyPatch:
     def setitem(self, dic: Mapping[K, V], name: K, value: V) -> None:
         """Set dictionary entry ``name`` to value."""
         self._setitem.append((dic, name, dic.get(name, notset)))
-        dic[name] = value
+        # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+        dic[name] = value  # type: ignore[index]
 
     def delitem(self, dic: Mapping[K, V], name: K, raising: bool = True) -> None:
         """Delete ``name`` from dict.
@@ -307,7 +308,8 @@ class MonkeyPatch:
                 raise KeyError(name)
         else:
             self._setitem.append((dic, name, dic.get(name, notset)))
-            del dic[name]
+            # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+            del dic[name]  # type: ignore[attr-defined]
 
     def setenv(self, name: str, value: str, prepend: Optional[str] = None) -> None:
         """Set environment variable ``name`` to ``value``.
@@ -402,11 +404,13 @@ class MonkeyPatch:
         for dictionary, key, value in reversed(self._setitem):
             if value is notset:
                 try:
-                    del dictionary[key]
+                    # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+                    del dictionary[key]  # type: ignore[attr-defined]
                 except KeyError:
                     pass  # Was already deleted, so we have the desired state.
             else:
-                dictionary[key] = value
+                # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+                dictionary[key] = value  # type: ignore[index]
         self._setitem[:] = []
         if self._savesyspath is not None:
             sys.path[:] = self._savesyspath
