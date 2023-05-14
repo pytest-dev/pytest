@@ -12,10 +12,10 @@ jobs:
     steps:
       - uses: actions/stale@v5
         with:
-          debug-only: true
+          debug-only: false
           days-before-issue-stale: 14
           days-before-issue-close: 7
-          only-labels: ["status: needs information"]
+          only-labels: "status: needs information"
           stale-issue-label: "stale"
           stale-issue-message: "This issue is stale because it has been open for 14 days with no activity."
           close-issue-message: "This issue was closed because it has been inactive for 7 days since being marked as stale."
