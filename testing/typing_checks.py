@@ -10,7 +10,7 @@ from typing import Optional
 from typing_extensions import assert_type
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 
 # Issue #7488.
@@ -32,9 +32,6 @@ def check_parametrize_ids_callable(func) -> None:
 
 
 # Issue #10999.
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="TypedDict introduced in Python 3.8"
-)
 def check_monkeypatch_typeddict(monkeypatch: MonkeyPatch) -> None:
     from typing import TypedDict
 
