@@ -117,13 +117,12 @@ def get_scope_package(
     node: nodes.Item,
     fixturedef: "FixtureDef[object]",
 ) -> Optional[Union[nodes.Item, nodes.Collector]]:
-    import pytest
+    from _pytest.python import Package
 
-    cls = pytest.Package
     current: Optional[Union[nodes.Item, nodes.Collector]] = node
     fixture_package_name = "{}/{}".format(fixturedef.baseid, "__init__.py")
     while current and (
-        type(current) is not cls or fixture_package_name != current.nodeid
+        not isinstance(current, Package) or fixture_package_name != current.nodeid
     ):
         current = current.parent  # type: ignore[assignment]
     if current is None:
