@@ -295,12 +295,7 @@ class MonkeyPatch:
         self._setitem.append((dic, name, dic.get(name, notset)))
         dic[name] = value
 
-    def delitem(
-        self,
-        dic: Mapping[K, V],
-        name: K,
-        raising: bool = True,
-    ) -> None:
+    def delitem(self, dic: Mapping[K, V], name: K, raising: bool = True) -> None:
         """Delete ``name`` from dict.
 
         Raises ``KeyError`` if it doesn't exist, unless ``raising`` is set to
@@ -341,7 +336,7 @@ class MonkeyPatch:
         Raises ``KeyError`` if it does not exist, unless ``raising`` is set to
         False.
         """
-        environ: Mapping[str, str] = os.environ
+        environ: MutableMapping[str, str] = os.environ
         self.delitem(environ, name, raising=raising)
 
     def syspath_prepend(self, path) -> None:

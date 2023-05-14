@@ -1,1 +1,1 @@
-Fixed bug where monkeypatch setitem/delitem type annotations didn't support typing.TypedDict.
+The `monkeypatch` `setitem`/`delitem` type annotations now allow `TypedDict` arguments.
