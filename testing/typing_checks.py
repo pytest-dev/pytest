@@ -39,8 +39,8 @@ def check_monkeypatch_typeddict(monkeypatch: MonkeyPatch) -> None:
         y: float
 
     a: Foo = {"x": 1, "y": 3.14}
-    monkeypatch.setitem("x", 2)
-    monkeypatch.delitem("y")
+    monkeypatch.setitem(a, "x", 2)
+    monkeypatch.delitem(a, "y")
 
 
 def check_raises_is_a_context_manager(val: bool) -> None:
