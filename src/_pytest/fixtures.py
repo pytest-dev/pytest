@@ -113,16 +113,19 @@ def pytest_sessionstart(session: "Session") -> None:
     session._fixturemanager = FixtureManager(session)
 
 
-def get_scope_package(node, fixturedef: "FixtureDef[object]"):
+def get_scope_package(
+    node: nodes.Item,
+    fixturedef: "FixtureDef[object]",
+) -> Optional[Union[nodes.Item, nodes.Collector]]:
     import pytest
 
     cls = pytest.Package
-    current = node
+    current: Optional[Union[nodes.Item, nodes.Collector]] = node
     fixture_package_name = "{}/{}".format(fixturedef.baseid, "__init__.py")
     while current and (
         type(current) is not cls or fixture_package_name != current.nodeid
     ):
-        current = current.parent
+        current = current.parent  # type: ignore[assignment]
     if current is None:
         return node.session
     return current
