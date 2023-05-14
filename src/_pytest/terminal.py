@@ -113,6 +113,21 @@ class MoreQuietAction(argparse.Action):
         namespace.quiet = getattr(namespace, "quiet", 0) + 1
 
 
+class TestStatus(NamedTuple):
+    """Used to store the test status result category, shortletter and verbose word.
+    For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
+
+    category: the class of result, for example “passed”, “skipped”, “error”, or the empty string
+    letter: the shortletter shown as testing progresses, for example ".", "s", "E", or the empty string.
+    word: verbose word is shown as testing progresses in verbose mode, for example "PASSED", "SKIPPED",
+    "ERROR", or the empty string.
+    """
+
+    category: str
+    letter: str
+    word: Union[str, Tuple[str, Mapping[str, bool]]]
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "Reporting", after="general")
     group._addoption(
@@ -546,25 +561,11 @@ class TerminalReporter:
             self.write_fspath_result(nodeid, "")
             self.flush()
 
-    class TestStatus(NamedTuple):
-        """Used to store the test status result category, shortletter and verbose word.
-        For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
-
-        category: the class of result, for example “passed”, “skipped”, “error”, or the empty string
-        letter: the shortletter shown as testing progresses, for example ".", "s", "E", or the empty string.
-        word: verbose word is shown as testing progresses in verbose mode, for example "PASSED", "SKIPPED",
-        "ERROR", or the empty string.
-        """
-
-        category: str
-        letter: str
-        word: Union[str, Tuple[str, Mapping[str, bool]]]
-
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
 
-        res = self.TestStatus(
+        res = TestStatus(
             *self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         )
         category, letter, word = res.category, res.letter, res.word

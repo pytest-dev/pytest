@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from _pytest.reports import TestReport
     from _pytest.runner import CallInfo
     from _pytest.terminal import TerminalReporter
+    from _pytest.terminal import TestStatus
     from _pytest.compat import LEGACY_PATH
 
 
@@ -805,7 +806,7 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 @hookspec(firstresult=True)
 def pytest_report_teststatus(  # type:ignore[empty-body]
     report: Union["CollectReport", "TestReport"], config: "Config"
-) -> "TerminalReporter.TestStatus":
+) -> "TestStatus":
     """Return result-category, shortletter and verbose word for status
     reporting.
 
