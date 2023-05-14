@@ -46,6 +46,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
+from _pytest.compat import NotSetType
 from _pytest.compat import overload
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
@@ -1583,13 +1584,52 @@ class FixtureManager:
         # Separate parametrized setups.
         items[:] = reorder_items(items)
 
+    @overload
     def parsefactories(
-        self, node_or_obj, nodeid=NOTSET, unittest: bool = False
+        self,
+        node_or_obj: nodes.Node,
+        *,
+        unittest: bool = ...,
     ) -> None:
+        raise NotImplementedError()
+
+    @overload
+    def parsefactories(  # noqa: F811
+        self,
+        node_or_obj: object,
+        nodeid: Optional[str],
+        *,
+        unittest: bool = ...,
+    ) -> None:
+        raise NotImplementedError()
+
+    def parsefactories(  # noqa: F811
+        self,
+        node_or_obj: Union[nodes.Node, object],
+        nodeid: Union[str, NotSetType, None] = NOTSET,
+        *,
+        unittest: bool = False,
+    ) -> None:
+        """Collect fixtures from a collection node or object.
+
+        Found fixtures are parsed into `FixtureDef`s and saved.
+
+        If `node_or_object` is a collection node (with an underlying Python
+        object), the node's object is traversed and the node's nodeid is used to
+        determine the fixtures' visibilty. `nodeid` must not be specified in
+        this case.
+
+        If `node_or_object` is an object (e.g. a plugin), the object is
+        traversed and the given `nodeid` is used to determine the fixtures'
+        visibility. `nodeid` must be specified in this case; None and "" mean
+        total visibility.
+        """
         if nodeid is not NOTSET:
             holderobj = node_or_obj
         else:
-            holderobj = node_or_obj.obj
+            assert isinstance(node_or_obj, nodes.Node)
+            holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
+            assert isinstance(node_or_obj.nodeid, str)
             nodeid = node_or_obj.nodeid
         if holderobj in self._holderobjseen:
             return
