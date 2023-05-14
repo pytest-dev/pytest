@@ -547,6 +547,15 @@ class TerminalReporter:
             self.flush()
 
     class TestStatus(NamedTuple):
+        """Used to store the test status result category, shortletter and verbose word.
+        For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
+
+        category: the class of result, for example “passed”, “skipped”, “error”, or the empty string
+        letter: the shortletter shown as testing progresses, for example ".", "s", "E", or the empty string.
+        word: verbose word is shown as testing progresses in verbose mode, for example "PASSED", "SKIPPED",
+        "ERROR", or the empty string.
+        """
+
         category: str
         letter: str
         word: Union[str, Tuple[str, Mapping[str, bool]]]
