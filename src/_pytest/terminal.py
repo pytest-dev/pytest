@@ -117,13 +117,13 @@ class TestShortLogReport(NamedTuple):
     """Used to store the test status result category, shortletter and verbose word.
     For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
 
-    :ivar category: 
+    :ivar category:
         The class of result, for example ``“passed”``, ``“skipped”``, ``“error”``, or the empty string.
 
-    :ivar letter: 
+    :ivar letter:
         The short letter shown as testing progresses, for example ``"."``, ``"s"``, ``"E"``, or the empty string.
-        
-    :ivar word: 
+
+    :ivar word:
         Verbose word is shown as testing progresses in verbose mode, for example ``"PASSED"``, ``"SKIPPED"``.
     "ERROR", or the empty string.
     """
