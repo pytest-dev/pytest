@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
     from _pytest._code.code import ExceptionRepr
-    from _pytest.code import ExceptionInfo
+    from _pytest._code.code import ExceptionInfo
     from _pytest.config import Config
     from _pytest.config import ExitCode
     from _pytest.config import PytestPluginManager
