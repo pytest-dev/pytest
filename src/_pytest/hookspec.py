@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -806,7 +807,7 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 @hookspec(firstresult=True)
 def pytest_report_teststatus(  # type:ignore[empty-body]
     report: Union["CollectReport", "TestReport"], config: "Config"
-) -> "TestShortLogReport":
+) -> "TestShortLogReport | Tuple[str, str, Union[str, Tuple[str, Mapping[str, bool]]]]":
     """Return result-category, shortletter and verbose word for status
     reporting.
 
