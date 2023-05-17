@@ -113,7 +113,7 @@ class MoreQuietAction(argparse.Action):
         namespace.quiet = getattr(namespace, "quiet", 0) + 1
 
 
-class TestStatus(NamedTuple):
+class TestShortLogReport(NamedTuple):
     """Used to store the test status result category, shortletter and verbose word.
     For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
 
@@ -565,7 +565,7 @@ class TerminalReporter:
         self._tests_ran = True
         rep = report
 
-        res = TestStatus(
+        res = TestShortLogReport(
             *self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         )
         category, letter, word = res.category, res.letter, res.word

@@ -956,10 +956,10 @@ TestReport
     :show-inheritance:
     :inherited-members:
 
-TestStatus
+TestShortLogReport
 ~~~~~~~~~~
 
-.. autoclass:: pytest.TestStatus()
+.. autoclass:: pytest.TestShortLogReport()
     :members:
 
 _Result
