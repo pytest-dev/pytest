@@ -124,8 +124,8 @@ class TestShortLogReport(NamedTuple):
         The short letter shown as testing progresses, for example ``"."``, ``"s"``, ``"E"``, or the empty string.
 
     :ivar word:
-        Verbose word is shown as testing progresses in verbose mode, for example ``"PASSED"``, ``"SKIPPED"``.
-    "ERROR", or the empty string.
+        Verbose word is shown as testing progresses in verbose mode, for example ``"PASSED"``, ``"SKIPPED"``,
+        ``"ERROR"``, or the empty string.
     """
 
     category: str
