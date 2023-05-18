@@ -49,7 +49,7 @@ from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
 from _pytest.compat import final
-from _pytest.compat import importlib_metadata
+from _pytest.compat import importlib_metadata  # type: ignore[attr-defined]
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath

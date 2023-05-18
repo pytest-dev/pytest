@@ -1,0 +1,3 @@
+:func:`_pytest.logging.LogCaptureFixture.set_level` and :func:`_pytest.logging.LogCaptureFixture.at_level`
+will temporarily enable the requested ``level`` if ``level`` was disabled globally via
+``logging.disable(LEVEL)``.

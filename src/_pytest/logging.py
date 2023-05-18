@@ -376,11 +376,12 @@ class LogCaptureFixture:
         self._initial_handler_level: Optional[int] = None
         # Dict of log name -> log level.
         self._initial_logger_levels: Dict[Optional[str], int] = {}
+        self._initial_disabled_logging_level: Optional[int] = None
 
     def _finalize(self) -> None:
         """Finalize the fixture.
 
-        This restores the log levels changed by :meth:`set_level`.
+        This restores the log levels and the disabled logging levels changed by :meth:`set_level`.
         """
         # Restore log levels.
         if self._initial_handler_level is not None:
@@ -388,6 +389,10 @@ class LogCaptureFixture:
         for logger_name, level in self._initial_logger_levels.items():
             logger = logging.getLogger(logger_name)
             logger.setLevel(level)
+        # Disable logging at the original disabled logging level.
+        if self._initial_disabled_logging_level is not None:
+            logging.disable(self._initial_disabled_logging_level)
+            self._initial_disabled_logging_level = None
 
     @property
     def handler(self) -> LogCaptureHandler:
@@ -453,12 +458,48 @@ class LogCaptureFixture:
         """Reset the list of log records and the captured log text."""
         self.handler.clear()
 
+    def _force_enable_logging(
+        self, level: Union[int, str], logger_obj: logging.Logger
+    ) -> int:
+        """Enable the desired logging level if the global level was disabled via ``logging.disabled``.
+
+        Only enables logging levels greater than or equal to the requested ``level``.
+
+        Does nothing if the desired ``level`` wasn't disabled.
+
+        :param level:
+            The logger level caplog should capture.
+            All logging is enabled if a non-standard logging level string is supplied.
+            Valid level strings are in :data:`logging._nameToLevel`.
+        :param logger_obj: The logger object to check.
+
+        :return: The original disabled logging level.
+        """
+        original_disable_level: int = logger_obj.manager.disable  # type: ignore[attr-defined]
+
+        if isinstance(level, str):
+            # Try to translate the level string to an int for `logging.disable()`
+            level = logging.getLevelName(level)
+
+        if not isinstance(level, int):
+            # The level provided was not valid, so just un-disable all logging.
+            logging.disable(logging.NOTSET)
+        elif not logger_obj.isEnabledFor(level):
+            # Each level is `10` away from other levels.
+            # https://docs.python.org/3/library/logging.html#logging-levels
+            disable_level = max(level - 10, logging.NOTSET)
+            logging.disable(disable_level)
+
+        return original_disable_level
+
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
         """Set the level of a logger for the duration of a test.
 
         .. versionchanged:: 3.4
             The levels of the loggers changed by this function will be
             restored to their initial values at the end of the test.
+
+        Will enable the requested logging level if it was disabled via :meth:`logging.disable`.
 
         :param level: The level.
         :param logger: The logger to update. If not given, the root logger.
@@ -470,6 +511,9 @@ class LogCaptureFixture:
         if self._initial_handler_level is None:
             self._initial_handler_level = self.handler.level
         self.handler.setLevel(level)
+        initial_disabled_logging_level = self._force_enable_logging(level, logger_obj)
+        if self._initial_disabled_logging_level is None:
+            self._initial_disabled_logging_level = initial_disabled_logging_level
 
     @contextmanager
     def at_level(
@@ -479,6 +523,8 @@ class LogCaptureFixture:
         the end of the 'with' statement the level is restored to its original
         value.
 
+        Will enable the requested logging level if it was disabled via :meth:`logging.disable`.
+
         :param level: The level.
         :param logger: The logger to update. If not given, the root logger.
         """
@@ -487,11 +533,13 @@ class LogCaptureFixture:
         logger_obj.setLevel(level)
         handler_orig_level = self.handler.level
         self.handler.setLevel(level)
+        original_disable_level = self._force_enable_logging(level, logger_obj)
         try:
             yield
         finally:
             logger_obj.setLevel(orig_level)
             self.handler.setLevel(handler_orig_level)
+            logging.disable(original_disable_level)
 
 
 @fixture
