@@ -100,7 +100,7 @@ class TempPathFactory:
         policy = config.getini("tmp_path_retention_policy")
         if policy not in ("all", "failed", "none"):
             raise ValueError(
-                f"tmp_path_retention_policy must be either all, failed, none. Current intput: {policy}."
+                f"tmp_path_retention_policy must be either all, failed, none. Current input: {policy}."
             )
 
         return cls(

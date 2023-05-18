@@ -241,7 +241,7 @@ class DontReadFromInput(TextIO):
         raise UnsupportedOperation("redirected stdin is pseudofile, has no tell()")
 
     def truncate(self, size: Optional[int] = None) -> int:
-        raise UnsupportedOperation("cannont truncate stdin")
+        raise UnsupportedOperation("cannot truncate stdin")
 
     def write(self, data: str) -> int:
         raise UnsupportedOperation("cannot write to stdin")
