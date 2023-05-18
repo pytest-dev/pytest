@@ -1,4 +1,4 @@
-# type: ignore[attr-defined]
+# mypy: disable-error-code="attr-defined"
 import logging
 
 import pytest
@@ -88,7 +88,7 @@ def test_change_level_undo(pytester: Pytester) -> None:
 def test_change_disabled_level_undo(
     pytester: Pytester, cleanup_disabled_logging
 ) -> None:
-    """Ensure that 'force_enable_logging' in 'set_level' is undone after the end of the test.
+    """Ensure that '_force_enable_logging' in 'set_level' is undone after the end of the test.
 
     Tests the logging output themselves (affected by disabled logging level).
     """
@@ -200,7 +200,7 @@ def test_with_statement_logging_disabled(caplog, cleanup_disabled_logging):
 def test_force_enable_logging_level_string(
     caplog, cleanup_disabled_logging, level_str, expected_disable_level
 ):
-    """Test force_enable_logging using a level string.
+    """Test _force_enable_logging using a level string.
 
     ``expected_disable_level`` is one level below ``level_str`` because the disabled log level
     always needs to be *at least* one level lower than the level that caplog is trying to capture.
@@ -211,7 +211,7 @@ def test_force_enable_logging_level_string(
     # Make sure all logging is disabled.
     assert not test_logger.isEnabledFor(logging.CRITICAL)
     # Un-disable logging for `level_str`.
-    caplog.force_enable_logging(level_str, test_logger)
+    caplog._force_enable_logging(level_str, test_logger)
     # Make sure that the disabled level is now one below the requested logging level.
     # We don't use `isEnabledFor` here because that also checks the level set by
     # `logging.setLevel()` which is irrelevant to `logging.disable()`.

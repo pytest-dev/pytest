@@ -458,22 +458,22 @@ class LogCaptureFixture:
         """Reset the list of log records and the captured log text."""
         self.handler.clear()
 
-    def force_enable_logging(
+    def _force_enable_logging(
         self, level: Union[int, str], logger_obj: logging.Logger
     ) -> int:
-        """Enable the desired logging level if the level was disabled.
+        """Enable the desired logging level if the global level was disabled via ``logging.disabled``.
 
         Only enables logging levels greater than or equal to the requested ``level``.
 
         Does nothing if the desired ``level`` wasn't disabled.
 
-        :param Union[int, str] level:
+        :param level:
             The logger level caplog should capture.
             All logging is enabled if a non-standard logging level string is supplied.
             Valid level strings are in :data:`logging._nameToLevel`.
-        :param Logger logger_obj: The logger object to check.
+        :param logger_obj: The logger object to check.
 
-        :return int: The original disabled logging level.
+        :return: The original disabled logging level.
         """
         original_disable_level: int = logger_obj.manager.disable  # type: ignore[attr-defined]
 
@@ -511,7 +511,7 @@ class LogCaptureFixture:
         if self._initial_handler_level is None:
             self._initial_handler_level = self.handler.level
         self.handler.setLevel(level)
-        initial_disabled_logging_level = self.force_enable_logging(level, logger_obj)
+        initial_disabled_logging_level = self._force_enable_logging(level, logger_obj)
         if self._initial_disabled_logging_level is None:
             self._initial_disabled_logging_level = initial_disabled_logging_level
 
@@ -533,7 +533,7 @@ class LogCaptureFixture:
         logger_obj.setLevel(level)
         handler_orig_level = self.handler.level
         self.handler.setLevel(level)
-        original_disable_level = self.force_enable_logging(level, logger_obj)
+        original_disable_level = self._force_enable_logging(level, logger_obj)
         try:
             yield
         finally:
