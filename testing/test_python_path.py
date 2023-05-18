@@ -82,7 +82,7 @@ def test_no_ini(pytester: Pytester, file_structure) -> None:
 
 def test_clean_up(pytester: Pytester) -> None:
     """Test that the plugin cleans up after itself."""
-    # This is tough to test behaviorly because the cleanup really runs last.
+    # This is tough to test behaviorally because the cleanup really runs last.
     # So the test make several implementation assumptions:
     # - Cleanup is done in pytest_unconfigure().
     # - Not a hookwrapper.
