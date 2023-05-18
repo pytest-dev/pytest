@@ -179,16 +179,22 @@ class Cache:
             else:
                 cache_dir_exists_already = self._cachedir.exists()
                 path.parent.mkdir(exist_ok=True, parents=True)
-        except OSError:
-            self.warn("could not create cache path {path}", path=path, _ispytest=True)
+        except OSError as exc:
+            self.warn(
+                f"could not create cache path {path}: {exc}",
+                _ispytest=True,
+            )
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
         data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
             f = path.open("w", encoding="UTF-8")
-        except OSError:
-            self.warn("cache could not write path {path}", path=path, _ispytest=True)
+        except OSError as exc:
+            self.warn(
+                f"cache could not write path {path}: {exc}",
+                _ispytest=True,
+            )
         else:
             with f:
                 f.write(data)
