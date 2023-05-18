@@ -1,0 +1,1 @@
+Added a warning about modifying the root logger during tests when using ``caplog``.
