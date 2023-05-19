@@ -62,6 +62,7 @@ from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
+from _pytest.terminal import TestShortLogReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestAssertRewriteWarning
 from _pytest.warning_types import PytestCacheWarning
@@ -152,6 +153,7 @@ __all__ = [
     "TempPathFactory",
     "Testdir",
     "TestReport",
+    "TestShortLogReport",
     "UsageError",
     "WarningsRecorder",
     "warns",
