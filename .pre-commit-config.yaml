@@ -1,8 +1,6 @@
-default_language_version:
-    python: "3.10"
 repos:
 -   repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
     -   id: black
         args: [--safe, --quiet]
@@ -23,7 +21,7 @@ repos:
         exclude: _pytest/(debugging|hookspec).py
         language_version: python3
 -   repo: https://github.com/PyCQA/autoflake
-    rev: v2.0.2
+    rev: v2.1.1
     hooks:
     -   id: autoflake
         name: autoflake
@@ -38,13 +36,13 @@ repos:
         additional_dependencies:
           - flake8-typing-imports==1.12.0
           - flake8-docstrings==1.5.0
--   repo: https://github.com/asottile/reorder_python_imports
+-   repo: https://github.com/asottile/reorder-python-imports
     rev: v3.9.0
     hooks:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py37-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.4.0
     hooks:
     -   id: pyupgrade
         args: [--py37-plus]
@@ -58,7 +56,7 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.1.1
+    rev: v1.3.0
     hooks:
     -   id: mypy
         files: ^(src/|testing/)

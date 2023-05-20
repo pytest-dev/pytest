@@ -6,6 +6,7 @@ import itertools
 import os
 import shutil
 import sys
+import types
 import uuid
 import warnings
 from enum import Enum
@@ -28,6 +29,8 @@ from typing import Iterable
 from typing import Iterator
 from typing import Optional
 from typing import Set
+from typing import Tuple
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -63,21 +66,33 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
     return path.joinpath(".lock")
 
 
-def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
+def on_rm_rf_error(
+    func,
+    path: str,
+    excinfo: Union[
+        BaseException,
+        Tuple[Type[BaseException], BaseException, Optional[types.TracebackType]],
+    ],
+    *,
+    start_path: Path,
+) -> bool:
     """Handle known read-only errors during rmtree.
 
     The returned value is used only by our own tests.
     """
-    exctype, excvalue = exc[:2]
+    if isinstance(excinfo, BaseException):
+        exc = excinfo
+    else:
+        exc = excinfo[1]
 
     # Another process removed the file in the middle of the "rm_rf" (xdist for example).
     # More context: https://github.com/pytest-dev/pytest/issues/5974#issuecomment-543799018
-    if isinstance(excvalue, FileNotFoundError):
+    if isinstance(exc, FileNotFoundError):
         return False
 
-    if not isinstance(excvalue, PermissionError):
+    if not isinstance(exc, PermissionError):
         warnings.warn(
-            PytestWarning(f"(rm_rf) error removing {path}\n{exctype}: {excvalue}")
+            PytestWarning(f"(rm_rf) error removing {path}\n{type(exc)}: {exc}")
         )
         return False
 
@@ -86,7 +101,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
             warnings.warn(
                 PytestWarning(
                     "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
-                        func, path, exctype, excvalue
+                        func, path, type(exc), exc
                     )
                 )
             )
@@ -149,7 +164,10 @@ def rm_rf(path: Path) -> None:
     are read-only."""
     path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
-    shutil.rmtree(str(path), onerror=onerror)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(str(path), onexc=onerror)
+    else:
+        shutil.rmtree(str(path), onerror=onerror)
 
 
 def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
@@ -335,7 +353,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
             yield path
 
 
-def cleanup_dead_symlink(root: Path):
+def cleanup_dead_symlinks(root: Path):
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
             if not left_dir.resolve().exists():
@@ -353,7 +371,7 @@ def cleanup_numbered_dir(
     for path in root.glob("garbage-*"):
         try_cleanup(path, consider_lock_dead_if_created_before)
 
-    cleanup_dead_symlink(root)
+    cleanup_dead_symlinks(root)
 
 
 def make_numbered_dir_with_cleanup(

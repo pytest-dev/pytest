@@ -695,11 +695,15 @@ class TestInvocationVariants:
         monkeypatch.chdir("world")
 
         # pgk_resources.declare_namespace has been deprecated in favor of implicit namespace packages.
+        # pgk_resources has been deprecated entirely.
         # While we could change the test to use implicit namespace packages, seems better
         # to still ensure the old declaration via declare_namespace still works.
-        ignore_w = r"-Wignore:Deprecated call to `pkg_resources.declare_namespace"
+        ignore_w = (
+            r"-Wignore:Deprecated call to `pkg_resources.declare_namespace",
+            r"-Wignore:pkg_resources is deprecated",
+        )
         result = pytester.runpytest(
-            "--pyargs", "-v", "ns_pkg.hello", "ns_pkg/world", ignore_w
+            "--pyargs", "-v", "ns_pkg.hello", "ns_pkg/world", *ignore_w
         )
         assert result.ret == 0
         result.stdout.fnmatch_lines(
@@ -1299,12 +1303,12 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     popen.stderr.close()
 
 
-def test_function_return_non_none_warning(testdir) -> None:
-    testdir.makepyfile(
+def test_function_return_non_none_warning(pytester: Pytester) -> None:
+    pytester.makepyfile(
         """
         def test_stuff():
             return "something"
     """
     )
-    res = testdir.runpytest()
+    res = pytester.runpytest()
     res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])

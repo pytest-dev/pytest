@@ -2,7 +2,6 @@ import io
 import os
 import sys
 from typing import Generator
-from typing import TextIO
 
 import pytest
 from _pytest.config import Config
@@ -11,7 +10,7 @@ from _pytest.nodes import Item
 from _pytest.stash import StashKey
 
 
-fault_handler_stderr_key = StashKey[TextIO]()
+fault_handler_stderr_fd_key = StashKey[int]()
 fault_handler_originally_enabled_key = StashKey[bool]()
 
 
@@ -26,10 +25,9 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     import faulthandler
 
-    stderr_fd_copy = os.dup(get_stderr_fileno())
-    config.stash[fault_handler_stderr_key] = open(stderr_fd_copy, "w")
+    config.stash[fault_handler_stderr_fd_key] = os.dup(get_stderr_fileno())
     config.stash[fault_handler_originally_enabled_key] = faulthandler.is_enabled()
-    faulthandler.enable(file=config.stash[fault_handler_stderr_key])
+    faulthandler.enable(file=config.stash[fault_handler_stderr_fd_key])
 
 
 def pytest_unconfigure(config: Config) -> None:
@@ -37,9 +35,9 @@ def pytest_unconfigure(config: Config) -> None:
 
     faulthandler.disable()
     # Close the dup file installed during pytest_configure.
-    if fault_handler_stderr_key in config.stash:
-        config.stash[fault_handler_stderr_key].close()
-        del config.stash[fault_handler_stderr_key]
+    if fault_handler_stderr_fd_key in config.stash:
+        os.close(config.stash[fault_handler_stderr_fd_key])
+        del config.stash[fault_handler_stderr_fd_key]
     if config.stash.get(fault_handler_originally_enabled_key, False):
         # Re-enable the faulthandler if it was originally enabled.
         faulthandler.enable(file=get_stderr_fileno())
@@ -67,10 +65,10 @@ def get_timeout_config_value(config: Config) -> float:
 @pytest.hookimpl(hookwrapper=True, trylast=True)
 def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
     timeout = get_timeout_config_value(item.config)
-    stderr = item.config.stash[fault_handler_stderr_key]
-    if timeout > 0 and stderr is not None:
+    if timeout > 0:
         import faulthandler
 
+        stderr = item.config.stash[fault_handler_stderr_fd_key]
         faulthandler.dump_traceback_later(timeout, file=stderr)
         try:
             yield

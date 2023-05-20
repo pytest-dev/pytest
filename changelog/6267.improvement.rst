@@ -1,2 +1,0 @@
-The full output of a test is no longer truncated if the truncation message would be longer than
-the hidden text. The line number shown has also been fixed.

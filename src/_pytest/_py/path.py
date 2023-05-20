@@ -953,7 +953,7 @@ class LocalPath:
         else:
             p.dirpath()._ensuredirs()
             if not p.check(file=1):
-                p.open("w").close()
+                p.open("wb").close()
             return p
 
     @overload

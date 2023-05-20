@@ -1,3 +1,4 @@
+# mypy: disable-error-code="attr-defined"
 import logging
 
 import pytest
@@ -6,6 +7,19 @@ from _pytest.pytester import Pytester
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
+
+
+@pytest.fixture
+def cleanup_disabled_logging():
+    """Simple fixture that ensures that a test doesn't disable logging.
+
+    This is necessary because ``logging.disable()`` is global, so a test disabling logging
+    and not cleaning up after will break every test that runs after it.
+
+    This behavior was moved to a fixture so that logging will be un-disabled even if the test fails an assertion.
+    """
+    yield
+    logging.disable(logging.NOTSET)
 
 
 def test_fixture_help(pytester: Pytester) -> None:
@@ -28,10 +42,27 @@ def test_change_level(caplog):
     assert "CRITICAL" in caplog.text
 
 
+def test_change_level_logging_disabled(caplog, cleanup_disabled_logging):
+    logging.disable(logging.CRITICAL)
+    assert logging.root.manager.disable == logging.CRITICAL
+    caplog.set_level(logging.WARNING)
+    logger.info("handler INFO level")
+    logger.warning("handler WARNING level")
+
+    caplog.set_level(logging.CRITICAL, logger=sublogger.name)
+    sublogger.warning("logger SUB_WARNING level")
+    sublogger.critical("logger SUB_CRITICAL level")
+
+    assert "INFO" not in caplog.text
+    assert "WARNING" in caplog.text
+    assert "SUB_WARNING" not in caplog.text
+    assert "SUB_CRITICAL" in caplog.text
+
+
 def test_change_level_undo(pytester: Pytester) -> None:
     """Ensure that 'set_level' is undone after the end of the test.
 
-    Tests the logging output themselves (affacted both by logger and handler levels).
+    Tests the logging output themselves (affected both by logger and handler levels).
     """
     pytester.makepyfile(
         """
@@ -46,6 +77,37 @@ def test_change_level_undo(pytester: Pytester) -> None:
         def test2(caplog):
             # using + operator here so fnmatch_lines doesn't match the code in the traceback
             logging.info('log from ' + 'test2')
+            assert 0
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
+    result.stdout.no_fnmatch_line("*log from test2*")
+
+
+def test_change_disabled_level_undo(
+    pytester: Pytester, cleanup_disabled_logging
+) -> None:
+    """Ensure that '_force_enable_logging' in 'set_level' is undone after the end of the test.
+
+    Tests the logging output themselves (affected by disabled logging level).
+    """
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test1(caplog):
+            logging.disable(logging.CRITICAL)
+            caplog.set_level(logging.INFO)
+            # using + operator here so fnmatch_lines doesn't match the code in the traceback
+            logging.info('log from ' + 'test1')
+            assert 0
+
+        def test2(caplog):
+            # using + operator here so fnmatch_lines doesn't match the code in the traceback
+            # use logging.warning because we need a level that will show up if logging.disabled
+            # isn't reset to ``CRITICAL`` after test1.
+            logging.warning('log from ' + 'test2')
             assert 0
     """
     )
@@ -95,6 +157,65 @@ def test_with_statement(caplog):
     assert "INFO" in caplog.text
     assert "WARNING" not in caplog.text
     assert "CRITICAL" in caplog.text
+
+
+def test_with_statement_logging_disabled(caplog, cleanup_disabled_logging):
+    logging.disable(logging.CRITICAL)
+    assert logging.root.manager.disable == logging.CRITICAL
+    with caplog.at_level(logging.WARNING):
+        logger.debug("handler DEBUG level")
+        logger.info("handler INFO level")
+        logger.warning("handler WARNING level")
+        logger.error("handler ERROR level")
+        logger.critical("handler CRITICAL level")
+
+        assert logging.root.manager.disable == logging.INFO
+
+        with caplog.at_level(logging.CRITICAL, logger=sublogger.name):
+            sublogger.warning("logger SUB_WARNING level")
+            sublogger.critical("logger SUB_CRITICAL level")
+
+    assert "DEBUG" not in caplog.text
+    assert "INFO" not in caplog.text
+    assert "WARNING" in caplog.text
+    assert "ERROR" in caplog.text
+    assert " CRITICAL" in caplog.text
+    assert "SUB_WARNING" not in caplog.text
+    assert "SUB_CRITICAL" in caplog.text
+    assert logging.root.manager.disable == logging.CRITICAL
+
+
+@pytest.mark.parametrize(
+    "level_str,expected_disable_level",
+    [
+        ("CRITICAL", logging.ERROR),
+        ("ERROR", logging.WARNING),
+        ("WARNING", logging.INFO),
+        ("INFO", logging.DEBUG),
+        ("DEBUG", logging.NOTSET),
+        ("NOTSET", logging.NOTSET),
+        ("NOTVALIDLEVEL", logging.NOTSET),
+    ],
+)
+def test_force_enable_logging_level_string(
+    caplog, cleanup_disabled_logging, level_str, expected_disable_level
+):
+    """Test _force_enable_logging using a level string.
+
+    ``expected_disable_level`` is one level below ``level_str`` because the disabled log level
+    always needs to be *at least* one level lower than the level that caplog is trying to capture.
+    """
+    test_logger = logging.getLogger("test_str_level_force_enable")
+    # Emulate a testing environment where all logging is disabled.
+    logging.disable(logging.CRITICAL)
+    # Make sure all logging is disabled.
+    assert not test_logger.isEnabledFor(logging.CRITICAL)
+    # Un-disable logging for `level_str`.
+    caplog._force_enable_logging(level_str, test_logger)
+    # Make sure that the disabled level is now one below the requested logging level.
+    # We don't use `isEnabledFor` here because that also checks the level set by
+    # `logging.setLevel()` which is irrelevant to `logging.disable()`.
+    assert test_logger.manager.disable == expected_disable_level
 
 
 def test_log_access(caplog):

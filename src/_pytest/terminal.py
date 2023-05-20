@@ -8,6 +8,7 @@ import datetime
 import inspect
 import platform
 import sys
+import textwrap
 import warnings
 from collections import Counter
 from functools import partial
@@ -20,6 +21,7 @@ from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -109,6 +111,26 @@ class MoreQuietAction(argparse.Action):
         setattr(namespace, self.dest, new_count)
         # todo Deprecate config.quiet
         namespace.quiet = getattr(namespace, "quiet", 0) + 1
+
+
+class TestShortLogReport(NamedTuple):
+    """Used to store the test status result category, shortletter and verbose word.
+    For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
+
+    :ivar category:
+        The class of result, for example ``“passed”``, ``“skipped”``, ``“error”``, or the empty string.
+
+    :ivar letter:
+        The short letter shown as testing progresses, for example ``"."``, ``"s"``, ``"E"``, or the empty string.
+
+    :ivar word:
+        Verbose word is shown as testing progresses in verbose mode, for example ``"PASSED"``, ``"SKIPPED"``,
+        ``"ERROR"``, or the empty string.
+    """
+
+    category: str
+    letter: str
+    word: Union[str, Tuple[str, Mapping[str, bool]]]
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -426,6 +448,28 @@ class TerminalReporter:
             self._tw.line()
             self.currentfspath = None
 
+    def wrap_write(
+        self,
+        content: str,
+        *,
+        flush: bool = False,
+        margin: int = 8,
+        line_sep: str = "\n",
+        **markup: bool,
+    ) -> None:
+        """Wrap message with margin for progress info."""
+        width_of_current_line = self._tw.width_of_current_line
+        wrapped = line_sep.join(
+            textwrap.wrap(
+                " " * width_of_current_line + content,
+                width=self._screen_width - margin,
+                drop_whitespace=True,
+                replace_whitespace=False,
+            ),
+        )
+        wrapped = wrapped[width_of_current_line:]
+        self._tw.write(wrapped, flush=flush, **markup)
+
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
         self._tw.write(content, flush=flush, **markup)
 
@@ -525,10 +569,11 @@ class TerminalReporter:
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
-        res: Tuple[
-            str, str, Union[str, Tuple[str, Mapping[str, bool]]]
-        ] = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
-        category, letter, word = res
+
+        res = TestShortLogReport(
+            *self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
+        )
+        category, letter, word = res.category, res.letter, res.word
         if not isinstance(word, tuple):
             markup = None
         else:
@@ -572,7 +617,7 @@ class TerminalReporter:
                         formatted_reason = f" ({reason})"
 
                     if reason and formatted_reason is not None:
-                        self._tw.write(formatted_reason)
+                        self.wrap_write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
             else:

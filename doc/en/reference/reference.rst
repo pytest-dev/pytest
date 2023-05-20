@@ -956,6 +956,12 @@ TestReport
     :show-inheritance:
     :inherited-members:
 
+TestShortLogReport
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.TestShortLogReport()
+    :members:
+
 _Result
 ~~~~~~~
 
@@ -1049,11 +1055,11 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alterative to ``BUILD_NUMBER`` variable.
+When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to ``BUILD_NUMBER`` variable.
 
 .. envvar:: BUILD_NUMBER
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alterative to CI variable.
+When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to CI variable.
 
 .. envvar:: PYTEST_ADDOPTS
 
@@ -1713,13 +1719,12 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: testpaths
 
-
-
    Sets list of directories that should be searched for tests when
    no specific directories, files or test ids are given in the command line when
    executing pytest from the :ref:`rootdir <rootdir>` directory.
    File system paths may use shell-style wildcards, including the recursive
    ``**`` pattern.
+
    Useful when all project tests are in a known location to speed up
    test collection and to avoid picking up undesired tests by accident.
 
@@ -1728,8 +1733,17 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         testpaths = testing doc
 
-   This tells pytest to only look for tests in ``testing`` and ``doc``
-   directories when executing from the root directory.
+   This configuration means that executing:
+
+   .. code-block:: console
+
+       pytest
+
+   has the same practical effects as executing:
+
+   .. code-block:: console
+
+       pytest testing doc
 
 
 .. confval:: tmp_path_retention_count
@@ -1744,7 +1758,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         tmp_path_retention_count = 3
 
-    Default: 3
+   Default: ``3``
 
 
 .. confval:: tmp_path_retention_policy
@@ -1763,7 +1777,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         tmp_path_retention_policy = "all"
 
-    Default: all
+   Default: ``all``
 
 
 .. confval:: usefixtures
@@ -1996,7 +2010,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Auto-indent multiline messages passed to the logging
                             module. Accepts true|on, false|off or an integer.
       --log-disable=LOGGER_DISABLE
-                            Disable a logger by name. Can be passed multipe
+                            Disable a logger by name. Can be passed multiple
                             times.
 
     [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:

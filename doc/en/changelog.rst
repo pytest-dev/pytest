@@ -28,6 +28,105 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.3.1 (2023-04-14)
+=========================
+
+Improvements
+------------
+
+- `#10875 <https://github.com/pytest-dev/pytest/issues/10875>`_: Python 3.12 support: fixed ``RuntimeError: TestResult has no addDuration method`` when running ``unittest`` tests.
+
+
+- `#10890 <https://github.com/pytest-dev/pytest/issues/10890>`_: Python 3.12 support: fixed ``shutil.rmtree(onerror=...)`` deprecation warning when using :fixture:`tmp_path`.
+
+
+
+Bug Fixes
+---------
+
+- `#10896 <https://github.com/pytest-dev/pytest/issues/10896>`_: Fixed performance regression related to :fixture:`tmp_path` and the new :confval:`tmp_path_retention_policy` option.
+
+
+- `#10903 <https://github.com/pytest-dev/pytest/issues/10903>`_: Fix crash ``INTERNALERROR IndexError: list index out of range`` which happens when displaying an exception where all entries are hidden.
+  This reverts the change "Correctly handle ``__tracebackhide__`` for chained exceptions." introduced in version 7.3.0.
+
+
+pytest 7.3.0 (2023-04-08)
+=========================
+
+Features
+--------
+
+- `#10525 <https://github.com/pytest-dev/pytest/issues/10525>`_: Test methods decorated with ``@classmethod`` can now be discovered as tests, following the same rules as normal methods. This fills the gap that static methods were discoverable as tests but not class methods.
+
+
+- `#10755 <https://github.com/pytest-dev/pytest/issues/10755>`_: :confval:`console_output_style` now supports ``progress-even-when-capture-no`` to force the use of the progress output even when capture is disabled. This is useful in large test suites where capture may have significant performance impact.
+
+
+- `#7431 <https://github.com/pytest-dev/pytest/issues/7431>`_: ``--log-disable`` CLI option added to disable individual loggers.
+
+
+- `#8141 <https://github.com/pytest-dev/pytest/issues/8141>`_: Added :confval:`tmp_path_retention_count` and :confval:`tmp_path_retention_policy` configuration options to control how directories created by the :fixture:`tmp_path` fixture are kept.
+
+
+
+Improvements
+------------
+
+- `#10226 <https://github.com/pytest-dev/pytest/issues/10226>`_: If multiple errors are raised in teardown, we now re-raise an ``ExceptionGroup`` of them instead of discarding all but the last.
+
+
+- `#10658 <https://github.com/pytest-dev/pytest/issues/10658>`_: Allow ``-p`` arguments to include spaces (eg: ``-p no:logging`` instead of
+  ``-pno:logging``). Mostly useful in the ``addopts`` section of the configuration
+  file.
+
+
+- `#10710 <https://github.com/pytest-dev/pytest/issues/10710>`_: Added ``start`` and ``stop`` timestamps to ``TestReport`` objects.
+
+
+- `#10727 <https://github.com/pytest-dev/pytest/issues/10727>`_: Split the report header for ``rootdir``, ``config file`` and ``testpaths`` so each has its own line.
+
+
+- `#10840 <https://github.com/pytest-dev/pytest/issues/10840>`_: pytest should no longer crash on AST with pathological position attributes, for example testing AST produced by `Hylang <https://github.com/hylang/hy>__`.
+
+
+- `#6267 <https://github.com/pytest-dev/pytest/issues/6267>`_: The full output of a test is no longer truncated if the truncation message would be longer than
+  the hidden text. The line number shown has also been fixed.
+
+
+
+Bug Fixes
+---------
+
+- `#10743 <https://github.com/pytest-dev/pytest/issues/10743>`_: The assertion rewriting mechanism now works correctly when assertion expressions contain the walrus operator.
+
+
+- `#10765 <https://github.com/pytest-dev/pytest/issues/10765>`_: Fixed :fixture:`tmp_path` fixture always raising :class:`OSError` on ``emscripten`` platform due to missing :func:`os.getuid`.
+
+
+- `#1904 <https://github.com/pytest-dev/pytest/issues/1904>`_: Correctly handle ``__tracebackhide__`` for chained exceptions.
+  NOTE: This change was reverted in version 7.3.1.
+
+
+
+Improved Documentation
+----------------------
+
+- `#10782 <https://github.com/pytest-dev/pytest/issues/10782>`_: Fixed the minimal example in :ref:`goodpractices`: ``pip install -e .`` requires a ``version`` entry in ``pyproject.toml`` to run successfully.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#10669 <https://github.com/pytest-dev/pytest/issues/10669>`_: pytest no longer directly depends on the `attrs <https://www.attrs.org/en/stable/>`__ package. While
+  we at pytest all love the package dearly and would like to thank the ``attrs`` team for many years of cooperation and support,
+  it makes sense for ``pytest`` to have as little external dependencies as possible, as this helps downstream projects.
+  With that in mind, we have replaced the pytest's limited internal usage to use the standard library's ``dataclasses`` instead.
+
+  Nice diffs for ``attrs`` classes are still supported though.
+
+
 pytest 7.2.2 (2023-03-03)
 =========================
 
@@ -468,7 +567,7 @@ Breaking Changes
 - `#7259 <https://github.com/pytest-dev/pytest/issues/7259>`_: The :ref:`Node.reportinfo() <non-python tests>` function first return value type has been expanded from `py.path.local | str` to `os.PathLike[str] | str`.
 
   Most plugins which refer to `reportinfo()` only define it as part of a custom :class:`pytest.Item` implementation.
-  Since `py.path.local` is a `os.PathLike[str]`, these plugins are unaffacted.
+  Since `py.path.local` is an `os.PathLike[str]`, these plugins are unaffacted.
 
   Plugins and users which call `reportinfo()`, use the first return value and interact with it as a `py.path.local`, would need to adjust by calling `py.path.local(fspath)`.
   Although preferably, avoid the legacy `py.path.local` and use `pathlib.Path`, or use `item.location` or `item.path`, instead.
@@ -3968,7 +4067,7 @@ Removals
   See our :ref:`docs <calling fixtures directly deprecated>` on information on how to update your code.
 
 
-- :issue:`4546`: Remove ``Node.get_marker(name)`` the return value was not usable for more than a existence check.
+- :issue:`4546`: Remove ``Node.get_marker(name)`` the return value was not usable for more than an existence check.
 
   Use ``Node.get_closest_marker(name)`` as a replacement.
 
