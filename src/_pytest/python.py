@@ -667,7 +667,7 @@ class Package(Module):
         config=None,
         session=None,
         nodeid=None,
-        path=Optional[Path],
+        path: Optional[Path] = None,
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
