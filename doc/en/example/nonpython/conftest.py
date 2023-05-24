@@ -38,6 +38,7 @@ class YamlItem(pytest.Item):
                     "   no further details known at this point.",
                 ]
             )
+        return super().repr_failure(excinfo)
 
     def reportinfo(self):
         return self.path, 0, f"usecase: {self.name}"
