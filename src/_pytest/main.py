@@ -122,12 +122,11 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(
         "-c",
-        "--config-file",
-        metavar="FILE",
+        metavar="file",
         type=str,
         dest="inifilename",
-        help="Load configuration from `FILE` instead of trying to locate one of the "
-        "implicit configuration files.",
+        help="Load configuration from `file` instead of trying to locate one of the "
+        "implicit configuration files",
     )
     group._addoption(
         "--continue-on-collection-errors",

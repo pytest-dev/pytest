@@ -514,8 +514,6 @@ class TestConfigCmdlineParsing:
         )
         config = pytester.parseconfig("-c", "custom.ini")
         assert config.getini("custom") == "1"
-        config = pytester.parseconfig("--config-file", "custom.ini")
-        assert config.getini("custom") == "1"
 
         pytester.makefile(
             ".cfg",
@@ -525,8 +523,6 @@ class TestConfigCmdlineParsing:
         """,
         )
         config = pytester.parseconfig("-c", "custom_tool_pytest_section.cfg")
-        assert config.getini("custom") == "1"
-        config = pytester.parseconfig("--config-file", "custom_tool_pytest_section.cfg")
         assert config.getini("custom") == "1"
 
         pytester.makefile(
@@ -539,8 +535,6 @@ class TestConfigCmdlineParsing:
             """,
         )
         config = pytester.parseconfig("-c", "custom.toml")
-        assert config.getini("custom") == "1"
-        config = pytester.parseconfig("--config-file", "custom.toml")
         assert config.getini("custom") == "1"
 
     def test_absolute_win32_path(self, pytester: Pytester) -> None:
@@ -555,8 +549,6 @@ class TestConfigCmdlineParsing:
 
         temp_ini_file_norm = normpath(str(temp_ini_file))
         ret = pytest.main(["-c", temp_ini_file_norm])
-        assert ret == ExitCode.OK
-        ret = pytest.main(["--config-file", temp_ini_file_norm])
         assert ret == ExitCode.OK
 
 
@@ -1914,9 +1906,6 @@ class TestSetupCfg:
         )
         with pytest.raises(pytest.fail.Exception):
             pytester.runpytest("-c", "custom.cfg")
-
-        with pytest.raises(pytest.fail.Exception):
-            pytester.runpytest("--config-file", "custom.cfg")
 
 
 class TestPytestPluginsVariable:
