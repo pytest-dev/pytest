@@ -665,7 +665,7 @@ class Package(Module):
         config=None,
         session=None,
         nodeid=None,
-        path=Optional[Path],
+        path: Optional[Path] = None,
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
@@ -743,11 +743,11 @@ class Package(Module):
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.path.parent
-        init_module = this_path / "__init__.py"
-        if init_module.is_file() and path_matches_patterns(
-            init_module, self.config.getini("python_files")
-        ):
-            yield Module.from_parent(self, path=init_module)
+
+        # Always collect the __init__ first.
+        if path_matches_patterns(self.path, self.config.getini("python_files")):
+            yield Module.from_parent(self, path=self.path)
+
         pkg_prefixes: Set[Path] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
             path = Path(direntry.path)
