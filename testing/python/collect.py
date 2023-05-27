@@ -1420,10 +1420,15 @@ def test_package_collection_infinite_recursion(pytester: Pytester) -> None:
 
 
 def test_package_collection_init_given_as_argument(pytester: Pytester) -> None:
-    """Regression test for #3749"""
+    """Regression test for #3749, #8976, #9263, #9313.
+
+    Specifying an __init__.py file directly should collect only the __init__.py
+    Module, not the entire package.
+    """
     p = pytester.copy_example("collect/package_init_given_as_arg")
-    result = pytester.runpytest(p / "pkg" / "__init__.py")
-    result.stdout.fnmatch_lines(["*1 passed*"])
+    items, hookrecorder = pytester.inline_genitems(p / "pkg" / "__init__.py")
+    assert len(items) == 1
+    assert items[0].name == "test_init"
 
 
 def test_package_with_modules(pytester: Pytester) -> None:

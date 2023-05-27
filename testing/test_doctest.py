@@ -114,7 +114,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_importmode(self, pytester: Pytester):
-        p = pytester.makepyfile(
+        pytester.makepyfile(
             **{
                 "namespacepkg/innerpkg/__init__.py": "",
                 "namespacepkg/innerpkg/a.py": """
@@ -132,7 +132,7 @@ class TestDoctests:
                 """,
             }
         )
-        reprec = pytester.inline_run(p, "--doctest-modules", "--import-mode=importlib")
+        reprec = pytester.inline_run("--doctest-modules", "--import-mode=importlib")
         reprec.assertoutcome(passed=1)
 
     def test_new_pattern(self, pytester: Pytester):

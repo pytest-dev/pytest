@@ -504,7 +504,7 @@ def test_nose_setup_skipped_if_non_callable(pytester: Pytester) -> None:
             pass
         """,
     )
-    result = pytester.runpytest(p, "-p", "nose")
+    result = pytester.runpytest(p.parent, "-p", "nose")
     assert result.ret == 0
 
 

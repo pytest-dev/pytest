@@ -736,7 +736,9 @@ class Package(Module):
         this_path = self.path.parent
 
         # Always collect the __init__ first.
-        if path_matches_patterns(self.path, self.config.getini("python_files")):
+        if self.session.isinitpath(self.path) or path_matches_patterns(
+            self.path, self.config.getini("python_files")
+        ):
             yield Module.from_parent(self, path=self.path)
 
         pkg_prefixes: Set[Path] = set()
