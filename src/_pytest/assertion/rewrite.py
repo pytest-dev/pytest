@@ -996,7 +996,9 @@ class AssertionRewriter(ast.NodeVisitor):
                     ]
                 ):
                     pytest_temp = self.variable()
-                    self.variables_overwrite[v.left.target.id] = pytest_temp
+                    self.variables_overwrite[
+                        v.left.target.id
+                    ] = v.left  # type:ignore[assignment]
                     v.left.target.id = pytest_temp
             self.push_format_context()
             res, expl = self.visit(v)
@@ -1037,10 +1039,19 @@ class AssertionRewriter(ast.NodeVisitor):
         new_args = []
         new_kwargs = []
         for arg in call.args:
+            if isinstance(arg, ast.Name) and arg.id in self.variables_overwrite:
+                arg = self.variables_overwrite[arg.id]  # type:ignore[assignment]
             res, expl = self.visit(arg)
             arg_expls.append(expl)
             new_args.append(res)
         for keyword in call.keywords:
+            if (
+                isinstance(keyword.value, ast.Name)
+                and keyword.value.id in self.variables_overwrite
+            ):
+                keyword.value = self.variables_overwrite[
+                    keyword.value.id
+                ]  # type:ignore[assignment]
             res, expl = self.visit(keyword.value)
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
@@ -1075,7 +1086,13 @@ class AssertionRewriter(ast.NodeVisitor):
         self.push_format_context()
         # We first check if we have overwritten a variable in the previous assert
         if isinstance(comp.left, ast.Name) and comp.left.id in self.variables_overwrite:
-            comp.left.id = self.variables_overwrite[comp.left.id]
+            comp.left = self.variables_overwrite[
+                comp.left.id
+            ]  # type:ignore[assignment]
+        if isinstance(comp.left, namedExpr):
+            self.variables_overwrite[
+                comp.left.target.id
+            ] = comp.left  # type:ignore[assignment]
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
             left_expl = f"({left_expl})"
@@ -1093,7 +1110,9 @@ class AssertionRewriter(ast.NodeVisitor):
                 and next_operand.target.id == left_res.id
             ):
                 next_operand.target.id = self.variable()
-                self.variables_overwrite[left_res.id] = next_operand.target.id
+                self.variables_overwrite[
+                    left_res.id
+                ] = next_operand  # type:ignore[assignment]
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = f"({next_expl})"

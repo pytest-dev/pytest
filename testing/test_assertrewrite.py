@@ -1437,6 +1437,96 @@ class TestIssue10743:
 
 
 @pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="walrus operator not available in py<38"
+)
+class TestIssue11028:
+    def test_assertion_walrus_operator_in_operand(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_in_string():
+              assert (obj := "foo") in obj
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_in_operand_json_dumps(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import json
+
+            def test_json_encoder():
+                assert (obj := "foo") in json.dumps(obj)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_equals_operand_function(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def f(a):
+                return a
+
+            def test_call_other_function_arg():
+              assert (obj := "foo") == f(obj)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_equals_operand_function_keyword_arg(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def f(a='test'):
+                return a
+
+            def test_call_other_function_k_arg():
+              assert (obj := "foo") == f(a=obj)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_equals_operand_function_arg_as_function(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def f(a='test'):
+                return a
+
+            def test_function_of_function():
+              assert (obj := "foo") == f(f(obj))
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_gt_operand_function(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def add_one(a):
+                return a + 1
+
+            def test_gt():
+              assert (object := 4) > add_one(object)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*assert 4 > 5", "*where 5 = add_one(4)"])
+
+
+@pytest.mark.skipif(
     sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
 )
 @pytest.mark.parametrize("offset", [-1, +1])

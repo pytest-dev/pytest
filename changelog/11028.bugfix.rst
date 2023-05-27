@@ -1,0 +1,1 @@
+Fix bug related to the walrus operator in asserts. Now a variable that is assigned with the walrus operator can be used later in a function call.
