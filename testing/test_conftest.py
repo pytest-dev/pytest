@@ -594,7 +594,13 @@ class TestConftestVisibility:
         print("pytestarg        : %s" % testarg)
         print("expected pass    : %s" % expect_ntests_passed)
         os.chdir(dirs[chdir])
-        reprec = pytester.inline_run(testarg, "-q", "--traceconfig")
+        reprec = pytester.inline_run(
+            testarg,
+            "-q",
+            "--traceconfig",
+            "--confcutdir",
+            pytester.path,
+        )
         reprec.assertoutcome(passed=expect_ntests_passed)
 
 

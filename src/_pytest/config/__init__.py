@@ -1261,8 +1261,11 @@ class Config:
                 _pytest.deprecated.STRICT_OPTION, stacklevel=2
             )
 
-        if self.known_args_namespace.confcutdir is None and self.inipath is not None:
-            confcutdir = str(self.inipath.parent)
+        if self.known_args_namespace.confcutdir is None:
+            if self.inipath is not None:
+                confcutdir = str(self.inipath.parent)
+            else:
+                confcutdir = str(self.rootpath)
             self.known_args_namespace.confcutdir = confcutdir
         try:
             self.hook.pytest_load_initial_conftests(

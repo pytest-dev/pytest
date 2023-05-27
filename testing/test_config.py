@@ -179,6 +179,23 @@ class TestParseIni:
         assert result.ret != 0
         result.stderr.fnmatch_lines("ERROR: *pyproject.toml: Invalid statement*")
 
+    def test_confcutdir_default_without_configfile(self, pytester: Pytester) -> None:
+        # If --confcutdir is not specified, and there is no configfile, default
+        # to the roothpath.
+        sub = pytester.mkdir("sub")
+        os.chdir(sub)
+        config = pytester.parseconfigure()
+        assert config.pluginmanager._confcutdir == sub
+
+    def test_confcutdir_default_with_configfile(self, pytester: Pytester) -> None:
+        # If --confcutdir is not specified, and there is a configfile, default
+        # to the configfile's directory.
+        pytester.makeini("[pytest]")
+        sub = pytester.mkdir("sub")
+        os.chdir(sub)
+        config = pytester.parseconfigure()
+        assert config.pluginmanager._confcutdir == pytester.path
+
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, pytester: Pytester) -> None:
         sub = pytester.mkdir("sub")
