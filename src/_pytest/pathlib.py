@@ -27,6 +27,7 @@ from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -669,30 +670,38 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     return result
 
 
+def scandir(path: Union[str, "os.PathLike[str]"]) -> List["os.DirEntry[str]"]:
+    """Scan a directory recursively, in breadth-first order.
+
+    The returned entries are sorted.
+    """
+    entries = []
+    with os.scandir(path) as s:
+        # Skip entries with symlink loops and other brokenness, so the caller
+        # doesn't have to deal with it.
+        for entry in s:
+            try:
+                entry.is_file()
+            except OSError as err:
+                if _ignore_error(err):
+                    continue
+                raise
+            entries.append(entry)
+    entries.sort(key=lambda entry: entry.name)
+    return entries
+
+
 def visit(
     path: Union[str, "os.PathLike[str]"], recurse: Callable[["os.DirEntry[str]"], bool]
 ) -> Iterator["os.DirEntry[str]"]:
     """Walk a directory recursively, in breadth-first order.
 
+    The `recurse` predicate determines whether a directory is recursed.
+
     Entries at each directory level are sorted.
     """
-
-    # Skip entries with symlink loops and other brokenness, so the caller doesn't
-    # have to deal with it.
-    entries = []
-    for entry in os.scandir(path):
-        try:
-            entry.is_file()
-        except OSError as err:
-            if _ignore_error(err):
-                continue
-            raise
-        entries.append(entry)
-
-    entries.sort(key=lambda entry: entry.name)
-
+    entries = scandir(path)
     yield from entries
-
     for entry in entries:
         if entry.is_dir() and recurse(entry):
             yield from visit(entry.path, recurse)
