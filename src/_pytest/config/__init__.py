@@ -1382,6 +1382,14 @@ class Config:
                         args = []
                         for path in testpaths:
                             args.extend(sorted(glob.iglob(path, recursive=True)))
+                        if testpaths and not args:
+                            warning_text = (
+                                "testpaths defined but path not found, "
+                                "will search recursively from current directory instead"
+                            )
+                            self.issue_config_time_warning(
+                                PytestConfigWarning(warning_text), stacklevel=3
+                            )
                 if not args:
                     source = Config.ArgsSource.INCOVATION_DIR
                     args = [str(self.invocation_params.dir)]
