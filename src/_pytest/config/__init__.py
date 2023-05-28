@@ -1384,7 +1384,8 @@ class Config:
                             args.extend(sorted(glob.iglob(path, recursive=True)))
                         if testpaths and not args:
                             warning_text = (
-                                "No files were found in testpaths; consider removing or adjusting your testpaths configuration. "
+                                "No files were found in testpaths; "
+                                "consider removing or adjusting your testpaths configuration. "
                                 "Searching recursively from the current directory instead."
                             )
                             self.issue_config_time_warning(
