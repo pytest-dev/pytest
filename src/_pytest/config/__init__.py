@@ -1384,8 +1384,8 @@ class Config:
                             args.extend(sorted(glob.iglob(path, recursive=True)))
                         if testpaths and not args:
                             warning_text = (
-                                "testpaths defined but path not found, "
-                                "will search recursively from current directory instead"
+                                "No files were found in testpaths; consider removing or adjusting your testpaths configuration. "
+                                "Searching recursively from the current directory instead."
                             )
                             self.issue_config_time_warning(
                                 PytestConfigWarning(warning_text), stacklevel=3
