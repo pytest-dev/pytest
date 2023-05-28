@@ -5,7 +5,11 @@ import os
 import re
 from contextlib import contextmanager
 from contextlib import nullcontext
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from io import StringIO
+from logging import LogRecord
 from pathlib import Path
 from typing import AbstractSet
 from typing import Dict
@@ -53,7 +57,28 @@ def _remove_ansi_escape_sequences(text: str) -> str:
     return _ANSI_ESCAPE_SEQ.sub("", text)
 
 
-class ColoredLevelFormatter(logging.Formatter):
+class DatetimeFormatter(logging.Formatter):
+    """A logging formatter which formats record with
+    :func:`datetime.datetime.strftime` formatter instead of
+    :func:`time.strftime` in case of microseconds in format string.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+    def formatTime(self, record: LogRecord, datefmt=None) -> str:
+        if datefmt and "%f" in datefmt:
+            ct = self.converter(record.created)
+            tz = timezone(timedelta(seconds=ct.tm_gmtoff), ct.tm_zone)
+            # Construct `datetime.datetime` object from `struct_time`
+            # and msecs information from `record`
+            dt = datetime(*ct[0:6], microsecond=round(record.msecs * 1000), tzinfo=tz)
+            return dt.strftime(datefmt)
+        # Use `logging.Formatter` for non-microsecond formats
+        return super().formatTime(record, datefmt)
+
+
+class ColoredLevelFormatter(DatetimeFormatter):
     """A logging formatter which colorizes the %(levelname)..s part of the
     log format passed to __init__."""
 
@@ -625,7 +650,7 @@ class LoggingPlugin:
             config, "log_file_date_format", "log_date_format"
         )
 
-        log_file_formatter = logging.Formatter(
+        log_file_formatter = DatetimeFormatter(
             log_file_format, datefmt=log_file_date_format
         )
         self.log_file_handler.setFormatter(log_file_formatter)
@@ -669,7 +694,7 @@ class LoggingPlugin:
                 create_terminal_writer(self._config), log_format, log_date_format
             )
         else:
-            formatter = logging.Formatter(log_format, log_date_format)
+            formatter = DatetimeFormatter(log_format, log_date_format)
 
         formatter._style = PercentStyleMultiline(
             formatter._style._fmt, auto_indent=auto_indent
