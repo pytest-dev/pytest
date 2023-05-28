@@ -786,7 +786,9 @@ def test_warning_on_testpaths_not_found(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*ConfigWarning: testpaths defined*", "*1 warning*"])
+    result.stdout.fnmatch_lines(
+        ["*ConfigWarning: No files were found in testpaths*", "*1 warning*"]
+    )
 
 
 def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
