@@ -1,1 +1,1 @@
-Added warning when testpaths is set, but paths are not found by glob. In this case, pytest will search fall back to searching from current directory.
+Added warning when :confval:`testpaths` is set, but paths are not found by glob. In this case, pytest will fall back to searching from the current directory.
