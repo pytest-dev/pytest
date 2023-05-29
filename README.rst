@@ -5,7 +5,7 @@
    :alt: pytest
 
 
-------
+---------
 
 .. image:: https://img.shields.io/pypi/v/pytest.svg
     :target: https://pypi.org/project/pytest/
