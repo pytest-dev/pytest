@@ -35,6 +35,7 @@ from _pytest._code import filter_traceback
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
@@ -1801,7 +1802,7 @@ class Function(PyobjMixin, nodes.Item):
     def setup(self) -> None:
         self._request._fillfixtures()
 
-    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
+    def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
             code = _pytest._code.Code.from_function(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
@@ -1813,14 +1814,21 @@ class Function(PyobjMixin, nodes.Item):
                     ntraceback = ntraceback.filter(filter_traceback)
                     if not ntraceback:
                         ntraceback = traceback
+            ntraceback = ntraceback.filter(excinfo)
 
-            excinfo.traceback = ntraceback.filter()
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame.
             if self.config.getoption("tbstyle", "auto") == "auto":
-                if len(excinfo.traceback) > 2:
-                    for entry in excinfo.traceback[1:-1]:
-                        entry.set_repr_style("short")
+                if len(ntraceback) > 2:
+                    ntraceback = Traceback(
+                        entry
+                        if i == 0 or i == len(ntraceback) - 1
+                        else entry.with_repr_style("short")
+                        for i, entry in enumerate(ntraceback)
+                    )
+
+            return ntraceback
+        return excinfo.traceback
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override]

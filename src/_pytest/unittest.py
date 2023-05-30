@@ -334,15 +334,16 @@ class TestCaseFunction(Function):
             finally:
                 delattr(self._testcase, self.name)
 
-    def _prunetraceback(
+    def _traceback_filter(
         self, excinfo: _pytest._code.ExceptionInfo[BaseException]
-    ) -> None:
-        super()._prunetraceback(excinfo)
-        traceback = excinfo.traceback.filter(
-            lambda x: not x.frame.f_globals.get("__unittest")
+    ) -> _pytest._code.Traceback:
+        traceback = super()._traceback_filter(excinfo)
+        ntraceback = traceback.filter(
+            lambda x: not x.frame.f_globals.get("__unittest"),
         )
-        if traceback:
-            excinfo.traceback = traceback
+        if not ntraceback:
+            ntraceback = traceback
+        return ntraceback
 
 
 @hookimpl(tryfirst=True)
