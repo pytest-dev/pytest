@@ -1518,7 +1518,7 @@ class TestIssue11028:
                 return a + 1
 
             def test_gt():
-              assert (object := 4) > add_one(object)
+              assert (obj := 4) > add_one(obj)
         """
         )
         result = pytester.runpytest()
