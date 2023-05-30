@@ -213,7 +213,7 @@ class LFPluginCollWrapper:
 
     @hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector: nodes.Collector):
-        if isinstance(collector, Session):
+        if isinstance(collector, (Session, Package)):
             out = yield
             res: CollectReport = out.get_result()
 
