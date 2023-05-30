@@ -63,7 +63,6 @@ class DatetimeFormatter(logging.Formatter):
     :func:`time.strftime` in case of microseconds in format string.
     """
 
-
     def formatTime(self, record: LogRecord, datefmt=None) -> str:
         if datefmt and "%f" in datefmt:
             ct = self.converter(record.created)
