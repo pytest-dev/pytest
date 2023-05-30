@@ -1382,6 +1382,15 @@ class Config:
                         args = []
                         for path in testpaths:
                             args.extend(sorted(glob.iglob(path, recursive=True)))
+                        if testpaths and not args:
+                            warning_text = (
+                                "No files were found in testpaths; "
+                                "consider removing or adjusting your testpaths configuration. "
+                                "Searching recursively from the current directory instead."
+                            )
+                            self.issue_config_time_warning(
+                                PytestConfigWarning(warning_text), stacklevel=3
+                            )
                 if not args:
                     source = Config.ArgsSource.INCOVATION_DIR
                     args = [str(self.invocation_params.dir)]
