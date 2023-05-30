@@ -1,2 +1,1 @@
 Added handling of ``%f`` directive to print microseconds in log format options, such as ``log-date-format``.
-Added helper :class:`pytest.logging.DatetimeFormatter <_pytest.logging.DatetimeFormatter>` which overrides :class:`logging.Formatter` behaviour to print log records with a microsecond-aware function :func:`datetime.strftime` instead of :func:`time.strftime`.
