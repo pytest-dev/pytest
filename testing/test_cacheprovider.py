@@ -420,7 +420,13 @@ class TestLastFailed:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 failed in*"])
 
-    def test_terminal_report_lastfailed(self, pytester: Pytester) -> None:
+    @pytest.mark.parametrize("parent", ("session", "package"))
+    def test_terminal_report_lastfailed(self, pytester: Pytester, parent: str) -> None:
+        if parent == "package":
+            pytester.makepyfile(
+                __init__="",
+            )
+
         test_a = pytester.makepyfile(
             test_a="""
             def test_a1(): pass

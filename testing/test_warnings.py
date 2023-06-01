@@ -777,6 +777,20 @@ class TestStackLevel:
         )
 
 
+def test_warning_on_testpaths_not_found(pytester: Pytester) -> None:
+    # Check for warning when testpaths set, but not found by glob
+    pytester.makeini(
+        """
+        [pytest]
+        testpaths = absent
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        ["*ConfigWarning: No files were found in testpaths*", "*1 warning*"]
+    )
+
+
 def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
     # Some platforms (notably PyPy) don't have tracemalloc.
     # We choose to explicitly not skip this in case tracemalloc is not

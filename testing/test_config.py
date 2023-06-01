@@ -179,6 +179,23 @@ class TestParseIni:
         assert result.ret != 0
         result.stderr.fnmatch_lines("ERROR: *pyproject.toml: Invalid statement*")
 
+    def test_confcutdir_default_without_configfile(self, pytester: Pytester) -> None:
+        # If --confcutdir is not specified, and there is no configfile, default
+        # to the roothpath.
+        sub = pytester.mkdir("sub")
+        os.chdir(sub)
+        config = pytester.parseconfigure()
+        assert config.pluginmanager._confcutdir == sub
+
+    def test_confcutdir_default_with_configfile(self, pytester: Pytester) -> None:
+        # If --confcutdir is not specified, and there is a configfile, default
+        # to the configfile's directory.
+        pytester.makeini("[pytest]")
+        sub = pytester.mkdir("sub")
+        os.chdir(sub)
+        config = pytester.parseconfigure()
+        assert config.pluginmanager._confcutdir == pytester.path
+
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, pytester: Pytester) -> None:
         sub = pytester.mkdir("sub")
@@ -514,6 +531,8 @@ class TestConfigCmdlineParsing:
         )
         config = pytester.parseconfig("-c", "custom.ini")
         assert config.getini("custom") == "1"
+        config = pytester.parseconfig("--config-file", "custom.ini")
+        assert config.getini("custom") == "1"
 
         pytester.makefile(
             ".cfg",
@@ -523,6 +542,8 @@ class TestConfigCmdlineParsing:
         """,
         )
         config = pytester.parseconfig("-c", "custom_tool_pytest_section.cfg")
+        assert config.getini("custom") == "1"
+        config = pytester.parseconfig("--config-file", "custom_tool_pytest_section.cfg")
         assert config.getini("custom") == "1"
 
         pytester.makefile(
@@ -535,6 +556,8 @@ class TestConfigCmdlineParsing:
             """,
         )
         config = pytester.parseconfig("-c", "custom.toml")
+        assert config.getini("custom") == "1"
+        config = pytester.parseconfig("--config-file", "custom.toml")
         assert config.getini("custom") == "1"
 
     def test_absolute_win32_path(self, pytester: Pytester) -> None:
@@ -549,6 +572,8 @@ class TestConfigCmdlineParsing:
 
         temp_ini_file_norm = normpath(str(temp_ini_file))
         ret = pytest.main(["-c", temp_ini_file_norm])
+        assert ret == ExitCode.OK
+        ret = pytest.main(["--config-file", temp_ini_file_norm])
         assert ret == ExitCode.OK
 
 
@@ -1906,6 +1931,9 @@ class TestSetupCfg:
         )
         with pytest.raises(pytest.fail.Exception):
             pytester.runpytest("-c", "custom.cfg")
+
+        with pytest.raises(pytest.fail.Exception):
+            pytester.runpytest("--config-file", "custom.cfg")
 
 
 class TestPytestPluginsVariable:
