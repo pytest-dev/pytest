@@ -228,12 +228,7 @@ class LFPluginCollWrapper:
 
             # Use stable sort to priorize last failed.
             def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
-                # Package.path is the __init__.py file, we need the directory.
-                if isinstance(node, Package):
-                    path = node.path.parent
-                else:
-                    path = node.path
-                return path in lf_paths
+                return node.path in lf_paths
 
             res.result = sorted(
                 res.result,
@@ -277,9 +272,7 @@ class LFPluginCollSkipfiles:
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Optional[CollectReport]:
-        # Packages are Files, but we only want to skip test-bearing Files,
-        # so don't filter Packages.
-        if isinstance(collector, File) and not isinstance(collector, Package):
+        if isinstance(collector, File):
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 

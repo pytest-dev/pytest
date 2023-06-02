@@ -17,9 +17,9 @@ from typing import Literal
 from typing import Optional
 from typing import overload
 from typing import Sequence
-from typing import Set
 from typing import Tuple
 from typing import Type
+from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._code
@@ -41,6 +41,10 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
+
+
+if TYPE_CHECKING:
+    from _pytest.python import Package
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -572,6 +576,17 @@ class Session(nodes.FSCollector):
             return False
         return True
 
+    def _collectpackage(self, fspath: Path) -> Optional["Package"]:
+        from _pytest.python import Package
+
+        ihook = self.gethookproxy(fspath)
+        if not self.isinitpath(fspath):
+            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
+                return None
+
+        pkg: Package = Package.from_parent(self, path=fspath)
+        return pkg
+
     def _collectfile(
         self, fspath: Path, handle_dupes: bool = True
     ) -> Sequence[nodes.Collector]:
@@ -680,8 +695,6 @@ class Session(nodes.FSCollector):
         return items
 
     def collect(self) -> Iterator[Union[nodes.Item, nodes.Collector]]:
-        from _pytest.python import Package
-
         # Keep track of any collected nodes in here, so we don't duplicate fixtures.
         node_cache1: Dict[Path, Sequence[nodes.Collector]] = {}
         node_cache2: Dict[Tuple[Type[nodes.Collector], Path], nodes.Collector] = {}
@@ -691,7 +704,9 @@ class Session(nodes.FSCollector):
         matchnodes_cache: Dict[Tuple[Type[nodes.Collector], str], CollectReport] = {}
 
         # Directories of pkgs with dunder-init files.
-        pkg_roots: Dict[Path, Package] = {}
+        pkg_roots: Dict[Path, "Package"] = {}
+
+        pm = self.config.pluginmanager
 
         for argpath, names in self._initial_parts:
             self.trace("processing argument", (argpath, names))
@@ -699,55 +714,47 @@ class Session(nodes.FSCollector):
 
             # Start with a Session root, and delve to argpath item (dir or file)
             # and stack all Packages found on the way.
-            # No point in finding packages when collecting doctests.
-            if not self.config.getoption("doctestmodules", False):
-                pm = self.config.pluginmanager
-                for parent in (argpath, *argpath.parents):
-                    if not pm._is_in_confcutdir(argpath):
-                        break
+            for parent in (argpath, *argpath.parents):
+                if not pm._is_in_confcutdir(argpath):
+                    break
 
-                    if parent.is_dir():
-                        pkginit = parent / "__init__.py"
-                        if pkginit.is_file() and pkginit not in node_cache1:
-                            col = self._collectfile(pkginit, handle_dupes=False)
-                            if col:
-                                if isinstance(col[0], Package):
-                                    pkg_roots[parent] = col[0]
-                                node_cache1[col[0].path] = [col[0]]
+                if parent.is_dir():
+                    pkginit = parent / "__init__.py"
+                    if pkginit.is_file() and parent not in node_cache1:
+                        pkg = self._collectpackage(parent)
+                        if pkg is not None:
+                            pkg_roots[parent] = pkg
+                            node_cache1[pkg.path] = [pkg]
 
             # If it's a directory argument, recurse and look for any Subpackages.
             # Let the Package collector deal with subnodes, don't collect here.
             if argpath.is_dir():
                 assert not names, f"invalid arg {(argpath, names)!r}"
 
-                seen_dirs: Set[Path] = set()
+                if argpath in pkg_roots:
+                    yield pkg_roots[argpath]
+
                 for direntry in visit(argpath, self._recurse):
-                    if not direntry.is_file():
-                        continue
-
                     path = Path(direntry.path)
-                    dirpath = path.parent
+                    if direntry.is_dir() and self._recurse(direntry):
+                        pkginit = path / "__init__.py"
+                        if pkginit.is_file():
+                            pkg = self._collectpackage(path)
+                            if pkg is not None:
+                                yield pkg
+                                pkg_roots[path] = pkg
 
-                    if dirpath not in seen_dirs:
-                        # Collect packages first.
-                        seen_dirs.add(dirpath)
-                        pkginit = dirpath / "__init__.py"
-                        if pkginit.exists():
-                            for x in self._collectfile(pkginit):
+                    elif direntry.is_file():
+                        if path.parent in pkg_roots:
+                            # Package handles this file.
+                            continue
+                        for x in self._collectfile(path):
+                            key2 = (type(x), x.path)
+                            if key2 in node_cache2:
+                                yield node_cache2[key2]
+                            else:
+                                node_cache2[key2] = x
                                 yield x
-                                if isinstance(x, Package):
-                                    pkg_roots[dirpath] = x
-                    if dirpath in pkg_roots:
-                        # Do not collect packages here.
-                        continue
-
-                    for x in self._collectfile(path):
-                        key2 = (type(x), x.path)
-                        if key2 in node_cache2:
-                            yield node_cache2[key2]
-                        else:
-                            node_cache2[key2] = x
-                            yield x
             else:
                 assert argpath.is_file()
 
@@ -804,21 +811,6 @@ class Session(nodes.FSCollector):
                 if not matching:
                     report_arg = "::".join((str(argpath), *names))
                     self._notfound.append((report_arg, col))
-                    continue
-
-                # If __init__.py was the only file requested, then the matched
-                # node will be the corresponding Package (by default), and the
-                # first yielded item will be the __init__ Module itself, so
-                # just use that. If this special case isn't taken, then all the
-                # files in the package will be yielded.
-                if argpath.name == "__init__.py" and isinstance(matching[0], Package):
-                    try:
-                        yield next(iter(matching[0].collect()))
-                    except StopIteration:
-                        # The package collects nothing with only an __init__.py
-                        # file in it, which gets ignored by the default
-                        # "python_files" option.
-                        pass
                     continue
 
                 yield from matching
