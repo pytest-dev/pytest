@@ -57,7 +57,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import INSTANCE_COLLECTOR
 from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FuncFixtureInfo
@@ -699,14 +698,6 @@ class Package(Module):
         if teardown_module is not None:
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
-
-    def gethookproxy(self, fspath: "os.PathLike[str]"):
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.gethookproxy(fspath)
-
-    def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.isinitpath(path)
 
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
         if direntry.name == "__pycache__":
