@@ -676,6 +676,24 @@ class File(FSCollector, abc.ABC):
     """
 
 
+class Directory(FSCollector, abc.ABC):
+    """Base class for collecting files from a directory.
+
+    A basic directory collector does the following: goes over the files and
+    sub-directories in the directory and creates collectors for them by calling
+    the hooks :hook:`pytest_collect_directory` and :hook:`pytest_collect_file`,
+    after checking that they are not ignored using
+    :hook:`pytest_ignore_collect`.
+
+    The default directory collectors are :class:`~pytest.Dir` and
+    :class:`~pytest.Package`.
+
+    .. versionadded:: 8.0
+
+    :ref:`custom directory collectors`.
+    """
+
+
 class Item(Node, abc.ABC):
     """Base class of all test invocation items.
 

@@ -1006,7 +1006,7 @@ class TestReportContents:
         )
         rec = pytester.inline_run()
         calls = rec.getcalls("pytest_collectreport")
-        _, call = calls
+        _, call, _ = calls
         assert isinstance(call.report.longrepr, tuple)
         assert "Skipped" in call.report.longreprtext
 

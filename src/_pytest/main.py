@@ -12,6 +12,8 @@ from typing import Callable
 from typing import Dict
 from typing import final
 from typing import FrozenSet
+from typing import Generator
+from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Literal
@@ -19,8 +21,6 @@ from typing import Optional
 from typing import overload
 from typing import Sequence
 from typing import Tuple
-from typing import Type
-from typing import TYPE_CHECKING
 from typing import Union
 
 import pluggy
@@ -41,15 +41,11 @@ from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import safe_exists
-from _pytest.pathlib import visit
+from _pytest.pathlib import scandir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
-
-
-if TYPE_CHECKING:
-    from _pytest.python import Package
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -414,6 +410,12 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[boo
     return None
 
 
+def pytest_collect_directory(
+    path: Path, parent: nodes.Collector
+) -> Optional[nodes.Collector]:
+    return Dir.from_parent(parent, path=path)
+
+
 def pytest_collection_modifyitems(items: List[nodes.Item], config: Config) -> None:
     deselect_prefixes = tuple(config.getoption("deselect") or [])
     if not deselect_prefixes:
@@ -470,7 +472,61 @@ class _bestrelpath_cache(Dict[Path, str]):
 
 
 @final
-class Session(nodes.FSCollector):
+class Dir(nodes.Directory):
+    """Collector of files in a file system directory.
+
+    .. versionadded:: 8.0
+
+    .. note::
+
+        Python directories with an `__init__.py` file are instead collected by
+        :class:`~pytest.Package` by default. Both are :class:`~pytest.Directory`
+        collectors.
+    """
+
+    @classmethod
+    def from_parent(  # type: ignore[override]
+        cls,
+        parent: nodes.Collector,  # type: ignore[override]
+        *,
+        path: Path,
+    ) -> "Dir":
+        """The public constructor.
+
+        :param parent: The parent collector of this Dir.
+        :param path: The directory's path.
+        """
+        return super().from_parent(parent=parent, path=path)  # type: ignore[no-any-return]
+
+    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
+        config = self.config
+        col: Optional[nodes.Collector]
+        cols: Sequence[nodes.Collector]
+        for direntry in scandir(self.path):
+            if direntry.is_dir():
+                if direntry.name == "__pycache__":
+                    continue
+                ihook = self.ihook
+                path = Path(direntry.path)
+                if not self.session.isinitpath(path, with_parents=True):
+                    if ihook.pytest_ignore_collect(collection_path=path, config=config):
+                        continue
+                col = ihook.pytest_collect_directory(path=path, parent=self)
+                if col is not None:
+                    yield col
+
+            elif direntry.is_file():
+                ihook = self.ihook
+                path = Path(direntry.path)
+                if not self.session.isinitpath(path):
+                    if ihook.pytest_ignore_collect(collection_path=path, config=config):
+                        continue
+                cols = ihook.pytest_collect_file(file_path=path, parent=self)
+                yield from cols
+
+
+@final
+class Session(nodes.Collector):
     """The root of the collection tree.
 
     ``Session`` collects the initial paths given as arguments to pytest.
@@ -486,6 +542,7 @@ class Session(nodes.FSCollector):
 
     def __init__(self, config: Config) -> None:
         super().__init__(
+            name="",
             path=config.rootpath,
             fspath=None,
             parent=None,
@@ -500,6 +557,11 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._initialpaths: FrozenSet[Path] = frozenset()
         self._initialpaths_with_parents: FrozenSet[Path] = frozenset()
+        self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
+        self._initial_parts: List[Tuple[Path, List[str]]] = []
+        self._in_genitems = False
+        self._collection_cache: Dict[nodes.Collector, CollectReport] = {}
+        self.items: List[nodes.Item] = []
 
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
@@ -550,6 +612,29 @@ class Session(nodes.FSCollector):
 
     pytest_collectreport = pytest_runtest_logreport
 
+    @hookimpl(wrapper=True)
+    def pytest_collect_directory(
+        self,
+    ) -> Generator[None, Optional[nodes.Collector], Optional[nodes.Collector]]:
+        col = yield
+
+        # Eagerly load conftests for the directory.
+        # This is needed because a conftest error needs to happen while
+        # collecting a collector, so it is caught by its CollectReport.
+        # Without this, the conftests are loaded inside of genitems itself
+        # which leads to an internal error.
+        # This should only be done for genitems; if done unconditionally, it
+        # will load conftests for non-selected directories which is to be
+        # avoided.
+        if self._in_genitems and col is not None:
+            self.config.pluginmanager._loadconftestmodules(
+                col.path,
+                self.config.getoption("importmode"),
+                rootpath=self.config.rootpath,
+            )
+
+        return col
+
     def isinitpath(
         self,
         path: Union[str, "os.PathLike[str]"],
@@ -558,7 +643,7 @@ class Session(nodes.FSCollector):
     ) -> bool:
         """Is path an initial path?
 
-        An initial path is a path pytest starts with, e.g. given on the command
+        An initial path is a path explicitly given to pytest on the command
         line.
 
         :param with_parents:
@@ -600,49 +685,36 @@ class Session(nodes.FSCollector):
             proxy = self.config.hook
         return proxy
 
-    def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
-        if direntry.name == "__pycache__":
-            return False
-        fspath = Path(direntry.path)
-        ihook = self.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-            return False
-        return True
-
-    def _collectpackage(self, fspath: Path) -> Optional["Package"]:
-        from _pytest.python import Package
-
-        ihook = self.gethookproxy(fspath)
-        if not self.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-                return None
-
-        pkg: Package = Package.from_parent(self, path=fspath)
-        return pkg
-
-    def _collectfile(
-        self, fspath: Path, handle_dupes: bool = True
+    def _collect_path(
+        self,
+        path: Path,
+        path_cache: Dict[Path, Sequence[nodes.Collector]],
     ) -> Sequence[nodes.Collector]:
-        assert (
-            fspath.is_file()
-        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            fspath, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
-        )
-        ihook = self.gethookproxy(fspath)
-        if not self.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-                return ()
+        """Create a Collector for the given path.
 
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if fspath in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(fspath)
+        `path_cache` makes it so the same Collectors are returned for the same
+        path.
+        """
+        if path in path_cache:
+            return path_cache[path]
 
-        return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
+        if path.is_dir():
+            ihook = self.gethookproxy(path.parent)
+            col: Optional[nodes.Collector] = ihook.pytest_collect_directory(
+                path=path, parent=self
+            )
+            cols: Sequence[nodes.Collector] = (col,) if col is not None else ()
+
+        elif path.is_file():
+            ihook = self.gethookproxy(path)
+            cols = ihook.pytest_collect_file(file_path=path, parent=self)
+
+        else:
+            # Broken symlink or invalid/missing file.
+            cols = ()
+
+        path_cache[path] = cols
+        return cols
 
     @overload
     def perform_collect(
@@ -678,12 +750,13 @@ class Session(nodes.FSCollector):
         self.trace("perform_collect", self, args)
         self.trace.root.indent += 1
 
-        self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
-        self._initial_parts: List[Tuple[Path, List[str]]] = []
-        self.items: List[nodes.Item] = []
-
         hook = self.config.hook
 
+        self._notfound = []
+        self._initial_parts = []
+        self._in_genitems = False
+        self._collection_cache = {}
+        self.items = []
         items: Sequence[Union[nodes.Item, nodes.Collector]] = self.items
         try:
             initialpaths: List[Path] = []
@@ -700,6 +773,7 @@ class Session(nodes.FSCollector):
                 initialpaths_with_parents.extend(fspath.parents)
             self._initialpaths = frozenset(initialpaths)
             self._initialpaths_with_parents = frozenset(initialpaths_with_parents)
+
             rep = collect_one_node(self)
             self.ihook.pytest_collectreport(report=rep)
             self.trace.root.indent -= 1
@@ -708,12 +782,14 @@ class Session(nodes.FSCollector):
                 for arg, collectors in self._notfound:
                     if collectors:
                         errors.append(
-                            f"not found: {arg}\n(no name {arg!r} in any of {collectors!r})"
+                            f"not found: {arg}\n(no match in any of {collectors!r})"
                         )
                     else:
                         errors.append(f"found no collectors for {arg}")
 
                 raise UsageError(*errors)
+
+            self._in_genitems = True
             if not genitems:
                 items = rep.result
             else:
@@ -726,22 +802,35 @@ class Session(nodes.FSCollector):
                 session=self, config=self.config, items=items
             )
         finally:
+            self._notfound = []
+            self._initial_parts = []
+            self._in_genitems = False
+            self._collection_cache = {}
             hook.pytest_collection_finish(session=self)
 
-        self.testscollected = len(items)
+        if genitems:
+            self.testscollected = len(items)
+
         return items
 
+    def _collect_one_node(
+        self,
+        node: nodes.Collector,
+        handle_dupes: bool = True,
+    ) -> Tuple[CollectReport, bool]:
+        if node in self._collection_cache and handle_dupes:
+            rep = self._collection_cache[node]
+            return rep, True
+        else:
+            rep = collect_one_node(node)
+            self._collection_cache[node] = rep
+            return rep, False
+
     def collect(self) -> Iterator[Union[nodes.Item, nodes.Collector]]:
-        # Keep track of any collected nodes in here, so we don't duplicate fixtures.
-        node_cache1: Dict[Path, Sequence[nodes.Collector]] = {}
-        node_cache2: Dict[Tuple[Type[nodes.Collector], Path], nodes.Collector] = {}
-
-        # Keep track of any collected collectors in matchnodes paths, so they
-        # are not collected more than once.
-        matchnodes_cache: Dict[Tuple[Type[nodes.Collector], str], CollectReport] = {}
-
-        # Directories of pkgs with dunder-init files.
-        pkg_roots: Dict[Path, "Package"] = {}
+        # This is a cache for the root directories of the initial paths.
+        # We can't use collection_cache for Session because of its special
+        # role as the bootstrapping collector.
+        path_cache: Dict[Path, Sequence[nodes.Collector]] = {}
 
         pm = self.config.pluginmanager
 
@@ -749,108 +838,87 @@ class Session(nodes.FSCollector):
             self.trace("processing argument", (argpath, names))
             self.trace.root.indent += 1
 
-            # Start with a Session root, and delve to argpath item (dir or file)
-            # and stack all Packages found on the way.
-            for parent in (argpath, *argpath.parents):
-                if not pm._is_in_confcutdir(argpath):
-                    break
-
-                if parent.is_dir():
-                    pkginit = parent / "__init__.py"
-                    if pkginit.is_file() and parent not in node_cache1:
-                        pkg = self._collectpackage(parent)
-                        if pkg is not None:
-                            pkg_roots[parent] = pkg
-                            node_cache1[pkg.path] = [pkg]
-
-            # If it's a directory argument, recurse and look for any Subpackages.
-            # Let the Package collector deal with subnodes, don't collect here.
+            # resolve_collection_argument() ensures this.
             if argpath.is_dir():
                 assert not names, f"invalid arg {(argpath, names)!r}"
 
-                if argpath in pkg_roots:
-                    yield pkg_roots[argpath]
+            # Match the argpath from the root, e.g.
+            #   /a/b/c.py -> [/, /a, /a/b, /a/b/c.py]
+            paths = [*reversed(argpath.parents), argpath]
+            # Paths outside of the confcutdir should not be considered, unless
+            # it's the argpath itself.
+            while len(paths) > 1 and not pm._is_in_confcutdir(paths[0]):
+                paths = paths[1:]
 
-                for direntry in visit(argpath, self._recurse):
-                    path = Path(direntry.path)
-                    if direntry.is_dir() and self._recurse(direntry):
-                        pkginit = path / "__init__.py"
-                        if pkginit.is_file():
-                            pkg = self._collectpackage(path)
-                            if pkg is not None:
-                                yield pkg
-                                pkg_roots[path] = pkg
+            # Start going over the parts from the root, collecting each level
+            # and discarding all nodes which don't match the level's part.
+            any_matched_in_initial_part = False
+            notfound_collectors = []
+            work: List[
+                Tuple[Union[nodes.Collector, nodes.Item], List[Union[Path, str]]]
+            ] = [(self, paths + names)]
+            while work:
+                matchnode, matchparts = work.pop()
 
-                    elif direntry.is_file():
-                        if path.parent in pkg_roots:
-                            # Package handles this file.
-                            continue
-                        for x in self._collectfile(path):
-                            key2 = (type(x), x.path)
-                            if key2 in node_cache2:
-                                yield node_cache2[key2]
-                            else:
-                                node_cache2[key2] = x
-                                yield x
-            else:
-                assert argpath.is_file()
-
-                if argpath in node_cache1:
-                    col = node_cache1[argpath]
-                else:
-                    collect_root = pkg_roots.get(argpath.parent, self)
-                    col = collect_root._collectfile(argpath, handle_dupes=False)
-                    if col:
-                        node_cache1[argpath] = col
-
-                matching = []
-                work: List[
-                    Tuple[Sequence[Union[nodes.Item, nodes.Collector]], Sequence[str]]
-                ] = [(col, names)]
-                while work:
-                    self.trace("matchnodes", col, names)
-                    self.trace.root.indent += 1
-
-                    matchnodes, matchnames = work.pop()
-                    for node in matchnodes:
-                        if not matchnames:
-                            matching.append(node)
-                            continue
-                        if not isinstance(node, nodes.Collector):
-                            continue
-                        key = (type(node), node.nodeid)
-                        if key in matchnodes_cache:
-                            rep = matchnodes_cache[key]
-                        else:
-                            rep = collect_one_node(node)
-                            matchnodes_cache[key] = rep
-                        if rep.passed:
-                            submatchnodes = []
-                            for r in rep.result:
-                                # TODO: Remove parametrized workaround once collection structure contains
-                                # parametrization.
-                                if (
-                                    r.name == matchnames[0]
-                                    or r.name.split("[")[0] == matchnames[0]
-                                ):
-                                    submatchnodes.append(r)
-                            if submatchnodes:
-                                work.append((submatchnodes, matchnames[1:]))
-                        else:
-                            # Report collection failures here to avoid failing to run some test
-                            # specified in the command line because the module could not be
-                            # imported (#134).
-                            node.ihook.pytest_collectreport(report=rep)
-
-                    self.trace("matchnodes finished -> ", len(matching), "nodes")
-                    self.trace.root.indent -= 1
-
-                if not matching:
-                    report_arg = "::".join((str(argpath), *names))
-                    self._notfound.append((report_arg, col))
+                # Pop'd all of the parts, this is a match.
+                if not matchparts:
+                    yield matchnode
+                    any_matched_in_initial_part = True
                     continue
 
-                yield from matching
+                # Should have been matched by now, discard.
+                if not isinstance(matchnode, nodes.Collector):
+                    continue
+
+                # Collect this level of matching.
+                # Collecting Session (self) is done directly to avoid endless
+                # recursion to this function.
+                subnodes: Sequence[Union[nodes.Collector, nodes.Item]]
+                if isinstance(matchnode, Session):
+                    assert isinstance(matchparts[0], Path)
+                    subnodes = matchnode._collect_path(matchparts[0], path_cache)
+                else:
+                    # For backward compat, files given directly multiple
+                    # times on the command line should not be deduplicated.
+                    handle_dupes = not (
+                        len(matchparts) == 1
+                        and isinstance(matchparts[0], Path)
+                        and matchparts[0].is_file()
+                    )
+                    rep, duplicate = self._collect_one_node(matchnode, handle_dupes)
+                    if not duplicate and not rep.passed:
+                        # Report collection failures here to avoid failing to
+                        # run some test specified in the command line because
+                        # the module could not be imported (#134).
+                        matchnode.ihook.pytest_collectreport(report=rep)
+                    if not rep.passed:
+                        continue
+                    subnodes = rep.result
+
+                # Prune this level.
+                any_matched_in_collector = False
+                for node in subnodes:
+                    # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
+                    if isinstance(matchparts[0], Path):
+                        is_match = node.path == matchparts[0]
+                    # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
+                    else:
+                        # TODO: Remove parametrized workaround once collection structure contains
+                        # parametrization.
+                        is_match = (
+                            node.name == matchparts[0]
+                            or node.name.split("[")[0] == matchparts[0]
+                        )
+                    if is_match:
+                        work.append((node, matchparts[1:]))
+                        any_matched_in_collector = True
+
+                if not any_matched_in_collector:
+                    notfound_collectors.append(matchnode)
+
+            if not any_matched_in_initial_part:
+                report_arg = "::".join((str(argpath), *names))
+                self._notfound.append((report_arg, notfound_collectors))
 
             self.trace.root.indent -= 1
 
@@ -863,11 +931,17 @@ class Session(nodes.FSCollector):
             yield node
         else:
             assert isinstance(node, nodes.Collector)
-            rep = collect_one_node(node)
+            keepduplicates = self.config.getoption("keepduplicates")
+            # For backward compat, dedup only applies to files.
+            handle_dupes = not (keepduplicates and isinstance(node, nodes.File))
+            rep, duplicate = self._collect_one_node(node, handle_dupes)
+            if duplicate and not keepduplicates:
+                return
             if rep.passed:
                 for subnode in rep.result:
                     yield from self.genitems(subnode)
-            node.ihook.pytest_collectreport(report=rep)
+            if not duplicate:
+                node.ihook.pytest_collectreport(report=rep)
 
 
 def search_pypath(module_name: str) -> str:

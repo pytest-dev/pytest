@@ -304,9 +304,9 @@ class TestReportSerialization:
             report = reports[1]
         else:
             assert report_class is CollectReport
-            # two collection reports: session and test file
+            # three collection reports: session, test file, directory
             reports = reprec.getreports("pytest_collectreport")
-            assert len(reports) == 2
+            assert len(reports) == 3
             report = reports[1]
 
         def check_longrepr(longrepr: ExceptionChainRepr) -> None:
@@ -471,7 +471,7 @@ class TestHooks:
         )
         reprec = pytester.inline_run()
         reports = reprec.getreports("pytest_collectreport")
-        assert len(reports) == 2
+        assert len(reports) == 3
         for rep in reports:
             data = pytestconfig.hook.pytest_report_to_serializable(
                 config=pytestconfig, report=rep

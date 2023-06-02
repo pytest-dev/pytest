@@ -682,6 +682,8 @@ Collection hooks
 .. autofunction:: pytest_collection
 .. hook:: pytest_ignore_collect
 .. autofunction:: pytest_ignore_collect
+.. hook:: pytest_collect_directory
+.. autofunction:: pytest_collect_directory
 .. hook:: pytest_collect_file
 .. autofunction:: pytest_collect_file
 .. hook:: pytest_pycollect_makemodule
@@ -919,6 +921,18 @@ Config
 ~~~~~~
 
 .. autoclass:: pytest.Config()
+    :members:
+
+Dir
+~~~
+
+.. autoclass:: pytest.Dir()
+    :members:
+
+Directory
+~~~~~~~~~
+
+.. autoclass:: pytest.Directory()
     :members:
 
 ExceptionInfo

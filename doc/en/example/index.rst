@@ -32,3 +32,4 @@ The following examples aim at various use cases you might encounter.
    special
    pythoncollection
    nonpython
+   customdirectory

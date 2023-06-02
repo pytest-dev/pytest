@@ -1574,12 +1574,12 @@ def test_assertrepr_loaded_per_dir(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*def test_base():*",
-            "*E*assert 1 == 2*",
             "*def test_a():*",
             "*E*assert summary a*",
             "*def test_b():*",
             "*E*assert summary b*",
+            "*def test_base():*",
+            "*E*assert 1 == 2*",
         ]
     )
 
@@ -1744,9 +1744,9 @@ def test_recursion_source_decode(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("--collect-only")
     result.stdout.fnmatch_lines(
-        """
-        <Module*>
-    """
+        [
+            "  <Module*>",
+        ]
     )
 
 
