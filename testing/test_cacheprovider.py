@@ -1085,6 +1085,28 @@ class TestLastFailed:
         result = pytester.runpytest("--lf")
         result.assert_outcomes(failed=3)
 
+    def test_non_python_file_skipped(
+        self,
+        pytester: Pytester,
+        dummy_yaml_custom_test: None,
+    ) -> None:
+        pytester.makepyfile(
+            **{
+                "test_bad.py": """def test_bad(): assert False""",
+            },
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["collected 2 items", "* 1 failed, 1 passed in *"])
+
+        result = pytester.runpytest("--lf")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 1 item",
+                "run-last-failure: rerun previous 1 failure (skipped 1 file)",
+                "* 1 failed in *",
+            ]
+        )
+
 
 class TestNewFirst:
     def test_newfirst_usecase(self, pytester: Pytester) -> None:

@@ -105,7 +105,7 @@ def tw_mock():
 
 
 @pytest.fixture
-def dummy_yaml_custom_test(pytester: Pytester):
+def dummy_yaml_custom_test(pytester: Pytester) -> None:
     """Writes a conftest file that collects and executes a dummy yaml test.
 
     Taken from the docs, but stripped down to the bare minimum, useful for
