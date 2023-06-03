@@ -226,10 +226,18 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
+            # Use stable sort to priorize last failed.
+            def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
+                # Package.path is the __init__.py file, we need the directory.
+                if isinstance(node, Package):
+                    path = node.path.parent
+                else:
+                    path = node.path
+                return path in lf_paths
+
             res.result = sorted(
                 res.result,
-                # use stable sort to priorize last failed
-                key=lambda x: x.path in lf_paths,
+                key=sort_key,
                 reverse=True,
             )
             return
@@ -272,9 +280,8 @@ class LFPluginCollSkipfiles:
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Optional[CollectReport]:
-        # Packages are Modules, but _last_failed_paths only contains
-        # test-bearing paths and doesn't try to include the paths of their
-        # packages, so don't filter them.
+        # Packages are Modules, but we only want to skip test-bearing Modules,
+        # so don't filter Packages.
         if isinstance(collector, Module) and not isinstance(collector, Package):
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
@@ -305,9 +312,14 @@ class LFPlugin:
             )
 
     def get_last_failed_paths(self) -> Set[Path]:
-        """Return a set with all Paths()s of the previously failed nodeids."""
+        """Return a set with all Paths of the previously failed nodeids and
+        their parents."""
         rootpath = self.config.rootpath
-        result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
+        result = set()
+        for nodeid in self.lastfailed:
+            path = rootpath / nodeid.split("::")[0]
+            result.add(path)
+            result.update(path.parents)
         return {x for x in result if x.exists()}
 
     def pytest_report_collectionfinish(self) -> Optional[str]:
