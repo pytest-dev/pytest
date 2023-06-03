@@ -27,7 +27,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
-from _pytest.python import Module
+from _pytest.nodes import File
 from _pytest.python import Package
 from _pytest.reports import TestReport
 
@@ -242,7 +242,7 @@ class LFPluginCollWrapper:
             )
             return
 
-        elif isinstance(collector, Module):
+        elif isinstance(collector, File):
             if collector.path in self.lfplugin._last_failed_paths:
                 out = yield
                 res = out.get_result()
@@ -280,9 +280,9 @@ class LFPluginCollSkipfiles:
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Optional[CollectReport]:
-        # Packages are Modules, but we only want to skip test-bearing Modules,
+        # Packages are Files, but we only want to skip test-bearing Files,
         # so don't filter Packages.
-        if isinstance(collector, Module) and not isinstance(collector, Package):
+        if isinstance(collector, File) and not isinstance(collector, Package):
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 
