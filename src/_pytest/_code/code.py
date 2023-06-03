@@ -708,6 +708,8 @@ class ExceptionInfo(Generic[E]):
         """
         __tracebackhide__ = True
         value = str(self.value)
+        if not value:
+            value = repr(self.value)
         msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
