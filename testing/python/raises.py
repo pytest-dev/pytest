@@ -173,7 +173,7 @@ class TestRaises:
         if method == "function":
             pytest.raises(ValueError, t)
         elif method == "function_match":
-            pytest.raises(ValueError, t).match(r"ValueError\(\)")
+            pytest.raises(ValueError, t).match("^$")
         else:
             with pytest.raises(ValueError):
                 t()
