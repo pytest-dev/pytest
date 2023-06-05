@@ -400,6 +400,12 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[boo
     allow_in_venv = config.getoption("collect_in_virtualenv")
     if not allow_in_venv and _in_venv(collection_path):
         return True
+
+    if collection_path.is_dir():
+        norecursepatterns = config.getini("norecursedirs")
+        if any(fnmatch_ex(pat, collection_path) for pat in norecursepatterns):
+            return True
+
     return None
 
 
@@ -562,9 +568,6 @@ class Session(nodes.FSCollector):
         fspath = Path(direntry.path)
         ihook = self.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-            return False
-        norecursepatterns = self.config.getini("norecursedirs")
-        if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
             return False
         return True
 
