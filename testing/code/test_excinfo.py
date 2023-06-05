@@ -67,20 +67,6 @@ def test_excinfo_from_exception_missing_traceback_assertion() -> None:
         _pytest._code.ExceptionInfo.from_exception(ValueError())
 
 
-class ExceptionHavingRepr(Exception):
-    def __init__(self, status_code: int):
-        self.status_code = status_code
-
-    def __repr__(self) -> str:
-        return f"status_code={self.status_code}"
-
-
-def test_excinfo_from_keywords_exception() -> None:
-    with pytest.raises(ExceptionHavingRepr, match=r"404"):
-        kwargs_exception = ExceptionHavingRepr(status_code=404)
-        raise kwargs_exception
-
-
 def test_excinfo_getstatement():
     def g():
         raise ValueError
@@ -448,7 +434,7 @@ def test_match_raises_error(pytester: Pytester) -> None:
     match = [
         r"E .* AssertionError: Regex pattern did not match.",
         r"E .* Regex: '\[123\]\+'",
-        r"E .* Input: 'division by zero'",
+        r"E .* str\(exception\): 'division by zero'",
     ]
     result.stdout.re_match_lines(match)
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
