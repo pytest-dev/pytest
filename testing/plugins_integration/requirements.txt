@@ -12,4 +12,4 @@ pytest-sugar==0.9.7
 pytest-trio==0.7.0
 pytest-twisted==1.14.0
 twisted==22.8.0
-pytest-xvfb==2.0.0
+pytest-xvfb==3.0.0
