@@ -4,4 +4,4 @@ If after updating to this version you see that your `norecursedir` setting is no
 it means that a conftest or a plugin you use has a bad `pytest_ignore_collect` implementation.
 Most likely, your hook returns `False` for paths it does not want to ignore,
 which ends the processing and doesn't allow other plugins, including pytest itself, to ignore the path.
-The fix is simple - return `None` instead of `False` for paths your hook doesn't want to ignore.
+The fix is to return `None` instead of `False` for paths your hook doesn't want to ignore.
