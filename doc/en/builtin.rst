@@ -207,7 +207,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
 
-    monkeypatch -- .../_pytest/monkeypatch.py:29
+    monkeypatch -- .../_pytest/monkeypatch.py:30
         A convenient fixture for monkey-patching.
 
         The fixture provides these methods to modify objects, dictionaries, or

@@ -1,1 +1,0 @@
-Fixed bug in assertion rewriting where a variable assigned with the walrus operator could not be used later in a function call.
