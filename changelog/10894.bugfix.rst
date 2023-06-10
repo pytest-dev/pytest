@@ -1,1 +1,0 @@
-Support for Python 3.12 (beta at the time of writing).
