@@ -897,25 +897,29 @@ class TestConftestCustomization:
     def test_issue2369_collect_module_fileext(self, pytester: Pytester) -> None:
         """Ensure we can collect files with weird file extensions as Python
         modules (#2369)"""
-        # We'll implement a little finder and loader to import files containing
+        # Implement a little meta path finder to import files containing
         # Python source code whose file extension is ".narf".
         pytester.makeconftest(
             """
-            import sys, os, imp
+            import sys
+            import os.path
+            from importlib.util import spec_from_loader
+            from importlib.machinery import SourceFileLoader
             from _pytest.python import Module
 
-            class Loader(object):
-                def load_module(self, name):
-                    return imp.load_source(name, name + ".narf")
-            class Finder(object):
-                def find_module(self, name, path=None):
-                    if os.path.exists(name + ".narf"):
-                        return Loader()
-            sys.meta_path.append(Finder())
+            class MetaPathFinder:
+                def find_spec(self, fullname, path, target=None):
+                    if os.path.exists(fullname + ".narf"):
+                        return spec_from_loader(
+                            fullname,
+                            SourceFileLoader(fullname, fullname + ".narf"),
+                        )
+            sys.meta_path.append(MetaPathFinder())
 
             def pytest_collect_file(file_path, parent):
                 if file_path.suffix == ".narf":
-                    return Module.from_parent(path=file_path, parent=parent)"""
+                    return Module.from_parent(path=file_path, parent=parent)
+            """
         )
         pytester.makefile(
             ".narf",
