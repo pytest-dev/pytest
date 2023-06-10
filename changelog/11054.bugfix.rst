@@ -1,1 +1,0 @@
-Fixed ``--last-failed``'s "(skipped N files)" functionality for files inside of packages (directories with `__init__.py` files).

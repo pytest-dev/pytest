@@ -1,1 +1,0 @@
-Fix bug where very long option names could cause pytest to break with ``OSError: [Errno 36] File name too long`` on some systems.
