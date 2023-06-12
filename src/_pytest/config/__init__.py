@@ -1341,12 +1341,14 @@ class Config:
             else:
                 raise
 
-    @hookimpl(hookwrapper=True)
-    def pytest_collection(self) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True)
+    def pytest_collection(self) -> Generator[None, object, object]:
         # Validate invalid ini keys after collection is done so we take in account
         # options added by late-loading conftest files.
-        yield
-        self._validate_config_options()
+        try:
+            return (yield)
+        finally:
+            self._validate_config_options()
 
     def _checkversion(self) -> None:
         import pytest
@@ -1448,7 +1450,7 @@ class Config:
         """Issue and handle a warning during the "configure" stage.
 
         During ``pytest_configure`` we can't capture warnings using the ``catch_warnings_for_item``
-        function because it is not possible to have hookwrappers around ``pytest_configure``.
+        function because it is not possible to have hook wrappers around ``pytest_configure``.
 
         This function is mainly intended for plugins that need to issue warnings during
         ``pytest_configure`` (or similar stages).

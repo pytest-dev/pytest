@@ -334,12 +334,11 @@ class TestPrunetraceback:
         pytester.makeconftest(
             """
             import pytest
-            @pytest.hookimpl(hookwrapper=True)
+            @pytest.hookimpl(wrapper=True)
             def pytest_make_collect_report():
-                outcome = yield
-                rep = outcome.get_result()
+                rep = yield
                 rep.headerlines += ["header1"]
-                outcome.force_result(rep)
+                return rep
         """
         )
         result = pytester.runpytest(p)

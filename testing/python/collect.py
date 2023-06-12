@@ -827,11 +827,11 @@ class TestConftestCustomization:
             textwrap.dedent(
                 """\
                 import pytest
-                @pytest.hookimpl(hookwrapper=True)
+                @pytest.hookimpl(wrapper=True)
                 def pytest_pycollect_makemodule():
-                    outcome = yield
-                    mod = outcome.get_result()
+                    mod = yield
                     mod.obj.hello = "world"
+                    return mod
                 """
             ),
             encoding="utf-8",
@@ -855,14 +855,13 @@ class TestConftestCustomization:
             textwrap.dedent(
                 """\
                 import pytest
-                @pytest.hookimpl(hookwrapper=True)
+                @pytest.hookimpl(wrapper=True)
                 def pytest_pycollect_makeitem():
-                    outcome = yield
-                    if outcome.excinfo is None:
-                        result = outcome.get_result()
-                        if result:
-                            for func in result:
-                                func._some123 = "world"
+                    result = yield
+                    if result:
+                        for func in result:
+                            func._some123 = "world"
+                    return result
                 """
             ),
             encoding="utf-8",

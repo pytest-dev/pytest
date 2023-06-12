@@ -15,7 +15,6 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import cast
 from typing import ClassVar
 from typing import Dict
 from typing import final
@@ -849,12 +848,11 @@ class TerminalReporter:
                         for line in doc.splitlines():
                             self._tw.line("{}{}".format(indent + "  ", line))
 
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_sessionfinish(
         self, session: "Session", exitstatus: Union[int, ExitCode]
-    ):
-        outcome = yield
-        outcome.get_result()
+    ) -> Generator[None, None, None]:
+        result = yield
         self._tw.line("")
         summary_exit_codes = (
             ExitCode.OK,
@@ -875,17 +873,20 @@ class TerminalReporter:
         elif session.shouldstop:
             self.write_sep("!", str(session.shouldstop), red=True)
         self.summary_stats()
+        return result
 
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_terminal_summary(self) -> Generator[None, None, None]:
         self.summary_errors()
         self.summary_failures()
         self.summary_warnings()
         self.summary_passes()
-        yield
-        self.short_test_summary()
-        # Display any extra warnings from teardown here (if any).
-        self.summary_warnings()
+        try:
+            return (yield)
+        finally:
+            self.short_test_summary()
+            # Display any extra warnings from teardown here (if any).
+            self.summary_warnings()
 
     def pytest_keyboard_interrupt(self, excinfo: ExceptionInfo[BaseException]) -> None:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
@@ -1466,7 +1467,7 @@ def _get_raw_skip_reason(report: TestReport) -> str:
     The string is just the part given by the user.
     """
     if hasattr(report, "wasxfail"):
-        reason = cast(str, report.wasxfail)
+        reason = report.wasxfail
         if reason.startswith("reason: "):
             reason = reason[len("reason: ") :]
         return reason

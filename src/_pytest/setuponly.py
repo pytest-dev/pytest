@@ -28,24 +28,26 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(wrapper=True)
 def pytest_fixture_setup(
     fixturedef: FixtureDef[object], request: SubRequest
-) -> Generator[None, None, None]:
-    yield
-    if request.config.option.setupshow:
-        if hasattr(request, "param"):
-            # Save the fixture parameter so ._show_fixture_action() can
-            # display it now and during the teardown (in .finish()).
-            if fixturedef.ids:
-                if callable(fixturedef.ids):
-                    param = fixturedef.ids(request.param)
+) -> Generator[None, object, object]:
+    try:
+        return (yield)
+    finally:
+        if request.config.option.setupshow:
+            if hasattr(request, "param"):
+                # Save the fixture parameter so ._show_fixture_action() can
+                # display it now and during the teardown (in .finish()).
+                if fixturedef.ids:
+                    if callable(fixturedef.ids):
+                        param = fixturedef.ids(request.param)
+                    else:
+                        param = fixturedef.ids[request.param_index]
                 else:
-                    param = fixturedef.ids[request.param_index]
-            else:
-                param = request.param
-            fixturedef.cached_param = param  # type: ignore[attr-defined]
-        _show_fixture_action(fixturedef, "SETUP")
+                    param = request.param
+                fixturedef.cached_param = param  # type: ignore[attr-defined]
+            _show_fixture_action(fixturedef, "SETUP")
 
 
 def pytest_fixture_post_finalizer(fixturedef: FixtureDef[object]) -> None:

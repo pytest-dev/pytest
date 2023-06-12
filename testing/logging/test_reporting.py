@@ -1040,13 +1040,13 @@ def test_log_set_path(pytester: Pytester) -> None:
         """
             import os
             import pytest
-            @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+            @pytest.hookimpl(wrapper=True, tryfirst=True)
             def pytest_runtest_setup(item):
                 config = item.config
                 logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
                 report_file = os.path.join({}, item._request.node.name)
                 logging_plugin.set_log_path(report_file)
-                yield
+                return (yield)
         """.format(
             repr(report_dir_base)
         )

@@ -36,6 +36,7 @@ from _pytest.fixtures import SubRequest
 from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
+from _pytest.reports import CollectReport
 
 _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
@@ -130,8 +131,8 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
     sys.stderr = _reopen_stdio(sys.stderr, "wb")
 
 
-@hookimpl(hookwrapper=True)
-def pytest_load_initial_conftests(early_config: Config):
+@hookimpl(wrapper=True)
+def pytest_load_initial_conftests(early_config: Config) -> Generator[None, None, None]:
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
         _windowsconsoleio_workaround(sys.stdout)
@@ -145,12 +146,16 @@ def pytest_load_initial_conftests(early_config: Config):
 
     # Finally trigger conftest loading but while capturing (issue #93).
     capman.start_global_capturing()
-    outcome = yield
-    capman.suspend_global_capture()
-    if outcome.excinfo is not None:
+    try:
+        try:
+            yield
+        finally:
+            capman.suspend_global_capture()
+    except BaseException:
         out, err = capman.read_global_capture()
         sys.stdout.write(out)
         sys.stderr.write(err)
+        raise
 
 
 # IO Helpers.
@@ -841,41 +846,45 @@ class CaptureManager:
             self.deactivate_fixture()
             self.suspend_global_capture(in_=False)
 
-        out, err = self.read_global_capture()
-        item.add_report_section(when, "stdout", out)
-        item.add_report_section(when, "stderr", err)
+            out, err = self.read_global_capture()
+            item.add_report_section(when, "stdout", out)
+            item.add_report_section(when, "stderr", err)
 
     # Hooks
 
-    @hookimpl(hookwrapper=True)
-    def pytest_make_collect_report(self, collector: Collector):
+    @hookimpl(wrapper=True)
+    def pytest_make_collect_report(
+        self, collector: Collector
+    ) -> Generator[None, CollectReport, CollectReport]:
         if isinstance(collector, File):
             self.resume_global_capture()
-            outcome = yield
-            self.suspend_global_capture()
+            try:
+                rep = yield
+            finally:
+                self.suspend_global_capture()
             out, err = self.read_global_capture()
-            rep = outcome.get_result()
             if out:
                 rep.sections.append(("Captured stdout", out))
             if err:
                 rep.sections.append(("Captured stderr", err))
         else:
-            yield
+            rep = yield
+        return rep
 
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_runtest_setup(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("setup", item):
-            yield
+            return (yield)
 
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_runtest_call(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("call", item):
-            yield
+            return (yield)
 
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_runtest_teardown(self, item: Item) -> Generator[None, None, None]:
         with self.item_capture("teardown", item):
-            yield
+            return (yield)
 
     @hookimpl(tryfirst=True)
     def pytest_keyboard_interrupt(self) -> None:

@@ -28,7 +28,7 @@ from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Item
-from _pytest.reports import CollectReport
+from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 
 tmppath_result_key = StashKey[Dict[str, bool]]()
@@ -309,10 +309,12 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
         cleanup_dead_symlinks(basetemp)
 
 
-@hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item: Item, call):
-    outcome = yield
-    result: CollectReport = outcome.get_result()
-
+@hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(
+    item: Item, call
+) -> Generator[None, TestReport, TestReport]:
+    rep = yield
+    assert rep.when is not None
     empty: Dict[str, bool] = {}
-    item.stash.setdefault(tmppath_result_key, empty)[result.when] = result.passed
+    item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
+    return rep

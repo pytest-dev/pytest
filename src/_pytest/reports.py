@@ -249,6 +249,9 @@ class TestReport(BaseReport):
     """
 
     __test__ = False
+    # Defined by skipping plugin.
+    # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
+    wasxfail: str
 
     def __init__(
         self,

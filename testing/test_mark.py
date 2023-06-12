@@ -806,12 +806,12 @@ class TestKeywordSelection:
         pytester.makepyfile(
             conftest="""
             import pytest
-            @pytest.hookimpl(hookwrapper=True)
+            @pytest.hookimpl(wrapper=True)
             def pytest_pycollect_makeitem(name):
-                outcome = yield
+                item = yield
                 if name == "TestClass":
-                    item = outcome.get_result()
                     item.extra_keyword_matches.add("xxx")
+                return item
         """
         )
         reprec = pytester.inline_run(p.parent, "-s", "-k", keyword)
