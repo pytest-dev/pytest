@@ -691,7 +691,7 @@ Here is an example for making a ``db`` fixture available in a directory:
         pass
 
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="package")
     def db():
         return DB()
 

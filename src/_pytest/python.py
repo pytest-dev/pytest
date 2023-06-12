@@ -706,9 +706,6 @@ class Package(Module):
         ihook = self.session.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
             return False
-        norecursepatterns = self.config.getini("norecursedirs")
-        if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
-            return False
         return True
 
     def _collectfile(

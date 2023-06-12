@@ -1,5 +1,5 @@
 anyio[curio,trio]==3.7.0
-django==4.2.1
+django==4.2.2
 pytest-asyncio==0.21.0
 pytest-bdd==6.1.1
 pytest-cov==4.1.0
@@ -12,4 +12,4 @@ pytest-sugar==0.9.7
 pytest-trio==0.7.0
 pytest-twisted==1.14.0
 twisted==22.8.0
-pytest-xvfb==2.0.0
+pytest-xvfb==3.0.0
