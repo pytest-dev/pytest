@@ -926,6 +926,12 @@ Parser
 .. autoclass:: pytest.Parser()
     :members:
 
+Package
+~~~~~~~
+
+.. autoclass:: pytest.Package()
+    :members:
+
 OptionGroup
 ~~~~~~~~~~~
 

@@ -659,6 +659,9 @@ class Module(nodes.File, PyCollector):
 
 
 class Package(Module):
+    """Collector for files and directories in a Python packages -- directories
+    with an `__init__.py` file."""
+
     def __init__(
         self,
         fspath: Optional[LEGACY_PATH],
