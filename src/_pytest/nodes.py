@@ -157,10 +157,11 @@ class NodeMeta(type):
 
 
 class Node(metaclass=NodeMeta):
-    """Base class for Collector and Item, the components of the test
-    collection tree.
+    r"""Base class of :class:`Collector` and :class:`Item`, the components of
+    the test collection tree.
 
-    Collector subclasses have children; Items are leaf nodes.
+    ``Collector``\'s are the internal nodes of the tree, and ``Item``\'s are the
+    leaf nodes.
     """
 
     # Implemented in the legacypath plugin.
@@ -525,15 +526,17 @@ def get_fslocation_from_item(node: "Node") -> Tuple[Union[str, Path], Optional[i
 
 
 class Collector(Node):
-    """Collector instances create children through collect() and thus
-    iteratively build a tree."""
+    """Base class of all collectors.
+
+    Collector create children through `collect()` and thus iteratively build
+    the collection tree.
+    """
 
     class CollectError(Exception):
         """An error during collection, contains a custom message."""
 
     def collect(self) -> Iterable[Union["Item", "Collector"]]:
-        """Return a list of children (items and collectors) for this
-        collection node."""
+        """Collect children (items and collectors) for this collector."""
         raise NotImplementedError("abstract")
 
     # TODO: This omits the style= parameter which breaks Liskov Substitution.
@@ -577,6 +580,8 @@ def _check_initialpaths_for_relpath(session: "Session", path: Path) -> Optional[
 
 
 class FSCollector(Collector):
+    """Base class for filesystem collectors."""
+
     def __init__(
         self,
         fspath: Optional[LEGACY_PATH] = None,
@@ -660,7 +665,7 @@ class File(FSCollector):
 
 
 class Item(Node):
-    """A basic test invocation item.
+    """Base class of all test invocation items.
 
     Note that for a single function there might be multiple test invocation items.
     """
