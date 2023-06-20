@@ -1,4 +1,5 @@
 import argparse
+import locale
 import os
 import shlex
 import subprocess
@@ -290,12 +291,17 @@ class TestParser:
 
 def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     try:
+        encoding = locale.getencoding()  # New in Python 3.11, ignores utf-8 mode
+    except AttributeError:
+        encoding = locale.getpreferredencoding(False)
+    try:
         bash_version = subprocess.run(
             ["bash", "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
             text=True,
+            encoding=encoding,
         ).stdout
     except (OSError, subprocess.CalledProcessError):
         pytest.skip("bash is not available")
