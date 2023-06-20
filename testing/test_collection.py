@@ -140,7 +140,7 @@ class TestCollectFS:
         ensure_file(tmp_path / ".bzr" / "test_notfound.py")
         ensure_file(tmp_path / "normal" / "test_found.py")
         for x in tmp_path.rglob("test_*.py"):
-            x.write_text("def test_hello(): pass", "utf-8")
+            x.write_text("def test_hello(): pass", encoding="utf-8")
 
         result = pytester.runpytest("--collect-only")
         s = result.stdout.str()
@@ -162,7 +162,7 @@ class TestCollectFS:
         bindir = "Scripts" if sys.platform.startswith("win") else "bin"
         ensure_file(pytester.path / "virtual" / bindir / fname)
         testfile = ensure_file(pytester.path / "virtual" / "test_invenv.py")
-        testfile.write_text("def test_hello(): pass")
+        testfile.write_text("def test_hello(): pass", encoding="utf-8")
 
         # by default, ignore tests inside a virtualenv
         result = pytester.runpytest()
@@ -192,7 +192,7 @@ class TestCollectFS:
         # norecursedirs takes priority
         ensure_file(pytester.path / ".virtual" / bindir / fname)
         testfile = ensure_file(pytester.path / ".virtual" / "test_invenv.py")
-        testfile.write_text("def test_hello(): pass")
+        testfile.write_text("def test_hello(): pass", encoding="utf-8")
         result = pytester.runpytest("--collect-in-virtualenv")
         result.stdout.no_fnmatch_line("*test_invenv*")
         # ...unless the virtualenv is explicitly given on the CLI
@@ -231,10 +231,14 @@ class TestCollectFS:
         )
         tmp_path = pytester.path
         ensure_file(tmp_path / "mydir" / "test_hello.py").write_text(
-            "def test_1(): pass"
+            "def test_1(): pass", encoding="utf-8"
         )
-        ensure_file(tmp_path / "xyz123" / "test_2.py").write_text("def test_2(): 0/0")
-        ensure_file(tmp_path / "xy" / "test_ok.py").write_text("def test_3(): pass")
+        ensure_file(tmp_path / "xyz123" / "test_2.py").write_text(
+            "def test_2(): 0/0", encoding="utf-8"
+        )
+        ensure_file(tmp_path / "xy" / "test_ok.py").write_text(
+            "def test_3(): pass", encoding="utf-8"
+        )
         rec = pytester.inline_run()
         rec.assertoutcome(passed=1)
         rec = pytester.inline_run("xyz123/test_2.py")
@@ -248,12 +252,14 @@ class TestCollectFS:
         """
         )
         tmp_path = pytester.path
-        ensure_file(tmp_path / "a" / "test_1.py").write_text("def test_a(): pass")
+        ensure_file(tmp_path / "a" / "test_1.py").write_text(
+            "def test_a(): pass", encoding="utf-8"
+        )
         ensure_file(tmp_path / "b" / "tests" / "test_2.py").write_text(
-            "def test_b(): pass"
+            "def test_b(): pass", encoding="utf-8"
         )
         ensure_file(tmp_path / "c" / "tests" / "test_3.py").write_text(
-            "def test_c(): pass"
+            "def test_c(): pass", encoding="utf-8"
         )
 
         # executing from rootdir only tests from `testpaths` directories
@@ -349,8 +355,8 @@ class TestCustomConftests:
         """
         )
         sub = pytester.mkdir("xy123")
-        ensure_file(sub / "test_hello.py").write_text("syntax error")
-        sub.joinpath("conftest.py").write_text("syntax error")
+        ensure_file(sub / "test_hello.py").write_text("syntax error", encoding="utf-8")
+        sub.joinpath("conftest.py").write_text("syntax error", encoding="utf-8")
         pytester.makepyfile("def test_hello(): pass")
         pytester.makepyfile(test_one="syntax error")
         result = pytester.runpytest("--fulltrace")
@@ -1060,13 +1066,18 @@ def test_fixture_scope_sibling_conftests(pytester: Pytester) -> None:
             def fix():
                 return 1
             """
-        )
+        ),
+        encoding="utf-8",
     )
-    foo_path.joinpath("test_foo.py").write_text("def test_foo(fix): assert fix == 1")
+    foo_path.joinpath("test_foo.py").write_text(
+        "def test_foo(fix): assert fix == 1", encoding="utf-8"
+    )
 
     # Tests in `food/` should not see the conftest fixture from `foo/`
     food_path = pytester.mkpydir("food")
-    food_path.joinpath("test_food.py").write_text("def test_food(fix): assert fix == 1")
+    food_path.joinpath("test_food.py").write_text(
+        "def test_food(fix): assert fix == 1", encoding="utf-8"
+    )
 
     res = pytester.runpytest()
     assert res.ret == 1
@@ -1197,7 +1208,8 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
             os.chdir(%r)
             """
             % (str(subdir),)
-        )
+        ),
+        encoding="utf-8",
     )
     pytester.makepyfile(
         """
@@ -1227,8 +1239,12 @@ def test_collect_pyargs_with_testpaths(
 ) -> None:
     testmod = pytester.mkdir("testmod")
     # NOTE: __init__.py is not collected since it does not match python_files.
-    testmod.joinpath("__init__.py").write_text("def test_func(): pass")
-    testmod.joinpath("test_file.py").write_text("def test_func(): pass")
+    testmod.joinpath("__init__.py").write_text(
+        "def test_func(): pass", encoding="utf-8"
+    )
+    testmod.joinpath("test_file.py").write_text(
+        "def test_func(): pass", encoding="utf-8"
+    )
 
     root = pytester.mkdir("root")
     root.joinpath("pytest.ini").write_text(
@@ -1238,7 +1254,8 @@ def test_collect_pyargs_with_testpaths(
         addopts = --pyargs
         testpaths = testmod
     """
-        )
+        ),
+        encoding="utf-8",
     )
     monkeypatch.setenv("PYTHONPATH", str(pytester.path), prepend=os.pathsep)
     with monkeypatch.context() as mp:
@@ -1323,6 +1340,7 @@ def test_collect_symlink_out_of_tree(pytester: Pytester) -> None:
             assert request.node.nodeid == "test_real.py::test_nodeid"
         """
         ),
+        encoding="utf-8",
     )
 
     out_of_tree = pytester.mkdir("out_of_tree")

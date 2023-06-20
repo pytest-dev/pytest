@@ -100,13 +100,13 @@ class TestImportPath:
     def setuptestfs(self, path: Path) -> None:
         # print "setting up test fs for", repr(path)
         samplefile = path / "samplefile"
-        samplefile.write_text("samplefile\n")
+        samplefile.write_text("samplefile\n", encoding="utf-8")
 
         execfile = path / "execfile"
-        execfile.write_text("x=42")
+        execfile.write_text("x=42", encoding="utf-8")
 
         execfilepy = path / "execfile.py"
-        execfilepy.write_text("x=42")
+        execfilepy.write_text("x=42", encoding="utf-8")
 
         d = {1: 2, "hello": "world", "answer": 42}
         path.joinpath("samplepickle").write_bytes(pickle.dumps(d, 1))

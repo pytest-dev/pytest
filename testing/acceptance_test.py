@@ -267,7 +267,7 @@ class TestGeneralUsage:
     def test_issue109_sibling_conftests_not_loaded(self, pytester: Pytester) -> None:
         sub1 = pytester.mkdir("sub1")
         sub2 = pytester.mkdir("sub2")
-        sub1.joinpath("conftest.py").write_text("assert 0")
+        sub1.joinpath("conftest.py").write_text("assert 0", encoding="utf-8")
         result = pytester.runpytest(sub2)
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         sub2.joinpath("__init__.py").touch()
@@ -467,7 +467,7 @@ class TestGeneralUsage:
         assert "invalid" in str(excinfo.value)
 
         p = pytester.path.joinpath("test_test_plugins_given_as_strings.py")
-        p.write_text("def test_foo(): pass")
+        p.write_text("def test_foo(): pass", encoding="utf-8")
         mod = types.ModuleType("myplugin")
         monkeypatch.setitem(sys.modules, "myplugin", mod)
         assert pytest.main(args=[str(pytester.path)], plugins=["myplugin"]) == 0
@@ -587,7 +587,7 @@ class TestInvocationVariants:
     def test_pyargs_importerror(self, pytester: Pytester, monkeypatch) -> None:
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", False)
         path = pytester.mkpydir("tpkg")
-        path.joinpath("test_hello.py").write_text("raise ImportError")
+        path.joinpath("test_hello.py").write_text("raise ImportError", encoding="utf-8")
 
         result = pytester.runpytest("--pyargs", "tpkg.test_hello", syspathinsert=True)
         assert result.ret != 0
@@ -597,10 +597,10 @@ class TestInvocationVariants:
     def test_pyargs_only_imported_once(self, pytester: Pytester) -> None:
         pkg = pytester.mkpydir("foo")
         pkg.joinpath("test_foo.py").write_text(
-            "print('hello from test_foo')\ndef test(): pass"
+            "print('hello from test_foo')\ndef test(): pass", encoding="utf-8"
         )
         pkg.joinpath("conftest.py").write_text(
-            "def pytest_configure(config): print('configuring')"
+            "def pytest_configure(config): print('configuring')", encoding="utf-8"
         )
 
         result = pytester.runpytest(
