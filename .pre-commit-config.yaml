@@ -5,7 +5,7 @@ repos:
     -   id: black
         args: [--safe, --quiet]
 -   repo: https://github.com/asottile/blacken-docs
-    rev: 1.13.0
+    rev: 1.14.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==23.1.0]
@@ -37,12 +37,12 @@ repos:
           - flake8-typing-imports==1.12.0
           - flake8-docstrings==1.5.0
 -   repo: https://github.com/asottile/reorder-python-imports
-    rev: v3.9.0
+    rev: v3.10.0
     hooks:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py37-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.6.0
+    rev: v3.7.0
     hooks:
     -   id: pyupgrade
         args: [--py37-plus]
