@@ -638,7 +638,7 @@ def test_search_conftest_up_to_inifile(
     root = pytester.path
     src = root.joinpath("src")
     src.mkdir()
-    src.joinpath("pytest.ini").write_text("[pytest]")
+    src.joinpath("pytest.ini").write_text("[pytest]", encoding="utf-8")
     src.joinpath("conftest.py").write_text(
         textwrap.dedent(
             """\

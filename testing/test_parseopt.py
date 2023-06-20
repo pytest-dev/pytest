@@ -311,7 +311,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
 
     script = str(pytester.path.joinpath("test_argcomplete"))
 
-    with open(str(script), "w") as fp:
+    with open(str(script), "w", encoding="utf-8") as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash

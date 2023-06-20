@@ -461,5 +461,5 @@ def test_syspath_prepend_with_namespace_packages(
     # Should invalidate caches via importlib.invalidate_caches.
     modules_tmpdir = pytester.mkdir("modules_tmpdir")
     monkeypatch.syspath_prepend(str(modules_tmpdir))
-    modules_tmpdir.joinpath("main_app.py").write_text("app = True")
+    modules_tmpdir.joinpath("main_app.py").write_text("app = True", encoding="utf-8")
     from main_app import app  # noqa: F401

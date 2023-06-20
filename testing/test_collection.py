@@ -1273,7 +1273,8 @@ def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
             def pytest_sessionstart(session):
                 raise Exception("pytest_sessionstart hook successfully run")
             """
-        )
+        ),
+        encoding="utf-8",
     )
     pytester.makeini(
         """
@@ -1369,12 +1370,16 @@ def test_collect_symlink_dir(pytester: Pytester) -> None:
 def test_collectignore_via_conftest(pytester: Pytester) -> None:
     """collect_ignore in parent conftest skips importing child (issue #4592)."""
     tests = pytester.mkpydir("tests")
-    tests.joinpath("conftest.py").write_text("collect_ignore = ['ignore_me']")
+    tests.joinpath("conftest.py").write_text(
+        "collect_ignore = ['ignore_me']", encoding="utf-8"
+    )
 
     ignore_me = tests.joinpath("ignore_me")
     ignore_me.mkdir()
     ignore_me.joinpath("__init__.py").touch()
-    ignore_me.joinpath("conftest.py").write_text("assert 0, 'should_not_be_called'")
+    ignore_me.joinpath("conftest.py").write_text(
+        "assert 0, 'should_not_be_called'", encoding="utf-8"
+    )
 
     result = pytester.runpytest()
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
@@ -1383,9 +1388,9 @@ def test_collectignore_via_conftest(pytester: Pytester) -> None:
 def test_collect_pkg_init_and_file_in_args(pytester: Pytester) -> None:
     subdir = pytester.mkdir("sub")
     init = subdir.joinpath("__init__.py")
-    init.write_text("def test_init(): pass")
+    init.write_text("def test_init(): pass", encoding="utf-8")
     p = subdir.joinpath("test_file.py")
-    p.write_text("def test_file(): pass")
+    p.write_text("def test_file(): pass", encoding="utf-8")
 
     # NOTE: without "-o python_files=*.py" this collects test_file.py twice.
     # This changed/broke with "Add package scoped fixtures #2283" (2b1410895)
@@ -1412,7 +1417,7 @@ def test_collect_pkg_init_and_file_in_args(pytester: Pytester) -> None:
 def test_collect_pkg_init_only(pytester: Pytester) -> None:
     subdir = pytester.mkdir("sub")
     init = subdir.joinpath("__init__.py")
-    init.write_text("def test_init(): pass")
+    init.write_text("def test_init(): pass", encoding="utf-8")
 
     result = pytester.runpytest(str(init))
     result.stdout.fnmatch_lines(["*no tests ran in*"])
@@ -1427,7 +1432,7 @@ def test_collect_sub_with_symlinks(use_pkg: bool, pytester: Pytester) -> None:
     sub = pytester.mkdir("sub")
     if use_pkg:
         sub.joinpath("__init__.py").touch()
-    sub.joinpath("test_file.py").write_text("def test_file(): pass")
+    sub.joinpath("test_file.py").write_text("def test_file(): pass", encoding="utf-8")
 
     # Create a broken symlink.
     symlink_or_skip("test_doesnotexist.py", sub.joinpath("test_broken.py"))
@@ -1465,7 +1470,7 @@ def test_collector_respects_tbstyle(pytester: Pytester) -> None:
 def test_does_not_eagerly_collect_packages(pytester: Pytester) -> None:
     pytester.makepyfile("def test(): pass")
     pydir = pytester.mkpydir("foopkg")
-    pydir.joinpath("__init__.py").write_text("assert False")
+    pydir.joinpath("__init__.py").write_text("assert False", encoding="utf-8")
     result = pytester.runpytest()
     assert result.ret == ExitCode.OK
 

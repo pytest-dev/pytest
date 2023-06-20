@@ -1161,7 +1161,7 @@ class TestAssertionRewriteHookDetails:
                 return False
 
             def rewrite_self():
-                with open(__file__, 'w') as self:
+                with open(__file__, 'w', encoding='utf-8') as self:
                     self.write('def reloaded(): return True')
             """,
             test_fun="""
