@@ -515,7 +515,9 @@ class LogCaptureFixture:
         return original_disable_level
 
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
-        """Set the level of a logger for the duration of a test.
+        """Set the threshold level of a logger for the duration of a test.
+
+        Logging messages which are less severe than this level will not be captured.
 
         .. versionchanged:: 3.4
             The levels of the loggers changed by this function will be
