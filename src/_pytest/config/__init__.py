@@ -1223,6 +1223,49 @@ class Config:
 
         return args
 
+    def _decide_args(
+        self,
+        *,
+        args: List[str],
+        pyargs: List[str],
+        testpaths: List[str],
+        invocation_dir: Path,
+        rootpath: Path,
+        warn: bool,
+    ) -> Tuple[List[str], ArgsSource]:
+        """Decide the args (initial paths/nodeids) to use given the relevant inputs.
+
+        :param warn: Whether can issue warnings.
+        """
+        if args:
+            source = Config.ArgsSource.ARGS
+            result = args
+        else:
+            if invocation_dir == rootpath:
+                source = Config.ArgsSource.TESTPATHS
+                if pyargs:
+                    result = testpaths
+                else:
+                    result = []
+                    for path in testpaths:
+                        result.extend(sorted(glob.iglob(path, recursive=True)))
+                    if testpaths and not result:
+                        if warn:
+                            warning_text = (
+                                "No files were found in testpaths; "
+                                "consider removing or adjusting your testpaths configuration. "
+                                "Searching recursively from the current directory instead."
+                            )
+                            self.issue_config_time_warning(
+                                PytestConfigWarning(warning_text), stacklevel=3
+                            )
+            else:
+                result = []
+            if not result:
+                source = Config.ArgsSource.INCOVATION_DIR
+                result = [str(invocation_dir)]
+        return result, source
+
     def _preparse(self, args: List[str], addopts: bool = True) -> None:
         if addopts:
             env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
@@ -1371,34 +1414,17 @@ class Config:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.after_preparse = True  # type: ignore
         try:
-            source = Config.ArgsSource.ARGS
             args = self._parser.parse_setoption(
                 args, self.option, namespace=self.option
             )
-            if not args:
-                if self.invocation_params.dir == self.rootpath:
-                    source = Config.ArgsSource.TESTPATHS
-                    testpaths: List[str] = self.getini("testpaths")
-                    if self.known_args_namespace.pyargs:
-                        args = testpaths
-                    else:
-                        args = []
-                        for path in testpaths:
-                            args.extend(sorted(glob.iglob(path, recursive=True)))
-                        if testpaths and not args:
-                            warning_text = (
-                                "No files were found in testpaths; "
-                                "consider removing or adjusting your testpaths configuration. "
-                                "Searching recursively from the current directory instead."
-                            )
-                            self.issue_config_time_warning(
-                                PytestConfigWarning(warning_text), stacklevel=3
-                            )
-                if not args:
-                    source = Config.ArgsSource.INCOVATION_DIR
-                    args = [str(self.invocation_params.dir)]
-            self.args = args
-            self.args_source = source
+            self.args, self.args_source = self._decide_args(
+                args=args,
+                pyargs=self.known_args_namespace.pyargs,
+                testpaths=self.getini("testpaths"),
+                invocation_dir=self.invocation_params.dir,
+                rootpath=self.rootpath,
+                warn=True,
+            )
         except PrintHelp:
             pass
 
