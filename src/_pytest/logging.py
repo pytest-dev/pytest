@@ -447,12 +447,9 @@ class LogCaptureFixture:
         self.handler.reset()
 
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
-        """Sets the threshold for this logger to level.
+        """Set the threshold level of a logger for the duration of a test.
 
-        Logging messages which are less severe than level will be ignored; logging messages
-        which have severity level or higher will be emitted by whichever handler or handlers
-        service this logger, unless a handler’s level has been set to a higher severity level
-        than `level`.
+        Logging messages which are less severe than this level will not be captured.
 
         .. versionchanged:: 3.4
             The levels of the loggers changed by this function will be
