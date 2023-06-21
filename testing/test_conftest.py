@@ -1,4 +1,3 @@
-import argparse
 import os
 import textwrap
 from pathlib import Path
@@ -7,6 +6,8 @@ from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Optional
+from typing import Sequence
+from typing import Union
 
 import pytest
 from _pytest.config import ExitCode
@@ -24,18 +25,18 @@ def ConftestWithSetinitial(path) -> PytestPluginManager:
 
 
 def conftest_setinitial(
-    conftest: PytestPluginManager, args, confcutdir: Optional["os.PathLike[str]"] = None
+    conftest: PytestPluginManager,
+    args: Sequence[Union[str, Path]],
+    confcutdir: Optional[Path] = None,
 ) -> None:
-    class Namespace:
-        def __init__(self) -> None:
-            self.file_or_dir = args
-            self.confcutdir = os.fspath(confcutdir) if confcutdir is not None else None
-            self.noconftest = False
-            self.pyargs = False
-            self.importmode = "prepend"
-
-    namespace = cast(argparse.Namespace, Namespace())
-    conftest._set_initial_conftests(namespace, rootpath=Path(args[0]), testpaths_ini=[])
+    conftest._set_initial_conftests(
+        args=args,
+        pyargs=False,
+        noconftest=False,
+        rootpath=Path(args[0]),
+        confcutdir=confcutdir,
+        importmode="prepend",
+    )
 
 
 @pytest.mark.usefixtures("_sys_snapshot")

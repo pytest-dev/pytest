@@ -1,0 +1,3 @@
+Fixed a regression in pytest 7.3.2 which caused to :confval:`testpaths` to be considered for loading initial conftests,
+even when it was not utilized (e.g. when explicit paths were given on the command line).
+Now the ``testpaths`` are only considered when they are in use.

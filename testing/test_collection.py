@@ -1264,10 +1264,17 @@ def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
         testpaths = some_path
         """
     )
+
+    # No command line args - falls back to testpaths.
     result = pytester.runpytest()
+    assert result.ret == ExitCode.INTERNAL_ERROR
     result.stdout.fnmatch_lines(
         "INTERNALERROR* Exception: pytest_sessionstart hook successfully run"
     )
+
+    # No fallback.
+    result = pytester.runpytest(".")
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
 def test_large_option_breaks_initial_conftests(pytester: Pytester) -> None:
