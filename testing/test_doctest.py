@@ -357,7 +357,8 @@ class TestDoctests:
                         >>> 1/0
                         '''
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(
@@ -448,7 +449,8 @@ class TestDoctests:
                 """\
                 import asdalsdkjaslkdjasd
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         pytester.maketxtfile(
             """
@@ -492,7 +494,8 @@ class TestDoctests:
                         2
                     '''
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(
@@ -1566,7 +1569,9 @@ def test_warning_on_unwrap_of_broken_object(
 
 def test_is_setup_py_not_named_setup_py(tmp_path: Path) -> None:
     not_setup_py = tmp_path.joinpath("not_setup.py")
-    not_setup_py.write_text('from setuptools import setup; setup(name="foo")')
+    not_setup_py.write_text(
+        'from setuptools import setup; setup(name="foo")', encoding="utf-8"
+    )
     assert not _is_setup_py(not_setup_py)
 
 

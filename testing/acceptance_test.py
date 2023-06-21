@@ -267,7 +267,7 @@ class TestGeneralUsage:
     def test_issue109_sibling_conftests_not_loaded(self, pytester: Pytester) -> None:
         sub1 = pytester.mkdir("sub1")
         sub2 = pytester.mkdir("sub2")
-        sub1.joinpath("conftest.py").write_text("assert 0")
+        sub1.joinpath("conftest.py").write_text("assert 0", encoding="utf-8")
         result = pytester.runpytest(sub2)
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
         sub2.joinpath("__init__.py").touch()
@@ -467,7 +467,7 @@ class TestGeneralUsage:
         assert "invalid" in str(excinfo.value)
 
         p = pytester.path.joinpath("test_test_plugins_given_as_strings.py")
-        p.write_text("def test_foo(): pass")
+        p.write_text("def test_foo(): pass", encoding="utf-8")
         mod = types.ModuleType("myplugin")
         monkeypatch.setitem(sys.modules, "myplugin", mod)
         assert pytest.main(args=[str(pytester.path)], plugins=["myplugin"]) == 0
@@ -587,7 +587,7 @@ class TestInvocationVariants:
     def test_pyargs_importerror(self, pytester: Pytester, monkeypatch) -> None:
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", False)
         path = pytester.mkpydir("tpkg")
-        path.joinpath("test_hello.py").write_text("raise ImportError")
+        path.joinpath("test_hello.py").write_text("raise ImportError", encoding="utf-8")
 
         result = pytester.runpytest("--pyargs", "tpkg.test_hello", syspathinsert=True)
         assert result.ret != 0
@@ -597,10 +597,10 @@ class TestInvocationVariants:
     def test_pyargs_only_imported_once(self, pytester: Pytester) -> None:
         pkg = pytester.mkpydir("foo")
         pkg.joinpath("test_foo.py").write_text(
-            "print('hello from test_foo')\ndef test(): pass"
+            "print('hello from test_foo')\ndef test(): pass", encoding="utf-8"
         )
         pkg.joinpath("conftest.py").write_text(
-            "def pytest_configure(config): print('configuring')"
+            "def pytest_configure(config): print('configuring')", encoding="utf-8"
         )
 
         result = pytester.runpytest(
@@ -613,7 +613,7 @@ class TestInvocationVariants:
 
     def test_pyargs_filename_looks_like_module(self, pytester: Pytester) -> None:
         pytester.path.joinpath("conftest.py").touch()
-        pytester.path.joinpath("t.py").write_text("def test(): pass")
+        pytester.path.joinpath("t.py").write_text("def test(): pass", encoding="utf-8")
         result = pytester.runpytest("--pyargs", "t.py")
         assert result.ret == ExitCode.OK
 
@@ -622,8 +622,12 @@ class TestInvocationVariants:
 
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", False)
         path = pytester.mkpydir("tpkg")
-        path.joinpath("test_hello.py").write_text("def test_hello(): pass")
-        path.joinpath("test_world.py").write_text("def test_world(): pass")
+        path.joinpath("test_hello.py").write_text(
+            "def test_hello(): pass", encoding="utf-8"
+        )
+        path.joinpath("test_world.py").write_text(
+            "def test_world(): pass", encoding="utf-8"
+        )
         result = pytester.runpytest("--pyargs", "tpkg")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*2 passed*"])
@@ -662,13 +666,15 @@ class TestInvocationVariants:
             ns = d.joinpath("ns_pkg")
             ns.mkdir()
             ns.joinpath("__init__.py").write_text(
-                "__import__('pkg_resources').declare_namespace(__name__)"
+                "__import__('pkg_resources').declare_namespace(__name__)",
+                encoding="utf-8",
             )
             lib = ns.joinpath(dirname)
             lib.mkdir()
             lib.joinpath("__init__.py").touch()
             lib.joinpath(f"test_{dirname}.py").write_text(
-                f"def test_{dirname}(): pass\ndef test_other():pass"
+                f"def test_{dirname}(): pass\ndef test_other():pass",
+                encoding="utf-8",
             )
 
         # The structure of the test directory is now:
@@ -754,10 +760,10 @@ class TestInvocationVariants:
         lib.mkdir()
         lib.joinpath("__init__.py").touch()
         lib.joinpath("test_bar.py").write_text(
-            "def test_bar(): pass\ndef test_other(a_fixture):pass"
+            "def test_bar(): pass\ndef test_other(a_fixture):pass", encoding="utf-8"
         )
         lib.joinpath("conftest.py").write_text(
-            "import pytest\n@pytest.fixture\ndef a_fixture():pass"
+            "import pytest\n@pytest.fixture\ndef a_fixture():pass", encoding="utf-8"
         )
 
         d_local = pytester.mkdir("symlink_root")
@@ -1276,8 +1282,7 @@ def test_tee_stdio_captures_and_live_prints(pytester: Pytester) -> None:
     result.stderr.fnmatch_lines(["*@this is stderr@*"])
 
     # now ensure the output is in the junitxml
-    with open(pytester.path.joinpath("output.xml")) as f:
-        fullXml = f.read()
+    fullXml = pytester.path.joinpath("output.xml").read_text(encoding="utf-8")
     assert "@this is stdout@\n" in fullXml
     assert "@this is stderr@\n" in fullXml
 

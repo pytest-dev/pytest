@@ -100,13 +100,13 @@ class TestImportPath:
     def setuptestfs(self, path: Path) -> None:
         # print "setting up test fs for", repr(path)
         samplefile = path / "samplefile"
-        samplefile.write_text("samplefile\n")
+        samplefile.write_text("samplefile\n", encoding="utf-8")
 
         execfile = path / "execfile"
-        execfile.write_text("x=42")
+        execfile.write_text("x=42", encoding="utf-8")
 
         execfilepy = path / "execfile.py"
-        execfilepy.write_text("x=42")
+        execfilepy.write_text("x=42", encoding="utf-8")
 
         d = {1: 2, "hello": "world", "answer": 42}
         path.joinpath("samplepickle").write_bytes(pickle.dumps(d, 1))
@@ -120,9 +120,9 @@ class TestImportPath:
         otherdir.joinpath("__init__.py").touch()
 
         module_a = otherdir / "a.py"
-        module_a.write_text("from .b import stuff as result\n")
+        module_a.write_text("from .b import stuff as result\n", encoding="utf-8")
         module_b = otherdir / "b.py"
-        module_b.write_text('stuff="got it"\n')
+        module_b.write_text('stuff="got it"\n', encoding="utf-8")
         module_c = otherdir / "c.py"
         module_c.write_text(
             dedent(
@@ -131,7 +131,8 @@ class TestImportPath:
             import otherdir.a
             value = otherdir.a.result
         """
-            )
+            ),
+            encoding="utf-8",
         )
         module_d = otherdir / "d.py"
         module_d.write_text(
@@ -141,7 +142,8 @@ class TestImportPath:
             from otherdir import a
             value2 = a.result
         """
-            )
+            ),
+            encoding="utf-8",
         )
 
     def test_smoke_test(self, path1: Path) -> None:
@@ -283,7 +285,7 @@ class TestImportPath:
     def simple_module(self, tmp_path: Path) -> Path:
         fn = tmp_path / "_src/tests/mymod.py"
         fn.parent.mkdir(parents=True)
-        fn.write_text("def foo(x): return 40 + x")
+        fn.write_text("def foo(x): return 40 + x", encoding="utf-8")
         return fn
 
     def test_importmode_importlib(self, simple_module: Path, tmp_path: Path) -> None:
@@ -447,7 +449,7 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
     return False, even when they are clearly equal.
     """
     module_path = tmp_path.joinpath("my_module.py")
-    module_path.write_text("def foo(): return 42")
+    module_path.write_text("def foo(): return 42", encoding="utf-8")
     monkeypatch.syspath_prepend(tmp_path)
 
     with monkeypatch.context() as mp:
@@ -473,7 +475,8 @@ class TestImportLibMode:
                 class Data:
                     value: str
                 """
-            )
+            ),
+            encoding="utf-8",
         )
 
         module = import_path(fn, mode="importlib", root=tmp_path)
@@ -498,7 +501,8 @@ class TestImportLibMode:
                     s = pickle.dumps(_action)
                     return pickle.loads(s)
                 """
-            )
+            ),
+            encoding="utf-8",
         )
 
         module = import_path(fn, mode="importlib", root=tmp_path)
@@ -525,7 +529,8 @@ class TestImportLibMode:
                 class Data:
                     x: int = 42
                 """
-            )
+            ),
+            encoding="utf-8",
         )
 
         fn2 = tmp_path.joinpath("_src/m2/tests/test.py")
@@ -540,7 +545,8 @@ class TestImportLibMode:
                 class Data:
                     x: str = ""
                 """
-            )
+            ),
+            encoding="utf-8",
         )
 
         import pickle

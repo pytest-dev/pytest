@@ -1,4 +1,5 @@
 import argparse
+import locale
 import os
 import shlex
 import subprocess
@@ -290,12 +291,17 @@ class TestParser:
 
 def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     try:
+        encoding = locale.getencoding()  # New in Python 3.11, ignores utf-8 mode
+    except AttributeError:
+        encoding = locale.getpreferredencoding(False)
+    try:
         bash_version = subprocess.run(
             ["bash", "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
             text=True,
+            encoding=encoding,
         ).stdout
     except (OSError, subprocess.CalledProcessError):
         pytest.skip("bash is not available")
@@ -305,7 +311,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
 
     script = str(pytester.path.joinpath("test_argcomplete"))
 
-    with open(str(script), "w") as fp:
+    with open(str(script), "w", encoding="utf-8") as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash

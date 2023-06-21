@@ -59,7 +59,8 @@ def test_link_resolve(pytester: Pytester) -> None:
         def test_foo():
             raise AssertionError()
         """
-        )
+        ),
+        encoding="utf-8",
     )
 
     subst = subst_path_linux

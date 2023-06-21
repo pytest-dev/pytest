@@ -60,7 +60,8 @@ class TestModule:
                 """.format(
                     str(root2)
                 )
-            )
+            ),
+            encoding="utf-8",
         )
         with monkeypatch.context() as mp:
             mp.chdir(root2)
@@ -832,7 +833,8 @@ class TestConftestCustomization:
                     mod = outcome.get_result()
                     mod.obj.hello = "world"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         b.joinpath("test_module.py").write_text(
             textwrap.dedent(
@@ -840,7 +842,8 @@ class TestConftestCustomization:
                 def test_hello():
                     assert hello == "world"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -861,7 +864,8 @@ class TestConftestCustomization:
                             for func in result:
                                 func._some123 = "world"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         b.joinpath("test_module.py").write_text(
             textwrap.dedent(
@@ -874,7 +878,8 @@ class TestConftestCustomization:
                 def test_hello(obj):
                     assert obj == "world"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -974,7 +979,8 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             def pytest_runtest_teardown(item):
                 assert item.path.stem == "test_in_sub1"
             """
-        )
+        ),
+        encoding="utf-8",
     )
     sub2.joinpath("conftest.py").write_text(
         textwrap.dedent(
@@ -987,10 +993,11 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             def pytest_runtest_teardown(item):
                 assert item.path.stem == "test_in_sub2"
             """
-        )
+        ),
+        encoding="utf-8",
     )
-    sub1.joinpath("test_in_sub1.py").write_text("def test_1(): pass")
-    sub2.joinpath("test_in_sub2.py").write_text("def test_2(): pass")
+    sub1.joinpath("test_in_sub1.py").write_text("def test_1(): pass", encoding="utf-8")
+    sub2.joinpath("test_in_sub2.py").write_text("def test_2(): pass", encoding="utf-8")
     result = pytester.runpytest("-v", "-s")
     result.assert_outcomes(passed=2)
 
@@ -1378,7 +1385,8 @@ def test_skip_duplicates_by_default(pytester: Pytester) -> None:
             def test_real():
                 pass
             """
-        )
+        ),
+        encoding="utf-8",
     )
     result = pytester.runpytest(str(a), str(a))
     result.stdout.fnmatch_lines(["*collected 1 item*"])
@@ -1398,7 +1406,8 @@ def test_keep_duplicates(pytester: Pytester) -> None:
             def test_real():
                 pass
             """
-        )
+        ),
+        encoding="utf-8",
     )
     result = pytester.runpytest("--keep-duplicates", str(a), str(a))
     result.stdout.fnmatch_lines(["*collected 2 item*"])
@@ -1443,8 +1452,12 @@ def test_package_with_modules(pytester: Pytester) -> None:
     sub2_test = sub2.joinpath("test")
     sub2_test.mkdir(parents=True)
 
-    sub1_test.joinpath("test_in_sub1.py").write_text("def test_1(): pass")
-    sub2_test.joinpath("test_in_sub2.py").write_text("def test_2(): pass")
+    sub1_test.joinpath("test_in_sub1.py").write_text(
+        "def test_1(): pass", encoding="utf-8"
+    )
+    sub2_test.joinpath("test_in_sub2.py").write_text(
+        "def test_2(): pass", encoding="utf-8"
+    )
 
     # Execute from .
     result = pytester.runpytest("-v", "-s")
@@ -1488,9 +1501,11 @@ def test_package_ordering(pytester: Pytester) -> None:
     sub2_test = sub2.joinpath("test")
     sub2_test.mkdir(parents=True)
 
-    root.joinpath("Test_root.py").write_text("def test_1(): pass")
-    sub1.joinpath("Test_sub1.py").write_text("def test_2(): pass")
-    sub2_test.joinpath("test_sub2.py").write_text("def test_3(): pass")
+    root.joinpath("Test_root.py").write_text("def test_1(): pass", encoding="utf-8")
+    sub1.joinpath("Test_sub1.py").write_text("def test_2(): pass", encoding="utf-8")
+    sub2_test.joinpath("test_sub2.py").write_text(
+        "def test_3(): pass", encoding="utf-8"
+    )
 
     # Execute from .
     result = pytester.runpytest("-v", "-s")

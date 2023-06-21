@@ -1443,7 +1443,8 @@ class TestMetafuncFunctional:
                 def pytest_generate_tests(metafunc):
                     assert metafunc.function.__name__ == "test_1"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         sub2.joinpath("conftest.py").write_text(
             textwrap.dedent(
@@ -1451,10 +1452,15 @@ class TestMetafuncFunctional:
                 def pytest_generate_tests(metafunc):
                     assert metafunc.function.__name__ == "test_2"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
-        sub1.joinpath("test_in_sub1.py").write_text("def test_1(): pass")
-        sub2.joinpath("test_in_sub2.py").write_text("def test_2(): pass")
+        sub1.joinpath("test_in_sub1.py").write_text(
+            "def test_1(): pass", encoding="utf-8"
+        )
+        sub2.joinpath("test_in_sub2.py").write_text(
+            "def test_2(): pass", encoding="utf-8"
+        )
         result = pytester.runpytest("--keep-duplicates", "-v", "-s", sub1, sub2, sub1)
         result.assert_outcomes(passed=3)
 
