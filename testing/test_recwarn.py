@@ -172,22 +172,6 @@ class TestDeprecatedCall:
             with pytest.deprecated_call():
                 assert f() == 10
 
-    @pytest.mark.parametrize("mode", ["context_manager", "call"])
-    def test_deprecated_call_exception_is_raised(self, mode) -> None:
-        """If the block of the code being tested by deprecated_call() raises an exception,
-        it must raise the exception undisturbed.
-        """
-
-        def f():
-            raise ValueError("some exception")
-
-        with pytest.raises(ValueError, match="some exception"):
-            if mode == "call":
-                pytest.deprecated_call(f)
-            else:
-                with pytest.deprecated_call():
-                    f()
-
     def test_deprecated_call_specificity(self) -> None:
         other_warnings = [
             Warning,
@@ -446,3 +430,15 @@ class TestWarns:
             with pytest.warns(UserWarning, match="v1 warning"):
                 warnings.warn("v1 warning", UserWarning)
                 warnings.warn("non-matching v2 warning", UserWarning)
+
+    def test_catch_warning_within_raise(self) -> None:
+        # warns-in-raises works since https://github.com/pytest-dev/pytest/pull/11129
+        with pytest.raises(ValueError, match="some exception"):
+            with pytest.warns(FutureWarning, match="some warning"):
+                warnings.warn("some warning", category=FutureWarning)
+                raise ValueError("some exception")
+        # and raises-in-warns has always worked but we'll check for symmetry.
+        with pytest.warns(FutureWarning, match="some warning"):
+            with pytest.raises(ValueError, match="some exception"):
+                warnings.warn("some warning", category=FutureWarning)
+                raise ValueError("some exception")

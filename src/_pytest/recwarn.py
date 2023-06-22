@@ -298,11 +298,6 @@ class WarningsChecker(WarningsRecorder):
             # nothing to do in this deprecated case, see WARNS_NONE_ARG above
             return
 
-        if not (exc_type is None and exc_val is None and exc_tb is None):
-            # We currently ignore missing warnings if an exception is active.
-            # TODO: fix this, because it means things are surprisingly order-sensitive.
-            return
-
         def found_str():
             return pformat([record.message for record in self], indent=2)
 
