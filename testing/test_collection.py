@@ -1392,19 +1392,27 @@ def test_collect_pkg_init_and_file_in_args(pytester: Pytester) -> None:
     p = subdir.joinpath("test_file.py")
     p.write_text("def test_file(): pass", encoding="utf-8")
 
-    # NOTE: without "-o python_files=*.py" this collects test_file.py twice.
-    # This changed/broke with "Add package scoped fixtures #2283" (2b1410895)
-    # initially (causing a RecursionError).
-    result = pytester.runpytest("-v", str(init), str(p))
+    # Just the package directory, the __init__.py module is filtered out.
+    result = pytester.runpytest("-v", subdir)
     result.stdout.fnmatch_lines(
         [
             "sub/test_file.py::test_file PASSED*",
+            "*1 passed in*",
+        ]
+    )
+
+    # But it's included if specified directly.
+    result = pytester.runpytest("-v", init, p)
+    result.stdout.fnmatch_lines(
+        [
+            "sub/__init__.py::test_init PASSED*",
             "sub/test_file.py::test_file PASSED*",
             "*2 passed in*",
         ]
     )
 
-    result = pytester.runpytest("-v", "-o", "python_files=*.py", str(init), str(p))
+    # Or if the pattern allows it.
+    result = pytester.runpytest("-v", "-o", "python_files=*.py", subdir)
     result.stdout.fnmatch_lines(
         [
             "sub/__init__.py::test_init PASSED*",
@@ -1419,10 +1427,13 @@ def test_collect_pkg_init_only(pytester: Pytester) -> None:
     init = subdir.joinpath("__init__.py")
     init.write_text("def test_init(): pass", encoding="utf-8")
 
-    result = pytester.runpytest(str(init))
+    result = pytester.runpytest(subdir)
     result.stdout.fnmatch_lines(["*no tests ran in*"])
 
-    result = pytester.runpytest("-v", "-o", "python_files=*.py", str(init))
+    result = pytester.runpytest("-v", init)
+    result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
+
+    result = pytester.runpytest("-v", "-o", "python_files=*.py", subdir)
     result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
 
 
