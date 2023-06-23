@@ -1,1 +1,0 @@
-Fixed traceback entries hidden with ``__tracebackhide__ = True`` still being shown for chained exceptions (parts after "... the above exception ..." message).

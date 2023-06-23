@@ -1923,9 +1923,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --strict-markers      Markers not registered in the `markers` section of
                             the configuration file raise errors
       --strict              (Deprecated) alias to --strict-markers
-      -c, --config-file FILE
+      -c FILE, --config-file=FILE
                             Load configuration from `FILE` instead of trying to
-                            locate one of the implicit configuration files
+                            locate one of the implicit configuration files.
       --continue-on-collection-errors
                             Force test execution even if collection errors occur
       --rootdir=ROOTDIR     Define root directory for tests. Can be relative

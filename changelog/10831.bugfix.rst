@@ -1,1 +1,0 @@
-Terminal Reporting: Fixed bug when running in ``--tb=line`` mode where ``pytest.fail(pytrace=False)`` tests report ``None``.
