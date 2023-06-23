@@ -1,5 +1,0 @@
-When an exception traceback to be displayed is completely filtered out (by mechanisms such as ``__tracebackhide__``, internal frames, and similar), now only the exception string and the following message are shown:
-
-"All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames.".
-
-Previously, the last frame of the traceback was shown, even though it was hidden.

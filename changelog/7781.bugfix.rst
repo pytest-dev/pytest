@@ -1,1 +1,0 @@
-Fix writing non-encodable text to log file when using ``--debug``.
