@@ -1,2 +1,0 @@
-Added :func:`ExceptionInfo.from_exception() <pytest.ExceptionInfo.from_exception>`, a simpler way to create an :class:`~pytest.ExceptionInfo` from an exception.
-This can replace :func:`ExceptionInfo.from_exc_info() <pytest.ExceptionInfo.from_exc_info()>` for most uses.

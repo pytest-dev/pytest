@@ -1,3 +1,0 @@
-When `--confcutdir` is not specified, and there is no config file present, the conftest cutoff directory (`--confcutdir`) is now set to the :ref:`rootdir`.
-Previously in such cases, `conftest.py` files would be probed all the way to the root directory of the filesystem.
-If you are badly affected by this change, consider adding an empty config file to your desired cutoff directory, or explicitly set `--confcutdir`.

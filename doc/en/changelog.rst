@@ -28,6 +28,98 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.4.0 (2023-06-23)
+=========================
+
+Features
+--------
+
+- `#10901 <https://github.com/pytest-dev/pytest/issues/10901>`_: Added :func:`ExceptionInfo.from_exception() <pytest.ExceptionInfo.from_exception>`, a simpler way to create an :class:`~pytest.ExceptionInfo` from an exception.
+  This can replace :func:`ExceptionInfo.from_exc_info() <pytest.ExceptionInfo.from_exc_info()>` for most uses.
+
+
+
+Improvements
+------------
+
+- `#10872 <https://github.com/pytest-dev/pytest/issues/10872>`_: Update test log report annotation to named tuple and fixed inconsistency in docs for :hook:`pytest_report_teststatus` hook.
+
+
+- `#10907 <https://github.com/pytest-dev/pytest/issues/10907>`_: When an exception traceback to be displayed is completely filtered out (by mechanisms such as ``__tracebackhide__``, internal frames, and similar), now only the exception string and the following message are shown:
+
+  "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames.".
+
+  Previously, the last frame of the traceback was shown, even though it was hidden.
+
+
+- `#10940 <https://github.com/pytest-dev/pytest/issues/10940>`_: Improved verbose output (``-vv``) of ``skip`` and ``xfail`` reasons by performing text wrapping while leaving a clear margin for progress output.
+
+  Added ``TerminalReporter.wrap_write()`` as a helper for that.
+
+
+- `#10991 <https://github.com/pytest-dev/pytest/issues/10991>`_: Added handling of ``%f`` directive to print microseconds in log format options, such as ``log-date-format``.
+
+
+- `#11005 <https://github.com/pytest-dev/pytest/issues/11005>`_: Added the underlying exception to the cache provider's path creation and write warning messages.
+
+
+- `#11013 <https://github.com/pytest-dev/pytest/issues/11013>`_: Added warning when :confval:`testpaths` is set, but paths are not found by glob. In this case, pytest will fall back to searching from the current directory.
+
+
+- `#11043 <https://github.com/pytest-dev/pytest/issues/11043>`_: When `--confcutdir` is not specified, and there is no config file present, the conftest cutoff directory (`--confcutdir`) is now set to the :ref:`rootdir <rootdir>`.
+  Previously in such cases, `conftest.py` files would be probed all the way to the root directory of the filesystem.
+  If you are badly affected by this change, consider adding an empty config file to your desired cutoff directory, or explicitly set `--confcutdir`.
+
+
+- `#11081 <https://github.com/pytest-dev/pytest/issues/11081>`_: The :confval:`norecursedirs` check is now performed in a :hook:`pytest_ignore_collect` implementation, so plugins can affect it.
+
+  If after updating to this version you see that your `norecursedirs` setting is not being respected,
+  it means that a conftest or a plugin you use has a bad `pytest_ignore_collect` implementation.
+  Most likely, your hook returns `False` for paths it does not want to ignore,
+  which ends the processing and doesn't allow other plugins, including pytest itself, to ignore the path.
+  The fix is to return `None` instead of `False` for paths your hook doesn't want to ignore.
+
+
+- `#8711 <https://github.com/pytest-dev/pytest/issues/8711>`_: :func:`caplog.set_level() <pytest.LogCaptureFixture.set_level>` and :func:`caplog.at_level() <pytest.LogCaptureFixture.at_level>`
+  will temporarily enable the requested ``level`` if ``level`` was disabled globally via
+  ``logging.disable(LEVEL)``.
+
+
+
+Bug Fixes
+---------
+
+- `#10831 <https://github.com/pytest-dev/pytest/issues/10831>`_: Terminal Reporting: Fixed bug when running in ``--tb=line`` mode where ``pytest.fail(pytrace=False)`` tests report ``None``.
+
+
+- `#11068 <https://github.com/pytest-dev/pytest/issues/11068>`_: Fixed the ``--last-failed`` whole-file skipping functionality ("skipped N files") for :ref:`non-python test files <non-python tests>`.
+
+
+- `#11104 <https://github.com/pytest-dev/pytest/issues/11104>`_: Fixed a regression in pytest 7.3.2 which caused to :confval:`testpaths` to be considered for loading initial conftests,
+  even when it was not utilized (e.g. when explicit paths were given on the command line).
+  Now the ``testpaths`` are only considered when they are in use.
+
+
+- `#1904 <https://github.com/pytest-dev/pytest/issues/1904>`_: Fixed traceback entries hidden with ``__tracebackhide__ = True`` still being shown for chained exceptions (parts after "... the above exception ..." message).
+
+
+- `#7781 <https://github.com/pytest-dev/pytest/issues/7781>`_: Fix writing non-encodable text to log file when using ``--debug``.
+
+
+
+Improved Documentation
+----------------------
+
+- `#9146 <https://github.com/pytest-dev/pytest/issues/9146>`_: Improved documentation for :func:`caplog.set_level() <pytest.LogCaptureFixture.set_level>`.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#11031 <https://github.com/pytest-dev/pytest/issues/11031>`_: Enhanced the CLI flag for ``-c`` to now include ``--config-file`` to make it clear that this flag applies to the usage of a custom config file.
+
+
 pytest 7.3.2 (2023-06-10)
 =========================
 
