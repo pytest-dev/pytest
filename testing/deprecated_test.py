@@ -103,7 +103,7 @@ def test_strict_option_is_deprecated(pytester: Pytester) -> None:
         def test_foo(): pass
         """
     )
-    result = pytester.runpytest("--strict")
+    result = pytester.runpytest("--strict", "-Wdefault::pytest.PytestRemovedIn8Warning")
     result.stdout.fnmatch_lines(
         [
             "'unknown' not found in `markers` configuration option",
@@ -189,7 +189,7 @@ class TestSkipMsgArgumentDeprecated:
                 pytest.skip(msg="skippedmsg")
             """
         )
-        result = pytester.runpytest(p)
+        result = pytester.runpytest(p, "-Wdefault::pytest.PytestRemovedIn8Warning")
         result.stdout.fnmatch_lines(
             [
                 "*PytestRemovedIn8Warning: pytest.skip(msg=...) is now deprecated, "
@@ -208,7 +208,7 @@ class TestSkipMsgArgumentDeprecated:
                 pytest.fail(msg="failedmsg")
             """
         )
-        result = pytester.runpytest(p)
+        result = pytester.runpytest(p, "-Wdefault::pytest.PytestRemovedIn8Warning")
         result.stdout.fnmatch_lines(
             [
                 "*PytestRemovedIn8Warning: pytest.fail(msg=...) is now deprecated, "
@@ -227,7 +227,7 @@ class TestSkipMsgArgumentDeprecated:
                 pytest.exit(msg="exitmsg")
             """
         )
-        result = pytester.runpytest(p)
+        result = pytester.runpytest(p, "-Wdefault::pytest.PytestRemovedIn8Warning")
         result.stdout.fnmatch_lines(
             [
                 "*PytestRemovedIn8Warning: pytest.exit(msg=...) is now deprecated, "
@@ -245,7 +245,7 @@ def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
 
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wdefault::pytest.PytestRemovedIn8Warning")
     result.stdout.fnmatch_lines(
         [
             "*PytestRemovedIn8Warning: The pytest_cmdline_preparse hook is deprecated*",
@@ -299,7 +299,7 @@ def test_nose_deprecated_with_setup(pytester: Pytester) -> None:
             ...
         """
     )
-    output = pytester.runpytest()
+    output = pytester.runpytest("-Wdefault::pytest.PytestRemovedIn8Warning")
     message = [
         "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
         "*test_nose_deprecated_with_setup.py::test_omits_warnings is using nose method: `setup_fn_no_op` (setup)",
@@ -327,7 +327,7 @@ def test_nose_deprecated_setup_teardown(pytester: Pytester) -> None:
                 ...
         """
     )
-    output = pytester.runpytest()
+    output = pytester.runpytest("-Wdefault::pytest.PytestRemovedIn8Warning")
     message = [
         "*PytestRemovedIn8Warning: Support for nose tests is deprecated and will be removed in a future release.",
         "*test_nose_deprecated_setup_teardown.py::Test::test is using nose-specific method: `setup(self)`",
