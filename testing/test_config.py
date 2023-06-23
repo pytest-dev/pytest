@@ -1184,7 +1184,7 @@ def test_cmdline_processargs_simple(pytester: Pytester) -> None:
             args.append("-h")
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn8Warning")
     result.stdout.fnmatch_lines(["*pytest*", "*-h*"])
 
 

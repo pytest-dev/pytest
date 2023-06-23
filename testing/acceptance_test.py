@@ -1164,7 +1164,6 @@ def test_usage_error_code(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-@pytest.mark.filterwarnings("default::pytest.PytestUnhandledCoroutineWarning")
 def test_warn_on_async_function(pytester: Pytester) -> None:
     # In the below we .close() the coroutine only to avoid
     # "RuntimeWarning: coroutine 'test_2' was never awaited"
@@ -1181,7 +1180,7 @@ def test_warn_on_async_function(pytester: Pytester) -> None:
             return coro
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wdefault")
     result.stdout.fnmatch_lines(
         [
             "test_async.py::test_1",
@@ -1197,7 +1196,6 @@ def test_warn_on_async_function(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.filterwarnings("default::pytest.PytestUnhandledCoroutineWarning")
 def test_warn_on_async_gen_function(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_async="""
@@ -1209,7 +1207,7 @@ def test_warn_on_async_gen_function(pytester: Pytester) -> None:
             return test_2()
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wdefault")
     result.stdout.fnmatch_lines(
         [
             "test_async.py::test_1",
