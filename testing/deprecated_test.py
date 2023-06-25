@@ -281,6 +281,57 @@ def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
         from _pytest.python import Instance  # noqa: F401
 
 
+def test_fixture_disallow_on_marked_functions():
+    """Test that applying @pytest.fixture to a marked function warns (#3364)."""
+    with pytest.warns(
+        pytest.PytestRemovedIn8Warning,
+        match=r"Marks applied to fixtures have no effect",
+    ) as record:
+
+        @pytest.fixture
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+    # it's only possible to get one warning here because you're already prevented
+    # from applying @fixture twice
+    # ValueError("fixture is being applied more than once to the same function")
+    assert len(record) == 1
+
+
+def test_fixture_disallow_marks_on_fixtures():
+    """Test that applying a mark to a fixture warns (#3364)."""
+    with pytest.warns(
+        pytest.PytestRemovedIn8Warning,
+        match=r"Marks applied to fixtures have no effect",
+    ) as record:
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        @pytest.fixture
+        def foo():
+            raise NotImplementedError()
+
+    assert len(record) == 2  # one for each mark decorator
+
+
+def test_fixture_disallowed_between_marks():
+    """Test that applying a mark to a fixture warns (#3364)."""
+    with pytest.warns(
+        pytest.PytestRemovedIn8Warning,
+        match=r"Marks applied to fixtures have no effect",
+    ) as record:
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.fixture
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+    assert len(record) == 2  # one for each mark decorator
+
+
 @pytest.mark.filterwarnings("default")
 def test_nose_deprecated_with_setup(pytester: Pytester) -> None:
     pytest.importorskip("nose")
