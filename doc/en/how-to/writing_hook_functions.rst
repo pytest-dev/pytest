@@ -249,6 +249,7 @@ and use pytest_addoption as follows:
 
    # contents of hooks.py
 
+
    # Use firstresult=True because we only want one plugin to define this
    # default value
    @hookspec(firstresult=True)

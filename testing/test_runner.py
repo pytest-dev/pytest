@@ -2,6 +2,7 @@ import inspect
 import os
 import sys
 import types
+from functools import partial
 from pathlib import Path
 from typing import Dict
 from typing import List
@@ -18,6 +19,9 @@ from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
+
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 
 class TestSetupState:
@@ -77,8 +81,6 @@ class TestSetupState:
         assert r == ["fin3", "fin1"]
 
     def test_teardown_multiple_fail(self, pytester: Pytester) -> None:
-        # Ensure the first exception is the one which is re-raised.
-        # Ideally both would be reported however.
         def fin1():
             raise Exception("oops1")
 
@@ -90,9 +92,14 @@ class TestSetupState:
         ss.setup(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
-        with pytest.raises(Exception) as err:
+        with pytest.raises(ExceptionGroup) as err:
             ss.teardown_exact(None)
-        assert err.value.args == ("oops2",)
+
+        # Note that finalizers are run LIFO, but because FIFO is more intuitive for
+        # users we reverse the order of messages, and see the error from fin1 first.
+        err1, err2 = err.value.exceptions
+        assert err1.args == ("oops1",)
+        assert err2.args == ("oops2",)
 
     def test_teardown_multiple_scopes_one_fails(self, pytester: Pytester) -> None:
         module_teardown = []
@@ -112,6 +119,25 @@ class TestSetupState:
         with pytest.raises(Exception, match="oops1"):
             ss.teardown_exact(None)
         assert module_teardown == ["fin_module"]
+
+    def test_teardown_multiple_scopes_several_fail(self, pytester) -> None:
+        def raiser(exc):
+            raise exc
+
+        item = pytester.getitem("def test_func(): pass")
+        mod = item.listchain()[-2]
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(partial(raiser, KeyError("from module scope")), mod)
+        ss.addfinalizer(partial(raiser, TypeError("from function scope 1")), item)
+        ss.addfinalizer(partial(raiser, ValueError("from function scope 2")), item)
+
+        with pytest.raises(ExceptionGroup, match="errors during test teardown") as e:
+            ss.teardown_exact(None)
+        mod, func = e.value.exceptions
+        assert isinstance(mod, KeyError)
+        assert isinstance(func.exceptions[0], TypeError)  # type: ignore
+        assert isinstance(func.exceptions[1], ValueError)  # type: ignore
 
 
 class BaseFunctionalTests:
@@ -447,6 +473,7 @@ class TestSessionReports:
         assert not rep.skipped
         assert rep.passed
         locinfo = rep.location
+        assert locinfo is not None
         assert locinfo[0] == col.path.name
         assert not locinfo[1]
         assert locinfo[2] == col.path.name
@@ -880,6 +907,7 @@ def test_makereport_getsource_dynamic_code(
 def test_store_except_info_on_error() -> None:
     """Test that upon test failure, the exception info is stored on
     sys.last_traceback and friends."""
+
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
     class ItemMightRaise:
         nodeid = "item_that_raises"

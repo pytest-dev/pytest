@@ -3,10 +3,12 @@
 This is a good source for looking at the various reporting hooks.
 """
 import argparse
+import dataclasses
 import datetime
 import inspect
 import platform
 import sys
+import textwrap
 import warnings
 from collections import Counter
 from functools import partial
@@ -19,6 +21,7 @@ from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -27,7 +30,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import attr
 import pluggy
 
 import _pytest._version
@@ -111,6 +113,26 @@ class MoreQuietAction(argparse.Action):
         namespace.quiet = getattr(namespace, "quiet", 0) + 1
 
 
+class TestShortLogReport(NamedTuple):
+    """Used to store the test status result category, shortletter and verbose word.
+    For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
+
+    :ivar category:
+        The class of result, for example ``“passed”``, ``“skipped”``, ``“error”``, or the empty string.
+
+    :ivar letter:
+        The short letter shown as testing progresses, for example ``"."``, ``"s"``, ``"E"``, or the empty string.
+
+    :ivar word:
+        Verbose word is shown as testing progresses in verbose mode, for example ``"PASSED"``, ``"SKIPPED"``,
+        ``"ERROR"``, or the empty string.
+    """
+
+    category: str
+    letter: str
+    word: Union[str, Tuple[str, Mapping[str, bool]]]
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "Reporting", after="general")
     group._addoption(
@@ -179,6 +201,12 @@ def pytest_addoption(parser: Parser) -> None:
         help="Show locals in tracebacks (disabled by default)",
     )
     group._addoption(
+        "--no-showlocals",
+        action="store_false",
+        dest="showlocals",
+        help="Hide locals in tracebacks (negate --showlocals passed through addopts)",
+    )
+    group._addoption(
         "--tb",
         metavar="style",
         action="store",
@@ -223,7 +251,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "console_output_style",
         help='Console output: "classic", or with additional progress information '
-        '("progress" (percentage) | "count")',
+        '("progress" (percentage) | "count" | "progress-even-when-capture-no" (forces '
+        "progress even when capture=no)",
         default="progress",
     )
 
@@ -281,7 +310,7 @@ def pytest_report_teststatus(report: BaseReport) -> Tuple[str, str, str]:
     return outcome, letter, outcome.upper()
 
 
-@attr.s(auto_attribs=True)
+@dataclasses.dataclass
 class WarningReport:
     """Simple structure to hold warnings information captured by ``pytest_warning_recorded``.
 
@@ -340,14 +369,19 @@ class TerminalReporter:
 
     def _determine_show_progress_info(self) -> "Literal['progress', 'count', False]":
         """Return whether we should display progress information based on the current config."""
-        # do not show progress if we are not capturing output (#3038)
-        if self.config.getoption("capture", "no") == "no":
+        # do not show progress if we are not capturing output (#3038) unless explicitly
+        # overridden by progress-even-when-capture-no
+        if (
+            self.config.getoption("capture", "no") == "no"
+            and self.config.getini("console_output_style")
+            != "progress-even-when-capture-no"
+        ):
             return False
         # do not show progress if we are showing fixture setup/teardown
         if self.config.getoption("setupshow", False):
             return False
         cfg: str = self.config.getini("console_output_style")
-        if cfg == "progress":
+        if cfg == "progress" or cfg == "progress-even-when-capture-no":
             return "progress"
         elif cfg == "count":
             return "count"
@@ -413,6 +447,28 @@ class TerminalReporter:
         if self.currentfspath:
             self._tw.line()
             self.currentfspath = None
+
+    def wrap_write(
+        self,
+        content: str,
+        *,
+        flush: bool = False,
+        margin: int = 8,
+        line_sep: str = "\n",
+        **markup: bool,
+    ) -> None:
+        """Wrap message with margin for progress info."""
+        width_of_current_line = self._tw.width_of_current_line
+        wrapped = line_sep.join(
+            textwrap.wrap(
+                " " * width_of_current_line + content,
+                width=self._screen_width - margin,
+                drop_whitespace=True,
+                replace_whitespace=False,
+            ),
+        )
+        wrapped = wrapped[width_of_current_line:]
+        self._tw.write(wrapped, flush=flush, **markup)
 
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
         self._tw.write(content, flush=flush, **markup)
@@ -513,10 +569,11 @@ class TerminalReporter:
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
-        res: Tuple[
-            str, str, Union[str, Tuple[str, Mapping[str, bool]]]
-        ] = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
-        category, letter, word = res
+
+        res = TestShortLogReport(
+            *self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
+        )
+        category, letter, word = res.category, res.letter, res.word
         if not isinstance(word, tuple):
             markup = None
         else:
@@ -560,7 +617,7 @@ class TerminalReporter:
                         formatted_reason = f" ({reason})"
 
                     if reason and formatted_reason is not None:
-                        self._tw.write(formatted_reason)
+                        self.wrap_write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
             else:
@@ -727,16 +784,14 @@ class TerminalReporter:
                     self.write_line(line)
 
     def pytest_report_header(self, config: Config) -> List[str]:
-        line = "rootdir: %s" % config.rootpath
+        result = [f"rootdir: {config.rootpath}"]
 
         if config.inipath:
-            line += ", configfile: " + bestrelpath(config.rootpath, config.inipath)
+            result.append("configfile: " + bestrelpath(config.rootpath, config.inipath))
 
         if config.args_source == Config.ArgsSource.TESTPATHS:
             testpaths: List[str] = config.getini("testpaths")
-            line += ", testpaths: {}".format(", ".join(testpaths))
-
-        result = [line]
+            result.append("testpaths: {}".format(", ".join(testpaths)))
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:

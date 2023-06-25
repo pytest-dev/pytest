@@ -486,11 +486,25 @@ The ``yield_fixture`` function/decorator
 It has been so for a very long time, so can be search/replaced safely.
 
 
-Removed Features
-----------------
+Removed Features and Breaking Changes
+-------------------------------------
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+Some breaking changes which could not be deprecated are also listed.
+
+
+Collecting ``__init__.py`` files no longer collects package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 8.0
+
+Running `pytest pkg/__init__.py` now collects the `pkg/__init__.py` file (module) only.
+Previously, it collected the entire `pkg` package, including other test files in the directory, but excluding tests in the `__init__.py` file itself
+(unless :confval:`python_files` was changed to allow `__init__.py` file).
+
+To collect the entire package, specify just the directory: `pytest pkg`.
 
 
 The ``pytest.collect`` module
@@ -1071,7 +1085,7 @@ that are then turned into proper test methods. Example:
 .. code-block:: python
 
     def check(x, y):
-        assert x ** x == y
+        assert x**x == y
 
 
     def test_squared():
@@ -1086,7 +1100,7 @@ This form of test function doesn't support fixtures properly, and users should s
 
     @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
     def test_squared(x, y):
-        assert x ** x == y
+        assert x**x == y
 
 .. _internal classes accessed through node deprecated:
 

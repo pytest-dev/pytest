@@ -1,3 +1,4 @@
+import dataclasses
 import inspect
 import warnings
 from types import FunctionType
@@ -5,8 +6,6 @@ from typing import Any
 from typing import Generic
 from typing import Type
 from typing import TypeVar
-
-import attr
 
 from _pytest.compat import final
 
@@ -53,6 +52,12 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
 
 class PytestRemovedIn8Warning(PytestDeprecationWarning):
     """Warning class for features that will be removed in pytest 8."""
+
+    __module__ = "pytest"
+
+
+class PytestRemovedIn9Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 9."""
 
     __module__ = "pytest"
 
@@ -130,7 +135,7 @@ _W = TypeVar("_W", bound=PytestWarning)
 
 
 @final
-@attr.s(auto_attribs=True)
+@dataclasses.dataclass
 class UnformattedWarning(Generic[_W]):
     """A warning meant to be formatted during runtime.
 
@@ -150,7 +155,7 @@ def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
     """
     Issue the warning :param:`message` for the definition of the given :param:`method`
 
-    this helps to log warnigns for functions defined prior to finding an issue with them
+    this helps to log warnings for functions defined prior to finding an issue with them
     (like hook wrappers being marked in a legacy mechanism)
     """
     lineno = method.__code__.co_firstlineno

@@ -105,7 +105,7 @@ def pytest_cmdline_parse():
     if config.option.debug:
         # --debug | --debug <file.log> was provided.
         path = config.option.debug
-        debugfile = open(path, "w")
+        debugfile = open(path, "w", encoding="utf-8")
         debugfile.write(
             "versions pytest-%s, "
             "python-%s\ncwd=%s\nargs=%s\n\n"
@@ -164,7 +164,8 @@ def showhelp(config: Config) -> None:
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:"
+        "[pytest] ini-options in the first "
+        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 

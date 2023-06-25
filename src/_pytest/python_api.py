@@ -8,7 +8,7 @@ from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
-from typing import Generic
+from typing import ContextManager
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -269,10 +269,16 @@ class ApproxMapping(ApproxBase):
                 max_abs_diff = max(
                     max_abs_diff, abs(approx_value.expected - other_value)
                 )
-                max_rel_diff = max(
-                    max_rel_diff,
-                    abs((approx_value.expected - other_value) / approx_value.expected),
-                )
+                if approx_value.expected == 0.0:
+                    max_rel_diff = math.inf
+                else:
+                    max_rel_diff = max(
+                        max_rel_diff,
+                        abs(
+                            (approx_value.expected - other_value)
+                            / approx_value.expected
+                        ),
+                    )
                 different_ids.append(approx_key)
 
         message_data = [
@@ -801,8 +807,8 @@ def raises(  # noqa: F811
     r"""Assert that a code block/function call raises an exception.
 
     :param typing.Type[E] | typing.Tuple[typing.Type[E], ...] expected_exception:
-        The excpected exception type, or a tuple if one of multiple possible
-        exception types are excepted.
+        The expected exception type, or a tuple if one of multiple possible
+        exception types are expected.
     :kwparam str | typing.Pattern[str] | None match:
         If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
@@ -918,10 +924,10 @@ def raises(  # noqa: F811
             f"any special code to say 'this should never raise an exception'."
         )
     if isinstance(expected_exception, type):
-        excepted_exceptions: Tuple[Type[E], ...] = (expected_exception,)
+        expected_exceptions: Tuple[Type[E], ...] = (expected_exception,)
     else:
-        excepted_exceptions = expected_exception
-    for exc in excepted_exceptions:
+        expected_exceptions = expected_exception
+    for exc in expected_exceptions:
         if not isinstance(exc, type) or not issubclass(exc, BaseException):
             msg = "expected exception must be a BaseException type, not {}"  # type: ignore[unreachable]
             not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
@@ -944,11 +950,7 @@ def raises(  # noqa: F811
         try:
             func(*args[1:], **kwargs)
         except expected_exception as e:
-            # We just caught the exception - there is a traceback.
-            assert e.__traceback__ is not None
-            return _pytest._code.ExceptionInfo.from_exc_info(
-                (type(e), e, e.__traceback__)
-            )
+            return _pytest._code.ExceptionInfo.from_exception(e)
     fail(message)
 
 
@@ -957,7 +959,7 @@ raises.Exception = fail.Exception  # type: ignore
 
 
 @final
-class RaisesContext(Generic[E]):
+class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
     def __init__(
         self,
         expected_exception: Union[Type[E], Tuple[Type[E], ...]],

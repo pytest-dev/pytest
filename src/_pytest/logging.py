@@ -5,7 +5,11 @@ import os
 import re
 from contextlib import contextmanager
 from contextlib import nullcontext
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from io import StringIO
+from logging import LogRecord
 from pathlib import Path
 from typing import AbstractSet
 from typing import Dict
@@ -53,7 +57,25 @@ def _remove_ansi_escape_sequences(text: str) -> str:
     return _ANSI_ESCAPE_SEQ.sub("", text)
 
 
-class ColoredLevelFormatter(logging.Formatter):
+class DatetimeFormatter(logging.Formatter):
+    """A logging formatter which formats record with
+    :func:`datetime.datetime.strftime` formatter instead of
+    :func:`time.strftime` in case of microseconds in format string.
+    """
+
+    def formatTime(self, record: LogRecord, datefmt=None) -> str:
+        if datefmt and "%f" in datefmt:
+            ct = self.converter(record.created)
+            tz = timezone(timedelta(seconds=ct.tm_gmtoff), ct.tm_zone)
+            # Construct `datetime.datetime` object from `struct_time`
+            # and msecs information from `record`
+            dt = datetime(*ct[0:6], microsecond=round(record.msecs * 1000), tzinfo=tz)
+            return dt.strftime(datefmt)
+        # Use `logging.Formatter` for non-microsecond formats
+        return super().formatTime(record, datefmt)
+
+
+class ColoredLevelFormatter(DatetimeFormatter):
     """A logging formatter which colorizes the %(levelname)..s part of the
     log format passed to __init__."""
 
@@ -297,6 +319,13 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         help="Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
     )
+    group.addoption(
+        "--log-disable",
+        action="append",
+        default=[],
+        dest="logger_disable",
+        help="Disable a logger by name. Can be passed multiple times.",
+    )
 
 
 _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
@@ -369,11 +398,12 @@ class LogCaptureFixture:
         self._initial_handler_level: Optional[int] = None
         # Dict of log name -> log level.
         self._initial_logger_levels: Dict[Optional[str], int] = {}
+        self._initial_disabled_logging_level: Optional[int] = None
 
     def _finalize(self) -> None:
         """Finalize the fixture.
 
-        This restores the log levels changed by :meth:`set_level`.
+        This restores the log levels and the disabled logging levels changed by :meth:`set_level`.
         """
         # Restore log levels.
         if self._initial_handler_level is not None:
@@ -381,6 +411,10 @@ class LogCaptureFixture:
         for logger_name, level in self._initial_logger_levels.items():
             logger = logging.getLogger(logger_name)
             logger.setLevel(level)
+        # Disable logging at the original disabled logging level.
+        if self._initial_disabled_logging_level is not None:
+            logging.disable(self._initial_disabled_logging_level)
+            self._initial_disabled_logging_level = None
 
     @property
     def handler(self) -> LogCaptureHandler:
@@ -446,12 +480,50 @@ class LogCaptureFixture:
         """Reset the list of log records and the captured log text."""
         self.handler.clear()
 
+    def _force_enable_logging(
+        self, level: Union[int, str], logger_obj: logging.Logger
+    ) -> int:
+        """Enable the desired logging level if the global level was disabled via ``logging.disabled``.
+
+        Only enables logging levels greater than or equal to the requested ``level``.
+
+        Does nothing if the desired ``level`` wasn't disabled.
+
+        :param level:
+            The logger level caplog should capture.
+            All logging is enabled if a non-standard logging level string is supplied.
+            Valid level strings are in :data:`logging._nameToLevel`.
+        :param logger_obj: The logger object to check.
+
+        :return: The original disabled logging level.
+        """
+        original_disable_level: int = logger_obj.manager.disable  # type: ignore[attr-defined]
+
+        if isinstance(level, str):
+            # Try to translate the level string to an int for `logging.disable()`
+            level = logging.getLevelName(level)
+
+        if not isinstance(level, int):
+            # The level provided was not valid, so just un-disable all logging.
+            logging.disable(logging.NOTSET)
+        elif not logger_obj.isEnabledFor(level):
+            # Each level is `10` away from other levels.
+            # https://docs.python.org/3/library/logging.html#logging-levels
+            disable_level = max(level - 10, logging.NOTSET)
+            logging.disable(disable_level)
+
+        return original_disable_level
+
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
-        """Set the level of a logger for the duration of a test.
+        """Set the threshold level of a logger for the duration of a test.
+
+        Logging messages which are less severe than this level will not be captured.
 
         .. versionchanged:: 3.4
             The levels of the loggers changed by this function will be
             restored to their initial values at the end of the test.
+
+        Will enable the requested logging level if it was disabled via :meth:`logging.disable`.
 
         :param level: The level.
         :param logger: The logger to update. If not given, the root logger.
@@ -463,6 +535,9 @@ class LogCaptureFixture:
         if self._initial_handler_level is None:
             self._initial_handler_level = self.handler.level
         self.handler.setLevel(level)
+        initial_disabled_logging_level = self._force_enable_logging(level, logger_obj)
+        if self._initial_disabled_logging_level is None:
+            self._initial_disabled_logging_level = initial_disabled_logging_level
 
     @contextmanager
     def at_level(
@@ -472,6 +547,8 @@ class LogCaptureFixture:
         the end of the 'with' statement the level is restored to its original
         value.
 
+        Will enable the requested logging level if it was disabled via :meth:`logging.disable`.
+
         :param level: The level.
         :param logger: The logger to update. If not given, the root logger.
         """
@@ -480,11 +557,13 @@ class LogCaptureFixture:
         logger_obj.setLevel(level)
         handler_orig_level = self.handler.level
         self.handler.setLevel(level)
+        original_disable_level = self._force_enable_logging(level, logger_obj)
         try:
             yield
         finally:
             logger_obj.setLevel(orig_level)
             self.handler.setLevel(handler_orig_level)
+            logging.disable(original_disable_level)
 
 
 @fixture
@@ -570,7 +649,7 @@ class LoggingPlugin:
             config, "log_file_date_format", "log_date_format"
         )
 
-        log_file_formatter = logging.Formatter(
+        log_file_formatter = DatetimeFormatter(
             log_file_format, datefmt=log_file_date_format
         )
         self.log_file_handler.setFormatter(log_file_formatter)
@@ -594,6 +673,15 @@ class LoggingPlugin:
             get_option_ini(config, "log_auto_indent"),
         )
         self.log_cli_handler.setFormatter(log_cli_formatter)
+        self._disable_loggers(loggers_to_disable=config.option.logger_disable)
+
+    def _disable_loggers(self, loggers_to_disable: List[str]) -> None:
+        if not loggers_to_disable:
+            return
+
+        for name in loggers_to_disable:
+            logger = logging.getLogger(name)
+            logger.disabled = True
 
     def _create_formatter(self, log_format, log_date_format, auto_indent):
         # Color option doesn't exist if terminal plugin is disabled.
@@ -605,7 +693,7 @@ class LoggingPlugin:
                 create_terminal_writer(self._config), log_format, log_date_format
             )
         else:
-            formatter = logging.Formatter(log_format, log_date_format)
+            formatter = DatetimeFormatter(log_format, log_date_format)
 
         formatter._style = PercentStyleMultiline(
             formatter._style._fmt, auto_indent=auto_indent

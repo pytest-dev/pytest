@@ -92,7 +92,7 @@ class TestSetattrWithImportPath:
             mp.delattr("os.path.abspath")
             assert not hasattr(os.path, "abspath")
             mp.undo()
-            assert os.path.abspath
+            assert os.path.abspath  # type:ignore[truthy-function]
 
 
 def test_delattr() -> None:
@@ -324,7 +324,8 @@ def test_importerror(pytester: Pytester) -> None:
 
         x = 1
     """
-        )
+        ),
+        encoding="utf-8",
     )
     pytester.path.joinpath("test_importerror.py").write_text(
         textwrap.dedent(
@@ -332,7 +333,8 @@ def test_importerror(pytester: Pytester) -> None:
         def test_importerror(monkeypatch):
             monkeypatch.setattr('package.a.x', 2)
     """
-        )
+        ),
+        encoding="utf-8",
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
@@ -425,6 +427,7 @@ def test_context_classmethod() -> None:
     assert A.x == 1
 
 
+@pytest.mark.filterwarnings(r"ignore:.*\bpkg_resources\b:DeprecationWarning")
 def test_syspath_prepend_with_namespace_packages(
     pytester: Pytester, monkeypatch: MonkeyPatch
 ) -> None:
@@ -433,11 +436,13 @@ def test_syspath_prepend_with_namespace_packages(
         ns = d.joinpath("ns_pkg")
         ns.mkdir()
         ns.joinpath("__init__.py").write_text(
-            "__import__('pkg_resources').declare_namespace(__name__)"
+            "__import__('pkg_resources').declare_namespace(__name__)", encoding="utf-8"
         )
         lib = ns.joinpath(dirname)
         lib.mkdir()
-        lib.joinpath("__init__.py").write_text("def check(): return %r" % dirname)
+        lib.joinpath("__init__.py").write_text(
+            "def check(): return %r" % dirname, encoding="utf-8"
+        )
 
     monkeypatch.syspath_prepend("hello")
     import ns_pkg.hello
@@ -456,5 +461,5 @@ def test_syspath_prepend_with_namespace_packages(
     # Should invalidate caches via importlib.invalidate_caches.
     modules_tmpdir = pytester.mkdir("modules_tmpdir")
     monkeypatch.syspath_prepend(str(modules_tmpdir))
-    modules_tmpdir.joinpath("main_app.py").write_text("app = True")
+    modules_tmpdir.joinpath("main_app.py").write_text("app = True", encoding="utf-8")
     from main_app import app  # noqa: F401

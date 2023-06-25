@@ -109,6 +109,18 @@ When a warning matches more than one option in the list, the action for the last
 is performed.
 
 
+.. note::
+
+    The ``-W`` flag and the ``filterwarnings`` ini option use warning filters that are
+    similar in structure, but each configuration option interprets its filter
+    differently. For example, *message* in ``filterwarnings`` is a string containing a
+    regular expression that the start of the warning message must match,
+    case-insensitively, while *message* in ``-W`` is a literal string that the start of
+    the warning message must contain (case-insensitively), ignoring any whitespace at
+    the start or end of message. Consult the `warning filter`_ documentation for more
+    details.
+
+
 .. _`filterwarnings`:
 
 ``@pytest.mark.filterwarnings``
@@ -270,19 +282,33 @@ which works in a similar manner to :ref:`raises <assertraises>` (except that
             warnings.warn("my warning", UserWarning)
 
 The test will fail if the warning in question is not raised. Use the keyword
-argument ``match`` to assert that the warning matches a text or regex::
+argument ``match`` to assert that the warning matches a text or regex.
+To match a literal string that may contain regular expression metacharacters like ``(`` or ``.``, the pattern can
+first be escaped with ``re.escape``.
 
-    >>> with warns(UserWarning, match='must be 0 or None'):
+Some examples:
+
+.. code-block:: pycon
+
+
+    >>> with warns(UserWarning, match="must be 0 or None"):
     ...     warnings.warn("value must be 0 or None", UserWarning)
+    ...
 
-    >>> with warns(UserWarning, match=r'must be \d+$'):
+    >>> with warns(UserWarning, match=r"must be \d+$"):
     ...     warnings.warn("value must be 42", UserWarning)
+    ...
 
-    >>> with warns(UserWarning, match=r'must be \d+$'):
+    >>> with warns(UserWarning, match=r"must be \d+$"):
     ...     warnings.warn("this is not here", UserWarning)
+    ...
     Traceback (most recent call last):
       ...
     Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+
+    >>> with warns(UserWarning, match=re.escape("issue with foo() func")):
+    ...     warnings.warn("issue with foo() func")
+    ...
 
 You can also call :func:`pytest.warns` on a function or code string:
 

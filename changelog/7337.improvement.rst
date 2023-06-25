@@ -1,1 +1,0 @@
-A warning is now emitted if a test function returns something other than `None`. This prevents a common mistake among beginners that expect that returning a `bool` (for example `return foo(a, b) == result`) would cause a test to pass or fail, instead of using `assert`.

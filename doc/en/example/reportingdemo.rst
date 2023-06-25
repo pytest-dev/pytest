@@ -144,7 +144,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E           1
     E           1...
     E
-    E         ...Full output truncated (7 lines hidden), use '-vv' to show
+    E         ...Full output truncated (6 lines hidden), use '-vv' to show
 
     failure_demo.py:60: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_list _________________
@@ -184,9 +184,8 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E         Left contains 1 more item:
     E         {'c': 0}
     E         Right contains 1 more item:
-    E         {'d': 0}...
-    E
-    E         ...Full output truncated (2 lines hidden), use '-vv' to show
+    E         {'d': 0}
+    E         Use -v to get more diff
 
     failure_demo.py:71: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_set __________________
@@ -195,16 +194,15 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
         def test_eq_set(self):
     >       assert {0, 10, 11, 12} == {0, 20, 21}
-    E       AssertionError: assert {0, 10, 11, 12} == {0, 20, 21}
+    E       assert {0, 10, 11, 12} == {0, 20, 21}
     E         Extra items in the left set:
     E         10
     E         11
     E         12
     E         Extra items in the right set:
     E         20
-    E         21...
-    E
-    E         ...Full output truncated (2 lines hidden), use '-vv' to show
+    E         21
+    E         Use -v to get more diff
 
     failure_demo.py:74: AssertionError
     _____________ TestSpecialisedExplanations.test_eq_longer_list ______________
@@ -241,9 +239,8 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E           which
     E           includes foo
     E         ?          +++
-    E           and a...
-    E
-    E         ...Full output truncated (2 lines hidden), use '-vv' to show
+    E           and a
+    E           tail
 
     failure_demo.py:84: AssertionError
     ___________ TestSpecialisedExplanations.test_not_in_text_single ____________
@@ -307,9 +304,9 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E         ['b']
     E
     E         Drill down into differing attribute b:
-    E           b: 'b' != 'c'...
-    E
-    E         ...Full output truncated (3 lines hidden), use '-vv' to show
+    E           b: 'b' != 'c'
+    E           - c
+    E           + b
 
     failure_demo.py:108: AssertionError
     ________________ TestSpecialisedExplanations.test_eq_attrs _________________
@@ -334,9 +331,9 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E         ['b']
     E
     E         Drill down into differing attribute b:
-    E           b: 'b' != 'c'...
-    E
-    E         ...Full output truncated (3 lines hidden), use '-vv' to show
+    E           b: 'b' != 'c'
+    E           - c
+    E           + b
 
     failure_demo.py:120: AssertionError
     ______________________________ test_attribute ______________________________
@@ -673,7 +670,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_list - asser...
     FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_list_long - ...
     FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_dict - Asser...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_set - Assert...
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_set - assert...
     FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_longer_list
     FAILED failure_demo.py::TestSpecialisedExplanations::test_in_list - asser...
     FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_multiline

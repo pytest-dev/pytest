@@ -661,8 +661,7 @@ If we run this:
 
     test_step.py:11: AssertionError
     ========================= short test summary info ==========================
-    XFAIL test_step.py::TestUserHandling::test_deletion
-      reason: previous test failed (test_modification)
+    XFAIL test_step.py::TestUserHandling::test_deletion - reason: previous test failed (test_modification)
     ================== 1 failed, 2 passed, 1 xfailed in 0.12s ==================
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
@@ -692,7 +691,7 @@ Here is an example for making a ``db`` fixture available in a directory:
         pass
 
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="package")
     def db():
         return DB()
 
@@ -893,8 +892,11 @@ here is a little example implemented via a local plugin:
 .. code-block:: python
 
     # content of conftest.py
-
+    from typing import Dict
     import pytest
+    from pytest import StashKey, CollectReport
+
+    phase_report_key = StashKey[Dict[str, CollectReport]]()
 
 
     @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -903,10 +905,9 @@ here is a little example implemented via a local plugin:
         outcome = yield
         rep = outcome.get_result()
 
-        # set a report attribute for each phase of a call, which can
+        # store test results for each phase of a call, which can
         # be "setup", "call", "teardown"
-
-        setattr(item, "rep_" + rep.when, rep)
+        item.stash.setdefault(phase_report_key, {})[rep.when] = rep
 
 
     @pytest.fixture
@@ -914,11 +915,11 @@ here is a little example implemented via a local plugin:
         yield
         # request.node is an "item" because we use the default
         # "function" scope
-        if request.node.rep_setup.failed:
-            print("setting up a test failed!", request.node.nodeid)
-        elif request.node.rep_setup.passed:
-            if request.node.rep_call.failed:
-                print("executing test failed", request.node.nodeid)
+        report = request.node.stash[phase_report_key]
+        if report["setup"].failed:
+            print("setting up a test failed or skipped", request.node.nodeid)
+        elif ("call" not in report) or report["call"].failed:
+            print("executing test failed or skipped", request.node.nodeid)
 
 
 if you then have failing tests:
@@ -956,8 +957,8 @@ and run it:
     rootdir: /home/sweet/project
     collected 3 items
 
-    test_module.py Esetting up a test failed! test_module.py::test_setup_fails
-    Fexecuting test failed test_module.py::test_call_fails
+    test_module.py Esetting up a test failed or skipped test_module.py::test_setup_fails
+    Fexecuting test failed or skipped test_module.py::test_call_fails
     F
 
     ================================== ERRORS ==================================

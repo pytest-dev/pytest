@@ -244,7 +244,8 @@ class TestTerminal:
                     def test_method(self):
                         pass
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         result = pytester.runpytest("-vv")
         assert result.ret == 0
@@ -387,13 +388,13 @@ class TestTerminal:
                 pytest.xfail("It's 🕙 o'clock")
 
             @pytest.mark.skip(
-                reason="cannot do foobar because baz is missing due to I don't know what"
+                reason="1 cannot do foobar because baz is missing due to I don't know what"
             )
             def test_long_skip():
                 pass
 
             @pytest.mark.xfail(
-                reason="cannot do foobar because baz is missing due to I don't know what"
+                reason="2 cannot do foobar because baz is missing due to I don't know what"
             )
             def test_long_xfail():
                 print(1 / 0)
@@ -417,8 +418,8 @@ class TestTerminal:
         result.stdout.fnmatch_lines(
             common_output
             + [
-                "test_verbose_skip_reason.py::test_long_skip SKIPPED (cannot *...) *",
-                "test_verbose_skip_reason.py::test_long_xfail XFAIL (cannot *...) *",
+                "test_verbose_skip_reason.py::test_long_skip SKIPPED (1 cannot *...) *",
+                "test_verbose_skip_reason.py::test_long_xfail XFAIL (2 cannot *...) *",
             ]
         )
 
@@ -428,12 +429,14 @@ class TestTerminal:
             + [
                 (
                     "test_verbose_skip_reason.py::test_long_skip SKIPPED"
-                    " (cannot do foobar because baz is missing due to I don't know what) *"
+                    " (1 cannot do foobar"
                 ),
+                "because baz is missing due to I don't know what) *",
                 (
                     "test_verbose_skip_reason.py::test_long_xfail XFAIL"
-                    " (cannot do foobar because baz is missing due to I don't know what) *"
+                    " (2 cannot do foobar"
                 ),
+                "because baz is missing due to I don't know what) *",
             ]
         )
 
@@ -909,7 +912,7 @@ class TestTerminalFunctional:
         # with configfile
         pytester.makeini("""[pytest]""")
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0", "configfile: tox.ini"])
 
         # with testpaths option, and not passing anything in the command-line
         pytester.makeini(
@@ -920,12 +923,12 @@ class TestTerminalFunctional:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            ["rootdir: *test_header0, configfile: tox.ini, testpaths: tests, gui"]
+            ["rootdir: *test_header0", "configfile: tox.ini", "testpaths: tests, gui"]
         )
 
         # with testpaths option, passing directory in command-line: do not show testpaths then
         result = pytester.runpytest("tests")
-        result.stdout.fnmatch_lines(["rootdir: *test_header0, configfile: tox.ini"])
+        result.stdout.fnmatch_lines(["rootdir: *test_header0", "configfile: tox.ini"])
 
     def test_header_absolute_testpath(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
@@ -944,9 +947,9 @@ class TestTerminalFunctional:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "rootdir: *absolute_testpath0, configfile: pyproject.toml, testpaths: {}".format(
-                    tests
-                )
+                "rootdir: *absolute_testpath0",
+                "configfile: pyproject.toml",
+                f"testpaths: {tests}",
             ]
         )
 
@@ -997,6 +1000,22 @@ class TestTerminalFunctional:
                 "y* = 'xxxxxx*",
             ]
         )
+
+    def test_noshowlocals_addopts_override(self, pytester: Pytester) -> None:
+        pytester.makeini("[pytest]\naddopts=--showlocals")
+        p1 = pytester.makepyfile(
+            """
+            def test_noshowlocals():
+                x = 3
+                y = "x" * 5000
+                assert 0
+        """
+        )
+
+        # Override global --showlocals for py.test via arg
+        result = pytester.runpytest(p1, "--no-showlocals")
+        result.stdout.no_fnmatch_line("x* = 3")
+        result.stdout.no_fnmatch_line("y* = 'xxxxxx*")
 
     def test_showlocals_short(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile(
@@ -1249,14 +1268,14 @@ def test_color_yes(pytester: Pytester, color_mapping) -> None:
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "",
-                "    {kw}def{hl-reset} {function}test_this{hl-reset}():",
-                ">       fail()",
+                "    {kw}def{hl-reset} {function}test_this{hl-reset}():{endline}",
+                ">       fail(){endline}",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:5: ",
                 "_ _ * _ _*",
                 "",
-                "    {kw}def{hl-reset} {function}fail{hl-reset}():",
-                ">       {kw}assert{hl-reset} {number}0{hl-reset}",
+                "    {kw}def{hl-reset} {function}fail{hl-reset}():{endline}",
+                ">       {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                 "{bold}{red}E       assert 0{reset}",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:2: AssertionError",
@@ -1276,9 +1295,9 @@ def test_color_yes(pytester: Pytester, color_mapping) -> None:
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "{bold}{red}test_color_yes.py{reset}:5: in test_this",
-                "    fail()",
+                "    fail(){endline}",
                 "{bold}{red}test_color_yes.py{reset}:2: in fail",
-                "    {kw}assert{hl-reset} {number}0{hl-reset}",
+                "    {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                 "{bold}{red}E   assert 0{reset}",
                 "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
             ]
@@ -1523,6 +1542,19 @@ class TestGenericReporting:
         s = result.stdout.str()
         assert "def test_func2" not in s
 
+    def test_tb_crashline_pytrace_false(self, pytester: Pytester, option) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+            def test_func1():
+                pytest.fail('test_func1', pytrace=False)
+        """
+        )
+        result = pytester.runpytest("--tb=line")
+        result.stdout.str()
+        bn = p.name
+        result.stdout.fnmatch_lines(["*%s:3: Failed: test_func1" % bn])
+
     def test_pytest_report_header(self, pytester: Pytester, option) -> None:
         pytester.makeconftest(
             """
@@ -1536,7 +1568,8 @@ class TestGenericReporting:
             """
 def pytest_report_header(config, start_path):
     return ["line1", str(start_path)]
-"""
+""",
+            encoding="utf-8",
         )
         result = pytester.runpytest("a")
         result.stdout.fnmatch_lines(["*hello: 42*", "line1", str(pytester.path)])
@@ -1640,7 +1673,7 @@ def test_fdopen_kept_alive_issue124(pytester: Pytester) -> None:
         import os, sys
         k = []
         def test_open_file_and_keep_alive(capfd):
-            stdout = os.fdopen(1, 'w', 1)
+            stdout = os.fdopen(1, 'w', buffering=1, encoding='utf-8')
             k.append(stdout)
 
         def test_close_kept_alive_file():
@@ -2197,6 +2230,24 @@ class TestProgressOutputStyle:
         output = pytester.runpytest("--capture=no")
         output.stdout.no_fnmatch_line("*%]*")
 
+    def test_capture_no_progress_enabled(
+        self, many_tests_files, pytester: Pytester
+    ) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = progress-even-when-capture-no
+        """
+        )
+        output = pytester.runpytest("-s")
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py \.{10} \s+ \[ 50%\]",
+                r"test_foo.py \.{5} \s+ \[ 75%\]",
+                r"test_foobar.py \.{5} \s+ \[100%\]",
+            ]
+        )
+
 
 class TestProgressWithTeardown:
     """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
@@ -2456,8 +2507,8 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
-                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}",
+                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
             )
@@ -2478,9 +2529,9 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
+                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
                     "        {print}print{hl-reset}({str}'''{hl-reset}{str}{hl-reset}",
-                    ">   {str}    {hl-reset}{str}'''{hl-reset}); {kw}assert{hl-reset} {number}0{hl-reset}",
+                    ">   {str}    {hl-reset}{str}'''{hl-reset}); {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                     "{bold}{red}E       assert 0{reset}",
                 ]
             )
@@ -2501,8 +2552,8 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():",
-                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}",
+                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
             )

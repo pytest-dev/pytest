@@ -1,12 +1,11 @@
 """Generic mechanism for marking and selecting python functions."""
+import dataclasses
 from typing import AbstractSet
 from typing import Collection
 from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
-
-import attr
 
 from .expression import Expression
 from .expression import ParseError
@@ -130,7 +129,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
     return None
 
 
-@attr.s(slots=True, auto_attribs=True)
+@dataclasses.dataclass
 class KeywordMatcher:
     """A matcher for keywords.
 
@@ -144,6 +143,8 @@ class KeywordMatcher:
     Additionally, matches on names in the 'extra_keyword_matches' set of
     any item, as well as names directly assigned to test functions.
     """
+
+    __slots__ = ("_names",)
 
     _names: AbstractSet[str]
 
@@ -201,12 +202,14 @@ def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
         items[:] = remaining
 
 
-@attr.s(slots=True, auto_attribs=True)
+@dataclasses.dataclass
 class MarkMatcher:
     """A matcher for markers which are present.
 
     Tries to match on any marker names, attached to the given colitem.
     """
+
+    __slots__ = ("own_mark_names",)
 
     own_mark_names: AbstractSet[str]
 

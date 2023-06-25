@@ -17,7 +17,9 @@ Plugin List
 ===========
 
 PyPI projects that match "pytest-\*" are considered plugins and are listed
-automatically. Packages classified as inactive are excluded.
+automatically together with a manually-maintained list in `the source
+code <https://github.com/pytest-dev/pytest/blob/main/scripts/update-plugin-list.py>`_.
+Packages classified as inactive are excluded.
 
 .. The following conditional uses a different format for this list when
    creating a PDF, because otherwise the table gets far too wide for the
@@ -33,6 +35,9 @@ DEVELOPMENT_STATUS_CLASSIFIERS = (
     "Development Status :: 6 - Mature",
     "Development Status :: 7 - Inactive",
 )
+ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
+    "logassert",
+}
 
 
 def escape_rst(text: str) -> str:
@@ -52,18 +57,18 @@ def iter_plugins():
     regex = r">([\d\w-]*)</a>"
     response = requests.get("https://pypi.org/simple")
 
-    matches = list(
-        match
-        for match in re.finditer(regex, response.text)
-        if match.groups()[0].startswith("pytest-")
-    )
+    match_names = (match.groups()[0] for match in re.finditer(regex, response.text))
+    plugin_names = [
+        name
+        for name in match_names
+        if name.startswith("pytest-") or name in ADDITIONAL_PROJECTS
+    ]
 
-    for match in tqdm(matches, smoothing=0):
-        name = match.groups()[0]
+    for name in tqdm(plugin_names, smoothing=0):
         response = requests.get(f"https://pypi.org/pypi/{name}/json")
         if response.status_code == 404:
-            # Some packages, like pytest-azurepipelines42, are included in https://pypi.org/simple but
-            # return 404 on the JSON API. Skip.
+            # Some packages, like pytest-azurepipelines42, are included in https://pypi.org/simple
+            # but return 404 on the JSON API. Skip.
             continue
         response.raise_for_status()
         info = response.json()["info"]
@@ -78,11 +83,23 @@ def iter_plugins():
         requires = "N/A"
         if info["requires_dist"]:
             for requirement in info["requires_dist"]:
-                if requirement == "pytest" or "pytest " in requirement:
+                if re.match(r"pytest(?![-.\w])", requirement):
                     requires = requirement
                     break
+
+        def version_sort_key(version_string):
+            """
+            Return the sort key for the given version string
+            returned by the API.
+            """
+            try:
+                return packaging.version.parse(version_string)
+            except packaging.version.InvalidVersion:
+                # Use a hard-coded pre-release version.
+                return packaging.version.Version("0.0.0alpha")
+
         releases = response.json()["releases"]
-        for release in sorted(releases, key=packaging.version.parse, reverse=True):
+        for release in sorted(releases, key=version_sort_key, reverse=True):
             if releases[release]:
                 release_date = datetime.date.fromisoformat(
                     releases[release][-1]["upload_time_iso_8601"].split("T")[0]
@@ -90,7 +107,9 @@ def iter_plugins():
                 last_release = release_date.strftime("%b %d, %Y")
                 break
         name = f':pypi:`{info["name"]}`'
-        summary = escape_rst(info["summary"].replace("\n", ""))
+        summary = ""
+        if info["summary"]:
+            summary = escape_rst(info["summary"].replace("\n", ""))
         yield {
             "name": name,
             "summary": summary.strip(),
@@ -122,7 +141,7 @@ def main():
     reference_dir = pathlib.Path("doc", "en", "reference")
 
     plugin_list = reference_dir / "plugin_list.rst"
-    with plugin_list.open("w") as f:
+    with plugin_list.open("w", encoding="UTF-8") as f:
         f.write(FILE_HEAD)
         f.write(f"This list contains {len(plugins)} plugins.\n\n")
         f.write(".. only:: not latex\n\n")

@@ -1,4 +1,5 @@
 """Python test discovery, setup and run of test functions."""
+import dataclasses
 import enum
 import fnmatch
 import inspect
@@ -27,8 +28,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import attr
-
 import _pytest
 from _pytest import fixtures
 from _pytest import nodes
@@ -36,6 +35,7 @@ from _pytest._code import filter_traceback
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
@@ -57,7 +57,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import INSTANCE_COLLECTOR
 from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FuncFixtureInfo
@@ -403,8 +402,8 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
     def istestfunction(self, obj: object, name: str) -> bool:
         if self.funcnamefilter(name) or self.isnosetest(obj):
-            if isinstance(obj, staticmethod):
-                # staticmethods need to be unwrapped.
+            if isinstance(obj, (staticmethod, classmethod)):
+                # staticmethods and classmethods need to be unwrapped.
                 obj = safe_getattr(obj, "__func__", False)
             return callable(obj) and fixtures.getfixturemarker(obj) is None
         else:
@@ -668,7 +667,7 @@ class Package(Module):
         config=None,
         session=None,
         nodeid=None,
-        path=Optional[Path],
+        path: Optional[Path] = None,
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
@@ -700,23 +699,12 @@ class Package(Module):
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
 
-    def gethookproxy(self, fspath: "os.PathLike[str]"):
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.gethookproxy(fspath)
-
-    def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.isinitpath(path)
-
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
         ihook = self.session.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-            return False
-        norecursepatterns = self.config.getini("norecursedirs")
-        if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
             return False
         return True
 
@@ -746,11 +734,13 @@ class Package(Module):
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.path.parent
-        init_module = this_path / "__init__.py"
-        if init_module.is_file() and path_matches_patterns(
-            init_module, self.config.getini("python_files")
+
+        # Always collect the __init__ first.
+        if self.session.isinitpath(self.path) or path_matches_patterns(
+            self.path, self.config.getini("python_files")
         ):
-            yield Module.from_parent(self, path=init_module)
+            yield Module.from_parent(self, path=self.path)
+
         pkg_prefixes: Set[Path] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
             path = Path(direntry.path)
@@ -790,7 +780,8 @@ def _call_with_optional_argument(func, arg) -> None:
 
 def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> Optional[object]:
     """Return the attribute from the given object to be used as a setup/teardown
-    xunit-style function, but only if not marked as a fixture to avoid calling it twice."""
+    xunit-style function, but only if not marked as a fixture to avoid calling it twice.
+    """
     for name in names:
         meth: Optional[object] = getattr(obj, name, None)
         if meth is not None and fixtures.getfixturemarker(meth) is None:
@@ -848,7 +839,7 @@ class Class(PyCollector):
         other fixtures (#517).
         """
         setup_class = _get_first_non_fixture_func(self.obj, ("setup_class",))
-        teardown_class = getattr(self.obj, "teardown_class", None)
+        teardown_class = _get_first_non_fixture_func(self.obj, ("teardown_class",))
         if setup_class is None and teardown_class is None:
             return
 
@@ -885,12 +876,12 @@ class Class(PyCollector):
             emit_nose_setup_warning = True
             setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
         teardown_name = "teardown_method"
-        teardown_method = getattr(self.obj, teardown_name, None)
+        teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
         emit_nose_teardown_warning = False
         if teardown_method is None and has_nose:
             teardown_name = "teardown"
             emit_nose_teardown_warning = True
-            teardown_method = getattr(self.obj, teardown_name, None)
+            teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
         if setup_method is None and teardown_method is None:
             return
 
@@ -956,9 +947,19 @@ def hasnew(obj: object) -> bool:
 
 
 @final
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@dataclasses.dataclass(frozen=True)
 class IdMaker:
     """Make IDs for a parametrization."""
+
+    __slots__ = (
+        "argnames",
+        "parametersets",
+        "idfn",
+        "ids",
+        "config",
+        "nodeid",
+        "func_name",
+    )
 
     # The argnames of the parametrization.
     argnames: Sequence[str]
@@ -1109,7 +1110,7 @@ class IdMaker:
 
 
 @final
-@attr.s(frozen=True, slots=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class CallSpec2:
     """A planned parameterized invocation of a test function.
 
@@ -1120,18 +1121,18 @@ class CallSpec2:
 
     # arg name -> arg value which will be passed to the parametrized test
     # function (direct parameterization).
-    funcargs: Dict[str, object] = attr.Factory(dict)
+    funcargs: Dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg value which will be passed to a fixture of the same name
     # (indirect parametrization).
-    params: Dict[str, object] = attr.Factory(dict)
+    params: Dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
-    indices: Dict[str, int] = attr.Factory(dict)
+    indices: Dict[str, int] = dataclasses.field(default_factory=dict)
     # Used for sorting parametrized resources.
-    _arg2scope: Dict[str, Scope] = attr.Factory(dict)
+    _arg2scope: Dict[str, Scope] = dataclasses.field(default_factory=dict)
     # Parts which will be added to the item's name in `[..]` separated by "-".
-    _idlist: List[str] = attr.Factory(list)
+    _idlist: List[str] = dataclasses.field(default_factory=list)
     # Marks which will be applied to the item.
-    marks: List[Mark] = attr.Factory(list)
+    marks: List[Mark] = dataclasses.field(default_factory=list)
 
     def setmulti(
         self,
@@ -1163,9 +1164,9 @@ class CallSpec2:
         return CallSpec2(
             funcargs=funcargs,
             params=params,
-            arg2scope=arg2scope,
             indices=indices,
-            idlist=[*self._idlist, id],
+            _arg2scope=arg2scope,
+            _idlist=[*self._idlist, id],
             marks=[*self.marks, *normalize_mark_list(marks)],
         )
 
@@ -1791,7 +1792,7 @@ class Function(PyobjMixin, nodes.Item):
     def setup(self) -> None:
         self._request._fillfixtures()
 
-    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
+    def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
             code = _pytest._code.Code.from_function(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
@@ -1803,14 +1804,21 @@ class Function(PyobjMixin, nodes.Item):
                     ntraceback = ntraceback.filter(filter_traceback)
                     if not ntraceback:
                         ntraceback = traceback
+            ntraceback = ntraceback.filter(excinfo)
 
-            excinfo.traceback = ntraceback.filter()
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame.
             if self.config.getoption("tbstyle", "auto") == "auto":
-                if len(excinfo.traceback) > 2:
-                    for entry in excinfo.traceback[1:-1]:
-                        entry.set_repr_style("short")
+                if len(ntraceback) > 2:
+                    ntraceback = Traceback(
+                        entry
+                        if i == 0 or i == len(ntraceback) - 1
+                        else entry.with_repr_style("short")
+                        for i, entry in enumerate(ntraceback)
+                    )
+
+            return ntraceback
+        return excinfo.traceback
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override]

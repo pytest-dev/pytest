@@ -22,10 +22,11 @@ The first few lines should look like this:
     requires = ["hatchling"]
     build-backend = "hatchling.build"
 
-    [metadata]
+    [project]
     name = "PACKAGENAME"
+    version = "PACKAGEVERSION"
 
-where ``PACKAGENAME`` is the name of your package.
+where ``PACKAGENAME`` and ``PACKAGEVERSION`` are the name and version of your package respectively.
 
 You can then install your package in "editable" mode by running from the same directory:
 
@@ -50,8 +51,8 @@ Conventions for Python test discovery
 * In those directories, search for ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
 * From those files, collect test items:
 
-  * ``test`` prefixed test functions or methods outside of class
-  * ``test`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
+  * ``test`` prefixed test functions or methods outside of class.
+  * ``test`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method). Methods decorated with ``@staticmethod`` and ``@classmethods`` are also considered.
 
 For examples of how to customize your test discovery :doc:`/example/pythoncollection`.
 
@@ -270,8 +271,8 @@ tox
 
 Once you are done with your work and want to make sure that your actual
 package passes all tests you may want to look into :doc:`tox <tox:index>`, the
-virtualenv test automation tool and its :doc:`pytest support <tox:example/pytest>`.
-tox helps you to setup virtualenv environments with pre-defined
+virtualenv test automation tool.
+``tox`` helps you to setup virtualenv environments with pre-defined
 dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
@@ -293,3 +294,20 @@ See also `pypa/setuptools#1684 <https://github.com/pypa/setuptools/issues/1684>`
 
 setuptools intends to
 `remove the test command <https://github.com/pypa/setuptools/issues/931>`_.
+
+Checking with flake8-pytest-style
+---------------------------------
+
+In order to ensure that pytest is being used correctly in your project,
+it can be helpful to use the `flake8-pytest-style <https://github.com/m-burst/flake8-pytest-style>`_ flake8 plugin.
+
+flake8-pytest-style checks for common mistakes and coding style violations in pytest code,
+such as incorrect use of fixtures, test function names, and markers.
+By using this plugin, you can catch these errors early in the development process
+and ensure that your pytest code is consistent and easy to maintain.
+
+A list of the lints detected by flake8-pytest-style can be found on its `PyPI page <https://pypi.org/project/flake8-pytest-style/>`_.
+
+.. note::
+
+    flake8-pytest-style is not an official pytest project. Some of the rules enforce certain style choices, such as using `@pytest.fixture()` over `@pytest.fixture`, but you can configure the plugin to fit your preferred style.

@@ -1,4 +1,5 @@
 """Support for skip/xfail functions and markers."""
+import dataclasses
 import os
 import platform
 import sys
@@ -8,8 +9,6 @@ from typing import Generator
 from typing import Optional
 from typing import Tuple
 from typing import Type
-
-import attr
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -157,7 +156,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
     return result, reason
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class Skip:
     """The result of evaluate_skip_marks()."""
 
@@ -192,9 +191,11 @@ def evaluate_skip_marks(item: Item) -> Optional[Skip]:
     return None
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class Xfail:
     """The result of evaluate_xfail_marks()."""
+
+    __slots__ = ("reason", "run", "strict", "raises")
 
     reason: str
     run: bool

@@ -1,3 +1,4 @@
+import dataclasses
 import itertools
 import re
 import sys
@@ -12,7 +13,6 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
-import attr
 import hypothesis
 from hypothesis import strategies
 
@@ -39,14 +39,14 @@ class TestMetafunc:
             def __init__(self, names):
                 self.names_closure = names
 
-        @attr.s
+        @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
-            obj = attr.ib()
-            _nodeid = attr.ib()
+            _nodeid: str
+            obj: object
 
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
-        definition: Any = DefinitionMock._create(func, "mock::nodeid")
+        definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
@@ -140,9 +140,9 @@ class TestMetafunc:
         """Unit test for _find_parametrized_scope (#3941)."""
         from _pytest.python import _find_parametrized_scope
 
-        @attr.s
+        @dataclasses.dataclass
         class DummyFixtureDef:
-            _scope = attr.ib()
+            _scope: Scope
 
         fixtures_defs = cast(
             Dict[str, Sequence[fixtures.FixtureDef[object]]],
@@ -1443,7 +1443,8 @@ class TestMetafuncFunctional:
                 def pytest_generate_tests(metafunc):
                     assert metafunc.function.__name__ == "test_1"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         sub2.joinpath("conftest.py").write_text(
             textwrap.dedent(
@@ -1451,10 +1452,15 @@ class TestMetafuncFunctional:
                 def pytest_generate_tests(metafunc):
                     assert metafunc.function.__name__ == "test_2"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
-        sub1.joinpath("test_in_sub1.py").write_text("def test_1(): pass")
-        sub2.joinpath("test_in_sub2.py").write_text("def test_2(): pass")
+        sub1.joinpath("test_in_sub1.py").write_text(
+            "def test_1(): pass", encoding="utf-8"
+        )
+        sub2.joinpath("test_in_sub2.py").write_text(
+            "def test_2(): pass", encoding="utf-8"
+        )
         result = pytester.runpytest("--keep-duplicates", "-v", "-s", sub1, sub2, sub1)
         result.assert_outcomes(passed=3)
 

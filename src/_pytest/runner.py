@@ -1,5 +1,6 @@
 """Basic collect and runtest protocol implementations."""
 import bdb
+import dataclasses
 import os
 import sys
 from typing import Callable
@@ -13,8 +14,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-
-import attr
 
 from .reports import BaseReport
 from .reports import CollectErrorRepr
@@ -34,6 +33,9 @@ from _pytest.outcomes import Exit
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
+
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -265,7 +267,7 @@ TResult = TypeVar("TResult", covariant=True)
 
 
 @final
-@attr.s(repr=False, init=False, auto_attribs=True)
+@dataclasses.dataclass
 class CallInfo(Generic[TResult]):
     """Result/Exception info of a function invocation."""
 
@@ -512,22 +514,29 @@ class SetupState:
         stack is torn down.
         """
         needed_collectors = nextitem and nextitem.listchain() or []
-        exc = None
+        exceptions: List[BaseException] = []
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
             node, (finalizers, _) = self.stack.popitem()
+            these_exceptions = []
             while finalizers:
                 fin = finalizers.pop()
                 try:
                     fin()
                 except TEST_OUTCOME as e:
-                    # XXX Only first exception will be seen by user,
-                    #     ideally all should be reported.
-                    if exc is None:
-                        exc = e
-        if exc:
-            raise exc
+                    these_exceptions.append(e)
+
+            if len(these_exceptions) == 1:
+                exceptions.extend(these_exceptions)
+            elif these_exceptions:
+                msg = f"errors while tearing down {node!r}"
+                exceptions.append(BaseExceptionGroup(msg, these_exceptions[::-1]))
+
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif exceptions:
+            raise BaseExceptionGroup("errors during test teardown", exceptions[::-1])
         if nextitem is None:
             assert not self.stack
 

@@ -1,3 +1,4 @@
+import dataclasses
 import re
 import sys
 from typing import List
@@ -104,7 +105,7 @@ def tw_mock():
 
 
 @pytest.fixture
-def dummy_yaml_custom_test(pytester: Pytester):
+def dummy_yaml_custom_test(pytester: Pytester) -> None:
     """Writes a conftest file that collects and executes a dummy yaml test.
 
     Taken from the docs, but stripped down to the bare minimum, useful for
@@ -157,6 +158,7 @@ def color_mapping():
             "number": "\x1b[94m",
             "str": "\x1b[33m",
             "print": "\x1b[96m",
+            "endline": "\x1b[90m\x1b[39;49;00m",
         }
         RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
 
@@ -191,20 +193,18 @@ def mock_timing(monkeypatch: MonkeyPatch):
     Time is static, and only advances through `sleep` calls, thus tests might sleep over large
     numbers and obtain accurate time() calls at the end, making tests reliable and instant.
     """
-    import attr
 
-    @attr.s
+    @dataclasses.dataclass
     class MockTiming:
+        _current_time: float = 1590150050.0
 
-        _current_time = attr.ib(default=1590150050.0)
-
-        def sleep(self, seconds):
+        def sleep(self, seconds: float) -> None:
             self._current_time += seconds
 
-        def time(self):
+        def time(self) -> float:
             return self._current_time
 
-        def patch(self):
+        def patch(self) -> None:
             from _pytest import timing
 
             monkeypatch.setattr(timing, "sleep", self.sleep)

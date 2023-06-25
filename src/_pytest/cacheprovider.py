@@ -1,6 +1,7 @@
 """Implementation of the cache provider."""
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
+import dataclasses
 import json
 import os
 from pathlib import Path
@@ -11,8 +12,6 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Union
-
-import attr
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
@@ -28,10 +27,9 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
-from _pytest.python import Module
+from _pytest.nodes import File
 from _pytest.python import Package
 from _pytest.reports import TestReport
-
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -53,10 +51,12 @@ Signature: 8a477f597d28d172789f06886806bc55
 
 
 @final
-@attr.s(init=False, auto_attribs=True)
+@dataclasses.dataclass
 class Cache:
-    _cachedir: Path = attr.ib(repr=False)
-    _config: Config = attr.ib(repr=False)
+    """Instance of the `cache` fixture."""
+
+    _cachedir: Path = dataclasses.field(repr=False)
+    _config: Config = dataclasses.field(repr=False)
 
     # Sub-directory under cache-dir for directories created by `mkdir()`.
     _CACHE_PREFIX_DIRS = "d"
@@ -179,16 +179,22 @@ class Cache:
             else:
                 cache_dir_exists_already = self._cachedir.exists()
                 path.parent.mkdir(exist_ok=True, parents=True)
-        except OSError:
-            self.warn("could not create cache path {path}", path=path, _ispytest=True)
+        except OSError as exc:
+            self.warn(
+                f"could not create cache path {path}: {exc}",
+                _ispytest=True,
+            )
             return
         if not cache_dir_exists_already:
             self._ensure_supporting_files()
         data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
             f = path.open("w", encoding="UTF-8")
-        except OSError:
-            self.warn("cache could not write path {path}", path=path, _ispytest=True)
+        except OSError as exc:
+            self.warn(
+                f"cache could not write path {path}: {exc}",
+                _ispytest=True,
+            )
         else:
             with f:
                 f.write(data)
@@ -213,22 +219,30 @@ class LFPluginCollWrapper:
 
     @hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector: nodes.Collector):
-        if isinstance(collector, Session):
+        if isinstance(collector, (Session, Package)):
             out = yield
             res: CollectReport = out.get_result()
 
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
+            # Use stable sort to priorize last failed.
+            def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
+                # Package.path is the __init__.py file, we need the directory.
+                if isinstance(node, Package):
+                    path = node.path.parent
+                else:
+                    path = node.path
+                return path in lf_paths
+
             res.result = sorted(
                 res.result,
-                # use stable sort to priorize last failed
-                key=lambda x: x.path in lf_paths,
+                key=sort_key,
                 reverse=True,
             )
             return
 
-        elif isinstance(collector, Module):
+        elif isinstance(collector, File):
             if collector.path in self.lfplugin._last_failed_paths:
                 out = yield
                 res = out.get_result()
@@ -266,10 +280,9 @@ class LFPluginCollSkipfiles:
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Optional[CollectReport]:
-        # Packages are Modules, but _last_failed_paths only contains
-        # test-bearing paths and doesn't try to include the paths of their
-        # packages, so don't filter them.
-        if isinstance(collector, Module) and not isinstance(collector, Package):
+        # Packages are Files, but we only want to skip test-bearing Files,
+        # so don't filter Packages.
+        if isinstance(collector, File) and not isinstance(collector, Package):
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 
@@ -299,9 +312,14 @@ class LFPlugin:
             )
 
     def get_last_failed_paths(self) -> Set[Path]:
-        """Return a set with all Paths()s of the previously failed nodeids."""
+        """Return a set with all Paths of the previously failed nodeids and
+        their parents."""
         rootpath = self.config.rootpath
-        result = {rootpath / nodeid.split("::")[0] for nodeid in self.lastfailed}
+        result = set()
+        for nodeid in self.lastfailed:
+            path = rootpath / nodeid.split("::")[0]
+            result.add(path)
+            result.update(path.parents)
         return {x for x in result if x.exists()}
 
     def pytest_report_collectionfinish(self) -> Optional[str]:
@@ -492,7 +510,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
-    if config.option.cacheshow:
+    if config.option.cacheshow and not config.option.help:
         from _pytest.main import wrap_session
 
         return wrap_session(config, cacheshow)

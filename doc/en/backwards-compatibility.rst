@@ -92,3 +92,5 @@ pytest version  min. Python version
 5.0 - 6.1       3.5+
 3.3 - 4.6       2.7, 3.4+
 ==============  ===================
+
+`Status of Python Versions <https://devguide.python.org/versions/>`__.

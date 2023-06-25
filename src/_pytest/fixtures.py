@@ -1,3 +1,4 @@
+import dataclasses
 import functools
 import inspect
 import os
@@ -28,8 +29,6 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
-import attr
-
 import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
@@ -47,6 +46,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
+from _pytest.compat import NotSetType
 from _pytest.compat import overload
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
@@ -59,6 +59,7 @@ from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
+from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -103,7 +104,7 @@ _FixtureCachedResult = Union[
 ]
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class PseudoFixtureDef(Generic[FixtureValue]):
     cached_result: "_FixtureCachedResult[FixtureValue]"
     _scope: Scope
@@ -113,16 +114,18 @@ def pytest_sessionstart(session: "Session") -> None:
     session._fixturemanager = FixtureManager(session)
 
 
-def get_scope_package(node, fixturedef: "FixtureDef[object]"):
-    import pytest
+def get_scope_package(
+    node: nodes.Item,
+    fixturedef: "FixtureDef[object]",
+) -> Optional[Union[nodes.Item, nodes.Collector]]:
+    from _pytest.python import Package
 
-    cls = pytest.Package
-    current = node
+    current: Optional[Union[nodes.Item, nodes.Collector]] = node
     fixture_package_name = "{}/{}".format(fixturedef.baseid, "__init__.py")
     while current and (
-        type(current) is not cls or fixture_package_name != current.nodeid
+        not isinstance(current, Package) or fixture_package_name != current.nodeid
     ):
-        current = current.parent
+        current = current.parent  # type: ignore[assignment]
     if current is None:
         return node.session
     return current
@@ -350,8 +353,10 @@ def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
     return request.param
 
 
-@attr.s(slots=True, auto_attribs=True)
+@dataclasses.dataclass
 class FuncFixtureInfo:
+    __slots__ = ("argnames", "initialnames", "names_closure", "name2fixturedefs")
+
     # Original function argument names.
     argnames: Tuple[str, ...]
     # Argnames that function immediately requires. These include argnames +
@@ -433,7 +438,23 @@ class FixtureRequest:
     @property
     def node(self):
         """Underlying collection node (depends on current request scope)."""
-        return self._getscopeitem(self._scope)
+        scope = self._scope
+        if scope is Scope.Function:
+            # This might also be a non-function Item despite its attribute name.
+            node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
+        elif scope is Scope.Package:
+            # FIXME: _fixturedef is not defined on FixtureRequest (this class),
+            # but on FixtureRequest (a subclass).
+            node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
+        else:
+            node = get_scope_node(self._pyfuncitem, scope)
+        if node is None and scope is Scope.Class:
+            # Fallback to function item itself.
+            node = self._pyfuncitem
+        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
+            scope, self._pyfuncitem
+        )
+        return node
 
     def _getnextfixturedef(self, argname: str) -> "FixtureDef[Any]":
         fixturedefs = self._arg2fixturedefs.get(argname, None)
@@ -517,11 +538,7 @@ class FixtureRequest:
         """Add finalizer/teardown function to be called without arguments after
         the last test within the requesting test context finished execution."""
         # XXX usually this method is shadowed by fixturedef specific ones.
-        self._addfinalizer(finalizer, scope=self.scope)
-
-    def _addfinalizer(self, finalizer: Callable[[], object], scope) -> None:
-        node = self._getscopeitem(scope)
-        node.addfinalizer(finalizer)
+        self.node.addfinalizer(finalizer)
 
     def applymarker(self, marker: Union[str, MarkDecorator]) -> None:
         """Apply a marker to a single test function invocation.
@@ -715,28 +732,6 @@ class FixtureRequest:
             args = _format_args(factory)
             lines.append("%s:%d:  def %s%s" % (p, lineno + 1, factory.__name__, args))
         return lines
-
-    def _getscopeitem(
-        self, scope: Union[Scope, "_ScopeName"]
-    ) -> Union[nodes.Item, nodes.Collector]:
-        if isinstance(scope, str):
-            scope = Scope(scope)
-        if scope is Scope.Function:
-            # This might also be a non-function Item despite its attribute name.
-            node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
-        elif scope is Scope.Package:
-            # FIXME: _fixturedef is not defined on FixtureRequest (this class),
-            # but on FixtureRequest (a subclass).
-            node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
-        else:
-            node = get_scope_node(self._pyfuncitem, scope)
-        if node is None and scope is Scope.Class:
-            # Fallback to function item itself.
-            node = self._pyfuncitem
-        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
-            scope, self._pyfuncitem
-        )
-        return node
 
     def __repr__(self) -> str:
         return "<FixtureRequest for %r>" % (self.node)
@@ -1130,6 +1125,10 @@ def pytest_fixture_setup(
     except TEST_OUTCOME:
         exc_info = sys.exc_info()
         assert exc_info[0] is not None
+        if isinstance(
+            exc_info[1], skip.Exception
+        ) and not fixturefunc.__name__.startswith("xunit_setup"):
+            exc_info[1]._use_item_location = True  # type: ignore[attr-defined]
         fixturedef.cached_result = (None, my_cache_key, exc_info)
         raise
     fixturedef.cached_result = (result, my_cache_key, None)
@@ -1177,18 +1176,20 @@ def wrap_function_to_error_out_if_called_directly(
 
 
 @final
-@attr.s(frozen=True, auto_attribs=True)
+@dataclasses.dataclass(frozen=True)
 class FixtureFunctionMarker:
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]"
-    params: Optional[Tuple[object, ...]] = attr.ib(converter=_params_converter)
+    params: Optional[Tuple[object, ...]]
     autouse: bool = False
     ids: Optional[
         Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
-    ] = attr.ib(
-        default=None,
-        converter=_ensure_immutable_ids,
-    )
+    ] = None
     name: Optional[str] = None
+
+    _ispytest: dataclasses.InitVar[bool] = False
+
+    def __post_init__(self, _ispytest: bool) -> None:
+        check_ispytest(_ispytest)
 
     def __call__(self, function: FixtureFunction) -> FixtureFunction:
         if inspect.isclass(function):
@@ -1312,10 +1313,11 @@ def fixture(  # noqa: F811
     """
     fixture_marker = FixtureFunctionMarker(
         scope=scope,
-        params=params,
+        params=tuple(params) if params is not None else None,
         autouse=autouse,
-        ids=ids,
+        ids=None if ids is None else ids if callable(ids) else tuple(ids),
         name=name,
+        _ispytest=True,
     )
 
     # Direct decoration.
@@ -1588,13 +1590,52 @@ class FixtureManager:
         # Separate parametrized setups.
         items[:] = reorder_items(items)
 
+    @overload
     def parsefactories(
-        self, node_or_obj, nodeid=NOTSET, unittest: bool = False
+        self,
+        node_or_obj: nodes.Node,
+        *,
+        unittest: bool = ...,
     ) -> None:
+        raise NotImplementedError()
+
+    @overload
+    def parsefactories(  # noqa: F811
+        self,
+        node_or_obj: object,
+        nodeid: Optional[str],
+        *,
+        unittest: bool = ...,
+    ) -> None:
+        raise NotImplementedError()
+
+    def parsefactories(  # noqa: F811
+        self,
+        node_or_obj: Union[nodes.Node, object],
+        nodeid: Union[str, NotSetType, None] = NOTSET,
+        *,
+        unittest: bool = False,
+    ) -> None:
+        """Collect fixtures from a collection node or object.
+
+        Found fixtures are parsed into `FixtureDef`s and saved.
+
+        If `node_or_object` is a collection node (with an underlying Python
+        object), the node's object is traversed and the node's nodeid is used to
+        determine the fixtures' visibilty. `nodeid` must not be specified in
+        this case.
+
+        If `node_or_object` is an object (e.g. a plugin), the object is
+        traversed and the given `nodeid` is used to determine the fixtures'
+        visibility. `nodeid` must be specified in this case; None and "" mean
+        total visibility.
+        """
         if nodeid is not NOTSET:
             holderobj = node_or_obj
         else:
-            holderobj = node_or_obj.obj
+            assert isinstance(node_or_obj, nodes.Node)
+            holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
+            assert isinstance(node_or_obj.nodeid, str)
             nodeid = node_or_obj.nodeid
         if holderobj in self._holderobjseen:
             return

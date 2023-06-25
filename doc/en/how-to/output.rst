@@ -12,8 +12,9 @@ Examples for modifying traceback printing:
 
 .. code-block:: bash
 
-    pytest --showlocals # show local variables in tracebacks
-    pytest -l           # show local variables (shortcut)
+    pytest --showlocals     # show local variables in tracebacks
+    pytest -l               # show local variables (shortcut)
+    pytest --no-showlocals  # hide local variables (if addopts enables them)
 
     pytest --tb=auto    # (default) 'long' tracebacks for the first and last
                          # entry, but 'short' style for the other entries
@@ -166,9 +167,9 @@ Now we can increase pytest's verbosity:
     E         Right contains 4 more items:
     E         {'10': 10, '20': 20, '30': 30, '40': 40}
     E         Full diff:
-    E         - {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}...
-    E
-    E         ...Full output truncated (3 lines hidden), use '-vv' to show
+    E         - {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}
+    E         ?            -    -    -    -    -    -    -    -
+    E         + {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4}
 
     test_verbosity_example.py:14: AssertionError
     ___________________________ test_long_text_fail ____________________________
@@ -348,8 +349,7 @@ Example:
     test_example.py:14: AssertionError
     ========================= short test summary info ==========================
     SKIPPED [1] test_example.py:22: skipping this test
-    XFAIL test_example.py::test_xfail
-      reason: xfailing this test
+    XFAIL test_example.py::test_xfail - reason: xfailing this test
     XPASS test_example.py::test_xpass always xfail
     ERROR test_example.py::test_error - assert 0
     FAILED test_example.py::test_fail - assert 0

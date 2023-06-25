@@ -167,13 +167,8 @@ it in your ``pyproject.toml`` file.
         "Framework :: Pytest",
     ]
 
-    [tool.setuptools]
-    packages = ["myproject"]
-
-    [project.entry_points]
-    pytest11 = [
-        "myproject = myproject.pluginmodule",
-    ]
+    [project.entry-points.pytest11]
+    myproject = "myproject.pluginmodule"
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
@@ -454,7 +449,8 @@ in our ``pytest.ini`` to tell pytest where to look for example files.
     $ pytest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
-    rootdir: /home/sweet/project, configfile: pytest.ini
+    rootdir: /home/sweet/project
+    configfile: pytest.ini
     collected 2 items
 
     test_example.py ..                                                   [100%]

@@ -81,7 +81,7 @@ def test_root_logger_affected(pytester: Pytester) -> None:
     # not the info one, because the default level of the root logger is
     # WARNING.
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "info text going to logger" not in contents
         assert "warning text going to logger" in contents
@@ -656,7 +656,7 @@ def test_log_file_cli(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -687,7 +687,7 @@ def test_log_file_cli_level(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -738,7 +738,7 @@ def test_log_file_ini(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -777,7 +777,7 @@ def test_log_file_ini_level(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -985,7 +985,7 @@ def test_log_in_hooks(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*sessionstart*", "*runtestloop*", "*sessionfinish*"])
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "sessionstart" in contents
         assert "runtestloop" in contents
@@ -1021,7 +1021,7 @@ def test_log_in_runtest_logreport(pytester: Pytester) -> None:
         """
     )
     pytester.runpytest()
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert contents.count("logreport") == 3
 
@@ -1065,11 +1065,11 @@ def test_log_set_path(pytester: Pytester) -> None:
         """
     )
     pytester.runpytest()
-    with open(os.path.join(report_dir_base, "test_first")) as rfh:
+    with open(os.path.join(report_dir_base, "test_first"), encoding="utf-8") as rfh:
         content = rfh.read()
         assert "message from test 1" in content
 
-    with open(os.path.join(report_dir_base, "test_second")) as rfh:
+    with open(os.path.join(report_dir_base, "test_second"), encoding="utf-8") as rfh:
         content = rfh.read()
         assert "message from test 2" in content
 
@@ -1165,3 +1165,169 @@ def test_log_file_cli_subdirectories_are_successfully_created(
     result = pytester.runpytest("--log-file=foo/bar/logf.log")
     assert "logf.log" in os.listdir(expected)
     assert result.ret == ExitCode.OK
+
+
+def test_disable_loggers(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+        import os
+        disabled_log = logging.getLogger('disabled')
+        test_log = logging.getLogger('test')
+        def test_logger_propagation(caplog):
+            with caplog.at_level(logging.DEBUG):
+                disabled_log.warning("no log; no stderr")
+                test_log.debug("Visible text!")
+                assert caplog.record_tuples == [('test', 10, 'Visible text!')]
+         """
+    )
+    result = pytester.runpytest("--log-disable=disabled", "-s")
+    assert result.ret == ExitCode.OK
+    assert not result.stderr.lines
+
+
+def test_disable_loggers_does_not_propagate(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+    import logging
+    import os
+
+    parent_logger = logging.getLogger("parent")
+    child_logger = parent_logger.getChild("child")
+
+    def test_logger_propagation_to_parent(caplog):
+            with caplog.at_level(logging.DEBUG):
+                parent_logger.warning("some parent logger message")
+                child_logger.warning("some child logger message")
+                assert len(caplog.record_tuples) == 1
+                assert caplog.record_tuples[0][0] == "parent"
+                assert caplog.record_tuples[0][2] == "some parent logger message"
+    """
+    )
+
+    result = pytester.runpytest("--log-disable=parent.child", "-s")
+    assert result.ret == ExitCode.OK
+    assert not result.stderr.lines
+
+
+def test_log_disabling_works_with_log_cli(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+    import logging
+    disabled_log = logging.getLogger('disabled')
+    test_log = logging.getLogger('test')
+
+    def test_log_cli_works(caplog):
+        test_log.info("Visible text!")
+        disabled_log.warning("This string will be suppressed.")
+    """
+    )
+    result = pytester.runpytest(
+        "--log-cli-level=DEBUG",
+        "--log-disable=disabled",
+    )
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        "INFO     test:test_log_disabling_works_with_log_cli.py:6 Visible text!"
+    )
+    result.stdout.no_fnmatch_line(
+        "WARNING  disabled:test_log_disabling_works_with_log_cli.py:7 This string will be suppressed."
+    )
+    assert not result.stderr.lines
+
+
+def test_without_date_format_log(pytester: Pytester) -> None:
+    """Check that date is not printed by default."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.warning('text')
+            assert False
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        ["WARNING  test_without_date_format_log:test_without_date_format_log.py:6 text"]
+    )
+
+
+def test_date_format_log(pytester: Pytester) -> None:
+    """Check that log_date_format affects output."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.warning('text')
+            assert False
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        log_format=%(asctime)s; %(levelname)s; %(message)s
+        log_date_format=%Y-%m-%d %H:%M:%S
+    """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 1
+    result.stdout.re_match_lines([r"^[0-9-]{10} [0-9:]{8}; WARNING; text"])
+
+
+def test_date_format_percentf_log(pytester: Pytester) -> None:
+    """Make sure that microseconds are printed in log."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.warning('text')
+            assert False
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        log_format=%(asctime)s; %(levelname)s; %(message)s
+        log_date_format=%Y-%m-%d %H:%M:%S.%f
+    """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 1
+    result.stdout.re_match_lines([r"^[0-9-]{10} [0-9:]{8}.[0-9]{6}; WARNING; text"])
+
+
+def test_date_format_percentf_tz_log(pytester: Pytester) -> None:
+    """Make sure that timezone and microseconds are properly formatted together."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            logger.warning('text')
+            assert False
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        log_format=%(asctime)s; %(levelname)s; %(message)s
+        log_date_format=%Y-%m-%d %H:%M:%S.%f%z
+    """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 1
+    result.stdout.re_match_lines(
+        [r"^[0-9-]{10} [0-9:]{8}.[0-9]{6}[+-][0-9\.]+; WARNING; text"]
+    )

@@ -6,6 +6,7 @@ import itertools
 import os
 import shutil
 import sys
+import types
 import uuid
 import warnings
 from enum import Enum
@@ -26,8 +27,11 @@ from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Set
+from typing import Tuple
+from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -63,21 +67,33 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
     return path.joinpath(".lock")
 
 
-def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
+def on_rm_rf_error(
+    func,
+    path: str,
+    excinfo: Union[
+        BaseException,
+        Tuple[Type[BaseException], BaseException, Optional[types.TracebackType]],
+    ],
+    *,
+    start_path: Path,
+) -> bool:
     """Handle known read-only errors during rmtree.
 
     The returned value is used only by our own tests.
     """
-    exctype, excvalue = exc[:2]
+    if isinstance(excinfo, BaseException):
+        exc = excinfo
+    else:
+        exc = excinfo[1]
 
     # Another process removed the file in the middle of the "rm_rf" (xdist for example).
     # More context: https://github.com/pytest-dev/pytest/issues/5974#issuecomment-543799018
-    if isinstance(excvalue, FileNotFoundError):
+    if isinstance(exc, FileNotFoundError):
         return False
 
-    if not isinstance(excvalue, PermissionError):
+    if not isinstance(exc, PermissionError):
         warnings.warn(
-            PytestWarning(f"(rm_rf) error removing {path}\n{exctype}: {excvalue}")
+            PytestWarning(f"(rm_rf) error removing {path}\n{type(exc)}: {exc}")
         )
         return False
 
@@ -86,7 +102,7 @@ def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
             warnings.warn(
                 PytestWarning(
                     "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
-                        func, path, exctype, excvalue
+                        func, path, type(exc), exc
                     )
                 )
             )
@@ -149,7 +165,10 @@ def rm_rf(path: Path) -> None:
     are read-only."""
     path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
-    shutil.rmtree(str(path), onerror=onerror)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(str(path), onexc=onerror)
+    else:
+        shutil.rmtree(str(path), onerror=onerror)
 
 
 def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
@@ -335,14 +354,25 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
             yield path
 
 
+def cleanup_dead_symlinks(root: Path):
+    for left_dir in root.iterdir():
+        if left_dir.is_symlink():
+            if not left_dir.resolve().exists():
+                left_dir.unlink()
+
+
 def cleanup_numbered_dir(
     root: Path, prefix: str, keep: int, consider_lock_dead_if_created_before: float
 ) -> None:
     """Cleanup for lock driven numbered directories."""
+    if not root.exists():
+        return
     for path in cleanup_candidates(root, prefix, keep):
         try_cleanup(path, consider_lock_dead_if_created_before)
     for path in root.glob("garbage-*"):
         try_cleanup(path, consider_lock_dead_if_created_before)
+
+    cleanup_dead_symlinks(root)
 
 
 def make_numbered_dir_with_cleanup(
@@ -357,8 +387,10 @@ def make_numbered_dir_with_cleanup(
     for i in range(10):
         try:
             p = make_numbered_dir(root, prefix, mode)
-            lock_path = create_cleanup_lock(p)
-            register_cleanup_lock_removal(lock_path)
+            # Only lock the current dir when keep is not 0
+            if keep != 0:
+                lock_path = create_cleanup_lock(p)
+                register_cleanup_lock_removal(lock_path)
         except Exception as exc:
             e = exc
         else:
@@ -464,14 +496,14 @@ def import_path(
 
     * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
       `__init__.py` files into account) will be put at the *start* of `sys.path` before
-      being imported with `__import__.
+      being imported with `importlib.import_module`.
 
     * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
       to the end of `sys.path`, if not already in `sys.path`.
 
     * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
-      to import the module, which avoids having to use `__import__` and muck with `sys.path`
-      at all. It effectively allows having same-named test modules in different places.
+      to import the module, which avoids having to muck with `sys.path` at all. It effectively
+      allows having same-named test modules in different places.
 
     :param root:
         Used as an anchor when mode == ImportMode.importlib to obtain
@@ -544,8 +576,8 @@ def import_path(
 
         if module_file.endswith((".pyc", ".pyo")):
             module_file = module_file[:-1]
-        if module_file.endswith(os.path.sep + "__init__.py"):
-            module_file = module_file[: -(len(os.path.sep + "__init__.py"))]
+        if module_file.endswith(os.sep + "__init__.py"):
+            module_file = module_file[: -(len(os.sep + "__init__.py"))]
 
         try:
             is_same = _is_same(str(path), module_file)
@@ -638,30 +670,38 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     return result
 
 
+def scandir(path: Union[str, "os.PathLike[str]"]) -> List["os.DirEntry[str]"]:
+    """Scan a directory recursively, in breadth-first order.
+
+    The returned entries are sorted.
+    """
+    entries = []
+    with os.scandir(path) as s:
+        # Skip entries with symlink loops and other brokenness, so the caller
+        # doesn't have to deal with it.
+        for entry in s:
+            try:
+                entry.is_file()
+            except OSError as err:
+                if _ignore_error(err):
+                    continue
+                raise
+            entries.append(entry)
+    entries.sort(key=lambda entry: entry.name)
+    return entries
+
+
 def visit(
     path: Union[str, "os.PathLike[str]"], recurse: Callable[["os.DirEntry[str]"], bool]
 ) -> Iterator["os.DirEntry[str]"]:
     """Walk a directory recursively, in breadth-first order.
 
+    The `recurse` predicate determines whether a directory is recursed.
+
     Entries at each directory level are sorted.
     """
-
-    # Skip entries with symlink loops and other brokenness, so the caller doesn't
-    # have to deal with it.
-    entries = []
-    for entry in os.scandir(path):
-        try:
-            entry.is_file()
-        except OSError as err:
-            if _ignore_error(err):
-                continue
-            raise
-        entries.append(entry)
-
-    entries.sort(key=lambda entry: entry.name)
-
+    entries = scandir(path)
     yield from entries
-
     for entry in entries:
         if entry.is_dir() and recurse(entry):
             yield from visit(entry.path, recurse)

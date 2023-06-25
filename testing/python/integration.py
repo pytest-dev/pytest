@@ -416,7 +416,7 @@ def test_function_instance(pytester: Pytester) -> None:
             def test_static(): pass
         """
     )
-    assert len(items) == 3
+    assert len(items) == 4
     assert isinstance(items[0], Function)
     assert items[0].name == "test_func"
     assert items[0].instance is None
@@ -424,6 +424,6 @@ def test_function_instance(pytester: Pytester) -> None:
     assert items[1].name == "test_method"
     assert items[1].instance is not None
     assert items[1].instance.__class__.__name__ == "TestIt"
-    assert isinstance(items[2], Function)
-    assert items[2].name == "test_static"
-    assert items[2].instance is None
+    assert isinstance(items[3], Function)
+    assert items[3].name == "test_static"
+    assert items[3].instance is None

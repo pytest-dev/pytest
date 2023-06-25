@@ -1,3 +1,4 @@
+import dataclasses
 import os
 from io import StringIO
 from pprint import pprint
@@ -15,8 +16,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-
-import attr
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
@@ -263,6 +262,8 @@ class TestReport(BaseReport):
         when: "Literal['setup', 'call', 'teardown']",
         sections: Iterable[Tuple[str, str]] = (),
         duration: float = 0,
+        start: float = 0,
+        stop: float = 0,
         user_properties: Optional[Iterable[Tuple[str, object]]] = None,
         **extra,
     ) -> None:
@@ -272,6 +273,8 @@ class TestReport(BaseReport):
         #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
         #: collected one e.g. if a method is inherited from a different module.
+        #: The filesystempath may be relative to ``config.rootdir``.
+        #: The line number is 0-based.
         self.location: Tuple[str, Optional[int], str] = location
 
         #: A name -> value dictionary containing all keywords and
@@ -300,6 +303,11 @@ class TestReport(BaseReport):
         #: Time it took to run just the test.
         self.duration: float = duration
 
+        #: The system time when the call started, in seconds since the epoch.
+        self.start: float = start
+        #: The system time when the call ended, in seconds since the epoch.
+        self.stop: float = stop
+
         self.__dict__.update(extra)
 
     def __repr__(self) -> str:
@@ -318,6 +326,8 @@ class TestReport(BaseReport):
         # Remove "collect" from the Literal type -- only for collection calls.
         assert when != "collect"
         duration = call.duration
+        start = call.start
+        stop = call.stop
         keywords = {x: 1 for x in item.keywords}
         excinfo = call.excinfo
         sections = []
@@ -337,6 +347,9 @@ class TestReport(BaseReport):
             elif isinstance(excinfo.value, skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
+                assert (
+                    r is not None
+                ), "There should always be a traceback entry for skipping a test."
                 if excinfo.value._use_item_location:
                     path, line = item.reportinfo()[:2]
                     assert line is not None
@@ -362,6 +375,8 @@ class TestReport(BaseReport):
             when,
             sections,
             duration,
+            start,
+            stop,
             user_properties=item.user_properties,
         )
 
@@ -407,7 +422,9 @@ class CollectReport(BaseReport):
         self.__dict__.update(extra)
 
     @property
-    def location(self):
+    def location(  # type:ignore[override]
+        self,
+    ) -> Optional[Tuple[str, Optional[int], str]]:
         return (self.fspath, None, self.fspath)
 
     def __repr__(self) -> str:
@@ -459,15 +476,15 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     def serialize_repr_entry(
         entry: Union[ReprEntry, ReprEntryNative]
     ) -> Dict[str, Any]:
-        data = attr.asdict(entry)
+        data = dataclasses.asdict(entry)
         for key, value in data.items():
             if hasattr(value, "__dict__"):
-                data[key] = attr.asdict(value)
+                data[key] = dataclasses.asdict(value)
         entry_data = {"type": type(entry).__name__, "data": data}
         return entry_data
 
     def serialize_repr_traceback(reprtraceback: ReprTraceback) -> Dict[str, Any]:
-        result = attr.asdict(reprtraceback)
+        result = dataclasses.asdict(reprtraceback)
         result["reprentries"] = [
             serialize_repr_entry(x) for x in reprtraceback.reprentries
         ]
@@ -477,7 +494,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
         reprcrash: Optional[ReprFileLocation],
     ) -> Optional[Dict[str, Any]]:
         if reprcrash is not None:
-            return attr.asdict(reprcrash)
+            return dataclasses.asdict(reprcrash)
         else:
             return None
 
@@ -573,7 +590,6 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
         and "reprcrash" in reportdict["longrepr"]
         and "reprtraceback" in reportdict["longrepr"]
     ):
-
         reprtraceback = deserialize_repr_traceback(
             reportdict["longrepr"]["reprtraceback"]
         )
@@ -594,7 +610,10 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
                 ExceptionChainRepr, ReprExceptionInfo
             ] = ExceptionChainRepr(chain)
         else:
-            exception_info = ReprExceptionInfo(reprtraceback, reprcrash)
+            exception_info = ReprExceptionInfo(
+                reprtraceback=reprtraceback,
+                reprcrash=reprcrash,
+            )
 
         for section in reportdict["longrepr"]["sections"]:
             exception_info.addsection(*section)
