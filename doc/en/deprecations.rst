@@ -383,7 +383,7 @@ deprecation warning is now raised.
 Applying a mark to a fixture function
 -------------------------------------
 
-.. deprecated:: 7.2
+.. deprecated:: 7.4
 
 Applying a mark to a fixture function never had any effect, but it is a common user error.
 
