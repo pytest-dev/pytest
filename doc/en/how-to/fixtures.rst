@@ -1752,7 +1752,7 @@ into an ini-file:
         def my_fixture_that_sadly_wont_use_my_other_fixture():
             ...
 
-    Currently this will generate a deprecation warning.
+    This generates a deprecation warning, and will become an error in Pytest 8.
 
 .. _`override fixtures`:
 

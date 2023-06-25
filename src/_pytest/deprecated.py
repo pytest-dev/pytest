@@ -122,7 +122,7 @@ HOOK_LEGACY_MARKING = UnformattedWarning(
     "#configuring-hook-specs-impls-using-markers",
 )
 
-MARKED_FIXTURE = PytestDeprecationWarning(
+MARKED_FIXTURE = PytestRemovedIn8Warning(
     "Marks applied to fixtures have no effect\n"
     "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
 )
