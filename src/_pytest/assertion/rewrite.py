@@ -687,6 +687,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 expect_docstring
                 and isinstance(item, ast.Expr)
                 and isinstance(item.value, astStr)
+                and isinstance(item.value.value, str)
             ):
                 if sys.version_info >= (3, 8):
                     doc = item.value.value
