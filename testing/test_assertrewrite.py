@@ -2055,3 +2055,14 @@ class TestReprSizeVerbosity:
         self.create_test_file(pytester, DEFAULT_REPR_MAX_SIZE * 10)
         result = pytester.runpytest("-vv")
         result.stdout.no_fnmatch_line("*xxx...xxx*")
+
+
+class TestIssue11140:
+    def test_constant_not_picked_as_module_docstring(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
+            0
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
