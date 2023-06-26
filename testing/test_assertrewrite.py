@@ -2062,6 +2062,9 @@ class TestIssue11140:
         pytester.makepyfile(
             """\
             0
+
+            def test_foo():
+                pass
             """
         )
         result = pytester.runpytest()
