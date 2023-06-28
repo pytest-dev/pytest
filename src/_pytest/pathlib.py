@@ -523,6 +523,8 @@ def import_path(
 
     if mode is ImportMode.importlib:
         module_name = module_name_from_path(path, root)
+        with contextlib.suppress(KeyError):
+            return sys.modules[module_name]
 
         for meta_importer in sys.meta_path:
             spec = meta_importer.find_spec(module_name, [str(path.parent)])
