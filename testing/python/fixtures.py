@@ -2,6 +2,7 @@ import os
 import sys
 import textwrap
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from _pytest import fixtures
@@ -2681,16 +2682,19 @@ class TestFixtureMarker:
         """
         )
         result = pytester.runpytest("-v")
+        # Order changed because fixture keys were sorted by their names in fixtures::get_fixture_keys
+        # beforehand so encap key came before flavor. This isn't problematic here as both fixtures
+        # are session-scoped but when this isn't the case, it might be problematic.
         result.stdout.fnmatch_lines(
             """
             test_dynamic_parametrized_ordering.py::test[flavor1-vxlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test[flavor1-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
         """
         )
 
@@ -4475,39 +4479,39 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
     assert result.ret == ExitCode.TESTS_FAILED
 
 
-def test_teardown_high_scope_fixture_at_last_dependent_item_simple(
+def test_early_teardown_simple(
     pytester: Pytester,
 ) -> None:
     pytester.makepyfile(
         """
         import pytest
-        @pytest.fixture(scope='module', params=[None])
+        @pytest.fixture(scope='module')
         def fixture():
-            yield
-            print("Tearing down fixture!")
+            pass
 
         def test_0(fixture):
             pass
 
         def test_1(fixture):
-            print("Running test_1!")
+            pass
 
         def test_2():
-            print("Running test_2!")
+            pass
         """
     )
-    result = pytester.runpytest("-s")
-    assert result.ret == 0
+    result = pytester.runpytest("--setup-show")
     result.stdout.fnmatch_lines(
         [
-            "*Running test_1!*",
-            "*Tearing down fixture!*",
-            "*Running test_2!*",
+            "*SETUP    M fixture*",
+            "*test_0*",
+            "*test_1*",
+            "*TEARDOWN M fixture*",
+            "*test_2*",
         ]
     )
 
 
-def test_teardown_high_scope_fixture_at_last_dependent_item_simple_2(
+def test_early_teardown_simple_2(
     pytester: Pytester,
 ) -> None:
     pytester.makepyfile(
@@ -4515,37 +4519,75 @@ def test_teardown_high_scope_fixture_at_last_dependent_item_simple_2(
         import pytest
         @pytest.fixture(scope='module', params=[None])
         def fixture1():
-            yield
-            print("Tearing down fixture!")
+            pass
 
         @pytest.fixture(scope='module', params=[None])
         def fixture2():
-            yield
-            print("Tearing down fixture!")
+            pass
 
         def test_0(fixture1):
             pass
 
         def test_1(fixture1, fixture2):
-            print("Running test_1!")
+            pass
 
         def test_2():
-            print("Running test_2!")
+            pass
         """
     )
-    result = pytester.runpytest("-s")
+    result = pytester.runpytest("--setup-show")
     assert result.ret == 0
     result.stdout.fnmatch_lines(
         [
-            "*Running test_1!*",
-            "*Tearing down fixture!*",
-            "*Tearing down fixture!*",
-            "*Running test_2!*",
+            "*SETUP    M fixture1*",
+            "*test_0*",
+            "*SETUP    M fixture2*",
+            "*test_1*",
+            "*TEARDOWN M fixture2*",
+            "*TEARDOWN M fixture1*",
+            "*test_2*",
         ]
     )
 
 
-def test_teardown_high_scope_fixture_at_last_dependent_item_complex(
+def test_early_teardown_simple_3(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.fixture(scope='module')
+        def fixture1():
+            pass
+
+        @pytest.fixture(scope='module')
+        def fixture2():
+            pass
+
+        def test_0(fixture1, fixture2):
+            pass
+
+        def test_1(fixture1):
+            pass
+
+        def test_2(fixture1, fixture2):
+            pass
+        """
+    )
+    result = pytester.runpytest("--setup-show")
+    result.stdout.fnmatch_lines(
+        [
+            "*SETUP    M fixture1*",
+            "*SETUP    M fixture2*",
+            "*test_0*",
+            "*test_2*",
+            "*TEARDOWN M fixture2*",
+            "*test_1*",
+            "*TEARDOWN M fixture1*",
+        ],
+        consecutive=True,
+    )
+
+
+def test_early_teardown_complex(
     pytester: Pytester,
 ) -> None:
     pytester.makepyfile(
@@ -4634,6 +4676,141 @@ def test_teardown_high_scope_fixture_at_last_dependent_item_complex(
     )
 
 
+def test_fixtureclosure_contains_shadowed_fixtures(pytester: Pytester):
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fixt0():
+            pass
+
+        @pytest.fixture
+        def fixt1():
+            pass
+
+        @pytest.fixture
+        def fixt2(fixt0, fixt1):
+            pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fixt2(fixt2):
+            pass
+
+        @pytest.fixture
+        def fixt3():
+            pass
+
+        def test(fixt2, fixt3):
+            pass
+        """
+    )
+    result = pytester.runpytest("--setup-show")
+    result.stdout.fnmatch_lines(
+        [
+            "*SETUP    F fixt0*",
+            "*SETUP    F fixt1*",
+            "*SETUP    F fixt2 (fixtures used: fixt0, fixt1)*",
+            "*SETUP    F fixt2 (fixtures used: fixt2)*",
+            "*SETUP    F fixt3*",
+            "*test (fixtures used: fixt0, fixt1, fixt2, fixt3)*",
+        ]
+    )
+
+
+def test_early_teardown_fixture_both_overriden_and_being_used(pytester: Pytester):
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture(scope='session')
+        def shadowed():
+            pass
+
+        @pytest.fixture
+        def intermediary(shadowed):
+            pass
+        """
+    )
+    pytester.makepyfile(
+        test_a="""
+        import pytest
+
+        def test_0(shadowed):
+            pass
+        """,
+        test_b="""
+        import pytest
+
+        @pytest.fixture(scope='session')
+        def shadowed():
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(shadowed, intermediary):
+            pass
+        """,
+    )
+    result = pytester.runpytest("--setup-show")
+    result.stdout.fnmatch_lines(
+        [
+            "*SETUP    S shadowed*",
+            "*test_0*",
+            "*TEARDOWN S shadowed*",
+            "*test_1*",
+            "*SETUP    S shadowed*",
+            "*SETUP    F intermediary*",
+            "*test_2*",
+            "*TEARDOWN F intermediary*",
+            "*TEARDOWN S shadowed*",
+        ]
+    )
+
+
+def test_early_teardown_homonym_session_scoped_fixtures(pytester: Pytester):
+    """Session-scoped fixtures, as only argname and baseid are active in their
+    corresponding arg keys."""
+    pytester.makepyfile(
+        test_a="""
+        import pytest
+        @pytest.fixture(scope='session')
+        def fixture():
+            yield 0
+
+        def test_0(fixture):
+            assert fixture == 0
+        """,
+        test_b="""
+        import pytest
+        @pytest.fixture(scope='session')
+        def fixture():
+            yield 1
+
+        def test_1(fixture):
+            assert fixture == 1
+        """,
+    )
+    result = pytester.runpytest("--setup-show")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        [
+            "*SETUP    S fixture*",
+            "*test_0*",
+            "*TEARDOWN S fixture*",
+            "*SETUP    S fixture",
+            "*test_1*",
+            "*TEARDOWN S fixture*",
+        ]
+    )
+
+
 def test_reorder_with_nonparametrized_fixtures(pytester: Pytester):
     path = pytester.makepyfile(
         """
@@ -4694,6 +4871,326 @@ def test_reorder_with_both_parametrized_and_nonparametrized_fixtures(
     )
     result = pytester.runpytest(path, "-q", "--collect-only")
     result.stdout.fnmatch_lines([f"*test_{i}*" for i in [0, 2, 1]])
+
+
+def test_early_teardown_parametrized_homonym_parent_fixture(pytester: Pytester):
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture(params=[0, 1], scope='session')
+        def fixture(request):
+            pass
+        """
+    )
+    pytester.makepyfile(
+        test_a="""
+        import pytest
+
+        @pytest.fixture(scope='session')
+        def fixture(fixture):
+            pass
+
+        def test_0(fixture):
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(fixture):
+            pass
+        """,
+        test_b="""
+        def test_3(fixture):
+            pass
+
+        def test_4():
+            pass
+        """,
+        test_c="""
+        import pytest
+
+        @pytest.fixture(scope='session')
+        def fixture():
+            pass
+
+        def test_5(fixture):
+            pass
+        """,
+    )
+    result = pytester.runpytest("--setup-show")
+    result.stdout.re_match_lines(
+        [
+            r"\s*SETUP    S fixture\[0\].*",
+            r"\s*SETUP    S fixture.*",
+            r".*test_0\[0\].*",
+            r".*test_2\[0\].*",
+            r"\s*TEARDOWN S fixture.*",
+            r".*test_3\[0\].*",
+            r"\s*TEARDOWN S fixture\[0\].*",
+            r"\s*SETUP    S fixture\[1\].*",
+            r"\s*SETUP    S fixture.*",
+            r".*test_0\[1\].*",
+            r".*test_2\[1\].*",
+            r"\s*TEARDOWN S fixture.*",
+            r".*test_3\[1\].*",
+            r"\s*TEARDOWN S fixture\[1\].*",
+            r".*test_1.*",
+            r".*test_4.*",
+            r"\s*SETUP    S fixture.*",
+            r".*test_5.*",
+            r"\s*TEARDOWN S fixture.*",
+        ]
+    )
+
+
+def test_early_teardown_parametrized_homonym_parent_and_child_fixture(
+    pytester: Pytester,
+):
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture(params=[0, 1], scope='session')
+        def fixture(request):
+            pass
+        """
+    )
+    pytester.makepyfile(
+        test_a="""
+        import pytest
+
+        @pytest.fixture(params=[2, 3], scope='session')
+        def fixture(request, fixture):
+            pass
+
+        def test_0(fixture):
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(fixture):
+            pass
+        """,
+        test_b="""
+        def test_3(fixture):
+            pass
+
+        def test_4():
+            pass
+
+        def test_5(fixture):
+            pass
+        """,
+    )
+    result = pytester.runpytest("--setup-show")
+    result.stdout.re_match_lines(
+        [
+            r"\s*SETUP    S fixture.*",
+            r"\s*SETUP    S fixture \(fixtures used: fixture\)\[2\].*",
+            r".*test_0.*",
+            r".*test_2.*",
+            r"\s*TEARDOWN S fixture\[2\].*",
+            r"\s*TEARDOWN S fixture.*",
+            r"\s*SETUP    S fixture.*",
+            r"\s*SETUP    S fixture \(fixtures used: fixture\)\[3\].*",
+            r".*test_0.*",
+            r".*test_2.*",
+            r"\s*TEARDOWN S fixture\[3\].*",
+            r"\s*TEARDOWN S fixture.*",
+            r".*test_1.*",
+            r"\s*SETUP    S fixture\[0\].*",
+            r".*test_3.*",
+            r".*test_5.*",
+            r"\s*TEARDOWN S fixture\[0\].*",
+            r"\s*SETUP    S fixture\[1\].*",
+            r".*test_3.*",
+            r".*test_5.*",
+            r"\s*TEARDOWN S fixture\[1\].*",
+            r".*test_4.*",
+        ]
+    )
+
+
+def test_early_teardown_parametrized_overriden_and_overrider_fixture(
+    pytester: Pytester,
+):
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture(params=[0, 1], scope='session')
+        def fixture(request):
+            pass
+        """
+    )
+    pytester.makepyfile(
+        test_a="""
+        def test_0(fixture):
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(fixture):
+            pass
+
+        def test_3():
+            pass
+        """,
+        test_b="""
+        import pytest
+
+        @pytest.fixture(params=[2, 3], scope='session')
+        def fixture(request):
+            pass
+
+        def test_4(fixture):
+            pass
+
+        def test_5():
+            pass
+
+        def test_6(fixture):
+            pass
+        """,
+    )
+    result = pytester.runpytest("--setup-show")
+    result.stdout.re_match_lines(
+        [
+            r"\s*SETUP    S fixture\[0\].*",
+            r".*test_0.*",
+            r".*test_2.*",
+            r"\s*TEARDOWN S fixture\[0\].*",
+            r"\s*SETUP    S fixture\[1\].*",
+            r".*test_0.*",
+            r".*test_2.*",
+            r"\s*TEARDOWN S fixture\[1\].*",
+            r".*test_3.*",
+            r"\s*SETUP    S fixture\[2\].*",
+            r".*test_4.*",
+            r".*test_6.*",
+            r"\s*TEARDOWN S fixture\[2\].*",
+            r"\s*SETUP    S fixture\[3\].*",
+            r".*test_4.*",
+            r".*test_6.*",
+            r"\s*TEARDOWN S fixture\[3\].*",
+            r".*test_5.*",
+        ]
+    )
+
+
+def test_early_teardown_indirectly_parametrized_fixture(pytester: Pytester):
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture(params=[0, 1], scope='session')
+        def fixture(request):
+            pass
+        """
+    )
+    pytester.makepyfile(
+        test_a="""
+        import pytest
+
+        @pytest.fixture(scope='session')
+        def fixture(request, fixture):
+            pass
+
+        @pytest.mark.parametrize('fixture', [2, 3], indirect=True)
+        def test_0(fixture):
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(fixture):
+            pass
+
+        def test_3():
+            pass
+
+        def test_4(fixture):
+            pass
+        """,
+        test_b="""
+        def test_5():
+            pass
+
+        def test_6(fixture):
+            pass
+        """,
+    )
+    result = pytester.runpytest("--setup-show")
+    result.stdout.re_match_lines(
+        [
+            r"\s*SETUP    S fixture.*",
+            r"\s*SETUP    S fixture \(fixtures used: fixture\)\[2\].*",
+            r".*test_0\[2\].*",
+            r"\s*TEARDOWN S fixture\[2\].*",
+            # One might expect conftest::fixture not to tear down here, as test_0[3] will use it afterwards,
+            # but since conftest::fixture gets parameter although it's not parametrized on test_0, it tears down
+            # itself as soon as it sees the parameter, which has nothing to do with, has changed from 2 to 3.
+            # In the future we could change callspec param dict to have the fixture baseid in its key as well to
+            # satisfy this expectation.
+            r"\s*TEARDOWN S fixture.*",
+            r"\s*SETUP    S fixture.*",
+            r"\s*SETUP    S fixture \(fixtures used: fixture\)\[3\].*",
+            r".*test_0\[3\].*",
+            r"\s*TEARDOWN S fixture\[3\].*",
+            r"\s*TEARDOWN S fixture.*",
+            r".*test_1.*",
+            r"\s*SETUP    S fixture\[0\].*",
+            r"\s*SETUP    S fixture.*",
+            r".*test_2\[0\].*",
+            r".*test_4\[0\].*",
+            r"\s*TEARDOWN S fixture.*",
+            r".*test_6\[0\].*",
+            r"\s*TEARDOWN S fixture\[0\].*",
+            r"\s*SETUP    S fixture\[1\].*",
+            r"\s*SETUP    S fixture.*",
+            r".*test_2\[1\].*",
+            r".*test_4\[1\].*",
+            r"\s*TEARDOWN S fixture.*",
+            r".*test_6\[1\].*",
+            r"\s*TEARDOWN S fixture\[1\].*",
+            r".*test_3.*",
+            r".*test_5.*",
+        ]
+    )
+
+
+def test_item_determines_which_def_to_use_not_the_requester(pytester: Pytester):
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fixture():
+            yield 1
+
+        @pytest.fixture
+        def intermediary(fixture):
+            yield fixture
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fixture():
+            yield 2
+
+        def test_0(intermediary):
+            "If requester(intermediary here) was to determine which fixture to use, we should have had 1"
+            assert intermediary == 2
+        """
+    )
+    result = pytester.runpytest()
+    result.ret == 0
 
 
 def test_add_new_test_dependent_on_a_fixuture_and_use_nfplugin(pytester: Pytester):
@@ -4765,9 +5262,6 @@ def test_last_dependent_test_on_a_fixture_is_in_last_failed_using_lfplugin(
     )
 
 
-@pytest.mark.xfail(
-    reason="We do not attempt to tear down early the fixture that is overridden and also is used"
-)
 def test_early_teardown_of_overridden_and_being_used_fixture(
     pytester: Pytester,
 ) -> None:
@@ -4777,8 +5271,8 @@ def test_early_teardown_of_overridden_and_being_used_fixture(
 
             @pytest.fixture(scope='module')
             def fixture0():
-                yield None
-                print("Tearing down higher-level fixture0")
+                # This fixture is used by its overrider
+                pass
             """
     )
     pytester.makepyfile(
@@ -4787,23 +5281,26 @@ def test_early_teardown_of_overridden_and_being_used_fixture(
 
             @pytest.fixture(scope='module')
             def fixture0(fixture0):
-                yield None
-                print("Tearing down lower-level fixture0")
+                pass
 
             def test_0(fixture0):
                 pass
 
             def test_1():
-                print("Both `fixture0`s should have been torn down")
+                pass
             """
     )
-    result = pytester.runpytest("-s")
+    result = pytester.runpytest("--setup-show")
     result.stdout.fnmatch_lines(
         [
-            "*Tearing down lower-level fixture0*",
-            "*Tearing down higher-level fixture0*",
-            "*Both `fixture0`s should have been torn down*",
-        ]
+            "*SETUP    M fixture0*",
+            "*SETUP    M fixture0*",
+            "*test_0*",
+            "*TEARDOWN M fixture0*",
+            "*TEARDOWN M fixture0*",
+            "*test_1*",
+        ],
+        consecutive=True,
     )
 
 
@@ -5010,3 +5507,125 @@ def test_early_teardown_does_not_occur_for_pseudo_fixtures(pytester: Pytester) -
     import functools
 
     assert not any([isinstance(item.teardown, functools.partial) for item in items])
+
+
+def test_fixture_info_after_dynamic_parametrize(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture(scope='session', params=[0, 1])
+        def fixture1(request):
+            pass
+
+        @pytest.fixture(scope='session')
+        def fixture2(fixture1):
+            pass
+
+        @pytest.fixture(scope='session', params=[2, 3])
+        def fixture3(request, fixture2):
+            pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        def pytest_generate_tests(metafunc):
+            metafunc.parametrize("fixture2", [4, 5], scope='session')
+
+        @pytest.fixture(scope='session')
+        def fixture4():
+            pass
+
+        @pytest.fixture(scope='session')
+        def fixture2(fixture3, fixture4):
+            pass
+
+        def test(fixture2):
+            pass
+        """
+    )
+    res = pytester.inline_run()
+    res.assertoutcome(passed=2)
+
+
+def test_reordering_after_dynamic_parametrize(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def pytest_generate_tests(metafunc):
+            if metafunc.definition.name == "test_0":
+                metafunc.parametrize("fixture2", [0])
+
+        @pytest.fixture(scope='module')
+        def fixture1():
+            pass
+
+        @pytest.fixture(scope='module')
+        def fixture2(fixture1):
+            pass
+
+        def test_0(fixture2):
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(fixture1):
+            pass
+        """
+    )
+    result = pytester.runpytest("--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "*test_0*",
+            "*test_1*",
+            "*test_2*",
+        ],
+        consecutive=True,
+    )
+
+
+def test_dont_recompute_dependency_tree_if_no_dynamic_parametrize(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def pytest_generate_tests(metafunc):
+            if metafunc.definition.name == "test_0":
+                metafunc.parametrize("fixture", [0])
+
+        @pytest.fixture(scope='module')
+        def fixture():
+            pass
+
+        def test_0(fixture):
+            pass
+
+        def test_1():
+            pass
+
+        @pytest.mark.parametrize("fixture", [0])
+        def test_2(fixture):
+            pass
+
+        @pytest.mark.parametrize("fixture", [0], indirect=True)
+        def test_3(fixture):
+            pass
+        """
+    )
+    from _pytest.fixtures import FixtureManager
+
+    with monkeypatch.context() as m:
+        mocked_function = Mock(wraps=FixtureManager.getfixtureclosure)
+        m.setattr(FixtureManager, "getfixtureclosure", mocked_function)
+        pytester.inline_run()
+        assert len(mocked_function.call_args_list) == 5
+        assert mocked_function.call_args_list[0].args[0].nodeid.endswith("test_0")
+        assert mocked_function.call_args_list[1].args[0].nodeid.endswith("test_0")
+        assert mocked_function.call_args_list[2].args[0].nodeid.endswith("test_1")
+        assert mocked_function.call_args_list[3].args[0].nodeid.endswith("test_2")
+        assert mocked_function.call_args_list[4].args[0].nodeid.endswith("test_3")

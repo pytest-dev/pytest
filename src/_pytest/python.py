@@ -58,7 +58,9 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import INSTANCE_COLLECTOR
 from _pytest.deprecated import NOSE_SUPPORT_METHOD
+from _pytest.fixtures import _get_direct_parametrize_args
 from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import FixtureManager
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
@@ -388,6 +390,26 @@ del _EmptyClass
 # fmt: on
 
 
+def unwrap_metafunc_parametrize_and_possibly_prune_dependency_tree(metafunc):
+    metafunc.parametrize = metafunc._parametrize
+    del metafunc._parametrize
+    if metafunc.has_dynamic_parametrize:
+        # Direct parametrization may have shadowed some fixtures
+        # so make sure we update what the function really needs.
+        fixture_closure, arg2num_fixturedefs_used = FixtureManager.getfixtureclosure(
+            metafunc.definition,
+            metafunc.definition._fixtureinfo.initialnames,
+            metafunc._arg2fixturedefs,
+            ignore_args=_get_direct_parametrize_args(metafunc.definition) + ["request"],
+        )
+        metafunc.fixturenames[:] = fixture_closure
+        metafunc.definition._fixtureinfo.name2num_fixturedefs_used.clear()
+        metafunc.definition._fixtureinfo.name2num_fixturedefs_used.update(
+            arg2num_fixturedefs_used
+        )
+    del metafunc.has_dynamic_parametrize
+
+
 class PyCollector(PyobjMixin, nodes.Collector):
     def funcnamefilter(self, name: str) -> bool:
         return self._matches_prefix_or_glob_option("python_functions", name)
@@ -484,8 +506,6 @@ class PyCollector(PyobjMixin, nodes.Collector):
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
         fixtureinfo = definition._fixtureinfo
 
-        # pytest_generate_tests impls call metafunc.parametrize() which fills
-        # metafunc._calls, the outcome of the hook.
         metafunc = Metafunc(
             definition=definition,
             fixtureinfo=fixtureinfo,
@@ -494,19 +514,29 @@ class PyCollector(PyobjMixin, nodes.Collector):
             module=module,
             _ispytest=True,
         )
-        methods = []
+        methods = [unwrap_metafunc_parametrize_and_possibly_prune_dependency_tree]
         if hasattr(module, "pytest_generate_tests"):
             methods.append(module.pytest_generate_tests)
         if cls is not None and hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
+        metafunc.has_dynamic_parametrize = False
+        from functools import wraps
+
+        @wraps(metafunc.parametrize)
+        def set_has_dynamic_parametrize(*args, **kwargs):
+            metafunc.has_dynamic_parametrize = True
+            metafunc._parametrize(*args, **kwargs)
+
+        metafunc._parametrize = metafunc.parametrize
+        metafunc.parametrize = set_has_dynamic_parametrize
+
+        # pytest_generate_tests impls call metafunc.parametrize() which fills
+        # metafunc._calls, the outcome of the hook.
         self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
+
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
-            # Direct parametrization may have shadowed some fixtures
-            # so make sure we update what the function really needs.
-            fixtureinfo.prune_dependency_tree()
-
             for callspec in metafunc._calls:
                 subname = f"{name}[{callspec.id}]"
                 yield Function.from_parent(
@@ -1360,7 +1390,7 @@ class Metafunc:
             if arg_values_types[argname] == "params":
                 continue
             if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
-                arg2fixturedefs[argname] = [name2pseudofixturedef[argname]]
+                fixturedef = name2pseudofixturedef[argname]
             else:
                 fixturedef = FixtureDef(
                     fixturemanager=self.definition.session._fixturemanager,
@@ -1373,9 +1403,10 @@ class Metafunc:
                     ids=None,
                     is_pseudo=True,
                 )
-                arg2fixturedefs[argname] = [fixturedef]
                 if name2pseudofixturedef is not None:
                     name2pseudofixturedef[argname] = fixturedef
+            arg2fixturedefs[argname] = [fixturedef]
+            self.definition._fixtureinfo.name2num_fixturedefs_used[argname] = 1
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
@@ -1557,7 +1588,7 @@ def _find_parametrized_scope(
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [
-            fixturedef[0]._scope
+            fixturedef[0]._scope  # Shouldn't be -1 ?
             for name, fixturedef in fixturedefs.items()
             if name in argnames
         ]
