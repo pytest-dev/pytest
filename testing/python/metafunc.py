@@ -35,6 +35,7 @@ class TestMetafunc:
         # initialization.
         class FuncFixtureInfoMock:
             name2fixturedefs = {}
+            name2num_fixturedefs_used = {}
 
             def __init__(self, names):
                 self.names_closure = names
@@ -55,6 +56,7 @@ class TestMetafunc:
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
+        definition._fixtureinfo = fixtureinfo
         definition.session = SessionMock(FixtureManagerMock({}))
 
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
