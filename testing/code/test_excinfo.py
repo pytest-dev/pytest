@@ -374,7 +374,7 @@ def test_excinfo_no_sourcecode():
 
 def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     # XXX: simplified locally testable version
-    tmp_path.joinpath("test.txt").write_text("{{ h()}}:")
+    tmp_path.joinpath("test.txt").write_text("{{ h()}}:", encoding="utf-8")
 
     jinja2 = pytest.importorskip("jinja2")
     loader = jinja2.FileSystemLoader(str(tmp_path))
@@ -451,7 +451,7 @@ class TestFormattedExcinfo:
             source = textwrap.dedent(source)
             modpath = tmp_path.joinpath("mod.py")
             tmp_path.joinpath("__init__.py").touch()
-            modpath.write_text(source)
+            modpath.write_text(source, encoding="utf-8")
             importlib.invalidate_caches()
             return import_path(modpath, root=tmp_path)
 
@@ -1023,7 +1023,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        tmp_path.joinpath("mod.py").write_text("asdf")
+        tmp_path.joinpath("mod.py").write_text("asdf", encoding="utf-8")
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)

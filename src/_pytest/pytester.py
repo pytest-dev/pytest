@@ -6,6 +6,7 @@ import collections.abc
 import contextlib
 import gc
 import importlib
+import locale
 import os
 import platform
 import re
@@ -129,6 +130,7 @@ class LsofFdLeakChecker:
             stderr=subprocess.DEVNULL,
             check=True,
             text=True,
+            encoding=locale.getpreferredencoding(False),
         ).stdout
 
         def isopen(line: str) -> bool:

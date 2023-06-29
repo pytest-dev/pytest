@@ -28,6 +28,7 @@ from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -412,6 +413,12 @@ def store_mark(obj, mark: Mark) -> None:
     This is used to implement the Mark declarations/decorators correctly.
     """
     assert isinstance(mark, Mark), mark
+
+    from ..fixtures import getfixturemarker
+
+    if getfixturemarker(obj) is not None:
+        warnings.warn(MARKED_FIXTURE, stacklevel=2)
+
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
     obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]

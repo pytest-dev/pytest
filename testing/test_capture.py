@@ -750,9 +750,10 @@ def test_setup_failure_does_not_kill_capturing(pytester: Pytester) -> None:
             def pytest_runtest_setup(item):
                 raise ValueError(42)
             """
-        )
+        ),
+        encoding="utf-8",
     )
-    sub1.joinpath("test_mod.py").write_text("def test_func1(): pass")
+    sub1.joinpath("test_mod.py").write_text("def test_func1(): pass", encoding="utf-8")
     result = pytester.runpytest(pytester.path, "--traceconfig")
     result.stdout.fnmatch_lines(["*ValueError(42)*", "*1 error*"])
 
@@ -1523,9 +1524,9 @@ def test_global_capture_with_live_logging(pytester: Pytester) -> None:
         def pytest_runtest_logreport(report):
             if "test_global" in report.nodeid:
                 if report.when == "teardown":
-                    with open("caplog", "w") as f:
+                    with open("caplog", "w", encoding="utf-8") as f:
                         f.write(report.caplog)
-                    with open("capstdout", "w") as f:
+                    with open("capstdout", "w", encoding="utf-8") as f:
                         f.write(report.capstdout)
         """
     )
@@ -1555,14 +1556,14 @@ def test_global_capture_with_live_logging(pytester: Pytester) -> None:
     result = pytester.runpytest_subprocess("--log-cli-level=INFO")
     assert result.ret == 0
 
-    with open("caplog") as f:
+    with open("caplog", encoding="utf-8") as f:
         caplog = f.read()
 
     assert "fix setup" in caplog
     assert "something in test" in caplog
     assert "fix teardown" in caplog
 
-    with open("capstdout") as f:
+    with open("capstdout", encoding="utf-8") as f:
         capstdout = f.read()
 
     assert "fix setup" in capstdout
