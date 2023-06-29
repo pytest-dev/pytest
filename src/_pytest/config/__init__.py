@@ -527,9 +527,12 @@ class PytestPluginManager(PluginManager):
     #
     def _set_initial_conftests(
         self,
-        namespace: argparse.Namespace,
+        args: Sequence[Union[str, Path]],
+        pyargs: bool,
+        noconftest: bool,
         rootpath: Path,
-        testpaths_ini: Sequence[str],
+        confcutdir: Optional[Path],
+        importmode: Union[ImportMode, str],
     ) -> None:
         """Load initial conftest files given a preparsed "namespace".
 
@@ -539,17 +542,12 @@ class PytestPluginManager(PluginManager):
         common options will not confuse our logic here.
         """
         current = Path.cwd()
-        self._confcutdir = (
-            absolutepath(current / namespace.confcutdir)
-            if namespace.confcutdir
-            else None
-        )
-        self._noconftest = namespace.noconftest
-        self._using_pyargs = namespace.pyargs
-        testpaths = namespace.file_or_dir + testpaths_ini
+        self._confcutdir = absolutepath(current / confcutdir) if confcutdir else None
+        self._noconftest = noconftest
+        self._using_pyargs = pyargs
         foundanchor = False
-        for testpath in testpaths:
-            path = str(testpath)
+        for intitial_path in args:
+            path = str(intitial_path)
             # remove node-id syntax
             i = path.find("::")
             if i != -1:
@@ -563,10 +561,10 @@ class PytestPluginManager(PluginManager):
             except OSError:  # pragma: no cover
                 anchor_exists = False
             if anchor_exists:
-                self._try_load_conftest(anchor, namespace.importmode, rootpath)
+                self._try_load_conftest(anchor, importmode, rootpath)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current, namespace.importmode, rootpath)
+            self._try_load_conftest(current, importmode, rootpath)
 
     def _is_in_confcutdir(self, path: Path) -> bool:
         """Whether a path is within the confcutdir.
@@ -1140,10 +1138,25 @@ class Config:
 
     @hookimpl(trylast=True)
     def pytest_load_initial_conftests(self, early_config: "Config") -> None:
-        self.pluginmanager._set_initial_conftests(
-            early_config.known_args_namespace,
+        # We haven't fully parsed the command line arguments yet, so
+        # early_config.args it not set yet. But we need it for
+        # discovering the initial conftests. So "pre-run" the logic here.
+        # It will be done for real in `parse()`.
+        args, args_source = early_config._decide_args(
+            args=early_config.known_args_namespace.file_or_dir,
+            pyargs=early_config.known_args_namespace.pyargs,
+            testpaths=early_config.getini("testpaths"),
+            invocation_dir=early_config.invocation_params.dir,
             rootpath=early_config.rootpath,
-            testpaths_ini=self.getini("testpaths"),
+            warn=False,
+        )
+        self.pluginmanager._set_initial_conftests(
+            args=args,
+            pyargs=early_config.known_args_namespace.pyargs,
+            noconftest=early_config.known_args_namespace.noconftest,
+            rootpath=early_config.rootpath,
+            confcutdir=early_config.known_args_namespace.confcutdir,
+            importmode=early_config.known_args_namespace.importmode,
         )
 
     def _initini(self, args: Sequence[str]) -> None:
@@ -1222,6 +1235,49 @@ class Config:
             del self._parser._config_source_hint  # type: ignore
 
         return args
+
+    def _decide_args(
+        self,
+        *,
+        args: List[str],
+        pyargs: List[str],
+        testpaths: List[str],
+        invocation_dir: Path,
+        rootpath: Path,
+        warn: bool,
+    ) -> Tuple[List[str], ArgsSource]:
+        """Decide the args (initial paths/nodeids) to use given the relevant inputs.
+
+        :param warn: Whether can issue warnings.
+        """
+        if args:
+            source = Config.ArgsSource.ARGS
+            result = args
+        else:
+            if invocation_dir == rootpath:
+                source = Config.ArgsSource.TESTPATHS
+                if pyargs:
+                    result = testpaths
+                else:
+                    result = []
+                    for path in testpaths:
+                        result.extend(sorted(glob.iglob(path, recursive=True)))
+                    if testpaths and not result:
+                        if warn:
+                            warning_text = (
+                                "No files were found in testpaths; "
+                                "consider removing or adjusting your testpaths configuration. "
+                                "Searching recursively from the current directory instead."
+                            )
+                            self.issue_config_time_warning(
+                                PytestConfigWarning(warning_text), stacklevel=3
+                            )
+            else:
+                result = []
+            if not result:
+                source = Config.ArgsSource.INCOVATION_DIR
+                result = [str(invocation_dir)]
+        return result, source
 
     def _preparse(self, args: List[str], addopts: bool = True) -> None:
         if addopts:
@@ -1371,34 +1427,17 @@ class Config:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.after_preparse = True  # type: ignore
         try:
-            source = Config.ArgsSource.ARGS
             args = self._parser.parse_setoption(
                 args, self.option, namespace=self.option
             )
-            if not args:
-                if self.invocation_params.dir == self.rootpath:
-                    source = Config.ArgsSource.TESTPATHS
-                    testpaths: List[str] = self.getini("testpaths")
-                    if self.known_args_namespace.pyargs:
-                        args = testpaths
-                    else:
-                        args = []
-                        for path in testpaths:
-                            args.extend(sorted(glob.iglob(path, recursive=True)))
-                        if testpaths and not args:
-                            warning_text = (
-                                "No files were found in testpaths; "
-                                "consider removing or adjusting your testpaths configuration. "
-                                "Searching recursively from the current directory instead."
-                            )
-                            self.issue_config_time_warning(
-                                PytestConfigWarning(warning_text), stacklevel=3
-                            )
-                if not args:
-                    source = Config.ArgsSource.INCOVATION_DIR
-                    args = [str(self.invocation_params.dir)]
-            self.args = args
-            self.args_source = source
+            self.args, self.args_source = self._decide_args(
+                args=args,
+                pyargs=self.known_args_namespace.pyargs,
+                testpaths=self.getini("testpaths"),
+                invocation_dir=self.invocation_params.dir,
+                rootpath=self.rootpath,
+                warn=True,
+            )
         except PrintHelp:
             pass
 

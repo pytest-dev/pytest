@@ -1,1 +1,0 @@
-Enhanced the CLI flag for ``-c`` to now include ``--config-file`` to make it clear that this flag applies to the usage of a custom config file.

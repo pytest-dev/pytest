@@ -1153,6 +1153,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestRemovedIn8Warning
   :show-inheritance:
 
+.. autoclass:: pytest.PytestRemovedIn9Warning
+  :show-inheritance:
+
 .. autoclass:: pytest.PytestUnhandledCoroutineWarning
    :show-inheritance:
 
@@ -1703,6 +1706,11 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         pythonpath = src1 src2
 
+   .. note::
+
+        ``pythonpath`` does not affect some imports that happen very early,
+        most notably plugins loaded using the ``-p`` command line option.
+
 
 .. confval:: required_plugins
 
@@ -1918,9 +1926,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --strict-markers      Markers not registered in the `markers` section of
                             the configuration file raise errors
       --strict              (Deprecated) alias to --strict-markers
-      -c, --config-file FILE
+      -c FILE, --config-file=FILE
                             Load configuration from `FILE` instead of trying to
-                            locate one of the implicit configuration files
+                            locate one of the implicit configuration files.
       --continue-on-collection-errors
                             Force test execution even if collection errors occur
       --rootdir=ROOTDIR     Define root directory for tests. Can be relative

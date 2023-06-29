@@ -38,7 +38,9 @@ class TestNewAPI:
     @pytest.mark.filterwarnings("ignore:could not create cache path")
     def test_cache_writefail_cachfile_silent(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")
-        pytester.path.joinpath(".pytest_cache").write_text("gone wrong")
+        pytester.path.joinpath(".pytest_cache").write_text(
+            "gone wrong", encoding="utf-8"
+        )
         config = pytester.parseconfigure()
         cache = config.cache
         assert cache is not None
@@ -1134,7 +1136,9 @@ class TestNewFirst:
             ["*test_2/test_2.py::test_1 PASSED*", "*test_1/test_1.py::test_1 PASSED*"]
         )
 
-        p1.write_text("def test_1(): assert 1\n" "def test_2(): assert 1\n")
+        p1.write_text(
+            "def test_1(): assert 1\n" "def test_2(): assert 1\n", encoding="utf-8"
+        )
         os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 
         result = pytester.runpytest("--nf", "--collect-only", "-q")
@@ -1207,7 +1211,8 @@ class TestNewFirst:
         p1.write_text(
             "import pytest\n"
             "@pytest.mark.parametrize('num', [1, 2, 3])\n"
-            "def test_1(num): assert num\n"
+            "def test_1(num): assert num\n",
+            encoding="utf-8",
         )
         os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 
@@ -1259,7 +1264,7 @@ def test_gitignore(pytester: Pytester) -> None:
     assert gitignore_path.read_text(encoding="UTF-8") == msg
 
     # Does not overwrite existing/custom one.
-    gitignore_path.write_text("custom")
+    gitignore_path.write_text("custom", encoding="utf-8")
     cache.set("something", "else")
     assert gitignore_path.read_text(encoding="UTF-8") == "custom"
 

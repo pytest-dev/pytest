@@ -160,7 +160,8 @@ class TestAssertionRewrite:
             "def special_asserter():\n"
             "    def special_assert(x, y):\n"
             "        assert x == y\n"
-            "    return special_assert\n"
+            "    return special_assert\n",
+            encoding="utf-8",
         )
         pytester.makeconftest('pytest_plugins = ["plugin"]')
         pytester.makepyfile("def test(special_asserter): special_asserter(1, 2)\n")
@@ -173,7 +174,9 @@ class TestAssertionRewrite:
         pytester.makepyfile(test_y="x = 1")
         xdir = pytester.mkdir("x")
         pytester.mkpydir(str(xdir.joinpath("test_Y")))
-        xdir.joinpath("test_Y").joinpath("__init__.py").write_text("x = 2")
+        xdir.joinpath("test_Y").joinpath("__init__.py").write_text(
+            "x = 2", encoding="utf-8"
+        )
         pytester.makepyfile(
             "import test_y\n"
             "import test_Y\n"
@@ -726,7 +729,7 @@ class TestAssertionRewrite:
 
 class TestRewriteOnImport:
     def test_pycache_is_a_file(self, pytester: Pytester) -> None:
-        pytester.path.joinpath("__pycache__").write_text("Hello")
+        pytester.path.joinpath("__pycache__").write_text("Hello", encoding="utf-8")
         pytester.makepyfile(
             """
             def test_rewritten():
@@ -903,7 +906,8 @@ def test_rewritten():
         pkg.joinpath("test_blah.py").write_text(
             """
 def test_rewritten():
-    assert "@py_builtins" in globals()"""
+    assert "@py_builtins" in globals()""",
+            encoding="utf-8",
         )
         assert pytester.runpytest().ret == 0
 
@@ -1066,7 +1070,7 @@ class TestAssertionRewriteHookDetails:
         source = tmp_path / "source.py"
         pyc = Path(str(source) + "c")
 
-        source.write_text("def test(): pass")
+        source.write_text("def test(): pass", encoding="utf-8")
         py_compile.compile(str(source), str(pyc))
 
         contents = pyc.read_bytes()
@@ -1092,7 +1096,7 @@ class TestAssertionRewriteHookDetails:
         fn = tmp_path / "source.py"
         pyc = Path(str(fn) + "c")
 
-        fn.write_text("def test(): assert True")
+        fn.write_text("def test(): assert True", encoding="utf-8")
 
         source_stat, co = _rewrite_test(fn, config)
         _write_pyc(state, co, source_stat, pyc)
@@ -1157,7 +1161,7 @@ class TestAssertionRewriteHookDetails:
                 return False
 
             def rewrite_self():
-                with open(__file__, 'w') as self:
+                with open(__file__, 'w', encoding='utf-8') as self:
                     self.write('def reloaded(): return True')
             """,
             test_fun="""
@@ -1187,9 +1191,10 @@ class TestAssertionRewriteHookDetails:
                         data = pkgutil.get_data('foo.test_foo', 'data.txt')
                         assert data == b'Hey'
                 """
-            )
+            ),
+            encoding="utf-8",
         )
-        path.joinpath("data.txt").write_text("Hey")
+        path.joinpath("data.txt").write_text("Hey", encoding="utf-8")
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
 
