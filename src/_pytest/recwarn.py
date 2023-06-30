@@ -149,6 +149,10 @@ def warns(  # noqa: F811
     This could be achieved in the same way as with exceptions, see
     :ref:`parametrizing_conditional_raising` for an example.
 
+    .. note::
+        Unlike the stdlib :func:`warnings.catch_warnings` context manager,
+        unmatched warnings will be re-emitted when the context closes.
+
     """
     __tracebackhide__ = True
     if not args:
@@ -290,6 +294,32 @@ class WarningsChecker(WarningsRecorder):
         def found_str():
             return pformat([record.message for record in self], indent=2)
 
+        def re_emit() -> None:
+            for r in self:
+                if matches(r):
+                    continue
+
+                assert issubclass(r.message.__class__, Warning)
+
+                warnings.warn_explicit(
+                    str(r.message),
+                    r.message.__class__,
+                    r.filename,
+                    r.lineno,
+                    module=r.__module__,
+                    source=r.source,
+                )
+
+        def matches(warning) -> bool:
+            if self.expected_warning is not None:
+                if issubclass(warning.category, self.expected_warning):
+                    if self.match_expr is not None:
+                        if re.compile(self.match_expr).search(str(warning.message)):
+                            return True
+                        return False
+                    return True
+            return False
+
         # only check if we're not currently handling an exception
         if exc_type is None and exc_val is None and exc_tb is None:
             if self.expected_warning is not None:
@@ -303,6 +333,7 @@ class WarningsChecker(WarningsRecorder):
                     for r in self:
                         if issubclass(r.category, self.expected_warning):
                             if re.compile(self.match_expr).search(str(r.message)):
+                                re_emit()
                                 break
                     else:
                         fail(
@@ -311,3 +342,5 @@ DID NOT WARN. No warnings of type {self.expected_warning} matching the regex wer
  Regex: {self.match_expr}
  Emitted warnings: {found_str()}"""
                         )
+                else:
+                    re_emit()

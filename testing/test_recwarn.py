@@ -376,10 +376,12 @@ class TestWarns:
                 warnings.warn("value must be 42", UserWarning)
 
     def test_one_from_multiple_warns(self) -> None:
-        with pytest.warns(UserWarning, match=r"aaa"):
-            warnings.warn("cccccccccc", UserWarning)
-            warnings.warn("bbbbbbbbbb", UserWarning)
-            warnings.warn("aaaaaaaaaa", UserWarning)
+        with pytest.raises(pytest.fail.Exception):
+            with pytest.warns(UserWarning, match=r"aaa"):
+                with pytest.warns(UserWarning, match=r"aaa"):
+                    warnings.warn("cccccccccc", UserWarning)
+                    warnings.warn("bbbbbbbbbb", UserWarning)
+                    warnings.warn("aaaaaaaaaa", UserWarning)
 
     def test_none_of_multiple_warns(self) -> None:
         with pytest.raises(pytest.fail.Exception):
@@ -403,3 +405,33 @@ class TestWarns:
             with pytest.warns(UserWarning, foo="bar"):  # type: ignore
                 pass
         assert "Unexpected keyword arguments" in str(excinfo.value)
+
+    def test_re_emit_single(self) -> None:
+        with pytest.warns(DeprecationWarning):
+            with pytest.warns(UserWarning):
+                warnings.warn("user warning", UserWarning)
+                warnings.warn("some deprecation warning", DeprecationWarning)
+
+    def test_re_emit_multiple(self) -> None:
+        with pytest.warns(UserWarning):
+            warnings.warn("first warning", UserWarning)
+            warnings.warn("second warning", UserWarning)
+
+    def test_re_emit_match_single(self) -> None:
+        with pytest.warns(DeprecationWarning):
+            with pytest.warns(UserWarning, match="user warning"):
+                warnings.warn("user warning", UserWarning)
+                warnings.warn("some deprecation warning", DeprecationWarning)
+
+    def test_re_emit_match_multiple(self) -> None:
+        # with pytest.warns(UserWarning):
+        with pytest.warns(UserWarning, match="user warning"):
+            warnings.warn("first user warning", UserWarning)
+            warnings.warn("second user warning", UserWarning)
+
+    def test_re_emit_non_match_single(self) -> None:
+        # with pytest.warns(UserWarning):
+        with pytest.warns(UserWarning, match="v2 warning"):
+            with pytest.warns(UserWarning, match="v1 warning"):
+                warnings.warn("v1 warning", UserWarning)
+                warnings.warn("non-matching v2 warning", UserWarning)
