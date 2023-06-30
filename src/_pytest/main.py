@@ -499,6 +499,7 @@ class Session(nodes.FSCollector):
         self.shouldfail: Union[bool, str] = False
         self.trace = config.trace.root.get("collection")
         self._initialpaths: FrozenSet[Path] = frozenset()
+        self._initialpaths_with_parents: FrozenSet[Path] = frozenset()
 
         self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
@@ -549,10 +550,29 @@ class Session(nodes.FSCollector):
 
     pytest_collectreport = pytest_runtest_logreport
 
-    def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
+    def isinitpath(
+        self,
+        path: Union[str, "os.PathLike[str]"],
+        *,
+        with_parents: bool = False,
+    ) -> bool:
+        """Is path an initial path?
+
+        An initial path is a path pytest starts with, e.g. given on the command
+        line.
+
+        :param with_parents:
+            If set, also return True if the path is a parent of an initial path.
+
+        .. versionchanged:: 8.0
+            Added the ``with_parents`` parameter.
+        """
         # Optimization: Path(Path(...)) is much slower than isinstance.
         path_ = path if isinstance(path, Path) else Path(path)
-        return path_ in self._initialpaths
+        if with_parents:
+            return path_ in self._initialpaths_with_parents
+        else:
+            return path_ in self._initialpaths
 
     def gethookproxy(self, fspath: "os.PathLike[str]") -> pluggy.HookRelay:
         # Optimization: Path(Path(...)) is much slower than isinstance.
@@ -667,6 +687,7 @@ class Session(nodes.FSCollector):
         items: Sequence[Union[nodes.Item, nodes.Collector]] = self.items
         try:
             initialpaths: List[Path] = []
+            initialpaths_with_parents: List[Path] = []
             for arg in args:
                 fspath, parts = resolve_collection_argument(
                     self.config.invocation_params.dir,
@@ -675,7 +696,10 @@ class Session(nodes.FSCollector):
                 )
                 self._initial_parts.append((fspath, parts))
                 initialpaths.append(fspath)
+                initialpaths_with_parents.append(fspath)
+                initialpaths_with_parents.extend(fspath.parents)
             self._initialpaths = frozenset(initialpaths)
+            self._initialpaths_with_parents = frozenset(initialpaths_with_parents)
             rep = collect_one_node(self)
             self.ihook.pytest_collectreport(report=rep)
             self.trace.root.indent -= 1
