@@ -117,10 +117,10 @@ def warns(  # noqa: F811
     warning of that class or classes.
 
     This helper produces a list of :class:`warnings.WarningMessage` objects, one for
-    each warning raised (regardless of whether it is an ``expected_warning`` or not).
+    each warning emitted (regardless of whether it is an ``expected_warning`` or not).
+    Since pytest 8.0, unmatched warnings are also re-emitted when the context closes.
 
-    This function can be used as a context manager, which will capture all the raised
-    warnings inside it::
+    This function can be used as a context manager::
 
         >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
@@ -149,10 +149,6 @@ def warns(  # noqa: F811
 
     This could be achieved in the same way as with exceptions, see
     :ref:`parametrizing_conditional_raising` for an example.
-
-    .. note::
-        Unlike the stdlib :func:`warnings.catch_warnings` context manager,
-        unmatched warnings will be re-emitted when the context closes.
 
     """
     __tracebackhide__ = True
@@ -328,7 +324,7 @@ class WarningsChecker(WarningsRecorder):
                 if not self.matches(w):
                     warnings.warn_explicit(
                         str(w.message),
-                        w.message.__class__,  # type: ignore
+                        w.message.__class__,  # type: ignore[arg-type]
                         w.filename,
                         w.lineno,
                         module=w.__module__,
