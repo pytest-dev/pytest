@@ -135,8 +135,9 @@ def warns(  # noqa: F811
         >>> with pytest.warns(UserWarning, match=r'must be \d+$'):
         ...     warnings.warn("value must be 42", UserWarning)
 
-        >>> with pytest.warns(UserWarning, match=r'must be \d+$'):
-        ...     warnings.warn("this is not here", UserWarning)
+        >>> with pytest.warns(UserWarning):  # catch re-emitted warning
+        ...     with pytest.warns(UserWarning, match=r'must be \d+$'):
+        ...         warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
         Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
@@ -327,7 +328,7 @@ class WarningsChecker(WarningsRecorder):
                 if not self.matches(w):
                     warnings.warn_explicit(
                         str(w.message),
-                        w.message.__class__,
+                        w.message.__class__,  # type: ignore
                         w.filename,
                         w.lineno,
                         module=w.__module__,
