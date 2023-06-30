@@ -1,11 +1,15 @@
+import sys
+
 import pytest
 from _pytest.pytester import Pytester
+
+PYPY = hasattr(sys, "pypy_version_info")
 
 
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it="""
+        test_it=f"""
         class BrokenDel:
             def __del__(self):
                 raise ValueError("del is broken")
@@ -13,6 +17,7 @@ def test_unraisable(pytester: Pytester) -> None:
         def test_it():
             obj = BrokenDel()
             del obj
+            {"import gc; gc.collect()" * PYPY}
 
         def test_2(): pass
         """
@@ -37,7 +42,7 @@ def test_unraisable(pytester: Pytester) -> None:
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_in_setup(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it="""
+        test_it=f"""
         import pytest
 
         class BrokenDel:
@@ -48,6 +53,7 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
         def broken_del():
             obj = BrokenDel()
             del obj
+            {"import gc; gc.collect()" * PYPY}
 
         def test_it(broken_del): pass
         def test_2(): pass
@@ -73,7 +79,7 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_in_teardown(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it="""
+        test_it=f"""
         import pytest
 
         class BrokenDel:
@@ -85,6 +91,7 @@ def test_unraisable_in_teardown(pytester: Pytester) -> None:
             yield
             obj = BrokenDel()
             del obj
+            {"import gc; gc.collect()" * PYPY}
 
         def test_it(broken_del): pass
         def test_2(): pass
@@ -110,7 +117,7 @@ def test_unraisable_in_teardown(pytester: Pytester) -> None:
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_warning_error(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it="""
+        test_it=f"""
         class BrokenDel:
             def __del__(self) -> None:
                 raise ValueError("del is broken")
@@ -118,6 +125,7 @@ def test_unraisable_warning_error(pytester: Pytester) -> None:
         def test_it() -> None:
             obj = BrokenDel()
             del obj
+            {"import gc; gc.collect()" * PYPY}
 
         def test_2(): pass
         """
