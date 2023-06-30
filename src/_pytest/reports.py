@@ -5,6 +5,7 @@ from pprint import pprint
 from typing import Any
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -29,7 +30,6 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item

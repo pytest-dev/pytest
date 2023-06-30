@@ -3,11 +3,10 @@ import inspect
 import warnings
 from types import FunctionType
 from typing import Any
+from typing import final
 from typing import Generic
 from typing import Type
 from typing import TypeVar
-
-from _pytest.compat import final
 
 
 class PytestWarning(UserWarning):

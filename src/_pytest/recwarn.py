@@ -5,18 +5,18 @@ from pprint import pformat
 from types import TracebackType
 from typing import Any
 from typing import Callable
+from typing import final
 from typing import Generator
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Pattern
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
 
-from _pytest.compat import final
-from _pytest.compat import overload
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import WARNS_NONE_ARG
 from _pytest.fixtures import fixture

@@ -7,22 +7,11 @@ from typing import Callable
 from typing import cast
 from typing import NoReturn
 from typing import Optional
+from typing import Protocol
 from typing import Type
 from typing import TypeVar
 
 from _pytest.deprecated import KEYWORD_MSG_ARG
-
-TYPE_CHECKING = False  # Avoid circular import through compat.
-
-if TYPE_CHECKING:
-    from typing_extensions import Protocol
-else:
-    # typing.Protocol is only available starting from Python 3.8. It is also
-    # available from typing_extensions, but we don't want a runtime dependency
-    # on that. So use a dummy runtime implementation.
-    from typing import Generic
-
-    Protocol = Generic
 
 
 class OutcomeException(BaseException):

@@ -11,6 +11,7 @@ from types import TracebackType
 from typing import Any
 from typing import AnyStr
 from typing import BinaryIO
+from typing import final
 from typing import Generator
 from typing import Generic
 from typing import Iterable
@@ -24,7 +25,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
-from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser

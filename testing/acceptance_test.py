@@ -1,10 +1,10 @@
 import dataclasses
+import importlib.metadata
 import os
 import sys
 import types
 
 import pytest
-from _pytest.compat import importlib_metadata
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
@@ -139,7 +139,7 @@ class TestGeneralUsage:
         def my_dists():
             return (DummyDist(entry_points),)
 
-        monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
+        monkeypatch.setattr(importlib.metadata, "distributions", my_dists)
         params = ("-p", "mycov") if load_cov_early else ()
         pytester.runpytest_inprocess(*params)
         if load_cov_early:

@@ -3,6 +3,7 @@ import dataclasses
 import shlex
 import subprocess
 from pathlib import Path
+from typing import final
 from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
@@ -11,7 +12,6 @@ from typing import Union
 from iniconfig import SectionWrapper
 
 from _pytest.cacheprovider import Cache
-from _pytest.compat import final
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import legacy_path
 from _pytest.config import Config

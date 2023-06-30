@@ -18,7 +18,6 @@ import ast
 import dataclasses
 import enum
 import re
-import sys
 import types
 from typing import Callable
 from typing import Iterator
@@ -26,12 +25,6 @@ from typing import Mapping
 from typing import NoReturn
 from typing import Optional
 from typing import Sequence
-
-if sys.version_info >= (3, 8):
-    astNameConstant = ast.Constant
-else:
-    astNameConstant = ast.NameConstant
-
 
 __all__ = [
     "Expression",
@@ -138,7 +131,7 @@ IDENT_PREFIX = "$"
 
 def expression(s: Scanner) -> ast.Expression:
     if s.accept(TokenType.EOF):
-        ret: ast.expr = astNameConstant(False)
+        ret: ast.expr = ast.Constant(False)
     else:
         ret = expr(s)
         s.accept(TokenType.EOF, reject=True)

@@ -5,6 +5,7 @@ import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
+from typing import final
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -23,7 +24,6 @@ from typing import Union
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
-from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config

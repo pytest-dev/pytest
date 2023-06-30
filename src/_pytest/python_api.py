@@ -9,9 +9,11 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import ContextManager
+from typing import final
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import Tuple
@@ -20,15 +22,12 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
+import _pytest._code
+from _pytest.compat import STRING_TYPES
+from _pytest.outcomes import fail
+
 if TYPE_CHECKING:
     from numpy import ndarray
-
-
-import _pytest._code
-from _pytest.compat import final
-from _pytest.compat import STRING_TYPES
-from _pytest.compat import overload
-from _pytest.outcomes import fail
 
 
 def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
