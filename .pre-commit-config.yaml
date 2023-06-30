@@ -40,12 +40,12 @@ repos:
     rev: v3.10.0
     hooks:
     -   id: reorder-python-imports
-        args: ['--application-directories=.:src', --py37-plus]
+        args: ['--application-directories=.:src', --py38-plus]
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.7.0
     hooks:
     -   id: pyupgrade
-        args: [--py37-plus]
+        args: [--py38-plus]
 -   repo: https://github.com/asottile/setup-cfg-fmt
     rev: v2.3.0
     hooks:

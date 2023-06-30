@@ -3,6 +3,7 @@ import dataclasses
 import shlex
 import subprocess
 from pathlib import Path
+from typing import Final
 from typing import final
 from typing import List
 from typing import Optional
@@ -32,8 +33,6 @@ from _pytest.terminal import TerminalReporter
 from _pytest.tmpdir import TempPathFactory
 
 if TYPE_CHECKING:
-    from typing_extensions import Final
-
     import pexpect
 
 

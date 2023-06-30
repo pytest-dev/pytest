@@ -12,14 +12,11 @@ from inspect import signature
 from pathlib import Path
 from typing import Any
 from typing import Callable
+from typing import Final
 from typing import NoReturn
-from typing import TYPE_CHECKING
 from typing import TypeVar
 
 import py
-
-if TYPE_CHECKING:
-    from typing_extensions import Final
 
 
 _T = TypeVar("_T")
