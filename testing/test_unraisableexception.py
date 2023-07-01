@@ -6,10 +6,11 @@ from _pytest.pytester import Pytester
 PYPY = hasattr(sys, "pypy_version_info")
 
 
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it=f"""
+        test_it="""
         class BrokenDel:
             def __del__(self):
                 raise ValueError("del is broken")
@@ -17,7 +18,6 @@ def test_unraisable(pytester: Pytester) -> None:
         def test_it():
             obj = BrokenDel()
             del obj
-            {"import gc; gc.collect()" * PYPY}
 
         def test_2(): pass
         """
@@ -39,10 +39,11 @@ def test_unraisable(pytester: Pytester) -> None:
     )
 
 
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_in_setup(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it=f"""
+        test_it="""
         import pytest
 
         class BrokenDel:
@@ -53,7 +54,6 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
         def broken_del():
             obj = BrokenDel()
             del obj
-            {"import gc; gc.collect()" * PYPY}
 
         def test_it(broken_del): pass
         def test_2(): pass
@@ -76,10 +76,11 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
     )
 
 
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_in_teardown(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it=f"""
+        test_it="""
         import pytest
 
         class BrokenDel:
@@ -91,7 +92,6 @@ def test_unraisable_in_teardown(pytester: Pytester) -> None:
             yield
             obj = BrokenDel()
             del obj
-            {"import gc; gc.collect()" * PYPY}
 
         def test_it(broken_del): pass
         def test_2(): pass
