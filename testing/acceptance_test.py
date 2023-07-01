@@ -1317,3 +1317,38 @@ def test_function_return_non_none_warning(pytester: Pytester) -> None:
     )
     res = pytester.runpytest()
     res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])
+
+
+def test_doctest_and_normal_imports_with_importlib(pytester: Pytester) -> None:
+    """
+    Regression test for #10811: previously import_path with ImportMode.importlib would
+    not return a module if already in sys.modules, resulting in modules being imported
+    multiple times, which causes problems with modules that have import side effects.
+    """
+    # Uses the exact reproducer form #10811, given it is very minimal
+    # and illustrates the problem well.
+    pytester.makepyfile(
+        **{
+            "pmxbot/commands.py": "from . import logging",
+            "pmxbot/logging.py": "",
+            "tests/__init__.py": "",
+            "tests/test_commands.py": """
+                import importlib
+                from pmxbot import logging
+
+                class TestCommands:
+                    def test_boo(self):
+                        assert importlib.import_module('pmxbot.logging') is logging
+                """,
+        }
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        addopts=
+            --doctest-modules
+            --import-mode importlib
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stdout.fnmatch_lines("*1 passed*")
