@@ -372,9 +372,11 @@ def get_unpacked_marks(
     """
     if isinstance(obj, type):
         if not consider_mro:
-            mark_lists = [obj.__dict__.get("pytestmark", [])]
+            mark_lists: Iterable[Any] = [obj.__dict__.get("pytestmark", [])]
         else:
-            mark_lists = [x.__dict__.get("pytestmark", []) for x in obj.__mro__]
+            mark_lists = reversed(
+                [x.__dict__.get("pytestmark", []) for x in obj.__mro__]
+            )
         mark_list = []
         for item in mark_lists:
             if isinstance(item, list):

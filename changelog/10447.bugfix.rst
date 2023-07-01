@@ -1,0 +1,1 @@
+When resolving marks from a class hierarchy MRO, reverse the order so that more basic classes' marks will be processed ahead of ancestral classes.
