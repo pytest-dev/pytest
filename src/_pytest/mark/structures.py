@@ -22,6 +22,9 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
+from more_itertools import always_iterable
+from more_itertools import flatten
+
 from .._code import getfslineno
 from ..compat import ascii_escaped
 from ..compat import NOTSET
@@ -375,18 +378,9 @@ def get_unpacked_marks(
             mark_lists = [obj.__dict__.get("pytestmark", [])]
         else:
             mark_lists = [x.__dict__.get("pytestmark", []) for x in obj.__mro__]
-        mark_list = []
-        for item in mark_lists:
-            if isinstance(item, list):
-                mark_list.extend(item)
-            else:
-                mark_list.append(item)
     else:
-        mark_attribute = getattr(obj, "pytestmark", [])
-        if isinstance(mark_attribute, list):
-            mark_list = mark_attribute
-        else:
-            mark_list = [mark_attribute]
+        mark_lists = [getattr(obj, "pytestmark", [])]
+    mark_list = flatten(map(always_iterable, mark_lists))
     return list(normalize_mark_list(mark_list))
 
 
