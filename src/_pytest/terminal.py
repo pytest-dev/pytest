@@ -18,6 +18,7 @@ from typing import Callable
 from typing import cast
 from typing import ClassVar
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import List
 from typing import Mapping
@@ -40,7 +41,6 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.assertion.util import running_on_ci
-from _pytest.compat import final
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
