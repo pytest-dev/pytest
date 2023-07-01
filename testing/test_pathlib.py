@@ -602,5 +602,5 @@ class TestImportLibMode:
         modules = {"xxx.tests.foo": ModuleType("xxx.tests.foo")}
         insert_missing_modules(modules, "xxx.tests.foo")
         assert sorted(modules) == ["xxx", "xxx.tests", "xxx.tests.foo"]
-        assert modules["xxx"].tests == modules["xxx.tests"]
-        assert modules["xxx.tests"].foo == modules["xxx.tests.foo"]
+        assert modules["xxx"].tests is modules["xxx.tests"]
+        assert modules["xxx.tests"].foo is modules["xxx.tests.foo"]
