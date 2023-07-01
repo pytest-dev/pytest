@@ -817,7 +817,7 @@ case we just write some information out to a ``failures`` file:
         # we only look at actual failing test calls, not setup/teardown
         if rep.when == "call" and rep.failed:
             mode = "a" if os.path.exists("failures") else "w"
-            with open("failures", mode) as f:
+            with open("failures", mode, encoding="utf-8") as f:
                 # let's also access a fixture for the fun of it
                 if "tmp_path" in item.fixturenames:
                     extra = " ({})".format(item.funcargs["tmp_path"])
