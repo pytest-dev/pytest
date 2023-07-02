@@ -217,6 +217,11 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
             __tracebackhide__ = True
             raise AssertionError(f"{cls!r} not found in warning list")
         (idx, best), *rest = matches
+        for i, w in rest:
+            if issubclass(w.category, best.category) and not issubclass(
+                best.category, w.category
+            ):
+                idx, best = i, w
         return self._list.pop(idx)
 
     def clear(self) -> None:
