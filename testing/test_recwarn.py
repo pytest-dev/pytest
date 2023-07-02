@@ -37,6 +37,26 @@ def test_recwarn_captures_deprecation_warning(recwarn: WarningsRecorder) -> None
     assert recwarn.pop(DeprecationWarning)
 
 
+class TestSubclassWarningPop:
+    class ParentWarning(Warning):
+        pass
+
+    class ChildWarning(ParentWarning):
+        pass
+
+    def raise_warnings(self):
+        warnings.warn("Warning Child", self.ChildWarning)
+        warnings.warn("Warning Parent", self.ParentWarning)
+
+    def test_pop(self):
+        with pytest.warns((self.ParentWarning, self.ChildWarning)) as record:
+            self.raise_warnings()
+
+        assert len(record) == 2
+        _warn = record.pop(self.ParentWarning)
+        assert _warn.category is self.ParentWarning
+
+
 class TestWarningsRecorderChecker:
     def test_recording(self) -> None:
         rec = WarningsRecorder(_ispytest=True)
