@@ -1,5 +1,6 @@
 import os
 import warnings
+from functools import cached_property
 from inspect import signature
 from pathlib import Path
 from typing import Any
@@ -22,7 +23,7 @@ import _pytest._code
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
-from _pytest.compat import cached_property
+from _pytest._code.code import Traceback
 from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
@@ -432,8 +433,8 @@ class Node(metaclass=NodeMeta):
         assert current is None or isinstance(current, cls)
         return current
 
-    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
-        pass
+    def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
+        return excinfo.traceback
 
     def _repr_failure_py(
         self,
@@ -449,10 +450,13 @@ class Node(metaclass=NodeMeta):
                 style = "value"
         if isinstance(excinfo.value, FixtureLookupError):
             return excinfo.value.formatrepr()
+
+        tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]]
         if self.config.getoption("fulltrace", False):
             style = "long"
+            tbfilter = False
         else:
-            self._prunetraceback(excinfo)
+            tbfilter = self._traceback_filter
             if style == "auto":
                 style = "long"
         # XXX should excinfo.getrepr record all data and toterminal() process it?
@@ -483,7 +487,7 @@ class Node(metaclass=NodeMeta):
             abspath=abspath,
             showlocals=self.config.getoption("showlocals", False),
             style=style,
-            tbfilter=False,  # pruned already, or in --fulltrace mode.
+            tbfilter=tbfilter,
             truncate_locals=truncate_locals,
         )
 
@@ -554,13 +558,14 @@ class Collector(Node):
 
         return self._repr_failure_py(excinfo, style=tbstyle)
 
-    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
+    def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         if hasattr(self, "path"):
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=self.path)
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
-            excinfo.traceback = ntraceback.filter()
+            return excinfo.traceback.filter(excinfo)
+        return excinfo.traceback
 
 
 def _check_initialpaths_for_relpath(session: "Session", path: Path) -> Optional[str]:

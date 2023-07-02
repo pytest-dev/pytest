@@ -17,21 +17,23 @@ from typing import Any
 from typing import Callable
 from typing import ClassVar
 from typing import Dict
+from typing import Final
+from typing import final
 from typing import Generic
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
 from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import Set
+from typing import SupportsIndex
 from typing import Tuple
 from typing import Type
-from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-from weakref import ref
 
 import pluggy
 
@@ -43,21 +45,15 @@ from _pytest._code.source import Source
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
-from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.deprecated import check_ispytest
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 
-if TYPE_CHECKING:
-    from typing_extensions import Literal
-    from typing_extensions import SupportsIndex
-    from weakref import ReferenceType
-
-    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
-
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import BaseExceptionGroup
+
+_TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:
@@ -194,24 +190,24 @@ class Frame:
 class TracebackEntry:
     """A single entry in a Traceback."""
 
-    __slots__ = ("_rawentry", "_excinfo", "_repr_style")
+    __slots__ = ("_rawentry", "_repr_style")
 
     def __init__(
         self,
         rawentry: TracebackType,
-        excinfo: Optional["ReferenceType[ExceptionInfo[BaseException]]"] = None,
+        repr_style: Optional['Literal["short", "long"]'] = None,
     ) -> None:
-        self._rawentry = rawentry
-        self._excinfo = excinfo
-        self._repr_style: Optional['Literal["short", "long"]'] = None
+        self._rawentry: "Final" = rawentry
+        self._repr_style: "Final" = repr_style
+
+    def with_repr_style(
+        self, repr_style: Optional['Literal["short", "long"]']
+    ) -> "TracebackEntry":
+        return TracebackEntry(self._rawentry, repr_style)
 
     @property
     def lineno(self) -> int:
         return self._rawentry.tb_lineno - 1
-
-    def set_repr_style(self, mode: "Literal['short', 'long']") -> None:
-        assert mode in ("short", "long")
-        self._repr_style = mode
 
     @property
     def frame(self) -> Frame:
@@ -272,7 +268,7 @@ class TracebackEntry:
 
     source = property(getsource)
 
-    def ishidden(self) -> bool:
+    def ishidden(self, excinfo: Optional["ExceptionInfo[BaseException]"]) -> bool:
         """Return True if the current frame has a var __tracebackhide__
         resolving to True.
 
@@ -296,7 +292,7 @@ class TracebackEntry:
             else:
                 break
         if tbh and callable(tbh):
-            return tbh(None if self._excinfo is None else self._excinfo())
+            return tbh(excinfo)
         return tbh
 
     def __str__(self) -> str:
@@ -329,16 +325,14 @@ class Traceback(List[TracebackEntry]):
     def __init__(
         self,
         tb: Union[TracebackType, Iterable[TracebackEntry]],
-        excinfo: Optional["ReferenceType[ExceptionInfo[BaseException]]"] = None,
     ) -> None:
         """Initialize from given python traceback object and ExceptionInfo."""
-        self._excinfo = excinfo
         if isinstance(tb, TracebackType):
 
             def f(cur: TracebackType) -> Iterable[TracebackEntry]:
                 cur_: Optional[TracebackType] = cur
                 while cur_ is not None:
-                    yield TracebackEntry(cur_, excinfo=excinfo)
+                    yield TracebackEntry(cur_)
                     cur_ = cur_.tb_next
 
             super().__init__(f(tb))
@@ -378,7 +372,7 @@ class Traceback(List[TracebackEntry]):
                 continue
             if firstlineno is not None and x.frame.code.firstlineno != firstlineno:
                 continue
-            return Traceback(x._rawentry, self._excinfo)
+            return Traceback(x._rawentry)
         return self
 
     @overload
@@ -398,27 +392,27 @@ class Traceback(List[TracebackEntry]):
             return super().__getitem__(key)
 
     def filter(
-        self, fn: Callable[[TracebackEntry], bool] = lambda x: not x.ishidden()
+        self,
+        # TODO(py38): change to positional only.
+        _excinfo_or_fn: Union[
+            "ExceptionInfo[BaseException]",
+            Callable[[TracebackEntry], bool],
+        ],
     ) -> "Traceback":
-        """Return a Traceback instance with certain items removed
+        """Return a Traceback instance with certain items removed.
 
-        fn is a function that gets a single argument, a TracebackEntry
-        instance, and should return True when the item should be added
-        to the Traceback, False when not.
+        If the filter is an `ExceptionInfo`, removes all the ``TracebackEntry``s
+        which are hidden (see ishidden() above).
 
-        By default this removes all the TracebackEntries which are hidden
-        (see ishidden() above).
+        Otherwise, the filter is a function that gets a single argument, a
+        ``TracebackEntry`` instance, and should return True when the item should
+        be added to the ``Traceback``, False when not.
         """
-        return Traceback(filter(fn, self), self._excinfo)
-
-    def getcrashentry(self) -> Optional[TracebackEntry]:
-        """Return last non-hidden traceback entry that lead to the exception of
-        a traceback, or None if all hidden."""
-        for i in range(-1, -len(self) - 1, -1):
-            entry = self[i]
-            if not entry.ishidden():
-                return entry
-        return None
+        if isinstance(_excinfo_or_fn, ExceptionInfo):
+            fn = lambda x: not x.ishidden(_excinfo_or_fn)  # noqa: E731
+        else:
+            fn = _excinfo_or_fn
+        return Traceback(filter(fn, self))
 
     def recursionindex(self) -> Optional[int]:
         """Return the index of the frame/TracebackEntry where recursion originates if
@@ -583,7 +577,7 @@ class ExceptionInfo(Generic[E]):
     def traceback(self) -> Traceback:
         """The traceback."""
         if self._traceback is None:
-            self._traceback = Traceback(self.tb, excinfo=ref(self))
+            self._traceback = Traceback(self.tb)
         return self._traceback
 
     @traceback.setter
@@ -623,19 +617,24 @@ class ExceptionInfo(Generic[E]):
         return isinstance(self.value, exc)
 
     def _getreprcrash(self) -> Optional["ReprFileLocation"]:
-        exconly = self.exconly(tryshort=True)
-        entry = self.traceback.getcrashentry()
-        if entry is None:
-            return None
-        path, lineno = entry.frame.code.raw.co_filename, entry.lineno
-        return ReprFileLocation(path, lineno + 1, exconly)
+        # Find last non-hidden traceback entry that led to the exception of the
+        # traceback, or None if all hidden.
+        for i in range(-1, -len(self.traceback) - 1, -1):
+            entry = self.traceback[i]
+            if not entry.ishidden(self):
+                path, lineno = entry.frame.code.raw.co_filename, entry.lineno
+                exconly = self.exconly(tryshort=True)
+                return ReprFileLocation(path, lineno + 1, exconly)
+        return None
 
     def getrepr(
         self,
         showlocals: bool = False,
-        style: "_TracebackStyle" = "long",
+        style: _TracebackStyle = "long",
         abspath: bool = False,
-        tbfilter: bool = True,
+        tbfilter: Union[
+            bool, Callable[["ExceptionInfo[BaseException]"], Traceback]
+        ] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
         chain: bool = True,
@@ -652,9 +651,15 @@ class ExceptionInfo(Generic[E]):
         :param bool abspath:
             If paths should be changed to absolute or left unchanged.
 
-        :param bool tbfilter:
-            Hide entries that contain a local variable ``__tracebackhide__==True``.
-            Ignored if ``style=="native"``.
+        :param tbfilter:
+            A filter for traceback entries.
+
+            * If false, don't hide any entries.
+            * If true, hide internal entries and entries that contain a local
+              variable ``__tracebackhide__ = True``.
+            * If a callable, delegates the filtering to the callable.
+
+            Ignored if ``style`` is ``"native"``.
 
         :param bool funcargs:
             Show fixtures ("funcargs" for legacy purposes) per traceback entry.
@@ -717,9 +722,9 @@ class FormattedExcinfo:
     fail_marker: ClassVar = "E"
 
     showlocals: bool = False
-    style: "_TracebackStyle" = "long"
+    style: _TracebackStyle = "long"
     abspath: bool = True
-    tbfilter: bool = True
+    tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]] = True
     funcargs: bool = False
     truncate_locals: bool = True
     chain: bool = True
@@ -881,8 +886,10 @@ class FormattedExcinfo:
 
     def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> "ReprTraceback":
         traceback = excinfo.traceback
-        if self.tbfilter:
-            traceback = traceback.filter()
+        if callable(self.tbfilter):
+            traceback = self.tbfilter(excinfo)
+        elif self.tbfilter:
+            traceback = traceback.filter(excinfo)
 
         if isinstance(excinfo.value, RecursionError):
             traceback, extraline = self._truncate_recursive_traceback(traceback)
@@ -1080,7 +1087,7 @@ class ReprExceptionInfo(ExceptionRepr):
 class ReprTraceback(TerminalRepr):
     reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]]
     extraline: Optional[str]
-    style: "_TracebackStyle"
+    style: _TracebackStyle
 
     entrysep: ClassVar = "_ "
 
@@ -1114,7 +1121,7 @@ class ReprTracebackNative(ReprTraceback):
 class ReprEntryNative(TerminalRepr):
     lines: Sequence[str]
 
-    style: ClassVar["_TracebackStyle"] = "native"
+    style: ClassVar[_TracebackStyle] = "native"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
@@ -1126,7 +1133,7 @@ class ReprEntry(TerminalRepr):
     reprfuncargs: Optional["ReprFuncArgs"]
     reprlocals: Optional["ReprLocals"]
     reprfileloc: Optional["ReprFileLocation"]
-    style: "_TracebackStyle"
+    style: _TracebackStyle
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
         """Write the source code portions of a list of traceback entries with syntax highlighting.

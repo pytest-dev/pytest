@@ -131,9 +131,8 @@ class TestAssertionRewrite:
             for n in [node, *ast.iter_child_nodes(node)]:
                 assert n.lineno == 3
                 assert n.col_offset == 0
-                if sys.version_info >= (3, 8):
-                    assert n.end_lineno == 6
-                    assert n.end_col_offset == 3
+                assert n.end_lineno == 6
+                assert n.end_col_offset == 3
 
     def test_dont_rewrite(self) -> None:
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
@@ -160,7 +159,8 @@ class TestAssertionRewrite:
             "def special_asserter():\n"
             "    def special_assert(x, y):\n"
             "        assert x == y\n"
-            "    return special_assert\n"
+            "    return special_assert\n",
+            encoding="utf-8",
         )
         pytester.makeconftest('pytest_plugins = ["plugin"]')
         pytester.makepyfile("def test(special_asserter): special_asserter(1, 2)\n")
@@ -173,7 +173,9 @@ class TestAssertionRewrite:
         pytester.makepyfile(test_y="x = 1")
         xdir = pytester.mkdir("x")
         pytester.mkpydir(str(xdir.joinpath("test_Y")))
-        xdir.joinpath("test_Y").joinpath("__init__.py").write_text("x = 2")
+        xdir.joinpath("test_Y").joinpath("__init__.py").write_text(
+            "x = 2", encoding="utf-8"
+        )
         pytester.makepyfile(
             "import test_y\n"
             "import test_Y\n"
@@ -726,7 +728,7 @@ class TestAssertionRewrite:
 
 class TestRewriteOnImport:
     def test_pycache_is_a_file(self, pytester: Pytester) -> None:
-        pytester.path.joinpath("__pycache__").write_text("Hello")
+        pytester.path.joinpath("__pycache__").write_text("Hello", encoding="utf-8")
         pytester.makepyfile(
             """
             def test_rewritten():
@@ -903,7 +905,8 @@ def test_rewritten():
         pkg.joinpath("test_blah.py").write_text(
             """
 def test_rewritten():
-    assert "@py_builtins" in globals()"""
+    assert "@py_builtins" in globals()""",
+            encoding="utf-8",
         )
         assert pytester.runpytest().ret == 0
 
@@ -1066,7 +1069,7 @@ class TestAssertionRewriteHookDetails:
         source = tmp_path / "source.py"
         pyc = Path(str(source) + "c")
 
-        source.write_text("def test(): pass")
+        source.write_text("def test(): pass", encoding="utf-8")
         py_compile.compile(str(source), str(pyc))
 
         contents = pyc.read_bytes()
@@ -1092,7 +1095,7 @@ class TestAssertionRewriteHookDetails:
         fn = tmp_path / "source.py"
         pyc = Path(str(fn) + "c")
 
-        fn.write_text("def test(): assert True")
+        fn.write_text("def test(): assert True", encoding="utf-8")
 
         source_stat, co = _rewrite_test(fn, config)
         _write_pyc(state, co, source_stat, pyc)
@@ -1157,7 +1160,7 @@ class TestAssertionRewriteHookDetails:
                 return False
 
             def rewrite_self():
-                with open(__file__, 'w') as self:
+                with open(__file__, 'w', encoding='utf-8') as self:
                     self.write('def reloaded(): return True')
             """,
             test_fun="""
@@ -1187,9 +1190,10 @@ class TestAssertionRewriteHookDetails:
                         data = pkgutil.get_data('foo.test_foo', 'data.txt')
                         assert data == b'Hey'
                 """
-            )
+            ),
+            encoding="utf-8",
         )
-        path.joinpath("data.txt").write_text("Hey")
+        path.joinpath("data.txt").write_text("Hey", encoding="utf-8")
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
 
@@ -1265,9 +1269,6 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="walrus operator not available in py<38"
-)
 class TestIssue10743:
     def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1434,6 +1435,93 @@ class TestIssue10743:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+
+class TestIssue11028:
+    def test_assertion_walrus_operator_in_operand(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_in_string():
+              assert (obj := "foo") in obj
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_in_operand_json_dumps(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import json
+
+            def test_json_encoder():
+                assert (obj := "foo") in json.dumps(obj)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_equals_operand_function(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def f(a):
+                return a
+
+            def test_call_other_function_arg():
+              assert (obj := "foo") == f(obj)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_equals_operand_function_keyword_arg(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def f(a='test'):
+                return a
+
+            def test_call_other_function_k_arg():
+              assert (obj := "foo") == f(a=obj)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_equals_operand_function_arg_as_function(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def f(a='test'):
+                return a
+
+            def test_function_of_function():
+              assert (obj := "foo") == f(f(obj))
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_gt_operand_function(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def add_one(a):
+                return a + 1
+
+            def test_gt():
+              assert (obj := 4) > add_one(obj)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*assert 4 > 5", "*where 5 = add_one(4)"])
 
 
 @pytest.mark.skipif(
@@ -1862,16 +1950,10 @@ class TestPyCacheDir:
     )
     def test_get_cache_dir(self, monkeypatch, prefix, source, expected) -> None:
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
-
-        if prefix is not None and sys.version_info < (3, 8):
-            pytest.skip("pycache_prefix not available in py<38")
         monkeypatch.setattr(sys, "pycache_prefix", prefix, raising=False)
 
         assert get_cache_dir(Path(source)) == Path(expected)
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 8), reason="pycache_prefix not available in py<38"
-    )
     @pytest.mark.skipif(
         sys.version_info[:2] == (3, 9) and sys.platform.startswith("win"),
         reason="#9298",

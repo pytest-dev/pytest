@@ -18,9 +18,11 @@ from typing import Callable
 from typing import cast
 from typing import ClassVar
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -39,7 +41,6 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest.assertion.util import running_on_ci
-from _pytest.compat import final
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -110,6 +111,26 @@ class MoreQuietAction(argparse.Action):
         setattr(namespace, self.dest, new_count)
         # todo Deprecate config.quiet
         namespace.quiet = getattr(namespace, "quiet", 0) + 1
+
+
+class TestShortLogReport(NamedTuple):
+    """Used to store the test status result category, shortletter and verbose word.
+    For example ``"rerun", "R", ("RERUN", {"yellow": True})``.
+
+    :ivar category:
+        The class of result, for example ``“passed”``, ``“skipped”``, ``“error”``, or the empty string.
+
+    :ivar letter:
+        The short letter shown as testing progresses, for example ``"."``, ``"s"``, ``"E"``, or the empty string.
+
+    :ivar word:
+        Verbose word is shown as testing progresses in verbose mode, for example ``"PASSED"``, ``"SKIPPED"``,
+        ``"ERROR"``, or the empty string.
+    """
+
+    category: str
+    letter: str
+    word: Union[str, Tuple[str, Mapping[str, bool]]]
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -548,10 +569,11 @@ class TerminalReporter:
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
         rep = report
-        res: Tuple[
-            str, str, Union[str, Tuple[str, Mapping[str, bool]]]
-        ] = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
-        category, letter, word = res
+
+        res = TestShortLogReport(
+            *self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
+        )
+        category, letter, word = res.category, res.letter, res.word
         if not isinstance(word, tuple):
             markup = None
         else:

@@ -9,7 +9,7 @@ Get Started
 Install ``pytest``
 ----------------------------------------
 
-``pytest`` requires: Python 3.7+ or PyPy3.
+``pytest`` requires: Python 3.8+ or PyPy3.
 
 1. Run the following command in your command line:
 
@@ -22,7 +22,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 7.3.1
+    pytest 7.4.0
 
 .. _`simpletest`:
 

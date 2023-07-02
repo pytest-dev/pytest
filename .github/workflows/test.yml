@@ -37,26 +37,26 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py37",
-          "windows-py37-pluggy",
           "windows-py38",
+          "windows-py38-pluggy",
           "windows-py39",
           "windows-py310",
           "windows-py311",
+          "windows-py312",
 
-          "ubuntu-py37",
-          "ubuntu-py37-pluggy",
-          "ubuntu-py37-freeze",
           "ubuntu-py38",
+          "ubuntu-py38-pluggy",
+          "ubuntu-py38-freeze",
           "ubuntu-py39",
           "ubuntu-py310",
           "ubuntu-py311",
+          "ubuntu-py312",
           "ubuntu-pypy3",
 
-          "macos-py37",
           "macos-py38",
           "macos-py39",
           "macos-py310",
+          "macos-py312",
 
           "docs",
           "doctesting",
@@ -64,19 +64,15 @@ jobs:
         ]
 
         include:
-          - name: "windows-py37"
-            python: "3.7"
-            os: windows-latest
-            tox_env: "py37-numpy"
-          - name: "windows-py37-pluggy"
-            python: "3.7"
-            os: windows-latest
-            tox_env: "py37-pluggymain-pylib-xdist"
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
             tox_env: "py38-unittestextras"
             use_coverage: true
+          - name: "windows-py38-pluggy"
+            python: "3.8"
+            os: windows-latest
+            tox_env: "py38-pluggymain-pylib-xdist"
           - name: "windows-py39"
             python: "3.9"
             os: windows-latest
@@ -86,27 +82,27 @@ jobs:
             os: windows-latest
             tox_env: "py310-xdist"
           - name: "windows-py311"
-            python: "3.11-dev"
+            python: "3.11"
             os: windows-latest
             tox_env: "py311"
+          - name: "windows-py312"
+            python: "3.12-dev"
+            os: windows-latest
+            tox_env: "py312"
 
-          - name: "ubuntu-py37"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-lsof-numpy-pexpect"
-            use_coverage: true
-          - name: "ubuntu-py37-pluggy"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-pluggymain-pylib-xdist"
-          - name: "ubuntu-py37-freeze"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-freeze"
           - name: "ubuntu-py38"
             python: "3.8"
             os: ubuntu-latest
-            tox_env: "py38-xdist"
+            tox_env: "py38-lsof-numpy-pexpect"
+            use_coverage: true
+          - name: "ubuntu-py38-pluggy"
+            python: "3.8"
+            os: ubuntu-latest
+            tox_env: "py38-pluggymain-pylib-xdist"
+          - name: "ubuntu-py38-freeze"
+            python: "3.8"
+            os: ubuntu-latest
+            tox_env: "py38-freeze"
           - name: "ubuntu-py39"
             python: "3.9"
             os: ubuntu-latest
@@ -116,32 +112,37 @@ jobs:
             os: ubuntu-latest
             tox_env: "py310-xdist"
           - name: "ubuntu-py311"
-            python: "3.11-dev"
+            python: "3.11"
             os: ubuntu-latest
             tox_env: "py311"
             use_coverage: true
+          - name: "ubuntu-py312"
+            python: "3.12-dev"
+            os: ubuntu-latest
+            tox_env: "py312"
+            use_coverage: true
           - name: "ubuntu-pypy3"
-            python: "pypy-3.7"
+            python: "pypy-3.8"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
-          - name: "macos-py37"
-            python: "3.7"
-            os: macos-latest
-            tox_env: "py37-xdist"
           - name: "macos-py38"
             python: "3.8"
             os: macos-latest
             tox_env: "py38-xdist"
-            use_coverage: true
           - name: "macos-py39"
             python: "3.9"
             os: macos-latest
             tox_env: "py39-xdist"
+            use_coverage: true
           - name: "macos-py310"
             python: "3.10"
             os: macos-latest
             tox_env: "py310-xdist"
+          - name: "macos-py312"
+            python: "3.12-dev"
+            os: macos-latest
+            tox_env: "py312-xdist"
 
           - name: "plugins"
             python: "3.9"
@@ -149,11 +150,11 @@ jobs:
             tox_env: "plugins"
 
           - name: "docs"
-            python: "3.7"
+            python: "3.8"
             os: ubuntu-latest
             tox_env: "docs"
           - name: "doctesting"
-            python: "3.7"
+            python: "3.8"
             os: ubuntu-latest
             tox_env: "doctesting"
             use_coverage: true
@@ -168,6 +169,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
+        check-latest: ${{ endsWith(matrix.python, '-dev') }}
 
     - name: Install dependencies
       run: |

@@ -22,7 +22,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collected 0 items
-    cache -- .../_pytest/cacheprovider.py:510
+    cache -- .../_pytest/cacheprovider.py:528
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -119,7 +119,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1360
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1353
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
@@ -196,7 +196,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
 
-    caplog -- .../_pytest/logging.py:498
+    caplog -- .../_pytest/logging.py:570
         Access and control log capturing.
 
         Captured logs are available through the following properties/methods::
@@ -207,7 +207,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
 
-    monkeypatch -- .../_pytest/monkeypatch.py:29
+    monkeypatch -- .../_pytest/monkeypatch.py:30
         A convenient fixture for monkey-patching.
 
         The fixture provides these methods to modify objects, dictionaries, or

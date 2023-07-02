@@ -26,7 +26,6 @@ from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 
-
 __all__ = [
     "Expression",
     "ParseError",
@@ -132,7 +131,7 @@ IDENT_PREFIX = "$"
 
 def expression(s: Scanner) -> ast.Expression:
     if s.accept(TokenType.EOF):
-        ret: ast.expr = ast.NameConstant(False)
+        ret: ast.expr = ast.Constant(False)
     else:
         ret = expr(s)
         s.accept(TokenType.EOF, reject=True)

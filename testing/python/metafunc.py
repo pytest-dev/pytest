@@ -19,7 +19,6 @@ from hypothesis import strategies
 import pytest
 from _pytest import fixtures
 from _pytest import python
-from _pytest.compat import _format_args
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
@@ -1036,27 +1035,6 @@ class TestMetafunc:
         """
         )
 
-    def test_format_args(self) -> None:
-        def function1():
-            pass
-
-        assert _format_args(function1) == "()"
-
-        def function2(arg1):
-            pass
-
-        assert _format_args(function2) == "(arg1)"
-
-        def function3(arg1, arg2="qwe"):
-            pass
-
-        assert _format_args(function3) == "(arg1, arg2='qwe')"
-
-        def function4(arg1, *args, **kwargs):
-            pass
-
-        assert _format_args(function4) == "(arg1, *args, **kwargs)"
-
 
 class TestMetafuncFunctional:
     def test_attributes(self, pytester: Pytester) -> None:
@@ -1443,7 +1421,8 @@ class TestMetafuncFunctional:
                 def pytest_generate_tests(metafunc):
                     assert metafunc.function.__name__ == "test_1"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         sub2.joinpath("conftest.py").write_text(
             textwrap.dedent(
@@ -1451,10 +1430,15 @@ class TestMetafuncFunctional:
                 def pytest_generate_tests(metafunc):
                     assert metafunc.function.__name__ == "test_2"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
-        sub1.joinpath("test_in_sub1.py").write_text("def test_1(): pass")
-        sub2.joinpath("test_in_sub2.py").write_text("def test_2(): pass")
+        sub1.joinpath("test_in_sub1.py").write_text(
+            "def test_1(): pass", encoding="utf-8"
+        )
+        sub2.joinpath("test_in_sub2.py").write_text(
+            "def test_2(): pass", encoding="utf-8"
+        )
         result = pytester.runpytest("--keep-duplicates", "-v", "-s", sub1, sub2, sub1)
         result.assert_outcomes(passed=3)
 

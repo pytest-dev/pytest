@@ -1,4 +1,5 @@
 import dataclasses
+import importlib.metadata
 import os
 import re
 import sys
@@ -13,7 +14,6 @@ from typing import Union
 
 import _pytest._code
 import pytest
-from _pytest.compat import importlib_metadata
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
@@ -87,7 +87,8 @@ class TestParseIni:
                 [pytest]
                 addopts = --verbose
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         config = pytester.parseconfig(tmp_path)
         assert config.option.color == "no"
@@ -127,7 +128,8 @@ class TestParseIni:
         """.format(
                     section=section
                 )
-            )
+            ),
+            encoding="utf-8",
         )
         config = pytester.parseconfig()
         assert config.getini("minversion") == "3.36"
@@ -150,7 +152,8 @@ class TestParseIni:
             [pytest]
             minversion = 2.0
         """
-            )
+            ),
+            encoding="utf-8",
         )
         pytester.path.joinpath("pytest.ini").write_text(
             textwrap.dedent(
@@ -158,13 +161,16 @@ class TestParseIni:
             [pytest]
             minversion = 1.5
         """
-            )
+            ),
+            encoding="utf-8",
         )
         config = pytester.parseconfigure(sub)
         assert config.getini("minversion") == "2.0"
 
     def test_ini_parse_error(self, pytester: Pytester) -> None:
-        pytester.path.joinpath("pytest.ini").write_text("addopts = -x")
+        pytester.path.joinpath("pytest.ini").write_text(
+            "addopts = -x", encoding="utf-8"
+        )
         result = pytester.runpytest()
         assert result.ret != 0
         result.stderr.fnmatch_lines("ERROR: *pytest.ini:1: no section header defined")
@@ -178,6 +184,23 @@ class TestParseIni:
         result = pytester.runpytest()
         assert result.ret != 0
         result.stderr.fnmatch_lines("ERROR: *pyproject.toml: Invalid statement*")
+
+    def test_confcutdir_default_without_configfile(self, pytester: Pytester) -> None:
+        # If --confcutdir is not specified, and there is no configfile, default
+        # to the roothpath.
+        sub = pytester.mkdir("sub")
+        os.chdir(sub)
+        config = pytester.parseconfigure()
+        assert config.pluginmanager._confcutdir == sub
+
+    def test_confcutdir_default_with_configfile(self, pytester: Pytester) -> None:
+        # If --confcutdir is not specified, and there is a configfile, default
+        # to the configfile's directory.
+        pytester.makeini("[pytest]")
+        sub = pytester.mkdir("sub")
+        os.chdir(sub)
+        config = pytester.parseconfigure()
+        assert config.pluginmanager._confcutdir == pytester.path
 
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, pytester: Pytester) -> None:
@@ -452,7 +475,7 @@ class TestParseIni:
         pytester.makepyfile(myplugin1_module="# my plugin module")
         pytester.syspathinsert()
 
-        monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
+        monkeypatch.setattr(importlib.metadata, "distributions", my_dists)
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
         pytester.makeini(ini_file_text)
@@ -514,6 +537,8 @@ class TestConfigCmdlineParsing:
         )
         config = pytester.parseconfig("-c", "custom.ini")
         assert config.getini("custom") == "1"
+        config = pytester.parseconfig("--config-file", "custom.ini")
+        assert config.getini("custom") == "1"
 
         pytester.makefile(
             ".cfg",
@@ -523,6 +548,8 @@ class TestConfigCmdlineParsing:
         """,
         )
         config = pytester.parseconfig("-c", "custom_tool_pytest_section.cfg")
+        assert config.getini("custom") == "1"
+        config = pytester.parseconfig("--config-file", "custom_tool_pytest_section.cfg")
         assert config.getini("custom") == "1"
 
         pytester.makefile(
@@ -535,6 +562,8 @@ class TestConfigCmdlineParsing:
             """,
         )
         config = pytester.parseconfig("-c", "custom.toml")
+        assert config.getini("custom") == "1"
+        config = pytester.parseconfig("--config-file", "custom.toml")
         assert config.getini("custom") == "1"
 
     def test_absolute_win32_path(self, pytester: Pytester) -> None:
@@ -549,6 +578,8 @@ class TestConfigCmdlineParsing:
 
         temp_ini_file_norm = normpath(str(temp_ini_file))
         ret = pytest.main(["-c", temp_ini_file_norm])
+        assert ret == ExitCode.OK
+        ret = pytest.main(["--config-file", temp_ini_file_norm])
         assert ret == ExitCode.OK
 
 
@@ -609,7 +640,7 @@ class TestConfigAPI:
     def test_getconftest_pathlist(self, pytester: Pytester, tmp_path: Path) -> None:
         somepath = tmp_path.joinpath("x", "y", "z")
         p = tmp_path.joinpath("conftest.py")
-        p.write_text(f"mylist = {['.', str(somepath)]}")
+        p.write_text(f"mylist = {['.', str(somepath)]}", encoding="utf-8")
         config = pytester.parseconfigure(p)
         assert (
             config._getconftest_pathlist("notexist", path=tmp_path, rootpath=tmp_path)
@@ -885,7 +916,8 @@ class TestConfigFromdictargs:
                 [pytest]
                 name = value
                 """
-            )
+            ),
+            encoding="utf-8",
         )
 
         inifilename = "../../foo/bar.ini"
@@ -902,7 +934,8 @@ class TestConfigFromdictargs:
                 name = wrong-value
                 should_not_be_set = true
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         with MonkeyPatch.context() as mp:
             mp.chdir(cwd)
@@ -970,7 +1003,7 @@ def test_preparse_ordering_with_setuptools(
     def my_dists():
         return (Dist,)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
+    monkeypatch.setattr(importlib.metadata, "distributions", my_dists)
     pytester.makeconftest(
         """
         pytest_plugins = "mytestplugin",
@@ -1003,7 +1036,7 @@ def test_setuptools_importerror_issue1479(
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     with pytest.raises(ImportError):
         pytester.parseconfig()
 
@@ -1030,7 +1063,7 @@ def test_importlib_metadata_broken_distribution(
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     pytester.parseconfig()
 
 
@@ -1058,7 +1091,7 @@ def test_plugin_preparse_prevents_setuptools_loading(
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     args = ("-p", "no:mytestplugin") if block_it else ()
     config = pytester.parseconfig(*args)
     config.pluginmanager.import_plugin("mytestplugin")
@@ -1107,7 +1140,7 @@ def test_disable_plugin_autoload(
         return (Distribution(),)
 
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())  # type: ignore[misc]
     config = pytester.parseconfig(*parse_args)
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
@@ -1151,7 +1184,7 @@ def test_cmdline_processargs_simple(pytester: Pytester) -> None:
             args.append("-h")
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn8Warning")
     result.stdout.fnmatch_lines(["*pytest*", "*-h*"])
 
 
@@ -1362,7 +1395,7 @@ class TestRootdir:
     )
     def test_with_ini(self, tmp_path: Path, name: str, contents: str) -> None:
         inipath = tmp_path / name
-        inipath.write_text(contents, "utf-8")
+        inipath.write_text(contents, encoding="utf-8")
 
         a = tmp_path / "a"
         a.mkdir()
@@ -1421,7 +1454,7 @@ class TestRootdir:
     ) -> None:
         p = tmp_path / name
         p.touch()
-        p.write_text(contents, "utf-8")
+        p.write_text(contents, encoding="utf-8")
         rootpath, inipath, ini_config = determine_setup(str(p), [str(tmp_path)])
         assert rootpath == tmp_path
         assert inipath == p
@@ -1517,7 +1550,8 @@ class TestOverrideIniArgs:
             custom = 1.0""".format(
                     section=section
                 )
-            )
+            ),
+            encoding="utf-8",
         )
         pytester.makeconftest(
             """
@@ -1906,6 +1940,9 @@ class TestSetupCfg:
         )
         with pytest.raises(pytest.fail.Exception):
             pytester.runpytest("-c", "custom.cfg")
+
+        with pytest.raises(pytest.fail.Exception):
+            pytester.runpytest("--config-file", "custom.cfg")
 
 
 class TestPytestPluginsVariable:

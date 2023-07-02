@@ -1,5 +1,6 @@
 import enum
 import sys
+from functools import cached_property
 from functools import partial
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -8,7 +9,6 @@ from typing import Union
 import pytest
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
-from _pytest.compat import cached_property
 from _pytest.compat import get_real_func
 from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr

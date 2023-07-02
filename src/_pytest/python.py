@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
@@ -35,11 +36,11 @@ from _pytest._code import filter_traceback
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
+from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
 from _pytest.compat import assert_never
-from _pytest.compat import final
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
@@ -56,7 +57,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import INSTANCE_COLLECTOR
 from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FuncFixtureInfo
@@ -667,7 +667,7 @@ class Package(Module):
         config=None,
         session=None,
         nodeid=None,
-        path=Optional[Path],
+        path: Optional[Path] = None,
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
         # nodes.FSCollector.__init__(self, fspath, parent=parent)
@@ -699,23 +699,12 @@ class Package(Module):
             func = partial(_call_with_optional_argument, teardown_module, self.obj)
             self.addfinalizer(func)
 
-    def gethookproxy(self, fspath: "os.PathLike[str]"):
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.gethookproxy(fspath)
-
-    def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.isinitpath(path)
-
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
         if direntry.name == "__pycache__":
             return False
         fspath = Path(direntry.path)
         ihook = self.session.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-            return False
-        norecursepatterns = self.config.getini("norecursedirs")
-        if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
             return False
         return True
 
@@ -745,11 +734,13 @@ class Package(Module):
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         this_path = self.path.parent
-        init_module = this_path / "__init__.py"
-        if init_module.is_file() and path_matches_patterns(
-            init_module, self.config.getini("python_files")
+
+        # Always collect the __init__ first.
+        if self.session.isinitpath(self.path) or path_matches_patterns(
+            self.path, self.config.getini("python_files")
         ):
-            yield Module.from_parent(self, path=init_module)
+            yield Module.from_parent(self, path=self.path)
+
         pkg_prefixes: Set[Path] = set()
         for direntry in visit(str(this_path), recurse=self._recurse):
             path = Path(direntry.path)
@@ -1801,7 +1792,7 @@ class Function(PyobjMixin, nodes.Item):
     def setup(self) -> None:
         self._request._fillfixtures()
 
-    def _prunetraceback(self, excinfo: ExceptionInfo[BaseException]) -> None:
+    def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
             code = _pytest._code.Code.from_function(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
@@ -1813,14 +1804,21 @@ class Function(PyobjMixin, nodes.Item):
                     ntraceback = ntraceback.filter(filter_traceback)
                     if not ntraceback:
                         ntraceback = traceback
+            ntraceback = ntraceback.filter(excinfo)
 
-            excinfo.traceback = ntraceback.filter()
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame.
             if self.config.getoption("tbstyle", "auto") == "auto":
-                if len(excinfo.traceback) > 2:
-                    for entry in excinfo.traceback[1:-1]:
-                        entry.set_repr_style("short")
+                if len(ntraceback) > 2:
+                    ntraceback = Traceback(
+                        entry
+                        if i == 0 or i == len(ntraceback) - 1
+                        else entry.with_repr_style("short")
+                        for i, entry in enumerate(ntraceback)
+                    )
+
+            return ntraceback
+        return excinfo.traceback
 
     # TODO: Type ignored -- breaks Liskov Substitution.
     def repr_failure(  # type: ignore[override]

@@ -11,7 +11,7 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-import _pytest
+import _pytest._code
 import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
@@ -186,7 +186,7 @@ class TestTraceback_f_g_h:
 
     def test_traceback_filter(self):
         traceback = self.excinfo.traceback
-        ntraceback = traceback.filter()
+        ntraceback = traceback.filter(self.excinfo)
         assert len(ntraceback) == len(traceback) - 1
 
     @pytest.mark.parametrize(
@@ -217,7 +217,7 @@ class TestTraceback_f_g_h:
 
         excinfo = pytest.raises(ValueError, h)
         traceback = excinfo.traceback
-        ntraceback = traceback.filter()
+        ntraceback = traceback.filter(excinfo)
         print(f"old: {traceback!r}")
         print(f"new: {ntraceback!r}")
 
@@ -290,7 +290,7 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, fail)
         assert excinfo.traceback.recursionindex() is None
 
-    def test_traceback_getcrashentry(self):
+    def test_getreprcrash(self):
         def i():
             __tracebackhide__ = True
             raise ValueError
@@ -306,15 +306,13 @@ class TestTraceback_f_g_h:
             g()
 
         excinfo = pytest.raises(ValueError, f)
-        tb = excinfo.traceback
-        entry = tb.getcrashentry()
-        assert entry is not None
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
         co = _pytest._code.Code.from_function(h)
-        assert entry.frame.code.path == co.path
-        assert entry.lineno == co.firstlineno + 1
-        assert entry.frame.code.name == "h"
+        assert reprcrash.path == str(co.path)
+        assert reprcrash.lineno == co.firstlineno + 1 + 1
 
-    def test_traceback_getcrashentry_empty(self):
+    def test_getreprcrash_empty(self):
         def g():
             __tracebackhide__ = True
             raise ValueError
@@ -324,7 +322,7 @@ class TestTraceback_f_g_h:
             g()
 
         excinfo = pytest.raises(ValueError, f)
-        assert excinfo.traceback.getcrashentry() is None
+        assert excinfo._getreprcrash() is None
 
 
 def test_excinfo_exconly():
@@ -376,7 +374,7 @@ def test_excinfo_no_sourcecode():
 
 def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     # XXX: simplified locally testable version
-    tmp_path.joinpath("test.txt").write_text("{{ h()}}:")
+    tmp_path.joinpath("test.txt").write_text("{{ h()}}:", encoding="utf-8")
 
     jinja2 = pytest.importorskip("jinja2")
     loader = jinja2.FileSystemLoader(str(tmp_path))
@@ -453,7 +451,7 @@ class TestFormattedExcinfo:
             source = textwrap.dedent(source)
             modpath = tmp_path.joinpath("mod.py")
             tmp_path.joinpath("__init__.py").touch()
-            modpath.write_text(source)
+            modpath.write_text(source, encoding="utf-8")
             importlib.invalidate_caches()
             return import_path(modpath, root=tmp_path)
 
@@ -626,7 +624,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1)
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         p = FormattedExcinfo()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
 
@@ -659,7 +657,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1, "m" * 90, 5, 13, "z" * 120)
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
         reprfuncargs = p.repr_args(entry)
@@ -686,7 +684,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.func1, "a", "b", c="d")
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
         reprfuncargs = p.repr_args(entry)
@@ -960,7 +958,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -994,7 +992,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.f)
         tmp_path.joinpath("mod.py").unlink()
-        excinfo.traceback = excinfo.traceback.filter()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -1025,8 +1023,8 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        tmp_path.joinpath("mod.py").write_text("asdf")
-        excinfo.traceback = excinfo.traceback.filter()
+        tmp_path.joinpath("mod.py").write_text("asdf", encoding="utf-8")
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
         assert tw_mock.lines[0] == ""
@@ -1123,9 +1121,11 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        excinfo.traceback = excinfo.traceback.filter()
-        excinfo.traceback[1].set_repr_style("short")
-        excinfo.traceback[2].set_repr_style("short")
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        excinfo.traceback = _pytest._code.Traceback(
+            entry if i not in (1, 2) else entry.with_repr_style("short")
+            for i, entry in enumerate(excinfo.traceback)
+        )
         r = excinfo.getrepr(style="long")
         r.toterminal(tw_mock)
         for line in tw_mock.lines:
@@ -1391,7 +1391,7 @@ raise ValueError()
         with pytest.raises(TypeError) as excinfo:
             mod.f()
         # previously crashed with `AttributeError: list has no attribute get`
-        excinfo.traceback.filter()
+        excinfo.traceback.filter(excinfo)
 
 
 @pytest.mark.parametrize("style", ["short", "long"])
@@ -1603,3 +1603,48 @@ def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
         result.stdout.fnmatch_lines(["*ZeroDivisionError: division by zero"])
     if tbstyle not in ("line", "native"):
         result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])
+
+
+def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) -> None:
+    """Hidden entries of chained exceptions are not shown (#1904)."""
+    p = pytester.makepyfile(
+        """
+        def g1():
+            __tracebackhide__ = True
+            str.does_not_exist
+
+        def f3():
+            __tracebackhide__ = True
+            1 / 0
+
+        def f2():
+            try:
+                f3()
+            except Exception:
+                g1()
+
+        def f1():
+            __tracebackhide__ = True
+            f2()
+
+        def test():
+            f1()
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*.py:11: in f2",
+            "    f3()",
+            "E   ZeroDivisionError: division by zero",
+            "",
+            "During handling of the above exception, another exception occurred:",
+            "*.py:20: in test",
+            "    f1()",
+            "*.py:13: in f2",
+            "    g1()",
+            "E   AttributeError:*'does_not_exist'",
+        ],
+        consecutive=True,
+    )

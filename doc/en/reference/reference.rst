@@ -956,6 +956,12 @@ TestReport
     :show-inheritance:
     :inherited-members:
 
+TestShortLogReport
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.TestShortLogReport()
+    :members:
+
 _Result
 ~~~~~~~
 
@@ -1049,11 +1055,11 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alterative to ``BUILD_NUMBER`` variable.
+When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to ``BUILD_NUMBER`` variable.
 
 .. envvar:: BUILD_NUMBER
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alterative to CI variable.
+When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to CI variable.
 
 .. envvar:: PYTEST_ADDOPTS
 
@@ -1145,6 +1151,9 @@ Custom warnings generated in some situations such as improper usage or deprecate
   :show-inheritance:
 
 .. autoclass:: pytest.PytestRemovedIn8Warning
+  :show-inheritance:
+
+.. autoclass:: pytest.PytestRemovedIn9Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnhandledCoroutineWarning
@@ -1697,6 +1706,11 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         pythonpath = src1 src2
 
+   .. note::
+
+        ``pythonpath`` does not affect some imports that happen very early,
+        most notably plugins loaded using the ``-p`` command line option.
+
 
 .. confval:: required_plugins
 
@@ -1912,8 +1926,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --strict-markers      Markers not registered in the `markers` section of
                             the configuration file raise errors
       --strict              (Deprecated) alias to --strict-markers
-      -c file               Load configuration from `file` instead of trying to
-                            locate one of the implicit configuration files
+      -c FILE, --config-file=FILE
+                            Load configuration from `FILE` instead of trying to
+                            locate one of the implicit configuration files.
       --continue-on-collection-errors
                             Force test execution even if collection errors occur
       --rootdir=ROOTDIR     Define root directory for tests. Can be relative

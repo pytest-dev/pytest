@@ -195,7 +195,8 @@ class TestEvaluation:
             def pytest_markeval_namespace():
                 return {"arg": "root"}
             """
-            )
+            ),
+            encoding="utf-8",
         )
         root.joinpath("test_root.py").write_text(
             textwrap.dedent(
@@ -206,7 +207,8 @@ class TestEvaluation:
             def test_root():
                 assert False
             """
-            )
+            ),
+            encoding="utf-8",
         )
         foo = root.joinpath("foo")
         foo.mkdir()
@@ -219,7 +221,8 @@ class TestEvaluation:
             def pytest_markeval_namespace():
                 return {"arg": "foo"}
             """
-            )
+            ),
+            encoding="utf-8",
         )
         foo.joinpath("test_foo.py").write_text(
             textwrap.dedent(
@@ -230,7 +233,8 @@ class TestEvaluation:
             def test_foo():
                 assert False
             """
-            )
+            ),
+            encoding="utf-8",
         )
         bar = root.joinpath("bar")
         bar.mkdir()
@@ -243,7 +247,8 @@ class TestEvaluation:
             def pytest_markeval_namespace():
                 return {"arg": "bar"}
             """
-            )
+            ),
+            encoding="utf-8",
         )
         bar.joinpath("test_bar.py").write_text(
             textwrap.dedent(
@@ -254,7 +259,8 @@ class TestEvaluation:
             def test_bar():
                 assert False
             """
-            )
+            ),
+            encoding="utf-8",
         )
 
         reprec = pytester.inline_run("-vs", "--capture=no")
@@ -629,7 +635,8 @@ class TestXFail:
 
             @pytest.mark.xfail(reason='unsupported feature', strict=%s)
             def test_foo():
-                with open('foo_executed', 'w'): pass  # make sure test executes
+                with open('foo_executed', 'w', encoding='utf-8'):
+                    pass  # make sure test executes
         """
             % strict
         )
@@ -1135,12 +1142,10 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    markline = "                ^"
+    markline = "            ^"
     pypy_version_info = getattr(sys, "pypy_version_info", None)
     if pypy_version_info is not None and pypy_version_info < (6,):
-        markline = markline[5:]
-    elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
-        markline = markline[4:]
+        markline = markline[1:]
 
     if sys.version_info[:2] >= (3, 10):
         expected = [

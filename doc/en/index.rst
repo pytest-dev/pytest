@@ -2,6 +2,7 @@
 
 .. sidebar:: Next Open Trainings
 
+   - `pytest tips and tricks for a better testsuite <https://ep2023.europython.eu/session/pytest-tips-and-tricks-for-a-better-testsuite>`_, at `Europython 2023 <https://ep2023.europython.eu/>`_, July 18th (3h), Prague/Remote
    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, March 5th to 7th 2024 (3 day in-depth training), Leipzig/Remote
 
    Also see :doc:`previous talks and blogposts <talks>`.
@@ -76,7 +77,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box
 
-- Python 3.7+ or PyPy 3
+- Python 3.8+ or PyPy 3
 
 - Rich plugin architecture, with over 800+ :ref:`external plugins <plugin-list>` and thriving community
 

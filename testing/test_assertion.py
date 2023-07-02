@@ -199,8 +199,8 @@ class TestImportHookInstallation:
                 return check
             """,
             "mainwrapper.py": """\
+            import importlib.metadata
             import pytest
-            from _pytest.compat import importlib_metadata
 
             class DummyEntryPoint(object):
                 name = 'spam'
@@ -220,7 +220,7 @@ class TestImportHookInstallation:
             def distributions():
                 return (DummyDistInfo(),)
 
-            importlib_metadata.distributions = distributions
+            importlib.metadata.distributions = distributions
             pytest.main()
             """,
             "test_foo.py": """\
@@ -1392,14 +1392,14 @@ def test_sequence_comparison_uses_repr(pytester: Pytester) -> None:
 def test_assertrepr_loaded_per_dir(pytester: Pytester) -> None:
     pytester.makepyfile(test_base=["def test_base(): assert 1 == 2"])
     a = pytester.mkdir("a")
-    a.joinpath("test_a.py").write_text("def test_a(): assert 1 == 2")
+    a.joinpath("test_a.py").write_text("def test_a(): assert 1 == 2", encoding="utf-8")
     a.joinpath("conftest.py").write_text(
-        'def pytest_assertrepr_compare(): return ["summary a"]'
+        'def pytest_assertrepr_compare(): return ["summary a"]', encoding="utf-8"
     )
     b = pytester.mkdir("b")
-    b.joinpath("test_b.py").write_text("def test_b(): assert 1 == 2")
+    b.joinpath("test_b.py").write_text("def test_b(): assert 1 == 2", encoding="utf-8")
     b.joinpath("conftest.py").write_text(
-        'def pytest_assertrepr_compare(): return ["summary b"]'
+        'def pytest_assertrepr_compare(): return ["summary b"]', encoding="utf-8"
     )
 
     result = pytester.runpytest()

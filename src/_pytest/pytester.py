@@ -6,6 +6,7 @@ import collections.abc
 import contextlib
 import gc
 import importlib
+import locale
 import os
 import platform
 import re
@@ -19,10 +20,13 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Final
+from typing import final
 from typing import Generator
 from typing import IO
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import overload
 from typing import Sequence
@@ -39,7 +43,6 @@ from iniconfig import SectionWrapper
 from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
-from _pytest.compat import final
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
 from _pytest.config import _PluggyPlugin
@@ -67,11 +70,7 @@ from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestWarning
 
-
 if TYPE_CHECKING:
-    from typing_extensions import Final
-    from typing_extensions import Literal
-
     import pexpect
 
 
@@ -129,6 +128,7 @@ class LsofFdLeakChecker:
             stderr=subprocess.DEVNULL,
             check=True,
             text=True,
+            encoding=locale.getpreferredencoding(False),
         ).stdout
 
         def isopen(line: str) -> bool:

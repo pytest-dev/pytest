@@ -23,7 +23,9 @@ def test_nose_setup(pytester: Pytester) -> None:
         test_hello.teardown = lambda: values.append(2)
     """
     )
-    result = pytester.runpytest(p, "-p", "nose")
+    result = pytester.runpytest(
+        p, "-p", "nose", "-Wignore::pytest.PytestRemovedIn8Warning"
+    )
     result.assert_outcomes(passed=2)
 
 
@@ -76,7 +78,9 @@ def test_nose_setup_func(pytester: Pytester) -> None:
 
     """
     )
-    result = pytester.runpytest(p, "-p", "nose")
+    result = pytester.runpytest(
+        p, "-p", "nose", "-Wignore::pytest.PytestRemovedIn8Warning"
+    )
     result.assert_outcomes(passed=2)
 
 
@@ -100,7 +104,9 @@ def test_nose_setup_func_failure(pytester: Pytester) -> None:
 
     """
     )
-    result = pytester.runpytest(p, "-p", "nose")
+    result = pytester.runpytest(
+        p, "-p", "nose", "-Wignore::pytest.PytestRemovedIn8Warning"
+    )
     result.stdout.fnmatch_lines(["*TypeError: <lambda>()*"])
 
 
@@ -154,7 +160,9 @@ def test_nose_setup_partial(pytester: Pytester) -> None:
         test_hello.teardown = my_teardown_partial
     """
     )
-    result = pytester.runpytest(p, "-p", "nose")
+    result = pytester.runpytest(
+        p, "-p", "nose", "-Wignore::pytest.PytestRemovedIn8Warning"
+    )
     result.stdout.fnmatch_lines(["*2 passed*"])
 
 
@@ -193,7 +201,9 @@ def test_module_level_setup(pytester: Pytester) -> None:
             assert items["setup2"] == ["up", "down", "up"]
     """
     )
-    result = pytester.runpytest("-p", "nose")
+    result = pytester.runpytest(
+        "-p", "nose", "-Wignore::pytest.PytestRemovedIn8Warning"
+    )
     result.stdout.fnmatch_lines(["*4 passed*"])
 
 
@@ -278,7 +288,7 @@ def test_nose_setup_ordering(pytester: Pytester) -> None:
                 assert self.visited_cls
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn8Warning")
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
@@ -494,7 +504,7 @@ def test_nose_setup_skipped_if_non_callable(pytester: Pytester) -> None:
             pass
         """,
     )
-    result = pytester.runpytest(p, "-p", "nose")
+    result = pytester.runpytest(p.parent, "-p", "nose")
     assert result.ret == 0
 
 
