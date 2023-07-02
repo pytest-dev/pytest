@@ -1,5 +1,7 @@
 import warnings
+from typing import List
 from typing import Optional
+from typing import Type
 
 import pytest
 from _pytest.pytester import Pytester
@@ -44,21 +46,36 @@ class TestSubclassWarningPop:
     class ChildWarning(ParentWarning):
         pass
 
-    class RandomWarning(Warning):
+    class ChildOfChildWarning(ChildWarning):
         pass
 
-    def raise_warnings(self):
-        warnings.warn("Warning Random", self.RandomWarning)
-        warnings.warn("Warning Child", self.ChildWarning)
-        warnings.warn("Warning Parent", self.ParentWarning)
+    @staticmethod
+    def raise_warnings_from_list(_warnings: List[Type[Warning]]):
+        for warn in _warnings:
+            warnings.warn(f"Warning {warn().__repr__()}", warn)
 
     def test_pop(self):
         with pytest.warns((self.ParentWarning, self.ChildWarning)) as record:
-            self.raise_warnings()
+            self.raise_warnings_from_list(
+                [self.ChildWarning, self.ParentWarning, self.ChildOfChildWarning]
+            )
 
-        assert len(record) == 2
+        assert len(record) == 3
         _warn = record.pop(self.ParentWarning)
         assert _warn.category is self.ParentWarning
+
+    def test_pop_raises(self):
+        with pytest.raises(AssertionError):
+            with pytest.warns(self.ParentWarning) as record:
+                self.raise_warnings_from_list([self.ParentWarning])
+            record.pop(self.ChildOfChildWarning)
+
+    def test_pop_most_recent(self):
+        with pytest.warns(self.ParentWarning) as record:
+            self.raise_warnings_from_list([self.ChildWarning, self.ChildOfChildWarning])
+
+        _warn = record.pop(self.ParentWarning)
+        assert _warn.category is self.ChildOfChildWarning
 
 
 class TestWarningsRecorderChecker:
