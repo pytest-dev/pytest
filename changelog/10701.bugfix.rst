@@ -1,0 +1,1 @@
+``pytest.WarningsRecorder.pop`` now also pop most recent subclass of warning.
