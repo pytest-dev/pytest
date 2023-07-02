@@ -44,7 +44,11 @@ class TestSubclassWarningPop:
     class ChildWarning(ParentWarning):
         pass
 
+    class RandomWarning(Warning):
+        pass
+
     def raise_warnings(self):
+        warnings.warn("Warning Random", self.RandomWarning)
         warnings.warn("Warning Child", self.ChildWarning)
         warnings.warn("Warning Parent", self.ParentWarning)
 
