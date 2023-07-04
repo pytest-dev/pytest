@@ -1,5 +1,7 @@
 import warnings
+from typing import List
 from typing import Optional
+from typing import Type
 
 import pytest
 from _pytest.pytester import Pytester
@@ -35,6 +37,47 @@ def test_recwarn_captures_deprecation_warning(recwarn: WarningsRecorder) -> None
     warnings.warn(DeprecationWarning("some deprecation"))
     assert len(recwarn) == 1
     assert recwarn.pop(DeprecationWarning)
+
+
+class TestSubclassWarningPop:
+    class ParentWarning(Warning):
+        pass
+
+    class ChildWarning(ParentWarning):
+        pass
+
+    class ChildOfChildWarning(ChildWarning):
+        pass
+
+    @staticmethod
+    def raise_warnings_from_list(_warnings: List[Type[Warning]]):
+        for warn in _warnings:
+            warnings.warn(f"Warning {warn().__repr__()}", warn)
+
+    def test_pop_finds_exact_match(self):
+        with pytest.warns((self.ParentWarning, self.ChildWarning)) as record:
+            self.raise_warnings_from_list(
+                [self.ChildWarning, self.ParentWarning, self.ChildOfChildWarning]
+            )
+
+        assert len(record) == 3
+        _warn = record.pop(self.ParentWarning)
+        assert _warn.category is self.ParentWarning
+
+    def test_pop_raises_if_no_match(self):
+        with pytest.raises(AssertionError):
+            with pytest.warns(self.ParentWarning) as record:
+                self.raise_warnings_from_list([self.ParentWarning])
+            record.pop(self.ChildOfChildWarning)
+
+    def test_pop_finds_best_inexact_match(self):
+        with pytest.warns(self.ParentWarning) as record:
+            self.raise_warnings_from_list(
+                [self.ChildOfChildWarning, self.ChildWarning, self.ChildOfChildWarning]
+            )
+
+        _warn = record.pop(self.ParentWarning)
+        assert _warn.category is self.ChildWarning
 
 
 class TestWarningsRecorderChecker:
