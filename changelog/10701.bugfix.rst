@@ -1,1 +1,2 @@
-``pytest.WarningsRecorder.pop`` now also pop most recent subclass of warning.
+:meth:`pytest.WarningsRecorder.pop` will return the most-closely-matched warning in the list,
+rather than the first warning which is an instance of the requested type.
