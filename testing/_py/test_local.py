@@ -1519,9 +1519,9 @@ class TestPOSIXLocalPath:
         path1.chown(owner, group)
 
 
-class TestUnicodePy2Py3:
+class TestUnicode:
     def test_join_ensure(self, tmpdir, monkeypatch):
-        if sys.version_info >= (3, 0) and "LANG" not in os.environ:
+        if "LANG" not in os.environ:
             pytest.skip("cannot run test without locale")
         x = local(tmpdir.strpath)
         part = "hällo"
@@ -1529,7 +1529,7 @@ class TestUnicodePy2Py3:
         assert x.join(part) == y
 
     def test_listdir(self, tmpdir):
-        if sys.version_info >= (3, 0) and "LANG" not in os.environ:
+        if "LANG" not in os.environ:
             pytest.skip("cannot run test without locale")
         x = local(tmpdir.strpath)
         part = "hällo"

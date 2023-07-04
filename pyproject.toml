@@ -113,7 +113,7 @@ template = "changelog/_template.rst"
   showcontent = true
 
 [tool.black]
-target-version = ['py37']
+target-version = ['py38']
 
 # check-wheel-contents is executed by the build-and-inspect-python-package action.
 [tool.check-wheel-contents]
