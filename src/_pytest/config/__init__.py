@@ -5,6 +5,7 @@ import copy
 import dataclasses
 import enum
 import glob
+import importlib.metadata
 import inspect
 import os
 import re
@@ -21,6 +22,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import IO
 from typing import Iterable
@@ -48,8 +50,6 @@ from .findpaths import determine_setup
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
-from _pytest.compat import final
-from _pytest.compat import importlib_metadata  # type: ignore[attr-defined]
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -257,7 +257,8 @@ default_plugins = essential_plugins + (
     "logging",
     "reports",
     "python_path",
-    *(["unraisableexception", "threadexception"] if sys.version_info >= (3, 8) else []),
+    "unraisableexception",
+    "threadexception",
     "faulthandler",
 )
 
@@ -1216,7 +1217,7 @@ class Config:
 
         package_files = (
             str(file)
-            for dist in importlib_metadata.distributions()
+            for dist in importlib.metadata.distributions()
             if any(ep.group == "pytest11" for ep in dist.entry_points)
             for file in dist.files or []
         )

@@ -199,8 +199,8 @@ class TestImportHookInstallation:
                 return check
             """,
             "mainwrapper.py": """\
+            import importlib.metadata
             import pytest
-            from _pytest.compat import importlib_metadata
 
             class DummyEntryPoint(object):
                 name = 'spam'
@@ -220,7 +220,7 @@ class TestImportHookInstallation:
             def distributions():
                 return (DummyDistInfo(),)
 
-            importlib_metadata.distributions = distributions
+            importlib.metadata.distributions = distributions
             pytest.main()
             """,
             "test_foo.py": """\

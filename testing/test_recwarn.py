@@ -172,22 +172,6 @@ class TestDeprecatedCall:
             with pytest.deprecated_call():
                 assert f() == 10
 
-    @pytest.mark.parametrize("mode", ["context_manager", "call"])
-    def test_deprecated_call_exception_is_raised(self, mode) -> None:
-        """If the block of the code being tested by deprecated_call() raises an exception,
-        it must raise the exception undisturbed.
-        """
-
-        def f():
-            raise ValueError("some exception")
-
-        with pytest.raises(ValueError, match="some exception"):
-            if mode == "call":
-                pytest.deprecated_call(f)
-            else:
-                with pytest.deprecated_call():
-                    f()
-
     def test_deprecated_call_specificity(self) -> None:
         other_warnings = [
             Warning,
@@ -203,19 +187,21 @@ class TestDeprecatedCall:
             def f():
                 warnings.warn(warning("hi"))
 
-            with pytest.raises(pytest.fail.Exception):
-                pytest.deprecated_call(f)
-            with pytest.raises(pytest.fail.Exception):
-                with pytest.deprecated_call():
-                    f()
+            with pytest.warns(warning):
+                with pytest.raises(pytest.fail.Exception):
+                    pytest.deprecated_call(f)
+                with pytest.raises(pytest.fail.Exception):
+                    with pytest.deprecated_call():
+                        f()
 
     def test_deprecated_call_supports_match(self) -> None:
         with pytest.deprecated_call(match=r"must be \d+$"):
             warnings.warn("value must be 42", DeprecationWarning)
 
-        with pytest.raises(pytest.fail.Exception):
-            with pytest.deprecated_call(match=r"must be \d+$"):
-                warnings.warn("this is not here", DeprecationWarning)
+        with pytest.deprecated_call():
+            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+                with pytest.deprecated_call(match=r"must be \d+$"):
+                    warnings.warn("this is not here", DeprecationWarning)
 
 
 class TestWarns:
@@ -227,8 +213,9 @@ class TestWarns:
     def test_several_messages(self) -> None:
         # different messages, b/c Python suppresses multiple identical warnings
         pytest.warns(RuntimeWarning, lambda: warnings.warn("w1", RuntimeWarning))
-        with pytest.raises(pytest.fail.Exception):
-            pytest.warns(UserWarning, lambda: warnings.warn("w2", RuntimeWarning))
+        with pytest.warns(RuntimeWarning):
+            with pytest.raises(pytest.fail.Exception):
+                pytest.warns(UserWarning, lambda: warnings.warn("w2", RuntimeWarning))
         pytest.warns(RuntimeWarning, lambda: warnings.warn("w3", RuntimeWarning))
 
     def test_function(self) -> None:
@@ -243,13 +230,14 @@ class TestWarns:
         pytest.warns(
             (RuntimeWarning, SyntaxWarning), lambda: warnings.warn("w2", SyntaxWarning)
         )
-        pytest.raises(
-            pytest.fail.Exception,
-            lambda: pytest.warns(
-                (RuntimeWarning, SyntaxWarning),
-                lambda: warnings.warn("w3", UserWarning),
-            ),
-        )
+        with pytest.warns():
+            pytest.raises(
+                pytest.fail.Exception,
+                lambda: pytest.warns(
+                    (RuntimeWarning, SyntaxWarning),
+                    lambda: warnings.warn("w3", UserWarning),
+                ),
+            )
 
     def test_as_contextmanager(self) -> None:
         with pytest.warns(RuntimeWarning):
@@ -258,20 +246,22 @@ class TestWarns:
         with pytest.warns(UserWarning):
             warnings.warn("user", UserWarning)
 
-        with pytest.raises(pytest.fail.Exception) as excinfo:
-            with pytest.warns(RuntimeWarning):
-                warnings.warn("user", UserWarning)
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception) as excinfo:
+                with pytest.warns(RuntimeWarning):
+                    warnings.warn("user", UserWarning)
         excinfo.match(
             r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) were emitted.\n"
-            r"The list of emitted warnings is: \[UserWarning\('user',?\)\]."
+            r" Emitted warnings: \[UserWarning\('user',?\)\]."
         )
 
-        with pytest.raises(pytest.fail.Exception) as excinfo:
-            with pytest.warns(UserWarning):
-                warnings.warn("runtime", RuntimeWarning)
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception) as excinfo:
+                with pytest.warns(UserWarning):
+                    warnings.warn("runtime", RuntimeWarning)
         excinfo.match(
             r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted.\n"
-            r"The list of emitted warnings is: \[RuntimeWarning\('runtime',?\)]."
+            r" Emitted warnings: \[RuntimeWarning\('runtime',?\)]."
         )
 
         with pytest.raises(pytest.fail.Exception) as excinfo:
@@ -279,19 +269,20 @@ class TestWarns:
                 pass
         excinfo.match(
             r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted.\n"
-            r"The list of emitted warnings is: \[\]."
+            r" Emitted warnings: \[\]."
         )
 
         warning_classes = (UserWarning, FutureWarning)
-        with pytest.raises(pytest.fail.Exception) as excinfo:
-            with pytest.warns(warning_classes) as warninfo:
-                warnings.warn("runtime", RuntimeWarning)
-                warnings.warn("import", ImportWarning)
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception) as excinfo:
+                with pytest.warns(warning_classes) as warninfo:
+                    warnings.warn("runtime", RuntimeWarning)
+                    warnings.warn("import", ImportWarning)
 
         messages = [each.message for each in warninfo]
         expected_str = (
             f"DID NOT WARN. No warnings of type {warning_classes} were emitted.\n"
-            f"The list of emitted warnings is: {messages}."
+            f" Emitted warnings: {messages}."
         )
 
         assert str(excinfo.value) == expected_str
@@ -367,25 +358,31 @@ class TestWarns:
         with pytest.warns(UserWarning, match=r"must be \d+$"):
             warnings.warn("value must be 42", UserWarning)
 
-        with pytest.raises(pytest.fail.Exception):
-            with pytest.warns(UserWarning, match=r"must be \d+$"):
-                warnings.warn("this is not here", UserWarning)
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception):
+                with pytest.warns(UserWarning, match=r"must be \d+$"):
+                    warnings.warn("this is not here", UserWarning)
 
-        with pytest.raises(pytest.fail.Exception):
-            with pytest.warns(FutureWarning, match=r"must be \d+$"):
-                warnings.warn("value must be 42", UserWarning)
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception):
+                with pytest.warns(FutureWarning, match=r"must be \d+$"):
+                    warnings.warn("value must be 42", UserWarning)
 
     def test_one_from_multiple_warns(self) -> None:
-        with pytest.warns(UserWarning, match=r"aaa"):
-            warnings.warn("cccccccccc", UserWarning)
-            warnings.warn("bbbbbbbbbb", UserWarning)
-            warnings.warn("aaaaaaaaaa", UserWarning)
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+                with pytest.warns(UserWarning, match=r"aaa"):
+                    with pytest.warns(UserWarning, match=r"aaa"):
+                        warnings.warn("cccccccccc", UserWarning)
+                        warnings.warn("bbbbbbbbbb", UserWarning)
+                        warnings.warn("aaaaaaaaaa", UserWarning)
 
     def test_none_of_multiple_warns(self) -> None:
-        with pytest.raises(pytest.fail.Exception):
-            with pytest.warns(UserWarning, match=r"aaa"):
-                warnings.warn("bbbbbbbbbb", UserWarning)
-                warnings.warn("cccccccccc", UserWarning)
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+                with pytest.warns(UserWarning, match=r"aaa"):
+                    warnings.warn("bbbbbbbbbb", UserWarning)
+                    warnings.warn("cccccccccc", UserWarning)
 
     @pytest.mark.filterwarnings("ignore")
     def test_can_capture_previously_warned(self) -> None:
@@ -403,3 +400,45 @@ class TestWarns:
             with pytest.warns(UserWarning, foo="bar"):  # type: ignore
                 pass
         assert "Unexpected keyword arguments" in str(excinfo.value)
+
+    def test_re_emit_single(self) -> None:
+        with pytest.warns(DeprecationWarning):
+            with pytest.warns(UserWarning):
+                warnings.warn("user warning", UserWarning)
+                warnings.warn("some deprecation warning", DeprecationWarning)
+
+    def test_re_emit_multiple(self) -> None:
+        with pytest.warns(UserWarning):
+            warnings.warn("first warning", UserWarning)
+            warnings.warn("second warning", UserWarning)
+
+    def test_re_emit_match_single(self) -> None:
+        with pytest.warns(DeprecationWarning):
+            with pytest.warns(UserWarning, match="user warning"):
+                warnings.warn("user warning", UserWarning)
+                warnings.warn("some deprecation warning", DeprecationWarning)
+
+    def test_re_emit_match_multiple(self) -> None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # if anything is re-emitted
+            with pytest.warns(UserWarning, match="user warning"):
+                warnings.warn("first user warning", UserWarning)
+                warnings.warn("second user warning", UserWarning)
+
+    def test_re_emit_non_match_single(self) -> None:
+        with pytest.warns(UserWarning, match="v2 warning"):
+            with pytest.warns(UserWarning, match="v1 warning"):
+                warnings.warn("v1 warning", UserWarning)
+                warnings.warn("non-matching v2 warning", UserWarning)
+
+    def test_catch_warning_within_raise(self) -> None:
+        # warns-in-raises works since https://github.com/pytest-dev/pytest/pull/11129
+        with pytest.raises(ValueError, match="some exception"):
+            with pytest.warns(FutureWarning, match="some warning"):
+                warnings.warn("some warning", category=FutureWarning)
+                raise ValueError("some exception")
+        # and raises-in-warns has always worked but we'll check for symmetry.
+        with pytest.warns(FutureWarning, match="some warning"):
+            with pytest.raises(ValueError, match="some exception"):
+                warnings.warn("some warning", category=FutureWarning)
+                raise ValueError("some exception")

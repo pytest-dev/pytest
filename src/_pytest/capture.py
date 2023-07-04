@@ -11,11 +11,14 @@ from types import TracebackType
 from typing import Any
 from typing import AnyStr
 from typing import BinaryIO
+from typing import Final
+from typing import final
 from typing import Generator
 from typing import Generic
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import NamedTuple
 from typing import Optional
 from typing import TextIO
@@ -24,7 +27,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
-from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
@@ -35,11 +37,7 @@ from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
 
-if TYPE_CHECKING:
-    from typing_extensions import Final
-    from typing_extensions import Literal
-
-    _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
+_CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -687,7 +685,7 @@ class MultiCapture(Generic[AnyStr]):
         return CaptureResult(out, err)  # type: ignore[arg-type]
 
 
-def _get_multicapture(method: "_CaptureMethod") -> MultiCapture[str]:
+def _get_multicapture(method: _CaptureMethod) -> MultiCapture[str]:
     if method == "fd":
         return MultiCapture(in_=FDCapture(0), out=FDCapture(1), err=FDCapture(2))
     elif method == "sys":
@@ -723,7 +721,7 @@ class CaptureManager:
       needed to ensure the fixtures take precedence over the global capture.
     """
 
-    def __init__(self, method: "_CaptureMethod") -> None:
+    def __init__(self, method: _CaptureMethod) -> None:
         self._method: Final = method
         self._global_capturing: Optional[MultiCapture[str]] = None
         self._capture_fixture: Optional[CaptureFixture[Any]] = None

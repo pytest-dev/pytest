@@ -523,6 +523,8 @@ def import_path(
 
     if mode is ImportMode.importlib:
         module_name = module_name_from_path(path, root)
+        with contextlib.suppress(KeyError):
+            return sys.modules[module_name]
 
         for meta_importer in sys.meta_path:
             spec = meta_importer.find_spec(module_name, [str(path.parent)])
@@ -633,6 +635,9 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
     otherwise "src.tests.test_foo" is not importable by ``__import__``.
     """
     module_parts = module_name.split(".")
+    child_module: Union[ModuleType, None] = None
+    module: Union[ModuleType, None] = None
+    child_name: str = ""
     while module_name:
         if module_name not in modules:
             try:
@@ -642,13 +647,22 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
                 # ourselves to fall back to creating a dummy module.
                 if not sys.meta_path:
                     raise ModuleNotFoundError
-                importlib.import_module(module_name)
+                module = importlib.import_module(module_name)
             except ModuleNotFoundError:
                 module = ModuleType(
                     module_name,
                     doc="Empty module created by pytest's importmode=importlib.",
                 )
+        else:
+            module = modules[module_name]
+        if child_module:
+            # Add child attribute to the parent that can reference the child
+            # modules.
+            if not hasattr(module, child_name):
+                setattr(module, child_name, child_module)
                 modules[module_name] = module
+        # Keep track of the child module while moving up the tree.
+        child_module, child_name = module, module_name.rpartition(".")[-1]
         module_parts.pop(-1)
         module_name = ".".join(module_parts)
 

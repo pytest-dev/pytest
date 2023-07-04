@@ -1,5 +1,6 @@
 import os
 import warnings
+from functools import cached_property
 from inspect import signature
 from pathlib import Path
 from typing import Any
@@ -23,7 +24,6 @@ from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
-from _pytest.compat import cached_property
 from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure

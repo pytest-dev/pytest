@@ -77,7 +77,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box
 
-- Python 3.7+ or PyPy 3
+- Python 3.8+ or PyPy 3
 
 - Rich plugin architecture, with over 800+ :ref:`external plugins <plugin-list>` and thriving community
 

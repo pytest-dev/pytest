@@ -13,6 +13,7 @@ from logging import LogRecord
 from pathlib import Path
 from typing import AbstractSet
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import List
 from typing import Mapping
@@ -25,7 +26,6 @@ from typing import Union
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
-from _pytest.compat import final
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer

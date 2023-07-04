@@ -1142,12 +1142,10 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    markline = "                ^"
+    markline = "            ^"
     pypy_version_info = getattr(sys, "pypy_version_info", None)
     if pypy_version_info is not None and pypy_version_info < (6,):
-        markline = markline[5:]
-    elif sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
-        markline = markline[4:]
+        markline = markline[1:]
 
     if sys.version_info[:2] >= (3, 10):
         expected = [
