@@ -72,10 +72,12 @@ class TestSubclassWarningPop:
 
     def test_pop_most_recent(self):
         with pytest.warns(self.ParentWarning) as record:
-            self.raise_warnings_from_list([self.ChildWarning, self.ChildOfChildWarning])
+            self.raise_warnings_from_list(
+                [self.ChildOfChildWarning, self.ChildWarning, self.ChildOfChildWarning]
+            )
 
         _warn = record.pop(self.ParentWarning)
-        assert _warn.category is self.ChildOfChildWarning
+        assert _warn.category is self.ChildWarning
 
 
 class TestWarningsRecorderChecker:

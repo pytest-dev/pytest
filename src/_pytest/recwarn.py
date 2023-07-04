@@ -206,23 +206,26 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         return len(self._list)
 
     def pop(self, cls: Type[Warning] = Warning) -> "warnings.WarningMessage":
-        """Pop the first recorded warning (or subclass of warning), raise exception if not exists."""
-        matches = []
+        """Pop the first recorded warning which is an instance of ``cls``.
+
+        But not an instance of a child class of any other match.
+        Raises ``AssertionError`` if there is no match.
+
+        """
+
+        best_idx = None
         for i, w in enumerate(self._list):
             if w.category == cls:
-                return self._list.pop(i)
-            if issubclass(w.category, cls):
-                matches.append((i, w))
-        if not matches:
-            __tracebackhide__ = True
-            raise AssertionError(f"{cls!r} not found in warning list")
-        (idx, best), *rest = matches
-        for i, w in rest:
-            if issubclass(w.category, best.category) and not issubclass(
-                best.category, w.category
+                return self._list.pop(i)  # exact match, stop looking
+            if issubclass(w.category, cls) and (
+                best_idx is None
+                or not issubclass(w.category, self._list[best_idx].category)  # type: ignore[unreachable]
             ):
-                idx, best = i, w
-        return self._list.pop(idx)
+                best_idx = i
+        if best_idx is not None:
+            return self._list.pop(best_idx)
+        __tracebackhide__ = True
+        raise AssertionError(f"{cls!r} not found in warning list")
 
     def clear(self) -> None:
         """Clear the list of recorded warnings."""
