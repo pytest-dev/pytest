@@ -54,7 +54,7 @@ class TestSubclassWarningPop:
         for warn in _warnings:
             warnings.warn(f"Warning {warn().__repr__()}", warn)
 
-    def test_pop(self):
+    def test_pop_finds_exact_match(self):
         with pytest.warns((self.ParentWarning, self.ChildWarning)) as record:
             self.raise_warnings_from_list(
                 [self.ChildWarning, self.ParentWarning, self.ChildOfChildWarning]
@@ -64,13 +64,13 @@ class TestSubclassWarningPop:
         _warn = record.pop(self.ParentWarning)
         assert _warn.category is self.ParentWarning
 
-    def test_pop_raises(self):
+    def test_pop_raises_if_no_match(self):
         with pytest.raises(AssertionError):
             with pytest.warns(self.ParentWarning) as record:
                 self.raise_warnings_from_list([self.ParentWarning])
             record.pop(self.ChildOfChildWarning)
 
-    def test_pop_most_recent(self):
+    def test_pop_finds_best_inexact_match(self):
         with pytest.warns(self.ParentWarning) as record:
             self.raise_warnings_from_list(
                 [self.ChildOfChildWarning, self.ChildWarning, self.ChildOfChildWarning]
