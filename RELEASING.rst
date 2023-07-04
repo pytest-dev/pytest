@@ -173,3 +173,6 @@ Both automatic and manual processes described above follow the same steps from t
    * testing-in-python@lists.idyll.org (only major/minor releases)
 
    And announce it on `Twitter <https://twitter.com/>`_ with the ``#pytest`` hashtag.
+
+#. For major releases, it is necessary to update the `Read The Docs <https://readthedocs.org/dashboard/pytest/advanced/>`__ settings
+   to point to the latest ``MAJOR.MINOR.x`` branch for **Default version** of the documentation.
