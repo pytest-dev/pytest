@@ -604,6 +604,13 @@ def _get_assertion_exprs(src: bytes) -> Dict[int, str]:
     return ret
 
 
+def _get_ast_constant_value(value: astStr) -> object:
+    if sys.version_info >= (3, 8):
+        return value.value
+    else:
+        return value.s
+
+
 class AssertionRewriter(ast.NodeVisitor):
     """Assertion rewriting implementation.
 
@@ -700,11 +707,10 @@ class AssertionRewriter(ast.NodeVisitor):
                 expect_docstring
                 and isinstance(item, ast.Expr)
                 and isinstance(item.value, astStr)
+                and isinstance(_get_ast_constant_value(item.value), str)
             ):
-                if sys.version_info >= (3, 8):
-                    doc = item.value.value
-                else:
-                    doc = item.value.s
+                doc = _get_ast_constant_value(item.value)
+                assert isinstance(doc, str)
                 if self.is_rewrite_disabled(doc):
                     return
                 expect_docstring = False
