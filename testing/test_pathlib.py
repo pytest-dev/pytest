@@ -603,3 +603,15 @@ class TestImportLibMode:
         modules = {}
         insert_missing_modules(modules, "")
         assert modules == {}
+
+    def test_parent_contains_child_module_attribute(
+        self, monkeypatch: MonkeyPatch, tmp_path: Path
+    ):
+        monkeypatch.chdir(tmp_path)
+        # Use 'xxx' and 'xxy' as parent names as they are unlikely to exist and
+        # don't end up being imported.
+        modules = {"xxx.tests.foo": ModuleType("xxx.tests.foo")}
+        insert_missing_modules(modules, "xxx.tests.foo")
+        assert sorted(modules) == ["xxx", "xxx.tests", "xxx.tests.foo"]
+        assert modules["xxx"].tests is modules["xxx.tests"]
+        assert modules["xxx.tests"].foo is modules["xxx.tests.foo"]
