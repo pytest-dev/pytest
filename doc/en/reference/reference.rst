@@ -783,18 +783,66 @@ reporting or interaction with exceptions:
 .. autofunction:: pytest_leave_pdb
 
 
-Objects
--------
+Collection tree objects
+-----------------------
 
-Full reference to objects accessible from :ref:`fixtures <fixture>` or :ref:`hooks <hook-reference>`.
+These are the collector and item classes (collectively called "nodes") which
+make up the collection tree.
 
+Node
+~~~~
 
-CallInfo
-~~~~~~~~
-
-.. autoclass:: pytest.CallInfo()
+.. autoclass:: _pytest.nodes.Node()
     :members:
 
+Collector
+~~~~~~~~~
+
+.. autoclass:: pytest.Collector()
+    :members:
+    :show-inheritance:
+
+Item
+~~~~
+
+.. autoclass:: pytest.Item()
+    :members:
+    :show-inheritance:
+
+File
+~~~~
+
+.. autoclass:: pytest.File()
+    :members:
+    :show-inheritance:
+
+FSCollector
+~~~~~~~~~~~
+
+.. autoclass:: _pytest.nodes.FSCollector()
+    :members:
+    :show-inheritance:
+
+Session
+~~~~~~~
+
+.. autoclass:: pytest.Session()
+    :members:
+    :show-inheritance:
+
+Package
+~~~~~~~
+
+.. autoclass:: pytest.Package()
+    :members:
+    :show-inheritance:
+
+Module
+~~~~~~
+
+.. autoclass:: pytest.Module()
+    :members:
+    :show-inheritance:
 
 Class
 ~~~~~
@@ -803,12 +851,33 @@ Class
     :members:
     :show-inheritance:
 
-Collector
-~~~~~~~~~
+Function
+~~~~~~~~
 
-.. autoclass:: pytest.Collector()
+.. autoclass:: pytest.Function()
     :members:
     :show-inheritance:
+
+FunctionDefinition
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.python.FunctionDefinition()
+    :members:
+    :show-inheritance:
+
+
+Objects
+-------
+
+Objects accessible from :ref:`fixtures <fixture>` or :ref:`hooks <hook-reference>`
+or importable from ``pytest``.
+
+
+CallInfo
+~~~~~~~~
+
+.. autoclass:: pytest.CallInfo()
+    :members:
 
 CollectReport
 ~~~~~~~~~~~~~
@@ -837,46 +906,11 @@ ExitCode
 .. autoclass:: pytest.ExitCode
     :members:
 
-File
-~~~~
-
-.. autoclass:: pytest.File()
-    :members:
-    :show-inheritance:
-
 
 FixtureDef
 ~~~~~~~~~~
 
 .. autoclass:: _pytest.fixtures.FixtureDef()
-    :members:
-    :show-inheritance:
-
-FSCollector
-~~~~~~~~~~~
-
-.. autoclass:: _pytest.nodes.FSCollector()
-    :members:
-    :show-inheritance:
-
-Function
-~~~~~~~~
-
-.. autoclass:: pytest.Function()
-    :members:
-    :show-inheritance:
-
-FunctionDefinition
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: _pytest.python.FunctionDefinition()
-    :members:
-    :show-inheritance:
-
-Item
-~~~~
-
-.. autoclass:: pytest.Item()
     :members:
     :show-inheritance:
 
@@ -907,19 +941,6 @@ Metafunc
 .. autoclass:: pytest.Metafunc()
     :members:
 
-Module
-~~~~~~
-
-.. autoclass:: pytest.Module()
-    :members:
-    :show-inheritance:
-
-Node
-~~~~
-
-.. autoclass:: _pytest.nodes.Node()
-    :members:
-
 Parser
 ~~~~~~
 
@@ -939,13 +960,6 @@ PytestPluginManager
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance:
-
-Session
-~~~~~~~
-
-.. autoclass:: pytest.Session()
-    :members:
     :show-inheritance:
 
 TestReport
