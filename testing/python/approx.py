@@ -123,6 +123,23 @@ class TestApprox:
         )
 
         assert_approx_raises_regex(
+            {"a": 1.0, "b": None, "c": None},
+            {
+                "a": None,
+                "b": 1000.0,
+                "c": None,
+            },
+            [
+                r"  comparison failed. Mismatched elements: 2 / 3:",
+                r"  Max absolute difference: -inf",
+                r"  Max relative difference: -inf",
+                r"  Index \| Obtained\s+\| Expected\s+",
+                rf"  a     \| {SOME_FLOAT} \| None",
+                rf"  b     \| None\s+\| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
+        assert_approx_raises_regex(
             [1.0, 2.0, 3.0, 4.0],
             [1.0, 3.0, 3.0, 5.0],
             [

@@ -1,0 +1,1 @@
+Fixed error assertion handling in :func:`pytest.approx` when ``None`` is an expected or received value when comparing dictionaries.
