@@ -462,6 +462,11 @@ class _bestrelpath_cache(Dict[Path, str]):
 
 @final
 class Session(nodes.FSCollector):
+    """The root of the collection tree.
+
+    ``Session`` collects the initial paths given as arguments to pytest.
+    """
+
     Interrupted = Interrupted
     Failed = Failed
     # Set on the session by runner.pytest_sessionstart.
