@@ -698,7 +698,8 @@ class FixtureRequest:
         self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
     ) -> None:
         # If fixture function failed it might have registered finalizers.
-        subrequest.node.addfinalizer(lambda: fixturedef.finish(request=subrequest))
+        finalizer = functools.partial(fixturedef.finish, request=subrequest)
+        subrequest.node.addfinalizer(finalizer)
 
     def _check_scope(
         self,
