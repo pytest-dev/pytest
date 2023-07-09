@@ -173,7 +173,8 @@ You can invoke ``pytest`` from Python code directly:
 
 this acts as if you would call "pytest" from the command line.
 It will not raise :class:`SystemExit` but return the :ref:`exit code <exit-codes>` instead.
-You can pass in options and arguments:
+If you don't pass it any arguments, ``main`` reads the arguments from the command line arguments of the process (:data:`sys.argv`), which may be undesirable.
+You can pass in options and arguments explicitly:
 
 .. code-block:: python
 
