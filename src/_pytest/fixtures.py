@@ -1471,7 +1471,7 @@ class FixtureManager:
             # Construct the base nodeid which is later used to check
             # what fixtures are visible for particular tests (as denoted
             # by their test id).
-            if p.name.startswith("conftest.py"):
+            if p.name == "conftest.py":
                 try:
                     nodeid = str(p.parent.relative_to(self.config.rootpath))
                 except ValueError:
