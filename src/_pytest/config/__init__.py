@@ -137,7 +137,9 @@ def main(
 ) -> Union[int, ExitCode]:
     """Perform an in-process test run.
 
-    :param args: List of command line arguments.
+    :param args:
+        List of command line arguments. If `None` or not given, defaults to reading
+        arguments directly from the command line.
     :param plugins: List of plugin objects to be auto-registered during initialization.
 
     :returns: An exit code.
