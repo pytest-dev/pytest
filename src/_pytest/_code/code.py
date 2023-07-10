@@ -393,11 +393,11 @@ class Traceback(List[TracebackEntry]):
 
     def filter(
         self,
-        # TODO(py38): change to positional only.
-        _excinfo_or_fn: Union[
+        excinfo_or_fn: Union[
             "ExceptionInfo[BaseException]",
             Callable[[TracebackEntry], bool],
         ],
+        /,
     ) -> "Traceback":
         """Return a Traceback instance with certain items removed.
 
@@ -408,10 +408,10 @@ class Traceback(List[TracebackEntry]):
         ``TracebackEntry`` instance, and should return True when the item should
         be added to the ``Traceback``, False when not.
         """
-        if isinstance(_excinfo_or_fn, ExceptionInfo):
-            fn = lambda x: not x.ishidden(_excinfo_or_fn)  # noqa: E731
+        if isinstance(excinfo_or_fn, ExceptionInfo):
+            fn = lambda x: not x.ishidden(excinfo_or_fn)  # noqa: E731
         else:
-            fn = _excinfo_or_fn
+            fn = excinfo_or_fn
         return Traceback(filter(fn, self))
 
     def recursionindex(self) -> Optional[int]:
