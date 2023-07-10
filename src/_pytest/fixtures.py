@@ -464,12 +464,13 @@ class FixtureRequest:
             assert self._pyfuncitem.parent is not None
             parentid = self._pyfuncitem.parent.nodeid
             fixturedefs = self._fixturemanager.getfixturedefs(argname, parentid)
-            # TODO: Fix this type ignore. Either add assert or adjust types.
-            #       Can this be None here?
-            self._arg2fixturedefs[argname] = fixturedefs  # type: ignore[assignment]
+            if fixturedefs is not None:
+                self._arg2fixturedefs[argname] = fixturedefs
+        if fixturedefs is None:
+            raise FixtureLookupError(argname, self)
         # fixturedefs list is immutable so we maintain a decreasing index.
         index = self._arg2index.get(argname, 0) - 1
-        if fixturedefs is None or (-index > len(fixturedefs)):
+        if -index > len(fixturedefs):
             raise FixtureLookupError(argname, self)
         self._arg2index[argname] = index
         return fixturedefs[index]
