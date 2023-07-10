@@ -699,6 +699,7 @@ class TestRequestBasic:
         """
         )
         (item1,) = pytester.genitems([modcol])
+        assert isinstance(item1, Function)
         assert item1.name == "test_method"
         arg2fixturedefs = fixtures.FixtureRequest(
             item1, _ispytest=True
@@ -967,6 +968,7 @@ class TestRequestBasic:
     def test_request_getmodulepath(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("def test_somefunc(): pass")
         (item,) = pytester.genitems([modcol])
+        assert isinstance(item, Function)
         req = fixtures.FixtureRequest(item, _ispytest=True)
         assert req.path == modcol.path
 
@@ -1125,6 +1127,7 @@ class TestRequestMarking:
                     pass
         """
         )
+        assert isinstance(item1, Function)
         req1 = fixtures.FixtureRequest(item1, _ispytest=True)
         assert "xfail" not in item1.keywords
         req1.applymarker(pytest.mark.xfail)
@@ -4009,6 +4012,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
@@ -4057,6 +4061,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         # order of fixtures based on their scope and position in the parameter list
         assert (
@@ -4084,6 +4089,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
@@ -4117,6 +4123,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "s1 m1 c1 f2 f1".split()
 
@@ -4159,6 +4166,7 @@ class TestScopeOrdering:
             }
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "p_sub m_conf m_sub m_test f1".split()
 
@@ -4203,6 +4211,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
 
