@@ -38,7 +38,7 @@ jobs:
         name: Packages
         path: dist
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.5
+      uses: pypa/gh-action-pypi-publish@v1.8.7
 
   release-notes:
 
