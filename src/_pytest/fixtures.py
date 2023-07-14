@@ -216,6 +216,7 @@ def add_funcarg_pseudo_fixture_def(
                 params=valuelist,
                 unittest=False,
                 ids=None,
+                _ispytest=True,
             )
             arg2fixturedefs[argname] = [fixturedef]
             if name2pseudofixturedef is not None:
@@ -974,7 +975,11 @@ def _eval_scope_callable(
 
 @final
 class FixtureDef(Generic[FixtureValue]):
-    """A container for a fixture definition."""
+    """A container for a fixture definition.
+
+    Note: At this time, only explicitly documented fields and methods are
+    considered public stable API.
+    """
 
     def __init__(
         self,
@@ -988,7 +993,10 @@ class FixtureDef(Generic[FixtureValue]):
         ids: Optional[
             Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
         ] = None,
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self._fixturemanager = fixturemanager
         # The "base" node ID for the fixture.
         #
@@ -1708,6 +1716,7 @@ class FixtureManager:
                 params=marker.params,
                 unittest=unittest,
                 ids=marker.ids,
+                _ispytest=True,
             )
 
             faclist = self._arg2fixturedefs.setdefault(name, [])

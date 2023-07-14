@@ -20,6 +20,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.doctest import DoctestItem
 from _pytest.fixtures import fixture
+from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import yield_fixture
@@ -102,6 +103,7 @@ __all__ = [
     "fail",
     "File",
     "fixture",
+    "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",
     "freeze_includes",
