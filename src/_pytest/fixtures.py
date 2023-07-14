@@ -1172,22 +1172,6 @@ def pytest_fixture_setup(
     return result
 
 
-def _ensure_immutable_ids(
-    ids: Optional[Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]]
-) -> Optional[Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]]:
-    if ids is None:
-        return None
-    if callable(ids):
-        return ids
-    return tuple(ids)
-
-
-def _params_converter(
-    params: Optional[Iterable[object]],
-) -> Optional[Tuple[object, ...]]:
-    return tuple(params) if params is not None else None
-
-
 def wrap_function_to_error_out_if_called_directly(
     function: FixtureFunction,
     fixture_marker: "FixtureFunctionMarker",
