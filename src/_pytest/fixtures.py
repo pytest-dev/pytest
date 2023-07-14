@@ -2,13 +2,11 @@ import dataclasses
 import functools
 import inspect
 import os
-import sys
 import warnings
 from collections import defaultdict
 from collections import deque
 from contextlib import suppress
 from pathlib import Path
-from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -27,7 +25,6 @@ from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -99,8 +96,8 @@ _FixtureCachedResult = Union[
         None,
         # Cache key.
         object,
-        # Exc info if raised.
-        Tuple[Type[BaseException], BaseException, TracebackType],
+        # Exception if raised.
+        BaseException,
     ],
 ]
 
@@ -1085,13 +1082,13 @@ class FixtureDef(Generic[FixtureValue]):
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
+            cache_key = self.cached_result[1]
             # note: comparison with `==` can fail (or be expensive) for e.g.
             # numpy arrays (#6497).
-            cache_key = self.cached_result[1]
             if my_cache_key is cache_key:
                 if self.cached_result[2] is not None:
-                    _, val, tb = self.cached_result[2]
-                    raise val.with_traceback(tb)
+                    exc = self.cached_result[2]
+                    raise exc
                 else:
                     result = self.cached_result[0]
                     return result
@@ -1156,14 +1153,12 @@ def pytest_fixture_setup(
     my_cache_key = fixturedef.cache_key(request)
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
-    except TEST_OUTCOME:
-        exc_info = sys.exc_info()
-        assert exc_info[0] is not None
-        if isinstance(
-            exc_info[1], skip.Exception
-        ) and not fixturefunc.__name__.startswith("xunit_setup"):
-            exc_info[1]._use_item_location = True  # type: ignore[attr-defined]
-        fixturedef.cached_result = (None, my_cache_key, exc_info)
+    except TEST_OUTCOME as e:
+        if isinstance(e, skip.Exception) and not fixturefunc.__name__.startswith(
+            "xunit_setup"
+        ):
+            e._use_item_location = True
+        fixturedef.cached_result = (None, my_cache_key, e)
         raise
     fixturedef.cached_result = (result, my_cache_key, None)
     return result
