@@ -1,0 +1,1 @@
+Test functions returning a value other than None will now return a warning and not an error.
