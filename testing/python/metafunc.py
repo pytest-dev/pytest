@@ -724,8 +724,6 @@ class TestMetafunc:
         metafunc.parametrize("x", [1], indirect=True)
         metafunc.parametrize("y", [2, 3], indirect=True)
         assert len(metafunc._calls) == 2
-        assert metafunc._calls[0].funcargs == {}
-        assert metafunc._calls[1].funcargs == {}
         assert metafunc._calls[0].params == dict(x=1, y=2)
         assert metafunc._calls[1].params == dict(x=1, y=3)
 
@@ -750,7 +748,6 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x, y", [("a", "b")], indirect=["x", "y"])
-        assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[0].params == dict(x="a", y="b")
         assert list(metafunc._arg2fixturedefs.keys()) == []
 
@@ -763,7 +760,6 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x, y", [("a", "b")], indirect=[])
         assert metafunc._calls[0].params == dict(x="a", y="b")
-        assert metafunc._calls[0].funcargs == {}
         assert list(metafunc._arg2fixturedefs.keys()) == ["x", "y"]
 
     def test_parametrize_indirect_wrong_type(self) -> None:
@@ -959,10 +955,8 @@ class TestMetafunc:
         metafunc.parametrize("x", [1, 2])
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].params == dict(x=1)
-        assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[0].id == "1"
         assert metafunc._calls[1].params == dict(x=2)
-        assert metafunc._calls[1].funcargs == {}
         assert metafunc._calls[1].id == "2"
 
     def test_parametrize_onearg_indirect(self) -> None:
@@ -978,10 +972,8 @@ class TestMetafunc:
         metafunc.parametrize(("x", "y"), [(1, 2), (3, 4)])
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].params == dict(x=1, y=2)
-        assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[0].id == "1-2"
         assert metafunc._calls[1].params == dict(x=3, y=4)
-        assert metafunc._calls[1].funcargs == {}
         assert metafunc._calls[1].id == "3-4"
 
     def test_parametrize_with_duplicate_values(self) -> None:
