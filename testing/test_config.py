@@ -1317,7 +1317,7 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     hookimpls = [
         (
             hookimpl.function.__module__,
-            "wrapper" if hookimpl.hookwrapper else "nonwrapper",
+            "wrapper" if (hookimpl.wrapper or hookimpl.hookwrapper) else "nonwrapper",
         )
         for hookimpl in hc.get_hookimpls()
     ]

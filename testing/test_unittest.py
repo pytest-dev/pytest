@@ -952,7 +952,7 @@ def test_issue333_result_clearing(pytester: Pytester) -> None:
     pytester.makeconftest(
         """
         import pytest
-        @pytest.hookimpl(hookwrapper=True)
+        @pytest.hookimpl(wrapper=True)
         def pytest_runtest_call(item):
             yield
             assert 0

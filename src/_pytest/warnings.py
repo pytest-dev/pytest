@@ -60,17 +60,18 @@ def catch_warnings_for_item(
                 for arg in mark.args:
                     warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
 
-        yield
-
-        for warning_message in log:
-            ihook.pytest_warning_recorded.call_historic(
-                kwargs=dict(
-                    warning_message=warning_message,
-                    nodeid=nodeid,
-                    when=when,
-                    location=None,
+        try:
+            yield
+        finally:
+            for warning_message in log:
+                ihook.pytest_warning_recorded.call_historic(
+                    kwargs=dict(
+                        warning_message=warning_message,
+                        nodeid=nodeid,
+                        when=when,
+                        location=None,
+                    )
                 )
-            )
 
 
 def warning_record_to_str(warning_message: warnings.WarningMessage) -> str:
@@ -103,24 +104,24 @@ def warning_record_to_str(warning_message: warnings.WarningMessage) -> str:
     return msg
 
 
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     with catch_warnings_for_item(
         config=item.config, ihook=item.ihook, when="runtest", item=item
     ):
-        yield
+        return (yield)
 
 
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_collection(session: Session) -> Generator[None, None, None]:
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_collection(session: Session) -> Generator[None, object, object]:
     config = session.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="collect", item=None
     ):
-        yield
+        return (yield)
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(wrapper=True)
 def pytest_terminal_summary(
     terminalreporter: TerminalReporter,
 ) -> Generator[None, None, None]:
@@ -128,23 +129,23 @@ def pytest_terminal_summary(
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None
     ):
-        yield
+        return (yield)
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(wrapper=True)
 def pytest_sessionfinish(session: Session) -> Generator[None, None, None]:
     config = session.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None
     ):
-        yield
+        return (yield)
 
 
-@pytest.hookimpl(hookwrapper=True)
+@pytest.hookimpl(wrapper=True)
 def pytest_load_initial_conftests(
     early_config: "Config",
 ) -> Generator[None, None, None]:
     with catch_warnings_for_item(
         config=early_config, ihook=early_config.hook, when="config", item=None
     ):
-        yield
+        return (yield)

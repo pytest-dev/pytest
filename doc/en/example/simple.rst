@@ -808,11 +808,10 @@ case we just write some information out to a ``failures`` file:
     import pytest
 
 
-    @pytest.hookimpl(tryfirst=True, hookwrapper=True)
+    @pytest.hookimpl(wrapper=True, tryfirst=True)
     def pytest_runtest_makereport(item, call):
         # execute all other hooks to obtain the report object
-        outcome = yield
-        rep = outcome.get_result()
+        rep = yield
 
         # we only look at actual failing test calls, not setup/teardown
         if rep.when == "call" and rep.failed:
@@ -825,6 +824,8 @@ case we just write some information out to a ``failures`` file:
                     extra = ""
 
                 f.write(rep.nodeid + extra + "\n")
+
+        return rep
 
 
 if you then have failing tests:
@@ -899,15 +900,16 @@ here is a little example implemented via a local plugin:
     phase_report_key = StashKey[Dict[str, CollectReport]]()
 
 
-    @pytest.hookimpl(tryfirst=True, hookwrapper=True)
+    @pytest.hookimpl(wrapper=True, tryfirst=True)
     def pytest_runtest_makereport(item, call):
         # execute all other hooks to obtain the report object
-        outcome = yield
-        rep = outcome.get_result()
+        rep = yield
 
         # store test results for each phase of a call, which can
         # be "setup", "call", "teardown"
         item.stash.setdefault(phase_report_key, {})[rep.when] = rep
+
+        return rep
 
 
     @pytest.fixture

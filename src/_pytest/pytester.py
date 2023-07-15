@@ -160,29 +160,31 @@ class LsofFdLeakChecker:
         else:
             return True
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True, tryfirst=True)
+    def pytest_runtest_protocol(self, item: Item) -> Generator[None, object, object]:
         lines1 = self.get_open_files()
-        yield
-        if hasattr(sys, "pypy_version_info"):
-            gc.collect()
-        lines2 = self.get_open_files()
+        try:
+            return (yield)
+        finally:
+            if hasattr(sys, "pypy_version_info"):
+                gc.collect()
+            lines2 = self.get_open_files()
 
-        new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
-        leaked_files = [t for t in lines2 if t[0] in new_fds]
-        if leaked_files:
-            error = [
-                "***** %s FD leakage detected" % len(leaked_files),
-                *(str(f) for f in leaked_files),
-                "*** Before:",
-                *(str(f) for f in lines1),
-                "*** After:",
-                *(str(f) for f in lines2),
-                "***** %s FD leakage detected" % len(leaked_files),
-                "*** function %s:%s: %s " % item.location,
-                "See issue #2366",
-            ]
-            item.warn(PytestWarning("\n".join(error)))
+            new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
+            leaked_files = [t for t in lines2 if t[0] in new_fds]
+            if leaked_files:
+                error = [
+                    "***** %s FD leakage detected" % len(leaked_files),
+                    *(str(f) for f in leaked_files),
+                    "*** Before:",
+                    *(str(f) for f in lines1),
+                    "*** After:",
+                    *(str(f) for f in lines2),
+                    "***** %s FD leakage detected" % len(leaked_files),
+                    "*** function %s:%s: %s " % item.location,
+                    "See issue #2366",
+                ]
+                item.warn(PytestWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin
