@@ -1,0 +1,1 @@
+:class:`~pytest.FixtureDef` is now exported as ``pytest.FixtureDef`` for typing purposes.

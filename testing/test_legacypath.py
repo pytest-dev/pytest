@@ -90,6 +90,7 @@ def test_cache_makedir(cache: pytest.Cache) -> None:
 def test_fixturerequest_getmodulepath(pytester: pytest.Pytester) -> None:
     modcol = pytester.getmodulecol("def test_somefunc(): pass")
     (item,) = pytester.genitems([modcol])
+    assert isinstance(item, pytest.Function)
     req = pytest.FixtureRequest(item, _ispytest=True)
     assert req.path == modcol.path
     assert req.fspath == modcol.fspath  # type: ignore[attr-defined]
