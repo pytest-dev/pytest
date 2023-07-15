@@ -13,13 +13,13 @@ from typing import final
 from typing import FrozenSet
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import Type
-from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._code
@@ -41,10 +41,6 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 
 def pytest_addoption(parser: Parser) -> None:

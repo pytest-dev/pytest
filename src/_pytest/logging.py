@@ -16,6 +16,7 @@ from typing import Dict
 from typing import final
 from typing import Generator
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
 from typing import Tuple
@@ -41,8 +42,6 @@ from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
     logging_StreamHandler = logging.StreamHandler[StringIO]
-
-    from typing_extensions import Literal
 else:
     logging_StreamHandler = logging.StreamHandler
 

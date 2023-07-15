@@ -48,13 +48,13 @@ class TempPathFactory:
     _trace: Any
     _basetemp: Optional[Path]
     _retention_count: int
-    _retention_policy: "RetentionType"
+    _retention_policy: RetentionType
 
     def __init__(
         self,
         given_basetemp: Optional[Path],
         retention_count: int,
-        retention_policy: "RetentionType",
+        retention_policy: RetentionType,
         trace,
         basetemp: Optional[Path] = None,
         *,

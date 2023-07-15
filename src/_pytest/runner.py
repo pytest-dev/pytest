@@ -9,6 +9,7 @@ from typing import Dict
 from typing import final
 from typing import Generic
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -38,8 +39,6 @@ if sys.version_info[:2] < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
-
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter
 
@@ -184,7 +183,7 @@ def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
 
 
 def _update_current_test_var(
-    item: Item, when: Optional["Literal['setup', 'call', 'teardown']"]
+    item: Item, when: Optional[Literal["setup", "call", "teardown"]]
 ) -> None:
     """Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
 
@@ -217,7 +216,7 @@ def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str
 
 
 def call_and_report(
-    item: Item, when: "Literal['setup', 'call', 'teardown']", log: bool = True, **kwds
+    item: Item, when: Literal["setup", "call", "teardown"], log: bool = True, **kwds
 ) -> TestReport:
     call = call_runtest_hook(item, when, **kwds)
     hook = item.ihook
@@ -245,7 +244,7 @@ def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) ->
 
 
 def call_runtest_hook(
-    item: Item, when: "Literal['setup', 'call', 'teardown']", **kwds
+    item: Item, when: Literal["setup", "call", "teardown"], **kwds
 ) -> "CallInfo[None]":
     if when == "setup":
         ihook: Callable[..., None] = item.ihook.pytest_runtest_setup
@@ -281,7 +280,7 @@ class CallInfo(Generic[TResult]):
     #: The call duration, in seconds.
     duration: float
     #: The context of invocation: "collect", "setup", "call" or "teardown".
-    when: "Literal['collect', 'setup', 'call', 'teardown']"
+    when: Literal["collect", "setup", "call", "teardown"]
 
     def __init__(
         self,
@@ -290,7 +289,7 @@ class CallInfo(Generic[TResult]):
         start: float,
         stop: float,
         duration: float,
-        when: "Literal['collect', 'setup', 'call', 'teardown']",
+        when: Literal["collect", "setup", "call", "teardown"],
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -319,7 +318,7 @@ class CallInfo(Generic[TResult]):
     def from_call(
         cls,
         func: "Callable[[], TResult]",
-        when: "Literal['collect', 'setup', 'call', 'teardown']",
+        when: Literal["collect", "setup", "call", "teardown"],
         reraise: Optional[
             Union[Type[BaseException], Tuple[Type[BaseException], ...]]
         ] = None,
