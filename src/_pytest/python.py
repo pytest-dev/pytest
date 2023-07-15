@@ -40,7 +40,6 @@ from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
-from _pytest.compat import assert_never
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
@@ -65,8 +64,6 @@ from _pytest.fixtures import FixtureManager
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
-from _pytest.fixtures import name2pseudofixturedef_key
-from _pytest.fixtures import resolve_unique_values_and_their_indices_in_parametersets
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
@@ -83,6 +80,7 @@ from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.pathlib import visit
 from _pytest.scope import Scope
+from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
@@ -1151,11 +1149,8 @@ class CallSpec2:
     and stored in item.callspec.
     """
 
-    # arg name -> arg value which will be passed to the parametrized test
-    # function (direct parameterization).
-    funcargs: Dict[str, object] = dataclasses.field(default_factory=dict)
-    # arg name -> arg value which will be passed to a fixture of the same name
-    # (indirect parametrization).
+    # arg name -> arg value which will be passed to a fixture or pseudo-fixture
+    # of the same name. (indirect or direct parametrization respectively)
     params: Dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
     indices: Dict[str, int] = dataclasses.field(default_factory=dict)
@@ -1206,6 +1201,65 @@ class CallSpec2:
 
 def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     return request.param
+
+
+def resolve_unique_values_and_their_indices_in_parametersets(
+    argnames: Sequence[str],
+    parametersets: Sequence[ParameterSet],
+) -> Tuple[Dict[str, List[object]], List[Tuple[int]]]:
+    """Resolve unique values and represent parameter sets by values' indices. The index of
+    a value in a parameter set is determined by where the value appears in the existing values
+    of the argname for the first time. For example, given ``argnames`` and ``parametersets``
+    below, the result would be:
+
+    ::
+
+        argnames = ["A", "B", "C"]
+        parametersets = [("a1", "b1", "c1"), ("a1", "b2", "c1"), ("a1", "b3", "c2")]
+        result[0] = {"A": ["a1"], "B": ["b1", "b2", "b3"], "C": ["c1", "c2"]}
+        result[1] = [(0, 0, 0), (0, 1, 0), (0, 2, 1)]
+
+    result is used in reordering tests to keep items using the same fixture close together.
+
+    :param argnames:
+        Argument names passed to ``parametrize()``.
+    :param parametersets:
+        The parameter sets, each containing a set of values corresponding
+        to ``argnames``.
+    :returns:
+        Tuple of unique parameter values and their indices in parametersets.
+    """
+    indices = []
+    argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(
+        dict
+    )
+    argvalues_count: Dict[str, int] = defaultdict(lambda: 0)
+    unique_values: Dict[str, List[object]] = defaultdict(list)
+    for i, argname in enumerate(argnames):
+        argname_indices = []
+        for parameterset in parametersets:
+            value = parameterset.values[i]
+            try:
+                argname_indices.append(
+                    argname_value_indices_for_hashable_ones[argname][value]
+                )
+            except KeyError:  # New unique value
+                argname_value_indices_for_hashable_ones[argname][
+                    value
+                ] = argvalues_count[argname]
+                argname_indices.append(argvalues_count[argname])
+                argvalues_count[argname] += 1
+                unique_values[argname].append(value)
+            except TypeError:  # `value` is not hashable
+                argname_indices.append(argvalues_count[argname])
+                argvalues_count[argname] += 1
+                unique_values[argname].append(value)
+        indices.append(argname_indices)
+    return unique_values, list(zip(*indices))
+
+
+# Used for storing artificial fixturedefs for direct parametrization.
+name2pseudofixturedef_key = StashKey[Dict[str, "FixtureDef[Any]"]]()
 
 
 @final

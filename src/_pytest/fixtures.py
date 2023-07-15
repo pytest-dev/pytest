@@ -65,7 +65,6 @@ from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
-from _pytest.stash import StashKey
 
 
 if TYPE_CHECKING:
@@ -147,66 +146,6 @@ def get_scope_node(
         return node.getparent(_pytest.main.Session)
     else:
         assert_never(scope)
-
-
-def resolve_unique_values_and_their_indices_in_parametersets(
-    argnames: Sequence[str],
-    parametersets: Sequence[ParameterSet],
-) -> Tuple[Dict[str, List[object]], List[Tuple[int]]]:
-    """Resolve unique values and their indices in parameter sets. The index of a value
-    is determined by when it appears in the possible values for the first time.
-    For example, given ``argnames`` and ``parametersets`` below, the result would be:
-
-    ::
-
-        argnames = ["A", "B", "C"]
-        parametersets = [("a1", "b1", "c1"), ("a1", "b2", "c1"), ("a1", "b3", "c2")]
-        result[0] = {"A": ["a1"], "B": ["b1", "b2", "b3"], "C": ["c1", "c2"]}
-        result[1] = [(0, 0, 0), (0, 1, 0), (0, 2, 1)]
-
-    result is used in reordering `indirect`ly parametrized with multiple
-    parameters or directly parametrized tests to keep items using the same fixture or
-    pseudo-fixture values respectively, close together.
-
-    :param argnames:
-        Argument names passed to ``parametrize()``.
-    :param parametersets:
-        The parameter sets, each containing a set of values corresponding
-        to ``argnames``.
-    :returns:
-        Tuple of unique parameter values and their indices in parametersets.
-    """
-    indices = []
-    argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(
-        dict
-    )
-    argvalues_count: Dict[str, int] = defaultdict(lambda: 0)
-    unique_values: Dict[str, List[object]] = defaultdict(list)
-    for i, argname in enumerate(argnames):
-        argname_indices = []
-        for parameterset in parametersets:
-            value = parameterset.values[i]
-            try:
-                argname_indices.append(
-                    argname_value_indices_for_hashable_ones[argname][value]
-                )
-            except KeyError:  # New unique value
-                argname_value_indices_for_hashable_ones[argname][
-                    value
-                ] = argvalues_count[argname]
-                argname_indices.append(argvalues_count[argname])
-                argvalues_count[argname] += 1
-                unique_values[argname].append(value)
-            except TypeError:  # `value` is not hashable
-                argname_indices.append(argvalues_count[argname])
-                argvalues_count[argname] += 1
-                unique_values[argname].append(value)
-        indices.append(argname_indices)
-    return unique_values, list(zip(*indices))
-
-
-# Used for storing artificial fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[Dict[str, "FixtureDef[Any]"]]()
 
 
 def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
@@ -352,15 +291,9 @@ def fix_cache_order(
     item: nodes.Item,
     argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
     items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
-    ignore: Set[Optional[FixtureArgKey]],
-    current_scope: Scope,
 ) -> None:
     for scope in HIGH_SCOPES:
-        if current_scope < scope:
-            continue
         for key in argkeys_cache[scope].get(item, []):
-            if key in ignore:
-                continue
             items_by_argkey[scope][key].appendleft(item)
 
 
@@ -404,11 +337,17 @@ def reorder_items_atscope(
             else:
                 slicing_argkey, _ = argkeys.popitem()
                 # deque because they'll just be ignored.
-                unique_matching_items = dict.fromkeys(scoped_items_by_argkey[slicing_argkey])
-                for i in reversed(unique_matching_items if sys.version_info.minor > 7 else list(unique_matching_items)):
+                unique_matching_items = dict.fromkeys(
+                    scoped_items_by_argkey[slicing_argkey]
+                )
+                for i in reversed(
+                    unique_matching_items
+                    if sys.version_info.minor > 7
+                    else list(unique_matching_items)
+                ):
                     if i not in items:
                         continue
-                    fix_cache_order(i, argkeys_cache, items_by_argkey, ignore, scope)
+                    fix_cache_order(i, argkeys_cache, items_by_argkey)
                     items_deque.appendleft(i)
                 break
         if no_argkey_group:
@@ -446,18 +385,6 @@ class FuncFixtureInfo:
     names_closure: List[str]
     name2fixturedefs: Dict[str, Sequence["FixtureDef[Any]"]]
     name2num_fixturedefs_used: Dict[str, int]
-
-    def prune_dependency_tree(self) -> None:
-        """Recompute names_closure from initialnames and name2fixturedefs.
-
-        Can only reduce names_closure, which means that the new closure will
-        always be a subset of the old one. The order is preserved.
-
-        This method is needed because dynamic direct parametrization may shadow
-        some of the fixtures that were included in the originally built dependency
-        tree. In this way the dependency tree can get pruned, and the closure
-        of argnames may get reduced.
-        """
 
 
 class FixtureRequest:
@@ -1585,18 +1512,14 @@ class FixtureManager:
         ignore_args: Sequence[str] = (),
     ) -> Tuple[List[str], Dict[str, List[FixtureDef[Any]]]]:
         # Collect the closure of all fixtures, starting with the given
-        # fixturenames as the initial set.  As we have to visit all
-        # factory definitions anyway, we also return an arg2fixturedefs
+        # initialnames as the initial set.  As we have to visit all
+        # factory definitions anyway, we also populate arg2fixturedefs
         # mapping so that the caller can reuse it and does not have
         # to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive).
 
         parentid = parentnode.nodeid
         fixturenames_closure: Dict[str, int] = {}
-
-        # At this point, fixturenames_closure contains what we call "initialnames",
-        # which is a set of fixturenames the function immediately requests. We
-        # need to return it as well, so save this.
 
         arg2num_fixturedefs_used: Dict[str, int] = defaultdict(lambda: 0)
         arg2num_def_used_in_path: Dict[str, int] = defaultdict(lambda: 0)
