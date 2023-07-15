@@ -1046,8 +1046,6 @@ class FixtureDef(Generic[FixtureValue]):
         # The names requested by the fixtures.
         self.argnames: Final = getfuncargnames(func, name=argname, is_method=unittest)
         # Whether the fixture was collected from a unittest TestCase class.
-        # Note that it really only makes sense to define autouse fixtures in
-        # unittest TestCases.
         self.unittest: Final = unittest
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
