@@ -112,8 +112,8 @@ def pytest_collection(session: "Session") -> None:
             assertstate.hook.set_session(session)
 
 
-@hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
+@hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks.
 
     The rewrite module will use util._reprcompare if it exists to use custom
@@ -162,10 +162,11 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
 
         util._assertion_pass = call_assertion_pass_hook
 
-    yield
-
-    util._reprcompare, util._assertion_pass = saved_assert_hooks
-    util._config = None
+    try:
+        return (yield)
+    finally:
+        util._reprcompare, util._assertion_pass = saved_assert_hooks
+        util._config = None
 
 
 def pytest_sessionfinish(session: "Session") -> None:

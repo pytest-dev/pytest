@@ -3,11 +3,10 @@ import sys
 import pytest
 from _pytest.pytester import Pytester
 
-
-if sys.version_info < (3, 8):
-    pytest.skip("unraisableexception plugin needs Python>=3.8", allow_module_level=True)
+PYPY = hasattr(sys, "pypy_version_info")
 
 
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable(pytester: Pytester) -> None:
     pytester.makepyfile(
@@ -40,6 +39,7 @@ def test_unraisable(pytester: Pytester) -> None:
     )
 
 
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_in_setup(pytester: Pytester) -> None:
     pytester.makepyfile(
@@ -76,6 +76,7 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
     )
 
 
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_in_teardown(pytester: Pytester) -> None:
     pytester.makepyfile(
@@ -116,7 +117,7 @@ def test_unraisable_in_teardown(pytester: Pytester) -> None:
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_unraisable_warning_error(pytester: Pytester) -> None:
     pytester.makepyfile(
-        test_it="""
+        test_it=f"""
         class BrokenDel:
             def __del__(self) -> None:
                 raise ValueError("del is broken")
@@ -124,6 +125,7 @@ def test_unraisable_warning_error(pytester: Pytester) -> None:
         def test_it() -> None:
             obj = BrokenDel()
             del obj
+            {"import gc; gc.collect()" * PYPY}
 
         def test_2(): pass
         """

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
@@ -39,7 +40,7 @@ from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
-from _pytest.compat import final
+from _pytest.compat import assert_never
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
@@ -550,7 +551,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
 
 class Module(nodes.File, PyCollector):
-    """Collector for test classes and functions."""
+    """Collector for test classes and functions in a Python module."""
 
     def _getobj(self):
         return self._importtestmodule()
@@ -687,6 +688,9 @@ class Module(nodes.File, PyCollector):
 
 
 class Package(Module):
+    """Collector for files and directories in a Python packages -- directories
+    with an `__init__.py` file."""
+
     def __init__(
         self,
         fspath: Optional[LEGACY_PATH],
@@ -818,7 +822,7 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> Optional[o
 
 
 class Class(PyCollector):
-    """Collector for test methods."""
+    """Collector for test methods (and nested classes) in a Python class."""
 
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw):
@@ -1743,7 +1747,7 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
 
 
 class Function(PyobjMixin, nodes.Item):
-    """An Item responsible for setting up and executing a Python test function.
+    """Item responsible for setting up and executing a Python test function.
 
     :param name:
         The full function name, including any decorations like those
@@ -1900,10 +1904,8 @@ class Function(PyobjMixin, nodes.Item):
 
 
 class FunctionDefinition(Function):
-    """
-    This class is a step gap solution until we evolve to have actual function definition nodes
-    and manage to get rid of ``metafunc``.
-    """
+    """This class is a stop gap solution until we evolve to have actual function
+    definition nodes and manage to get rid of ``metafunc``."""
 
     def runtest(self) -> None:
         raise RuntimeError("function definitions are not supposed to be run as tests")

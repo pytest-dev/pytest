@@ -5,6 +5,7 @@ import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
+from typing import final
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -23,7 +24,6 @@ from typing import Union
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
-from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
@@ -374,7 +374,9 @@ def get_unpacked_marks(
         if not consider_mro:
             mark_lists = [obj.__dict__.get("pytestmark", [])]
         else:
-            mark_lists = [x.__dict__.get("pytestmark", []) for x in obj.__mro__]
+            mark_lists = [
+                x.__dict__.get("pytestmark", []) for x in reversed(obj.__mro__)
+            ]
         mark_list = []
         for item in mark_lists:
             if isinstance(item, list):

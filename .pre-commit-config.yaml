@@ -1,14 +1,14 @@
 repos:
 -   repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
     -   id: black
         args: [--safe, --quiet]
 -   repo: https://github.com/asottile/blacken-docs
-    rev: 1.14.0
+    rev: 1.15.0
     hooks:
     -   id: blacken-docs
-        additional_dependencies: [black==23.1.0]
+        additional_dependencies: [black==23.7.0]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -40,14 +40,14 @@ repos:
     rev: v3.10.0
     hooks:
     -   id: reorder-python-imports
-        args: ['--application-directories=.:src', --py37-plus]
+        args: ['--application-directories=.:src', --py38-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.7.0
+    rev: v3.9.0
     hooks:
     -   id: pyupgrade
-        args: [--py37-plus]
+        args: [--py38-plus]
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.3.0
+    rev: v2.4.0
     hooks:
     -   id: setup-cfg-fmt
         args: ["--max-py-version=3.12", "--include-version-classifiers"]

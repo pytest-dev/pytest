@@ -725,12 +725,12 @@ class TestTerminalFunctional:
         )
         assert result.ret == 0
 
-    def test_deselected_with_hookwrapper(self, pytester: Pytester) -> None:
+    def test_deselected_with_hook_wrapper(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             import pytest
 
-            @pytest.hookimpl(hookwrapper=True)
+            @pytest.hookimpl(wrapper=True)
             def pytest_collection_modifyitems(config, items):
                 yield
                 deselected = items.pop()

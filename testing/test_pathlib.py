@@ -7,6 +7,7 @@ from textwrap import dedent
 from types import ModuleType
 from typing import Any
 from typing import Generator
+from typing import Iterator
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -282,29 +283,36 @@ class TestImportPath:
             import_path(tmp_path / "invalid.py", root=tmp_path)
 
     @pytest.fixture
-    def simple_module(self, tmp_path: Path) -> Path:
-        fn = tmp_path / "_src/tests/mymod.py"
+    def simple_module(
+        self, tmp_path: Path, request: pytest.FixtureRequest
+    ) -> Iterator[Path]:
+        name = f"mymod_{request.node.name}"
+        fn = tmp_path / f"_src/tests/{name}.py"
         fn.parent.mkdir(parents=True)
         fn.write_text("def foo(x): return 40 + x", encoding="utf-8")
-        return fn
+        module_name = module_name_from_path(fn, root=tmp_path)
+        yield fn
+        sys.modules.pop(module_name, None)
 
-    def test_importmode_importlib(self, simple_module: Path, tmp_path: Path) -> None:
+    def test_importmode_importlib(
+        self, simple_module: Path, tmp_path: Path, request: pytest.FixtureRequest
+    ) -> None:
         """`importlib` mode does not change sys.path."""
         module = import_path(simple_module, mode="importlib", root=tmp_path)
         assert module.foo(2) == 42  # type: ignore[attr-defined]
         assert str(simple_module.parent) not in sys.path
         assert module.__name__ in sys.modules
-        assert module.__name__ == "_src.tests.mymod"
+        assert module.__name__ == f"_src.tests.mymod_{request.node.name}"
         assert "_src" in sys.modules
         assert "_src.tests" in sys.modules
 
-    def test_importmode_twice_is_different_module(
+    def test_remembers_previous_imports(
         self, simple_module: Path, tmp_path: Path
     ) -> None:
-        """`importlib` mode always returns a new module."""
+        """`importlib` mode called remembers previous module (#10341, #10811)."""
         module1 = import_path(simple_module, mode="importlib", root=tmp_path)
         module2 = import_path(simple_module, mode="importlib", root=tmp_path)
-        assert module1 is not module2
+        assert module1 is module2
 
     def test_no_meta_path_found(
         self, simple_module: Path, monkeypatch: MonkeyPatch, tmp_path: Path
@@ -316,6 +324,9 @@ class TestImportPath:
 
         # mode='importlib' fails if no spec is found to load the module
         import importlib.util
+
+        # Force module to be re-imported.
+        del sys.modules[module.__name__]
 
         monkeypatch.setattr(
             importlib.util, "spec_from_file_location", lambda *args: None
@@ -592,3 +603,15 @@ class TestImportLibMode:
         modules = {}
         insert_missing_modules(modules, "")
         assert modules == {}
+
+    def test_parent_contains_child_module_attribute(
+        self, monkeypatch: MonkeyPatch, tmp_path: Path
+    ):
+        monkeypatch.chdir(tmp_path)
+        # Use 'xxx' and 'xxy' as parent names as they are unlikely to exist and
+        # don't end up being imported.
+        modules = {"xxx.tests.foo": ModuleType("xxx.tests.foo")}
+        insert_missing_modules(modules, "xxx.tests.foo")
+        assert sorted(modules) == ["xxx", "xxx.tests", "xxx.tests.foo"]
+        assert modules["xxx"].tests is modules["xxx.tests"]
+        assert modules["xxx.tests"].foo is modules["xxx.tests.foo"]

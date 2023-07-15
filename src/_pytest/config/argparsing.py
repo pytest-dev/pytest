@@ -7,6 +7,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import List
 from typing import Mapping
 from typing import NoReturn
@@ -17,7 +18,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._io
-from _pytest.compat import final
 from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
 from _pytest.deprecated import ARGUMENT_TYPE_STR

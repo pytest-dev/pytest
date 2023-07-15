@@ -2,12 +2,12 @@
 import os
 import shutil
 import sys
+from typing import final
 from typing import Optional
 from typing import Sequence
 from typing import TextIO
 
 from .wcwidth import wcswidth
-from _pytest.compat import final
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.

@@ -13,6 +13,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import Generic
 from typing import Hashable
@@ -22,6 +23,7 @@ from typing import List
 from typing import MutableMapping
 from typing import NoReturn
 from typing import Optional
+from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -36,10 +38,8 @@ from _pytest._code import getfslineno
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import _format_args
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
-from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
 from _pytest.compat import getfuncargnames
@@ -48,7 +48,6 @@ from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
-from _pytest.compat import overload
 from _pytest.compat import safe_getattr
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -796,8 +795,10 @@ class FixtureRequest:
                 p = bestrelpath(session.path, fs)
             else:
                 p = fs
-            args = _format_args(factory)
-            lines.append("%s:%d:  def %s%s" % (p, lineno + 1, factory.__name__, args))
+            lines.append(
+                "%s:%d:  def %s%s"
+                % (p, lineno + 1, factory.__name__, inspect.signature(factory))
+            )
         return lines
 
     def __repr__(self) -> str:

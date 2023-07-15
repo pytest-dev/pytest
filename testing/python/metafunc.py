@@ -19,7 +19,6 @@ from hypothesis import strategies
 import pytest
 from _pytest import fixtures
 from _pytest import python
-from _pytest.compat import _format_args
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
@@ -1064,27 +1063,6 @@ class TestMetafunc:
             *6 passed*
         """
         )
-
-    def test_format_args(self) -> None:
-        def function1():
-            pass
-
-        assert _format_args(function1) == "()"
-
-        def function2(arg1):
-            pass
-
-        assert _format_args(function2) == "(arg1)"
-
-        def function3(arg1, arg2="qwe"):
-            pass
-
-        assert _format_args(function3) == "(arg1, arg2='qwe')"
-
-        def function4(arg1, *args, **kwargs):
-            pass
-
-        assert _format_args(function4) == "(arg1, *args, **kwargs)"
 
 
 class TestMetafuncFunctional:

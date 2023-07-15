@@ -1,4 +1,5 @@
 import dataclasses
+import importlib.metadata
 import os
 import re
 import sys
@@ -13,7 +14,6 @@ from typing import Union
 
 import _pytest._code
 import pytest
-from _pytest.compat import importlib_metadata
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
@@ -475,7 +475,7 @@ class TestParseIni:
         pytester.makepyfile(myplugin1_module="# my plugin module")
         pytester.syspathinsert()
 
-        monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
+        monkeypatch.setattr(importlib.metadata, "distributions", my_dists)
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
         pytester.makeini(ini_file_text)
@@ -1003,7 +1003,7 @@ def test_preparse_ordering_with_setuptools(
     def my_dists():
         return (Dist,)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", my_dists)
+    monkeypatch.setattr(importlib.metadata, "distributions", my_dists)
     pytester.makeconftest(
         """
         pytest_plugins = "mytestplugin",
@@ -1036,7 +1036,7 @@ def test_setuptools_importerror_issue1479(
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     with pytest.raises(ImportError):
         pytester.parseconfig()
 
@@ -1063,7 +1063,7 @@ def test_importlib_metadata_broken_distribution(
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     pytester.parseconfig()
 
 
@@ -1091,7 +1091,7 @@ def test_plugin_preparse_prevents_setuptools_loading(
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     args = ("-p", "no:mytestplugin") if block_it else ()
     config = pytester.parseconfig(*args)
     config.pluginmanager.import_plugin("mytestplugin")
@@ -1140,7 +1140,7 @@ def test_disable_plugin_autoload(
         return (Distribution(),)
 
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    monkeypatch.setattr(importlib_metadata, "distributions", distributions)
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())  # type: ignore[misc]
     config = pytester.parseconfig(*parse_args)
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
@@ -1317,7 +1317,7 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
     hookimpls = [
         (
             hookimpl.function.__module__,
-            "wrapper" if hookimpl.hookwrapper else "nonwrapper",
+            "wrapper" if (hookimpl.wrapper or hookimpl.hookwrapper) else "nonwrapper",
         )
         for hookimpl in hc.get_hookimpls()
     ]

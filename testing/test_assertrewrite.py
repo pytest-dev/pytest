@@ -131,9 +131,8 @@ class TestAssertionRewrite:
             for n in [node, *ast.iter_child_nodes(node)]:
                 assert n.lineno == 3
                 assert n.col_offset == 0
-                if sys.version_info >= (3, 8):
-                    assert n.end_lineno == 6
-                    assert n.end_col_offset == 3
+                assert n.end_lineno == 6
+                assert n.end_col_offset == 3
 
     def test_dont_rewrite(self) -> None:
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
@@ -1270,9 +1269,6 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="walrus operator not available in py<38"
-)
 class TestIssue10743:
     def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1441,9 +1437,6 @@ class TestIssue10743:
         assert result.ret == 0
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="walrus operator not available in py<38"
-)
 class TestIssue11028:
     def test_assertion_walrus_operator_in_operand(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1957,16 +1950,10 @@ class TestPyCacheDir:
     )
     def test_get_cache_dir(self, monkeypatch, prefix, source, expected) -> None:
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
-
-        if prefix is not None and sys.version_info < (3, 8):
-            pytest.skip("pycache_prefix not available in py<38")
         monkeypatch.setattr(sys, "pycache_prefix", prefix, raising=False)
 
         assert get_cache_dir(Path(source)) == Path(expected)
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 8), reason="pycache_prefix not available in py<38"
-    )
     @pytest.mark.skipif(
         sys.version_info[:2] == (3, 9) and sys.platform.startswith("win"),
         reason="#9298",
@@ -2055,3 +2042,17 @@ class TestReprSizeVerbosity:
         self.create_test_file(pytester, DEFAULT_REPR_MAX_SIZE * 10)
         result = pytester.runpytest("-vv")
         result.stdout.no_fnmatch_line("*xxx...xxx*")
+
+
+class TestIssue11140:
+    def test_constant_not_picked_as_module_docstring(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
+            0
+
+            def test_foo():
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0

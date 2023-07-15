@@ -6,6 +6,7 @@ import sys
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import Generic
 from typing import List
 from typing import Optional
@@ -23,7 +24,6 @@ from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
-from _pytest.compat import final
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.nodes import Collector

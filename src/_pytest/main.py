@@ -9,10 +9,12 @@ import sys
 from pathlib import Path
 from typing import Callable
 from typing import Dict
+from typing import final
 from typing import FrozenSet
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
@@ -22,8 +24,6 @@ from typing import Union
 
 import _pytest._code
 from _pytest import nodes
-from _pytest.compat import final
-from _pytest.compat import overload
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -462,6 +462,11 @@ class _bestrelpath_cache(Dict[Path, str]):
 
 @final
 class Session(nodes.FSCollector):
+    """The root of the collection tree.
+
+    ``Session`` collects the initial paths given as arguments to pytest.
+    """
+
     Interrupted = Interrupted
     Failed = Failed
     # Set on the session by runner.pytest_sessionstart.

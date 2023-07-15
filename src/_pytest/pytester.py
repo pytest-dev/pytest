@@ -20,10 +20,13 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Final
+from typing import final
 from typing import Generator
 from typing import IO
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import overload
 from typing import Sequence
@@ -40,7 +43,6 @@ from iniconfig import SectionWrapper
 from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
-from _pytest.compat import final
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
 from _pytest.config import _PluggyPlugin
@@ -61,18 +63,13 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
 from _pytest.pathlib import bestrelpath
-from _pytest.pathlib import copytree
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestWarning
 
-
 if TYPE_CHECKING:
-    from typing_extensions import Final
-    from typing_extensions import Literal
-
     import pexpect
 
 
@@ -163,29 +160,31 @@ class LsofFdLeakChecker:
         else:
             return True
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True, tryfirst=True)
+    def pytest_runtest_protocol(self, item: Item) -> Generator[None, object, object]:
         lines1 = self.get_open_files()
-        yield
-        if hasattr(sys, "pypy_version_info"):
-            gc.collect()
-        lines2 = self.get_open_files()
+        try:
+            return (yield)
+        finally:
+            if hasattr(sys, "pypy_version_info"):
+                gc.collect()
+            lines2 = self.get_open_files()
 
-        new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
-        leaked_files = [t for t in lines2 if t[0] in new_fds]
-        if leaked_files:
-            error = [
-                "***** %s FD leakage detected" % len(leaked_files),
-                *(str(f) for f in leaked_files),
-                "*** Before:",
-                *(str(f) for f in lines1),
-                "*** After:",
-                *(str(f) for f in lines2),
-                "***** %s FD leakage detected" % len(leaked_files),
-                "*** function %s:%s: %s " % item.location,
-                "See issue #2366",
-            ]
-            item.warn(PytestWarning("\n".join(error)))
+            new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
+            leaked_files = [t for t in lines2 if t[0] in new_fds]
+            if leaked_files:
+                error = [
+                    "***** %s FD leakage detected" % len(leaked_files),
+                    *(str(f) for f in leaked_files),
+                    "*** Before:",
+                    *(str(f) for f in lines1),
+                    "*** After:",
+                    *(str(f) for f in lines2),
+                    "***** %s FD leakage detected" % len(leaked_files),
+                    "*** function %s:%s: %s " % item.location,
+                    "See issue #2366",
+                ]
+                item.warn(PytestWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin
@@ -973,7 +972,7 @@ class Pytester:
             example_path = example_dir.joinpath(name)
 
         if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
-            copytree(example_path, self.path)
+            shutil.copytree(example_path, self.path, symlinks=True, dirs_exist_ok=True)
             return self.path
         elif example_path.is_file():
             result = self.path.joinpath(example_path.name)

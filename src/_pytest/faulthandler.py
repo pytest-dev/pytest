@@ -62,8 +62,8 @@ def get_timeout_config_value(config: Config) -> float:
     return float(config.getini("faulthandler_timeout") or 0.0)
 
 
-@pytest.hookimpl(hookwrapper=True, trylast=True)
-def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
+@pytest.hookimpl(wrapper=True, trylast=True)
+def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     timeout = get_timeout_config_value(item.config)
     if timeout > 0:
         import faulthandler
@@ -71,11 +71,11 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
         stderr = item.config.stash[fault_handler_stderr_fd_key]
         faulthandler.dump_traceback_later(timeout, file=stderr)
         try:
-            yield
+            return (yield)
         finally:
             faulthandler.cancel_dump_traceback_later()
     else:
-        yield
+        return (yield)
 
 
 @pytest.hookimpl(tryfirst=True)

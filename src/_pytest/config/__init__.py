@@ -5,6 +5,7 @@ import copy
 import dataclasses
 import enum
 import glob
+import importlib.metadata
 import inspect
 import os
 import re
@@ -21,6 +22,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import IO
 from typing import Iterable
@@ -48,8 +50,6 @@ from .findpaths import determine_setup
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
-from _pytest.compat import final
-from _pytest.compat import importlib_metadata  # type: ignore[attr-defined]
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -137,7 +137,9 @@ def main(
 ) -> Union[int, ExitCode]:
     """Perform an in-process test run.
 
-    :param args: List of command line arguments.
+    :param args:
+        List of command line arguments. If `None` or not given, defaults to reading
+        arguments directly from the process command line (:data:`sys.argv`).
     :param plugins: List of plugin objects to be auto-registered during initialization.
 
     :returns: An exit code.
@@ -257,7 +259,8 @@ default_plugins = essential_plugins + (
     "logging",
     "reports",
     "python_path",
-    *(["unraisableexception", "threadexception"] if sys.version_info >= (3, 8) else []),
+    "unraisableexception",
+    "threadexception",
     "faulthandler",
 )
 
@@ -1216,7 +1219,7 @@ class Config:
 
         package_files = (
             str(file)
-            for dist in importlib_metadata.distributions()
+            for dist in importlib.metadata.distributions()
             if any(ep.group == "pytest11" for ep in dist.entry_points)
             for file in dist.files or []
         )
@@ -1338,12 +1341,14 @@ class Config:
             else:
                 raise
 
-    @hookimpl(hookwrapper=True)
-    def pytest_collection(self) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True)
+    def pytest_collection(self) -> Generator[None, object, object]:
         # Validate invalid ini keys after collection is done so we take in account
         # options added by late-loading conftest files.
-        yield
-        self._validate_config_options()
+        try:
+            return (yield)
+        finally:
+            self._validate_config_options()
 
     def _checkversion(self) -> None:
         import pytest
@@ -1445,7 +1450,7 @@ class Config:
         """Issue and handle a warning during the "configure" stage.
 
         During ``pytest_configure`` we can't capture warnings using the ``catch_warnings_for_item``
-        function because it is not possible to have hookwrappers around ``pytest_configure``.
+        function because it is not possible to have hook wrappers around ``pytest_configure``.
 
         This function is mainly intended for plugins that need to issue warnings during
         ``pytest_configure`` (or similar stages).
