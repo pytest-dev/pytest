@@ -200,10 +200,10 @@ class TestCaseFunction(Function):
         assert self.parent is not None
         self._testcase = self.parent.obj(self.name)  # type: ignore[attr-defined]
         self._obj = getattr(self._testcase, self.name)
-        if hasattr(self, "_request"):
-            self._request._fillfixtures()
+        super().setup()
 
     def teardown(self) -> None:
+        super().teardown()
         if self._explicit_tearDown is not None:
             self._explicit_tearDown()
             self._explicit_tearDown = None
