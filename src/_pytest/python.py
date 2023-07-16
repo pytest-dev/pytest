@@ -20,13 +20,13 @@ from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
 from typing import Pattern
 from typing import Sequence
 from typing import Set
 from typing import Tuple
-from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest
@@ -75,15 +75,11 @@ from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.pathlib import visit
+from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
-
-    from _pytest.scope import _ScopeName
 
 
 _PYTEST_DIR = Path(_pytest.__file__).parent
@@ -1236,7 +1232,7 @@ class Metafunc:
         ids: Optional[
             Union[Iterable[Optional[object]], Callable[[Any], Optional[object]]]
         ] = None,
-        scope: "Optional[_ScopeName]" = None,
+        scope: Optional[_ScopeName] = None,
         *,
         _param_mark: Optional[Mark] = None,
     ) -> None:

@@ -20,6 +20,7 @@ from typing import Dict
 from typing import final
 from typing import Generator
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import NamedTuple
 from typing import Optional
@@ -54,8 +55,6 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
-
     from _pytest.main import Session
 
 
@@ -366,7 +365,7 @@ class TerminalReporter:
         self._already_displayed_warnings: Optional[int] = None
         self._keyboardinterrupt_memo: Optional[ExceptionRepr] = None
 
-    def _determine_show_progress_info(self) -> "Literal['progress', 'count', False]":
+    def _determine_show_progress_info(self) -> Literal["progress", "count", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
         # overridden by progress-even-when-capture-no

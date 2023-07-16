@@ -60,6 +60,7 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
+from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
@@ -68,7 +69,6 @@ from _pytest.stash import StashKey
 if TYPE_CHECKING:
     from typing import Deque
 
-    from _pytest.scope import _ScopeName
     from _pytest.main import Session
     from _pytest.python import CallSpec2
     from _pytest.python import Function
@@ -444,7 +444,7 @@ class FixtureRequest:
         self.param: Any
 
     @property
-    def scope(self) -> "_ScopeName":
+    def scope(self) -> _ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
@@ -949,10 +949,10 @@ def _teardown_yield_fixture(fixturefunc, it) -> None:
 
 
 def _eval_scope_callable(
-    scope_callable: "Callable[[str, Config], _ScopeName]",
+    scope_callable: Callable[[str, Config], _ScopeName],
     fixture_name: str,
     config: Config,
-) -> "_ScopeName":
+) -> _ScopeName:
     try:
         # Type ignored because there is no typing mechanism to specify
         # keyword arguments, currently.
@@ -987,7 +987,7 @@ class FixtureDef(Generic[FixtureValue]):
         baseid: Optional[str],
         argname: str,
         func: "_FixtureFunc[FixtureValue]",
-        scope: Union[Scope, "_ScopeName", Callable[[str, Config], "_ScopeName"], None],
+        scope: Union[Scope, _ScopeName, Callable[[str, Config], _ScopeName], None],
         params: Optional[Sequence[object]],
         unittest: bool = False,
         ids: Optional[
@@ -1048,7 +1048,7 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers: Final[List[Callable[[], object]]] = []
 
     @property
-    def scope(self) -> "_ScopeName":
+    def scope(self) -> _ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 

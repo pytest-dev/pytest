@@ -2,8 +2,8 @@ import sys
 import warnings
 from contextlib import contextmanager
 from typing import Generator
+from typing import Literal
 from typing import Optional
-from typing import TYPE_CHECKING
 
 import pytest
 from _pytest.config import apply_warning_filters
@@ -12,9 +12,6 @@ from _pytest.config import parse_warning_filter
 from _pytest.main import Session
 from _pytest.nodes import Item
 from _pytest.terminal import TerminalReporter
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 
 def pytest_configure(config: Config) -> None:
@@ -29,7 +26,7 @@ def pytest_configure(config: Config) -> None:
 def catch_warnings_for_item(
     config: Config,
     ihook,
-    when: "Literal['config', 'collect', 'runtest']",
+    when: Literal["config", "collect", "runtest"],
     item: Optional[Item],
 ) -> Generator[None, None, None]:
     """Context manager that catches warnings generated in the contained execution block.

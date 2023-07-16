@@ -25,13 +25,11 @@ from stat import S_ISREG
 from typing import Any
 from typing import Callable
 from typing import cast
+from typing import Literal
 from typing import overload
 from typing import TYPE_CHECKING
 
 from . import error
-
-if TYPE_CHECKING:
-    from typing import Literal
 
 # Moved from local.py.
 iswin32 = sys.platform == "win32" or (getattr(os, "_name", False) == "nt")
