@@ -1650,7 +1650,14 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
     )
 
 
-@pytest.mark.skip("sys.version_info < (3,11)")
+def add_note(err: BaseException, msg: str) -> None:
+    """Adds a note to an exception inplace."""
+    if sys.version_info < (3, 11):
+        err.__notes__ = getattr(err, "__notes__", []) + [msg]  # type: ignore[attr-defined]
+    else:
+        err.add_note(msg)
+
+
 @pytest.mark.parametrize(
     "error,notes,match",
     [
@@ -1662,23 +1669,23 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
 )
 def test_check_error_notes_success(error, notes, match):
     for note in notes:
-        error.add_note(note)
+        add_note(error, note)
 
     with pytest.raises(Exception, match=match):
         raise error
 
 
-@pytest.mark.skip("sys.version_info < (3,11)")
 @pytest.mark.parametrize(
     "error, notes, match",
     [
         (Exception("test"), [], "foo"),
         (AssertionError("foo"), ["bar"], "baz"),
+        (AssertionError("foo"), ["bar"], "foo\nbaz"),
     ],
 )
 def test_check_error_notes_failure(error, notes, match):
     for note in notes:
-        error.add_note(note)
+        add_note(error, note)
 
     with pytest.raises(AssertionError):
         with pytest.raises(type(error), match=match):
