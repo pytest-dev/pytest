@@ -1648,3 +1648,38 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
         ],
         consecutive=True,
     )
+
+
+@pytest.mark.skip("sys.version_info < (3,11)")
+@pytest.mark.parametrize(
+    "error,notes,match",
+    [
+        (Exception("test"), [], "test"),
+        (AssertionError("foo"), ["bar"], "bar"),
+        (AssertionError("foo"), ["bar", "baz"], "bar"),
+        (AssertionError("foo"), ["bar", "baz"], "baz"),
+    ],
+)
+def test_check_error_notes_success(error, notes, match):
+    for note in notes:
+        error.add_note(note)
+
+    with pytest.raises(Exception, match=match):
+        raise error
+
+
+@pytest.mark.skip("sys.version_info < (3,11)")
+@pytest.mark.parametrize(
+    "error, notes, match",
+    [
+        (Exception("test"), [], "foo"),
+        (AssertionError("foo"), ["bar"], "baz"),
+    ],
+)
+def test_check_error_notes_failure(error, notes, match):
+    for note in notes:
+        error.add_note(note)
+
+    with pytest.raises(AssertionError):
+        with pytest.raises(type(error), match=match):
+            raise error

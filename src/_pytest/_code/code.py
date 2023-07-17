@@ -704,7 +704,12 @@ class ExceptionInfo(Generic[E]):
         If it matches `True` is returned, otherwise an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        value = str(self.value)
+        value = "\n".join(
+            [
+                str(self.value),
+                *getattr(self.value, "__notes__", []),
+            ]
+        )
         msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
