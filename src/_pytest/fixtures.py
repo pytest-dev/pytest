@@ -1162,9 +1162,10 @@ def pytest_fixture_setup(
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
     except TEST_OUTCOME as e:
-        if isinstance(e, skip.Exception) and not fixturefunc.__name__.startswith(
-            "xunit_setup"
-        ):
+        if isinstance(e, skip.Exception):
+            # The test requested a fixture which caused a skip.
+            # Don't show the fixture as the skip location, as then the user
+            # wouldn't know which test skipped.
             e._use_item_location = True
         fixturedef.cached_result = (None, my_cache_key, e)
         raise
