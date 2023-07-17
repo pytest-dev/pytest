@@ -354,16 +354,27 @@ def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
 
 @dataclasses.dataclass(frozen=True)
 class FuncFixtureInfo:
+    """Fixture-related information for a fixture-requesting item (e.g. test
+    function).
+
+    This is used to examine the fixtures which an item requests statically
+    (known during collection). This includes autouse fixtures, fixtures
+    requested by the `usefixtures` marker, fixtures requested in the function
+    parameters, and the transitive closure of these.
+
+    An item may also request fixtures dynamically (using `request.getfixturevalue`);
+    these are not reflected here.
+    """
+
     __slots__ = ("argnames", "initialnames", "names_closure", "name2fixturedefs")
 
-    # Original function argument names, i.e. fixture names that the function
-    # requests directly.
+    # Fixture names that the item requests directly by function parameters.
     argnames: Tuple[str, ...]
-    # Fixture names that the function immediately requires. These include
+    # Fixture names that the item immediately requires. These include
     # argnames + fixture names specified via usefixtures and via autouse=True in
     # fixture definitions.
     initialnames: Tuple[str, ...]
-    # The transitive closure of the fixture names that the function requires.
+    # The transitive closure of the fixture names that the item requires.
     # Note: can't include dynamic dependencies (`request.getfixturevalue` calls).
     names_closure: List[str]
     # A map from a fixture name in the transitive closure to the FixtureDefs
@@ -547,8 +558,7 @@ class FixtureRequest:
         """Path where the test function was collected."""
         if self.scope not in ("function", "class", "module", "package"):
             raise AttributeError(f"path not available in {self.scope}-scoped context")
-        # TODO: Remove ignore once _pyfuncitem is properly typed.
-        return self._pyfuncitem.path  # type: ignore
+        return self._pyfuncitem.path
 
     @property
     def keywords(self) -> MutableMapping[str, Any]:
@@ -620,9 +630,8 @@ class FixtureRequest:
     def _get_active_fixturedef(
         self, argname: str
     ) -> Union["FixtureDef[object]", PseudoFixtureDef[object]]:
-        try:
-            return self._fixture_defs[argname]
-        except KeyError:
+        fixturedef = self._fixture_defs.get(argname)
+        if fixturedef is None:
             try:
                 fixturedef = self._getnextfixturedef(argname)
             except FixtureLookupError:
@@ -630,10 +639,8 @@ class FixtureRequest:
                     cached_result = (self, [0], None)
                     return PseudoFixtureDef(cached_result, Scope.Function)
                 raise
-        # Remove indent to prevent the python3 exception
-        # from leaking into the call.
-        self._compute_fixture_value(fixturedef)
-        self._fixture_defs[argname] = fixturedef
+            self._compute_fixture_value(fixturedef)
+            self._fixture_defs[argname] = fixturedef
         return fixturedef
 
     def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
@@ -1039,8 +1046,6 @@ class FixtureDef(Generic[FixtureValue]):
         # The names requested by the fixtures.
         self.argnames: Final = getfuncargnames(func, name=argname, is_method=unittest)
         # Whether the fixture was collected from a unittest TestCase class.
-        # Note that it really only makes sense to define autouse fixtures in
-        # unittest TestCases.
         self.unittest: Final = unittest
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
@@ -1468,8 +1473,26 @@ class FixtureManager:
         return parametrize_argnames
 
     def getfixtureinfo(
-        self, node: nodes.Node, func, cls, funcargs: bool = True
+        self,
+        node: nodes.Item,
+        func: Callable[..., object],
+        cls: Optional[type],
+        funcargs: bool = True,
     ) -> FuncFixtureInfo:
+        """Calculate the :class:`FuncFixtureInfo` for an item.
+
+        If ``funcargs`` is false, or if the item sets an attribute
+        ``nofuncargs = True``, then ``func`` is not examined at all.
+
+        :param node:
+            The item requesting the fixtures.
+        :param func:
+            The item's function.
+        :param cls:
+            If the function is a method, the method's class.
+        :param funcargs:
+            Whether to look into func's parameters as fixture requests.
+        """
         if funcargs and not getattr(node, "nofuncargs", False):
             argnames = getfuncargnames(func, name=node.name, cls=cls)
         else:
@@ -1479,8 +1502,7 @@ class FixtureManager:
             arg for mark in node.iter_markers(name="usefixtures") for arg in mark.args
         )
         initialnames = usefixtures + argnames
-        fm = node.session._fixturemanager
-        initialnames, names_closure, arg2fixturedefs = fm.getfixtureclosure(
+        initialnames, names_closure, arg2fixturedefs = self.getfixtureclosure(
             initialnames, node, ignore_args=self._get_direct_parametrize_args(node)
         )
         return FuncFixtureInfo(argnames, initialnames, names_closure, arg2fixturedefs)

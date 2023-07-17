@@ -102,7 +102,7 @@ def num_mock_patch_args(function) -> int:
 
 
 def getfuncargnames(
-    function: Callable[..., Any],
+    function: Callable[..., object],
     *,
     name: str = "",
     is_method: bool = False,
