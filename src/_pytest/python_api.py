@@ -843,7 +843,8 @@ def raises(  # noqa: F811
         >>> with pytest.raises(ValueError, match=r'must be \d+$'):
         ...     raise ValueError("value must be 42")
 
-    The ``match`` argument searches the formatted exception string, which includes any ``__notes__``:
+    The ``match`` argument searches the formatted exception string, which includes any
+    `PEP-678 <https://peps.python.org/pep-0678/>` ``__notes__``:
 
         >>> with pytest.raises(ValueError, match=r'had a note added'):  # doctest: +SKIP
         ...    e = ValueError("value must be 42")
