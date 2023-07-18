@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib
 import io
 import operator
@@ -7,10 +9,7 @@ import sys
 import textwrap
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import Tuple
 from typing import TYPE_CHECKING
-from typing import Union
 
 import _pytest._code
 import pytest
@@ -802,7 +801,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: Tuple[_TracebackStyle, ...] = ("long", "short")
+        styles: tuple[_TracebackStyle, ...] = ("long", "short")
         for style in styles:
             p = FormattedExcinfo(style=style)
             reprtb = p.repr_traceback(excinfo)
@@ -929,7 +928,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: Tuple[_TracebackStyle, ...] = ("short", "long", "no")
+        styles: tuple[_TracebackStyle, ...] = ("short", "long", "no")
         for style in styles:
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
@@ -1091,7 +1090,7 @@ raise ValueError()
             for funcargs in (True, False)
         ],
     )
-    def test_format_excinfo(self, reproptions: Dict[str, Any]) -> None:
+    def test_format_excinfo(self, reproptions: dict[str, Any]) -> None:
         def bar():
             assert False, "some error"
 
@@ -1399,7 +1398,7 @@ raise ValueError()
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
 def test_repr_traceback_with_unicode(style, encoding):
     if encoding is None:
-        msg: Union[str, bytes] = "☹"
+        msg: str | bytes = "☹"
     else:
         msg = "☹".encode(encoding)
     try:
