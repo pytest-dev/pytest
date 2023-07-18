@@ -1667,7 +1667,7 @@ def add_note(err: BaseException, msg: str) -> None:
         (AssertionError("foo"), ["bar", "baz"], "baz"),
     ],
 )
-def test_check_error_notes_success(error, notes, match):
+def test_check_error_notes_success(error: Exception, notes: list[str], match: str) -> None:
     for note in notes:
         add_note(error, note)
 
@@ -1683,7 +1683,7 @@ def test_check_error_notes_success(error, notes, match):
         (AssertionError("foo"), ["bar"], "foo\nbaz"),
     ],
 )
-def test_check_error_notes_failure(error, notes, match):
+def test_check_error_notes_failure(error: Exception, notes: list[str], match: str) -> None:
     for note in notes:
         add_note(error, note)
 
