@@ -2464,6 +2464,31 @@ class TestFixtureMarker:
             ["*ScopeMismatch*You tried*function*session*request*"]
         )
 
+    def test_scope_mismatch_already_computed_dynamic(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_it="""
+                import pytest
+
+                @pytest.fixture(scope="function")
+                def fixfunc(): pass
+
+                @pytest.fixture(scope="module")
+                def fixmod(fixfunc): pass
+
+                def test_it(request, fixfunc):
+                    request.getfixturevalue("fixmod")
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.fnmatch_lines(
+            [
+                "*ScopeMismatch*involved factories*",
+                "test_it.py:6:  def fixmod(fixfunc)",
+            ]
+        )
+
     def test_dynamic_scope(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
