@@ -2,6 +2,7 @@ import importlib
 import io
 import operator
 import queue
+import re
 import sys
 import textwrap
 from pathlib import Path
@@ -1665,6 +1666,8 @@ def add_note(err: BaseException, msg: str) -> None:
         (AssertionError("foo"), ["bar"], "bar"),
         (AssertionError("foo"), ["bar", "baz"], "bar"),
         (AssertionError("foo"), ["bar", "baz"], "baz"),
+        (ValueError("foo"), ["bar", "baz"], re.compile(r"bar\nbaz", re.MULTILINE)),
+        (ValueError("foo"), ["bar", "baz"], re.compile(r"BAZ", re.IGNORECASE)),
     ],
 )
 def test_check_error_notes_success(
