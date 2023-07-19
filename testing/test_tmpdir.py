@@ -561,7 +561,7 @@ def test_basetemp_with_read_only_files(pytester: Pytester) -> None:
 
         def test(tmp_path):
             fn = tmp_path / 'foo.txt'
-            fn.write_text('hello')
+            fn.write_text('hello', encoding='utf-8')
             mode = os.stat(str(fn)).st_mode
             os.chmod(str(fn), mode & ~stat.S_IREAD)
     """

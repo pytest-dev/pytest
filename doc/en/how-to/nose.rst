@@ -47,8 +47,7 @@ Unsupported idioms / known issues
 - nose imports test modules with the same import path (e.g.
   ``tests.test_mode``) but different file system paths
   (e.g. ``tests/test_mode.py`` and ``other/tests/test_mode.py``)
-  by extending sys.path/import semantics.   pytest does not do that
-  but there is discussion in :issue:`268` for adding some support.  Note that
+  by extending sys.path/import semantics.   pytest does not do that.  Note that
   `nose2 choose to avoid this sys.path/import hackery <https://nose2.readthedocs.io/en/latest/differences.html#test-discovery-and-loading>`_.
 
   If you place a conftest.py file in the root directory of your project
@@ -66,16 +65,34 @@ Unsupported idioms / known issues
 
 - no nose-configuration is recognized.
 
-- ``yield``-based methods are unsupported as of pytest 4.1.0.  They are
+- ``yield``-based methods are
   fundamentally incompatible with pytest because they don't support fixtures
   properly since collection and test execution are separated.
+
+Here is a table comparing the default supported naming conventions for both
+nose and pytest.
+
+========= ========================== ======= =====
+what      default naming convention  pytest  nose
+========= ========================== ======= =====
+module    ``test*.py``                       ✅
+module    ``test_*.py``              ✅       ✅
+module    ``*_test.py``              ✅
+module    ``*_tests.py``
+class     ``*(unittest.TestCase)``   ✅       ✅
+method    ``test_*``                 ✅       ✅
+class     ``Test*``                  ✅
+method    ``test_*``                 ✅
+function  ``test_*``                 ✅
+========= ========================== ======= =====
+
 
 Migrating from nose to pytest
 ------------------------------
 
 `nose2pytest <https://github.com/pytest-dev/nose2pytest>`_ is a Python script
 and pytest plugin to help convert Nose-based tests into pytest-based tests.
-Specifically, the script transforms nose.tools.assert_* function calls into
+Specifically, the script transforms ``nose.tools.assert_*`` function calls into
 raw assert statements, while preserving format of original arguments
 as much as possible.
 

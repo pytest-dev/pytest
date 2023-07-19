@@ -1,6 +1,7 @@
 import dataclasses
 import re
 import sys
+from typing import Generator
 from typing import List
 
 import pytest
@@ -21,11 +22,11 @@ if sys.gettrace():
             sys.settrace(orig_trace)
 
 
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_collection_modifyitems(items):
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_collection_modifyitems(items) -> Generator[None, None, None]:
     """Prefer faster tests.
 
-    Use a hookwrapper to do this in the beginning, so e.g. --ff still works
+    Use a hook wrapper to do this in the beginning, so e.g. --ff still works
     correctly.
     """
     fast_items = []
@@ -62,7 +63,7 @@ def pytest_collection_modifyitems(items):
 
     items[:] = fast_items + neutral_items + slow_items + slowest_items
 
-    yield
+    return (yield)
 
 
 @pytest.fixture
@@ -105,7 +106,7 @@ def tw_mock():
 
 
 @pytest.fixture
-def dummy_yaml_custom_test(pytester: Pytester):
+def dummy_yaml_custom_test(pytester: Pytester) -> None:
     """Writes a conftest file that collects and executes a dummy yaml test.
 
     Taken from the docs, but stripped down to the bare minimum, useful for

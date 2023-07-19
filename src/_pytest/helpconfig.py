@@ -2,6 +2,7 @@
 import os
 import sys
 from argparse import Action
+from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Union
@@ -97,15 +98,14 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_cmdline_parse():
-    outcome = yield
-    config: Config = outcome.get_result()
+@pytest.hookimpl(wrapper=True)
+def pytest_cmdline_parse() -> Generator[None, Config, Config]:
+    config = yield
 
     if config.option.debug:
         # --debug | --debug <file.log> was provided.
         path = config.option.debug
-        debugfile = open(path, "w")
+        debugfile = open(path, "w", encoding="utf-8")
         debugfile.write(
             "versions pytest-%s, "
             "python-%s\ncwd=%s\nargs=%s\n\n"
@@ -127,6 +127,8 @@ def pytest_cmdline_parse():
             undo_tracing()
 
         config.add_cleanup(unset_tracing)
+
+    return config
 
 
 def showversion(config: Config) -> None:

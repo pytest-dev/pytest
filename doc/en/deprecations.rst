@@ -380,6 +380,25 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 ``fspath``, as :ref:`outlined above <node-ctor-fspath-deprecation>`), a
 deprecation warning is now raised.
 
+Applying a mark to a fixture function
+-------------------------------------
+
+.. deprecated:: 7.4
+
+Applying a mark to a fixture function never had any effect, but it is a common user error.
+
+.. code-block:: python
+
+    @pytest.mark.usefixtures("clean_database")
+    @pytest.fixture
+    def user() -> User:
+        ...
+
+Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
+
+Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
+
+
 Backward compatibilities in ``Parser.addoption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -467,11 +486,25 @@ The ``yield_fixture`` function/decorator
 It has been so for a very long time, so can be search/replaced safely.
 
 
-Removed Features
-----------------
+Removed Features and Breaking Changes
+-------------------------------------
 
 As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
 an appropriate period of deprecation has passed.
+
+Some breaking changes which could not be deprecated are also listed.
+
+
+Collecting ``__init__.py`` files no longer collects package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 8.0
+
+Running `pytest pkg/__init__.py` now collects the `pkg/__init__.py` file (module) only.
+Previously, it collected the entire `pkg` package, including other test files in the directory, but excluding tests in the `__init__.py` file itself
+(unless :confval:`python_files` was changed to allow `__init__.py` file).
+
+To collect the entire package, specify just the directory: `pytest pkg`.
 
 
 The ``pytest.collect`` module

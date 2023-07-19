@@ -5,6 +5,7 @@ import copy
 import dataclasses
 import enum
 import glob
+import importlib.metadata
 import inspect
 import os
 import re
@@ -21,6 +22,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import IO
 from typing import Iterable
@@ -48,8 +50,6 @@ from .findpaths import determine_setup
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
-from _pytest.compat import final
-from _pytest.compat import importlib_metadata  # type: ignore[attr-defined]
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -137,7 +137,9 @@ def main(
 ) -> Union[int, ExitCode]:
     """Perform an in-process test run.
 
-    :param args: List of command line arguments.
+    :param args:
+        List of command line arguments. If `None` or not given, defaults to reading
+        arguments directly from the process command line (:data:`sys.argv`).
     :param plugins: List of plugin objects to be auto-registered during initialization.
 
     :returns: An exit code.
@@ -257,7 +259,8 @@ default_plugins = essential_plugins + (
     "logging",
     "reports",
     "python_path",
-    *(["unraisableexception", "threadexception"] if sys.version_info >= (3, 8) else []),
+    "unraisableexception",
+    "threadexception",
     "faulthandler",
 )
 
@@ -527,9 +530,12 @@ class PytestPluginManager(PluginManager):
     #
     def _set_initial_conftests(
         self,
-        namespace: argparse.Namespace,
+        args: Sequence[Union[str, Path]],
+        pyargs: bool,
+        noconftest: bool,
         rootpath: Path,
-        testpaths_ini: Sequence[str],
+        confcutdir: Optional[Path],
+        importmode: Union[ImportMode, str],
     ) -> None:
         """Load initial conftest files given a preparsed "namespace".
 
@@ -539,17 +545,12 @@ class PytestPluginManager(PluginManager):
         common options will not confuse our logic here.
         """
         current = Path.cwd()
-        self._confcutdir = (
-            absolutepath(current / namespace.confcutdir)
-            if namespace.confcutdir
-            else None
-        )
-        self._noconftest = namespace.noconftest
-        self._using_pyargs = namespace.pyargs
-        testpaths = namespace.file_or_dir + testpaths_ini
+        self._confcutdir = absolutepath(current / confcutdir) if confcutdir else None
+        self._noconftest = noconftest
+        self._using_pyargs = pyargs
         foundanchor = False
-        for testpath in testpaths:
-            path = str(testpath)
+        for intitial_path in args:
+            path = str(intitial_path)
             # remove node-id syntax
             i = path.find("::")
             if i != -1:
@@ -563,10 +564,10 @@ class PytestPluginManager(PluginManager):
             except OSError:  # pragma: no cover
                 anchor_exists = False
             if anchor_exists:
-                self._try_load_conftest(anchor, namespace.importmode, rootpath)
+                self._try_load_conftest(anchor, importmode, rootpath)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current, namespace.importmode, rootpath)
+            self._try_load_conftest(current, importmode, rootpath)
 
     def _is_in_confcutdir(self, path: Path) -> bool:
         """Whether a path is within the confcutdir.
@@ -1140,10 +1141,25 @@ class Config:
 
     @hookimpl(trylast=True)
     def pytest_load_initial_conftests(self, early_config: "Config") -> None:
-        self.pluginmanager._set_initial_conftests(
-            early_config.known_args_namespace,
+        # We haven't fully parsed the command line arguments yet, so
+        # early_config.args it not set yet. But we need it for
+        # discovering the initial conftests. So "pre-run" the logic here.
+        # It will be done for real in `parse()`.
+        args, args_source = early_config._decide_args(
+            args=early_config.known_args_namespace.file_or_dir,
+            pyargs=early_config.known_args_namespace.pyargs,
+            testpaths=early_config.getini("testpaths"),
+            invocation_dir=early_config.invocation_params.dir,
             rootpath=early_config.rootpath,
-            testpaths_ini=self.getini("testpaths"),
+            warn=False,
+        )
+        self.pluginmanager._set_initial_conftests(
+            args=args,
+            pyargs=early_config.known_args_namespace.pyargs,
+            noconftest=early_config.known_args_namespace.noconftest,
+            rootpath=early_config.rootpath,
+            confcutdir=early_config.known_args_namespace.confcutdir,
+            importmode=early_config.known_args_namespace.importmode,
         )
 
     def _initini(self, args: Sequence[str]) -> None:
@@ -1203,7 +1219,7 @@ class Config:
 
         package_files = (
             str(file)
-            for dist in importlib_metadata.distributions()
+            for dist in importlib.metadata.distributions()
             if any(ep.group == "pytest11" for ep in dist.entry_points)
             for file in dist.files or []
         )
@@ -1222,6 +1238,49 @@ class Config:
             del self._parser._config_source_hint  # type: ignore
 
         return args
+
+    def _decide_args(
+        self,
+        *,
+        args: List[str],
+        pyargs: List[str],
+        testpaths: List[str],
+        invocation_dir: Path,
+        rootpath: Path,
+        warn: bool,
+    ) -> Tuple[List[str], ArgsSource]:
+        """Decide the args (initial paths/nodeids) to use given the relevant inputs.
+
+        :param warn: Whether can issue warnings.
+        """
+        if args:
+            source = Config.ArgsSource.ARGS
+            result = args
+        else:
+            if invocation_dir == rootpath:
+                source = Config.ArgsSource.TESTPATHS
+                if pyargs:
+                    result = testpaths
+                else:
+                    result = []
+                    for path in testpaths:
+                        result.extend(sorted(glob.iglob(path, recursive=True)))
+                    if testpaths and not result:
+                        if warn:
+                            warning_text = (
+                                "No files were found in testpaths; "
+                                "consider removing or adjusting your testpaths configuration. "
+                                "Searching recursively from the current directory instead."
+                            )
+                            self.issue_config_time_warning(
+                                PytestConfigWarning(warning_text), stacklevel=3
+                            )
+            else:
+                result = []
+            if not result:
+                source = Config.ArgsSource.INCOVATION_DIR
+                result = [str(invocation_dir)]
+        return result, source
 
     def _preparse(self, args: List[str], addopts: bool = True) -> None:
         if addopts:
@@ -1282,12 +1341,14 @@ class Config:
             else:
                 raise
 
-    @hookimpl(hookwrapper=True)
-    def pytest_collection(self) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True)
+    def pytest_collection(self) -> Generator[None, object, object]:
         # Validate invalid ini keys after collection is done so we take in account
         # options added by late-loading conftest files.
-        yield
-        self._validate_config_options()
+        try:
+            return (yield)
+        finally:
+            self._validate_config_options()
 
     def _checkversion(self) -> None:
         import pytest
@@ -1371,34 +1432,17 @@ class Config:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.after_preparse = True  # type: ignore
         try:
-            source = Config.ArgsSource.ARGS
             args = self._parser.parse_setoption(
                 args, self.option, namespace=self.option
             )
-            if not args:
-                if self.invocation_params.dir == self.rootpath:
-                    source = Config.ArgsSource.TESTPATHS
-                    testpaths: List[str] = self.getini("testpaths")
-                    if self.known_args_namespace.pyargs:
-                        args = testpaths
-                    else:
-                        args = []
-                        for path in testpaths:
-                            args.extend(sorted(glob.iglob(path, recursive=True)))
-                        if testpaths and not args:
-                            warning_text = (
-                                "No files were found in testpaths; "
-                                "consider removing or adjusting your testpaths configuration. "
-                                "Searching recursively from the current directory instead."
-                            )
-                            self.issue_config_time_warning(
-                                PytestConfigWarning(warning_text), stacklevel=3
-                            )
-                if not args:
-                    source = Config.ArgsSource.INCOVATION_DIR
-                    args = [str(self.invocation_params.dir)]
-            self.args = args
-            self.args_source = source
+            self.args, self.args_source = self._decide_args(
+                args=args,
+                pyargs=self.known_args_namespace.pyargs,
+                testpaths=self.getini("testpaths"),
+                invocation_dir=self.invocation_params.dir,
+                rootpath=self.rootpath,
+                warn=True,
+            )
         except PrintHelp:
             pass
 
@@ -1406,7 +1450,7 @@ class Config:
         """Issue and handle a warning during the "configure" stage.
 
         During ``pytest_configure`` we can't capture warnings using the ``catch_warnings_for_item``
-        function because it is not possible to have hookwrappers around ``pytest_configure``.
+        function because it is not possible to have hook wrappers around ``pytest_configure``.
 
         This function is mainly intended for plugins that need to issue warnings during
         ``pytest_configure`` (or similar stages).

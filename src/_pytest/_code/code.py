@@ -17,18 +17,21 @@ from typing import Any
 from typing import Callable
 from typing import ClassVar
 from typing import Dict
+from typing import Final
+from typing import final
 from typing import Generic
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
 from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import Set
+from typing import SupportsIndex
 from typing import Tuple
 from typing import Type
-from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
@@ -42,21 +45,15 @@ from _pytest._code.source import Source
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
-from _pytest.compat import final
 from _pytest.compat import get_real_func
 from _pytest.deprecated import check_ispytest
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 
-if TYPE_CHECKING:
-    from typing_extensions import Final
-    from typing_extensions import Literal
-    from typing_extensions import SupportsIndex
-
-    _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
-
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import BaseExceptionGroup
+
+_TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:
@@ -396,11 +393,11 @@ class Traceback(List[TracebackEntry]):
 
     def filter(
         self,
-        # TODO(py38): change to positional only.
-        _excinfo_or_fn: Union[
+        excinfo_or_fn: Union[
             "ExceptionInfo[BaseException]",
             Callable[[TracebackEntry], bool],
         ],
+        /,
     ) -> "Traceback":
         """Return a Traceback instance with certain items removed.
 
@@ -411,10 +408,10 @@ class Traceback(List[TracebackEntry]):
         ``TracebackEntry`` instance, and should return True when the item should
         be added to the ``Traceback``, False when not.
         """
-        if isinstance(_excinfo_or_fn, ExceptionInfo):
-            fn = lambda x: not x.ishidden(_excinfo_or_fn)  # noqa: E731
+        if isinstance(excinfo_or_fn, ExceptionInfo):
+            fn = lambda x: not x.ishidden(excinfo_or_fn)  # noqa: E731
         else:
-            fn = _excinfo_or_fn
+            fn = excinfo_or_fn
         return Traceback(filter(fn, self))
 
     def recursionindex(self) -> Optional[int]:
@@ -633,7 +630,7 @@ class ExceptionInfo(Generic[E]):
     def getrepr(
         self,
         showlocals: bool = False,
-        style: "_TracebackStyle" = "long",
+        style: _TracebackStyle = "long",
         abspath: bool = False,
         tbfilter: Union[
             bool, Callable[["ExceptionInfo[BaseException]"], Traceback]
@@ -707,7 +704,12 @@ class ExceptionInfo(Generic[E]):
         If it matches `True` is returned, otherwise an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        value = str(self.value)
+        value = "\n".join(
+            [
+                str(self.value),
+                *getattr(self.value, "__notes__", []),
+            ]
+        )
         msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n str(exception): {value!r}"
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
@@ -725,7 +727,7 @@ class FormattedExcinfo:
     fail_marker: ClassVar = "E"
 
     showlocals: bool = False
-    style: "_TracebackStyle" = "long"
+    style: _TracebackStyle = "long"
     abspath: bool = True
     tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]] = True
     funcargs: bool = False
@@ -1090,7 +1092,7 @@ class ReprExceptionInfo(ExceptionRepr):
 class ReprTraceback(TerminalRepr):
     reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]]
     extraline: Optional[str]
-    style: "_TracebackStyle"
+    style: _TracebackStyle
 
     entrysep: ClassVar = "_ "
 
@@ -1124,7 +1126,7 @@ class ReprTracebackNative(ReprTraceback):
 class ReprEntryNative(TerminalRepr):
     lines: Sequence[str]
 
-    style: ClassVar["_TracebackStyle"] = "native"
+    style: ClassVar[_TracebackStyle] = "native"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
@@ -1136,7 +1138,7 @@ class ReprEntry(TerminalRepr):
     reprfuncargs: Optional["ReprFuncArgs"]
     reprlocals: Optional["ReprLocals"]
     reprfileloc: Optional["ReprFileLocation"]
-    style: "_TracebackStyle"
+    style: _TracebackStyle
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
         """Write the source code portions of a list of traceback entries with syntax highlighting.

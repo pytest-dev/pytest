@@ -15,17 +15,18 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
 from typing import Pattern
 from typing import Sequence
 from typing import Set
 from typing import Tuple
-from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest
@@ -40,7 +41,6 @@ from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
 from _pytest.compat import assert_never
-from _pytest.compat import final
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
@@ -75,15 +75,11 @@ from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import parts
 from _pytest.pathlib import visit
+from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
-
-    from _pytest.scope import _ScopeName
 
 
 _PYTEST_DIR = Path(_pytest.__file__).parent
@@ -522,7 +518,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
 
 class Module(nodes.File, PyCollector):
-    """Collector for test classes and functions."""
+    """Collector for test classes and functions in a Python module."""
 
     def _getobj(self):
         return self._importtestmodule()
@@ -659,6 +655,9 @@ class Module(nodes.File, PyCollector):
 
 
 class Package(Module):
+    """Collector for files and directories in a Python packages -- directories
+    with an `__init__.py` file."""
+
     def __init__(
         self,
         fspath: Optional[LEGACY_PATH],
@@ -706,9 +705,6 @@ class Package(Module):
         ihook = self.session.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
             return False
-        norecursepatterns = self.config.getini("norecursedirs")
-        if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
-            return False
         return True
 
     def _collectfile(
@@ -739,7 +735,9 @@ class Package(Module):
         this_path = self.path.parent
 
         # Always collect the __init__ first.
-        if path_matches_patterns(self.path, self.config.getini("python_files")):
+        if self.session.isinitpath(self.path) or path_matches_patterns(
+            self.path, self.config.getini("python_files")
+        ):
             yield Module.from_parent(self, path=self.path)
 
         pkg_prefixes: Set[Path] = set()
@@ -791,7 +789,7 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> Optional[o
 
 
 class Class(PyCollector):
-    """Collector for test methods."""
+    """Collector for test methods (and nested classes) in a Python class."""
 
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw):
@@ -1234,7 +1232,7 @@ class Metafunc:
         ids: Optional[
             Union[Iterable[Optional[object]], Callable[[Any], Optional[object]]]
         ] = None,
-        scope: "Optional[_ScopeName]" = None,
+        scope: Optional[_ScopeName] = None,
         *,
         _param_mark: Optional[Mark] = None,
     ) -> None:
@@ -1676,7 +1674,7 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
 
 
 class Function(PyobjMixin, nodes.Item):
-    """An Item responsible for setting up and executing a Python test function.
+    """Item responsible for setting up and executing a Python test function.
 
     :param name:
         The full function name, including any decorations like those
@@ -1833,10 +1831,8 @@ class Function(PyobjMixin, nodes.Item):
 
 
 class FunctionDefinition(Function):
-    """
-    This class is a step gap solution until we evolve to have actual function definition nodes
-    and manage to get rid of ``metafunc``.
-    """
+    """This class is a stop gap solution until we evolve to have actual function
+    definition nodes and manage to get rid of ``metafunc``."""
 
     def runtest(self) -> None:
         raise RuntimeError("function definitions are not supposed to be run as tests")

@@ -172,6 +172,13 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
 
 The full API is available at :class:`pytest.LogCaptureFixture`.
 
+.. warning::
+
+    The ``caplog`` fixture adds a handler to the root logger to capture logs. If the root logger is
+    modified during a test, for example with ``logging.config.dictConfig``, this handler may be
+    removed and cause no logs to be captured. To avoid this, ensure that any root logger configuration
+    only adds to the existing handlers.
+
 
 .. _live_logs:
 

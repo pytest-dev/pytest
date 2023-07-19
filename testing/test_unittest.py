@@ -952,7 +952,7 @@ def test_issue333_result_clearing(pytester: Pytester) -> None:
     pytester.makeconftest(
         """
         import pytest
-        @pytest.hookimpl(hookwrapper=True)
+        @pytest.hookimpl(wrapper=True)
         def pytest_runtest_call(item):
             yield
             assert 0
@@ -1354,9 +1354,6 @@ def test_plain_unittest_does_not_support_async(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(expected_lines)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="Feature introduced in Python 3.8"
-)
 def test_do_class_cleanups_on_success(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
@@ -1382,9 +1379,6 @@ def test_do_class_cleanups_on_success(pytester: Pytester) -> None:
     assert passed == 3
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="Feature introduced in Python 3.8"
-)
 def test_do_class_cleanups_on_setupclass_failure(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
@@ -1409,9 +1403,6 @@ def test_do_class_cleanups_on_setupclass_failure(pytester: Pytester) -> None:
     assert passed == 1
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="Feature introduced in Python 3.8"
-)
 def test_do_class_cleanups_on_teardownclass_failure(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """

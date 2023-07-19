@@ -410,7 +410,7 @@ class TestReportSerialization:
     ) -> None:
         sub_dir = pytester.path.joinpath("ns")
         sub_dir.mkdir()
-        sub_dir.joinpath("conftest.py").write_text("import unknown")
+        sub_dir.joinpath("conftest.py").write_text("import unknown", encoding="utf-8")
 
         result = pytester.runpytest_subprocess(".")
         result.stdout.fnmatch_lines(["E   *Error: No module named 'unknown'"])

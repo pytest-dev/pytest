@@ -352,6 +352,6 @@ def test_one():
     assert result.ret == 0
 
     assert Path(stepwise_cache_file).exists()
-    with stepwise_cache_file.open() as file_handle:
+    with stepwise_cache_file.open(encoding="utf-8") as file_handle:
         observed_value = file_handle.readlines()
     assert [expected_value] == observed_value

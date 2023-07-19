@@ -304,10 +304,10 @@ class PdbInvoke:
 
 
 class PdbTrace:
-    @hookimpl(hookwrapper=True)
-    def pytest_pyfunc_call(self, pyfuncitem) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True)
+    def pytest_pyfunc_call(self, pyfuncitem) -> Generator[None, object, object]:
         wrap_pytest_function_for_tracing(pyfuncitem)
-        yield
+        return (yield)
 
 
 def wrap_pytest_function_for_tracing(pyfuncitem):

@@ -542,10 +542,10 @@ def test_runtest_in_module_ordering(pytester: Pytester) -> None:
             @pytest.fixture
             def mylist(self, request):
                 return request.function.mylist
-            @pytest.hookimpl(hookwrapper=True)
+            @pytest.hookimpl(wrapper=True)
             def pytest_runtest_call(self, item):
                 try:
-                    (yield).get_result()
+                    yield
                 except ValueError:
                     pass
             def test_hello1(self, mylist):
@@ -826,12 +826,12 @@ def test_unicode_in_longrepr(pytester: Pytester) -> None:
     pytester.makeconftest(
         """\
         import pytest
-        @pytest.hookimpl(hookwrapper=True)
+        @pytest.hookimpl(wrapper=True)
         def pytest_runtest_makereport():
-            outcome = yield
-            rep = outcome.get_result()
+            rep = yield
             if rep.when == "call":
                 rep.longrepr = 'ä'
+            return rep
         """
     )
     pytester.makepyfile(

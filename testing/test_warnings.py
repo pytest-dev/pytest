@@ -518,7 +518,8 @@ class TestDeprecationWarningsByDefault:
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-@pytest.mark.skip("not relevant until pytest 8.0")
+# In 8.1, uncomment below and change RemovedIn8 -> RemovedIn9.
+# @pytest.mark.skip("not relevant until pytest 9.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
     """This ensures that PytestRemovedInXWarnings raised by pytest are turned into errors.
@@ -810,12 +811,12 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
     pytester.makepyfile(
         """
         def open_file(p):
-            f = p.open("r")
+            f = p.open("r", encoding="utf-8")
             assert p.read_text() == "hello"
 
         def test_resource_warning(tmp_path):
             p = tmp_path.joinpath("foo.txt")
-            p.write_text("hello")
+            p.write_text("hello", encoding="utf-8")
             open_file(p)
         """
     )

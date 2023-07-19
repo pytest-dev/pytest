@@ -3,11 +3,10 @@ import inspect
 import warnings
 from types import FunctionType
 from typing import Any
+from typing import final
 from typing import Generic
 from typing import Type
 from typing import TypeVar
-
-from _pytest.compat import final
 
 
 class PytestWarning(UserWarning):
@@ -52,6 +51,12 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
 
 class PytestRemovedIn8Warning(PytestDeprecationWarning):
     """Warning class for features that will be removed in pytest 8."""
+
+    __module__ = "pytest"
+
+
+class PytestRemovedIn9Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 9."""
 
     __module__ = "pytest"
 

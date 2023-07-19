@@ -7,25 +7,22 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
-from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._io
-from _pytest.compat import final
 from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
 from _pytest.deprecated import ARGUMENT_TYPE_STR
 from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 from _pytest.deprecated import check_ispytest
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -177,7 +174,7 @@ class Parser:
         name: str,
         help: str,
         type: Optional[
-            "Literal['string', 'paths', 'pathlist', 'args', 'linelist', 'bool']"
+            Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
         ] = None,
         default: Any = None,
     ) -> None:

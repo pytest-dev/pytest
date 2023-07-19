@@ -20,6 +20,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.doctest import DoctestItem
 from _pytest.fixtures import fixture
+from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import yield_fixture
@@ -71,6 +72,7 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestRemovedIn8Warning
+from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
@@ -101,6 +103,7 @@ __all__ = [
     "fail",
     "File",
     "fixture",
+    "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",
     "freeze_includes",
@@ -131,6 +134,7 @@ __all__ = [
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
     "PytestRemovedIn8Warning",
+    "PytestRemovedIn9Warning",
     "PytestReturnNotNoneWarning",
     "Pytester",
     "PytestPluginManager",

@@ -60,7 +60,8 @@ class TestModule:
                 """.format(
                     str(root2)
                 )
-            )
+            ),
+            encoding="utf-8",
         )
         with monkeypatch.context() as mp:
             mp.chdir(root2)
@@ -826,13 +827,14 @@ class TestConftestCustomization:
             textwrap.dedent(
                 """\
                 import pytest
-                @pytest.hookimpl(hookwrapper=True)
+                @pytest.hookimpl(wrapper=True)
                 def pytest_pycollect_makemodule():
-                    outcome = yield
-                    mod = outcome.get_result()
+                    mod = yield
                     mod.obj.hello = "world"
+                    return mod
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         b.joinpath("test_module.py").write_text(
             textwrap.dedent(
@@ -840,7 +842,8 @@ class TestConftestCustomization:
                 def test_hello():
                     assert hello == "world"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -852,16 +855,16 @@ class TestConftestCustomization:
             textwrap.dedent(
                 """\
                 import pytest
-                @pytest.hookimpl(hookwrapper=True)
+                @pytest.hookimpl(wrapper=True)
                 def pytest_pycollect_makeitem():
-                    outcome = yield
-                    if outcome.excinfo is None:
-                        result = outcome.get_result()
-                        if result:
-                            for func in result:
-                                func._some123 = "world"
+                    result = yield
+                    if result:
+                        for func in result:
+                            func._some123 = "world"
+                    return result
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         b.joinpath("test_module.py").write_text(
             textwrap.dedent(
@@ -874,7 +877,8 @@ class TestConftestCustomization:
                 def test_hello(obj):
                     assert obj == "world"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -897,25 +901,29 @@ class TestConftestCustomization:
     def test_issue2369_collect_module_fileext(self, pytester: Pytester) -> None:
         """Ensure we can collect files with weird file extensions as Python
         modules (#2369)"""
-        # We'll implement a little finder and loader to import files containing
+        # Implement a little meta path finder to import files containing
         # Python source code whose file extension is ".narf".
         pytester.makeconftest(
             """
-            import sys, os, imp
+            import sys
+            import os.path
+            from importlib.util import spec_from_loader
+            from importlib.machinery import SourceFileLoader
             from _pytest.python import Module
 
-            class Loader(object):
-                def load_module(self, name):
-                    return imp.load_source(name, name + ".narf")
-            class Finder(object):
-                def find_module(self, name, path=None):
-                    if os.path.exists(name + ".narf"):
-                        return Loader()
-            sys.meta_path.append(Finder())
+            class MetaPathFinder:
+                def find_spec(self, fullname, path, target=None):
+                    if os.path.exists(fullname + ".narf"):
+                        return spec_from_loader(
+                            fullname,
+                            SourceFileLoader(fullname, fullname + ".narf"),
+                        )
+            sys.meta_path.append(MetaPathFinder())
 
             def pytest_collect_file(file_path, parent):
                 if file_path.suffix == ".narf":
-                    return Module.from_parent(path=file_path, parent=parent)"""
+                    return Module.from_parent(path=file_path, parent=parent)
+            """
         )
         pytester.makefile(
             ".narf",
@@ -970,7 +978,8 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             def pytest_runtest_teardown(item):
                 assert item.path.stem == "test_in_sub1"
             """
-        )
+        ),
+        encoding="utf-8",
     )
     sub2.joinpath("conftest.py").write_text(
         textwrap.dedent(
@@ -983,10 +992,11 @@ def test_setup_only_available_in_subdir(pytester: Pytester) -> None:
             def pytest_runtest_teardown(item):
                 assert item.path.stem == "test_in_sub2"
             """
-        )
+        ),
+        encoding="utf-8",
     )
-    sub1.joinpath("test_in_sub1.py").write_text("def test_1(): pass")
-    sub2.joinpath("test_in_sub2.py").write_text("def test_2(): pass")
+    sub1.joinpath("test_in_sub1.py").write_text("def test_1(): pass", encoding="utf-8")
+    sub2.joinpath("test_in_sub2.py").write_text("def test_2(): pass", encoding="utf-8")
     result = pytester.runpytest("-v", "-s")
     result.assert_outcomes(passed=2)
 
@@ -1374,7 +1384,8 @@ def test_skip_duplicates_by_default(pytester: Pytester) -> None:
             def test_real():
                 pass
             """
-        )
+        ),
+        encoding="utf-8",
     )
     result = pytester.runpytest(str(a), str(a))
     result.stdout.fnmatch_lines(["*collected 1 item*"])
@@ -1394,7 +1405,8 @@ def test_keep_duplicates(pytester: Pytester) -> None:
             def test_real():
                 pass
             """
-        )
+        ),
+        encoding="utf-8",
     )
     result = pytester.runpytest("--keep-duplicates", str(a), str(a))
     result.stdout.fnmatch_lines(["*collected 2 item*"])
@@ -1407,10 +1419,15 @@ def test_package_collection_infinite_recursion(pytester: Pytester) -> None:
 
 
 def test_package_collection_init_given_as_argument(pytester: Pytester) -> None:
-    """Regression test for #3749"""
+    """Regression test for #3749, #8976, #9263, #9313.
+
+    Specifying an __init__.py file directly should collect only the __init__.py
+    Module, not the entire package.
+    """
     p = pytester.copy_example("collect/package_init_given_as_arg")
-    result = pytester.runpytest(p / "pkg" / "__init__.py")
-    result.stdout.fnmatch_lines(["*1 passed*"])
+    items, hookrecorder = pytester.inline_genitems(p / "pkg" / "__init__.py")
+    assert len(items) == 1
+    assert items[0].name == "test_init"
 
 
 def test_package_with_modules(pytester: Pytester) -> None:
@@ -1439,8 +1456,12 @@ def test_package_with_modules(pytester: Pytester) -> None:
     sub2_test = sub2.joinpath("test")
     sub2_test.mkdir(parents=True)
 
-    sub1_test.joinpath("test_in_sub1.py").write_text("def test_1(): pass")
-    sub2_test.joinpath("test_in_sub2.py").write_text("def test_2(): pass")
+    sub1_test.joinpath("test_in_sub1.py").write_text(
+        "def test_1(): pass", encoding="utf-8"
+    )
+    sub2_test.joinpath("test_in_sub2.py").write_text(
+        "def test_2(): pass", encoding="utf-8"
+    )
 
     # Execute from .
     result = pytester.runpytest("-v", "-s")
@@ -1484,9 +1505,11 @@ def test_package_ordering(pytester: Pytester) -> None:
     sub2_test = sub2.joinpath("test")
     sub2_test.mkdir(parents=True)
 
-    root.joinpath("Test_root.py").write_text("def test_1(): pass")
-    sub1.joinpath("Test_sub1.py").write_text("def test_2(): pass")
-    sub2_test.joinpath("test_sub2.py").write_text("def test_3(): pass")
+    root.joinpath("Test_root.py").write_text("def test_1(): pass", encoding="utf-8")
+    sub1.joinpath("Test_sub1.py").write_text("def test_2(): pass", encoding="utf-8")
+    sub2_test.joinpath("test_sub2.py").write_text(
+        "def test_3(): pass", encoding="utf-8"
+    )
 
     # Execute from .
     result = pytester.runpytest("-v", "-s")

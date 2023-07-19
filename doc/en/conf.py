@@ -15,12 +15,10 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-import ast
 import os
 import shutil
 import sys
 from textwrap import dedent
-from typing import List
 from typing import TYPE_CHECKING
 
 from _pytest import __version__ as version
@@ -450,25 +448,6 @@ def setup(app: "sphinx.application.Sphinx") -> None:
     )
 
     configure_logging(app)
-
-    # Make Sphinx mark classes with "final" when decorated with @final.
-    # We need this because we import final from pytest._compat, not from
-    # typing (for Python < 3.8 compat), so Sphinx doesn't detect it.
-    # To keep things simple we accept any `@final` decorator.
-    # Ref: https://github.com/pytest-dev/pytest/pull/7780
-    import sphinx.pycode.ast
-    import sphinx.pycode.parser
-
-    original_is_final = sphinx.pycode.parser.VariableCommentPicker.is_final
-
-    def patched_is_final(self, decorators: List[ast.expr]) -> bool:
-        if original_is_final(self, decorators):
-            return True
-        return any(
-            sphinx.pycode.ast.unparse(decorator) == "final" for decorator in decorators
-        )
-
-    sphinx.pycode.parser.VariableCommentPicker.is_final = patched_is_final
 
     # legacypath.py monkey-patches pytest.Testdir in. Import the file so
     # that autodoc can discover references to it.

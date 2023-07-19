@@ -1,0 +1,1 @@
+``pytest.warns`` and similar functions now capture warnings when an exception is raised inside a ``with`` block.

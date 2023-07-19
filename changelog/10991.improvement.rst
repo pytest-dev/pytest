@@ -1,1 +1,0 @@
-Added handling of ``%f`` directive to print microseconds in log format options, such as ``log-date-format``.

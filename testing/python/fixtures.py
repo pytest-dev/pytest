@@ -287,7 +287,8 @@ class TestFillFixtures:
                 def spam():
                     return 'spam'
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         testfile = subdir.joinpath("test_spam.py")
         testfile.write_text(
@@ -296,7 +297,8 @@ class TestFillFixtures:
                 def test_spam(spam):
                     assert spam == "spam"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
@@ -359,7 +361,8 @@ class TestFillFixtures:
                 def spam(request):
                     return request.param
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         testfile = subdir.joinpath("test_spam.py")
         testfile.write_text(
@@ -371,7 +374,8 @@ class TestFillFixtures:
                     assert spam == params['spam']
                     params['spam'] += 1
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*3 passed*"])
@@ -403,7 +407,8 @@ class TestFillFixtures:
                 def spam(request):
                     return request.param
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         testfile = subdir.joinpath("test_spam.py")
         testfile.write_text(
@@ -415,7 +420,8 @@ class TestFillFixtures:
                     assert spam == params['spam']
                     params['spam'] += 1
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*3 passed*"])
@@ -693,6 +699,7 @@ class TestRequestBasic:
         """
         )
         (item1,) = pytester.genitems([modcol])
+        assert isinstance(item1, Function)
         assert item1.name == "test_method"
         arg2fixturedefs = fixtures.FixtureRequest(
             item1, _ispytest=True
@@ -961,6 +968,7 @@ class TestRequestBasic:
     def test_request_getmodulepath(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("def test_somefunc(): pass")
         (item,) = pytester.genitems([modcol])
+        assert isinstance(item, Function)
         req = fixtures.FixtureRequest(item, _ispytest=True)
         assert req.path == modcol.path
 
@@ -1037,10 +1045,11 @@ class TestRequestBasic:
                 def arg1():
                     pass
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         p = b.joinpath("test_module.py")
-        p.write_text("def test_func(arg1): pass")
+        p.write_text("def test_func(arg1): pass", encoding="utf-8")
         result = pytester.runpytest(p, "--fixtures")
         assert result.ret == 0
         result.stdout.fnmatch_lines(
@@ -1118,6 +1127,7 @@ class TestRequestMarking:
                     pass
         """
         )
+        assert isinstance(item1, Function)
         req1 = fixtures.FixtureRequest(item1, _ispytest=True)
         assert "xfail" not in item1.keywords
         req1.applymarker(pytest.mark.xfail)
@@ -1617,7 +1627,8 @@ class TestFixtureManagerParseFactories:
             def one():
                 return 1
             """
-            )
+            ),
+            encoding="utf-8",
         )
         package.joinpath("test_x.py").write_text(
             textwrap.dedent(
@@ -1625,7 +1636,8 @@ class TestFixtureManagerParseFactories:
                 def test_x(one):
                     assert one == 1
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         sub = package.joinpath("sub")
         sub.mkdir()
@@ -1638,7 +1650,8 @@ class TestFixtureManagerParseFactories:
                 def one():
                     return 2
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         sub.joinpath("test_y.py").write_text(
             textwrap.dedent(
@@ -1646,7 +1659,8 @@ class TestFixtureManagerParseFactories:
                 def test_x(one):
                     assert one == 2
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
@@ -1671,7 +1685,8 @@ class TestFixtureManagerParseFactories:
                 def teardown_module():
                     values[:] = []
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         package.joinpath("test_x.py").write_text(
             textwrap.dedent(
@@ -1680,7 +1695,8 @@ class TestFixtureManagerParseFactories:
                 def test_x():
                     assert values == ["package"]
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         package = pytester.mkdir("package2")
         package.joinpath("__init__.py").write_text(
@@ -1692,7 +1708,8 @@ class TestFixtureManagerParseFactories:
                 def teardown_module():
                     values[:] = []
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         package.joinpath("test_x.py").write_text(
             textwrap.dedent(
@@ -1701,7 +1718,8 @@ class TestFixtureManagerParseFactories:
                 def test_x():
                     assert values == ["package2"]
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
@@ -1714,7 +1732,7 @@ class TestFixtureManagerParseFactories:
         )
         pytester.syspathinsert(pytester.path.name)
         package = pytester.mkdir("package")
-        package.joinpath("__init__.py").write_text("")
+        package.joinpath("__init__.py").write_text("", encoding="utf-8")
         package.joinpath("conftest.py").write_text(
             textwrap.dedent(
                 """\
@@ -1731,7 +1749,8 @@ class TestFixtureManagerParseFactories:
                     yield values
                     values.pop()
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         package.joinpath("test_x.py").write_text(
             textwrap.dedent(
@@ -1742,7 +1761,8 @@ class TestFixtureManagerParseFactories:
                 def test_package(one):
                     assert values == ["package-auto", "package"]
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
@@ -1892,8 +1912,12 @@ class TestAutouseDiscovery:
         """
         )
         conftest.rename(a.joinpath(conftest.name))
-        a.joinpath("test_something.py").write_text("def test_func(): pass")
-        b.joinpath("test_otherthing.py").write_text("def test_func(): pass")
+        a.joinpath("test_something.py").write_text(
+            "def test_func(): pass", encoding="utf-8"
+        )
+        b.joinpath("test_otherthing.py").write_text(
+            "def test_func(): pass", encoding="utf-8"
+        )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             """
@@ -1939,7 +1963,8 @@ class TestAutouseManagement:
                     import sys
                     sys._myapp = "hello"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         sub = pkgdir.joinpath("tests")
         sub.mkdir()
@@ -1952,7 +1977,8 @@ class TestAutouseManagement:
                 def test_app():
                     assert sys._myapp == "hello"
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=1)
@@ -2438,6 +2464,31 @@ class TestFixtureMarker:
             ["*ScopeMismatch*You tried*function*session*request*"]
         )
 
+    def test_scope_mismatch_already_computed_dynamic(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_it="""
+                import pytest
+
+                @pytest.fixture(scope="function")
+                def fixfunc(): pass
+
+                @pytest.fixture(scope="module")
+                def fixmod(fixfunc): pass
+
+                def test_it(request, fixfunc):
+                    request.getfixturevalue("fixmod")
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.stdout.fnmatch_lines(
+            [
+                "*ScopeMismatch*involved factories*",
+                "test_it.py:6:  def fixmod(fixfunc)",
+            ]
+        )
+
     def test_dynamic_scope(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
@@ -2882,7 +2933,7 @@ class TestFixtureMarker:
             def browser(request):
 
                 def finalize():
-                    sys.stdout.write_text('Finalized')
+                    sys.stdout.write_text('Finalized', encoding='utf-8')
                 request.addfinalizer(finalize)
                 return {}
         """
@@ -2900,7 +2951,8 @@ class TestFixtureMarker:
                 def test_browser(browser):
                     assert browser['visited'] is True
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.runpytest("-s")
         for test in ["test_browser"]:
@@ -3855,7 +3907,8 @@ class TestParameterizedSubRequest:
                 def fix_with_param(request):
                     return request.param
                 """
-            )
+            ),
+            encoding="utf-8",
         )
 
         testfile = tests_dir.joinpath("test_foos.py")
@@ -3867,7 +3920,8 @@ class TestParameterizedSubRequest:
                 def test_foo(request):
                     request.getfixturevalue('fix_with_param')
                 """
-            )
+            ),
+            encoding="utf-8",
         )
 
         os.chdir(tests_dir)
@@ -3983,6 +4037,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
@@ -4031,6 +4086,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         # order of fixtures based on their scope and position in the parameter list
         assert (
@@ -4058,6 +4114,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
@@ -4091,6 +4148,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "s1 m1 c1 f2 f1".split()
 
@@ -4133,6 +4191,7 @@ class TestScopeOrdering:
             }
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "p_sub m_conf m_sub m_test f1".split()
 
@@ -4177,6 +4236,7 @@ class TestScopeOrdering:
         """
         )
         items, _ = pytester.inline_genitems()
+        assert isinstance(items[0], Function)
         request = FixtureRequest(items[0], _ispytest=True)
         assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
 
@@ -4196,7 +4256,7 @@ class TestScopeOrdering:
                 └── test_2.py
         """
         root = pytester.mkdir("root")
-        root.joinpath("__init__.py").write_text("values = []")
+        root.joinpath("__init__.py").write_text("values = []", encoding="utf-8")
         sub1 = root.joinpath("sub1")
         sub1.mkdir()
         sub1.joinpath("__init__.py").touch()
@@ -4211,7 +4271,8 @@ class TestScopeOrdering:
                 yield values
                 assert values.pop() == "pre-sub1"
         """
-            )
+            ),
+            encoding="utf-8",
         )
         sub1.joinpath("test_1.py").write_text(
             textwrap.dedent(
@@ -4220,7 +4281,8 @@ class TestScopeOrdering:
             def test_1(fix):
                 assert values == ["pre-sub1"]
         """
-            )
+            ),
+            encoding="utf-8",
         )
         sub2 = root.joinpath("sub2")
         sub2.mkdir()
@@ -4236,7 +4298,8 @@ class TestScopeOrdering:
                 yield values
                 assert values.pop() == "pre-sub2"
         """
-            )
+            ),
+            encoding="utf-8",
         )
         sub2.joinpath("test_2.py").write_text(
             textwrap.dedent(
@@ -4245,7 +4308,8 @@ class TestScopeOrdering:
             def test_2(fix):
                 assert values == ["pre-sub2"]
         """
-            )
+            ),
+            encoding="utf-8",
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)

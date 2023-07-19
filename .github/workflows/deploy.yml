@@ -13,39 +13,53 @@ on:
 permissions: {}
 
 jobs:
-
-  deploy:
-    if: github.repository == 'pytest-dev/pytest'
-
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
-
+    timeout-minutes: 10
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         persist-credentials: false
-
     - name: Build and Check Package
       uses: hynek/build-and-inspect-python-package@v1.5
 
+  deploy:
+    if: github.repository == 'pytest-dev/pytest'
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+    steps:
     - name: Download Package
       uses: actions/download-artifact@v3
       with:
         name: Packages
         path: dist
-
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.pypi_token }}
+      uses: pypa/gh-action-pypi-publish@v1.8.8
 
+  release-notes:
+
+    # todo: generate the content in the build  job
+    #       the goal being of using a github action script to push the release data
+    #       after success instead of creating a complete python/tox env
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        persist-credentials: false
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.7"
+        python-version: "3.11"
+
 
     - name: Install tox
       run: |

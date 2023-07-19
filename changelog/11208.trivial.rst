@@ -1,0 +1,2 @@
+The (internal) ``FixtureDef.cached_result`` type has changed.
+Now the third item ``cached_result[2]``, when set, is an exception instance instead of an exception triplet.

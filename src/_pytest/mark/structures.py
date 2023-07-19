@@ -5,6 +5,7 @@ import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
+from typing import final
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -23,11 +24,11 @@ from typing import Union
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
-from ..compat import final
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -373,7 +374,9 @@ def get_unpacked_marks(
         if not consider_mro:
             mark_lists = [obj.__dict__.get("pytestmark", [])]
         else:
-            mark_lists = [x.__dict__.get("pytestmark", []) for x in obj.__mro__]
+            mark_lists = [
+                x.__dict__.get("pytestmark", []) for x in reversed(obj.__mro__)
+            ]
         mark_list = []
         for item in mark_lists:
             if isinstance(item, list):
@@ -412,6 +415,12 @@ def store_mark(obj, mark: Mark) -> None:
     This is used to implement the Mark declarations/decorators correctly.
     """
     assert isinstance(mark, Mark), mark
+
+    from ..fixtures import getfixturemarker
+
+    if getfixturemarker(obj) is not None:
+        warnings.warn(MARKED_FIXTURE, stacklevel=2)
+
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
     obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]

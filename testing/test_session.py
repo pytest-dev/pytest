@@ -265,9 +265,9 @@ def test_plugin_already_exists(pytester: Pytester) -> None:
 
 def test_exclude(pytester: Pytester) -> None:
     hellodir = pytester.mkdir("hello")
-    hellodir.joinpath("test_hello.py").write_text("x y syntaxerror")
+    hellodir.joinpath("test_hello.py").write_text("x y syntaxerror", encoding="utf-8")
     hello2dir = pytester.mkdir("hello2")
-    hello2dir.joinpath("test_hello2.py").write_text("x y syntaxerror")
+    hello2dir.joinpath("test_hello2.py").write_text("x y syntaxerror", encoding="utf-8")
     pytester.makepyfile(test_ok="def test_pass(): pass")
     result = pytester.runpytest("--ignore=hello", "--ignore=hello2")
     assert result.ret == 0
@@ -276,13 +276,13 @@ def test_exclude(pytester: Pytester) -> None:
 
 def test_exclude_glob(pytester: Pytester) -> None:
     hellodir = pytester.mkdir("hello")
-    hellodir.joinpath("test_hello.py").write_text("x y syntaxerror")
+    hellodir.joinpath("test_hello.py").write_text("x y syntaxerror", encoding="utf-8")
     hello2dir = pytester.mkdir("hello2")
-    hello2dir.joinpath("test_hello2.py").write_text("x y syntaxerror")
+    hello2dir.joinpath("test_hello2.py").write_text("x y syntaxerror", encoding="utf-8")
     hello3dir = pytester.mkdir("hallo3")
-    hello3dir.joinpath("test_hello3.py").write_text("x y syntaxerror")
+    hello3dir.joinpath("test_hello3.py").write_text("x y syntaxerror", encoding="utf-8")
     subdir = pytester.mkdir("sub")
-    subdir.joinpath("test_hello4.py").write_text("x y syntaxerror")
+    subdir.joinpath("test_hello4.py").write_text("x y syntaxerror", encoding="utf-8")
     pytester.makepyfile(test_ok="def test_pass(): pass")
     result = pytester.runpytest("--ignore-glob=*h[ea]llo*")
     assert result.ret == 0

@@ -9,21 +9,21 @@ import sys
 from pathlib import Path
 from typing import Callable
 from typing import Dict
+from typing import final
 from typing import FrozenSet
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import Optional
+from typing import overload
 from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import Type
-from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._code
 from _pytest import nodes
-from _pytest.compat import final
-from _pytest.compat import overload
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -41,10 +41,6 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -400,6 +396,12 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[boo
     allow_in_venv = config.getoption("collect_in_virtualenv")
     if not allow_in_venv and _in_venv(collection_path):
         return True
+
+    if collection_path.is_dir():
+        norecursepatterns = config.getini("norecursedirs")
+        if any(fnmatch_ex(pat, collection_path) for pat in norecursepatterns):
+            return True
+
     return None
 
 
@@ -456,6 +458,11 @@ class _bestrelpath_cache(Dict[Path, str]):
 
 @final
 class Session(nodes.FSCollector):
+    """The root of the collection tree.
+
+    ``Session`` collects the initial paths given as arguments to pytest.
+    """
+
     Interrupted = Interrupted
     Failed = Failed
     # Set on the session by runner.pytest_sessionstart.
@@ -562,9 +569,6 @@ class Session(nodes.FSCollector):
         fspath = Path(direntry.path)
         ihook = self.gethookproxy(fspath.parent)
         if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-            return False
-        norecursepatterns = self.config.getini("norecursedirs")
-        if any(fnmatch_ex(pat, fspath) for pat in norecursepatterns):
             return False
         return True
 
@@ -686,8 +690,8 @@ class Session(nodes.FSCollector):
         # are not collected more than once.
         matchnodes_cache: Dict[Tuple[Type[nodes.Collector], str], CollectReport] = {}
 
-        # Dirnames of pkgs with dunder-init files.
-        pkg_roots: Dict[str, Package] = {}
+        # Directories of pkgs with dunder-init files.
+        pkg_roots: Dict[Path, Package] = {}
 
         for argpath, names in self._initial_parts:
             self.trace("processing argument", (argpath, names))
@@ -708,7 +712,7 @@ class Session(nodes.FSCollector):
                             col = self._collectfile(pkginit, handle_dupes=False)
                             if col:
                                 if isinstance(col[0], Package):
-                                    pkg_roots[str(parent)] = col[0]
+                                    pkg_roots[parent] = col[0]
                                 node_cache1[col[0].path] = [col[0]]
 
             # If it's a directory argument, recurse and look for any Subpackages.
@@ -717,7 +721,7 @@ class Session(nodes.FSCollector):
                 assert not names, f"invalid arg {(argpath, names)!r}"
 
                 seen_dirs: Set[Path] = set()
-                for direntry in visit(str(argpath), self._recurse):
+                for direntry in visit(argpath, self._recurse):
                     if not direntry.is_file():
                         continue
 
@@ -732,8 +736,8 @@ class Session(nodes.FSCollector):
                             for x in self._collectfile(pkginit):
                                 yield x
                                 if isinstance(x, Package):
-                                    pkg_roots[str(dirpath)] = x
-                    if str(dirpath) in pkg_roots:
+                                    pkg_roots[dirpath] = x
+                    if dirpath in pkg_roots:
                         # Do not collect packages here.
                         continue
 
@@ -750,7 +754,7 @@ class Session(nodes.FSCollector):
                 if argpath in node_cache1:
                     col = node_cache1[argpath]
                 else:
-                    collect_root = pkg_roots.get(str(argpath.parent), self)
+                    collect_root = pkg_roots.get(argpath.parent, self)
                     col = collect_root._collectfile(argpath, handle_dupes=False)
                     if col:
                         node_cache1[argpath] = col

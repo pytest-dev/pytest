@@ -222,7 +222,7 @@ class TestInlineRunModulesCleanup:
         result = pytester.inline_run(str(test_mod))
         assert result.ret == ExitCode.OK
         # rewrite module, now test should fail if module was re-imported
-        test_mod.write_text("def test_foo(): assert False")
+        test_mod.write_text("def test_foo(): assert False", encoding="utf-8")
         result2 = pytester.inline_run(str(test_mod))
         assert result2.ret == ExitCode.TESTS_FAILED
 

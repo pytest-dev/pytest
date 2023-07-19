@@ -28,7 +28,7 @@ from _pytest.stash import Stash
 def schema() -> xmlschema.XMLSchema:
     """Return an xmlschema.XMLSchema object for the junit-10.xsd file."""
     fn = Path(__file__).parent / "example_scripts/junit-10.xsd"
-    with fn.open() as f:
+    with fn.open(encoding="utf-8") as f:
         return xmlschema.XMLSchema(f)
 
 
@@ -45,7 +45,7 @@ class RunAndParse:
         xml_path = self.pytester.path.joinpath("junit.xml")
         result = self.pytester.runpytest("--junitxml=%s" % xml_path, *args)
         if family == "xunit2":
-            with xml_path.open() as f:
+            with xml_path.open(encoding="utf-8") as f:
                 self.schema.validate(f)
         xmldoc = minidom.parse(str(xml_path))
         return result, DomNode(xmldoc)
@@ -469,7 +469,7 @@ class TestPython:
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
     ) -> None:
         p = pytester.mkdir("sub").joinpath("test_hello.py")
-        p.write_text("def test_func(): 0/0")
+        p.write_text("def test_func(): 0/0", encoding="utf-8")
         result, dom = run_and_parse(family=xunit_family)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
@@ -987,7 +987,7 @@ class TestNonPython:
                     return "custom item runtest failed"
         """
         )
-        pytester.path.joinpath("myfile.xyz").write_text("hello")
+        pytester.path.joinpath("myfile.xyz").write_text("hello", encoding="utf-8")
         result, dom = run_and_parse(family=xunit_family)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
@@ -1013,7 +1013,7 @@ def test_nullbyte(pytester: Pytester, junit_logging: str) -> None:
     )
     xmlf = pytester.path.joinpath("junit.xml")
     pytester.runpytest("--junitxml=%s" % xmlf, "-o", "junit_logging=%s" % junit_logging)
-    text = xmlf.read_text()
+    text = xmlf.read_text(encoding="utf-8")
     assert "\x00" not in text
     if junit_logging == "system-out":
         assert "#x00" in text
@@ -1035,7 +1035,7 @@ def test_nullbyte_replace(pytester: Pytester, junit_logging: str) -> None:
     )
     xmlf = pytester.path.joinpath("junit.xml")
     pytester.runpytest("--junitxml=%s" % xmlf, "-o", "junit_logging=%s" % junit_logging)
-    text = xmlf.read_text()
+    text = xmlf.read_text(encoding="utf-8")
     if junit_logging == "system-out":
         assert "#x0" in text
     if junit_logging == "no":

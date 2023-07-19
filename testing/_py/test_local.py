@@ -1,12 +1,22 @@
+import contextlib
 import multiprocessing
 import os
 import sys
 import time
+import warnings
 from unittest import mock
 
 import pytest
 from py import error
 from py.path import local
+
+
+@contextlib.contextmanager
+def ignore_encoding_warning():
+    with warnings.catch_warnings():
+        with contextlib.suppress(NameError):  # new in 3.10
+            warnings.simplefilter("ignore", EncodingWarning)
+        yield
 
 
 class CommonFSTests:
@@ -223,7 +233,8 @@ class CommonFSTests:
         assert not (path1 < path1)
 
     def test_simple_read(self, path1):
-        x = path1.join("samplefile").read("r")
+        with ignore_encoding_warning():
+            x = path1.join("samplefile").read("r")
         assert x == "samplefile\n"
 
     def test_join_div_operator(self, path1):
@@ -265,12 +276,14 @@ class CommonFSTests:
 
     def test_readlines(self, path1):
         fn = path1.join("samplefile")
-        contents = fn.readlines()
+        with ignore_encoding_warning():
+            contents = fn.readlines()
         assert contents == ["samplefile\n"]
 
     def test_readlines_nocr(self, path1):
         fn = path1.join("samplefile")
-        contents = fn.readlines(cr=0)
+        with ignore_encoding_warning():
+            contents = fn.readlines(cr=0)
         assert contents == ["samplefile", ""]
 
     def test_file(self, path1):
@@ -362,8 +375,8 @@ class CommonFSTests:
         initpy.copy(copied)
         try:
             assert copied.check()
-            s1 = initpy.read()
-            s2 = copied.read()
+            s1 = initpy.read_text(encoding="utf-8")
+            s2 = copied.read_text(encoding="utf-8")
             assert s1 == s2
         finally:
             if copied.check():
@@ -376,8 +389,8 @@ class CommonFSTests:
             otherdir.copy(copied)
             assert copied.check(dir=1)
             assert copied.join("__init__.py").check(file=1)
-            s1 = otherdir.join("__init__.py").read()
-            s2 = copied.join("__init__.py").read()
+            s1 = otherdir.join("__init__.py").read_text(encoding="utf-8")
+            s2 = copied.join("__init__.py").read_text(encoding="utf-8")
             assert s1 == s2
         finally:
             if copied.check(dir=1):
@@ -463,13 +476,13 @@ def setuptestfs(path):
         return
     # print "setting up test fs for", repr(path)
     samplefile = path.ensure("samplefile")
-    samplefile.write("samplefile\n")
+    samplefile.write_text("samplefile\n", encoding="utf-8")
 
     execfile = path.ensure("execfile")
-    execfile.write("x=42")
+    execfile.write_text("x=42", encoding="utf-8")
 
     execfilepy = path.ensure("execfile.py")
-    execfilepy.write("x=42")
+    execfilepy.write_text("x=42", encoding="utf-8")
 
     d = {1: 2, "hello": "world", "answer": 42}
     path.ensure("samplepickle").dump(d)
@@ -481,22 +494,24 @@ def setuptestfs(path):
     otherdir.ensure("__init__.py")
 
     module_a = otherdir.ensure("a.py")
-    module_a.write("from .b import stuff as result\n")
+    module_a.write_text("from .b import stuff as result\n", encoding="utf-8")
     module_b = otherdir.ensure("b.py")
-    module_b.write('stuff="got it"\n')
+    module_b.write_text('stuff="got it"\n', encoding="utf-8")
     module_c = otherdir.ensure("c.py")
-    module_c.write(
+    module_c.write_text(
         """import py;
 import otherdir.a
 value = otherdir.a.result
-"""
+""",
+        encoding="utf-8",
     )
     module_d = otherdir.ensure("d.py")
-    module_d.write(
+    module_d.write_text(
         """import py;
 from otherdir import a
 value2 = a.result
-"""
+""",
+        encoding="utf-8",
     )
 
 
@@ -534,9 +549,11 @@ def batch_make_numbered_dirs(rootdir, repeats):
     for i in range(repeats):
         dir_ = local.make_numbered_dir(prefix="repro-", rootdir=rootdir)
         file_ = dir_.join("foo")
-        file_.write("%s" % i)
-        actual = int(file_.read())
-        assert actual == i, f"int(file_.read()) is {actual} instead of {i}"
+        file_.write_text("%s" % i, encoding="utf-8")
+        actual = int(file_.read_text(encoding="utf-8"))
+        assert (
+            actual == i
+        ), f"int(file_.read_text(encoding='utf-8')) is {actual} instead of {i}"
         dir_.join(".lock").remove(ignore_errors=True)
     return True
 
@@ -692,14 +709,14 @@ class TestLocalPath(CommonFSTests):
 
     def test_open_and_ensure(self, path1):
         p = path1.join("sub1", "sub2", "file")
-        with p.open("w", ensure=1) as f:
+        with p.open("w", ensure=1, encoding="utf-8") as f:
             f.write("hello")
-        assert p.read() == "hello"
+        assert p.read_text(encoding="utf-8") == "hello"
 
     def test_write_and_ensure(self, path1):
         p = path1.join("sub1", "sub2", "file")
-        p.write("hello", ensure=1)
-        assert p.read() == "hello"
+        p.write_text("hello", ensure=1, encoding="utf-8")
+        assert p.read_text(encoding="utf-8") == "hello"
 
     @pytest.mark.parametrize("bin", (False, True))
     def test_dump(self, tmpdir, bin):
@@ -770,9 +787,9 @@ class TestLocalPath(CommonFSTests):
         newfile = tmpdir.join("test1", "test")
         newfile.ensure()
         assert newfile.check(file=1)
-        newfile.write("42")
+        newfile.write_text("42", encoding="utf-8")
         newfile.ensure()
-        s = newfile.read()
+        s = newfile.read_text(encoding="utf-8")
         assert s == "42"
 
     def test_ensure_filepath_withoutdir(self, tmpdir):
@@ -806,9 +823,9 @@ class TestLocalPath(CommonFSTests):
         newfilename = "/test" * 60  # type:ignore[unreachable]
         l1 = tmpdir.join(newfilename)
         l1.ensure(file=True)
-        l1.write("foo")
+        l1.write_text("foo", encoding="utf-8")
         l2 = tmpdir.join(newfilename)
-        assert l2.read() == "foo"
+        assert l2.read_text(encoding="utf-8") == "foo"
 
     def test_visit_depth_first(self, tmpdir):
         tmpdir.ensure("a", "1")
@@ -1278,14 +1295,14 @@ class TestPOSIXLocalPath:
     def test_hardlink(self, tmpdir):
         linkpath = tmpdir.join("test")
         filepath = tmpdir.join("file")
-        filepath.write("Hello")
+        filepath.write_text("Hello", encoding="utf-8")
         nlink = filepath.stat().nlink
         linkpath.mklinkto(filepath)
         assert filepath.stat().nlink == nlink + 1
 
     def test_symlink_are_identical(self, tmpdir):
         filepath = tmpdir.join("file")
-        filepath.write("Hello")
+        filepath.write_text("Hello", encoding="utf-8")
         linkpath = tmpdir.join("test")
         linkpath.mksymlinkto(filepath)
         assert linkpath.readlink() == str(filepath)
@@ -1293,7 +1310,7 @@ class TestPOSIXLocalPath:
     def test_symlink_isfile(self, tmpdir):
         linkpath = tmpdir.join("test")
         filepath = tmpdir.join("file")
-        filepath.write("")
+        filepath.write_text("", encoding="utf-8")
         linkpath.mksymlinkto(filepath)
         assert linkpath.check(file=1)
         assert not linkpath.check(link=0, file=1)
@@ -1302,10 +1319,12 @@ class TestPOSIXLocalPath:
     def test_symlink_relative(self, tmpdir):
         linkpath = tmpdir.join("test")
         filepath = tmpdir.join("file")
-        filepath.write("Hello")
+        filepath.write_text("Hello", encoding="utf-8")
         linkpath.mksymlinkto(filepath, absolute=False)
         assert linkpath.readlink() == "file"
-        assert filepath.read() == linkpath.read()
+        assert filepath.read_text(encoding="utf-8") == linkpath.read_text(
+            encoding="utf-8"
+        )
 
     def test_symlink_not_existing(self, tmpdir):
         linkpath = tmpdir.join("testnotexisting")
@@ -1338,7 +1357,7 @@ class TestPOSIXLocalPath:
     def test_realpath_file(self, tmpdir):
         linkpath = tmpdir.join("test")
         filepath = tmpdir.join("file")
-        filepath.write("")
+        filepath.write_text("", encoding="utf-8")
         linkpath.mksymlinkto(filepath)
         realpath = linkpath.realpath()
         assert realpath.basename == "file"
@@ -1383,7 +1402,7 @@ class TestPOSIXLocalPath:
         atime1 = path.atime()
         # we could wait here but timer resolution is very
         # system dependent
-        path.read()
+        path.read_binary()
         time.sleep(ATIME_RESOLUTION)
         atime2 = path.atime()
         time.sleep(ATIME_RESOLUTION)
@@ -1467,7 +1486,7 @@ class TestPOSIXLocalPath:
         test_files = ["a", "b", "c"]
         src = tmpdir.join("src")
         for f in test_files:
-            src.join(f).write(f, ensure=True)
+            src.join(f).write_text(f, ensure=True, encoding="utf-8")
         dst = tmpdir.join("dst")
         # a small delay before the copy
         time.sleep(ATIME_RESOLUTION)
@@ -1500,9 +1519,9 @@ class TestPOSIXLocalPath:
         path1.chown(owner, group)
 
 
-class TestUnicodePy2Py3:
+class TestUnicode:
     def test_join_ensure(self, tmpdir, monkeypatch):
-        if sys.version_info >= (3, 0) and "LANG" not in os.environ:
+        if "LANG" not in os.environ:
             pytest.skip("cannot run test without locale")
         x = local(tmpdir.strpath)
         part = "hällo"
@@ -1510,7 +1529,7 @@ class TestUnicodePy2Py3:
         assert x.join(part) == y
 
     def test_listdir(self, tmpdir):
-        if sys.version_info >= (3, 0) and "LANG" not in os.environ:
+        if "LANG" not in os.environ:
             pytest.skip("cannot run test without locale")
         x = local(tmpdir.strpath)
         part = "hällo"
@@ -1521,10 +1540,11 @@ class TestUnicodePy2Py3:
     def test_read_write(self, tmpdir):
         x = tmpdir.join("hello")
         part = "hällo"
-        x.write(part)
-        assert x.read() == part
-        x.write(part.encode(sys.getdefaultencoding()))
-        assert x.read() == part.encode(sys.getdefaultencoding())
+        with ignore_encoding_warning():
+            x.write(part)
+            assert x.read() == part
+            x.write(part.encode(sys.getdefaultencoding()))
+            assert x.read() == part.encode(sys.getdefaultencoding())
 
 
 class TestBinaryAndTextMethods:

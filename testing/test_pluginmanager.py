@@ -347,7 +347,7 @@ class TestPytestPluginManager:
         pytest.raises(ImportError, pytestpm.import_plugin, "pytest_qweqwex.y")
 
         pytester.syspathinsert()
-        pytester.mkpydir("pkg").joinpath("plug.py").write_text("x=3")
+        pytester.mkpydir("pkg").joinpath("plug.py").write_text("x=3", encoding="utf-8")
         pluginname = "pkg.plug"
         pytestpm.import_plugin(pluginname)
         mod = pytestpm.get_plugin("pkg.plug")

@@ -5,9 +5,11 @@ from pprint import pprint
 from typing import Any
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import NoReturn
 from typing import Optional
@@ -29,15 +31,12 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import skip
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
-
     from _pytest.runner import CallInfo
 
 
@@ -64,7 +63,7 @@ class BaseReport:
     ]
     sections: List[Tuple[str, str]]
     nodeid: str
-    outcome: "Literal['passed', 'failed', 'skipped']"
+    outcome: Literal["passed", "failed", "skipped"]
 
     def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
@@ -249,17 +248,20 @@ class TestReport(BaseReport):
     """
 
     __test__ = False
+    # Defined by skipping plugin.
+    # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
+    wasxfail: str
 
     def __init__(
         self,
         nodeid: str,
         location: Tuple[str, Optional[int], str],
         keywords: Mapping[str, Any],
-        outcome: "Literal['passed', 'failed', 'skipped']",
+        outcome: Literal["passed", "failed", "skipped"],
         longrepr: Union[
             None, ExceptionInfo[BaseException], Tuple[str, int, str], str, TerminalRepr
         ],
-        when: "Literal['setup', 'call', 'teardown']",
+        when: Literal["setup", "call", "teardown"],
         sections: Iterable[Tuple[str, str]] = (),
         duration: float = 0,
         start: float = 0,

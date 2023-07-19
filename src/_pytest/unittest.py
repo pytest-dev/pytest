@@ -200,10 +200,10 @@ class TestCaseFunction(Function):
         assert self.parent is not None
         self._testcase = self.parent.obj(self.name)  # type: ignore[attr-defined]
         self._obj = getattr(self._testcase, self.name)
-        if hasattr(self, "_request"):
-            self._request._fillfixtures()
+        super().setup()
 
     def teardown(self) -> None:
+        super().teardown()
         if self._explicit_tearDown is not None:
             self._explicit_tearDown()
             self._explicit_tearDown = None
@@ -376,8 +376,8 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
 # Twisted trial support.
 
 
-@hookimpl(hookwrapper=True)
-def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
+@hookimpl(wrapper=True)
+def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     if isinstance(item, TestCaseFunction) and "twisted.trial.unittest" in sys.modules:
         ut: Any = sys.modules["twisted.python.failure"]
         Failure__init__ = ut.Failure.__init__
@@ -400,10 +400,13 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
                 Failure__init__(self, exc_value, exc_type, exc_tb)
 
         ut.Failure.__init__ = excstore
-        yield
-        ut.Failure.__init__ = Failure__init__
+        try:
+            res = yield
+        finally:
+            ut.Failure.__init__ = Failure__init__
     else:
-        yield
+        res = yield
+    return res
 
 
 def check_testcase_implements_trial_reporter(done: List[int] = []) -> None:

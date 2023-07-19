@@ -17,7 +17,9 @@ Plugin List
 ===========
 
 PyPI projects that match "pytest-\*" are considered plugins and are listed
-automatically. Packages classified as inactive are excluded.
+automatically together with a manually-maintained list in `the source
+code <https://github.com/pytest-dev/pytest/blob/main/scripts/update-plugin-list.py>`_.
+Packages classified as inactive are excluded.
 
 .. The following conditional uses a different format for this list when
    creating a PDF, because otherwise the table gets far too wide for the
@@ -33,6 +35,9 @@ DEVELOPMENT_STATUS_CLASSIFIERS = (
     "Development Status :: 6 - Mature",
     "Development Status :: 7 - Inactive",
 )
+ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
+    "logassert",
+}
 
 
 def escape_rst(text: str) -> str:
@@ -52,18 +57,18 @@ def iter_plugins():
     regex = r">([\d\w-]*)</a>"
     response = requests.get("https://pypi.org/simple")
 
-    matches = list(
-        match
-        for match in re.finditer(regex, response.text)
-        if match.groups()[0].startswith("pytest-")
-    )
+    match_names = (match.groups()[0] for match in re.finditer(regex, response.text))
+    plugin_names = [
+        name
+        for name in match_names
+        if name.startswith("pytest-") or name in ADDITIONAL_PROJECTS
+    ]
 
-    for match in tqdm(matches, smoothing=0):
-        name = match.groups()[0]
+    for name in tqdm(plugin_names, smoothing=0):
         response = requests.get(f"https://pypi.org/pypi/{name}/json")
         if response.status_code == 404:
-            # Some packages, like pytest-azurepipelines42, are included in https://pypi.org/simple but
-            # return 404 on the JSON API. Skip.
+            # Some packages, like pytest-azurepipelines42, are included in https://pypi.org/simple
+            # but return 404 on the JSON API. Skip.
             continue
         response.raise_for_status()
         info = response.json()["info"]

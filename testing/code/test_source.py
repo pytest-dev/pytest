@@ -294,7 +294,7 @@ def test_source_of_class_at_eof_without_newline(_sys_snapshot, tmp_path: Path) -
     """
     )
     path = tmp_path.joinpath("a.py")
-    path.write_text(str(source))
+    path.write_text(str(source), encoding="utf-8")
     mod: Any = import_path(path, root=tmp_path)
     s2 = Source(mod.A)
     assert str(source).strip() == str(s2).strip()
@@ -439,14 +439,9 @@ comment 4
 '''
     for line in range(2, 6):
         assert str(getstatement(line, source)) == "    x = 1"
-    if sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
-        tqs_start = 8
-    else:
-        tqs_start = 10
-        assert str(getstatement(10, source)) == '"""'
-    for line in range(6, tqs_start):
+    for line in range(6, 8):
         assert str(getstatement(line, source)) == "    assert False"
-    for line in range(tqs_start, 10):
+    for line in range(8, 10):
         assert str(getstatement(line, source)) == '"""\ncomment 4\n"""'
 
 

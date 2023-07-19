@@ -44,11 +44,6 @@ from _pytest.stash import StashKey
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
-if sys.version_info >= (3, 8):
-    namedExpr = ast.NamedExpr
-else:
-    namedExpr = ast.Expr
-
 
 assertstate_key = StashKey["AssertionState"]()
 
@@ -680,9 +675,10 @@ class AssertionRewriter(ast.NodeVisitor):
             if (
                 expect_docstring
                 and isinstance(item, ast.Expr)
-                and isinstance(item.value, ast.Str)
+                and isinstance(item.value, ast.Constant)
+                and isinstance(item.value.value, str)
             ):
-                doc = item.value.s
+                doc = item.value.value
                 if self.is_rewrite_disabled(doc):
                     return
                 expect_docstring = False
@@ -814,7 +810,7 @@ class AssertionRewriter(ast.NodeVisitor):
         current = self.stack.pop()
         if self.stack:
             self.explanation_specifiers = self.stack[-1]
-        keys = [ast.Str(key) for key in current.keys()]
+        keys = [ast.Constant(key) for key in current.keys()]
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
@@ -868,16 +864,16 @@ class AssertionRewriter(ast.NodeVisitor):
         negation = ast.UnaryOp(ast.Not(), top_condition)
 
         if self.enable_assertion_pass_hook:  # Experimental pytest_assertion_pass hook
-            msg = self.pop_format_context(ast.Str(explanation))
+            msg = self.pop_format_context(ast.Constant(explanation))
 
             # Failed
             if assert_.msg:
                 assertmsg = self.helper("_format_assertmsg", assert_.msg)
                 gluestr = "\n>assert "
             else:
-                assertmsg = ast.Str("")
+                assertmsg = ast.Constant("")
                 gluestr = "assert "
-            err_explanation = ast.BinOp(ast.Str(gluestr), ast.Add(), msg)
+            err_explanation = ast.BinOp(ast.Constant(gluestr), ast.Add(), msg)
             err_msg = ast.BinOp(assertmsg, ast.Add(), err_explanation)
             err_name = ast.Name("AssertionError", ast.Load())
             fmt = self.helper("_format_explanation", err_msg)
@@ -893,8 +889,8 @@ class AssertionRewriter(ast.NodeVisitor):
             hook_call_pass = ast.Expr(
                 self.helper(
                     "_call_assertion_pass",
-                    ast.Num(assert_.lineno),
-                    ast.Str(orig),
+                    ast.Constant(assert_.lineno),
+                    ast.Constant(orig),
                     fmt_pass,
                 )
             )
@@ -913,7 +909,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 variables = [
                     ast.Name(name, ast.Store()) for name in self.format_variables
                 ]
-                clear_format = ast.Assign(variables, ast.NameConstant(None))
+                clear_format = ast.Assign(variables, ast.Constant(None))
                 self.statements.append(clear_format)
 
         else:  # Original assertion rewriting
@@ -924,9 +920,9 @@ class AssertionRewriter(ast.NodeVisitor):
                 assertmsg = self.helper("_format_assertmsg", assert_.msg)
                 explanation = "\n>assert " + explanation
             else:
-                assertmsg = ast.Str("")
+                assertmsg = ast.Constant("")
                 explanation = "assert " + explanation
-            template = ast.BinOp(assertmsg, ast.Add(), ast.Str(explanation))
+            template = ast.BinOp(assertmsg, ast.Add(), ast.Constant(explanation))
             msg = self.pop_format_context(template)
             fmt = self.helper("_format_explanation", msg)
             err_name = ast.Name("AssertionError", ast.Load())
@@ -938,7 +934,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # Clear temporary variables by setting them to None.
         if self.variables:
             variables = [ast.Name(name, ast.Store()) for name in self.variables]
-            clear = ast.Assign(variables, ast.NameConstant(None))
+            clear = ast.Assign(variables, ast.Constant(None))
             self.statements.append(clear)
         # Fix locations (line numbers/column offsets).
         for stmt in self.statements:
@@ -946,26 +942,26 @@ class AssertionRewriter(ast.NodeVisitor):
                 ast.copy_location(node, assert_)
         return self.statements
 
-    def visit_NamedExpr(self, name: namedExpr) -> Tuple[namedExpr, str]:
+    def visit_NamedExpr(self, name: ast.NamedExpr) -> Tuple[ast.NamedExpr, str]:
         # This method handles the 'walrus operator' repr of the target
         # name if it's a local variable or _should_repr_global_name()
         # thinks it's acceptable.
         locs = ast.Call(self.builtin("locals"), [], [])
         target_id = name.target.id  # type: ignore[attr-defined]
-        inlocs = ast.Compare(ast.Str(target_id), [ast.In()], [locs])
+        inlocs = ast.Compare(ast.Constant(target_id), [ast.In()], [locs])
         dorepr = self.helper("_should_repr_global_name", name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
-        expr = ast.IfExp(test, self.display(name), ast.Str(target_id))
+        expr = ast.IfExp(test, self.display(name), ast.Constant(target_id))
         return name, self.explanation_param(expr)
 
     def visit_Name(self, name: ast.Name) -> Tuple[ast.Name, str]:
         # Display the repr of the name if it's a local variable or
         # _should_repr_global_name() thinks it's acceptable.
         locs = ast.Call(self.builtin("locals"), [], [])
-        inlocs = ast.Compare(ast.Str(name.id), [ast.In()], [locs])
+        inlocs = ast.Compare(ast.Constant(name.id), [ast.In()], [locs])
         dorepr = self.helper("_should_repr_global_name", name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
-        expr = ast.IfExp(test, self.display(name), ast.Str(name.id))
+        expr = ast.IfExp(test, self.display(name), ast.Constant(name.id))
         return name, self.explanation_param(expr)
 
     def visit_BoolOp(self, boolop: ast.BoolOp) -> Tuple[ast.Name, str]:
@@ -984,10 +980,10 @@ class AssertionRewriter(ast.NodeVisitor):
                 # cond is set in a prior loop iteration below
                 self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
                 self.expl_stmts = fail_inner
-                # Check if the left operand is a namedExpr and the value has already been visited
+                # Check if the left operand is a ast.NamedExpr and the value has already been visited
                 if (
                     isinstance(v, ast.Compare)
-                    and isinstance(v.left, namedExpr)
+                    and isinstance(v.left, ast.NamedExpr)
                     and v.left.target.id
                     in [
                         ast_expr.id
@@ -1003,7 +999,7 @@ class AssertionRewriter(ast.NodeVisitor):
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
-            expl_format = self.pop_format_context(ast.Str(expl))
+            expl_format = self.pop_format_context(ast.Constant(expl))
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
             if i < levels:
@@ -1015,7 +1011,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 self.statements = body = inner
         self.statements = save
         self.expl_stmts = fail_save
-        expl_template = self.helper("_format_boolop", expl_list, ast.Num(is_or))
+        expl_template = self.helper("_format_boolop", expl_list, ast.Constant(is_or))
         expl = self.pop_format_context(expl_template)
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)
 
@@ -1089,7 +1085,7 @@ class AssertionRewriter(ast.NodeVisitor):
             comp.left = self.variables_overwrite[
                 comp.left.id
             ]  # type:ignore[assignment]
-        if isinstance(comp.left, namedExpr):
+        if isinstance(comp.left, ast.NamedExpr):
             self.variables_overwrite[
                 comp.left.target.id
             ] = comp.left  # type:ignore[assignment]
@@ -1105,7 +1101,7 @@ class AssertionRewriter(ast.NodeVisitor):
         results = [left_res]
         for i, op, next_operand in it:
             if (
-                isinstance(next_operand, namedExpr)
+                isinstance(next_operand, ast.NamedExpr)
                 and isinstance(left_res, ast.Name)
                 and next_operand.target.id == left_res.id
             ):
@@ -1118,9 +1114,9 @@ class AssertionRewriter(ast.NodeVisitor):
                 next_expl = f"({next_expl})"
             results.append(next_res)
             sym = BINOP_MAP[op.__class__]
-            syms.append(ast.Str(sym))
+            syms.append(ast.Constant(sym))
             expl = f"{left_expl} {sym} {next_expl}"
-            expls.append(ast.Str(expl))
+            expls.append(ast.Constant(expl))
             res_expr = ast.Compare(left_res, [op], [next_res])
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
@@ -1164,7 +1160,7 @@ def try_makedirs(cache_dir: Path) -> bool:
 
 def get_cache_dir(file_path: Path) -> Path:
     """Return the cache directory to write .pyc files for the given .py file path."""
-    if sys.version_info >= (3, 8) and sys.pycache_prefix:
+    if sys.pycache_prefix:
         # given:
         #   prefix = '/tmp/pycs'
         #   path = '/home/user/proj/test_app.py'

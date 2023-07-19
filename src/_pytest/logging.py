@@ -13,8 +13,10 @@ from logging import LogRecord
 from pathlib import Path
 from typing import AbstractSet
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
 from typing import Tuple
@@ -25,7 +27,6 @@ from typing import Union
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
-from _pytest.compat import final
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
@@ -41,8 +42,6 @@ from _pytest.terminal import TerminalReporter
 
 if TYPE_CHECKING:
     logging_StreamHandler = logging.StreamHandler[StringIO]
-
-    from typing_extensions import Literal
 else:
     logging_StreamHandler = logging.StreamHandler
 
@@ -515,7 +514,9 @@ class LogCaptureFixture:
         return original_disable_level
 
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
-        """Set the level of a logger for the duration of a test.
+        """Set the threshold level of a logger for the duration of a test.
+
+        Logging messages which are less severe than this level will not be captured.
 
         .. versionchanged:: 3.4
             The levels of the loggers changed by this function will be
@@ -736,27 +737,26 @@ class LoggingPlugin:
 
         return True
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(wrapper=True, tryfirst=True)
     def pytest_sessionstart(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionstart")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
-                yield
+                return (yield)
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("collection")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
-                yield
+                return (yield)
 
-    @hookimpl(hookwrapper=True)
-    def pytest_runtestloop(self, session: Session) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True)
+    def pytest_runtestloop(self, session: Session) -> Generator[None, object, object]:
         if session.config.option.collectonly:
-            yield
-            return
+            return (yield)
 
         if self._log_cli_enabled() and self._config.getoption("verbose") < 1:
             # The verbose flag is needed to avoid messy test progress output.
@@ -764,7 +764,7 @@ class LoggingPlugin:
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
-                yield  # Run all the tests.
+                return (yield)  # Run all the tests.
 
     @hookimpl
     def pytest_runtest_logstart(self) -> None:
@@ -789,12 +789,13 @@ class LoggingPlugin:
             item.stash[caplog_records_key][when] = caplog_handler.records
             item.stash[caplog_handler_key] = caplog_handler
 
-            yield
+            try:
+                yield
+            finally:
+                log = report_handler.stream.getvalue().strip()
+                item.add_report_section(when, "log", log)
 
-            log = report_handler.stream.getvalue().strip()
-            item.add_report_section(when, "log", log)
-
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("setup")
 
@@ -802,31 +803,33 @@ class LoggingPlugin:
         item.stash[caplog_records_key] = empty
         yield from self._runtest_for(item, "setup")
 
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_runtest_call(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("call")
 
         yield from self._runtest_for(item, "call")
 
-    @hookimpl(hookwrapper=True)
+    @hookimpl(wrapper=True)
     def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("teardown")
 
-        yield from self._runtest_for(item, "teardown")
-        del item.stash[caplog_records_key]
-        del item.stash[caplog_handler_key]
+        try:
+            yield from self._runtest_for(item, "teardown")
+        finally:
+            del item.stash[caplog_records_key]
+            del item.stash[caplog_handler_key]
 
     @hookimpl
     def pytest_runtest_logfinish(self) -> None:
         self.log_cli_handler.set_when("finish")
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(wrapper=True, tryfirst=True)
     def pytest_sessionfinish(self) -> Generator[None, None, None]:
         self.log_cli_handler.set_when("sessionfinish")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
-                yield
+                return (yield)
 
     @hookimpl
     def pytest_unconfigure(self) -> None:

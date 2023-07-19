@@ -1,0 +1,1 @@
+Allow :func:`pytest.raises` ``match`` argument to match against `PEP-678 <https://peps.python.org/pep-0678/>` ``__notes__``.

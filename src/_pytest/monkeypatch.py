@@ -5,6 +5,7 @@ import sys
 import warnings
 from contextlib import contextmanager
 from typing import Any
+from typing import final
 from typing import Generator
 from typing import List
 from typing import Mapping
@@ -15,7 +16,6 @@ from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
-from _pytest.compat import final
 from _pytest.fixtures import fixture
 from _pytest.warning_types import PytestWarning
 

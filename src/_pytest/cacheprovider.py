@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 from typing import Dict
+from typing import final
 from typing import Generator
 from typing import Iterable
 from typing import List
@@ -18,7 +19,6 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
-from _pytest.compat import final
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -27,7 +27,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
-from _pytest.python import Module
+from _pytest.nodes import File
 from _pytest.python import Package
 from _pytest.reports import TestReport
 
@@ -217,12 +217,12 @@ class LFPluginCollWrapper:
         self.lfplugin = lfplugin
         self._collected_at_least_one_failure = False
 
-    @hookimpl(hookwrapper=True)
-    def pytest_make_collect_report(self, collector: nodes.Collector):
+    @hookimpl(wrapper=True)
+    def pytest_make_collect_report(
+        self, collector: nodes.Collector
+    ) -> Generator[None, CollectReport, CollectReport]:
+        res = yield
         if isinstance(collector, (Session, Package)):
-            out = yield
-            res: CollectReport = out.get_result()
-
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
@@ -240,19 +240,16 @@ class LFPluginCollWrapper:
                 key=sort_key,
                 reverse=True,
             )
-            return
 
-        elif isinstance(collector, Module):
+        elif isinstance(collector, File):
             if collector.path in self.lfplugin._last_failed_paths:
-                out = yield
-                res = out.get_result()
                 result = res.result
                 lastfailed = self.lfplugin.lastfailed
 
                 # Only filter with known failures.
                 if not self._collected_at_least_one_failure:
                     if not any(x.nodeid in lastfailed for x in result):
-                        return
+                        return res
                     self.lfplugin.config.pluginmanager.register(
                         LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
                     )
@@ -268,8 +265,8 @@ class LFPluginCollWrapper:
                     # Keep all sub-collectors.
                     or isinstance(x, nodes.Collector)
                 ]
-                return
-        yield
+
+        return res
 
 
 class LFPluginCollSkipfiles:
@@ -280,9 +277,9 @@ class LFPluginCollSkipfiles:
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Optional[CollectReport]:
-        # Packages are Modules, but we only want to skip test-bearing Modules,
+        # Packages are Files, but we only want to skip test-bearing Files,
         # so don't filter Packages.
-        if isinstance(collector, Module) and not isinstance(collector, Package):
+        if isinstance(collector, File) and not isinstance(collector, Package):
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
 
@@ -342,14 +339,14 @@ class LFPlugin:
         else:
             self.lastfailed[report.nodeid] = True
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
         self, config: Config, items: List[nodes.Item]
     ) -> Generator[None, None, None]:
-        yield
+        res = yield
 
         if not self.active:
-            return
+            return res
 
         if self.lastfailed:
             previously_failed = []
@@ -394,6 +391,8 @@ class LFPlugin:
             else:
                 self._report_status += "not deselecting items."
 
+        return res
+
     def pytest_sessionfinish(self, session: Session) -> None:
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "workerinput"):
@@ -414,11 +413,11 @@ class NFPlugin:
         assert config.cache is not None
         self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
+    @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
         self, items: List[nodes.Item]
     ) -> Generator[None, None, None]:
-        yield
+        res = yield
 
         if self.active:
             new_items: Dict[str, nodes.Item] = {}
@@ -435,6 +434,8 @@ class NFPlugin:
             self.cached_nodeids.update(new_items)
         else:
             self.cached_nodeids.update(item.nodeid for item in items)
+
+        return res
 
     def _get_increasing_order(self, items: Iterable[nodes.Item]) -> List[nodes.Item]:
         return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)  # type: ignore[no-any-return]

@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 import importlib
 import io
 import operator
 import queue
+import re
 import sys
 import textwrap
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import Tuple
 from typing import TYPE_CHECKING
-from typing import Union
 
 import _pytest._code
 import pytest
@@ -374,7 +374,7 @@ def test_excinfo_no_sourcecode():
 
 def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     # XXX: simplified locally testable version
-    tmp_path.joinpath("test.txt").write_text("{{ h()}}:")
+    tmp_path.joinpath("test.txt").write_text("{{ h()}}:", encoding="utf-8")
 
     jinja2 = pytest.importorskip("jinja2")
     loader = jinja2.FileSystemLoader(str(tmp_path))
@@ -451,7 +451,7 @@ class TestFormattedExcinfo:
             source = textwrap.dedent(source)
             modpath = tmp_path.joinpath("mod.py")
             tmp_path.joinpath("__init__.py").touch()
-            modpath.write_text(source)
+            modpath.write_text(source, encoding="utf-8")
             importlib.invalidate_caches()
             return import_path(modpath, root=tmp_path)
 
@@ -801,7 +801,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: Tuple[_TracebackStyle, ...] = ("long", "short")
+        styles: tuple[_TracebackStyle, ...] = ("long", "short")
         for style in styles:
             p = FormattedExcinfo(style=style)
             reprtb = p.repr_traceback(excinfo)
@@ -928,7 +928,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: Tuple[_TracebackStyle, ...] = ("short", "long", "no")
+        styles: tuple[_TracebackStyle, ...] = ("short", "long", "no")
         for style in styles:
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
@@ -1023,7 +1023,7 @@ raise ValueError()
         """
         )
         excinfo = pytest.raises(ValueError, mod.f)
-        tmp_path.joinpath("mod.py").write_text("asdf")
+        tmp_path.joinpath("mod.py").write_text("asdf", encoding="utf-8")
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
@@ -1090,7 +1090,7 @@ raise ValueError()
             for funcargs in (True, False)
         ],
     )
-    def test_format_excinfo(self, reproptions: Dict[str, Any]) -> None:
+    def test_format_excinfo(self, reproptions: dict[str, Any]) -> None:
         def bar():
             assert False, "some error"
 
@@ -1398,7 +1398,7 @@ raise ValueError()
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
 def test_repr_traceback_with_unicode(style, encoding):
     if encoding is None:
-        msg: Union[str, bytes] = "☹"
+        msg: str | bytes = "☹"
     else:
         msg = "☹".encode(encoding)
     try:
@@ -1648,3 +1648,51 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
         ],
         consecutive=True,
     )
+
+
+def add_note(err: BaseException, msg: str) -> None:
+    """Adds a note to an exception inplace."""
+    if sys.version_info < (3, 11):
+        err.__notes__ = getattr(err, "__notes__", []) + [msg]  # type: ignore[attr-defined]
+    else:
+        err.add_note(msg)
+
+
+@pytest.mark.parametrize(
+    "error,notes,match",
+    [
+        (Exception("test"), [], "test"),
+        (AssertionError("foo"), ["bar"], "bar"),
+        (AssertionError("foo"), ["bar", "baz"], "bar"),
+        (AssertionError("foo"), ["bar", "baz"], "baz"),
+        (ValueError("foo"), ["bar", "baz"], re.compile(r"bar\nbaz", re.MULTILINE)),
+        (ValueError("foo"), ["bar", "baz"], re.compile(r"BAZ", re.IGNORECASE)),
+    ],
+)
+def test_check_error_notes_success(
+    error: Exception, notes: list[str], match: str
+) -> None:
+    for note in notes:
+        add_note(error, note)
+
+    with pytest.raises(Exception, match=match):
+        raise error
+
+
+@pytest.mark.parametrize(
+    "error, notes, match",
+    [
+        (Exception("test"), [], "foo"),
+        (AssertionError("foo"), ["bar"], "baz"),
+        (AssertionError("foo"), ["bar"], "foo\nbaz"),
+    ],
+)
+def test_check_error_notes_failure(
+    error: Exception, notes: list[str], match: str
+) -> None:
+    for note in notes:
+        add_note(error, note)
+
+    with pytest.raises(AssertionError):
+        with pytest.raises(type(error), match=match):
+            raise error

@@ -244,7 +244,8 @@ class TestTerminal:
                     def test_method(self):
                         pass
                 """
-            )
+            ),
+            encoding="utf-8",
         )
         result = pytester.runpytest("-vv")
         assert result.ret == 0
@@ -724,12 +725,12 @@ class TestTerminalFunctional:
         )
         assert result.ret == 0
 
-    def test_deselected_with_hookwrapper(self, pytester: Pytester) -> None:
+    def test_deselected_with_hook_wrapper(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             import pytest
 
-            @pytest.hookimpl(hookwrapper=True)
+            @pytest.hookimpl(wrapper=True)
             def pytest_collection_modifyitems(config, items):
                 yield
                 deselected = items.pop()
@@ -1567,7 +1568,8 @@ class TestGenericReporting:
             """
 def pytest_report_header(config, start_path):
     return ["line1", str(start_path)]
-"""
+""",
+            encoding="utf-8",
         )
         result = pytester.runpytest("a")
         result.stdout.fnmatch_lines(["*hello: 42*", "line1", str(pytester.path)])
@@ -1671,7 +1673,7 @@ def test_fdopen_kept_alive_issue124(pytester: Pytester) -> None:
         import os, sys
         k = []
         def test_open_file_and_keep_alive(capfd):
-            stdout = os.fdopen(1, 'w', 1)
+            stdout = os.fdopen(1, 'w', buffering=1, encoding='utf-8')
             k.append(stdout)
 
         def test_close_kept_alive_file():

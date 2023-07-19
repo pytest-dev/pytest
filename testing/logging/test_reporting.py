@@ -81,7 +81,7 @@ def test_root_logger_affected(pytester: Pytester) -> None:
     # not the info one, because the default level of the root logger is
     # WARNING.
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "info text going to logger" not in contents
         assert "warning text going to logger" in contents
@@ -656,7 +656,7 @@ def test_log_file_cli(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -687,7 +687,7 @@ def test_log_file_cli_level(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -738,7 +738,7 @@ def test_log_file_ini(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -777,7 +777,7 @@ def test_log_file_ini_level(pytester: Pytester) -> None:
     # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
     assert os.path.isfile(log_file)
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
@@ -985,7 +985,7 @@ def test_log_in_hooks(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*sessionstart*", "*runtestloop*", "*sessionfinish*"])
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "sessionstart" in contents
         assert "runtestloop" in contents
@@ -1021,7 +1021,7 @@ def test_log_in_runtest_logreport(pytester: Pytester) -> None:
         """
     )
     pytester.runpytest()
-    with open(log_file) as rfh:
+    with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert contents.count("logreport") == 3
 
@@ -1040,13 +1040,13 @@ def test_log_set_path(pytester: Pytester) -> None:
         """
             import os
             import pytest
-            @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+            @pytest.hookimpl(wrapper=True, tryfirst=True)
             def pytest_runtest_setup(item):
                 config = item.config
                 logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
                 report_file = os.path.join({}, item._request.node.name)
                 logging_plugin.set_log_path(report_file)
-                yield
+                return (yield)
         """.format(
             repr(report_dir_base)
         )
@@ -1065,11 +1065,11 @@ def test_log_set_path(pytester: Pytester) -> None:
         """
     )
     pytester.runpytest()
-    with open(os.path.join(report_dir_base, "test_first")) as rfh:
+    with open(os.path.join(report_dir_base, "test_first"), encoding="utf-8") as rfh:
         content = rfh.read()
         assert "message from test 1" in content
 
-    with open(os.path.join(report_dir_base, "test_second")) as rfh:
+    with open(os.path.join(report_dir_base, "test_second"), encoding="utf-8") as rfh:
         content = rfh.read()
         assert "message from test 2" in content
 

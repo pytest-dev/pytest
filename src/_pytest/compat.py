@@ -12,25 +12,11 @@ from inspect import signature
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import Generic
+from typing import Final
 from typing import NoReturn
-from typing import TYPE_CHECKING
 from typing import TypeVar
 
 import py
-
-# fmt: off
-# Workaround for https://github.com/sphinx-doc/sphinx/issues/10351.
-# If `overload` is imported from `compat` instead of from `typing`,
-# Sphinx doesn't recognize it as `overload` and the API docs for
-# overloaded functions look good again. But type checkers handle
-# it fine.
-# fmt: on
-if True:
-    from typing import overload as overload
-
-if TYPE_CHECKING:
-    from typing_extensions import Final
 
 
 _T = TypeVar("_T")
@@ -58,17 +44,6 @@ class NotSetType(enum.Enum):
 NOTSET: Final = NotSetType.token  # noqa: E305
 # fmt: on
 
-if sys.version_info >= (3, 8):
-    import importlib.metadata
-
-    importlib_metadata = importlib.metadata
-else:
-    import importlib_metadata as importlib_metadata  # noqa: F401
-
-
-def _format_args(func: Callable[..., Any]) -> str:
-    return str(signature(func))
-
 
 def is_generator(func: object) -> bool:
     genfunc = inspect.isgeneratorfunction(func)
@@ -93,7 +68,7 @@ def is_async_function(func: object) -> bool:
     return iscoroutinefunction(func) or inspect.isasyncgenfunction(func)
 
 
-def getlocation(function, curdir: str | None = None) -> str:
+def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno
@@ -127,7 +102,7 @@ def num_mock_patch_args(function) -> int:
 
 
 def getfuncargnames(
-    function: Callable[..., Any],
+    function: Callable[..., object],
     *,
     name: str = "",
     is_method: bool = False,
@@ -336,47 +311,6 @@ def safe_isclass(obj: object) -> bool:
         return inspect.isclass(obj)
     except Exception:
         return False
-
-
-if TYPE_CHECKING:
-    if sys.version_info >= (3, 8):
-        from typing import final as final
-    else:
-        from typing_extensions import final as final
-elif sys.version_info >= (3, 8):
-    from typing import final as final
-else:
-
-    def final(f):
-        return f
-
-
-if sys.version_info >= (3, 8):
-    from functools import cached_property as cached_property
-else:
-
-    class cached_property(Generic[_S, _T]):
-        __slots__ = ("func", "__doc__")
-
-        def __init__(self, func: Callable[[_S], _T]) -> None:
-            self.func = func
-            self.__doc__ = func.__doc__
-
-        @overload
-        def __get__(
-            self, instance: None, owner: type[_S] | None = ...
-        ) -> cached_property[_S, _T]:
-            ...
-
-        @overload
-        def __get__(self, instance: _S, owner: type[_S] | None = ...) -> _T:
-            ...
-
-        def __get__(self, instance, owner=None):
-            if instance is None:
-                return self
-            value = instance.__dict__[self.func.__name__] = self.func(instance)
-            return value
 
 
 def get_user_id() -> int | None:

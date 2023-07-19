@@ -1,3 +1,0 @@
-Improved verbose output (``-vv``) of ``skip`` and ``xfail`` reasons by performing text wrapping while leaving a clear margin for progress output.
-
-Added :func:`TerminalReporter.wrap_write() <pytest.TerminalReporter.wrap_write>` as a helper for that.

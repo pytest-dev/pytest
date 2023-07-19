@@ -7,38 +7,32 @@ from pathlib import Path
 from shutil import rmtree
 from typing import Any
 from typing import Dict
+from typing import final
 from typing import Generator
+from typing import Literal
 from typing import Optional
-from typing import TYPE_CHECKING
 from typing import Union
 
-from _pytest.nodes import Item
-from _pytest.reports import CollectReport
-from _pytest.stash import StashKey
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
-
-    RetentionType = Literal["all", "failed", "none"]
-
-
-from _pytest.config.argparsing import Parser
-
+from .pathlib import cleanup_dead_symlinks
 from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
-from .pathlib import cleanup_dead_symlinks
-from _pytest.compat import final, get_user_id
+from _pytest.compat import get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
+from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.nodes import Item
+from _pytest.reports import TestReport
+from _pytest.stash import StashKey
 
 tmppath_result_key = StashKey[Dict[str, bool]]()
+RetentionType = Literal["all", "failed", "none"]
 
 
 @final
@@ -54,13 +48,13 @@ class TempPathFactory:
     _trace: Any
     _basetemp: Optional[Path]
     _retention_count: int
-    _retention_policy: "RetentionType"
+    _retention_policy: RetentionType
 
     def __init__(
         self,
         given_basetemp: Optional[Path],
         retention_count: int,
-        retention_policy: "RetentionType",
+        retention_policy: RetentionType,
         trace,
         basetemp: Optional[Path] = None,
         *,
@@ -315,10 +309,12 @@ def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
         cleanup_dead_symlinks(basetemp)
 
 
-@hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item: Item, call):
-    outcome = yield
-    result: CollectReport = outcome.get_result()
-
+@hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(
+    item: Item, call
+) -> Generator[None, TestReport, TestReport]:
+    rep = yield
+    assert rep.when is not None
     empty: Dict[str, bool] = {}
-    item.stash.setdefault(tmppath_result_key, empty)[result.when] = result.passed
+    item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
+    return rep

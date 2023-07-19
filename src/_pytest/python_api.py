@@ -9,9 +9,11 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import ContextManager
+from typing import final
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import Tuple
@@ -20,15 +22,12 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
+import _pytest._code
+from _pytest.compat import STRING_TYPES
+from _pytest.outcomes import fail
+
 if TYPE_CHECKING:
     from numpy import ndarray
-
-
-import _pytest._code
-from _pytest.compat import final
-from _pytest.compat import STRING_TYPES
-from _pytest.compat import overload
-from _pytest.outcomes import fail
 
 
 def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
@@ -266,19 +265,20 @@ class ApproxMapping(ApproxBase):
             approx_side_as_map.items(), other_side.values()
         ):
             if approx_value != other_value:
-                max_abs_diff = max(
-                    max_abs_diff, abs(approx_value.expected - other_value)
-                )
-                if approx_value.expected == 0.0:
-                    max_rel_diff = math.inf
-                else:
-                    max_rel_diff = max(
-                        max_rel_diff,
-                        abs(
-                            (approx_value.expected - other_value)
-                            / approx_value.expected
-                        ),
+                if approx_value.expected is not None and other_value is not None:
+                    max_abs_diff = max(
+                        max_abs_diff, abs(approx_value.expected - other_value)
                     )
+                    if approx_value.expected == 0.0:
+                        max_rel_diff = math.inf
+                    else:
+                        max_rel_diff = max(
+                            max_rel_diff,
+                            abs(
+                                (approx_value.expected - other_value)
+                                / approx_value.expected
+                            ),
+                        )
                 different_ids.append(approx_key)
 
         message_data = [
@@ -842,6 +842,14 @@ def raises(  # noqa: F811
 
         >>> with pytest.raises(ValueError, match=r'must be \d+$'):
         ...     raise ValueError("value must be 42")
+
+    The ``match`` argument searches the formatted exception string, which includes any
+    `PEP-678 <https://peps.python.org/pep-0678/>` ``__notes__``:
+
+        >>> with pytest.raises(ValueError, match=r'had a note added'):  # doctest: +SKIP
+        ...    e = ValueError("value must be 42")
+        ...    e.add_note("had a note added")
+        ...    raise e
 
     The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
     details of the captured exception::

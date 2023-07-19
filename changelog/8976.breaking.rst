@@ -1,0 +1,5 @@
+Running `pytest pkg/__init__.py` now collects the `pkg/__init__.py` file (module) only.
+Previously, it collected the entire `pkg` package, including other test files in the directory, but excluding tests in the `__init__.py` file itself
+(unless :confval:`python_files` was changed to allow `__init__.py` file).
+
+To collect the entire package, specify just the directory: `pytest pkg`.

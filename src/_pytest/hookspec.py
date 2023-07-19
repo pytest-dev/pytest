@@ -18,7 +18,7 @@ from _pytest.deprecated import WARNING_CMDLINE_PREPARSE_HOOK
 if TYPE_CHECKING:
     import pdb
     import warnings
-    from typing_extensions import Literal
+    from typing import Literal
 
     from _pytest._code.code import ExceptionRepr
     from _pytest._code.code import ExceptionInfo
@@ -60,7 +60,7 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
     :param pytest.PytestPluginManager pluginmanager: The pytest plugin manager.
 
     .. note::
-        This hook is incompatible with ``hookwrapper=True``.
+        This hook is incompatible with hook wrappers.
     """
 
 
@@ -74,7 +74,7 @@ def pytest_plugin_registered(
     :param pytest.PytestPluginManager manager: pytest plugin manager.
 
     .. note::
-        This hook is incompatible with ``hookwrapper=True``.
+        This hook is incompatible with hook wrappers.
     """
 
 
@@ -113,7 +113,7 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
     attribute or can be retrieved as the ``pytestconfig`` fixture.
 
     .. note::
-        This hook is incompatible with ``hookwrapper=True``.
+        This hook is incompatible with hook wrappers.
     """
 
 
@@ -128,7 +128,7 @@ def pytest_configure(config: "Config") -> None:
     imported.
 
     .. note::
-        This hook is incompatible with ``hookwrapper=True``.
+        This hook is incompatible with hook wrappers.
 
     :param pytest.Config config: The pytest config object.
     """
