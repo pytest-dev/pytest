@@ -4536,3 +4536,143 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines([expected])
     assert result.ret == ExitCode.TESTS_FAILED
+
+
+def test_basing_fixture_argkeys_on_param_values_rather_than_on_param_indices(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def fixture1(request):
+            pass
+
+        @pytest.mark.parametrize("fixture1",[1, 0],indirect=True)
+        def test_0(fixture1):
+            pass
+
+        @pytest.mark.parametrize("fixture1",[2, 1],indirect=True)
+        def test_1(fixture1):
+            pass
+
+        def test_2():
+            pass
+
+        @pytest.mark.parametrize("param", [0,1,2], scope='module')
+        def test_3(param):
+            pass
+
+        @pytest.mark.parametrize("param", [2,1,0], scope='module')
+        def test_4(param):
+            pass
+    """
+    )
+    result = pytester.runpytest("--collect-only")
+    result.stdout.re_match_lines(
+        [
+            r"  <Function test_0\[1\]>",
+            r"  <Function test_1\[1\]>",
+            r"  <Function test_0\[0\]>",
+            r"  <Function test_1\[2\]>",
+            r"  <Function test_2>",
+            r"  <Function test_3\[0\]>",
+            r"  <Function test_4\[0\]>",
+            r"  <Function test_3\[1\]>",
+            r"  <Function test_4\[1\]>",
+            r"  <Function test_3\[2\]>",
+            r"  <Function test_4\[2\]>",
+        ]
+    )
+
+
+def test_basing_fixture_argkeys_on_param_values_rather_than_on_param_indices_2(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def fixture1(request):
+            pass
+
+        @pytest.fixture(scope='module')
+        def fixture2(request):
+            pass
+
+        @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect=True)
+        def test_1(fixture1, fixture2):
+            pass
+
+        @pytest.mark.parametrize("fixture1, fixture2", [("c", 4), ("a", 3)], indirect=True)
+        def test_2(fixture1, fixture2):
+            pass
+
+        def test_3():
+            pass
+
+        @pytest.mark.parametrize("param1, param2", [("a", 0), ("b", 1), ("a", 2)], scope='module')
+        def test_4(param1, param2):
+            pass
+
+        @pytest.mark.parametrize("param1, param2", [("c", 4), ("a", 3)], scope='module')
+        def test_5(param1, param2):
+            pass
+    """
+    )
+    result = pytester.runpytest("--collect-only")
+    result.stdout.re_match_lines(
+        [
+            r"  <Function test_1\[a-0\]>",
+            r"  <Function test_1\[a-2\]>",
+            r"  <Function test_2\[a-3\]>",
+            r"  <Function test_1\[b-1\]>",
+            r"  <Function test_2\[c-4\]>",
+            r"  <Function test_3>",
+            r"  <Function test_4\[a-0\]>",
+            r"  <Function test_4\[a-2\]>",
+            r"  <Function test_5\[a-3\]>",
+            r"  <Function test_4\[b-1\]>",
+            r"  <Function test_5\[c-4\]>",
+        ]
+    )
+
+
+@pytest.mark.xfail(
+    reason="It isn't differentiated between direct `fixture` param and fixture `fixture`. Will be"
+    "solved by adding `baseid` to `FixtureArgKey`."
+)
+def test_reorder_with_high_scoped_direct_and_fixture_parametrization(
+    pytester: Pytester,
+):
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(params=[0, 1], scope='module')
+        def fixture(request):
+            pass
+
+        def test_1(fixture):
+            pass
+
+        def test_2():
+            pass
+
+        @pytest.mark.parametrize("fixture", [1, 2], scope='module')
+        def test_3(fixture):
+            pass
+    """
+    )
+    result = pytester.runpytest("--collect-only")
+    result.stdout.re_match_lines(
+        [
+            r"  <Function test_1\[0\]>",
+            r"  <Function test_1\[1\]>",
+            r"  <Function test_2>",
+            r"  <Function test_3\[1\]>",
+            r"  <Function test_3\[2\]>",
+        ]
+    )
