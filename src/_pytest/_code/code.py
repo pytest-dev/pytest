@@ -710,7 +710,7 @@ class ExceptionInfo(Generic[E]):
                 *getattr(self.value, "__notes__", []),
             ]
         )
-        msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n str(exception): {value!r}"
+        msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
         assert re.search(regexp, value), msg
