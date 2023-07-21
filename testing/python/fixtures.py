@@ -4544,7 +4544,7 @@ def test_basing_fixture_argkeys_on_param_values_rather_than_on_param_indices(
     pytester: Pytester,
 ):
     package = pytester.mkdir("package")
-    package.joinpath("__init__.py").write_text("")
+    package.joinpath("__init__.py").write_text("", encoding="utf-8")
     package.joinpath("test_a.py").write_text(
         textwrap.dedent(
             f"""\
@@ -4574,6 +4574,7 @@ def test_basing_fixture_argkeys_on_param_values_rather_than_on_param_indices(
                 pass
             """
         ),
+        encoding="utf-8",
     )
     result = pytester.runpytest("--collect-only")
     result.stdout.re_match_lines(
