@@ -4538,51 +4538,57 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
     assert result.ret == ExitCode.TESTS_FAILED
 
 
+@pytest.mark.parametrize("scope", ["module", "package"])
 def test_basing_fixture_argkeys_on_param_values_rather_than_on_param_indices(
+    scope,
     pytester: Pytester,
 ):
-    pytester.makepyfile(
-        """
-        import pytest
+    package = pytester.mkdir("package")
+    package.joinpath("__init__.py").write_text("")
+    package.joinpath("test_a.py").write_text(
+        textwrap.dedent(
+            f"""\
+            import pytest
 
-        @pytest.fixture(scope='module')
-        def fixture1(request):
-            pass
+            @pytest.fixture(scope='{scope}')
+            def fixture1(request):
+                pass
 
-        @pytest.mark.parametrize("fixture1",[1, 0],indirect=True)
-        def test_0(fixture1):
-            pass
+            @pytest.mark.parametrize("fixture1", [1, 0], indirect=True)
+            def test_0(fixture1):
+                pass
 
-        @pytest.mark.parametrize("fixture1",[2, 1],indirect=True)
-        def test_1(fixture1):
-            pass
+            @pytest.mark.parametrize("fixture1", [2, 1], indirect=True)
+            def test_1(fixture1):
+                pass
 
-        def test_2():
-            pass
+            def test_2():
+                pass
 
-        @pytest.mark.parametrize("param", [0,1,2], scope='module')
-        def test_3(param):
-            pass
+            @pytest.mark.parametrize("param", [0, 1, 2], scope='{scope}')
+            def test_3(param):
+                pass
 
-        @pytest.mark.parametrize("param", [2,1,0], scope='module')
-        def test_4(param):
-            pass
-    """
+            @pytest.mark.parametrize("param", [2, 1, 0], scope='{scope}')
+            def test_4(param):
+                pass
+            """
+        ),
     )
     result = pytester.runpytest("--collect-only")
     result.stdout.re_match_lines(
         [
-            r"  <Function test_0\[1\]>",
-            r"  <Function test_1\[1\]>",
-            r"  <Function test_0\[0\]>",
-            r"  <Function test_1\[2\]>",
-            r"  <Function test_2>",
-            r"  <Function test_3\[0\]>",
-            r"  <Function test_4\[0\]>",
-            r"  <Function test_3\[1\]>",
-            r"  <Function test_4\[1\]>",
-            r"  <Function test_3\[2\]>",
-            r"  <Function test_4\[2\]>",
+            r"    <Function test_0\[1\]>",
+            r"    <Function test_1\[1\]>",
+            r"    <Function test_0\[0\]>",
+            r"    <Function test_1\[2\]>",
+            r"    <Function test_2>",
+            r"    <Function test_3\[0\]>",
+            r"    <Function test_4\[0\]>",
+            r"    <Function test_3\[1\]>",
+            r"    <Function test_4\[1\]>",
+            r"    <Function test_3\[2\]>",
+            r"    <Function test_4\[2\]>",
         ]
     )
 
