@@ -70,7 +70,6 @@ if TYPE_CHECKING:
     from typing import Deque
 
     from _pytest.main import Session
-    from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
 
@@ -243,34 +242,41 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
 _Key = Tuple[object, ...]
 
 
-def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
-    """Return list of keys for all parametrized arguments which match
+def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
+    """Return list of keys for all arguments which match
     the specified scope."""
     assert scope is not Scope.Function
-    try:
-        callspec = item.callspec  # type: ignore[attr-defined]
-    except AttributeError:
-        pass
-    else:
-        cs: CallSpec2 = callspec
-        # cs.indices.items() is random order of argnames.  Need to
-        # sort this so that different calls to
-        # get_parametrized_fixture_keys will be deterministic.
-        for argname, param_index in sorted(cs.indices.items()):
-            if cs._arg2scope[argname] != scope:
+    if hasattr(item, "_fixtureinfo"):
+        for argname in item._fixtureinfo.names_closure:
+            if argname not in item._fixtureinfo.name2fixturedefs:
+                # We can also raise FixtureLookupError
                 continue
-            if scope is Scope.Session:
-                key: _Key = (argname, param_index)
-            elif scope is Scope.Package:
-                key = (argname, param_index, item.path)
-            elif scope is Scope.Module:
-                key = (argname, param_index, item.path)
-            elif scope is Scope.Class:
-                item_cls = item.cls  # type: ignore[attr-defined]
-                key = (argname, param_index, item.path, item_cls)
-            else:
-                assert_never(scope)
-            yield key
+            is_parametrized = (
+                hasattr(item, "callspec") and argname in item.callspec._arg2scope
+            )
+            fixturedef = item._fixtureinfo.name2fixturedefs[argname][-1]
+            # In the case item is parametrized on the `argname` with
+            # a scope, it overrides that of the fixture.
+            if (
+                is_parametrized
+                and cast(Function, item).callspec._arg2scope[argname] == scope
+            ) or (not is_parametrized and fixturedef._scope == scope):
+                param_index = None
+                if is_parametrized:
+                    param_index = cast(Function, item).callspec.indices[argname]
+
+                if scope is Scope.Session:
+                    key: _Key = (argname, param_index)
+                elif scope is Scope.Package:
+                    key = (argname, param_index, item.path.parent)
+                elif scope is Scope.Module:
+                    key = (argname, param_index, item.path)
+                elif scope is Scope.Class:
+                    item_cls = item.cls  # type: ignore[attr-defined]
+                    key = (argname, param_index, item.path, item_cls)
+                else:
+                    assert_never(scope)
+                yield key
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
@@ -288,7 +294,7 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
         item_d: Dict[_Key, Deque[nodes.Item]] = defaultdict(deque)
         items_by_argkey[scope] = item_d
         for item in items:
-            keys = dict.fromkeys(get_parametrized_fixture_keys(item, scope), None)
+            keys = dict.fromkeys(get_fixture_keys(item, scope), None)
             if keys:
                 d[item] = keys
                 for key in keys:

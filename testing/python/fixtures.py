@@ -2731,16 +2731,19 @@ class TestFixtureMarker:
         """
         )
         result = pytester.runpytest("-v")
+        # Order changed because fixture keys were sorted by their names in fixtures::get_fixture_keys
+        # beforehand so encap key came before flavor. This isn't problematic here as both fixtures
+        # are session-scoped but when this isn't the case, it might be problematic.
         result.stdout.fnmatch_lines(
             """
             test_dynamic_parametrized_ordering.py::test[flavor1-vxlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test[flavor1-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
         """
         )
 
@@ -4536,3 +4539,65 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines([expected])
     assert result.ret == ExitCode.TESTS_FAILED
+
+
+def test_reorder_with_nonparametrized_fixtures(pytester: Pytester):
+    path = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def a():
+            return "a"
+
+        @pytest.fixture(scope='module')
+        def b():
+            return "b"
+
+        def test_0(a):
+            pass
+
+        def test_1(b):
+            pass
+
+        def test_2(a):
+            pass
+
+        def test_3(b):
+            pass
+
+        def test_4(b):
+            pass
+        """
+    )
+    result = pytester.runpytest(path, "-q", "--collect-only")
+    result.stdout.fnmatch_lines([f"*test_{i}*" for i in [0, 2, 1, 3, 4]])
+
+
+def test_reorder_with_both_parametrized_and_nonparametrized_fixtures(
+    pytester: Pytester,
+):
+    path = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope='module',params=[None])
+        def parametrized():
+            yield
+
+        @pytest.fixture(scope='module')
+        def nonparametrized():
+            yield
+
+        def test_0(parametrized, nonparametrized):
+            pass
+
+        def test_1():
+            pass
+
+        def test_2(nonparametrized):
+            pass
+        """
+    )
+    result = pytester.runpytest(path, "-q", "--collect-only")
+    result.stdout.fnmatch_lines([f"*test_{i}*" for i in [0, 2, 1]])
