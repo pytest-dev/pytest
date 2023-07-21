@@ -259,11 +259,11 @@ def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
             # a scope, it overrides that of the fixture.
             if (
                 is_parametrized
-                and cast(Function, item).callspec._arg2scope[argname] == scope
+                and cast("Function", item).callspec._arg2scope[argname] == scope
             ) or (not is_parametrized and fixturedef._scope == scope):
                 param_index = None
                 if is_parametrized:
-                    param_index = cast(Function, item).callspec.indices[argname]
+                    param_index = cast("Function", item).callspec.indices[argname]
 
                 if scope is Scope.Session:
                     key: _Key = (argname, param_index)
