@@ -1,14 +1,13 @@
-"""
-module containing a parametrized tests testing cross-python
-serialization via the pickle module.
-"""
+"""Module containing a parametrized tests testing cross-python serialization
+via the pickle module."""
 import shutil
 import subprocess
 import textwrap
 
 import pytest
 
-pythonlist = ["python3.5", "python3.6", "python3.7"]
+
+pythonlist = ["python3.9", "python3.10", "python3.11"]
 
 
 @pytest.fixture(params=pythonlist)
@@ -43,7 +42,7 @@ class Python:
                 )
             )
         )
-        subprocess.check_call((self.pythonpath, str(dumpfile)))
+        subprocess.run((self.pythonpath, str(dumpfile)), check=True)
 
     def load_and_is_true(self, expression):
         loadfile = self.picklefile.with_name("load.py")
@@ -63,7 +62,7 @@ class Python:
             )
         )
         print(loadfile)
-        subprocess.check_call((self.pythonpath, str(loadfile)))
+        subprocess.run((self.pythonpath, str(loadfile)), check=True)
 
 
 @pytest.mark.parametrize("obj", [42, {}, {1: 3}])

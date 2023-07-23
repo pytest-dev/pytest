@@ -483,8 +483,8 @@ argument sets to use for each test function.  Let's run it:
     FAILED test_parametrize.py::TestClass::test_equals[1-2] - assert 1 == 2
     1 failed, 2 passed in 0.12s
 
-Indirect parametrization with multiple fixtures
---------------------------------------------------------------
+Parametrization with multiple fixtures
+--------------------------------------
 
 Here is a stripped down real-life example of using parametrized
 testing for testing serialization of objects between different python
@@ -509,8 +509,8 @@ Running it results in some skips if we don't have all the python interpreters in
    SKIPPED [9] multipython.py:69: 'python3.7' not found
    27 skipped in 0.12s
 
-Indirect parametrization of optional implementations/imports
---------------------------------------------------------------------
+Parametrization of optional implementations/imports
+---------------------------------------------------
 
 If you want to compare the outcomes of several implementations of a given
 API, you can write test functions that receive the already imported implementations
