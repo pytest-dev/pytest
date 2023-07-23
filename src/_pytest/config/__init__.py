@@ -1243,7 +1243,7 @@ class Config:
         self,
         *,
         args: List[str],
-        pyargs: List[str],
+        pyargs: bool,
         testpaths: List[str],
         invocation_dir: Path,
         rootpath: Path,
