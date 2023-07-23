@@ -1170,7 +1170,7 @@ class Config:
             ns.inifilename,
             ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
-            config=self,
+            invocation_dir=self.invocation_params.dir,
         )
         self._rootpath = rootpath
         self._inipath = inipath
