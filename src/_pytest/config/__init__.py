@@ -353,9 +353,9 @@ def _get_legacy_hook_marks(
     if TYPE_CHECKING:
         # abuse typeguard from importlib to avoid massive method type union thats lacking a alias
         assert inspect.isroutine(method)
-    known_marks: set[str] = {m.name for m in getattr(method, "pytestmark", [])}
-    must_warn: list[str] = []
-    opts: dict[str, bool] = {}
+    known_marks: Set[str] = {m.name for m in getattr(method, "pytestmark", [])}
+    must_warn: List[str] = []
+    opts: Dict[str, bool] = {}
     for opt_name in opt_names:
         opt_attr = getattr(method, opt_name, AttributeError)
         if opt_attr is not AttributeError:
