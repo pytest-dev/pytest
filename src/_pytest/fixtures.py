@@ -1404,6 +1404,26 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
+def _get_direct_parametrize_args(node: nodes.Node) -> List[str]:
+    """Return all direct parametrization arguments of a node, so we don't
+    mistake them for fixtures.
+
+    Check https://github.com/pytest-dev/pytest/issues/5036.
+
+    These things are done later as well when dealing with parametrization
+    so this could be improved.
+    """
+    parametrize_argnames: List[str] = []
+    for marker in node.iter_markers(name="parametrize"):
+        if not marker.kwargs.get("indirect", False):
+            p_argnames, _ = ParameterSet._parse_parametrize_args(
+                *marker.args, **marker.kwargs
+            )
+            parametrize_argnames.extend(p_argnames)
+
+    return parametrize_argnames
+
+
 class FixtureManager:
     """pytest fixture definitions and information is stored and managed
     from this class.
@@ -1453,25 +1473,6 @@ class FixtureManager:
         }
         session.config.pluginmanager.register(self, "funcmanage")
 
-    def _get_direct_parametrize_args(self, node: nodes.Node) -> List[str]:
-        """Return all direct parametrization arguments of a node, so we don't
-        mistake them for fixtures.
-
-        Check https://github.com/pytest-dev/pytest/issues/5036.
-
-        These things are done later as well when dealing with parametrization
-        so this could be improved.
-        """
-        parametrize_argnames: List[str] = []
-        for marker in node.iter_markers(name="parametrize"):
-            if not marker.kwargs.get("indirect", False):
-                p_argnames, _ = ParameterSet._parse_parametrize_args(
-                    *marker.args, **marker.kwargs
-                )
-                parametrize_argnames.extend(p_argnames)
-
-        return parametrize_argnames
-
     def getfixtureinfo(
         self,
         node: nodes.Item,
@@ -1503,7 +1504,7 @@ class FixtureManager:
         )
         initialnames = usefixtures + argnames
         initialnames, names_closure, arg2fixturedefs = self.getfixtureclosure(
-            initialnames, node, ignore_args=self._get_direct_parametrize_args(node)
+            initialnames, node, ignore_args=_get_direct_parametrize_args(node)
         )
         return FuncFixtureInfo(argnames, initialnames, names_closure, arg2fixturedefs)
 
