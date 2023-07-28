@@ -1136,12 +1136,12 @@ class CallSpec2:
         id: str,
         marks: Iterable[Union[Mark, MarkDecorator]],
         scope: Scope,
-        param_index: int,
+        param_indices: Tuple[int, ...],
     ) -> "CallSpec2":
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = self._arg2scope.copy()
-        for arg, val in zip(argnames, valset):
+        for arg, val, param_index in zip(argnames, valset, param_indices):
             if arg in params:
                 raise ValueError(f"duplicate {arg!r}")
             params[arg] = val
@@ -1168,6 +1168,54 @@ class CallSpec2:
 
 def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     return request.param
+
+
+def resolve_values_indices_in_parametersets(
+    argnames: Sequence[str],
+    parametersets: Sequence[ParameterSet],
+) -> List[Tuple[int, ...]]:
+    """Resolve indices of the values in parameter sets. The index of a value is determined by
+    where the value first appears in the existing values of the argname. For example, given
+    ``argnames`` and ``parametersets`` below, the result would be:
+    ::
+        argnames = ["A", "B", "C"]
+        parametersets = [("a1", "b1", "c1"), ("a1", "b2", "c1"), ("a1", "b3", "c2")]
+        result = [(0, 0, 0), (0, 1, 0), (0, 2, 1)]
+
+    result is used in reordering tests to keep items using the same fixture close together.
+
+    :param argnames:
+        Argument names passed to ``metafunc.parametrize()``.
+    :param parametersets:
+        The parameter sets, each containing a set of values corresponding
+        to ``argnames``.
+    :returns:
+        List of tuples of indices, each tuple for a parameter set.
+    """
+    indices = []
+    argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(
+        dict
+    )
+    argvalues_count: Dict[str, int] = defaultdict(lambda: 0)
+    for i, argname in enumerate(argnames):
+        argname_indices = []
+        for parameterset in parametersets:
+            value = parameterset.values[i]
+            try:
+                argname_indices.append(
+                    argname_value_indices_for_hashable_ones[argname][value]
+                )
+            except KeyError:  # New unique value
+                argname_value_indices_for_hashable_ones[argname][
+                    value
+                ] = argvalues_count[argname]
+                argname_indices.append(argvalues_count[argname])
+                argvalues_count[argname] += 1
+            except TypeError:  # `value` is not hashable
+                argname_indices.append(argvalues_count[argname])
+                argvalues_count[argname] += 1
+        indices.append(argname_indices)
+    return list(cast(Iterable[Tuple[int]], zip(*indices)))
 
 
 # Used for storing artificial fixturedefs for direct parametrization.
@@ -1324,7 +1372,9 @@ class Metafunc:
         ids = self._resolve_parameter_set_ids(
             argnames, ids, parametersets, nodeid=self.definition.nodeid
         )
-
+        param_indices_list = resolve_values_indices_in_parametersets(
+            argnames, parametersets
+        )
         # Store used (possibly generated) ids with parametrize Marks.
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
@@ -1387,8 +1437,8 @@ class Metafunc:
         # of all calls.
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
-            for param_index, (param_id, param_set) in enumerate(
-                zip(ids, parametersets)
+            for param_id, param_set, param_indices in zip(
+                ids, parametersets, param_indices_list
             ):
                 newcallspec = callspec.setmulti(
                     argnames=argnames,
@@ -1396,7 +1446,7 @@ class Metafunc:
                     id=param_id,
                     marks=param_set.marks,
                     scope=scope_,
-                    param_index=param_index,
+                    param_indices=param_indices,
                 )
                 newcalls.append(newcallspec)
         self._calls = newcalls
