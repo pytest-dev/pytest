@@ -44,12 +44,10 @@ Use ``""`` instead of ``''`` in expression when running this on Windows
 
 .. _nodeids:
 
-**Run tests by node ids**
+**Run tests by collection arguments**
 
-Each collected test is assigned a unique ``nodeid`` which consist of the module file path followed
-by specifiers like class names and function names separated by ``::`` characters,
-and parameters from parametrization in ``[...]``.
-You can use the same syntax to match tests relative to the working directory.
+Pass the module filename relative to the working directory, followed by specifiers like the class name and function name
+separated by ``::`` characters, and parameters from parameterization enclosed in ``[]``.
 
 To run a specific test within a module:
 
@@ -68,6 +66,12 @@ Specifying a specific test method:
 .. code-block:: bash
 
     pytest tests/test_mod.py::TestClass::test_method
+
+Specifying a specific parametrization of a test:
+
+.. code-block:: bash
+
+    pytest tests/test_mod.py::test_func[x1,y2]
 
 **Run tests by marker expressions**
 
