@@ -119,9 +119,8 @@ def get_scope_package(
     from _pytest.python import Package
 
     current: Optional[Union[nodes.Item, nodes.Collector]] = node
-    fixture_package_name = "{}/{}".format(fixturedef.baseid, "__init__.py")
     while current and (
-        not isinstance(current, Package) or fixture_package_name != current.nodeid
+        not isinstance(current, Package) or current.nodeid != fixturedef.baseid
     ):
         current = current.parent  # type: ignore[assignment]
     if current is None:
@@ -263,7 +262,7 @@ def get_parametrized_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_K
             if scope is Scope.Session:
                 key: _Key = (argname, param_index)
             elif scope is Scope.Package:
-                key = (argname, param_index, item.path.parent)
+                key = (argname, param_index, item.path)
             elif scope is Scope.Module:
                 key = (argname, param_index, item.path)
             elif scope is Scope.Class:

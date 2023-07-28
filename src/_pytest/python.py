@@ -204,7 +204,7 @@ def pytest_collect_file(file_path: Path, parent: nodes.Collector) -> Optional["M
     if file_path.suffix == ".py":
         if not parent.session.isinitpath(file_path):
             if not path_matches_patterns(
-                file_path, parent.config.getini("python_files") + ["__init__.py"]
+                file_path, parent.config.getini("python_files")
             ):
                 return None
         ihook = parent.session.gethookproxy(file_path)
@@ -221,9 +221,6 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
 
 
 def pytest_pycollect_makemodule(module_path: Path, parent) -> "Module":
-    if module_path.name == "__init__.py":
-        pkg: Package = Package.from_parent(parent, path=module_path)
-        return pkg
     mod: Module = Module.from_parent(parent, path=module_path)
     return mod
 
@@ -517,11 +514,62 @@ class PyCollector(PyobjMixin, nodes.Collector):
                 )
 
 
+def importtestmodule(
+    path: Path,
+    config: Config,
+):
+    # We assume we are only called once per module.
+    importmode = config.getoption("--import-mode")
+    try:
+        mod = import_path(path, mode=importmode, root=config.rootpath)
+    except SyntaxError as e:
+        raise nodes.Collector.CollectError(
+            ExceptionInfo.from_current().getrepr(style="short")
+        ) from e
+    except ImportPathMismatchError as e:
+        raise nodes.Collector.CollectError(
+            "import file mismatch:\n"
+            "imported module %r has this __file__ attribute:\n"
+            "  %s\n"
+            "which is not the same as the test file we want to collect:\n"
+            "  %s\n"
+            "HINT: remove __pycache__ / .pyc files and/or use a "
+            "unique basename for your test file modules" % e.args
+        ) from e
+    except ImportError as e:
+        exc_info = ExceptionInfo.from_current()
+        if config.getoption("verbose") < 2:
+            exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+        exc_repr = (
+            exc_info.getrepr(style="short")
+            if exc_info.traceback
+            else exc_info.exconly()
+        )
+        formatted_tb = str(exc_repr)
+        raise nodes.Collector.CollectError(
+            "ImportError while importing test module '{path}'.\n"
+            "Hint: make sure your test modules/packages have valid Python names.\n"
+            "Traceback:\n"
+            "{traceback}".format(path=path, traceback=formatted_tb)
+        ) from e
+    except skip.Exception as e:
+        if e.allow_module_level:
+            raise
+        raise nodes.Collector.CollectError(
+            "Using pytest.skip outside of a test will skip the entire module. "
+            "If that's your intention, pass `allow_module_level=True`. "
+            "If you want to skip a specific test or an entire class, "
+            "use the @pytest.mark.skip or @pytest.mark.skipif decorators."
+        ) from e
+    config.pluginmanager.consider_module(mod)
+    return mod
+
+
 class Module(nodes.File, PyCollector):
     """Collector for test classes and functions in a Python module."""
 
     def _getobj(self):
-        return self._importtestmodule()
+        return importtestmodule(self.path, self.config)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         self._inject_setup_module_fixture()
@@ -606,55 +654,8 @@ class Module(nodes.File, PyCollector):
 
         self.obj.__pytest_setup_function = xunit_setup_function_fixture
 
-    def _importtestmodule(self):
-        # We assume we are only called once per module.
-        importmode = self.config.getoption("--import-mode")
-        try:
-            mod = import_path(self.path, mode=importmode, root=self.config.rootpath)
-        except SyntaxError as e:
-            raise self.CollectError(
-                ExceptionInfo.from_current().getrepr(style="short")
-            ) from e
-        except ImportPathMismatchError as e:
-            raise self.CollectError(
-                "import file mismatch:\n"
-                "imported module %r has this __file__ attribute:\n"
-                "  %s\n"
-                "which is not the same as the test file we want to collect:\n"
-                "  %s\n"
-                "HINT: remove __pycache__ / .pyc files and/or use a "
-                "unique basename for your test file modules" % e.args
-            ) from e
-        except ImportError as e:
-            exc_info = ExceptionInfo.from_current()
-            if self.config.getoption("verbose") < 2:
-                exc_info.traceback = exc_info.traceback.filter(filter_traceback)
-            exc_repr = (
-                exc_info.getrepr(style="short")
-                if exc_info.traceback
-                else exc_info.exconly()
-            )
-            formatted_tb = str(exc_repr)
-            raise self.CollectError(
-                "ImportError while importing test module '{path}'.\n"
-                "Hint: make sure your test modules/packages have valid Python names.\n"
-                "Traceback:\n"
-                "{traceback}".format(path=self.path, traceback=formatted_tb)
-            ) from e
-        except skip.Exception as e:
-            if e.allow_module_level:
-                raise
-            raise self.CollectError(
-                "Using pytest.skip outside of a test will skip the entire module. "
-                "If that's your intention, pass `allow_module_level=True`. "
-                "If you want to skip a specific test or an entire class, "
-                "use the @pytest.mark.skip or @pytest.mark.skipif decorators."
-            ) from e
-        self.config.pluginmanager.consider_module(mod)
-        return mod
 
-
-class Package(Module):
+class Package(nodes.FSCollector):
     """Collector for files and directories in a Python packages -- directories
     with an `__init__.py` file."""
 
@@ -680,22 +681,24 @@ class Package(Module):
             session=session,
             nodeid=nodeid,
         )
-        self.name = self.path.parent.name
+        self.name = self.path.name
 
     def setup(self) -> None:
+        init_mod = importtestmodule(self.path / "__init__.py", self.config)
+
         # Not using fixtures to call setup_module here because autouse fixtures
         # from packages are not called automatically (#4085).
         setup_module = _get_first_non_fixture_func(
-            self.obj, ("setUpModule", "setup_module")
+            init_mod, ("setUpModule", "setup_module")
         )
         if setup_module is not None:
-            _call_with_optional_argument(setup_module, self.obj)
+            _call_with_optional_argument(setup_module, init_mod)
 
         teardown_module = _get_first_non_fixture_func(
-            self.obj, ("tearDownModule", "teardown_module")
+            init_mod, ("tearDownModule", "teardown_module")
         )
         if teardown_module is not None:
-            func = partial(_call_with_optional_argument, teardown_module, self.obj)
+            func = partial(_call_with_optional_argument, teardown_module, init_mod)
             self.addfinalizer(func)
 
     def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
@@ -732,21 +735,16 @@ class Package(Module):
         return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        this_path = self.path.parent
-
         # Always collect the __init__ first.
-        if self.session.isinitpath(self.path) or path_matches_patterns(
-            self.path, self.config.getini("python_files")
-        ):
-            yield Module.from_parent(self, path=self.path)
+        yield from self._collectfile(self.path / "__init__.py")
 
         pkg_prefixes: Set[Path] = set()
-        for direntry in visit(str(this_path), recurse=self._recurse):
+        for direntry in visit(self.path, recurse=self._recurse):
             path = Path(direntry.path)
 
-            # We will visit our own __init__.py file, in which case we skip it.
+            # Already handled above.
             if direntry.is_file():
-                if direntry.name == "__init__.py" and path.parent == this_path:
+                if direntry.name == "__init__.py" and path.parent == self.path:
                     continue
 
             parts_ = parts(direntry.path)
@@ -761,7 +759,7 @@ class Package(Module):
             elif not direntry.is_dir():
                 # Broken symlink or invalid/missing file.
                 continue
-            elif path.joinpath("__init__.py").is_file():
+            elif self._recurse(direntry) and path.joinpath("__init__.py").is_file():
                 pkg_prefixes.add(path)
 
 
