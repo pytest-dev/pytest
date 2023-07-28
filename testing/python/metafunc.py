@@ -1486,6 +1486,23 @@ class TestMetafuncFunctional:
             ]
         )
 
+    @pytest.mark.parametrize("scope", ["class", "package"])
+    def test_parametrize_missing_scope_doesnt_crash(
+        self, pytester: Pytester, scope: str
+    ) -> None:
+        """Doesn't crash when parametrize(scope=<scope>) is used without a
+        corresponding <scope> node."""
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.mark.parametrize("x", [0], scope="{scope}")
+            def test_it(x): pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
 
 class TestMetafuncFunctionalAuto:
     """Tests related to automatically find out the correct scope for

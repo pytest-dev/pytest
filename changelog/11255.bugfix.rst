@@ -1,0 +1,1 @@
+Fixed crash on `parametrize(..., scope="package")` without a package present.
