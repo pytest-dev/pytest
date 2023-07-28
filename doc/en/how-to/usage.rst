@@ -44,7 +44,7 @@ Use ``""`` instead of ``''`` in expression when running this on Windows
 
 .. _nodeids:
 
-**Run tests by collection argument**
+**Run tests by collection arguments**
 
 Pass the module filename relative to the working directory, followed by specifiers like the class name and function name
 separated by ``::`` characters, and parameters from parameterization enclosed in ``[]``.
