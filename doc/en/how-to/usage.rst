@@ -44,12 +44,10 @@ Use ``""`` instead of ``''`` in expression when running this on Windows
 
 .. _nodeids:
 
-**Run tests by node ids**
+**Run tests by collection argument**
 
-Each collected test is assigned a unique ``nodeid`` which consist of the module file path followed
-by specifiers like class names and function names separated by ``::`` characters,
-and parameters from parametrization in ``[...]``.
-You can use the same syntax to match tests relative to the working directory.
+Pass the module filename relative to working directory followed by specifiers like class names, function names and
+parameters from parameterization, separated by ``::`` characters.
 
 To run a specific test within a module:
 
