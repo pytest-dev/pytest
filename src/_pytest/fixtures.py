@@ -155,6 +155,8 @@ name2pseudofixturedef_key = StashKey[Dict[str, "FixtureDef[Any]"]]()
 def add_funcarg_pseudo_fixture_def(
     collector: nodes.Collector, metafunc: "Metafunc", fixturemanager: "FixtureManager"
 ) -> None:
+    import _pytest.python
+
     # This function will transform all collected calls to functions
     # if they use direct funcargs (i.e. direct parametrization)
     # because we want later test execution to be able to rely on
@@ -192,11 +194,17 @@ def add_funcarg_pseudo_fixture_def(
         if scope is not Scope.Function:
             node = get_scope_node(collector, scope)
             if node is None:
-                assert scope is Scope.Class and isinstance(
-                    collector, _pytest.python.Module
-                )
-                # Use module-level collector for class-scope (for now).
-                node = collector
+                # If used class scope and there is no class, use module-level
+                # collector (for now).
+                if scope is Scope.Class:
+                    assert isinstance(collector, _pytest.python.Module)
+                    node = collector
+                # If used package scope and there is no package, use session
+                # (for now).
+                elif scope is Scope.Package:
+                    node = collector.session
+                else:
+                    assert False, f"Unhandled missing scope: {scope}"
         if node is None:
             name2pseudofixturedef = None
         else:
