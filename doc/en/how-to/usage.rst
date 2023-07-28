@@ -46,8 +46,8 @@ Use ``""`` instead of ``''`` in expression when running this on Windows
 
 **Run tests by collection argument**
 
-Pass the module filename relative to working directory followed by specifiers like class names, function names and
-parameters from parameterization, separated by ``::`` characters.
+Pass the module filename relative to the working directory, followed by specifiers like the class name and function name
+separated by ``::`` characters, and parameters from parameterization enclosed in ``[]``.
 
 To run a specific test within a module:
 
@@ -66,6 +66,12 @@ Specifying a specific test method:
 .. code-block:: bash
 
     pytest tests/test_mod.py::TestClass::test_method
+
+Specifying a specific parametrization of a test:
+
+.. code-block:: bash
+
+    pytest tests/test_mod.py::test_func[x1,y2]
 
 **Run tests by marker expressions**
 
