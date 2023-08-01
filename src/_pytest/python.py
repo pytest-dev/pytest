@@ -14,7 +14,6 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import cast
 from typing import Dict
 from typing import final
 from typing import Generator
@@ -498,8 +497,11 @@ class PyCollector(PyobjMixin, nodes.Collector):
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
-            # Dynamic direct parametrization may have shadowed some fixtures,
-            # so make sure we update what the function really needs.
+            # Direct parametrizations taking place in module/class-specific
+            # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
+            # we update what the function really needs a.k.a its fixture closure. Note that
+            # direct parametrizations using `@pytest.mark.parametrize` have already been considered
+            # into making the closure using `ignore_args` arg to `getfixtureclosure`.
             fixtureinfo.prune_dependency_tree()
 
             for callspec in metafunc._calls:
@@ -1170,7 +1172,7 @@ def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     return request.param
 
 
-# Used for storing artificial fixturedefs for direct parametrization.
+# Used for storing pseudo fixturedefs for direct parametrization.
 name2pseudofixturedef_key = StashKey[Dict[str, FixtureDef[Any]]]()
 
 
@@ -1330,8 +1332,8 @@ class Metafunc:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
         # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
-        # artificial FixtureDef's so that later at test execution time we can rely
-        # on a proper FixtureDef to exist for fixture setup.
+        # artificial "pseudo" FixtureDef's so that later at test execution time we can
+        # rely on a proper FixtureDef to exist for fixture setup.
         arg2fixturedefs = self._arg2fixturedefs
         node = None
         # If we have a scope that is higher than function, we need
@@ -1339,7 +1341,8 @@ class Metafunc:
         # a per-scope basis. We thus store and cache the fixturedef on the
         # node related to the scope.
         if scope_ is not Scope.Function:
-            collector = cast(nodes.Node, self.definition.parent)
+            collector = self.definition.parent
+            assert collector is not None
             node = get_scope_node(collector, scope_)
             if node is None:
                 # If used class scope and there is no class, use module-level

@@ -23,6 +23,7 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.pytester import Pytester
+from _pytest.python import Function
 from _pytest.python import IdMaker
 from _pytest.scope import Scope
 
@@ -974,16 +975,6 @@ class TestMetafunc:
         assert metafunc._calls[1].params == dict(x=3, y=4)
         assert metafunc._calls[1].id == "3-4"
 
-    @pytest.mark.xfail(reason="Will pass upon merging PR#11257")
-    def test_parametrize_with_duplicate_values(self) -> None:
-        metafunc = self.Metafunc(lambda x, y: None)
-        metafunc.parametrize(("x", "y"), [(1, 2), (3, 4), (1, 5), (2, 2)])
-        assert len(metafunc._calls) == 4
-        assert metafunc._calls[0].indices == dict(x=0, y=0)
-        assert metafunc._calls[1].indices == dict(x=1, y=1)
-        assert metafunc._calls[2].indices == dict(x=0, y=2)
-        assert metafunc._calls[3].indices == dict(x=2, y=0)
-
     def test_high_scoped_parametrize_reordering(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -1015,36 +1006,6 @@ class TestMetafunc:
                 r"  <Function test1\[2-4\]>",
                 r"  <Function test3\[2\]>",
                 r"  <Function test2>",
-            ]
-        )
-
-    @pytest.mark.xfail(reason="Will pass upon merging PR#11257")
-    def test_high_scoped_parametrize_with_duplicate_values_reordering(
-        self, pytester: Pytester
-    ) -> None:
-        pytester.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture(scope='module')
-            def fixture1(request):
-                pass
-
-            @pytest.fixture(scope='module')
-            def fixture2(request):
-                pass
-
-            @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect=True)
-            def test(fixture1, fixture2):
-                pass
-        """
-        )
-        result = pytester.runpytest("--collect-only")
-        result.stdout.re_match_lines(
-            [
-                r"  <Function test\[a-0\]>",
-                r"  <Function test\[a-2\]>",
-                r"  <Function test\[b-1\]>",
             ]
         )
 
@@ -1590,29 +1551,27 @@ class TestMetafuncFunctional:
     def test_parametrize_module_level_test_with_class_scope(
         self, pytester: Pytester
     ) -> None:
-        pytester.makepyfile(
+        module = pytester.makepyfile(
             """
             import pytest
 
-            @pytest.fixture
-            def item(request):
-                return request._pyfuncitem
-
-            fixturedef = None
-
             @pytest.mark.parametrize("x", [0, 1], scope="class")
-            def test_1(item, x):
-                global fixturedef
-                fixturedef = item._fixtureinfo.name2fixturedefs['x'][-1]
+            def test_1(x):
+                pass
 
             @pytest.mark.parametrize("x", [1, 2], scope="module")
-            def test_2(item, x):
-                global fixturedef
-                assert fixturedef == item._fixtureinfo.name2fixturedefs['x'][-1]
+            def test_2(x):
+                pass
         """
         )
-        result = pytester.runpytest()
-        assert result.ret == 0
+        test_1_0, _, test_2_0, _ = pytester.genitems((pytester.getmodulecol(module),))
+        test_1_fixture_x = cast(Function, test_1_0)._fixtureinfo.name2fixturedefs["x"][
+            -1
+        ]
+        test_2_fixture_x = cast(Function, test_2_0)._fixtureinfo.name2fixturedefs["x"][
+            -1
+        ]
+        assert test_1_fixture_x == test_2_fixture_x
 
 
 class TestMetafuncFunctionalAuto:
