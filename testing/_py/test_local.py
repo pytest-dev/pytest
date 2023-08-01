@@ -1573,4 +1573,4 @@ class TestBinaryAndTextMethods:
         x.write_text(part, "ascii")
         s = x.read_text("ascii")
         assert s == part
-        assert isinstance(s, type(part))
+        assert type(s) is type(part)
