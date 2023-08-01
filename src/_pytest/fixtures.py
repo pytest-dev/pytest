@@ -15,7 +15,6 @@ from typing import Final
 from typing import final
 from typing import Generator
 from typing import Generic
-from typing import Hashable
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -241,22 +240,11 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
 
 
 @dataclasses.dataclass(frozen=True)
-class FixtureArgKeyByIndex:
+class FixtureArgKey:
     argname: str
     param_index: int
     scoped_item_path: Optional[Path]
     item_cls: Optional[type]
-
-
-@dataclasses.dataclass(frozen=True)
-class FixtureArgKeyByValue:
-    argname: str
-    param_value: Hashable
-    scoped_item_path: Optional[Path]
-    item_cls: Optional[type]
-
-
-FixtureArgKey = Union[FixtureArgKeyByIndex, FixtureArgKeyByValue]
 
 
 def get_parametrized_fixture_keys(
@@ -292,15 +280,7 @@ def get_parametrized_fixture_keys(
                 assert_never(scope)
 
             param_index = cs.indices[argname]
-            param_value = cs.params[argname]
-            if isinstance(param_value, Hashable):
-                yield FixtureArgKeyByValue(
-                    argname, param_value, scoped_item_path, item_cls
-                )
-            else:
-                yield FixtureArgKeyByIndex(  # type: ignore[unreachable]
-                    argname, param_index, scoped_item_path, item_cls
-                )
+            yield FixtureArgKey(argname, param_index, scoped_item_path, item_cls)
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
