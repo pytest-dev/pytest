@@ -222,7 +222,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             other_side = right if isinstance(left, ApproxBase) else left
 
             explanation = approx_side._repr_compare(other_side)
-        elif type(left) is type(right)
+        elif type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
             # Note: unlike dataclasses/attrs, namedtuples compare only the
