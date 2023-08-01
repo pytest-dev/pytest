@@ -12,6 +12,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+from _pytest.scope import Scope
 
 
 def test_getfuncargnames_functions():
@@ -4681,5 +4682,56 @@ def test_reorder_with_high_scoped_direct_and_fixture_parametrization(
             r"  <Function test_2>",
             r"  <Function test_3\[1\]>",
             r"  <Function test_3\[2\]>",
+        ]
+    )
+
+
+def test_get_parametrized_fixture_keys_with_unhashable_params(
+    pytester: Pytester,
+) -> None:
+    module = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("arg", [[1], [2]], scope='module')
+        def test(arg):
+            pass
+    """
+    )
+    test_0, test_1 = pytester.genitems((pytester.getmodulecol(module),))
+    test_0_keys = list(fixtures.get_parametrized_fixture_keys(test_0, Scope.Module))
+    test_1_keys = list(fixtures.get_parametrized_fixture_keys(test_1, Scope.Module))
+    assert len(test_0_keys) == len(test_1_keys) == 1
+    assert isinstance(test_0_keys[0], fixtures.FixtureArgKeyByIndex)
+    assert test_0_keys[0].param_index == 0
+    assert isinstance(test_1_keys[0], fixtures.FixtureArgKeyByIndex)
+    assert test_1_keys[0].param_index == 1
+
+
+def test_reordering_with_unhashable_parametrize_args(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("arg", [[1], [2]], scope='module')
+        def test_1(arg):
+            print(arg)
+
+        def test_2():
+            print("test_2")
+
+        @pytest.mark.parametrize("arg", [[3], [4]], scope='module')
+        def test_3(arg):
+            print(arg)
+    """
+    )
+    result = pytester.runpytest("-s")
+    result.stdout.fnmatch_lines(
+        [
+            r"*1*",
+            r"*3*",
+            r"*2*",
+            r"*4*",
+            r"*test_2*",
         ]
     )

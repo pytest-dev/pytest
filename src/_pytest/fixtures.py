@@ -241,12 +241,22 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
 
 
 @dataclasses.dataclass(frozen=True)
-class FixtureArgKey:
+class FixtureArgKeyByIndex:
     argname: str
-    param_index: Optional[int]
-    param_value: Optional[Hashable]
+    param_index: int
     scoped_item_path: Optional[Path]
     item_cls: Optional[type]
+
+
+@dataclasses.dataclass(frozen=True)
+class FixtureArgKeyByValue:
+    argname: str
+    param_value: Hashable
+    scoped_item_path: Optional[Path]
+    item_cls: Optional[type]
+
+
+FixtureArgKey = Union[FixtureArgKeyByIndex, FixtureArgKeyByValue]
 
 
 def get_parametrized_fixture_keys(
@@ -268,13 +278,6 @@ def get_parametrized_fixture_keys(
             if cs._arg2scope[argname] != scope:
                 continue
 
-            param_index: Optional[int] = cs.indices[argname]
-            param_value = cs.params[argname]
-            if isinstance(cs.params[argname], Hashable):
-                param_index = None
-            else:
-                param_value = None
-
             item_cls = None
             if scope is Scope.Session:
                 scoped_item_path = None
@@ -288,9 +291,16 @@ def get_parametrized_fixture_keys(
             else:
                 assert_never(scope)
 
-            yield FixtureArgKey(
-                argname, param_index, param_value, scoped_item_path, item_cls
-            )
+            param_index = cs.indices[argname]
+            param_value = cs.params[argname]
+            if isinstance(param_value, Hashable):
+                yield FixtureArgKeyByValue(
+                    argname, param_value, scoped_item_path, item_cls
+                )
+            else:
+                yield FixtureArgKeyByIndex(  # type: ignore[unreachable]
+                    argname, param_index, scoped_item_path, item_cls
+                )
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
