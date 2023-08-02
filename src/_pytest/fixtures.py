@@ -210,16 +210,14 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
     argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]] = {}
     items_by_argkey: Dict[Scope, Dict[FixtureArgKey, Deque[nodes.Item]]] = {}
     for scope in HIGH_SCOPES:
-        d: Dict[nodes.Item, Dict[FixtureArgKey, None]] = {}
-        argkeys_cache[scope] = d
-        item_d: Dict[FixtureArgKey, Deque[nodes.Item]] = defaultdict(deque)
-        items_by_argkey[scope] = item_d
+        scoped_argkeys_cache = argkeys_cache[scope] = {}
+        scoped_items_by_argkey = items_by_argkey[scope] = defaultdict(deque)
         for item in items:
             keys = dict.fromkeys(get_parametrized_fixture_keys(item, scope), None)
             if keys:
-                d[item] = keys
+                scoped_argkeys_cache[item] = keys
                 for key in keys:
-                    item_d[key].append(item)
+                    scoped_items_by_argkey[key].append(item)
     items_dict = dict.fromkeys(items, None)
     return list(
         reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, Scope.Session)
