@@ -238,11 +238,15 @@ def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
     )
 
 
-# Parametrized fixture key, helper alias for code below.
-_Key = Tuple[object, ...]
+@dataclasses.dataclass(frozen=True)
+class FixtureArgKey:
+    argname: str
+    param_index: Optional[int]
+    scoped_item_path: Optional[Path]
+    item_cls: Optional[type]
 
 
-def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
+def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[FixtureArgKey]:
     """Return list of keys for all arguments which match
     the specified scope."""
     assert scope is not Scope.Function
@@ -265,18 +269,20 @@ def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
                 if is_parametrized:
                     param_index = cast("Function", item).callspec.indices[argname]
 
+                item_cls = None
                 if scope is Scope.Session:
-                    key: _Key = (argname, param_index)
+                    scoped_item_path = None
                 elif scope is Scope.Package:
-                    key = (argname, param_index, item.path.parent)
+                    scoped_item_path = item.path
                 elif scope is Scope.Module:
-                    key = (argname, param_index, item.path)
+                    scoped_item_path = item.path
                 elif scope is Scope.Class:
+                    scoped_item_path = item.path
                     item_cls = item.cls  # type: ignore[attr-defined]
-                    key = (argname, param_index, item.path, item_cls)
                 else:
                     assert_never(scope)
-                yield key
+
+                yield FixtureArgKey(argname, param_index, scoped_item_path, item_cls)
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
@@ -286,12 +292,12 @@ def get_fixture_keys(item: nodes.Item, scope: Scope) -> Iterator[_Key]:
 
 
 def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]] = {}
-    items_by_argkey: Dict[Scope, Dict[_Key, Deque[nodes.Item]]] = {}
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]] = {}
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, Deque[nodes.Item]]] = {}
     for scope in HIGH_SCOPES:
-        d: Dict[nodes.Item, Dict[_Key, None]] = {}
+        d: Dict[nodes.Item, Dict[FixtureArgKey, None]] = {}
         argkeys_cache[scope] = d
-        item_d: Dict[_Key, Deque[nodes.Item]] = defaultdict(deque)
+        item_d: Dict[FixtureArgKey, Deque[nodes.Item]] = defaultdict(deque)
         items_by_argkey[scope] = item_d
         for item in items:
             keys = dict.fromkeys(get_fixture_keys(item, scope), None)
@@ -307,8 +313,8 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
 
 def fix_cache_order(
     item: nodes.Item,
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]],
-    items_by_argkey: Dict[Scope, Dict[_Key, "Deque[nodes.Item]"]],
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
 ) -> None:
     for scope in HIGH_SCOPES:
         for key in argkeys_cache[scope].get(item, []):
@@ -317,13 +323,13 @@ def fix_cache_order(
 
 def reorder_items_atscope(
     items: Dict[nodes.Item, None],
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[_Key, None]]],
-    items_by_argkey: Dict[Scope, Dict[_Key, "Deque[nodes.Item]"]],
+    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
     scope: Scope,
 ) -> Dict[nodes.Item, None]:
     if scope is Scope.Function or len(items) < 3:
         return items
-    ignore: Set[Optional[_Key]] = set()
+    ignore: Set[Optional[FixtureArgKey]] = set()
     items_deque = deque(items)
     items_done: Dict[nodes.Item, None] = {}
     scoped_items_by_argkey = items_by_argkey[scope]
