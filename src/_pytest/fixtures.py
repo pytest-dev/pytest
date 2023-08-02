@@ -259,7 +259,7 @@ def get_parametrized_fixture_keys(
         pass
     else:
         cs: CallSpec2 = callspec
-        # cs.indices.items() is random order of argnames.  Need to
+        # cs.indices is random order of argnames.  Need to
         # sort this so that different calls to
         # get_parametrized_fixture_keys will be deterministic.
         for argname in sorted(cs.indices):
@@ -270,7 +270,7 @@ def get_parametrized_fixture_keys(
             if scope is Scope.Session:
                 scoped_item_path = None
             elif scope is Scope.Package:
-                scoped_item_path = item.path.parent
+                scoped_item_path = item.path
             elif scope is Scope.Module:
                 scoped_item_path = item.path
             elif scope is Scope.Class:
