@@ -1551,6 +1551,10 @@ class TestMetafuncFunctional:
     def test_parametrize_module_level_test_with_class_scope(
         self, pytester: Pytester
     ) -> None:
+        """
+        Test that a class-scoped parametrization without a corresponding `Class`
+        gets module scope, i.e. we only create a single FixtureDef for it per module.
+        """
         module = pytester.makepyfile(
             """
             import pytest
@@ -1565,13 +1569,16 @@ class TestMetafuncFunctional:
         """
         )
         test_1_0, _, test_2_0, _ = pytester.genitems((pytester.getmodulecol(module),))
-        test_1_fixture_x = cast(Function, test_1_0)._fixtureinfo.name2fixturedefs["x"][
-            -1
-        ]
-        test_2_fixture_x = cast(Function, test_2_0)._fixtureinfo.name2fixturedefs["x"][
-            -1
-        ]
-        assert test_1_fixture_x == test_2_fixture_x
+
+        assert isinstance(test_1_0, Function)
+        assert test_1_0.name == "test_1[0]"
+        test_1_fixture_x = test_1_0._fixtureinfo.name2fixturedefs["x"][-1]
+
+        assert isinstance(test_2_0, Function)
+        assert test_2_0.name == "test_2[1]"
+        test_2_fixture_x = test_2_0._fixtureinfo.name2fixturedefs["x"][-1]
+
+        assert test_1_fixture_x is test_2_fixture_x
 
 
 class TestMetafuncFunctionalAuto:

@@ -40,7 +40,6 @@ from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
-from _pytest.compat import assert_never
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
@@ -1355,7 +1354,7 @@ class Metafunc:
                 elif scope_ is Scope.Package:
                     node = collector.session
                 else:
-                    assert_never(scope_)  # type: ignore[arg-type]
+                    assert False, f"Unhandled missing scope: {scope}"
         if node is None:
             name2pseudofixturedef = None
         else:
