@@ -1123,9 +1123,9 @@ class CallSpec2:
     # arg name -> arg index.
     indices: Dict[str, int] = dataclasses.field(default_factory=dict)
     # Used for sorting parametrized resources.
-    _arg2scope: Dict[str, Scope] = dataclasses.field(default_factory=dict)
+    _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # Parts which will be added to the item's name in `[..]` separated by "-".
-    _idlist: List[str] = dataclasses.field(default_factory=list)
+    _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: List[Mark] = dataclasses.field(default_factory=list)
 
@@ -1141,7 +1141,7 @@ class CallSpec2:
     ) -> "CallSpec2":
         params = self.params.copy()
         indices = self.indices.copy()
-        arg2scope = self._arg2scope.copy()
+        arg2scope = dict(self._arg2scope)
         for arg, val in zip(argnames, valset):
             if arg in params:
                 raise ValueError(f"duplicate parametrization of {arg!r}")
