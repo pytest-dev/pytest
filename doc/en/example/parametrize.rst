@@ -663,7 +663,7 @@ For example:
 
 .. code-block:: python
 
-    from contextlib import nullcontext as does_not_raise
+    from contextlib import nullcontext
 
     import pytest
 
@@ -671,9 +671,9 @@ For example:
     @pytest.mark.parametrize(
         "example_input,expectation",
         [
-            (3, does_not_raise()),
-            (2, does_not_raise()),
-            (1, does_not_raise()),
+            (3, nullcontext()),
+            (2, nullcontext()),
+            (1, nullcontext()),
             (0, pytest.raises(ZeroDivisionError)),
         ],
     )
