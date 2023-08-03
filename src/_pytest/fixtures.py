@@ -492,7 +492,7 @@ class FixtureRequest:
             node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
         elif scope is Scope.Package:
             # FIXME: _fixturedef is not defined on FixtureRequest (this class),
-            # but on FixtureRequest (a subclass).
+            # but on SubRequest (a subclass).
             node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
         else:
             node = get_scope_node(self._pyfuncitem, scope)
