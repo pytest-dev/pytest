@@ -151,6 +151,7 @@ class TestMetafunc:
                 module_fix=[DummyFixtureDef(Scope.Module)],
                 class_fix=[DummyFixtureDef(Scope.Class)],
                 func_fix=[DummyFixtureDef(Scope.Function)],
+                mixed_fix=[DummyFixtureDef(Scope.Module), DummyFixtureDef(Scope.Class)],
             ),
         )
 
@@ -187,6 +188,7 @@ class TestMetafunc:
             )
             == Scope.Module
         )
+        assert find_scope(["mixed_fix"], indirect=True) == Scope.Class
 
     def test_parametrize_and_id(self) -> None:
         def func(x, y):

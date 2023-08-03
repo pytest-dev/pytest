@@ -1516,7 +1516,7 @@ def _find_parametrized_scope(
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [
-            fixturedef[0]._scope
+            fixturedef[-1]._scope
             for name, fixturedef in fixturedefs.items()
             if name in argnames
         ]
