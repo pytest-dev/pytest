@@ -9,7 +9,6 @@ from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.pytester import get_public_names
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 
@@ -128,8 +127,7 @@ class TestFillFixtures:
         assert isinstance(item, Function)
         # Execute's item's setup, which fills fixtures.
         item.session._setupstate.setup(item)
-        del item.funcargs["request"]
-        assert len(get_public_names(item.funcargs)) == 2
+        assert len(item.funcargs) == 2
         assert item.funcargs["some"] == "test_func"
         assert item.funcargs["other"] == 42
 
@@ -841,8 +839,7 @@ class TestRequestBasic:
         val2 = req.getfixturevalue("other")  # see about caching
         assert val2 == 2
         assert item.funcargs["something"] == 1
-        assert len(get_public_names(item.funcargs)) == 2
-        assert "request" in item.funcargs
+        assert len(item.funcargs) == 1
 
     def test_request_addfinalizer(self, pytester: Pytester) -> None:
         item = pytester.getitem(

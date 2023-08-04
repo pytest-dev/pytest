@@ -682,9 +682,12 @@ class TopRequest(FixtureRequest):
 
     def _fillfixtures(self) -> None:
         item = self._pyfuncitem
-        for argname in item.fixturenames:
-            if argname not in item.funcargs:
-                item.funcargs[argname] = self.getfixturevalue(argname)
+        fixturenames = getattr(item, "fixturenames", self.fixturenames)
+        initialnames = item._fixtureinfo.initialnames
+        for argname in fixturenames:
+            value = self.getfixturevalue(argname)
+            if argname not in item.funcargs and argname in initialnames:
+                item.funcargs[argname] = value
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self.node.addfinalizer(finalizer)
