@@ -40,26 +40,26 @@ class TestParseIni:
         tmp_path: Path,
         section: str,
         filename: str,
-        monkeypatch: MonkeyPatch,
     ) -> None:
         sub = tmp_path / "sub"
         sub.mkdir()
-        monkeypatch.chdir(sub)
-        (tmp_path / filename).write_text(
-            textwrap.dedent(
-                """\
-                [{section}]
-                name = value
-                """.format(
-                    section=section
-                )
-            ),
-            encoding="utf-8",
-        )
-        _, _, cfg = locate_config([sub])
-        assert cfg["name"] == "value"
-        config = pytester.parseconfigure(str(sub))
-        assert config.inicfg["name"] == "value"
+        with MonkeyPatch.context() as mp:
+            mp.chdir(sub)
+            (tmp_path / filename).write_text(
+                textwrap.dedent(
+                    """\
+                    [{section}]
+                    name = value
+                    """.format(
+                        section=section
+                    )
+                ),
+                encoding="utf-8",
+            )
+            _, _, cfg = locate_config([sub])
+            assert cfg["name"] == "value"
+            config = pytester.parseconfigure(str(sub))
+            assert config.inicfg["name"] == "value"
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test(): pass")
