@@ -657,13 +657,16 @@ Use :func:`pytest.raises` with the
 :ref:`pytest.mark.parametrize ref` decorator to write parametrized tests
 in which some tests raise exceptions and others do not.
 
-It may be helpful to use ``nullcontext`` as a complement to ``raises``.
+``contextlib.nullcontext`` can be used to test cases that are not expected to
+raise exceptions but that should result in some value. The value is given as the
+``enter_result`` parameter, which will be available as the ``with`` statement’s
+target (``e`` in the example below).
 
 For example:
 
 .. code-block:: python
 
-    from contextlib import nullcontext as does_not_raise
+    from contextlib import nullcontext
 
     import pytest
 
@@ -671,16 +674,17 @@ For example:
     @pytest.mark.parametrize(
         "example_input,expectation",
         [
-            (3, does_not_raise()),
-            (2, does_not_raise()),
-            (1, does_not_raise()),
+            (3, nullcontext(2)),
+            (2, nullcontext(3)),
+            (1, nullcontext(6)),
             (0, pytest.raises(ZeroDivisionError)),
         ],
     )
     def test_division(example_input, expectation):
         """Test how much I know division."""
-        with expectation:
-            assert (6 / example_input) is not None
+        with expectation as e:
+            assert (6 / example_input) == e
 
-In the example above, the first three test cases should run unexceptionally,
-while the fourth should raise ``ZeroDivisionError``.
+In the example above, the first three test cases should run without any
+exceptions, while the fourth should raise a``ZeroDivisionError`` exception,
+which is expected by pytest.
