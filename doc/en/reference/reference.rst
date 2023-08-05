@@ -82,6 +82,8 @@ pytest.exit
 pytest.main
 ~~~~~~~~~~~
 
+**Tutorial**: :ref:`pytest.main-usage`
+
 .. autofunction:: pytest.main
 
 pytest.param
