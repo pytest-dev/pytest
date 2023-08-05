@@ -1682,7 +1682,7 @@ class Function(PyobjMixin, nodes.Item):
     :param config:
         The pytest Config object.
     :param callspec:
-        If given, this is function has been parametrized and the callspec contains
+        If given, this function has been parametrized and the callspec contains
         meta information about the parametrization.
     :param callobj:
         If given, the object which will be called when the Function is invoked,
