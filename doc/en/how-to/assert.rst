@@ -54,14 +54,13 @@ operators. (See :ref:`tbreportdemo`).  This allows you to use the
 idiomatic python constructs without boilerplate code while not losing
 introspection information.
 
-However, if you specify a message with the assertion like this:
+If a message is specified with the assertion like this:
 
 .. code-block:: python
 
     assert a % 2 == 0, "value was odd, should be even"
 
-then no assertion introspection takes places at all and the message
-will be simply shown in the traceback.
+it is printed alongside the assertion introspection in the traceback.
 
 See :ref:`assert-details` for more information on assertion introspection.
 
