@@ -618,6 +618,7 @@ class TestLocalPath(CommonFSTests):
 
     @skiponwin32
     def test_chdir_gone(self, path1):
+        original_cwd = os.getcwd()
         p = path1.ensure("dir_to_be_removed", dir=1)
         p.chdir()
         p.remove()
@@ -628,15 +629,18 @@ class TestLocalPath(CommonFSTests):
         with pytest.raises(error.ENOENT):
             with p.as_cwd():
                 raise NotImplementedError
+        os.chdir(original_cwd)
 
     @skiponwin32
     def test_chdir_gone_in_as_cwd(self, path1):
+        original_cwd = os.getcwd()
         p = path1.ensure("dir_to_be_removed", dir=1)
         p.chdir()
         p.remove()
 
         with path1.as_cwd() as old:
             assert old is None
+        os.chdir(original_cwd)
 
     def test_as_cwd(self, path1):
         dir = path1.ensure("subdir", dir=1)

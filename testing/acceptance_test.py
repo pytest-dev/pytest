@@ -6,6 +6,7 @@ import types
 
 import pytest
 from _pytest.config import ExitCode
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
 
@@ -651,7 +652,7 @@ class TestInvocationVariants:
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
 
     def test_cmdline_python_namespace_package(
-        self, pytester: Pytester, monkeypatch
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
         """Test --pyargs option with namespace packages (#1567).
 
@@ -731,6 +732,7 @@ class TestInvocationVariants:
         result.stdout.fnmatch_lines(
             ["*test_world.py::test_other*PASSED*", "*1 passed*"]
         )
+        monkeypatch.undo()
 
     def test_invoke_test_and_doctestmodules(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(

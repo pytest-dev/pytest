@@ -244,7 +244,7 @@ class TestCollectFS:
         rec = pytester.inline_run("xyz123/test_2.py")
         rec.assertoutcome(failed=1)
 
-    def test_testpaths_ini(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    def test_testpaths_ini(self, pytester: Pytester) -> None:
         pytester.makeini(
             """
             [pytest]
@@ -275,10 +275,11 @@ class TestCollectFS:
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
-        for dirname in ("a", "b", "c"):
-            monkeypatch.chdir(pytester.path.joinpath(dirname))
-            items, reprec = pytester.inline_genitems()
-            assert [x.name for x in items] == ["test_%s" % dirname]
+        with MonkeyPatch.context() as mp:
+            for dirname in ("a", "b", "c"):
+                mp.chdir(pytester.path.joinpath(dirname))
+                items, reprec = pytester.inline_genitems()
+                assert [x.name for x in items] == ["test_%s" % dirname]
 
 
 class TestCollectPluginHookRelay:
@@ -660,7 +661,7 @@ class Test_getinitialnodes:
         for parent in col.listchain():
             assert parent.config is config
 
-    def test_pkgfile(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    def test_pkgfile(self, pytester: Pytester) -> None:
         """Verify nesting when a module is within a package.
         The parent chain should match: Module<x.py> -> Package<subdir> -> Session.
             Session's parent should always be None.
@@ -669,7 +670,7 @@ class Test_getinitialnodes:
         subdir = tmp_path.joinpath("subdir")
         x = ensure_file(subdir / "x.py")
         ensure_file(subdir / "__init__.py")
-        with monkeypatch.context() as mp:
+        with MonkeyPatch.context() as mp:
             mp.chdir(subdir)
             config = pytester.parseconfigure(x)
         col = pytester.getnode(config, x)

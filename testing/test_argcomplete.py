@@ -67,22 +67,21 @@ class FilesCompleter:
 
 class TestArgComplete:
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
-    def test_compare_with_compgen(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
+    def test_compare_with_compgen(self, tmp_path: Path) -> None:
         from _pytest._argcomplete import FastFilesCompleter
 
         ffc = FastFilesCompleter()
         fc = FilesCompleter()
 
-        monkeypatch.chdir(tmp_path)
+        with MonkeyPatch.context() as mp:
+            mp.chdir(tmp_path)
 
-        assert equal_with_bash("", ffc, fc, out=sys.stdout)
+            assert equal_with_bash("", ffc, fc, out=sys.stdout)
 
-        tmp_path.cwd().joinpath("data").touch()
+            tmp_path.cwd().joinpath("data").touch()
 
-        for x in ["d", "data", "doesnotexist", ""]:
-            assert equal_with_bash(x, ffc, fc, out=sys.stdout)
+            for x in ["d", "data", "doesnotexist", ""]:
+                assert equal_with_bash(x, ffc, fc, out=sys.stdout)
 
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
     def test_remove_dir_prefix(self):
