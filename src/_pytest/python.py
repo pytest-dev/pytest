@@ -1148,7 +1148,7 @@ class CallSpec2:
         arg2scope = self._arg2scope.copy()
         for arg, val in zip(argnames, valset):
             if arg in params or arg in funcargs:
-                raise ValueError(f"duplicate {arg!r}")
+                raise ValueError(f"duplicate parametrization of {arg!r}")
             valtype_for_arg = valtypes[arg]
             if valtype_for_arg == "params":
                 params[arg] = val
