@@ -1239,8 +1239,9 @@ class Metafunc:
         during the collection phase. If you need to setup expensive resources
         see about setting indirect to do it rather than at test setup time.
 
-        Can be called multiple times, in which case each call parametrizes all
-        previous parametrizations, e.g.
+        Can be called multiple times per test function (but only on different
+        argument names), in which case each call parametrizes all previous
+        parametrizations, e.g.
 
         ::
 
