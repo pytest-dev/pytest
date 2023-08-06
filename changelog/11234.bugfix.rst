@@ -1,1 +1,0 @@
-Fixed the case that when there are multiple fixturedefs for a param, _find_parametrized_scope picks the farthest one, while it should pick the nearest one.
