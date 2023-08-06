@@ -1546,7 +1546,7 @@ class TestMetafuncFunctional:
 
             class Test:
                 @pytest.fixture(scope="class")
-                def fixture(self):
+                def fixture(self, fixture):
                     pass
 
                 @pytest.mark.parametrize("fixture", [0], indirect=True)
