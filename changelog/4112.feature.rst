@@ -1,0 +1,1 @@
+Support use `pytest.mark.usefixtures` with `pytest.mark.parametrize`.
