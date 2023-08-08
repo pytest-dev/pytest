@@ -1152,7 +1152,7 @@ class CallSpec2:
         arg2scope = self._arg2scope.copy()
         for arg, val in zip(argnames, valset):
             if arg in params or arg in funcargs:
-                raise ValueError(f"duplicate {arg!r}")
+                raise ValueError(f"duplicate parametrization of {arg!r}")
             valtype_for_arg = valtypes[arg]
             if valtype_for_arg == "params":
                 params[arg] = val
@@ -1243,8 +1243,9 @@ class Metafunc:
         during the collection phase. If you need to setup expensive resources
         see about setting indirect to do it rather than at test setup time.
 
-        Can be called multiple times, in which case each call parametrizes all
-        previous parametrizations, e.g.
+        Can be called multiple times per test function (but only on different
+        argument names), in which case each call parametrizes all previous
+        parametrizations, e.g.
 
         ::
 
