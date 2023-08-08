@@ -507,7 +507,7 @@ class PyCollector(PyobjMixin, nodes.Collector):
 
             for callspec in metafunc._calls:
                 subname = f"{name}[{callspec.id}]"
-                yield Function.from_parent(
+                node = Function.from_parent(
                     self,
                     name=subname,
                     callspec=callspec,
@@ -515,6 +515,18 @@ class PyCollector(PyobjMixin, nodes.Collector):
                     keywords={callspec.id: True},
                     originalname=name,
                 )
+                # if usefixtures is added via a parameter, then there will be
+                # fixtures missing from the node.fixturenames
+                callspec_usefixtures = tuple(
+                    arg
+                    for mark in node.iter_markers(name="usefixtures")
+                    for arg in mark.args
+                    if arg not in node.fixturenames
+                )
+                if callspec_usefixtures:
+                    # node.fixturenames must be unique for this parameter
+                    node.fixturenames = [*node.fixturenames, *callspec_usefixtures]
+                yield node
 
 
 def importtestmodule(

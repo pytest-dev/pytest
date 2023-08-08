@@ -2112,3 +2112,31 @@ class TestMarkersWithParametrization:
                 "*= 6 passed in *",
             ]
         )
+
+    def test_simple_usefixtures_single_argname(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def some_fixture():
+                pytest.skip()
+
+            @pytest.mark.parametrize("val", [
+                1,
+                pytest.param(2, marks=pytest.mark.usefixtures('some_fixture')),
+                3,
+            ])
+            def test_foo(request, val):
+                assert val
+        """
+        )
+        result = pytester.runpytest("-vv", "-s")
+        result.assert_outcomes(passed=2, skipped=1)
+        result.stdout.fnmatch_lines(
+            [
+                "test_simple_usefixtures_single_argname.py::test_foo[1] PASSED",
+                "test_simple_usefixtures_single_argname.py::test_foo[2] SKIPPED",
+                "test_simple_usefixtures_single_argname.py::test_foo[3] PASSED",
+            ]
+        )
