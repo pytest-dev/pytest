@@ -642,18 +642,11 @@ class TestConfigAPI:
         p = tmp_path.joinpath("conftest.py")
         p.write_text(f"mylist = {['.', str(somepath)]}", encoding="utf-8")
         config = pytester.parseconfigure(p)
-        assert (
-            config._getconftest_pathlist("notexist", path=tmp_path, rootpath=tmp_path)
-            is None
-        )
-        pl = (
-            config._getconftest_pathlist("mylist", path=tmp_path, rootpath=tmp_path)
-            or []
-        )
-        print(pl)
-        assert len(pl) == 2
-        assert pl[0] == tmp_path
-        assert pl[1] == somepath
+        assert config._getconftest_pathlist("notexist", path=tmp_path) is None
+        assert config._getconftest_pathlist("mylist", path=tmp_path) == [
+            tmp_path,
+            somepath,
+        ]
 
     @pytest.mark.parametrize("maybe_type", ["not passed", "None", '"string"'])
     def test_addini(self, pytester: Pytester, maybe_type: str) -> None:
