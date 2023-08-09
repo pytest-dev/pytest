@@ -162,6 +162,7 @@ class TestMetafunc:
                 module_fix=[DummyFixtureDef(Scope.Module)],
                 class_fix=[DummyFixtureDef(Scope.Class)],
                 func_fix=[DummyFixtureDef(Scope.Function)],
+                mixed_fix=[DummyFixtureDef(Scope.Module), DummyFixtureDef(Scope.Class)],
             ),
         )
 
@@ -198,6 +199,7 @@ class TestMetafunc:
             )
             == Scope.Module
         )
+        assert find_scope(["mixed_fix"], indirect=True) == Scope.Class
 
     def test_parametrize_and_id(self) -> None:
         def func(x, y):
@@ -1579,6 +1581,66 @@ class TestMetafuncFunctional:
         test_2_fixture_x = test_2_0._fixtureinfo.name2fixturedefs["x"][-1]
 
         assert test_1_fixture_x is test_2_fixture_x
+
+    def test_reordering_with_scopeless_and_just_indirect_parametrization(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(scope="package")
+            def fixture1():
+                pass
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="module")
+            def fixture0():
+                pass
+
+            @pytest.fixture(scope="module")
+            def fixture1(fixture0):
+                pass
+
+            @pytest.mark.parametrize("fixture1", [0], indirect=True)
+            def test_0(fixture1):
+                pass
+
+            @pytest.fixture(scope="module")
+            def fixture():
+                pass
+
+            @pytest.mark.parametrize("fixture", [0], indirect=True)
+            def test_1(fixture):
+                pass
+
+            def test_2():
+                pass
+
+            class Test:
+                @pytest.fixture(scope="class")
+                def fixture(self, fixture):
+                    pass
+
+                @pytest.mark.parametrize("fixture", [0], indirect=True)
+                def test_3(self, fixture):
+                    pass
+            """
+        )
+        result = pytester.runpytest("-v")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(
+            [
+                "*test_0*",
+                "*test_1*",
+                "*test_2*",
+                "*test_3*",
+            ]
+        )
 
 
 class TestMetafuncFunctionalAuto:

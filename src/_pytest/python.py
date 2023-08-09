@@ -1236,8 +1236,9 @@ class Metafunc:
         during the collection phase. If you need to setup expensive resources
         see about setting indirect to do it rather than at test setup time.
 
-        Can be called multiple times, in which case each call parametrizes all
-        previous parametrizations, e.g.
+        Can be called multiple times per test function (but only on different
+        argument names), in which case each call parametrizes all previous
+        parametrizations, e.g.
 
         ::
 
@@ -1564,7 +1565,7 @@ def _find_parametrized_scope(
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [
-            fixturedef[0]._scope
+            fixturedef[-1]._scope
             for name, fixturedef in fixturedefs.items()
             if name in argnames
         ]
@@ -1730,7 +1731,7 @@ class Function(PyobjMixin, nodes.Item):
     :param config:
         The pytest Config object.
     :param callspec:
-        If given, this is function has been parametrized and the callspec contains
+        If given, this function has been parametrized and the callspec contains
         meta information about the parametrization.
     :param callobj:
         If given, the object which will be called when the Function is invoked,
