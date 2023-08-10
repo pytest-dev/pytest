@@ -1363,9 +1363,9 @@ class Metafunc:
             name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
-        arg_values_types = self._resolve_arg_value_types(argnames, indirect)
+        arg_directness = self._resolve_args_directness(argnames, indirect)
         for argname in argnames:
-            if arg_values_types[argname] == "params":
+            if arg_directness[argname] == "indirect":
                 continue
             if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
                 fixturedef = name2pseudofixturedef[argname]
@@ -1470,28 +1470,30 @@ class Metafunc:
 
         return list(itertools.islice(ids, num_ids))
 
-    def _resolve_arg_value_types(
+    def _resolve_args_directness(
         self,
         argnames: Sequence[str],
         indirect: Union[bool, Sequence[str]],
-    ) -> Dict[str, "Literal['params', 'funcargs']"]:
-        """Resolve if each parametrized argument must be considered a
-        parameter to a fixture or a "funcarg" to the function, based on the
-        ``indirect`` parameter of the parametrized() call.
+    ) -> Dict[str, Literal["indirect", "direct"]]:
+        """Resolve if each parametrized argument must be considered an indirect
+        parameter to a fixture of the same name, or a direct parameter to the
+        parametrized function, based on the ``indirect`` parameter of the
+        parametrized() call.
 
-        :param List[str] argnames: List of argument names passed to ``parametrize()``.
-        :param indirect: Same as the ``indirect`` parameter of ``parametrize()``.
-        :rtype: Dict[str, str]
-            A dict mapping each arg name to either:
-            * "params" if the argname should be the parameter of a fixture of the same name.
-            * "funcargs" if the argname should be a parameter to the parametrized test function.
+        :param argnames:
+            List of argument names passed to ``parametrize()``.
+        :param indirect:
+            Same as the ``indirect`` parameter of ``parametrize()``.
+        :returns
+            A dict mapping each arg name to either "indirect" or "direct".
         """
+        arg_directness: Dict[str, Literal["indirect", "direct"]]
         if isinstance(indirect, bool):
-            valtypes: Dict[str, Literal["params", "funcargs"]] = dict.fromkeys(
-                argnames, "params" if indirect else "funcargs"
+            arg_directness = dict.fromkeys(
+                argnames, "indirect" if indirect else "direct"
             )
         elif isinstance(indirect, Sequence):
-            valtypes = dict.fromkeys(argnames, "funcargs")
+            arg_directness = dict.fromkeys(argnames, "direct")
             for arg in indirect:
                 if arg not in argnames:
                     fail(
@@ -1500,7 +1502,7 @@ class Metafunc:
                         ),
                         pytrace=False,
                     )
-                valtypes[arg] = "params"
+                arg_directness[arg] = "indirect"
         else:
             fail(
                 "In {func}: expected Sequence or boolean for indirect, got {type}".format(
@@ -1508,7 +1510,7 @@ class Metafunc:
                 ),
                 pytrace=False,
             )
-        return valtypes
+        return arg_directness
 
     def _validate_if_using_arg_names(
         self,
