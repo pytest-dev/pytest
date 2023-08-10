@@ -23,6 +23,7 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.pytester import Pytester
+from _pytest.python import Function
 from _pytest.python import IdMaker
 from _pytest.scope import Scope
 
@@ -161,6 +162,7 @@ class TestMetafunc:
                 module_fix=[DummyFixtureDef(Scope.Module)],
                 class_fix=[DummyFixtureDef(Scope.Class)],
                 func_fix=[DummyFixtureDef(Scope.Function)],
+                mixed_fix=[DummyFixtureDef(Scope.Module), DummyFixtureDef(Scope.Class)],
             ),
         )
 
@@ -197,6 +199,7 @@ class TestMetafunc:
             )
             == Scope.Module
         )
+        assert find_scope(["mixed_fix"], indirect=True) == Scope.Class
 
     def test_parametrize_and_id(self) -> None:
         def func(x, y):
@@ -1588,29 +1591,94 @@ class TestMetafuncFunctional:
     def test_parametrize_module_level_test_with_class_scope(
         self, pytester: Pytester
     ) -> None:
+        """
+        Test that a class-scoped parametrization without a corresponding `Class`
+        gets module scope, i.e. we only create a single FixtureDef for it per module.
+        """
+        module = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("x", [0, 1], scope="class")
+            def test_1(x):
+                pass
+
+            @pytest.mark.parametrize("x", [1, 2], scope="module")
+            def test_2(x):
+                pass
+        """
+        )
+        test_1_0, _, test_2_0, _ = pytester.genitems((pytester.getmodulecol(module),))
+
+        assert isinstance(test_1_0, Function)
+        assert test_1_0.name == "test_1[0]"
+        test_1_fixture_x = test_1_0._fixtureinfo.name2fixturedefs["x"][-1]
+
+        assert isinstance(test_2_0, Function)
+        assert test_2_0.name == "test_2[1]"
+        test_2_fixture_x = test_2_0._fixtureinfo.name2fixturedefs["x"][-1]
+
+        assert test_1_fixture_x is test_2_fixture_x
+
+    def test_reordering_with_scopeless_and_just_indirect_parametrization(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture(scope="package")
+            def fixture1():
+                pass
+            """
+        )
         pytester.makepyfile(
             """
             import pytest
 
-            @pytest.fixture
-            def item(request):
-                return request._pyfuncitem
+            @pytest.fixture(scope="module")
+            def fixture0():
+                pass
 
-            fixturedef = None
+            @pytest.fixture(scope="module")
+            def fixture1(fixture0):
+                pass
 
-            @pytest.mark.parametrize("x", [0, 1], scope="class")
-            def test_1(item, x):
-                global fixturedef
-                fixturedef = item._fixtureinfo.name2fixturedefs['x'][-1]
+            @pytest.mark.parametrize("fixture1", [0], indirect=True)
+            def test_0(fixture1):
+                pass
 
-            @pytest.mark.parametrize("x", [1, 2], scope="module")
-            def test_2(item, x):
-                global fixturedef
-                assert fixturedef == item._fixtureinfo.name2fixturedefs['x'][-1]
-        """
+            @pytest.fixture(scope="module")
+            def fixture():
+                pass
+
+            @pytest.mark.parametrize("fixture", [0], indirect=True)
+            def test_1(fixture):
+                pass
+
+            def test_2():
+                pass
+
+            class Test:
+                @pytest.fixture(scope="class")
+                def fixture(self, fixture):
+                    pass
+
+                @pytest.mark.parametrize("fixture", [0], indirect=True)
+                def test_3(self, fixture):
+                    pass
+            """
         )
-        result = pytester.runpytest()
+        result = pytester.runpytest("-v")
         assert result.ret == 0
+        result.stdout.fnmatch_lines(
+            [
+                "*test_0*",
+                "*test_1*",
+                "*test_2*",
+                "*test_3*",
+            ]
+        )
 
 
 class TestMetafuncFunctionalAuto:

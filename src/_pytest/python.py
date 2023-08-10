@@ -41,7 +41,6 @@ from _pytest._code.code import Traceback
 from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
-from _pytest.compat import assert_never
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
@@ -498,8 +497,11 @@ class PyCollector(PyobjMixin, nodes.Collector):
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
-            # Dynamic direct parametrization may have shadowed some fixtures,
-            # so make sure we update what the function really needs.
+            # Direct parametrizations taking place in module/class-specific
+            # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
+            # we update what the function really needs a.k.a its fixture closure. Note that
+            # direct parametrizations using `@pytest.mark.parametrize` have already been considered
+            # into making the closure using `ignore_args` arg to `getfixtureclosure`.
             fixtureinfo.prune_dependency_tree()
 
             for callspec in metafunc._calls:
@@ -1283,8 +1285,9 @@ class Metafunc:
         during the collection phase. If you need to setup expensive resources
         see about setting indirect to do it rather than at test setup time.
 
-        Can be called multiple times, in which case each call parametrizes all
-        previous parametrizations, e.g.
+        Can be called multiple times per test function (but only on different
+        argument names), in which case each call parametrizes all previous
+        parametrizations, e.g.
 
         ::
 
@@ -1389,7 +1392,8 @@ class Metafunc:
         # a per-scope basis. We thus store and cache the fixturedef on the
         # node related to the scope.
         if scope_ is not Scope.Function:
-            collector = cast(nodes.Node, self.definition.parent)
+            collector = self.definition.parent
+            assert collector is not None
             node = get_scope_node(collector, scope_)
             if node is None:
                 # If used class scope and there is no class, use module-level
@@ -1402,7 +1406,7 @@ class Metafunc:
                 elif scope_ is Scope.Package:
                     node = collector.session
                 else:
-                    assert_never(scope_)  # type: ignore[arg-type]
+                    assert False, f"Unhandled missing scope: {scope}"
         if node is None:
             name2pseudofixturedef = None
         else:
@@ -1410,9 +1414,9 @@ class Metafunc:
             name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
-        arg_values_types = self._resolve_arg_value_types(argnames, indirect)
+        arg_directness = self._resolve_args_directness(argnames, indirect)
         for argname in argnames:
-            if arg_values_types[argname] == "params":
+            if arg_directness[argname] == "indirect":
                 continue
             if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
                 fixturedef = name2pseudofixturedef[argname]
@@ -1517,28 +1521,30 @@ class Metafunc:
 
         return list(itertools.islice(ids, num_ids))
 
-    def _resolve_arg_value_types(
+    def _resolve_args_directness(
         self,
         argnames: Sequence[str],
         indirect: Union[bool, Sequence[str]],
-    ) -> Dict[str, "Literal['params', 'funcargs']"]:
-        """Resolve if each parametrized argument must be considered a
-        parameter to a fixture or a "funcarg" to the function, based on the
-        ``indirect`` parameter of the parametrized() call.
+    ) -> Dict[str, Literal["indirect", "direct"]]:
+        """Resolve if each parametrized argument must be considered an indirect
+        parameter to a fixture of the same name, or a direct parameter to the
+        parametrized function, based on the ``indirect`` parameter of the
+        parametrized() call.
 
-        :param List[str] argnames: List of argument names passed to ``parametrize()``.
-        :param indirect: Same as the ``indirect`` parameter of ``parametrize()``.
-        :rtype: Dict[str, str]
-            A dict mapping each arg name to either:
-            * "params" if the argname should be the parameter of a fixture of the same name.
-            * "funcargs" if the argname should be a parameter to the parametrized test function.
+        :param argnames:
+            List of argument names passed to ``parametrize()``.
+        :param indirect:
+            Same as the ``indirect`` parameter of ``parametrize()``.
+        :returns
+            A dict mapping each arg name to either "indirect" or "direct".
         """
+        arg_directness: Dict[str, Literal["indirect", "direct"]]
         if isinstance(indirect, bool):
-            valtypes: Dict[str, Literal["params", "funcargs"]] = dict.fromkeys(
-                argnames, "params" if indirect else "funcargs"
+            arg_directness = dict.fromkeys(
+                argnames, "indirect" if indirect else "direct"
             )
         elif isinstance(indirect, Sequence):
-            valtypes = dict.fromkeys(argnames, "funcargs")
+            arg_directness = dict.fromkeys(argnames, "direct")
             for arg in indirect:
                 if arg not in argnames:
                     fail(
@@ -1547,7 +1553,7 @@ class Metafunc:
                         ),
                         pytrace=False,
                     )
-                valtypes[arg] = "params"
+                arg_directness[arg] = "indirect"
         else:
             fail(
                 "In {func}: expected Sequence or boolean for indirect, got {type}".format(
@@ -1555,7 +1561,7 @@ class Metafunc:
                 ),
                 pytrace=False,
             )
-        return valtypes
+        return arg_directness
 
     def _validate_if_using_arg_names(
         self,
@@ -1612,7 +1618,7 @@ def _find_parametrized_scope(
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [
-            fixturedef[0]._scope
+            fixturedef[-1]._scope
             for name, fixturedef in fixturedefs.items()
             if name in argnames
         ]
@@ -1778,7 +1784,7 @@ class Function(PyobjMixin, nodes.Item):
     :param config:
         The pytest Config object.
     :param callspec:
-        If given, this is function has been parametrized and the callspec contains
+        If given, this function has been parametrized and the callspec contains
         meta information about the parametrization.
     :param callobj:
         If given, the object which will be called when the Function is invoked,

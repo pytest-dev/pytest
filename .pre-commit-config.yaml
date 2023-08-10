@@ -29,7 +29,7 @@ repos:
         language: python
         files: \.py$
 -   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
     -   id: flake8
         language_version: python3
@@ -42,7 +42,7 @@ repos:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py38-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.9.0
+    rev: v3.10.1
     hooks:
     -   id: pyupgrade
         args: [--py38-plus]
