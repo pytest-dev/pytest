@@ -685,6 +685,21 @@ class TestAssertionRewrite:
         assert msg is not None
         assert "<MY42 object> < 0" in msg
 
+    def test_assert_handling_raise_in__iter__(self) -> None:
+        def f() -> None:
+            class A:
+                def __iter__(self):
+                    raise TypeError("user message")
+
+                def __eq__(self, o: object) -> bool:
+                    return self is o
+
+            assert A() == A()
+
+        msg = getmsg(f)
+        assert msg is not None
+        assert "Unexpected exception" in msg
+
     def test_formatchar(self) -> None:
         def f() -> None:
             assert "%test" == "test"  # type: ignore[comparison-overlap]
