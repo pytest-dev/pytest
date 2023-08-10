@@ -64,7 +64,6 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
-from _pytest.stash import StashKey
 
 
 if TYPE_CHECKING:
@@ -148,89 +147,6 @@ def get_scope_node(
         assert_never(scope)
 
 
-# Used for storing artificial fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[Dict[str, "FixtureDef[Any]"]]()
-
-
-def add_funcarg_pseudo_fixture_def(
-    collector: nodes.Collector, metafunc: "Metafunc", fixturemanager: "FixtureManager"
-) -> None:
-    import _pytest.python
-
-    # This function will transform all collected calls to functions
-    # if they use direct funcargs (i.e. direct parametrization)
-    # because we want later test execution to be able to rely on
-    # an existing FixtureDef structure for all arguments.
-    # XXX we can probably avoid this algorithm  if we modify CallSpec2
-    # to directly care for creating the fixturedefs within its methods.
-    if not metafunc._calls[0].funcargs:
-        # This function call does not have direct parametrization.
-        return
-    # Collect funcargs of all callspecs into a list of values.
-    arg2params: Dict[str, List[object]] = {}
-    arg2scope: Dict[str, Scope] = {}
-    for callspec in metafunc._calls:
-        for argname, argvalue in callspec.funcargs.items():
-            assert argname not in callspec.params
-            callspec.params[argname] = argvalue
-            arg2params_list = arg2params.setdefault(argname, [])
-            callspec.indices[argname] = len(arg2params_list)
-            arg2params_list.append(argvalue)
-            if argname not in arg2scope:
-                scope = callspec._arg2scope.get(argname, Scope.Function)
-                arg2scope[argname] = scope
-        callspec.funcargs.clear()
-
-    # Register artificial FixtureDef's so that later at test execution
-    # time we can rely on a proper FixtureDef to exist for fixture setup.
-    arg2fixturedefs = metafunc._arg2fixturedefs
-    for argname, valuelist in arg2params.items():
-        # If we have a scope that is higher than function, we need
-        # to make sure we only ever create an according fixturedef on
-        # a per-scope basis. We thus store and cache the fixturedef on the
-        # node related to the scope.
-        scope = arg2scope[argname]
-        node = None
-        if scope is not Scope.Function:
-            node = get_scope_node(collector, scope)
-            if node is None:
-                # If used class scope and there is no class, use module-level
-                # collector (for now).
-                if scope is Scope.Class:
-                    assert isinstance(collector, _pytest.python.Module)
-                    node = collector
-                # If used package scope and there is no package, use session
-                # (for now).
-                elif scope is Scope.Package:
-                    node = collector.session
-                else:
-                    assert False, f"Unhandled missing scope: {scope}"
-        if node is None:
-            name2pseudofixturedef = None
-        else:
-            default: Dict[str, FixtureDef[Any]] = {}
-            name2pseudofixturedef = node.stash.setdefault(
-                name2pseudofixturedef_key, default
-            )
-        if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
-            arg2fixturedefs[argname] = [name2pseudofixturedef[argname]]
-        else:
-            fixturedef = FixtureDef(
-                fixturemanager=fixturemanager,
-                baseid="",
-                argname=argname,
-                func=get_direct_param_fixture_func,
-                scope=arg2scope[argname],
-                params=valuelist,
-                unittest=False,
-                ids=None,
-                _ispytest=True,
-            )
-            arg2fixturedefs[argname] = [fixturedef]
-            if name2pseudofixturedef is not None:
-                name2pseudofixturedef[argname] = fixturedef
-
-
 def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
     """Return fixturemarker or None if it doesn't exist or raised
     exceptions."""
@@ -271,7 +187,7 @@ def get_parametrized_fixture_keys(
         pass
     else:
         cs: CallSpec2 = callspec
-        # cs.indices.items() is random order of argnames.  Need to
+        # cs.indices is random order of argnames.  Need to
         # sort this so that different calls to
         # get_parametrized_fixture_keys will be deterministic.
         for argname in sorted(cs.indices):
@@ -282,7 +198,7 @@ def get_parametrized_fixture_keys(
             if scope is Scope.Session:
                 scoped_item_path = None
             elif scope is Scope.Package:
-                scoped_item_path = item.path.parent
+                scoped_item_path = item.path
             elif scope is Scope.Module:
                 scoped_item_path = item.path
             elif scope is Scope.Class:
@@ -383,10 +299,6 @@ def reorder_items_atscope(
                 items_done[item] = None
         ignore.add(slicing_argkey)
     return items_done
-
-
-def get_direct_param_fixture_func(request: "FixtureRequest") -> Any:
-    return request.param
 
 
 @dataclasses.dataclass(frozen=True)
@@ -512,7 +424,7 @@ class FixtureRequest:
             node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
         elif scope is Scope.Package:
             # FIXME: _fixturedef is not defined on FixtureRequest (this class),
-            # but on FixtureRequest (a subclass).
+            # but on SubRequest (a subclass).
             node = get_scope_package(self._pyfuncitem, self._fixturedef)  # type: ignore[attr-defined]
         else:
             node = get_scope_node(self._pyfuncitem, scope)

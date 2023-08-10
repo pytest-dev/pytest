@@ -2104,9 +2104,7 @@ class TestAutouseManagement:
         reprec = pytester.inline_run("-v", "-s", "--confcutdir", pytester.path)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
-        values = config.pluginmanager._getconftestmodules(
-            p, importmode="prepend", rootpath=pytester.path
-        )[0].values
+        values = config.pluginmanager._getconftestmodules(p)[0].values
         assert values == ["fin_a1", "fin_a2", "fin_b1", "fin_b2"] * 2
 
     def test_scope_ordering(self, pytester: Pytester) -> None:
