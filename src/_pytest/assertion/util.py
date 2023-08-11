@@ -135,7 +135,9 @@ def isiterable(obj: Any) -> bool:
     except TypeError:
         return False
     except Exception as e:
-        raise ValueError(f"Unexpected exception {e!r} while testing object {obj!r}")
+        raise ValueError(
+            f"Unexpected exception {e!r} while testing object {obj!r}. Probably an issue with __iter__"
+        )
 
 
 def has_default_eq(
