@@ -136,7 +136,10 @@ def isiterable(obj: Any) -> bool:
         return False
     except Exception as e:
         raise ValueError(
-            f"Unexpected exception {e!r} while testing object {obj!r}. Probably an issue with __iter__"
+            [
+                f"pytest_assertion plugin: unexpected exception {e!r} while testing object {obj!r}",
+                ", probably from __iter__",
+            ]
         )
 
 
@@ -203,9 +206,9 @@ def assertrepr_compare(
         if (
             isinstance(e, ValueError)
             and (len(e.args) == 1)
-            and ("Unexpected exception" in str(e.args[0]))
+            and ("__iter__" in str(e.args[0]))
         ):
-            explanation = [e.args[0]]
+            explanation = e.args[0]
         else:
             explanation = [
                 "(pytest_assertion plugin: representation of details failed: {}.".format(

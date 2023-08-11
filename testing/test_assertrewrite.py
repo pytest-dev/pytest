@@ -698,7 +698,7 @@ class TestAssertionRewrite:
 
         msg = getmsg(f)
         assert msg is not None
-        assert "Unexpected exception" in msg
+        assert "__iter__" in msg and "__repr__" not in msg
 
     def test_formatchar(self) -> None:
         def f() -> None:
