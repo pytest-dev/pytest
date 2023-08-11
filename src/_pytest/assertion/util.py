@@ -132,13 +132,9 @@ def isiterable(obj: Any) -> bool:
     try:
         iter(obj)
         return not istext(obj)
+    except TypeError:
+        return False
     except Exception as e:
-        if (
-            isinstance(e, TypeError)
-            and (len(e.args) == 1)
-            and "iter() returned non-iterator of type" in str(e.args[0])
-        ):
-            return False
         raise ValueError(f"Unexpected exception {e!r} while testing object {obj!r}")
 
 

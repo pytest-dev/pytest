@@ -689,7 +689,7 @@ class TestAssertionRewrite:
         def f() -> None:
             class A:
                 def __iter__(self):
-                    raise TypeError("user message")
+                    raise ValueError()
 
                 def __eq__(self, o: object) -> bool:
                     return self is o
