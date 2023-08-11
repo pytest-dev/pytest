@@ -132,8 +132,14 @@ def isiterable(obj: Any) -> bool:
     try:
         iter(obj)
         return not istext(obj)
-    except TypeError:
-        return False
+    except Exception as e:
+        if (
+            isinstance(e, TypeError)
+            and (len(e.args) == 1)
+            and "iter() returned non-iterator of type" in str(e.args[0])
+        ):
+            return False
+        raise ValueError(f"Unexpected exception {e!r} while testing object {obj!r}")
 
 
 def has_default_eq(
@@ -195,13 +201,20 @@ def assertrepr_compare(
                 explanation = _notin_text(left, right, verbose)
     except outcomes.Exit:
         raise
-    except Exception:
-        explanation = [
-            "(pytest_assertion plugin: representation of details failed: {}.".format(
-                _pytest._code.ExceptionInfo.from_current()._getreprcrash()
-            ),
-            " Probably an object has a faulty __repr__.)",
-        ]
+    except Exception as e:
+        if (
+            isinstance(e, ValueError)
+            and (len(e.args) == 1)
+            and ("Unexpected exception" in str(e.args[0]))
+        ):
+            explanation = [e.args[0]]
+        else:
+            explanation = [
+                "(pytest_assertion plugin: representation of details failed: {}.".format(
+                    _pytest._code.ExceptionInfo.from_current()._getreprcrash()
+                ),
+                " Probably an object has a faulty __repr__.)",
+            ]
 
     if not explanation:
         return None
