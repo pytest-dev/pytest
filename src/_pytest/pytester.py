@@ -625,14 +625,6 @@ class RunResult:
         )
 
 
-class CwdSnapshot:
-    def __init__(self) -> None:
-        self.__saved = os.getcwd()
-
-    def restore(self) -> None:
-        os.chdir(self.__saved)
-
-
 class SysModulesSnapshot:
     def __init__(self, preserve: Optional[Callable[[str], bool]] = None) -> None:
         self.__preserve = preserve
@@ -696,15 +688,14 @@ class Pytester:
         #: be added to the list.  The type of items to add to the list depends on
         #: the method using them so refer to them for details.
         self.plugins: List[Union[str, _PluggyPlugin]] = []
-        self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
-        self.chdir()
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
         self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
 
         self._monkeypatch = mp = monkeypatch
+        self.chdir()
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self._test_tmproot))
         # Ensure no unexpected caching via tox.
         mp.delenv("TOX_ENV_DIR", raising=False)
@@ -735,7 +726,6 @@ class Pytester:
         """
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
-        self._cwd_snapshot.restore()
 
     def __take_sys_modules_snapshot(self) -> SysModulesSnapshot:
         # Some zope modules used by twisted-related tests keep internal state
@@ -760,7 +750,7 @@ class Pytester:
 
         This is done automatically upon instantiation.
         """
-        os.chdir(self.path)
+        self._monkeypatch.chdir(self.path)
 
     def _makefile(
         self,

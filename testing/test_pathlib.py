@@ -236,15 +236,15 @@ class TestImportPath:
         name = "pointsback123"
         p = tmp_path.joinpath(name + ".py")
         p.touch()
-        for ending in (".pyc", ".pyo"):
-            mod = ModuleType(name)
-            pseudopath = tmp_path.joinpath(name + ending)
-            pseudopath.touch()
-            mod.__file__ = str(pseudopath)
-            monkeypatch.setitem(sys.modules, name, mod)
-            newmod = import_path(p, root=tmp_path)
-            assert mod == newmod
-        monkeypatch.undo()
+        with monkeypatch.context() as mp:
+            for ending in (".pyc", ".pyo"):
+                mod = ModuleType(name)
+                pseudopath = tmp_path.joinpath(name + ending)
+                pseudopath.touch()
+                mod.__file__ = str(pseudopath)
+                mp.setitem(sys.modules, name, mod)
+                newmod = import_path(p, root=tmp_path)
+                assert mod == newmod
         mod = ModuleType(name)
         pseudopath = tmp_path.joinpath(name + "123.py")
         pseudopath.touch()
