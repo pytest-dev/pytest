@@ -1,5 +1,6 @@
 """Discover and run doctests in modules and test files."""
 import bdb
+import functools
 import inspect
 import os
 import platform
@@ -536,6 +537,21 @@ class DoctestModule(Module):
                         tests, obj, name, module, source_lines, globs, seen
                     )
 
+        class CachedPropertyAwareDocTestFinder(MockAwareDocTestFinder):
+            def _from_module(self, module, object):
+                """Doctest code does not take into account `@cached_property`,
+                this is a hackish way to fix it. https://github.com/python/cpython/issues/107995
+
+                Wrap Doctest finder so that when it calls `_from_module` for
+                a cached_property it uses the underlying function instead of the
+                wrapped cached_property object.
+                """
+                if isinstance(object, functools.cached_property):
+                    object = object.func
+
+                # Type ignored because this is a private function.
+                return super()._from_module(module, object)  # type: ignore[misc]
+
         if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
                 self.path,
@@ -555,7 +571,7 @@ class DoctestModule(Module):
                 else:
                     raise
         # Uses internal doctest module parsing mechanism.
-        finder = MockAwareDocTestFinder()
+        finder = CachedPropertyAwareDocTestFinder()
         optionflags = get_optionflags(self)
         runner = _get_runner(
             verbose=False,
