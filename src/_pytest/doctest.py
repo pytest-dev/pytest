@@ -537,14 +537,11 @@ class DoctestModule(Module):
                         tests, obj, name, module, source_lines, globs, seen
                     )
 
-        class CachedPropertyAwareDocTestFinder(MockAwareDocTestFinder):
             def _from_module(self, module, object):
-                """Doctest code does not take into account `@cached_property`,
-                this is a hackish way to fix it. https://github.com/python/cpython/issues/107995
-
-                Wrap Doctest finder so that when it calls `_from_module` for
-                a cached_property it uses the underlying function instead of the
-                wrapped cached_property object.
+                """`cached_property` objects will are never considered a part
+                of the 'current module'. As such they are skipped by doctest.
+                Here we override `_from_module` to check the underlying
+                function instead. https://github.com/python/cpython/issues/107995
                 """
                 if isinstance(object, functools.cached_property):
                     object = object.func
@@ -571,7 +568,7 @@ class DoctestModule(Module):
                 else:
                     raise
         # Uses internal doctest module parsing mechanism.
-        finder = CachedPropertyAwareDocTestFinder()
+        finder = MockAwareDocTestFinder()
         optionflags = get_optionflags(self)
         runner = _get_runner(
             verbose=False,
