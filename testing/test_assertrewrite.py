@@ -689,7 +689,7 @@ class TestAssertionRewrite:
         def f() -> None:
             class A:
                 def __iter__(self):
-                    raise ValueError()
+                    raise TypeError("user message")
 
                 def __eq__(self, o: object) -> bool:
                     return self is o
@@ -698,7 +698,7 @@ class TestAssertionRewrite:
 
         msg = getmsg(f)
         assert msg is not None
-        assert "__iter__" in msg and "__repr__" not in msg
+        assert "Unexpected exception" in msg
 
     def test_formatchar(self) -> None:
         def f() -> None:

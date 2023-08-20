@@ -1,1 +1,0 @@
-Assertion rewrite mechanism now gives a seperate, more detailed error message from failures within __iter__.
