@@ -537,17 +537,19 @@ class DoctestModule(Module):
                         tests, obj, name, module, source_lines, globs, seen
                     )
 
-            def _from_module(self, module, object):
-                """`cached_property` objects will are never considered a part
-                of the 'current module'. As such they are skipped by doctest.
-                Here we override `_from_module` to check the underlying
-                function instead. https://github.com/python/cpython/issues/107995
-                """
-                if isinstance(object, functools.cached_property):
-                    object = object.func
+            if sys.version_info < (3, 13):
 
-                # Type ignored because this is a private function.
-                return super()._from_module(module, object)  # type: ignore[misc]
+                def _from_module(self, module, object):
+                    """`cached_property` objects are never considered a part
+                    of the 'current module'. As such they are skipped by doctest.
+                    Here we override `_from_module` to check the underlying
+                    function instead. https://github.com/python/cpython/issues/107995
+                    """
+                    if isinstance(object, functools.cached_property):
+                        object = object.func
+
+                    # Type ignored because this is a private function.
+                    return super()._from_module(module, object)  # type: ignore[misc]
 
         if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
