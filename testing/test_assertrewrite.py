@@ -685,8 +685,9 @@ class TestAssertionRewrite:
         assert msg is not None
         assert "<MY42 object> < 0" in msg
 
-    def test_assert_handling_raise_in__iter__(self) -> None:
-        def f() -> None:
+    def test_assert_handling_raise_in__iter__(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
             class A:
                 def __iter__(self):
                     raise ValueError()
@@ -698,10 +699,10 @@ class TestAssertionRewrite:
                     return "<A object>"
 
             assert A() == A()
-
-        msg = getmsg(f)
-        assert msg is not None
-        assert "<A object> == <A object>" in msg
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*E*assert <A object> == <A object>"])
 
     def test_formatchar(self) -> None:
         def f() -> None:
