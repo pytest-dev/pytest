@@ -551,6 +551,9 @@ class DoctestModule(Module):
                     # Type ignored because this is a private function.
                     return super()._from_module(module, object)  # type: ignore[misc]
 
+            else:  # pragma: no cover
+                pass
+
         if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
                 self.path,
