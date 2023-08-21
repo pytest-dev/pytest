@@ -173,6 +173,6 @@ if not TYPE_CHECKING:
         if name == "Instance":
             # The import emits a deprecation warning.
             from _pytest.python import Instance
-    
+
             return Instance
         raise AttributeError(f"module {__name__} has no attribute {name}")
