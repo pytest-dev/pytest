@@ -507,6 +507,24 @@ class TestParseIni:
         result = pytester.runpytest("--foo=1")
         result.stdout.fnmatch_lines("* no tests ran in *")
 
+    def test_args_source_args(self, pytester: Pytester):
+        config = pytester.parseconfig("--", "test_filename.py")
+        assert config.args_source == Config.ArgsSource.ARGS
+
+    def test_args_source_invocation_dir(self, pytester: Pytester):
+        config = pytester.parseconfig()
+        assert config.args_source == Config.ArgsSource.INVOCATION_DIR
+
+    def test_args_source_testpaths(self, pytester: Pytester):
+        pytester.makeini(
+            """
+            [pytest]
+            testpaths=*
+        """
+        )
+        config = pytester.parseconfig()
+        assert config.args_source == Config.ArgsSource.TESTPATHS
+
 
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, pytester: Pytester) -> None:
@@ -642,18 +660,11 @@ class TestConfigAPI:
         p = tmp_path.joinpath("conftest.py")
         p.write_text(f"mylist = {['.', str(somepath)]}", encoding="utf-8")
         config = pytester.parseconfigure(p)
-        assert (
-            config._getconftest_pathlist("notexist", path=tmp_path, rootpath=tmp_path)
-            is None
-        )
-        pl = (
-            config._getconftest_pathlist("mylist", path=tmp_path, rootpath=tmp_path)
-            or []
-        )
-        print(pl)
-        assert len(pl) == 2
-        assert pl[0] == tmp_path
-        assert pl[1] == somepath
+        assert config._getconftest_pathlist("notexist", path=tmp_path) is None
+        assert config._getconftest_pathlist("mylist", path=tmp_path) == [
+            tmp_path,
+            somepath,
+        ]
 
     @pytest.mark.parametrize("maybe_type", ["not passed", "None", '"string"'])
     def test_addini(self, pytester: Pytester, maybe_type: str) -> None:

@@ -581,26 +581,25 @@ class PytestPluginManager(PluginManager):
     def _try_load_conftest(
         self, anchor: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> None:
-        self._getconftestmodules(anchor, importmode, rootpath)
+        self._loadconftestmodules(anchor, importmode, rootpath)
         # let's also consider test* subdirs
         if anchor.is_dir():
             for x in anchor.glob("test*"):
                 if x.is_dir():
-                    self._getconftestmodules(x, importmode, rootpath)
+                    self._loadconftestmodules(x, importmode, rootpath)
 
-    def _getconftestmodules(
+    def _loadconftestmodules(
         self, path: Path, importmode: Union[str, ImportMode], rootpath: Path
-    ) -> Sequence[types.ModuleType]:
+    ) -> None:
         if self._noconftest:
-            return []
+            return
 
         directory = self._get_directory(path)
 
         # Optimization: avoid repeated searches in the same directory.
         # Assumes always called with same importmode and rootpath.
-        existing_clist = self._dirpath2confmods.get(directory)
-        if existing_clist is not None:
-            return existing_clist
+        if directory in self._dirpath2confmods:
+            return
 
         # XXX these days we may rather want to use config.rootpath
         # and allow users to opt into looking into the rootdir parent
@@ -613,16 +612,17 @@ class PytestPluginManager(PluginManager):
                     mod = self._importconftest(conftestpath, importmode, rootpath)
                     clist.append(mod)
         self._dirpath2confmods[directory] = clist
-        return clist
+
+    def _getconftestmodules(self, path: Path) -> Sequence[types.ModuleType]:
+        directory = self._get_directory(path)
+        return self._dirpath2confmods.get(directory, ())
 
     def _rget_with_confmod(
         self,
         name: str,
         path: Path,
-        importmode: Union[str, ImportMode],
-        rootpath: Path,
     ) -> Tuple[types.ModuleType, Any]:
-        modules = self._getconftestmodules(path, importmode, rootpath=rootpath)
+        modules = self._getconftestmodules(path)
         for mod in reversed(modules):
             try:
                 return mod, getattr(mod, name)
@@ -953,7 +953,8 @@ class Config:
         #: Command line arguments.
         ARGS = enum.auto()
         #: Invocation directory.
-        INCOVATION_DIR = enum.auto()
+        INVOCATION_DIR = enum.auto()
+        INCOVATION_DIR = INVOCATION_DIR  # backwards compatibility alias
         #: 'testpaths' configuration value.
         TESTPATHS = enum.auto()
 
@@ -1278,7 +1279,7 @@ class Config:
             else:
                 result = []
             if not result:
-                source = Config.ArgsSource.INCOVATION_DIR
+                source = Config.ArgsSource.INVOCATION_DIR
                 result = [str(invocation_dir)]
         return result, source
 
@@ -1562,13 +1563,9 @@ class Config:
         else:
             return self._getini_unknown_type(name, type, value)
 
-    def _getconftest_pathlist(
-        self, name: str, path: Path, rootpath: Path
-    ) -> Optional[List[Path]]:
+    def _getconftest_pathlist(self, name: str, path: Path) -> Optional[List[Path]]:
         try:
-            mod, relroots = self.pluginmanager._rget_with_confmod(
-                name, path, self.getoption("importmode"), rootpath
-            )
+            mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
         except KeyError:
             return None
         assert mod.__file__ is not None
