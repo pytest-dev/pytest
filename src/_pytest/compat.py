@@ -321,7 +321,7 @@ def get_user_id() -> int | None:
         return None
     # getuid shouldn't fail, but cpython defines such a case.
     # Let's hope for the best.
-    uid = os.getuid()
+    uid = os.getuid()  # type: ignore[attr-defined]
     return uid if uid != -1 else None
 
 
