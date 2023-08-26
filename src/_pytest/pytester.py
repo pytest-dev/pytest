@@ -752,7 +752,7 @@ class Pytester:
 
     def make_hook_recorder(self, pluginmanager: PytestPluginManager) -> HookRecorder:
         """Create a new :class:`HookRecorder` for a :class:`PytestPluginManager`."""
-        pluginmanager.reprec = reprec = HookRecorder(pluginmanager, _ispytest=True)
+        pluginmanager.reprec = reprec = HookRecorder(pluginmanager, _ispytest=True)  # type: ignore[attr-defined]
         self._request.addfinalizer(reprec.finish_recording)
         return reprec
 
