@@ -444,10 +444,10 @@ class PytestPluginManager(PluginManager):
         # so we avoid accessing possibly non-readable attributes
         # (see issue #1073).
         if not name.startswith("pytest_"):
-            return
+            return None
         # Ignore names which can not be hooks.
         if name == "pytest_plugins":
-            return
+            return None
 
         opts = super().parse_hookimpl_opts(plugin, name)
         if opts is not None:
@@ -456,9 +456,9 @@ class PytestPluginManager(PluginManager):
         method = getattr(plugin, name)
         # Consider only actual functions for hooks (#3775).
         if not inspect.isroutine(method):
-            return
+            return None
         # Collect unmarked hooks as long as they have the `pytest_' prefix.
-        return _get_legacy_hook_marks(
+        return _get_legacy_hook_marks(  # type: ignore[return-value]
             method, "impl", ("tryfirst", "trylast", "optionalhook", "hookwrapper")
         )
 
@@ -467,7 +467,7 @@ class PytestPluginManager(PluginManager):
         if opts is None:
             method = getattr(module_or_class, name)
             if name.startswith("pytest_"):
-                opts = _get_legacy_hook_marks(
+                opts = _get_legacy_hook_marks(  # type: ignore[assignment]
                     method,
                     "spec",
                     ("firstresult", "historic"),
@@ -1065,9 +1065,10 @@ class Config:
             fin()
 
     def get_terminal_writer(self) -> TerminalWriter:
-        terminalreporter: TerminalReporter = self.pluginmanager.get_plugin(
+        terminalreporter: Optional[TerminalReporter] = self.pluginmanager.get_plugin(
             "terminalreporter"
         )
+        assert terminalreporter is not None
         return terminalreporter._tw
 
     def pytest_cmdline_parse(
