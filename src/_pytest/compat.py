@@ -313,14 +313,10 @@ def safe_isclass(obj: object) -> bool:
         return False
 
 
-def get_user_id(*, UNRELIABLE: int = -1) -> int | None:
-    """Return the current user id, or None if we cannot get it reliably on
-    the current platform.
+def get_user_id() -> int | None:
+    """Return the current process's real user id or None if it cannot be
+    retrieved reliably.
 
-    :param UNRELIABLE:
-        The platform-specific constant which indicates that the retrieved uid
-        is unreliable. The default value, -1, is a common unreliability
-        indicator on UNIX-like systems.
     :return: The user id or None
     """
     # mypy follows the version and platform checking expectation of PEP 484:
@@ -331,6 +327,9 @@ def get_user_id(*, UNRELIABLE: int = -1) -> int | None:
         # Emscripten has a return 0 stub.
         return None
     else:
+        # On other platforms, a return value of -1 is assumed to indicate that
+        # the current process's real user id cannot be retrieved reliably.
+        UNRELIABLE = -1
         uid = os.getuid()
         return uid if uid != UNRELIABLE else None
 
