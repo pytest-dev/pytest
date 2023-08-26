@@ -1892,8 +1892,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
       --lfnf={all,none}, --last-failed-no-failures={all,none}
-                            Which tests to run with no previously (known)
-                            failures
+                            Determines whether to execute tests when there
+                            are no previously (known) failures or when no
+                            cached ``lastfailed`` data was found
       --sw, --stepwise      Exit on test failure and continue from last failing
                             test next time
       --sw-skip, --stepwise-skip
