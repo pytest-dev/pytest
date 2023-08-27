@@ -314,7 +314,7 @@ def safe_isclass(obj: object) -> bool:
 
 
 def get_user_id() -> int | None:
-    """Return the current process's real user id or None if it cannot be
+    """Return the current process's real user id or None if it could not be
     determined.
 
     :return: The user id or None if it could not be determined.
@@ -328,7 +328,7 @@ def get_user_id() -> int | None:
         return None
     else:
         # On other platforms, a return value of -1 is assumed to indicate that
-        # the current process's real user id cannot be determined.
+        # the current process's real user id could not be determined.
         ERROR = -1
         uid = os.getuid()
         return uid if uid != ERROR else None
