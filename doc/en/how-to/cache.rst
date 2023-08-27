@@ -185,6 +185,9 @@ using the ``--last-failed-no-failures`` option, which takes one of the following
     pytest --last-failed --last-failed-no-failures all    # run all tests (default behavior)
     pytest --last-failed --last-failed-no-failures none   # run no tests and exit
 
+The ``--last-failed-no-failures`` option governs the behavior of ``--if``.
+Default ``all`` runs all tests with no known failures. ``none`` avoids tests and exits successfully when there are no known failures.
+
 The new config.cache object
 --------------------------------
 

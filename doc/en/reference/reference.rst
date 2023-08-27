@@ -1894,7 +1894,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --lfnf={all,none}, --last-failed-no-failures={all,none}
                             Determines whether to execute tests when there
                             are no previously (known) failures or when no
-                            cached ``lastfailed`` data was found
+                            cached ``lastfailed`` data was found.
+                            This option governs the behavior of ``--if``.
+                            Default ``all`` runs all tests with no known failures.
+                            ``none`` avoids tests and exits if no failures.
       --sw, --stepwise      Exit on test failure and continue from last failing
                             test next time
       --sw-skip, --stepwise-skip
