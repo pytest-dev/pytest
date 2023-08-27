@@ -329,9 +329,9 @@ def get_user_id() -> int | None:
     else:
         # On other platforms, a return value of -1 is assumed to indicate that
         # the current process's real user id cannot be determined.
-        UNRELIABLE = -1
+        ERROR = -1
         uid = os.getuid()
-        return uid if uid != UNRELIABLE else None
+        return uid if uid != ERROR else None
 
 
 # Perform exhaustiveness checking.
