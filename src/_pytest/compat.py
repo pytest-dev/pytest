@@ -315,9 +315,9 @@ def safe_isclass(obj: object) -> bool:
 
 def get_user_id() -> int | None:
     """Return the current process's real user id or None if it cannot be
-    retrieved reliably.
+    determined.
 
-    :return: The user id or None
+    :return: The user id or None if it could not be determined.
     """
     # mypy follows the version and platform checking expectation of PEP 484:
     # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=platform#python-version-and-system-platform-checks
@@ -328,7 +328,7 @@ def get_user_id() -> int | None:
         return None
     else:
         # On other platforms, a return value of -1 is assumed to indicate that
-        # the current process's real user id cannot be retrieved reliably.
+        # the current process's real user id cannot be determined.
         UNRELIABLE = -1
         uid = os.getuid()
         return uid if uid != UNRELIABLE else None
