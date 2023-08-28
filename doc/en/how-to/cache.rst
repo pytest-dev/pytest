@@ -176,17 +176,14 @@ with more recent files coming first.
 Behavior when no tests failed in the last run
 ---------------------------------------------
 
-When no tests failed in the last run, or when no cached ``lastfailed`` data was
-found, ``pytest`` can be configured either to run all of the tests or no tests,
-using the ``--last-failed-no-failures`` option, which takes one of the following values:
+This option governs the behavior of ``--last-failed``.
+Determines whether to execute tests when there are no previously (known)
+failures or when no cached ``lastfailed`` data was found.
 
 .. code-block:: bash
 
-    pytest --last-failed --last-failed-no-failures all    # run all tests (default behavior)
-    pytest --last-failed --last-failed-no-failures none   # run no tests and exit
-
-The ``--last-failed-no-failures`` option governs the behavior of ``--if``.
-Default ``all`` runs all tests with no known failures. ``none`` avoids tests and exits successfully when there are no known failures.
+    pytest --last-failed --last-failed-no-failures all    # run the full test suite again (default behavior)
+    pytest --last-failed --last-failed-no-failures none   # runs no tests, emits a message about no known failures and exits successfully
 
 The new config.cache object
 --------------------------------

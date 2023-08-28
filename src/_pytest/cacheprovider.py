@@ -499,11 +499,11 @@ def pytest_addoption(parser: Parser) -> None:
         dest="last_failed_no_failures",
         choices=("all", "none"),
         default="all",
-        help="Determines whether to execute tests when there are no previously (known)"
-        "failures or when no cached ``lastfailed`` data was found."
-        "This option governs the behavior of ``--if``."
-        "Default ``all`` runs all tests with no known failures."
-        "``none`` avoids tests and exits if no failures.",
+        help="With ``--lf``, determines whether to execute tests when there"
+        "are no previously (known) failures or when no"
+        "cached ``lastfailed`` data was found."
+        "``all`` (the default) runs the full test suite again."
+        "``none`` just emits a message about no known failures and exits successfully.",
     )
 
 
