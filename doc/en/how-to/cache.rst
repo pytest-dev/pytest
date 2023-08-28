@@ -180,10 +180,17 @@ This option governs the behavior of ``--last-failed``.
 Determines whether to execute tests when there are no previously (known)
 failures or when no cached ``lastfailed`` data was found.
 
+There are two options:
+
+* ``all``:  when there are no known test failures, runs all tests (the full test suite). This is the default.
+* ``none``: when there are no known test failures, just emits a message stating this and exit successfully.
+
+Example:
+
 .. code-block:: bash
 
-    pytest --last-failed --last-failed-no-failures all    # when there are no known test failures, runs the full test suite again (default behavior)
-    pytest --last-failed --last-failed-no-failures none   # when there are no known test failures, runs no tests, emits a message about no known failures and exits successfully
+    pytest --last-failed --last-failed-no-failures all    # runs the full test suite (default behavior)
+    pytest --last-failed --last-failed-no-failures none   # runs no tests and exits successfully
 
 The new config.cache object
 --------------------------------
