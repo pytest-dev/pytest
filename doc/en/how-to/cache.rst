@@ -176,7 +176,7 @@ with more recent files coming first.
 Behavior when no tests failed in the last run
 ---------------------------------------------
 
-This option governs the behavior of ``--last-failed``.
+The ``--lfnf/--last-failed-no-failures`` option governs the behavior of ``--last-failed``.
 Determines whether to execute tests when there are no previously (known)
 failures or when no cached ``lastfailed`` data was found.
 
