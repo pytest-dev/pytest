@@ -182,8 +182,8 @@ failures or when no cached ``lastfailed`` data was found.
 
 .. code-block:: bash
 
-    pytest --last-failed --last-failed-no-failures all    # run the full test suite again (default behavior)
-    pytest --last-failed --last-failed-no-failures none   # runs no tests, emits a message about no known failures and exits successfully
+    pytest --last-failed --last-failed-no-failures all    # when there are no known test failures, runs the full test suite again (default behavior)
+    pytest --last-failed --last-failed-no-failures none   # when there are no known test failures, runs no tests, emits a message about no known failures and exits successfully
 
 The new config.cache object
 --------------------------------
