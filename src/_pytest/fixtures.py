@@ -791,7 +791,10 @@ class SubRequest(FixtureRequest):
         # If the executing fixturedef was not explicitly requested in the argument list (via
         # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
         # first.
-        if fixturedef.argname not in self.fixturenames:
+        if (
+            fixturedef.argname not in self._fixture_defs
+            and fixturedef.argname not in self._pyfuncitem.fixturenames
+        ):
             fixturedef.addfinalizer(
                 functools.partial(self._fixturedef.finish, request=self)
             )
