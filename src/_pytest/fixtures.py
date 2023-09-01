@@ -405,7 +405,7 @@ class FixtureRequest(abc.ABC):
     @property
     def fixturenames(self) -> List[str]:
         """Names of all active fixtures in this request."""
-        result = list(self._pyfuncitem._fixtureinfo.names_closure)
+        result = list(self._pyfuncitem.fixturenames)
         result.extend(set(self._fixture_defs).difference(result))
         return result
 
