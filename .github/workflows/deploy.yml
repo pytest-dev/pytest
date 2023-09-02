@@ -44,7 +44,7 @@ jobs:
         path: dist
 
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.8
+      uses: pypa/gh-action-pypi-publish@v1.8.10
 
     - name: Push tag
       run: |
