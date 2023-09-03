@@ -1,4 +1,1 @@
-[junit] move properties handling to :func:`finalize()`
-
-seem like not all the cases of calling finalize were adding the properties into the test case element,
-which leads to some test cases missing the expected properties.
+Fixed bug where `user_properties` where not being saved in the JUnit XML file if a fixture failed during teardown.
