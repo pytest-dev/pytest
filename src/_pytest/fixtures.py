@@ -8,6 +8,7 @@ from collections import defaultdict
 from collections import deque
 from contextlib import suppress
 from pathlib import Path
+from typing import AbstractSet
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -1382,7 +1383,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-def _get_direct_parametrize_args(node: nodes.Node) -> List[str]:
+def _get_direct_parametrize_args(node: nodes.Node) -> Set[str]:
     """Return all direct parametrization arguments of a node, so we don't
     mistake them for fixtures.
 
@@ -1391,14 +1392,13 @@ def _get_direct_parametrize_args(node: nodes.Node) -> List[str]:
     These things are done later as well when dealing with parametrization
     so this could be improved.
     """
-    parametrize_argnames: List[str] = []
+    parametrize_argnames: Set[str] = set()
     for marker in node.iter_markers(name="parametrize"):
         if not marker.kwargs.get("indirect", False):
             p_argnames, _ = ParameterSet._parse_parametrize_args(
                 *marker.args, **marker.kwargs
             )
-            parametrize_argnames.extend(p_argnames)
-
+            parametrize_argnames.update(p_argnames)
     return parametrize_argnames
 
 
@@ -1519,7 +1519,7 @@ class FixtureManager:
         self,
         fixturenames: Tuple[str, ...],
         parentnode: nodes.Node,
-        ignore_args: Sequence[str] = (),
+        ignore_args: AbstractSet[str],
     ) -> Tuple[Tuple[str, ...], List[str], Dict[str, Sequence[FixtureDef[Any]]]]:
         # Collect the closure of all fixtures, starting with the given
         # fixturenames as the initial set.  As we have to visit all
