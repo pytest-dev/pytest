@@ -1,0 +1,1 @@
+Fixed bug using ``--importmode=importlib`` which would cause package ``__init__.py`` files to be imported more than once in some cases.
