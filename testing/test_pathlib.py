@@ -18,6 +18,7 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_extended_length_path_str
 from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import import_path
+from _pytest.pathlib import ImportMode
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import insert_missing_modules
 from _pytest.pathlib import maybe_delete_a_numbered_dir
@@ -585,6 +586,10 @@ class TestImportLibMode:
         result = module_name_from_path(Path("/home/foo/test_foo.py"), Path("/bar"))
         assert result == "home.foo.test_foo"
 
+        # Importing __init__.py files should return the package as module name.
+        result = module_name_from_path(tmp_path / "src/app/__init__.py", tmp_path)
+        assert result == "src.app"
+
     def test_insert_missing_modules(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
     ) -> None:
@@ -615,3 +620,43 @@ class TestImportLibMode:
         assert sorted(modules) == ["xxx", "xxx.tests", "xxx.tests.foo"]
         assert modules["xxx"].tests is modules["xxx.tests"]
         assert modules["xxx.tests"].foo is modules["xxx.tests.foo"]
+
+    def test_importlib_package(self, monkeypatch: MonkeyPatch, tmp_path: Path):
+        """
+        Importing a package using --importmode=importlib should not import the
+        package's __init__.py file more than once (#11306).
+        """
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.syspath_prepend(tmp_path)
+
+        package_name = "importlib_import_package"
+        tmp_path.joinpath(package_name).mkdir()
+        init = tmp_path.joinpath(f"{package_name}/__init__.py")
+        init.write_text(
+            dedent(
+                """
+                from .singleton import Singleton
+
+                instance = Singleton()
+                """
+            ),
+            encoding="ascii",
+        )
+        singleton = tmp_path.joinpath(f"{package_name}/singleton.py")
+        singleton.write_text(
+            dedent(
+                """
+                class Singleton:
+                    INSTANCES = []
+
+                    def __init__(self) -> None:
+                        self.INSTANCES.append(self)
+                        if len(self.INSTANCES) > 1:
+                            raise RuntimeError("Already initialized")
+                """
+            ),
+            encoding="ascii",
+        )
+
+        mod = import_path(init, root=tmp_path, mode=ImportMode.importlib)
+        assert len(mod.instance.INSTANCES) == 1
