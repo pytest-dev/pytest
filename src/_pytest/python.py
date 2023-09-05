@@ -473,7 +473,9 @@ class PyCollector(PyobjMixin, nodes.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
 
-        definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
+        definition: FunctionDefinition = FunctionDefinition.from_parent(
+            self, name=name, callobj=funcobj
+        )
         fixtureinfo = definition._fixtureinfo
 
         # pytest_generate_tests impls call metafunc.parametrize() which fills
