@@ -163,6 +163,7 @@ def getfuncargnames(
         and not isinstance(
             inspect.getattr_static(cls, name, default=None), staticmethod
         )
+        and not hasattr(function, "__self__")
     ):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.
