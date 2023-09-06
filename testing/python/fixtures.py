@@ -9,6 +9,7 @@ from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pytester import get_public_names
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 
@@ -121,15 +122,20 @@ class TestFillFixtures:
             ["*recursive dependency involving fixture 'fix1' detected*"]
         )
 
-    def test_funcarg_basic(self, pytester: Pytester) -> None:
+    def test_funcarg_basic(self, recwarn, pytester: Pytester) -> None:
         pytester.copy_example()
         item = pytester.getitem(Path("test_funcarg_basic.py"))
         assert isinstance(item, Function)
         # Execute's item's setup, which fills fixtures.
         item.session._setupstate.setup(item)
-        assert len(item.funcargs) == 2
+        assert len(recwarn) == 0
+        item.funcargs["request"]
+        assert len(recwarn) == 1 and recwarn[0].category is DeprecationWarning
+        del item.funcargs["request"]
+        assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs["some"] == "test_func"
         assert item.funcargs["other"] == 42
+        assert len(recwarn) == 1
 
     def test_funcarg_lookup_modulelevel(self, pytester: Pytester) -> None:
         pytester.copy_example()
@@ -839,7 +845,8 @@ class TestRequestBasic:
         val2 = req.getfixturevalue("other")  # see about caching
         assert val2 == 2
         assert item.funcargs["something"] == 1
-        assert len(item.funcargs) == 1
+        assert len(get_public_names(item.funcargs)) == 2
+        assert "request" in item.funcargs
 
     def test_request_addfinalizer(self, pytester: Pytester) -> None:
         item = pytester.getitem(

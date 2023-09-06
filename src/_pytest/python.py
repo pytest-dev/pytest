@@ -1659,6 +1659,23 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
         tw.line(indent + line)
 
 
+class DeprecatingFuncArgs(Dict[str, object]):
+    def __init__(self, initialnames):
+        self.initialnames = initialnames
+        super().__init__()
+
+    def __getitem__(self, key: str) -> object:
+        if key not in self.initialnames:
+            warnings.warn(
+                "Accessing to names other than initialnames i.e., direct args,"
+                " the ones with `usefixture` or the ones with `autouse` through "
+                "`item.funcargs` is deprecated and will raise `KeyError` from "
+                "pytest 9. Please use `request.getfixturevalue` instead.",
+                DeprecationWarning,
+            )
+        return super().__getitem__(key)
+
+
 class Function(PyobjMixin, nodes.Item):
     """Item responsible for setting up and executing a Python test function.
 
@@ -1747,7 +1764,9 @@ class Function(PyobjMixin, nodes.Item):
         return super().from_parent(parent=parent, **kw)
 
     def _initrequest(self) -> None:
-        self.funcargs: Dict[str, object] = {}
+        self.funcargs: Dict[str, object] = DeprecatingFuncArgs(
+            self._fixtureinfo.initialnames
+        )
         self._request = fixtures.TopRequest(self, _ispytest=True)
 
     @property

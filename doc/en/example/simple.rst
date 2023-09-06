@@ -819,7 +819,7 @@ case we just write some information out to a ``failures`` file:
             with open("failures", mode, encoding="utf-8") as f:
                 # let's also access a fixture for the fun of it
                 if "tmp_path" in item.fixturenames:
-                    extra = " ({})".format(item.funcargs["tmp_path"])
+                    extra = " ({})".format(item._request.getfixturevalue("tmp_path"))
                 else:
                     extra = ""
 
