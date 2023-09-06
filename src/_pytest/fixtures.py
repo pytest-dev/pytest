@@ -210,16 +210,14 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
     argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]] = {}
     items_by_argkey: Dict[Scope, Dict[FixtureArgKey, Deque[nodes.Item]]] = {}
     for scope in HIGH_SCOPES:
-        d: Dict[nodes.Item, Dict[FixtureArgKey, None]] = {}
-        argkeys_cache[scope] = d
-        item_d: Dict[FixtureArgKey, Deque[nodes.Item]] = defaultdict(deque)
-        items_by_argkey[scope] = item_d
+        scoped_argkeys_cache = argkeys_cache[scope] = {}
+        scoped_items_by_argkey = items_by_argkey[scope] = defaultdict(deque)
         for item in items:
             keys = dict.fromkeys(get_parametrized_fixture_keys(item, scope), None)
             if keys:
-                d[item] = keys
+                scoped_argkeys_cache[item] = keys
                 for key in keys:
-                    item_d[key].append(item)
+                    scoped_items_by_argkey[key].append(item)
     items_dict = dict.fromkeys(items, None)
     return list(
         reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, Scope.Session)
@@ -407,7 +405,7 @@ class FixtureRequest(abc.ABC):
     @property
     def fixturenames(self) -> List[str]:
         """Names of all active fixtures in this request."""
-        result = list(self._pyfuncitem._fixtureinfo.names_closure)
+        result = list(self._pyfuncitem.fixturenames)
         result.extend(set(self._fixture_defs).difference(result))
         return result
 
@@ -687,8 +685,7 @@ class TopRequest(FixtureRequest):
 
     def _fillfixtures(self) -> None:
         item = self._pyfuncitem
-        fixturenames = getattr(item, "fixturenames", self.fixturenames)
-        for argname in fixturenames:
+        for argname in item.fixturenames:
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfixturevalue(argname)
 
@@ -794,7 +791,10 @@ class SubRequest(FixtureRequest):
         # If the executing fixturedef was not explicitly requested in the argument list (via
         # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
         # first.
-        if fixturedef.argname not in self.fixturenames:
+        if (
+            fixturedef.argname not in self._fixture_defs
+            and fixturedef.argname not in self._pyfuncitem.fixturenames
+        ):
             fixturedef.addfinalizer(
                 functools.partial(self._fixturedef.finish, request=self)
             )

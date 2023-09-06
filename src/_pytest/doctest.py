@@ -579,9 +579,11 @@ def _setup_fixtures(doctest_item: DoctestItem) -> TopRequest:
 
     doctest_item.funcargs = {}  # type: ignore[attr-defined]
     fm = doctest_item.session._fixturemanager
-    doctest_item._fixtureinfo = fm.getfixtureinfo(  # type: ignore[attr-defined]
+    fixtureinfo = fm.getfixtureinfo(
         node=doctest_item, func=func, cls=None, funcargs=False
     )
+    doctest_item._fixtureinfo = fixtureinfo  # type: ignore[attr-defined]
+    doctest_item.fixturenames = fixtureinfo.names_closure  # type: ignore[attr-defined]
     fixture_request = TopRequest(doctest_item, _ispytest=True)  # type: ignore[arg-type]
     fixture_request._fillfixtures()
     return fixture_request
