@@ -1,5 +1,6 @@
 """Discover and run doctests in modules and test files."""
 import bdb
+import functools
 import inspect
 import os
 import platform
@@ -535,6 +536,25 @@ class DoctestModule(Module):
                     super()._find(  # type:ignore[misc]
                         tests, obj, name, module, source_lines, globs, seen
                     )
+
+            if sys.version_info < (3, 13):
+
+                def _from_module(self, module, object):
+                    """`cached_property` objects are never considered a part
+                    of the 'current module'. As such they are skipped by doctest.
+                    Here we override `_from_module` to check the underlying
+                    function instead. https://github.com/python/cpython/issues/107995
+                    """
+                    if hasattr(functools, "cached_property") and isinstance(
+                        object, functools.cached_property
+                    ):
+                        object = object.func
+
+                    # Type ignored because this is a private function.
+                    return super()._from_module(module, object)  # type: ignore[misc]
+
+            else:  # pragma: no cover
+                pass
 
         if self.path.name == "conftest.py":
             module = self.config.pluginmanager._importconftest(
