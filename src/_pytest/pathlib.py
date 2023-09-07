@@ -1,5 +1,6 @@
 import atexit
 import contextlib
+import errno
 import fnmatch
 import importlib.util
 import itertools
@@ -791,3 +792,13 @@ def copytree(source: Path, target: Path) -> None:
             shutil.copyfile(x, newx)
         elif x.is_dir():
             newx.mkdir(exist_ok=True)
+
+
+def safe_exists(p: Path) -> bool:
+    """Like Path.exists(), but account for input arguments that might be too long (#11394)."""
+    try:
+        return p.exists()
+    except OSError as e:
+        if e.errno == errno.ENAMETOOLONG:
+            return False
+        raise
