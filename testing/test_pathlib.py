@@ -1,3 +1,4 @@
+import errno
 import os.path
 import pickle
 import sys
@@ -24,6 +25,7 @@ from _pytest.pathlib import insert_missing_modules
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
+from _pytest.pathlib import safe_exists
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
 from _pytest.tmpdir import TempPathFactory
@@ -660,3 +662,32 @@ class TestImportLibMode:
 
         mod = import_path(init, root=tmp_path, mode=ImportMode.importlib)
         assert len(mod.instance.INSTANCES) == 1
+
+
+def test_safe_exists(tmp_path: Path) -> None:
+    d = tmp_path.joinpath("some_dir")
+    d.mkdir()
+    assert safe_exists(d) is True
+
+    f = tmp_path.joinpath("some_file")
+    f.touch()
+    assert safe_exists(f) is True
+
+    # Use unittest.mock() as a context manager to have a very narrow
+    # patch lifetime.
+    p = tmp_path.joinpath("some long filename" * 100)
+    with unittest.mock.patch.object(
+        Path,
+        "exists",
+        autospec=True,
+        side_effect=OSError(errno.ENAMETOOLONG, "name too long"),
+    ):
+        assert safe_exists(p) is False
+
+    with unittest.mock.patch.object(
+        Path,
+        "exists",
+        autospec=True,
+        side_effect=ValueError("name too long"),
+    ):
+        assert safe_exists(p) is False
