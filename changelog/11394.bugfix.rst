@@ -1,0 +1,1 @@
+Fixed crash when parsing long command line arguments that might be interpreted as files.
