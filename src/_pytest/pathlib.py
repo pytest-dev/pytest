@@ -1,6 +1,5 @@
 import atexit
 import contextlib
-import errno
 import fnmatch
 import importlib.util
 import itertools
@@ -780,7 +779,7 @@ def safe_exists(p: Path) -> bool:
     """Like Path.exists(), but account for input arguments that might be too long (#11394)."""
     try:
         return p.exists()
-    except OSError as e:
-        if e.errno == errno.ENAMETOOLONG:
-            return False
-        raise
+    except (ValueError, OSError):
+        # ValueError: stat: path too long for Windows
+        # OSError: [WinError 123] The filename, directory name, or volume label syntax is incorrect
+        return False
