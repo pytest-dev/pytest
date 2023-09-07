@@ -482,6 +482,9 @@ class TestDoctests:
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1)
 
+    @pytest.mark.skipif(
+        sys.version_info[:2] <= (3, 7), reason="Only Python 3.7 or less"
+    )
     def test_doctest_cached_property(self, pytester: Pytester):
         p = pytester.makepyfile(
             """

@@ -545,7 +545,9 @@ class DoctestModule(Module):
                     Here we override `_from_module` to check the underlying
                     function instead. https://github.com/python/cpython/issues/107995
                     """
-                    if isinstance(object, functools.cached_property):
+                    if hasattr(functools, "cached_property") and isinstance(
+                        object, functools.cached_property
+                    ):
                         object = object.func
 
                     # Type ignored because this is a private function.
