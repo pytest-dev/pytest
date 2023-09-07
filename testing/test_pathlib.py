@@ -688,7 +688,6 @@ def test_safe_exists(tmp_path: Path) -> None:
         Path,
         "exists",
         autospec=True,
-        side_effect=OSError(errno.EIO, "another kind of error"),
+        side_effect=ValueError("name too long"),
     ):
-        with pytest.raises(OSError):
-            _ = safe_exists(p)
+        assert safe_exists(p) is False
