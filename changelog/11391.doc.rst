@@ -1,1 +1,0 @@
-Improved disclaimer on pytest plugin reference page to better indicate this is an automated, non-curated listing.
