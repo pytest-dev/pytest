@@ -265,6 +265,13 @@ def test_module_full_path_without_drive(pytester: Pytester) -> None:
 
 
 def test_very_long_cmdline_arg(pytester: Pytester) -> None:
+    """
+    Regression test for #11394.
+
+    Note: we could not manage to actually reproduce the error with this code, we suspect
+    GitHub runners are configured to support very long paths, however decided to leave
+    the test in place in case this ever regresses in the future.
+    """
     pytester.makeconftest(
         """
         import pytest
