@@ -1545,6 +1545,10 @@ class TestIssue11028:
 
 class TestIssue11239:
     def test_assertion_walrus_different_test_cases(self, pytester: Pytester) -> None:
+        """Regression for (#11239)
+
+        Walrus operator rewriting would leak to separate test cases if they used the same variables.
+        """
         pytester.makepyfile(
             """
             def test_1():
