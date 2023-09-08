@@ -176,11 +176,11 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         co = _read_pyc(fn, pyc, state.trace)
         if co is None:
             state.trace(f"rewriting {fn!r}")
-            source_stat, co = _rewrite_test(fn, self.config)
+            source_stat, source_hash, co = _rewrite_test(fn, self.config)
             if write:
                 self._writing_pyc = True
                 try:
-                    _write_pyc(state, co, source_stat, pyc)
+                    _write_pyc(state, co, source_stat, source_hash, pyc)
                 finally:
                     self._writing_pyc = False
         else:
@@ -298,7 +298,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
 
 def _write_pyc_fp(
-    fp: IO[bytes], source_stat: os.stat_result, co: types.CodeType
+    fp: IO[bytes], source_stat: os.stat_result, source_hash: bytes, co: types.CodeType
 ) -> None:
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
@@ -310,8 +310,11 @@ def _write_pyc_fp(
     # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
     mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
     size = source_stat.st_size & 0xFFFFFFFF
+    # 64-bit source file hash
+    source_hash = source_hash[:8]
     # "<LL" stands for 2 unsigned longs, little-endian.
     fp.write(struct.pack("<LL", mtime, size))
+    fp.write(source_hash)
     fp.write(marshal.dumps(co))
 
 
@@ -319,12 +322,13 @@ def _write_pyc(
     state: AssertionState,
     co: types.CodeType,
     source_stat: os.stat_result,
+    source_hash: bytes,
     pyc: Path,
 ) -> bool:
     proc_pyc = f"{pyc}.{os.getpid()}"
     try:
         with open(proc_pyc, "wb") as fp:
-            _write_pyc_fp(fp, source_stat, co)
+            _write_pyc_fp(fp, source_stat, source_hash, co)
     except OSError as e:
         state.trace(f"error writing pyc file at {proc_pyc}: errno={e.errno}")
         return False
@@ -340,15 +344,18 @@ def _write_pyc(
     return True
 
 
-def _rewrite_test(fn: Path, config: Config) -> tuple[os.stat_result, types.CodeType]:
+def _rewrite_test(
+    fn: Path, config: Config
+) -> tuple[os.stat_result, bytes, types.CodeType]:
     """Read and rewrite *fn* and return the code object."""
     stat = os.stat(fn)
     source = fn.read_bytes()
+    source_hash = importlib.util.source_hash(source)
     strfn = str(fn)
     tree = ast.parse(source, filename=strfn)
     rewrite_asserts(tree, source, strfn, config)
     co = compile(tree, strfn, "exec", dont_inherit=True)
-    return stat, co
+    return stat, source_hash, co
 
 
 def _read_pyc(
@@ -367,12 +374,12 @@ def _read_pyc(
             stat_result = os.stat(source)
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
-            data = fp.read(16)
+            data = fp.read(24)
         except OSError as e:
             trace(f"_read_pyc({source}): OSError {e}")
             return None
         # Check for invalid or out of date pyc file.
-        if len(data) != (16):
+        if len(data) != (24):
             trace(f"_read_pyc({source}): invalid pyc (too short)")
             return None
         if data[:4] != importlib.util.MAGIC_NUMBER:
@@ -381,14 +388,20 @@ def _read_pyc(
         if data[4:8] != b"\x00\x00\x00\x00":
             trace(f"_read_pyc({source}): invalid pyc (unsupported flags)")
             return None
-        mtime_data = data[8:12]
-        if int.from_bytes(mtime_data, "little") != mtime & 0xFFFFFFFF:
-            trace(f"_read_pyc({source}): out of date")
-            return None
         size_data = data[12:16]
         if int.from_bytes(size_data, "little") != size & 0xFFFFFFFF:
             trace(f"_read_pyc({source}): invalid pyc (incorrect size)")
             return None
+        mtime_data = data[8:12]
+        if int.from_bytes(mtime_data, "little") != mtime & 0xFFFFFFFF:
+            trace(f"_read_pyc({source}): out of date")
+            hash = data[16:24]
+            source_hash = importlib.util.source_hash(source.read_bytes())
+            if source_hash[:8] == hash:
+                trace(f"_read_pyc({source}): source hash match (no change detected)")
+            else:
+                trace(f"_read_pyc({source}): hash doesn't match")
+                return None
         try:
             co = marshal.load(fp)
         except Exception as e:
