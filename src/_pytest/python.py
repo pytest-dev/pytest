@@ -1800,9 +1800,8 @@ class Function(PyobjMixin, nodes.Item):
             self.keywords.update(keywords)
 
         if fixtureinfo is None:
-            fixtureinfo = self.session._fixturemanager.getfixtureinfo(
-                self, self.obj, self.cls, funcargs=True
-            )
+            fm = self.session._fixturemanager
+            fixtureinfo = fm.getfixtureinfo(self, self.obj, self.cls)
         self._fixtureinfo: FuncFixtureInfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
