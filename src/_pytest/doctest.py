@@ -261,8 +261,14 @@ class DoctestItem(Item):
         super().__init__(name, parent)
         self.runner = runner
         self.dtest = dtest
+
+        # Stuff needed for fixture support.
         self.obj = None
-        self.fixture_request: Optional[TopRequest] = None
+        fm = self.session._fixturemanager
+        fixtureinfo = fm.getfixtureinfo(node=self, func=None, cls=None)
+        self._fixtureinfo = fixtureinfo
+        self.fixturenames = fixtureinfo.names_closure
+        self._initrequest()
 
     @classmethod
     def from_parent(  # type: ignore
@@ -277,11 +283,16 @@ class DoctestItem(Item):
         """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
 
+    def _initrequest(self) -> None:
+        self.funcargs: Dict[str, object] = {}
+        self._request = TopRequest(self, _ispytest=True)  # type: ignore[arg-type]
+
     def setup(self) -> None:
         if self.dtest is not None:
-            self.fixture_request = _setup_fixtures(self)
-            globs = dict(getfixture=self.fixture_request.getfixturevalue)
-            for name, value in self.fixture_request.getfixturevalue(
+            self._request._fillfixtures()
+
+            globs = dict(getfixture=self._request.getfixturevalue)
+            for name, value in self._request.getfixturevalue(
                 "doctest_namespace"
             ).items():
                 globs[name] = value
@@ -587,19 +598,6 @@ class DoctestModule(Module):
                 yield DoctestItem.from_parent(
                     self, name=test.name, runner=runner, dtest=test
                 )
-
-
-def _setup_fixtures(doctest_item: DoctestItem) -> TopRequest:
-    """Used by DoctestTextfile and DoctestItem to setup fixture information."""
-
-    doctest_item.funcargs = {}  # type: ignore[attr-defined]
-    fm = doctest_item.session._fixturemanager
-    fixtureinfo = fm.getfixtureinfo(node=doctest_item, func=None, cls=None)
-    doctest_item._fixtureinfo = fixtureinfo  # type: ignore[attr-defined]
-    doctest_item.fixturenames = fixtureinfo.names_closure  # type: ignore[attr-defined]
-    fixture_request = TopRequest(doctest_item, _ispytest=True)  # type: ignore[arg-type]
-    fixture_request._fillfixtures()
-    return fixture_request
 
 
 def _init_checker_class() -> Type["doctest.OutputChecker"]:
