@@ -592,14 +592,9 @@ class DoctestModule(Module):
 def _setup_fixtures(doctest_item: DoctestItem) -> TopRequest:
     """Used by DoctestTextfile and DoctestItem to setup fixture information."""
 
-    def func() -> None:
-        pass
-
     doctest_item.funcargs = {}  # type: ignore[attr-defined]
     fm = doctest_item.session._fixturemanager
-    fixtureinfo = fm.getfixtureinfo(
-        node=doctest_item, func=func, cls=None, funcargs=False
-    )
+    fixtureinfo = fm.getfixtureinfo(node=doctest_item, func=None, cls=None)
     doctest_item._fixtureinfo = fixtureinfo  # type: ignore[attr-defined]
     doctest_item.fixturenames = fixtureinfo.names_closure  # type: ignore[attr-defined]
     fixture_request = TopRequest(doctest_item, _ispytest=True)  # type: ignore[arg-type]

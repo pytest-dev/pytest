@@ -1460,13 +1460,12 @@ class FixtureManager:
     def getfixtureinfo(
         self,
         node: nodes.Item,
-        func: Callable[..., object],
+        func: Optional[Callable[..., object]],
         cls: Optional[type],
-        funcargs: bool = True,
     ) -> FuncFixtureInfo:
         """Calculate the :class:`FuncFixtureInfo` for an item.
 
-        If ``funcargs`` is false, or if the item sets an attribute
+        If ``func`` is None, or if the item sets an attribute
         ``nofuncargs = True``, then ``func`` is not examined at all.
 
         :param node:
@@ -1475,10 +1474,8 @@ class FixtureManager:
             The item's function.
         :param cls:
             If the function is a method, the method's class.
-        :param funcargs:
-            Whether to look into func's parameters as fixture requests.
         """
-        if funcargs and not getattr(node, "nofuncargs", False):
+        if func is not None and not getattr(node, "nofuncargs", False):
             argnames = getfuncargnames(func, name=node.name, cls=cls)
         else:
             argnames = ()
