@@ -345,18 +345,18 @@ def test_resolve_package_path(tmp_path: Path) -> None:
     (pkg / "subdir").mkdir()
     (pkg / "subdir/__init__.py").touch()
     assert resolve_package_path(pkg) == pkg
-    assert resolve_package_path(pkg.joinpath("subdir", "__init__.py")) == pkg
+    assert resolve_package_path(pkg / "subdir/__init__.py") == pkg
 
 
 def test_package_unimportable(tmp_path: Path) -> None:
     pkg = tmp_path / "pkg1-1"
     pkg.mkdir()
     pkg.joinpath("__init__.py").touch()
-    subdir = pkg.joinpath("subdir")
+    subdir = pkg / "subdir"
     subdir.mkdir()
-    pkg.joinpath("subdir/__init__.py").touch()
+    (pkg / "subdir/__init__.py").touch()
     assert resolve_package_path(subdir) == subdir
-    xyz = subdir.joinpath("xyz.py")
+    xyz = subdir / "xyz.py"
     xyz.touch()
     assert resolve_package_path(xyz) == subdir
     assert not resolve_package_path(pkg)
