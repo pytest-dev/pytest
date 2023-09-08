@@ -14,6 +14,7 @@ import sys
 import tokenize
 import types
 from collections import defaultdict
+from enum import Enum
 from pathlib import Path
 from pathlib import PurePath
 from typing import Callable
@@ -53,7 +54,11 @@ PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
-_SCOPE_END_MARKER = object()
+
+class ScopeEndMarkerType(Enum):
+    """Special marker that denotes we have just left a function or class definition."""
+
+    ScopeEndMarker = 1
 
 
 class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
@@ -728,13 +733,13 @@ class AssertionRewriter(ast.NodeVisitor):
 
         # Collect asserts.
         self.scope = (mod,)
-        nodes: List[Union[ast.AST, object]] = [mod]
+        nodes: List[Union[ast.AST, ScopeEndMarkerType]] = [mod]
         while nodes:
             node = nodes.pop()
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 self.scope = tuple((*self.scope, node))
-                nodes.append(_SCOPE_END_MARKER)
-            if node == _SCOPE_END_MARKER:
+                nodes.append(ScopeEndMarkerType.ScopeEndMarker)
+            if node is ScopeEndMarkerType.ScopeEndMarker:
                 self.scope = self.scope[:-1]
                 continue
             assert isinstance(node, ast.AST)
