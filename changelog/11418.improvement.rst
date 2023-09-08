@@ -1,0 +1,1 @@
+Added hash comparison for pyc cache files.
