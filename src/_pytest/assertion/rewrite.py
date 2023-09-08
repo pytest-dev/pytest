@@ -46,6 +46,10 @@ if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
 
 
+class Sentinel:
+    pass
+
+
 assertstate_key = StashKey["AssertionState"]()
 
 # pytest caches rewritten pycs in pycache dirs
@@ -53,7 +57,8 @@ PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
-_SCOPE_END_MARKER = object()
+# Special marker that denotes we have just left a scope definition
+_SCOPE_END_MARKER = Sentinel()
 
 
 class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
@@ -728,7 +733,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
         # Collect asserts.
         self.scope = (mod,)
-        nodes: List[Union[ast.AST, object]] = [mod]
+        nodes: List[Union[ast.AST, Sentinel]] = [mod]
         while nodes:
             node = nodes.pop()
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
