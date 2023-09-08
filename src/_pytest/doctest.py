@@ -400,8 +400,8 @@ def _get_flag_lookup() -> Dict[str, int]:
     )
 
 
-def get_optionflags(parent):
-    optionflags_str = parent.config.getini("doctest_optionflags")
+def get_optionflags(config: Config) -> int:
+    optionflags_str = config.getini("doctest_optionflags")
     flag_lookup_table = _get_flag_lookup()
     flag_acc = 0
     for flag in optionflags_str:
@@ -409,8 +409,8 @@ def get_optionflags(parent):
     return flag_acc
 
 
-def _get_continue_on_failure(config):
-    continue_on_failure = config.getvalue("doctest_continue_on_failure")
+def _get_continue_on_failure(config: Config) -> bool:
+    continue_on_failure: bool = config.getvalue("doctest_continue_on_failure")
     if continue_on_failure:
         # We need to turn off this if we use pdb since we should stop at
         # the first failure.
@@ -433,7 +433,7 @@ class DoctestTextfile(Module):
         name = self.path.name
         globs = {"__name__": "__main__"}
 
-        optionflags = get_optionflags(self)
+        optionflags = get_optionflags(self.config)
 
         runner = _get_runner(
             verbose=False,
@@ -578,7 +578,7 @@ class DoctestModule(Module):
                     raise
         # Uses internal doctest module parsing mechanism.
         finder = MockAwareDocTestFinder()
-        optionflags = get_optionflags(self)
+        optionflags = get_optionflags(self.config)
         runner = _get_runner(
             verbose=False,
             optionflags=optionflags,
