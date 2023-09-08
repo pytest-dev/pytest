@@ -255,8 +255,8 @@ class DoctestItem(Item):
         self,
         name: str,
         parent: "Union[DoctestTextfile, DoctestModule]",
-        runner: Optional["doctest.DocTestRunner"] = None,
-        dtest: Optional["doctest.DocTest"] = None,
+        runner: "doctest.DocTestRunner",
+        dtest: "doctest.DocTest",
     ) -> None:
         super().__init__(name, parent)
         self.runner = runner
@@ -288,19 +288,13 @@ class DoctestItem(Item):
         self._request = TopRequest(self, _ispytest=True)  # type: ignore[arg-type]
 
     def setup(self) -> None:
-        if self.dtest is not None:
-            self._request._fillfixtures()
-
-            globs = dict(getfixture=self._request.getfixturevalue)
-            for name, value in self._request.getfixturevalue(
-                "doctest_namespace"
-            ).items():
-                globs[name] = value
-            self.dtest.globs.update(globs)
+        self._request._fillfixtures()
+        globs = dict(getfixture=self._request.getfixturevalue)
+        for name, value in self._request.getfixturevalue("doctest_namespace").items():
+            globs[name] = value
+        self.dtest.globs.update(globs)
 
     def runtest(self) -> None:
-        assert self.dtest is not None
-        assert self.runner is not None
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
         failures: List["doctest.DocTestFailure"] = []
@@ -387,7 +381,6 @@ class DoctestItem(Item):
         return ReprFailDoctest(reprlocation_lines)
 
     def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
-        assert self.dtest is not None
         return self.path, self.dtest.lineno, "[doctest] %s" % self.name
 
 
