@@ -680,7 +680,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     result = None
     for parent in itertools.chain((path,), path.parents):
         if parent.is_dir():
-            if not parent.joinpath("__init__.py").is_file():
+            if not (parent / "__init__.py").is_file():
                 break
             if not parent.name.isidentifier():
                 break
