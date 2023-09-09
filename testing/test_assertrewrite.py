@@ -1531,6 +1531,28 @@ class TestIssue11028:
         result.stdout.fnmatch_lines(["*assert 4 > 5", "*where 5 = add_one(4)"])
 
 
+class TestIssue11239:
+    @pytest.mark.skipif(sys.version_info[:2] <= (3, 7), reason="Only Python 3.8+")
+    def test_assertion_walrus_different_test_cases(self, pytester: Pytester) -> None:
+        """Regression for (#11239)
+
+        Walrus operator rewriting would leak to separate test cases if they used the same variables.
+        """
+        pytester.makepyfile(
+            """
+            def test_1():
+                state = {"x": 2}.get("x")
+                assert state is not None
+
+            def test_2():
+                db = {"x": 2}
+                assert (state := db.get("x")) is not None
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+
 @pytest.mark.skipif(
     sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
 )
