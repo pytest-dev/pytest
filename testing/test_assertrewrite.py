@@ -1532,6 +1532,7 @@ class TestIssue11028:
 
 
 class TestIssue11239:
+    @pytest.mark.skipif(sys.version_info[:2] <= (3, 7), reason="Only Python 3.8+")
     def test_assertion_walrus_different_test_cases(self, pytester: Pytester) -> None:
         """Regression for (#11239)
 
