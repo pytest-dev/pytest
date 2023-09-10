@@ -27,6 +27,9 @@ from _pytest.pytester import Pytester
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
 
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import ExceptionGroup
+
 
 @pytest.fixture
 def limited_recursion_depth():
@@ -442,6 +445,62 @@ def test_match_raises_error(pytester: Pytester) -> None:
     result = pytester.runpytest("--fulltrace")
     assert result.ret != 0
     result.stdout.re_match_lines([r".*__tracebackhide__ = True.*", *match])
+
+
+class TestGroupContains:
+    def test_contains_exception_type(self) -> None:
+        exc_group = ExceptionGroup("", [RuntimeError()])
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert exc_info.group_contains(RuntimeError)
+
+    def test_doesnt_contain_exception_type(self) -> None:
+        exc_group = ExceptionGroup("", [ValueError()])
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert not exc_info.group_contains(RuntimeError)
+
+    def test_contains_exception_match(self) -> None:
+        exc_group = ExceptionGroup("", [RuntimeError("exception message")])
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert exc_info.group_contains(RuntimeError, match=r"^exception message$")
+
+    def test_doesnt_contain_exception_match(self) -> None:
+        exc_group = ExceptionGroup("", [RuntimeError("message that will not match")])
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert not exc_info.group_contains(RuntimeError, match=r"^exception message$")
+
+    def test_contains_exception_type_recursive(self) -> None:
+        exc_group = ExceptionGroup("", [ExceptionGroup("", [RuntimeError()])])
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert exc_info.group_contains(RuntimeError, recursive=True)
+
+    def test_doesnt_contain_exception_type_nonrecursive(self) -> None:
+        exc_group = ExceptionGroup("", [ExceptionGroup("", [RuntimeError()])])
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert not exc_info.group_contains(RuntimeError)
+
+    def test_contains_exception_match_recursive(self) -> None:
+        exc_group = ExceptionGroup(
+            "", [ExceptionGroup("", [RuntimeError("exception message")])]
+        )
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert exc_info.group_contains(
+            RuntimeError, match=r"^exception message$", recursive=True
+        )
+
+    def test_doesnt_contain_exception_match_nonrecursive(self) -> None:
+        exc_group = ExceptionGroup(
+            "", [ExceptionGroup("", [RuntimeError("message that will not match")])]
+        )
+        with pytest.raises(ExceptionGroup) as exc_info:
+            raise exc_group
+        assert not exc_info.group_contains(RuntimeError, match=r"^exception message$")
 
 
 class TestFormattedExcinfo:
