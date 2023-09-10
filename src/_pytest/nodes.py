@@ -127,6 +127,20 @@ _NodeType = TypeVar("_NodeType", bound="Node")
 
 
 class NodeMeta(type):
+    """Metaclass used by :class:`Node` to enforce that direct construction raises 
+    :class:`Failed`
+    
+    This behaviour supports the indirection introduced with :meth:`Node.from_parent`,
+    the named constructor to be used instead of direct construction. The design 
+    decision to enforce indirection with :class:`NodeMeta` was made as a 
+    temporary aid for refactoring the collection tree, which was diagnosed to 
+    have :class:`Node` objects whose creational patterns were overly entangled. 
+    Once the refactoring is complete, this metaclass can be removed. 
+    
+    See https://github.com/pytest-dev/pytest/projects/3 for an overview of the
+    progress on detangling the :class:`Node` classes.   
+    """  
+    
     def __call__(self, *k, **kw):
         msg = (
             "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
