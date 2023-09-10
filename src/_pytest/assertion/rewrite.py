@@ -23,12 +23,15 @@ from typing import IO
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
+
+import _imp
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
@@ -299,23 +302,31 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
 
 def _write_pyc_fp(
-    fp: IO[bytes], source_stat: os.stat_result, source_hash: bytes, co: types.CodeType
+    fp: IO[bytes],
+    source_stat: os.stat_result,
+    source_hash: bytes,
+    co: types.CodeType,
+    invalidation_mode: Literal["timestamp", "checked-hash"],
 ) -> None:
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
     # import. However, there's little reason to deviate.
     fp.write(importlib.util.MAGIC_NUMBER)
     # https://www.python.org/dev/peps/pep-0552/
-    flags = b"\x00\x00\x00\x00"
-    fp.write(flags)
-    # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
-    mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
-    size = source_stat.st_size & 0xFFFFFFFF
-    # 64-bit source file hash
-    source_hash = source_hash[:8]
-    # "<LL" stands for 2 unsigned longs, little-endian.
-    fp.write(struct.pack("<LL", mtime, size))
-    fp.write(source_hash)
+    if invalidation_mode == "timestamp":
+        flags = b"\x00\x00\x00\x00"
+        fp.write(flags)
+        # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
+        mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
+        size = source_stat.st_size & 0xFFFFFFFF
+        # "<LL" stands for 2 unsigned longs, little-endian.
+        fp.write(struct.pack("<LL", mtime, size))
+    elif invalidation_mode == "checked-hash":
+        flags = b"\x03\x00\x00\x00"
+        fp.write(flags)
+        # 64-bit source file hash
+        source_hash = source_hash[:8]
+        fp.write(source_hash)
     fp.write(marshal.dumps(co))
 
 
@@ -329,7 +340,7 @@ def _write_pyc(
     proc_pyc = f"{pyc}.{os.getpid()}"
     try:
         with open(proc_pyc, "wb") as fp:
-            _write_pyc_fp(fp, source_stat, source_hash, co)
+            _write_pyc_fp(fp, source_stat, source_hash, co, state.invalidation_mode)
     except OSError as e:
         state.trace(f"error writing pyc file at {proc_pyc}: errno={e.errno}")
         return False
@@ -375,34 +386,40 @@ def _read_pyc(
             stat_result = os.stat(source)
             mtime = int(stat_result.st_mtime)
             size = stat_result.st_size
-            data = fp.read(24)
+            data = fp.read(16)
         except OSError as e:
             trace(f"_read_pyc({source}): OSError {e}")
             return None
         # Check for invalid or out of date pyc file.
-        if len(data) != (24):
+        if len(data) != (16):
             trace("_read_pyc(%s): invalid pyc (too short)" % source)
             return None
         if data[:4] != importlib.util.MAGIC_NUMBER:
             trace("_read_pyc(%s): invalid pyc (bad magic number)" % source)
             return None
-        if data[4:8] != b"\x00\x00\x00\x00":
-            trace("_read_pyc(%s): invalid pyc (unsupported flags)" % source)
-            return None
-        size_data = data[12:16]
-        if int.from_bytes(size_data, "little") != size & 0xFFFFFFFF:
-            trace("_read_pyc(%s): invalid pyc (incorrect size)" % source)
-            return None
-        mtime_data = data[8:12]
-        if int.from_bytes(mtime_data, "little") != mtime & 0xFFFFFFFF:
-            trace("_read_pyc(%s): out of date" % source)
-            hash = data[16:24]
+
+        hash_based = getattr(_imp, "check_hash_based_pycs", "default") == "always"
+        if data[4:8] == b"\x00\x00\x00\x00" and not hash_based:
+            trace("_read_pyc(%s): timestamp based" % source)
+            mtime_data = data[8:12]
+            if int.from_bytes(mtime_data, "little") != mtime & 0xFFFFFFFF:
+                trace("_read_pyc(%s): out of date" % source)
+                return None
+            size_data = data[12:16]
+            if int.from_bytes(size_data, "little") != size & 0xFFFFFFFF:
+                trace("_read_pyc(%s): invalid pyc (incorrect size)" % source)
+                return None
+        elif data[4:8] == b"\x03\x00\x00\x00":
+            trace("_read_pyc(%s): hash based" % source)
+            hash = data[8:16]
             source_hash = importlib.util.source_hash(source.read_bytes())
-            if source_hash[:8] == hash:
-                trace("_read_pyc(%s): source hash match (no change detected)" % source)
-            else:
+            if source_hash[:8] != hash:
                 trace("_read_pyc(%s): hash doesn't match" % source)
                 return None
+        else:
+            trace("_read_pyc(%s): invalid pyc (unsupported flags)" % source)
+            return None
+
         try:
             co = marshal.load(fp)
         except Exception as e:

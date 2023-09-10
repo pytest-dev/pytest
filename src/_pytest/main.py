@@ -223,6 +223,14 @@ def pytest_addoption(parser: Parser) -> None:
         help="Prepend/append to sys.path when importing test modules and conftest "
         "files. Default: prepend.",
     )
+    group.addoption(
+        "--invalidation-mode",
+        default="timestamp",
+        choices=["timestamp", "checked-hash"],
+        dest="invalidationmode",
+        help="Pytest pyc cache invalidation mode. Default: timestamp.",
+    )
+
     parser.addini(
         "consider_namespace_packages",
         type="bool",
