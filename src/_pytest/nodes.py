@@ -128,7 +128,7 @@ _NodeType = TypeVar("_NodeType", bound="Node")
 
 class NodeMeta(type):
     """Metaclass used by :class:`Node` to enforce that direct construction raises 
-    :class:`Failed`
+    :class:`Failed`.
     
     This behaviour supports the indirection introduced with :meth:`Node.from_parent`,
     the named constructor to be used instead of direct construction. The design 
