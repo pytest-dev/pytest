@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
+from _pytest.fixtures import deduplicate_names
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
@@ -4531,3 +4532,10 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines([expected])
     assert result.ret == ExitCode.TESTS_FAILED
+
+
+def test_deduplicate_names() -> None:
+    items = deduplicate_names("abacd")
+    assert items == ("a", "b", "c", "d")
+    items = deduplicate_names(items + ("g", "f", "g", "e", "b"))
+    assert items == ("a", "b", "c", "d", "g", "f", "e")
