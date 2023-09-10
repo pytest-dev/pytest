@@ -28,6 +28,7 @@ from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
+from _pytest.pytester import Pytester
 from _pytest.tmpdir import TempPathFactory
 
 
@@ -592,6 +593,10 @@ class TestImportLibMode:
         result = module_name_from_path(tmp_path / "src/app/__init__.py", tmp_path)
         assert result == "src.app"
 
+        # Unless __init__.py file is at the root, in which case we cannot have an empty module name.
+        result = module_name_from_path(tmp_path / "__init__.py", tmp_path)
+        assert result == "__init__"
+
     def test_insert_missing_modules(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
     ) -> None:
@@ -662,6 +667,22 @@ class TestImportLibMode:
 
         mod = import_path(init, root=tmp_path, mode=ImportMode.importlib)
         assert len(mod.instance.INSTANCES) == 1
+
+    def test_importlib_root_is_package(self, pytester: Pytester) -> None:
+        """
+        Regression for importing a `__init__`.py file that is at the root
+        (#11417).
+        """
+        pytester.makepyfile(__init__="")
+        pytester.makepyfile(
+            """
+            def test_my_test():
+                assert True
+            """
+        )
+
+        result = pytester.runpytest("--import-mode=importlib")
+        result.stdout.fnmatch_lines("* 1 passed *")
 
 
 def test_safe_exists(tmp_path: Path) -> None:

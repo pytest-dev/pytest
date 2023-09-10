@@ -623,8 +623,9 @@ def module_name_from_path(path: Path, root: Path) -> str:
         # Use the parts for the relative path to the root path.
         path_parts = relative_path.parts
 
-    # Module name for packages do not contain the __init__ file.
-    if path_parts[-1] == "__init__":
+    # Module name for packages do not contain the __init__ file, unless
+    # the `__init__.py` file is at the root.
+    if len(path_parts) >= 2 and path_parts[-1] == "__init__":
         path_parts = path_parts[:-1]
 
     return ".".join(path_parts)
