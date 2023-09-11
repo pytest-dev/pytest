@@ -22,6 +22,15 @@ if sys.gettrace():
             sys.settrace(orig_trace)
 
 
+@pytest.fixture(autouse=True)
+def set_column_width(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Force terminal width to 80: some tests check the formatting of --help, which is sensible
+    to terminal width.
+    """
+    monkeypatch.setenv("COLUMNS", "80")
+
+
 @pytest.hookimpl(wrapper=True, tryfirst=True)
 def pytest_collection_modifyitems(items) -> Generator[None, None, None]:
     """Prefer faster tests.
