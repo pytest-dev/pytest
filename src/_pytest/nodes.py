@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
+import pluggy
+
 import _pytest._code
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
@@ -27,6 +29,7 @@ from _pytest._code.code import Traceback
 from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
+from _pytest.config.compat import _check_path
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
@@ -92,14 +95,6 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
     # The node ID itself.
     if nodeid:
         yield nodeid
-
-
-def _check_path(path: Path, fspath: LEGACY_PATH) -> None:
-    if Path(fspath) != path:
-        raise ValueError(
-            f"Path({fspath!r}) != {path!r}\n"
-            "if both path and fspath are given they need to be equal"
-        )
 
 
 def _imply_path(
@@ -264,7 +259,7 @@ class Node(metaclass=NodeMeta):
         return cls._create(parent=parent, **kw)
 
     @property
-    def ihook(self):
+    def ihook(self) -> pluggy.HookRelay:
         """fspath-sensitive hook proxy used to call pytest hooks."""
         return self.session.gethookproxy(self.path)
 
