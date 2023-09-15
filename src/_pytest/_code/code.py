@@ -725,13 +725,22 @@ class ExceptionInfo(Generic[E]):
         exc_group: BaseExceptionGroup[BaseException],
         expected_exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
         match: Union[str, Pattern[str], None],
-        recursive: bool = False,
+        target_depth: Optional[int] = None,
+        current_depth: int = 1,
     ) -> bool:
         """Return `True` if a `BaseExceptionGroup` contains a matching exception."""
+        if (target_depth is not None) and (current_depth > target_depth):
+            # already descended past the target depth
+            return False
         for exc in exc_group.exceptions:
-            if recursive and isinstance(exc, BaseExceptionGroup):
-                if self._group_contains(exc, expected_exception, match, recursive):
+            if isinstance(exc, BaseExceptionGroup):
+                if self._group_contains(
+                    exc, expected_exception, match, target_depth, current_depth + 1
+                ):
                     return True
+            if (target_depth is not None) and (current_depth != target_depth):
+                # not at the target depth, no match
+                continue
             if not isinstance(exc, expected_exception):
                 continue
             if match is not None:
@@ -744,8 +753,9 @@ class ExceptionInfo(Generic[E]):
     def group_contains(
         self,
         expected_exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
+        *,
         match: Union[str, Pattern[str], None] = None,
-        recursive: bool = False,
+        depth: Optional[int] = None,
     ) -> bool:
         """Check whether a captured exception group contains a matching exception.
 
@@ -762,13 +772,16 @@ class ExceptionInfo(Generic[E]):
             To match a literal string that may contain :ref:`special characters
             <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
 
-        :param bool recursive:
-            If `True`, search will descend recursively into any nested exception groups.
-            If `False`, only the top exception group will be searched.
+        :param Optional[int] depth:
+            If `None`, will search for a matching exception at any nesting depth.
+            If >= 1, will only match an exception if it's at the specified depth (depth = 1 being
+            the exceptions contained within the topmost exception group).
         """
         msg = "Captured exception is not an instance of `BaseExceptionGroup`"
         assert isinstance(self.value, BaseExceptionGroup), msg
-        return self._group_contains(self.value, expected_exception, match, recursive)
+        msg = "`depth` must be >= 1 if specified"
+        assert (depth is None) or (depth >= 1), msg
+        return self._group_contains(self.value, expected_exception, match, depth)
 
 
 @dataclasses.dataclass
