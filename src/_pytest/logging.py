@@ -637,7 +637,7 @@ class LoggingPlugin:
         # File logging.
         self.log_file_level = get_log_level_for_setting(
             config, "log_file_level", "log_level"
-            )
+        )
         log_file = get_option_ini(config, "log_file") or os.devnull
         if log_file != os.devnull:
             directory = os.path.dirname(os.path.abspath(log_file))
