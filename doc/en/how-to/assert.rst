@@ -115,9 +115,55 @@ that a regular expression matches on the string representation of an exception
         with pytest.raises(ValueError, match=r".* 123 .*"):
             myfunc()
 
-The regexp parameter of the ``match`` method is matched with the ``re.search``
+The regexp parameter of the ``match`` parameter is matched with the ``re.search``
 function, so in the above example ``match='123'`` would have worked as
 well.
+
+You can also use the :func:`excinfo.group_contains() <pytest.ExceptionInfo.group_contains>`
+method to test for exceptions returned as part of an ``ExceptionGroup``:
+
+.. code-block:: python
+
+    def test_exception_in_group():
+        with pytest.raises(RuntimeError) as excinfo:
+            raise ExceptionGroup(
+                "Group message",
+                [
+                    RuntimeError("Exception 123 raised"),
+                ],
+            )
+        assert excinfo.group_contains(RuntimeError, match=r".* 123 .*")
+        assert not excinfo.group_contains(TypeError)
+
+The optional ``match`` keyword parameter works the same way as for
+:func:`pytest.raises`.
+
+By default ``group_contains()`` will recursively search for a matching
+exception at any level of nested ``ExceptionGroup`` instances. You can
+specify a ``depth`` keyword parameter if you only want to match an
+exception at a specific level; exceptions contained directly in the top
+``ExceptionGroup`` would match ``depth=1``.
+
+.. code-block:: python
+
+    def test_exception_in_group_at_given_depth():
+        with pytest.raises(RuntimeError) as excinfo:
+            raise ExceptionGroup(
+                "Group message",
+                [
+                    RuntimeError(),
+                    ExceptionGroup(
+                        "Nested group",
+                        [
+                            TypeError(),
+                        ],
+                    ),
+                ],
+            )
+        assert excinfo.group_contains(RuntimeError, depth=1)
+        assert excinfo.group_contains(TypeError, depth=2)
+        assert not excinfo.group_contains(RuntimeError, depth=2)
+        assert not excinfo.group_contains(TypeError, depth=1)
 
 There's an alternate form of the :func:`pytest.raises` function where you pass
 a function that will be executed with the given ``*args`` and ``**kwargs`` and
