@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Final
 from typing import final
 from typing import Generator
 from typing import Iterable
@@ -55,6 +56,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import ITEM_FUNCARGS_MEMBERS
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -1660,19 +1662,13 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
 
 
 class DeprecatingFuncArgs(Dict[str, object]):
-    def __init__(self, initialnames):
-        self.initialnames = initialnames
+    def __init__(self, initialnames: Sequence[str]) -> None:
         super().__init__()
+        self.initialnames: Final = initialnames
 
     def __getitem__(self, key: str) -> object:
         if key not in self.initialnames:
-            warnings.warn(
-                "Accessing to names other than initialnames i.e., direct args,"
-                " the ones with `usefixture` or the ones with `autouse` through "
-                "`item.funcargs` is deprecated and will raise `KeyError` from "
-                "pytest 9. Please use `request.getfixturevalue` instead.",
-                DeprecationWarning,
-            )
+            warnings.warn(ITEM_FUNCARGS_MEMBERS)
         return super().__getitem__(key)
 
 

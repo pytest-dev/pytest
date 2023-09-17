@@ -11,6 +11,7 @@ in case of warnings which need to format their messages.
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -46,6 +47,13 @@ HOOK_LEGACY_MARKING = UnformattedWarning(
 MARKED_FIXTURE = PytestRemovedIn9Warning(
     "Marks applied to fixtures have no effect\n"
     "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
+)
+
+ITEM_FUNCARGS_MEMBERS = PytestRemovedIn9Warning(
+    "Access to names other than initialnames i.e., direct args,"
+    " the ones with `usefixture` or the ones with `autouse` through "
+    "`item.funcargs` is deprecated and will raise `KeyError` from "
+    "pytest 9. Please use `request.getfixturevalue` instead."
 )
 
 # You want to make some `__init__` or function "private".
