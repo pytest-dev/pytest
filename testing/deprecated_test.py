@@ -217,7 +217,7 @@ def test_deprecated_access_to_item_funcargs(pytester: Pytester) -> None:
     test.setup()
     with pytest.warns(
         pytest.PytestRemovedIn9Warning,
-        match=r"Access to names other than initialnames",
+        match=r"Accessing `item.funcargs` with a fixture",
     ) as record:
         test.funcargs["fixture1"]
         assert len(record) == 1
