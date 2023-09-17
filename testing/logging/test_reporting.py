@@ -77,14 +77,14 @@ def test_root_logger_affected(pytester: Pytester) -> None:
     assert "warning text going to logger" not in stdout
     assert "info text going to logger" not in stdout
 
-    # The log file should contain the warning and the error log messages and
-    # not the info one, because the default level of the root logger is
-    # WARNING.
+    # The log file should only contain the error log messages and
+    # not the warning or info ones, because the root logger is set to
+    # ERROR using --log-level=ERROR.
     assert os.path.isfile(log_file)
     with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
         assert "info text going to logger" not in contents
-        assert "warning text going to logger" in contents
+        assert "warning text going to logger" not in contents
         assert "error text going to logger" in contents
 
 
