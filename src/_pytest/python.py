@@ -1668,7 +1668,7 @@ class DeprecatingFuncArgs(Dict[str, object]):
 
     def __getitem__(self, key: str) -> object:
         if key not in self.initialnames:
-            warnings.warn(ITEM_FUNCARGS_MEMBERS)
+            warnings.warn(ITEM_FUNCARGS_MEMBERS, stacklevel=2)
         return super().__getitem__(key)
 
 
