@@ -115,7 +115,7 @@ that a regular expression matches on the string representation of an exception
         with pytest.raises(ValueError, match=r".* 123 .*"):
             myfunc()
 
-The regexp parameter of the ``match`` method is matched with the ``re.search``
+The regexp parameter of the ``match`` parameter is matched with the ``re.search``
 function, so in the above example ``match='123'`` would have worked as
 well.
 
