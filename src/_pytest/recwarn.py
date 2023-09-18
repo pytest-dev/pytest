@@ -82,7 +82,9 @@ def deprecated_call(  # noqa: F811
     __tracebackhide__ = True
     if func is not None:
         args = (func,) + args
-    return warns((DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs)
+    return warns(
+        (DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs
+    )
 
 
 @overload
