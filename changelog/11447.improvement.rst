@@ -1,0 +1,1 @@
+Add ``FutureWarning`` to ``deprecated_call``.
