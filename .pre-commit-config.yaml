@@ -37,12 +37,12 @@ repos:
           - flake8-typing-imports==1.12.0
           - flake8-docstrings==1.5.0
 -   repo: https://github.com/asottile/reorder-python-imports
-    rev: v3.10.0
+    rev: v3.11.0
     hooks:
     -   id: reorder-python-imports
         args: ['--application-directories=.:src', --py38-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.10.1
+    rev: v3.11.0
     hooks:
     -   id: pyupgrade
         args: [--py38-plus]
