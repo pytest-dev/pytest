@@ -1,0 +1,1 @@
+Fix for ValueError exception being raised in faulthandler teardown code.
