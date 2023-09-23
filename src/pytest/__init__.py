@@ -15,6 +15,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
+from _pytest.config import OutputVerbosity
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import OptionGroup
@@ -126,6 +127,7 @@ __all__ = [
     "Module",
     "MonkeyPatch",
     "OptionGroup",
+    "OutputVerbosity",
     "Package",
     "param",
     "Parser",

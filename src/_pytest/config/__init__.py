@@ -69,7 +69,7 @@ from _pytest.warning_types import warn_explicit_for
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
     from _pytest.terminal import TerminalReporter
-    from .argparsing import Argument
+    from .argparsing import Argument, Parser
 
 
 _PluggyPlugin = object
@@ -1020,6 +1020,7 @@ class Config:
         )
         self.args_source = Config.ArgsSource.ARGS
         self.args: List[str] = []
+        self.output_verbosity = OutputVerbosity(self)
 
         if TYPE_CHECKING:
             from _pytest.cacheprovider import Cache
@@ -1660,6 +1661,54 @@ class Config:
                 PytestConfigWarning(f"skipped plugin {module_name!r}: {msg}"),
                 stacklevel=2,
             )
+
+
+class OutputVerbosity:
+    DEFAULT = "auto"
+    _option_name_fmt = "verbosity_{}"
+
+    def __init__(self, config: Config) -> None:
+        self._config = config
+
+    @property
+    def verbose(self) -> int:
+        """Application wide verbosity level."""
+        return cast(int, self._config.option.verbose)
+
+    def verbosity_for(self, output_type: str) -> int:
+        """Return verbosity level for the given output type.
+
+        :param output_type: Name of the output type.
+
+        If the level is not configured, the value of ``config.option.verbose``.
+        """
+        level = self._config.getini(OutputVerbosity._ini_name(output_type))
+
+        if level == OutputVerbosity.DEFAULT:
+            return self.verbose
+        return int(level)
+
+    @staticmethod
+    def _ini_name(output_type: str) -> str:
+        return f"verbosity_{output_type}"
+
+    @staticmethod
+    def add_ini(parser: "Parser", output_type: str, help: str) -> None:
+        """Add a output verbosity configuration option for the given output type.
+
+        :param parser: Parser for command line arguments and ini-file values.
+        :param output_type: Name of the output type.
+        :param help: Description of the output this type controls.
+
+        The value should be retrieved via a call to
+        :py:func:`config.output_verbosity.verbosity_for(name) <pytest.OutputVerbosity.verbosity_for>`.
+        """
+        parser.addini(
+            OutputVerbosity._ini_name(output_type),
+            help=help,
+            type="string",
+            default=OutputVerbosity.DEFAULT,
+        )
 
 
 def _assertion_supported() -> bool:

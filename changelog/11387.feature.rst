@@ -1,0 +1,1 @@
+:confval:`verbosity_assertions` option added to be able to control assertion output independent of the application wide verbosity level.

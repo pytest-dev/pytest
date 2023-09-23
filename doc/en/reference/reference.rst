@@ -1819,6 +1819,19 @@ passed multiple times. The expected format is ``name=value``. For example::
             clean_db
 
 
+.. confval:: verbosity_assertions
+
+    Set a verbosity level specifically for assertion related output, overriding the application wide level.
+
+
+    .. code-block:: ini
+
+        [pytest]
+        verbosity_assertions = 2
+
+    Defaults to application wide verbosity level.
+
+
 .. confval:: xfail_strict
 
     If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the

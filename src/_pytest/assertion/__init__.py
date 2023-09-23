@@ -12,6 +12,7 @@ from _pytest.assertion import util
 from _pytest.assertion.rewrite import assertstate_key
 from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config import OutputVerbosity
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 
@@ -41,6 +42,14 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Enables the pytest_assertion_pass hook. "
         "Make sure to delete any previously generated pyc cache files.",
+    )
+    OutputVerbosity.add_ini(
+        parser,
+        "assertions",
+        help=(
+            "Specify a verbosity level for assertions, overriding the main level. "
+            "Higher levels will provide more a more detailed explanation when an assertion fails."
+        ),
     )
 
 

@@ -17,12 +17,23 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
 
-def mock_config(verbose=0):
-    class Config:
-        def getoption(self, name):
-            if name == "verbose":
+def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
+    class OutputVerbosity:
+        @property
+        def verbose(self) -> int:
+            return verbose
+
+        def verbosity_for(self, output_type: str) -> int:
+            if output_type == "assertions":
+                if assertion_override is not None:
+                    return assertion_override
                 return verbose
-            raise KeyError("Not mocked out: %s" % name)
+
+            raise KeyError("Not mocked out: %s" % output_type)
+
+    class Config:
+        def __init__(self) -> None:
+            self.output_verbosity = OutputVerbosity()
 
     return Config()
 

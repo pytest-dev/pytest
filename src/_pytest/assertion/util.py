@@ -161,7 +161,7 @@ def assertrepr_compare(
     config, op: str, left: Any, right: Any, use_ascii: bool = False
 ) -> Optional[List[str]]:
     """Return specialised explanations for some operators/operands."""
-    verbose = config.getoption("verbose")
+    verbose = config.output_verbosity.verbosity_for("assertions")
 
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.

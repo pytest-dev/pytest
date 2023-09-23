@@ -270,6 +270,16 @@ situations, for example you are shown even fixtures that start with ``_`` if you
 Using higher verbosity levels (``-vvv``, ``-vvvv``, ...) is supported, but has no effect in pytest itself at the moment,
 however some plugins might make use of higher verbosity.
 
+Fine gain verbosity
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In addition to specifying the application wide verbosity level, it is possible to control specific aspects independently.
+This is done by setting a verbosity level in the configuration file for the specific aspect of the output.
+
+``verbosity_assertions``: Controls how verbose the assertion output should be when pytest is executed. A value of ``2``
+would have the same output as the previous example, but each test inside the file is shown by a single character in the
+output.
+
 .. _`pytest.detailed_failed_tests_usage`:
 
 Producing a detailed summary report
