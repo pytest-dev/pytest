@@ -854,7 +854,11 @@ raise ValueError()
         reprtb = p.repr_traceback(excinfo)
         assert len(reprtb.reprentries) == 3
 
-    def test_traceback_short_no_source(self, importasmod, monkeypatch) -> None:
+    def test_traceback_short_no_source(
+        self,
+        importasmod,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         mod = importasmod(
             """
             def func1():
@@ -866,14 +870,14 @@ raise ValueError()
         excinfo = pytest.raises(ValueError, mod.entry)
         from _pytest._code.code import Code
 
-        monkeypatch.setattr(Code, "path", "bogus")
-        p = FormattedExcinfo(style="short")
-        reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
-        lines = reprtb.lines
-        last_p = FormattedExcinfo(style="short")
-        last_reprtb = last_p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
-        last_lines = last_reprtb.lines
-        monkeypatch.undo()
+        with monkeypatch.context() as mp:
+            mp.setattr(Code, "path", "bogus")
+            p = FormattedExcinfo(style="short")
+            reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
+            lines = reprtb.lines
+            last_p = FormattedExcinfo(style="short")
+            last_reprtb = last_p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
+            last_lines = last_reprtb.lines
         assert lines[0] == "    func1()"
 
         assert last_lines[0] == '    raise ValueError("hello")'
