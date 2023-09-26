@@ -1345,48 +1345,98 @@ def test_reprcompare_whitespaces() -> None:
     ]
 
 
-def test_pytest_assertrepr_compare_integration(pytester: Pytester) -> None:
+@pytest.mark.parametrize("op", [">=", "<="])
+def test_operators_not_set_for_full_coverage(op, pytester: Pytester) -> None:
     pytester.makepyfile(
-        """
+        f"""
         def test_hello():
-            x = set(range(100))
-            y = x.copy()
-            y.remove(50)
-            assert x == y
+            x = ["hello x"]
+            y = ["hello y"]
+            assert x {op} y
     """
     )
+
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(
-        [
-            "*def test_hello():*",
-            "*assert x == y*",
-            "*E*Extra items*left*",
-            "*E*50*",
-            "*= 1 failed in*",
-        ]
-    )
+    result.stdout.no_fnmatch_line(f"assert x {op} y")
 
 
-def test_sequence_comparison_uses_repr(pytester: Pytester) -> None:
-    pytester.makepyfile(
+class TestSetAssertions:
+    @pytest.mark.parametrize("op", [">=", ">", "<=", "<", "=="])
+    def test_set_extra_item(self, op, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            f"""
+            def test_hello():
+                x = set("hello x")
+                y = set("hello y")
+                assert x {op} y
         """
-        def test_hello():
-            x = set("hello x")
-            y = set("hello y")
-            assert x == y
-    """
-    )
-    result = pytester.runpytest()
-    result.stdout.fnmatch_lines(
-        [
-            "*def test_hello():*",
-            "*assert x == y*",
-            "*E*Extra items*left*",
-            "*E*'x'*",
-            "*E*Extra items*right*",
-            "*E*'y'*",
-        ]
-    )
+        )
+
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*def test_hello():*",
+                f"*assert x {op} y*",
+            ]
+        )
+        if op in [">=", ">", "=="]:
+            result.stdout.fnmatch_lines(
+                [
+                    "*E*Extra items in the right set:*",
+                    "*E*'y'",
+                ]
+            )
+        if op in ["<=", "<", "=="]:
+            result.stdout.fnmatch_lines(
+                [
+                    "*E*Extra items in the left set:*",
+                    "*E*'x'",
+                    # "*E*50*",
+                ]
+            )
+        assert True  # only reached if no error above
+
+    @pytest.mark.parametrize("op", [">", "<", "!="])
+    def test_set_proper_superset_equal(self, pytester: Pytester, op) -> None:
+        pytester.makepyfile(
+            f"""
+            def test_hello():
+                x = set([1, 2, 3])
+                y = x.copy()
+                assert x {op} y
+        """
+        )
+
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*def test_hello():*",
+                f"*assert x {op} y*",
+                "*E*Both sets are equal*",
+            ]
+        )
+        assert True  # only reached if no error above
+
+    def test_pytest_assertrepr_compare_integration(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_hello():
+                x = set(range(100))
+                y = x.copy()
+                y.remove(50)
+                assert x == y
+        """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*def test_hello():*",
+                "*assert x == y*",
+                "*E*Extra items*left*",
+                "*E*50*",
+                "*= 1 failed in*",
+            ]
+        )
 
 
 def test_assertrepr_loaded_per_dir(pytester: Pytester) -> None:
