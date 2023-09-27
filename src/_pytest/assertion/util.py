@@ -408,31 +408,14 @@ def _compare_eq_set(
     left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
 ) -> List[str]:
     explanation = []
-    # diff_left = _set_one_sided_diff("left", left, right)
-    # diff_right = _set_one_sided_diff("right", right, left)
-    # if diff_left:
     explanation.extend(_set_one_sided_diff("left", left, right))
-    # if diff_right:
     explanation.extend(_set_one_sided_diff("right", right, left))
     return explanation
-    # explanation = []
-    # diff_left = left - right
-    # diff_right = right - left
-    # if diff_left:
-    #     explanation.append("Extra items in the left set:")
-    #     for item in diff_left:
-    #         explanation.append(saferepr(item))
-    # if diff_right:
-    #     explanation.append("Extra items in the right set:")
-    #     for item in diff_right:
-    #         explanation.append(saferepr(item))
-    # return explanation
 
 
 def _compare_gt_set(
     left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
 ) -> List[str]:
-    # explanation = []
     explanation = _compare_gte_set(left, right, verbose)
     if not explanation:
         return ["Both sets are equal"]
@@ -442,7 +425,6 @@ def _compare_gt_set(
 def _compare_lt_set(
     left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
 ) -> List[str]:
-    # explanation = []
     explanation = _compare_lte_set(left, right, verbose)
     if not explanation:
         return ["Both sets are equal"]
@@ -452,21 +434,13 @@ def _compare_lt_set(
 def _compare_gte_set(
     left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
 ) -> List[str]:
-    explanation = []
-    # diff_right = _set_one_sided_diff("right", right, left)
-    # if diff_right:
-    explanation.extend(_set_one_sided_diff("right", right, left))
-    return explanation
+    return _set_one_sided_diff("right", right, left)
 
 
 def _compare_lte_set(
     left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
 ) -> List[str]:
-    explanation = []
-    # diff_left = _set_one_sided_diff("left", left, right)
-    # if diff_left:
-    explanation.extend(_set_one_sided_diff("left", left, right))
-    return explanation
+    return _set_one_sided_diff("left", left, right)
 
 
 def _set_one_sided_diff(
