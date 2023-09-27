@@ -1,0 +1,3 @@
+This change resolves :issue:`10617`` and adds more powerful set assertion rewrites for comparisons
+other than equality ``==``. Previously, only ``==`` was supported for sets. Now, the additional
+following operations are supported: ``!=``, ``<=``, ``>=``, ``<``, and ``>``.
