@@ -2212,7 +2212,7 @@ class TestOutputVerbosity:
 
         assert config.option.verbose == config.output_verbosity.verbose
 
-    def test_level_matches_verbost_when_not_specified(
+    def test_level_matches_verbose_when_not_specified(
         self, pytester: Pytester, tmp_path: Path
     ) -> None:
         tmp_path.joinpath("pytest.ini").write_text(
