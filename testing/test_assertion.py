@@ -1391,10 +1391,8 @@ class TestSetAssertions:
                 [
                     "*E*Extra items in the left set:*",
                     "*E*'x'",
-                    # "*E*50*",
                 ]
             )
-        assert True  # only reached if no error above
 
     @pytest.mark.parametrize("op", [">", "<", "!="])
     def test_set_proper_superset_equal(self, pytester: Pytester, op) -> None:
@@ -1415,7 +1413,6 @@ class TestSetAssertions:
                 "*E*Both sets are equal*",
             ]
         )
-        assert True  # only reached if no error above
 
     def test_pytest_assertrepr_compare_integration(self, pytester: Pytester) -> None:
         pytester.makepyfile(
