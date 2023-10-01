@@ -38,6 +38,41 @@ def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
     return Config()
 
 
+class TestMockConfig:
+    SOME_VERBOSITY_LEVEL = 3
+    SOME_OTHER_VERBOSITY_LEVEL = 10
+
+    def test_verbose_exposes_value(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        assert config.output_verbosity.verbose == TestMockConfig.SOME_VERBOSITY_LEVEL
+
+    def test_verbosity_for_assertion_override_not_set_verbose_value(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        assert (
+            config.output_verbosity.verbosity_for("assertions")
+            == TestMockConfig.SOME_VERBOSITY_LEVEL
+        )
+
+    def test_verbosity_for_assertion_override_set_custom_value(self):
+        config = mock_config(
+            verbose=TestMockConfig.SOME_VERBOSITY_LEVEL,
+            assertion_override=TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL,
+        )
+
+        assert (
+            config.output_verbosity.verbosity_for("assertions")
+            == TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL
+        )
+
+    def test_verbosity_for_unsupported_type_error(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        with pytest.raises(KeyError):
+            config.output_verbosity.verbosity_for("NOT CONFIGURED NAME")
+
+
 class TestImportHookInstallation:
     @pytest.mark.parametrize("initial_conftest", [True, False])
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
