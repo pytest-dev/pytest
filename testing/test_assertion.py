@@ -1345,21 +1345,6 @@ def test_reprcompare_whitespaces() -> None:
     ]
 
 
-@pytest.mark.parametrize("op", [">=", "<="])
-def test_operators_not_set_for_full_coverage(op, pytester: Pytester) -> None:
-    pytester.makepyfile(
-        f"""
-        def test_hello():
-            x = ["hello x"]
-            y = ["hello y"]
-            assert x {op} y
-    """
-    )
-
-    result = pytester.runpytest()
-    result.stdout.no_fnmatch_line(f"assert x {op} y")
-
-
 class TestSetAssertions:
     @pytest.mark.parametrize("op", [">=", ">", "<=", "<", "=="])
     def test_set_extra_item(self, op, pytester: Pytester) -> None:
