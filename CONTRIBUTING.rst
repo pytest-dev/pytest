@@ -197,7 +197,7 @@ Short version
 ~~~~~~~~~~~~~
 
 #. Fork the repository.
-#. fetch tags from upstream if necessary (if you cloned only main `git fetch --tags https://github.com/pytest-dev/pytest`
+#. Fetch tags from upstream if necessary (if you cloned only main `git fetch --tags https://github.com/pytest-dev/pytest`).
 #. Enable and install `pre-commit <https://pre-commit.com>`_ to ensure style-guides and code checks are followed.
 #. Follow **PEP-8** for naming and `black <https://github.com/psf/black>`_ for formatting.
 #. Tests are run using ``tox``::
