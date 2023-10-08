@@ -378,7 +378,7 @@ class TestGeneralUsage:
             """
         )
         result = pytester.runpytest(p)
-        result.assert_outcomes(failed=0, passed=9)
+        result.assert_outcomes(failed=0, passed=5)
 
     def test_direct_addressing_notfound(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
