@@ -1,2 +1,4 @@
-In this, we propose a solution that ensures the generation of unique identifiers for ParameterSets in the make_unique_parameterset_ids method in Python.py class. It appends numeric suffixes to identifiers, ensuring uniqueness even when the original identifiers have digit endings.
-If the id ends in a digit, make then new id f"{id}_{suffix}". If the new id is already in the set of seen ids, increment the suffix number and try again. This is sure to work, and even be fast in practice, because our maximum suffix is the number of duplicate ids we started with.
+Parametrized tests now *really do* ensure that the ids given to each input are unique - for
+example, ``a, a, a0`` now results in ``a1, a2, a0`` instead of the previous (buggy) ``a0, a1, a0``.
+This necessarily means changing nodeids where these were previously colliding, and for
+readability adds an underscore when non-unique ids end in a number.
