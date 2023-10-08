@@ -372,7 +372,7 @@ class TestGeneralUsage:
             """
             import pytest
 
-            @pytest.mark.parametrize("a", [a,b,c,a_1])
+            @pytest.mark.parametrize("a", ["a","b","c","a","a1"])
             def test_func(a):
                 pass
             """
