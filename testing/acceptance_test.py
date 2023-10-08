@@ -341,6 +341,34 @@ class TestGeneralUsage:
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_direct_addressing_selects_duplicates(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("a", [1, 2, 10, 11, 2, 1, 12, 11])
+            def test_func(a):
+                pass
+            """
+        )
+        res = pytester.runpytest(p.name + "::" + "test_func[1]")
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_direct_addressing_selects_duplicates_1(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("a", [1, 2, 10, 11, 2, 1, 12, 1_1,2_1])
+            def test_func(a):
+                pass
+            """
+        )
+        res = pytester.runpytest(p.name + "::" + "test_func[1]")
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 passed*"])
+
     def test_direct_addressing_notfound(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
