@@ -1074,7 +1074,7 @@ class Pytester:
         return self.inline_run(*values)
 
     def inline_genitems(self, *args) -> Tuple[List[Item], HookRecorder]:
-        """Run ``pytest.main(['--collectonly'])`` in-process.
+        """Run ``pytest.main(['--collect-only'])`` in-process.
 
         Runs the :py:func:`pytest.main` function to run all of pytest inside
         the test process itself like :py:meth:`inline_run`, but returns a

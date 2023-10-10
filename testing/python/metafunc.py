@@ -1493,7 +1493,7 @@ class TestMetafuncFunctional:
                 pass
         """
         )
-        result = pytester.runpytest("--collectonly")
+        result = pytester.runpytest("--collect-only")
         result.stdout.fnmatch_lines(
             [
                 "collected 0 items / 1 error",
