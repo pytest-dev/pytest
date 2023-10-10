@@ -362,6 +362,30 @@ def test_conftest_badcase(pytester: Pytester) -> None:
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
 
+def test_my_option(pytester):
+    testdir = pytester.mkdir("test_my_option")
+    testdir.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+    def pytest_addoption(parser):
+        parser.addini(
+            "my_option",
+            type="string",
+            default=None,
+            help="My option",
+        )
+    @pytest.fixture(scope='session')
+    def my_option(request):
+        return request.config.getini("my_option")
+    """
+        ),
+        encoding="utf-8",
+    )
+    result = pytester.runpytest("--my_option=None", str(testdir))
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
 def test_conftest_uppercase(pytester: Pytester) -> None:
     """Check conftest.py whose qualified name contains uppercase characters (#5819)"""
     source = {"__init__.py": "", "Foo/conftest.py": "", "Foo/__init__.py": ""}

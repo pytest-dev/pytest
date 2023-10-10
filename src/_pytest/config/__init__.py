@@ -1525,6 +1525,8 @@ class Config:
                     return default
                 if type is None:
                     return ""
+                if type == "string":
+                    return None
                 return []
         else:
             value = override_value
