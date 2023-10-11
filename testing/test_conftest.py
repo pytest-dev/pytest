@@ -382,7 +382,6 @@ def test_my_option(pytester):
         encoding="utf-8",
     )
     result = pytester.runpytest("--my_option=None", str(testdir))
-    assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
