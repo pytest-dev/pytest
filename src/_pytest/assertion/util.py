@@ -193,6 +193,22 @@ def assertrepr_compare(
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
+        elif op == "!=":
+            if isset(left) and isset(right):
+                explanation = ["Both sets are equal"]
+        elif op == ">=":
+            if isset(left) and isset(right):
+                explanation = _compare_gte_set(left, right, verbose)
+        elif op == "<=":
+            if isset(left) and isset(right):
+                explanation = _compare_lte_set(left, right, verbose)
+        elif op == ">":
+            if isset(left) and isset(right):
+                explanation = _compare_gt_set(left, right, verbose)
+        elif op == "<":
+            if isset(left) and isset(right):
+                explanation = _compare_lt_set(left, right, verbose)
+
     except outcomes.Exit:
         raise
     except Exception:
@@ -392,15 +408,49 @@ def _compare_eq_set(
     left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
 ) -> List[str]:
     explanation = []
-    diff_left = left - right
-    diff_right = right - left
-    if diff_left:
-        explanation.append("Extra items in the left set:")
-        for item in diff_left:
-            explanation.append(saferepr(item))
-    if diff_right:
-        explanation.append("Extra items in the right set:")
-        for item in diff_right:
+    explanation.extend(_set_one_sided_diff("left", left, right))
+    explanation.extend(_set_one_sided_diff("right", right, left))
+    return explanation
+
+
+def _compare_gt_set(
+    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+) -> List[str]:
+    explanation = _compare_gte_set(left, right, verbose)
+    if not explanation:
+        return ["Both sets are equal"]
+    return explanation
+
+
+def _compare_lt_set(
+    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+) -> List[str]:
+    explanation = _compare_lte_set(left, right, verbose)
+    if not explanation:
+        return ["Both sets are equal"]
+    return explanation
+
+
+def _compare_gte_set(
+    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+) -> List[str]:
+    return _set_one_sided_diff("right", right, left)
+
+
+def _compare_lte_set(
+    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+) -> List[str]:
+    return _set_one_sided_diff("left", left, right)
+
+
+def _set_one_sided_diff(
+    posn: str, set1: AbstractSet[Any], set2: AbstractSet[Any]
+) -> List[str]:
+    explanation = []
+    diff = set1 - set2
+    if diff:
+        explanation.append(f"Extra items in the {posn} set:")
+        for item in diff:
             explanation.append(saferepr(item))
     return explanation
 
