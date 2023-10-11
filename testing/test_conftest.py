@@ -236,14 +236,20 @@ def test_my_option(pytester: Pytester):
     def my_option(request):
         return request.config.getini("my_option")
     """
-    testdir.joinpath("conftest.py").write_text(conftest_content, encoding="utf-8")
+    # Place conftest.py in the root directory of the project
+    testdir.parent.joinpath("conftest.py").write_text(
+        conftest_content, encoding="utf-8"
+    )
+
     # Create a simple test function
     test_content = """
     def test_example(my_option):
         assert my_option is None
     """
     testdir.joinpath("test_my_option.py").write_text(test_content, encoding="utf-8")
-    result = pytester.runpytest(str(testdir))
+    result = pytester.runpytest(
+        str(testdir.parent)
+    )  # Run pytest from the root directory
     assert result.ret == 0
 
 
