@@ -240,6 +240,16 @@ def test_my_option(pytester: Pytester):
         ),
         encoding="utf-8",
     )
+    # Create a simple test function
+    testdir.joinpath("test_my_option.py").write_text(
+        textwrap.dedent(
+            """\
+            def test_example(my_option):
+                assert my_option is None
+            """
+        ),
+        encoding="utf-8",
+    )
     result = pytester.runpytest(str(testdir))
     assert result.ret == 0
     captured_stdout = result.stdout.str()
