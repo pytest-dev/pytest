@@ -147,20 +147,6 @@ def pytester(pytester: Pytester, monkeypatch: MonkeyPatch) -> Pytester:
     return pytester
 
 
-def pytest_addoption(parser):
-    parser.addini(
-        "my_option",
-        type="string",
-        default=None,
-        help="My option",
-    )
-
-
-@pytest.fixture(scope="session")
-def my_option(request):
-    return request.config.getini("my_option")
-
-
 @pytest.fixture(scope="session")
 def color_mapping():
     """Returns a utility class which can replace keys in strings in the form "{NAME}"

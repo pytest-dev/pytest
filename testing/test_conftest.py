@@ -222,14 +222,40 @@ def test_setinitial_conftest_subdirs(pytester: Pytester, name: str) -> None:
 
 
 def test_my_option(pytester: Pytester):
-    p = pytester.makepyfile(
-        """
-            def test_x(my_option):
-                assert my_option is None
-            """
+    testdir = pytester.mkdir("test_my_option")
+    conftest_content = """\
+    import pytest
+
+    def pytest_addoption(parser):
+        parser.addini(
+            "my_option",
+            type="string",
+            default=None,
+            help="My option",
+        )
+
+    @pytest.fixture(scope='session')
+    def my_option(request):
+        return request.config.getini("my_option")
+
+    """
+    # Place conftest.py in the root directory of the project
+    testdir.parent.joinpath("conftest.py").write_text(
+        conftest_content, encoding="utf-8"
     )
-    result = pytester.runpytest(p)
-    result.assert_outcomes(failed=0, passed=1)
+
+    # Create a simple test function
+    test_content = """\
+
+    def test_example(my_option):
+        assert my_option is None
+
+    """
+    testdir.joinpath("test_my_option.py").write_text(test_content, encoding="utf-8")
+    result = pytester.runpytest(
+        str(testdir.parent)
+    )  # Run pytest from the root directory
+    assert result.ret == 0
 
 
 def test_conftest_confcutdir(pytester: Pytester) -> None:
