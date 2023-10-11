@@ -221,6 +221,31 @@ def test_setinitial_conftest_subdirs(pytester: Pytester, name: str) -> None:
         assert len(set(pm.get_plugins()) - {pm}) == 0
 
 
+def test_my_option(pytester: Pytester):
+    testdir = pytester.mkdir("test_my_option")
+    testdir.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+            def pytest_addoption(parser):
+                parser.addini(
+                    "my_option",
+                    type="string",
+                    default=None,
+                    help="My option",
+                )
+            @pytest.fixture(scope='session')
+            def my_option(request):
+                return request.config.getini("my_option")
+            """
+        ),
+        encoding="utf-8",
+    )
+    result = pytester.runpytest(str(testdir))
+    assert result.ret == 0
+    captured_stdout = result.stdout.str()
+    assert "1 passed" in captured_stdout
+
+
 def test_conftest_confcutdir(pytester: Pytester) -> None:
     pytester.makeconftest("assert 0")
     x = pytester.mkdir("x")

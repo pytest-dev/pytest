@@ -1,0 +1,1 @@
+Return "None" as the default value if "None" or no default value if provided by the developer.In this approach, existing calls to the getini function would need to check for "None" values.
