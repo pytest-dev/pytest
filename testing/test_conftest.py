@@ -224,6 +224,7 @@ def test_setinitial_conftest_subdirs(pytester: Pytester, name: str) -> None:
 def test_my_option(pytester: Pytester):
     testdir = pytester.mkdir("test_my_option")
     conftest_content = """
+        import pytest
         def pytest_addoption(parser):
             parser.addini(
                 "my_option",
@@ -231,6 +232,9 @@ def test_my_option(pytester: Pytester):
                 default=None,
                 help="My option",
             )
+        @pytest.fixture(scope='session')
+        def my_option(request):
+            return request.config.getini("my_option")
     """
     testdir.joinpath("conftest.py").write_text(conftest_content, encoding="utf-8")
     # Create a simple test function
