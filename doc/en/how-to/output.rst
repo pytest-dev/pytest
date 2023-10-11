@@ -478,7 +478,7 @@ integration servers, use this invocation:
 
 .. code-block:: bash
 
-    pytest --junitxml=path
+    pytest --junit-xml=path
 
 to create an XML file at ``path``.
 
