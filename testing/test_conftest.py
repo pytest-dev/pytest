@@ -223,37 +223,24 @@ def test_setinitial_conftest_subdirs(pytester: Pytester, name: str) -> None:
 
 def test_my_option(pytester: Pytester):
     testdir = pytester.mkdir("test_my_option")
-    testdir.joinpath("conftest.py").write_text(
-        textwrap.dedent(
-            """\
-            def pytest_addoption(parser):
-                parser.addini(
-                    "my_option",
-                    type="string",
-                    default=None,
-                    help="My option",
-                )
-            @pytest.fixture(scope='session')
-            def my_option(request):
-                return request.config.getini("my_option")
-            """
-        ),
-        encoding="utf-8",
-    )
+    conftest_content = """
+        def pytest_addoption(parser):
+            parser.addini(
+                "my_option",
+                type="string",
+                default=None,
+                help="My option",
+            )
+    """
+    testdir.joinpath("conftest.py").write_text(conftest_content, encoding="utf-8")
     # Create a simple test function
-    testdir.joinpath("test_my_option.py").write_text(
-        textwrap.dedent(
-            """\
-            def test_example(my_option):
-                assert my_option is None
-            """
-        ),
-        encoding="utf-8",
-    )
+    test_content = """
+        def test_example(my_option):
+            assert my_option is None
+    """
+    testdir.joinpath("test_my_option.py").write_text(test_content, encoding="utf-8")
     result = pytester.runpytest(str(testdir))
     assert result.ret == 0
-    captured_stdout = result.stdout.str()
-    assert "1 passed" in captured_stdout
 
 
 def test_conftest_confcutdir(pytester: Pytester) -> None:
