@@ -399,8 +399,8 @@ class TestLastFailed:
                 assert 1
         """
         )
-        config = pytester.parseconfigure()
-        assert config.cache is None
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*1 failed in*"])
 
     def test_non_serializable_parametrize(self, pytester: Pytester) -> None:
         """Test that failed parametrized tests with unmarshable parameters

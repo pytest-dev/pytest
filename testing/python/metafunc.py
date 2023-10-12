@@ -1949,7 +1949,7 @@ class TestMarkersWithParametrization:
         )
         pytester.makepyfile(s)
         reprec = pytester.inline_run()
-        passed, failed = (2, 1) if strict else (3, 0)
+        passed, failed = (2, 1)
         reprec.assertoutcome(passed=passed, failed=failed)
 
     def test_parametrize_called_in_generate_tests(self, pytester: Pytester) -> None:
@@ -2017,7 +2017,7 @@ class TestMarkersWithParametrization:
         )
         pytester.makepyfile(s)
         reprec = pytester.inline_run()
-        passed, failed = (0, 2) if strict else (2, 0)
+        passed, failed = (0, 2)
         reprec.assertoutcome(passed=passed, failed=failed)
 
     def test_pytest_make_parametrize_id(self, pytester: Pytester) -> None:

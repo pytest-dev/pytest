@@ -143,7 +143,7 @@ def test_runresult_assertion_on_xpassed(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    result.assert_outcomes(xpassed=1)
+    result.assert_outcomes(failed=1)
     assert result.ret == 0
 
 

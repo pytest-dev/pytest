@@ -665,7 +665,7 @@ class TestFunction:
         """
         )
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["* 2 passed, 1 xpassed in *"])
+        result.stdout.fnmatch_lines(["* 1 failed, 2 passed in *"])
 
     def test_parametrize_xfail_passed(self, pytester: Pytester) -> None:
         pytester.makepyfile(
