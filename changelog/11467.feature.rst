@@ -1,0 +1,1 @@
+In this strict parameter of xfail is set to true by default and it will ensure xpass is either a warning or a failure in any case.

@@ -357,6 +357,22 @@ class TestXFail:
         assert str(callreport.longrepr) == "[XPASS(strict)] nope"
         assert not hasattr(callreport, "wasxfail")
 
+    def test_xfail_xpassed_strict_default_true(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                assert 1
+        """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.failed
+        assert str(callreport.longrepr) == "[XPASS(strict)] nope"
+        assert not hasattr(callreport, "wasxfail")
+
     def test_xfail_run_anyway(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
