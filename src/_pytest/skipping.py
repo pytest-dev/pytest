@@ -83,9 +83,9 @@ def pytest_configure(config: Config) -> None:
     )
     if not config.getini("xfail_strict"):
         warnings.warn(
-            "In a future major release of pytest, the default 'strict' parameter behavior"
+            "In a future major release of pytest, the default 'strict' parameter behavior "
             "for xfail markers will change from False to True. "
-            "Consider setting 'xfail_strict = True' in your pytest configuration"
+            "Consider setting 'xfail_strict = True' in your pytest configuration "
             "or use a plugin for handling flaky tests.",
             FutureWarning,
         )

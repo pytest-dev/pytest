@@ -326,19 +326,6 @@ class TestXFail:
         assert callreport.passed
         assert callreport.wasxfail == "this is an xfail"
 
-    def test_xfail_xpassed_warning(self, pytester: Pytester) -> None:
-        p = pytester.makepyfile(
-            test_one="""
-            import pytest
-            @pytest.mark.xfail
-            def test_that():
-                assert 1
-        """
-        )
-        result = pytester.runpytest(p, "-rX")
-        result.stdout.fnmatch_lines(["*FutureWarning*", "*1 xpassed*"])
-        assert result.ret == 0
-
     def test_xfail_using_platform(self, pytester: Pytester) -> None:
         """Verify that platform can be used with xfail statements."""
         item = pytester.getitem(

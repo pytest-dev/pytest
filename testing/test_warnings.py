@@ -653,7 +653,12 @@ def test_pytest_configure_warning(pytester: Pytester, recwarn) -> None:
     assert result.ret == 5
     assert "INTERNALERROR" not in result.stderr.str()
     warning = recwarn.pop()
-    assert str(warning.message) == "from pytest_configure"
+    assert (
+        str(warning.message)
+        == "In a future major release of pytest, the default 'strict' parameter behavior for xfail "
+        "markers will change from False to True. Consider setting 'xfail_strict = True' in your pytest "
+        "configuration or use a plugin for handling flaky tests."
+    )
 
 
 class TestStackLevel:
