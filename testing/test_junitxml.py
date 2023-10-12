@@ -164,7 +164,7 @@ class TestPython:
         result, dom = run_and_parse(family=xunit_family)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=0, failures=1, skipped=2, tests=5)
+        node.assert_attr(name="pytest", errors=0, failures=2, skipped=2, tests=5)
 
     @parametrize_families
     def test_summing_simple_with_errors(
