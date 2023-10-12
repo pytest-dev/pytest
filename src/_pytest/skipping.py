@@ -4,6 +4,7 @@ import os
 import platform
 import sys
 import traceback
+import warnings
 from collections.abc import Mapping
 from typing import Generator
 from typing import Optional
@@ -80,6 +81,14 @@ def pytest_configure(config: Config) -> None:
         "raises, and if the test fails in other ways, it will be reported as "
         "a true failure. See https://docs.pytest.org/en/stable/reference/reference.html#pytest-mark-xfail",
     )
+    if not config.getini("xfail_strict"):
+        warnings.warn(
+            "In a future major release of pytest, the default 'strict' parameter behavior"
+            "for xfail markers will change from False to True. "
+            "Consider setting 'xfail_strict = True' in your pytest configuration"
+            "or use a plugin for handling flaky tests.",
+            FutureWarning,
+        )
 
 
 def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool, str]:

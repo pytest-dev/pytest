@@ -1,0 +1,4 @@
+In order to ensure backward compatibility we cannot go straight from non-strict to strict instead
+we have to start by warning if strict was not set to true or false. The warning should indicate that a
+future major release of pytest will change the default from False to True and recommend to use
+strict=True as default and a plugin for actually flaky tests.
