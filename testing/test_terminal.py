@@ -403,7 +403,7 @@ class TestTerminal:
 
         common_output = [
             "test_verbose_skip_reason.py::test_1 SKIPPED (123) *",
-            "test_verbose_skip_reason.py::test_2 FAILED (456) *",
+            "test_verbose_skip_reason.py::test_2 FAILED *",
             "test_verbose_skip_reason.py::test_3 XFAIL (789) *",
             "test_verbose_skip_reason.py::test_4 XFAIL  *",
             "test_verbose_skip_reason.py::test_5 SKIPPED (unconditional skip) *",
