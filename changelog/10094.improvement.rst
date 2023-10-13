@@ -1,0 +1,4 @@
+The documentation for pytest.mark.xfail():
+reason=None: If no conditions are passed, reason’s default is "" (code). Adding @pytest.mark.xfail(reason=None, strict=True) to a passing test results in “TypeError: can only concatenate str (not "NoneType") to str”. If a condition is passed, passing no reason behaves like passing None to it (code). I’m unsure how this subtlety could be captured in the function signature. pytest.mark.skipif() has the same issue. pytest.mark.skip()’s default value for reason is in fact "unconditional skip" (code).
+raises: The type (according to the type annotations) is Union[Type[BaseException], Tuple[Type[BaseException], ...]] instead of Type[Exception]. Neither captures the fact that None can be passed to it (which is also the documented default value).
+strict=False: The default value of strict is actually determined by the xfail_strict config (code).
