@@ -1446,7 +1446,7 @@ def test_importorskip_module_not_found_raises_on_import_error(
 
     (on_path / "doesnotexist.py").write_bytes(b"1 / 0")
 
-    monkeypatch.syspath_prepend(some_dir)
+    monkeypatch.syspath_prepend(on_path)
 
     with pytest.raises(ImportError):
         pytest.importorskip("doesnotexist", exc=ModuleNotFoundError)
