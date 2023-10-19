@@ -249,7 +249,9 @@ def xfail(reason: str = "") -> NoReturn:
 
 
 def importorskip(
-    modname: str, minversion: Optional[str] = None, reason: Optional[str] = None,
+    modname: str,
+    minversion: Optional[str] = None,
+    reason: Optional[str] = None,
     exc: type[ImportError] = ImportError,
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
