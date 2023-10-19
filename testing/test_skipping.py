@@ -1,7 +1,9 @@
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
@@ -1437,7 +1439,7 @@ def test_importorskip_module_not_found() -> None:
 
 
 def test_importorskip_module_not_found_raises_on_import_error(
-    monkeypatch, tmp_path
+    monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
     on_path = tmp_path / "on_path"
     on_path.mkdir()
