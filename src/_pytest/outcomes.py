@@ -266,6 +266,9 @@ def importorskip(
     :param reason:
         If given, this reason is shown as the message when the module cannot
         be imported.
+    :param exc:
+        Either ImportError or ModuleNotFoundError, the exception to catch
+        when importing.
 
     :returns:
         The imported module. This should be assigned to its canonical name.
