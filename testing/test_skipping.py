@@ -1436,7 +1436,9 @@ def test_importorskip_module_not_found() -> None:
         pytest.importorskip("doesnotexist", exc=ModuleNotFoundError)
 
 
-def test_importorskip_module_not_found_raises_on_import_error(monkeypatch, tmp_path) -> None:
+def test_importorskip_module_not_found_raises_on_import_error(
+    monkeypatch, tmp_path
+) -> None:
     on_path = tmp_path / "on_path"
     on_path.mkdir()
 
