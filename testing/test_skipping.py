@@ -1428,6 +1428,26 @@ def test_importorskip() -> None:
         pytest.importorskip("doesnotexist")
 
 
+def test_importorskip_module_not_found() -> None:
+    with pytest.raises(
+        pytest.skip.Exception,
+        match="^could not import 'doesnotexist': No module named .*",
+    ):
+        pytest.importorskip("doesnotexist", exc=ModuleNotFoundError)
+
+
+def test_importorskip_module_not_found_raises_on_import_error(monkeypatch, tmp_path) -> None:
+    on_path = tmp_path / "on_path"
+    on_path.mkdir()
+
+    (on_path / "doesnotexist.py").write_bytes(b"1 / 0")
+
+    monkeypatch.syspath_prepend(some_dir)
+
+    with pytest.raises(ImportError):
+        pytest.importorskip("doesnotexist", exc=ModuleNotFoundError)
+
+
 def test_relpath_rootdir(pytester: Pytester) -> None:
     pytester.makepyfile(
         **{
