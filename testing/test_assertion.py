@@ -1795,7 +1795,7 @@ def test_reprcompare_verbose_long() -> None:
 
 @pytest.mark.parametrize("enable_colors", [True, False])
 @pytest.mark.parametrize(
-    ("code", "expected_lines"),
+    ("test_code", "expected_lines"),
     (
         (
             """
@@ -1823,9 +1823,9 @@ def test_reprcompare_verbose_long() -> None:
     ),
 )
 def test_comparisons_handle_colors(
-    pytester: Pytester, color_mapping, enable_colors, code, expected_lines
+    pytester: Pytester, color_mapping, enable_colors, test_code, expected_lines
 ) -> None:
-    p = pytester.makepyfile(code)
+    p = pytester.makepyfile(test_code)
     result = pytester.runpytest(
         f"--color={'yes' if enable_colors else 'no'}", "-vv", str(p)
     )
