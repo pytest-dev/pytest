@@ -1,5 +1,6 @@
 # mypy: disable-error-code="attr-defined"
 import logging
+from typing import Iterator
 
 import pytest
 from _pytest.logging import caplog_records_key
@@ -9,8 +10,8 @@ logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
 
 
-@pytest.fixture
-def cleanup_disabled_logging():
+@pytest.fixture(autouse=True)
+def cleanup_disabled_logging() -> Iterator[None]:
     """Simple fixture that ensures that a test doesn't disable logging.
 
     This is necessary because ``logging.disable()`` is global, so a test disabling logging
@@ -42,7 +43,7 @@ def test_change_level(caplog):
     assert "CRITICAL" in caplog.text
 
 
-def test_change_level_logging_disabled(caplog, cleanup_disabled_logging):
+def test_change_level_logging_disabled(caplog):
     logging.disable(logging.CRITICAL)
     assert logging.root.manager.disable == logging.CRITICAL
     caplog.set_level(logging.WARNING)
@@ -85,9 +86,7 @@ def test_change_level_undo(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("*log from test2*")
 
 
-def test_change_disabled_level_undo(
-    pytester: Pytester, cleanup_disabled_logging
-) -> None:
+def test_change_disabled_level_undo(pytester: Pytester) -> None:
     """Ensure that '_force_enable_logging' in 'set_level' is undone after the end of the test.
 
     Tests the logging output themselves (affected by disabled logging level).
@@ -159,7 +158,7 @@ def test_with_statement(caplog):
     assert "CRITICAL" in caplog.text
 
 
-def test_with_statement_logging_disabled(caplog, cleanup_disabled_logging):
+def test_with_statement_logging_disabled(caplog):
     logging.disable(logging.CRITICAL)
     assert logging.root.manager.disable == logging.CRITICAL
     with caplog.at_level(logging.WARNING):
@@ -197,9 +196,7 @@ def test_with_statement_logging_disabled(caplog, cleanup_disabled_logging):
         ("NOTVALIDLEVEL", logging.NOTSET),
     ],
 )
-def test_force_enable_logging_level_string(
-    caplog, cleanup_disabled_logging, level_str, expected_disable_level
-):
+def test_force_enable_logging_level_string(caplog, level_str, expected_disable_level):
     """Test _force_enable_logging using a level string.
 
     ``expected_disable_level`` is one level below ``level_str`` because the disabled log level
