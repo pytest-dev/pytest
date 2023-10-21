@@ -17,6 +17,7 @@ from _pytest import outcomes
 from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
+from _pytest._io.terminalwriter import TerminalWriter
 from _pytest.config import Config
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -189,7 +190,8 @@ def assertrepr_compare(
     explanation = None
     try:
         if op == "==":
-            explanation = _compare_eq_any(left, right, verbose)
+            writer = config.get_terminal_writer()
+            explanation = _compare_eq_any(left, right, writer, verbose)
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
@@ -225,7 +227,9 @@ def assertrepr_compare(
     return [summary] + explanation
 
 
-def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
+def _compare_eq_any(
+    left: Any, right: Any, writer: TerminalWriter, verbose: int = 0
+) -> List[str]:
     explanation = []
     if istext(left) and istext(right):
         explanation = _diff_text(left, right, verbose)
@@ -245,7 +249,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             # field values, not the type or field names. But this branch
             # intentionally only handles the same-type case, which was often
             # used in older code bases before dataclasses/attrs were available.
-            explanation = _compare_eq_cls(left, right, verbose)
+            explanation = _compare_eq_cls(left, right, writer, verbose)
         elif issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(left, right, verbose)
         elif isset(left) and isset(right):
@@ -254,7 +258,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             explanation = _compare_eq_dict(left, right, verbose)
 
         if isiterable(left) and isiterable(right):
-            expl = _compare_eq_iterable(left, right, verbose)
+            expl = _compare_eq_iterable(left, right, writer, verbose)
             explanation.extend(expl)
 
     return explanation
@@ -321,7 +325,10 @@ def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
 
 
 def _compare_eq_iterable(
-    left: Iterable[Any], right: Iterable[Any], verbose: int = 0
+    left: Iterable[Any],
+    right: Iterable[Any],
+    writer: TerminalWriter,
+    verbose: int = 0,
 ) -> List[str]:
     if verbose <= 0 and not running_on_ci():
         return ["Use -v to get more diff"]
@@ -346,7 +353,13 @@ def _compare_eq_iterable(
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     explanation.extend(
-        line.rstrip() for line in difflib.ndiff(right_formatting, left_formatting)
+        writer._highlight(
+            "\n".join(
+                line.rstrip()
+                for line in difflib.ndiff(right_formatting, left_formatting)
+            ),
+            lexer="diff",
+        ).splitlines()
     )
     return explanation
 
@@ -496,7 +509,9 @@ def _compare_eq_dict(
     return explanation
 
 
-def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
+def _compare_eq_cls(
+    left: Any, right: Any, writer: TerminalWriter, verbose: int
+) -> List[str]:
     if not has_default_eq(left):
         return []
     if isdatacls(left):
@@ -542,7 +557,7 @@ def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
             ]
             explanation += [
                 indent + line
-                for line in _compare_eq_any(field_left, field_right, verbose)
+                for line in _compare_eq_any(field_left, field_right, writer, verbose)
             ]
     return explanation
 
