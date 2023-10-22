@@ -208,50 +208,44 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
     def _format_dict_items(self, items, stream, indent, allowance, context, level):
         if not items:
             return
-        write = stream.write
+
+        # Type ignored because _indent_per_level is private.
         item_indent = indent + self._indent_per_level  # type: ignore[attr-defined]
         delimnl = "\n" + " " * item_indent
         for key, ent in items:
-            write(delimnl)
-            write(self._repr(key, context, level))  # type: ignore[attr-defined]
-            write(": ")
-            self._format(ent, stream, item_indent, allowance + 1, context, level)
-            write(",")
-        write("\n" + " " * indent)
-
-    def _pprint_dataclass(self, object, stream, indent, allowance, context, level):
-        cls_name = object.__class__.__name__
-        items = [
-            (f.name, getattr(object, f.name))
-            for f in dataclasses.fields(object)
-            if f.repr
-        ]
-        if not items:
+            stream.write(delimnl)
             # Type ignored because _repr is private.
-            stream.write(self._repr(object, context, level))  # type: ignore[attr-defined]
+            stream.write(self._repr(key, context, level))  # type: ignore[attr-defined]
+            stream.write(": ")
+            self._format(ent, stream, item_indent, allowance + 1, context, level)
+            stream.write(",")
+
+        stream.write("\n" + " " * indent)
+
+    def _format_namespace_items(self, items, stream, indent, allowance, context, level):
+        if not items:
             return
 
+        # Force a recomputation of the indent to be at a consistent level
         # Type ignored because _indent_per_level is private.
-        stream.write(cls_name + "(\n" + (" " * (indent + self._indent_per_level)))  # type: ignore[attr-defined]
-        # Type ignored because _ is private.
-        self._format_namespace_items(  # type: ignore[attr-defined]
-            items, stream, indent + self._indent_per_level, allowance, context, level  # type: ignore[attr-defined]
+        indent = self._indent_per_level * level  # type: ignore[attr-defined]
+
+        stream.write("\n" + " " * indent)
+        # Type ignored because _format_items is private.
+        super()._format_namespace_items(  # type: ignore[misc]
+            items, stream, indent, allowance, context, level
         )
-        stream.write(",\n" + " " * indent + ")")
+        # Type ignored because _indent_per_level is private.
+        stream.write(",\n" + " " * (indent - self._indent_per_level))  # type: ignore[attr-defined]
 
     def _pprint_chain_map(self, object, stream, indent, allowance, context, level):
         if not len(object.maps) or (len(object.maps) == 1 and not len(object.maps[0])):
             stream.write(repr(object))
             return
-        cls = object.__class__
-        stream.write(cls.__name__ + "(")
-        # Type ignored because _indent_per_level is private.
-        item_indent = indent + self._indent_per_level  # type: ignore[attr-defined]
-        for m in object.maps:
-            stream.write("\n" + " " * item_indent)
-            self._format(m, stream, item_indent, allowance + 1, context, level + 1)
-            stream.write(",")
-        stream.write("\n%s)" % (" " * indent))
+
+        stream.write(object.__class__.__name__ + "(")
+        self._format_items(object.maps, stream, indent, allowance + 1, context, level)
+        stream.write(")")
 
     _dispatch[collections.ChainMap.__repr__] = _pprint_chain_map
 
@@ -272,8 +266,7 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
             stream.write(repr(object))
             return
 
-        cls = object.__class__
-        stream.write(cls.__name__ + "(")
+        stream.write(object.__class__.__name__ + "(")
         if object.maxlen is not None:
             stream.write("maxlen=%d, " % object.maxlen)
         stream.write("[")
@@ -315,7 +308,18 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
 
     def _pprint_mappingproxy(self, object, stream, indent, allowance, context, level):
         stream.write("mappingproxy(")
-        self._format(object.copy(), stream, indent, allowance + 1, context, level)
+        self._format(
+            object.copy(),
+            stream,
+            indent,
+            allowance,
+            context,
+            # Force the mappingproxy to go back one level up.
+            # This is necessary as we are doing two subsequent calls
+            # to `_format`, which leads to the level being increased
+            # twice
+            level - 1,
+        )
         stream.write(")")
 
     _dispatch[types.MappingProxyType.__repr__] = _pprint_mappingproxy
@@ -330,38 +334,6 @@ class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
         stream.write(")")
 
     _dispatch[collections.OrderedDict.__repr__] = _pprint_ordered_dict
-
-    if sys.version_info[:2] > (3, 9):
-
-        def _pprint_simplenamespace(
-            self, object, stream, indent, allowance, context, level
-        ):
-            if not len(object.__dict__):
-                stream.write(repr(object))
-                return
-
-            if type(object) is types.SimpleNamespace:
-                # The SimpleNamespace repr is "namespace" instead of the class
-                # name, so we do the same here. For subclasses; use the class name.
-                cls_name = "namespace"
-            else:
-                cls_name = object.__class__.__name__
-            items = object.__dict__.items()
-            # Type ignored because _indent_per_level is private.
-            stream.write(cls_name + "(\n" + " " * (indent + self._indent_per_level))  # type: ignore[attr-defined]
-            # Type ignored because _format_namespace_items is private.
-            self._format_namespace_items(  # type: ignore[attr-defined]
-                items,
-                stream,
-                # Type ignored because _indent_per_level is private.
-                indent + self._indent_per_level,  # type: ignore[attr-defined]
-                allowance + 1,
-                context,
-                level,
-            )
-            stream.write(",\n" + " " * indent + ")")
-
-        _dispatch[types.SimpleNamespace.__repr__] = _pprint_simplenamespace
 
     def _pprint_tuple(self, object, stream, indent, allowance, context, level):
         stream.write("(")
