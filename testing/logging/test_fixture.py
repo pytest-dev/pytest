@@ -1,4 +1,5 @@
 # mypy: disable-error-code="attr-defined"
+# mypy: disallow-untyped-defs
 import logging
 from typing import Iterator
 
@@ -28,7 +29,7 @@ def test_fixture_help(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*caplog*"])
 
 
-def test_change_level(caplog):
+def test_change_level(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.INFO)
     logger.debug("handler DEBUG level")
     logger.info("handler INFO level")
@@ -43,7 +44,7 @@ def test_change_level(caplog):
     assert "CRITICAL" in caplog.text
 
 
-def test_change_level_logging_disabled(caplog):
+def test_change_level_logging_disabled(caplog: pytest.LogCaptureFixture) -> None:
     logging.disable(logging.CRITICAL)
     assert logging.root.manager.disable == logging.CRITICAL
     caplog.set_level(logging.WARNING)
@@ -143,7 +144,7 @@ def test_change_level_undos_handler_level(pytester: Pytester) -> None:
     result.assert_outcomes(passed=3)
 
 
-def test_with_statement(caplog):
+def test_with_statement(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level(logging.INFO):
         logger.debug("handler DEBUG level")
         logger.info("handler INFO level")
@@ -158,7 +159,7 @@ def test_with_statement(caplog):
     assert "CRITICAL" in caplog.text
 
 
-def test_with_statement_logging_disabled(caplog):
+def test_with_statement_logging_disabled(caplog: pytest.LogCaptureFixture) -> None:
     logging.disable(logging.CRITICAL)
     assert logging.root.manager.disable == logging.CRITICAL
     with caplog.at_level(logging.WARNING):
@@ -196,7 +197,9 @@ def test_with_statement_logging_disabled(caplog):
         ("NOTVALIDLEVEL", logging.NOTSET),
     ],
 )
-def test_force_enable_logging_level_string(caplog, level_str, expected_disable_level):
+def test_force_enable_logging_level_string(
+    caplog: pytest.LogCaptureFixture, level_str: str, expected_disable_level: int
+) -> None:
     """Test _force_enable_logging using a level string.
 
     ``expected_disable_level`` is one level below ``level_str`` because the disabled log level
@@ -215,7 +218,7 @@ def test_force_enable_logging_level_string(caplog, level_str, expected_disable_l
     assert test_logger.manager.disable == expected_disable_level
 
 
-def test_log_access(caplog):
+def test_log_access(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.INFO)
     logger.info("boo %s", "arg")
     assert caplog.records[0].levelname == "INFO"
@@ -223,7 +226,7 @@ def test_log_access(caplog):
     assert "boo arg" in caplog.text
 
 
-def test_messages(caplog):
+def test_messages(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.INFO)
     logger.info("boo %s", "arg")
     logger.info("bar %s\nbaz %s", "arg1", "arg2")
@@ -244,14 +247,14 @@ def test_messages(caplog):
     assert "Exception" not in caplog.messages[-1]
 
 
-def test_record_tuples(caplog):
+def test_record_tuples(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.INFO)
     logger.info("boo %s", "arg")
 
     assert caplog.record_tuples == [(__name__, logging.INFO, "boo arg")]
 
 
-def test_unicode(caplog):
+def test_unicode(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.INFO)
     logger.info("bū")
     assert caplog.records[0].levelname == "INFO"
@@ -259,7 +262,7 @@ def test_unicode(caplog):
     assert "bū" in caplog.text
 
 
-def test_clear(caplog):
+def test_clear(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.INFO)
     logger.info("bū")
     assert len(caplog.records)
@@ -270,7 +273,9 @@ def test_clear(caplog):
 
 
 @pytest.fixture
-def logging_during_setup_and_teardown(caplog):
+def logging_during_setup_and_teardown(
+    caplog: pytest.LogCaptureFixture,
+) -> Iterator[None]:
     caplog.set_level("INFO")
     logger.info("a_setup_log")
     yield
@@ -278,7 +283,9 @@ def logging_during_setup_and_teardown(caplog):
     assert [x.message for x in caplog.get_records("teardown")] == ["a_teardown_log"]
 
 
-def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardown):
+def test_caplog_captures_for_all_stages(
+    caplog: pytest.LogCaptureFixture, logging_during_setup_and_teardown: None
+) -> None:
     assert not caplog.records
     assert not caplog.get_records("call")
     logger.info("a_call_log")
@@ -287,25 +294,31 @@ def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardow
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
 
     # This reaches into private API, don't use this type of thing in real tests!
-    assert set(caplog._item.stash[caplog_records_key]) == {"setup", "call"}
+    caplog_records = caplog._item.stash[caplog_records_key]
+    assert set(caplog_records) == {"setup", "call"}
 
 
-def test_clear_for_call_stage(caplog, logging_during_setup_and_teardown):
+def test_clear_for_call_stage(
+    caplog: pytest.LogCaptureFixture, logging_during_setup_and_teardown: None
+) -> None:
     logger.info("a_call_log")
     assert [x.message for x in caplog.get_records("call")] == ["a_call_log"]
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
-    assert set(caplog._item.stash[caplog_records_key]) == {"setup", "call"}
+    caplog_records = caplog._item.stash[caplog_records_key]
+    assert set(caplog_records) == {"setup", "call"}
 
     caplog.clear()
 
     assert caplog.get_records("call") == []
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
-    assert set(caplog._item.stash[caplog_records_key]) == {"setup", "call"}
+    caplog_records = caplog._item.stash[caplog_records_key]
+    assert set(caplog_records) == {"setup", "call"}
 
     logging.info("a_call_log_after_clear")
     assert [x.message for x in caplog.get_records("call")] == ["a_call_log_after_clear"]
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
-    assert set(caplog._item.stash[caplog_records_key]) == {"setup", "call"}
+    caplog_records = caplog._item.stash[caplog_records_key]
+    assert set(caplog_records) == {"setup", "call"}
 
 
 def test_ini_controls_global_log_level(pytester: Pytester) -> None:
