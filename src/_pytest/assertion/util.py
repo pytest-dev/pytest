@@ -197,7 +197,7 @@ def assertrepr_compare(
     try:
         if op == "==":
             writer = config.get_terminal_writer()
-            explanation = _compare_eq_any(left, right, writer, verbose)
+            explanation = _compare_eq_any(left, right, writer._highlight, verbose)
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
