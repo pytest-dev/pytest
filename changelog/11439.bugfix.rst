@@ -1,1 +1,0 @@
-Handle an edge case where :data:`sys.stderr` might already be closed when :ref:`faulthandler` is tearing down.

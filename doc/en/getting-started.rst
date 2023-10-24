@@ -22,7 +22,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 7.4.2
+    pytest 7.4.3
 
 .. _`simpletest`:
 
