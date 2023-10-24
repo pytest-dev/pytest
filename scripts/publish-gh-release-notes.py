@@ -29,7 +29,7 @@ import pypandoc
 
 
 def publish_github_release(slug, token, tag_name, body):
-    github = github3.login(token=token)
+    with github3.login(token=token) as github:
     owner, repo = slug.split("/")
     repo = github.repository(owner, repo)
     return repo.create_release(tag_name=tag_name, body=body)
