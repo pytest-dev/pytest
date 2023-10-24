@@ -1130,6 +1130,41 @@ def test_mark_mro() -> None:
 
     all_marks = get_unpacked_marks(C)
 
-    assert all_marks == [xfail("c").mark, xfail("a").mark, xfail("b").mark]
+    assert all_marks == [xfail("b").mark, xfail("a").mark, xfail("c").mark]
 
     assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
+
+
+# @pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/10447")
+def test_mark_fixture_order_mro(pytester: Pytester):
+    """This ensures we walk marks of the mro starting with the base classes
+    the action at a distance fixtures are taken as minimal example from a real project
+
+    """
+    foo = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def add_attr1(request):
+            request.instance.attr1 = object()
+
+
+        @pytest.fixture
+        def add_attr2(request):
+            request.instance.attr2 = request.instance.attr1
+
+
+        @pytest.mark.usefixtures('add_attr1')
+        class Parent:
+            pass
+
+
+        @pytest.mark.usefixtures('add_attr2')
+        class TestThings(Parent):
+            def test_attrs(self):
+                assert self.attr1 == self.attr2
+        """
+    )
+    result = pytester.runpytest(foo)
+    result.assert_outcomes(passed=1)
