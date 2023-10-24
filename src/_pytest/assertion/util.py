@@ -7,8 +7,10 @@ from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
+from typing import Protocol
 from typing import Sequence
 from unicodedata import normalize
 
@@ -31,6 +33,11 @@ _assertion_pass: Optional[Callable[[int, str, str], None]] = None
 
 # Config object which is assigned during pytest_runtest_protocol.
 _config: Optional[Config] = None
+
+
+class _HighlightFunc(Protocol):
+    def __call__(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
+        """Apply highlighting to the given source."""
 
 
 def format_explanation(explanation: str) -> str:
@@ -189,7 +196,8 @@ def assertrepr_compare(
     explanation = None
     try:
         if op == "==":
-            explanation = _compare_eq_any(left, right, verbose)
+            writer = config.get_terminal_writer()
+            explanation = _compare_eq_any(left, right, writer._highlight, verbose)
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
@@ -225,7 +233,9 @@ def assertrepr_compare(
     return [summary] + explanation
 
 
-def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
+def _compare_eq_any(
+    left: Any, right: Any, highlighter: _HighlightFunc, verbose: int = 0
+) -> List[str]:
     explanation = []
     if istext(left) and istext(right):
         explanation = _diff_text(left, right, verbose)
@@ -245,7 +255,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             # field values, not the type or field names. But this branch
             # intentionally only handles the same-type case, which was often
             # used in older code bases before dataclasses/attrs were available.
-            explanation = _compare_eq_cls(left, right, verbose)
+            explanation = _compare_eq_cls(left, right, highlighter, verbose)
         elif issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(left, right, verbose)
         elif isset(left) and isset(right):
@@ -254,7 +264,7 @@ def _compare_eq_any(left: Any, right: Any, verbose: int = 0) -> List[str]:
             explanation = _compare_eq_dict(left, right, verbose)
 
         if isiterable(left) and isiterable(right):
-            expl = _compare_eq_iterable(left, right, verbose)
+            expl = _compare_eq_iterable(left, right, highlighter, verbose)
             explanation.extend(expl)
 
     return explanation
@@ -321,7 +331,10 @@ def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
 
 
 def _compare_eq_iterable(
-    left: Iterable[Any], right: Iterable[Any], verbose: int = 0
+    left: Iterable[Any],
+    right: Iterable[Any],
+    highligher: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     if verbose <= 0 and not running_on_ci():
         return ["Use -v to get more diff"]
@@ -346,7 +359,13 @@ def _compare_eq_iterable(
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     explanation.extend(
-        line.rstrip() for line in difflib.ndiff(right_formatting, left_formatting)
+        highligher(
+            "\n".join(
+                line.rstrip()
+                for line in difflib.ndiff(right_formatting, left_formatting)
+            ),
+            lexer="diff",
+        ).splitlines()
     )
     return explanation
 
@@ -496,7 +515,9 @@ def _compare_eq_dict(
     return explanation
 
 
-def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
+def _compare_eq_cls(
+    left: Any, right: Any, highlighter: _HighlightFunc, verbose: int
+) -> List[str]:
     if not has_default_eq(left):
         return []
     if isdatacls(left):
@@ -542,7 +563,9 @@ def _compare_eq_cls(left: Any, right: Any, verbose: int) -> List[str]:
             ]
             explanation += [
                 indent + line
-                for line in _compare_eq_any(field_left, field_right, verbose)
+                for line in _compare_eq_any(
+                    field_left, field_right, highlighter, verbose
+                )
             ]
     return explanation
 

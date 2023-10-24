@@ -18,11 +18,18 @@ from _pytest.pytester import Pytester
 
 
 def mock_config(verbose=0):
+    class TerminalWriter:
+        def _highlight(self, source, lexer):
+            return source
+
     class Config:
         def getoption(self, name):
             if name == "verbose":
                 return verbose
             raise KeyError("Not mocked out: %s" % name)
+
+        def get_terminal_writer(self):
+            return TerminalWriter()
 
     return Config()
 
@@ -1784,3 +1791,48 @@ def test_reprcompare_verbose_long() -> None:
         "{'v0': 0, 'v1': 1, 'v2': 12, 'v3': 3, 'v4': 4, 'v5': 5, "
         "'v6': 6, 'v7': 7, 'v8': 8, 'v9': 9, 'v10': 10}"
     )
+
+
+@pytest.mark.parametrize("enable_colors", [True, False])
+@pytest.mark.parametrize(
+    ("test_code", "expected_lines"),
+    (
+        (
+            """
+            def test():
+                assert [0, 1] == [0, 2]
+            """,
+            [
+                "{bold}{red}E         {light-red}- [0, 2]{hl-reset}{endline}{reset}",
+                "{bold}{red}E         {light-green}+ [0, 1]{hl-reset}{endline}{reset}",
+            ],
+        ),
+        (
+            """
+            def test():
+                assert {f"number-is-{i}": i for i in range(1, 6)} == {
+                    f"number-is-{i}": i for i in range(5)
+                }
+            """,
+            [
+                "{bold}{red}E         {light-gray} {hl-reset} {{{endline}{reset}",
+                "{bold}{red}E         {light-gray} {hl-reset}  'number-is-1': 1,{endline}{reset}",
+                "{bold}{red}E         {light-green}+  'number-is-5': 5,{hl-reset}{endline}{reset}",
+            ],
+        ),
+    ),
+)
+def test_comparisons_handle_colors(
+    pytester: Pytester, color_mapping, enable_colors, test_code, expected_lines
+) -> None:
+    p = pytester.makepyfile(test_code)
+    result = pytester.runpytest(
+        f"--color={'yes' if enable_colors else 'no'}", "-vv", str(p)
+    )
+    formatter = (
+        color_mapping.format_for_fnmatch
+        if enable_colors
+        else color_mapping.strip_colors
+    )
+
+    result.stdout.fnmatch_lines(formatter(expected_lines), consecutive=False)
