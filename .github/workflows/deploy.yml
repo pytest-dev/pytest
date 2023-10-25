@@ -53,8 +53,8 @@ jobs:
       run: |
         git config user.name "pytest bot"
         git config user.email "pytestbot@gmail.com"
-        git tag --annotate --message=v${{ github.event.inputs.version }} v${{ github.event.inputs.version }} ${{ github.sha }}
-        git push origin v${{ github.event.inputs.version }}
+        git tag --annotate --message=v${{ github.event.inputs.version }} ${{ github.event.inputs.version }} ${{ github.sha }}
+        git push origin ${{ github.event.inputs.version }}
 
   release-notes:
 
