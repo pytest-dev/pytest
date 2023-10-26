@@ -48,6 +48,9 @@ Examples for modifying printing verbosity:
 
     pytest --quiet          # quiet - less verbose - mode
     pytest -q               # quiet - less verbose - mode (shortcut)
+    pytest -v               # increase verbosity, display individual test names
+    pytest -vv              # more verbose, display more details from the test output
+    pytest -vvv             # not a standard , but may be used for even more detail in certain setups
 
 The ``-v`` flag controls the verbosity of pytest output in various aspects: test session progress, assertion
 details when tests fail, fixtures details with ``--fixtures``, etc.
