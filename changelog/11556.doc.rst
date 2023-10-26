@@ -1,0 +1,1 @@
+Remove/update recommendation about using nullcontext + parametrize in teh docs
