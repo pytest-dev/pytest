@@ -18,6 +18,13 @@ Examples for modifying traceback printing:
     pytest --quiet          # quiet - less verbose - mode
     pytest -q               # quiet - less verbose - mode (shortcut)
 
+    pytest --capture=fd  # default, capture at the file descriptor level
+    pytest --capture=sys # capture at the sys level
+    pytest --capture=no  # don't capture
+    pytest -s            # don't capture (shortcut)
+    pytest --capture=tee-sys # capture to logs but also output to sys level streams
+
+
     pytest --tb=auto    # (default) 'long' tracebacks for the first and last
                          # entry, but 'short' style for the other entries
     pytest --tb=long    # exhaustive, informative traceback formatting
