@@ -883,14 +883,6 @@ def raises(  # noqa: F811
            ...
            >>> assert exc_info.type is ValueError
 
-    **Using with** ``pytest.mark.parametrize``
-
-    When using :ref:`pytest.mark.parametrize ref`
-    it is possible to parametrize tests such that
-    some runs raise an exception and others do not.
-
-    See :ref:`parametrizing_conditional_raising` for an example.
-
     **Legacy form**
 
     It is possible to specify a callable by passing a to-be-called lambda::
