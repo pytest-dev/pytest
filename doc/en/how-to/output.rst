@@ -15,6 +15,8 @@ Examples for modifying traceback printing:
     pytest --showlocals     # show local variables in tracebacks
     pytest -l               # show local variables (shortcut)
     pytest --no-showlocals  # hide local variables (if addopts enables them)
+    pytest --quiet          # quiet - less verbose - mode
+    pytest -q               # quiet - less verbose - mode (shortcut)
 
     pytest --tb=auto    # (default) 'long' tracebacks for the first and last
                          # entry, but 'short' style for the other entries

@@ -1,0 +1,1 @@
+Added documentation lines for command line options -q (--quiet ).
