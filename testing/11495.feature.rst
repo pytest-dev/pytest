@@ -1,0 +1,4 @@
+Add denotation, users now can use annotation to denote a test:
+@pytest.mark.test
+def hello():
+    assert 5 == 5

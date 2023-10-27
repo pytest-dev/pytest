@@ -111,7 +111,7 @@ def pytest_addoption(parser: Parser) -> None:
         "python_files",
         type="args",
         # NOTE: default is also used in AssertionRewritingHook.
-        default=["test_*.py", "*_test.py"],
+        default=["test_*.py", "*_test.py", "myselftest_*.py"],
         help="Glob-style file patterns for Python test module discovery",
     )
     parser.addini(
@@ -123,7 +123,7 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "python_functions",
         type="args",
-        default=["test"],
+        default=["test", "my", "*"],
         help="Prefixes or glob names for Python test function and method discovery",
     )
     parser.addini(
