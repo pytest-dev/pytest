@@ -239,7 +239,7 @@ Marks a test function as *expected to fail*.
 
 .. py:function:: pytest.mark.xfail(condition=None, *, reason=None, raises=None, run=True, strict=xfail_strict)
 
-    :keyword Optional[Union[bool, str]] condition: 
+    :keyword Optional[Union[bool, str]] condition:
         Condition for marking the test function as xfail (``True/False/None`` or a
         :ref:`condition string <string conditions>`). If a bool or None, you also have
         to specify ``reason`` (see :ref:`condition string <string conditions>`). ``None`` is the same as ``False``.
