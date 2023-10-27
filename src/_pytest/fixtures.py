@@ -1898,7 +1898,12 @@ class FixtureManager:
                 else:
                     defs = retrieve(arg)
                     if not defs:
-                        # for now just skip if no definitions are found
+                        # for now just add a edge/node instead of reporting an error
+                        if parent_stack:
+                            with suppress(DuplicateDependency):
+                                info.add_dependency(parent_stack[-1], (arg, -1))
+                        else:
+                            info.add_node((arg, -1))
                         continue
                     if parent_stack:
                         parent = parent_stack[-1]
