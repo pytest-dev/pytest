@@ -3,10 +3,10 @@ import pytest
 
 
 @pytest.mark.test
-def  mul():
+def mul():
     assert 24 == (4 * 6)
 
-def my_test():
-   print("test_answer")
-   assert 5 == 5
 
+def my_test():
+    print("test_answer")
+    assert 5 == 5

@@ -617,6 +617,7 @@ class NodeKeywords(MutableMapping[str, Any]):
     def __repr__(self) -> str:
         return f"<NodeKeywords for node {self.node}>"
 
+
 @final
 @dataclasses.dataclass(frozen=True)
 class Test:
@@ -663,7 +664,7 @@ class Test:
 
         Combines by appending args and merging kwargs.
 
-       """
+        """
         assert self.name == other.name
 
         # Remember source of ids with parametrize Marks.
@@ -681,5 +682,3 @@ class Test:
             param_ids_from=param_ids_from,
             _ispytest=True,
         )
-
-
