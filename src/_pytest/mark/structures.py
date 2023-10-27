@@ -457,8 +457,8 @@ if TYPE_CHECKING:
         @overload
         def __call__(
             self,
-            condition: Union[str, bool] = ...,
-            *conditions: Union[str, bool],
+            condition: Optional[Union[str, bool]] = None,
+            *conditions: Optional[Union[str, bool]],
             reason: str = ...,
             run: bool = ...,
             raises: Union[
