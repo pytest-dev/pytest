@@ -366,6 +366,7 @@ class FuncFixtureInfo2:
     # - check which sort/sorted calls need to be reversed by default.
     # - maybe replace Tuple[str, int] by a NamedTuple?
     # - make this a frozen dataclass again? this would make clone more difficult to implement!
+    # - special case 'request' and nodes without fixture definitions in fixturedef_closure
     __slots__ = (
         "argnames",
         "initialnames",
@@ -413,6 +414,7 @@ class FuncFixtureInfo2:
         self._outgoing = defaultdict(defaultdict)
         self._incoming = defaultdict(defaultdict)
         self._reuse = set()
+        self._closure_store = []
 
     def clone(self) -> "FuncFixtureInfo2":
         clone = FuncFixtureInfo2(self.argnames, copy.copy(self.initialnames))
@@ -448,7 +450,7 @@ class FuncFixtureInfo2:
 
     def name_idx_closure(self, reverse: bool = False) -> Sequence[Tuple[str, int]]:
         # closure in topological sort order / scope is not honored
-        return sorted(self._rank, key=self._rank.__getitem__)
+        return sorted(self._rank, key=self._rank.__getitem__, reverse=reverse)
 
     def fixturedef_closure(self, reverse: bool = False) -> Sequence["FixtureDef[Any]"]:
         # closure in topogical sort order and proper scope order
@@ -457,6 +459,7 @@ class FuncFixtureInfo2:
         return sorted(
             (self.name2fixturedefs[name][idx] for name, idx in self.name_idx_closure()),
             key=lambda d: d._scope,
+            reverse=reverse,
         )
 
     def add_node(self, node: Tuple[str, int]):
@@ -540,7 +543,9 @@ class FuncFixtureInfo2:
         for node in {
             node
             for node in self._rank
-            if node not in self._outgoing and node not in self._incoming
+            if node not in self._outgoing
+            and node not in self._incoming
+            and node not in roots
         }:
             self.remove_fixture(node)
 
@@ -1738,12 +1743,11 @@ class FixtureManager:
     def getfixtureinfo2(
         self,
         node: nodes.Item,
-        func: Callable[..., object],
+        func: Optional[Callable[..., object]],
         cls: Optional[type],
-        funcargs: bool = True,
     ) -> FuncFixtureInfo2:
         """See above"""
-        if funcargs and not getattr(node, "nofuncargs", False):
+        if func is not None and not getattr(node, "nofuncargs", False):
             argnames = getfuncargnames(func, name=node.name, cls=cls)
         else:
             argnames = ()
@@ -1846,7 +1850,7 @@ class FixtureManager:
         self,
         info: FuncFixtureInfo2,
         nodeid: str,
-        ignore: Collection[str],
+        ignore_args: Collection[str],
     ) -> None:
         # TODO:
         # - reword last sentence
@@ -1864,9 +1868,9 @@ class FixtureManager:
         iter_stack: List[Iterator[str]] = [iter(info.initialnames)]
         parent_stack: List[Tuple[str, int]] = []
 
-        def retrieve(name: str) -> Sequence[FixtureDef[Any]] | None:
+        def retrieve(name: str) -> Optional[Sequence[FixtureDef[Any]]]:
             try:
-                return cache.get(name, None)
+                return cache[name]
             except KeyError:
                 defs = self.getfixturedefs(name, nodeid)
                 if defs:
@@ -1875,49 +1879,51 @@ class FixtureManager:
                 else:
                     return None
 
+        def push_onto_stack(node: Tuple[str, int], argnames: Sequence[str]):
+            if node not in parent_stack:
+                parent_stack.append(node)
+                iter_stack.append(iter(argnames))
+
         while iter_stack:
             arg = next(iter_stack[-1], None)
             if arg:
-                if arg in ignore:
-                    continue
-                defs = retrieve(arg)
-                if not defs:
-                    # for now continue if no definitions are found
-                    # this should be guarded against by giving appropriate ignores
-                    continue
-                if parent_stack:
-                    parent = parent_stack[-1]
-                    # entry unconditionally exists at this point
-                    parent_scope = cast(Sequence[FixtureDef[Any]], retrieve(parent[0]))[
-                        parent[1]
-                    ]._scope
-                    for i in range(-1, -len(defs) - 1, -1):
-                        try:
-                            info.add_dependency(parent, (arg, i))
-                        except CyclicDependency:
-                            continue
-                        except DuplicateDependency:
-                            break
-                        else:
-                            if defs[i]._scope < parent_scope:
-                                info.remove_dependency(parent, (arg, i))
-                                raise Exception("Scope violation: ...")
-                            # check if the fixture is already in the stack to bound
-                            # the stack growth.
-                            # this check is not a sufficient condition for termination
-                            # of the algorithm.
-                            if (arg, i) not in parent_stack:
-                                parent_stack.append((arg, i))
-                                iter_stack.append(iter(defs[i].argnames))
-                            break
+                if arg == "request" or arg in ignore_args:
+                    # do not retrive definitions because they either to not exist
+                    # or are replaced during parametrization.
+                    if parent_stack:
+                        with suppress(DuplicateDependency):
+                            info.add_dependency(parent_stack[-1], (arg, -1))
                     else:
-                        raise Exception("Cycle Detected: ...")
+                        info.add_node((arg, -1))
                 else:
-                    parent_stack.append((arg, -1))
-                    iter_stack.append(iter(defs[-1].argnames))
-                    # make sure the initalnames are actually inserted even if they
-                    # have no dependencies
-                    info.add_node((arg, -1))
+                    defs = retrieve(arg)
+                    if not defs:
+                        # for now just skip if no definitions are found
+                        continue
+                    if parent_stack:
+                        parent = parent_stack[-1]
+                        # entry unconditionally exists at this point
+                        parent_scope = cast(
+                            Sequence[FixtureDef[Any]], retrieve(parent[0])
+                        )[parent[1]]._scope
+                        for i in range(-1, -len(defs) - 1, -1):
+                            try:
+                                info.add_dependency(parent, (arg, i))
+                            except CyclicDependency:
+                                continue
+                            except DuplicateDependency:
+                                break
+                            else:
+                                if defs[i]._scope < parent_scope:
+                                    info.remove_dependency(parent, (arg, i))
+                                    raise Exception("Scope violation: ...")
+                                push_onto_stack((arg, i), defs[i].argnames)
+                                break
+                        else:
+                            raise Exception("Cycle Detected: ...")
+                    else:
+                        push_onto_stack((arg, -1), defs[-1].argnames)
+                        info.add_node((arg, -1))
             else:
                 # remove the exhausted iterator and backtrack
                 iter_stack.pop()
