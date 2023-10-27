@@ -1034,6 +1034,7 @@ class Pytester:
         return result
 
     def runitem(self, source: str) -> Any:
+        print(str)
         """Run the "test_func" Item.
 
         The calling test instance (class containing the test method) must

@@ -661,9 +661,8 @@ class Session(nodes.FSCollector):
         self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
         self._initial_parts: List[Tuple[Path, List[str]]] = []
         self.items: List[nodes.Item] = []
-
+        #import pdb; pdb.set_trace()
         hook = self.config.hook
-
         items: Sequence[Union[nodes.Item, nodes.Collector]] = self.items
         try:
             initialpaths: List[Path] = []
@@ -705,6 +704,12 @@ class Session(nodes.FSCollector):
             hook.pytest_collection_finish(session=self)
 
         self.testscollected = len(items)
+
+#         print("[lizhicheng]")
+#         print(len(items))
+#         print(type(items))
+#         print(items)
+# #        import pdb;pdb.set_trace()
         return items
 
     def collect(self) -> Iterator[Union[nodes.Item, nodes.Collector]]:

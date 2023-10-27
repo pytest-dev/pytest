@@ -625,3 +625,70 @@ class NodeKeywords(MutableMapping[str, Any]):
 
     def __repr__(self) -> str:
         return f"<NodeKeywords for node {self.node}>"
+
+@final
+@dataclasses.dataclass(frozen=True)
+class Test:
+    """A pytest test."""
+
+    #: Name of the test.
+    name: str
+    #: Positional arguments of the mark decorator.
+    args: Tuple[Any, ...]
+    #: Keyword arguments of the mark decorator.
+    kwargs: Mapping[str, Any]
+
+    _param_ids_from: Optional["Test"] = dataclasses.field(default=None, repr=False)
+    #: Resolved/generated ids with parametrize Marks.
+    _param_ids_generated: Optional[Sequence[str]] = dataclasses.field(
+        default=None, repr=False
+    )
+
+    def __init__(
+        self,
+        name: str,
+        args: Tuple[Any, ...],
+        kwargs: Mapping[str, Any],
+        param_ids_from: Optional["Mark"] = None,
+        param_ids_generated: Optional[Sequence[str]] = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        """:meta private:"""
+        check_ispytest(_ispytest)
+        # Weirdness to bypass frozen=True.
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "args", args)
+        object.__setattr__(self, "kwargs", kwargs)
+        object.__setattr__(self, "_param_ids_from", param_ids_from)
+        object.__setattr__(self, "_param_ids_generated", param_ids_generated)
+
+    def _has_param_ids(self) -> bool:
+        return "ids" in self.kwargs or len(self.args) >= 4
+
+    def combined_with(self, other: "Test") -> "Test":
+        """Return a new Test which is a combination of this
+        Test and another Test.
+
+        Combines by appending args and merging kwargs.
+
+       """
+        assert self.name == other.name
+
+        # Remember source of ids with parametrize Marks.
+        param_ids_from: Optional[Mark] = None
+        if self.name == "parametrize":
+            if other._has_param_ids():
+                param_ids_from = other
+            elif self._has_param_ids():
+                param_ids_from = self
+
+        return Test(
+            self.name,
+            self.args + other.args,
+            dict(self.kwargs, **other.kwargs),
+            param_ids_from=param_ids_from,
+            _ispytest=True,
+        )
+
+
