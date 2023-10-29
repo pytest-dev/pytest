@@ -80,7 +80,6 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         try:
             self.fnpats = config.getini("python_files")
         except ValueError:
-            print("debug in 75")
             self.fnpats = ["test_*.py", "*_test.py"]
         self.session: Optional[Session] = None
         self._rewritten_names: Dict[str, Path] = {}
