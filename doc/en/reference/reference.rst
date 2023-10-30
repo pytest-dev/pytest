@@ -1,3 +1,5 @@
+:tocdepth: 3
+
 .. _`api-reference`:
 
 API Reference
