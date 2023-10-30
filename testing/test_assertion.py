@@ -451,11 +451,14 @@ class TestAssert_reprcompare:
                 [0, 2],
                 """
                 Full diff:
-                - [0, 2]
+                  [
+                      0,
+                -     2,
                 ?     ^
-                + [0, 1]
+                +     1,
                 ?     ^
-            """,
+                  ]
+                """,
                 id="lists",
             ),
             pytest.param(
@@ -463,10 +466,12 @@ class TestAssert_reprcompare:
                 {0: 2},
                 """
                 Full diff:
-                - {0: 2}
-                ?     ^
-                + {0: 1}
-                ?     ^
+                  {
+                -     0: 2,
+                ?        ^
+                +     0: 1,
+                ?        ^
+                  }
             """,
                 id="dicts",
             ),
@@ -475,10 +480,13 @@ class TestAssert_reprcompare:
                 {0, 2},
                 """
                 Full diff:
-                - {0, 2}
+                  {
+                      0,
+                -     2,
                 ?     ^
-                + {0, 1}
+                +     1,
                 ?     ^
+                  }
             """,
                 id="sets",
             ),
@@ -542,10 +550,10 @@ class TestAssert_reprcompare:
             "Right contains one more item: '" + long_d + "'",
             "Full diff:",
             "  [",
-            "   'a',",
-            "   'b',",
-            "   'c',",
-            "-  '" + long_d + "',",
+            "      'a',",
+            "      'b',",
+            "      'c',",
+            "-     '" + long_d + "',",
             "  ]",
         ]
 
@@ -555,10 +563,10 @@ class TestAssert_reprcompare:
             "Left contains one more item: '" + long_d + "'",
             "Full diff:",
             "  [",
-            "   'a',",
-            "   'b',",
-            "   'c',",
-            "+  '" + long_d + "',",
+            "      'a',",
+            "      'b',",
+            "      'c',",
+            "+     '" + long_d + "',",
             "  ]",
         ]
 
@@ -574,10 +582,10 @@ class TestAssert_reprcompare:
             "At index 0 diff: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' != 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
             "Full diff:",
             "  [",
-            "+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
-            "   'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
-            "   'cccccccccccccccccccccccccccccc',",
-            "-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "+     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "      'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
+            "      'cccccccccccccccccccccccccccccc',",
+            "-     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
             "  ]",
         ]
 
@@ -592,15 +600,15 @@ class TestAssert_reprcompare:
             "Left contains 7 more items, first extra item: 'aaaaaaaaaa'",
             "Full diff:",
             "  [",
-            "-  'should not get wrapped',",
-            "+  'a',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
+            "-     'should not get wrapped',",
+            "+     'a',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
             "  ]",
         ]
 
@@ -615,13 +623,17 @@ class TestAssert_reprcompare:
             "Differing items:",
             "{'env': {'env1': 1, 'env2': 2}} != {'env': {'env1': 1}}",
             "Full diff:",
-            "- {'common': 1, 'env': {'env1': 1}}",
-            "+ {'common': 1, 'env': {'env1': 1, 'env2': 2}}",
-            "?                                +++++++++++",
+            "  {",
+            "      'common': 1,",
+            "      'env': {",
+            "          'env1': 1,",
+            "+         'env2': 2,",
+            "      },",
+            "  }",
         ]
 
         long_a = "a" * 80
-        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 2}}
+        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 3}}
         d1 = {"env": {"sub": sub}}
         d2 = {"env": {"sub": sub}, "new": 1}
         diff = callequal(d1, d2, verbose=True)
@@ -632,10 +644,16 @@ class TestAssert_reprcompare:
             "{'new': 1}",
             "Full diff:",
             "  {",
-            "   'env': {'sub': {'long_a': '" + long_a + "',",
-            "                   'sub1': {'long_a': 'substring that gets wrapped substring '",
-            "                                      'that gets wrapped '}}},",
-            "-  'new': 1,",
+            "      'env': {",
+            "          'sub': {",
+            f"              'long_a': '{long_a}',",
+            "              'sub1': {",
+            "                  'long_a': 'substring that gets wrapped substring that gets wrapped '",
+            "                  'substring that gets wrapped ',",
+            "              },",
+            "          },",
+            "      },",
+            "-     'new': 1,",
             "  }",
         ]
 
@@ -677,8 +695,13 @@ class TestAssert_reprcompare:
             "Right contains 2 more items:",
             "{'b': 1, 'c': 2}",
             "Full diff:",
-            "- {'b': 1, 'c': 2}",
-            "+ {'a': 0}",
+            "  {",
+            "-     'b': 1,",
+            "?      ^   ^",
+            "+     'a': 0,",
+            "?      ^   ^",
+            "-     'c': 2,",
+            "  }",
         ]
         lines = callequal({"b": 1, "c": 2}, {"a": 0}, verbose=2)
         assert lines == [
@@ -688,8 +711,13 @@ class TestAssert_reprcompare:
             "Right contains 1 more item:",
             "{'a': 0}",
             "Full diff:",
-            "- {'a': 0}",
-            "+ {'b': 1, 'c': 2}",
+            "  {",
+            "-     'a': 0,",
+            "?      ^   ^",
+            "+     'b': 1,",
+            "?      ^   ^",
+            "+     'c': 2,",
+            "  }",
         ]
 
     def test_sequence_different_items(self) -> None:
@@ -699,8 +727,17 @@ class TestAssert_reprcompare:
             "At index 0 diff: 1 != 3",
             "Right contains one more item: 5",
             "Full diff:",
-            "- (3, 4, 5)",
-            "+ (1, 2)",
+            "  (",
+            "-     3,",
+            "?     ^",
+            "+     1,",
+            "?     ^",
+            "-     4,",
+            "?     ^",
+            "+     2,",
+            "?     ^",
+            "-     5,",
+            "  )",
         ]
         lines = callequal((1, 2, 3), (4,), verbose=2)
         assert lines == [
@@ -708,8 +745,14 @@ class TestAssert_reprcompare:
             "At index 0 diff: 1 != 4",
             "Left contains 2 more items, first extra item: 2",
             "Full diff:",
-            "- (4,)",
-            "+ (1, 2, 3)",
+            "  (",
+            "-     4,",
+            "?     ^",
+            "+     1,",
+            "?     ^",
+            "+     2,",
+            "+     3,",
+            "  )",
         ]
 
     def test_set(self) -> None:
@@ -1844,8 +1887,8 @@ def test_reprcompare_verbose_long() -> None:
                 assert [0, 1] == [0, 2]
             """,
             [
-                "{bold}{red}E         {light-red}- [0, 2]{hl-reset}{endline}{reset}",
-                "{bold}{red}E         {light-green}+ [0, 1]{hl-reset}{endline}{reset}",
+                "{bold}{red}E         {light-red}-     2,{hl-reset}{endline}{reset}",
+                "{bold}{red}E         {light-green}+     1,{hl-reset}{endline}{reset}",
             ],
         ),
         (
@@ -1857,8 +1900,8 @@ def test_reprcompare_verbose_long() -> None:
             """,
             [
                 "{bold}{red}E         {light-gray} {hl-reset} {{{endline}{reset}",
-                "{bold}{red}E         {light-gray} {hl-reset}  'number-is-1': 1,{endline}{reset}",
-                "{bold}{red}E         {light-green}+  'number-is-5': 5,{hl-reset}{endline}{reset}",
+                "{bold}{red}E         {light-gray} {hl-reset}     'number-is-1': 1,{endline}{reset}",
+                "{bold}{red}E         {light-green}+     'number-is-5': 5,{hl-reset}{endline}{reset}",
             ],
         ),
     ),
@@ -1917,14 +1960,32 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
             f"{p.name} .FFF                            [100%]",
             "E         At index 2 diff: 'grapes' != 'orange'",
             "E         Full diff:",
-            "E         - ['banana', 'apple', 'orange', 'melon', 'kiwi']",
-            "E         ?                      ^  ^^",
-            "E         + ['banana', 'apple', 'grapes', 'melon', 'kiwi']",
-            "E         ?                      ^  ^ +",
+            "E           [",
+            "E               'banana',",
+            "E               'apple',",
+            "E         -     'orange',",
+            "E         ?      ^  ^^",
+            "E         +     'grapes',",
+            "E         ?      ^  ^ +",
+            "E               'melon',",
+            "E               'kiwi',",
+            "E           ]",
             "E         Full diff:",
-            "E         - {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}",
-            "E         ?            -    -    -    -    -    -    -    -",
-            "E         + {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4}",
+            "E           {",
+            "E               '0': 0,",
+            "E         -     '10': 10,",
+            "E         ?       -    -",
+            "E         +     '1': 1,",
+            "E         -     '20': 20,",
+            "E         ?       -    -",
+            "E         +     '2': 2,",
+            "E         -     '30': 30,",
+            "E         ?       -    -",
+            "E         +     '3': 3,",
+            "E         -     '40': 40,",
+            "E         ?       -    -",
+            "E         +     '4': 4,",
+            "E           }",
             f"E       AssertionError: assert 'hello world' in '{long_text}'",
         ]
     )

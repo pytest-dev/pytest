@@ -1,0 +1,7 @@
+Improved the very verbose diff for every standard library container types. Previously,
+this would use the default python pretty printer, which puts opening and closing
+markers on the same line as the first/last entry, in addition to not having
+consistent indentation.
+
+The indentation is now consistent and the markers on their own separate lines
+which should reduce the diffs shown to users.
