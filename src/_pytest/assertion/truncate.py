@@ -1,7 +1,7 @@
 """Utilities for truncating assertion output.
 
 Current default behaviour is to truncate assertion explanations at
-terminal lines, unless running with a verbosity level of at least 2 or running on CI.
+terminal lines, unless running with an assertions verbosity level of at least 2 or running on CI.
 """
 from typing import List
 from typing import Optional

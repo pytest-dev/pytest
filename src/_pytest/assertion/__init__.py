@@ -48,7 +48,7 @@ def pytest_addoption(parser: Parser) -> None:
         "assertions",
         help=(
             "Specify a verbosity level for assertions, overriding the main level. "
-            "Higher levels will provide more a more detailed explanation when an assertion fails."
+            "Higher levels will provide more detailed explanation when an assertion fails."
         ),
     )
 
