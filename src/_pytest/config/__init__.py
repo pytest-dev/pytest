@@ -13,6 +13,7 @@ import shlex
 import sys
 import types
 import warnings
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
@@ -1663,6 +1664,13 @@ class Config:
             )
 
 
+class VerbosityType(Enum):
+    """Fine-grained verbosity categories."""
+
+    Global = "global"
+    Assertions = "assertions"
+
+
 class OutputVerbosity:
     DEFAULT = "auto"
     _option_name_fmt = "verbosity_{}"
@@ -1675,36 +1683,36 @@ class OutputVerbosity:
         """Application wide verbosity level."""
         return cast(int, self._config.option.verbose)
 
-    def verbosity_for(self, output_type: str) -> int:
+    def get(self, verbosity_type: VerbosityType = VerbosityType.Global) -> int:
         """Return verbosity level for the given output type.
 
-        :param output_type: Name of the output type.
+        :param verbosity_type: Fine-grained verbosity category.
 
         If the level is not configured, the value of ``config.option.verbose``.
         """
-        level = self._config.getini(OutputVerbosity._ini_name(output_type))
+        level = self._config.getini(OutputVerbosity._ini_name(verbosity_type))
 
         if level == OutputVerbosity.DEFAULT:
             return self.verbose
         return int(level)
 
     @staticmethod
-    def _ini_name(output_type: str) -> str:
-        return f"verbosity_{output_type}"
+    def _ini_name(verbosity_type: VerbosityType) -> str:
+        return f"verbosity_{verbosity_type.value}"
 
     @staticmethod
-    def add_ini(parser: "Parser", output_type: str, help: str) -> None:
+    def _add_ini(parser: "Parser", verbosity_type: VerbosityType, help: str) -> None:
         """Add a output verbosity configuration option for the given output type.
 
         :param parser: Parser for command line arguments and ini-file values.
-        :param output_type: Name of the output type.
+        :param verbosity_type: Fine-grained verbosity category.
         :param help: Description of the output this type controls.
 
         The value should be retrieved via a call to
-        :py:func:`config.output_verbosity.verbosity_for(name) <pytest.OutputVerbosity.verbosity_for>`.
+        :py:func:`config.output_verbosity.get(type) <pytest.OutputVerbosity.get>`.
         """
         parser.addini(
-            OutputVerbosity._ini_name(output_type),
+            OutputVerbosity._ini_name(verbosity_type),
             help=help,
             type="string",
             default=OutputVerbosity.DEFAULT,

@@ -7,8 +7,8 @@ from typing import List
 from typing import Optional
 
 from _pytest.assertion import util
+from _pytest.config import VerbosityType
 from _pytest.nodes import Item
-
 
 DEFAULT_MAX_LINES = 8
 DEFAULT_MAX_CHARS = 8 * 80
@@ -26,7 +26,7 @@ def truncate_if_required(
 
 def _should_truncate_item(item: Item) -> bool:
     """Whether or not this test item is eligible for truncation."""
-    verbose = item.config.output_verbosity.verbosity_for("assertions")
+    verbose = item.config.output_verbosity.get(VerbosityType.Assertions)
     return verbose < 2 and not util.running_on_ci()
 
 

@@ -13,6 +13,7 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.config import VerbosityType
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
@@ -23,13 +24,13 @@ def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
         def verbose(self) -> int:
             return verbose
 
-        def verbosity_for(self, output_type: str) -> int:
-            if output_type == "assertions":
+        def get(self, verbosity_type: VerbosityType = VerbosityType.Global) -> int:
+            if verbosity_type == VerbosityType.Assertions:
                 if assertion_override is not None:
                     return assertion_override
                 return verbose
 
-            raise KeyError("Not mocked out: %s" % output_type)
+            raise KeyError(f"Not mocked out: {verbosity_type}")
 
     class Config:
         def __init__(self) -> None:
@@ -47,30 +48,30 @@ class TestMockConfig:
 
         assert config.output_verbosity.verbose == TestMockConfig.SOME_VERBOSITY_LEVEL
 
-    def test_verbosity_for_assertion_override_not_set_verbose_value(self):
+    def test_get_assertion_override_not_set_verbose_value(self):
         config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
 
         assert (
-            config.output_verbosity.verbosity_for("assertions")
+            config.output_verbosity.get(VerbosityType.Assertions)
             == TestMockConfig.SOME_VERBOSITY_LEVEL
         )
 
-    def test_verbosity_for_assertion_override_set_custom_value(self):
+    def test_get_assertion_override_set_custom_value(self):
         config = mock_config(
             verbose=TestMockConfig.SOME_VERBOSITY_LEVEL,
             assertion_override=TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL,
         )
 
         assert (
-            config.output_verbosity.verbosity_for("assertions")
+            config.output_verbosity.get(VerbosityType.Assertions)
             == TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL
         )
 
-    def test_verbosity_for_unsupported_type_error(self):
+    def test_get_unsupported_type_error(self):
         config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
 
         with pytest.raises(KeyError):
-            config.output_verbosity.verbosity_for("NOT CONFIGURED NAME")
+            config.output_verbosity.get(VerbosityType.Global)
 
 
 class TestImportHookInstallation:

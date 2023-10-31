@@ -22,6 +22,7 @@ from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
 from _pytest.config import OutputVerbosity
 from _pytest.config import parse_warning_filter
+from _pytest.config import VerbosityType
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
@@ -2186,12 +2187,12 @@ class TestDebugOptions:
 
 
 class TestOutputVerbosity:
-    SOME_OUTPUT_TYPE = "foo"
+    SOME_OUTPUT_TYPE = VerbosityType.Assertions
     SOME_OUTPUT_VERBOSITY_LEVEL = 5
 
     class VerbosityIni:
         def pytest_addoption(self, parser: Parser) -> None:
-            OutputVerbosity.add_ini(
+            OutputVerbosity._add_ini(
                 parser, TestOutputVerbosity.SOME_OUTPUT_TYPE, help="some help text"
             )
 
@@ -2229,19 +2230,20 @@ class TestOutputVerbosity:
         config = pytester.parseconfig(tmp_path)
 
         assert (
-            config.output_verbosity.verbosity_for(TestOutputVerbosity.SOME_OUTPUT_TYPE)
+            config.output_verbosity.get(TestOutputVerbosity.SOME_OUTPUT_TYPE)
             == config.output_verbosity.verbose
         )
 
     def test_level_matches_specified_override(
         self, pytester: Pytester, tmp_path: Path
     ) -> None:
+        setting_name = f"verbosity_{TestOutputVerbosity.SOME_OUTPUT_TYPE.value}"
         tmp_path.joinpath("pytest.ini").write_text(
             textwrap.dedent(
                 f"""\
                 [pytest]
                 addopts = --verbose
-                verbosity_{TestOutputVerbosity.SOME_OUTPUT_TYPE} = {TestOutputVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL}
+                {setting_name} = {TestOutputVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL}
                 """
             ),
             encoding="utf-8",
@@ -2251,6 +2253,6 @@ class TestOutputVerbosity:
         config = pytester.parseconfig(tmp_path)
 
         assert (
-            config.output_verbosity.verbosity_for(TestOutputVerbosity.SOME_OUTPUT_TYPE)
+            config.output_verbosity.get(TestOutputVerbosity.SOME_OUTPUT_TYPE)
             == TestOutputVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL
         )
