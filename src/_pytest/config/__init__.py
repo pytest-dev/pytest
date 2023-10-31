@@ -1681,7 +1681,8 @@ class OutputVerbosity:
     @property
     def verbose(self) -> int:
         """Application wide verbosity level."""
-        return cast(int, self._config.option.verbose)
+        assert isinstance(self._config.option.verbose, int)
+        return self._config.option.verbose
 
     def get(self, verbosity_type: VerbosityType = VerbosityType.Global) -> int:
         """Return verbosity level for the given output type.
