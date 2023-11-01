@@ -1098,7 +1098,6 @@ class TerminalReporter:
                         self._outrep_summary(rep)
                         self._handle_teardown_sections(rep.nodeid)
 
-
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
             reports: List[BaseReport] = self.getreports("error")
