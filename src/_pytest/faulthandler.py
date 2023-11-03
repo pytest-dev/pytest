@@ -9,6 +9,7 @@ from _pytest.nodes import Item
 from _pytest.stash import StashKey
 
 
+fault_handler_original_stderr_fd_key = StashKey[int]()
 fault_handler_stderr_fd_key = StashKey[int]()
 fault_handler_originally_enabled_key = StashKey[bool]()
 
@@ -24,7 +25,9 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     import faulthandler
 
-    config.stash[fault_handler_stderr_fd_key] = os.dup(get_stderr_fileno())
+    stderr_fileno = get_stderr_fileno()
+    config.stash[fault_handler_original_stderr_fd_key] = stderr_fileno
+    config.stash[fault_handler_stderr_fd_key] = os.dup(stderr_fileno)
     config.stash[fault_handler_originally_enabled_key] = faulthandler.is_enabled()
     faulthandler.enable(file=config.stash[fault_handler_stderr_fd_key])
 
@@ -39,7 +42,11 @@ def pytest_unconfigure(config: Config) -> None:
         del config.stash[fault_handler_stderr_fd_key]
     if config.stash.get(fault_handler_originally_enabled_key, False):
         # Re-enable the faulthandler if it was originally enabled.
-        faulthandler.enable(file=get_stderr_fileno())
+        if fault_handler_original_stderr_fd_key in config.stash:
+            faulthandler.enable(config.stash[fault_handler_original_stderr_fd_key])
+            del config.stash[fault_handler_original_stderr_fd_key]
+        else:
+            faulthandler.enable(file=get_stderr_fileno())
 
 
 def get_stderr_fileno() -> int:
