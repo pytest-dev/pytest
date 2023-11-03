@@ -862,6 +862,20 @@ def raises(  # noqa: F811
         >>> assert exc_info.type is ValueError
         >>> assert exc_info.value.args[0] == "value must be 42"
 
+    .. warning::
+
+       Given that ``pytest.raises`` matches subclasses, be wary of using it to match :class:`Exception` like this::
+
+           with pytest.raises(Exception):  # Careful, this will catch ANY exception raised.
+                some_function()
+
+       Because :class:`Exception` is the base class of almost all exceptions, it is easy for this to hide
+       real bugs, where the user wrote this expecting a specific exception, but some other exception is being
+       raised due to a bug introduced during a refactoring.
+
+       Avoid using ``pytest.raises`` to catch :class:`Exception` unless certain that you really want to catch
+       **any** exception raised.
+
     .. note::
 
        When using ``pytest.raises`` as a context manager, it's worthwhile to
