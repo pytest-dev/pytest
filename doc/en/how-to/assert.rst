@@ -104,13 +104,13 @@ If you want to check if a block of code is raising an exact exception type, you 
 
 .. code-block:: python
 
-    def test_recursion_depth():
+    def test_foo_not_implemented():
         def foo():
             raise NotImplementedError
 
         with pytest.raises(RuntimeError) as excinfo:
             foo()
-        assert type(excinfo.value) is RuntimeError
+        assert excinfo.type is RuntimeError
 
 The :func:`pytest.raises` call will succeed, even though the function raises :class:`NotImplementedError`, because
 :class:`NotImplementedError` is a subclass of :class:`RuntimeError`; however the following `assert` statement will
