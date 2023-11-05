@@ -1,1 +1,4 @@
-:confval:`verbosity_assertions` option added to be able to control assertion output independent of the application wide verbosity level.
+Added fine-grained verbosity support to override the application wide verbosity level.
+:class:`pytest.OutputVerbosity` can be used to retrieve the verbosity level for a specific :class:`pytest.VerbosityType`.
+:confval:`verbosity_assertions` option added to be able to control assertion output independent of the application wide
+verbosity level. See :ref:`Fine-grained verbosity <pytest.fine_grained_verbosity>`.

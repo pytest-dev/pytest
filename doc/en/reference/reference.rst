@@ -957,6 +957,15 @@ OptionGroup
 .. autoclass:: pytest.OptionGroup()
     :members:
 
+OutputVerbosity
+~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.OutputVerbosity()
+    :members:
+
+.. autoclass:: pytest.VerbosityType()
+    :members:
+
 PytestPluginManager
 ~~~~~~~~~~~~~~~~~~~
 
@@ -995,7 +1004,6 @@ Stash
 .. autoclass:: pytest.StashKey
     :show-inheritance:
     :members:
-
 
 Global Variables
 ----------------

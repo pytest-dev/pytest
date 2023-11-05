@@ -1667,11 +1667,30 @@ class Config:
 class VerbosityType(Enum):
     """Fine-grained verbosity categories."""
 
+    #: Application wide (default)
     Global = "global"
     Assertions = "assertions"
 
 
 class OutputVerbosity:
+    r"""Access to fine-grained verbosity levels.
+
+    .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        verbosity_assertions = 2
+
+    .. code-block:: bash
+
+        pytest -v
+
+    .. code-block:: python
+
+        print(config.output_verbosity.get())  # 1
+        print(config.output_verbosity.get(VerbosityType.Assertions))  # 2
+    """
+
     DEFAULT = "auto"
     _option_name_fmt = "verbosity_{}"
 
