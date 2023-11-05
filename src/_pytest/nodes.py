@@ -53,7 +53,6 @@ SEP = "/"
 tracebackcutdir = Path(_pytest.__file__).parent
 
 
-_T = TypeVar("_T")
 
 
 def _imply_path(
