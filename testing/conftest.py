@@ -160,6 +160,9 @@ def color_mapping():
             "red": "\x1b[31m",
             "green": "\x1b[32m",
             "yellow": "\x1b[33m",
+            "light-gray": "\x1b[90m",
+            "light-red": "\x1b[91m",
+            "light-green": "\x1b[92m",
             "bold": "\x1b[1m",
             "reset": "\x1b[0m",
             "kw": "\x1b[94m",
@@ -171,6 +174,7 @@ def color_mapping():
             "endline": "\x1b[90m\x1b[39;49;00m",
         }
         RE_COLORS = {k: re.escape(v) for k, v in COLORS.items()}
+        NO_COLORS = {k: "" for k in COLORS.keys()}
 
         @classmethod
         def format(cls, lines: List[str]) -> List[str]:
@@ -186,6 +190,11 @@ def color_mapping():
         def format_for_rematch(cls, lines: List[str]) -> List[str]:
             """Replace color names for use with LineMatcher.re_match_lines"""
             return [line.format(**cls.RE_COLORS) for line in lines]
+
+        @classmethod
+        def strip_colors(cls, lines: List[str]) -> List[str]:
+            """Entirely remove every color code"""
+            return [line.format(**cls.NO_COLORS) for line in lines]
 
     return ColorMapping
 

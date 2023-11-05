@@ -16,6 +16,12 @@ Examples for modifying traceback printing:
     pytest -l               # show local variables (shortcut)
     pytest --no-showlocals  # hide local variables (if addopts enables them)
 
+    pytest --capture=fd  # default, capture at the file descriptor level
+    pytest --capture=sys # capture at the sys level
+    pytest --capture=no  # don't capture
+    pytest -s            # don't capture (shortcut)
+    pytest --capture=tee-sys # capture to logs but also output to sys level streams
+
     pytest --tb=auto    # (default) 'long' tracebacks for the first and last
                          # entry, but 'short' style for the other entries
     pytest --tb=long    # exhaustive, informative traceback formatting
@@ -35,6 +41,16 @@ option you make sure a trace is shown.
 
 Verbosity
 --------------------------------------------------
+
+Examples for modifying printing verbosity:
+
+.. code-block:: bash
+
+    pytest --quiet          # quiet - less verbose - mode
+    pytest -q               # quiet - less verbose - mode (shortcut)
+    pytest -v               # increase verbosity, display individual test names
+    pytest -vv              # more verbose, display more details from the test output
+    pytest -vvv             # not a standard , but may be used for even more detail in certain setups
 
 The ``-v`` flag controls the verbosity of pytest output in various aspects: test session progress, assertion
 details when tests fail, fixtures details with ``--fixtures``, etc.

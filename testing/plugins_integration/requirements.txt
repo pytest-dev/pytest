@@ -1,12 +1,12 @@
 anyio[curio,trio]==4.0.0
-django==4.2.6
+django==4.2.7
 pytest-asyncio==0.21.1
 pytest-bdd==7.0.0
 pytest-cov==4.1.0
 pytest-django==4.5.2
 pytest-flakes==4.0.5
 pytest-html==4.0.2
-pytest-mock==3.11.1
+pytest-mock==3.12.0
 pytest-rerunfailures==12.0
 pytest-sugar==0.9.7
 pytest-trio==0.7.0

@@ -1003,7 +1003,7 @@ class IdMaker:
             for index, id in enumerate(resolved_ids):
                 if id_counts[id] > 1:
                     suffix = ""
-                    if id[-1].isdigit():
+                    if id and id[-1].isdigit():
                         suffix = "_"
                     new_id = f"{id}{suffix}{id_suffixes[id]}"
                     while new_id in set(resolved_ids):
