@@ -25,6 +25,9 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     import faulthandler
 
+    # stash original stderr fileno to be restored at the end of the test session
+    # sys.stderr and sys.__stderr__ may be closed or patched during the session
+    # so we can't rely on their values being good at that point
     stderr_fileno = get_stderr_fileno()
     config.stash[fault_handler_original_stderr_fd_key] = stderr_fileno
     config.stash[fault_handler_stderr_fd_key] = os.dup(stderr_fileno)
