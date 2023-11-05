@@ -249,7 +249,9 @@ Marks a test function as *expected to fail*.
     :keyword str reason:
         Reason why the test function is marked as xfail.
     :keyword Type[Exception] raises:
-        Exception subclass (or tuple of subclasses) expected to be raised by the test function; other exceptions will fail the test.
+        Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
+        Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
+
     :keyword bool run:
         Whether the test function should actually be executed. If ``False``, the function will always xfail and will
         not be executed (useful if a function is segfaulting).
