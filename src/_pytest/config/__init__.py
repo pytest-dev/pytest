@@ -1701,7 +1701,6 @@ class OutputVerbosity:
     """
 
     DEFAULT = "auto"
-    _option_name_fmt = "verbosity_{}"
 
     def __init__(self, config: Config) -> None:
         self._config = config
