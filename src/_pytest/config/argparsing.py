@@ -212,24 +212,27 @@ class Parser:
         """
         assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool")
         if default is NOT_SET:
-            default = self._get_ini_default_for_type(type)
+            default = get_ini_default_for_type(type)
 
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
 
-    def _get_ini_default_for_type(self, type) -> Any:
-        default = Any
-        if type is None:
-            default = ""
-        else:
-            if type in ["paths", "pathlist", "args", "linelist"]:
-                default = []
-            elif type == "bool":
-                default = False
-            else:
-                # for string type
-                default = ""
-        return default
+
+def get_ini_default_for_type(
+    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]]
+) -> Any:
+    """
+    Used by addini to get the default value for a given ini-option type, when
+    default is not supplied.
+    """
+    if type is None:
+        return ""
+    elif type in ("paths", "pathlist", "args", "linelist"):
+        return []
+    elif type == "bool":
+        return False
+    else:
+        return ""
 
 
 class ArgumentError(Exception):

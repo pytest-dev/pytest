@@ -5,6 +5,7 @@ import re
 import sys
 import textwrap
 from pathlib import Path
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Sequence
@@ -21,6 +22,7 @@ from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
+from _pytest.config.argparsing import get_ini_default_for_type
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
@@ -903,6 +905,21 @@ class TestConfigAPI:
         # treat it as string and default value will be ""
         value = config.getini("no_type")
         assert value == ""
+
+    @pytest.mark.parametrize(
+        "type, expected",
+        [
+            pytest.param(None, "", id="None"),
+            pytest.param("string", "", id="string"),
+            pytest.param("paths", [], id="paths"),
+            pytest.param("pathlist", [], id="pathlist"),
+            pytest.param("args", [], id="args"),
+            pytest.param("linelist", [], id="linelist"),
+            pytest.param("bool", False, id="bool"),
+        ],
+    )
+    def test_get_ini_default_for_type(self, type: Any, expected: Any) -> None:
+        assert get_ini_default_for_type(type) == expected
 
     def test_confcutdir_check_isdir(self, pytester: Pytester) -> None:
         """Give an error if --confcutdir is not a valid directory (#2078)"""
