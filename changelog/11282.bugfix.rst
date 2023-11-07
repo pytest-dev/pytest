@@ -1,3 +1,0 @@
-Fixed returning "None" as the default value for a config option when "None" is explicitly
-provided as the default while creating the config option. If no default value is provided
-at the time of creating the config option, then a default based on the option type is returned
