@@ -1521,11 +1521,7 @@ class Config:
             try:
                 value = self.inicfg[name]
             except KeyError:
-                if default is not None:
-                    return default
-                if type is None:
-                    return ""
-                return []
+                return default
         else:
             value = override_value
         # Coerce the values based on types.

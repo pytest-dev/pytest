@@ -27,6 +27,14 @@ from _pytest.deprecated import check_ispytest
 FILE_OR_DIR = "file_or_dir"
 
 
+class Notset:
+    def __repr__(self) -> str:
+        return "<notset>"
+
+
+notset = Notset()
+
+
 @final
 class Parser:
     """Parser for command line arguments and ini-file values.
@@ -176,7 +184,7 @@ class Parser:
         type: Optional[
             Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
         ] = None,
-        default: Any = None,
+        default: Any = notset,
     ) -> None:
         """Register an ini-file option.
 
@@ -203,6 +211,20 @@ class Parser:
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
         assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool")
+        if default is notset:
+            if type is None:
+                default = ""
+            else:
+                if type in ["paths", "pathlist", "args", "linelist"]:
+                    default = []
+                elif type == "bool":
+                    default = False
+                elif type == "string":
+                    default = ""
+                else:
+                    # unknown type will default to None
+                    default = None
+
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
 
