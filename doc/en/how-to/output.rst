@@ -289,7 +289,7 @@ however some plugins might make use of higher verbosity.
 .. _`pytest.fine_grained_verbosity`:
 
 Fine-grained verbosity
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 In addition to specifying the application wide verbosity level, it is possible to control specific aspects independently.
 This is done by setting a verbosity level in the configuration file for the specific aspect of the output.
