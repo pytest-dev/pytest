@@ -2196,23 +2196,6 @@ class TestOutputVerbosity:
                 parser, TestOutputVerbosity.SOME_OUTPUT_TYPE, help="some help text"
             )
 
-    def test_verbose_matches_option_verbose(
-        self, pytester: Pytester, tmp_path: Path
-    ) -> None:
-        tmp_path.joinpath("pytest.ini").write_text(
-            textwrap.dedent(
-                """\
-                [pytest]
-                addopts = --verbose
-                """
-            ),
-            encoding="utf-8",
-        )
-
-        config = pytester.parseconfig(tmp_path)
-
-        assert config.option.verbose == config.output_verbosity.verbose
-
     def test_level_matches_verbose_when_not_specified(
         self, pytester: Pytester, tmp_path: Path
     ) -> None:
@@ -2231,7 +2214,7 @@ class TestOutputVerbosity:
 
         assert (
             config.output_verbosity.get(TestOutputVerbosity.SOME_OUTPUT_TYPE)
-            == config.output_verbosity.verbose
+            == config.option.verbose
         )
 
     def test_level_matches_specified_override(

@@ -1705,16 +1705,6 @@ class OutputVerbosity:
     def __init__(self, config: Config) -> None:
         self._config = config
 
-    @property
-    def verbose(self) -> int:
-        """
-        Application wide verbosity level.
-
-        Same as the traditional ``config.getoption("verbose")``.
-        """
-        assert isinstance(self._config.option.verbose, int)
-        return self._config.option.verbose
-
     def get(self, verbosity_type: VerbosityType = VerbosityType.Global) -> int:
         """Return verbosity level for the given output type.
 
@@ -1725,7 +1715,9 @@ class OutputVerbosity:
         level = self._config.getini(OutputVerbosity._ini_name(verbosity_type))
 
         if level == OutputVerbosity.DEFAULT:
-            return self.verbose
+            assert isinstance(self._config.option.verbose, int)
+            return self._config.option.verbose
+
         return int(level)
 
     @staticmethod
