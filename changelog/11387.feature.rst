@@ -1,4 +1,5 @@
-Added fine-grained verbosity support to override the application wide verbosity level.
-:class:`pytest.OutputVerbosity` can be used to retrieve the verbosity level for a specific :class:`pytest.VerbosityType`.
-:confval:`verbosity_assertions` option added to be able to control assertion output independent of the application wide
-verbosity level. See :ref:`Fine-grained verbosity <pytest.fine_grained_verbosity>`.
+Added the new :confval:`verbosity_assertions` configuration option for fine-grained control of failed assertions verbosity.
+
+See :ref:`Fine-grained verbosity <pytest.fine_grained_verbosity>` for more details.
+
+For plugin authors, :attr:`config.output_verbosity <pytest.Config.output_verbosity>` can be used to retrieve the verbosity level for a specific :class:`pytest.VerbosityType`.

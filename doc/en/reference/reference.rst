@@ -1841,7 +1841,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         verbosity_assertions = 2
 
-    Defaults to application wide verbosity level.
+    Defaults to application wide verbosity level (via the ``-v`` command-line option).
 
 
 .. confval:: xfail_strict

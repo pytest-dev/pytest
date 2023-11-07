@@ -1021,7 +1021,12 @@ class Config:
         )
         self.args_source = Config.ArgsSource.ARGS
         self.args: List[str] = []
+
         self.output_verbosity = OutputVerbosity(self)
+        """Access to output verbosity configuration.
+
+        :type: OutputVerbosity
+        """
 
         if TYPE_CHECKING:
             from _pytest.cacheprovider import Cache
@@ -1667,13 +1672,17 @@ class Config:
 class VerbosityType(Enum):
     """Fine-grained verbosity categories."""
 
-    #: Application wide (default)
+    #: Application wide, controlled by ``-v``/``-q``.
     Global = "global"
+
+    #: Verbosity for failed assertions (see :confval:`verbosity_assertions`).
     Assertions = "assertions"
 
 
 class OutputVerbosity:
     r"""Access to fine-grained verbosity levels.
+
+    Access via :attr:`config.output_verbosity <pytest.Config.output_verbosity>`.
 
     .. code-block:: ini
 
@@ -1681,7 +1690,7 @@ class OutputVerbosity:
         [pytest]
         verbosity_assertions = 2
 
-    .. code-block:: bash
+    .. code-block:: console
 
         pytest -v
 
@@ -1699,7 +1708,11 @@ class OutputVerbosity:
 
     @property
     def verbose(self) -> int:
-        """Application wide verbosity level."""
+        """
+        Application wide verbosity level.
+
+        Same as the traditional ``config.getoption("verbose")``.
+        """
         assert isinstance(self._config.option.verbose, int)
         return self._config.option.verbose
 
