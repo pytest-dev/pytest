@@ -219,11 +219,9 @@ class Parser:
                     default = []
                 elif type == "bool":
                     default = False
-                elif type == "string":
-                    default = ""
                 else:
-                    # unknown type will default to None
-                    default = None
+                    # for string type
+                    default = ""
 
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
