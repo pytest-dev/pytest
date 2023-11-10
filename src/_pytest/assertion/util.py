@@ -20,7 +20,6 @@ from _pytest._io.saferepr import _pformat_dispatch
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
-from _pytest.config import VerbosityType
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -169,7 +168,7 @@ def assertrepr_compare(
     config, op: str, left: Any, right: Any, use_ascii: bool = False
 ) -> Optional[List[str]]:
     """Return specialised explanations for some operators/operands."""
-    verbose = config.output_verbosity.get(VerbosityType.Assertions)
+    verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
 
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.

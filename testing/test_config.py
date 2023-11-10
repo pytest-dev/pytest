@@ -20,9 +20,7 @@ from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
-from _pytest.config import OutputVerbosity
 from _pytest.config import parse_warning_filter
-from _pytest.config import VerbosityType
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
@@ -2186,14 +2184,14 @@ class TestDebugOptions:
         )
 
 
-class TestOutputVerbosity:
-    SOME_OUTPUT_TYPE = VerbosityType.Assertions
+class TestVerbosity:
+    SOME_OUTPUT_TYPE = Config.VERBOSITY_ASSERTIONS
     SOME_OUTPUT_VERBOSITY_LEVEL = 5
 
     class VerbosityIni:
         def pytest_addoption(self, parser: Parser) -> None:
-            OutputVerbosity._add_ini(
-                parser, TestOutputVerbosity.SOME_OUTPUT_TYPE, help="some help text"
+            Config._add_ini(
+                parser, TestVerbosity.SOME_OUTPUT_TYPE, help="some help text"
             )
 
     def test_level_matches_verbose_when_not_specified(
@@ -2208,34 +2206,34 @@ class TestOutputVerbosity:
             ),
             encoding="utf-8",
         )
-        pytester.plugins = [TestOutputVerbosity.VerbosityIni()]
+        pytester.plugins = [TestVerbosity.VerbosityIni()]
 
         config = pytester.parseconfig(tmp_path)
 
         assert (
-            config.output_verbosity.get(TestOutputVerbosity.SOME_OUTPUT_TYPE)
+            config.get_verbosity(TestVerbosity.SOME_OUTPUT_TYPE)
             == config.option.verbose
         )
 
     def test_level_matches_specified_override(
         self, pytester: Pytester, tmp_path: Path
     ) -> None:
-        setting_name = f"verbosity_{TestOutputVerbosity.SOME_OUTPUT_TYPE.value}"
+        setting_name = f"verbosity_{TestVerbosity.SOME_OUTPUT_TYPE}"
         tmp_path.joinpath("pytest.ini").write_text(
             textwrap.dedent(
                 f"""\
                 [pytest]
                 addopts = --verbose
-                {setting_name} = {TestOutputVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL}
+                {setting_name} = {TestVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL}
                 """
             ),
             encoding="utf-8",
         )
-        pytester.plugins = [TestOutputVerbosity.VerbosityIni()]
+        pytester.plugins = [TestVerbosity.VerbosityIni()]
 
         config = pytester.parseconfig(tmp_path)
 
         assert (
-            config.output_verbosity.get(TestOutputVerbosity.SOME_OUTPUT_TYPE)
-            == TestOutputVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL
+            config.get_verbosity(TestVerbosity.SOME_OUTPUT_TYPE)
+            == TestVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL
         )

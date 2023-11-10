@@ -15,10 +15,8 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import hookspec
 from _pytest.config import main
-from _pytest.config import OutputVerbosity
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
-from _pytest.config import VerbosityType
 from _pytest.config.argparsing import OptionGroup
 from _pytest.config.argparsing import Parser
 from _pytest.debugging import pytestPDB as __pytestPDB
@@ -128,7 +126,6 @@ __all__ = [
     "Module",
     "MonkeyPatch",
     "OptionGroup",
-    "OutputVerbosity",
     "Package",
     "param",
     "Parser",
@@ -164,7 +161,6 @@ __all__ = [
     "TestReport",
     "TestShortLogReport",
     "UsageError",
-    "VerbosityType",
     "WarningsRecorder",
     "warns",
     "xfail",

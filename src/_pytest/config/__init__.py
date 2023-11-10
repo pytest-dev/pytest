@@ -13,7 +13,6 @@ import shlex
 import sys
 import types
 import warnings
-from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
@@ -23,6 +22,7 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import Final
 from typing import final
 from typing import Generator
 from typing import IO
@@ -1022,12 +1022,6 @@ class Config:
         self.args_source = Config.ArgsSource.ARGS
         self.args: List[str] = []
 
-        self.output_verbosity = OutputVerbosity(self)
-        """Access to output verbosity configuration.
-
-        :type: OutputVerbosity
-        """
-
         if TYPE_CHECKING:
             from _pytest.cacheprovider import Cache
 
@@ -1640,6 +1634,66 @@ class Config:
         """Deprecated, use getoption(skip=True) instead."""
         return self.getoption(name, skip=True)
 
+    #: Verbosity for failed assertions (see :confval:`verbosity_assertions`).
+    VERBOSITY_ASSERTIONS: Final = "assertions"
+    _KNOWN_VERBOSITY_TYPES: Final = {VERBOSITY_ASSERTIONS}
+    _VERBOSITY_INI_DEFAULT = "auto"
+
+    def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+        r"""Access to fine-grained verbosity levels.
+
+        .. code-block:: ini
+
+            # content of pytest.ini
+            [pytest]
+            verbosity_assertions = 2
+
+        .. code-block:: console
+
+            pytest -v
+
+        .. code-block:: python
+
+            print(config.get_verbosity())  # 1
+            print(config.get_verbosity(Config.VERBOSITY_ASSERTIONS))  # 2
+        """
+        global_level = self.option.verbose
+        assert isinstance(global_level, int)
+        if (
+            verbosity_type is None
+            or verbosity_type not in Config._KNOWN_VERBOSITY_TYPES
+        ):
+            return global_level
+
+        level = self.getini(Config._ini_name(verbosity_type))
+
+        if level == Config._VERBOSITY_INI_DEFAULT:
+            return global_level
+
+        return int(level)
+
+    @staticmethod
+    def _ini_name(verbosity_type: str) -> str:
+        return f"verbosity_{verbosity_type}"
+
+    @staticmethod
+    def _add_ini(parser: "Parser", verbosity_type: str, help: str) -> None:
+        """Add a output verbosity configuration option for the given output type.
+
+        :param parser: Parser for command line arguments and ini-file values.
+        :param verbosity_type: Fine-grained verbosity category.
+        :param help: Description of the output this type controls.
+
+        The value should be retrieved via a call to
+        :py:func:`config.get_verbosity(type) <pytest.Config.get_verbosity>`.
+        """
+        parser.addini(
+            Config._ini_name(verbosity_type),
+            help=help,
+            type="string",
+            default=Config._VERBOSITY_INI_DEFAULT,
+        )
+
     def _warn_about_missing_assertion(self, mode: str) -> None:
         if not _assertion_supported():
             if mode == "plain":
@@ -1667,80 +1721,6 @@ class Config:
                 PytestConfigWarning(f"skipped plugin {module_name!r}: {msg}"),
                 stacklevel=2,
             )
-
-
-class VerbosityType(Enum):
-    """Fine-grained verbosity categories."""
-
-    #: Application wide, controlled by ``-v``/``-q``.
-    Global = "global"
-
-    #: Verbosity for failed assertions (see :confval:`verbosity_assertions`).
-    Assertions = "assertions"
-
-
-class OutputVerbosity:
-    r"""Access to fine-grained verbosity levels.
-
-    Access via :attr:`config.output_verbosity <pytest.Config.output_verbosity>`.
-
-    .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        verbosity_assertions = 2
-
-    .. code-block:: console
-
-        pytest -v
-
-    .. code-block:: python
-
-        print(config.output_verbosity.get())  # 1
-        print(config.output_verbosity.get(VerbosityType.Assertions))  # 2
-    """
-
-    DEFAULT = "auto"
-
-    def __init__(self, config: Config) -> None:
-        self._config = config
-
-    def get(self, verbosity_type: VerbosityType = VerbosityType.Global) -> int:
-        """Return verbosity level for the given output type.
-
-        :param verbosity_type: Fine-grained verbosity category.
-
-        If the level is not configured, the value of ``config.option.verbose``.
-        """
-        level = self._config.getini(OutputVerbosity._ini_name(verbosity_type))
-
-        if level == OutputVerbosity.DEFAULT:
-            assert isinstance(self._config.option.verbose, int)
-            return self._config.option.verbose
-
-        return int(level)
-
-    @staticmethod
-    def _ini_name(verbosity_type: VerbosityType) -> str:
-        return f"verbosity_{verbosity_type.value}"
-
-    @staticmethod
-    def _add_ini(parser: "Parser", verbosity_type: VerbosityType, help: str) -> None:
-        """Add a output verbosity configuration option for the given output type.
-
-        :param parser: Parser for command line arguments and ini-file values.
-        :param verbosity_type: Fine-grained verbosity category.
-        :param help: Description of the output this type controls.
-
-        The value should be retrieved via a call to
-        :py:func:`config.output_verbosity.get(type) <pytest.OutputVerbosity.get>`.
-        """
-        parser.addini(
-            OutputVerbosity._ini_name(verbosity_type),
-            help=help,
-            type="string",
-            default=OutputVerbosity.DEFAULT,
-        )
 
 
 def _assertion_supported() -> bool:

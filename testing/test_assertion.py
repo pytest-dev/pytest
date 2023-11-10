@@ -13,7 +13,7 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
-from _pytest.config import VerbosityType
+from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
@@ -23,25 +23,19 @@ def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
         def _highlight(self, source, lexer):
             return source
 
-    class OutputVerbosity:
-        @property
-        def verbose(self) -> int:
-            return verbose
+    class Config:
+        def get_terminal_writer(self):
+            return TerminalWriter()
 
-        def get(self, verbosity_type: VerbosityType = VerbosityType.Global) -> int:
-            if verbosity_type == VerbosityType.Assertions:
+        def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+            if verbosity_type is None:
+                return verbose
+            if verbosity_type == _Config.VERBOSITY_ASSERTIONS:
                 if assertion_override is not None:
                     return assertion_override
                 return verbose
 
             raise KeyError(f"Not mocked out: {verbosity_type}")
-
-    class Config:
-        def __init__(self) -> None:
-            self.output_verbosity = OutputVerbosity()
-
-        def get_terminal_writer(self):
-            return TerminalWriter()
 
     return Config()
 
@@ -53,13 +47,13 @@ class TestMockConfig:
     def test_verbose_exposes_value(self):
         config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
 
-        assert config.output_verbosity.verbose == TestMockConfig.SOME_VERBOSITY_LEVEL
+        assert config.get_verbosity() == TestMockConfig.SOME_VERBOSITY_LEVEL
 
     def test_get_assertion_override_not_set_verbose_value(self):
         config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
 
         assert (
-            config.output_verbosity.get(VerbosityType.Assertions)
+            config.get_verbosity(_Config.VERBOSITY_ASSERTIONS)
             == TestMockConfig.SOME_VERBOSITY_LEVEL
         )
 
@@ -70,7 +64,7 @@ class TestMockConfig:
         )
 
         assert (
-            config.output_verbosity.get(VerbosityType.Assertions)
+            config.get_verbosity(_Config.VERBOSITY_ASSERTIONS)
             == TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL
         )
 
@@ -78,7 +72,7 @@ class TestMockConfig:
         config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
 
         with pytest.raises(KeyError):
-            config.output_verbosity.get(VerbosityType.Global)
+            config.get_verbosity("--- NOT A VERBOSITY LEVEL ---")
 
 
 class TestImportHookInstallation:
