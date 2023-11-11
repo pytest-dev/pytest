@@ -1877,3 +1877,54 @@ def test_comparisons_handle_colors(
     )
 
     result.stdout.fnmatch_lines(formatter(expected_lines), consecutive=False)
+
+
+def test_fine_grained_assertion_verbosity(pytester: Pytester):
+    long_text = "Lorem ipsum dolor sit amet " * 10
+    p = pytester.makepyfile(
+        f"""
+        def test_ok():
+            pass
+
+
+        def test_words_fail():
+            fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+            fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+            assert fruits1 == fruits2
+
+
+        def test_numbers_fail():
+            number_to_text1 = {{str(x): x for x in range(5)}}
+            number_to_text2 = {{str(x * 10): x * 10 for x in range(5)}}
+            assert number_to_text1 == number_to_text2
+
+
+        def test_long_text_fail():
+            long_text = "{long_text}"
+            assert "hello world" in long_text
+        """
+    )
+    pytester.makeini(
+        f"""
+        [pytest]
+        {_Config._ini_name(_Config.VERBOSITY_ASSERTIONS)} = 2
+        """
+    )
+    result = pytester.runpytest(str(p))
+
+    result.stdout.fnmatch_lines(
+        [
+            f"{p.name} .FFF                            [100%]",
+            "E         At index 2 diff: 'grapes' != 'orange'",
+            "E         Full diff:",
+            "E         - ['banana', 'apple', 'orange', 'melon', 'kiwi']",
+            "E         ?                      ^  ^^",
+            "E         + ['banana', 'apple', 'grapes', 'melon', 'kiwi']",
+            "E         ?                      ^  ^ +",
+            "E         Full diff:",
+            "E         - {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}",
+            "E         ?            -    -    -    -    -    -    -    -",
+            "E         + {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4}",
+            f"E       AssertionError: assert 'hello world' in '{long_text}'",
+        ]
+    )
