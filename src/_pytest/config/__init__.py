@@ -1495,6 +1495,27 @@ class Config:
     def getini(self, name: str):
         """Return configuration value from an :ref:`ini file <configfiles>`.
 
+        If a configuration value is not defined in an
+        :ref:`ini file <configfiles>`, then the ``default`` value provided while
+        registering the configuration through
+        :func:`parser.addini <pytest.Parser.addini>` will be returned.
+        Please note that you can even provide ``None`` as a valid
+        default value.
+
+        If ``default`` is not provided while registering using
+        :func:`parser.addini <pytest.Parser.addini>`, then a default value
+        based on the ``type`` parameter passed to
+        :func:`parser.addini <pytest.Parser.addini>` will be returned.
+        The default values based on ``type`` are:
+        ``paths``, ``pathlist``, ``args`` and ``linelist`` : empty list ``[]``
+        ``bool`` : ``False``
+        ``string`` : empty string ``""``
+
+        If neither the ``default`` nor the ``type`` parameter is passed
+        while registering the configuration through
+        :func:`parser.addini <pytest.Parser.addini>`, then the configuration
+        is treated as a string and a default empty string '' is returned.
+
         If the specified name hasn't been registered through a prior
         :func:`parser.addini <pytest.Parser.addini>` call (usually from a
         plugin), a ValueError is raised.
@@ -1521,11 +1542,7 @@ class Config:
             try:
                 value = self.inicfg[name]
             except KeyError:
-                if default is not None:
-                    return default
-                if type is None:
-                    return ""
-                return []
+                return default
         else:
             value = override_value
         # Coerce the values based on types.

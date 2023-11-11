@@ -5,6 +5,7 @@ import re
 import sys
 import textwrap
 from pathlib import Path
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Sequence
@@ -21,6 +22,7 @@ from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
+from _pytest.config.argparsing import get_ini_default_for_type
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
@@ -856,6 +858,68 @@ class TestConfigAPI:
         values = config.getini("xy")
         assert len(values) == 2
         assert values == ["456", "123"]
+
+    def test_addini_default_values(self, pytester: Pytester) -> None:
+        """Tests the default values for configuration based on
+        config type
+        """
+
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("linelist1", "", type="linelist")
+                parser.addini("paths1", "", type="paths")
+                parser.addini("pathlist1", "", type="pathlist")
+                parser.addini("args1", "", type="args")
+                parser.addini("bool1", "", type="bool")
+                parser.addini("string1", "", type="string")
+                parser.addini("none_1", "", type="linelist", default=None)
+                parser.addini("none_2", "", default=None)
+                parser.addini("no_type", "")
+        """
+        )
+
+        config = pytester.parseconfig()
+        # default for linelist, paths, pathlist and args is []
+        value = config.getini("linelist1")
+        assert value == []
+        value = config.getini("paths1")
+        assert value == []
+        value = config.getini("pathlist1")
+        assert value == []
+        value = config.getini("args1")
+        assert value == []
+        # default for bool is False
+        value = config.getini("bool1")
+        assert value is False
+        # default for string is ""
+        value = config.getini("string1")
+        assert value == ""
+        # should return None if None is explicity set as default value
+        # irrespective of the type argument
+        value = config.getini("none_1")
+        assert value is None
+        value = config.getini("none_2")
+        assert value is None
+        # in case no type is provided and no default set
+        # treat it as string and default value will be ""
+        value = config.getini("no_type")
+        assert value == ""
+
+    @pytest.mark.parametrize(
+        "type, expected",
+        [
+            pytest.param(None, "", id="None"),
+            pytest.param("string", "", id="string"),
+            pytest.param("paths", [], id="paths"),
+            pytest.param("pathlist", [], id="pathlist"),
+            pytest.param("args", [], id="args"),
+            pytest.param("linelist", [], id="linelist"),
+            pytest.param("bool", False, id="bool"),
+        ],
+    )
+    def test_get_ini_default_for_type(self, type: Any, expected: Any) -> None:
+        assert get_ini_default_for_type(type) == expected
 
     def test_confcutdir_check_isdir(self, pytester: Pytester) -> None:
         """Give an error if --confcutdir is not a valid directory (#2078)"""
