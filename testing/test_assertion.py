@@ -1905,12 +1905,12 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
         """
     )
     pytester.makeini(
-        f"""
+        """
         [pytest]
-        {_Config._verbosity_ini_name(_Config.VERBOSITY_ASSERTIONS)} = 2
+        verbosity_assertions = 2
         """
     )
-    result = pytester.runpytest(str(p))
+    result = pytester.runpytest(p)
 
     result.stdout.fnmatch_lines(
         [
