@@ -1826,13 +1826,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Set a verbosity level specifically for assertion related output, overriding the application wide level.
 
-
     .. code-block:: ini
 
         [pytest]
         verbosity_assertions = 2
 
-    Defaults to application wide verbosity level (via the ``-v`` command-line option).
+    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    "auto" can be used to explicitly use the global verbosity level.
 
 
 .. confval:: xfail_strict

@@ -1651,13 +1651,26 @@ class Config:
         """Deprecated, use getoption(skip=True) instead."""
         return self.getoption(name, skip=True)
 
-    #: Verbosity for failed assertions (see :confval:`verbosity_assertions`).
+    #: Verbosity type for failed assertions (see :confval:`verbosity_assertions`).
     VERBOSITY_ASSERTIONS: Final = "assertions"
     _KNOWN_VERBOSITY_TYPES: Final = {VERBOSITY_ASSERTIONS}
     _VERBOSITY_INI_DEFAULT = "auto"
 
     def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
-        r"""Access to fine-grained verbosity levels.
+        r"""Retrieve the verbosity level for a fine-grained verbosity type.
+
+        :param verbosity_type: Verbosity type to get level for. If a level is
+            configured for the given type, that value will be returned. If the
+            given type is not a known verbosity type, the global verbosity
+            level will be returned. If the given type is None (default), the
+            global verbosity level will be returned.
+
+        To configure a level for a fine-grained verbosity type, the
+        configuration file should have a setting for the configuration name
+        and a numeric value for the verbosity level. A special value of "auto"
+        can be used to explicitly use the global verbosity level.
+
+        Example:
 
         .. code-block:: ini
 
