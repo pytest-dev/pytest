@@ -2279,6 +2279,24 @@ class TestVerbosity:
             == config.option.verbose
         )
 
+    def test_level_matches_verbose_when_not_known_type(
+        self, pytester: Pytester, tmp_path: Path
+    ) -> None:
+        tmp_path.joinpath("pytest.ini").write_text(
+            textwrap.dedent(
+                """\
+                [pytest]
+                addopts = --verbose
+                """
+            ),
+            encoding="utf-8",
+        )
+        pytester.plugins = [TestVerbosity.VerbosityIni()]
+
+        config = pytester.parseconfig(tmp_path)
+
+        assert config.get_verbosity("some fake verbosity type") == config.option.verbose
+
     def test_level_matches_specified_override(
         self, pytester: Pytester, tmp_path: Path
     ) -> None:
