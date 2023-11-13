@@ -2254,7 +2254,7 @@ class TestVerbosity:
 
     class VerbosityIni:
         def pytest_addoption(self, parser: Parser) -> None:
-            Config._add_ini(
+            Config._add_verbosity_ini(
                 parser, TestVerbosity.SOME_OUTPUT_TYPE, help="some help text"
             )
 

@@ -42,7 +42,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="Enables the pytest_assertion_pass hook. "
         "Make sure to delete any previously generated pyc cache files.",
     )
-    Config._add_ini(
+    Config._add_verbosity_ini(
         parser,
         Config.VERBOSITY_ASSERTIONS,
         help=(

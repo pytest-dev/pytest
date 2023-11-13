@@ -1682,7 +1682,7 @@ class Config:
         ):
             return global_level
 
-        level = self.getini(Config._ini_name(verbosity_type))
+        level = self.getini(Config._verbosity_ini_name(verbosity_type))
 
         if level == Config._VERBOSITY_INI_DEFAULT:
             return global_level
@@ -1690,11 +1690,11 @@ class Config:
         return int(level)
 
     @staticmethod
-    def _ini_name(verbosity_type: str) -> str:
+    def _verbosity_ini_name(verbosity_type: str) -> str:
         return f"verbosity_{verbosity_type}"
 
     @staticmethod
-    def _add_ini(parser: "Parser", verbosity_type: str, help: str) -> None:
+    def _add_verbosity_ini(parser: "Parser", verbosity_type: str, help: str) -> None:
         """Add a output verbosity configuration option for the given output type.
 
         :param parser: Parser for command line arguments and ini-file values.
@@ -1705,7 +1705,7 @@ class Config:
         :py:func:`config.get_verbosity(type) <pytest.Config.get_verbosity>`.
         """
         parser.addini(
-            Config._ini_name(verbosity_type),
+            Config._verbosity_ini_name(verbosity_type),
             help=help,
             type="string",
             default=Config._VERBOSITY_INI_DEFAULT,
