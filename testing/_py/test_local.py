@@ -868,6 +868,9 @@ class TestLocalPath(CommonFSTests):
             py_path.strpath, str_path
         )
 
+    @pytest.mark.xfail(
+        reason="#11603", raises=(error.EEXIST, error.ENOENT), strict=False
+    )
     def test_make_numbered_dir_multiprocess_safe(self, tmpdir):
         # https://github.com/pytest-dev/py/issues/30
         with multiprocessing.Pool() as pool:
