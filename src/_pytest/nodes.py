@@ -138,8 +138,13 @@ class Node(abc.ABC, metaclass=NodeMeta):
     #: for methods not migrated to ``pathlib.Path`` yet, such as
     #: :meth:`Item.reportinfo <pytest.Item.reportinfo>`. Will be deprecated in
     #: a future release, prefer using :attr:`path` instead.
+    name: str
+    parent: Node | None
+    config: Config
+    session: Session
     fspath: LEGACY_PATH
 
+    _nodeid: str
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
@@ -156,7 +161,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def __init__(
         self,
         name: str,
-        parent: Node | None = None,
+        parent: Node | None,
         config: Config | None = None,
         session: Session | None = None,
         fspath: LEGACY_PATH | None = None,
@@ -200,19 +205,24 @@ class Node(abc.ABC, metaclass=NodeMeta):
         #: Allow adding of extra keywords to use for matching.
         self.extra_keyword_matches: set[str] = set()
 
-        if nodeid is not None:
-            assert "::()" not in nodeid
-            self._nodeid = nodeid
-        else:
-            if not self.parent:
-                raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid + "::" + self.name
+        self._nodeid = self._make_nodeid(
+            name=self.name, parent=self.parent, given=nodeid
+        )
 
         #: A place where plugins can store information on the node for their
         #: own use.
         self.stash: Stash = Stash()
         # Deprecated alias. Was never public. Can be removed in a few releases.
         self._store = self.stash
+
+    @classmethod
+    def _make_nodeid(cls, name: str, parent: Node | None, given: str | None) -> str:
+        if given is not None:
+            assert "::()" not in given
+            return given
+        else:
+            assert parent is not None
+            return f"{parent.nodeid}::{name}"
 
     @classmethod
     def from_parent(cls, parent: Node, **kw) -> Self:
@@ -598,7 +608,6 @@ class FSCollector(Collector, abc.ABC):
 
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
-
         super().__init__(
             name=name,
             parent=parent,
