@@ -238,7 +238,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         return self.session.gethookproxy(self.path)
 
     def __repr__(self) -> str:
-        return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
+        return f'<{self.__class__.__name__} { getattr(self, "name", None)}>'
 
     def warn(self, warning: Warning) -> None:
         """Issue a warning for this Node.
