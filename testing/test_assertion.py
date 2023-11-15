@@ -1945,7 +1945,7 @@ def test_reprcompare_verbose_long() -> None:
                 }
             """,
             [
-                "{bold}{red}E         {light-gray} {hl-reset} {{{endline}{reset}",
+                "{bold}{red}E         {reset}{light-gray} {hl-reset} {{{endline}{reset}",
                 "{bold}{red}E         {light-gray} {hl-reset}     'number-is-1': 1,{endline}{reset}",
                 "{bold}{red}E         {light-green}+     'number-is-5': 5,{hl-reset}{endline}{reset}",
             ],

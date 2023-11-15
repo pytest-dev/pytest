@@ -223,7 +223,7 @@ class TerminalWriter:
                         style=os.getenv("PYTEST_THEME"),
                     ),
                 )
-                return highlighted
+                return "\x1b[0m" + highlighted
             except pygments.util.ClassNotFound:
                 raise UsageError(
                     "PYTEST_THEME environment variable had an invalid value: '{}'. "
