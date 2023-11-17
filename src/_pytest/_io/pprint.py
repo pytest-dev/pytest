@@ -2,9 +2,6 @@
 # (https://github.com/python/cpython/) at commit
 # c5140945c723ae6c4b7ee81ff720ac8ea4b52cfd (python3.12).
 #
-# flake8: noqa
-# type: ignore
-#
 #
 #  Original Author:      Fred L. Drake, Jr.
 #                        fdrake@acm.org
@@ -21,6 +18,11 @@ import re
 import sys as _sys
 import types as _types
 from io import StringIO as _StringIO
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import IO
+from typing import List
 
 
 class _safe_key:
@@ -49,7 +51,7 @@ class _safe_key:
 
 
 def _safe_tuple(t):
-    "Helper function for comparing 2-tuples"
+    """Helper function for comparing 2-tuples"""
     return _safe_key(t[0]), _safe_key(t[1])
 
 
@@ -107,7 +109,7 @@ class PrettyPrinter:
         self._sort_dicts = sort_dicts
         self._underscore_numbers = underscore_numbers
 
-    def pformat(self, object):
+    def pformat(self, object: Any) -> str:
         sio = _StringIO()
         self._format(object, sio, 0, 0, {}, 0)
         return sio.getvalue()
@@ -157,7 +159,10 @@ class PrettyPrinter:
         self._format_namespace_items(items, stream, indent, allowance, context, level)
         stream.write(")")
 
-    _dispatch = {}
+    _dispatch: Dict[
+        Callable[..., str],
+        Callable[["PrettyPrinter", Any, IO[str], int, int, Dict[int, int], int], str],
+    ] = {}
 
     def _pprint_dict(self, object, stream, indent, allowance, context, level):
         write = stream.write
@@ -544,7 +549,7 @@ class PrettyPrinter:
             context[objid] = 1
             readable = True
             recursive = False
-            components = []
+            components: List[str] = []
             append = components.append
             level += 1
             if self._sort_dicts:

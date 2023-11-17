@@ -5,7 +5,7 @@ from typing import Dict
 from typing import IO
 from typing import Optional
 
-from .pprint import PrettyPrinter  # type: ignore
+from .pprint import PrettyPrinter
 
 
 def _try_repr_or_str(obj: object) -> str:
@@ -148,13 +148,11 @@ class AlwaysDispatchingPrettyPrinter(PrettyPrinter):
         context: Dict[int, Any],
         level: int,
     ) -> None:
-        # Type ignored because _dispatch is private.
-        p = self._dispatch.get(type(object).__repr__, None)  # type: ignore[attr-defined]
+        p = self._dispatch.get(type(object).__repr__, None)
 
         objid = id(object)
         if objid in context or p is None:
-            # Type ignored because _format is private.
-            super()._format(  # type: ignore[misc]
+            super()._format(
                 object,
                 stream,
                 indent,
@@ -177,6 +175,6 @@ def _pformat_dispatch(
     *,
     compact: bool = False,
 ) -> str:
-    return AlwaysDispatchingPrettyPrinter(  # type: ignore
+    return AlwaysDispatchingPrettyPrinter(
         indent=indent, width=width, depth=depth, compact=compact
     ).pformat(object)
