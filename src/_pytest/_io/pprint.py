@@ -5,7 +5,8 @@
 # fmt: off
 # flake8: noqa
 # type: ignore
-
+#
+#
 #  Original Author:      Fred L. Drake, Jr.
 #                        fdrake@acm.org
 #
@@ -408,7 +409,7 @@ class PrettyPrinter:
         rdf = self._repr(object.default_factory, context, level)
         cls = object.__class__
         indent += len(cls.__name__) + 1
-        stream.write('%s(%s,\n%s' % (cls.__name__, rdf, ' ' * indent))
+        stream.write(f"{cls.__name__}({rdf},\n{' ' * indent}")
         self._pprint_dict(object, stream, indent, allowance + 1, context, level)
         stream.write(')')
 
@@ -463,7 +464,7 @@ class PrettyPrinter:
             self._format_items(object, stream, indent, 2,
                                context, level)
             rml = self._repr(object.maxlen, context, level)
-            stream.write('],\n%smaxlen=%s)' % (' ' * indent, rml))
+            stream.write(f"],\n{' ' * indent}maxlen={rml})")
 
     _dispatch[_collections.deque.__repr__] = _pprint_deque
 
@@ -519,7 +520,7 @@ class PrettyPrinter:
                     k, context, maxlevels, level)
                 vrepr, vreadable, vrecur = self.format(
                     v, context, maxlevels, level)
-                append("%s: %s" % (krepr, vrepr))
+                append(f"{krepr}: {vrepr}")
                 readable = readable and kreadable and vreadable
                 if krecur or vrecur:
                     recursive = True
