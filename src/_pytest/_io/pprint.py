@@ -6,9 +6,8 @@
 # flake8: noqa
 # type: ignore
 
-#
-#  Author:      Fred L. Drake, Jr.
-#               fdrake@acm.org
+#  Original Author:      Fred L. Drake, Jr.
+#                        fdrake@acm.org
 #
 #  This is a simple little module I wrote to make life easier.  I didn't
 #  see anything quite like it in the library, though I may have overlooked
@@ -16,33 +15,6 @@
 #  tuples with fairly non-descriptive content.  This is modeled very much
 #  after Lisp/Scheme - style pretty-printing of lists.  If you find it
 #  useful, thank small children who sleep at night.
-
-"""Support to pretty-print lists, tuples, & dictionaries recursively.
-
-Very simple, but useful, especially in debugging data structures.
-
-Classes
--------
-
-PrettyPrinter()
-    Handle pretty-printing operations onto a stream using a configured
-    set of formatting parameters.htop
-
-Functions
----------
-
-pformat()
-    Format a Python object into a pretty-printed representation.
-
-pprint()
-    Pretty-print a Python object to a stream [default is sys.stdout].
-
-saferepr()
-    Generate a 'standard' repr()-like value, but protect against recursive
-    data structures.
-
-"""
-
 import collections as _collections
 import dataclasses as _dataclasses
 import re
@@ -50,41 +22,6 @@ import sys as _sys
 import types as _types
 from io import StringIO as _StringIO
 
-__all__ = ["pprint","pformat","isreadable","isrecursive","saferepr",
-           "PrettyPrinter", "pp"]
-
-
-def pprint(object, stream=None, indent=1, width=80, depth=None, *,
-           compact=False, sort_dicts=True, underscore_numbers=False):
-    """Pretty-print a Python object to a stream [default is sys.stdout]."""
-    printer = PrettyPrinter(
-        stream=stream, indent=indent, width=width, depth=depth,
-        compact=compact, sort_dicts=sort_dicts,
-        underscore_numbers=underscore_numbers)
-    printer.pprint(object)
-
-def pformat(object, indent=1, width=80, depth=None, *,
-            compact=False, sort_dicts=True, underscore_numbers=False):
-    """Format a Python object into a pretty-printed representation."""
-    return PrettyPrinter(indent=indent, width=width, depth=depth,
-                         compact=compact, sort_dicts=sort_dicts,
-                         underscore_numbers=underscore_numbers).pformat(object)
-
-def pp(object, *args, sort_dicts=False, **kwargs):
-    """Pretty-print a Python object"""
-    pprint(object, *args, sort_dicts=sort_dicts, **kwargs)
-
-def saferepr(object):
-    """Version of repr() which can handle recursive data structures."""
-    return PrettyPrinter()._safe_repr(object, {}, None, 0)[0]
-
-def isreadable(object):
-    """Determine if saferepr(object) is readable by eval()."""
-    return PrettyPrinter()._safe_repr(object, {}, None, 0)[1]
-
-def isrecursive(object):
-    """Determine if object requires a recursive representation."""
-    return PrettyPrinter()._safe_repr(object, {}, None, 0)[2]
 
 class _safe_key:
     """Helper function for key functions when sorting unorderable objects.
@@ -157,22 +94,10 @@ class PrettyPrinter:
         self._sort_dicts = sort_dicts
         self._underscore_numbers = underscore_numbers
 
-    def pprint(self, object):
-        if self._stream is not None:
-            self._format(object, self._stream, 0, 0, {}, 0)
-            self._stream.write("\n")
-
     def pformat(self, object):
         sio = _StringIO()
         self._format(object, sio, 0, 0, {}, 0)
         return sio.getvalue()
-
-    def isrecursive(self, object):
-        return self.format(object, {}, 0, 0)[2]
-
-    def isreadable(self, object):
-        s, readable, recursive = self.format(object, {}, 0, 0)
-        return readable and not recursive
 
     def _format(self, object, stream, indent, allowance, context, level):
         objid = id(object)
