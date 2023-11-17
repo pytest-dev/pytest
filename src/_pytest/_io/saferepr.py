@@ -5,6 +5,8 @@ from typing import Dict
 from typing import IO
 from typing import Optional
 
+from .pprint import PrettyPrinter  # type: ignore
+
 
 def _try_repr_or_str(obj: object) -> str:
     try:
@@ -134,7 +136,7 @@ def saferepr_unlimited(obj: object, use_ascii: bool = True) -> str:
         return _format_repr_exception(exc, obj)
 
 
-class AlwaysDispatchingPrettyPrinter(pprint.PrettyPrinter):
+class AlwaysDispatchingPrettyPrinter(PrettyPrinter):
     """PrettyPrinter that always dispatches (regardless of width)."""
 
     def _format(
@@ -175,6 +177,6 @@ def _pformat_dispatch(
     *,
     compact: bool = False,
 ) -> str:
-    return AlwaysDispatchingPrettyPrinter(
+    return AlwaysDispatchingPrettyPrinter(  # type: ignore
         indent=indent, width=width, depth=depth, compact=compact
     ).pformat(object)
