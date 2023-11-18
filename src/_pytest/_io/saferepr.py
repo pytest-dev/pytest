@@ -1,11 +1,6 @@
 import pprint
 import reprlib
-from typing import Any
-from typing import Dict
-from typing import IO
 from typing import Optional
-
-from .pprint import PrettyPrinter
 
 
 def _try_repr_or_str(obj: object) -> str:
@@ -134,47 +129,3 @@ def saferepr_unlimited(obj: object, use_ascii: bool = True) -> str:
         return repr(obj)
     except Exception as exc:
         return _format_repr_exception(exc, obj)
-
-
-class AlwaysDispatchingPrettyPrinter(PrettyPrinter):
-    """PrettyPrinter that always dispatches (regardless of width)."""
-
-    def _format(
-        self,
-        object: object,
-        stream: IO[str],
-        indent: int,
-        allowance: int,
-        context: Dict[int, Any],
-        level: int,
-    ) -> None:
-        p = self._dispatch.get(type(object).__repr__, None)
-
-        objid = id(object)
-        if objid in context or p is None:
-            super()._format(
-                object,
-                stream,
-                indent,
-                allowance,
-                context,
-                level,
-            )
-            return
-
-        context[objid] = 1
-        p(self, object, stream, indent, allowance, context, level + 1)
-        del context[objid]
-
-
-def _pformat_dispatch(
-    object: object,
-    indent: int = 1,
-    width: int = 80,
-    depth: Optional[int] = None,
-    *,
-    compact: bool = False,
-) -> str:
-    return AlwaysDispatchingPrettyPrinter(
-        indent=indent, width=width, depth=depth, compact=compact
-    ).pformat(object)
