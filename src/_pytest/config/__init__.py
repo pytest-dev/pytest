@@ -1654,7 +1654,7 @@ class Config:
     #: Verbosity type for failed assertions (see :confval:`verbosity_assertions`).
     VERBOSITY_ASSERTIONS: Final = "assertions"
     _KNOWN_VERBOSITY_TYPES: Final = {VERBOSITY_ASSERTIONS}
-    _VERBOSITY_INI_DEFAULT = "auto"
+    _VERBOSITY_INI_DEFAULT: Final = "auto"
 
     def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
         r"""Retrieve the verbosity level for a fine-grained verbosity type.
