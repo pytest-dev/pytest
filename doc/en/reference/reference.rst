@@ -999,6 +999,7 @@ Stash
     :show-inheritance:
     :members:
 
+
 Global Variables
 ----------------
 
