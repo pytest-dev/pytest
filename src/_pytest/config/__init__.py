@@ -1653,7 +1653,6 @@ class Config:
 
     #: Verbosity type for failed assertions (see :confval:`verbosity_assertions`).
     VERBOSITY_ASSERTIONS: Final = "assertions"
-    _KNOWN_VERBOSITY_TYPES: Final = {VERBOSITY_ASSERTIONS}
     _VERBOSITY_INI_DEFAULT: Final = "auto"
 
     def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
@@ -1689,14 +1688,14 @@ class Config:
         """
         global_level = self.option.verbose
         assert isinstance(global_level, int)
-        if (
-            verbosity_type is None
-            or verbosity_type not in Config._KNOWN_VERBOSITY_TYPES
-        ):
+        if verbosity_type is None:
             return global_level
 
-        level = self.getini(Config._verbosity_ini_name(verbosity_type))
+        ini_name = Config._verbosity_ini_name(verbosity_type)
+        if ini_name not in self._parser._inidict:
+            return global_level
 
+        level = self.getini(ini_name)
         if level == Config._VERBOSITY_INI_DEFAULT:
             return global_level
 
