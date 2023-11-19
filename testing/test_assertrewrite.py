@@ -2056,12 +2056,14 @@ class TestReprSizeVerbosity:
     )
     def test_get_maxsize_for_saferepr(self, verbose: int, expected_size) -> None:
         class FakeConfig:
-            def getoption(self, name: str) -> int:
-                assert name == "verbose"
+            def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
                 return verbose
 
         config = FakeConfig()
         assert _get_maxsize_for_saferepr(cast(Config, config)) == expected_size
+
+    def test_get_maxsize_for_saferepr_no_config(self) -> None:
+        assert _get_maxsize_for_saferepr(None) == DEFAULT_REPR_MAX_SIZE
 
     def create_test_file(self, pytester: Pytester, size: int) -> None:
         pytester.makepyfile(

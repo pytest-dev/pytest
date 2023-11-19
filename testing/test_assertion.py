@@ -13,25 +13,66 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
 
-def mock_config(verbose=0):
+def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
     class TerminalWriter:
         def _highlight(self, source, lexer):
             return source
 
     class Config:
-        def getoption(self, name):
-            if name == "verbose":
-                return verbose
-            raise KeyError("Not mocked out: %s" % name)
-
         def get_terminal_writer(self):
             return TerminalWriter()
 
+        def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+            if verbosity_type is None:
+                return verbose
+            if verbosity_type == _Config.VERBOSITY_ASSERTIONS:
+                if assertion_override is not None:
+                    return assertion_override
+                return verbose
+
+            raise KeyError(f"Not mocked out: {verbosity_type}")
+
     return Config()
+
+
+class TestMockConfig:
+    SOME_VERBOSITY_LEVEL = 3
+    SOME_OTHER_VERBOSITY_LEVEL = 10
+
+    def test_verbose_exposes_value(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        assert config.get_verbosity() == TestMockConfig.SOME_VERBOSITY_LEVEL
+
+    def test_get_assertion_override_not_set_verbose_value(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        assert (
+            config.get_verbosity(_Config.VERBOSITY_ASSERTIONS)
+            == TestMockConfig.SOME_VERBOSITY_LEVEL
+        )
+
+    def test_get_assertion_override_set_custom_value(self):
+        config = mock_config(
+            verbose=TestMockConfig.SOME_VERBOSITY_LEVEL,
+            assertion_override=TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL,
+        )
+
+        assert (
+            config.get_verbosity(_Config.VERBOSITY_ASSERTIONS)
+            == TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL
+        )
+
+    def test_get_unsupported_type_error(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        with pytest.raises(KeyError):
+            config.get_verbosity("--- NOT A VERBOSITY LEVEL ---")
 
 
 class TestImportHookInstallation:
@@ -1836,3 +1877,54 @@ def test_comparisons_handle_colors(
     )
 
     result.stdout.fnmatch_lines(formatter(expected_lines), consecutive=False)
+
+
+def test_fine_grained_assertion_verbosity(pytester: Pytester):
+    long_text = "Lorem ipsum dolor sit amet " * 10
+    p = pytester.makepyfile(
+        f"""
+        def test_ok():
+            pass
+
+
+        def test_words_fail():
+            fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+            fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+            assert fruits1 == fruits2
+
+
+        def test_numbers_fail():
+            number_to_text1 = {{str(x): x for x in range(5)}}
+            number_to_text2 = {{str(x * 10): x * 10 for x in range(5)}}
+            assert number_to_text1 == number_to_text2
+
+
+        def test_long_text_fail():
+            long_text = "{long_text}"
+            assert "hello world" in long_text
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        verbosity_assertions = 2
+        """
+    )
+    result = pytester.runpytest(p)
+
+    result.stdout.fnmatch_lines(
+        [
+            f"{p.name} .FFF                            [100%]",
+            "E         At index 2 diff: 'grapes' != 'orange'",
+            "E         Full diff:",
+            "E         - ['banana', 'apple', 'orange', 'melon', 'kiwi']",
+            "E         ?                      ^  ^^",
+            "E         + ['banana', 'apple', 'grapes', 'melon', 'kiwi']",
+            "E         ?                      ^  ^ +",
+            "E         Full diff:",
+            "E         - {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}",
+            "E         ?            -    -    -    -    -    -    -    -",
+            "E         + {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4}",
+            f"E       AssertionError: assert 'hello world' in '{long_text}'",
+        ]
+    )

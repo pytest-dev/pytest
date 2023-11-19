@@ -426,7 +426,10 @@ def _saferepr(obj: object) -> str:
 
 def _get_maxsize_for_saferepr(config: Optional[Config]) -> Optional[int]:
     """Get `maxsize` configuration for saferepr based on the given config object."""
-    verbosity = config.getoption("verbose") if config is not None else 0
+    if config is None:
+        verbosity = 0
+    else:
+        verbosity = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
     if verbosity >= 2:
         return None
     if verbosity >= 1:
