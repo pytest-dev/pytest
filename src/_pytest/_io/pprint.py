@@ -15,7 +15,6 @@
 import collections as _collections
 import dataclasses as _dataclasses
 import re
-import sys as _sys
 import types as _types
 from io import StringIO as _StringIO
 from typing import Any
@@ -61,9 +60,7 @@ class PrettyPrinter:
         indent=4,
         width=80,
         depth=None,
-        stream=None,
         *,
-        compact=False,
         sort_dicts=True,
         underscore_numbers=False,
     ):
@@ -78,13 +75,6 @@ class PrettyPrinter:
 
         depth
             The maximum depth to print out nested structures.
-
-        stream
-            The desired output stream.  If omitted (or false), the standard
-            output stream available at construction will be used.
-
-        compact
-            If true, several items will be combined in one line.
 
         sort_dicts
             If true, dict keys are sorted.
@@ -101,11 +91,6 @@ class PrettyPrinter:
         self._depth = depth
         self._indent_per_level = indent
         self._width = width
-        if stream is not None:
-            self._stream = stream
-        else:
-            self._stream = _sys.stdout
-        self._compact = bool(compact)
         self._sort_dicts = sort_dicts
         self._underscore_numbers = underscore_numbers
 
