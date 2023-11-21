@@ -114,7 +114,6 @@ class PrettyPrinter:
         objid = id(object)
         if objid in context:
             stream.write(_recursion(object))
-            self._recursive = True
             self._readable = False
             return
 
@@ -487,21 +486,16 @@ class PrettyPrinter:
         write("\n" + " " * indent)
 
     def _repr(self, object: Any, context: Dict[int, int], level: int) -> str:
-        repr, readable, recursive = self.format(
-            object, context.copy(), self._depth, level
-        )
+        repr, readable = self.format(object, context.copy(), self._depth, level)
         if not readable:
             self._readable = False
-        if recursive:
-            self._recursive = True
         return repr
 
     def format(
         self, object: Any, context: Dict[int, int], maxlevels: Optional[int], level: int
-    ) -> Tuple[str, bool, bool]:
+    ) -> Tuple[str, bool]:
         """Format object for a specific context, returning a string
-        and flags indicating whether the representation is 'readable'
-        and whether the object represents a recursive construct.
+        and a flag indicating whether the representation is 'readable'.
         """
         return self._safe_repr(object, context, maxlevels, level)
 
@@ -621,31 +615,30 @@ class PrettyPrinter:
 
     def _safe_repr(
         self, object: Any, context: Dict[int, int], maxlevels: Optional[int], level: int
-    ) -> Tuple[str, bool, bool]:
-        # Return triple (repr_string, isreadable, isrecursive).
+    ) -> Tuple[str, bool]:
+        # Return pair (repr_string, isreadable).
         typ = type(object)
         if typ in _builtin_scalars:
-            return repr(object), True, False
+            return repr(object), True
 
         r = getattr(typ, "__repr__", None)
 
         if issubclass(typ, int) and r is int.__repr__:
             if self._underscore_numbers:
-                return f"{object:_d}", True, False
+                return f"{object:_d}", True
             else:
-                return repr(object), True, False
+                return repr(object), True
 
         if issubclass(typ, dict) and r is dict.__repr__:
             if not object:
-                return "{}", True, False
+                return "{}", True
             objid = id(object)
             if maxlevels and level >= maxlevels:
-                return "{...}", False, objid in context
+                return "{...}", False
             if objid in context:
-                return _recursion(object), False, True
+                return _recursion(object), False
             context[objid] = 1
             readable = True
-            recursive = False
             components: List[str] = []
             append = components.append
             level += 1
@@ -654,51 +647,46 @@ class PrettyPrinter:
             else:
                 items = object.items()
             for k, v in items:
-                krepr, kreadable, krecur = self.format(k, context, maxlevels, level)
-                vrepr, vreadable, vrecur = self.format(v, context, maxlevels, level)
+                krepr, kreadable = self.format(k, context, maxlevels, level)
+                vrepr, vreadable = self.format(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
                 readable = readable and kreadable and vreadable
-                if krecur or vrecur:
-                    recursive = True
             del context[objid]
-            return "{%s}" % ", ".join(components), readable, recursive
+            return "{%s}" % ", ".join(components), readable
 
         if (issubclass(typ, list) and r is list.__repr__) or (
             issubclass(typ, tuple) and r is tuple.__repr__
         ):
             if issubclass(typ, list):
                 if not object:
-                    return "[]", True, False
+                    return "[]", True
                 format = "[%s]"
             elif len(object) == 1:
                 format = "(%s,)"
             else:
                 if not object:
-                    return "()", True, False
+                    return "()", True
                 format = "(%s)"
             objid = id(object)
             if maxlevels and level >= maxlevels:
-                return format % "...", False, objid in context
+                return format % "...", False
             if objid in context:
-                return _recursion(object), False, True
+                return _recursion(object), False
             context[objid] = 1
             readable = True
-            recursive = False
             components = []
             append = components.append
             level += 1
             for o in object:
-                orepr, oreadable, orecur = self.format(o, context, maxlevels, level)
+                orepr, oreadable = self.format(o, context, maxlevels, level)
                 append(orepr)
                 if not oreadable:
                     readable = False
-                if orecur:
-                    recursive = True
             del context[objid]
-            return format % ", ".join(components), readable, recursive
+            return format % ", ".join(components), readable
 
         rep = repr(object)
-        return rep, bool(rep and not rep.startswith("<")), False
+        return rep, bool(rep and not rep.startswith("<"))
 
 
 _builtin_scalars = frozenset({str, bytes, bytearray, float, complex, bool, type(None)})
