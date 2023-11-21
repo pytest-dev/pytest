@@ -239,12 +239,11 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=None, *, reason=None, raises=None, run=True, strict=xfail_strict)
+.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=xfail_strict)
 
-    :type condition: bool or str
-    :param condition:
+    :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
-        :ref:`condition string <string conditions>`). If a bool, you also have
+        :ref:`condition string <string conditions>`). If a ``bool``, you also have
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
     :keyword str reason:
         Reason why the test function is marked as xfail.
@@ -1821,6 +1820,19 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         usefixtures =
             clean_db
+
+
+.. confval:: verbosity_assertions
+
+    Set a verbosity level specifically for assertion related output, overriding the application wide level.
+
+    .. code-block:: ini
+
+        [pytest]
+        verbosity_assertions = 2
+
+    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    "auto" can be used to explicitly use the global verbosity level.
 
 
 .. confval:: xfail_strict

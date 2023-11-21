@@ -35,7 +35,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v1.5.3
+      uses: hynek/build-and-inspect-python-package@v1.5.4
 
   build:
     needs: [package]

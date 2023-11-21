@@ -16,7 +16,7 @@ from unicodedata import normalize
 
 import _pytest._code
 from _pytest import outcomes
-from _pytest._io.saferepr import _pformat_dispatch
+from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
@@ -168,7 +168,7 @@ def assertrepr_compare(
     config, op: str, left: Any, right: Any, use_ascii: bool = False
 ) -> Optional[List[str]]:
     """Return specialised explanations for some operators/operands."""
-    verbose = config.getoption("verbose")
+    verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
 
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.
@@ -348,8 +348,9 @@ def _compare_eq_iterable(
     lines_left = len(left_formatting)
     lines_right = len(right_formatting)
     if lines_left != lines_right:
-        left_formatting = _pformat_dispatch(left).splitlines()
-        right_formatting = _pformat_dispatch(right).splitlines()
+        printer = PrettyPrinter()
+        left_formatting = printer.pformat(left).splitlines()
+        right_formatting = printer.pformat(right).splitlines()
 
     if lines_left > 1 or lines_right > 1:
         _surrounding_parens_on_own_lines(left_formatting)
