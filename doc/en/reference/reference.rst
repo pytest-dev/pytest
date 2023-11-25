@@ -1835,6 +1835,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     "auto" can be used to explicitly use the global verbosity level.
 
 
+.. confval:: verbosity_test_case
+
+    Set a verbosity level specifically for test case execution related output, overriding the application wide level.
+
+    .. code-block:: ini
+
+        [pytest]
+        verbosity_test_case = 2
+
+    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    "auto" can be used to explicitly use the global verbosity level.
+
+
 .. confval:: xfail_strict
 
     If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the

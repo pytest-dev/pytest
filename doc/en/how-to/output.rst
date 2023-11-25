@@ -298,7 +298,9 @@ This is done by setting a verbosity level in the configuration file for the spec
 ``pytest --no-header`` with a value of ``2`` would have the same output as the previous example, but each test inside
 the file is shown by a single character in the output.
 
-(Note: currently this is the only option available, but more might be added in the future).
+:confval:`verbosity_test_case`: Controls how verbose the test execution output should be when pytest is executed.
+Running ``pytest --no-header`` with a value of ``2`` would have the same output as the first verbosity example, but each
+test inside the file gets its own line in the output.
 
 .. _`pytest.detailed_failed_tests_usage`:
 
