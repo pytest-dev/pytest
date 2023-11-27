@@ -178,7 +178,7 @@ class PrettyPrinter:
             return
         cls = object.__class__
         stream.write(cls.__name__ + "(")
-        self._format(list(object.items()), stream, indent, allowance, context, level)
+        self._pprint_dict(object, stream, indent, allowance, context, level)
         stream.write(")")
 
     _dispatch[_collections.OrderedDict.__repr__] = _pprint_ordered_dict
