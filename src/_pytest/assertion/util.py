@@ -318,18 +318,6 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
     return explanation
 
 
-def _surrounding_parens_on_own_lines(lines: List[str]) -> None:
-    """Move opening/closing parenthesis/bracket to own lines."""
-    opening = lines[0][:1]
-    if opening in ["(", "[", "{"]:
-        lines[0] = " " + lines[0][1:]
-        lines[:] = [opening] + lines
-    closing = lines[-1][-1:]
-    if closing in [")", "]", "}"]:
-        lines[-1] = lines[-1][:-1] + ","
-        lines[:] = lines + [closing]
-
-
 def _compare_eq_iterable(
     left: Iterable[Any],
     right: Iterable[Any],
@@ -341,20 +329,8 @@ def _compare_eq_iterable(
     # dynamic import to speedup pytest
     import difflib
 
-    left_formatting = pprint.pformat(left).splitlines()
-    right_formatting = pprint.pformat(right).splitlines()
-
-    # Re-format for different output lengths.
-    lines_left = len(left_formatting)
-    lines_right = len(right_formatting)
-    if lines_left != lines_right:
-        printer = PrettyPrinter()
-        left_formatting = printer.pformat(left).splitlines()
-        right_formatting = printer.pformat(right).splitlines()
-
-    if lines_left > 1 or lines_right > 1:
-        _surrounding_parens_on_own_lines(left_formatting)
-        _surrounding_parens_on_own_lines(right_formatting)
+    left_formatting = PrettyPrinter().pformat(left).splitlines()
+    right_formatting = PrettyPrinter().pformat(right).splitlines()
 
     explanation = ["Full diff:"]
     # "right" is the expected base against which we compare "left",
