@@ -20,7 +20,7 @@ from _pytest.pytester import Pytester
 
 def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
     class TerminalWriter:
-        def _highlight(self, source, lexer):
+        def _highlight(self, source, lexer="python"):
             return source
 
     class Config:

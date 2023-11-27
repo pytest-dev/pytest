@@ -195,8 +195,9 @@ def assertrepr_compare(
 
     explanation = None
     try:
+        writer = config.get_terminal_writer()
+
         if op == "==":
-            writer = config.get_terminal_writer()
             explanation = _compare_eq_any(left, right, writer._highlight, verbose)
         elif op == "not in":
             if istext(left) and istext(right):
@@ -206,16 +207,16 @@ def assertrepr_compare(
                 explanation = ["Both sets are equal"]
         elif op == ">=":
             if isset(left) and isset(right):
-                explanation = _compare_gte_set(left, right, verbose)
+                explanation = _compare_gte_set(left, right, writer._highlight)
         elif op == "<=":
             if isset(left) and isset(right):
-                explanation = _compare_lte_set(left, right, verbose)
+                explanation = _compare_lte_set(left, right, writer._highlight)
         elif op == ">":
             if isset(left) and isset(right):
-                explanation = _compare_gt_set(left, right, verbose)
+                explanation = _compare_gt_set(left, right, writer._highlight)
         elif op == "<":
             if isset(left) and isset(right):
-                explanation = _compare_lt_set(left, right, verbose)
+                explanation = _compare_lt_set(left, right, writer._highlight)
 
     except outcomes.Exit:
         raise
@@ -259,11 +260,11 @@ def _compare_eq_any(
             # used in older code bases before dataclasses/attrs were available.
             explanation = _compare_eq_cls(left, right, highlighter, verbose)
         elif issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left, right, verbose)
+            explanation = _compare_eq_sequence(left, right, highlighter, verbose)
         elif isset(left) and isset(right):
-            explanation = _compare_eq_set(left, right, verbose)
+            explanation = _compare_eq_set(left, right, highlighter)
         elif isdict(left) and isdict(right):
-            explanation = _compare_eq_dict(left, right, verbose)
+            explanation = _compare_eq_dict(left, right, highlighter, verbose)
 
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left, right, highlighter, verbose)
@@ -350,7 +351,10 @@ def _compare_eq_iterable(
 
 
 def _compare_eq_sequence(
-    left: Sequence[Any], right: Sequence[Any], verbose: int = 0
+    left: Sequence[Any],
+    right: Sequence[Any],
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
     explanation: List[str] = []
@@ -373,7 +377,10 @@ def _compare_eq_sequence(
                 left_value = left[i]
                 right_value = right[i]
 
-            explanation += [f"At index {i} diff: {left_value!r} != {right_value!r}"]
+            explanation.append(
+                f"At index {i} diff:"
+                f" {highlighter(repr(left_value)).strip()} != {highlighter(repr(right_value)).strip()}"
+            )
             break
 
     if comparing_bytes:
@@ -393,68 +400,82 @@ def _compare_eq_sequence(
             extra = saferepr(right[len_left])
 
         if len_diff == 1:
-            explanation += [f"{dir_with_more} contains one more item: {extra}"]
+            explanation += [
+                f"{dir_with_more} contains one more item: {highlighter(extra).strip()}"
+            ]
         else:
             explanation += [
                 "%s contains %d more items, first extra item: %s"
-                % (dir_with_more, len_diff, extra)
+                % (dir_with_more, len_diff, highlighter(extra).strip())
             ]
     return explanation
 
 
 def _compare_eq_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+    left: AbstractSet[Any],
+    right: AbstractSet[Any],
+    highlighter: _HighlightFunc,
 ) -> List[str]:
     explanation = []
-    explanation.extend(_set_one_sided_diff("left", left, right))
-    explanation.extend(_set_one_sided_diff("right", right, left))
+    explanation.extend(_set_one_sided_diff("left", left, right, highlighter))
+    explanation.extend(_set_one_sided_diff("right", right, left, highlighter))
     return explanation
 
 
 def _compare_gt_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+    left: AbstractSet[Any],
+    right: AbstractSet[Any],
+    highlighter: _HighlightFunc,
 ) -> List[str]:
-    explanation = _compare_gte_set(left, right, verbose)
+    explanation = _compare_gte_set(left, right, highlighter)
     if not explanation:
         return ["Both sets are equal"]
     return explanation
 
 
 def _compare_lt_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+    left: AbstractSet[Any], right: AbstractSet[Any], highlighter: _HighlightFunc
 ) -> List[str]:
-    explanation = _compare_lte_set(left, right, verbose)
+    explanation = _compare_lte_set(left, right, highlighter)
     if not explanation:
         return ["Both sets are equal"]
     return explanation
 
 
 def _compare_gte_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+    left: AbstractSet[Any],
+    right: AbstractSet[Any],
+    highlighter: _HighlightFunc,
 ) -> List[str]:
-    return _set_one_sided_diff("right", right, left)
+    return _set_one_sided_diff("right", right, left, highlighter)
 
 
 def _compare_lte_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], verbose: int = 0
+    left: AbstractSet[Any], right: AbstractSet[Any], highlighter: _HighlightFunc
 ) -> List[str]:
-    return _set_one_sided_diff("left", left, right)
+    return _set_one_sided_diff("left", left, right, highlighter)
 
 
 def _set_one_sided_diff(
-    posn: str, set1: AbstractSet[Any], set2: AbstractSet[Any]
+    posn: str,
+    set1: AbstractSet[Any],
+    set2: AbstractSet[Any],
+    highlighter: _HighlightFunc,
 ) -> List[str]:
     explanation = []
     diff = set1 - set2
     if diff:
         explanation.append(f"Extra items in the {posn} set:")
         for item in diff:
-            explanation.append(saferepr(item))
+            explanation.append(highlighter(saferepr(item)).strip())
     return explanation
 
 
 def _compare_eq_dict(
-    left: Mapping[Any, Any], right: Mapping[Any, Any], verbose: int = 0
+    left: Mapping[Any, Any],
+    right: Mapping[Any, Any],
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     explanation: List[str] = []
     set_left = set(left)
@@ -465,12 +486,16 @@ def _compare_eq_dict(
         explanation += ["Omitting %s identical items, use -vv to show" % len(same)]
     elif same:
         explanation += ["Common items:"]
-        explanation += pprint.pformat(same).splitlines()
+        explanation += highlighter(pprint.pformat(same)).strip().splitlines()
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         explanation += ["Differing items:"]
         for k in diff:
-            explanation += [saferepr({k: left[k]}) + " != " + saferepr({k: right[k]})]
+            explanation += [
+                highlighter(saferepr({k: left[k]})).strip()
+                + " != "
+                + highlighter(saferepr({k: right[k]})).strip()
+            ]
     extra_left = set_left - set_right
     len_extra_left = len(extra_left)
     if len_extra_left:
@@ -479,7 +504,9 @@ def _compare_eq_dict(
             % (len_extra_left, "" if len_extra_left == 1 else "s")
         )
         explanation.extend(
-            pprint.pformat({k: left[k] for k in extra_left}).splitlines()
+            highlighter(pprint.pformat({k: left[k] for k in extra_left}))
+            .strip()
+            .splitlines()
         )
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
@@ -489,7 +516,9 @@ def _compare_eq_dict(
             % (len_extra_right, "" if len_extra_right == 1 else "s")
         )
         explanation.extend(
-            pprint.pformat({k: right[k] for k in extra_right}).splitlines()
+            highlighter(pprint.pformat({k: right[k] for k in extra_right}))
+            .strip()
+            .splitlines()
         )
     return explanation
 
@@ -528,17 +557,17 @@ def _compare_eq_cls(
         explanation.append("Omitting %s identical items, use -vv to show" % len(same))
     elif same:
         explanation += ["Matching attributes:"]
-        explanation += pprint.pformat(same).splitlines()
+        explanation += highlighter(pprint.pformat(same)).strip().splitlines()
     if diff:
         explanation += ["Differing attributes:"]
-        explanation += pprint.pformat(diff).splitlines()
+        explanation += highlighter(pprint.pformat(diff)).strip().splitlines()
         for field in diff:
             field_left = getattr(left, field)
             field_right = getattr(right, field)
             explanation += [
                 "",
-                "Drill down into differing attribute %s:" % field,
-                ("%s%s: %r != %r") % (indent, field, field_left, field_right),
+                f"Drill down into differing attribute {field}:",
+                f"{indent}{field}: {highlighter(repr(field_left)).strip()} != {highlighter(repr(field_right)).strip()}",
             ]
             explanation += [
                 indent + line
