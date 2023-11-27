@@ -754,6 +754,19 @@ class TestAssert_reprcompare:
             "+     3,",
             "  )",
         ]
+        lines = callequal((1, 2, 3), (1, 20, 3), verbose=2)
+        assert lines == [
+            "(1, 2, 3) == (1, 20, 3)",
+            "At index 1 diff: 2 != 20",
+            "Full diff:",
+            "  (",
+            "      1,",
+            "-     20,",
+            "?      -",
+            "+     2,",
+            "      3,",
+            "  )",
+        ]
 
     def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})

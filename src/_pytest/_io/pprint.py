@@ -178,7 +178,7 @@ class PrettyPrinter:
             return
         cls = object.__class__
         stream.write(cls.__name__ + "(")
-        self._pprint_dict(object, stream, indent, allowance, context, level)
+        self._format(list(object.items()), stream, indent, allowance, context, level)
         stream.write(")")
 
     _dispatch[_collections.OrderedDict.__repr__] = _pprint_ordered_dict
@@ -373,15 +373,9 @@ class PrettyPrinter:
         item_indent = indent + self._indent_per_level
         delimnl = "\n" + " " * item_indent
 
-        it = iter(items)
-        while True:
-            try:
-                next_ent = next(it)
-            except StopIteration:
-                break
-
+        for item in items:
             write(delimnl)
-            self._format(next_ent, stream, item_indent, 1, context, level)
+            self._format(item, stream, item_indent, 1, context, level)
             write(",")
 
         write("\n" + " " * indent)
@@ -412,10 +406,15 @@ class PrettyPrinter:
     _dispatch[_collections.defaultdict.__repr__] = _pprint_default_dict
 
     def _pprint_counter(self, object, stream, indent, allowance, context, level):
-        stream.write(object.__class__.__name__ + "({")
-        items = object.most_common()
-        self._format_dict_items(items, stream, indent, allowance, context, level)
-        stream.write("})")
+        stream.write(object.__class__.__name__ + "(")
+
+        if object:
+            stream.write("{")
+            items = object.most_common()
+            self._format_dict_items(items, stream, indent, allowance, context, level)
+            stream.write("}")
+
+        stream.write(")")
 
     _dispatch[_collections.Counter.__repr__] = _pprint_counter
 

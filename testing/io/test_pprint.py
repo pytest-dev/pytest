@@ -84,19 +84,28 @@ class DataclassWithTwoItems:
         pytest.param(
             OrderedDict({"one": 1}),
             """
-            OrderedDict({
-                'one': 1,
-            })
+            OrderedDict([
+                (
+                    'one',
+                    1,
+                ),
+            ])
             """,
             id="ordereddict-one-item",
         ),
         pytest.param(
             OrderedDict({"one": 1, "two": 2}),
             """
-            OrderedDict({
-                'one': 1,
-                'two': 2,
-            })
+            OrderedDict([
+                (
+                    'one',
+                    1,
+                ),
+                (
+                    'two',
+                    2,
+                ),
+            ])
             """,
             id="ordereddict-two-items",
         ),
@@ -244,7 +253,7 @@ class DataclassWithTwoItems:
         ),
         pytest.param(
             Counter(),
-            "Counter({})",
+            "Counter()",
             id="counter-empty",
         ),
         pytest.param(
@@ -380,10 +389,16 @@ class DataclassWithTwoItems:
                     'one': 1,
                     'two': 2,
                 }),
-                'ordereddict': OrderedDict({
-                    'one': 1,
-                    'two': 2,
-                }),
+                'ordereddict': OrderedDict([
+                    (
+                        'one',
+                        1,
+                    ),
+                    (
+                        'two',
+                        2,
+                    ),
+                ]),
                 'set': {
                     1,
                     2,
