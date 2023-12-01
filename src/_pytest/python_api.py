@@ -1166,7 +1166,6 @@ def raises(
         try:
             func(*args[1:], **kwargs)
         except expected_exception as e:  # type: ignore[misc]  # TypeError raised for any ExpectedExceptionGroup
-
             return _pytest._code.ExceptionInfo.from_exception(e)
     fail(message)
 

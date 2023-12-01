@@ -119,7 +119,6 @@ class TestExpectedExceptionGroup:
         assert eeg.matches(ExceptionGroup("", (ValueError(),)))
 
     def test_message(self) -> None:
-
         try:
             with pytest.raises(ExpectedExceptionGroup(ValueError)):
                 ...
