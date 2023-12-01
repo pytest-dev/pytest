@@ -1,3 +1,4 @@
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -8,6 +9,9 @@ from _pytest.python_api import Matcher
 
 if TYPE_CHECKING:
     from typing_extensions import assert_type
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 
 class TestExpectedExceptionGroup:

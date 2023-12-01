@@ -1,6 +1,7 @@
 import math
 import pprint
 import re
+import sys
 from collections.abc import Collection
 from collections.abc import Sized
 from decimal import Decimal
@@ -25,16 +26,16 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
-if TYPE_CHECKING:
-    from typing_extensions import TypeAlias, TypeGuard
-
-
 import _pytest._code
 from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
     from numpy import ndarray
+    from typing_extensions import TypeAlias, TypeGuard
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 
 def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
