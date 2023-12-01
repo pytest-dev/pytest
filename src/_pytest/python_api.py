@@ -794,7 +794,7 @@ E2 = TypeVar("E2", bound=BaseException)
 class Matcher(Generic[E]):
     def __init__(
         self,
-        exception_type: Optional[type[E]] = None,
+        exception_type: Optional[Type[E]] = None,
         match: Optional[Union[str, Pattern[str]]] = None,
         check: Optional[Callable[[E], bool]] = None,
     ):
