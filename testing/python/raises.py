@@ -287,7 +287,10 @@ class TestRaises:
         with pytest.raises(TypeError) as excinfo:
             with pytest.raises("hello"):  # type: ignore[call-overload]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
+        assert (
+            "must be a BaseException type or ExpectedExceptionGroup instance, not str"
+            in str(excinfo.value)
+        )
 
         class NotAnException:
             pass
@@ -295,9 +298,15 @@ class TestRaises:
         with pytest.raises(TypeError) as excinfo:
             with pytest.raises(NotAnException):  # type: ignore[type-var]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not NotAnException" in str(excinfo.value)
+        assert (
+            "must be a BaseException type or ExpectedExceptionGroup instance, not NotAnException"
+            in str(excinfo.value)
+        )
 
         with pytest.raises(TypeError) as excinfo:
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
+        assert (
+            "must be a BaseException type or ExpectedExceptionGroup instance, not str"
+            in str(excinfo.value)
+        )
