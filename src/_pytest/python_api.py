@@ -1,5 +1,7 @@
 import math
 import pprint
+import re
+import sys
 from collections.abc import Collection
 from collections.abc import Sized
 from decimal import Decimal
@@ -10,6 +12,8 @@ from typing import Callable
 from typing import cast
 from typing import ContextManager
 from typing import final
+from typing import Generic
+from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -28,6 +32,10 @@ from _pytest.outcomes import fail
 
 if TYPE_CHECKING:
     from numpy import ndarray
+    from typing_extensions import TypeGuard
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 
 def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
@@ -985,6 +993,155 @@ def raises(  # noqa: F811
 
 # This doesn't work with mypy for now. Use fail.Exception instead.
 raises.Exception = fail.Exception  # type: ignore
+
+
+class Matcher(Generic[E]):
+    def __init__(
+        self,
+        exception_type: Optional[Type[E]] = None,
+        match: Optional[Union[str, Pattern[str]]] = None,
+        check: Optional[Callable[[E], bool]] = None,
+    ):
+        if exception_type is None and match is None and check is None:
+            raise ValueError("You must specify at least one parameter to match on.")
+        self.exception_type = exception_type
+        self.match = match
+        self.check = check
+
+    def matches(self, exception: E) -> "TypeGuard[E]":
+        if self.exception_type is not None and not isinstance(
+            exception, self.exception_type
+        ):
+            return False
+        if self.match is not None and not re.search(self.match, str(exception)):
+            return False
+        if self.check is not None and not self.check(exception):
+            return False
+        return True
+
+
+if TYPE_CHECKING:
+    SuperClass = BaseExceptionGroup
+else:
+    SuperClass = Generic
+
+
+@final
+class RaisesGroup(
+    ContextManager[_pytest._code.ExceptionInfo[BaseExceptionGroup[E]]], SuperClass[E]
+):
+    # My_T = TypeVar("My_T", bound=Union[Type[E], Matcher[E], "RaisesGroup[E]"])
+    def __init__(
+        self,
+        exceptions: Union[Type[E], Matcher[E], E],
+        *args: Union[Type[E], Matcher[E], E],
+        strict: bool = True,
+        match: Optional[Union[str, Pattern[str]]] = None,
+    ):
+        # could add parameter `notes: Optional[Tuple[str, Pattern[str]]] = None`
+        self.expected_exceptions = (exceptions, *args)
+        self.strict = strict
+        self.match_expr = match
+        self.message = f"DID NOT RAISE ExceptionGroup{repr(self.expected_exceptions)}"  # type: ignore[misc]
+
+        for exc in self.expected_exceptions:
+            if not isinstance(exc, (Matcher, RaisesGroup)) and not (
+                isinstance(exc, type) and issubclass(exc, BaseException)
+            ):
+                raise ValueError(
+                    "Invalid argument {exc} must be exception type, Matcher, or RaisesGroup."
+                )
+            if isinstance(exc, RaisesGroup) and not strict:  # type: ignore[unreachable]
+                raise ValueError(
+                    "You cannot specify a nested structure inside a RaisesGroup with strict=False"
+                )
+
+    def __enter__(self) -> _pytest._code.ExceptionInfo[BaseExceptionGroup[E]]:
+        self.excinfo: _pytest._code.ExceptionInfo[
+            BaseExceptionGroup[E]
+        ] = _pytest._code.ExceptionInfo.for_later()
+        return self.excinfo
+
+    def _unroll_exceptions(
+        self, exceptions: Iterable[BaseException]
+    ) -> Iterable[BaseException]:
+        res: list[BaseException] = []
+        for exc in exceptions:
+            if isinstance(exc, BaseExceptionGroup):
+                res.extend(self._unroll_exceptions(exc.exceptions))
+
+            else:
+                res.append(exc)
+        return res
+
+    def matches(
+        self,
+        exc_val: Optional[BaseException],
+    ) -> "TypeGuard[BaseExceptionGroup[E]]":
+        if exc_val is None:
+            return False
+        if not isinstance(exc_val, BaseExceptionGroup):
+            return False
+        if not len(exc_val.exceptions) == len(self.expected_exceptions):
+            return False
+        remaining_exceptions = list(self.expected_exceptions)
+        actual_exceptions: Iterable[BaseException] = exc_val.exceptions
+        if not self.strict:
+            actual_exceptions = self._unroll_exceptions(actual_exceptions)
+
+        # it should be possible to get RaisesGroup.matches typed so as not to
+        # need these type: ignores, but I'm not sure that's possible while also having it
+        # transparent for the end user.
+        for e in actual_exceptions:
+            for rem_e in remaining_exceptions:
+                # TODO: how to print string diff on mismatch?
+                # Probably accumulate them, and then if fail, print them
+                # Further QoL would be to print how the exception structure differs on non-match
+                if (
+                    (isinstance(rem_e, type) and isinstance(e, rem_e))
+                    or (
+                        isinstance(e, BaseExceptionGroup)
+                        and isinstance(rem_e, RaisesGroup)
+                        and rem_e.matches(e)
+                    )
+                    or (
+                        isinstance(rem_e, Matcher)
+                        and rem_e.matches(e)  # type: ignore[arg-type]
+                    )
+                ):
+                    remaining_exceptions.remove(rem_e)  # type: ignore[arg-type]
+                    break
+            else:
+                return False
+        return True
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> bool:
+        __tracebackhide__ = True
+        if exc_type is None:
+            fail(self.message)
+        assert self.excinfo is not None
+
+        if not self.matches(exc_val):
+            return False
+
+        # Cast to narrow the exception type now that it's verified.
+        exc_info = cast(
+            Tuple[Type[BaseExceptionGroup[E]], BaseExceptionGroup[E], TracebackType],
+            (exc_type, exc_val, exc_tb),
+        )
+        self.excinfo.fill_unfilled(exc_info)
+        if self.match_expr is not None:
+            self.excinfo.match(self.match_expr)
+        return True
+
+    def __repr__(self) -> str:
+        # TODO: [Base]ExceptionGroup
+        return f"ExceptionGroup{self.expected_exceptions}"
 
 
 @final
