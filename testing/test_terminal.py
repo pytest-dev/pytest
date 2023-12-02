@@ -2616,7 +2616,7 @@ def test_format_trimmed() -> None:
     assert _format_trimmed(" ({}) ", msg, len(msg) + 3) == " (unconditional ...) "
 
 
-def test_fine_grained_test_case_verbosity(pytester: Pytester):
+def test_fine_grained_test_case_verbosity(pytester: Pytester) -> None:
     p = pytester.makepyfile(_fine_grained_verbosity_file_contents())
     pytester.makeini(
         """
@@ -2642,7 +2642,7 @@ def test_fine_grained_test_case_verbosity(pytester: Pytester):
     )
 
 
-def test_fine_grained_test_case_verbosity_collect_only_negative_2(pytester: Pytester):
+def test_fine_grained_test_case_verbosity_collect_only_negative_2(pytester: Pytester) -> None:
     p = pytester.makepyfile(_fine_grained_verbosity_file_contents())
     pytester.makeini(
         """
@@ -2662,7 +2662,7 @@ def test_fine_grained_test_case_verbosity_collect_only_negative_2(pytester: Pyte
     )
 
 
-def test_fine_grained_test_case_verbosity_collect_only_positive_2(pytester: Pytester):
+def test_fine_grained_test_case_verbosity_collect_only_positive_2(pytester: Pytester) -> None:
     p = pytester.makepyfile(_fine_grained_verbosity_file_contents())
     pytester.makeini(
         """
