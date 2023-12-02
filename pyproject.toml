@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 write_to = "src/_pytest/_version.py"
 
 [tool.pytest.ini_options]
-minversion = "2.0"
+minversion = "0.0"
 addopts = "-rfEX -p pytester --strict-markers"
 python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
 python_classes = ["Test", "Acceptance"]
