@@ -78,8 +78,6 @@ class PrettyPrinter:
             The maximum depth to print out nested structures.
 
         """
-        indent = int(indent)
-        width = int(width)
         if indent < 0:
             raise ValueError("indent must be >= 0")
         if depth is not None and depth <= 0:
