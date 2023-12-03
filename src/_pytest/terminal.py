@@ -414,7 +414,7 @@ class TerminalReporter:
     @property
     def showfspath(self) -> bool:
         if self._showfspath is None:
-            return self.verbosity >= 0
+            return self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) >= 0
         return self._showfspath
 
     @showfspath.setter
