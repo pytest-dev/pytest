@@ -486,12 +486,7 @@ class PrettyPrinter:
         write("\n" + " " * indent)
 
     def _repr(self, object: Any, context: Set[int], level: int) -> str:
-        return self.format(object, context.copy(), self._depth, level)
-
-    def format(
-        self, object: Any, context: Set[int], maxlevels: Optional[int], level: int
-    ) -> str:
-        return self._safe_repr(object, context, maxlevels, level)
+        return self._safe_repr(object, context.copy(), self._depth, level)
 
     def _pprint_default_dict(
         self,
@@ -639,8 +634,8 @@ class PrettyPrinter:
             else:
                 items = object.items()
             for k, v in items:
-                krepr = self.format(k, context, maxlevels, level)
-                vrepr = self.format(v, context, maxlevels, level)
+                krepr = self._safe_repr(k, context, maxlevels, level)
+                vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
             context.remove(objid)
             return "{%s}" % ", ".join(components)
@@ -668,7 +663,7 @@ class PrettyPrinter:
             append = components.append
             level += 1
             for o in object:
-                orepr = self.format(o, context, maxlevels, level)
+                orepr = self._safe_repr(o, context, maxlevels, level)
                 append(orepr)
             context.remove(objid)
             return format % ", ".join(components)
