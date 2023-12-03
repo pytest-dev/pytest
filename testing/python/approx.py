@@ -295,7 +295,7 @@ class TestApprox:
                 rf"  Max relative difference: {SOME_FLOAT}",
                 r"  Index \| Obtained\s+\| Expected",
                 rf"  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                rf"  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
                 "",
                 rf"\s*...Full output truncated \({SOME_INT} lines hidden\), use '-vv' to show",
             ],
