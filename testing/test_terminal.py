@@ -2626,6 +2626,9 @@ class TestFineGrainedTestCase:
                 some docstring
                 '''
                 pass
+
+            def test_fail():
+                assert False
             """
     LONG_SKIP_FILE_CONTENTS = """
             import pytest
@@ -2646,12 +2649,13 @@ class TestFineGrainedTestCase:
 
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items",
+                "collected 5 items",
                 "",
-                f"{p.name}::test_ok[0] PASSED                              [ 25%]",
-                f"{p.name}::test_ok[1] PASSED                              [ 50%]",
-                f"{p.name}::test_ok[2] PASSED                              [ 75%]",
-                f"{p.name}::test_ok[3] PASSED                              [100%]",
+                f"{p.name}::test_ok[0] PASSED                              [ 20%]",
+                f"{p.name}::test_ok[1] PASSED                              [ 40%]",
+                f"{p.name}::test_ok[2] PASSED                              [ 60%]",
+                f"{p.name}::test_ok[3] PASSED                              [ 80%]",
+                f"{p.name}::test_fail FAILED                               [100%]",
             ],
             consecutive=True,
         )
@@ -2663,9 +2667,9 @@ class TestFineGrainedTestCase:
 
         result.stdout.fnmatch_lines(
             [
-                "collecting ... collected 4 items",
+                "collecting ... collected 5 items",
                 "",
-                f"{p.name} ....                                          [100%]",
+                f"{p.name} ....F                                         [100%]",
             ],
             consecutive=True,
         )
@@ -2678,8 +2682,8 @@ class TestFineGrainedTestCase:
 
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items",
-                "....                                                                     [100%]",
+                "collected 5 items",
+                "....F                                                                    [100%]",
             ],
             consecutive=True,
         )
@@ -2765,7 +2769,7 @@ class TestFineGrainedTestCase:
 
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items",
+                "collected 5 items",
                 "",
                 f"<Module {p.name}>",
                 "  <Function test_ok[0]>",
@@ -2776,6 +2780,7 @@ class TestFineGrainedTestCase:
                 "    some docstring",
                 "  <Function test_ok[3]>",
                 "    some docstring",
+                "  <Function test_fail>",
             ],
             consecutive=True,
         )
@@ -2786,13 +2791,14 @@ class TestFineGrainedTestCase:
 
         result.stdout.fnmatch_lines(
             [
-                "collecting ... collected 4 items",
+                "collecting ... collected 5 items",
                 "",
                 f"<Module {p.name}>",
                 "  <Function test_ok[0]>",
                 "  <Function test_ok[1]>",
                 "  <Function test_ok[2]>",
                 "  <Function test_ok[3]>",
+                "  <Function test_fail>",
             ],
             consecutive=True,
         )
@@ -2803,12 +2809,13 @@ class TestFineGrainedTestCase:
 
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items",
+                "collected 5 items",
                 "",
                 f"{p.name}::test_ok[0]",
                 f"{p.name}::test_ok[1]",
                 f"{p.name}::test_ok[2]",
                 f"{p.name}::test_ok[3]",
+                f"{p.name}::test_fail",
             ],
             consecutive=True,
         )
@@ -2819,9 +2826,9 @@ class TestFineGrainedTestCase:
 
         result.stdout.fnmatch_lines(
             [
-                "collected 4 items",
+                "collected 5 items",
                 "",
-                f"{p.name}: 4",
+                f"{p.name}: 5",
             ],
             consecutive=True,
         )
