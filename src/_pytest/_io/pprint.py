@@ -65,7 +65,6 @@ class PrettyPrinter:
         width: int = 80,
         depth: Optional[int] = None,
         *,
-        sort_dicts: bool = True,
         underscore_numbers: bool = False,
     ) -> None:
         """Handle pretty printing operations onto a stream using a set of
@@ -80,9 +79,6 @@ class PrettyPrinter:
         depth
             The maximum depth to print out nested structures.
 
-        sort_dicts
-            If true, dict keys are sorted.
-
         """
         indent = int(indent)
         width = int(width)
@@ -95,7 +91,6 @@ class PrettyPrinter:
         self._depth = depth
         self._indent_per_level = indent
         self._width = width
-        self._sort_dicts = sort_dicts
         self._underscore_numbers = underscore_numbers
 
     def pformat(self, object: Any) -> str:
@@ -174,10 +169,7 @@ class PrettyPrinter:
     ) -> None:
         write = stream.write
         write("{")
-        if self._sort_dicts:
-            items = sorted(object.items(), key=_safe_tuple)
-        else:
-            items = object.items()
+        items = sorted(object.items(), key=_safe_tuple)
         self._format_dict_items(items, stream, indent, allowance, context, level)
         write("}")
 
@@ -629,11 +621,7 @@ class PrettyPrinter:
             components: List[str] = []
             append = components.append
             level += 1
-            if self._sort_dicts:
-                items = sorted(object.items(), key=_safe_tuple)
-            else:
-                items = object.items()
-            for k, v in items:
+            for k, v in sorted(object.items(), key=_safe_tuple):
                 krepr = self._safe_repr(k, context, maxlevels, level)
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
