@@ -118,7 +118,7 @@ For any given hook specification there may be more than one
 implementation and we thus generally view ``hook`` execution as a
 ``1:N`` function call where ``N`` is the number of registered functions.
 
-There are certain limitations about hooks starting with ``_pytest``. For
+There are certain limitations about hooks starting with ``pytest_``. For
 more information, consult :ref:`Declaring new hooks <new-hooks>`.
 
 There are ways to influence if a hook implementation comes before or
