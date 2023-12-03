@@ -64,8 +64,6 @@ class PrettyPrinter:
         indent: int = 4,
         width: int = 80,
         depth: Optional[int] = None,
-        *,
-        underscore_numbers: bool = False,
     ) -> None:
         """Handle pretty printing operations onto a stream using a set of
         configured parameters.
@@ -91,7 +89,6 @@ class PrettyPrinter:
         self._depth = depth
         self._indent_per_level = indent
         self._width = width
-        self._underscore_numbers = underscore_numbers
 
     def pformat(self, object: Any) -> str:
         sio = _StringIO()
@@ -603,12 +600,6 @@ class PrettyPrinter:
 
         r = getattr(typ, "__repr__", None)
 
-        if issubclass(typ, int) and r is int.__repr__:
-            if self._underscore_numbers:
-                return f"{object:_d}"
-            else:
-                return repr(object)
-
         if issubclass(typ, dict) and r is dict.__repr__:
             if not object:
                 return "{}"
@@ -659,7 +650,9 @@ class PrettyPrinter:
         return repr(object)
 
 
-_builtin_scalars = frozenset({str, bytes, bytearray, float, complex, bool, type(None)})
+_builtin_scalars = frozenset(
+    {str, bytes, bytearray, float, complex, bool, type(None), int}
+)
 
 
 def _recursion(object: Any) -> str:
