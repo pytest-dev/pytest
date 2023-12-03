@@ -2616,121 +2616,113 @@ def test_format_trimmed() -> None:
     assert _format_trimmed(" ({}) ", msg, len(msg) + 3) == " (unconditional ...) "
 
 
-def test_fine_grained_test_case_verbosity(pytester: Pytester) -> None:
-    p = pytester.makepyfile(_fine_grained_verbosity_file_contents())
-    pytester.makeini(
-        """
-        [pytest]
-        verbosity_test_cases = 2
-        """
-    )
-    result = pytester.runpytest(p)
+class TestFineGrainedTestCase:
+    def test_max_verbosity(self, pytester: Pytester) -> None:
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=2)
+        result = pytester.runpytest(p)
 
-    result.stdout.fnmatch_lines(
-        [
-            f"{p.name}::test_ok PASSED                 [ 14%]",
-            f"{p.name}::test_words_fail FAILED         [ 28%]",
-            f"{p.name}::test_numbers_fail FAILED       [ 42%]",
-            f"{p.name}::test_long_text_fail FAILED     [ 57%]",
-            f"{p.name}::test_parametrize_fail[hello-1] FAILED [ 71%]",
-            f"{p.name}::test_parametrize_fail[world-987654321] FAILED [ 85%]",
-            f"{p.name}::test_sample_skip SKIPPED (some",
-            "long skip reason that will not fit on a single line with other content",
-            "that goes on and on and on and on and on)                                [100%]",
-        ],
-        consecutive=True,
-    )
-
-
-def test_fine_grained_test_case_verbosity_collect_only_negative_2(pytester: Pytester) -> None:
-    p = pytester.makepyfile(_fine_grained_verbosity_file_contents())
-    pytester.makeini(
-        """
-        [pytest]
-        verbosity_test_cases = -2
-        """
-    )
-    result = pytester.runpytest("--collect-only", p)
-
-    result.stdout.fnmatch_lines(
-        [
-            "collected 7 items",
-            "",
-            f"{p.name}: 7",
-        ],
-        consecutive=True,
-    )
-
-
-def test_fine_grained_test_case_verbosity_collect_only_positive_2(pytester: Pytester) -> None:
-    p = pytester.makepyfile(_fine_grained_verbosity_file_contents())
-    pytester.makeini(
-        """
-        [pytest]
-        verbosity_test_cases = 2
-        """
-    )
-    result = pytester.runpytest("--collect-only", p)
-
-    result.stdout.fnmatch_lines(
-        [
-            "collected 7 items",
-            "",
-            f"<Module {p.name}>",
-            "  <Function test_ok>",
-            "    some docstring",
-            "  <Function test_words_fail>",
-            "  <Function test_numbers_fail>",
-            "  <Function test_long_text_fail>",
-            "  <Function test_parametrize_fail[hello-1]>",
-            "  <Function test_parametrize_fail[world-987654321]>",
-            "  <Function test_sample_skip>",
-        ],
-        consecutive=True,
-    )
-
-
-def _fine_grained_verbosity_file_contents() -> str:
-    long_text = "Lorem ipsum dolor sit amet " * 10
-    return f"""
-        import pytest
-        def test_ok():
-            '''
-            some docstring
-            '''
-            pass
-
-
-        def test_words_fail():
-            fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
-            fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
-            assert fruits1 == fruits2
-
-
-        def test_numbers_fail():
-            number_to_text1 = {{str(x): x for x in range(5)}}
-            number_to_text2 = {{str(x * 10): x * 10 for x in range(5)}}
-            assert number_to_text1 == number_to_text2
-
-
-        def test_long_text_fail():
-            long_text = "{long_text}"
-            assert "hello world" in long_text
-
-
-        @pytest.mark.parametrize(["foo", "bar"], [
-            ("hello", 1),
-            ("world", 987654321),
-        ])
-        def test_parametrize_fail(foo, bar):
-            long_text = f"{{foo}} {{bar}}"
-            assert "hello world" in long_text
-
-
-        @pytest.mark.skip(
-          "some long skip reason that will not fit on a single line with other content that goes"
-          " on and on and on and on and on"
+        result.stdout.fnmatch_lines(
+            [
+                f"{p.name}::test_ok PASSED                                    [ 14%]",
+                f"{p.name}::test_words_fail FAILED                            [ 28%]",
+                f"{p.name}::test_numbers_fail FAILED                          [ 42%]",
+                f"{p.name}::test_long_text_fail FAILED                        [ 57%]",
+                f"{p.name}::test_parametrize_fail[hello-1] FAILED             [ 71%]",
+                f"{p.name}::test_parametrize_fail[world-987654321] FAILED     [ 85%]",
+                f"{p.name}::test_sample_skip SKIPPED (some long skip reason",
+                "that will not fit on a single line with other content that goes on and",
+                "on and on and on and on)                                                 [100%]",
+            ],
+            consecutive=True,
         )
-        def test_sample_skip():
-            pass
-        """
+
+    def test_collect_only_negative_2(self, pytester: Pytester) -> None:
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=-2)
+        result = pytester.runpytest("--collect-only", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 7 items",
+                "",
+                f"{p.name}: 7",
+            ],
+            consecutive=True,
+        )
+
+    def test__collect_only_positive_2(self, pytester: Pytester) -> None:
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=2)
+        result = pytester.runpytest("--collect-only", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 7 items",
+                "",
+                f"<Module {p.name}>",
+                "  <Function test_ok>",
+                "    some docstring",
+                "  <Function test_words_fail>",
+                "  <Function test_numbers_fail>",
+                "  <Function test_long_text_fail>",
+                "  <Function test_parametrize_fail[hello-1]>",
+                "  <Function test_parametrize_fail[world-987654321]>",
+                "  <Function test_sample_skip>",
+            ],
+            consecutive=True,
+        )
+
+    @staticmethod
+    def _initialize_files(pytester: Pytester, verbosity: int) -> Path:
+        p = pytester.makepyfile(TestFineGrainedTestCase.file_contents())
+        pytester.makeini(
+            f"""
+            [pytest]
+            verbosity_test_cases = {verbosity}
+            """
+        )
+        return p
+
+    @staticmethod
+    def file_contents() -> str:
+        long_text = "Lorem ipsum dolor sit amet " * 10
+        return f"""
+            import pytest
+            def test_ok():
+                '''
+                some docstring
+                '''
+                pass
+
+
+            def test_words_fail():
+                fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+                fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+                assert fruits1 == fruits2
+
+
+            def test_numbers_fail():
+                number_to_text1 = {{str(x): x for x in range(5)}}
+                number_to_text2 = {{str(x * 10): x * 10 for x in range(5)}}
+                assert number_to_text1 == number_to_text2
+
+
+            def test_long_text_fail():
+                long_text = "{long_text}"
+                assert "hello world" in long_text
+
+
+            @pytest.mark.parametrize(["foo", "bar"], [
+                ("hello", 1),
+                ("world", 987654321),
+            ])
+            def test_parametrize_fail(foo, bar):
+                long_text = f"{{foo}} {{bar}}"
+                assert "hello world" in long_text
+
+
+            @pytest.mark.skip(
+              "some long skip reason that will not fit on a single line with other content that goes"
+              " on and on and on and on and on"
+            )
+            def test_sample_skip():
+                pass
+            """
