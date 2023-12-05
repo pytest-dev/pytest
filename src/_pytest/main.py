@@ -12,7 +12,6 @@ from typing import Callable
 from typing import Dict
 from typing import final
 from typing import FrozenSet
-from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -502,11 +501,11 @@ class Dir(nodes.Directory):
         config = self.config
         col: Optional[nodes.Collector]
         cols: Sequence[nodes.Collector]
+        ihook = self.ihook
         for direntry in scandir(self.path):
             if direntry.is_dir():
                 if direntry.name == "__pycache__":
                     continue
-                ihook = self.ihook
                 path = Path(direntry.path)
                 if not self.session.isinitpath(path, with_parents=True):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):
@@ -516,7 +515,6 @@ class Dir(nodes.Directory):
                     yield col
 
             elif direntry.is_file():
-                ihook = self.ihook
                 path = Path(direntry.path)
                 if not self.session.isinitpath(path):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):
@@ -559,7 +557,6 @@ class Session(nodes.Collector):
         self._initialpaths_with_parents: FrozenSet[Path] = frozenset()
         self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
         self._initial_parts: List[Tuple[Path, List[str]]] = []
-        self._in_genitems = False
         self._collection_cache: Dict[nodes.Collector, CollectReport] = {}
         self.items: List[nodes.Item] = []
 
@@ -612,29 +609,6 @@ class Session(nodes.Collector):
 
     pytest_collectreport = pytest_runtest_logreport
 
-    @hookimpl(wrapper=True)
-    def pytest_collect_directory(
-        self,
-    ) -> Generator[None, Optional[nodes.Collector], Optional[nodes.Collector]]:
-        col = yield
-
-        # Eagerly load conftests for the directory.
-        # This is needed because a conftest error needs to happen while
-        # collecting a collector, so it is caught by its CollectReport.
-        # Without this, the conftests are loaded inside of genitems itself
-        # which leads to an internal error.
-        # This should only be done for genitems; if done unconditionally, it
-        # will load conftests for non-selected directories which is to be
-        # avoided.
-        if self._in_genitems and col is not None:
-            self.config.pluginmanager._loadconftestmodules(
-                col.path,
-                self.config.getoption("importmode"),
-                rootpath=self.config.rootpath,
-            )
-
-        return col
-
     def isinitpath(
         self,
         path: Union[str, "os.PathLike[str]"],
@@ -665,15 +639,6 @@ class Session(nodes.Collector):
         pm = self.config.pluginmanager
         # Check if we have the common case of running
         # hooks with all conftest.py files.
-        #
-        # TODO: pytest relies on this call to load non-initial conftests. This
-        # is incidental. It will be better to load conftests at a more
-        # well-defined place.
-        pm._loadconftestmodules(
-            path,
-            self.config.getoption("importmode"),
-            rootpath=self.config.rootpath,
-        )
         my_conftestmodules = pm._getconftestmodules(path)
         remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
         proxy: pluggy.HookRelay
@@ -754,7 +719,6 @@ class Session(nodes.Collector):
 
         self._notfound = []
         self._initial_parts = []
-        self._in_genitems = False
         self._collection_cache = {}
         self.items = []
         items: Sequence[Union[nodes.Item, nodes.Collector]] = self.items
@@ -789,7 +753,6 @@ class Session(nodes.Collector):
 
                 raise UsageError(*errors)
 
-            self._in_genitems = True
             if not genitems:
                 items = rep.result
             else:
@@ -804,7 +767,6 @@ class Session(nodes.Collector):
         finally:
             self._notfound = []
             self._initial_parts = []
-            self._in_genitems = False
             self._collection_cache = {}
             hook.pytest_collection_finish(session=self)
 

@@ -731,12 +731,12 @@ class Package(nodes.Directory):
         config = self.config
         col: Optional[nodes.Collector]
         cols: Sequence[nodes.Collector]
+        ihook = self.ihook
         for direntry in scandir(self.path, sort_key):
             if direntry.is_dir():
                 if direntry.name == "__pycache__":
                     continue
                 path = Path(direntry.path)
-                ihook = self.ihook
                 if not self.session.isinitpath(path, with_parents=True):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):
                         continue
@@ -746,7 +746,6 @@ class Package(nodes.Directory):
 
             elif direntry.is_file():
                 path = Path(direntry.path)
-                ihook = self.ihook
                 if not self.session.isinitpath(path):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):
                         continue
