@@ -59,10 +59,6 @@ The remaining hook functions will not be called in this case.
 hook wrappers: executing around other hooks
 -------------------------------------------------
 
-.. currentmodule:: _pytest.core
-
-
-
 pytest plugins can implement hook wrappers which wrap the execution
 of other hook implementations.  A hook wrapper is a generator function
 which yields exactly once. When pytest invokes hooks it first executes
@@ -165,6 +161,7 @@ Here is the order of execution:
 It's possible to use ``tryfirst`` and ``trylast`` also on hook wrappers
 in which case it will influence the ordering of hook wrappers among each other.
 
+.. _`declaringhooks`:
 
 Declaring new hooks
 ------------------------
