@@ -1620,6 +1620,11 @@ def pytest_report_header(config, start_path):
         assert "!This is stderr!" not in stdout
         assert "!This is a warning log msg!" in stdout
 
+        stdout = pytester.runpytest("--show-capture=stdio", "--tb=short").stdout.str()
+        assert "!This is stdout!" in stdout
+        assert "!This is stderr!" in stdout
+        assert "!This is a warning log msg!" not in stdout
+
         stdout = pytester.runpytest("--show-capture=no", "--tb=short").stdout.str()
         assert "!This is stdout!" not in stdout
         assert "!This is stderr!" not in stdout
