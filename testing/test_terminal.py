@@ -1665,6 +1665,11 @@ def pytest_report_header(config, start_path):
         assert "!stderr!" not in result
         assert "!log!" in result
 
+        result = pytester.runpytest("--show-capture=stdio", "--tb=short").stdout.str()
+        assert "!stdout!" in result
+        assert "!stderr!" in result
+        assert "!log!" not in result
+
         result = pytester.runpytest("--show-capture=no", "--tb=short").stdout.str()
         assert "!stdout!" not in result
         assert "!stderr!" not in result
