@@ -171,13 +171,11 @@ Declaring new hooks
     This is a quick overview on how to add new hooks and how they work in general, but a more complete
     overview can be found in `the pluggy documentation <https://pluggy.readthedocs.io/en/latest/>`__.
 
-.. currentmodule:: _pytest.hookspec
-
 Plugins and ``conftest.py`` files may declare new hooks that can then be
 implemented by other plugins in order to alter behaviour or interact with
 the new plugin:
 
-.. autofunction:: pytest_addhooks
+.. autofunction:: _pytest.hookspec.pytest_addhooks
     :noindex:
 
 Hooks are usually declared as do-nothing functions that contain only
