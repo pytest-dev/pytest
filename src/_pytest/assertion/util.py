@@ -192,13 +192,12 @@ def assertrepr_compare(
         right_repr = saferepr(right, maxsize=maxsize, use_ascii=use_ascii)
 
     summary = f"{left_repr} {op} {right_repr}"
+    highlighter = config.get_terminal_writer()._highlight
 
     explanation = None
     try:
-        writer = config.get_terminal_writer()
-
         if op == "==":
-            explanation = _compare_eq_any(left, right, writer._highlight, verbose)
+            explanation = _compare_eq_any(left, right, highlighter, verbose)
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
@@ -207,16 +206,16 @@ def assertrepr_compare(
                 explanation = ["Both sets are equal"]
         elif op == ">=":
             if isset(left) and isset(right):
-                explanation = _compare_gte_set(left, right, writer._highlight)
+                explanation = _compare_gte_set(left, right, highlighter, verbose)
         elif op == "<=":
             if isset(left) and isset(right):
-                explanation = _compare_lte_set(left, right, writer._highlight)
+                explanation = _compare_lte_set(left, right, highlighter, verbose)
         elif op == ">":
             if isset(left) and isset(right):
-                explanation = _compare_gt_set(left, right, writer._highlight)
+                explanation = _compare_gt_set(left, right, highlighter, verbose)
         elif op == "<":
             if isset(left) and isset(right):
-                explanation = _compare_lt_set(left, right, writer._highlight)
+                explanation = _compare_lt_set(left, right, highlighter, verbose)
 
     except outcomes.Exit:
         raise
@@ -262,7 +261,7 @@ def _compare_eq_any(
         elif issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(left, right, highlighter, verbose)
         elif isset(left) and isset(right):
-            explanation = _compare_eq_set(left, right, highlighter)
+            explanation = _compare_eq_set(left, right, highlighter, verbose)
         elif isdict(left) and isdict(right):
             explanation = _compare_eq_dict(left, right, highlighter, verbose)
 
@@ -415,6 +414,7 @@ def _compare_eq_set(
     left: AbstractSet[Any],
     right: AbstractSet[Any],
     highlighter: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     explanation = []
     explanation.extend(_set_one_sided_diff("left", left, right, highlighter))
@@ -426,6 +426,7 @@ def _compare_gt_set(
     left: AbstractSet[Any],
     right: AbstractSet[Any],
     highlighter: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     explanation = _compare_gte_set(left, right, highlighter)
     if not explanation:
@@ -434,7 +435,10 @@ def _compare_gt_set(
 
 
 def _compare_lt_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], highlighter: _HighlightFunc
+    left: AbstractSet[Any],
+    right: AbstractSet[Any],
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     explanation = _compare_lte_set(left, right, highlighter)
     if not explanation:
@@ -446,12 +450,16 @@ def _compare_gte_set(
     left: AbstractSet[Any],
     right: AbstractSet[Any],
     highlighter: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     return _set_one_sided_diff("right", right, left, highlighter)
 
 
 def _compare_lte_set(
-    left: AbstractSet[Any], right: AbstractSet[Any], highlighter: _HighlightFunc
+    left: AbstractSet[Any],
+    right: AbstractSet[Any],
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
 ) -> List[str]:
     return _set_one_sided_diff("left", left, right, highlighter)
 
