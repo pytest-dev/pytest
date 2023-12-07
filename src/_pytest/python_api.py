@@ -30,15 +30,6 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
 
-def _non_numeric_type_error(value, at: Optional[str]) -> TypeError:
-    at_str = f" at {at}" if at else ""
-    return TypeError(
-        "cannot make approximate comparisons to non-numeric values: {!r} {}".format(
-            value, at_str
-        )
-    )
-
-
 def _compare_approx(
     full_object: object,
     message_data: Sequence[Tuple[str, str, str]],
