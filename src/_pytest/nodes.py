@@ -1,4 +1,5 @@
 import os
+import pathlib
 import warnings
 from functools import cached_property
 from inspect import signature
@@ -176,8 +177,8 @@ class Node(metaclass=NodeMeta):
     # Implemented in the legacypath plugin.
     #: A ``LEGACY_PATH`` copy of the :attr:`path` attribute. Intended for usage
     #: for methods not migrated to ``pathlib.Path`` yet, such as
-    #: :meth:`Item.reportinfo`. Will be deprecated in a future release, prefer
-    #: using :attr:`path` instead.
+    #: :meth:`Item.reportinfo <pytest.Item.reportinfo>`. Will be deprecated in
+    #: a future release, prefer using :attr:`path` instead.
     fspath: LEGACY_PATH
 
     # Use __slots__ to make attribute access faster.
@@ -228,7 +229,7 @@ class Node(metaclass=NodeMeta):
         if path is None and fspath is None:
             path = getattr(parent, "path", None)
         #: Filesystem path where this node was collected from (can be None).
-        self.path: Path = _imply_path(type(self), path, fspath=fspath)
+        self.path: pathlib.Path = _imply_path(type(self), path, fspath=fspath)
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
