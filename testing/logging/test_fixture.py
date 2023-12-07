@@ -144,7 +144,7 @@ def test_change_level_undos_handler_level(pytester: Pytester) -> None:
     result.assert_outcomes(passed=3)
 
 
-def test_with_statement(caplog: pytest.LogCaptureFixture) -> None:
+def test_with_statement_at_level(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level(logging.INFO):
         logger.debug("handler DEBUG level")
         logger.info("handler INFO level")
@@ -159,7 +159,9 @@ def test_with_statement(caplog: pytest.LogCaptureFixture) -> None:
     assert "CRITICAL" in caplog.text
 
 
-def test_with_statement_logging_disabled(caplog: pytest.LogCaptureFixture) -> None:
+def test_with_statement_at_level_logging_disabled(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     logging.disable(logging.CRITICAL)
     assert logging.root.manager.disable == logging.CRITICAL
     with caplog.at_level(logging.WARNING):
@@ -183,6 +185,22 @@ def test_with_statement_logging_disabled(caplog: pytest.LogCaptureFixture) -> No
     assert "SUB_WARNING" not in caplog.text
     assert "SUB_CRITICAL" in caplog.text
     assert logging.root.manager.disable == logging.CRITICAL
+
+
+def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
+    class TestFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            record.msg = "filtered handler call"
+            return True
+
+    with caplog.at_level(logging.INFO):
+        with caplog.filtering(TestFilter()):
+            logger.info("handler call")
+        logger.info("handler call")
+
+    filtered_tuple, unfiltered_tuple = caplog.record_tuples
+    assert filtered_tuple == ("test_fixture", 20, "filtered handler call")
+    assert unfiltered_tuple == ("test_fixture", 20, "handler call")
 
 
 @pytest.mark.parametrize(
