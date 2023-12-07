@@ -186,7 +186,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -Im pip install --upgrade pip
         pip install tox coverage
 
     - name: Test without coverage
@@ -201,7 +201,7 @@ jobs:
 
     - name: Generate coverage report
       if: "matrix.use_coverage"
-      run: python -m coverage xml
+      run: python -Im coverage xml
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"

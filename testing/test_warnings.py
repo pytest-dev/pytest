@@ -792,7 +792,7 @@ def test_warning_on_testpaths_not_found(pytester: Pytester) -> None:
     )
 
 
-def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_resource_warning(pytester: Pytester) -> None:
     # Some platforms (notably PyPy) don't have tracemalloc.
     # We choose to explicitly not skip this in case tracemalloc is not
     # available, using `importorskip("tracemalloc")` for example,
@@ -803,10 +803,6 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
         has_tracemalloc = True
     except ImportError:
         has_tracemalloc = False
-
-    # Explicitly disable PYTHONTRACEMALLOC in case pytest's test suite is running
-    # with it enabled.
-    monkeypatch.delenv("PYTHONTRACEMALLOC", raising=False)
 
     pytester.makepyfile(
         """
@@ -820,7 +816,9 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
             open_file(p)
         """
     )
-    result = pytester.run(sys.executable, "-Xdev", "-m", "pytest")
+    # Explicitly disable PYTHONTRACEMALLOC in case pytest's test suite is running
+    # with it enabled.
+    result = pytester.run(sys.executable, "-Xdev", "-Xtracemalloc=0", "-Im", "pytest")
     expected_extra = (
         [
             "*ResourceWarning* unclosed file*",
@@ -832,9 +830,7 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
     )
     result.stdout.fnmatch_lines([*expected_extra, "*1 passed*"])
 
-    monkeypatch.setenv("PYTHONTRACEMALLOC", "20")
-
-    result = pytester.run(sys.executable, "-Xdev", "-m", "pytest")
+    result = pytester.run(sys.executable, "-Xdev", "-Xtracemalloc=20", "-Im", "pytest")
     expected_extra = (
         [
             "*ResourceWarning* unclosed file*",

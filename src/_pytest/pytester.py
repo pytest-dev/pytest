@@ -97,7 +97,7 @@ def pytest_addoption(parser: Parser) -> None:
         choices=("inprocess", "subprocess"),
         help=(
             "Run pytest sub runs in tests using an 'inprocess' "
-            "or 'subprocess' (python -m main) method"
+            "or 'subprocess' (python -Im main) method"
         ),
     )
 

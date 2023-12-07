@@ -1702,18 +1702,18 @@ def test_exception_handling_no_traceback(pytester: Pytester) -> None:
     "cmdline_args, warning_output",
     [
         (
-            ["-OO", "-m", "pytest", "-h"],
+            ["-OO", "-Im", "pytest", "-h"],
             ["warning :*PytestConfigWarning:*assert statements are not executed*"],
         ),
         (
-            ["-OO", "-m", "pytest"],
+            ["-OO", "-Im", "pytest"],
             [
                 "=*= warnings summary =*=",
                 "*PytestConfigWarning:*assert statements are not executed*",
             ],
         ),
         (
-            ["-OO", "-m", "pytest", "--assert=plain"],
+            ["-OO", "-Im", "pytest", "--assert=plain"],
             [
                 "=*= warnings summary =*=",
                 "*PytestConfigWarning: ASSERTIONS ARE NOT EXECUTED and FAILING TESTS WILL PASS.  "
