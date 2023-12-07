@@ -340,6 +340,12 @@ class TestReport(BaseReport):
                 str,
                 TerminalRepr,
             ] = None
+        elif call.excinfo and when in ("setup", "teardown"):
+            outcome = "passed"
+            longrepr = excinfo
+            TerminalWriter().write(
+                msg=f"<Warning! You are using '{when}' file in your code>", Yellow=True
+            )
         else:
             if not isinstance(excinfo, ExceptionInfo):
                 outcome = "failed"
