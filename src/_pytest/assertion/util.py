@@ -12,6 +12,7 @@ from typing import Mapping
 from typing import Optional
 from typing import Protocol
 from typing import Sequence
+from typing import Tuple
 from unicodedata import normalize
 
 import _pytest._code
@@ -341,12 +342,16 @@ def _compare_eq_iterable(
     # dynamic import to speedup pytest
     import difflib
 
-    left_formatting = pprint.pformat(left).splitlines()
-    right_formatting = pprint.pformat(right).splitlines()
+    if _is_empty_vs_non_empty(left, right):
+        left_formatting, right_formatting = _format_for_empty_and_non_empty(left, right)
+    else:
+        left_formatting = pprint.pformat(left).splitlines()
+        right_formatting = pprint.pformat(right).splitlines()
 
     # Re-format for different output lengths.
     lines_left = len(left_formatting)
     lines_right = len(right_formatting)
+
     if lines_left != lines_right:
         printer = PrettyPrinter()
         left_formatting = printer.pformat(left).splitlines()
@@ -369,6 +374,32 @@ def _compare_eq_iterable(
         ).splitlines()
     )
     return explanation
+
+
+def _is_empty_vs_non_empty(left: Iterable[Any], right: Iterable[Any]) -> bool:
+    is_left_empty = not any(left) if isinstance(left, Iterable) else not left
+    is_right_empty = not any(right) if isinstance(right, Iterable) else not right
+    return (is_left_empty and not is_right_empty) or (
+        not is_left_empty and is_right_empty
+    )
+
+
+def _format_for_empty_and_non_empty(
+    left: Iterable[Any], right: Iterable[Any]
+) -> Tuple[List[str], List[str]]:
+    if isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
+        if not left:
+            right_width = len(right[0]) + 4 if right else 80
+            right_formatting = pprint.pformat(right, width=right_width).splitlines()
+            left_formatting = pprint.pformat(left).splitlines()
+        else:
+            left_width = len(left[0]) + 4 if left else 80
+            left_formatting = pprint.pformat(left, width=left_width).splitlines()
+            right_formatting = pprint.pformat(right).splitlines()
+        return left_formatting, right_formatting
+    else:
+        # Fall back to default formatting
+        return pprint.pformat(left).splitlines(), pprint.pformat(right).splitlines()
 
 
 def _compare_eq_sequence(
