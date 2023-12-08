@@ -215,13 +215,22 @@ class TerminalWriter:
             return source
         else:
             try:
+                from pygments.formatters.terminal256 import TerminalTrueColorFormatter
+                from pygments.formatters.terminal256 import Terminal256Formatter
+
+                if os.environ.get('COLORTERM','') in ('truecolor', '24bit'):
+                    terminal_formatter = TerminalTrueColorFormatter()
+                elif '256' in os.environ.get('TERM', ''):
+                    terminal_formatter = Terminal256Formatter()
+                else:
+                    terminal_formatter = TerminalFormatter(
+                                            bg=os.getenv("PYTEST_THEME_MODE", "dark"),
+                                            style=os.getenv("PYTEST_THEME"),
+                                            )
                 highlighted: str = highlight(
                     source,
                     Lexer(),
-                    TerminalFormatter(
-                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                        style=os.getenv("PYTEST_THEME"),
-                    ),
+                    terminal_formatter,
                 )
                 return highlighted
             except pygments.util.ClassNotFound:
