@@ -215,13 +215,56 @@ class TerminalWriter:
             return source
         else:
             try:
-                from pygments.formatters.terminal256 import TerminalTrueColorFormatter
-                from pygments.formatters.terminal256 import Terminal256Formatter
+                from pygments.style import Style
+                from pygments.token import (
+                    Token,
+                    Comment,
+                    Keyword,
+                    Name,
+                    String,
+                    Error,
+                    Generic,
+                    Number,
+                    Operator,
+                )
 
+                from pygments.formatters.terminal256 import TerminalTrueColorFormatter
+
+                # Set the terminal formatter to better performing formatters is user environement allows for it
                 if os.environ.get('COLORTERM','') in ('truecolor', '24bit'):
                     terminal_formatter = TerminalTrueColorFormatter()
                 elif '256' in os.environ.get('TERM', ''):
-                    terminal_formatter = Terminal256Formatter()
+                    # Create new styling for 256 Formatter
+                    class Updated256Style(Style):
+                        # Set color values for the 256 Formatter
+                        styles = {
+                            Token: (""),
+                            Comment: ("ansigray"),
+                            Comment.Preproc: ("ansicyan"),
+                            Keyword: ("ansiblue"),
+                            Keyword.Type: ("ansicyan"),
+                            Operator.Word: ("ansimagenta"),
+                            Name.Builtin: ("ansicyan"),
+                            Name.Function: ("ansigreen"),
+                            Name.Namespace: ("ansicyan"),
+                            Name.Class: ("ansigreen"),
+                            Name.Exception: ("ansicyan"),
+                            Name.Decorator: ("ansibrightblack"),
+                            Name.Variable: ("ansired"),
+                            Name.Constant: ("ansired"),
+                            Name.Attribute: ("ansicyan"),
+                            Name.Tag: ("ansibrightblue"),
+                            String: ("ansiyellow"),
+                            Number: ("ansiblue"),
+                            Generic.Deleted: ("ansibrightred"),
+                            Generic.Inserted: ("ansigreen"),
+                            Generic.Subheading: ("ansimagenta"),
+                            Generic.Error: ("ansibrightred"),
+                            Error: ("ansibrightred"),
+                        }
+
+                    from pygments.formatters.terminal256 import Terminal256Formatter
+                    terminal_formatter = Terminal256Formatter(style=Updated256Style)
                 else:
                     terminal_formatter = TerminalFormatter(
                                             bg=os.getenv("PYTEST_THEME_MODE", "dark"),
