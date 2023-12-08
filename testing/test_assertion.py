@@ -416,14 +416,17 @@ class TestAssert_reprcompare:
 
         assert callequal(m1, []) == [
             "['This is som...e full diff.'] == []",
+            "",
             "Left contains one more item: 'This is some dummy test which shows the "
             "strange way in which Pycharm displays the full diff.'",
             "Use -v to get more diff",
         ]
         assert callequal(m1, [], verbose=True) == [
             "['This is som...e full diff.'] == []",
+            "",
             "Left contains one more item: 'This is some dummy test which shows the "
             "strange way in which Pycharm displays the full diff.'",
+            "",
             "Full diff:",
             "- []",
             "+ ['This is some dummy test which shows the strange way in which Pycharm "
@@ -432,6 +435,7 @@ class TestAssert_reprcompare:
 
         assert callequal(m2, []) == [
             "['This is som...e full diff.'] == []",
+            "",
             "Left contains one more item: 'This is some dummy test which shows the "
             "strange way in which Pycharm displays the full diff.This is some dummy test "
             "which shows the strange way in which Pycharm displays the full diff.'",
@@ -440,9 +444,11 @@ class TestAssert_reprcompare:
 
         assert callequal(m2, [], verbose=True) == [
             "['This is som...e full diff.'] == []",
+            "",
             "Left contains one more item: 'This is some dummy test which shows the "
             "strange way in which Pycharm displays the full diff.This is some dummy test "
             "which shows the strange way in which Pycharm displays the full diff.'",
+            "" "",
             "Full diff:",
             "- []",
             "+ ['This is some dummy test which shows the strange way in which Pycharm "
@@ -452,15 +458,18 @@ class TestAssert_reprcompare:
 
         assert callequal(m3, []) == [
             "['This is som...e full diff.'] == []",
+            "",
             "Left contains 2 more items, first extra item: 'This is some dummy test which shows the strange way in "
             "which Pycharm displays the full diff.'",
-            "Use -v to get more diff",
+            "" "Use -v to get more diff",
         ]
 
         assert callequal(m3, [], verbose=True) == [
             "['This is som...e full diff.'] == []",
+            "",
             "Left contains 2 more items, first extra item: 'This is some dummy test which shows the strange way in "
             "which Pycharm displays the full diff.'",
+            "",
             "Full diff:",
             "  [",
             "-  ,",
