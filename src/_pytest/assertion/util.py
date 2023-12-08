@@ -336,7 +336,7 @@ def _compare_eq_iterable(
         left_formatting, right_formatting = _format_for_empty_and_non_empty(left, right)
         lines_left = len(left_formatting)
         lines_right = len(right_formatting)
-        
+
         if lines_left > 1 or lines_right > 1:
         _surrounding_parens_on_own_lines(left_formatting)
         _surrounding_parens_on_own_lines(right_formatting)
