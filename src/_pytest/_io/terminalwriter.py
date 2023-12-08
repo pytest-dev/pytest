@@ -228,11 +228,39 @@ class TerminalWriter:
                     Operator,
                 )
 
-                from pygments.formatters.terminal256 import TerminalTrueColorFormatter
-
                 # Set the terminal formatter to better performing formatters is user environement allows for it
                 if os.environ.get('COLORTERM','') in ('truecolor', '24bit'):
-                    terminal_formatter = TerminalTrueColorFormatter()
+                    # Create new styling for True Color Formatter
+                    class UpdatedTrueStyle(Style):
+                        # Set color values for the True Color Formatter
+                        styles = {
+                            Token: (""),
+                            Comment: ("ansigray"),
+                            Comment.Preproc: ("ansicyan"),
+                            Keyword: ("ansiblue"),
+                            Keyword.Type: ("ansicyan"),
+                            Operator.Word: ("ansimagenta"),
+                            Name.Builtin: ("ansicyan"),
+                            Name.Function: ("ansigreen"),
+                            Name.Namespace: ("ansicyan"),
+                            Name.Class: ("ansigreen"),
+                            Name.Exception: ("ansicyan"),
+                            Name.Decorator: ("ansibrightblack"),
+                            Name.Variable: ("ansired"),
+                            Name.Constant: ("ansired"),
+                            Name.Attribute: ("ansicyan"),
+                            Name.Tag: ("ansibrightblue"),
+                            String: ("ansiyellow"),
+                            Number: ("ansiblue"),
+                            Generic.Deleted: ("ansibrightred"),
+                            Generic.Inserted: ("ansigreen"),
+                            Generic.Subheading: ("ansimagenta"),
+                            Generic.Error: ("ansibrightred"),
+                            Error: ("ansibrightblue"),
+                        }
+
+                    from pygments.formatters.terminal256 import TerminalTrueColorFormatter
+                    terminal_formatter = TerminalTrueColorFormatter(style=UpdatedTrueStyle)
                 elif '256' in os.environ.get('TERM', ''):
                     # Create new styling for 256 Formatter
                     class Updated256Style(Style):
