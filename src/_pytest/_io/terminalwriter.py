@@ -229,7 +229,7 @@ class TerminalWriter:
                 )
 
                 # Set the terminal formatter to better performing formatters is user environement allows for it
-                if os.environ.get('COLORTERM','') in ('truecolor', '24bit'):
+                if os.environ.get("COLORTERM", "") in ("truecolor", "24bit"):
                     # Create new styling for True Color Formatter
                     class UpdatedTrueStyle(Style):
                         # Set color values for the True Color Formatter
@@ -259,9 +259,14 @@ class TerminalWriter:
                             Error: ("ansibrightblue"),
                         }
 
-                    from pygments.formatters.terminal256 import TerminalTrueColorFormatter
-                    terminal_formatter = TerminalTrueColorFormatter(style=UpdatedTrueStyle)
-                elif '256' in os.environ.get('TERM', ''):
+                    from pygments.formatters.terminal256 import (
+                        TerminalTrueColorFormatter,
+                    )
+
+                    terminal_formatter = TerminalTrueColorFormatter(
+                        style=UpdatedTrueStyle
+                    )
+                elif "256" in os.environ.get("TERM", ""):
                     # Create new styling for 256 Formatter
                     class Updated256Style(Style):
                         # Set color values for the 256 Formatter
@@ -292,12 +297,13 @@ class TerminalWriter:
                         }
 
                     from pygments.formatters.terminal256 import Terminal256Formatter
+
                     terminal_formatter = Terminal256Formatter(style=Updated256Style)
                 else:
                     terminal_formatter = TerminalFormatter(
-                                            bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                                            style=os.getenv("PYTEST_THEME"),
-                                            )
+                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
+                        style=os.getenv("PYTEST_THEME"),
+                    )
                 highlighted: str = highlight(
                     source,
                     Lexer(),
