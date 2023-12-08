@@ -395,6 +395,27 @@ class TestAssert_reprcompare:
             "- eggs",
             "+ spam",
         ]
+        
+    def test_multiline_diff(self) -> None:
+        m = [
+            "This is some dummy test which shows the strange way in which Pycharm"
+            " displays the full diff."
+        ]
+        assert callequal(m, []) == [
+            "['This is som...e full diff.'] == []",
+            "Left contains one more item: 'This is some dummy test which shows the "
+            "strange way in which Pycharm displays the full diff.'",
+            'Use -v to get more diff',
+        ]
+        assert callequal(m, [], verbose=True) == [
+            "['This is som...e full diff.'] == []",
+            "Left contains one more item: 'This is some dummy test which shows the "
+            "strange way in which Pycharm displays the full diff.'",
+            "Full diff:",
+            "- []",
+            "+ ['This is some dummy test which shows the strange way in which Pycharm "
+            "displays the full diff.']",
+        ]
 
     def test_text_skipping(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs")
