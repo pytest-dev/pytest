@@ -821,6 +821,7 @@ Node
 
 .. autoclass:: _pytest.nodes.Node()
     :members:
+    :show-inheritance:
 
 Collector
 ~~~~~~~~~
