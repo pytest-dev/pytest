@@ -612,9 +612,29 @@ Hooks
 
 **Tutorial**: :ref:`writing-plugins`
 
-.. currentmodule:: _pytest.hookspec
-
 Reference to all hooks which can be implemented by :ref:`conftest.py files <localplugin>` and :ref:`plugins <plugins>`.
+
+@pytest.hookimpl
+~~~~~~~~~~~~~~~~
+
+.. function:: pytest.hookimpl
+    :decorator:
+
+    pytest's decorator for marking functions as hook implementations.
+
+    See :ref:`writinghooks` and :func:`pluggy.HookimplMarker`.
+
+@pytest.hookspec
+~~~~~~~~~~~~~~~~
+
+.. function:: pytest.hookspec
+    :decorator:
+
+    pytest's decorator for marking functions as hook specifications.
+
+    See :ref:`declaringhooks` and :func:`pluggy.HookspecMarker`.
+
+.. currentmodule:: _pytest.hookspec
 
 Bootstrapping hooks
 ~~~~~~~~~~~~~~~~~~~
@@ -801,6 +821,7 @@ Node
 
 .. autoclass:: _pytest.nodes.Node()
     :members:
+    :show-inheritance:
 
 Collector
 ~~~~~~~~~
@@ -1137,7 +1158,10 @@ When set (regardless of value), pytest will use color in terminal output.
 Exceptions
 ----------
 
-.. autoclass:: pytest.UsageError()
+.. autoexception:: pytest.UsageError()
+    :show-inheritance:
+
+.. autoexception:: pytest.FixtureLookupError()
     :show-inheritance:
 
 .. _`warnings ref`:

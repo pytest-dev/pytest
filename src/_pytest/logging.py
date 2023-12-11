@@ -522,7 +522,7 @@ class LogCaptureFixture:
             The levels of the loggers changed by this function will be
             restored to their initial values at the end of the test.
 
-        Will enable the requested logging level if it was disabled via :meth:`logging.disable`.
+        Will enable the requested logging level if it was disabled via :func:`logging.disable`.
 
         :param level: The level.
         :param logger: The logger to update. If not given, the root logger.
@@ -546,7 +546,7 @@ class LogCaptureFixture:
         the end of the 'with' statement the level is restored to its original
         value.
 
-        Will enable the requested logging level if it was disabled via :meth:`logging.disable`.
+        Will enable the requested logging level if it was disabled via :func:`logging.disable`.
 
         :param level: The level.
         :param logger: The logger to update. If not given, the root logger.
@@ -563,6 +563,22 @@ class LogCaptureFixture:
             logger_obj.setLevel(orig_level)
             self.handler.setLevel(handler_orig_level)
             logging.disable(original_disable_level)
+
+    @contextmanager
+    def filtering(self, filter_: logging.Filter) -> Generator[None, None, None]:
+        """Context manager that temporarily adds the given filter to the caplog's
+        :meth:`handler` for the 'with' statement block, and removes that filter at the
+        end of the block.
+
+        :param filter_: A custom :class:`logging.Filter` object.
+
+        .. versionadded:: 7.5
+        """
+        self.handler.addFilter(filter_)
+        try:
+            yield
+        finally:
+            self.handler.removeFilter(filter_)
 
 
 @fixture
