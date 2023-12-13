@@ -113,6 +113,7 @@ def exit(
 
     :param returncode:
         Return code to be used when exiting pytest.
+    :default returncode: None
 
     :param msg:
         Same as ``reason``, but deprecated. Will be removed in a future version, use ``reason`` instead.
