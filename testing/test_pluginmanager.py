@@ -98,6 +98,38 @@ class TestPytestPluginInteractions:
         config.pluginmanager.register(A())
         assert len(values) == 2
 
+    @pytest.mark.skipif(
+        not sys.platform.startswith("win"),
+        reason="requires a case-insensitive file system",
+    )
+    def test_conftestpath_case_sensitivity(self, pytester: Pytester) -> None:
+        """Unit test for issue #9765."""
+        config = pytester.parseconfig()
+        pytester.makepyfile(**{"tests/conftest.py": ""})
+
+        conftest = pytester.path.joinpath("tests/conftest.py")
+        conftest_upper_case = pytester.path.joinpath("TESTS/conftest.py")
+
+        mod = config.pluginmanager._importconftest(
+            conftest,
+            importmode="prepend",
+            rootpath=pytester.path,
+        )
+        plugin = config.pluginmanager.get_plugin(str(conftest))
+        assert plugin is mod
+
+        mod_uppercase = config.pluginmanager._importconftest(
+            conftest_upper_case,
+            importmode="prepend",
+            rootpath=pytester.path,
+        )
+        plugin_uppercase = config.pluginmanager.get_plugin(str(conftest_upper_case))
+        assert plugin_uppercase is mod_uppercase
+
+        # No str(conftestpath) normalization so conftest should be imported
+        # twice and modules should be different objects
+        assert mod is not mod_uppercase
+
     def test_hook_tracing(self, _config_for_test: Config) -> None:
         pytestpm = _config_for_test.pluginmanager  # fully initialized with plugins
         saveindent = []
@@ -368,7 +400,7 @@ class TestPytestPluginManager:
             pytester.makepyfile("pytest_plugins='xyz'"), root=pytester.path
         )
         with pytest.raises(ImportError):
-            pytestpm.consider_conftest(mod)
+            pytestpm.consider_conftest(mod, registration_name="unused")
 
 
 class TestPytestPluginManagerBootstrapming:
