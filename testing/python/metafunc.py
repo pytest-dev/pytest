@@ -993,6 +993,14 @@ class TestMetafunc:
         assert metafunc._calls[2].indices == dict(x=0, y=2)
         assert metafunc._calls[3].indices == dict(x=2, y=0)
 
+    def test_parametrize_with_unhashable_duplicate_values(self) -> None:
+        metafunc = self.Metafunc(lambda x: None)
+        metafunc.parametrize(("x"), [[1], [2], [1]])
+        assert len(metafunc._calls) == 3
+        assert metafunc._calls[0].indices == dict(x=0)
+        assert metafunc._calls[1].indices == dict(x=1)
+        assert metafunc._calls[2].indices == dict(x=2)
+
     def test_high_scoped_parametrize_reordering(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
