@@ -55,6 +55,7 @@ class TestMetafunc:
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
         definition._fixtureinfo = fixtureinfo
+        definition.config = config
         definition.session = SessionMock(FixtureManagerMock({}))
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
