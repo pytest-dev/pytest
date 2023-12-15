@@ -177,7 +177,7 @@ arguments they only pass on to the superclass.
     resolved in future versions as we slowly get rid of the :pypi:`py`
     dependency (see :issue:`9283` for a longer discussion).
 
-Due to the ongoing migration of methods like :meth:`~_pytest.Item.reportinfo`
+Due to the ongoing migration of methods like :meth:`~pytest.Item.reportinfo`
 which still is expected to return a ``py.path.local`` object, nodes still have
 both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
 no matter what argument was used in the constructor. We expect to deprecate the
@@ -336,7 +336,7 @@ Diamond inheritance between :class:`pytest.Collector` and :class:`pytest.Item`
 
 .. deprecated:: 7.0
 
-Defining a custom pytest node type which is both an :class:`pytest.Item <Item>` and a :class:`pytest.Collector <Collector>` (e.g. :class:`pytest.File <File>`) now issues a warning.
+Defining a custom pytest node type which is both an :class:`~pytest.Item` and a :class:`~pytest.Collector` (e.g. :class:`~pytest.File`) now issues a warning.
 It was never sanely supported and triggers hard to debug errors.
 
 Some plugins providing linting/code analysis have been using this as a hack.
@@ -348,8 +348,8 @@ Instead, a separate collector node should be used, which collects the item. See
 
 .. _uncooperative-constructors-deprecated:
 
-Constructors of custom :class:`pytest.Node` subclasses should take ``**kwargs``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Constructors of custom :class:`~_pytest.nodes.Node` subclasses should take ``**kwargs``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 7.0
 
@@ -645,7 +645,7 @@ By using ``legacy`` you will keep using the legacy/xunit1 format when upgrading 
 pytest 6.0, where the default format will be ``xunit2``.
 
 In order to let users know about the transition, pytest will issue a warning in case
-the ``--junitxml`` option is given in the command line but ``junit_family`` is not explicitly
+the ``--junit-xml`` option is given in the command line but ``junit_family`` is not explicitly
 configured in ``pytest.ini``.
 
 Services known to support the ``xunit2`` format:

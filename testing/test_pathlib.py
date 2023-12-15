@@ -1,3 +1,4 @@
+import errno
 import os.path
 import pickle
 import sys
@@ -18,13 +19,16 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_extended_length_path_str
 from _pytest.pathlib import get_lock_path
 from _pytest.pathlib import import_path
+from _pytest.pathlib import ImportMode
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import insert_missing_modules
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
+from _pytest.pathlib import safe_exists
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
+from _pytest.pytester import Pytester
 from _pytest.tmpdir import TempPathFactory
 
 
@@ -232,15 +236,15 @@ class TestImportPath:
         name = "pointsback123"
         p = tmp_path.joinpath(name + ".py")
         p.touch()
-        for ending in (".pyc", ".pyo"):
-            mod = ModuleType(name)
-            pseudopath = tmp_path.joinpath(name + ending)
-            pseudopath.touch()
-            mod.__file__ = str(pseudopath)
-            monkeypatch.setitem(sys.modules, name, mod)
-            newmod = import_path(p, root=tmp_path)
-            assert mod == newmod
-        monkeypatch.undo()
+        with monkeypatch.context() as mp:
+            for ending in (".pyc", ".pyo"):
+                mod = ModuleType(name)
+                pseudopath = tmp_path.joinpath(name + ending)
+                pseudopath.touch()
+                mod.__file__ = str(pseudopath)
+                mp.setitem(sys.modules, name, mod)
+                newmod = import_path(p, root=tmp_path)
+                assert mod == newmod
         mod = ModuleType(name)
         pseudopath = tmp_path.joinpath(name + "123.py")
         pseudopath.touch()
@@ -342,18 +346,18 @@ def test_resolve_package_path(tmp_path: Path) -> None:
     (pkg / "subdir").mkdir()
     (pkg / "subdir/__init__.py").touch()
     assert resolve_package_path(pkg) == pkg
-    assert resolve_package_path(pkg.joinpath("subdir", "__init__.py")) == pkg
+    assert resolve_package_path(pkg / "subdir/__init__.py") == pkg
 
 
 def test_package_unimportable(tmp_path: Path) -> None:
     pkg = tmp_path / "pkg1-1"
     pkg.mkdir()
     pkg.joinpath("__init__.py").touch()
-    subdir = pkg.joinpath("subdir")
+    subdir = pkg / "subdir"
     subdir.mkdir()
-    pkg.joinpath("subdir/__init__.py").touch()
+    (pkg / "subdir/__init__.py").touch()
     assert resolve_package_path(subdir) == subdir
-    xyz = subdir.joinpath("xyz.py")
+    xyz = subdir / "xyz.py"
     xyz.touch()
     assert resolve_package_path(xyz) == subdir
     assert not resolve_package_path(pkg)
@@ -585,6 +589,14 @@ class TestImportLibMode:
         result = module_name_from_path(Path("/home/foo/test_foo.py"), Path("/bar"))
         assert result == "home.foo.test_foo"
 
+        # Importing __init__.py files should return the package as module name.
+        result = module_name_from_path(tmp_path / "src/app/__init__.py", tmp_path)
+        assert result == "src.app"
+
+        # Unless __init__.py file is at the root, in which case we cannot have an empty module name.
+        result = module_name_from_path(tmp_path / "__init__.py", tmp_path)
+        assert result == "__init__"
+
     def test_insert_missing_modules(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
     ) -> None:
@@ -615,3 +627,88 @@ class TestImportLibMode:
         assert sorted(modules) == ["xxx", "xxx.tests", "xxx.tests.foo"]
         assert modules["xxx"].tests is modules["xxx.tests"]
         assert modules["xxx.tests"].foo is modules["xxx.tests.foo"]
+
+    def test_importlib_package(self, monkeypatch: MonkeyPatch, tmp_path: Path):
+        """
+        Importing a package using --importmode=importlib should not import the
+        package's __init__.py file more than once (#11306).
+        """
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.syspath_prepend(tmp_path)
+
+        package_name = "importlib_import_package"
+        tmp_path.joinpath(package_name).mkdir()
+        init = tmp_path.joinpath(f"{package_name}/__init__.py")
+        init.write_text(
+            dedent(
+                """
+                from .singleton import Singleton
+
+                instance = Singleton()
+                """
+            ),
+            encoding="ascii",
+        )
+        singleton = tmp_path.joinpath(f"{package_name}/singleton.py")
+        singleton.write_text(
+            dedent(
+                """
+                class Singleton:
+                    INSTANCES = []
+
+                    def __init__(self) -> None:
+                        self.INSTANCES.append(self)
+                        if len(self.INSTANCES) > 1:
+                            raise RuntimeError("Already initialized")
+                """
+            ),
+            encoding="ascii",
+        )
+
+        mod = import_path(init, root=tmp_path, mode=ImportMode.importlib)
+        assert len(mod.instance.INSTANCES) == 1
+
+    def test_importlib_root_is_package(self, pytester: Pytester) -> None:
+        """
+        Regression for importing a `__init__`.py file that is at the root
+        (#11417).
+        """
+        pytester.makepyfile(__init__="")
+        pytester.makepyfile(
+            """
+            def test_my_test():
+                assert True
+            """
+        )
+
+        result = pytester.runpytest("--import-mode=importlib")
+        result.stdout.fnmatch_lines("* 1 passed *")
+
+
+def test_safe_exists(tmp_path: Path) -> None:
+    d = tmp_path.joinpath("some_dir")
+    d.mkdir()
+    assert safe_exists(d) is True
+
+    f = tmp_path.joinpath("some_file")
+    f.touch()
+    assert safe_exists(f) is True
+
+    # Use unittest.mock() as a context manager to have a very narrow
+    # patch lifetime.
+    p = tmp_path.joinpath("some long filename" * 100)
+    with unittest.mock.patch.object(
+        Path,
+        "exists",
+        autospec=True,
+        side_effect=OSError(errno.ENAMETOOLONG, "name too long"),
+    ):
+        assert safe_exists(p) is False
+
+    with unittest.mock.patch.object(
+        Path,
+        "exists",
+        autospec=True,
+        side_effect=ValueError("name too long"),
+    ):
+        assert safe_exists(p) is False

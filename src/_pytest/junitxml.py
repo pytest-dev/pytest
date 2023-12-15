@@ -369,7 +369,7 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
     __tracebackhide__ = True
 
     def record_func(name: str, value: object) -> None:
-        """No-op function in case --junitxml was not passed in the command-line."""
+        """No-op function in case --junit-xml was not passed in the command-line."""
         __tracebackhide__ = True
         _check_record_param_type("name", name)
 
@@ -502,6 +502,10 @@ class LogXML:
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
         reporter = self.node_reporters.pop((nodeid, workernode))
+
+        for propname, propvalue in report.user_properties:
+            reporter.add_property(propname, str(propvalue))
+
         if reporter is not None:
             reporter.finalize()
 
@@ -598,9 +602,6 @@ class LogXML:
         if report.when == "teardown":
             reporter = self._opentestcase(report)
             reporter.write_captured_output(report)
-
-            for propname, propvalue in report.user_properties:
-                reporter.add_property(propname, str(propvalue))
 
             self.finalize(report)
             report_wid = getattr(report, "worker_id", None)

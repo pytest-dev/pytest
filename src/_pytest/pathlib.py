@@ -623,6 +623,11 @@ def module_name_from_path(path: Path, root: Path) -> str:
         # Use the parts for the relative path to the root path.
         path_parts = relative_path.parts
 
+    # Module name for packages do not contain the __init__ file, unless
+    # the `__init__.py` file is at the root.
+    if len(path_parts) >= 2 and path_parts[-1] == "__init__":
+        path_parts = path_parts[:-1]
+
     return ".".join(path_parts)
 
 
@@ -676,7 +681,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     result = None
     for parent in itertools.chain((path,), path.parents):
         if parent.is_dir():
-            if not parent.joinpath("__init__.py").is_file():
+            if not (parent / "__init__.py").is_file():
                 break
             if not parent.name.isidentifier():
                 break
@@ -769,3 +774,13 @@ def bestrelpath(directory: Path, dest: Path) -> str:
         # Forward from base to dest.
         *reldest.parts,
     )
+
+
+def safe_exists(p: Path) -> bool:
+    """Like Path.exists(), but account for input arguments that might be too long (#11394)."""
+    try:
+        return p.exists()
+    except (ValueError, OSError):
+        # ValueError: stat: path too long for Windows
+        # OSError: [WinError 123] The filename, directory name, or volume label syntax is incorrect
+        return False

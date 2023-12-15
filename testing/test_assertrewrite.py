@@ -685,6 +685,25 @@ class TestAssertionRewrite:
         assert msg is not None
         assert "<MY42 object> < 0" in msg
 
+    def test_assert_handling_raise_in__iter__(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
+            class A:
+                def __iter__(self):
+                    raise ValueError()
+
+                def __eq__(self, o: object) -> bool:
+                    return self is o
+
+                def __repr__(self):
+                    return "<A object>"
+
+            assert A() == A()
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*E*assert <A object> == <A object>"])
+
     def test_formatchar(self) -> None:
         def f() -> None:
             assert "%test" == "test"  # type: ignore[comparison-overlap]
@@ -876,7 +895,11 @@ def test_rewritten():
         )
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
-    def test_pyc_vs_pyo(self, pytester: Pytester, monkeypatch) -> None:
+    def test_pyc_vs_pyo(
+        self,
+        pytester: Pytester,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         pytester.makepyfile(
             """
             import pytest
@@ -886,13 +909,13 @@ def test_rewritten():
         )
         p = make_numbered_dir(root=Path(pytester.path), prefix="runpytest-")
         tmp = "--basetemp=%s" % p
-        monkeypatch.setenv("PYTHONOPTIMIZE", "2")
-        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
-        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
-        assert pytester.runpytest_subprocess(tmp).ret == 0
-        tagged = "test_pyc_vs_pyo." + PYTEST_TAG
-        assert tagged + ".pyo" in os.listdir("__pycache__")
-        monkeypatch.undo()
+        with monkeypatch.context() as mp:
+            mp.setenv("PYTHONOPTIMIZE", "2")
+            mp.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+            mp.delenv("PYTHONPYCACHEPREFIX", raising=False)
+            assert pytester.runpytest_subprocess(tmp).ret == 0
+            tagged = "test_pyc_vs_pyo." + PYTEST_TAG
+            assert tagged + ".pyo" in os.listdir("__pycache__")
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
         assert pytester.runpytest_subprocess(tmp).ret == 1
@@ -1524,6 +1547,27 @@ class TestIssue11028:
         result.stdout.fnmatch_lines(["*assert 4 > 5", "*where 5 = add_one(4)"])
 
 
+class TestIssue11239:
+    def test_assertion_walrus_different_test_cases(self, pytester: Pytester) -> None:
+        """Regression for (#11239)
+
+        Walrus operator rewriting would leak to separate test cases if they used the same variables.
+        """
+        pytester.makepyfile(
+            """
+            def test_1():
+                state = {"x": 2}.get("x")
+                assert state is not None
+
+            def test_2():
+                db = {"x": 2}
+                assert (state := db.get("x")) is not None
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+
 @pytest.mark.skipif(
     sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
 )
@@ -2012,12 +2056,14 @@ class TestReprSizeVerbosity:
     )
     def test_get_maxsize_for_saferepr(self, verbose: int, expected_size) -> None:
         class FakeConfig:
-            def getoption(self, name: str) -> int:
-                assert name == "verbose"
+            def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
                 return verbose
 
         config = FakeConfig()
         assert _get_maxsize_for_saferepr(cast(Config, config)) == expected_size
+
+    def test_get_maxsize_for_saferepr_no_config(self) -> None:
+        assert _get_maxsize_for_saferepr(None) == DEFAULT_REPR_MAX_SIZE
 
     def create_test_file(self, pytester: Pytester, size: int) -> None:
         pytester.makepyfile(

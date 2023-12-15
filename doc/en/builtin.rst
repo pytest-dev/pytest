@@ -22,7 +22,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collected 0 items
-    cache -- .../_pytest/cacheprovider.py:528
+    cache -- .../_pytest/cacheprovider.py:532
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -105,7 +105,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capsys.readouterr()
                 assert captured.out == "hello\n"
 
-    doctest_namespace [session scope] -- .../_pytest/doctest.py:737
+    doctest_namespace [session scope] -- .../_pytest/doctest.py:757
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 

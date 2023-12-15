@@ -1,3 +1,5 @@
+:tocdepth: 3
+
 .. _`api-reference`:
 
 API Reference
@@ -77,7 +79,7 @@ pytest.xfail
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.exit(reason, [returncode=False, msg=None])
+.. autofunction:: pytest.exit(reason, [returncode=None, msg=None])
 
 pytest.main
 ~~~~~~~~~~~
@@ -237,28 +239,31 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=None, *, reason=None, raises=None, run=True, strict=False)
+.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=xfail_strict)
 
-    :type condition: bool or str
-    :param condition:
+    :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
-        :ref:`condition string <string conditions>`). If a bool, you also have
+        :ref:`condition string <string conditions>`). If a ``bool``, you also have
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
     :keyword str reason:
         Reason why the test function is marked as xfail.
     :keyword Type[Exception] raises:
-        Exception subclass (or tuple of subclasses) expected to be raised by the test function; other exceptions will fail the test.
+        Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
+        Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
+
     :keyword bool run:
-        If the test function should actually be executed. If ``False``, the function will always xfail and will
+        Whether the test function should actually be executed. If ``False``, the function will always xfail and will
         not be executed (useful if a function is segfaulting).
     :keyword bool strict:
-        * If ``False`` (the default) the function will be shown in the terminal output as ``xfailed`` if it fails
+        * If ``False`` the function will be shown in the terminal output as ``xfailed`` if it fails
           and as ``xpass`` if it passes. In both cases this will not cause the test suite to fail as a whole. This
           is particularly useful to mark *flaky* tests (tests that fail at random) to be tackled later.
         * If ``True``, the function will be shown in the terminal output as ``xfailed`` if it fails, but if it
           unexpectedly passes then it will **fail** the test suite. This is particularly useful to mark functions
           that are always failing and there should be a clear indication if they unexpectedly start to pass (for example
           a new release of a library fixes a known bug).
+
+        Defaults to :confval:`xfail_strict`, which is ``False`` by default.
 
 
 Custom marks
@@ -607,9 +612,29 @@ Hooks
 
 **Tutorial**: :ref:`writing-plugins`
 
-.. currentmodule:: _pytest.hookspec
-
 Reference to all hooks which can be implemented by :ref:`conftest.py files <localplugin>` and :ref:`plugins <plugins>`.
+
+@pytest.hookimpl
+~~~~~~~~~~~~~~~~
+
+.. function:: pytest.hookimpl
+    :decorator:
+
+    pytest's decorator for marking functions as hook implementations.
+
+    See :ref:`writinghooks` and :func:`pluggy.HookimplMarker`.
+
+@pytest.hookspec
+~~~~~~~~~~~~~~~~
+
+.. function:: pytest.hookspec
+    :decorator:
+
+    pytest's decorator for marking functions as hook specifications.
+
+    See :ref:`declaringhooks` and :func:`pluggy.HookspecMarker`.
+
+.. currentmodule:: _pytest.hookspec
 
 Bootstrapping hooks
 ~~~~~~~~~~~~~~~~~~~
@@ -796,6 +821,7 @@ Node
 
 .. autoclass:: _pytest.nodes.Node()
     :members:
+    :show-inheritance:
 
 Collector
 ~~~~~~~~~
@@ -978,10 +1004,10 @@ TestShortLogReport
 .. autoclass:: pytest.TestShortLogReport()
     :members:
 
-_Result
+Result
 ~~~~~~~
 
-Result object used within :ref:`hook wrappers <hookwrapper>`, see :py:class:`_Result in the pluggy documentation <pluggy._callers._Result>` for more information.
+Result object used within :ref:`hook wrappers <hookwrapper>`, see :py:class:`Result in the pluggy documentation <pluggy.Result>` for more information.
 
 Stash
 ~~~~~
@@ -1132,7 +1158,10 @@ When set (regardless of value), pytest will use color in terminal output.
 Exceptions
 ----------
 
-.. autoclass:: pytest.UsageError()
+.. autoexception:: pytest.UsageError()
+    :show-inheritance:
+
+.. autoexception:: pytest.FixtureLookupError()
     :show-inheritance:
 
 .. _`warnings ref`:
@@ -1638,11 +1667,11 @@ passed multiple times. The expected format is ``name=value``. For example::
    Additionally, ``pytest`` will attempt to intelligently identify and ignore a
    virtualenv by the presence of an activation script.  Any directory deemed to
    be the root of a virtual environment will not be considered during test
-   collection unless ``‑‑collect‑in‑virtualenv`` is given.  Note also that
-   ``norecursedirs`` takes precedence over ``‑‑collect‑in‑virtualenv``; e.g. if
+   collection unless ``--collect-in-virtualenv`` is given.  Note also that
+   ``norecursedirs`` takes precedence over ``--collect-in-virtualenv``; e.g. if
    you intend to run tests in a virtualenv with a base directory that matches
    ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
-   ``‑‑collect‑in‑virtualenv`` flag.
+   ``--collect-in-virtualenv`` flag.
 
 
 .. confval:: python_classes
@@ -1817,6 +1846,19 @@ passed multiple times. The expected format is ``name=value``. For example::
             clean_db
 
 
+.. confval:: verbosity_assertions
+
+    Set a verbosity level specifically for assertion related output, overriding the application wide level.
+
+    .. code-block:: ini
+
+        [pytest]
+        verbosity_assertions = 2
+
+    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    "auto" can be used to explicitly use the global verbosity level.
+
+
 .. confval:: xfail_strict
 
     If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
@@ -1890,8 +1932,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
       --lfnf={all,none}, --last-failed-no-failures={all,none}
-                            Which tests to run with no previously (known)
-                            failures
+                            With ``--lf``, determines whether to execute tests
+                            when there are no previously (known) failures or
+                            when no cached ``lastfailed`` data was found.
+                            ``all`` (the default) runs the full test suite
+                            again. ``none`` just emits a message about no known
+                            failures and exits successfully.
       --sw, --stepwise      Exit on test failure and continue from last failing
                             test next time
       --sw-skip, --stepwise-skip

@@ -121,13 +121,18 @@ def pytest_configure(config: Config) -> None:
 
 class LsofFdLeakChecker:
     def get_open_files(self) -> List[Tuple[str, str]]:
+        if sys.version_info >= (3, 11):
+            # New in Python 3.11, ignores utf-8 mode
+            encoding = locale.getencoding()
+        else:
+            encoding = locale.getpreferredencoding(False)
         out = subprocess.run(
             ("lsof", "-Ffn0", "-p", str(os.getpid())),
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
             text=True,
-            encoding=locale.getpreferredencoding(False),
+            encoding=encoding,
         ).stdout
 
         def isopen(line: str) -> bool:
@@ -625,14 +630,6 @@ class RunResult:
         )
 
 
-class CwdSnapshot:
-    def __init__(self) -> None:
-        self.__saved = os.getcwd()
-
-    def restore(self) -> None:
-        os.chdir(self.__saved)
-
-
 class SysModulesSnapshot:
     def __init__(self, preserve: Optional[Callable[[str], bool]] = None) -> None:
         self.__preserve = preserve
@@ -696,15 +693,14 @@ class Pytester:
         #: be added to the list.  The type of items to add to the list depends on
         #: the method using them so refer to them for details.
         self.plugins: List[Union[str, _PluggyPlugin]] = []
-        self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
-        self.chdir()
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
         self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
 
         self._monkeypatch = mp = monkeypatch
+        self.chdir()
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self._test_tmproot))
         # Ensure no unexpected caching via tox.
         mp.delenv("TOX_ENV_DIR", raising=False)
@@ -735,7 +731,6 @@ class Pytester:
         """
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
-        self._cwd_snapshot.restore()
 
     def __take_sys_modules_snapshot(self) -> SysModulesSnapshot:
         # Some zope modules used by twisted-related tests keep internal state
@@ -751,7 +746,7 @@ class Pytester:
 
     def make_hook_recorder(self, pluginmanager: PytestPluginManager) -> HookRecorder:
         """Create a new :class:`HookRecorder` for a :class:`PytestPluginManager`."""
-        pluginmanager.reprec = reprec = HookRecorder(pluginmanager, _ispytest=True)
+        pluginmanager.reprec = reprec = HookRecorder(pluginmanager, _ispytest=True)  # type: ignore[attr-defined]
         self._request.addfinalizer(reprec.finish_recording)
         return reprec
 
@@ -760,7 +755,7 @@ class Pytester:
 
         This is done automatically upon instantiation.
         """
-        os.chdir(self.path)
+        self._monkeypatch.chdir(self.path)
 
     def _makefile(
         self,
@@ -829,7 +824,7 @@ class Pytester:
         return self._makefile(ext, args, kwargs)
 
     def makeconftest(self, source: str) -> Path:
-        """Write a contest.py file.
+        """Write a conftest.py file.
 
         :param source: The contents.
         :returns: The conftest.py file.
@@ -1049,7 +1044,7 @@ class Pytester:
         The calling test instance (class containing the test method) must
         provide a ``.getrunner()`` method which should return a runner which
         can run the test protocol for a single item, e.g.
-        :py:func:`_pytest.runner.runtestprotocol`.
+        ``_pytest.runner.runtestprotocol``.
         """
         # used from runner functional tests
         item = self.getitem(source)
@@ -1073,7 +1068,7 @@ class Pytester:
         return self.inline_run(*values)
 
     def inline_genitems(self, *args) -> Tuple[List[Item], HookRecorder]:
-        """Run ``pytest.main(['--collectonly'])`` in-process.
+        """Run ``pytest.main(['--collect-only'])`` in-process.
 
         Runs the :py:func:`pytest.main` function to run all of pytest inside
         the test process itself like :py:meth:`inline_run`, but returns a
@@ -1400,7 +1395,7 @@ class Pytester:
         :param stdin:
             Optional standard input.
 
-            - If it is :py:attr:`CLOSE_STDIN` (Default), then this method calls
+            - If it is ``CLOSE_STDIN`` (Default), then this method calls
               :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
               the standard input is closed immediately after the new command is
               started.

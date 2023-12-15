@@ -112,7 +112,7 @@ def exit(
         only because `msg` is deprecated.
 
     :param returncode:
-        Return code to be used when exiting pytest.
+        Return code to be used when exiting pytest. None means the same as ``0`` (no error), same as :func:`sys.exit`.
 
     :param msg:
         Same as ``reason``, but deprecated. Will be removed in a future version, use ``reason`` instead.
@@ -232,6 +232,9 @@ def xfail(reason: str = "") -> NoReturn:
     """Imperatively xfail an executing test or setup function with the given reason.
 
     This function should be called only during testing (setup, call or teardown).
+
+    No other code is executed after using ``xfail()`` (it is implemented
+    internally by raising an exception).
 
     :param reason:
         The message to show the user as reason for the xfail.

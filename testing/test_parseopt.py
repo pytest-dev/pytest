@@ -290,9 +290,10 @@ class TestParser:
 
 
 def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-    try:
-        encoding = locale.getencoding()  # New in Python 3.11, ignores utf-8 mode
-    except AttributeError:
+    if sys.version_info >= (3, 11):
+        # New in Python 3.11, ignores utf-8 mode
+        encoding = locale.getencoding()
+    else:
         encoding = locale.getpreferredencoding(False)
     try:
         bash_version = subprocess.run(

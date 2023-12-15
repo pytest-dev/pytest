@@ -1,4 +1,6 @@
+import abc
 import os
+import pathlib
 import warnings
 from functools import cached_property
 from inspect import signature
@@ -19,6 +21,8 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
+import pluggy
+
 import _pytest._code
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
@@ -27,6 +31,7 @@ from _pytest._code.code import Traceback
 from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
+from _pytest.config.compat import _check_path
 from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
@@ -94,14 +99,6 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
         yield nodeid
 
 
-def _check_path(path: Path, fspath: LEGACY_PATH) -> None:
-    if Path(fspath) != path:
-        raise ValueError(
-            f"Path({fspath!r}) != {path!r}\n"
-            "if both path and fspath are given they need to be equal"
-        )
-
-
 def _imply_path(
     node_type: Type["Node"],
     path: Optional[Path],
@@ -126,7 +123,21 @@ def _imply_path(
 _NodeType = TypeVar("_NodeType", bound="Node")
 
 
-class NodeMeta(type):
+class NodeMeta(abc.ABCMeta):
+    """Metaclass used by :class:`Node` to enforce that direct construction raises
+    :class:`Failed`.
+
+    This behaviour supports the indirection introduced with :meth:`Node.from_parent`,
+    the named constructor to be used instead of direct construction. The design
+    decision to enforce indirection with :class:`NodeMeta` was made as a
+    temporary aid for refactoring the collection tree, which was diagnosed to
+    have :class:`Node` objects whose creational patterns were overly entangled.
+    Once the refactoring is complete, this metaclass can be removed.
+
+    See https://github.com/pytest-dev/pytest/projects/3 for an overview of the
+    progress on detangling the :class:`Node` classes.
+    """
+
     def __call__(self, *k, **kw):
         msg = (
             "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
@@ -156,7 +167,7 @@ class NodeMeta(type):
             return super().__call__(*k, **known_kw)
 
 
-class Node(metaclass=NodeMeta):
+class Node(abc.ABC, metaclass=NodeMeta):
     r"""Base class of :class:`Collector` and :class:`Item`, the components of
     the test collection tree.
 
@@ -167,8 +178,8 @@ class Node(metaclass=NodeMeta):
     # Implemented in the legacypath plugin.
     #: A ``LEGACY_PATH`` copy of the :attr:`path` attribute. Intended for usage
     #: for methods not migrated to ``pathlib.Path`` yet, such as
-    #: :meth:`Item.reportinfo`. Will be deprecated in a future release, prefer
-    #: using :attr:`path` instead.
+    #: :meth:`Item.reportinfo <pytest.Item.reportinfo>`. Will be deprecated in
+    #: a future release, prefer using :attr:`path` instead.
     fspath: LEGACY_PATH
 
     # Use __slots__ to make attribute access faster.
@@ -219,7 +230,7 @@ class Node(metaclass=NodeMeta):
         if path is None and fspath is None:
             path = getattr(parent, "path", None)
         #: Filesystem path where this node was collected from (can be None).
-        self.path: Path = _imply_path(type(self), path, fspath=fspath)
+        self.path: pathlib.Path = _imply_path(type(self), path, fspath=fspath)
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -264,7 +275,7 @@ class Node(metaclass=NodeMeta):
         return cls._create(parent=parent, **kw)
 
     @property
-    def ihook(self):
+    def ihook(self) -> pluggy.HookRelay:
         """fspath-sensitive hook proxy used to call pytest hooks."""
         return self.session.gethookproxy(self.path)
 
@@ -525,7 +536,7 @@ def get_fslocation_from_item(node: "Node") -> Tuple[Union[str, Path], Optional[i
     return getattr(node, "fspath", "unknown location"), -1
 
 
-class Collector(Node):
+class Collector(Node, abc.ABC):
     """Base class of all collectors.
 
     Collector create children through `collect()` and thus iteratively build
@@ -535,6 +546,7 @@ class Collector(Node):
     class CollectError(Exception):
         """An error during collection, contains a custom message."""
 
+    @abc.abstractmethod
     def collect(self) -> Iterable[Union["Item", "Collector"]]:
         """Collect children (items and collectors) for this collector."""
         raise NotImplementedError("abstract")
@@ -579,7 +591,7 @@ def _check_initialpaths_for_relpath(session: "Session", path: Path) -> Optional[
     return None
 
 
-class FSCollector(Collector):
+class FSCollector(Collector, abc.ABC):
     """Base class for filesystem collectors."""
 
     def __init__(
@@ -657,14 +669,14 @@ class FSCollector(Collector):
         return self.session.isinitpath(path)
 
 
-class File(FSCollector):
+class File(FSCollector, abc.ABC):
     """Base class for collecting tests from a file.
 
     :ref:`non-python tests`.
     """
 
 
-class Item(Node):
+class Item(Node, abc.ABC):
     """Base class of all test invocation items.
 
     Note that for a single function there might be multiple test invocation items.
@@ -730,6 +742,7 @@ class Item(Node):
                 PytestWarning,
             )
 
+    @abc.abstractmethod
     def runtest(self) -> None:
         """Run the test case for this item.
 

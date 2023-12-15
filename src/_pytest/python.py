@@ -1,4 +1,5 @@
 """Python test discovery, setup and run of test functions."""
+import abc
 import dataclasses
 import enum
 import fnmatch
@@ -381,7 +382,7 @@ del _EmptyClass
 # fmt: on
 
 
-class PyCollector(PyobjMixin, nodes.Collector):
+class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
     def funcnamefilter(self, name: str) -> bool:
         return self._matches_prefix_or_glob_option("python_functions", name)
 
@@ -474,7 +475,9 @@ class PyCollector(PyobjMixin, nodes.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
 
-        definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
+        definition: FunctionDefinition = FunctionDefinition.from_parent(
+            self, name=name, callobj=funcobj
+        )
         fixtureinfo = definition._fixtureinfo
 
         # pytest_generate_tests impls call metafunc.parametrize() which fills
@@ -1001,8 +1004,18 @@ class IdMaker:
             # Suffix non-unique IDs to make them unique.
             for index, id in enumerate(resolved_ids):
                 if id_counts[id] > 1:
-                    resolved_ids[index] = f"{id}{id_suffixes[id]}"
+                    suffix = ""
+                    if id and id[-1].isdigit():
+                        suffix = "_"
+                    new_id = f"{id}{suffix}{id_suffixes[id]}"
+                    while new_id in set(resolved_ids):
+                        id_suffixes[id] += 1
+                        new_id = f"{id}{suffix}{id_suffixes[id]}"
+                    resolved_ids[index] = new_id
                     id_suffixes[id] += 1
+        assert len(resolved_ids) == len(
+            set(resolved_ids)
+        ), f"Internal error: {resolved_ids=}"
         return resolved_ids
 
     def _resolve_ids(self) -> Iterable[str]:
@@ -1124,9 +1137,9 @@ class CallSpec2:
     # arg name -> arg index.
     indices: Dict[str, int] = dataclasses.field(default_factory=dict)
     # Used for sorting parametrized resources.
-    _arg2scope: Dict[str, Scope] = dataclasses.field(default_factory=dict)
+    _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # Parts which will be added to the item's name in `[..]` separated by "-".
-    _idlist: List[str] = dataclasses.field(default_factory=list)
+    _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: List[Mark] = dataclasses.field(default_factory=list)
 
@@ -1142,7 +1155,7 @@ class CallSpec2:
     ) -> "CallSpec2":
         params = self.params.copy()
         indices = self.indices.copy()
-        arg2scope = self._arg2scope.copy()
+        arg2scope = dict(self._arg2scope)
         for arg, val, param_index in zip(argnames, valset, param_indices):
             if arg in params:
                 raise ValueError(f"duplicate {arg!r}")
@@ -1198,7 +1211,7 @@ def resolve_values_indices_in_parametersets(
     argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(
         dict
     )
-    argvalues_count: Dict[str, int] = defaultdict(lambda: 0)
+    argvalues_count: Dict[str, int] = defaultdict(int)
     for i, argname in enumerate(argnames):
         argname_indices = []
         for parameterset in parametersets:
@@ -1849,9 +1862,8 @@ class Function(PyobjMixin, nodes.Item):
             self.keywords.update(keywords)
 
         if fixtureinfo is None:
-            fixtureinfo = self.session._fixturemanager.getfixtureinfo(
-                self, self.obj, self.cls, funcargs=True
-            )
+            fm = self.session._fixturemanager
+            fixtureinfo = fm.getfixtureinfo(self, self.obj, self.cls)
         self._fixtureinfo: FuncFixtureInfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
@@ -1863,7 +1875,7 @@ class Function(PyobjMixin, nodes.Item):
 
     def _initrequest(self) -> None:
         self.funcargs: Dict[str, object] = {}
-        self._request = fixtures.FixtureRequest(self, _ispytest=True)
+        self._request = fixtures.TopRequest(self, _ispytest=True)
 
     @property
     def function(self):

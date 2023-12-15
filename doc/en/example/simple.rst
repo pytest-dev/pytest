@@ -168,7 +168,7 @@ Now we'll get feedback on a bad argument:
 
 
 If you need to provide more detailed error messages, you can use the
-``type`` parameter and raise ``pytest.UsageError``:
+``type`` parameter and raise :exc:`pytest.UsageError`:
 
 .. code-block:: python
 
@@ -1090,4 +1090,4 @@ application with standard ``pytest`` command-line options:
 
 .. code-block:: bash
 
-    ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/
+    ./app_main --pytest --verbose --tb=long --junit=xml=results.xml test-suite/

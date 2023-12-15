@@ -457,11 +457,13 @@ if TYPE_CHECKING:
         @overload
         def __call__(
             self,
-            condition: Union[str, bool] = ...,
+            condition: Union[str, bool] = False,
             *conditions: Union[str, bool],
             reason: str = ...,
             run: bool = ...,
-            raises: Union[Type[BaseException], Tuple[Type[BaseException], ...]] = ...,
+            raises: Union[
+                None, Type[BaseException], Tuple[Type[BaseException], ...]
+            ] = ...,
             strict: bool = ...,
         ) -> MarkDecorator:
             ...
