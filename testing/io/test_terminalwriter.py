@@ -213,6 +213,12 @@ def test_should_not_do_markup_NO_COLOR_and_FORCE_COLOR(
     assert_color_not_set()
 
 
+def test_empty_NO_COLOR_ignored(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "NO_COLOR", "")
+    monkeypatch.setitem(os.environ, "FORCE_COLOR", "1")
+    assert_color_set()
+
+
 class TestTerminalWriterLineWidth:
     def test_init(self) -> None:
         tw = terminalwriter.TerminalWriter()
