@@ -16,6 +16,7 @@ from _pytest.nodes import Item
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import Pytester
+from _pytest._code.code import ExceptionChainRepr, ReprTraceback
 
 
 def ensure_file(file_path: Path) -> Path:
@@ -344,6 +345,29 @@ class TestPrunetraceback:
         )
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*ERROR collecting*", "*header1*"])
+
+    def test_collection_error_traceback_is_clean(self, pytester: Pytester) -> None:
+        """When a collection error occurs, the report traceback doesn't contain
+        internal pytest stack entries.
+
+        Issue #11710.
+        """
+        pytester.makepyfile(
+            """
+            raise Exception("LOUSY")
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR collecting*",
+                "test_*.py:1: in <module>",
+                '    raise Exception("LOUSY")',
+                "E   Exception: LOUSY",
+                "*= short test summary info =*",
+            ],
+            consecutive=True,
+        )
 
 
 class TestCustomConftests:
