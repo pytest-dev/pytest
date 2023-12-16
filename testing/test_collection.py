@@ -16,7 +16,6 @@ from _pytest.nodes import Item
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import Pytester
-from _pytest._code.code import ExceptionChainRepr, ReprTraceback
 
 
 def ensure_file(file_path: Path) -> Path:
