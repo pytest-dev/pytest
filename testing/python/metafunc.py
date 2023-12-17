@@ -21,10 +21,12 @@ from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
+from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
+from _pytest.python import resolve_values_indices_in_parametersets
 from _pytest.scope import Scope
 
 
@@ -984,6 +986,12 @@ class TestMetafunc:
         assert metafunc._calls[1].params == dict(x=3, y=4)
         assert metafunc._calls[1].id == "3-4"
 
+    def test_parametrize_with_duplicate_args(self) -> None:
+        metafunc = self.Metafunc(lambda x: None)
+        metafunc.parametrize("x", [0, 1])
+        with pytest.raises(ValueError, match="duplicate 'x'"):
+            metafunc.parametrize("x", [2, 3])
+
     def test_parametrize_with_duplicate_values(self) -> None:
         metafunc = self.Metafunc(lambda x, y: None)
         metafunc.parametrize(("x", "y"), [(1, 2), (3, 4), (1, 5), (2, 2)])
@@ -995,7 +1003,7 @@ class TestMetafunc:
 
     def test_parametrize_with_unhashable_duplicate_values(self) -> None:
         metafunc = self.Metafunc(lambda x: None)
-        metafunc.parametrize(("x"), [[1], [2], [1]])
+        metafunc.parametrize("x", [[1], [2], [1]])
         assert len(metafunc._calls) == 3
         assert metafunc._calls[0].indices == dict(x=0)
         assert metafunc._calls[1].indices == dict(x=1)
@@ -1694,6 +1702,16 @@ class TestMetafuncFunctional:
                 "*test_3*",
             ]
         )
+
+    def test_resolve_values_indices_in_parametersets(self, pytester: Pytester) -> None:
+        indices = resolve_values_indices_in_parametersets(
+            ("a", "b"),
+            [
+                ParameterSet.extract_from((a, b))
+                for a, b in [(1, 1), (1, 2), (2, 3), ([2], 4), ([2], 1)]
+            ],
+        )
+        assert indices == [(0, 0), (0, 1), (1, 2), (2, 3), (3, 0)]
 
 
 class TestMetafuncFunctionalAuto:
