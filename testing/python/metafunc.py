@@ -986,11 +986,21 @@ class TestMetafunc:
         assert metafunc._calls[1].params == dict(x=3, y=4)
         assert metafunc._calls[1].id == "3-4"
 
-    def test_parametrize_with_duplicate_args(self) -> None:
-        metafunc = self.Metafunc(lambda x: None)
-        metafunc.parametrize("x", [0, 1])
-        with pytest.raises(ValueError, match="duplicate 'x'"):
-            metafunc.parametrize("x", [2, 3])
+    def test_parametrize_with_duplicate_args(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize('x', [0, 1])
+                metafunc.parametrize('x', [2, 3])
+
+            def test(x):
+                pass
+        """
+        )
+        result = pytester.runpytest("--collect-only")
+        assert any(["duplicate 'x'" in line for line in result.outlines])
+        result.assert_outcomes(errors=1)
 
     def test_parametrize_with_duplicate_values(self) -> None:
         metafunc = self.Metafunc(lambda x, y: None)
