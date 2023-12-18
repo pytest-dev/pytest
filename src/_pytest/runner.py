@@ -179,6 +179,9 @@ def pytest_runtest_call(item: Item) -> None:
 
 def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
     _update_current_test_var(item, "teardown")
+    # If the session is about to fail, teardown everything - this is necessary
+    # to correctly report fixture teardown errors (see #11706)
+    nextitem = None if item.session.shouldfail else nextitem
     item.session._setupstate.teardown_exact(nextitem)
     _update_current_test_var(item, None)
 

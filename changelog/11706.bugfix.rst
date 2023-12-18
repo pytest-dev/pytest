@@ -1,0 +1,1 @@
+Fix reporting of teardown errors in session and module scoped fixtures when `--maxfail=1`.

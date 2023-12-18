@@ -1087,3 +1087,25 @@ def test_outcome_exception_bad_msg() -> None:
     with pytest.raises(TypeError) as excinfo:
         OutcomeException(func)  # type: ignore
     assert str(excinfo.value) == expected
+
+
+def test_teardown_session_failed(pytester: Pytester) -> None:
+    """Test that fixture teardown failures are reported after a test fails."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.fail("This is a failing fixture")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(baz):
+            pass
+    """
+    )
+    result = pytester.runpytest("--maxfail=1")
+    result.stdout.fnmatch_lines(["*1 failed, 1 error*"])
