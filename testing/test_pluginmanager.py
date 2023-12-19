@@ -129,6 +129,32 @@ class TestPytestPluginInteractions:
             conftest_lower, importmode="prepend", rootpath=pytester.path
         )
 
+    def test_conftestpath_no_normalization(self, pytester: Pytester) -> None:
+        """Non-regression test for https://github.com/pytest-dev/pytest/issues/9765
+
+        Ensures that the conftests are registered in the plugin dictionary with a key
+        that does not depend on the normalization of the input path.
+        """
+
+        config = pytester.parseconfig()
+        pytester.makepyfile(**{"tests/conftest.py": ""})
+
+        conftest = pytester.path.joinpath("tests/conftest.py")
+        contest_similar = pytester.path.joinpath("tests/../tests/conftest.py")
+
+        mod = config.pluginmanager._importconftest(
+            conftest, importmode="prepend", rootpath=pytester.path
+        )
+
+        # Those two calls should succeed because the conftest should be registered
+        # independently of the normalization of conftestpath.
+        assert mod is config.pluginmanager._importconftest(
+            conftest, importmode="prepend", rootpath=pytester.path
+        )
+        assert mod is config.pluginmanager._importconftest(
+            contest_similar, importmode="prepend", rootpath=pytester.path
+        )
+
     def test_hook_tracing(self, _config_for_test: Config) -> None:
         pytestpm = _config_for_test.pluginmanager  # fully initialized with plugins
         saveindent = []
