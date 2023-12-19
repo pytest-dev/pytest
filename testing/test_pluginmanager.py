@@ -114,7 +114,7 @@ class TestPytestPluginInteractions:
         pytester.makepyfile(**{"tests/conftest.py": ""})
 
         conftest = pytester.path.joinpath("tests/conftest.py")
-        conftest_lower = pytester.path.joinpath("TESTS/CONFTEST.PY")
+        conftest_lower = type(conftest)("TESTS/CONFTEST.PY")
 
         mod = config.pluginmanager._importconftest(
             conftest, importmode="prepend", rootpath=pytester.path
