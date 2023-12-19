@@ -98,6 +98,37 @@ class TestPytestPluginInteractions:
         config.pluginmanager.register(A())
         assert len(values) == 2
 
+    @pytest.mark.skipif(
+        not sys.platform.startswith("win"),
+        reason="requires a case-insensitive file system",
+    )
+    def test_conftestpath_case_sensitivity(self, pytester: Pytester) -> None:
+        """Non-regression test for https://github.com/pytest-dev/pytest/issues/9765
+
+        Ensures that the conftests are registered in the plugin dictionary with a key
+        that does not depend on the case of the input path if the filesystem is
+        case-insensitive.
+        """
+
+        config = pytester.parseconfig()
+        pytester.makepyfile(**{"tests/conftest.py": ""})
+
+        conftest = pytester.path.joinpath("tests/conftest.py")
+        conftest_lower = pytester.path.joinpath("TESTS/CONFTEST.PY")
+
+        mod = config.pluginmanager._importconftest(
+            conftest, importmode="prepend", rootpath=pytester.path
+        )
+
+        # Those two calls should succeed because the conftest should be registered
+        # independently of the casing of conftestpath.
+        assert mod is config.pluginmanager._importconftest(
+            conftest, importmode="prepend", rootpath=pytester.path
+        )
+        assert mod is config.pluginmanager._importconftest(
+            conftest_lower, importmode="prepend", rootpath=pytester.path
+        )
+
     def test_hook_tracing(self, _config_for_test: Config) -> None:
         pytestpm = _config_for_test.pluginmanager  # fully initialized with plugins
         saveindent = []
