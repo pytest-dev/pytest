@@ -223,6 +223,8 @@ class TerminalWriter:
                         style=os.getenv("PYTEST_THEME"),
                     ),
                 )
+                if highlighted[-1] == "\n" and source[-1] != "\n":
+                    highlighted = highlighted[:-1]
                 return "\x1b[0m" + highlighted
             except pygments.util.ClassNotFound:
                 raise UsageError(

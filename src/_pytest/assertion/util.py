@@ -378,7 +378,7 @@ def _compare_eq_sequence(
 
             explanation.append(
                 f"At index {i} diff:"
-                f" {highlighter(repr(left_value)).strip()} != {highlighter(repr(right_value)).strip()}"
+                f" {highlighter(repr(left_value))} != {highlighter(repr(right_value))}"
             )
             break
 
@@ -400,12 +400,12 @@ def _compare_eq_sequence(
 
         if len_diff == 1:
             explanation += [
-                f"{dir_with_more} contains one more item: {highlighter(extra).strip()}"
+                f"{dir_with_more} contains one more item: {highlighter(extra)}"
             ]
         else:
             explanation += [
                 "%s contains %d more items, first extra item: %s"
-                % (dir_with_more, len_diff, highlighter(extra).strip())
+                % (dir_with_more, len_diff, highlighter(extra))
             ]
     return explanation
 
@@ -475,7 +475,7 @@ def _set_one_sided_diff(
     if diff:
         explanation.append(f"Extra items in the {posn} set:")
         for item in diff:
-            explanation.append(highlighter(saferepr(item)).strip())
+            explanation.append(highlighter(saferepr(item)))
     return explanation
 
 
@@ -494,15 +494,15 @@ def _compare_eq_dict(
         explanation += ["Omitting %s identical items, use -vv to show" % len(same)]
     elif same:
         explanation += ["Common items:"]
-        explanation += highlighter(pprint.pformat(same)).strip().splitlines()
+        explanation += highlighter(pprint.pformat(same)).splitlines()
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         explanation += ["Differing items:"]
         for k in diff:
             explanation += [
-                highlighter(saferepr({k: left[k]})).strip()
+                highlighter(saferepr({k: left[k]}))
                 + " != "
-                + highlighter(saferepr({k: right[k]})).strip()
+                + highlighter(saferepr({k: right[k]}))
             ]
     extra_left = set_left - set_right
     len_extra_left = len(extra_left)
@@ -565,17 +565,17 @@ def _compare_eq_cls(
         explanation.append("Omitting %s identical items, use -vv to show" % len(same))
     elif same:
         explanation += ["Matching attributes:"]
-        explanation += highlighter(pprint.pformat(same)).strip().splitlines()
+        explanation += highlighter(pprint.pformat(same)).splitlines()
     if diff:
         explanation += ["Differing attributes:"]
-        explanation += highlighter(pprint.pformat(diff)).strip().splitlines()
+        explanation += highlighter(pprint.pformat(diff)).splitlines()
         for field in diff:
             field_left = getattr(left, field)
             field_right = getattr(right, field)
             explanation += [
                 "",
                 f"Drill down into differing attribute {field}:",
-                f"{indent}{field}: {highlighter(repr(field_left)).strip()} != {highlighter(repr(field_right)).strip()}",
+                f"{indent}{field}: {highlighter(repr(field_left))} != {highlighter(repr(field_right))}",
             ]
             explanation += [
                 indent + line
