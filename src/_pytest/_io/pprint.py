@@ -64,9 +64,6 @@ class PrettyPrinter:
         indent: int = 4,
         width: int = 80,
         depth: Optional[int] = None,
-        *,
-        sort_dicts: bool = True,
-        underscore_numbers: bool = False,
     ) -> None:
         """Handle pretty printing operations onto a stream using a set of
         configured parameters.
@@ -80,12 +77,7 @@ class PrettyPrinter:
         depth
             The maximum depth to print out nested structures.
 
-        sort_dicts
-            If true, dict keys are sorted.
-
         """
-        indent = int(indent)
-        width = int(width)
         if indent < 0:
             raise ValueError("indent must be >= 0")
         if depth is not None and depth <= 0:
@@ -95,8 +87,6 @@ class PrettyPrinter:
         self._depth = depth
         self._indent_per_level = indent
         self._width = width
-        self._sort_dicts = sort_dicts
-        self._underscore_numbers = underscore_numbers
 
     def pformat(self, object: Any) -> str:
         sio = _StringIO()
@@ -174,10 +164,7 @@ class PrettyPrinter:
     ) -> None:
         write = stream.write
         write("{")
-        if self._sort_dicts:
-            items = sorted(object.items(), key=_safe_tuple)
-        else:
-            items = object.items()
+        items = sorted(object.items(), key=_safe_tuple)
         self._format_dict_items(items, stream, indent, allowance, context, level)
         write("}")
 
@@ -486,12 +473,7 @@ class PrettyPrinter:
         write("\n" + " " * indent)
 
     def _repr(self, object: Any, context: Set[int], level: int) -> str:
-        return self.format(object, context.copy(), self._depth, level)
-
-    def format(
-        self, object: Any, context: Set[int], maxlevels: Optional[int], level: int
-    ) -> str:
-        return self._safe_repr(object, context, maxlevels, level)
+        return self._safe_repr(object, context.copy(), self._depth, level)
 
     def _pprint_default_dict(
         self,
@@ -616,12 +598,6 @@ class PrettyPrinter:
 
         r = getattr(typ, "__repr__", None)
 
-        if issubclass(typ, int) and r is int.__repr__:
-            if self._underscore_numbers:
-                return f"{object:_d}"
-            else:
-                return repr(object)
-
         if issubclass(typ, dict) and r is dict.__repr__:
             if not object:
                 return "{}"
@@ -634,13 +610,9 @@ class PrettyPrinter:
             components: List[str] = []
             append = components.append
             level += 1
-            if self._sort_dicts:
-                items = sorted(object.items(), key=_safe_tuple)
-            else:
-                items = object.items()
-            for k, v in items:
-                krepr = self.format(k, context, maxlevels, level)
-                vrepr = self.format(v, context, maxlevels, level)
+            for k, v in sorted(object.items(), key=_safe_tuple):
+                krepr = self._safe_repr(k, context, maxlevels, level)
+                vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
             context.remove(objid)
             return "{%s}" % ", ".join(components)
@@ -668,7 +640,7 @@ class PrettyPrinter:
             append = components.append
             level += 1
             for o in object:
-                orepr = self.format(o, context, maxlevels, level)
+                orepr = self._safe_repr(o, context, maxlevels, level)
                 append(orepr)
             context.remove(objid)
             return format % ", ".join(components)
@@ -676,7 +648,9 @@ class PrettyPrinter:
         return repr(object)
 
 
-_builtin_scalars = frozenset({str, bytes, bytearray, float, complex, bool, type(None)})
+_builtin_scalars = frozenset(
+    {str, bytes, bytearray, float, complex, bool, type(None), int}
+)
 
 
 def _recursion(object: Any) -> str:
