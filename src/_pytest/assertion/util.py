@@ -513,7 +513,6 @@ def _compare_eq_dict(
         )
         explanation.extend(
             highlighter(pprint.pformat({k: left[k] for k in extra_left}))
-            .strip()
             .splitlines()
         )
     extra_right = set_right - set_left
@@ -525,7 +524,6 @@ def _compare_eq_dict(
         )
         explanation.extend(
             highlighter(pprint.pformat({k: right[k] for k in extra_right}))
-            .strip()
             .splitlines()
         )
     return explanation
