@@ -512,8 +512,7 @@ def _compare_eq_dict(
             % (len_extra_left, "" if len_extra_left == 1 else "s")
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: left[k] for k in extra_left}))
-            .splitlines()
+            highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
         )
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
@@ -523,8 +522,7 @@ def _compare_eq_dict(
             % (len_extra_right, "" if len_extra_right == 1 else "s")
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: right[k] for k in extra_right}))
-            .splitlines()
+            highlighter(pprint.pformat({k: right[k] for k in extra_right})).splitlines()
         )
     return explanation
 
