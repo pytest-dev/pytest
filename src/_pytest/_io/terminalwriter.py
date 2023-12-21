@@ -223,7 +223,15 @@ class TerminalWriter:
                         style=os.getenv("PYTEST_THEME"),
                     ),
                 )
-                return highlighted
+                # pygments terminal formatter may add a newline when there wasn't one.
+                # We don't want this, remove.
+                if highlighted[-1] == "\n" and source[-1] != "\n":
+                    highlighted = highlighted[:-1]
+
+                # Some lexers will not set the initial color explicitly
+                # which may lead to the previous color being propagated to the
+                # start of the expression, so reset first.
+                return "\x1b[0m" + highlighted
             except pygments.util.ClassNotFound:
                 raise UsageError(
                     "PYTEST_THEME environment variable had an invalid value: '{}'. "
