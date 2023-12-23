@@ -317,7 +317,7 @@ class CallInfo(Generic[TResult]):
     @classmethod
     def from_call(
         cls,
-        func: "Callable[[], TResult]",
+        func: Callable[[], TResult],
         when: Literal["collect", "setup", "call", "teardown"],
         reraise: Optional[
             Union[Type[BaseException], Tuple[Type[BaseException], ...]]

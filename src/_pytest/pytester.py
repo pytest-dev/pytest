@@ -121,13 +121,18 @@ def pytest_configure(config: Config) -> None:
 
 class LsofFdLeakChecker:
     def get_open_files(self) -> List[Tuple[str, str]]:
+        if sys.version_info >= (3, 11):
+            # New in Python 3.11, ignores utf-8 mode
+            encoding = locale.getencoding()
+        else:
+            encoding = locale.getpreferredencoding(False)
         out = subprocess.run(
             ("lsof", "-Ffn0", "-p", str(os.getpid())),
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
             text=True,
-            encoding=locale.getpreferredencoding(False),
+            encoding=encoding,
         ).stdout
 
         def isopen(line: str) -> bool:
@@ -1039,7 +1044,7 @@ class Pytester:
         The calling test instance (class containing the test method) must
         provide a ``.getrunner()`` method which should return a runner which
         can run the test protocol for a single item, e.g.
-        :py:func:`_pytest.runner.runtestprotocol`.
+        ``_pytest.runner.runtestprotocol``.
         """
         # used from runner functional tests
         item = self.getitem(source)
@@ -1390,7 +1395,7 @@ class Pytester:
         :param stdin:
             Optional standard input.
 
-            - If it is :py:attr:`CLOSE_STDIN` (Default), then this method calls
+            - If it is ``CLOSE_STDIN`` (Default), then this method calls
               :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
               the standard input is closed immediately after the new command is
               started.

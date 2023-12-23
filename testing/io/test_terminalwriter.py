@@ -254,7 +254,7 @@ class TestTerminalWriterLineWidth:
         pytest.param(
             True,
             True,
-            "{kw}assert{hl-reset} {number}0{hl-reset}{endline}\n",
+            "{reset}{kw}assert{hl-reset} {number}0{hl-reset}{endline}\n",
             id="with markup and code_highlight",
         ),
         pytest.param(

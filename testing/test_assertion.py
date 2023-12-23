@@ -13,25 +13,66 @@ import pytest
 from _pytest import outcomes
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 
 
-def mock_config(verbose=0):
+def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
     class TerminalWriter:
-        def _highlight(self, source, lexer):
+        def _highlight(self, source, lexer="python"):
             return source
 
     class Config:
-        def getoption(self, name):
-            if name == "verbose":
-                return verbose
-            raise KeyError("Not mocked out: %s" % name)
-
         def get_terminal_writer(self):
             return TerminalWriter()
 
+        def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+            if verbosity_type is None:
+                return verbose
+            if verbosity_type == _Config.VERBOSITY_ASSERTIONS:
+                if assertion_override is not None:
+                    return assertion_override
+                return verbose
+
+            raise KeyError(f"Not mocked out: {verbosity_type}")
+
     return Config()
+
+
+class TestMockConfig:
+    SOME_VERBOSITY_LEVEL = 3
+    SOME_OTHER_VERBOSITY_LEVEL = 10
+
+    def test_verbose_exposes_value(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        assert config.get_verbosity() == TestMockConfig.SOME_VERBOSITY_LEVEL
+
+    def test_get_assertion_override_not_set_verbose_value(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        assert (
+            config.get_verbosity(_Config.VERBOSITY_ASSERTIONS)
+            == TestMockConfig.SOME_VERBOSITY_LEVEL
+        )
+
+    def test_get_assertion_override_set_custom_value(self):
+        config = mock_config(
+            verbose=TestMockConfig.SOME_VERBOSITY_LEVEL,
+            assertion_override=TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL,
+        )
+
+        assert (
+            config.get_verbosity(_Config.VERBOSITY_ASSERTIONS)
+            == TestMockConfig.SOME_OTHER_VERBOSITY_LEVEL
+        )
+
+    def test_get_unsupported_type_error(self):
+        config = mock_config(verbose=TestMockConfig.SOME_VERBOSITY_LEVEL)
+
+        with pytest.raises(KeyError):
+            config.get_verbosity("--- NOT A VERBOSITY LEVEL ---")
 
 
 class TestImportHookInstallation:
@@ -351,6 +392,7 @@ class TestAssert_reprcompare:
     def test_text_diff(self) -> None:
         assert callequal("spam", "eggs") == [
             "'spam' == 'eggs'",
+            "",
             "- eggs",
             "+ spam",
         ]
@@ -358,7 +400,7 @@ class TestAssert_reprcompare:
     def test_text_skipping(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs")
         assert lines is not None
-        assert "Skipping" in lines[1]
+        assert "Skipping" in lines[2]
         for line in lines:
             assert "a" * 50 not in line
 
@@ -382,6 +424,7 @@ class TestAssert_reprcompare:
 
         assert diff == [
             "b'spam' == b'eggs'",
+            "",
             "At index 0 diff: b's' != b'e'",
             "Use -v to get more diff",
         ]
@@ -391,7 +434,9 @@ class TestAssert_reprcompare:
         diff = callequal(b"spam", b"eggs", verbose=1)
         assert diff == [
             "b'spam' == b'eggs'",
+            "",
             "At index 0 diff: b's' != b'e'",
+            "",
             "Full diff:",
             "- b'eggs'",
             "+ b'spam'",
@@ -410,11 +455,14 @@ class TestAssert_reprcompare:
                 [0, 2],
                 """
                 Full diff:
-                - [0, 2]
+                  [
+                      0,
+                -     2,
                 ?     ^
-                + [0, 1]
+                +     1,
                 ?     ^
-            """,
+                  ]
+                """,
                 id="lists",
             ),
             pytest.param(
@@ -422,10 +470,12 @@ class TestAssert_reprcompare:
                 {0: 2},
                 """
                 Full diff:
-                - {0: 2}
-                ?     ^
-                + {0: 1}
-                ?     ^
+                  {
+                -     0: 2,
+                ?        ^
+                +     0: 1,
+                ?        ^
+                  }
             """,
                 id="dicts",
             ),
@@ -434,10 +484,13 @@ class TestAssert_reprcompare:
                 {0, 2},
                 """
                 Full diff:
-                - {0, 2}
+                  {
+                      0,
+                -     2,
                 ?     ^
-                + {0, 1}
+                +     1,
                 ?     ^
+                  }
             """,
                 id="sets",
             ),
@@ -460,6 +513,7 @@ class TestAssert_reprcompare:
         expl = callequal([1, 2], [10, 2], verbose=-1)
         assert expl == [
             "[1, 2] == [10, 2]",
+            "",
             "At index 0 diff: 1 != 10",
             "Use -v to get more diff",
         ]
@@ -498,26 +552,30 @@ class TestAssert_reprcompare:
         diff = callequal(l1, l2, verbose=True)
         assert diff == [
             "['a', 'b', 'c'] == ['a', 'b', 'c...dddddddddddd']",
+            "",
             "Right contains one more item: '" + long_d + "'",
+            "",
             "Full diff:",
             "  [",
-            "   'a',",
-            "   'b',",
-            "   'c',",
-            "-  '" + long_d + "',",
+            "      'a',",
+            "      'b',",
+            "      'c',",
+            "-     '" + long_d + "',",
             "  ]",
         ]
 
         diff = callequal(l2, l1, verbose=True)
         assert diff == [
             "['a', 'b', 'c...dddddddddddd'] == ['a', 'b', 'c']",
+            "",
             "Left contains one more item: '" + long_d + "'",
+            "",
             "Full diff:",
             "  [",
-            "   'a',",
-            "   'b',",
-            "   'c',",
-            "+  '" + long_d + "',",
+            "      'a',",
+            "      'b',",
+            "      'c',",
+            "+     '" + long_d + "',",
             "  ]",
         ]
 
@@ -530,13 +588,15 @@ class TestAssert_reprcompare:
         diff = callequal(l1, l2, verbose=True)
         assert diff == [
             "['aaaaaaaaaaa...cccccccccccc'] == ['bbbbbbbbbbb...aaaaaaaaaaaa']",
+            "",
             "At index 0 diff: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' != 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
+            "",
             "Full diff:",
             "  [",
-            "+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
-            "   'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
-            "   'cccccccccccccccccccccccccccccc',",
-            "-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "+     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
+            "      'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
+            "      'cccccccccccccccccccccccccccccc',",
+            "-     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
             "  ]",
         ]
 
@@ -547,19 +607,21 @@ class TestAssert_reprcompare:
         diff = callequal(l1, l2, verbose=True)
         assert diff == [
             "['a', 'aaaaaa...aaaaaaa', ...] == ['should not get wrapped']",
+            "",
             "At index 0 diff: 'a' != 'should not get wrapped'",
             "Left contains 7 more items, first extra item: 'aaaaaaaaaa'",
+            "",
             "Full diff:",
             "  [",
-            "-  'should not get wrapped',",
-            "+  'a',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
-            "+  'aaaaaaaaaa',",
+            "-     'should not get wrapped',",
+            "+     'a',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
+            "+     'aaaaaaaaaa',",
             "  ]",
         ]
 
@@ -570,31 +632,45 @@ class TestAssert_reprcompare:
         diff = callequal(d1, d2, verbose=True)
         assert diff == [
             "{'common': 1,...1, 'env2': 2}} == {'common': 1,...: {'env1': 1}}",
+            "",
             "Omitting 1 identical items, use -vv to show",
             "Differing items:",
             "{'env': {'env1': 1, 'env2': 2}} != {'env': {'env1': 1}}",
+            "",
             "Full diff:",
-            "- {'common': 1, 'env': {'env1': 1}}",
-            "+ {'common': 1, 'env': {'env1': 1, 'env2': 2}}",
-            "?                                +++++++++++",
+            "  {",
+            "      'common': 1,",
+            "      'env': {",
+            "          'env1': 1,",
+            "+         'env2': 2,",
+            "      },",
+            "  }",
         ]
 
         long_a = "a" * 80
-        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 2}}
+        sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 3}}
         d1 = {"env": {"sub": sub}}
         d2 = {"env": {"sub": sub}, "new": 1}
         diff = callequal(d1, d2, verbose=True)
         assert diff == [
             "{'env': {'sub... wrapped '}}}} == {'env': {'sub...}}}, 'new': 1}",
+            "",
             "Omitting 1 identical items, use -vv to show",
             "Right contains 1 more item:",
             "{'new': 1}",
+            "",
             "Full diff:",
             "  {",
-            "   'env': {'sub': {'long_a': '" + long_a + "',",
-            "                   'sub1': {'long_a': 'substring that gets wrapped substring '",
-            "                                      'that gets wrapped '}}},",
-            "-  'new': 1,",
+            "      'env': {",
+            "          'sub': {",
+            f"              'long_a': '{long_a}',",
+            "              'sub1': {",
+            "                  'long_a': 'substring that gets wrapped substring that gets wrapped '",
+            "                  'substring that gets wrapped ',",
+            "              },",
+            "          },",
+            "      },",
+            "-     'new': 1,",
             "  }",
         ]
 
@@ -606,7 +682,7 @@ class TestAssert_reprcompare:
     def test_dict_omitting(self) -> None:
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1})
         assert lines is not None
-        assert lines[1].startswith("Omitting 1 identical item")
+        assert lines[2].startswith("Omitting 1 identical item")
         assert "Common items" not in lines
         for line in lines[1:]:
             assert "b" not in line
@@ -615,60 +691,109 @@ class TestAssert_reprcompare:
         """Ensure differing items are visible for verbosity=1 (#1512)."""
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1}, verbose=1)
         assert lines is not None
-        assert lines[1].startswith("Omitting 1 identical item")
-        assert lines[2].startswith("Differing items")
-        assert lines[3] == "{'a': 0} != {'a': 1}"
+        assert lines[1] == ""
+        assert lines[2].startswith("Omitting 1 identical item")
+        assert lines[3].startswith("Differing items")
+        assert lines[4] == "{'a': 0} != {'a': 1}"
         assert "Common items" not in lines
 
     def test_dict_omitting_with_verbosity_2(self) -> None:
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1}, verbose=2)
         assert lines is not None
-        assert lines[1].startswith("Common items:")
-        assert "Omitting" not in lines[1]
-        assert lines[2] == "{'b': 1}"
+        assert lines[2].startswith("Common items:")
+        assert "Omitting" not in lines[2]
+        assert lines[3] == "{'b': 1}"
 
     def test_dict_different_items(self) -> None:
         lines = callequal({"a": 0}, {"b": 1, "c": 2}, verbose=2)
         assert lines == [
             "{'a': 0} == {'b': 1, 'c': 2}",
+            "",
             "Left contains 1 more item:",
             "{'a': 0}",
             "Right contains 2 more items:",
             "{'b': 1, 'c': 2}",
+            "",
             "Full diff:",
-            "- {'b': 1, 'c': 2}",
-            "+ {'a': 0}",
+            "  {",
+            "-     'b': 1,",
+            "?      ^   ^",
+            "+     'a': 0,",
+            "?      ^   ^",
+            "-     'c': 2,",
+            "  }",
         ]
         lines = callequal({"b": 1, "c": 2}, {"a": 0}, verbose=2)
         assert lines == [
             "{'b': 1, 'c': 2} == {'a': 0}",
+            "",
             "Left contains 2 more items:",
             "{'b': 1, 'c': 2}",
             "Right contains 1 more item:",
             "{'a': 0}",
+            "",
             "Full diff:",
-            "- {'a': 0}",
-            "+ {'b': 1, 'c': 2}",
+            "  {",
+            "-     'a': 0,",
+            "?      ^   ^",
+            "+     'b': 1,",
+            "?      ^   ^",
+            "+     'c': 2,",
+            "  }",
         ]
 
     def test_sequence_different_items(self) -> None:
         lines = callequal((1, 2), (3, 4, 5), verbose=2)
         assert lines == [
             "(1, 2) == (3, 4, 5)",
+            "",
             "At index 0 diff: 1 != 3",
             "Right contains one more item: 5",
+            "",
             "Full diff:",
-            "- (3, 4, 5)",
-            "+ (1, 2)",
+            "  (",
+            "-     3,",
+            "?     ^",
+            "+     1,",
+            "?     ^",
+            "-     4,",
+            "?     ^",
+            "+     2,",
+            "?     ^",
+            "-     5,",
+            "  )",
         ]
         lines = callequal((1, 2, 3), (4,), verbose=2)
         assert lines == [
             "(1, 2, 3) == (4,)",
+            "",
             "At index 0 diff: 1 != 4",
             "Left contains 2 more items, first extra item: 2",
+            "",
             "Full diff:",
-            "- (4,)",
-            "+ (1, 2, 3)",
+            "  (",
+            "-     4,",
+            "?     ^",
+            "+     1,",
+            "?     ^",
+            "+     2,",
+            "+     3,",
+            "  )",
+        ]
+        lines = callequal((1, 2, 3), (1, 20, 3), verbose=2)
+        assert lines == [
+            "(1, 2, 3) == (1, 20, 3)",
+            "",
+            "At index 1 diff: 2 != 20",
+            "",
+            "Full diff:",
+            "  (",
+            "      1,",
+            "-     20,",
+            "?      -",
+            "+     2,",
+            "      3,",
+            "  )",
         ]
 
     def test_set(self) -> None:
@@ -726,7 +851,7 @@ class TestAssert_reprcompare:
         assert expl is not None
         assert expl[0].startswith("{} == <[ValueError")
         assert "raised in repr" in expl[0]
-        assert expl[1:] == [
+        assert expl[2:] == [
             "(pytest_assertion plugin: representation of details failed:"
             " {}:{}: ValueError: 42.".format(
                 __file__, A.__repr__.__code__.co_firstlineno + 1
@@ -752,6 +877,7 @@ class TestAssert_reprcompare:
     def test_unicode(self) -> None:
         assert callequal("£€", "£") == [
             "'£€' == '£'",
+            "",
             "- £",
             "+ £€",
         ]
@@ -767,7 +893,7 @@ class TestAssert_reprcompare:
                 return "\xff"
 
         expl = callequal(A(), "1")
-        assert expl == ["ÿ == '1'", "- 1"]
+        assert expl == ["ÿ == '1'", "", "- 1"]
 
     def test_format_nonascii_explanation(self) -> None:
         assert util.format_explanation("λ")
@@ -790,6 +916,7 @@ class TestAssert_reprcompare:
         expl = callequal(left, right)
         assert expl == [
             r"'hyv\xe4' == 'hyva\u0308'",
+            "",
             f"- {str(right)}",
             f"+ {str(left)}",
         ]
@@ -797,6 +924,7 @@ class TestAssert_reprcompare:
         expl = callequal(left, right, verbose=2)
         assert expl == [
             r"'hyv\xe4' == 'hyva\u0308'",
+            "",
             f"- {str(right)}",
             f"+ {str(left)}",
         ]
@@ -1085,6 +1213,7 @@ class TestAssert_reprcompare_namedtuple:
         # Because the types are different, uses the generic sequence matcher.
         assert lines == [
             "NT1(a=1, b='b') == NT2(a=2, b='b')",
+            "",
             "At index 0 diff: 1 != 2",
             "Use -v to get more diff",
         ]
@@ -1272,7 +1401,7 @@ class TestTruncateExplanation:
 
         line_count = 7
         line_len = 100
-        expected_truncated_lines = 1
+        expected_truncated_lines = 2
         pytester.makepyfile(
             r"""
             def test_many_lines():
@@ -1292,8 +1421,7 @@ class TestTruncateExplanation:
             [
                 "*+ 1*",
                 "*+ 3*",
-                "*+ 5*",
-                "*truncated (%d line hidden)*use*-vv*" % expected_truncated_lines,
+                "*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
             ]
         )
 
@@ -1336,6 +1464,7 @@ def test_rewritten(pytester: Pytester) -> None:
 def test_reprcompare_notin() -> None:
     assert callop("not in", "foo", "aaafoobbb") == [
         "'foo' not in 'aaafoobbb'",
+        "",
         "'foo' is contained here:",
         "  aaafoobbb",
         "?    +++",
@@ -1345,6 +1474,7 @@ def test_reprcompare_notin() -> None:
 def test_reprcompare_whitespaces() -> None:
     assert callequal("\r\n", "\n") == [
         r"'\r\n' == '\n'",
+        "",
         r"Strings contain only whitespace, escaping them using repr()",
         r"- '\n'",
         r"+ '\r\n'",
@@ -1803,8 +1933,9 @@ def test_reprcompare_verbose_long() -> None:
                 assert [0, 1] == [0, 2]
             """,
             [
-                "{bold}{red}E         {light-red}- [0, 2]{hl-reset}{endline}{reset}",
-                "{bold}{red}E         {light-green}+ [0, 1]{hl-reset}{endline}{reset}",
+                "{bold}{red}E         At index 1 diff: {reset}{number}1{hl-reset}{endline} != {reset}{number}2*",
+                "{bold}{red}E         {light-red}-     2,{hl-reset}{endline}{reset}",
+                "{bold}{red}E         {light-green}+     1,{hl-reset}{endline}{reset}",
             ],
         ),
         (
@@ -1815,9 +1946,15 @@ def test_reprcompare_verbose_long() -> None:
                 }
             """,
             [
-                "{bold}{red}E         {light-gray} {hl-reset} {{{endline}{reset}",
-                "{bold}{red}E         {light-gray} {hl-reset}  'number-is-1': 1,{endline}{reset}",
-                "{bold}{red}E         {light-green}+  'number-is-5': 5,{hl-reset}{endline}{reset}",
+                "{bold}{red}E         Common items:{reset}",
+                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-1{hl-reset}{str}'{hl-reset}: {number}1*",
+                "{bold}{red}E         Left contains 1 more item:{reset}",
+                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-5{hl-reset}{str}'{hl-reset}: {number}5*",
+                "{bold}{red}E         Right contains 1 more item:{reset}",
+                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-0{hl-reset}{str}'{hl-reset}: {number}0*",
+                "{bold}{red}E         {reset}{light-gray} {hl-reset} {{{endline}{reset}",
+                "{bold}{red}E         {light-gray} {hl-reset}     'number-is-1': 1,{endline}{reset}",
+                "{bold}{red}E         {light-green}+     'number-is-5': 5,{hl-reset}{endline}{reset}",
             ],
         ),
     ),
@@ -1836,3 +1973,72 @@ def test_comparisons_handle_colors(
     )
 
     result.stdout.fnmatch_lines(formatter(expected_lines), consecutive=False)
+
+
+def test_fine_grained_assertion_verbosity(pytester: Pytester):
+    long_text = "Lorem ipsum dolor sit amet " * 10
+    p = pytester.makepyfile(
+        f"""
+        def test_ok():
+            pass
+
+
+        def test_words_fail():
+            fruits1 = ["banana", "apple", "grapes", "melon", "kiwi"]
+            fruits2 = ["banana", "apple", "orange", "melon", "kiwi"]
+            assert fruits1 == fruits2
+
+
+        def test_numbers_fail():
+            number_to_text1 = {{str(x): x for x in range(5)}}
+            number_to_text2 = {{str(x * 10): x * 10 for x in range(5)}}
+            assert number_to_text1 == number_to_text2
+
+
+        def test_long_text_fail():
+            long_text = "{long_text}"
+            assert "hello world" in long_text
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        verbosity_assertions = 2
+        """
+    )
+    result = pytester.runpytest(p)
+
+    result.stdout.fnmatch_lines(
+        [
+            f"{p.name} .FFF                            [100%]",
+            "E         At index 2 diff: 'grapes' != 'orange'",
+            "E         Full diff:",
+            "E           [",
+            "E               'banana',",
+            "E               'apple',",
+            "E         -     'orange',",
+            "E         ?      ^  ^^",
+            "E         +     'grapes',",
+            "E         ?      ^  ^ +",
+            "E               'melon',",
+            "E               'kiwi',",
+            "E           ]",
+            "E         Full diff:",
+            "E           {",
+            "E               '0': 0,",
+            "E         -     '10': 10,",
+            "E         ?       -    -",
+            "E         +     '1': 1,",
+            "E         -     '20': 20,",
+            "E         ?       -    -",
+            "E         +     '2': 2,",
+            "E         -     '30': 30,",
+            "E         ?       -    -",
+            "E         +     '3': 3,",
+            "E         -     '40': 40,",
+            "E         ?       -    -",
+            "E         +     '4': 4,",
+            "E           }",
+            f"E       AssertionError: assert 'hello world' in '{long_text}'",
+        ]
+    )

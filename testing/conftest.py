@@ -31,6 +31,17 @@ def set_column_width(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("COLUMNS", "80")
 
 
+@pytest.fixture(autouse=True)
+def reset_colors(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Reset all color-related variables to prevent them from affecting internal pytest output
+    in tests that depend on it.
+    """
+    monkeypatch.delenv("PY_COLORS", raising=False)
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.delenv("FORCE_COLOR", raising=False)
+
+
 @pytest.hookimpl(wrapper=True, tryfirst=True)
 def pytest_collection_modifyitems(items) -> Generator[None, None, None]:
     """Prefer faster tests.
