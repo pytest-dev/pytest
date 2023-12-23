@@ -1186,12 +1186,13 @@ class TerminalReporter:
                 markup_word = self._tw.markup(
                     verbose_word, **{_color_for_type["warnings"]: True}
                 )
-                nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
-                line = f"{markup_word} {nodeid}"
+                color = _color_for_type.get("xfailed", _color_for_type_default)
+                line = _get_line_with_reprcrash_message(
+                    self.config, rep, self._tw, {color: True}
+                )
                 reason = rep.wasxfail
                 if reason:
                     line += " - " + str(reason)
-
                 lines.append(line)
 
         def show_xpassed(lines: List[str]) -> None:
@@ -1202,8 +1203,11 @@ class TerminalReporter:
                     verbose_word, **{_color_for_type["warnings"]: True}
                 )
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
+                line = f"{markup_word} {nodeid}"
                 reason = rep.wasxfail
-                lines.append(f"{markup_word} {nodeid} {reason}")
+                if reason:
+                    line += " - " + str(reason)
+                lines.append(line)
 
         def show_skipped(lines: List[str]) -> None:
             skipped: List[CollectReport] = self.stats.get("skipped", [])
