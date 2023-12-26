@@ -105,7 +105,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="show markers (builtin, plugin and per-project ones).",
     )
 
-    parser.addini("markers", "Markers for test functions", "linelist")
+    parser.addini("markers", "Register new markers for test functions", "linelist")
     parser.addini(EMPTY_PARAMETERSET_OPTION, "Default marker for empty parametersets")
 
 
