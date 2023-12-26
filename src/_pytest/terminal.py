@@ -1182,10 +1182,12 @@ class TerminalReporter:
         def show_xfailed(lines: List[str]) -> None:
             xfailed = self.stats.get("xfailed", [])
             for rep in xfailed:
-                color = _color_for_type.get("xfailed", _color_for_type_default)
-                line = _get_line_with_reprcrash_message(
-                    self.config, rep, self._tw, {color: True}
+                verbose_word = rep._get_verbose_word(self.config)
+                markup_word = self._tw.markup(
+                    verbose_word, **{_color_for_type["warnings"]: True}
                 )
+                nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
+                line = f"{markup_word} {nodeid}"
                 reason = rep.wasxfail
                 if reason:
                     line += " - " + str(reason)

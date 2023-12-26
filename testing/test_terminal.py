@@ -2631,8 +2631,8 @@ def test_summary_xfail_reason(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest("-rx")
-    expect1 = "XFAIL test_summary_xfail_reason.py::test_xfail - assert False"
-    expect2 = "XFAIL test_summary_xfail_reason.py::test_xfail_reason - assert False - foo"
+    expect1 = "XFAIL test_summary_xfail_reason.py::test_xfail"
+    expect2 = "XFAIL test_summary_xfail_reason.py::test_xfail_reason - foo"
     result.stdout.fnmatch_lines([expect1, expect2])
     assert result.stdout.lines.count(expect1) == 1
     assert result.stdout.lines.count(expect2) == 1
@@ -2660,7 +2660,7 @@ def test_summary_xfail_tb(pytester: Pytester) -> None:
         "E *assert 1 == 2*",
         "test_summary_xfail_tb.py:6: AssertionError*",
         "*= short test summary info =*",
-        "XFAIL test_summary_xfail_tb.py::test_xfail - assert 1 == 2",
+        "XFAIL test_summary_xfail_tb.py::test_xfail",
         "*= 1 xfailed in * =*"
     ])
 
@@ -2681,7 +2681,7 @@ def test_xfail_tb_line(pytester: Pytester) -> None:
         "*= XFAILURES =*",
         "*test_xfail_tb_line.py:6: assert 1 == 2",
         "*= short test summary info =*",
-        "XFAIL test_xfail_tb_line.py::test_xfail - assert 1 == 2",
+        "XFAIL test_xfail_tb_line.py::test_xfail",
         "*= 1 xfailed in * =*"
     ])
 
@@ -2724,7 +2724,7 @@ def test_xpass_output(pytester: Pytester) -> None:
         "*_ test_pass _*",
         "*- Captured stdout call -*",
         "*= short test summary info =*",
-        "XPASS test_xpass_output.py::test_pass",
+        "XPASS test_xpass_output.py::test_pass*",
         "*= 1 xpassed in * =*"
     ])
 
