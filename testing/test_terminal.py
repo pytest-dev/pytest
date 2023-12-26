@@ -2650,19 +2650,21 @@ def test_summary_xfail_tb(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest("-rx")
-    result.stdout.fnmatch_lines([
-        "*= XFAILURES =*",
-        "*_ test_xfail _*",
-        "* @pytest.mark.xfail*",
-        "* def test_xfail():*",
-        "*    a, b = 1, 2*",
-        "> *assert a == b*",
-        "E *assert 1 == 2*",
-        "test_summary_xfail_tb.py:6: AssertionError*",
-        "*= short test summary info =*",
-        "XFAIL test_summary_xfail_tb.py::test_xfail",
-        "*= 1 xfailed in * =*"
-    ])
+    result.stdout.fnmatch_lines(
+        [
+            "*= XFAILURES =*",
+            "*_ test_xfail _*",
+            "* @pytest.mark.xfail*",
+            "* def test_xfail():*",
+            "*    a, b = 1, 2*",
+            "> *assert a == b*",
+            "E *assert 1 == 2*",
+            "test_summary_xfail_tb.py:6: AssertionError*",
+            "*= short test summary info =*",
+            "XFAIL test_summary_xfail_tb.py::test_xfail",
+            "*= 1 xfailed in * =*",
+        ]
+    )
 
 
 def test_xfail_tb_line(pytester: Pytester) -> None:
@@ -2677,13 +2679,15 @@ def test_xfail_tb_line(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest("-rx", "--tb=line")
-    result.stdout.fnmatch_lines([
-        "*= XFAILURES =*",
-        "*test_xfail_tb_line.py:6: assert 1 == 2",
-        "*= short test summary info =*",
-        "XFAIL test_xfail_tb_line.py::test_xfail",
-        "*= 1 xfailed in * =*"
-    ])
+    result.stdout.fnmatch_lines(
+        [
+            "*= XFAILURES =*",
+            "*test_xfail_tb_line.py:6: assert 1 == 2",
+            "*= short test summary info =*",
+            "XFAIL test_xfail_tb_line.py::test_xfail",
+            "*= 1 xfailed in * =*",
+        ]
+    )
 
 
 def test_summary_xpass_reason(pytester: Pytester) -> None:
@@ -2719,12 +2723,13 @@ def test_xpass_output(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest("-rX")
-    result.stdout.fnmatch_lines([
-        "*= XPASSES =*",
-        "*_ test_pass _*",
-        "*- Captured stdout call -*",
-        "*= short test summary info =*",
-        "XPASS test_xpass_output.py::test_pass*",
-        "*= 1 xpassed in * =*"
-    ])
-
+    result.stdout.fnmatch_lines(
+        [
+            "*= XPASSES =*",
+            "*_ test_pass _*",
+            "*- Captured stdout call -*",
+            "*= short test summary info =*",
+            "XPASS test_xpass_output.py::test_pass*",
+            "*= 1 xpassed in * =*",
+        ]
+    )
