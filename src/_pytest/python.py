@@ -1158,7 +1158,7 @@ class CallSpec2:
         arg2scope = dict(self._arg2scope)
         for arg, val, param_index in zip(argnames, valset, param_indices):
             if arg in params:
-                raise ValueError(f"duplicate {arg!r}")
+                raise ValueError(f"duplicate parametrization of {arg!r}")
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
@@ -1396,8 +1396,8 @@ class Metafunc:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
         # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
-        # artificial FixtureDef's so that later at test execution time we can rely
-        # on a proper FixtureDef to exist for fixture setup.
+        # artificial FixtureDef's so that later at test execution time we can
+        # rely on a proper FixtureDef to exist for fixture setup.
         arg2fixturedefs = self._arg2fixturedefs
         node = None
         # If we have a scope that is higher than function, we need
