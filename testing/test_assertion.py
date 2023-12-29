@@ -20,7 +20,7 @@ from _pytest.pytester import Pytester
 
 def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
     class TerminalWriter:
-        def _highlight(self, source, lexer):
+        def _highlight(self, source, lexer="python"):
             return source
 
     class Config:
@@ -1933,6 +1933,7 @@ def test_reprcompare_verbose_long() -> None:
                 assert [0, 1] == [0, 2]
             """,
             [
+                "{bold}{red}E         At index 1 diff: {reset}{number}1{hl-reset}{endline} != {reset}{number}2*",
                 "{bold}{red}E         {light-red}-     2,{hl-reset}{endline}{reset}",
                 "{bold}{red}E         {light-green}+     1,{hl-reset}{endline}{reset}",
             ],
@@ -1945,7 +1946,13 @@ def test_reprcompare_verbose_long() -> None:
                 }
             """,
             [
-                "{bold}{red}E         {light-gray} {hl-reset} {{{endline}{reset}",
+                "{bold}{red}E         Common items:{reset}",
+                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-1{hl-reset}{str}'{hl-reset}: {number}1*",
+                "{bold}{red}E         Left contains 1 more item:{reset}",
+                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-5{hl-reset}{str}'{hl-reset}: {number}5*",
+                "{bold}{red}E         Right contains 1 more item:{reset}",
+                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-0{hl-reset}{str}'{hl-reset}: {number}0*",
+                "{bold}{red}E         {reset}{light-gray} {hl-reset} {{{endline}{reset}",
                 "{bold}{red}E         {light-gray} {hl-reset}     'number-is-1': 1,{endline}{reset}",
                 "{bold}{red}E         {light-green}+     'number-is-5': 5,{hl-reset}{endline}{reset}",
             ],
