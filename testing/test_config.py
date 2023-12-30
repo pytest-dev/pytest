@@ -1966,7 +1966,8 @@ def test_config_blocked_default_plugins(pytester: Pytester, plugin: str) -> None
         assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(
             [
-                "ERROR: found no collectors for */test_config_blocked_default_plugins.py",
+                "ERROR: not found: */test_config_blocked_default_plugins.py",
+                "(no match in any of *<Dir *>*",
             ]
         )
         return

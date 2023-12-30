@@ -284,10 +284,34 @@ def pytest_ignore_collect(
     """
 
 
+@hookspec(firstresult=True)
+def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Collector]":
+    """Create a :class:`~pytest.Collector` for the given directory, or None if
+    not relevant.
+
+    .. versionadded:: 8.0
+
+    For best results, the returned collector should be a subclass of
+    :class:`~pytest.Directory`, but this is not required.
+
+    The new node needs to have the specified ``parent`` as a parent.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+
+    :param path: The path to analyze.
+
+    See :ref:`custom directory collectors` for a simple example of use of this
+    hook.
+    """
+
+
 def pytest_collect_file(
     file_path: Path, path: "LEGACY_PATH", parent: "Collector"
 ) -> "Optional[Collector]":
     """Create a :class:`~pytest.Collector` for the given path, or None if not relevant.
+
+    For best results, the returned collector should be a subclass of
+    :class:`~pytest.File`, but this is not required.
 
     The new node needs to have the specified ``parent`` as a parent.
 

@@ -152,12 +152,19 @@ class KeywordMatcher:
     def from_item(cls, item: "Item") -> "KeywordMatcher":
         mapped_names = set()
 
-        # Add the names of the current item and any parent items.
+        # Add the names of the current item and any parent items,
+        # except the Session and root Directory's which are not
+        # interesting for matching.
         import pytest
 
         for node in item.listchain():
-            if not isinstance(node, pytest.Session):
-                mapped_names.add(node.name)
+            if isinstance(node, pytest.Session):
+                continue
+            if isinstance(node, pytest.Directory) and isinstance(
+                node.parent, pytest.Session
+            ):
+                continue
+            mapped_names.add(node.name)
 
         # Add the names added as extra keywords to current or parent items.
         mapped_names.update(item.listextrakeywords())

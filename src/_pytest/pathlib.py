@@ -689,10 +689,14 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     return result
 
 
-def scandir(path: Union[str, "os.PathLike[str]"]) -> List["os.DirEntry[str]"]:
+def scandir(
+    path: Union[str, "os.PathLike[str]"],
+    sort_key: Callable[["os.DirEntry[str]"], object] = lambda entry: entry.name,
+) -> List["os.DirEntry[str]"]:
     """Scan a directory recursively, in breadth-first order.
 
-    The returned entries are sorted.
+    The returned entries are sorted according to the given key.
+    The default is to sort by name.
     """
     entries = []
     with os.scandir(path) as s:
@@ -706,7 +710,7 @@ def scandir(path: Union[str, "os.PathLike[str]"]) -> List["os.DirEntry[str]"]:
                     continue
                 raise
             entries.append(entry)
-    entries.sort(key=lambda entry: entry.name)
+    entries.sort(key=sort_key)  # type: ignore[arg-type]
     return entries
 
 

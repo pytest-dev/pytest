@@ -30,6 +30,7 @@ from _pytest.freeze_support import freeze_includes
 from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir
 from _pytest.logging import LogCaptureFixture
+from _pytest.main import Dir
 from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
@@ -38,6 +39,7 @@ from _pytest.mark import MarkGenerator
 from _pytest.mark import param
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
+from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.nodes import Item
 from _pytest.outcomes import exit
@@ -98,6 +100,8 @@ __all__ = [
     "Config",
     "console_main",
     "deprecated_call",
+    "Dir",
+    "Directory",
     "DoctestItem",
     "exit",
     "ExceptionInfo",

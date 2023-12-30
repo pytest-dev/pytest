@@ -76,8 +76,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
-from _pytest.pathlib import parts
-from _pytest.pathlib import visit
+from _pytest.pathlib import scandir
 from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
@@ -202,6 +201,16 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
             )
         )
     return True
+
+
+def pytest_collect_directory(
+    path: Path, parent: nodes.Collector
+) -> Optional[nodes.Collector]:
+    pkginit = path / "__init__.py"
+    if pkginit.is_file():
+        pkg: Package = Package.from_parent(parent, path=path)
+        return pkg
+    return None
 
 
 def pytest_collect_file(file_path: Path, parent: nodes.Collector) -> Optional["Module"]:
@@ -659,9 +668,20 @@ class Module(nodes.File, PyCollector):
         self.obj.__pytest_setup_function = xunit_setup_function_fixture
 
 
-class Package(nodes.FSCollector):
+class Package(nodes.Directory):
     """Collector for files and directories in a Python packages -- directories
-    with an `__init__.py` file."""
+    with an `__init__.py` file.
+
+    .. note::
+
+        Directories without an `__init__.py` file are instead collected by
+        :class:`~pytest.Dir` by default. Both are :class:`~pytest.Directory`
+        collectors.
+
+    .. versionchanged:: 8.0
+
+        Now inherits from :class:`~pytest.Directory`.
+    """
 
     def __init__(
         self,
@@ -674,10 +694,9 @@ class Package(nodes.FSCollector):
         path: Optional[Path] = None,
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
-        # nodes.FSCollector.__init__(self, fspath, parent=parent)
+        # super().__init__(self, fspath, parent=parent)
         session = parent.session
-        nodes.FSCollector.__init__(
-            self,
+        super().__init__(
             fspath=fspath,
             path=path,
             parent=parent,
@@ -685,7 +704,6 @@ class Package(nodes.FSCollector):
             session=session,
             nodeid=nodeid,
         )
-        self.name = self.path.name
 
     def setup(self) -> None:
         init_mod = importtestmodule(self.path / "__init__.py", self.config)
@@ -705,66 +723,34 @@ class Package(nodes.FSCollector):
             func = partial(_call_with_optional_argument, teardown_module, init_mod)
             self.addfinalizer(func)
 
-    def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
-        if direntry.name == "__pycache__":
-            return False
-        fspath = Path(direntry.path)
-        ihook = self.session.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-            return False
-        return True
-
-    def _collectfile(
-        self, fspath: Path, handle_dupes: bool = True
-    ) -> Sequence[nodes.Collector]:
-        assert (
-            fspath.is_file()
-        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            fspath, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
-        )
-        ihook = self.session.gethookproxy(fspath)
-        if not self.session.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-                return ()
-
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if fspath in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(fspath)
-
-        return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
-
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        # Always collect the __init__ first.
-        yield from self._collectfile(self.path / "__init__.py")
+        # Always collect __init__.py first.
+        def sort_key(entry: "os.DirEntry[str]") -> object:
+            return (entry.name != "__init__.py", entry.name)
 
-        pkg_prefixes: Set[Path] = set()
-        for direntry in visit(self.path, recurse=self._recurse):
-            path = Path(direntry.path)
-
-            # Already handled above.
-            if direntry.is_file():
-                if direntry.name == "__init__.py" and path.parent == self.path:
+        config = self.config
+        col: Optional[nodes.Collector]
+        cols: Sequence[nodes.Collector]
+        ihook = self.ihook
+        for direntry in scandir(self.path, sort_key):
+            if direntry.is_dir():
+                if direntry.name == "__pycache__":
                     continue
+                path = Path(direntry.path)
+                if not self.session.isinitpath(path, with_parents=True):
+                    if ihook.pytest_ignore_collect(collection_path=path, config=config):
+                        continue
+                col = ihook.pytest_collect_directory(path=path, parent=self)
+                if col is not None:
+                    yield col
 
-            parts_ = parts(direntry.path)
-            if any(
-                str(pkg_prefix) in parts_ and pkg_prefix / "__init__.py" != path
-                for pkg_prefix in pkg_prefixes
-            ):
-                continue
-
-            if direntry.is_file():
-                yield from self._collectfile(path)
-            elif not direntry.is_dir():
-                # Broken symlink or invalid/missing file.
-                continue
-            elif self._recurse(direntry) and path.joinpath("__init__.py").is_file():
-                pkg_prefixes.add(path)
+            elif direntry.is_file():
+                path = Path(direntry.path)
+                if not self.session.isinitpath(path):
+                    if ihook.pytest_ignore_collect(collection_path=path, config=config):
+                        continue
+                cols = ihook.pytest_collect_file(file_path=path, parent=self)
+                yield from cols
 
 
 def _call_with_optional_argument(func, arg) -> None:

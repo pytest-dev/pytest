@@ -415,8 +415,6 @@ class PytestPluginManager(PluginManager):
         # session (#9478), often with the same path, so cache it.
         self._get_directory = lru_cache(256)(_get_directory)
 
-        self._duplicatepaths: Set[Path] = set()
-
         # plugins that were explicitly skipped with pytest.skip
         # list of (module name, skip reason)
         # previously we would issue a warning when a plugin was skipped, but

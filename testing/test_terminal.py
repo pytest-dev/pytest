@@ -451,7 +451,11 @@ class TestCollectonly:
         )
         result = pytester.runpytest("--collect-only")
         result.stdout.fnmatch_lines(
-            ["<Module test_collectonly_basic.py>", "  <Function test_func>"]
+            [
+                "<Dir test_collectonly_basic0>",
+                "  <Module test_collectonly_basic.py>",
+                "    <Function test_func>",
+            ]
         )
 
     def test_collectonly_skipped_module(self, pytester: Pytester) -> None:
@@ -480,14 +484,15 @@ class TestCollectonly:
         result = pytester.runpytest("--collect-only", "--verbose")
         result.stdout.fnmatch_lines(
             [
-                "<YamlFile test1.yaml>",
-                "  <YamlItem test1.yaml>",
-                "<Module test_collectonly_displays_test_description.py>",
-                "  <Function test_with_description>",
-                "    This test has a description.",
-                "    ",
-                "    more1.",
-                "      more2.",
+                "<Dir test_collectonly_displays_test_description0>",
+                "  <YamlFile test1.yaml>",
+                "    <YamlItem test1.yaml>",
+                "  <Module test_collectonly_displays_test_description.py>",
+                "    <Function test_with_description>",
+                "      This test has a description.",
+                "      ",
+                "      more1.",
+                "        more2.",
             ],
             consecutive=True,
         )
@@ -2001,9 +2006,9 @@ class TestClassicOutputStyle:
         result = pytester.runpytest("-o", "console_output_style=classic")
         result.stdout.fnmatch_lines(
             [
+                f"sub{os.sep}test_three.py .F.",
                 "test_one.py .",
                 "test_two.py F",
-                f"sub{os.sep}test_three.py .F.",
                 "*2 failed, 3 passed in*",
             ]
         )
@@ -2012,18 +2017,18 @@ class TestClassicOutputStyle:
         result = pytester.runpytest("-o", "console_output_style=classic", "-v")
         result.stdout.fnmatch_lines(
             [
-                "test_one.py::test_one PASSED",
-                "test_two.py::test_two FAILED",
                 f"sub{os.sep}test_three.py::test_three_1 PASSED",
                 f"sub{os.sep}test_three.py::test_three_2 FAILED",
                 f"sub{os.sep}test_three.py::test_three_3 PASSED",
+                "test_one.py::test_one PASSED",
+                "test_two.py::test_two FAILED",
                 "*2 failed, 3 passed in*",
             ]
         )
 
     def test_quiet(self, pytester: Pytester, test_files) -> None:
         result = pytester.runpytest("-o", "console_output_style=classic", "-q")
-        result.stdout.fnmatch_lines([".F.F.", "*2 failed, 3 passed in*"])
+        result.stdout.fnmatch_lines([".F..F", "*2 failed, 3 passed in*"])
 
 
 class TestProgressOutputStyle:
