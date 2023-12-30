@@ -12,6 +12,7 @@ from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn8Warning
+from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
 
 # set of plugins which have been integrated into the core; we use this list to ignore
@@ -122,7 +123,7 @@ HOOK_LEGACY_MARKING = UnformattedWarning(
     "#configuring-hook-specs-impls-using-markers",
 )
 
-MARKED_FIXTURE = PytestRemovedIn8Warning(
+MARKED_FIXTURE = PytestRemovedIn9Warning(
     "Marks applied to fixtures have no effect\n"
     "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
 )

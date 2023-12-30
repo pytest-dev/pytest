@@ -290,7 +290,7 @@ def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
 def test_fixture_disallow_on_marked_functions():
     """Test that applying @pytest.fixture to a marked function warns (#3364)."""
     with pytest.warns(
-        pytest.PytestRemovedIn8Warning,
+        pytest.PytestRemovedIn9Warning,
         match=r"Marks applied to fixtures have no effect",
     ) as record:
 
@@ -309,7 +309,7 @@ def test_fixture_disallow_on_marked_functions():
 def test_fixture_disallow_marks_on_fixtures():
     """Test that applying a mark to a fixture warns (#3364)."""
     with pytest.warns(
-        pytest.PytestRemovedIn8Warning,
+        pytest.PytestRemovedIn9Warning,
         match=r"Marks applied to fixtures have no effect",
     ) as record:
 
@@ -325,7 +325,7 @@ def test_fixture_disallow_marks_on_fixtures():
 def test_fixture_disallowed_between_marks():
     """Test that applying a mark to a fixture warns (#3364)."""
     with pytest.warns(
-        pytest.PytestRemovedIn8Warning,
+        pytest.PytestRemovedIn9Warning,
         match=r"Marks applied to fixtures have no effect",
     ) as record:
 
