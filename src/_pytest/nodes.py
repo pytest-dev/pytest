@@ -567,7 +567,7 @@ class Collector(Node):
             ntraceback = traceback.cut(path=self.path)
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
-            return excinfo.traceback.filter(excinfo)
+            return ntraceback.filter(excinfo)
         return excinfo.traceback
 
 
