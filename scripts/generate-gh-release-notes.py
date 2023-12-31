@@ -1,4 +1,4 @@
-# mypy:disallow-untyped-defs
+# mypy: disallow-untyped-defs
 """
 Script used to publish GitHub release notes extracted from CHANGELOG.rst.
 
@@ -23,11 +23,12 @@ Requires Python3.6+.
 import re
 import sys
 from pathlib import Path
+from typing import Sequence
 
 import pypandoc
 
 
-def parse_changelog(tag_name):
+def parse_changelog(tag_name: str) -> str:
     p = Path(__file__).parent.parent / "doc/en/changelog.rst"
     changelog_lines = p.read_text(encoding="UTF-8").splitlines()
 
@@ -49,13 +50,15 @@ def parse_changelog(tag_name):
     return "\n".join(version_lines)
 
 
-def convert_rst_to_md(text):
-    return pypandoc.convert_text(
+def convert_rst_to_md(text: str) -> str:
+    result = pypandoc.convert_text(
         text, "md", format="rst", extra_args=["--wrap=preserve"]
     )
+    assert isinstance(result, str), repr(result)
+    return result
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> int:
     if len(argv) != 3:
         print("Usage: generate-gh-release-notes VERSION FILE")
         return 2
