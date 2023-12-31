@@ -28,6 +28,31 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.4.4 (2023-12-31)
+=========================
+
+Bug Fixes
+---------
+
+- `#11140 <https://github.com/pytest-dev/pytest/issues/11140>`_: Fix non-string constants at the top of file being detected as docstrings on Python>=3.8.
+
+
+- `#11572 <https://github.com/pytest-dev/pytest/issues/11572>`_: Handle an edge case where :data:`sys.stderr` and :data:`sys.__stderr__` might already be closed when :ref:`faulthandler` is tearing down.
+
+
+- `#11710 <https://github.com/pytest-dev/pytest/issues/11710>`_: Fixed tracebacks from collection errors not getting pruned.
+
+
+- `#7966 <https://github.com/pytest-dev/pytest/issues/7966>`_: Removed unhelpful error message from assertion rewrite mechanism when exceptions are raised in ``__iter__`` methods. Now they are treated un-iterable instead.
+
+
+
+Improved Documentation
+----------------------
+
+- `#11091 <https://github.com/pytest-dev/pytest/issues/11091>`_: Updated documentation to refer to hyphenated options: replaced ``--junitxml`` with ``--junit-xml`` and ``--collectonly`` with ``--collect-only``.
+
+
 pytest 7.4.3 (2023-10-24)
 =========================
 
