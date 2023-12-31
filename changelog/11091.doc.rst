@@ -1,1 +1,0 @@
-Updated documentation to refer to hyphenated options: replaced ``--junitxml`` with ``--junit-xml`` and ``--collectonly`` with ``--collect-only``.

@@ -1,1 +1,0 @@
-Fix non-string constants at the top of file being detected as docstrings on Python>=3.8.

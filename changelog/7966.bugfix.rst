@@ -1,1 +1,0 @@
-Removed unhelpful error message from assertion rewrite mechanism when exceptions are raised in ``__iter__`` methods. Now they are treated un-iterable instead.
