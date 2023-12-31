@@ -1,3 +1,4 @@
+# mypy:disallow-untyped-defs
 """
 Script used to publish GitHub release notes extracted from CHANGELOG.rst.
 
@@ -19,27 +20,18 @@ The script also requires ``pandoc`` to be previously installed in the system.
 
 Requires Python3.6+.
 """
-import os
 import re
 import sys
 from pathlib import Path
 
-import github3
 import pypandoc
-
-
-def publish_github_release(slug, token, tag_name, body):
-    github = github3.login(token=token)
-    owner, repo = slug.split("/")
-    repo = github.repository(owner, repo)
-    return repo.create_release(tag_name=tag_name, body=body)
 
 
 def parse_changelog(tag_name):
     p = Path(__file__).parent.parent / "doc/en/changelog.rst"
     changelog_lines = p.read_text(encoding="UTF-8").splitlines()
 
-    title_regex = re.compile(r"pytest (\d\.\d+\.\d+) \(\d{4}-\d{2}-\d{2}\)")
+    title_regex = re.compile(r"pytest (\d\.\d+\.\d+\w*) \(\d{4}-\d{2}-\d{2}\)")
     consuming_version = False
     version_lines = []
     for line in changelog_lines:
@@ -64,36 +56,17 @@ def convert_rst_to_md(text):
 
 
 def main(argv):
-    if len(argv) > 1:
-        tag_name = argv[1]
-    else:
-        tag_name = os.environ.get("GITHUB_REF")
-        if not tag_name:
-            print("tag_name not given and $GITHUB_REF not set", file=sys.stderr)
-            return 1
-        if tag_name.startswith("refs/tags/"):
-            tag_name = tag_name[len("refs/tags/") :]
+    if len(argv) != 3:
+        print("Usage: generate-gh-release-notes VERSION FILE")
+        return 2
 
-    token = os.environ.get("GH_RELEASE_NOTES_TOKEN")
-    if not token:
-        print("GH_RELEASE_NOTES_TOKEN not set", file=sys.stderr)
-        return 1
-
-    slug = os.environ.get("GITHUB_REPOSITORY")
-    if not slug:
-        print("GITHUB_REPOSITORY not set", file=sys.stderr)
-        return 1
-
-    rst_body = parse_changelog(tag_name)
+    version, filename = argv[1:3]
+    print(f"Generating GitHub release notes for version {version}")
+    rst_body = parse_changelog(version)
     md_body = convert_rst_to_md(rst_body)
-    if not publish_github_release(slug, token, tag_name, md_body):
-        print("Could not publish release notes:", file=sys.stderr)
-        print(md_body, file=sys.stderr)
-        return 5
-
+    Path(filename).write_text(md_body, encoding="UTF-8")
     print()
-    print(f"Release notes for {tag_name} published successfully:")
-    print(f"https://github.com/{slug}/releases/tag/{tag_name}")
+    print(f"Done: {filename}")
     print()
     return 0
 
