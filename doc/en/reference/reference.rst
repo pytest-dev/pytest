@@ -2141,6 +2141,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
+      verbosity_assertions (string):
+                            Specify a verbosity level for assertions, overriding
+                            the main level. Higher levels will provide more
+                            detailed explanation when an assertion fails.
       junit_suite_name (string):
                             Test suite name for JUnit report
       junit_logging (string):

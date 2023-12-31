@@ -1,2 +1,0 @@
-Fixed a bug that when there are multiple fixtures for an indirect parameter,
-the scope of the highest-scope fixture is picked for the parameter set, instead of that of the one with the narrowest scope.

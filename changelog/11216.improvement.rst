@@ -1,1 +1,0 @@
-If a test is skipped from inside an :ref:`xunit setup fixture <classic xunit>`, the test summary now shows the test location instead of the fixture location.
