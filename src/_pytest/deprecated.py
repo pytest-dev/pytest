@@ -11,7 +11,6 @@ in case of warnings which need to format their messages.
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -34,14 +33,6 @@ YIELD_FIXTURE = PytestDeprecationWarning(
 # This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
-
-NODE_CTOR_FSPATH_ARG = UnformattedWarning(
-    PytestRemovedIn8Warning,
-    "The (fspath: py.path.local) argument to {node_type_name} is deprecated. "
-    "Please use the (path: pathlib.Path) argument instead.\n"
-    "See https://docs.pytest.org/en/latest/deprecations.html"
-    "#fspath-argument-for-node-constructors-replaced-with-pathlib-path",
-)
 
 HOOK_LEGACY_MARKING = UnformattedWarning(
     PytestDeprecationWarning,

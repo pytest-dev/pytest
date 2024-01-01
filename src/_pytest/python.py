@@ -47,7 +47,6 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -672,7 +671,6 @@ class Package(nodes.Directory):
 
     def __init__(
         self,
-        fspath: Optional[LEGACY_PATH],
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
@@ -684,7 +682,6 @@ class Package(nodes.Directory):
         # super().__init__(self, fspath, parent=parent)
         session = parent.session
         super().__init__(
-            fspath=fspath,
             path=path,
             parent=parent,
             config=config,

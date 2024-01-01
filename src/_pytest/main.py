@@ -541,7 +541,6 @@ class Session(nodes.Collector):
         super().__init__(
             name="",
             path=config.rootpath,
-            fspath=None,
             parent=None,
             config=config,
             session=self,
