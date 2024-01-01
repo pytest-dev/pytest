@@ -438,19 +438,6 @@ The proper fix is to change the `return` to an `assert`:
         assert foo(a, b) == result
 
 
-The ``--strict`` command-line option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 6.2
-
-The ``--strict`` command-line option has been deprecated in favor of ``--strict-markers``, which
-better conveys what the option does.
-
-We have plans to maybe in the future to reintroduce ``--strict`` and make it an encompassing
-flag for all strictness related options (``--strict-markers`` and ``--strict-config``
-at the moment, more might be introduced in the future).
-
-
 The ``yield_fixture`` function/decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -468,6 +455,20 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+
+The ``--strict`` command-line option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.2
+.. versionremoved:: 8.0
+
+The ``--strict`` command-line option has been deprecated in favor of ``--strict-markers``, which
+better conveys what the option does.
+
+We have plans to maybe in the future to reintroduce ``--strict`` and make it an encompassing
+flag for all strictness related options (``--strict-markers`` and ``--strict-config``
+at the moment, more might be introduced in the future).
 
 
 .. _cmdline-preparse-deprecated:

@@ -46,10 +46,6 @@ YIELD_FIXTURE = PytestDeprecationWarning(
     "Use @pytest.fixture instead; they are the same."
 )
 
-STRICT_OPTION = PytestRemovedIn8Warning(
-    "The --strict option is deprecated, use --strict-markers instead."
-)
-
 # This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 

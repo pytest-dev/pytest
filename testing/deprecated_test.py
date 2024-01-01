@@ -67,25 +67,6 @@ def test_hookimpl_via_function_attributes_are_deprecated():
     assert record.filename == __file__
 
 
-def test_strict_option_is_deprecated(pytester: Pytester) -> None:
-    """--strict is a deprecated alias to --strict-markers (#7530)."""
-    pytester.makepyfile(
-        """
-        import pytest
-
-        @pytest.mark.unknown
-        def test_foo(): pass
-        """
-    )
-    result = pytester.runpytest("--strict", "-Wdefault::pytest.PytestRemovedIn8Warning")
-    result.stdout.fnmatch_lines(
-        [
-            "'unknown' not found in `markers` configuration option",
-            "*PytestRemovedIn8Warning: The --strict option is deprecated, use --strict-markers instead.",
-        ]
-    )
-
-
 def test_yield_fixture_is_deprecated() -> None:
     with pytest.warns(DeprecationWarning, match=r"yield_fixture is deprecated"):
 
