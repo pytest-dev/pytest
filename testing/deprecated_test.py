@@ -120,64 +120,6 @@ def test_hookproxy_warnings_for_pathlib(tmp_path, hooktype, request):
             )
 
 
-class TestSkipMsgArgumentDeprecated:
-    def test_skip_with_msg_is_deprecated(self, pytester: Pytester) -> None:
-        p = pytester.makepyfile(
-            """
-            import pytest
-
-            def test_skipping_msg():
-                pytest.skip(msg="skippedmsg")
-            """
-        )
-        result = pytester.runpytest(p, "-Wdefault::pytest.PytestRemovedIn8Warning")
-        result.stdout.fnmatch_lines(
-            [
-                "*PytestRemovedIn8Warning: pytest.skip(msg=...) is now deprecated, "
-                "use pytest.skip(reason=...) instead",
-                '*pytest.skip(msg="skippedmsg")*',
-            ]
-        )
-        result.assert_outcomes(skipped=1, warnings=1)
-
-    def test_fail_with_msg_is_deprecated(self, pytester: Pytester) -> None:
-        p = pytester.makepyfile(
-            """
-            import pytest
-
-            def test_failing_msg():
-                pytest.fail(msg="failedmsg")
-            """
-        )
-        result = pytester.runpytest(p, "-Wdefault::pytest.PytestRemovedIn8Warning")
-        result.stdout.fnmatch_lines(
-            [
-                "*PytestRemovedIn8Warning: pytest.fail(msg=...) is now deprecated, "
-                "use pytest.fail(reason=...) instead",
-                '*pytest.fail(msg="failedmsg")',
-            ]
-        )
-        result.assert_outcomes(failed=1, warnings=1)
-
-    def test_exit_with_msg_is_deprecated(self, pytester: Pytester) -> None:
-        p = pytester.makepyfile(
-            """
-            import pytest
-
-            def test_exit_msg():
-                pytest.exit(msg="exitmsg")
-            """
-        )
-        result = pytester.runpytest(p, "-Wdefault::pytest.PytestRemovedIn8Warning")
-        result.stdout.fnmatch_lines(
-            [
-                "*PytestRemovedIn8Warning: pytest.exit(msg=...) is now deprecated, "
-                "use pytest.exit(reason=...) instead",
-            ]
-        )
-        result.assert_outcomes(warnings=1)
-
-
 def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
     mod = pytester.getmodulecol("")
 

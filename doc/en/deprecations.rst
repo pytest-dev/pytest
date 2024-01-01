@@ -255,37 +255,6 @@ Directly constructing the following classes is now deprecated:
 
 These constructors have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 8.
 
-Passing ``msg=`` to ``pytest.skip``, ``pytest.fail`` or ``pytest.exit``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-Passing the keyword argument ``msg`` to :func:`pytest.skip`, :func:`pytest.fail` or :func:`pytest.exit`
-is now deprecated and ``reason`` should be used instead.  This change is to bring consistency between these
-functions and the ``@pytest.mark.skip`` and ``@pytest.mark.xfail`` markers which already accept a ``reason`` argument.
-
-.. code-block:: python
-
-    def test_fail_example():
-        # old
-        pytest.fail(msg="foo")
-        # new
-        pytest.fail(reason="bar")
-
-
-    def test_skip_example():
-        # old
-        pytest.skip(msg="foo")
-        # new
-        pytest.skip(reason="bar")
-
-
-    def test_exit_example():
-        # old
-        pytest.exit(msg="foo")
-        # new
-        pytest.exit(reason="bar")
-
 .. _diamond-inheritance-deprecated:
 
 Diamond inheritance between :class:`pytest.Collector` and :class:`pytest.Item`
@@ -413,6 +382,39 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+Passing ``msg=`` to ``pytest.skip``, ``pytest.fail`` or ``pytest.exit``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+.. versionremoved:: 8.0
+
+Passing the keyword argument ``msg`` to :func:`pytest.skip`, :func:`pytest.fail` or :func:`pytest.exit`
+is now deprecated and ``reason`` should be used instead.  This change is to bring consistency between these
+functions and the ``@pytest.mark.skip`` and ``@pytest.mark.xfail`` markers which already accept a ``reason`` argument.
+
+.. code-block:: python
+
+    def test_fail_example():
+        # old
+        pytest.fail(msg="foo")
+        # new
+        pytest.fail(reason="bar")
+
+
+    def test_skip_example():
+        # old
+        pytest.skip(msg="foo")
+        # new
+        pytest.skip(reason="bar")
+
+
+    def test_exit_example():
+        # old
+        pytest.exit(msg="foo")
+        # new
+        pytest.exit(reason="bar")
+
 
 .. _instance-collector-deprecation:
 
