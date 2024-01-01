@@ -530,13 +530,11 @@ class TestRmRf:
             assert fn.is_file()
 
         # ignored function
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            with pytest.warns(None) as warninfo:  # type: ignore[call-overload]
-                exc_info4 = PermissionError()
-                on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
-                assert fn.is_file()
-            assert not [x.message for x in warninfo]
+        with warnings.catch_warnings(record=True) as w:
+            exc_info4 = PermissionError()
+            on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
+            assert fn.is_file()
+            assert not [x.message for x in w]
 
         exc_info5 = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info5, start_path=tmp_path)

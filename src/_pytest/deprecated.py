@@ -65,13 +65,6 @@ NODE_CTOR_FSPATH_ARG = UnformattedWarning(
     "#fspath-argument-for-node-constructors-replaced-with-pathlib-path",
 )
 
-WARNS_NONE_ARG = PytestRemovedIn8Warning(
-    "Passing None has been deprecated.\n"
-    "See https://docs.pytest.org/en/latest/how-to/capture-warnings.html"
-    "#additional-use-cases-of-warnings-in-tests"
-    " for alternatives in common use cases."
-)
-
 KEYWORD_MSG_ARG = UnformattedWarning(
     PytestRemovedIn8Warning,
     "pytest.{func}(msg=...) is now deprecated, use pytest.{func}(reason=...) instead",

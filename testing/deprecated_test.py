@@ -120,20 +120,6 @@ def test_hookproxy_warnings_for_pathlib(tmp_path, hooktype, request):
             )
 
 
-def test_warns_none_is_deprecated():
-    with pytest.warns(
-        PytestDeprecationWarning,
-        match=re.escape(
-            "Passing None has been deprecated.\n"
-            "See https://docs.pytest.org/en/latest/how-to/capture-warnings.html"
-            "#additional-use-cases-of-warnings-in-tests"
-            " for alternatives in common use cases."
-        ),
-    ):
-        with pytest.warns(None):  # type: ignore[call-overload]
-            pass
-
-
 class TestSkipMsgArgumentDeprecated:
     def test_skip_with_msg_is_deprecated(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(

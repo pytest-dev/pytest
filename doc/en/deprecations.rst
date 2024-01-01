@@ -374,18 +374,6 @@ Users expected in this case that the ``usefixtures`` mark would have its intende
 Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
 
 
-Using ``pytest.warns(None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-:func:`pytest.warns(None) <pytest.warns>` is now deprecated because it was frequently misused.
-Its correct usage was checking that the code emits at least one warning of any type - like ``pytest.warns()``
-or ``pytest.warns(Warning)``.
-
-See :ref:`warns use cases` for examples.
-
-
 Returning non-None value in test functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -443,6 +431,19 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+
+Using ``pytest.warns(None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+.. versionremoved:: 8.0
+
+:func:`pytest.warns(None) <pytest.warns>` is now deprecated because it was frequently misused.
+Its correct usage was checking that the code emits at least one warning of any type - like ``pytest.warns()``
+or ``pytest.warns(Warning)``.
+
+See :ref:`warns use cases` for examples.
 
 
 Backward compatibilities in ``Parser.addoption``
