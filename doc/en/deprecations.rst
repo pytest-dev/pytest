@@ -136,7 +136,7 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 deprecation warning is now raised.
 
 Applying a mark to a fixture function
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 7.4
 
