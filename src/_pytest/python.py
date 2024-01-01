@@ -57,7 +57,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -596,23 +595,12 @@ class Module(nodes.File, PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_module = _get_first_non_fixture_func(
             self.obj, ("setUpModule", "setup_module")
         )
-        if setup_module is None and has_nose:
-            # The name "setup" is too common - only treat as fixture if callable.
-            setup_module = _get_first_non_fixture_func(self.obj, ("setup",))
-            if not callable(setup_module):
-                setup_module = None
         teardown_module = _get_first_non_fixture_func(
             self.obj, ("tearDownModule", "teardown_module")
         )
-        if teardown_module is None and has_nose:
-            teardown_module = _get_first_non_fixture_func(self.obj, ("teardown",))
-            # Same as "setup" above - only treat as fixture if callable.
-            if not callable(teardown_module):
-                teardown_module = None
 
         if setup_module is None and teardown_module is None:
             return
@@ -853,21 +841,10 @@ class Class(PyCollector):
         Using a fixture to invoke these methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_name = "setup_method"
         setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
-        emit_nose_setup_warning = False
-        if setup_method is None and has_nose:
-            setup_name = "setup"
-            emit_nose_setup_warning = True
-            setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
         teardown_name = "teardown_method"
         teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
-        emit_nose_teardown_warning = False
-        if teardown_method is None and has_nose:
-            teardown_name = "teardown"
-            emit_nose_teardown_warning = True
-            teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
         if setup_method is None and teardown_method is None:
             return
 
@@ -882,24 +859,10 @@ class Class(PyCollector):
             if setup_method is not None:
                 func = getattr(self, setup_name)
                 _call_with_optional_argument(func, method)
-                if emit_nose_setup_warning:
-                    warnings.warn(
-                        NOSE_SUPPORT_METHOD.format(
-                            nodeid=request.node.nodeid, method="setup"
-                        ),
-                        stacklevel=2,
-                    )
             yield
             if teardown_method is not None:
                 func = getattr(self, teardown_name)
                 _call_with_optional_argument(func, method)
-                if emit_nose_teardown_warning:
-                    warnings.warn(
-                        NOSE_SUPPORT_METHOD.format(
-                            nodeid=request.node.nodeid, method="teardown"
-                        ),
-                        stacklevel=2,
-                    )
 
         self.obj.__pytest_setup_method = xunit_setup_method_fixture
 

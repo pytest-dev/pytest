@@ -44,7 +44,6 @@ How-to guides
 
    how-to/existingtestsuite
    how-to/unittest
-   how-to/nose
    how-to/xunit_setup
 
    how-to/bash-completion

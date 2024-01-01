@@ -252,7 +252,6 @@ default_plugins = essential_plugins + (
     "monkeypatch",
     "recwarn",
     "pastebin",
-    "nose",
     "assertion",
     "junitxml",
     "doctest",

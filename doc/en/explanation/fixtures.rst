@@ -85,7 +85,7 @@ style of setup/teardown functions:
 In addition, pytest continues to support :ref:`xunitsetup`.  You can mix
 both styles, moving incrementally from classic to new style, as you
 prefer.  You can also start out from existing :ref:`unittest.TestCase
-style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
+style <unittest.TestCase>`.
 
 
 

@@ -74,7 +74,7 @@ Features
 
 - :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources
 
-- Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box
+- Can run :ref:`unittest <unittest>` (including trial) test suites out of the box
 
 - Python 3.8+ or PyPy 3
 
