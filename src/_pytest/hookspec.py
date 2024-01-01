@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
     from _pytest.terminal import TerminalReporter
     from _pytest.terminal import TestShortLogReport
-    from _pytest.compat import LEGACY_PATH
 
 
 hookspec = HookspecMarker("pytest")
@@ -246,9 +245,7 @@ def pytest_collection_finish(session: "Session") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_ignore_collect(
-    collection_path: Path, path: "LEGACY_PATH", config: "Config"
-) -> Optional[bool]:
+def pytest_ignore_collect(collection_path: Path, config: "Config") -> Optional[bool]:
     """Return True to prevent considering this path for collection.
 
     This hook is consulted for all files and directories prior to calling
@@ -262,8 +259,10 @@ def pytest_ignore_collect(
 
     .. versionchanged:: 7.0.0
         The ``collection_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``path`` parameter. The ``path`` parameter
-        has been deprecated.
+        equivalent of the ``path`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``path`` parameter has been removed.
     """
 
 
@@ -288,9 +287,7 @@ def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Colle
     """
 
 
-def pytest_collect_file(
-    file_path: Path, path: "LEGACY_PATH", parent: "Collector"
-) -> "Optional[Collector]":
+def pytest_collect_file(file_path: Path, parent: "Collector") -> "Optional[Collector]":
     """Create a :class:`~pytest.Collector` for the given path, or None if not relevant.
 
     For best results, the returned collector should be a subclass of
@@ -303,8 +300,10 @@ def pytest_collect_file(
 
     .. versionchanged:: 7.0.0
         The ``file_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``path`` parameter. The ``path`` parameter
-        has been deprecated.
+        equivalent of the ``path`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``path`` parameter was removed.
     """
 
 
@@ -363,9 +362,7 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
 
 
 @hookspec(firstresult=True)
-def pytest_pycollect_makemodule(
-    module_path: Path, path: "LEGACY_PATH", parent
-) -> Optional["Module"]:
+def pytest_pycollect_makemodule(module_path: Path, parent) -> Optional["Module"]:
     """Return a :class:`pytest.Module` collector or None for the given path.
 
     This hook will be called for each matching test module path.
@@ -381,7 +378,8 @@ def pytest_pycollect_makemodule(
         The ``module_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter.
 
-        The ``path`` parameter has been deprecated in favor of ``fspath``.
+    .. versionchanged:: 8.0.0
+        The ``path`` parameter has been removed in favor of ``module_path``.
     """
 
 
@@ -751,7 +749,7 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
 
 
 def pytest_report_header(  # type:ignore[empty-body]
-    config: "Config", start_path: Path, startdir: "LEGACY_PATH"
+    config: "Config", start_path: Path
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
@@ -774,15 +772,16 @@ def pytest_report_header(  # type:ignore[empty-body]
 
     .. versionchanged:: 7.0.0
         The ``start_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``startdir`` parameter. The ``startdir`` parameter
-        has been deprecated.
+        equivalent of the ``startdir`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``startdir`` parameter has been removed.
     """
 
 
 def pytest_report_collectionfinish(  # type:ignore[empty-body]
     config: "Config",
     start_path: Path,
-    startdir: "LEGACY_PATH",
     items: Sequence["Item"],
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed after collection
@@ -806,8 +805,10 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 
     .. versionchanged:: 7.0.0
         The ``start_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``startdir`` parameter. The ``startdir`` parameter
-        has been deprecated.
+        equivalent of the ``startdir`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``startdir`` parameter has been removed.
     """
 
 
