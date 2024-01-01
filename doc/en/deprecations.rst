@@ -374,18 +374,6 @@ Users expected in this case that the ``usefixtures`` mark would have its intende
 Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
 
 
-Backward compatibilities in ``Parser.addoption``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 2.4
-
-Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
-scheduled for removal in pytest 8 (deprecated since pytest 2.4.0):
-
-- ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.
-- ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
-
-
 Using ``pytest.warns(None)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -455,6 +443,19 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+
+Backward compatibilities in ``Parser.addoption``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 2.4
+.. versionremoved:: 8.0
+
+Several behaviors of :meth:`Parser.addoption <pytest.Parser.addoption>` are now
+removed in pytest 8 (deprecated since pytest 2.4.0):
+
+- ``parser.addoption(..., help=".. %default ..")`` - use ``%(default)s`` instead.
+- ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
 
 
 The ``--strict`` command-line option

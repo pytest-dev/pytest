@@ -49,25 +49,6 @@ YIELD_FIXTURE = PytestDeprecationWarning(
 # This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
-ARGUMENT_PERCENT_DEFAULT = PytestRemovedIn8Warning(
-    'pytest now uses argparse. "%default" should be changed to "%(default)s"',
-)
-
-ARGUMENT_TYPE_STR_CHOICE = UnformattedWarning(
-    PytestRemovedIn8Warning,
-    "`type` argument to addoption() is the string {typ!r}."
-    " For choices this is optional and can be omitted, "
-    " but when supplied should be a type (for example `str` or `int`)."
-    " (options: {names})",
-)
-
-ARGUMENT_TYPE_STR = UnformattedWarning(
-    PytestRemovedIn8Warning,
-    "`type` argument to addoption() is the string {typ!r}, "
-    " but when supplied should be a type (for example `str` or `int`)."
-    " (options: {names})",
-)
-
 
 HOOK_LEGACY_PATH_ARG = UnformattedWarning(
     PytestRemovedIn8Warning,
