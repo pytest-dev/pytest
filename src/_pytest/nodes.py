@@ -32,7 +32,6 @@ from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config.compat import _check_path
-from _pytest.deprecated import FSCOLLECTOR_GETHOOKPROXY_ISINITPATH
 from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
@@ -659,14 +658,6 @@ class FSCollector(Collector, abc.ABC):
     ):
         """The public constructor."""
         return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
-
-    def gethookproxy(self, fspath: "os.PathLike[str]"):
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.gethookproxy(fspath)
-
-    def isinitpath(self, path: Union[str, "os.PathLike[str]"]) -> bool:
-        warnings.warn(FSCOLLECTOR_GETHOOKPROXY_ISINITPATH, stacklevel=2)
-        return self.session.isinitpath(path)
 
 
 class File(FSCollector, abc.ABC):

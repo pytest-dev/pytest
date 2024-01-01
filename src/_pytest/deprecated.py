@@ -51,11 +51,6 @@ WARNING_CMDLINE_PREPARSE_HOOK = PytestRemovedIn8Warning(
     "Please use pytest_load_initial_conftests hook instead."
 )
 
-FSCOLLECTOR_GETHOOKPROXY_ISINITPATH = PytestRemovedIn8Warning(
-    "The gethookproxy() and isinitpath() methods of FSCollector and Package are deprecated; "
-    "use self.session.gethookproxy() and self.session.isinitpath() instead. "
-)
-
 STRICT_OPTION = PytestRemovedIn8Warning(
     "The --strict option is deprecated, use --strict-markers instead."
 )

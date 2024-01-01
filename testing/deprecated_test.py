@@ -1,6 +1,5 @@
 import re
 import sys
-import warnings
 from pathlib import Path
 
 import pytest
@@ -66,31 +65,6 @@ def test_hookimpl_via_function_attributes_are_deprecated():
         == DeprecatedMarkImplPlugin.pytest_runtest_call.__code__.co_firstlineno
     )
     assert record.filename == __file__
-
-
-def test_fscollector_gethookproxy_isinitpath(pytester: Pytester) -> None:
-    module = pytester.getmodulecol(
-        """
-        def test_foo(): pass
-        """,
-        withinit=True,
-    )
-    assert isinstance(module, pytest.Module)
-    package = module.parent
-    assert isinstance(package, pytest.Package)
-
-    with pytest.warns(pytest.PytestDeprecationWarning, match="gethookproxy"):
-        package.gethookproxy(pytester.path)
-
-    with pytest.warns(pytest.PytestDeprecationWarning, match="isinitpath"):
-        package.isinitpath(pytester.path)
-
-    # The methods on Session are *not* deprecated.
-    session = module.session
-    with warnings.catch_warnings(record=True) as rec:
-        session.gethookproxy(pytester.path)
-        session.isinitpath(pytester.path)
-    assert len(rec) == 0
 
 
 def test_strict_option_is_deprecated(pytester: Pytester) -> None:
