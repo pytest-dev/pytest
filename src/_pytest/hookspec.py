@@ -13,8 +13,6 @@ from typing import Union
 
 from pluggy import HookspecMarker
 
-from _pytest.deprecated import WARNING_CMDLINE_PREPARSE_HOOK
-
 if TYPE_CHECKING:
     import pdb
     import warnings
@@ -156,21 +154,6 @@ def pytest_cmdline_parse(
     :param pluginmanager: The pytest plugin manager.
     :param args: List of arguments passed on the command line.
     :returns: A pytest config object.
-    """
-
-
-@hookspec(warn_on_impl=WARNING_CMDLINE_PREPARSE_HOOK)
-def pytest_cmdline_preparse(config: "Config", args: List[str]) -> None:
-    """(**Deprecated**) modify command line arguments before option parsing.
-
-    This hook is considered deprecated and will be removed in a future pytest version. Consider
-    using :hook:`pytest_load_initial_conftests` instead.
-
-    .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
-
-    :param config: The pytest config object.
-    :param args: Arguments passed on the command line.
     """
 
 

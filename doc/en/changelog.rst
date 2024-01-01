@@ -1257,7 +1257,7 @@ Deprecations
   See :ref:`the deprecation note <diamond-inheritance-deprecated>` for full details.
 
 
-- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: :hook:`pytest_cmdline_preparse` has been officially deprecated.  It will be removed in a future release.  Use :hook:`pytest_load_initial_conftests` instead.
+- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: ``pytest_cmdline_preparse`` has been officially deprecated.  It will be removed in a future release.  Use :hook:`pytest_load_initial_conftests` instead.
 
   See :ref:`the deprecation note <cmdline-preparse-deprecated>` for full details.
 

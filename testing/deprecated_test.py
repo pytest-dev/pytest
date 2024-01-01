@@ -211,23 +211,6 @@ class TestSkipMsgArgumentDeprecated:
         result.assert_outcomes(warnings=1)
 
 
-def test_deprecation_of_cmdline_preparse(pytester: Pytester) -> None:
-    pytester.makeconftest(
-        """
-        def pytest_cmdline_preparse(config, args):
-            ...
-
-        """
-    )
-    result = pytester.runpytest("-Wdefault::pytest.PytestRemovedIn8Warning")
-    result.stdout.fnmatch_lines(
-        [
-            "*PytestRemovedIn8Warning: The pytest_cmdline_preparse hook is deprecated*",
-            "*Please use pytest_load_initial_conftests hook instead.*",
-        ]
-    )
-
-
 def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
     mod = pytester.getmodulecol("")
 

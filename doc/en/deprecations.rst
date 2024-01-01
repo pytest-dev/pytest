@@ -273,8 +273,6 @@ Directly constructing the following classes is now deprecated:
 
 These constructors have always been considered private, but now issue a deprecation warning, which may become a hard error in pytest 8.
 
-.. _cmdline-preparse-deprecated:
-
 Passing ``msg=`` to ``pytest.skip``, ``pytest.fail`` or ``pytest.exit``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -305,29 +303,6 @@ functions and the ``@pytest.mark.skip`` and ``@pytest.mark.xfail`` markers which
         pytest.exit(msg="foo")
         # new
         pytest.exit(reason="bar")
-
-
-Implementing the ``pytest_cmdline_preparse`` hook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-Implementing the :hook:`pytest_cmdline_preparse` hook has been officially deprecated.
-Implement the :hook:`pytest_load_initial_conftests` hook instead.
-
-.. code-block:: python
-
-    def pytest_cmdline_preparse(config: Config, args: List[str]) -> None:
-        ...
-
-
-    # becomes:
-
-
-    def pytest_load_initial_conftests(
-        early_config: Config, parser: Parser, args: List[str]
-    ) -> None:
-        ...
 
 .. _diamond-inheritance-deprecated:
 
@@ -493,6 +468,32 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+
+.. _cmdline-preparse-deprecated:
+
+Implementing the ``pytest_cmdline_preparse`` hook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+.. versionremoved:: 8.0
+
+Implementing the ``pytest_cmdline_preparse`` hook has been officially deprecated.
+Implement the :hook:`pytest_load_initial_conftests` hook instead.
+
+.. code-block:: python
+
+    def pytest_cmdline_preparse(config: Config, args: List[str]) -> None:
+        ...
+
+
+    # becomes:
+
+
+    def pytest_load_initial_conftests(
+        early_config: Config, parser: Parser, args: List[str]
+    ) -> None:
+        ...
 
 
 Collection changes in pytest 8
