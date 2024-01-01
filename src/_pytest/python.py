@@ -57,7 +57,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import INSTANCE_COLLECTOR
 from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
@@ -903,20 +902,6 @@ class Class(PyCollector):
                     )
 
         self.obj.__pytest_setup_method = xunit_setup_method_fixture
-
-
-class InstanceDummy:
-    """Instance used to be a node type between Class and Function. It has been
-    removed in pytest 7.0. Some plugins exist which reference `pytest.Instance`
-    only to ignore it; this dummy class keeps them working. This will be removed
-    in pytest 8."""
-
-
-def __getattr__(name: str) -> object:
-    if name == "Instance":
-        warnings.warn(INSTANCE_COLLECTOR, 2)
-        return InstanceDummy
-    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def hasinit(obj: object) -> bool:

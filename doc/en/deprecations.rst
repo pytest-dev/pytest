@@ -125,24 +125,6 @@ Will also need to be ported to a supported pytest style. One way to do it is usi
 
 .. _`with-setup-nose`: https://nose.readthedocs.io/en/latest/testing_tools.html?highlight=with_setup#nose.tools.with_setup
 
-.. _instance-collector-deprecation:
-
-The ``pytest.Instance`` collector
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionremoved:: 7.0
-
-The ``pytest.Instance`` collector type has been removed.
-
-Previously, Python test methods were collected as :class:`~pytest.Class` -> ``Instance`` -> :class:`~pytest.Function`.
-Now :class:`~pytest.Class` collects the test methods directly.
-
-Most plugins which reference ``Instance`` do so in order to ignore or skip it,
-using a check such as ``if isinstance(node, Instance): return``.
-Such plugins should simply remove consideration of ``Instance`` on pytest>=7.
-However, to keep such uses working, a dummy type has been instanted in ``pytest.Instance`` and ``_pytest.python.Instance``,
-and importing it emits a deprecation warning. This will be removed in pytest 8.
-
 
 .. _node-ctor-fspath-deprecation:
 
@@ -431,6 +413,24 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+.. _instance-collector-deprecation:
+
+The ``pytest.Instance`` collector
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 7.0
+
+The ``pytest.Instance`` collector type has been removed.
+
+Previously, Python test methods were collected as :class:`~pytest.Class` -> ``Instance`` -> :class:`~pytest.Function`.
+Now :class:`~pytest.Class` collects the test methods directly.
+
+Most plugins which reference ``Instance`` do so in order to ignore or skip it,
+using a check such as ``if isinstance(node, Instance): return``.
+Such plugins should simply remove consideration of ``Instance`` on pytest>=7.
+However, to keep such uses working, a dummy type has been instanted in ``pytest.Instance`` and ``_pytest.python.Instance``,
+and importing it emits a deprecation warning. This was removed in pytest 8.
 
 
 Using ``pytest.warns(None)``

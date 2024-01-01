@@ -197,20 +197,6 @@ def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
         )
 
 
-def test_importing_instance_is_deprecated(pytester: Pytester) -> None:
-    with pytest.warns(
-        pytest.PytestDeprecationWarning,
-        match=re.escape("The pytest.Instance collector type is deprecated"),
-    ):
-        pytest.Instance  # type:ignore[attr-defined]
-
-    with pytest.warns(
-        pytest.PytestDeprecationWarning,
-        match=re.escape("The pytest.Instance collector type is deprecated"),
-    ):
-        from _pytest.python import Instance  # noqa: F401
-
-
 def test_fixture_disallow_on_marked_functions():
     """Test that applying @pytest.fixture to a marked function warns (#3364)."""
     with pytest.warns(

@@ -70,10 +70,6 @@ KEYWORD_MSG_ARG = UnformattedWarning(
     "pytest.{func}(msg=...) is now deprecated, use pytest.{func}(reason=...) instead",
 )
 
-INSTANCE_COLLECTOR = PytestRemovedIn8Warning(
-    "The pytest.Instance collector type is deprecated and is no longer used. "
-    "See https://docs.pytest.org/en/latest/deprecations.html#the-pytest-instance-collector",
-)
 HOOK_LEGACY_MARKING = UnformattedWarning(
     PytestDeprecationWarning,
     "The hook{type} {fullname} uses old-style configuration options (marks or attributes).\n"
