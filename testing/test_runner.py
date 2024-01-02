@@ -1090,7 +1090,11 @@ def test_outcome_exception_bad_msg() -> None:
 
 
 def test_teardown_session_failed(pytester: Pytester) -> None:
-    """Test that fixture teardown failures are reported after a test fails."""
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --maxfail.
+
+    Regression test for #11706.
+    """
     pytester.makepyfile(
         """
         import pytest
@@ -1108,4 +1112,4 @@ def test_teardown_session_failed(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest("--maxfail=1")
-    result.stdout.fnmatch_lines(["*1 failed, 1 error*"])
+    result.assert_outcomes(failed=1, errors=1)
