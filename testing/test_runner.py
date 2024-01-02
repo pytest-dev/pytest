@@ -1113,3 +1113,29 @@ def test_teardown_session_failed(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("--maxfail=1")
     result.assert_outcomes(failed=1, errors=1)
+
+
+def test_teardown_session_stopped(pytester: Pytester) -> None:
+    """Similar to `test_teardown_session_failed`, but uses `pytest.exit` instead
+    of `pytest.fail`.
+
+    Regression test for #11706.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.exit("This is an exiting fixture")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(baz):
+            pass
+    """
+    )
+    result = pytester.runpytest("--maxfail=1")
+    result.assert_outcomes(failed=1, errors=0)
