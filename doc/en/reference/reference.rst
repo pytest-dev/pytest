@@ -1146,13 +1146,13 @@ When set to ``0``, pytest will not use color.
 
 .. envvar:: NO_COLOR
 
-When set (regardless of value), pytest will not use color in terminal output.
+When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
 ``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
 See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
 
 .. envvar:: FORCE_COLOR
 
-When set (regardless of value), pytest will use color in terminal output.
+When set to a non-empty string (regardless of value), pytest will use color in terminal output.
 ``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
 
 Exceptions

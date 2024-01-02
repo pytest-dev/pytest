@@ -649,7 +649,7 @@ class TestXFail:
             result.stdout.fnmatch_lines(
                 [
                     "*test_strict_xfail*",
-                    "XPASS test_strict_xfail.py::test_foo unsupported feature",
+                    "XPASS test_strict_xfail.py::test_foo - unsupported feature",
                 ]
             )
         assert result.ret == (1 if strict else 0)

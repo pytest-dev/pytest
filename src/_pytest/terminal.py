@@ -1202,8 +1202,11 @@ class TerminalReporter:
                     verbose_word, **{_color_for_type["warnings"]: True}
                 )
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
+                line = f"{markup_word} {nodeid}"
                 reason = rep.wasxfail
-                lines.append(f"{markup_word} {nodeid} {reason}")
+                if reason:
+                    line += " - " + str(reason)
+                lines.append(line)
 
         def show_skipped(lines: List[str]) -> None:
             skipped: List[CollectReport] = self.stats.get("skipped", [])
