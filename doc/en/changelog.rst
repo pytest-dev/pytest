@@ -227,7 +227,7 @@ These are breaking changes where deprecation was not possible.
 Deprecations
 ------------
 
-- `#10465 <https://github.com/pytest-dev/pytest/issues/10465>`_: Test functions returning a value other than ``None`` will now issue a :class:`pytest.PytestWarning` instead of :class:`pytest.PytestRemovedIn8Warning`, meaning this will stay a warning instead of becoming an error in the future.
+- `#10465 <https://github.com/pytest-dev/pytest/issues/10465>`_: Test functions returning a value other than ``None`` will now issue a :class:`pytest.PytestWarning` instead of ``pytest.PytestRemovedIn8Warning``, meaning this will stay a warning instead of becoming an error in the future.
 
 
 - `#3664 <https://github.com/pytest-dev/pytest/issues/3664>`_: Applying a mark to a fixture function now issues a warning: marks in fixtures never had any effect, but it is a common user error to apply a mark to a fixture (for example ``usefixtures``) and expect it to work.
