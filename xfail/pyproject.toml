@@ -1,3 +1,0 @@
-[tool.pytest.ini_options]
-addopts = "-ra --strict-markers"
-#xfail_strict = true
