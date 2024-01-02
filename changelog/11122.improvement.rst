@@ -1,6 +1,0 @@
-``pluggy>=1.2.0`` is now required.
-
-pytest now uses "new-style" hook wrappers internally, available since pluggy 1.2.0.
-See `pluggy's 1.2.0 changelog <https://pluggy.readthedocs.io/en/latest/changelog.html#pluggy-1-2-0-2023-06-21>`_ and the :ref:`updated docs <hookwrapper>` for details.
-
-Plugins which want to use new-style wrappers can do so if they require this version of pytest or later.
