@@ -1,1 +1,0 @@
-Improved the documentation and type signature for :func:`pytest.mark.xfail <pytest.mark.xfail>`'s ``condition`` param to use ``False`` as the default value.

@@ -29,7 +29,7 @@ you will see the return value of the function call:
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -143,11 +143,13 @@ Notes:
 * The ``match`` parameter also matches against `PEP-678 <https://peps.python.org/pep-0678/>`__ ``__notes__``.
 
 
+.. _`assert-matching-exception-groups`:
+
 Matching exception groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can also use the :func:`excinfo.group_contains() <pytest.ExceptionInfo.group_contains>`
-method to test for exceptions returned as part of an ``ExceptionGroup``:
+method to test for exceptions returned as part of an :class:`ExceptionGroup`:
 
 .. code-block:: python
 
@@ -278,7 +280,7 @@ if you run this module:
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -292,6 +294,7 @@ if you run this module:
             set2 = set("8035")
     >       assert set1 == set2
     E       AssertionError: assert {'0', '1', '3', '8'} == {'0', '3', '5', '8'}
+    E
     E         Extra items in the left set:
     E         '1'
     E         Extra items in the right set:
