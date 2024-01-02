@@ -6,6 +6,7 @@ import functools
 import importlib
 import os
 import sys
+import warnings
 from pathlib import Path
 from typing import AbstractSet
 from typing import Callable
@@ -44,6 +45,7 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
+from _pytest.warning_types import PytestWarning
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -584,6 +586,12 @@ class Session(nodes.Collector):
     def shouldstop(self, value: Union[bool, str]) -> None:
         """Prevent plugins from setting this to False once it has been set."""
         if value is False and self._shouldstop:
+            warnings.warn(
+                PytestWarning(
+                    "session.shouldstop cannot be unset after it has been set; ignoring."
+                ),
+                stacklevel=2,
+            )
             return
         self._shouldstop = value
 
@@ -595,6 +603,12 @@ class Session(nodes.Collector):
     def shouldfail(self, value: Union[bool, str]) -> None:
         """Prevent plugins from setting this to False once it has been set."""
         if value is False and self._shouldfail:
+            warnings.warn(
+                PytestWarning(
+                    "session.shouldfail cannot be unset after it has been set; ignoring."
+                ),
+                stacklevel=2,
+            )
             return
         self._shouldfail = value
 
