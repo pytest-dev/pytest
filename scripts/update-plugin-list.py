@@ -1,8 +1,13 @@
+# mypy: disallow-untyped-defs
 import datetime
 import pathlib
 import re
 from textwrap import dedent
 from textwrap import indent
+from typing import Any
+from typing import Iterable
+from typing import Iterator
+from typing import TypedDict
 
 import packaging.version
 import platformdirs
@@ -109,7 +114,17 @@ def pytest_plugin_projects_from_pypi(session: CachedSession) -> dict[str, int]:
     }
 
 
-def iter_plugins():
+class PluginInfo(TypedDict):
+    """Relevant information about a plugin to generate the summary."""
+
+    name: str
+    summary: str
+    last_release: str
+    status: str
+    requires: str
+
+
+def iter_plugins() -> Iterator[PluginInfo]:
     session = get_session()
     name_2_serial = pytest_plugin_projects_from_pypi(session)
 
@@ -136,7 +151,7 @@ def iter_plugins():
                     requires = requirement
                     break
 
-        def version_sort_key(version_string):
+        def version_sort_key(version_string: str) -> Any:
             """
             Return the sort key for the given version string
             returned by the API.
@@ -162,20 +177,20 @@ def iter_plugins():
         yield {
             "name": name,
             "summary": summary.strip(),
-            "last release": last_release,
+            "last_release": last_release,
             "status": status,
             "requires": requires,
         }
 
 
-def plugin_definitions(plugins):
+def plugin_definitions(plugins: Iterable[PluginInfo]) -> Iterator[str]:
     """Return RST for the plugin list that fits better on a vertical page."""
 
     for plugin in plugins:
         yield dedent(
             f"""
             {plugin['name']}
-               *last release*: {plugin["last release"]},
+               *last release*: {plugin["last_release"]},
                *status*: {plugin["status"]},
                *requires*: {plugin["requires"]}
 
@@ -184,7 +199,7 @@ def plugin_definitions(plugins):
         )
 
 
-def main():
+def main() -> None:
     plugins = [*iter_plugins()]
 
     reference_dir = pathlib.Path("doc", "en", "reference")
