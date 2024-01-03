@@ -584,7 +584,8 @@ class Session(nodes.Collector):
 
     @shouldstop.setter
     def shouldstop(self, value: Union[bool, str]) -> None:
-        """Prevent plugins from setting this to False once it has been set."""
+        # The runner checks shouldfail and assumes that if it is set we are
+        # definitely stopping, so prevent unsetting it.
         if value is False and self._shouldstop:
             warnings.warn(
                 PytestWarning(
@@ -601,7 +602,8 @@ class Session(nodes.Collector):
 
     @shouldfail.setter
     def shouldfail(self, value: Union[bool, str]) -> None:
-        """Prevent plugins from setting this to False once it has been set."""
+        # The runner checks shouldfail and assumes that if it is set we are
+        # definitely stopping, so prevent unsetting it.
         if value is False and self._shouldfail:
             warnings.warn(
                 PytestWarning(

@@ -1102,22 +1102,21 @@ def test_teardown_session_failed(pytester: Pytester) -> None:
         @pytest.fixture(scope="module")
         def baz():
             yield
-            pytest.fail("This is a failing fixture")
+            pytest.fail("This is a failing teardown")
 
         def test_foo(baz):
             pytest.fail("This is a failing test")
 
-        def test_bar(baz):
-            pass
-    """
+        def test_bar(): pass
+        """
     )
     result = pytester.runpytest("--maxfail=1")
     result.assert_outcomes(failed=1, errors=1)
 
 
 def test_teardown_session_stopped(pytester: Pytester) -> None:
-    """Similar to `test_teardown_session_failed`, but uses `pytest.exit` instead
-    of `pytest.fail`.
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --stepwise.
 
     Regression test for #11706.
     """
@@ -1128,14 +1127,13 @@ def test_teardown_session_stopped(pytester: Pytester) -> None:
         @pytest.fixture(scope="module")
         def baz():
             yield
-            pytest.exit("This is an exiting fixture")
+            pytest.fail("This is a failing teardown")
 
         def test_foo(baz):
             pytest.fail("This is a failing test")
 
-        def test_bar(baz):
-            pass
-    """
+        def test_bar(): pass
+        """
     )
-    result = pytester.runpytest("--maxfail=1")
-    result.assert_outcomes(failed=1, errors=0)
+    result = pytester.runpytest("--stepwise")
+    result.assert_outcomes(failed=1, errors=1)
