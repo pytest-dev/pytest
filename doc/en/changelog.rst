@@ -227,7 +227,7 @@ These are breaking changes where deprecation was not possible.
 Deprecations
 ------------
 
-- `#10465 <https://github.com/pytest-dev/pytest/issues/10465>`_: Test functions returning a value other than ``None`` will now issue a :class:`pytest.PytestWarning` instead of :class:`pytest.PytestRemovedIn8Warning`, meaning this will stay a warning instead of becoming an error in the future.
+- `#10465 <https://github.com/pytest-dev/pytest/issues/10465>`_: Test functions returning a value other than ``None`` will now issue a :class:`pytest.PytestWarning` instead of ``pytest.PytestRemovedIn8Warning``, meaning this will stay a warning instead of becoming an error in the future.
 
 
 - `#3664 <https://github.com/pytest-dev/pytest/issues/3664>`_: Applying a mark to a fixture function now issues a warning: marks in fixtures never had any effect, but it is a common user error to apply a mark to a fixture (for example ``usefixtures``) and expect it to work.
@@ -1257,7 +1257,7 @@ Deprecations
   See :ref:`the deprecation note <diamond-inheritance-deprecated>` for full details.
 
 
-- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: :hook:`pytest_cmdline_preparse` has been officially deprecated.  It will be removed in a future release.  Use :hook:`pytest_load_initial_conftests` instead.
+- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: ``pytest_cmdline_preparse`` has been officially deprecated.  It will be removed in a future release.  Use :hook:`pytest_load_initial_conftests` instead.
 
   See :ref:`the deprecation note <cmdline-preparse-deprecated>` for full details.
 

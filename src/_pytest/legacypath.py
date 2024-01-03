@@ -1,5 +1,6 @@
 """Add backward compatibility support for the legacy py path type."""
 import dataclasses
+import os
 import shlex
 import subprocess
 from pathlib import Path
@@ -12,9 +13,8 @@ from typing import Union
 
 from iniconfig import SectionWrapper
 
+import py
 from _pytest.cacheprovider import Cache
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
@@ -34,6 +34,20 @@ from _pytest.tmpdir import TempPathFactory
 
 if TYPE_CHECKING:
     import pexpect
+
+
+#: constant to prepare valuing pylib path replacements/lazy proxies later on
+#  intended for removal in pytest 8.0 or 9.0
+
+# fmt: off
+# intentional space to create a fake difference for the verification
+LEGACY_PATH = py.path. local
+# fmt: on
+
+
+def legacy_path(path: Union[str, "os.PathLike[str]"]) -> LEGACY_PATH:
+    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
+    return LEGACY_PATH(path)
 
 
 @final

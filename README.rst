@@ -97,8 +97,8 @@ Features
 - `Modular fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`_ for
   managing small or parametrized long-lived test resources
 
-- Can run `unittest <https://docs.pytest.org/en/stable/how-to/unittest.html>`_ (or trial),
-  `nose <https://docs.pytest.org/en/stable/how-to/nose.html>`_ test suites out of the box
+- Can run `unittest <https://docs.pytest.org/en/stable/how-to/unittest.html>`_ (or trial)
+  test suites out of the box
 
 - Python 3.8+ or PyPy3
 

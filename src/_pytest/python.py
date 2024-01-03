@@ -47,7 +47,6 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -57,8 +56,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import INSTANCE_COLLECTOR
-from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -597,23 +594,12 @@ class Module(nodes.File, PyCollector):
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_module = _get_first_non_fixture_func(
             self.obj, ("setUpModule", "setup_module")
         )
-        if setup_module is None and has_nose:
-            # The name "setup" is too common - only treat as fixture if callable.
-            setup_module = _get_first_non_fixture_func(self.obj, ("setup",))
-            if not callable(setup_module):
-                setup_module = None
         teardown_module = _get_first_non_fixture_func(
             self.obj, ("tearDownModule", "teardown_module")
         )
-        if teardown_module is None and has_nose:
-            teardown_module = _get_first_non_fixture_func(self.obj, ("teardown",))
-            # Same as "setup" above - only treat as fixture if callable.
-            if not callable(teardown_module):
-                teardown_module = None
 
         if setup_module is None and teardown_module is None:
             return
@@ -685,7 +671,6 @@ class Package(nodes.Directory):
 
     def __init__(
         self,
-        fspath: Optional[LEGACY_PATH],
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
@@ -697,7 +682,6 @@ class Package(nodes.Directory):
         # super().__init__(self, fspath, parent=parent)
         session = parent.session
         super().__init__(
-            fspath=fspath,
             path=path,
             parent=parent,
             config=config,
@@ -854,21 +838,10 @@ class Class(PyCollector):
         Using a fixture to invoke these methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_name = "setup_method"
         setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
-        emit_nose_setup_warning = False
-        if setup_method is None and has_nose:
-            setup_name = "setup"
-            emit_nose_setup_warning = True
-            setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
         teardown_name = "teardown_method"
         teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
-        emit_nose_teardown_warning = False
-        if teardown_method is None and has_nose:
-            teardown_name = "teardown"
-            emit_nose_teardown_warning = True
-            teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
         if setup_method is None and teardown_method is None:
             return
 
@@ -883,40 +856,12 @@ class Class(PyCollector):
             if setup_method is not None:
                 func = getattr(self, setup_name)
                 _call_with_optional_argument(func, method)
-                if emit_nose_setup_warning:
-                    warnings.warn(
-                        NOSE_SUPPORT_METHOD.format(
-                            nodeid=request.node.nodeid, method="setup"
-                        ),
-                        stacklevel=2,
-                    )
             yield
             if teardown_method is not None:
                 func = getattr(self, teardown_name)
                 _call_with_optional_argument(func, method)
-                if emit_nose_teardown_warning:
-                    warnings.warn(
-                        NOSE_SUPPORT_METHOD.format(
-                            nodeid=request.node.nodeid, method="teardown"
-                        ),
-                        stacklevel=2,
-                    )
 
         self.obj.__pytest_setup_method = xunit_setup_method_fixture
-
-
-class InstanceDummy:
-    """Instance used to be a node type between Class and Function. It has been
-    removed in pytest 7.0. Some plugins exist which reference `pytest.Instance`
-    only to ignore it; this dummy class keeps them working. This will be removed
-    in pytest 8."""
-
-
-def __getattr__(name: str) -> object:
-    if name == "Instance":
-        warnings.warn(INSTANCE_COLLECTOR, 2)
-        return InstanceDummy
-    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def hasinit(obj: object) -> bool:

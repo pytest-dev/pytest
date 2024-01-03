@@ -1253,17 +1253,6 @@ def test_plugin_loading_order(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-def test_cmdline_processargs_simple(pytester: Pytester) -> None:
-    pytester.makeconftest(
-        """
-        def pytest_cmdline_preparse(args):
-            args.append("-h")
-    """
-    )
-    result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn8Warning")
-    result.stdout.fnmatch_lines(["*pytest*", "*-h*"])
-
-
 def test_invalid_options_show_extra_information(pytester: Pytester) -> None:
     """Display extra information when pytest exits due to unrecognized
     options in the command-line."""

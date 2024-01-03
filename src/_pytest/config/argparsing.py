@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-import warnings
 from gettext import gettext
 from typing import Any
 from typing import Callable
@@ -19,9 +18,6 @@ from typing import Union
 
 import _pytest._io
 from _pytest.config.exceptions import UsageError
-from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
-from _pytest.deprecated import ARGUMENT_TYPE_STR
-from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 from _pytest.deprecated import check_ispytest
 
 FILE_OR_DIR = "file_or_dir"
@@ -259,39 +255,15 @@ class Argument:
     https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
     """
 
-    _typ_map = {"int": int, "string": str, "float": float, "complex": complex}
-
     def __init__(self, *names: str, **attrs: Any) -> None:
         """Store params in private vars for use in add_argument."""
         self._attrs = attrs
         self._short_opts: List[str] = []
         self._long_opts: List[str] = []
-        if "%default" in (attrs.get("help") or ""):
-            warnings.warn(ARGUMENT_PERCENT_DEFAULT, stacklevel=3)
         try:
-            typ = attrs["type"]
+            self.type = attrs["type"]
         except KeyError:
             pass
-        else:
-            # This might raise a keyerror as well, don't want to catch that.
-            if isinstance(typ, str):
-                if typ == "choice":
-                    warnings.warn(
-                        ARGUMENT_TYPE_STR_CHOICE.format(typ=typ, names=names),
-                        stacklevel=4,
-                    )
-                    # argparse expects a type here take it from
-                    # the type of the first element
-                    attrs["type"] = type(attrs["choices"][0])
-                else:
-                    warnings.warn(
-                        ARGUMENT_TYPE_STR.format(typ=typ, names=names), stacklevel=4
-                    )
-                    attrs["type"] = Argument._typ_map[typ]
-                # Used in test_parseopt -> test_parse_defaultgetter.
-                self.type = attrs["type"]
-            else:
-                self.type = typ
         try:
             # Attribute existence is tested in Config._processopt.
             self.default = attrs["default"]
@@ -322,11 +294,6 @@ class Argument:
                 self._attrs[attr] = getattr(self, attr)
             except AttributeError:
                 pass
-        if self._attrs.get("help"):
-            a = self._attrs["help"]
-            a = a.replace("%default", "%(default)s")
-            # a = a.replace('%prog', '%(prog)s')
-            self._attrs["help"] = a
         return self._attrs
 
     def _set_opt_strings(self, opts: Sequence[str]) -> None:

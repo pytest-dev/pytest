@@ -643,8 +643,6 @@ Bootstrapping hooks called for plugins registered early enough (internal and set
 
 .. hook:: pytest_load_initial_conftests
 .. autofunction:: pytest_load_initial_conftests
-.. hook:: pytest_cmdline_preparse
-.. autofunction:: pytest_cmdline_preparse
 .. hook:: pytest_cmdline_parse
 .. autofunction:: pytest_cmdline_parse
 .. hook:: pytest_cmdline_main
@@ -1207,9 +1205,6 @@ Custom warnings generated in some situations such as improper usage or deprecate
    :show-inheritance:
 
 .. autoclass:: pytest.PytestReturnNotNoneWarning
-  :show-inheritance:
-
-.. autoclass:: pytest.PytestRemovedIn8Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestRemovedIn9Warning
