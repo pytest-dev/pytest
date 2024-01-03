@@ -200,8 +200,9 @@ class TerminalWriter:
         """Highlight the given source if we have markup support."""
         from _pytest.config.exceptions import UsageError
 
-        if not self.hasmarkup or not self.code_highlight:
+        if not source or not self.hasmarkup or not self.code_highlight:
             return source
+
         try:
             from pygments.formatters.terminal import TerminalFormatter
 
