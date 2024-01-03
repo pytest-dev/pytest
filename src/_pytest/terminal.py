@@ -877,11 +877,11 @@ class TerminalReporter:
     @hookimpl(wrapper=True)
     def pytest_terminal_summary(self) -> Generator[None, None, None]:
         self.summary_errors()
-        self.summary_failures()
-        self.summary_xfailures()
+        self.summary_failures("failed", "FAILURES")
+        self.summary_failures("xfailed", "XFAILURES", "x")
         self.summary_warnings()
-        self.summary_passes()
-        self.summary_xpasses()
+        self.summary_passes("passed", "PASSES", "P")
+        self.summary_passes("xpassed", "XPASSES", "X")
         try:
             return (yield)
         finally:
@@ -1010,27 +1010,16 @@ class TerminalReporter:
                 "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html"
             )
 
-    def summary_passes(self) -> None:
+    def summary_passes(self,
+                       which_reports: str,
+                       sep_title: str,
+                       needed_opt: str) -> None:
         if self.config.option.tbstyle != "no":
-            if self.hasopt("P"):
-                reports: List[TestReport] = self.getreports("passed")
+            if self.hasopt(needed_opt):
+                reports: List[TestReport] = self.getreports(which_reports)
                 if not reports:
                     return
-                self.write_sep("=", "PASSES")
-                for rep in reports:
-                    if rep.sections:
-                        msg = self._getfailureheadline(rep)
-                        self.write_sep("_", msg, green=True, bold=True)
-                        self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.nodeid)
-
-    def summary_xpasses(self) -> None:
-        if self.config.option.tbstyle != "no":
-            if self.hasopt("X"):
-                reports: List[TestReport] = self.getreports("xpassed")
-                if not reports:
-                    return
-                self.write_sep("=", "XPASSES")
+                self.write_sep("=", sep_title)
                 for rep in reports:
                     if rep.sections:
                         msg = self._getfailureheadline(rep)
@@ -1063,30 +1052,16 @@ class TerminalReporter:
                     content = content[:-1]
                 self._tw.line(content)
 
-    def summary_failures(self) -> None:
+    def summary_failures(self,
+                         which_reports: str,
+                         sep_title: str,
+                         needed_opt:str|None = None) -> None:
         if self.config.option.tbstyle != "no":
-            reports: List[BaseReport] = self.getreports("failed")
-            if not reports:
-                return
-            self.write_sep("=", "FAILURES")
-            if self.config.option.tbstyle == "line":
-                for rep in reports:
-                    line = self._getcrashline(rep)
-                    self.write_line(line)
-            else:
-                for rep in reports:
-                    msg = self._getfailureheadline(rep)
-                    self.write_sep("_", msg, red=True, bold=True)
-                    self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.nodeid)
-
-    def summary_xfailures(self) -> None:
-        if self.config.option.tbstyle != "no":
-            if self.hasopt("x"):
-                reports: List[BaseReport] = self.getreports("xfailed")
+            if not needed_opt or self.hasopt(needed_opt):
+                reports: List[BaseReport] = self.getreports(which_reports)
                 if not reports:
                     return
-                self.write_sep("=", "XFAILURES")
+                self.write_sep("=", sep_title)
                 if self.config.option.tbstyle == "line":
                     for rep in reports:
                         line = self._getcrashline(rep)
