@@ -2100,7 +2100,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
 
     [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
-      markers (linelist):   Markers for test functions
+      markers (linelist):   Register new markers for test functions
       empty_parameter_set_mark (string):
                             Default marker for empty parametersets
       norecursedirs (args): Directory patterns to avoid for recursion
