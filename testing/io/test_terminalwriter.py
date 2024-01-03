@@ -306,3 +306,17 @@ def test_code_highlight(has_markup, code_highlight, expected, color_mapping):
         match=re.escape("indents size (2) should have same size as lines (1)"),
     ):
         tw._write_source(["assert 0"], [" ", " "])
+
+
+def test_highlight_empty_source() -> None:
+    """Don't crash trying to highlight empty source code.
+
+    Issue #11758.
+    """
+    f = io.StringIO()
+    tw = terminalwriter.TerminalWriter(f)
+    tw.hasmarkup = True
+    tw.code_highlight = True
+    tw._write_source([])
+
+    assert f.getvalue() == ""
