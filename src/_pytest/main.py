@@ -6,6 +6,7 @@ import functools
 import importlib
 import os
 import sys
+import warnings
 from pathlib import Path
 from typing import AbstractSet
 from typing import Callable
@@ -44,6 +45,7 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
+from _pytest.warning_types import PytestWarning
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -548,8 +550,8 @@ class Session(nodes.Collector):
         )
         self.testsfailed = 0
         self.testscollected = 0
-        self.shouldstop: Union[bool, str] = False
-        self.shouldfail: Union[bool, str] = False
+        self._shouldstop: Union[bool, str] = False
+        self._shouldfail: Union[bool, str] = False
         self.trace = config.trace.root.get("collection")
         self._initialpaths: FrozenSet[Path] = frozenset()
         self._initialpaths_with_parents: FrozenSet[Path] = frozenset()
@@ -575,6 +577,42 @@ class Session(nodes.Collector):
             self.testsfailed,
             self.testscollected,
         )
+
+    @property
+    def shouldstop(self) -> Union[bool, str]:
+        return self._shouldstop
+
+    @shouldstop.setter
+    def shouldstop(self, value: Union[bool, str]) -> None:
+        # The runner checks shouldfail and assumes that if it is set we are
+        # definitely stopping, so prevent unsetting it.
+        if value is False and self._shouldstop:
+            warnings.warn(
+                PytestWarning(
+                    "session.shouldstop cannot be unset after it has been set; ignoring."
+                ),
+                stacklevel=2,
+            )
+            return
+        self._shouldstop = value
+
+    @property
+    def shouldfail(self) -> Union[bool, str]:
+        return self._shouldfail
+
+    @shouldfail.setter
+    def shouldfail(self, value: Union[bool, str]) -> None:
+        # The runner checks shouldfail and assumes that if it is set we are
+        # definitely stopping, so prevent unsetting it.
+        if value is False and self._shouldfail:
+            warnings.warn(
+                PytestWarning(
+                    "session.shouldfail cannot be unset after it has been set; ignoring."
+                ),
+                stacklevel=2,
+            )
+            return
+        self._shouldfail = value
 
     @property
     def startpath(self) -> Path:

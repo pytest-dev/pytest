@@ -418,3 +418,63 @@ def test_rootdir_wrong_option_arg(pytester: Pytester) -> None:
     result.stderr.fnmatch_lines(
         ["*Directory *wrong_dir* not found. Check your '--rootdir' option.*"]
     )
+
+
+def test_shouldfail_is_sticky(pytester: Pytester) -> None:
+    """Test that session.shouldfail cannot be reset to False after being set.
+
+    Issue #11706.
+    """
+    pytester.makeconftest(
+        """
+        def pytest_sessionfinish(session):
+            assert session.shouldfail
+            session.shouldfail = False
+            assert session.shouldfail
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_foo():
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+
+    result = pytester.runpytest("--maxfail=1", "-Wall")
+
+    result.assert_outcomes(failed=1, warnings=1)
+    result.stdout.fnmatch_lines("*session.shouldfail cannot be unset*")
+
+
+def test_shouldstop_is_sticky(pytester: Pytester) -> None:
+    """Test that session.shouldstop cannot be reset to False after being set.
+
+    Issue #11706.
+    """
+    pytester.makeconftest(
+        """
+        def pytest_sessionfinish(session):
+            assert session.shouldstop
+            session.shouldstop = False
+            assert session.shouldstop
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_foo():
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+
+    result = pytester.runpytest("--stepwise", "-Wall")
+
+    result.assert_outcomes(failed=1, warnings=1)
+    result.stdout.fnmatch_lines("*session.shouldstop cannot be unset*")
