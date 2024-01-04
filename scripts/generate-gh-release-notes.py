@@ -1,22 +1,10 @@
 # mypy: disallow-untyped-defs
 """
-Script used to publish GitHub release notes extracted from CHANGELOG.rst.
+Script used to generate a Markdown file containing only the changelog entries of a specific pytest release, which
+is then published as a GitHub Release during deploy (see workflows/deploy.yml).
 
-This script is meant to be executed after a successful deployment in GitHub actions.
-
-Uses the following environment variables:
-
-* GIT_TAG: the name of the tag of the current commit.
-* GH_RELEASE_NOTES_TOKEN: a personal access token with 'repo' permissions.
-
-  Create one at:
-
-    https://github.com/settings/tokens
-
-  This token should be set in a secret in the repository, which is exposed as an
-  environment variable in the main.yml workflow file.
-
-The script also requires ``pandoc`` to be previously installed in the system.
+The script requires ``pandoc`` to be previously installed in the system -- we need to convert from RST (the format of
+our CHANGELOG) into Markdown (which is required by GitHub Releases).
 
 Requires Python3.6+.
 """
@@ -28,7 +16,7 @@ from typing import Sequence
 import pypandoc
 
 
-def parse_changelog(tag_name: str) -> str:
+def extract_changelog_entries_for(version: str) -> str:
     p = Path(__file__).parent.parent / "doc/en/changelog.rst"
     changelog_lines = p.read_text(encoding="UTF-8").splitlines()
 
@@ -38,10 +26,10 @@ def parse_changelog(tag_name: str) -> str:
     for line in changelog_lines:
         m = title_regex.match(line)
         if m:
-            # found the version we want: start to consume lines until we find the next version title
-            if m.group(1) == tag_name:
+            # Found the version we want: start to consume lines until we find the next version title.
+            if m.group(1) == version:
                 consuming_version = True
-            # found a new version title while parsing the version we want: break out
+            # Found a new version title while parsing the version we want: break out.
             elif consuming_version:
                 break
         if consuming_version:
@@ -65,7 +53,7 @@ def main(argv: Sequence[str]) -> int:
 
     version, filename = argv[1:3]
     print(f"Generating GitHub release notes for version {version}")
-    rst_body = parse_changelog(version)
+    rst_body = extract_changelog_entries_for(version)
     md_body = convert_rst_to_md(rst_body)
     Path(filename).write_text(md_body, encoding="UTF-8")
     print()
