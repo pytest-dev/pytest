@@ -1055,7 +1055,7 @@ class TerminalReporter:
     def summary_failures(self,
                          which_reports: str,
                          sep_title: str,
-                         needed_opt:str|None = None) -> None:
+                         needed_opt: Optional[str] = None) -> None:
         if self.config.option.tbstyle != "no":
             if not needed_opt or self.hasopt(needed_opt):
                 reports: List[BaseReport] = self.getreports(which_reports)
