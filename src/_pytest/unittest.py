@@ -70,9 +70,9 @@ class UnitTestCase(Class):
 
         skipped = _is_skipped(cls)
         if not skipped:
-            self._inject_unittest_setup_method_fixture(cls)
-            self._inject_unittest_setup_class_fixture(cls)
-            self._inject_setup_class_fixture()
+            self._register_unittest_setup_method_fixture(cls)
+            self._register_unittest_setup_class_fixture(cls)
+            self._register_setup_class_fixture()
 
         self.session._fixturemanager.parsefactories(self, unittest=True)
         loader = TestLoader()
@@ -93,8 +93,8 @@ class UnitTestCase(Class):
                 if ut is None or runtest != ut.TestCase.runTest:  # type: ignore
                     yield TestCaseFunction.from_parent(self, name="runTest")
 
-    def _inject_unittest_setup_class_fixture(self, cls: type) -> None:
-        """Injects a hidden auto-use fixture to invoke setUpClass and
+    def _register_unittest_setup_class_fixture(self, cls: type) -> None:
+        """Register an auto-use fixture to invoke setUpClass and
         tearDownClass (#517)."""
         setup = getattr(cls, "setUpClass", None)
         teardown = getattr(cls, "tearDownClass", None)
@@ -102,15 +102,12 @@ class UnitTestCase(Class):
             return None
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
-        @pytest.fixture(
-            scope="class",
-            autouse=True,
-            # Use a unique name to speed up lookup.
-            name=f"_unittest_setUpClass_fixture_{cls.__qualname__}",
-        )
-        def fixture(self) -> Generator[None, None, None]:
-            if _is_skipped(self):
-                reason = self.__unittest_skip_why__
+        def unittest_setup_class_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
+            cls = request.cls
+            if _is_skipped(cls):
+                reason = cls.__unittest_skip_why__
                 raise pytest.skip.Exception(reason, _use_item_location=True)
             if setup is not None:
                 try:
@@ -127,23 +124,27 @@ class UnitTestCase(Class):
             finally:
                 cleanup()
 
-        cls.__pytest_class_setup = fixture  # type: ignore[attr-defined]
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_unittest_setUpClass_fixture_{cls.__qualname__}",
+            func=unittest_setup_class_fixture,
+            nodeid=self.nodeid,
+            scope="class",
+            autouse=True,
+        )
 
-    def _inject_unittest_setup_method_fixture(self, cls: type) -> None:
-        """Injects a hidden auto-use fixture to invoke setup_method and
+    def _register_unittest_setup_method_fixture(self, cls: type) -> None:
+        """Register an auto-use fixture to invoke setup_method and
         teardown_method (#517)."""
         setup = getattr(cls, "setup_method", None)
         teardown = getattr(cls, "teardown_method", None)
         if setup is None and teardown is None:
             return None
 
-        @pytest.fixture(
-            scope="function",
-            autouse=True,
-            # Use a unique name to speed up lookup.
-            name=f"_unittest_setup_method_fixture_{cls.__qualname__}",
-        )
-        def fixture(self, request: FixtureRequest) -> Generator[None, None, None]:
+        def unittest_setup_method_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
+            self = request.instance
             if _is_skipped(self):
                 reason = self.__unittest_skip_why__
                 raise pytest.skip.Exception(reason, _use_item_location=True)
@@ -153,7 +154,14 @@ class UnitTestCase(Class):
             if teardown is not None:
                 teardown(self, request.function)
 
-        cls.__pytest_method_setup = fixture  # type: ignore[attr-defined]
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_unittest_setup_method_fixture_{cls.__qualname__}",
+            func=unittest_setup_method_fixture,
+            nodeid=self.nodeid,
+            scope="function",
+            autouse=True,
+        )
 
 
 class TestCaseFunction(Function):
