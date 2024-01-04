@@ -877,11 +877,11 @@ class TerminalReporter:
     @hookimpl(wrapper=True)
     def pytest_terminal_summary(self) -> Generator[None, None, None]:
         self.summary_errors()
-        self.summary_failures("failed", "FAILURES")
-        self.summary_failures("xfailed", "XFAILURES", "x")
+        self.summary_failures()
+        self.summary_xfailures()
         self.summary_warnings()
-        self.summary_passes("passed", "PASSES", "P")
-        self.summary_passes("xpassed", "XPASSES", "X")
+        self.summary_passes()
+        self.summary_xpasses()
         try:
             return (yield)
         finally:
@@ -1010,10 +1010,15 @@ class TerminalReporter:
                 "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html"
             )
 
-    def summary_passes(self,
-                       which_reports: str,
-                       sep_title: str,
-                       needed_opt: str) -> None:
+    def summary_passes(self) -> None:
+        self.summary_passes_combined("passed", "PASSES", "P")
+
+    def summary_xpasses(self) -> None:
+        self.summary_passes_combined("xpassed", "XPASSES", "X")
+
+    def summary_passes_combined(
+        self, which_reports: str, sep_title: str, needed_opt: str
+    ) -> None:
         if self.config.option.tbstyle != "no":
             if self.hasopt(needed_opt):
                 reports: List[TestReport] = self.getreports(which_reports)
@@ -1052,10 +1057,15 @@ class TerminalReporter:
                     content = content[:-1]
                 self._tw.line(content)
 
-    def summary_failures(self,
-                         which_reports: str,
-                         sep_title: str,
-                         needed_opt: Optional[str] = None) -> None:
+    def summary_failures(self) -> None:
+        self.summary_failures_combined("failed", "FAILURES")
+
+    def summary_xfailures(self) -> None:
+        self.summary_failures_combined("xfailed", "XFAILURES", "x")
+
+    def summary_failures_combined(
+        self, which_reports: str, sep_title: str, needed_opt: Optional[str] = None
+    ) -> None:
         if self.config.option.tbstyle != "no":
             if not needed_opt or self.hasopt(needed_opt):
                 reports: List[BaseReport] = self.getreports(which_reports)

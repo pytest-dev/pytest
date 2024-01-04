@@ -1,0 +1,1 @@
+Report tracebacks for xfailures when ``-rx`` is set. Report captured output for xpasses when ``-rX`` is set. For xpasses, add ``-`` in summary between test name and reason, to match the format of xfail.
