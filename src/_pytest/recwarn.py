@@ -113,7 +113,7 @@ def warns(  # noqa: F811
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
 
-    Specifically, the parameter ``expected_warning`` can be a warning class or sequence
+    Specifically, the parameter ``expected_warning`` can be a warning class or tuple
     of warning classes, and the code inside the ``with`` block must issue at least one
     warning of that class or classes.
 
