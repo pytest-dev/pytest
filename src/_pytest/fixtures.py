@@ -1621,6 +1621,69 @@ class FixtureManager:
         # Separate parametrized setups.
         items[:] = reorder_items(items)
 
+    def _register_fixture(
+        self,
+        *,
+        name: str,
+        func: "_FixtureFunc[object]",
+        nodeid: Optional[str],
+        scope: Union[
+            Scope, _ScopeName, Callable[[str, Config], _ScopeName], None
+        ] = "function",
+        params: Optional[Sequence[object]] = None,
+        ids: Optional[
+            Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
+        ] = None,
+        autouse: bool = False,
+        unittest: bool = False,
+    ) -> None:
+        """Register a fixture
+
+        :param name:
+            The fixture's name.
+        :param func:
+            The fixture's implementation function.
+        :param nodeid:
+            The visibility of the fixture. The fixture will be available to the
+            node with this nodeid and its children in the collection tree.
+            None means that the fixture is visible to the entire collection tree,
+            e.g. a fixture defined for general use in a plugin.
+        :param scope:
+            The fixture's scope.
+        :param params:
+            The fixture's parametrization params.
+        :param ids:
+            The fixture's IDs.
+        :param autouse:
+            Whether this is an autouse fixture.
+        :param unittest:
+            Set this if this is a unittest fixture.
+        """
+        fixture_def = FixtureDef(
+            fixturemanager=self,
+            baseid=nodeid,
+            argname=name,
+            func=func,
+            scope=scope,
+            params=params,
+            unittest=unittest,
+            ids=ids,
+            _ispytest=True,
+        )
+
+        faclist = self._arg2fixturedefs.setdefault(name, [])
+        if fixture_def.has_location:
+            faclist.append(fixture_def)
+        else:
+            # fixturedefs with no location are at the front
+            # so this inserts the current fixturedef after the
+            # existing fixturedefs from external plugins but
+            # before the fixturedefs provided in conftests.
+            i = len([f for f in faclist if not f.has_location])
+            faclist.insert(i, fixture_def)
+        if autouse:
+            self._nodeid_autousenames.setdefault(nodeid or "", []).append(name)
+
     @overload
     def parsefactories(
         self,
@@ -1672,7 +1735,6 @@ class FixtureManager:
             return
 
         self._holderobjseen.add(holderobj)
-        autousenames = []
         for name in dir(holderobj):
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getatt() ignores such exceptions.
@@ -1690,35 +1752,18 @@ class FixtureManager:
             # to issue a warning if called directly, so here we unwrap it in
             # order to not emit the warning when pytest itself calls the
             # fixture function.
-            obj = get_real_method(obj, holderobj)
+            func = get_real_method(obj, holderobj)
 
-            fixture_def = FixtureDef(
-                fixturemanager=self,
-                baseid=nodeid,
-                argname=name,
-                func=obj,
+            self._register_fixture(
+                name=name,
+                nodeid=nodeid,
+                func=func,
                 scope=marker.scope,
                 params=marker.params,
                 unittest=unittest,
                 ids=marker.ids,
-                _ispytest=True,
+                autouse=marker.autouse,
             )
-
-            faclist = self._arg2fixturedefs.setdefault(name, [])
-            if fixture_def.has_location:
-                faclist.append(fixture_def)
-            else:
-                # fixturedefs with no location are at the front
-                # so this inserts the current fixturedef after the
-                # existing fixturedefs from external plugins but
-                # before the fixturedefs provided in conftests.
-                i = len([f for f in faclist if not f.has_location])
-                faclist.insert(i, fixture_def)
-            if marker.autouse:
-                autousenames.append(name)
-
-        if autousenames:
-            self._nodeid_autousenames.setdefault(nodeid or "", []).extend(autousenames)
 
     def getfixturedefs(
         self, argname: str, nodeid: str
