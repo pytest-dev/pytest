@@ -878,8 +878,10 @@ class TerminalReporter:
     def pytest_terminal_summary(self) -> Generator[None, None, None]:
         self.summary_errors()
         self.summary_failures()
+        self.summary_xfailures()
         self.summary_warnings()
         self.summary_passes()
+        self.summary_xpasses()
         try:
             return (yield)
         finally:
@@ -1009,12 +1011,20 @@ class TerminalReporter:
             )
 
     def summary_passes(self) -> None:
+        self.summary_passes_combined("passed", "PASSES", "P")
+
+    def summary_xpasses(self) -> None:
+        self.summary_passes_combined("xpassed", "XPASSES", "X")
+
+    def summary_passes_combined(
+        self, which_reports: str, sep_title: str, needed_opt: str
+    ) -> None:
         if self.config.option.tbstyle != "no":
-            if self.hasopt("P"):
-                reports: List[TestReport] = self.getreports("passed")
+            if self.hasopt(needed_opt):
+                reports: List[TestReport] = self.getreports(which_reports)
                 if not reports:
                     return
-                self.write_sep("=", "PASSES")
+                self.write_sep("=", sep_title)
                 for rep in reports:
                     if rep.sections:
                         msg = self._getfailureheadline(rep)
@@ -1048,21 +1058,30 @@ class TerminalReporter:
                 self._tw.line(content)
 
     def summary_failures(self) -> None:
+        self.summary_failures_combined("failed", "FAILURES")
+
+    def summary_xfailures(self) -> None:
+        self.summary_failures_combined("xfailed", "XFAILURES", "x")
+
+    def summary_failures_combined(
+        self, which_reports: str, sep_title: str, needed_opt: Optional[str] = None
+    ) -> None:
         if self.config.option.tbstyle != "no":
-            reports: List[BaseReport] = self.getreports("failed")
-            if not reports:
-                return
-            self.write_sep("=", "FAILURES")
-            if self.config.option.tbstyle == "line":
-                for rep in reports:
-                    line = self._getcrashline(rep)
-                    self.write_line(line)
-            else:
-                for rep in reports:
-                    msg = self._getfailureheadline(rep)
-                    self.write_sep("_", msg, red=True, bold=True)
-                    self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.nodeid)
+            if not needed_opt or self.hasopt(needed_opt):
+                reports: List[BaseReport] = self.getreports(which_reports)
+                if not reports:
+                    return
+                self.write_sep("=", sep_title)
+                if self.config.option.tbstyle == "line":
+                    for rep in reports:
+                        line = self._getcrashline(rep)
+                        self.write_line(line)
+                else:
+                    for rep in reports:
+                        msg = self._getfailureheadline(rep)
+                        self.write_sep("_", msg, red=True, bold=True)
+                        self._outrep_summary(rep)
+                        self._handle_teardown_sections(rep.nodeid)
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
@@ -1168,8 +1187,11 @@ class TerminalReporter:
                     verbose_word, **{_color_for_type["warnings"]: True}
                 )
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
+                line = f"{markup_word} {nodeid}"
                 reason = rep.wasxfail
-                lines.append(f"{markup_word} {nodeid} {reason}")
+                if reason:
+                    line += " - " + str(reason)
+                lines.append(line)
 
         def show_skipped(lines: List[str]) -> None:
             skipped: List[CollectReport] = self.stats.get("skipped", [])
