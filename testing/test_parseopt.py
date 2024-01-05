@@ -54,9 +54,6 @@ class TestParser:
         assert argument.type is str
         argument = parseopt.Argument("-t", dest="abc", type=float)
         assert argument.type is float
-        with pytest.warns(DeprecationWarning):
-            with pytest.raises(KeyError):
-                argument = parseopt.Argument("-t", dest="abc", type="choice")
         argument = parseopt.Argument(
             "-t", dest="abc", type=str, choices=["red", "blue"]
         )

@@ -42,7 +42,7 @@ To execute it:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -74,7 +74,7 @@ Features
 
 - :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources
 
-- Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box
+- Can run :ref:`unittest <unittest>` (including trial) test suites out of the box
 
 - Python 3.8+ or PyPy 3
 

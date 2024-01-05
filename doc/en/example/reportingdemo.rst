@@ -9,7 +9,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
     assertion $ pytest failure_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project/assertion
     collected 44 items
 
@@ -80,6 +80,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_text(self):
     >       assert "spam" == "eggs"
     E       AssertionError: assert 'spam' == 'eggs'
+    E
     E         - eggs
     E         + spam
 
@@ -91,6 +92,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_similar_text(self):
     >       assert "foo 1 bar" == "foo 2 bar"
     E       AssertionError: assert 'foo 1 bar' == 'foo 2 bar'
+    E
     E         - foo 2 bar
     E         ?     ^
     E         + foo 1 bar
@@ -104,6 +106,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_multiline_text(self):
     >       assert "foo\nspam\nbar" == "foo\neggs\nbar"
     E       AssertionError: assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
+    E
     E           foo
     E         - eggs
     E         + spam
@@ -119,6 +122,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             b = "1" * 100 + "b" + "2" * 100
     >       assert a == b
     E       AssertionError: assert '111111111111...2222222222222' == '111111111111...2222222222222'
+    E
     E         Skipping 90 identical leading characters in diff, use -v to show
     E         Skipping 91 identical trailing characters in diff, use -v to show
     E         - 1111111111b222222222
@@ -136,15 +140,15 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             b = "1\n" * 100 + "b" + "2\n" * 100
     >       assert a == b
     E       AssertionError: assert '1\n1\n1\n1\n...n2\n2\n2\n2\n' == '1\n1\n1\n1\n...n2\n2\n2\n2\n'
+    E
     E         Skipping 190 identical leading characters in diff, use -v to show
     E         Skipping 191 identical trailing characters in diff, use -v to show
     E           1
     E           1
     E           1
-    E           1
     E           1...
     E
-    E         ...Full output truncated (6 lines hidden), use '-vv' to show
+    E         ...Full output truncated (7 lines hidden), use '-vv' to show
 
     failure_demo.py:60: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_list _________________
@@ -154,6 +158,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_list(self):
     >       assert [0, 1, 2] == [0, 1, 3]
     E       assert [0, 1, 2] == [0, 1, 3]
+    E
     E         At index 2 diff: 2 != 3
     E         Use -v to get more diff
 
@@ -167,6 +172,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             b = [0] * 100 + [2] + [3] * 100
     >       assert a == b
     E       assert [0, 0, 0, 0, 0, 0, ...] == [0, 0, 0, 0, 0, 0, ...]
+    E
     E         At index 100 diff: 1 != 2
     E         Use -v to get more diff
 
@@ -178,6 +184,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_dict(self):
     >       assert {"a": 0, "b": 1, "c": 0} == {"a": 0, "b": 2, "d": 0}
     E       AssertionError: assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
+    E
     E         Omitting 1 identical items, use -vv to show
     E         Differing items:
     E         {'b': 1} != {'b': 2}
@@ -195,6 +202,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_set(self):
     >       assert {0, 10, 11, 12} == {0, 20, 21}
     E       assert {0, 10, 11, 12} == {0, 20, 21}
+    E
     E         Extra items in the left set:
     E         10
     E         11
@@ -212,6 +220,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_eq_longer_list(self):
     >       assert [1, 2] == [1, 2, 3]
     E       assert [1, 2] == [1, 2, 3]
+    E
     E         Right contains one more item: 3
     E         Use -v to get more diff
 
@@ -233,6 +242,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             text = "some multiline\ntext\nwhich\nincludes foo\nand a\ntail"
     >       assert "foo" not in text
     E       AssertionError: assert 'foo' not in 'some multil...nand a\ntail'
+    E
     E         'foo' is contained here:
     E           some multiline
     E           text
@@ -251,6 +261,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             text = "single foo line"
     >       assert "foo" not in text
     E       AssertionError: assert 'foo' not in 'single foo line'
+    E
     E         'foo' is contained here:
     E           single foo line
     E         ?        +++
@@ -264,6 +275,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             text = "head " * 50 + "foo " + "tail " * 20
     >       assert "foo" not in text
     E       AssertionError: assert 'foo' not in 'head head h...l tail tail '
+    E
     E         'foo' is contained here:
     E           head head foo tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
     E         ?           +++
@@ -277,6 +289,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             text = "head " * 50 + "f" * 70 + "tail " * 20
     >       assert "f" * 70 not in text
     E       AssertionError: assert 'fffffffffff...ffffffffffff' not in 'head head h...l tail tail '
+    E
     E         'ffffffffffffffffff...fffffffffffffffffff' is contained here:
     E           head head fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffftail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
     E         ?           ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -1,3 +1,0 @@
-Use pytestconfig instead of request.config in cache example
-
-to be consistent with the API documentation.
