@@ -1,3 +1,4 @@
+import os
 import pprint
 import reprlib
 from typing import Optional
@@ -93,7 +94,7 @@ def safeformat(obj: object) -> str:
 
 
 # Maximum size of overall repr of objects to display during assertion errors.
-DEFAULT_REPR_MAX_SIZE = 240
+DEFAULT_REPR_MAX_SIZE = int(os.environ.get("PYTEST_DEFAULT_REPR_MAX_SIZE", 240))
 
 
 def saferepr(
