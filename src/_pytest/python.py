@@ -15,7 +15,6 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import cast
 from typing import Dict
 from typing import final
 from typing import Generator
@@ -1190,14 +1189,16 @@ def resolve_values_indices_in_parametersets(
     parametersets: Sequence[ParameterSet],
 ) -> List[Tuple[int, ...]]:
     """Resolve indices of the values in parameter sets. The index of a value is determined by
-    where the value first appears in the existing values of the argname. For example, given
-    ``argnames`` and ``parametersets`` below, the result would be:
+    where the value first appears in the existing values of the argname. In other words, given
+    a subset of the cross-product of some ordered sets, it substitues the values in the subset
+    members with their index in the respective sets. For example, given ``argnames`` and
+    ``parametersets`` below, the result would be:
     ::
         argnames = ["A", "B", "C"]
         parametersets = [("a1", "b1", "c1"), ("a1", "b2", "c1"), ("a1", "b3", "c2")]
         result = [(0, 0, 0), (0, 1, 0), (0, 2, 1)]
 
-    result is used in reordering tests to keep items using the same fixture close together.
+    Result is used in reordering tests to keep items using the same fixture close together.
 
     :param argnames:
         Argument names passed to ``metafunc.parametrize()``.
@@ -1207,7 +1208,7 @@ def resolve_values_indices_in_parametersets(
     :returns:
         List of tuples of indices, each tuple for a parameter set.
     """
-    indices = []
+    indices: List[List[int]] = []
     argname_value_indices_for_hashable_ones: Dict[str, Dict[object, int]] = defaultdict(
         dict
     )
@@ -1230,7 +1231,7 @@ def resolve_values_indices_in_parametersets(
                 argname_indices.append(argvalues_count[argname])
                 argvalues_count[argname] += 1
         indices.append(argname_indices)
-    return list(cast(Iterable[Tuple[int]], zip(*indices)))
+    return list(zip(*indices))
 
 
 # Used for storing artificial fixturedefs for direct parametrization.
