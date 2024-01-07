@@ -38,7 +38,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
-import pluggy
 from pluggy import HookimplMarker
 from pluggy import HookimplOpts
 from pluggy import HookspecMarker
@@ -48,7 +47,6 @@ from pluggy import PluginManager
 import _pytest._code
 import _pytest.deprecated
 import _pytest.hookspec
-from .compat import PathAwareHookProxy
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
@@ -252,7 +250,6 @@ default_plugins = essential_plugins + (
     "monkeypatch",
     "recwarn",
     "pastebin",
-    "nose",
     "assertion",
     "junitxml",
     "doctest",
@@ -414,8 +411,6 @@ class PytestPluginManager(PluginManager):
         # storm when it's called potentially thousands of times in a test
         # session (#9478), often with the same path, so cache it.
         self._get_directory = lru_cache(256)(_get_directory)
-
-        self._duplicatepaths: Set[Path] = set()
 
         # plugins that were explicitly skipped with pytest.skip
         # list of (module name, skip reason)
@@ -1011,7 +1006,7 @@ class Config:
         self._store = self.stash
 
         self.trace = self.pluginmanager.trace.root.get("config")
-        self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
+        self.hook = self.pluginmanager.hook  # type: ignore[assignment]
         self._inicache: Dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}
@@ -1321,11 +1316,6 @@ class Config:
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 
-        if self.known_args_namespace.strict:
-            self.issue_config_time_warning(
-                _pytest.deprecated.STRICT_OPTION, stacklevel=2
-            )
-
         if self.known_args_namespace.confcutdir is None:
             if self.inipath is not None:
                 confcutdir = str(self.inipath.parent)
@@ -1434,8 +1424,6 @@ class Config:
             kwargs=dict(pluginmanager=self.pluginmanager)
         )
         self._preparse(args, addopts=addopts)
-        # XXX deprecated hook:
-        self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.after_preparse = True  # type: ignore
         try:
             args = self._parser.parse_setoption(

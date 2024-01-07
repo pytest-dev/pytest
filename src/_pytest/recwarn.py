@@ -18,7 +18,6 @@ from typing import TypeVar
 from typing import Union
 
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import WARNS_NONE_ARG
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
 
@@ -114,7 +113,7 @@ def warns(  # noqa: F811
 ) -> Union["WarningsChecker", Any]:
     r"""Assert that code raises a particular class of warning.
 
-    Specifically, the parameter ``expected_warning`` can be a warning class or sequence
+    Specifically, the parameter ``expected_warning`` can be a warning class or tuple
     of warning classes, and the code inside the ``with`` block must issue at least one
     warning of that class or classes.
 
@@ -264,9 +263,7 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 class WarningsChecker(WarningsRecorder):
     def __init__(
         self,
-        expected_warning: Optional[
-            Union[Type[Warning], Tuple[Type[Warning], ...]]
-        ] = Warning,
+        expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
         match_expr: Optional[Union[str, Pattern[str]]] = None,
         *,
         _ispytest: bool = False,
@@ -275,15 +272,14 @@ class WarningsChecker(WarningsRecorder):
         super().__init__(_ispytest=True)
 
         msg = "exceptions must be derived from Warning, not %s"
-        if expected_warning is None:
-            warnings.warn(WARNS_NONE_ARG, stacklevel=4)
-            expected_warning_tup = None
-        elif isinstance(expected_warning, tuple):
+        if isinstance(expected_warning, tuple):
             for exc in expected_warning:
                 if not issubclass(exc, Warning):
                     raise TypeError(msg % type(exc))
             expected_warning_tup = expected_warning
-        elif issubclass(expected_warning, Warning):
+        elif isinstance(expected_warning, type) and issubclass(
+            expected_warning, Warning
+        ):
             expected_warning_tup = (expected_warning,)
         else:
             raise TypeError(msg % type(expected_warning))
@@ -306,10 +302,6 @@ class WarningsChecker(WarningsRecorder):
         super().__exit__(exc_type, exc_val, exc_tb)
 
         __tracebackhide__ = True
-
-        if self.expected_warning is None:
-            # nothing to do in this deprecated case, see WARNS_NONE_ARG above
-            return
 
         def found_str():
             return pformat([record.message for record in self], indent=2)

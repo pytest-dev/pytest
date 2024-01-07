@@ -422,7 +422,7 @@ class TestLastFailed:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 failed in*"])
 
-    @pytest.mark.parametrize("parent", ("session", "package"))
+    @pytest.mark.parametrize("parent", ("directory", "package"))
     def test_terminal_report_lastfailed(self, pytester: Pytester, parent: str) -> None:
         if parent == "package":
             pytester.makepyfile(
@@ -936,8 +936,10 @@ class TestLastFailed:
                 "collected 1 item",
                 "run-last-failure: rerun previous 1 failure (skipped 1 file)",
                 "",
-                "<Module pkg1/test_1.py>",
-                "  <Function test_renamed>",
+                "<Dir *>",
+                "  <Dir pkg1>",
+                "    <Module test_1.py>",
+                "      <Function test_renamed>",
             ]
         )
 
@@ -966,8 +968,10 @@ class TestLastFailed:
                 "*collected 1 item",
                 "run-last-failure: 1 known failures not in selected tests",
                 "",
-                "<Module pkg1/test_1.py>",
-                "  <Function test_pass>",
+                "<Dir *>",
+                "  <Dir pkg1>",
+                "    <Module test_1.py>",
+                "      <Function test_pass>",
             ],
             consecutive=True,
         )
@@ -981,8 +985,10 @@ class TestLastFailed:
                 "collected 2 items / 1 deselected / 1 selected",
                 "run-last-failure: rerun previous 1 failure",
                 "",
-                "<Module pkg1/test_1.py>",
-                "  <Function test_fail>",
+                "<Dir *>",
+                "  <Dir pkg1>",
+                "    <Module test_1.py>",
+                "      <Function test_fail>",
                 "*= 1/2 tests collected (1 deselected) in *",
             ],
         )
@@ -1011,10 +1017,12 @@ class TestLastFailed:
                 "collected 3 items / 1 deselected / 2 selected",
                 "run-last-failure: rerun previous 2 failures",
                 "",
-                "<Module pkg1/test_1.py>",
-                "  <Class TestFoo>",
-                "    <Function test_fail>",
-                "  <Function test_other>",
+                "<Dir *>",
+                "  <Dir pkg1>",
+                "    <Module test_1.py>",
+                "      <Class TestFoo>",
+                "        <Function test_fail>",
+                "      <Function test_other>",
                 "",
                 "*= 2/3 tests collected (1 deselected) in *",
             ],
@@ -1048,8 +1056,10 @@ class TestLastFailed:
                 "collected 1 item",
                 "run-last-failure: 1 known failures not in selected tests",
                 "",
-                "<Module pkg1/test_1.py>",
-                "  <Function test_pass>",
+                "<Dir *>",
+                "  <Dir pkg1>",
+                "    <Module test_1.py>",
+                "      <Function test_pass>",
                 "",
                 "*= 1 test collected in*",
             ],

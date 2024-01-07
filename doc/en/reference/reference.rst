@@ -643,8 +643,6 @@ Bootstrapping hooks called for plugins registered early enough (internal and set
 
 .. hook:: pytest_load_initial_conftests
 .. autofunction:: pytest_load_initial_conftests
-.. hook:: pytest_cmdline_preparse
-.. autofunction:: pytest_cmdline_preparse
 .. hook:: pytest_cmdline_parse
 .. autofunction:: pytest_cmdline_parse
 .. hook:: pytest_cmdline_main
@@ -682,6 +680,8 @@ Collection hooks
 .. autofunction:: pytest_collection
 .. hook:: pytest_ignore_collect
 .. autofunction:: pytest_ignore_collect
+.. hook:: pytest_collect_directory
+.. autofunction:: pytest_collect_directory
 .. hook:: pytest_collect_file
 .. autofunction:: pytest_collect_file
 .. hook:: pytest_pycollect_makemodule
@@ -919,6 +919,18 @@ Config
 ~~~~~~
 
 .. autoclass:: pytest.Config()
+    :members:
+
+Dir
+~~~
+
+.. autoclass:: pytest.Dir()
+    :members:
+
+Directory
+~~~~~~~~~
+
+.. autoclass:: pytest.Directory()
     :members:
 
 ExceptionInfo
@@ -1193,9 +1205,6 @@ Custom warnings generated in some situations such as improper usage or deprecate
    :show-inheritance:
 
 .. autoclass:: pytest.PytestReturnNotNoneWarning
-  :show-inheritance:
-
-.. autoclass:: pytest.PytestRemovedIn8Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestRemovedIn9Warning
@@ -2086,7 +2095,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
 
     [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
-      markers (linelist):   Markers for test functions
+      markers (linelist):   Register new markers for test functions
       empty_parameter_set_mark (string):
                             Default marker for empty parametersets
       norecursedirs (args): Directory patterns to avoid for recursion
@@ -2127,6 +2136,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
+      verbosity_assertions (string):
+                            Specify a verbosity level for assertions, overriding
+                            the main level. Higher levels will provide more
+                            detailed explanation when an assertion fails.
       junit_suite_name (string):
                             Test suite name for JUnit report
       junit_logging (string):

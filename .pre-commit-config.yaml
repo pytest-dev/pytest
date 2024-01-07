@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/psf/black
-    rev: 23.12.0
+    rev: 23.12.1
     hooks:
     -   id: black
         args: [--safe, --quiet]
@@ -56,10 +56,10 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.7.1
+    rev: v1.8.0
     hooks:
     -   id: mypy
-        files: ^(src/|testing/)
+        files: ^(src/|testing/|scripts/)
         args: []
         additional_dependencies:
           - iniconfig>=1.1.0
@@ -67,6 +67,7 @@ repos:
           - packaging
           - tomli
           - types-pkg_resources
+          - types-tabulate
             # for mypy running on python>=3.11 since exceptiongroup is only a dependency
             # on <3.11
           - exceptiongroup>=1.0.0rc8

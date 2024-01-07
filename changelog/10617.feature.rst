@@ -1,2 +1,0 @@
-Added more comprehensive set assertion rewrites for comparisons other than equality ``==``, with
-the following operations now providing better failure messages: ``!=``, ``<=``, ``>=``, ``<``, and ``>``.

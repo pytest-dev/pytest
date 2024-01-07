@@ -28,6 +28,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.nodes import Collector
+from _pytest.nodes import Directory
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
@@ -130,6 +131,10 @@ def runtestprotocol(
             show_test_item(item)
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
+    # If the session is about to fail or stop, teardown everything - this is
+    # necessary to correctly report fixture teardown errors (see #11706)
+    if item.session.shouldfail or item.session.shouldstop:
+        nextitem = None
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # After all teardown hooks have been called
     # want funcargs and request info to go away.
@@ -368,7 +373,23 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:
 
 
 def pytest_make_collect_report(collector: Collector) -> CollectReport:
-    call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
+    def collect() -> List[Union[Item, Collector]]:
+        # Before collecting, if this is a Directory, load the conftests.
+        # If a conftest import fails to load, it is considered a collection
+        # error of the Directory collector. This is why it's done inside of the
+        # CallInfo wrapper.
+        #
+        # Note: initial conftests are loaded early, not here.
+        if isinstance(collector, Directory):
+            collector.config.pluginmanager._loadconftestmodules(
+                collector.path,
+                collector.config.getoption("importmode"),
+                rootpath=collector.config.rootpath,
+            )
+
+        return list(collector.collect())
+
+    call = CallInfo.from_call(collect, "collect")
     longrepr: Union[None, Tuple[str, int, str], str, TerminalRepr] = None
     if not call.excinfo:
         outcome: Literal["passed", "skipped", "failed"] = "passed"
