@@ -488,7 +488,7 @@ def get_fslocation_from_item(node: "Node") -> Tuple[Union[str, Path], Optional[i
 
     * "location": a pair (path, lineno)
     * "obj": a Python object that the node wraps.
-    * "fspath": just a path
+    * "path": just a path
 
     :rtype: A tuple of (str|Path, int) with filename and 0-based line number.
     """
@@ -499,7 +499,7 @@ def get_fslocation_from_item(node: "Node") -> Tuple[Union[str, Path], Optional[i
     obj = getattr(node, "obj", None)
     if obj is not None:
         return getfslineno(obj)
-    return getattr(node, "fspath", "unknown location"), -1
+    return getattr(node, "path", "unknown location"), -1
 
 
 class Collector(Node, abc.ABC):

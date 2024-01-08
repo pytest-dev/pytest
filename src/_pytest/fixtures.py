@@ -1674,11 +1674,6 @@ class FixtureManager:
         self._holderobjseen.add(holderobj)
         autousenames = []
         for name in dir(holderobj):
-            # ugly workaround for one of the fspath deprecated property of node
-            # todo: safely generalize
-            if isinstance(holderobj, nodes.Node) and name == "fspath":
-                continue
-
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getatt() ignores such exceptions.
             obj = safe_getattr(holderobj, name, None)
