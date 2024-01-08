@@ -424,9 +424,9 @@ class FixtureRequest(abc.ABC):
             # We arrive here because of a dynamic call to
             # getfixturevalue(argname) usage which was naturally
             # not known at parsing/collection time.
-            assert self._pyfuncitem.parent is not None
-            parentid = self._pyfuncitem.parent.nodeid
-            fixturedefs = self._fixturemanager.getfixturedefs(argname, parentid)
+            parent = self._pyfuncitem.parent
+            assert parent is not None
+            fixturedefs = self._fixturemanager.getfixturedefs(argname, parent)
             if fixturedefs is not None:
                 self._arg2fixturedefs[argname] = fixturedefs
         # No fixtures defined with this name.
@@ -846,9 +846,8 @@ class FixtureLookupError(LookupError):
             available = set()
             parent = self.request._pyfuncitem.parent
             assert parent is not None
-            parentid = parent.nodeid
             for name, fixturedefs in fm._arg2fixturedefs.items():
-                faclist = list(fm._matchfactories(fixturedefs, parentid))
+                faclist = list(fm._matchfactories(fixturedefs, parent))
                 if faclist:
                     available.add(name)
             if self.argname in available:
@@ -989,9 +988,8 @@ class FixtureDef(Generic[FixtureValue]):
         # The "base" node ID for the fixture.
         #
         # This is a node ID prefix. A fixture is only available to a node (e.g.
-        # a `Function` item) if the fixture's baseid is a parent of the node's
-        # nodeid (see the `iterparentnodeids` function for what constitutes a
-        # "parent" and a "prefix" in this context).
+        # a `Function` item) if the fixture's baseid is a nodeid of a parent of
+        # node.
         #
         # For a fixture found in a Collector's object (e.g. a `Module`s module,
         # a `Class`'s class), the baseid is the Collector's nodeid.
@@ -1482,7 +1480,7 @@ class FixtureManager:
         else:
             argnames = ()
         usefixturesnames = self._getusefixturesnames(node)
-        autousenames = self._getautousenames(node.nodeid)
+        autousenames = self._getautousenames(node)
         initialnames = deduplicate_names(autousenames, usefixturesnames, argnames)
 
         direct_parametrize_args = _get_direct_parametrize_args(node)
@@ -1517,10 +1515,10 @@ class FixtureManager:
 
         self.parsefactories(plugin, nodeid)
 
-    def _getautousenames(self, nodeid: str) -> Iterator[str]:
-        """Return the names of autouse fixtures applicable to nodeid."""
-        for parentnodeid in nodes.iterparentnodeids(nodeid):
-            basenames = self._nodeid_autousenames.get(parentnodeid)
+    def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
+        """Return the names of autouse fixtures applicable to node."""
+        for parentnode in reversed(list(nodes.iterparentnodes(node))):
+            basenames = self._nodeid_autousenames.get(parentnode.nodeid)
             if basenames:
                 yield from basenames
 
@@ -1542,7 +1540,6 @@ class FixtureManager:
         # to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive).
 
-        parentid = parentnode.nodeid
         fixturenames_closure = list(initialnames)
 
         arg2fixturedefs: Dict[str, Sequence[FixtureDef[Any]]] = {}
@@ -1554,7 +1551,7 @@ class FixtureManager:
                     continue
                 if argname in arg2fixturedefs:
                     continue
-                fixturedefs = self.getfixturedefs(argname, parentid)
+                fixturedefs = self.getfixturedefs(argname, parentnode)
                 if fixturedefs:
                     arg2fixturedefs[argname] = fixturedefs
                     for arg in fixturedefs[-1].argnames:
@@ -1766,7 +1763,7 @@ class FixtureManager:
             )
 
     def getfixturedefs(
-        self, argname: str, nodeid: str
+        self, argname: str, node: nodes.Node
     ) -> Optional[Sequence[FixtureDef[Any]]]:
         """Get FixtureDefs for a fixture name which are applicable
         to a given node.
@@ -1777,18 +1774,18 @@ class FixtureManager:
         an empty result is returned).
 
         :param argname: Name of the fixture to search for.
-        :param nodeid: Full node id of the requesting test.
+        :param node: The requesting Node.
         """
         try:
             fixturedefs = self._arg2fixturedefs[argname]
         except KeyError:
             return None
-        return tuple(self._matchfactories(fixturedefs, nodeid))
+        return tuple(self._matchfactories(fixturedefs, node))
 
     def _matchfactories(
-        self, fixturedefs: Iterable[FixtureDef[Any]], nodeid: str
+        self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        parentnodeids = set(nodes.iterparentnodeids(nodeid))
+        parentnodeids = {n.nodeid for n in nodes.iterparentnodes(node)}
         for fixturedef in fixturedefs:
             if fixturedef.baseid in parentnodeids:
                 yield fixturedef

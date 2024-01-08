@@ -1574,7 +1574,7 @@ class TestFixtureManagerParseFactories:
             """
             def test_hello(item, fm):
                 for name in ("fm", "hello", "item"):
-                    faclist = fm.getfixturedefs(name, item.nodeid)
+                    faclist = fm.getfixturedefs(name, item)
                     assert len(faclist) == 1
                     fac = faclist[0]
                     assert fac.func.__name__ == name
@@ -1598,7 +1598,7 @@ class TestFixtureManagerParseFactories:
                 def hello(self, request):
                     return "class"
                 def test_hello(self, item, fm):
-                    faclist = fm.getfixturedefs("hello", item.nodeid)
+                    faclist = fm.getfixturedefs("hello", item)
                     print(faclist)
                     assert len(faclist) == 3
 
@@ -1804,7 +1804,7 @@ class TestAutouseDiscovery:
             """
             from _pytest.pytester import get_public_names
             def test_check_setup(item, fm):
-                autousenames = list(fm._getautousenames(item.nodeid))
+                autousenames = list(fm._getautousenames(item))
                 assert len(get_public_names(autousenames)) == 2
                 assert "perfunction2" in autousenames
                 assert "perfunction" in autousenames

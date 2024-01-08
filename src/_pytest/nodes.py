@@ -49,49 +49,13 @@ SEP = "/"
 tracebackcutdir = Path(_pytest.__file__).parent
 
 
-def iterparentnodeids(nodeid: str) -> Iterator[str]:
-    """Return the parent node IDs of a given node ID, inclusive.
-
-    For the node ID
-
-        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
-
-    the result would be
-
-        ""
-        "testing"
-        "testing/code"
-        "testing/code/test_excinfo.py"
-        "testing/code/test_excinfo.py::TestFormattedExcinfo"
-        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
-
-    Note that / components are only considered until the first ::.
-    """
-    pos = 0
-    first_colons: Optional[int] = nodeid.find("::")
-    if first_colons == -1:
-        first_colons = None
-    # The root Session node - always present.
-    yield ""
-    # Eagerly consume SEP parts until first colons.
-    while True:
-        at = nodeid.find(SEP, pos, first_colons)
-        if at == -1:
-            break
-        if at > 0:
-            yield nodeid[:at]
-        pos = at + len(SEP)
-    # Eagerly consume :: parts.
-    while True:
-        at = nodeid.find("::", pos)
-        if at == -1:
-            break
-        if at > 0:
-            yield nodeid[:at]
-        pos = at + len("::")
-    # The node ID itself.
-    if nodeid:
-        yield nodeid
+def iterparentnodes(node: "Node") -> Iterator["Node"]:
+    """Return the parent nodes, including the node itself, from the node
+    upwards."""
+    parent: Optional[Node] = node
+    while parent is not None:
+        yield parent
+        parent = parent.parent
 
 
 _NodeType = TypeVar("_NodeType", bound="Node")
