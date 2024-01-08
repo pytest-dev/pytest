@@ -1,6 +1,6 @@
 anyio[curio,trio]==4.2.0
 django==5.0
-pytest-asyncio==0.23.2
+pytest-asyncio==0.23.3
 # Temporarily not installed until pytest-bdd is fixed:
 # https://github.com/pytest-dev/pytest/pull/11785
 # pytest-bdd==7.0.1
