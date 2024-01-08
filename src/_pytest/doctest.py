@@ -265,7 +265,7 @@ class DoctestItem(Item):
         # Stuff needed for fixture support.
         self.obj = None
         fm = self.session._fixturemanager
-        fixtureinfo = fm.getfixtureinfo(node=self, func=None, cls=None)
+        fixtureinfo = fm.getfixtureinfo2(node=self, func=None, cls=None)
         self._fixtureinfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()

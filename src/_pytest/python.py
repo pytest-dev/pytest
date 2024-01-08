@@ -58,7 +58,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
-from _pytest.fixtures import FuncFixtureInfo
+from _pytest.fixtures import FuncFixtureInfo2
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
@@ -1131,7 +1131,7 @@ class Metafunc:
     def __init__(
         self,
         definition: "FunctionDefinition",
-        fixtureinfo: fixtures.FuncFixtureInfo,
+        fixtureinfo: fixtures.FuncFixtureInfo2,
         config: Config,
         cls=None,
         module=None,
@@ -1580,7 +1580,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
 
     def write_item(item: nodes.Item) -> None:
         # Not all items have _fixtureinfo attribute.
-        info: Optional[FuncFixtureInfo] = getattr(item, "_fixtureinfo", None)
+        info: Optional[FuncFixtureInfo2] = getattr(item, "_fixtureinfo", None)
         if info is None or not info.name2fixturedefs:
             # This test item does not use any fixtures.
             return
@@ -1707,7 +1707,7 @@ class Function(PyobjMixin, nodes.Item):
         callobj=NOTSET,
         keywords: Optional[Mapping[str, Any]] = None,
         session: Optional[Session] = None,
-        fixtureinfo: Optional[FuncFixtureInfo] = None,
+        fixtureinfo: Optional[FuncFixtureInfo2] = None,
         originalname: Optional[str] = None,
     ) -> None:
         super().__init__(name, parent, config=config, session=session)
@@ -1743,8 +1743,8 @@ class Function(PyobjMixin, nodes.Item):
 
         if fixtureinfo is None:
             fm = self.session._fixturemanager
-            fixtureinfo = fm.getfixtureinfo(self, self.obj, self.cls)
-        self._fixtureinfo: FuncFixtureInfo = fixtureinfo
+            fixtureinfo = fm.getfixtureinfo2(self, self.obj, self.cls)
+        self._fixtureinfo: FuncFixtureInfo2 = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
