@@ -525,7 +525,7 @@ class FixtureRequest(abc.ABC):
         :param msg:
             An optional custom error message.
         """
-        raise self._fixturemanager.FixtureLookupError(None, self, msg)
+        raise FixtureLookupError(None, self, msg)
 
     def getfixturevalue(self, argname: str) -> Any:
         """Dynamically run a named fixture function.
@@ -1437,9 +1437,6 @@ class FixtureManager:
     Upon the test-setup phases all fixturenames are instantiated, retrieved
     by a lookup of their FuncFixtureInfo.
     """
-
-    FixtureLookupError = FixtureLookupError
-    FixtureLookupErrorRepr = FixtureLookupErrorRepr
 
     def __init__(self, session: "Session") -> None:
         self.session = session
