@@ -1052,9 +1052,9 @@ class TestMetafunc:
         result = pytester.runpytest("--collect-only")
         result.stdout.re_match_lines(
             [
-                r"  <Function test\[a-0\]>",
-                r"  <Function test\[a-2\]>",
-                r"  <Function test\[b-1\]>",
+                r"    <Function test\[a-0\]>",
+                r"    <Function test\[a-2\]>",
+                r"    <Function test\[b-1\]>",
             ]
         )
 
