@@ -1,0 +1,7 @@
+Some changes were made to private functions which may affect plugins which access them:
+
+- ``FixtureManager._getautousenames()`` now takes a ``Node`` itself instead of the nodeid.
+- ``FixtureManager.getfixturedefs()`` now takes the ``Node`` itself instead of the nodeid.
+- The ``_pytest.nodes.iterparentnodeids()`` function is removed without replacement.
+  Prefer to traverse the node hierarchy itself instead.
+  If you really need to, copy the function from the previous pytest release.

@@ -582,13 +582,13 @@ class Module(nodes.File, PyCollector):
         return importtestmodule(self.path, self.config)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        self._inject_setup_module_fixture()
-        self._inject_setup_function_fixture()
+        self._register_setup_module_fixture()
+        self._register_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
         return super().collect()
 
-    def _inject_setup_module_fixture(self) -> None:
-        """Inject a hidden autouse, module scoped fixture into the collected module object
+    def _register_setup_module_fixture(self) -> None:
+        """Register an autouse, module-scoped fixture for the collected module object
         that invokes setUpModule/tearDownModule if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -604,23 +604,25 @@ class Module(nodes.File, PyCollector):
         if setup_module is None and teardown_module is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="module",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
-        )
         def xunit_setup_module_fixture(request) -> Generator[None, None, None]:
+            module = request.module
             if setup_module is not None:
-                _call_with_optional_argument(setup_module, request.module)
+                _call_with_optional_argument(setup_module, module)
             yield
             if teardown_module is not None:
-                _call_with_optional_argument(teardown_module, request.module)
+                _call_with_optional_argument(teardown_module, module)
 
-        self.obj.__pytest_setup_module = xunit_setup_module_fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
+            func=xunit_setup_module_fixture,
+            nodeid=self.nodeid,
+            scope="module",
+            autouse=True,
+        )
 
-    def _inject_setup_function_fixture(self) -> None:
-        """Inject a hidden autouse, function scoped fixture into the collected module object
+    def _register_setup_function_fixture(self) -> None:
+        """Register an autouse, function-scoped fixture for the collected module object
         that invokes setup_function/teardown_function if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -633,25 +635,27 @@ class Module(nodes.File, PyCollector):
         if setup_function is None and teardown_function is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="function",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
-        )
         def xunit_setup_function_fixture(request) -> Generator[None, None, None]:
             if request.instance is not None:
                 # in this case we are bound to an instance, so we need to let
                 # setup_method handle this
                 yield
                 return
+            function = request.function
             if setup_function is not None:
-                _call_with_optional_argument(setup_function, request.function)
+                _call_with_optional_argument(setup_function, function)
             yield
             if teardown_function is not None:
-                _call_with_optional_argument(teardown_function, request.function)
+                _call_with_optional_argument(teardown_function, function)
 
-        self.obj.__pytest_setup_function = xunit_setup_function_fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
+            func=xunit_setup_function_fixture,
+            nodeid=self.nodeid,
+            scope="function",
+            autouse=True,
+        )
 
 
 class Package(nodes.Directory):
@@ -795,15 +799,15 @@ class Class(PyCollector):
             )
             return []
 
-        self._inject_setup_class_fixture()
-        self._inject_setup_method_fixture()
+        self._register_setup_class_fixture()
+        self._register_setup_method_fixture()
 
         self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
 
         return super().collect()
 
-    def _inject_setup_class_fixture(self) -> None:
-        """Inject a hidden autouse, class scoped fixture into the collected class object
+    def _register_setup_class_fixture(self) -> None:
+        """Register an autouse, class scoped fixture into the collected class object
         that invokes setup_class/teardown_class if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -814,25 +818,27 @@ class Class(PyCollector):
         if setup_class is None and teardown_class is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="class",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
-        )
-        def xunit_setup_class_fixture(cls) -> Generator[None, None, None]:
+        def xunit_setup_class_fixture(request) -> Generator[None, None, None]:
+            cls = request.cls
             if setup_class is not None:
                 func = getimfunc(setup_class)
-                _call_with_optional_argument(func, self.obj)
+                _call_with_optional_argument(func, cls)
             yield
             if teardown_class is not None:
                 func = getimfunc(teardown_class)
-                _call_with_optional_argument(func, self.obj)
+                _call_with_optional_argument(func, cls)
 
-        self.obj.__pytest_setup_class = xunit_setup_class_fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
+            func=xunit_setup_class_fixture,
+            nodeid=self.nodeid,
+            scope="class",
+            autouse=True,
+        )
 
-    def _inject_setup_method_fixture(self) -> None:
-        """Inject a hidden autouse, function scoped fixture into the collected class object
+    def _register_setup_method_fixture(self) -> None:
+        """Register an autouse, function scoped fixture into the collected class object
         that invokes setup_method/teardown_method if either or both are available.
 
         Using a fixture to invoke these methods ensures we play nicely and unsurprisingly with
@@ -845,23 +851,25 @@ class Class(PyCollector):
         if setup_method is None and teardown_method is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="function",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
-        )
-        def xunit_setup_method_fixture(self, request) -> Generator[None, None, None]:
+        def xunit_setup_method_fixture(request) -> Generator[None, None, None]:
+            instance = request.instance
             method = request.function
             if setup_method is not None:
-                func = getattr(self, setup_name)
+                func = getattr(instance, setup_name)
                 _call_with_optional_argument(func, method)
             yield
             if teardown_method is not None:
-                func = getattr(self, teardown_name)
+                func = getattr(instance, teardown_name)
                 _call_with_optional_argument(func, method)
 
-        self.obj.__pytest_setup_method = xunit_setup_method_fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
+            func=xunit_setup_method_fixture,
+            nodeid=self.nodeid,
+            scope="function",
+            autouse=True,
+        )
 
 
 def hasinit(obj: object) -> bool:

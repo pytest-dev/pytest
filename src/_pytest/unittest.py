@@ -29,7 +29,6 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
 from _pytest.runner import CallInfo
-from _pytest.scope import Scope
 
 if TYPE_CHECKING:
     import unittest
@@ -71,8 +70,9 @@ class UnitTestCase(Class):
 
         skipped = _is_skipped(cls)
         if not skipped:
-            self._inject_setup_teardown_fixtures(cls)
-            self._inject_setup_class_fixture()
+            self._register_unittest_setup_method_fixture(cls)
+            self._register_unittest_setup_class_fixture(cls)
+            self._register_setup_class_fixture()
 
         self.session._fixturemanager.parsefactories(self, unittest=True)
         loader = TestLoader()
@@ -93,91 +93,75 @@ class UnitTestCase(Class):
                 if ut is None or runtest != ut.TestCase.runTest:  # type: ignore
                     yield TestCaseFunction.from_parent(self, name="runTest")
 
-    def _inject_setup_teardown_fixtures(self, cls: type) -> None:
-        """Injects a hidden auto-use fixture to invoke setUpClass/setup_method and corresponding
-        teardown functions (#517)."""
-        class_fixture = _make_xunit_fixture(
-            cls,
-            "setUpClass",
-            "tearDownClass",
-            "doClassCleanups",
-            scope=Scope.Class,
-            pass_self=False,
-        )
-        if class_fixture:
-            cls.__pytest_class_setup = class_fixture  # type: ignore[attr-defined]
+    def _register_unittest_setup_class_fixture(self, cls: type) -> None:
+        """Register an auto-use fixture to invoke setUpClass and
+        tearDownClass (#517)."""
+        setup = getattr(cls, "setUpClass", None)
+        teardown = getattr(cls, "tearDownClass", None)
+        if setup is None and teardown is None:
+            return None
+        cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
-        method_fixture = _make_xunit_fixture(
-            cls,
-            "setup_method",
-            "teardown_method",
-            None,
-            scope=Scope.Function,
-            pass_self=True,
-        )
-        if method_fixture:
-            cls.__pytest_method_setup = method_fixture  # type: ignore[attr-defined]
-
-
-def _make_xunit_fixture(
-    obj: type,
-    setup_name: str,
-    teardown_name: str,
-    cleanup_name: Optional[str],
-    scope: Scope,
-    pass_self: bool,
-):
-    setup = getattr(obj, setup_name, None)
-    teardown = getattr(obj, teardown_name, None)
-    if setup is None and teardown is None:
-        return None
-
-    if cleanup_name:
-        cleanup = getattr(obj, cleanup_name, lambda *args: None)
-    else:
-
-        def cleanup(*args):
-            pass
-
-    @pytest.fixture(
-        scope=scope.value,
-        autouse=True,
-        # Use a unique name to speed up lookup.
-        name=f"_unittest_{setup_name}_fixture_{obj.__qualname__}",
-    )
-    def fixture(self, request: FixtureRequest) -> Generator[None, None, None]:
-        if _is_skipped(self):
-            reason = self.__unittest_skip_why__
-            raise pytest.skip.Exception(reason, _use_item_location=True)
-        if setup is not None:
-            try:
-                if pass_self:
-                    setup(self, request.function)
-                else:
+        def unittest_setup_class_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
+            cls = request.cls
+            if _is_skipped(cls):
+                reason = cls.__unittest_skip_why__
+                raise pytest.skip.Exception(reason, _use_item_location=True)
+            if setup is not None:
+                try:
                     setup()
-            # unittest does not call the cleanup function for every BaseException, so we
-            # follow this here.
-            except Exception:
-                if pass_self:
-                    cleanup(self)
-                else:
+                # unittest does not call the cleanup function for every BaseException, so we
+                # follow this here.
+                except Exception:
                     cleanup()
-
-                raise
-        yield
-        try:
-            if teardown is not None:
-                if pass_self:
-                    teardown(self, request.function)
-                else:
+                    raise
+            yield
+            try:
+                if teardown is not None:
                     teardown()
-        finally:
-            if pass_self:
-                cleanup(self)
-            else:
+            finally:
                 cleanup()
 
-    return fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_unittest_setUpClass_fixture_{cls.__qualname__}",
+            func=unittest_setup_class_fixture,
+            nodeid=self.nodeid,
+            scope="class",
+            autouse=True,
+        )
+
+    def _register_unittest_setup_method_fixture(self, cls: type) -> None:
+        """Register an auto-use fixture to invoke setup_method and
+        teardown_method (#517)."""
+        setup = getattr(cls, "setup_method", None)
+        teardown = getattr(cls, "teardown_method", None)
+        if setup is None and teardown is None:
+            return None
+
+        def unittest_setup_method_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
+            self = request.instance
+            if _is_skipped(self):
+                reason = self.__unittest_skip_why__
+                raise pytest.skip.Exception(reason, _use_item_location=True)
+            if setup is not None:
+                setup(self, request.function)
+            yield
+            if teardown is not None:
+                teardown(self, request.function)
+
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_unittest_setup_method_fixture_{cls.__qualname__}",
+            func=unittest_setup_method_fixture,
+            nodeid=self.nodeid,
+            scope="function",
+            autouse=True,
+        )
 
 
 class TestCaseFunction(Function):
