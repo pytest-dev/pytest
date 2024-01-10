@@ -1,0 +1,3 @@
+Fix bug where `monkeypatch.setattr` and `monkeypatch.delattr` bind descriptors (possibly causing unwanted side-effects) to implement their `hasattr` checks even when their checks are disabled by `raising=False`.
+
+Note that they still must bind descriptors to implement their checks if `raising=True`.

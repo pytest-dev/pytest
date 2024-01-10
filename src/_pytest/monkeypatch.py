@@ -224,7 +224,6 @@ class MonkeyPatch:
         applies to ``monkeypatch.setattr`` as well.
         """
         __tracebackhide__ = True
-        import inspect
 
         if isinstance(value, Notset):
             if not isinstance(target, str):
@@ -243,13 +242,13 @@ class MonkeyPatch:
                     "import string"
                 )
 
-        oldval = getattr(target, name, notset)
-        if raising and oldval is notset:
+        if raising and not hasattr(target, name):
             raise AttributeError(f"{target!r} has no attribute {name!r}")
 
-        # avoid class descriptors like staticmethod/classmethod
-        if inspect.isclass(target):
-            oldval = target.__dict__.get(name, notset)
+        # Prevent `undo` from polluting `vars(target)` with an object that was not in it
+        # before monkeypatching, such as inherited attributes or the results of
+        # descriptor binding.
+        oldval = vars(target).get(name, notset)
         self._setattr.append((target, name, oldval))
         setattr(target, name, value)
 
@@ -269,7 +268,6 @@ class MonkeyPatch:
         ``raising`` is set to False.
         """
         __tracebackhide__ = True
-        import inspect
 
         if isinstance(name, Notset):
             if not isinstance(target, str):
@@ -280,16 +278,18 @@ class MonkeyPatch:
                 )
             name, target = derive_importpath(target, raising)
 
-        if not hasattr(target, name):
-            if raising:
-                raise AttributeError(name)
-        else:
-            oldval = getattr(target, name, notset)
-            # Avoid class descriptors like staticmethod/classmethod.
-            if inspect.isclass(target):
-                oldval = target.__dict__.get(name, notset)
-            self._setattr.append((target, name, oldval))
+        if raising and not hasattr(target, name):
+            raise AttributeError(f"{target!r} has no attribute {name!r}")
+
+        # Prevent `undo` from overwriting class descriptors (like
+        # staticmethod/classmethod) with the results of descriptor binding.
+        oldval = vars(target).get(name, notset)
+        try:
             delattr(target, name)
+        except AttributeError:
+            pass
+        else:
+            self._setattr.append((target, name, oldval))
 
     def setitem(self, dic: Mapping[K, V], name: K, value: V) -> None:
         """Set dictionary entry ``name`` to value."""
