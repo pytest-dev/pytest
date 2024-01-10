@@ -47,20 +47,23 @@ def pytest_fixture_setup(
                 else:
                     param = request.param
                 fixturedef.cached_param = param  # type: ignore[attr-defined]
-            _show_fixture_action(fixturedef, "SETUP")
+            _show_fixture_action(fixturedef, request.config, "SETUP")
 
 
-def pytest_fixture_post_finalizer(fixturedef: FixtureDef[object]) -> None:
+def pytest_fixture_post_finalizer(
+    fixturedef: FixtureDef[object], request: SubRequest
+) -> None:
     if fixturedef.cached_result is not None:
-        config = fixturedef._fixturemanager.config
+        config = request.config
         if config.option.setupshow:
-            _show_fixture_action(fixturedef, "TEARDOWN")
+            _show_fixture_action(fixturedef, request.config, "TEARDOWN")
             if hasattr(fixturedef, "cached_param"):
                 del fixturedef.cached_param  # type: ignore[attr-defined]
 
 
-def _show_fixture_action(fixturedef: FixtureDef[object], msg: str) -> None:
-    config = fixturedef._fixturemanager.config
+def _show_fixture_action(
+    fixturedef: FixtureDef[object], config: Config, msg: str
+) -> None:
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
         capman.suspend_global_capture()

@@ -525,7 +525,7 @@ class FixtureRequest(abc.ABC):
         :param msg:
             An optional custom error message.
         """
-        raise self._fixturemanager.FixtureLookupError(None, self, msg)
+        raise FixtureLookupError(None, self, msg)
 
     def getfixturevalue(self, argname: str) -> Any:
         """Dynamically run a named fixture function.
@@ -970,7 +970,7 @@ class FixtureDef(Generic[FixtureValue]):
 
     def __init__(
         self,
-        fixturemanager: "FixtureManager",
+        config: Config,
         baseid: Optional[str],
         argname: str,
         func: "_FixtureFunc[FixtureValue]",
@@ -984,7 +984,6 @@ class FixtureDef(Generic[FixtureValue]):
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-        self._fixturemanager = fixturemanager
         # The "base" node ID for the fixture.
         #
         # This is a node ID prefix. A fixture is only available to a node (e.g.
@@ -1010,7 +1009,7 @@ class FixtureDef(Generic[FixtureValue]):
         if scope is None:
             scope = Scope.Function
         elif callable(scope):
-            scope = _eval_scope_callable(scope, argname, fixturemanager.config)
+            scope = _eval_scope_callable(scope, argname, config)
         if isinstance(scope, str):
             scope = Scope.from_user(
                 scope, descr=f"Fixture '{func.__name__}'", where=baseid
@@ -1439,9 +1438,6 @@ class FixtureManager:
     by a lookup of their FuncFixtureInfo.
     """
 
-    FixtureLookupError = FixtureLookupError
-    FixtureLookupErrorRepr = FixtureLookupErrorRepr
-
     def __init__(self, session: "Session") -> None:
         self.session = session
         self.config: Config = session.config
@@ -1657,7 +1653,7 @@ class FixtureManager:
             Set this if this is a unittest fixture.
         """
         fixture_def = FixtureDef(
-            fixturemanager=self,
+            config=self.config,
             baseid=nodeid,
             argname=name,
             func=func,

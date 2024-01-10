@@ -638,9 +638,16 @@ class PytestPluginManager(PluginManager):
         if existing is not None:
             return cast(types.ModuleType, existing)
 
+        # conftest.py files there are not in a Python package all have module
+        # name "conftest", and thus conflict with each other. Clear the existing
+        # before loading the new one, otherwise the existing one will be
+        # returned from the module cache.
         pkgpath = resolve_package_path(conftestpath)
         if pkgpath is None:
-            _ensure_removed_sysmodule(conftestpath.stem)
+            try:
+                del sys.modules[conftestpath.stem]
+            except KeyError:
+                pass
 
         try:
             mod = import_path(conftestpath, mode=importmode, root=rootpath)
@@ -816,13 +823,6 @@ def _get_plugin_specs_as_list(
         "Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: %r"
         % specs
     )
-
-
-def _ensure_removed_sysmodule(modname: str) -> None:
-    try:
-        del sys.modules[modname]
-    except KeyError:
-        pass
 
 
 class Notset:
