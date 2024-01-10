@@ -6,7 +6,6 @@ import fnmatch
 import inspect
 import itertools
 import os
-import sys
 import types
 import warnings
 from collections import Counter
@@ -350,20 +349,8 @@ class PyobjMixin(nodes.Node):
 
     def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
         # XXX caching?
-        obj = self.obj
-        compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
-        if isinstance(compat_co_firstlineno, int):
-            # nose compatibility
-            file_path = sys.modules[obj.__module__].__file__
-            assert file_path is not None
-            if file_path.endswith(".pyc"):
-                file_path = file_path[:-1]
-            path: Union["os.PathLike[str]", str] = file_path
-            lineno = compat_co_firstlineno
-        else:
-            path, lineno = getfslineno(obj)
+        path, lineno = getfslineno(self.obj)
         modpath = self.getmodpath()
-        assert isinstance(lineno, int)
         return path, lineno, modpath
 
 
