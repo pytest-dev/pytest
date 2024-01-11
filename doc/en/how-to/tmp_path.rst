@@ -9,7 +9,7 @@ The ``tmp_path`` fixture
 ------------------------
 
 You can use the ``tmp_path`` fixture which will
-provide a temporary directory unique to the test invocation,
+provide a temporary directory unique to the current test,
 created in the `base temporary directory`_.
 
 ``tmp_path`` is a :class:`pathlib.Path` object. Here is an example test usage:
