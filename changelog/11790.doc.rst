@@ -1,2 +1,0 @@
-Changed phrasing on the ``tmp_path`` documentation to more clearly
-illustrate it's behavior ("test invocation" to "current test").
