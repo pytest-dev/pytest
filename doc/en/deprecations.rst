@@ -387,6 +387,13 @@ Will also need to be ported to a supported pytest style. One way to do it is usi
 .. _`with-setup-nose`: https://nose.readthedocs.io/en/latest/testing_tools.html?highlight=with_setup#nose.tools.with_setup
 
 
+The ``compat_co_firstlineno`` attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Nose inspects this attribute on function objects to allow overriding the function's inferred line number.
+Pytest no longer respects this attribute.
+
+
 
 Passing ``msg=`` to ``pytest.skip``, ``pytest.fail`` or ``pytest.exit``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
