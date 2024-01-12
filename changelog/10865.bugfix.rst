@@ -1,0 +1,1 @@
+Fix a TypeError in a warning arguments call muted by warnings filter.
