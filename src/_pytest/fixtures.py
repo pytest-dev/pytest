@@ -116,22 +116,16 @@ def pytest_sessionstart(session: "Session") -> None:
 def get_scope_package(
     node: nodes.Item,
     fixturedef: "FixtureDef[object]",
-) -> Optional[Union[nodes.Item, nodes.Collector]]:
+) -> Optional[nodes.Node]:
     from _pytest.python import Package
 
-    current: Optional[Union[nodes.Item, nodes.Collector]] = node
-    while current and (
-        not isinstance(current, Package) or current.nodeid != fixturedef.baseid
-    ):
-        current = current.parent  # type: ignore[assignment]
-    if current is None:
-        return node.session
-    return current
+    for parent in node.iterparents():
+        if isinstance(parent, Package) and parent.nodeid == fixturedef.baseid:
+            return parent
+    return node.session
 
 
-def get_scope_node(
-    node: nodes.Node, scope: Scope
-) -> Optional[Union[nodes.Item, nodes.Collector]]:
+def get_scope_node(node: nodes.Node, scope: Scope) -> Optional[nodes.Node]:
     import _pytest.python
 
     if scope is Scope.Function:
@@ -738,7 +732,7 @@ class SubRequest(FixtureRequest):
         scope = self._scope
         if scope is Scope.Function:
             # This might also be a non-function Item despite its attribute name.
-            node: Optional[Union[nodes.Item, nodes.Collector]] = self._pyfuncitem
+            node: Optional[nodes.Node] = self._pyfuncitem
         elif scope is Scope.Package:
             node = get_scope_package(self._pyfuncitem, self._fixturedef)
         else:
@@ -1513,7 +1507,7 @@ class FixtureManager:
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
-        for parentnode in reversed(list(nodes.iterparentnodes(node))):
+        for parentnode in node.listchain():
             basenames = self._nodeid_autousenames.get(parentnode.nodeid)
             if basenames:
                 yield from basenames
@@ -1781,7 +1775,7 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        parentnodeids = {n.nodeid for n in nodes.iterparentnodes(node)}
+        parentnodeids = {n.nodeid for n in node.iterparents()}
         for fixturedef in fixturedefs:
             if fixturedef.baseid in parentnodeids:
                 yield fixturedef

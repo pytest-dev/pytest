@@ -49,15 +49,6 @@ SEP = "/"
 tracebackcutdir = Path(_pytest.__file__).parent
 
 
-def iterparentnodes(node: "Node") -> Iterator["Node"]:
-    """Return the parent nodes, including the node itself, from the node
-    upwards."""
-    parent: Optional[Node] = node
-    while parent is not None:
-        yield parent
-        parent = parent.parent
-
-
 _NodeType = TypeVar("_NodeType", bound="Node")
 
 
@@ -265,12 +256,20 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def teardown(self) -> None:
         pass
 
-    def listchain(self) -> List["Node"]:
-        """Return list of all parent collectors up to self, starting from
-        the root of collection tree.
+    def iterparents(self) -> Iterator["Node"]:
+        """Iterate over all parent collectors starting from and including self
+        up to the root of the collection tree.
 
-        :returns: The nodes.
+        .. versionadded:: 8.1
         """
+        parent: Optional[Node] = self
+        while parent is not None:
+            yield parent
+            parent = parent.parent
+
+    def listchain(self) -> List["Node"]:
+        """Return a list of all parent collectors starting from the root of the
+        collection tree down to and including self."""
         chain = []
         item: Optional[Node] = self
         while item is not None:
@@ -319,7 +318,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
-        for node in reversed(self.listchain()):
+        for node in self.iterparents():
             for mark in node.own_markers:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
@@ -363,17 +362,16 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.session._setupstate.addfinalizer(fin, self)
 
     def getparent(self, cls: Type[_NodeType]) -> Optional[_NodeType]:
-        """Get the next parent node (including self) which is an instance of
+        """Get the closest parent node (including self) which is an instance of
         the given class.
 
         :param cls: The node class to search for.
         :returns: The node, if found.
         """
-        current: Optional[Node] = self
-        while current and not isinstance(current, cls):
-            current = current.parent
-        assert current is None or isinstance(current, cls)
-        return current
+        for node in self.iterparents():
+            if isinstance(node, cls):
+                return node
+        return None
 
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         return excinfo.traceback
