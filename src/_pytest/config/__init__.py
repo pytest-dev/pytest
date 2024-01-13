@@ -17,7 +17,6 @@ from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
 from types import FunctionType
-from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -112,16 +111,14 @@ class ConftestImportFailure(Exception):
     def __init__(
         self,
         path: Path,
-        excinfo: Tuple[Type[Exception], Exception, TracebackType],
+        *,
+        cause: Exception,
     ) -> None:
-        super().__init__(path, excinfo)
         self.path = path
-        self.excinfo = excinfo
+        self.cause = cause
 
     def __str__(self) -> str:
-        return "{}: {} (from {})".format(
-            self.excinfo[0].__name__, self.excinfo[1], self.path
-        )
+        return f"{type(self.cause).__name__}: {self.cause} (from {self.path})"
 
 
 def filter_traceback_for_conftest_import_failure(
@@ -152,7 +149,7 @@ def main(
         try:
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
-            exc_info = ExceptionInfo.from_exc_info(e.excinfo)
+            exc_info = ExceptionInfo.from_exception(e.cause)
             tw = TerminalWriter(sys.stderr)
             tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
             exc_info.traceback = exc_info.traceback.filter(
@@ -654,8 +651,7 @@ class PytestPluginManager(PluginManager):
             mod = import_path(conftestpath, mode=importmode, root=rootpath)
         except Exception as e:
             assert e.__traceback__ is not None
-            exc_info = (type(e), e, e.__traceback__)
-            raise ConftestImportFailure(conftestpath, exc_info) from e
+            raise ConftestImportFailure(conftestpath, cause=e) from e
 
         self._check_non_top_pytest_plugins(mod, conftestpath)
 

@@ -2108,9 +2108,7 @@ def test_conftest_import_error_repr(tmp_path: Path) -> None:
         try:
             raise RuntimeError("some error")
         except Exception as exc:
-            assert exc.__traceback__ is not None
-            exc_info = (type(exc), exc, exc.__traceback__)
-            raise ConftestImportFailure(path, exc_info) from exc
+            raise ConftestImportFailure(path, cause=exc) from exc
 
 
 def test_strtobool() -> None:
