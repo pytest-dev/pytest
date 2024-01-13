@@ -871,17 +871,30 @@ class TestKeywordSelection:
         deselected_tests = dlist[0].items
         assert len(deselected_tests) == 1
 
-    def test_no_match_directories_outside_the_suite(self, pytester: Pytester) -> None:
+    def test_no_match_directories_outside_the_suite(
+        self,
+        pytester: Pytester,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """`-k` should not match against directories containing the test suite (#7040)."""
-        test_contents = """
-            def test_aaa(): pass
-            def test_ddd(): pass
-        """
-        pytester.makepyfile(
-            **{"ddd/tests/__init__.py": "", "ddd/tests/test_foo.py": test_contents}
+        pytester.makefile(
+            **{
+                "suite/pytest": """[pytest]""",
+            },
+            ext=".ini",
         )
+        pytester.makepyfile(
+            **{
+                "suite/ddd/tests/__init__.py": "",
+                "suite/ddd/tests/test_foo.py": """
+                def test_aaa(): pass
+                def test_ddd(): pass
+            """,
+            }
+        )
+        monkeypatch.chdir(pytester.path / "suite")
 
-        def get_collected_names(*args):
+        def get_collected_names(*args: str) -> List[str]:
             _, rec = pytester.inline_genitems(*args)
             calls = rec.getcalls("pytest_collection_finish")
             assert len(calls) == 1
@@ -892,12 +905,6 @@ class TestKeywordSelection:
 
         # do not collect anything based on names outside the collection tree
         assert get_collected_names("-k", pytester._name) == []
-
-        # "-k ddd" should only collect "test_ddd", but not
-        # 'test_aaa' just because one of its parent directories is named "ddd";
-        # this was matched previously because Package.name would contain the full path
-        # to the package
-        assert get_collected_names("-k", "ddd") == ["test_ddd"]
 
 
 class TestMarkDecorator:

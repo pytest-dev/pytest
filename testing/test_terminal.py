@@ -451,7 +451,11 @@ class TestCollectonly:
         )
         result = pytester.runpytest("--collect-only")
         result.stdout.fnmatch_lines(
-            ["<Module test_collectonly_basic.py>", "  <Function test_func>"]
+            [
+                "<Dir test_collectonly_basic0>",
+                "  <Module test_collectonly_basic.py>",
+                "    <Function test_func>",
+            ]
         )
 
     def test_collectonly_skipped_module(self, pytester: Pytester) -> None:
@@ -480,14 +484,15 @@ class TestCollectonly:
         result = pytester.runpytest("--collect-only", "--verbose")
         result.stdout.fnmatch_lines(
             [
-                "<YamlFile test1.yaml>",
-                "  <YamlItem test1.yaml>",
-                "<Module test_collectonly_displays_test_description.py>",
-                "  <Function test_with_description>",
-                "    This test has a description.",
-                "    ",
-                "    more1.",
-                "      more2.",
+                "<Dir test_collectonly_displays_test_description0>",
+                "  <YamlFile test1.yaml>",
+                "    <YamlItem test1.yaml>",
+                "  <Module test_collectonly_displays_test_description.py>",
+                "    <Function test_with_description>",
+                "      This test has a description.",
+                "      ",
+                "      more1.",
+                "        more2.",
             ],
             consecutive=True,
         )
@@ -1268,13 +1273,13 @@ def test_color_yes(pytester: Pytester, color_mapping) -> None:
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "",
-                "    {kw}def{hl-reset} {function}test_this{hl-reset}():{endline}",
+                "    {reset}{kw}def{hl-reset} {function}test_this{hl-reset}():{endline}",
                 ">       fail(){endline}",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:5: ",
                 "_ _ * _ _*",
                 "",
-                "    {kw}def{hl-reset} {function}fail{hl-reset}():{endline}",
+                "    {reset}{kw}def{hl-reset} {function}fail{hl-reset}():{endline}",
                 ">       {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                 "{bold}{red}E       assert 0{reset}",
                 "",
@@ -1295,9 +1300,9 @@ def test_color_yes(pytester: Pytester, color_mapping) -> None:
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "{bold}{red}test_color_yes.py{reset}:5: in test_this",
-                "    fail(){endline}",
+                "    {reset}fail(){endline}",
                 "{bold}{red}test_color_yes.py{reset}:2: in fail",
-                "    {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
+                "    {reset}{kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                 "{bold}{red}E   assert 0{reset}",
                 "{red}=*= {red}{bold}1 failed{reset}{red} in *s{reset}{red} =*={reset}",
             ]
@@ -2001,9 +2006,9 @@ class TestClassicOutputStyle:
         result = pytester.runpytest("-o", "console_output_style=classic")
         result.stdout.fnmatch_lines(
             [
+                f"sub{os.sep}test_three.py .F.",
                 "test_one.py .",
                 "test_two.py F",
-                f"sub{os.sep}test_three.py .F.",
                 "*2 failed, 3 passed in*",
             ]
         )
@@ -2012,18 +2017,18 @@ class TestClassicOutputStyle:
         result = pytester.runpytest("-o", "console_output_style=classic", "-v")
         result.stdout.fnmatch_lines(
             [
-                "test_one.py::test_one PASSED",
-                "test_two.py::test_two FAILED",
                 f"sub{os.sep}test_three.py::test_three_1 PASSED",
                 f"sub{os.sep}test_three.py::test_three_2 FAILED",
                 f"sub{os.sep}test_three.py::test_three_3 PASSED",
+                "test_one.py::test_one PASSED",
+                "test_two.py::test_two FAILED",
                 "*2 failed, 3 passed in*",
             ]
         )
 
     def test_quiet(self, pytester: Pytester, test_files) -> None:
         result = pytester.runpytest("-o", "console_output_style=classic", "-q")
-        result.stdout.fnmatch_lines([".F.F.", "*2 failed, 3 passed in*"])
+        result.stdout.fnmatch_lines([".F..F", "*2 failed, 3 passed in*"])
 
 
 class TestProgressOutputStyle:
@@ -2507,7 +2512,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
                     ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
@@ -2529,7 +2534,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
                     "        {print}print{hl-reset}({str}'''{hl-reset}{str}{hl-reset}",
                     ">   {str}    {hl-reset}{str}'''{hl-reset}); {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                     "{bold}{red}E       assert 0{reset}",
@@ -2552,7 +2557,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
                     ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
@@ -2771,16 +2776,17 @@ class TestFineGrainedTestCase:
             [
                 "collected 5 items",
                 "",
-                f"<Module {p.name}>",
-                "  <Function test_ok[0]>",
-                "    some docstring",
-                "  <Function test_ok[1]>",
-                "    some docstring",
-                "  <Function test_ok[2]>",
-                "    some docstring",
-                "  <Function test_ok[3]>",
-                "    some docstring",
-                "  <Function test_fail>",
+                f"<Dir {p.parent.name}>",
+                f"  <Module {p.name}>",
+                "    <Function test_ok[0]>",
+                "      some docstring",
+                "    <Function test_ok[1]>",
+                "      some docstring",
+                "    <Function test_ok[2]>",
+                "      some docstring",
+                "    <Function test_ok[3]>",
+                "      some docstring",
+                "    <Function test_fail>",
             ],
             consecutive=True,
         )
@@ -2793,12 +2799,13 @@ class TestFineGrainedTestCase:
             [
                 "collecting ... collected 5 items",
                 "",
-                f"<Module {p.name}>",
-                "  <Function test_ok[0]>",
-                "  <Function test_ok[1]>",
-                "  <Function test_ok[2]>",
-                "  <Function test_ok[3]>",
-                "  <Function test_fail>",
+                f"<Dir {p.parent.name}>",
+                f"  <Module {p.name}>",
+                "    <Function test_ok[0]>",
+                "    <Function test_ok[1]>",
+                "    <Function test_ok[2]>",
+                "    <Function test_ok[3]>",
+                "    <Function test_fail>",
             ],
             consecutive=True,
         )
@@ -2845,3 +2852,122 @@ class TestFineGrainedTestCase:
             """
         )
         return p
+
+
+def test_summary_xfail_reason(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail
+        def test_xfail():
+            assert False
+
+        @pytest.mark.xfail(reason="foo")
+        def test_xfail_reason():
+            assert False
+        """
+    )
+    result = pytester.runpytest("-rx")
+    expect1 = "XFAIL test_summary_xfail_reason.py::test_xfail"
+    expect2 = "XFAIL test_summary_xfail_reason.py::test_xfail_reason - foo"
+    result.stdout.fnmatch_lines([expect1, expect2])
+    assert result.stdout.lines.count(expect1) == 1
+    assert result.stdout.lines.count(expect2) == 1
+
+
+def test_summary_xfail_tb(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail
+        def test_xfail():
+            a, b = 1, 2
+            assert a == b
+        """
+    )
+    result = pytester.runpytest("-rx")
+    result.stdout.fnmatch_lines(
+        [
+            "*= XFAILURES =*",
+            "*_ test_xfail _*",
+            "* @pytest.mark.xfail*",
+            "* def test_xfail():*",
+            "*    a, b = 1, 2*",
+            "> *assert a == b*",
+            "E *assert 1 == 2*",
+            "test_summary_xfail_tb.py:6: AssertionError*",
+            "*= short test summary info =*",
+            "XFAIL test_summary_xfail_tb.py::test_xfail",
+            "*= 1 xfailed in * =*",
+        ]
+    )
+
+
+def test_xfail_tb_line(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail
+        def test_xfail():
+            a, b = 1, 2
+            assert a == b
+        """
+    )
+    result = pytester.runpytest("-rx", "--tb=line")
+    result.stdout.fnmatch_lines(
+        [
+            "*= XFAILURES =*",
+            "*test_xfail_tb_line.py:6: assert 1 == 2",
+            "*= short test summary info =*",
+            "XFAIL test_xfail_tb_line.py::test_xfail",
+            "*= 1 xfailed in * =*",
+        ]
+    )
+
+
+def test_summary_xpass_reason(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail
+        def test_pass():
+            ...
+
+        @pytest.mark.xfail(reason="foo")
+        def test_reason():
+            ...
+        """
+    )
+    result = pytester.runpytest("-rX")
+    expect1 = "XPASS test_summary_xpass_reason.py::test_pass"
+    expect2 = "XPASS test_summary_xpass_reason.py::test_reason - foo"
+    result.stdout.fnmatch_lines([expect1, expect2])
+    assert result.stdout.lines.count(expect1) == 1
+    assert result.stdout.lines.count(expect2) == 1
+
+
+def test_xpass_output(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail
+        def test_pass():
+            print('hi there')
+        """
+    )
+    result = pytester.runpytest("-rX")
+    result.stdout.fnmatch_lines(
+        [
+            "*= XPASSES =*",
+            "*_ test_pass _*",
+            "*- Captured stdout call -*",
+            "*= short test summary info =*",
+            "XPASS test_xpass_output.py::test_pass*",
+            "*= 1 xpassed in * =*",
+        ]
+    )

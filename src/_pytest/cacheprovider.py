@@ -27,8 +27,8 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
+from _pytest.nodes import Directory
 from _pytest.nodes import File
-from _pytest.python import Package
 from _pytest.reports import TestReport
 
 README_CONTENT = """\
@@ -222,7 +222,7 @@ class LFPluginCollWrapper:
         self, collector: nodes.Collector
     ) -> Generator[None, CollectReport, CollectReport]:
         res = yield
-        if isinstance(collector, (Session, Package)):
+        if isinstance(collector, (Session, Directory)):
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 

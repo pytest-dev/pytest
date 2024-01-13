@@ -13,8 +13,6 @@ from typing import Union
 
 from pluggy import HookspecMarker
 
-from _pytest.deprecated import WARNING_CMDLINE_PREPARSE_HOOK
-
 if TYPE_CHECKING:
     import pdb
     import warnings
@@ -42,7 +40,6 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
     from _pytest.terminal import TerminalReporter
     from _pytest.terminal import TestShortLogReport
-    from _pytest.compat import LEGACY_PATH
 
 
 hookspec = HookspecMarker("pytest")
@@ -159,21 +156,6 @@ def pytest_cmdline_parse(
     """
 
 
-@hookspec(warn_on_impl=WARNING_CMDLINE_PREPARSE_HOOK)
-def pytest_cmdline_preparse(config: "Config", args: List[str]) -> None:
-    """(**Deprecated**) modify command line arguments before option parsing.
-
-    This hook is considered deprecated and will be removed in a future pytest version. Consider
-    using :hook:`pytest_load_initial_conftests` instead.
-
-    .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
-
-    :param config: The pytest config object.
-    :param args: Arguments passed on the command line.
-    """
-
-
 @hookspec(firstresult=True)
 def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
     """Called for performing the main command line action. The default
@@ -263,9 +245,7 @@ def pytest_collection_finish(session: "Session") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_ignore_collect(
-    collection_path: Path, path: "LEGACY_PATH", config: "Config"
-) -> Optional[bool]:
+def pytest_ignore_collect(collection_path: Path, config: "Config") -> Optional[bool]:
     """Return True to prevent considering this path for collection.
 
     This hook is consulted for all files and directories prior to calling
@@ -279,15 +259,39 @@ def pytest_ignore_collect(
 
     .. versionchanged:: 7.0.0
         The ``collection_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``path`` parameter. The ``path`` parameter
-        has been deprecated.
+        equivalent of the ``path`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``path`` parameter has been removed.
     """
 
 
-def pytest_collect_file(
-    file_path: Path, path: "LEGACY_PATH", parent: "Collector"
-) -> "Optional[Collector]":
+@hookspec(firstresult=True)
+def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Collector]":
+    """Create a :class:`~pytest.Collector` for the given directory, or None if
+    not relevant.
+
+    .. versionadded:: 8.0
+
+    For best results, the returned collector should be a subclass of
+    :class:`~pytest.Directory`, but this is not required.
+
+    The new node needs to have the specified ``parent`` as a parent.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+
+    :param path: The path to analyze.
+
+    See :ref:`custom directory collectors` for a simple example of use of this
+    hook.
+    """
+
+
+def pytest_collect_file(file_path: Path, parent: "Collector") -> "Optional[Collector]":
     """Create a :class:`~pytest.Collector` for the given path, or None if not relevant.
+
+    For best results, the returned collector should be a subclass of
+    :class:`~pytest.File`, but this is not required.
 
     The new node needs to have the specified ``parent`` as a parent.
 
@@ -296,8 +300,10 @@ def pytest_collect_file(
 
     .. versionchanged:: 7.0.0
         The ``file_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``path`` parameter. The ``path`` parameter
-        has been deprecated.
+        equivalent of the ``path`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``path`` parameter was removed.
     """
 
 
@@ -356,9 +362,7 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
 
 
 @hookspec(firstresult=True)
-def pytest_pycollect_makemodule(
-    module_path: Path, path: "LEGACY_PATH", parent
-) -> Optional["Module"]:
+def pytest_pycollect_makemodule(module_path: Path, parent) -> Optional["Module"]:
     """Return a :class:`pytest.Module` collector or None for the given path.
 
     This hook will be called for each matching test module path.
@@ -374,7 +378,8 @@ def pytest_pycollect_makemodule(
         The ``module_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter.
 
-        The ``path`` parameter has been deprecated in favor of ``fspath``.
+    .. versionchanged:: 8.0.0
+        The ``path`` parameter has been removed in favor of ``module_path``.
     """
 
 
@@ -744,7 +749,7 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
 
 
 def pytest_report_header(  # type:ignore[empty-body]
-    config: "Config", start_path: Path, startdir: "LEGACY_PATH"
+    config: "Config", start_path: Path
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
@@ -767,15 +772,16 @@ def pytest_report_header(  # type:ignore[empty-body]
 
     .. versionchanged:: 7.0.0
         The ``start_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``startdir`` parameter. The ``startdir`` parameter
-        has been deprecated.
+        equivalent of the ``startdir`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``startdir`` parameter has been removed.
     """
 
 
 def pytest_report_collectionfinish(  # type:ignore[empty-body]
     config: "Config",
     start_path: Path,
-    startdir: "LEGACY_PATH",
     items: Sequence["Item"],
 ) -> Union[str, List[str]]:
     """Return a string or list of strings to be displayed after collection
@@ -799,8 +805,10 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 
     .. versionchanged:: 7.0.0
         The ``start_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``startdir`` parameter. The ``startdir`` parameter
-        has been deprecated.
+        equivalent of the ``startdir`` parameter.
+
+    .. versionchanged:: 8.0.0
+        The ``startdir`` parameter has been removed.
     """
 
 

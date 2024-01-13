@@ -1,3 +1,0 @@
-Applying a mark to a fixture function now issues a warning: marks in fixtures never had any effect, but it is a common user error to apply a mark to a fixture (for example ``usefixtures``) and expect it to work.
-
-This will become an error in the future.

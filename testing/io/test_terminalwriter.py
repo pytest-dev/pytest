@@ -5,6 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 from typing import Generator
+from typing import Optional
 from unittest import mock
 
 import pytest
@@ -164,53 +165,67 @@ def test_attr_hasmarkup() -> None:
     assert "\x1b[0m" in s
 
 
-def assert_color_set():
+def assert_color(expected: bool, default: Optional[bool] = None) -> None:
     file = io.StringIO()
-    tw = terminalwriter.TerminalWriter(file)
-    assert tw.hasmarkup
+    if default is None:
+        default = not expected
+    file.isatty = lambda: default  # type: ignore
+    tw = terminalwriter.TerminalWriter(file=file)
+    assert tw.hasmarkup is expected
     tw.line("hello", bold=True)
     s = file.getvalue()
-    assert len(s) > len("hello\n")
-    assert "\x1b[1m" in s
-    assert "\x1b[0m" in s
-
-
-def assert_color_not_set():
-    f = io.StringIO()
-    f.isatty = lambda: True  # type: ignore
-    tw = terminalwriter.TerminalWriter(file=f)
-    assert not tw.hasmarkup
-    tw.line("hello", bold=True)
-    s = f.getvalue()
-    assert s == "hello\n"
+    if expected:
+        assert len(s) > len("hello\n")
+        assert "\x1b[1m" in s
+        assert "\x1b[0m" in s
+    else:
+        assert s == "hello\n"
 
 
 def test_should_do_markup_PY_COLORS_eq_1(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setitem(os.environ, "PY_COLORS", "1")
-    assert_color_set()
+    assert_color(True)
 
 
 def test_should_not_do_markup_PY_COLORS_eq_0(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setitem(os.environ, "PY_COLORS", "0")
-    assert_color_not_set()
+    assert_color(False)
 
 
 def test_should_not_do_markup_NO_COLOR(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setitem(os.environ, "NO_COLOR", "1")
-    assert_color_not_set()
+    assert_color(False)
 
 
 def test_should_do_markup_FORCE_COLOR(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setitem(os.environ, "FORCE_COLOR", "1")
-    assert_color_set()
+    assert_color(True)
 
 
-def test_should_not_do_markup_NO_COLOR_and_FORCE_COLOR(
+@pytest.mark.parametrize(
+    ["NO_COLOR", "FORCE_COLOR", "expected"],
+    [
+        ("1", "1", False),
+        ("", "1", True),
+        ("1", "", False),
+    ],
+)
+def test_NO_COLOR_and_FORCE_COLOR(
     monkeypatch: MonkeyPatch,
+    NO_COLOR: str,
+    FORCE_COLOR: str,
+    expected: bool,
 ) -> None:
-    monkeypatch.setitem(os.environ, "NO_COLOR", "1")
-    monkeypatch.setitem(os.environ, "FORCE_COLOR", "1")
-    assert_color_not_set()
+    monkeypatch.setitem(os.environ, "NO_COLOR", NO_COLOR)
+    monkeypatch.setitem(os.environ, "FORCE_COLOR", FORCE_COLOR)
+    assert_color(expected)
+
+
+def test_empty_NO_COLOR_and_FORCE_COLOR_ignored(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "NO_COLOR", "")
+    monkeypatch.setitem(os.environ, "FORCE_COLOR", "")
+    assert_color(True, True)
+    assert_color(False, False)
 
 
 class TestTerminalWriterLineWidth:
@@ -254,7 +269,7 @@ class TestTerminalWriterLineWidth:
         pytest.param(
             True,
             True,
-            "{kw}assert{hl-reset} {number}0{hl-reset}{endline}\n",
+            "{reset}{kw}assert{hl-reset} {number}0{hl-reset}{endline}\n",
             id="with markup and code_highlight",
         ),
         pytest.param(
@@ -291,3 +306,17 @@ def test_code_highlight(has_markup, code_highlight, expected, color_mapping):
         match=re.escape("indents size (2) should have same size as lines (1)"),
     ):
         tw._write_source(["assert 0"], [" ", " "])
+
+
+def test_highlight_empty_source() -> None:
+    """Don't crash trying to highlight empty source code.
+
+    Issue #11758.
+    """
+    f = io.StringIO()
+    tw = terminalwriter.TerminalWriter(f)
+    tw.hasmarkup = True
+    tw.code_highlight = True
+    tw._write_source([])
+
+    assert f.getvalue() == ""

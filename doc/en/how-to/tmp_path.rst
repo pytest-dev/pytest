@@ -9,7 +9,7 @@ The ``tmp_path`` fixture
 ------------------------
 
 You can use the ``tmp_path`` fixture which will
-provide a temporary directory unique to the test invocation,
+provide a temporary directory unique to the current test,
 created in the `base temporary directory`_.
 
 ``tmp_path`` is a :class:`pathlib.Path` object. Here is an example test usage:
@@ -36,7 +36,7 @@ Running this would result in a passed test except for the last
 
     $ pytest test_tmp_path.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 

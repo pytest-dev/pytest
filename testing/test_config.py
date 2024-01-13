@@ -1253,17 +1253,6 @@ def test_plugin_loading_order(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-def test_cmdline_processargs_simple(pytester: Pytester) -> None:
-    pytester.makeconftest(
-        """
-        def pytest_cmdline_preparse(args):
-            args.append("-h")
-    """
-    )
-    result = pytester.runpytest("-Wignore::pytest.PytestRemovedIn8Warning")
-    result.stdout.fnmatch_lines(["*pytest*", "*-h*"])
-
-
 def test_invalid_options_show_extra_information(pytester: Pytester) -> None:
     """Display extra information when pytest exits due to unrecognized
     options in the command-line."""
@@ -1966,7 +1955,8 @@ def test_config_blocked_default_plugins(pytester: Pytester, plugin: str) -> None
         assert result.ret == ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(
             [
-                "ERROR: found no collectors for */test_config_blocked_default_plugins.py",
+                "ERROR: not found: */test_config_blocked_default_plugins.py",
+                "(no match in any of *<Dir *>*",
             ]
         )
         return
