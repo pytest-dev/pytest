@@ -634,7 +634,8 @@ class PytestPluginManager(PluginManager):
     def _importconftest(
         self, conftestpath: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> types.ModuleType:
-        existing = self.get_plugin(str(conftestpath))
+        conftestpath_plugin_name = str(conftestpath)
+        existing = self.get_plugin(conftestpath_plugin_name)
         if existing is not None:
             return cast(types.ModuleType, existing)
 
@@ -666,7 +667,7 @@ class PytestPluginManager(PluginManager):
                     assert mod not in mods
                     mods.append(mod)
         self.trace(f"loading conftestmodule {mod!r}")
-        self.consider_conftest(mod)
+        self.consider_conftest(mod, registration_name=conftestpath_plugin_name)
         return mod
 
     def _check_non_top_pytest_plugins(
@@ -746,9 +747,11 @@ class PytestPluginManager(PluginManager):
                     del self._name2plugin["pytest_" + name]
             self.import_plugin(arg, consider_entry_points=True)
 
-    def consider_conftest(self, conftestmodule: types.ModuleType) -> None:
+    def consider_conftest(
+        self, conftestmodule: types.ModuleType, registration_name: str
+    ) -> None:
         """:meta private:"""
-        self.register(conftestmodule, name=conftestmodule.__file__)
+        self.register(conftestmodule, name=registration_name)
 
     def consider_env(self) -> None:
         """:meta private:"""
