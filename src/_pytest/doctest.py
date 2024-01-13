@@ -558,24 +558,18 @@ class DoctestModule(Module):
             else:  # pragma: no cover
                 pass
 
-        if self.path.name == "conftest.py":
-            module = self.config.pluginmanager._importconftest(
+        try:
+            module = import_path(
                 self.path,
-                self.config.getoption("importmode"),
-                rootpath=self.config.rootpath,
+                root=self.config.rootpath,
+                mode=self.config.getoption("importmode"),
             )
-        else:
-            try:
-                module = import_path(
-                    self.path,
-                    root=self.config.rootpath,
-                    mode=self.config.getoption("importmode"),
-                )
-            except ImportError:
-                if self.config.getvalue("doctest_ignore_import_errors"):
-                    skip("unable to import module %r" % self.path)
-                else:
-                    raise
+        except ImportError:
+            if self.config.getvalue("doctest_ignore_import_errors"):
+                skip("unable to import module %r" % self.path)
+            else:
+                raise
+
         # Uses internal doctest module parsing mechanism.
         finder = MockAwareDocTestFinder()
         optionflags = get_optionflags(self.config)
