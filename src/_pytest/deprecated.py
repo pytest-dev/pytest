@@ -11,7 +11,6 @@ in case of warnings which need to format their messages.
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
 
