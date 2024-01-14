@@ -1664,10 +1664,12 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
 class DeprecatingFuncArgs(Dict[str, object]):
     def __init__(self, initialnames: Sequence[str]) -> None:
         super().__init__()
+        self.warned: bool = False
         self.initialnames: Final = initialnames
 
     def __getitem__(self, key: str) -> object:
-        if key not in self.initialnames:
+        if not self.warned and key not in self.initialnames:
+            self.warned = True
             warnings.warn(ITEM_FUNCARGS_MEMBERS, stacklevel=2)
         return super().__getitem__(key)
 

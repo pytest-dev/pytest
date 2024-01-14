@@ -40,6 +40,7 @@ from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
+from _pytest.python import DeprecatingFuncArgs
 from _pytest.python import Module
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
@@ -284,7 +285,9 @@ class DoctestItem(Item):
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
 
     def _initrequest(self) -> None:
-        self.funcargs: Dict[str, object] = {}
+        self.funcargs: Dict[str, object] = DeprecatingFuncArgs(
+            self._fixtureinfo.initialnames
+        )
         self._request = TopRequest(self, _ispytest=True)  # type: ignore[arg-type]
 
     def setup(self) -> None:

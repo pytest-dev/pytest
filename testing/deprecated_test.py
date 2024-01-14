@@ -195,7 +195,7 @@ def test_nose_deprecated_setup_teardown(pytester: Pytester) -> None:
 
 
 def test_deprecated_access_to_item_funcargs(pytester: Pytester) -> None:
-    module = pytester.makepyfile(
+    pytester.makepyfile(
         """
         import pytest
 
@@ -207,19 +207,17 @@ def test_deprecated_access_to_item_funcargs(pytester: Pytester) -> None:
         def fixture2(fixture1):
             return None
 
-        def test(fixture2):
-            pass
+        def test(request, fixture2):
+            with pytest.warns(
+                pytest.PytestRemovedIn9Warning,
+                match=r"Accessing `item.funcargs` with a fixture",
+            ) as record:
+                request.node.funcargs["fixture1"]
+                assert request.node.funcargs.warned
+                request.node.funcargs.warned = False
+                request.node.funcargs["fixture2"]
+            assert len(record) == 1
         """
     )
-    test = pytester.genitems((pytester.getmodulecol(module),))[0]
-    assert isinstance(test, pytest.Function)
-    test.session._setupstate.setup(test)
-    test.setup()
-    with pytest.warns(
-        pytest.PytestRemovedIn9Warning,
-        match=r"Accessing `item.funcargs` with a fixture",
-    ) as record:
-        test.funcargs["fixture1"]
-        assert len(record) == 1
-        test.funcargs["fixture2"]
-        assert len(record) == 1
+    output = pytester.runpytest()
+    output.assert_outcomes(passed=1)

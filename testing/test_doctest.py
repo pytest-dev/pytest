@@ -881,6 +881,41 @@ class TestDoctests:
         result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["*collected 1 item*"])
 
+    def test_deprecated_access_to_item_funcargs(self, pytester: Pytester):
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixture1():
+                return None
+
+            @pytest.fixture(autouse=True)
+            def fixture2(fixture1):
+                return None
+        """
+        )
+        pytester.makepyfile(
+            """
+            '''
+                >>> import pytest
+                >>> request = getfixture('request')
+                >>> with pytest.warns(
+                ...     pytest.PytestRemovedIn9Warning,
+                ...    match=r"Accessing `item.funcargs` with a fixture",
+                ... ) as record:
+                ...     request.node.funcargs["fixture1"]
+                ...     assert request.node.funcargs.warned
+                ...     request.node.funcargs.warned = False
+                ...     request.node.funcargs["fixture2"]
+                >>> len(record)
+                1
+            '''
+        """
+        )
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=1)
+
 
 class TestLiterals:
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
