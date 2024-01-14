@@ -707,8 +707,6 @@ class Package(nodes.Directory):
         ihook = self.ihook
         for direntry in scandir(self.path, sort_key):
             if direntry.is_dir():
-                if direntry.name == "__pycache__":
-                    continue
                 path = Path(direntry.path)
                 if not self.session.isinitpath(path, with_parents=True):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):
