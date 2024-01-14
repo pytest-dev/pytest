@@ -660,7 +660,12 @@ class PytestPluginManager(PluginManager):
         if dirpath in self._dirpath2confmods:
             for path, mods in self._dirpath2confmods.items():
                 if dirpath in path.parents or path == dirpath:
-                    assert mod not in mods
+                    if mod in mods:
+                        raise AssertionError(
+                            f"While trying to load conftest path {str(conftestpath)}, "
+                            f"found that the module {mod} is already loaded with path {mod.__file__}. "
+                            "This is not supposed to happen. Please report this issue to pytest."
+                        )
                     mods.append(mod)
         self.trace(f"loading conftestmodule {mod!r}")
         self.consider_conftest(mod, registration_name=conftestpath_plugin_name)
