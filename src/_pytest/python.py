@@ -333,7 +333,7 @@ class PyobjMixin(nodes.Node):
     def getmodpath(self, stopatmodule: bool = True, includemodule: bool = False) -> str:
         """Return Python path relative to the containing module."""
         parts = []
-        for node in self.iterparents():
+        for node in self.iter_parents():
             name = node.name
             if isinstance(node, Module):
                 name = os.path.splitext(name)[0]
