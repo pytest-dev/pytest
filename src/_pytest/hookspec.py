@@ -173,8 +173,10 @@ def pytest_load_initial_conftests(
 
 @hookspec(firstresult=True)
 def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
-    """Called for performing the main command line action. The default
-    implementation will invoke the configure hooks and runtest_mainloop.
+    """Called for performing the main command line action.
+
+    The default implementation will invoke the configure hooks and
+    :hook:`pytest_runtestloop`.
 
     Stops at first non-None result, see :ref:`firstresult`.
 
