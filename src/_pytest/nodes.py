@@ -384,7 +384,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         from _pytest.fixtures import FixtureLookupError
 
         if isinstance(excinfo.value, ConftestImportFailure):
-            excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)
+            excinfo = ExceptionInfo.from_exception(excinfo.value.cause)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 style = "value"
