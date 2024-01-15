@@ -30,6 +30,7 @@ from typing import overload
 from typing import TYPE_CHECKING
 
 from . import error
+from . import os_path
 
 # Moved from local.py.
 iswin32 = sys.platform == "win32" or (getattr(os, "_name", False) == "nt")
@@ -1126,7 +1127,7 @@ class LocalPath:
             if self.basename == "__init__.py":
                 return mod  # we don't check anything as we might
                 # be in a namespace package ... too icky to check
-            modfile = mod.__file__
+            modfile = os_path.module_casesensitivepath(mod)
             assert modfile is not None
             if modfile[-4:] in (".pyc", ".pyo"):
                 modfile = modfile[:-1]

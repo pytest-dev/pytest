@@ -8,6 +8,7 @@ from typing import Optional
 from typing import Union
 
 import pytest
+from _pytest._py.os_path import module_casesensitivepath
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
@@ -265,7 +266,7 @@ def pytest_report_header(config: Config) -> List[str]:
         items = config.pluginmanager.list_name_plugin()
         for name, plugin in items:
             if hasattr(plugin, "__file__"):
-                r = plugin.__file__
+                r = module_casesensitivepath(plugin)
             else:
                 r = repr(plugin)
             lines.append(f"    {name:<20}: {r}")

@@ -37,6 +37,7 @@ from _pytest._code import getfslineno
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest._py.os_path import casesensitivepath
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
@@ -1485,17 +1486,22 @@ class FixtureManager:
 
     def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         nodeid = None
+
         try:
-            p = absolutepath(plugin.__file__)  # type: ignore[attr-defined]
+            module_file: str = plugin.__file__  # type: ignore[attr-defined]
         except AttributeError:
             pass
         else:
+            module_absfile = Path(casesensitivepath(str(absolutepath(module_file))))
+
             # Construct the base nodeid which is later used to check
             # what fixtures are visible for particular tests (as denoted
             # by their test id).
-            if p.name == "conftest.py":
+            if module_absfile.name == "conftest.py":
                 try:
-                    nodeid = str(p.parent.relative_to(self.config.rootpath))
+                    nodeid = str(
+                        module_absfile.parent.relative_to(self.config.rootpath)
+                    )
                 except ValueError:
                     nodeid = ""
                 if nodeid == ".":

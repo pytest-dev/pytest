@@ -118,17 +118,14 @@ class TestPytestPluginInteractions:
         plugin = config.pluginmanager.get_plugin(str(conftest))
         assert plugin is mod
 
-        mod_uppercase = config.pluginmanager._importconftest(
-            conftest_upper_case,
-            importmode="prepend",
-            rootpath=pytester.path,
-        )
+        with pytest.raises(ValueError, match="Plugin name already registered"):
+            config.pluginmanager._importconftest(
+                conftest_upper_case,
+                importmode="prepend",
+                rootpath=pytester.path,
+            )
         plugin_uppercase = config.pluginmanager.get_plugin(str(conftest_upper_case))
-        assert plugin_uppercase is mod_uppercase
-
-        # No str(conftestpath) normalization so conftest should be imported
-        # twice and modules should be different objects
-        assert mod is not mod_uppercase
+        assert plugin_uppercase is None
 
     def test_hook_tracing(self, _config_for_test: Config) -> None:
         pytestpm = _config_for_test.pluginmanager  # fully initialized with plugins
@@ -400,7 +397,7 @@ class TestPytestPluginManager:
             pytester.makepyfile("pytest_plugins='xyz'"), root=pytester.path
         )
         with pytest.raises(ImportError):
-            pytestpm.consider_conftest(mod, registration_name="unused")
+            pytestpm.consider_conftest(mod)
 
 
 class TestPytestPluginManagerBootstrapming:

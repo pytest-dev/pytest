@@ -35,6 +35,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+from _pytest._py.os_path import module_casesensitivepath
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
@@ -572,7 +573,7 @@ def import_path(
 
     ignore = os.environ.get("PY_IGNORE_IMPORTMISMATCH", "")
     if ignore != "1":
-        module_file = mod.__file__
+        module_file = module_casesensitivepath(mod)
         if module_file is None:
             raise ImportPathMismatchError(module_name, module_file, path)
 
