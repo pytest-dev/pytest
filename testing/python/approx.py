@@ -954,6 +954,43 @@ class TestApprox:
         with pytest.raises(TypeError, match="only supports ordered sequences"):
             assert {1, 2, 3} == approx({1, 2, 3})
 
+    def test_strange_sequence(self):
+        """https://github.com/pytest-dev/pytest/issues/11797"""
+        a = MyVec3(1, 2, 3)
+        b = MyVec3(0, 1, 2)
+
+        # this would trigger the error inside the test
+        pytest.approx(a, abs=0.5)._repr_compare(b)
+
+        assert b == pytest.approx(a, abs=2)
+        assert b != pytest.approx(a, abs=0.5)
+
+
+class MyVec3:  # incomplete
+    """sequence like"""
+
+    _x: int
+    _y: int
+    _z: int
+
+    def __init__(self, x: int, y: int, z: int):
+        self._x, self._y, self._z = x, y, z
+
+    def __repr__(self) -> str:
+        return f"<MyVec3 {self._x} {self._y} {self._z}>"
+
+    def __len__(self) -> int:
+        return 3
+
+    def __getitem__(self, key: int) -> int:
+        if key == 0:
+            return self._x
+        if key == 1:
+            return self._y
+        if key == 2:
+            return self._z
+        raise IndexError(key)
+
 
 class TestRecursiveSequenceMap:
     def test_map_over_scalar(self):
@@ -981,3 +1018,6 @@ class TestRecursiveSequenceMap:
             (5, 8),
             [(7)],
         ]
+
+    def test_map_over_sequence_like(self):
+        assert _recursive_sequence_map(int, MyVec3(1, 2, 3)) == [1, 2, 3]

@@ -129,6 +129,8 @@ def _recursive_sequence_map(f, x):
     if isinstance(x, (list, tuple)):
         seq_type = type(x)
         return seq_type(_recursive_sequence_map(f, xi) for xi in x)
+    elif _is_sequence_like(x):
+        return [_recursive_sequence_map(f, xi) for xi in x]
     else:
         return f(x)
 
@@ -721,11 +723,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     elif _is_numpy_array(expected):
         expected = _as_numpy_array(expected)
         cls = ApproxNumpy
-    elif (
-        hasattr(expected, "__getitem__")
-        and isinstance(expected, Sized)
-        and not isinstance(expected, (str, bytes))
-    ):
+    elif _is_sequence_like(expected):
         cls = ApproxSequenceLike
     elif isinstance(expected, Collection) and not isinstance(expected, (str, bytes)):
         msg = f"pytest.approx() only supports ordered sequences, but got: {expected!r}"
@@ -734,6 +732,14 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         cls = ApproxScalar
 
     return cls(expected, rel, abs, nan_ok)
+
+
+def _is_sequence_like(expected: object) -> bool:
+    return (
+        hasattr(expected, "__getitem__")
+        and isinstance(expected, Sized)
+        and not isinstance(expected, (str, bytes))
+    )
 
 
 def _is_numpy_array(obj: object) -> bool:
