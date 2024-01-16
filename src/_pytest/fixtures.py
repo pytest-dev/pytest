@@ -1485,23 +1485,25 @@ class FixtureManager:
 
     def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
         nodeid = None
-        try:
-            p = absolutepath(plugin.__file__)  # type: ignore[attr-defined]
-        except AttributeError:
-            pass
-        else:
-            # Construct the base nodeid which is later used to check
-            # what fixtures are visible for particular tests (as denoted
-            # by their test id).
-            if p.name == "conftest.py":
-                try:
-                    nodeid = str(p.parent.relative_to(self.config.rootpath))
-                except ValueError:
-                    nodeid = ""
-                if nodeid == ".":
-                    nodeid = ""
-                if os.sep != nodes.SEP:
-                    nodeid = nodeid.replace(os.sep, nodes.SEP)
+        plugin_name = self.config.pluginmanager.get_name(plugin)
+
+        # Construct the base nodeid which is later used to check
+        # what fixtures are visible for particular tests (as denoted
+        # by their test id).
+        if plugin_name and plugin_name.endswith("conftest.py"):
+            # The plugin name is assumed to be equal to plugin.__file__
+            # for conftest plugins. The difference is that plugin_name
+            # has the correct capitalization on capital-insensitive
+            # systems (Windows).
+            p = absolutepath(plugin_name)
+            try:
+                nodeid = str(p.parent.relative_to(self.config.rootpath))
+            except ValueError:
+                nodeid = ""
+            if nodeid == ".":
+                nodeid = ""
+            if os.sep != nodes.SEP:
+                nodeid = nodeid.replace(os.sep, nodes.SEP)
 
         self.parsefactories(plugin, nodeid)
 
