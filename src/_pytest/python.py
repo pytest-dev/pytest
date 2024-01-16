@@ -335,7 +335,7 @@ class PyobjMixin(nodes.Node):
     def getmodpath(self, stopatmodule: bool = True, includemodule: bool = False) -> str:
         """Return Python path relative to the containing module."""
         parts = []
-        for node in self.iterparents():
+        for node in self.iter_parents():
             name = node.name
             if isinstance(node, Module):
                 name = os.path.splitext(name)[0]
@@ -709,8 +709,6 @@ class Package(nodes.Directory):
         ihook = self.ihook
         for direntry in scandir(self.path, sort_key):
             if direntry.is_dir():
-                if direntry.name == "__pycache__":
-                    continue
                 path = Path(direntry.path)
                 if not self.session.isinitpath(path, with_parents=True):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):

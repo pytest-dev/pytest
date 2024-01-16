@@ -1,8 +1,11 @@
 :orphan:
 
-.. sidebar:: Next Open Trainings
+.. sidebar:: Next Open Trainings and Events
 
-   - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, **March 5th to 7th 2024** (3 day in-depth training), **Leipzig, Germany / Remote**
+   - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training):
+      * **June 11th to 13th 2024**, Remote
+      * **March 4th to 6th 2025**, Leipzig, Germany / Remote
+   - `pytest development sprint <https://github.com/pytest-dev/pytest/discussions/11655>`_, June 2024 (`date poll <https://nuudel.digitalcourage.de/2tEsEpRcwMNcAXVO>`_)
 
    Also see :doc:`previous talks and blogposts <talks>`.
 

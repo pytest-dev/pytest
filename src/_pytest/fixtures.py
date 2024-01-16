@@ -119,7 +119,7 @@ def get_scope_package(
 ) -> Optional[nodes.Node]:
     from _pytest.python import Package
 
-    for parent in node.iterparents():
+    for parent in node.iter_parents():
         if isinstance(parent, Package) and parent.nodeid == fixturedef.baseid:
             return parent
     return node.session
@@ -1776,7 +1776,7 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        parentnodeids = {n.nodeid for n in node.iterparents()}
+        parentnodeids = {n.nodeid for n in node.iter_parents()}
         for fixturedef in fixturedefs:
             if fixturedef.baseid in parentnodeids:
                 yield fixturedef

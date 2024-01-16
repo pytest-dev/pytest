@@ -376,6 +376,9 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[bool]:
+    if collection_path.name == "__pycache__":
+        return True
+
     ignore_paths = config._getconftest_pathlist(
         "collect_ignore", path=collection_path.parent
     )
@@ -505,8 +508,6 @@ class Dir(nodes.Directory):
         ihook = self.ihook
         for direntry in scandir(self.path):
             if direntry.is_dir():
-                if direntry.name == "__pycache__":
-                    continue
                 path = Path(direntry.path)
                 if not self.session.isinitpath(path, with_parents=True):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):

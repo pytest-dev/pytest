@@ -256,7 +256,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def teardown(self) -> None:
         pass
 
-    def iterparents(self) -> Iterator["Node"]:
+    def iter_parents(self) -> Iterator["Node"]:
         """Iterate over all parent collectors starting from and including self
         up to the root of the collection tree.
 
@@ -318,7 +318,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
-        for node in self.iterparents():
+        for node in self.iter_parents():
             for mark in node.own_markers:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
@@ -368,7 +368,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         :param cls: The node class to search for.
         :returns: The node, if found.
         """
-        for node in self.iterparents():
+        for node in self.iter_parents():
             if isinstance(node, cls):
                 return node
         return None
@@ -384,7 +384,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         from _pytest.fixtures import FixtureLookupError
 
         if isinstance(excinfo.value, ConftestImportFailure):
-            excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)
+            excinfo = ExceptionInfo.from_exception(excinfo.value.cause)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 style = "value"
