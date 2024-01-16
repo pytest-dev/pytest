@@ -1179,8 +1179,8 @@ class Config:
             args, namespace=copy.copy(self.option)
         )
         rootpath, inipath, inicfg = determine_setup(
-            ns.inifilename,
-            ns.file_or_dir + unknown_args,
+            inifile=ns.inifilename,
+            args=ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             invocation_dir=self.invocation_params.dir,
         )
