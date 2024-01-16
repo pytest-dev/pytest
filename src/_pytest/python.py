@@ -1525,14 +1525,13 @@ def _ascii_escaped_by_config(val: Union[str, bytes], config: Optional[Config]) -
     return val if escape_option else ascii_escaped(val)  # type: ignore
 
 
-def _pretty_fixture_path(func) -> str:
-    cwd = Path.cwd()
-    loc = Path(getlocation(func, str(cwd)))
+def _pretty_fixture_path(invocation_dir: Path, func) -> str:
+    loc = Path(getlocation(func, invocation_dir))
     prefix = Path("...", "_pytest")
     try:
         return str(prefix / loc.relative_to(_PYTEST_DIR))
     except ValueError:
-        return bestrelpath(cwd, loc)
+        return bestrelpath(invocation_dir, loc)
 
 
 def show_fixtures_per_test(config):
@@ -1545,19 +1544,19 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = Path.cwd()
+    invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
     def get_best_relpath(func) -> str:
-        loc = getlocation(func, str(curdir))
-        return bestrelpath(curdir, Path(loc))
+        loc = getlocation(func, invocation_dir)
+        return bestrelpath(invocation_dir, Path(loc))
 
     def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
-        prettypath = _pretty_fixture_path(fixture_def.func)
+        prettypath = _pretty_fixture_path(invocation_dir, fixture_def.func)
         tw.write(f"{argname}", green=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
@@ -1601,7 +1600,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = Path.cwd()
+    invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
@@ -1615,7 +1614,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if not fixturedefs:
             continue
         for fixturedef in fixturedefs:
-            loc = getlocation(fixturedef.func, str(curdir))
+            loc = getlocation(fixturedef.func, invocation_dir)
             if (fixturedef.argname, loc) in seen:
                 continue
             seen.add((fixturedef.argname, loc))
@@ -1623,7 +1622,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 (
                     len(fixturedef.baseid),
                     fixturedef.func.__module__,
-                    _pretty_fixture_path(fixturedef.func),
+                    _pretty_fixture_path(invocation_dir, fixturedef.func),
                     fixturedef.argname,
                     fixturedef,
                 )
