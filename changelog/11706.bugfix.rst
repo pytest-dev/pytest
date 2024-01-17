@@ -1,1 +1,0 @@
-Fix reporting of teardown errors in higher-scoped fixtures when using `--maxfail` or `--stepwise`.
