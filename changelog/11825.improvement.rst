@@ -1,0 +1,1 @@
+The :hook:`pytest_plugin_registered` hook has a new ``plugin_name`` parameter containing the name by which ``plugin`` is registered.
