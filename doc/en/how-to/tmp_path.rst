@@ -11,11 +11,6 @@ The ``tmp_path`` fixture
 You can use the ``tmp_path`` fixture which will provide a temporary directory
 unique to each test function.
 
-By default, ``pytest`` retains the temporary directory for the last 3 ``pytest``
-invocations. Concurrent invocations of the same test function are supported by
-configuring the base temporary directory to be unique for each concurrent
-run. See `temporary directory location and retention`_ for details.
-
 ``tmp_path`` is a :class:`pathlib.Path` object. Here is an example test usage:
 
 .. code-block:: python
@@ -65,6 +60,11 @@ Running this would result in a passed test except for the last
     ========================= short test summary info ==========================
     FAILED test_tmp_path.py::test_create_file - assert 0
     ============================ 1 failed in 0.12s =============================
+
+By default, ``pytest`` retains the temporary directory for the last 3 ``pytest``
+invocations. Concurrent invocations of the same test function are supported by
+configuring the base temporary directory to be unique for each concurrent
+run. See `temporary directory location and retention`_ for details.
 
 .. _`tmp_path_factory example`:
 
