@@ -538,6 +538,8 @@ class FixtureRequest(abc.ABC):
         :raises pytest.FixtureLookupError:
             If the given fixture could not be found.
         """
+        # Note: This is called during setup for evaluating fixtures defined via
+        # function arguments as well.
         fixturedef = self._get_active_fixturedef(argname)
         assert fixturedef.cached_result is not None, (
             f'The fixture value for "{argname}" is not available.  '
@@ -574,9 +576,8 @@ class FixtureRequest(abc.ABC):
         """Create a SubRequest based on "self" and call the execute method
         of the given FixtureDef object.
 
-        This will force the FixtureDef object to throw away any previous
-        results and compute a new fixture value, which will be stored into
-        the FixtureDef object itself.
+        If the FixtureDef has cached the result it will do nothing, otherwise it will
+        setup and run the fixture, cache the value, and schedule a finalizer for it.
         """
         # prepare a subrequest object before calling fixture function
         # (latter managed by fixturedef)
@@ -641,11 +642,8 @@ class FixtureRequest(abc.ABC):
 
         # Check if a higher-level scoped fixture accesses a lower level one.
         subrequest._check_scope(argname, self._scope, scope)
-        try:
-            # Call the fixture function.
-            fixturedef.execute(request=subrequest)
-        finally:
-            self._schedule_finalizers(fixturedef, subrequest)
+        # Make sure the fixture value is cached, running it if it isn't
+        fixturedef.execute(request=subrequest)
 
     def _schedule_finalizers(
         self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
@@ -1055,7 +1053,9 @@ class FixtureDef(Generic[FixtureValue]):
             self.cached_result = None
             self._finalizers.clear()
 
+    # Note: the return value is entirely unused, no tests depend on it
     def execute(self, request: SubRequest) -> FixtureValue:
+        finalizer = functools.partial(self.finish, request=request)
         # Get required arguments and register our own finish()
         # with their finalization.
         for argname in self.argnames:
@@ -1063,7 +1063,7 @@ class FixtureDef(Generic[FixtureValue]):
             if argname != "request":
                 # PseudoFixtureDef is only for "request".
                 assert isinstance(fixturedef, FixtureDef)
-                fixturedef.addfinalizer(functools.partial(self.finish, request=request))
+                fixturedef.addfinalizer(finalizer)
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
@@ -1073,6 +1073,7 @@ class FixtureDef(Generic[FixtureValue]):
             if my_cache_key is cache_key:
                 if self.cached_result[2] is not None:
                     exc = self.cached_result[2]
+                    # this would previously trigger adding a finalizer. Should it?
                     raise exc
                 else:
                     result = self.cached_result[0]
@@ -1083,7 +1084,15 @@ class FixtureDef(Generic[FixtureValue]):
             assert self.cached_result is None
 
         ihook = request.node.ihook
-        result = ihook.pytest_fixture_setup(fixturedef=self, request=request)
+        try:
+            # Setup the fixture, run the code in it, and cache the value
+            # in self.cached_result
+            result = ihook.pytest_fixture_setup(fixturedef=self, request=request)
+        finally:
+            # schedule our finalizer, even if the setup failed
+            request.node.addfinalizer(finalizer)
+
+        # note: unused
         return result
 
     def cache_key(self, request: SubRequest) -> object:
