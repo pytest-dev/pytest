@@ -1,2 +1,0 @@
-Fixed ``IndexError: string index out of range`` crash in ``if highlighted[-1] == "\n" and source[-1] != "\n"``.
-This bug was introduced in pytest 8.0.0rc1.
