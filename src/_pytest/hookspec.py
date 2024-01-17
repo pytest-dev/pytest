@@ -54,7 +54,7 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
     """Called at plugin registration time to allow adding new hooks via a call to
     :func:`pluginmanager.add_hookspecs(module_or_class, prefix) <pytest.PytestPluginManager.add_hookspecs>`.
 
-    :param pytest.PytestPluginManager pluginmanager: The pytest plugin manager.
+    :param pluginmanager: The pytest plugin manager.
 
     .. note::
         This hook is incompatible with hook wrappers.
@@ -63,12 +63,15 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
 
 @hookspec(historic=True)
 def pytest_plugin_registered(
-    plugin: "_PluggyPlugin", manager: "PytestPluginManager"
+    plugin: "_PluggyPlugin",
+    plugin_name: str,
+    manager: "PytestPluginManager",
 ) -> None:
     """A new pytest plugin got registered.
 
     :param plugin: The plugin module or instance.
-    :param pytest.PytestPluginManager manager: pytest plugin manager.
+    :param plugin_name: The name by which the plugin is registered.
+    :param manager: The pytest plugin manager.
 
     .. note::
         This hook is incompatible with hook wrappers.
@@ -86,13 +89,13 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
-    :param pytest.Parser parser:
+    :param parser:
         To add command line options, call
         :py:func:`parser.addoption(...) <pytest.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
         <pytest.Parser.addini>`.
 
-    :param pytest.PytestPluginManager pluginmanager:
+    :param pluginmanager:
         The pytest plugin manager, which can be used to install :py:func:`~pytest.hookspec`'s
         or :py:func:`~pytest.hookimpl`'s and allow one plugin to call another plugin's hooks
         to change how command line options are added.
@@ -127,7 +130,7 @@ def pytest_configure(config: "Config") -> None:
     .. note::
         This hook is incompatible with hook wrappers.
 
-    :param pytest.Config config: The pytest config object.
+    :param config: The pytest config object.
     """
 
 
@@ -156,18 +159,6 @@ def pytest_cmdline_parse(
     """
 
 
-@hookspec(firstresult=True)
-def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
-    """Called for performing the main command line action. The default
-    implementation will invoke the configure hooks and runtest_mainloop.
-
-    Stops at first non-None result, see :ref:`firstresult`.
-
-    :param config: The pytest config object.
-    :returns: The exit code.
-    """
-
-
 def pytest_load_initial_conftests(
     early_config: "Config", parser: "Parser", args: List[str]
 ) -> None:
@@ -180,6 +171,20 @@ def pytest_load_initial_conftests(
     :param early_config: The pytest config object.
     :param args: Arguments passed on the command line.
     :param parser: To add command line options.
+    """
+
+
+@hookspec(firstresult=True)
+def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
+    """Called for performing the main command line action.
+
+    The default implementation will invoke the configure hooks and
+    :hook:`pytest_runtestloop`.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+
+    :param config: The pytest config object.
+    :returns: The exit code.
     """
 
 
@@ -435,7 +440,7 @@ def pytest_make_parametrize_id(
 
     :param config: The pytest config object.
     :param val: The parametrized value.
-    :param str argname: The automatic parameter name produced by pytest.
+    :param argname: The automatic parameter name produced by pytest.
     """
 
 

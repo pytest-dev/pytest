@@ -490,15 +490,19 @@ class PytestPluginManager(PluginManager):
                 )
             )
             return None
-        ret: Optional[str] = super().register(plugin, name)
-        if ret:
+        plugin_name = super().register(plugin, name)
+        if plugin_name is not None:
             self.hook.pytest_plugin_registered.call_historic(
-                kwargs=dict(plugin=plugin, manager=self)
+                kwargs=dict(
+                    plugin=plugin,
+                    plugin_name=plugin_name,
+                    manager=self,
+                )
             )
 
             if isinstance(plugin, types.ModuleType):
                 self.consider_module(plugin)
-        return ret
+        return plugin_name
 
     def getplugin(self, name: str):
         # Support deprecated naming because plugins (xdist e.g.) use it.
