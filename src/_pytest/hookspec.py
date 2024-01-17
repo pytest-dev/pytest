@@ -63,12 +63,15 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
 
 @hookspec(historic=True)
 def pytest_plugin_registered(
-    plugin: "_PluggyPlugin", manager: "PytestPluginManager"
+    plugin: "_PluggyPlugin",
+    plugin_name: str,
+    manager: "PytestPluginManager",
 ) -> None:
     """A new pytest plugin got registered.
 
     :param plugin: The plugin module or instance.
-    :param manager: pytest plugin manager.
+    :param plugin_name: The name by which the plugin is registered.
+    :param manager: The pytest plugin manager.
 
     .. note::
         This hook is incompatible with hook wrappers.
