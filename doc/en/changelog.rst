@@ -28,6 +28,42 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 7.5.0rc2 (2024-01-17)
+============================
+
+Features
+--------
+
+- `#11233 <https://github.com/pytest-dev/pytest/issues/11233>`_: Improvements to how ``-r`` for xfailures and xpasses:
+
+  * Report tracebacks for xfailures when ``-rx`` is set.
+  * Report captured output for xpasses when ``-rX`` is set.
+  * For xpasses, add ``-`` in summary between test name and reason, to match how xfail is displayed.
+
+
+
+Improvements
+------------
+
+- `#11825 <https://github.com/pytest-dev/pytest/issues/11825>`_: The :hook:`pytest_plugin_registered` hook has a new ``plugin_name`` parameter containing the name by which ``plugin`` is registered.
+
+
+
+Bug Fixes
+---------
+
+- `#11706 <https://github.com/pytest-dev/pytest/issues/11706>`_: Fix reporting of teardown errors in higher-scoped fixtures when using `--maxfail` or `--stepwise`.
+
+
+- `#11758 <https://github.com/pytest-dev/pytest/issues/11758>`_: Fixed ``IndexError: string index out of range`` crash in ``if highlighted[-1] == "\n" and source[-1] != "\n"``.
+  This bug was introduced in pytest 8.0.0rc1.
+
+
+- `#9765 <https://github.com/pytest-dev/pytest/issues/9765>`_: Fixed a frustrating bug that afflicted some users with the only error being ``assert mod not in mods``. The issue was caused by the fact that ``str(Path(mod))`` and ``mod.__file__`` don't necessarily produce the same string, and was being erroneously used interchangably in some places in the code.
+
+  This fix also broke the internal API of ``PytestPluginManager.consider_conftest`` by introducing a new parameter -- we mention this in case it is being used by external code, even if marked as *private*.
+
+
 pytest 8.0.0rc1 (2023-12-30)
 ============================
 

@@ -42,7 +42,7 @@ An you can now execute the test specification:
 
     customdirectory $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project/customdirectory
     configfile: pytest.ini
     collected 2 items
@@ -62,7 +62,7 @@ You can verify that your custom collector appears in the collection tree:
 
     customdirectory $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project/customdirectory
     configfile: pytest.ini
     collected 2 items
