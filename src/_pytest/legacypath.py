@@ -326,8 +326,8 @@ class LegacyTmpdirPlugin:
 
         By default, a new base temporary directory is created each test session,
         and old bases are removed after 3 sessions, to aid in debugging. If
-        ``--basetemp`` is used then it is cleared each session. See :ref:`base
-        temporary directory`.
+        ``--basetemp`` is used then it is cleared each session. See
+        :ref:`temporary directory location and retention`.
 
         The returned object is a `legacy_path`_ object.
 

@@ -8,9 +8,8 @@ How to use temporary directories and files in tests
 The ``tmp_path`` fixture
 ------------------------
 
-You can use the ``tmp_path`` fixture which will
-provide a temporary directory unique to the current test,
-created in the `base temporary directory`_.
+You can use the ``tmp_path`` fixture which will provide a temporary directory
+unique to each test function.
 
 ``tmp_path`` is a :class:`pathlib.Path` object. Here is an example test usage:
 
@@ -62,6 +61,11 @@ Running this would result in a passed test except for the last
     FAILED test_tmp_path.py::test_create_file - assert 0
     ============================ 1 failed in 0.12s =============================
 
+By default, ``pytest`` retains the temporary directory for the last 3 ``pytest``
+invocations. Concurrent invocations of the same test function are supported by
+configuring the base temporary directory to be unique for each concurrent
+run. See `temporary directory location and retention`_ for details.
+
 .. _`tmp_path_factory example`:
 
 The ``tmp_path_factory`` fixture
@@ -100,7 +104,7 @@ See :ref:`tmp_path_factory API <tmp_path_factory factory api>` for details.
 .. _tmpdir:
 
 The ``tmpdir`` and ``tmpdir_factory`` fixtures
----------------------------------------------------
+----------------------------------------------
 
 The ``tmpdir`` and ``tmpdir_factory`` fixtures are similar to ``tmp_path``
 and ``tmp_path_factory``, but use/return legacy `py.path.local`_ objects
@@ -124,10 +128,10 @@ See :fixture:`tmpdir <tmpdir>` :fixture:`tmpdir_factory <tmpdir_factory>`
 API for details.
 
 
-.. _`base temporary directory`:
+.. _`temporary directory location and retention`:
 
-The default base temporary directory
------------------------------------------------
+Temporary directory location and retention
+------------------------------------------
 
 Temporary directories are by default created as sub-directories of
 the system temporary directory.  The base name will be ``pytest-NUM`` where
@@ -152,7 +156,7 @@ You can override the default temporary directory setting like this:
     for that purpose only.
 
 When distributing tests on the local machine using ``pytest-xdist``, care is taken to
-automatically configure a basetemp directory for the sub processes such that all temporary
-data lands below a single per-test run basetemp directory.
+automatically configure a `basetemp` directory for the sub processes such that all temporary
+data lands below a single per-test run temporary directory.
 
 .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
