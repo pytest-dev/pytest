@@ -72,6 +72,12 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
+    - name: Download Package
+      uses: actions/download-artifact@v4
+      with:
+        name: Packages
+        path: dist
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
