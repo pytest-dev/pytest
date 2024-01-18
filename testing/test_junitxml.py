@@ -1653,6 +1653,24 @@ def test_escaped_skipreason_issue3533(
     snode.assert_attr(message="1 <> 2")
 
 
+def test_bin_escaped_skipreason(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.skip("\33[31;1red\33[0m")
+        def test_skip():
+            pass
+    """
+    )
+    _, dom = run_and_parse()
+    node = dom.find_first_by_tag("testcase")
+    snode = node.find_first_by_tag("skipped")
+    assert "#x1B[31;1mred#x1B[0m" in snode.text
+    snode.assert_attr(message="#x1B[31;1mred#x1B[0m")
+
+
 def test_escaped_setup_teardown_error(
     pytester: Pytester, run_and_parse: RunAndParse
 ) -> None:
