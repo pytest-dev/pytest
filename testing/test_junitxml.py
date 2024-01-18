@@ -1653,9 +1653,7 @@ def test_escaped_skipreason_issue3533(
     snode.assert_attr(message="1 <> 2")
 
 
-def test_bin_escaped_skipreason(
-    pytester: Pytester, run_and_parse: RunAndParse
-) -> None:
+def test_bin_escaped_skipreason(pytester: Pytester, run_and_parse: RunAndParse) -> None:
     pytester.makepyfile(
         """
         import pytest
