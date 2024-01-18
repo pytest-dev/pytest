@@ -1657,7 +1657,7 @@ def test_bin_escaped_skipreason(pytester: Pytester, run_and_parse: RunAndParse) 
     pytester.makepyfile(
         """
         import pytest
-        @pytest.mark.skip("\33[31;1red\33[0m")
+        @pytest.mark.skip("\33[31;1mred\33[0m")
         def test_skip():
             pass
     """
