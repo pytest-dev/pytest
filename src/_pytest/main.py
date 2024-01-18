@@ -300,7 +300,6 @@ def wrap_session(
     finally:
         # Explicitly break reference cycle.
         excinfo = None  # type: ignore
-        os.chdir(session.startpath)
         if initstate >= 2:
             try:
                 config.hook.pytest_sessionfinish(
