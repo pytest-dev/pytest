@@ -35,6 +35,7 @@ def conftest_setinitial(
         noconftest=False,
         rootpath=Path(args[0]),
         confcutdir=confcutdir,
+        invocation_dir=Path.cwd(),
         importmode="prepend",
     )
 

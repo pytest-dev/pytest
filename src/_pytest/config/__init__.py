@@ -541,6 +541,7 @@ class PytestPluginManager(PluginManager):
         noconftest: bool,
         rootpath: Path,
         confcutdir: Optional[Path],
+        invocation_dir: Path,
         importmode: Union[ImportMode, str],
     ) -> None:
         """Load initial conftest files given a preparsed "namespace".
@@ -550,8 +551,9 @@ class PytestPluginManager(PluginManager):
         All builtin and 3rd party plugins will have been loaded, however, so
         common options will not confuse our logic here.
         """
-        current = Path.cwd()
-        self._confcutdir = absolutepath(current / confcutdir) if confcutdir else None
+        self._confcutdir = (
+            absolutepath(invocation_dir / confcutdir) if confcutdir else None
+        )
         self._noconftest = noconftest
         self._using_pyargs = pyargs
         foundanchor = False
@@ -561,7 +563,7 @@ class PytestPluginManager(PluginManager):
             i = path.find("::")
             if i != -1:
                 path = path[:i]
-            anchor = absolutepath(current / path)
+            anchor = absolutepath(invocation_dir / path)
 
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
@@ -569,7 +571,7 @@ class PytestPluginManager(PluginManager):
                 self._try_load_conftest(anchor, importmode, rootpath)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current, importmode, rootpath)
+            self._try_load_conftest(invocation_dir, importmode, rootpath)
 
     def _is_in_confcutdir(self, path: Path) -> bool:
         """Whether a path is within the confcutdir.
@@ -1168,6 +1170,7 @@ class Config:
             noconftest=early_config.known_args_namespace.noconftest,
             rootpath=early_config.rootpath,
             confcutdir=early_config.known_args_namespace.confcutdir,
+            invocation_dir=early_config.invocation_params.dir,
             importmode=early_config.known_args_namespace.importmode,
         )
 
@@ -1176,8 +1179,8 @@ class Config:
             args, namespace=copy.copy(self.option)
         )
         rootpath, inipath, inicfg = determine_setup(
-            ns.inifilename,
-            ns.file_or_dir + unknown_args,
+            inifile=ns.inifilename,
+            args=ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             invocation_dir=self.invocation_params.dir,
         )
@@ -1261,6 +1264,8 @@ class Config:
         """Decide the args (initial paths/nodeids) to use given the relevant inputs.
 
         :param warn: Whether can issue warnings.
+
+        :returns: The args and the args source. Guaranteed to be non-empty.
         """
         if args:
             source = Config.ArgsSource.ARGS
