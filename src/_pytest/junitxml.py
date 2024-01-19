@@ -248,7 +248,9 @@ class _NodeReporter:
                 skipreason = skipreason[9:]
             details = f"{filename}:{lineno}: {skipreason}"
 
-            skipped = ET.Element("skipped", type="pytest.skip", message=skipreason)
+            skipped = ET.Element(
+                "skipped", type="pytest.skip", message=bin_xml_escape(skipreason)
+            )
             skipped.text = bin_xml_escape(details)
             self.append(skipped)
             self.write_captured_output(report)
