@@ -1,0 +1,1 @@
+Properly escape the ``reason`` of a :ref:`skipif <pytest.mark.skipif ref>` mark when writing JUnit XML files.
