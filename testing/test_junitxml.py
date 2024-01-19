@@ -1654,6 +1654,7 @@ def test_escaped_skipreason_issue3533(
 
 
 def test_bin_escaped_skipreason(pytester: Pytester, run_and_parse: RunAndParse) -> None:
+    """Special characters are skipped from mark.skip reason (#11842)."""
     pytester.makepyfile(
         """
         import pytest
