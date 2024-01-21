@@ -99,7 +99,8 @@ class TestCollector:
             conftest="""
             import pytest
             class CustomFile(pytest.File):
-                pass
+                def collect(self):
+                    return []
             def pytest_collect_file(file_path, parent):
                 if file_path.suffix == ".xxx":
                     return CustomFile.from_parent(path=file_path, parent=parent)
@@ -344,6 +345,29 @@ class TestPrunetraceback:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*ERROR collecting*", "*header1*"])
 
+    def test_collection_error_traceback_is_clean(self, pytester: Pytester) -> None:
+        """When a collection error occurs, the report traceback doesn't contain
+        internal pytest stack entries.
+
+        Issue #11710.
+        """
+        pytester.makepyfile(
+            """
+            raise Exception("LOUSY")
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR collecting*",
+                "test_*.py:1: in <module>",
+                '    raise Exception("LOUSY")',
+                "E   Exception: LOUSY",
+                "*= short test summary info =*",
+            ],
+            consecutive=True,
+        )
+
 
 class TestCustomConftests:
     def test_ignore_collect_path(self, pytester: Pytester) -> None:
@@ -489,7 +513,7 @@ class TestSession:
         # assert root2 == rcol, rootid
         colitems = rcol.perform_collect([rcol.nodeid], genitems=False)
         assert len(colitems) == 1
-        assert colitems[0].path == p
+        assert colitems[0].path == topdir
 
     def get_reported_items(self, hookrec: HookRecorder) -> List[Item]:
         """Return pytest.Item instances reported by the pytest_collectreport hook"""
@@ -567,12 +591,12 @@ class TestSession:
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == collector.session.path"),
+                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
+                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 (
                     "pytest_collectstart",
                     "collector.__class__.__name__ == 'SpecialFile'",
                 ),
-                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
-                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid.startswith(p.name)"),
             ]
         )
@@ -656,7 +680,8 @@ class Test_getinitialnodes:
         assert isinstance(col, pytest.Module)
         assert col.name == "x.py"
         assert col.parent is not None
-        assert col.parent.parent is None
+        assert col.parent.parent is not None
+        assert col.parent.parent.parent is None
         for parent in col.listchain():
             assert parent.config is config
 
@@ -936,6 +961,46 @@ class TestNodeKeywords:
         assert "baz" not in mod.keywords
 
 
+class TestCollectDirectoryHook:
+    def test_custom_directory_example(self, pytester: Pytester) -> None:
+        """Verify the example from the customdirectory.rst doc."""
+        pytester.copy_example("customdirectory")
+
+        reprec = pytester.inline_run()
+
+        reprec.assertoutcome(passed=2, failed=0)
+        calls = reprec.getcalls("pytest_collect_directory")
+        assert len(calls) == 2
+        assert calls[0].path == pytester.path
+        assert isinstance(calls[0].parent, pytest.Session)
+        assert calls[1].path == pytester.path / "tests"
+        assert isinstance(calls[1].parent, pytest.Dir)
+
+    def test_directory_ignored_if_none(self, pytester: Pytester) -> None:
+        """If the (entire) hook returns None, it's OK, the directory is ignored."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.hookimpl(wrapper=True)
+            def pytest_collect_directory():
+                yield
+                return None
+            """,
+        )
+        pytester.makepyfile(
+            **{
+                "tests/test_it.py": """
+                    import pytest
+
+                    def test_it(): pass
+                """,
+            },
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=0, failed=0)
+
+
 COLLECTION_ERROR_PY_FILES = dict(
     test_01_failure="""
         def test_1():
@@ -1097,22 +1162,24 @@ def test_collect_init_tests(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package tests>",
-            "  <Module __init__.py>",
-            "    <Function test_init>",
-            "  <Module test_foo.py>",
-            "    <Function test_foo>",
+            "<Dir *>",
+            "  <Package tests>",
+            "    <Module __init__.py>",
+            "      <Function test_init>",
+            "    <Module test_foo.py>",
+            "      <Function test_foo>",
         ]
     )
     result = pytester.runpytest("./tests", "--collect-only")
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package tests>",
-            "  <Module __init__.py>",
-            "    <Function test_init>",
-            "  <Module test_foo.py>",
-            "    <Function test_foo>",
+            "<Dir *>",
+            "  <Package tests>",
+            "    <Module __init__.py>",
+            "      <Function test_init>",
+            "    <Module test_foo.py>",
+            "      <Function test_foo>",
         ]
     )
     # Ignores duplicates with "." and pkginit (#4310).
@@ -1120,11 +1187,12 @@ def test_collect_init_tests(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package tests>",
-            "  <Module __init__.py>",
-            "    <Function test_init>",
-            "  <Module test_foo.py>",
-            "    <Function test_foo>",
+            "<Dir *>",
+            "  <Package tests>",
+            "    <Module __init__.py>",
+            "      <Function test_init>",
+            "    <Module test_foo.py>",
+            "      <Function test_foo>",
         ]
     )
     # Same as before, but different order.
@@ -1132,21 +1200,32 @@ def test_collect_init_tests(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "collected 2 items",
-            "<Package tests>",
-            "  <Module __init__.py>",
-            "    <Function test_init>",
-            "  <Module test_foo.py>",
-            "    <Function test_foo>",
+            "<Dir *>",
+            "  <Package tests>",
+            "    <Module __init__.py>",
+            "      <Function test_init>",
+            "    <Module test_foo.py>",
+            "      <Function test_foo>",
         ]
     )
     result = pytester.runpytest("./tests/test_foo.py", "--collect-only")
     result.stdout.fnmatch_lines(
-        ["<Package tests>", "  <Module test_foo.py>", "    <Function test_foo>"]
+        [
+            "<Dir *>",
+            "  <Package tests>",
+            "    <Module test_foo.py>",
+            "      <Function test_foo>",
+        ]
     )
     result.stdout.no_fnmatch_line("*test_init*")
     result = pytester.runpytest("./tests/__init__.py", "--collect-only")
     result.stdout.fnmatch_lines(
-        ["<Package tests>", "  <Module __init__.py>", "    <Function test_init>"]
+        [
+            "<Dir *>",
+            "  <Package tests>",
+            "    <Module __init__.py>",
+            "      <Function test_init>",
+        ]
     )
     result.stdout.no_fnmatch_line("*test_foo*")
 
@@ -1508,6 +1587,9 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
         def __init__(self, *k, x, **kw):
             super().__init__(*k, **kw)
             self.x = x
+
+        def collect(self):
+            raise NotImplementedError()
 
     collector = MyCollector.from_parent(
         parent=request.session, path=pytester.path / "foo", x=10

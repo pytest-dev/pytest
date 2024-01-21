@@ -649,7 +649,7 @@ class TestXFail:
             result.stdout.fnmatch_lines(
                 [
                     "*test_strict_xfail*",
-                    "XPASS test_strict_xfail.py::test_foo unsupported feature",
+                    "XPASS test_strict_xfail.py::test_foo - unsupported feature",
                 ]
             )
         assert result.ret == (1 if strict else 0)
@@ -1491,54 +1491,6 @@ def test_fail_using_reason_works_ok(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.no_fnmatch_line("*PytestDeprecationWarning*")
-    result.assert_outcomes(failed=1)
-
-
-def test_fail_fails_with_msg_and_reason(pytester: Pytester) -> None:
-    p = pytester.makepyfile(
-        """
-        import pytest
-
-        def test_fail_both_arguments():
-            pytest.fail(reason="foo", msg="bar")
-        """
-    )
-    result = pytester.runpytest(p)
-    result.stdout.fnmatch_lines(
-        "*UsageError: Passing both ``reason`` and ``msg`` to pytest.fail(...) is not permitted.*"
-    )
-    result.assert_outcomes(failed=1)
-
-
-def test_skip_fails_with_msg_and_reason(pytester: Pytester) -> None:
-    p = pytester.makepyfile(
-        """
-        import pytest
-
-        def test_skip_both_arguments():
-            pytest.skip(reason="foo", msg="bar")
-        """
-    )
-    result = pytester.runpytest(p)
-    result.stdout.fnmatch_lines(
-        "*UsageError: Passing both ``reason`` and ``msg`` to pytest.skip(...) is not permitted.*"
-    )
-    result.assert_outcomes(failed=1)
-
-
-def test_exit_with_msg_and_reason_fails(pytester: Pytester) -> None:
-    p = pytester.makepyfile(
-        """
-        import pytest
-
-        def test_exit_both_arguments():
-            pytest.exit(reason="foo", msg="bar")
-        """
-    )
-    result = pytester.runpytest(p)
-    result.stdout.fnmatch_lines(
-        "*UsageError: cannot pass reason and msg to exit(), `msg` is deprecated, use `reason`.*"
-    )
     result.assert_outcomes(failed=1)
 
 

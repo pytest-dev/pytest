@@ -46,24 +46,18 @@ Plugin discovery order at tool startup
 
 5. by loading all plugins specified through the :envvar:`PYTEST_PLUGINS` environment variable.
 
-6. by loading all :file:`conftest.py` files as inferred by the command line
-   invocation:
+6. by loading all "initial ":file:`conftest.py` files:
 
-   - if no test paths are specified, use the current dir as a test path
-   - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative
-     to the directory part of the first test path. After the ``conftest.py``
-     file is loaded, load all plugins specified in its
-     :globalvar:`pytest_plugins` variable if present.
-
-   Note that pytest does not find ``conftest.py`` files in deeper nested
-   sub directories at tool startup.  It is usually a good idea to keep
-   your ``conftest.py`` file in the top level test or project root directory.
-
-7. by recursively loading all plugins specified by the
-   :globalvar:`pytest_plugins` variable in ``conftest.py`` files.
+   - determine the test paths: specified on the command line, otherwise in
+     :confval:`testpaths` if defined and running from the rootdir, otherwise the
+     current dir
+   - for each test path, load ``conftest.py`` and ``test*/conftest.py`` relative
+     to the directory part of the test path, if exist. Before a ``conftest.py``
+     file is loaded, load ``conftest.py`` files in all of its parent directories.
+     After a ``conftest.py`` file is loaded, recursively load all plugins specified
+     in its :globalvar:`pytest_plugins` variable if present.
 
 
-.. _`pytest/plugin`: http://bitbucket.org/pytest-dev/pytest/src/tip/pytest/plugin/
 .. _`conftest.py plugins`:
 .. _`localplugin`:
 .. _`local conftest plugins`:
@@ -108,9 +102,9 @@ Here is how you might run it::
     See also: :ref:`pythonpath`.
 
 .. note::
-    Some hooks should be implemented only in plugins or conftest.py files situated at the
-    tests root directory due to how pytest discovers plugins during startup,
-    see the documentation of each hook for details.
+    Some hooks cannot be implemented in conftest.py files which are not
+    :ref:`initial <pluginorder>` due to how pytest discovers plugins during
+    startup. See the documentation of each hook for details.
 
 Writing your own plugin
 -----------------------
@@ -448,7 +442,7 @@ in our ``pytest.ini`` to tell pytest where to look for example files.
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     configfile: pytest.ini
     collected 2 items

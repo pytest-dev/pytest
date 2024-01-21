@@ -1,7 +1,0 @@
-:func:`pytest.warns <warns>` now re-emits unmatched warnings when the context
-closes -- previously it would consume all warnings, hiding those that were not
-matched by the function.
-
-While this is a new feature, we decided to announce this as a breaking change
-because many test suites are configured to error-out on warnings, and will
-therefore fail on the newly-re-emitted warnings.

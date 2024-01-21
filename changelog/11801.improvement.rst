@@ -1,0 +1,2 @@
+Added the :func:`iter_parents() <_pytest.nodes.Node.iter_parents>` helper method on nodes.
+It is similar to :func:`listchain <_pytest.nodes.Node.listchain>`, but goes from bottom to top, and returns an iterator, not a list.

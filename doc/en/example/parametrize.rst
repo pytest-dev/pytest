@@ -4,8 +4,6 @@
 Parametrizing tests
 =================================================
 
-.. currentmodule:: _pytest.python
-
 ``pytest`` allows to easily parametrize test functions.
 For basic docs, see :ref:`parametrize-basics`.
 
@@ -160,19 +158,20 @@ objects, they are still using the default pytest representation:
 
     $ pytest test_time.py --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 8 items
 
-    <Module test_time.py>
-      <Function test_timedistance_v0[a0-b0-expected0]>
-      <Function test_timedistance_v0[a1-b1-expected1]>
-      <Function test_timedistance_v1[forward]>
-      <Function test_timedistance_v1[backward]>
-      <Function test_timedistance_v2[20011212-20011211-expected0]>
-      <Function test_timedistance_v2[20011211-20011212-expected1]>
-      <Function test_timedistance_v3[forward]>
-      <Function test_timedistance_v3[backward]>
+    <Dir parametrize.rst-192>
+      <Module test_time.py>
+        <Function test_timedistance_v0[a0-b0-expected0]>
+        <Function test_timedistance_v0[a1-b1-expected1]>
+        <Function test_timedistance_v1[forward]>
+        <Function test_timedistance_v1[backward]>
+        <Function test_timedistance_v2[20011212-20011211-expected0]>
+        <Function test_timedistance_v2[20011211-20011212-expected1]>
+        <Function test_timedistance_v3[forward]>
+        <Function test_timedistance_v3[backward]>
 
     ======================== 8 tests collected in 0.12s ========================
 
@@ -185,7 +184,7 @@ A quick port of "testscenarios"
 Here is a quick port to run tests configured with :pypi:`testscenarios`,
 an add-on from Robert Collins for the standard unittest framework. We
 only have to work a bit to construct the correct arguments for pytest's
-:py:func:`Metafunc.parametrize`:
+:py:func:`Metafunc.parametrize <pytest.Metafunc.parametrize>`:
 
 .. code-block:: python
 
@@ -222,7 +221,7 @@ this is a fully self-contained example which you can run with:
 
     $ pytest test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items
 
@@ -236,16 +235,17 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ pytest --collect-only test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items
 
-    <Module test_scenarios.py>
-      <Class TestSampleWithScenarios>
-        <Function test_demo1[basic]>
-        <Function test_demo2[basic]>
-        <Function test_demo1[advanced]>
-        <Function test_demo2[advanced]>
+    <Dir parametrize.rst-192>
+      <Module test_scenarios.py>
+        <Class TestSampleWithScenarios>
+          <Function test_demo1[basic]>
+          <Function test_demo2[basic]>
+          <Function test_demo1[advanced]>
+          <Function test_demo2[advanced]>
 
     ======================== 4 tests collected in 0.12s ========================
 
@@ -314,13 +314,14 @@ Let's first see how it looks like at collection time:
 
     $ pytest test_backends.py --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
-    <Module test_backends.py>
-      <Function test_db_initialized[d1]>
-      <Function test_db_initialized[d2]>
+    <Dir parametrize.rst-192>
+      <Module test_backends.py>
+        <Function test_db_initialized[d1]>
+        <Function test_db_initialized[d2]>
 
     ======================== 2 tests collected in 0.12s ========================
 
@@ -412,7 +413,7 @@ The result of this test will be successful:
 
     $ pytest -v test_indirect_list.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 1 item
@@ -502,12 +503,11 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   sssssssssssssssssssssssssss                                          [100%]
+   ssssssssssssssssssssssss...                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [9] multipython.py:69: 'python3.5' not found
-   SKIPPED [9] multipython.py:69: 'python3.6' not found
-   SKIPPED [9] multipython.py:69: 'python3.7' not found
-   27 skipped in 0.12s
+   SKIPPED [12] multipython.py:68: 'python3.9' not found
+   SKIPPED [12] multipython.py:68: 'python3.10' not found
+   3 passed, 24 skipped in 0.12s
 
 Parametrization of optional implementations/imports
 ---------------------------------------------------
@@ -567,7 +567,7 @@ If you run this with reporting for skips enabled:
 
     $ pytest -rs test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -628,7 +628,7 @@ Then run ``pytest`` with verbose mode and with only the ``basic`` marker:
 
     $ pytest -v -m basic
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 24 items / 21 deselected / 3 selected

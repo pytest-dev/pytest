@@ -1,1 +1,0 @@
-- Prevent constants at the top of file from being detected as docstrings.

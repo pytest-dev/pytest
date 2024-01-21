@@ -1,11 +1,11 @@
 """Python test discovery, setup and run of test functions."""
+import abc
 import dataclasses
 import enum
 import fnmatch
 import inspect
 import itertools
 import os
-import sys
 import types
 import warnings
 from collections import Counter
@@ -46,7 +46,6 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -56,8 +55,6 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import INSTANCE_COLLECTOR
-from _pytest.deprecated import NOSE_SUPPORT_METHOD
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -75,8 +72,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
-from _pytest.pathlib import parts
-from _pytest.pathlib import visit
+from _pytest.pathlib import scandir
 from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
@@ -203,6 +199,16 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     return True
 
 
+def pytest_collect_directory(
+    path: Path, parent: nodes.Collector
+) -> Optional[nodes.Collector]:
+    pkginit = path / "__init__.py"
+    if pkginit.is_file():
+        pkg: Package = Package.from_parent(parent, path=path)
+        return pkg
+    return None
+
+
 def pytest_collect_file(file_path: Path, parent: nodes.Collector) -> Optional["Module"]:
     if file_path.suffix == ".py":
         if not parent.session.isinitpath(file_path):
@@ -326,10 +332,8 @@ class PyobjMixin(nodes.Node):
 
     def getmodpath(self, stopatmodule: bool = True, includemodule: bool = False) -> str:
         """Return Python path relative to the containing module."""
-        chain = self.listchain()
-        chain.reverse()
         parts = []
-        for node in chain:
+        for node in self.iter_parents():
             name = node.name
             if isinstance(node, Module):
                 name = os.path.splitext(name)[0]
@@ -343,20 +347,8 @@ class PyobjMixin(nodes.Node):
 
     def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
         # XXX caching?
-        obj = self.obj
-        compat_co_firstlineno = getattr(obj, "compat_co_firstlineno", None)
-        if isinstance(compat_co_firstlineno, int):
-            # nose compatibility
-            file_path = sys.modules[obj.__module__].__file__
-            assert file_path is not None
-            if file_path.endswith(".pyc"):
-                file_path = file_path[:-1]
-            path: Union["os.PathLike[str]", str] = file_path
-            lineno = compat_co_firstlineno
-        else:
-            path, lineno = getfslineno(obj)
+        path, lineno = getfslineno(self.obj)
         modpath = self.getmodpath()
-        assert isinstance(lineno, int)
         return path, lineno, modpath
 
 
@@ -380,7 +372,7 @@ del _EmptyClass
 # fmt: on
 
 
-class PyCollector(PyobjMixin, nodes.Collector):
+class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
     def funcnamefilter(self, name: str) -> bool:
         return self._matches_prefix_or_glob_option("python_functions", name)
 
@@ -575,56 +567,47 @@ class Module(nodes.File, PyCollector):
         return importtestmodule(self.path, self.config)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        self._inject_setup_module_fixture()
-        self._inject_setup_function_fixture()
+        self._register_setup_module_fixture()
+        self._register_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
         return super().collect()
 
-    def _inject_setup_module_fixture(self) -> None:
-        """Inject a hidden autouse, module scoped fixture into the collected module object
+    def _register_setup_module_fixture(self) -> None:
+        """Register an autouse, module-scoped fixture for the collected module object
         that invokes setUpModule/tearDownModule if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_module = _get_first_non_fixture_func(
             self.obj, ("setUpModule", "setup_module")
         )
-        if setup_module is None and has_nose:
-            # The name "setup" is too common - only treat as fixture if callable.
-            setup_module = _get_first_non_fixture_func(self.obj, ("setup",))
-            if not callable(setup_module):
-                setup_module = None
         teardown_module = _get_first_non_fixture_func(
             self.obj, ("tearDownModule", "teardown_module")
         )
-        if teardown_module is None and has_nose:
-            teardown_module = _get_first_non_fixture_func(self.obj, ("teardown",))
-            # Same as "setup" above - only treat as fixture if callable.
-            if not callable(teardown_module):
-                teardown_module = None
 
         if setup_module is None and teardown_module is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="module",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
-        )
         def xunit_setup_module_fixture(request) -> Generator[None, None, None]:
+            module = request.module
             if setup_module is not None:
-                _call_with_optional_argument(setup_module, request.module)
+                _call_with_optional_argument(setup_module, module)
             yield
             if teardown_module is not None:
-                _call_with_optional_argument(teardown_module, request.module)
+                _call_with_optional_argument(teardown_module, module)
 
-        self.obj.__pytest_setup_module = xunit_setup_module_fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
+            func=xunit_setup_module_fixture,
+            nodeid=self.nodeid,
+            scope="module",
+            autouse=True,
+        )
 
-    def _inject_setup_function_fixture(self) -> None:
-        """Inject a hidden autouse, function scoped fixture into the collected module object
+    def _register_setup_function_fixture(self) -> None:
+        """Register an autouse, function-scoped fixture for the collected module object
         that invokes setup_function/teardown_function if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -637,34 +620,46 @@ class Module(nodes.File, PyCollector):
         if setup_function is None and teardown_function is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="function",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
-        )
         def xunit_setup_function_fixture(request) -> Generator[None, None, None]:
             if request.instance is not None:
                 # in this case we are bound to an instance, so we need to let
                 # setup_method handle this
                 yield
                 return
+            function = request.function
             if setup_function is not None:
-                _call_with_optional_argument(setup_function, request.function)
+                _call_with_optional_argument(setup_function, function)
             yield
             if teardown_function is not None:
-                _call_with_optional_argument(teardown_function, request.function)
+                _call_with_optional_argument(teardown_function, function)
 
-        self.obj.__pytest_setup_function = xunit_setup_function_fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
+            func=xunit_setup_function_fixture,
+            nodeid=self.nodeid,
+            scope="function",
+            autouse=True,
+        )
 
 
-class Package(nodes.FSCollector):
+class Package(nodes.Directory):
     """Collector for files and directories in a Python packages -- directories
-    with an `__init__.py` file."""
+    with an `__init__.py` file.
+
+    .. note::
+
+        Directories without an `__init__.py` file are instead collected by
+        :class:`~pytest.Dir` by default. Both are :class:`~pytest.Directory`
+        collectors.
+
+    .. versionchanged:: 8.0
+
+        Now inherits from :class:`~pytest.Directory`.
+    """
 
     def __init__(
         self,
-        fspath: Optional[LEGACY_PATH],
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
@@ -673,18 +668,15 @@ class Package(nodes.FSCollector):
         path: Optional[Path] = None,
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
-        # nodes.FSCollector.__init__(self, fspath, parent=parent)
+        # super().__init__(self, fspath, parent=parent)
         session = parent.session
-        nodes.FSCollector.__init__(
-            self,
-            fspath=fspath,
+        super().__init__(
             path=path,
             parent=parent,
             config=config,
             session=session,
             nodeid=nodeid,
         )
-        self.name = self.path.name
 
     def setup(self) -> None:
         init_mod = importtestmodule(self.path / "__init__.py", self.config)
@@ -704,66 +696,32 @@ class Package(nodes.FSCollector):
             func = partial(_call_with_optional_argument, teardown_module, init_mod)
             self.addfinalizer(func)
 
-    def _recurse(self, direntry: "os.DirEntry[str]") -> bool:
-        if direntry.name == "__pycache__":
-            return False
-        fspath = Path(direntry.path)
-        ihook = self.session.gethookproxy(fspath.parent)
-        if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-            return False
-        return True
-
-    def _collectfile(
-        self, fspath: Path, handle_dupes: bool = True
-    ) -> Sequence[nodes.Collector]:
-        assert (
-            fspath.is_file()
-        ), "{!r} is not a file (isdir={!r}, exists={!r}, islink={!r})".format(
-            fspath, fspath.is_dir(), fspath.exists(), fspath.is_symlink()
-        )
-        ihook = self.session.gethookproxy(fspath)
-        if not self.session.isinitpath(fspath):
-            if ihook.pytest_ignore_collect(collection_path=fspath, config=self.config):
-                return ()
-
-        if handle_dupes:
-            keepduplicates = self.config.getoption("keepduplicates")
-            if not keepduplicates:
-                duplicate_paths = self.config.pluginmanager._duplicatepaths
-                if fspath in duplicate_paths:
-                    return ()
-                else:
-                    duplicate_paths.add(fspath)
-
-        return ihook.pytest_collect_file(file_path=fspath, parent=self)  # type: ignore[no-any-return]
-
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
-        # Always collect the __init__ first.
-        yield from self._collectfile(self.path / "__init__.py")
+        # Always collect __init__.py first.
+        def sort_key(entry: "os.DirEntry[str]") -> object:
+            return (entry.name != "__init__.py", entry.name)
 
-        pkg_prefixes: Set[Path] = set()
-        for direntry in visit(self.path, recurse=self._recurse):
-            path = Path(direntry.path)
+        config = self.config
+        col: Optional[nodes.Collector]
+        cols: Sequence[nodes.Collector]
+        ihook = self.ihook
+        for direntry in scandir(self.path, sort_key):
+            if direntry.is_dir():
+                path = Path(direntry.path)
+                if not self.session.isinitpath(path, with_parents=True):
+                    if ihook.pytest_ignore_collect(collection_path=path, config=config):
+                        continue
+                col = ihook.pytest_collect_directory(path=path, parent=self)
+                if col is not None:
+                    yield col
 
-            # Already handled above.
-            if direntry.is_file():
-                if direntry.name == "__init__.py" and path.parent == self.path:
-                    continue
-
-            parts_ = parts(direntry.path)
-            if any(
-                str(pkg_prefix) in parts_ and pkg_prefix / "__init__.py" != path
-                for pkg_prefix in pkg_prefixes
-            ):
-                continue
-
-            if direntry.is_file():
-                yield from self._collectfile(path)
-            elif not direntry.is_dir():
-                # Broken symlink or invalid/missing file.
-                continue
-            elif self._recurse(direntry) and path.joinpath("__init__.py").is_file():
-                pkg_prefixes.add(path)
+            elif direntry.is_file():
+                path = Path(direntry.path)
+                if not self.session.isinitpath(path):
+                    if ihook.pytest_ignore_collect(collection_path=path, config=config):
+                        continue
+                cols = ihook.pytest_collect_file(file_path=path, parent=self)
+                yield from cols
 
 
 def _call_with_optional_argument(func, arg) -> None:
@@ -824,15 +782,15 @@ class Class(PyCollector):
             )
             return []
 
-        self._inject_setup_class_fixture()
-        self._inject_setup_method_fixture()
+        self._register_setup_class_fixture()
+        self._register_setup_method_fixture()
 
         self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
 
         return super().collect()
 
-    def _inject_setup_class_fixture(self) -> None:
-        """Inject a hidden autouse, class scoped fixture into the collected class object
+    def _register_setup_class_fixture(self) -> None:
+        """Register an autouse, class scoped fixture into the collected class object
         that invokes setup_class/teardown_class if either or both are available.
 
         Using a fixture to invoke this methods ensures we play nicely and unsurprisingly with
@@ -843,93 +801,58 @@ class Class(PyCollector):
         if setup_class is None and teardown_class is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="class",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
-        )
-        def xunit_setup_class_fixture(cls) -> Generator[None, None, None]:
+        def xunit_setup_class_fixture(request) -> Generator[None, None, None]:
+            cls = request.cls
             if setup_class is not None:
                 func = getimfunc(setup_class)
-                _call_with_optional_argument(func, self.obj)
+                _call_with_optional_argument(func, cls)
             yield
             if teardown_class is not None:
                 func = getimfunc(teardown_class)
-                _call_with_optional_argument(func, self.obj)
+                _call_with_optional_argument(func, cls)
 
-        self.obj.__pytest_setup_class = xunit_setup_class_fixture
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
+            func=xunit_setup_class_fixture,
+            nodeid=self.nodeid,
+            scope="class",
+            autouse=True,
+        )
 
-    def _inject_setup_method_fixture(self) -> None:
-        """Inject a hidden autouse, function scoped fixture into the collected class object
+    def _register_setup_method_fixture(self) -> None:
+        """Register an autouse, function scoped fixture into the collected class object
         that invokes setup_method/teardown_method if either or both are available.
 
         Using a fixture to invoke these methods ensures we play nicely and unsurprisingly with
         other fixtures (#517).
         """
-        has_nose = self.config.pluginmanager.has_plugin("nose")
         setup_name = "setup_method"
         setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
-        emit_nose_setup_warning = False
-        if setup_method is None and has_nose:
-            setup_name = "setup"
-            emit_nose_setup_warning = True
-            setup_method = _get_first_non_fixture_func(self.obj, (setup_name,))
         teardown_name = "teardown_method"
         teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
-        emit_nose_teardown_warning = False
-        if teardown_method is None and has_nose:
-            teardown_name = "teardown"
-            emit_nose_teardown_warning = True
-            teardown_method = _get_first_non_fixture_func(self.obj, (teardown_name,))
         if setup_method is None and teardown_method is None:
             return
 
-        @fixtures.fixture(
-            autouse=True,
-            scope="function",
-            # Use a unique name to speed up lookup.
-            name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
-        )
-        def xunit_setup_method_fixture(self, request) -> Generator[None, None, None]:
+        def xunit_setup_method_fixture(request) -> Generator[None, None, None]:
+            instance = request.instance
             method = request.function
             if setup_method is not None:
-                func = getattr(self, setup_name)
+                func = getattr(instance, setup_name)
                 _call_with_optional_argument(func, method)
-                if emit_nose_setup_warning:
-                    warnings.warn(
-                        NOSE_SUPPORT_METHOD.format(
-                            nodeid=request.node.nodeid, method="setup"
-                        ),
-                        stacklevel=2,
-                    )
             yield
             if teardown_method is not None:
-                func = getattr(self, teardown_name)
+                func = getattr(instance, teardown_name)
                 _call_with_optional_argument(func, method)
-                if emit_nose_teardown_warning:
-                    warnings.warn(
-                        NOSE_SUPPORT_METHOD.format(
-                            nodeid=request.node.nodeid, method="teardown"
-                        ),
-                        stacklevel=2,
-                    )
 
-        self.obj.__pytest_setup_method = xunit_setup_method_fixture
-
-
-class InstanceDummy:
-    """Instance used to be a node type between Class and Function. It has been
-    removed in pytest 7.0. Some plugins exist which reference `pytest.Instance`
-    only to ignore it; this dummy class keeps them working. This will be removed
-    in pytest 8."""
-
-
-def __getattr__(name: str) -> object:
-    if name == "Instance":
-        warnings.warn(INSTANCE_COLLECTOR, 2)
-        return InstanceDummy
-    raise AttributeError(f"module {__name__} has no attribute {name}")
+        self.session._fixturemanager._register_fixture(
+            # Use a unique name to speed up lookup.
+            name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
+            func=xunit_setup_method_fixture,
+            nodeid=self.nodeid,
+            scope="function",
+            autouse=True,
+        )
 
 
 def hasinit(obj: object) -> bool:
@@ -1383,7 +1306,7 @@ class Metafunc:
                 fixturedef = name2pseudofixturedef[argname]
             else:
                 fixturedef = FixtureDef(
-                    fixturemanager=self.definition.session._fixturemanager,
+                    config=self.config,
                     baseid="",
                     argname=argname,
                     func=get_direct_param_fixture_func,
@@ -1602,14 +1525,13 @@ def _ascii_escaped_by_config(val: Union[str, bytes], config: Optional[Config]) -
     return val if escape_option else ascii_escaped(val)  # type: ignore
 
 
-def _pretty_fixture_path(func) -> str:
-    cwd = Path.cwd()
-    loc = Path(getlocation(func, str(cwd)))
+def _pretty_fixture_path(invocation_dir: Path, func) -> str:
+    loc = Path(getlocation(func, invocation_dir))
     prefix = Path("...", "_pytest")
     try:
         return str(prefix / loc.relative_to(_PYTEST_DIR))
     except ValueError:
-        return bestrelpath(cwd, loc)
+        return bestrelpath(invocation_dir, loc)
 
 
 def show_fixtures_per_test(config):
@@ -1622,19 +1544,19 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = Path.cwd()
+    invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
     def get_best_relpath(func) -> str:
-        loc = getlocation(func, str(curdir))
-        return bestrelpath(curdir, Path(loc))
+        loc = getlocation(func, invocation_dir)
+        return bestrelpath(invocation_dir, Path(loc))
 
     def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
-        prettypath = _pretty_fixture_path(fixture_def.func)
+        prettypath = _pretty_fixture_path(invocation_dir, fixture_def.func)
         tw.write(f"{argname}", green=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
@@ -1678,7 +1600,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = Path.cwd()
+    invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
@@ -1692,7 +1614,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if not fixturedefs:
             continue
         for fixturedef in fixturedefs:
-            loc = getlocation(fixturedef.func, str(curdir))
+            loc = getlocation(fixturedef.func, invocation_dir)
             if (fixturedef.argname, loc) in seen:
                 continue
             seen.add((fixturedef.argname, loc))
@@ -1700,7 +1622,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 (
                     len(fixturedef.baseid),
                     fixturedef.func.__module__,
-                    _pretty_fixture_path(fixturedef.func),
+                    _pretty_fixture_path(invocation_dir, fixturedef.func),
                     fixturedef.argname,
                     fixturedef,
                 )

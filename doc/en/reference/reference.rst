@@ -79,7 +79,7 @@ pytest.xfail
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.exit(reason, [returncode=False, msg=None])
+.. autofunction:: pytest.exit(reason, [returncode=None, msg=None])
 
 pytest.main
 ~~~~~~~~~~~
@@ -612,9 +612,29 @@ Hooks
 
 **Tutorial**: :ref:`writing-plugins`
 
-.. currentmodule:: _pytest.hookspec
-
 Reference to all hooks which can be implemented by :ref:`conftest.py files <localplugin>` and :ref:`plugins <plugins>`.
+
+@pytest.hookimpl
+~~~~~~~~~~~~~~~~
+
+.. function:: pytest.hookimpl
+    :decorator:
+
+    pytest's decorator for marking functions as hook implementations.
+
+    See :ref:`writinghooks` and :func:`pluggy.HookimplMarker`.
+
+@pytest.hookspec
+~~~~~~~~~~~~~~~~
+
+.. function:: pytest.hookspec
+    :decorator:
+
+    pytest's decorator for marking functions as hook specifications.
+
+    See :ref:`declaringhooks` and :func:`pluggy.HookspecMarker`.
+
+.. currentmodule:: _pytest.hookspec
 
 Bootstrapping hooks
 ~~~~~~~~~~~~~~~~~~~
@@ -623,8 +643,6 @@ Bootstrapping hooks called for plugins registered early enough (internal and set
 
 .. hook:: pytest_load_initial_conftests
 .. autofunction:: pytest_load_initial_conftests
-.. hook:: pytest_cmdline_preparse
-.. autofunction:: pytest_cmdline_preparse
 .. hook:: pytest_cmdline_parse
 .. autofunction:: pytest_cmdline_parse
 .. hook:: pytest_cmdline_main
@@ -662,6 +680,8 @@ Collection hooks
 .. autofunction:: pytest_collection
 .. hook:: pytest_ignore_collect
 .. autofunction:: pytest_ignore_collect
+.. hook:: pytest_collect_directory
+.. autofunction:: pytest_collect_directory
 .. hook:: pytest_collect_file
 .. autofunction:: pytest_collect_file
 .. hook:: pytest_pycollect_makemodule
@@ -801,6 +821,7 @@ Node
 
 .. autoclass:: _pytest.nodes.Node()
     :members:
+    :show-inheritance:
 
 Collector
 ~~~~~~~~~
@@ -898,6 +919,18 @@ Config
 ~~~~~~
 
 .. autoclass:: pytest.Config()
+    :members:
+
+Dir
+~~~
+
+.. autoclass:: pytest.Dir()
+    :members:
+
+Directory
+~~~~~~~~~
+
+.. autoclass:: pytest.Directory()
     :members:
 
 ExceptionInfo
@@ -1125,19 +1158,22 @@ When set to ``0``, pytest will not use color.
 
 .. envvar:: NO_COLOR
 
-When set (regardless of value), pytest will not use color in terminal output.
+When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
 ``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
 See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
 
 .. envvar:: FORCE_COLOR
 
-When set (regardless of value), pytest will use color in terminal output.
+When set to a non-empty string (regardless of value), pytest will use color in terminal output.
 ``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
 
 Exceptions
 ----------
 
-.. autoclass:: pytest.UsageError()
+.. autoexception:: pytest.UsageError()
+    :show-inheritance:
+
+.. autoexception:: pytest.FixtureLookupError()
     :show-inheritance:
 
 .. _`warnings ref`:
@@ -1169,9 +1205,6 @@ Custom warnings generated in some situations such as improper usage or deprecate
    :show-inheritance:
 
 .. autoclass:: pytest.PytestReturnNotNoneWarning
-  :show-inheritance:
-
-.. autoclass:: pytest.PytestRemovedIn8Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestRemovedIn9Warning
@@ -2062,7 +2095,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
 
     [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
-      markers (linelist):   Markers for test functions
+      markers (linelist):   Register new markers for test functions
       empty_parameter_set_mark (string):
                             Default marker for empty parametersets
       norecursedirs (args): Directory patterns to avoid for recursion
@@ -2103,6 +2136,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
+      verbosity_assertions (string):
+                            Specify a verbosity level for assertions, overriding
+                            the main level. Higher levels will provide more
+                            detailed explanation when an assertion fails.
       junit_suite_name (string):
                             Test suite name for JUnit report
       junit_logging (string):

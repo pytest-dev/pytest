@@ -1,1 +1,0 @@
-Improved very verbose diff output to color it as a diff instead of only red.

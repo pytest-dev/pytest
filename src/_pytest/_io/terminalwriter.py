@@ -29,9 +29,9 @@ def should_do_markup(file: TextIO) -> bool:
         return True
     if os.environ.get("PY_COLORS") == "0":
         return False
-    if "NO_COLOR" in os.environ:
+    if os.environ.get("NO_COLOR"):
         return False
-    if "FORCE_COLOR" in os.environ:
+    if os.environ.get("FORCE_COLOR"):
         return True
     return (
         hasattr(file, "isatty") and file.isatty() and os.environ.get("TERM") != "dumb"
@@ -200,8 +200,9 @@ class TerminalWriter:
         """Highlight the given source if we have markup support."""
         from _pytest.config.exceptions import UsageError
 
-        if not self.hasmarkup or not self.code_highlight:
+        if not source or not self.hasmarkup or not self.code_highlight:
             return source
+
         try:
             from pygments.formatters.terminal import TerminalFormatter
 
@@ -223,7 +224,15 @@ class TerminalWriter:
                         style=os.getenv("PYTEST_THEME"),
                     ),
                 )
-                return highlighted
+                # pygments terminal formatter may add a newline when there wasn't one.
+                # We don't want this, remove.
+                if highlighted[-1] == "\n" and source[-1] != "\n":
+                    highlighted = highlighted[:-1]
+
+                # Some lexers will not set the initial color explicitly
+                # which may lead to the previous color being propagated to the
+                # start of the expression, so reset first.
+                return "\x1b[0m" + highlighted
             except pygments.util.ClassNotFound:
                 raise UsageError(
                     "PYTEST_THEME environment variable had an invalid value: '{}'. "

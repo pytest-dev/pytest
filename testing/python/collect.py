@@ -1514,3 +1514,108 @@ def test_package_ordering(pytester: Pytester) -> None:
     # Execute from .
     result = pytester.runpytest("-v", "-s")
     result.assert_outcomes(passed=3)
+
+
+def test_collection_hierarchy(pytester: Pytester) -> None:
+    """A general test checking that a filesystem hierarchy is collected as
+    expected in various scenarios.
+
+    top/
+    ├── aaa
+    │   ├── pkg
+    │   │   ├── __init__.py
+    │   │   └── test_pkg.py
+    │   └── test_aaa.py
+    ├── test_a.py
+    ├── test_b
+    │   ├── __init__.py
+    │   └── test_b.py
+    ├── test_c.py
+    └── zzz
+        ├── dir
+        │   └── test_dir.py
+        ├── __init__.py
+        └── test_zzz.py
+    """
+    pytester.makepyfile(
+        **{
+            "top/aaa/test_aaa.py": "def test_it(): pass",
+            "top/aaa/pkg/__init__.py": "",
+            "top/aaa/pkg/test_pkg.py": "def test_it(): pass",
+            "top/test_a.py": "def test_it(): pass",
+            "top/test_b/__init__.py": "",
+            "top/test_b/test_b.py": "def test_it(): pass",
+            "top/test_c.py": "def test_it(): pass",
+            "top/zzz/__init__.py": "",
+            "top/zzz/test_zzz.py": "def test_it(): pass",
+            "top/zzz/dir/test_dir.py": "def test_it(): pass",
+        }
+    )
+
+    full = [
+        "<Dir test_collection_hierarchy*>",
+        "  <Dir top>",
+        "    <Dir aaa>",
+        "      <Package pkg>",
+        "        <Module test_pkg.py>",
+        "          <Function test_it>",
+        "      <Module test_aaa.py>",
+        "        <Function test_it>",
+        "    <Module test_a.py>",
+        "      <Function test_it>",
+        "    <Package test_b>",
+        "      <Module test_b.py>",
+        "        <Function test_it>",
+        "    <Module test_c.py>",
+        "      <Function test_it>",
+        "    <Package zzz>",
+        "      <Dir dir>",
+        "        <Module test_dir.py>",
+        "          <Function test_it>",
+        "      <Module test_zzz.py>",
+        "        <Function test_it>",
+    ]
+    result = pytester.runpytest("--collect-only")
+    result.stdout.fnmatch_lines(full, consecutive=True)
+    result = pytester.runpytest("top", "--collect-only")
+    result.stdout.fnmatch_lines(full, consecutive=True)
+    result = pytester.runpytest("top", "top", "--collect-only")
+    result.stdout.fnmatch_lines(full, consecutive=True)
+
+    result = pytester.runpytest(
+        "top/aaa", "top/aaa/pkg", "--collect-only", "--keep-duplicates"
+    )
+    result.stdout.fnmatch_lines(
+        [
+            "<Dir test_collection_hierarchy*>",
+            "  <Dir top>",
+            "    <Dir aaa>",
+            "      <Package pkg>",
+            "        <Module test_pkg.py>",
+            "          <Function test_it>",
+            "      <Module test_aaa.py>",
+            "        <Function test_it>",
+            "      <Package pkg>",
+            "        <Module test_pkg.py>",
+            "          <Function test_it>",
+        ],
+        consecutive=True,
+    )
+
+    result = pytester.runpytest(
+        "top/aaa/pkg", "top/aaa", "--collect-only", "--keep-duplicates"
+    )
+    result.stdout.fnmatch_lines(
+        [
+            "<Dir test_collection_hierarchy*>",
+            "  <Dir top>",
+            "    <Dir aaa>",
+            "      <Package pkg>",
+            "        <Module test_pkg.py>",
+            "          <Function test_it>",
+            "          <Function test_it>",
+            "      <Module test_aaa.py>",
+            "        <Function test_it>",
+        ],
+        consecutive=True,
+    )

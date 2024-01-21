@@ -262,8 +262,8 @@ def tmp_path(
     and old bases are removed after 3 sessions, to aid in debugging.
     This behavior can be configured with :confval:`tmp_path_retention_count` and
     :confval:`tmp_path_retention_policy`.
-    If ``--basetemp`` is used then it is cleared each session. See :ref:`base
-    temporary directory`.
+    If ``--basetemp`` is used then it is cleared each session. See
+    :ref:`temporary directory location and retention`.
 
     The returned object is a :class:`pathlib.Path` object.
     """

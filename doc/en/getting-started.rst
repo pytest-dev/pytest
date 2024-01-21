@@ -22,7 +22,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 7.4.3
+    pytest 8.0.0rc2
 
 .. _`simpletest`:
 
@@ -47,7 +47,7 @@ The test
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -98,7 +98,7 @@ Use the :ref:`raises <assertraises>` helper to assert that some code raises an e
             f()
 
 You can also use the context provided by :ref:`raises <assertraises>` to
-assert that an expected exception is part of a raised ``ExceptionGroup``:
+assert that an expected exception is part of a raised :class:`ExceptionGroup`:
 
 .. code-block:: python
 

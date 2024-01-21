@@ -16,24 +16,9 @@ from typing import Final
 from typing import NoReturn
 from typing import TypeVar
 
-import py
-
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
-
-#: constant to prepare valuing pylib path replacements/lazy proxies later on
-#  intended for removal in pytest 8.0 or 9.0
-
-# fmt: off
-# intentional space to create a fake difference for the verification
-LEGACY_PATH = py.path. local
-# fmt: on
-
-
-def legacy_path(path: str | os.PathLike[str]) -> LEGACY_PATH:
-    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
-    return LEGACY_PATH(path)
 
 
 # fmt: off

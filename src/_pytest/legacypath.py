@@ -1,5 +1,6 @@
 """Add backward compatibility support for the legacy py path type."""
 import dataclasses
+import os
 import shlex
 import subprocess
 from pathlib import Path
@@ -12,9 +13,8 @@ from typing import Union
 
 from iniconfig import SectionWrapper
 
+import py
 from _pytest.cacheprovider import Cache
-from _pytest.compat import LEGACY_PATH
-from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
@@ -34,6 +34,20 @@ from _pytest.tmpdir import TempPathFactory
 
 if TYPE_CHECKING:
     import pexpect
+
+
+#: constant to prepare valuing pylib path replacements/lazy proxies later on
+#  intended for removal in pytest 8.0 or 9.0
+
+# fmt: off
+# intentional space to create a fake difference for the verification
+LEGACY_PATH = py.path. local
+# fmt: on
+
+
+def legacy_path(path: Union[str, "os.PathLike[str]"]) -> LEGACY_PATH:
+    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
+    return LEGACY_PATH(path)
 
 
 @final
@@ -88,7 +102,6 @@ class Testdir:
         return self._pytester.chdir()
 
     def finalize(self) -> None:
-        """See :meth:`Pytester._finalize`."""
         return self._pytester._finalize()
 
     def makefile(self, ext, *args, **kwargs) -> LEGACY_PATH:
@@ -269,7 +282,7 @@ class LegacyTestdirPlugin:
 @final
 @dataclasses.dataclass
 class TempdirFactory:
-    """Backward compatibility wrapper that implements :class:`py.path.local`
+    """Backward compatibility wrapper that implements ``py.path.local``
     for :class:`TempPathFactory`.
 
     .. note::
@@ -288,11 +301,11 @@ class TempdirFactory:
         self._tmppath_factory = tmppath_factory
 
     def mktemp(self, basename: str, numbered: bool = True) -> LEGACY_PATH:
-        """Same as :meth:`TempPathFactory.mktemp`, but returns a :class:`py.path.local` object."""
+        """Same as :meth:`TempPathFactory.mktemp`, but returns a ``py.path.local`` object."""
         return legacy_path(self._tmppath_factory.mktemp(basename, numbered).resolve())
 
     def getbasetemp(self) -> LEGACY_PATH:
-        """Same as :meth:`TempPathFactory.getbasetemp`, but returns a :class:`py.path.local` object."""
+        """Same as :meth:`TempPathFactory.getbasetemp`, but returns a ``py.path.local`` object."""
         return legacy_path(self._tmppath_factory.getbasetemp().resolve())
 
 
@@ -313,8 +326,8 @@ class LegacyTmpdirPlugin:
 
         By default, a new base temporary directory is created each test session,
         and old bases are removed after 3 sessions, to aid in debugging. If
-        ``--basetemp`` is used then it is cleared each session. See :ref:`base
-        temporary directory`.
+        ``--basetemp`` is used then it is cleared each session. See
+        :ref:`temporary directory location and retention`.
 
         The returned object is a `legacy_path`_ object.
 

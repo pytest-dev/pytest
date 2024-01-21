@@ -17,7 +17,6 @@ from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
 from types import FunctionType
-from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -38,7 +37,6 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
-import pluggy
 from pluggy import HookimplMarker
 from pluggy import HookimplOpts
 from pluggy import HookspecMarker
@@ -48,7 +46,6 @@ from pluggy import PluginManager
 import _pytest._code
 import _pytest.deprecated
 import _pytest.hookspec
-from .compat import PathAwareHookProxy
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
@@ -114,16 +111,14 @@ class ConftestImportFailure(Exception):
     def __init__(
         self,
         path: Path,
-        excinfo: Tuple[Type[Exception], Exception, TracebackType],
+        *,
+        cause: Exception,
     ) -> None:
-        super().__init__(path, excinfo)
         self.path = path
-        self.excinfo = excinfo
+        self.cause = cause
 
     def __str__(self) -> str:
-        return "{}: {} (from {})".format(
-            self.excinfo[0].__name__, self.excinfo[1], self.path
-        )
+        return f"{type(self.cause).__name__}: {self.cause} (from {self.path})"
 
 
 def filter_traceback_for_conftest_import_failure(
@@ -154,7 +149,7 @@ def main(
         try:
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
-            exc_info = ExceptionInfo.from_exc_info(e.excinfo)
+            exc_info = ExceptionInfo.from_exception(e.cause)
             tw = TerminalWriter(sys.stderr)
             tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
             exc_info.traceback = exc_info.traceback.filter(
@@ -252,7 +247,6 @@ default_plugins = essential_plugins + (
     "monkeypatch",
     "recwarn",
     "pastebin",
-    "nose",
     "assertion",
     "junitxml",
     "doctest",
@@ -415,8 +409,6 @@ class PytestPluginManager(PluginManager):
         # session (#9478), often with the same path, so cache it.
         self._get_directory = lru_cache(256)(_get_directory)
 
-        self._duplicatepaths: Set[Path] = set()
-
         # plugins that were explicitly skipped with pytest.skip
         # list of (module name, skip reason)
         # previously we would issue a warning when a plugin was skipped, but
@@ -449,6 +441,7 @@ class PytestPluginManager(PluginManager):
     def parse_hookimpl_opts(
         self, plugin: _PluggyPlugin, name: str
     ) -> Optional[HookimplOpts]:
+        """:meta private:"""
         # pytest hooks are always prefixed with "pytest_",
         # so we avoid accessing possibly non-readable attributes
         # (see issue #1073).
@@ -472,6 +465,7 @@ class PytestPluginManager(PluginManager):
         )
 
     def parse_hookspec_opts(self, module_or_class, name: str) -> Optional[HookspecOpts]:
+        """:meta private:"""
         opts = super().parse_hookspec_opts(module_or_class, name)
         if opts is None:
             method = getattr(module_or_class, name)
@@ -496,15 +490,19 @@ class PytestPluginManager(PluginManager):
                 )
             )
             return None
-        ret: Optional[str] = super().register(plugin, name)
-        if ret:
+        plugin_name = super().register(plugin, name)
+        if plugin_name is not None:
             self.hook.pytest_plugin_registered.call_historic(
-                kwargs=dict(plugin=plugin, manager=self)
+                kwargs=dict(
+                    plugin=plugin,
+                    plugin_name=plugin_name,
+                    manager=self,
+                )
             )
 
             if isinstance(plugin, types.ModuleType):
                 self.consider_module(plugin)
-        return ret
+        return plugin_name
 
     def getplugin(self, name: str):
         # Support deprecated naming because plugins (xdist e.g.) use it.
@@ -543,6 +541,7 @@ class PytestPluginManager(PluginManager):
         noconftest: bool,
         rootpath: Path,
         confcutdir: Optional[Path],
+        invocation_dir: Path,
         importmode: Union[ImportMode, str],
     ) -> None:
         """Load initial conftest files given a preparsed "namespace".
@@ -552,8 +551,9 @@ class PytestPluginManager(PluginManager):
         All builtin and 3rd party plugins will have been loaded, however, so
         common options will not confuse our logic here.
         """
-        current = Path.cwd()
-        self._confcutdir = absolutepath(current / confcutdir) if confcutdir else None
+        self._confcutdir = (
+            absolutepath(invocation_dir / confcutdir) if confcutdir else None
+        )
         self._noconftest = noconftest
         self._using_pyargs = pyargs
         foundanchor = False
@@ -563,7 +563,7 @@ class PytestPluginManager(PluginManager):
             i = path.find("::")
             if i != -1:
                 path = path[:i]
-            anchor = absolutepath(current / path)
+            anchor = absolutepath(invocation_dir / path)
 
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
@@ -571,7 +571,7 @@ class PytestPluginManager(PluginManager):
                 self._try_load_conftest(anchor, importmode, rootpath)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current, importmode, rootpath)
+            self._try_load_conftest(invocation_dir, importmode, rootpath)
 
     def _is_in_confcutdir(self, path: Path) -> bool:
         """Whether a path is within the confcutdir.
@@ -637,20 +637,27 @@ class PytestPluginManager(PluginManager):
     def _importconftest(
         self, conftestpath: Path, importmode: Union[str, ImportMode], rootpath: Path
     ) -> types.ModuleType:
-        existing = self.get_plugin(str(conftestpath))
+        conftestpath_plugin_name = str(conftestpath)
+        existing = self.get_plugin(conftestpath_plugin_name)
         if existing is not None:
             return cast(types.ModuleType, existing)
 
+        # conftest.py files there are not in a Python package all have module
+        # name "conftest", and thus conflict with each other. Clear the existing
+        # before loading the new one, otherwise the existing one will be
+        # returned from the module cache.
         pkgpath = resolve_package_path(conftestpath)
         if pkgpath is None:
-            _ensure_removed_sysmodule(conftestpath.stem)
+            try:
+                del sys.modules[conftestpath.stem]
+            except KeyError:
+                pass
 
         try:
             mod = import_path(conftestpath, mode=importmode, root=rootpath)
         except Exception as e:
             assert e.__traceback__ is not None
-            exc_info = (type(e), e, e.__traceback__)
-            raise ConftestImportFailure(conftestpath, exc_info) from e
+            raise ConftestImportFailure(conftestpath, cause=e) from e
 
         self._check_non_top_pytest_plugins(mod, conftestpath)
 
@@ -659,10 +666,15 @@ class PytestPluginManager(PluginManager):
         if dirpath in self._dirpath2confmods:
             for path, mods in self._dirpath2confmods.items():
                 if dirpath in path.parents or path == dirpath:
-                    assert mod not in mods
+                    if mod in mods:
+                        raise AssertionError(
+                            f"While trying to load conftest path {str(conftestpath)}, "
+                            f"found that the module {mod} is already loaded with path {mod.__file__}. "
+                            "This is not supposed to happen. Please report this issue to pytest."
+                        )
                     mods.append(mod)
         self.trace(f"loading conftestmodule {mod!r}")
-        self.consider_conftest(mod)
+        self.consider_conftest(mod, registration_name=conftestpath_plugin_name)
         return mod
 
     def _check_non_top_pytest_plugins(
@@ -742,9 +754,11 @@ class PytestPluginManager(PluginManager):
                     del self._name2plugin["pytest_" + name]
             self.import_plugin(arg, consider_entry_points=True)
 
-    def consider_conftest(self, conftestmodule: types.ModuleType) -> None:
+    def consider_conftest(
+        self, conftestmodule: types.ModuleType, registration_name: str
+    ) -> None:
         """:meta private:"""
-        self.register(conftestmodule, name=conftestmodule.__file__)
+        self.register(conftestmodule, name=registration_name)
 
     def consider_env(self) -> None:
         """:meta private:"""
@@ -819,13 +833,6 @@ def _get_plugin_specs_as_list(
         "Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: %r"
         % specs
     )
-
-
-def _ensure_removed_sysmodule(modname: str) -> None:
-    try:
-        del sys.modules[modname]
-    except KeyError:
-        pass
 
 
 class Notset:
@@ -1009,7 +1016,7 @@ class Config:
         self._store = self.stash
 
         self.trace = self.pluginmanager.trace.root.get("config")
-        self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
+        self.hook = self.pluginmanager.hook  # type: ignore[assignment]
         self._inicache: Dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}
@@ -1163,6 +1170,7 @@ class Config:
             noconftest=early_config.known_args_namespace.noconftest,
             rootpath=early_config.rootpath,
             confcutdir=early_config.known_args_namespace.confcutdir,
+            invocation_dir=early_config.invocation_params.dir,
             importmode=early_config.known_args_namespace.importmode,
         )
 
@@ -1171,8 +1179,8 @@ class Config:
             args, namespace=copy.copy(self.option)
         )
         rootpath, inipath, inicfg = determine_setup(
-            ns.inifilename,
-            ns.file_or_dir + unknown_args,
+            inifile=ns.inifilename,
+            args=ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             invocation_dir=self.invocation_params.dir,
         )
@@ -1256,6 +1264,8 @@ class Config:
         """Decide the args (initial paths/nodeids) to use given the relevant inputs.
 
         :param warn: Whether can issue warnings.
+
+        :returns: The args and the args source. Guaranteed to be non-empty.
         """
         if args:
             source = Config.ArgsSource.ARGS
@@ -1318,11 +1328,6 @@ class Config:
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()
-
-        if self.known_args_namespace.strict:
-            self.issue_config_time_warning(
-                _pytest.deprecated.STRICT_OPTION, stacklevel=2
-            )
 
         if self.known_args_namespace.confcutdir is None:
             if self.inipath is not None:
@@ -1432,8 +1437,6 @@ class Config:
             kwargs=dict(pluginmanager=self.pluginmanager)
         )
         self._preparse(args, addopts=addopts)
-        # XXX deprecated hook:
-        self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.after_preparse = True  # type: ignore
         try:
             args = self._parser.parse_setoption(

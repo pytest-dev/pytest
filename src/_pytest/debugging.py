@@ -377,7 +377,8 @@ def _postmortem_traceback(excinfo: ExceptionInfo[BaseException]) -> types.Traceb
     elif isinstance(excinfo.value, ConftestImportFailure):
         # A config.ConftestImportFailure is not useful for post_mortem.
         # Use the underlying exception instead:
-        return excinfo.value.excinfo[2]
+        assert excinfo.value.cause.__traceback__ is not None
+        return excinfo.value.cause.__traceback__
     else:
         assert excinfo._excinfo is not None
         return excinfo._excinfo[2]

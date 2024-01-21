@@ -1,7 +1,5 @@
 # PYTHON_ARGCOMPLETE_OK
 """pytest: unit and functional testing with Python."""
-from typing import TYPE_CHECKING
-
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
@@ -30,6 +28,7 @@ from _pytest.freeze_support import freeze_includes
 from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir
 from _pytest.logging import LogCaptureFixture
+from _pytest.main import Dir
 from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
@@ -38,6 +37,7 @@ from _pytest.mark import MarkGenerator
 from _pytest.mark import param
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
+from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.nodes import Item
 from _pytest.outcomes import exit
@@ -74,7 +74,6 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
-from _pytest.warning_types import PytestRemovedIn8Warning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
@@ -99,6 +98,8 @@ __all__ = [
     "Config",
     "console_main",
     "deprecated_call",
+    "Dir",
+    "Directory",
     "DoctestItem",
     "exit",
     "ExceptionInfo",
@@ -136,7 +137,6 @@ __all__ = [
     "PytestConfigWarning",
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
-    "PytestRemovedIn8Warning",
     "PytestRemovedIn9Warning",
     "PytestReturnNotNoneWarning",
     "Pytester",
@@ -168,13 +168,3 @@ __all__ = [
     "xfail",
     "yield_fixture",
 ]
-
-if not TYPE_CHECKING:
-
-    def __getattr__(name: str) -> object:
-        if name == "Instance":
-            # The import emits a deprecation warning.
-            from _pytest.python import Instance
-
-            return Instance
-        raise AttributeError(f"module {__name__} has no attribute {name}")
