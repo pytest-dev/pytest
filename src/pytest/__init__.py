@@ -57,6 +57,7 @@ from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
 from _pytest.python_api import raises
+from _pytest.python_api import RaisesGroup
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
@@ -146,6 +147,7 @@ __all__ = [
     "PytestUnraisableExceptionWarning",
     "PytestWarning",
     "raises",
+    "RaisesGroup",
     "RecordedHookCall",
     "register_assert_rewrite",
     "RunResult",

@@ -1,11 +1,10 @@
+import re
 import sys
 from typing import TYPE_CHECKING
 
 import pytest
-from _pytest.python_api import Matcher
-from _pytest.python_api import RaisesGroup
-
-# TODO: make a public export
+from _pytest.outcomes import Failed
+from pytest import RaisesGroup
 
 if TYPE_CHECKING:
     from typing_extensions import assert_type
@@ -14,237 +13,137 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
-class TestRaisesGroup:
-    def test_raises_group(self) -> None:
-        with pytest.raises(
-            ValueError,
-            match="^Invalid argument {exc} must be exception type, Matcher, or RaisesGroup.$",
-        ):
-            RaisesGroup(ValueError())
+def test_raises_group() -> None:
+    # wrong type to constructor
+    with pytest.raises(
+        TypeError,
+        match="^expected exception must be a BaseException type, not ValueError$",
+    ):
+        RaisesGroup(ValueError())  # type: ignore[arg-type]
 
+    # working example
+    with RaisesGroup(ValueError):
+        raise ExceptionGroup("foo", (ValueError(),))
+
+    with RaisesGroup(ValueError, check=lambda x: True):
+        raise ExceptionGroup("foo", (ValueError(),))
+
+    # wrong subexception
+    with pytest.raises(
+        AssertionError,
+        match="Wrong type in group: got <class 'SyntaxError'>, expected <class 'ValueError'>",
+    ):
         with RaisesGroup(ValueError):
+            raise ExceptionGroup("foo", (SyntaxError(),))
+
+    # will error if there's excess exceptions
+    with pytest.raises(
+        AssertionError, match="Wrong number of exceptions: got 2, expected 1"
+    ):
+        with RaisesGroup(ValueError):
+            raise ExceptionGroup("", (ValueError(), ValueError()))
+
+    # double nested exceptions is not (currently) supported (contrary to expect*)
+    with pytest.raises(
+        AssertionError,
+        match="Wrong type in group: got <class '(exceptiongroup.)?ExceptionGroup'>, expected <class 'ValueError'>",
+    ):
+        with RaisesGroup(ValueError):
+            raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
+
+    # you'd need to write
+    with RaisesGroup(ExceptionGroup) as excinfo:
+        raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
+    RaisesGroup(ValueError).assert_matches(excinfo.value.exceptions[0])
+
+    # unwrapped exceptions are not accepted (contrary to expect*)
+    with pytest.raises(
+        AssertionError, match="Expected an ExceptionGroup, not <class 'ValueError'."
+    ):
+        with RaisesGroup(ValueError):
+            raise ValueError
+
+    with pytest.raises(
+        AssertionError,
+        match=re.escape("Check failed on ExceptionGroup('foo', (ValueError(),))."),
+    ):
+        with RaisesGroup(ValueError, check=lambda x: False):
             raise ExceptionGroup("foo", (ValueError(),))
 
-        with RaisesGroup(SyntaxError):
-            with RaisesGroup(ValueError):
-                raise ExceptionGroup("foo", (SyntaxError(),))
 
-        # multiple exceptions
-        with RaisesGroup(ValueError, SyntaxError):
-            raise ExceptionGroup("foo", (ValueError(), SyntaxError()))
+def test_RaisesGroup_matches() -> None:
+    eeg = RaisesGroup(ValueError)
+    # exc_val is None
+    assert not eeg.matches(None)
+    # exc_val is not an exceptiongroup
+    assert not eeg.matches(ValueError())
+    # wrong length
+    assert not eeg.matches(ExceptionGroup("", (ValueError(), ValueError())))
+    # wrong type
+    assert not eeg.matches(ExceptionGroup("", (TypeError(),)))
+    # check fails
+    assert not RaisesGroup(ValueError, check=lambda _: False).matches(
+        ExceptionGroup("", (ValueError(),))
+    )
+    # success
+    assert eeg.matches(ExceptionGroup("", (ValueError(),)))
 
-        # order doesn't matter
-        with RaisesGroup(SyntaxError, ValueError):
-            raise ExceptionGroup("foo", (ValueError(), SyntaxError()))
 
-        # nested exceptions
-        with RaisesGroup(RaisesGroup(ValueError)):
-            raise ExceptionGroup("foo", (ExceptionGroup("bar", (ValueError(),)),))
+def test_RaisesGroup_assert_matches() -> None:
+    """Check direct use of RaisesGroup.assert_matches, without a context manager"""
+    eeg = RaisesGroup(ValueError)
+    with pytest.raises(AssertionError):
+        eeg.assert_matches(None)
+    with pytest.raises(AssertionError):
+        eeg.assert_matches(ValueError())
+    eeg.assert_matches(ExceptionGroup("", (ValueError(),)))
 
-        with RaisesGroup(
-            SyntaxError,
-            RaisesGroup(ValueError),
-            RaisesGroup(RuntimeError),
-        ):
-            raise ExceptionGroup(
-                "foo",
-                (
-                    SyntaxError(),
-                    ExceptionGroup("bar", (ValueError(),)),
-                    ExceptionGroup("", (RuntimeError(),)),
-                ),
-            )
 
-        # will error if there's excess exceptions
-        with pytest.raises(ExceptionGroup):
-            with RaisesGroup(ValueError):
-                raise ExceptionGroup("", (ValueError(), ValueError()))
+def test_message() -> None:
+    with pytest.raises(
+        Failed,
+        match=re.escape(
+            f"DID NOT RAISE ANY EXCEPTION, expected ExceptionGroup({repr(ValueError)})"
+        ),
+    ):
+        with RaisesGroup(ValueError):
+            ...
 
-        with pytest.raises(ExceptionGroup):
-            with RaisesGroup(ValueError):
-                raise ExceptionGroup("", (RuntimeError(), ValueError()))
+    with pytest.raises(
+        Failed,
+        match=re.escape(
+            f"DID NOT RAISE ANY EXCEPTION, expected BaseExceptionGroup({repr(KeyboardInterrupt)})"
+        ),
+    ):
+        with RaisesGroup(KeyboardInterrupt):
+            ...
 
-        # will error if there's missing exceptions
-        with pytest.raises(ExceptionGroup):
-            with RaisesGroup(ValueError, ValueError):
-                raise ExceptionGroup("", (ValueError(),))
 
-        with pytest.raises(ExceptionGroup):
-            with RaisesGroup(ValueError, SyntaxError):
-                raise ExceptionGroup("", (ValueError(),))
+if TYPE_CHECKING:
 
-        # loose semantics, as with expect*
-        with RaisesGroup(ValueError, strict=False):
-            raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
+    def test_types_1() -> None:
+        with RaisesGroup(ValueError) as e:
+            raise ExceptionGroup("foo", (ValueError(),))
+        assert_type(e.value, BaseExceptionGroup[ValueError])
 
-        # mixed loose is possible if you want it to be at least N deep
-        with RaisesGroup(RaisesGroup(ValueError, strict=True)):
-            raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
-        with RaisesGroup(RaisesGroup(ValueError, strict=False)):
-            raise ExceptionGroup(
-                "", (ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),)),)
-            )
+    def test_types_2() -> None:
+        exc: ExceptionGroup[ValueError] | ValueError = ExceptionGroup(
+            "", (ValueError(),)
+        )
+        if RaisesGroup(ValueError).assert_matches(exc):
+            assert_type(exc, BaseExceptionGroup[ValueError])
 
-        # but not the other way around
-        with pytest.raises(
-            ValueError,
-            match="^You cannot specify a nested structure inside a RaisesGroup with strict=False$",
-        ):
-            RaisesGroup(RaisesGroup(ValueError), strict=False)
+    def test_types_3() -> None:
+        e: BaseExceptionGroup[KeyboardInterrupt] = BaseExceptionGroup(
+            "", (KeyboardInterrupt(),)
+        )
+        if RaisesGroup(ValueError).matches(e):
+            assert_type(e, BaseExceptionGroup[ValueError])
 
-        # currently not fully identical in behaviour to expect*, which would also catch an unwrapped exception
-        with pytest.raises(ValueError):
-            with RaisesGroup(ValueError, strict=False):
-                raise ValueError
-
-    def test_match(self) -> None:
-        # supports match string
-        with RaisesGroup(ValueError, match="bar"):
-            raise ExceptionGroup("bar", (ValueError(),))
-
-        try:
-            with RaisesGroup(ValueError, match="foo"):
-                raise ExceptionGroup("bar", (ValueError(),))
-        except AssertionError as e:
-            assert str(e).startswith("Regex pattern did not match.")
-        else:
-            raise AssertionError("Expected pytest.raises.Exception")
-
-    def test_RaisesGroup_matches(self) -> None:
-        eeg = RaisesGroup(ValueError)
-        assert not eeg.matches(None)
-        assert not eeg.matches(ValueError())
-        assert eeg.matches(ExceptionGroup("", (ValueError(),)))
-
-    def test_message(self) -> None:
-        try:
-            with RaisesGroup(ValueError):
-                ...
-        except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE ExceptionGroup({repr(ValueError)},)"
-        else:
-            assert False, "Expected pytest.raises.Exception"
-        try:
-            with RaisesGroup(RaisesGroup(ValueError)):
-                ...
-        except pytest.fail.Exception as e:
-            assert (
-                e.msg
-                == f"DID NOT RAISE ExceptionGroup(ExceptionGroup({repr(ValueError)},),)"
-            )
-        else:
-            assert False, "Expected pytest.raises.Exception"
-
-    def test_matcher(self) -> None:
-        with pytest.raises(
-            ValueError, match="^You must specify at least one parameter to match on.$"
-        ):
-            Matcher()
-
-        with RaisesGroup(Matcher(ValueError)):
-            raise ExceptionGroup("", (ValueError(),))
-        try:
-            with RaisesGroup(Matcher(TypeError)):
-                raise ExceptionGroup("", (ValueError(),))
-        except ExceptionGroup:
-            pass
-        else:
-            assert False, "Expected pytest.raises.Exception"
-
-    def test_matcher_match(self) -> None:
-        with RaisesGroup(Matcher(ValueError, "foo")):
-            raise ExceptionGroup("", (ValueError("foo"),))
-        try:
-            with RaisesGroup(Matcher(ValueError, "foo")):
-                raise ExceptionGroup("", (ValueError("bar"),))
-        except ExceptionGroup:
-            pass
-        else:
-            assert False, "Expected pytest.raises.Exception"
-
-        # Can be used without specifying the type
-        with RaisesGroup(Matcher(match="foo")):
-            raise ExceptionGroup("", (ValueError("foo"),))
-        try:
-            with RaisesGroup(Matcher(match="foo")):
-                raise ExceptionGroup("", (ValueError("bar"),))
-        except ExceptionGroup:
-            pass
-        else:
-            assert False, "Expected pytest.raises.Exception"
-
-    def test_Matcher_check(self) -> None:
-        def check_oserror_and_errno_is_5(e: BaseException) -> bool:
-            return isinstance(e, OSError) and e.errno == 5
-
-        with RaisesGroup(Matcher(check=check_oserror_and_errno_is_5)):
-            raise ExceptionGroup("", (OSError(5, ""),))
-
-        # specifying exception_type narrows the parameter type to the callable
-        def check_errno_is_5(e: OSError) -> bool:
-            return e.errno == 5
-
-        with RaisesGroup(Matcher(OSError, check=check_errno_is_5)):
-            raise ExceptionGroup("", (OSError(5, ""),))
-
-        try:
-            with RaisesGroup(Matcher(OSError, check=check_errno_is_5)):
-                raise ExceptionGroup("", (OSError(6, ""),))
-        except ExceptionGroup:
-            pass
-        else:
-            assert False, "Expected pytest.raises.Exception"
-
-    if TYPE_CHECKING:
-        # getting the typing working satisfactory is very tricky
-        # but with RaisesGroup being seen as a subclass of BaseExceptionGroup
-        # most end-user cases of checking excinfo.value.foobar should work fine now.
-        def test_types_0(self) -> None:
-            _: BaseExceptionGroup[ValueError] = RaisesGroup(ValueError)
-            _ = RaisesGroup(RaisesGroup(ValueError))  # type: ignore[arg-type]
-            a: BaseExceptionGroup[BaseExceptionGroup[ValueError]]
-            a = RaisesGroup(RaisesGroup(ValueError))
-            a = BaseExceptionGroup("", (BaseExceptionGroup("", (ValueError(),)),))
-            assert a
-
-        def test_types_1(self) -> None:
-            with RaisesGroup(ValueError) as e:
-                raise ExceptionGroup("foo", (ValueError(),))
-            assert_type(e.value, BaseExceptionGroup[ValueError])
-            # assert_type(e.value, RaisesGroup[ValueError])
-
-        def test_types_2(self) -> None:
-            exc: ExceptionGroup[ValueError] | ValueError = ExceptionGroup(
-                "", (ValueError(),)
-            )
-            if RaisesGroup(ValueError).matches(exc):
-                assert_type(exc, BaseExceptionGroup[ValueError])
-
-        def test_types_3(self) -> None:
-            e: BaseExceptionGroup[KeyboardInterrupt] = BaseExceptionGroup(
-                "", (KeyboardInterrupt(),)
-            )
-            if RaisesGroup(ValueError).matches(e):
-                assert_type(e, BaseExceptionGroup[ValueError])
-
-        def test_types_4(self) -> None:
-            with RaisesGroup(Matcher(ValueError)) as e:
-                ...
-            _: BaseExceptionGroup[ValueError] = e.value
-            assert_type(e.value, BaseExceptionGroup[ValueError])
-
-        def test_types_5(self) -> None:
-            with RaisesGroup(RaisesGroup(ValueError)) as excinfo:
-                raise ExceptionGroup("foo", (ValueError(),))
-            _: BaseExceptionGroup[BaseExceptionGroup[ValueError]] = excinfo.value
-            assert_type(
-                excinfo.value,
-                BaseExceptionGroup[RaisesGroup[ValueError]],
-            )
-            print(excinfo.value.exceptions[0].exceptions[0])
-
-        def test_types_6(self) -> None:
-            exc: ExceptionGroup[ExceptionGroup[ValueError]] = ...  # type: ignore[assignment]
-            if RaisesGroup(RaisesGroup(ValueError)).matches(exc):  # type: ignore[arg-type]
-                # ugly
-                assert_type(exc, BaseExceptionGroup[RaisesGroup[ValueError]])
+    def test_types_4() -> None:
+        e: BaseExceptionGroup[KeyboardInterrupt] = BaseExceptionGroup(
+            "", (KeyboardInterrupt(),)
+        )
+        # not currently possible: https://github.com/python/typing/issues/930
+        RaisesGroup(ValueError).assert_matches(e)
+        assert_type(e, BaseExceptionGroup[ValueError])  # type: ignore[assert-type]
