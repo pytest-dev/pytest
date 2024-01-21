@@ -11,7 +11,6 @@ from typing import Callable
 from typing import cast
 from typing import ContextManager
 from typing import final
-from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -1032,18 +1031,6 @@ class RaisesGroup(ContextManager[_pytest._code.ExceptionInfo[BaseExceptionGroup[
             BaseExceptionGroup[E]
         ] = _pytest._code.ExceptionInfo.for_later()
         return self.excinfo
-
-    def _unroll_exceptions(
-        self, exceptions: Iterable[BaseException]
-    ) -> Iterable[BaseException]:
-        res: list[BaseException] = []
-        for exc in exceptions:
-            if isinstance(exc, BaseExceptionGroup):
-                res.extend(self._unroll_exceptions(exc.exceptions))
-
-            else:
-                res.append(exc)
-        return res
 
     def matches(
         self,
