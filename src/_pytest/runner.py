@@ -223,13 +223,26 @@ def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str
 def call_and_report(
     item: Item, when: Literal["setup", "call", "teardown"], log: bool = True, **kwds
 ) -> TestReport:
-    call = call_runtest_hook(item, when, **kwds)
-    hook = item.ihook
-    report: TestReport = hook.pytest_runtest_makereport(item=item, call=call)
+    ihook = item.ihook
+    if when == "setup":
+        runtest_hook: Callable[..., None] = ihook.pytest_runtest_setup
+    elif when == "call":
+        runtest_hook = ihook.pytest_runtest_call
+    elif when == "teardown":
+        runtest_hook = ihook.pytest_runtest_teardown
+    else:
+        assert False, f"Unhandled runtest hook case: {when}"
+    reraise: Tuple[Type[BaseException], ...] = (Exit,)
+    if not item.config.getoption("usepdb", False):
+        reraise += (KeyboardInterrupt,)
+    call = CallInfo.from_call(
+        lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+    )
+    report: TestReport = ihook.pytest_runtest_makereport(item=item, call=call)
     if log:
-        hook.pytest_runtest_logreport(report=report)
+        ihook.pytest_runtest_logreport(report=report)
     if check_interactive_exception(call, report):
-        hook.pytest_exception_interact(node=item, call=call, report=report)
+        ihook.pytest_exception_interact(node=item, call=call, report=report)
     return report
 
 
@@ -246,25 +259,6 @@ def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) ->
         # Special control flow exception.
         return False
     return True
-
-
-def call_runtest_hook(
-    item: Item, when: Literal["setup", "call", "teardown"], **kwds
-) -> "CallInfo[None]":
-    if when == "setup":
-        ihook: Callable[..., None] = item.ihook.pytest_runtest_setup
-    elif when == "call":
-        ihook = item.ihook.pytest_runtest_call
-    elif when == "teardown":
-        ihook = item.ihook.pytest_runtest_teardown
-    else:
-        assert False, f"Unhandled runtest hook case: {when}"
-    reraise: Tuple[Type[BaseException], ...] = (Exit,)
-    if not item.config.getoption("usepdb", False):
-        reraise += (KeyboardInterrupt,)
-    return CallInfo.from_call(
-        lambda: ihook(item=item, **kwds), when=when, reraise=reraise
-    )
 
 
 TResult = TypeVar("TResult", covariant=True)
