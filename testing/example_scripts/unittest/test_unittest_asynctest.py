@@ -8,7 +8,7 @@ import asynctest
 teardowns: List[None] = []
 
 
-class Test(asynctest.TestCase):
+class Test(asynctest.TestCase):  # type: ignore[misc]
     async def tearDown(self):
         teardowns.append(None)
 

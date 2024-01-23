@@ -123,3 +123,11 @@ target-version = ['py38']
 [tool.check-wheel-contents]
 # W009: Wheel contains multiple toplevel library entries
 ignore = "W009"
+
+[tool.mypy]
+strict = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+warn_unused_ignores = false
+ignore_missing_imports = true
