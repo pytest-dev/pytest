@@ -745,13 +745,10 @@ class PytestPluginManager(PluginManager):
                 self.set_blocked("pytest_" + name)
         else:
             name = arg
-            # Unblock the plugin.  None indicates that it has been blocked.
-            # There is no interface with pluggy for this.
-            if self._name2plugin.get(name, -1) is None:
-                del self._name2plugin[name]
+            # Unblock the plugin.
+            self.unblock(name)
             if not name.startswith("pytest_"):
-                if self._name2plugin.get("pytest_" + name, -1) is None:
-                    del self._name2plugin["pytest_" + name]
+                self.unblock("pytest_" + name)
             self.import_plugin(arg, consider_entry_points=True)
 
     def consider_conftest(
