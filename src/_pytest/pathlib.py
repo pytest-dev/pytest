@@ -171,23 +171,23 @@ def rm_rf(path: Path) -> None:
         shutil.rmtree(str(path), onerror=onerror)
 
 
-def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
+def find_prefixed(root: Path, prefix: str) -> Iterator["os.DirEntry[str]"]:
     """Find all elements in root that begin with the prefix, case insensitive."""
     l_prefix = prefix.lower()
-    for x in root.iterdir():
+    for x in os.scandir(root):
         if x.name.lower().startswith(l_prefix):
             yield x
 
 
-def extract_suffixes(iter: Iterable[PurePath], prefix: str) -> Iterator[str]:
+def extract_suffixes(iter: Iterable["os.DirEntry[str]"], prefix: str) -> Iterator[str]:
     """Return the parts of the paths following the prefix.
 
     :param iter: Iterator over path names.
     :param prefix: Expected prefix of the path names.
     """
     p_len = len(prefix)
-    for p in iter:
-        yield p.name[p_len:]
+    for entry in iter:
+        yield entry.name[p_len:]
 
 
 def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
@@ -346,12 +346,12 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
     """List candidates for numbered directories to be removed - follows py.path."""
     max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
     max_delete = max_existing - keep
-    paths = find_prefixed(root, prefix)
-    paths, paths2 = itertools.tee(paths)
-    numbers = map(parse_num, extract_suffixes(paths2, prefix))
-    for path, number in zip(paths, numbers):
+    entries = find_prefixed(root, prefix)
+    entries, entries2 = itertools.tee(entries)
+    numbers = map(parse_num, extract_suffixes(entries2, prefix))
+    for entry, number in zip(entries, numbers):
         if number <= max_delete:
-            yield path
+            yield Path(entry)
 
 
 def cleanup_dead_symlinks(root: Path):
