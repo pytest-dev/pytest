@@ -1,1 +1,0 @@
-Avoid microsecond exceeds ``1_000_000`` when using ``log-date-format`` with ``%f`` specifier.
