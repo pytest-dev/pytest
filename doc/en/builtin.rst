@@ -129,7 +129,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 if pytestconfig.getoption("verbose") > 0:
                     ...
 
-    record_property -- .../_pytest/junitxml.py:282
+    record_property -- .../_pytest/junitxml.py:284
         Add extra properties to the calling test.
 
         User properties become part of the test report and are available to the
@@ -143,13 +143,13 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             def test_function(record_property):
                 record_property("example_key", 1)
 
-    record_xml_attribute -- .../_pytest/junitxml.py:305
+    record_xml_attribute -- .../_pytest/junitxml.py:307
         Add extra xml attributes to the tag for the calling test.
 
         The fixture is callable with ``name, value``. The value is
         automatically XML-encoded.
 
-    record_testsuite_property [session scope] -- .../_pytest/junitxml.py:343
+    record_testsuite_property [session scope] -- .../_pytest/junitxml.py:345
         Record a new ``<property>`` tag as child of the root ``<testsuite>``.
 
         This is suitable to writing global information regarding the entire test
@@ -196,7 +196,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
 
-    caplog -- .../_pytest/logging.py:593
+    caplog -- .../_pytest/logging.py:594
         Access and control log capturing.
 
         Captured logs are available through the following properties/methods::
