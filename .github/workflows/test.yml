@@ -35,7 +35,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v1.5.4
+      uses: hynek/build-and-inspect-python-package@v2.0.0
 
   build:
     needs: [package]
@@ -173,7 +173,7 @@ jobs:
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Packages
         path: dist
