@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Interactive debugging with PDB, the Python Debugger."""
 import argparse
 import functools

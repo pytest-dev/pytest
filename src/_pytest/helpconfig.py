@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Version info, help messages, tracing configuration."""
 import os
 import sys

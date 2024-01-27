@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Implementation of the cache provider."""
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.

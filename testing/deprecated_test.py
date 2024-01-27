@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import pytest
 from _pytest import deprecated
 from _pytest.pytester import Pytester

@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Support for skip/xfail functions and markers."""
 import dataclasses
 import os

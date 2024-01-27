@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Terminal reporting of the full testing process."""
 import collections
 import os

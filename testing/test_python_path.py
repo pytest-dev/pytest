@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import sys
 from textwrap import dedent
 from typing import Generator

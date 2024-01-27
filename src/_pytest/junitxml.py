@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Report test results in JUnit-XML format, for use with Jenkins and build
 integration servers.
 

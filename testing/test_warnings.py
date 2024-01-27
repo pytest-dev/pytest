@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import os
 import sys
 import warnings
@@ -623,11 +624,11 @@ def test_group_warnings_by_message_summary(pytester: Pytester) -> None:
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
             "test_1.py: 21 warnings",
             "test_2.py: 1 warning",
-            "  */test_1.py:7: UserWarning: foo",
+            "  */test_1.py:8: UserWarning: foo",
             "    warnings.warn(UserWarning(msg))",
             "",
             "test_1.py: 20 warnings",
-            "  */test_1.py:7: UserWarning: bar",
+            "  */test_1.py:8: UserWarning: bar",
             "    warnings.warn(UserWarning(msg))",
             "",
             "-- Docs: *",

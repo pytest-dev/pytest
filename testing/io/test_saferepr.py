@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import pytest
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr

@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Utilities for assertion debugging."""
 import collections.abc
 import os

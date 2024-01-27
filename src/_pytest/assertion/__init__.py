@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Support for presenting detailed information in failing assertions."""
 import sys
 from typing import Any

@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Monkeypatching and mocking functionality."""
 import os
 import re

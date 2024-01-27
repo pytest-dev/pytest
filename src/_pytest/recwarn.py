@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Record warnings during test function execution."""
 import re
 import warnings

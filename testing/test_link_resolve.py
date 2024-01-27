@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import os.path
 import subprocess
 import sys

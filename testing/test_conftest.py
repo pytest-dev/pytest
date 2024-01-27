@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import os
 import textwrap
 from pathlib import Path

@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import pytest
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker

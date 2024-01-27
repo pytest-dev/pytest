@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Per-test stdout/stderr capturing mechanism."""
 import abc
 import collections
