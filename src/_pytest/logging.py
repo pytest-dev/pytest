@@ -71,7 +71,8 @@ class DatetimeFormatter(logging.Formatter):
             tz = timezone(timedelta(seconds=ct.tm_gmtoff), ct.tm_zone)
             # Construct `datetime.datetime` object from `struct_time`
             # and msecs information from `record`
-            dt = datetime(*ct[0:6], microsecond=round(record.msecs * 1000), tzinfo=tz)
+            # Using int() instead of round() to avoid it exceeding 1_000_000 and causing a ValueError (#11861).
+            dt = datetime(*ct[0:6], microsecond=int(record.msecs * 1000), tzinfo=tz)
             return dt.strftime(datefmt)
         # Use `logging.Formatter` for non-microsecond formats
         return super().formatTime(record, datefmt)
