@@ -2,6 +2,7 @@
 from typing import List
 from typing import Optional
 from typing import Type
+import sys
 import warnings
 
 from _pytest.pytester import Pytester
@@ -485,6 +486,12 @@ def test_raise_type_error_on_non_string_warning() -> None:
         with pytest.warns(UserWarning):
             warnings.warn(1)  # type: ignore
 
+
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"),
+    reason="Not for pypy",
+)
+def test_raise_type_error_on_non_string_warning_cpython() -> None:
     # Check that we get the same behavior with the stdlib, at least if filtering
     # (see https://github.com/python/cpython/issues/103577 for details)
     with pytest.raises(TypeError):
