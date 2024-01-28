@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import email.message
 import io
 from typing import List

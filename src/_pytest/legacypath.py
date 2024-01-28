@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Add backward compatibility support for the legacy py path type."""
 import dataclasses
 import os

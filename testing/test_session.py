@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import pytest
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch

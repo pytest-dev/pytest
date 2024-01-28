@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """File for checking typing issues.
 
 This file is not executed, it is only checked by mypy to ensure that

@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """local path implementation."""
 from __future__ import annotations
 

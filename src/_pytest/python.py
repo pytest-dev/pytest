@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Python test discovery, setup and run of test functions."""
 import abc
 import dataclasses

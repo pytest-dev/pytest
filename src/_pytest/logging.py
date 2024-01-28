@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Access and control log capturing."""
 import io
 import logging

@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Python version compatibility code."""
 from __future__ import annotations
 

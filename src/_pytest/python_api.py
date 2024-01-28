@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import math
 import pprint
 from collections.abc import Collection

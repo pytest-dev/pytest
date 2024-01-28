@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Submit failure or test session information to a pastebin service."""
 import tempfile
 from io import StringIO

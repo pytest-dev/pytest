@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import ast
 import errno
 import glob

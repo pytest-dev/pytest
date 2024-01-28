@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Discover and run doctests in modules and test files."""
 import bdb
 import functools

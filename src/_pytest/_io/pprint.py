@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 # This module was imported from the cpython standard library
 # (https://github.com/python/cpython/) at commit
 # c5140945c723ae6c4b7ee81ff720ac8ea4b52cfd (python3.12).

@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import re
 import sys
 from types import FrameType

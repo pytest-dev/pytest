@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import subprocess
 import sys
 from pathlib import Path

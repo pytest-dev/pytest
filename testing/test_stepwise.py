@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 from pathlib import Path
 
 import pytest

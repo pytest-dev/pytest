@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Basic collect and runtest protocol implementations."""
 import bdb
 import dataclasses
