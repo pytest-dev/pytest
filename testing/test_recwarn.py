@@ -487,6 +487,12 @@ def test_raise_type_error_on_non_string_warning() -> None:
             warnings.warn(1)  # type: ignore
 
 
+def test_no_raise_type_error_on_string_warning() -> None:
+    """Check pytest.warns validates warning messages are strings (#10865)."""
+    with pytest.warns(UserWarning):
+        warnings.warn("Warning")
+
+
 @pytest.mark.skipif(
     hasattr(sys, "pypy_version_info"),
     reason="Not for pypy",
