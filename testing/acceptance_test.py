@@ -1452,7 +1452,7 @@ def test_issue_9765(pytester: Pytester) -> None:
         ) from exc
 
 
-def test_issue_11872():
+def test_issue_11872() -> None:
     # see https://github.com/pytest-dev/pytest/issues/11872
     from urllib.error import HTTPError
 
