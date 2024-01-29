@@ -1793,9 +1793,11 @@ class Function(PyobjMixin, nodes.Item):
             if self.config.getoption("tbstyle", "auto") == "auto":
                 if len(ntraceback) > 2:
                     ntraceback = Traceback(
-                        entry
-                        if i == 0 or i == len(ntraceback) - 1
-                        else entry.with_repr_style("short")
+                        (
+                            entry
+                            if i == 0 or i == len(ntraceback) - 1
+                            else entry.with_repr_style("short")
+                        )
                         for i, entry in enumerate(ntraceback)
                     )
 

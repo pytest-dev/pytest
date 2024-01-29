@@ -278,9 +278,9 @@ class TracebackEntry:
 
         Mostly for internal use.
         """
-        tbh: Union[
-            bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]
-        ] = False
+        tbh: Union[bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]] = (
+            False
+        )
         for maybe_ns_dct in (self.frame.f_locals, self.frame.f_globals):
             # in normal cases, f_locals and f_globals are dictionaries
             # however via `exec(...)` / `eval(...)` they can be other types
@@ -377,12 +377,10 @@ class Traceback(List[TracebackEntry]):
         return self
 
     @overload
-    def __getitem__(self, key: "SupportsIndex") -> TracebackEntry:
-        ...
+    def __getitem__(self, key: "SupportsIndex") -> TracebackEntry: ...
 
     @overload
-    def __getitem__(self, key: slice) -> "Traceback":
-        ...
+    def __getitem__(self, key: slice) -> "Traceback": ...
 
     def __getitem__(
         self, key: Union["SupportsIndex", slice]
@@ -1045,13 +1043,13 @@ class FormattedExcinfo:
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 if isinstance(e, BaseExceptionGroup):
-                    reprtraceback: Union[
-                        ReprTracebackNative, ReprTraceback
-                    ] = ReprTracebackNative(
-                        traceback.format_exception(
-                            type(excinfo_.value),
-                            excinfo_.value,
-                            excinfo_.traceback[0]._rawentry,
+                    reprtraceback: Union[ReprTracebackNative, ReprTraceback] = (
+                        ReprTracebackNative(
+                            traceback.format_exception(
+                                type(excinfo_.value),
+                                excinfo_.value,
+                                excinfo_.traceback[0]._rawentry,
+                            )
                         )
                     )
                 else:

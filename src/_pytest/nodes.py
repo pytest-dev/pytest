@@ -104,6 +104,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ``Collector``\'s are the internal nodes of the tree, and ``Item``\'s are the
     leaf nodes.
     """
+
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
@@ -325,12 +326,10 @@ class Node(abc.ABC, metaclass=NodeMeta):
                     yield node, mark
 
     @overload
-    def get_closest_marker(self, name: str) -> Optional[Mark]:
-        ...
+    def get_closest_marker(self, name: str) -> Optional[Mark]: ...
 
     @overload
-    def get_closest_marker(self, name: str, default: Mark) -> Mark:
-        ...
+    def get_closest_marker(self, name: str, default: Mark) -> Mark: ...
 
     def get_closest_marker(
         self, name: str, default: Optional[Mark] = None
