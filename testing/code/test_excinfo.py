@@ -1792,6 +1792,7 @@ def test_check_error_notes_failure(
         with pytest.raises(type(error), match=match):
             raise error
 
+
 def test_notes_getattr_keyerror():
     """Non-regression test for #11872.
 
