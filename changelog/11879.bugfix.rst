@@ -1,1 +1,1 @@
-Fix an edge case where ``ExceptionInfo._stringify_exception`` could crash ``pytest.raises``.
+Fix an edge case where ``ExceptionInfo._stringify_exception`` could crash :func:`pytest.raises`.
