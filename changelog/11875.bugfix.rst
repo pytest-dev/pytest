@@ -1,0 +1,1 @@
+Correctly handle errors from :func:`getpass.getuser` in Python 3.13.
