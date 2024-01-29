@@ -203,7 +203,7 @@ def get_user() -> Optional[str]:
         import getpass
 
         return getpass.getuser()
-    except (ImportError, KeyError):
+    except (ImportError, OSError, KeyError):
         return None
 
 
