@@ -47,6 +47,7 @@ from _pytest._io import TerminalWriter
 from _pytest._io.saferepr import safeformat
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import get_real_func
+from _pytest.compat import safe_getattr
 from _pytest.deprecated import check_ispytest
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -702,7 +703,7 @@ class ExceptionInfo(Generic[E]):
         return "\n".join(
             [
                 str(exc),
-                *getattr(exc, "__notes__", []),
+                *safe_getattr(exc, "__notes__", []),
             ]
         )
 
