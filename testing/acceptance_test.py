@@ -1450,3 +1450,11 @@ def test_issue_9765(pytester: Pytester) -> None:
         raise AssertionError(
             f"pytest command failed:\n{exc.stdout=!s}\n{exc.stderr=!s}"
         ) from exc
+
+
+def test_issue_11872():
+    # see https://github.com/pytest-dev/pytest/issues/11872
+    from urllib.error import HTTPError
+
+    with pytest.raises(HTTPError, match="Not Found"):
+        raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
