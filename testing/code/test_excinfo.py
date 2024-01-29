@@ -11,6 +11,7 @@ import textwrap
 from pathlib import Path
 from typing import Any
 from typing import TYPE_CHECKING
+from urllib.error import HTTPError
 
 import _pytest._code
 import pytest
@@ -1790,3 +1791,13 @@ def test_check_error_notes_failure(
     with pytest.raises(AssertionError):
         with pytest.raises(type(error), match=match):
             raise error
+
+def test_notes_getattr_keyerror():
+    """Non-regression test for #11872.
+
+    HTTPError in Python < 3.10 was subclassing tempfile._TemporaryFileWrapper that
+    was not properly initialize and not exposing a `__file__` attribute:
+    https://github.com/python/cpython/issues/98778
+    """
+    with pytest.raises(HTTPError, match="Not Found"):
+        raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")
