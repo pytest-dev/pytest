@@ -699,10 +699,21 @@ class ExceptionInfo(Generic[E]):
         return fmt.repr_excinfo(self)
 
     def _stringify_exception(self, exc: BaseException) -> str:
+        try:
+            notes = getattr(exc, "__notes__", [])
+        except KeyError:
+            # Workaround for https://github.com/python/cpython/issues/98778 on
+            # Python <= 3.9, and some 3.10 and 3.11 patch versions.
+            HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
+            if sys.version_info[:2] <= (3, 11) and isinstance(exc, HTTPError):
+                notes = []
+            else:
+                raise
+
         return "\n".join(
             [
                 str(exc),
-                *getattr(exc, "__notes__", []),
+                *notes,
             ]
         )
 

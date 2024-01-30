@@ -302,3 +302,16 @@ class TestRaises:
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover
         assert "must be a BaseException type, not str" in str(excinfo.value)
+
+    def test_issue_11872(self) -> None:
+        """Regression test for #11872.
+
+        urllib.error.HTTPError on Python<=3.9 raises KeyError instead of
+        AttributeError on invalid attribute access.
+
+        https://github.com/python/cpython/issues/98778
+        """
+        from urllib.error import HTTPError
+
+        with pytest.raises(HTTPError, match="Not Found"):
+            raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
