@@ -1,8 +1,10 @@
 # mypy: allow-untyped-defs
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
@@ -1427,6 +1429,28 @@ def test_importorskip() -> None:
         match="^could not import 'doesnotexist': No module named .*",
     ):
         pytest.importorskip("doesnotexist")
+
+
+def test_importorskip_module_not_found() -> None:
+    with pytest.raises(
+        pytest.skip.Exception,
+        match="^could not import 'doesnotexist': No module named .*",
+    ):
+        pytest.importorskip("doesnotexist", exc=ModuleNotFoundError)
+
+
+def test_importorskip_module_not_found_raises_on_import_error(
+    monkeypatch: MonkeyPatch, tmp_path: Path
+) -> None:
+    on_path = tmp_path / "on_path"
+    on_path.mkdir()
+
+    (on_path / "doesnotexist.py").write_bytes(b"1 / 0")
+
+    monkeypatch.syspath_prepend(on_path)
+
+    with pytest.raises(ImportError):
+        pytest.importorskip("doesnotexist", exc=ModuleNotFoundError)
 
 
 def test_relpath_rootdir(pytester: Pytester) -> None:

@@ -191,7 +191,11 @@ def xfail(reason: str = "") -> NoReturn:
 
 
 def importorskip(
-    modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
+    modname: str,
+    minversion: Optional[str] = None,
+    reason: Optional[str] = None,
+    *,
+    exc: Type[ImportError] = ImportError,
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.
@@ -204,6 +208,9 @@ def importorskip(
     :param reason:
         If given, this reason is shown as the message when the module cannot
         be imported.
+    :param exc:
+        Either ImportError or ModuleNotFoundError, the exception to catch
+        when importing.
 
     :returns:
         The imported module. This should be assigned to its canonical name.
@@ -224,9 +231,9 @@ def importorskip(
         warnings.simplefilter("ignore")
         try:
             __import__(modname)
-        except ImportError as exc:
+        except exc as e:
             if reason is None:
-                reason = f"could not import {modname!r}: {exc}"
+                reason = f"could not import {modname!r}: {e}"
             raise Skipped(reason, allow_module_level=True) from None
     mod = sys.modules[modname]
     if minversion is None:

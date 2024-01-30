@@ -197,6 +197,14 @@ the test. You can also skip based on the version number of a library:
 The version will be read from the specified
 module's ``__version__`` attribute.
 
+Sometimes importing a module can fail due to an exception, if you want to
+only skip if the module does not exist pass ModuleNotFoundError as the
+``exc`` kwarg:
+
+.. code-block:: python
+
+    docutils = pytest.importorskip("docutils", exc=ModuleNotFoundError)
+
 Summary
 ~~~~~~~
 
