@@ -266,6 +266,10 @@ These are breaking changes where deprecation was not possible.
   therefore fail on the newly-re-emitted warnings.
 
 
+- The internal ``FixtureManager.getfixtureclosure`` method has changed. Plugins which use this method or
+  which subclass ``FixtureManager`` and overwrite that method will need to adapt to the change.
+
+
 
 Deprecations
 ------------
