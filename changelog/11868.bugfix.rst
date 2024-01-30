@@ -1,1 +1,1 @@
-Reintroduced the default value for the ``ignore_args`` of internal ``FixtureManager.getfixtureclosure``: even though it is an internal API, it was changed by accident in 8.0.0 and this broken a number of plugins.
+Reintroduced the default value for the ``ignore_args`` of internal ``FixtureManager.getfixtureclosure``: it was changed in 8.0.0 and this has broken a number of plugins.
