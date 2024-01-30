@@ -4,9 +4,9 @@ Tests and examples for correct "+/-" usage in error diffs.
 See https://github.com/pytest-dev/pytest/issues/3333 for details.
 
 """
+
 import pytest
 from _pytest.pytester import Pytester
-
 
 TESTCASES = [
     pytest.param(

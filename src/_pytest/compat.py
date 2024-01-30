@@ -17,7 +17,6 @@ from typing import Final
 from typing import NoReturn
 from typing import TypeVar
 
-
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 

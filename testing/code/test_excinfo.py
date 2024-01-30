@@ -24,7 +24,6 @@ from _pytest.pathlib import import_path
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 
-
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
 

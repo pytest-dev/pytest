@@ -1,4 +1,5 @@
 """create errno-specific classes for IO or os calls."""
+
 from __future__ import annotations
 
 import errno

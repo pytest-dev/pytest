@@ -1,5 +1,6 @@
 """Exception classes and constants handling test outcomes as well as
 functions creating them."""
+
 import sys
 from typing import Any
 from typing import Callable

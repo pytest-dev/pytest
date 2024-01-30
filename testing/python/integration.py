@@ -43,8 +43,9 @@ class TestMockDecoration:
         assert values == ("x",)
 
     def test_getfuncargnames_patching(self):
-        from _pytest.compat import getfuncargnames
         from unittest.mock import patch
+
+        from _pytest.compat import getfuncargnames
 
         class T:
             def original(self, x, y, z):

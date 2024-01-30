@@ -12,7 +12,6 @@ from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 
-
 pastebinfile_key = StashKey[IO[bytes]]()
 
 
@@ -74,8 +73,8 @@ def create_new_paste(contents: Union[str, bytes]) -> str:
     :returns: URL to the pasted contents, or an error message.
     """
     import re
-    from urllib.request import urlopen
     from urllib.parse import urlencode
+    from urllib.request import urlopen
 
     params = {"code": contents, "lexer": "text", "expiry": "1week"}
     url = "https://bpa.st"

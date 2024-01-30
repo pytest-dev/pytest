@@ -15,6 +15,7 @@ from typing import Union
 from iniconfig import SectionWrapper
 
 import py
+
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config import hookimpl

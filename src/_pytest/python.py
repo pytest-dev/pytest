@@ -81,7 +81,6 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
-
 _PYTEST_DIR = Path(_pytest.__file__).parent
 
 
@@ -1793,9 +1792,11 @@ class Function(PyobjMixin, nodes.Item):
             if self.config.getoption("tbstyle", "auto") == "auto":
                 if len(ntraceback) > 2:
                     ntraceback = Traceback(
-                        entry
-                        if i == 0 or i == len(ntraceback) - 1
-                        else entry.with_repr_style("short")
+                        (
+                            entry
+                            if i == 0 or i == len(ntraceback) - 1
+                            else entry.with_repr_style("short")
+                        )
                         for i, entry in enumerate(ntraceback)
                     )
 
