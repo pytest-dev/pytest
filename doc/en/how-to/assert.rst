@@ -154,7 +154,7 @@ method to test for exceptions returned as part of an :class:`ExceptionGroup`:
 .. code-block:: python
 
     def test_exception_in_group():
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(ExceptionGroup) as excinfo:
             raise ExceptionGroup(
                 "Group message",
                 [
@@ -176,7 +176,7 @@ exception at a specific level; exceptions contained directly in the top
 .. code-block:: python
 
     def test_exception_in_group_at_given_depth():
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(ExceptionGroup) as excinfo:
             raise ExceptionGroup(
                 "Group message",
                 [
