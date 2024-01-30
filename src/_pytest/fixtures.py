@@ -1524,7 +1524,7 @@ class FixtureManager:
         self,
         parentnode: nodes.Node,
         initialnames: Tuple[str, ...],
-        ignore_args: AbstractSet[str],
+        ignore_args: AbstractSet[str] = frozenset(),
     ) -> Tuple[List[str], Dict[str, Sequence[FixtureDef[Any]]]]:
         # Collect the closure of all fixtures, starting with the given
         # fixturenames as the initial set.  As we have to visit all
