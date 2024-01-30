@@ -266,8 +266,7 @@ These are breaking changes where deprecation was not possible.
   therefore fail on the newly-re-emitted warnings.
 
 
-- The internal ``FixtureManager.getfixtureclosure`` method introduced a breaking change (mostly by accident):
-  the ``ignore_args`` parameter was changed to an ``AbstractSet[str]`` and lost the default argument. Plugins
+- The internal ``FixtureManager.getfixtureclosure`` method has changed. Plugins which use this method or
   which subclass ``FixtureManager`` and overwrite that method will need to adapt to the change.
 
 
