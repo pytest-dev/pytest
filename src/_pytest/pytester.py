@@ -2,6 +2,7 @@
 
 PYTEST_DONT_REWRITE
 """
+
 import collections.abc
 import contextlib
 import gc
@@ -243,8 +244,7 @@ class RecordedHookCall:
 
     if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
-        def __getattr__(self, key: str):
-            ...
+        def __getattr__(self, key: str): ...
 
 
 @final
@@ -325,15 +325,13 @@ class HookRecorder:
     def getreports(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]:
-        ...
+    ) -> Sequence[CollectReport]: ...
 
     @overload
     def getreports(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]:
-        ...
+    ) -> Sequence[TestReport]: ...
 
     @overload
     def getreports(
@@ -342,8 +340,7 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]:
-        ...
+    ) -> Sequence[Union[CollectReport, TestReport]]: ...
 
     def getreports(
         self,
@@ -390,15 +387,13 @@ class HookRecorder:
     def getfailures(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]:
-        ...
+    ) -> Sequence[CollectReport]: ...
 
     @overload
     def getfailures(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]:
-        ...
+    ) -> Sequence[TestReport]: ...
 
     @overload
     def getfailures(
@@ -407,8 +402,7 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]:
-        ...
+    ) -> Sequence[Union[CollectReport, TestReport]]: ...
 
     def getfailures(
         self,

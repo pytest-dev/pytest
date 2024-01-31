@@ -1,5 +1,6 @@
 """Hook specifications for pytest plugins which are invoked by pytest itself
 and by builtin plugins."""
+
 from pathlib import Path
 from typing import Any
 from typing import Dict
@@ -20,12 +21,13 @@ if TYPE_CHECKING:
     import warnings
     from typing import Literal
 
-    from _pytest._code.code import ExceptionRepr
     from _pytest._code.code import ExceptionInfo
+    from _pytest._code.code import ExceptionRepr
+    from _pytest.compat import LEGACY_PATH
+    from _pytest.config import _PluggyPlugin
     from _pytest.config import Config
     from _pytest.config import ExitCode
     from _pytest.config import PytestPluginManager
-    from _pytest.config import _PluggyPlugin
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureDef
     from _pytest.fixtures import SubRequest
@@ -42,7 +44,6 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
     from _pytest.terminal import TerminalReporter
     from _pytest.terminal import TestShortLogReport
-    from _pytest.compat import LEGACY_PATH
 
 
 hookspec = HookspecMarker("pytest")

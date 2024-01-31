@@ -1,4 +1,5 @@
 """Support for presenting detailed information in failing assertions."""
+
 import sys
 from typing import Any
 from typing import Generator

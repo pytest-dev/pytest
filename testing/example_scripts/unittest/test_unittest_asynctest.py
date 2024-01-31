@@ -1,9 +1,9 @@
 """Issue #7110"""
+
 import asyncio
 from typing import List
 
 import asynctest
-
 
 teardowns: List[None] = []
 

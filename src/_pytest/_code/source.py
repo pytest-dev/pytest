@@ -46,12 +46,10 @@ class Source:
     __hash__ = None  # type: ignore
 
     @overload
-    def __getitem__(self, key: int) -> str:
-        ...
+    def __getitem__(self, key: int) -> str: ...
 
     @overload
-    def __getitem__(self, key: slice) -> "Source":
-        ...
+    def __getitem__(self, key: slice) -> "Source": ...
 
     def __getitem__(self, key: Union[int, slice]) -> Union[str, "Source"]:
         if isinstance(key, int):

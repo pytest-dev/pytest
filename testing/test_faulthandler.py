@@ -113,6 +113,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
     to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
     other interactive exception (pytest-dev/pytest-faulthandler#14)."""
     import faulthandler
+
     from _pytest import faulthandler as faulthandler_plugin
 
     called = []

@@ -8,7 +8,6 @@ from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 from _pytest.stash import StashKey
 
-
 fault_handler_original_stderr_fd_key = StashKey[int]()
 fault_handler_stderr_fd_key = StashKey[int]()
 

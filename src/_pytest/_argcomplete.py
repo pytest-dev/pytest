@@ -61,6 +61,7 @@ If things do not work right away:
   which should throw a KeyError: 'COMPLINE' (which is properly set by the
   global argcomplete script).
 """
+
 import argparse
 import os
 import sys

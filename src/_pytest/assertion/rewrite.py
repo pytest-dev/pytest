@@ -1,4 +1,5 @@
 """Rewrite assertion AST to produce nice error messages."""
+
 import ast
 import errno
 import functools
@@ -33,14 +34,15 @@ from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
-from _pytest.assertion.util import (  # noqa: F401
-    format_explanation as _format_explanation,
-)
 from _pytest.config import Config
 from _pytest.main import Session
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.stash import StashKey
+
+# fmt: off
+from _pytest.assertion.util import format_explanation as _format_explanation  # noqa:F401, isort:skip
+# fmt:on
 
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
@@ -669,9 +671,9 @@ class AssertionRewriter(ast.NodeVisitor):
             self.enable_assertion_pass_hook = False
         self.source = source
         self.scope: tuple[ast.AST, ...] = ()
-        self.variables_overwrite: defaultdict[
-            tuple[ast.AST, ...], Dict[str, str]
-        ] = defaultdict(dict)
+        self.variables_overwrite: defaultdict[tuple[ast.AST, ...], Dict[str, str]] = (
+            defaultdict(dict)
+        )
 
     def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""
@@ -858,8 +860,9 @@ class AssertionRewriter(ast.NodeVisitor):
         the expression is false.
         """
         if isinstance(assert_.test, ast.Tuple) and len(assert_.test.elts) >= 1:
-            from _pytest.warning_types import PytestAssertRewriteWarning
             import warnings
+
+            from _pytest.warning_types import PytestAssertRewriteWarning
 
             # TODO: This assert should not be needed.
             assert self.module_path is not None

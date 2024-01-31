@@ -1,4 +1,5 @@
 """Generic mechanism for marking and selecting python functions."""
+
 import dataclasses
 from typing import AbstractSet
 from typing import Collection

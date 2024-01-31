@@ -830,9 +830,10 @@ def test_live_logging_suspends_capture(
     We parametrize the test to also make sure _LiveLoggingStreamHandler works correctly if no capture manager plugin
     is installed.
     """
-    import logging
     import contextlib
+    import logging
     from functools import partial
+
     from _pytest.logging import _LiveLoggingStreamHandler
 
     class MockCaptureManager:

@@ -1,4 +1,5 @@
 """Core implementation of the testing process: init, session, runtest loop."""
+
 import argparse
 import dataclasses
 import fnmatch
@@ -722,14 +723,12 @@ class Session(nodes.Collector):
     @overload
     def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: "Literal[True]" = ...
-    ) -> Sequence[nodes.Item]:
-        ...
+    ) -> Sequence[nodes.Item]: ...
 
     @overload
     def perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
-    ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
-        ...
+    ) -> Sequence[Union[nodes.Item, nodes.Collector]]: ...
 
     def perform_collect(  # noqa: F811
         self, args: Optional[Sequence[str]] = None, genitems: bool = True

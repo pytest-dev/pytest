@@ -295,9 +295,9 @@ class TestReportSerialization:
 
         reprec = pytester.inline_run()
         if report_class is TestReport:
-            reports: Union[
-                Sequence[TestReport], Sequence[CollectReport]
-            ] = reprec.getreports("pytest_runtest_logreport")
+            reports: Union[Sequence[TestReport], Sequence[CollectReport]] = (
+                reprec.getreports("pytest_runtest_logreport")
+            )
             # we have 3 reports: setup/call/teardown
             assert len(reports) == 3
             # get the call report

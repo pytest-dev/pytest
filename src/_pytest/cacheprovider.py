@@ -1,4 +1,5 @@
 """Implementation of the cache provider."""
+
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
 import dataclasses
@@ -111,6 +112,7 @@ class Cache:
         """
         check_ispytest(_ispytest)
         import warnings
+
         from _pytest.warning_types import PytestCacheWarning
 
         warnings.warn(

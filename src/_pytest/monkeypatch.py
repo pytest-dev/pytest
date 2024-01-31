@@ -1,4 +1,5 @@
 """Monkeypatching and mocking functionality."""
+
 import os
 import re
 import sys
@@ -168,8 +169,7 @@ class MonkeyPatch:
         name: object,
         value: Notset = ...,
         raising: bool = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def setattr(
@@ -178,8 +178,7 @@ class MonkeyPatch:
         name: str,
         value: object,
         raising: bool = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def setattr(
         self,

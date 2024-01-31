@@ -1,4 +1,5 @@
 """Test correct setup/teardowns at module, class, and instance level."""
+
 from typing import List
 
 import pytest

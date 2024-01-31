@@ -1,5 +1,6 @@
 """Provides a function to report all internal modules for using freezing
 tools."""
+
 import types
 from typing import Iterator
 from typing import List
