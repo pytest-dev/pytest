@@ -779,8 +779,7 @@ def raises(
     expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
-) -> "RaisesContext[E]":
-    ...
+) -> "RaisesContext[E]": ...
 
 
 @overload
@@ -789,8 +788,7 @@ def raises(  # noqa: F811
     func: Callable[..., Any],
     *args: Any,
     **kwargs: Any,
-) -> _pytest._code.ExceptionInfo[E]:
-    ...
+) -> _pytest._code.ExceptionInfo[E]: ...
 
 
 def raises(  # noqa: F811

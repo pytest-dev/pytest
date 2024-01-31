@@ -112,6 +112,7 @@ class Cache:
         """
         check_ispytest(_ispytest)
         import warnings
+
         from _pytest.warning_types import PytestCacheWarning
 
         warnings.warn(

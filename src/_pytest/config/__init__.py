@@ -66,9 +66,10 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
 if TYPE_CHECKING:
+    from .argparsing import Argument
+    from .argparsing import Parser
     from _pytest._code.code import _TracebackStyle
     from _pytest.terminal import TerminalReporter
-    from .argparsing import Argument, Parser
 
 
 _PluggyPlugin = object
@@ -973,7 +974,8 @@ class Config:
         *,
         invocation_params: Optional[InvocationParams] = None,
     ) -> None:
-        from .argparsing import Parser, FILE_OR_DIR
+        from .argparsing import FILE_OR_DIR
+        from .argparsing import Parser
 
         if invocation_params is None:
             invocation_params = self.InvocationParams(
@@ -1390,8 +1392,9 @@ class Config:
             return
 
         # Imported lazily to improve start-up time.
+        from packaging.requirements import InvalidRequirement
+        from packaging.requirements import Requirement
         from packaging.version import Version
-        from packaging.requirements import InvalidRequirement, Requirement
 
         plugin_info = self.pluginmanager.list_plugin_distinfo()
         plugin_dist_info = {dist.project_name: dist.version for _, dist in plugin_info}

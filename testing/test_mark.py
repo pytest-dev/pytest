@@ -943,7 +943,8 @@ def test_parameterset_for_parametrize_marks(
         )
 
     config = pytester.parseconfig()
-    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    from _pytest.mark import get_empty_parameterset_mark
+    from _pytest.mark import pytest_configure
 
     pytest_configure(config)
     result_mark = get_empty_parameterset_mark(config, ["a"], all)
@@ -967,7 +968,8 @@ def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
     )
 
     config = pytester.parseconfig()
-    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    from _pytest.mark import get_empty_parameterset_mark
+    from _pytest.mark import pytest_configure
 
     pytest_configure(config)
 

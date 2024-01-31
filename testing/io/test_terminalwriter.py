@@ -13,7 +13,6 @@ import pytest
 from _pytest._io import terminalwriter
 from _pytest.monkeypatch import MonkeyPatch
 
-
 # These tests were initially copied from py 1.8.1.
 
 

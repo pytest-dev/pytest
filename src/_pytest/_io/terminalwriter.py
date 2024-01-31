@@ -1,4 +1,5 @@
 """Helper functions for writing to terminals and files."""
+
 import os
 import shutil
 import sys
@@ -9,7 +10,6 @@ from typing import Sequence
 from typing import TextIO
 
 from .wcwidth import wcswidth
-
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
 
@@ -210,8 +210,8 @@ class TerminalWriter:
                 from pygments.lexers.python import PythonLexer as Lexer
             elif lexer == "diff":
                 from pygments.lexers.diff import DiffLexer as Lexer
-            from pygments import highlight
             import pygments.util
+            from pygments import highlight
         except ImportError:
             return source
         else:

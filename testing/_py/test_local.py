@@ -7,9 +7,10 @@ import time
 import warnings
 from unittest import mock
 
-import pytest
 from py import error
 from py.path import local
+
+import pytest
 
 
 @contextlib.contextmanager
@@ -1367,8 +1368,8 @@ class TestPOSIXLocalPath:
         assert realpath.basename == "file"
 
     def test_owner(self, path1, tmpdir):
-        from pwd import getpwuid  # type:ignore[attr-defined]
         from grp import getgrgid  # type:ignore[attr-defined]
+        from pwd import getpwuid  # type:ignore[attr-defined]
 
         stat = path1.stat()
         assert stat.path == path1
