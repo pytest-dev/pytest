@@ -164,8 +164,7 @@ Add warning filters to marked test items.
         .. code-block:: python
 
             @pytest.mark.filterwarnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
-            def test_foo():
-                ...
+            def test_foo(): ...
 
 
 .. _`pytest.mark.parametrize ref`:
@@ -276,8 +275,7 @@ For example:
 .. code-block:: python
 
     @pytest.mark.timeout(10, "slow", method="thread")
-    def test_function():
-        ...
+    def test_function(): ...
 
 Will create and attach a :class:`Mark <pytest.Mark>` object to the collected
 :class:`Item <pytest.Item>`, which can then be accessed by fixtures or hooks with
@@ -294,8 +292,7 @@ Example for using multiple custom markers:
 
     @pytest.mark.timeout(10, "slow", method="thread")
     @pytest.mark.slow
-    def test_function():
-        ...
+    def test_function(): ...
 
 When :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>` or :meth:`Node.iter_markers_with_node <_pytest.nodes.Node.iter_markers_with_node>` is used with multiple markers, the marker closest to the function will be iterated over first. The above example will result in ``@pytest.mark.slow`` followed by ``@pytest.mark.timeout(...)``.
 

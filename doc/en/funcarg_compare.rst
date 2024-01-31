@@ -99,8 +99,7 @@ sets.  pytest-2.3 introduces a decorator for use on the factory itself:
 .. code-block:: python
 
     @pytest.fixture(params=["mysql", "pg"])
-    def db(request):
-        ...  # use request.param
+    def db(request): ...  # use request.param
 
 Here the factory will be invoked twice (with the respective "mysql"
 and "pg" values set as ``request.param`` attributes) and all of
@@ -141,8 +140,7 @@ argument:
 .. code-block:: python
 
     @pytest.fixture()
-    def db(request):
-        ...
+    def db(request): ...
 
 The name under which the funcarg resource can be requested is ``db``.
 
@@ -151,8 +149,7 @@ aka:
 
 .. code-block:: python
 
-    def pytest_funcarg__db(request):
-        ...
+    def pytest_funcarg__db(request): ...
 
 
 But it is then not possible to define scoping and parametrization.

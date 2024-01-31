@@ -1721,8 +1721,7 @@ You can specify multiple fixtures like this:
 .. code-block:: python
 
     @pytest.mark.usefixtures("cleandir", "anotherfixture")
-    def test():
-        ...
+    def test(): ...
 
 and you may specify fixture usage at the test module level using :globalvar:`pytestmark`:
 
@@ -1750,8 +1749,7 @@ into an ini-file:
 
         @pytest.mark.usefixtures("my_other_fixture")
         @pytest.fixture
-        def my_fixture_that_sadly_wont_use_my_other_fixture():
-            ...
+        def my_fixture_that_sadly_wont_use_my_other_fixture(): ...
 
     This generates a deprecation warning, and will become an error in Pytest 8.
 
