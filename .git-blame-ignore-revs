@@ -26,3 +26,6 @@ afc607cfd81458d4e4f3b1f3cf8cc931b933907e
 
 # move argument parser to own file
 c9df77cbd6a365dcb73c39618e4842711817e871
+
+# Replace reorder-python-imports by isort due to black incompatibility (#11896)
+8b54596639f41dfac070030ef20394b9001fe63c
