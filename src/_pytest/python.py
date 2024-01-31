@@ -203,7 +203,11 @@ def pytest_collect_directory(
     path: Path, parent: nodes.Collector
 ) -> Optional[nodes.Collector]:
     pkginit = path / "__init__.py"
-    if pkginit.is_file():
+    try:
+        is_accessible_file = pkginit.is_file()
+    except PermissionError:
+        is_accessible_file = False
+    if is_accessible_file:
         pkg: Package = Package.from_parent(parent, path=path)
         return pkg
     return None
