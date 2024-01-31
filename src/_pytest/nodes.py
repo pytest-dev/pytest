@@ -45,8 +45,8 @@ from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     # Imported here due to circular import.
-    from _pytest.main import Session
     from _pytest._code.code import _TracebackStyle
+    from _pytest.main import Session
 
 
 SEP = "/"
@@ -179,8 +179,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
     #: A ``LEGACY_PATH`` copy of the :attr:`path` attribute. Intended for usage
     #: for methods not migrated to ``pathlib.Path`` yet, such as
     #: :meth:`Item.reportinfo <pytest.Item.reportinfo>`. Will be deprecated in
-    #: a future release, prefer using :attr:`path` instead.
     fspath: LEGACY_PATH
+    #: a future release, prefer using :attr:`path` instead.
 
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
@@ -395,12 +395,10 @@ class Node(abc.ABC, metaclass=NodeMeta):
                     yield node, mark
 
     @overload
-    def get_closest_marker(self, name: str) -> Optional[Mark]:
-        ...
+    def get_closest_marker(self, name: str) -> Optional[Mark]: ...
 
     @overload
-    def get_closest_marker(self, name: str, default: Mark) -> Mark:
-        ...
+    def get_closest_marker(self, name: str, default: Mark) -> Mark: ...
 
     def get_closest_marker(
         self, name: str, default: Optional[Mark] = None

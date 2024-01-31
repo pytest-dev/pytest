@@ -1,4 +1,5 @@
 """Python version compatibility code."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -17,7 +18,6 @@ from typing import NoReturn
 from typing import TypeVar
 
 import py
-
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")

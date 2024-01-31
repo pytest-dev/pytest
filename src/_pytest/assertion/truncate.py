@@ -3,13 +3,13 @@
 Current default behaviour is to truncate assertion explanations at
 terminal lines, unless running with an assertions verbosity level of at least 2 or running on CI.
 """
+
 from typing import List
 from typing import Optional
 
 from _pytest.assertion import util
 from _pytest.config import Config
 from _pytest.nodes import Item
-
 
 DEFAULT_MAX_LINES = 8
 DEFAULT_MAX_CHARS = 8 * 80

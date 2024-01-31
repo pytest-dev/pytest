@@ -66,7 +66,6 @@ from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 
-
 if TYPE_CHECKING:
     from typing import Deque
 
@@ -1239,8 +1238,7 @@ def fixture(
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = ...,
-) -> FixtureFunction:
-    ...
+) -> FixtureFunction: ...
 
 
 @overload
@@ -1254,8 +1252,7 @@ def fixture(  # noqa: F811
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = None,
-) -> FixtureFunctionMarker:
-    ...
+) -> FixtureFunctionMarker: ...
 
 
 def fixture(  # noqa: F811

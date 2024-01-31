@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 24.1.1
     hooks:
     -   id: black
         args: [--safe, --quiet]
@@ -36,11 +36,12 @@ repos:
         additional_dependencies:
           - flake8-typing-imports==1.12.0
           - flake8-docstrings==1.5.0
--   repo: https://github.com/asottile/reorder-python-imports
-    rev: v3.12.0
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
     hooks:
-    -   id: reorder-python-imports
-        args: ['--application-directories=.:src', --py38-plus]
+      - id: isort
+        name: isort
+        args: [--force-single-line, --profile=black]
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.15.0
     hooks:

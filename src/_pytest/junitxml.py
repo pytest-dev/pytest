@@ -6,6 +6,7 @@ Based on initial code from Ross Lawley.
 Output conforms to
 https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
+
 import functools
 import os
 import platform
@@ -32,7 +33,6 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
-
 
 xml_key = StashKey["LogXML"]()
 

@@ -1,4 +1,5 @@
 """The pytest entry point."""
+
 import pytest
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 """Discover and run std-library "unittest" style tests."""
+
 import sys
 import traceback
 import types
@@ -33,6 +34,7 @@ from _pytest.scope import Scope
 
 if TYPE_CHECKING:
     import unittest
+
     import twisted.trial.unittest
 
     _SysExcInfoType = Union[
@@ -412,8 +414,8 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
 def check_testcase_implements_trial_reporter(done: List[int] = []) -> None:
     if done:
         return
-    from zope.interface import classImplements
     from twisted.trial.itrial import IReporter
+    from zope.interface import classImplements
 
     classImplements(TestCaseFunction, IReporter)
     done.append(1)

@@ -1,11 +1,11 @@
 """Module containing a parametrized tests testing cross-python serialization
 via the pickle module."""
+
 import shutil
 import subprocess
 import textwrap
 
 import pytest
-
 
 pythonlist = ["python3.9", "python3.10", "python3.11"]
 

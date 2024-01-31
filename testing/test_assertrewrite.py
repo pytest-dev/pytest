@@ -1036,8 +1036,8 @@ class TestAssertionRewriteHookDetails:
         assert pytester.runpytest().ret == 0
 
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
-        from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
+        from _pytest.assertion.rewrite import _write_pyc
 
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
@@ -1087,6 +1087,7 @@ class TestAssertionRewriteHookDetails:
         an exception that is propagated to the caller.
         """
         import py_compile
+
         from _pytest.assertion.rewrite import _read_pyc
 
         source = tmp_path / "source.py"

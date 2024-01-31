@@ -1,4 +1,5 @@
 """Access and control log capturing."""
+
 import io
 import logging
 import os

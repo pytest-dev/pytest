@@ -1,7 +1,9 @@
 """Generate an executable with pytest runner embedded using PyInstaller."""
+
 if __name__ == "__main__":
-    import pytest
     import subprocess
+
+    import pytest
 
     hidden = []
     for x in pytest.freeze_includes():
