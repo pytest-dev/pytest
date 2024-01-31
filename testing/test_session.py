@@ -1,7 +1,7 @@
-import pytest
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 class SessionTests:

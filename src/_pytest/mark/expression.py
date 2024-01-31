@@ -27,6 +27,7 @@ from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 
+
 __all__ = [
     "Expression",
     "ParseError",

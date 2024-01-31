@@ -1,13 +1,14 @@
 import os
 import sys
-import warnings
 from typing import List
 from typing import Optional
 from typing import Tuple
+import warnings
 
-import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
+import pytest
+
 
 WARNINGS_SUMMARY_HEADER = "warnings summary"
 
@@ -19,13 +20,11 @@ def pyfile_with_warnings(pytester: Pytester, request: FixtureRequest) -> str:
     test_name = request.function.__name__
     module_name = test_name.lstrip("test_") + "_module"
     test_file = pytester.makepyfile(
-        """
+        f"""
         import {module_name}
         def test_func():
             assert {module_name}.foo() == 1
-        """.format(
-            module_name=module_name
-        ),
+        """,
         **{
             module_name: """
             import warnings
@@ -436,7 +435,7 @@ class TestDeprecationWarningsByDefault:
 
     def create_file(self, pytester: Pytester, mark="") -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest, warnings
 
             warnings.warn(DeprecationWarning("collection"))
@@ -444,9 +443,7 @@ class TestDeprecationWarningsByDefault:
             {mark}
             def test_foo():
                 warnings.warn(PendingDeprecationWarning("test run"))
-        """.format(
-                mark=mark
-            )
+        """
         )
 
     @pytest.mark.parametrize("customize_filters", [True, False])

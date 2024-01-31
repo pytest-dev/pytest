@@ -1,16 +1,16 @@
 import argparse
 import os
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 from typing import Optional
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.config import UsageError
 from _pytest.main import resolve_collection_argument
 from _pytest.main import validate_basetemp
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.mark.parametrize(
@@ -24,19 +24,17 @@ from _pytest.pytester import Pytester
 def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
     returncode, exc = ret_exc
     c1 = pytester.makeconftest(
-        """
+        f"""
         import pytest
 
         def pytest_sessionstart():
-            raise {exc}("boom")
+            raise {exc.__name__}("boom")
 
         def pytest_internalerror(excrepr, excinfo):
             returncode = {returncode!r}
             if returncode is not False:
                 pytest.exit("exiting after %s..." % excinfo.typename, returncode={returncode!r})
-    """.format(
-            returncode=returncode, exc=exc.__name__
-        )
+    """
     )
     result = pytester.runpytest()
     if returncode:
@@ -84,13 +82,11 @@ def test_wrap_session_exit_sessionfinish(
     returncode: Optional[int], pytester: Pytester
 ) -> None:
     pytester.makeconftest(
-        """
+        f"""
         import pytest
         def pytest_sessionfinish():
             pytest.exit(reason="exit_pytest_sessionfinish", returncode={returncode})
-    """.format(
-            returncode=returncode
-        )
+    """
     )
     result = pytester.runpytest()
     if returncode:

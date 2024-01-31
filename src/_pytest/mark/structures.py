@@ -1,7 +1,6 @@
 import collections.abc
 import dataclasses
 import inspect
-import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
@@ -21,6 +20,7 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
@@ -31,6 +31,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
+
 
 if TYPE_CHECKING:
     from ..nodes import Node
@@ -111,7 +112,6 @@ class ParameterSet(NamedTuple):
             Enforce tuple wrapping so single argument tuple values
             don't get decomposed and break tests.
         """
-
         if isinstance(parameterset, cls):
             return parameterset
         if force_tuple:
@@ -271,8 +271,8 @@ class MarkDecorator:
 
     ``MarkDecorators`` are created with ``pytest.mark``::
 
-        mark1 = pytest.mark.NAME              # Simple MarkDecorator
-        mark2 = pytest.mark.NAME(name1=value) # Parametrized MarkDecorator
+        mark1 = pytest.mark.NAME  # Simple MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value)  # Parametrized MarkDecorator
 
     and can then be applied as decorators to test functions::
 
@@ -393,7 +393,7 @@ def get_unpacked_marks(
 
 
 def normalize_mark_list(
-    mark_list: Iterable[Union[Mark, MarkDecorator]]
+    mark_list: Iterable[Union[Mark, MarkDecorator]],
 ) -> Iterable[Mark]:
     """
     Normalize an iterable of Mark or MarkDecorator objects into a list of marks
@@ -433,10 +433,12 @@ if TYPE_CHECKING:
 
     class _SkipMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc,no-overload-impl]
-        def __call__(self, arg: Markable) -> Markable: ...
+        def __call__(self, arg: Markable) -> Markable:
+            ...
 
         @overload
-        def __call__(self, reason: str = ...) -> "MarkDecorator": ...
+        def __call__(self, reason: str = ...) -> "MarkDecorator":
+            ...
 
     class _SkipifMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -444,11 +446,13 @@ if TYPE_CHECKING:
             condition: Union[str, bool] = ...,
             *conditions: Union[str, bool],
             reason: str = ...,
-        ) -> MarkDecorator: ...
+        ) -> MarkDecorator:
+            ...
 
     class _XfailMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc,no-overload-impl]
-        def __call__(self, arg: Markable) -> Markable: ...
+        def __call__(self, arg: Markable) -> Markable:
+            ...
 
         @overload
         def __call__(
@@ -461,7 +465,8 @@ if TYPE_CHECKING:
                 None, Type[BaseException], Tuple[Type[BaseException], ...]
             ] = ...,
             strict: bool = ...,
-        ) -> MarkDecorator: ...
+        ) -> MarkDecorator:
+            ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -477,7 +482,8 @@ if TYPE_CHECKING:
                 ]
             ] = ...,
             scope: Optional[_ScopeName] = ...,
-        ) -> MarkDecorator: ...
+        ) -> MarkDecorator:
+            ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):
         def __call__(self, *fixtures: str) -> MarkDecorator:  # type: ignore[override]
@@ -497,9 +503,10 @@ class MarkGenerator:
 
          import pytest
 
+
          @pytest.mark.slowtest
          def test_function():
-            pass
+             pass
 
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """

@@ -1,6 +1,6 @@
 import os
-import sys
 from pathlib import Path
+import sys
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -37,7 +37,6 @@ def load_config_dict_from_file(
 
     Return None if the file does not contain valid pytest configuration.
     """
-
     # Configuration from ini files are obtained from the [pytest] section, if present.
     if filepath.suffix == ".ini":
         iniconfig = _parse_ini_config(filepath)
@@ -211,9 +210,7 @@ def determine_setup(
         rootdir = absolutepath(os.path.expandvars(rootdir_cmd_arg))
         if not rootdir.is_dir():
             raise UsageError(
-                "Directory '{}' not found. Check your '--rootdir' option.".format(
-                    rootdir
-                )
+                f"Directory '{rootdir}' not found. Check your '--rootdir' option."
             )
     assert rootdir is not None
     return rootdir, inipath, inicfg or {}

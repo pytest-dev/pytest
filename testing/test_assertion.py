@@ -8,14 +8,14 @@ from typing import Optional
 
 import attr
 
-import _pytest.assertion as plugin
-import pytest
 from _pytest import outcomes
+import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
@@ -181,11 +181,9 @@ class TestImportHookInstallation:
         """
         plugins = '"ham"' if mode == "str" else '["ham"]'
         contents = {
-            "conftest.py": """
+            "conftest.py": f"""
                 pytest_plugins = {plugins}
-            """.format(
-                plugins=plugins
-            ),
+            """,
             "ham.py": """
                 import pytest
             """,
@@ -853,9 +851,7 @@ class TestAssert_reprcompare:
         assert "raised in repr" in expl[0]
         assert expl[2:] == [
             "(pytest_assertion plugin: representation of details failed:"
-            " {}:{}: ValueError: 42.".format(
-                __file__, A.__repr__.__code__.co_firstlineno + 1
-            ),
+            f" {__file__}:{A.__repr__.__code__.co_firstlineno + 1}: ValueError: 42.",
             " Probably an object has a faulty __repr__.)",
         ]
 
@@ -1398,7 +1394,6 @@ class TestTruncateExplanation:
 
     def test_full_output_truncated(self, monkeypatch, pytester: Pytester) -> None:
         """Test against full runpytest() output."""
-
         line_count = 7
         line_len = 100
         expected_truncated_lines = 2

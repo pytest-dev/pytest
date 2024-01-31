@@ -1,12 +1,12 @@
+from pathlib import Path
 import re
 import sys
 import warnings
-from pathlib import Path
 
-import pytest
 from _pytest import deprecated
 from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
+import pytest
 from pytest import PytestDeprecationWarning
 
 

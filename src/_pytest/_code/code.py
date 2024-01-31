@@ -1,14 +1,14 @@
 import ast
 import dataclasses
 import inspect
-import os
-import re
-import sys
-import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
 from io import StringIO
+import os
 from pathlib import Path
+import re
+import sys
+import traceback
 from traceback import format_exception_only
 from types import CodeType
 from types import FrameType
@@ -49,6 +49,7 @@ from _pytest.compat import get_real_func
 from _pytest.deprecated import check_ispytest
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
+
 
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import BaseExceptionGroup
@@ -277,9 +278,9 @@ class TracebackEntry:
 
         Mostly for internal use.
         """
-        tbh: Union[bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]] = (
-            False
-        )
+        tbh: Union[
+            bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]
+        ] = False
         for maybe_ns_dct in (self.frame.f_locals, self.frame.f_globals):
             # in normal cases, f_locals and f_globals are dictionaries
             # however via `exec(...)` / `eval(...)` they can be other types
@@ -376,10 +377,12 @@ class Traceback(List[TracebackEntry]):
         return self
 
     @overload
-    def __getitem__(self, key: "SupportsIndex") -> TracebackEntry: ...
+    def __getitem__(self, key: "SupportsIndex") -> TracebackEntry:
+        ...
 
     @overload
-    def __getitem__(self, key: slice) -> "Traceback": ...
+    def __getitem__(self, key: slice) -> "Traceback":
+        ...
 
     def __getitem__(
         self, key: Union["SupportsIndex", slice]
@@ -484,9 +487,10 @@ class ExceptionInfo(Generic[E]):
 
         .. versionadded:: 7.4
         """
-        assert (
-            exception.__traceback__
-        ), "Exceptions passed to ExcInfo.from_exception(...) must have a non-None __traceback__."
+        assert exception.__traceback__, (
+            "Exceptions passed to ExcInfo.from_exception(...)"
+            " must have a non-None __traceback__."
+        )
         exc_info = (type(exception), exception, exception.__traceback__)
         return cls.from_exc_info(exc_info, exprinfo)
 
@@ -585,9 +589,7 @@ class ExceptionInfo(Generic[E]):
     def __repr__(self) -> str:
         if self._excinfo is None:
             return "<ExceptionInfo for raises contextmanager>"
-        return "<{} {} tblen={}>".format(
-            self.__class__.__name__, saferepr(self._excinfo[1]), len(self.traceback)
-        )
+        return f"<{self.__class__.__name__} {saferepr(self._excinfo[1])} tblen={len(self.traceback)}>"
 
     def exconly(self, tryshort: bool = False) -> str:
         """Return the exception as a string.
@@ -1015,13 +1017,8 @@ class FormattedExcinfo:
             extraline: Optional[str] = (
                 "!!! Recursion error detected, but an error occurred locating the origin of recursion.\n"
                 "  The following exception happened when comparing locals in the stack frame:\n"
-                "    {exc_type}: {exc_msg}\n"
-                "  Displaying first and last {max_frames} stack frames out of {total}."
-            ).format(
-                exc_type=type(e).__name__,
-                exc_msg=str(e),
-                max_frames=max_frames,
-                total=len(traceback),
+                f"    {type(e).__name__}: {str(e)}\n"
+                f"  Displaying first and last {max_frames} stack frames out of {len(traceback)}."
             )
             # Type ignored because adding two instances of a List subtype
             # currently incorrectly has type List instead of the subtype.
@@ -1053,13 +1050,13 @@ class FormattedExcinfo:
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 if isinstance(e, BaseExceptionGroup):
-                    reprtraceback: Union[ReprTracebackNative, ReprTraceback] = (
-                        ReprTracebackNative(
-                            traceback.format_exception(
-                                type(excinfo_.value),
-                                excinfo_.value,
-                                excinfo_.traceback[0]._rawentry,
-                            )
+                    reprtraceback: Union[
+                        ReprTracebackNative, ReprTraceback
+                    ] = ReprTracebackNative(
+                        traceback.format_exception(
+                            type(excinfo_.value),
+                            excinfo_.value,
+                            excinfo_.traceback[0]._rawentry,
                         )
                     )
                 else:
@@ -1228,7 +1225,6 @@ class ReprEntry(TerminalRepr):
         the "E" prefix) using syntax highlighting, taking care to not highlighting the ">"
         character, as doing so might break line continuations.
         """
-
         if not self.lines:
             return
 

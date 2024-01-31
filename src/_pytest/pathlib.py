@@ -1,20 +1,15 @@
 import atexit
 import contextlib
-import fnmatch
-import importlib.util
-import itertools
-import os
-import shutil
-import sys
-import types
-import uuid
-import warnings
 from enum import Enum
 from errno import EBADF
 from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
+import fnmatch
 from functools import partial
+import importlib.util
+import itertools
+import os
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
@@ -22,6 +17,9 @@ from os.path import sep
 from pathlib import Path
 from pathlib import PurePath
 from posixpath import sep as posix_sep
+import shutil
+import sys
+import types
 from types import ModuleType
 from typing import Callable
 from typing import Dict
@@ -34,10 +32,13 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
+import uuid
+import warnings
 
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
+
 
 LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
@@ -101,9 +102,7 @@ def on_rm_rf_error(
         if func not in (os.open,):
             warnings.warn(
                 PytestWarning(
-                    "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
-                        func, path, type(exc), exc
-                    )
+                    f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
                 )
             )
         return False
@@ -242,7 +241,7 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
     else:
         raise OSError(
             "could not create numbered dir with prefix "
-            "{prefix} in {root} after 10 tries".format(prefix=prefix, root=root)
+            f"{prefix} in {root} after 10 tries"
         )
 
 

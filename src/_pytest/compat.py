@@ -6,11 +6,11 @@ import dataclasses
 import enum
 import functools
 import inspect
-import os
-import sys
 from inspect import Parameter
 from inspect import signature
+import os
 from pathlib import Path
+import sys
 from typing import Any
 from typing import Callable
 from typing import Final
@@ -18,6 +18,7 @@ from typing import NoReturn
 from typing import TypeVar
 
 import py
+
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
@@ -258,9 +259,7 @@ def get_real_func(obj):
         from _pytest._io.saferepr import saferepr
 
         raise ValueError(
-            ("could not find real function of {start}\nstopped at {current}").format(
-                start=saferepr(start_obj), current=saferepr(obj)
-            )
+            f"could not find real function of {saferepr(start_obj)}\nstopped at {saferepr(obj)}"
         )
     if isinstance(obj, functools.partial):
         obj = obj.func

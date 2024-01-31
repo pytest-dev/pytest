@@ -5,19 +5,19 @@ PYTEST_DONT_REWRITE
 
 import collections.abc
 import contextlib
+from fnmatch import fnmatch
 import gc
 import importlib
+from io import StringIO
 import locale
 import os
+from pathlib import Path
 import platform
 import re
 import shutil
 import subprocess
 import sys
 import traceback
-from fnmatch import fnmatch
-from io import StringIO
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -69,6 +69,7 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestWarning
+
 
 if TYPE_CHECKING:
     import pexpect
@@ -187,7 +188,7 @@ class LsofFdLeakChecker:
                     "*** After:",
                     *(str(f) for f in lines2),
                     "***** %s FD leakage detected" % len(leaked_files),
-                    "*** function %s:%s: %s " % item.location,
+                    "*** function {}:{}: {} ".format(*item.location),
                     "See issue #2366",
                 ]
                 item.warn(PytestWarning("\n".join(error)))
@@ -244,7 +245,8 @@ class RecordedHookCall:
 
     if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
-        def __getattr__(self, key: str): ...
+        def __getattr__(self, key: str):
+            ...
 
 
 @final
@@ -325,13 +327,15 @@ class HookRecorder:
     def getreports(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]: ...
+    ) -> Sequence[CollectReport]:
+        ...
 
     @overload
     def getreports(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]: ...
+    ) -> Sequence[TestReport]:
+        ...
 
     @overload
     def getreports(
@@ -340,7 +344,8 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]: ...
+    ) -> Sequence[Union[CollectReport, TestReport]]:
+        ...
 
     def getreports(
         self,
@@ -372,14 +377,12 @@ class HookRecorder:
                 values.append(rep)
         if not values:
             raise ValueError(
-                "could not find test report matching %r: "
-                "no test reports at all!" % (inamepart,)
+                f"could not find test report matching {inamepart!r}: "
+                "no test reports at all!"
             )
         if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching {!r}: {}".format(
-                    inamepart, values
-                )
+                f"found 2 or more testreports matching {inamepart!r}: {values}"
             )
         return values[0]
 
@@ -387,13 +390,15 @@ class HookRecorder:
     def getfailures(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]: ...
+    ) -> Sequence[CollectReport]:
+        ...
 
     @overload
     def getfailures(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]: ...
+    ) -> Sequence[TestReport]:
+        ...
 
     @overload
     def getfailures(
@@ -402,7 +407,8 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]: ...
+    ) -> Sequence[Union[CollectReport, TestReport]]:
+        ...
 
     def getfailures(
         self,
@@ -801,7 +807,6 @@ class Pytester:
             The first created file.
 
         Examples:
-
         .. code-block:: python
 
             pytester.makefile(".txt", "line1", "line2")
@@ -855,7 +860,6 @@ class Pytester:
         existing files.
 
         Examples:
-
         .. code-block:: python
 
             def test_something(pytester):
@@ -875,7 +879,6 @@ class Pytester:
         existing files.
 
         Examples:
-
         .. code-block:: python
 
             def test_something(pytester):
@@ -1265,9 +1268,7 @@ class Pytester:
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "{!r} item not found in module:\n{}\nitems: {}".format(
-            funcname, source, items
-        )
+        assert 0, f"{funcname!r} item not found in module:\n{source}\nitems: {items}"
 
     def getitems(self, source: Union[str, "os.PathLike[str]"]) -> List[Item]:
         """Return all test items collected from the module.
@@ -1426,10 +1427,7 @@ class Pytester:
             def handle_timeout() -> None:
                 __tracebackhide__ = True
 
-                timeout_message = (
-                    "{seconds} second timeout expired running:"
-                    " {command}".format(seconds=timeout, command=cmdargs)
-                )
+                timeout_message = f"{timeout} second timeout expired running: {cmdargs}"
 
                 popen.kill()
                 popen.wait()

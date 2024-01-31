@@ -1,12 +1,11 @@
 import abc
+from collections import defaultdict
+from collections import deque
+from contextlib import suppress
 import dataclasses
 import functools
 import inspect
 import os
-import warnings
-from collections import defaultdict
-from collections import deque
-from contextlib import suppress
 from pathlib import Path
 from typing import AbstractSet
 from typing import Any
@@ -30,6 +29,7 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 import _pytest
 from _pytest import nodes
@@ -65,6 +65,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
+
 
 if TYPE_CHECKING:
     from typing import Deque
@@ -606,13 +607,9 @@ class FixtureRequest(abc.ABC):
             fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
             if has_params and fixtures_not_supported:
                 msg = (
-                    "{name} does not support fixtures, maybe unittest.TestCase subclass?\n"
-                    "Node id: {nodeid}\n"
-                    "Function type: {typename}"
-                ).format(
-                    name=funcitem.name,
-                    nodeid=funcitem.nodeid,
-                    typename=type(funcitem).__name__,
+                    f"{funcitem.name} does not support fixtures, maybe unittest.TestCase subclass?\n"
+                    f"Node id: {funcitem.nodeid}\n"
+                    f"Function type: {type(funcitem).__name__}"
                 )
                 fail(msg, pytrace=False)
             if has_params:
@@ -745,9 +742,7 @@ class SubRequest(FixtureRequest):
         if node is None and scope is Scope.Class:
             # Fallback to function item itself.
             node = self._pyfuncitem
-        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
-            scope, self._pyfuncitem
-        )
+        assert node, f'Could not obtain a node for scope "{scope}" for function {self._pyfuncitem!r}'
         return node
 
     def _check_scope(
@@ -851,8 +846,8 @@ class FixtureLookupError(LookupError):
                 if faclist:
                     available.add(name)
             if self.argname in available:
-                msg = " recursive dependency involving fixture '{}' detected".format(
-                    self.argname
+                msg = (
+                    f" recursive dependency involving fixture '{self.argname}' detected"
                 )
             else:
                 msg = f"fixture '{self.argname}' not found"
@@ -946,15 +941,13 @@ def _eval_scope_callable(
         result = scope_callable(fixture_name=fixture_name, config=config)  # type: ignore[call-arg]
     except Exception as e:
         raise TypeError(
-            "Error evaluating {} while defining fixture '{}'.\n"
-            "Expected a function with the signature (*, fixture_name, config)".format(
-                scope_callable, fixture_name
-            )
+            f"Error evaluating {scope_callable} while defining fixture '{fixture_name}'.\n"
+            "Expected a function with the signature (*, fixture_name, config)"
         ) from e
     if not isinstance(result, str):
         fail(
-            "Expected {} to return a 'str' while defining fixture '{}', but it returned:\n"
-            "{!r}".format(scope_callable, fixture_name, result),
+            f"Expected {scope_callable} to return a 'str' while defining fixture '{fixture_name}', but it returned:\n"
+            f"{result!r}",
             pytrace=False,
         )
     return result
@@ -1098,9 +1091,7 @@ class FixtureDef(Generic[FixtureValue]):
         return request.param_index if not hasattr(request, "param") else request.param
 
     def __repr__(self) -> str:
-        return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
-            self.argname, self.scope, self.baseid
-        )
+        return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
 
 
 def resolve_fixture_function(
@@ -1121,7 +1112,8 @@ def resolve_fixture_function(
             # Handle the case where fixture is defined not in a test class, but some other class
             # (for example a plugin class with a fixture), see #2270.
             if hasattr(fixturefunc, "__self__") and not isinstance(
-                request.instance, fixturefunc.__self__.__class__  # type: ignore[union-attr]
+                request.instance,
+                fixturefunc.__self__.__class__,  # type: ignore[union-attr]
             ):
                 return fixturefunc
             fixturefunc = getimfunc(fixturedef.func)
@@ -1216,9 +1208,7 @@ class FixtureFunctionMarker:
         if name == "request":
             location = getlocation(function)
             fail(
-                "'request' is a reserved word for fixtures, use another name:\n  {}".format(
-                    location
-                ),
+                f"'request' is a reserved word for fixtures, use another name:\n  {location}",
                 pytrace=False,
             )
 
@@ -1238,7 +1228,8 @@ def fixture(
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = ...,
-) -> FixtureFunction: ...
+) -> FixtureFunction:
+    ...
 
 
 @overload
@@ -1252,7 +1243,8 @@ def fixture(  # noqa: F811
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = None,
-) -> FixtureFunctionMarker: ...
+) -> FixtureFunctionMarker:
+    ...
 
 
 def fixture(  # noqa: F811

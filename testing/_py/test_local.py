@@ -3,8 +3,8 @@ import multiprocessing
 import os
 import sys
 import time
-import warnings
 from unittest import mock
+import warnings
 
 from py import error
 from py.path import local
@@ -182,7 +182,7 @@ class CommonFSTests:
     def test_listdir_filter(self, path1):
         p = path1.listdir(lambda x: x.check(dir=1))
         assert path1.join("sampledir") in p
-        assert not path1.join("samplefile") in p
+        assert path1.join("samplefile") not in p
 
     def test_listdir_sorted(self, path1):
         p = path1.listdir(lambda x: x.check(basestarts="sample"), sort=True)
@@ -202,7 +202,7 @@ class CommonFSTests:
         for i in path1.visit(None, lambda x: x.basename != "sampledir"):
             lst.append(i.relto(path1))
         assert "sampledir" in lst
-        assert not path1.sep.join(["sampledir", "otherfile"]) in lst
+        assert path1.sep.join(["sampledir", "otherfile"]) not in lst
 
     @pytest.mark.parametrize(
         "fil",

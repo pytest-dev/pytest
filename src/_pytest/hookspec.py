@@ -16,10 +16,11 @@ from pluggy import HookspecMarker
 
 from _pytest.deprecated import WARNING_CMDLINE_PREPARSE_HOOK
 
+
 if TYPE_CHECKING:
     import pdb
-    import warnings
     from typing import Literal
+    import warnings
 
     from _pytest._code.code import ExceptionInfo
     from _pytest._code.code import ExceptionRepr

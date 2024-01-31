@@ -1,14 +1,10 @@
 repos:
--   repo: https://github.com/psf/black
-    rev: 24.1.1
-    hooks:
-    -   id: black
-        args: [--safe, --quiet]
--   repo: https://github.com/asottile/blacken-docs
-    rev: 1.16.0
-    hooks:
-    -   id: blacken-docs
-        additional_dependencies: [black==24.1.1]
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: "v0.1.15"
+  hooks:
+    - id: ruff
+      args: ["--fix"]
+    - id: ruff-format
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
@@ -20,33 +16,11 @@ repos:
     -   id: debug-statements
         exclude: _pytest/(debugging|hookspec).py
         language_version: python3
--   repo: https://github.com/PyCQA/autoflake
-    rev: v2.2.1
+-   repo: https://github.com/adamchainz/blacken-docs
+    rev: 1.16.0
     hooks:
-    -   id: autoflake
-        name: autoflake
-        args: ["--in-place", "--remove-unused-variables", "--remove-all-unused-imports"]
-        language: python
-        files: \.py$
--   repo: https://github.com/PyCQA/flake8
-    rev: 6.1.0
-    hooks:
-    -   id: flake8
-        language_version: python3
-        additional_dependencies:
-          - flake8-typing-imports==1.12.0
-          - flake8-docstrings==1.5.0
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: isort
-        args: [--force-single-line, --profile=black]
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
-    hooks:
-    -   id: pyupgrade
-        args: [--py38-plus]
+    -   id: blacken-docs
+        additional_dependencies: [black==24.1.1]
 -   repo: https://github.com/asottile/setup-cfg-fmt
     rev: v2.5.0
     hooks:

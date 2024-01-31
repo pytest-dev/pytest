@@ -27,9 +27,6 @@
    :target: https://results.pre-commit.ci/latest/github/pytest-dev/pytest/main
    :alt: pre-commit.ci status
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
-
 .. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg
     :target: https://www.codetriage.com/pytest-dev/pytest
 

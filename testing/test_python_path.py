@@ -4,8 +4,8 @@ from typing import Generator
 from typing import List
 from typing import Optional
 
-import pytest
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.fixture()

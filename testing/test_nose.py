@@ -1,5 +1,5 @@
-import pytest
 from _pytest.pytester import Pytester
+import pytest
 
 
 def setup_module(mod):
