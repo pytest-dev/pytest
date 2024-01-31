@@ -47,11 +47,9 @@ they are in fact part of the ``nose`` support.
         def teardown(self):
             self.resource.close()
 
-        def test_foo(self):
-            ...
+        def test_foo(self): ...
 
-        def test_bar(self):
-            ...
+        def test_bar(self): ...
 
 
 
@@ -66,11 +64,9 @@ Native pytest support uses ``setup_method`` and ``teardown_method`` (see :ref:`x
         def teardown_method(self):
             self.resource.close()
 
-        def test_foo(self):
-            ...
+        def test_foo(self): ...
 
-        def test_bar(self):
-            ...
+        def test_bar(self): ...
 
 
 This is easy to do in an entire code base by doing a simple find/replace.
@@ -85,17 +81,14 @@ Code using `@with_setup <with-setup-nose>`_ such as this:
     from nose.tools import with_setup
 
 
-    def setup_some_resource():
-        ...
+    def setup_some_resource(): ...
 
 
-    def teardown_some_resource():
-        ...
+    def teardown_some_resource(): ...
 
 
     @with_setup(setup_some_resource, teardown_some_resource)
-    def test_foo():
-        ...
+    def test_foo(): ...
 
 Will also need to be ported to a supported pytest style. One way to do it is using a fixture:
 
@@ -104,12 +97,10 @@ Will also need to be ported to a supported pytest style. One way to do it is usi
     import pytest
 
 
-    def setup_some_resource():
-        ...
+    def setup_some_resource(): ...
 
 
-    def teardown_some_resource():
-        ...
+    def teardown_some_resource(): ...
 
 
     @pytest.fixture
@@ -119,8 +110,7 @@ Will also need to be ported to a supported pytest style. One way to do it is usi
         teardown_some_resource()
 
 
-    def test_foo(some_resource):
-        ...
+    def test_foo(some_resource): ...
 
 
 .. _`with-setup-nose`: https://nose.readthedocs.io/en/latest/testing_tools.html?highlight=with_setup#nose.tools.with_setup
@@ -197,13 +187,11 @@ have been available since years and should be used instead.
 .. code-block:: python
 
     @pytest.mark.tryfirst
-    def pytest_runtest_call():
-        ...
+    def pytest_runtest_call(): ...
 
 
     # or
-    def pytest_runtest_call():
-        ...
+    def pytest_runtest_call(): ...
 
 
     pytest_runtest_call.tryfirst = True
@@ -213,8 +201,7 @@ should be changed to:
 .. code-block:: python
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_runtest_call():
-        ...
+    def pytest_runtest_call(): ...
 
 Changed ``hookimpl`` attributes:
 
@@ -317,8 +304,7 @@ Implement the :hook:`pytest_load_initial_conftests` hook instead.
 
 .. code-block:: python
 
-    def pytest_cmdline_preparse(config: Config, args: List[str]) -> None:
-        ...
+    def pytest_cmdline_preparse(config: Config, args: List[str]) -> None: ...
 
 
     # becomes:
@@ -326,8 +312,7 @@ Implement the :hook:`pytest_load_initial_conftests` hook instead.
 
     def pytest_load_initial_conftests(
         early_config: Config, parser: Parser, args: List[str]
-    ) -> None:
-        ...
+    ) -> None: ...
 
 .. _diamond-inheritance-deprecated:
 
@@ -391,8 +376,7 @@ Applying a mark to a fixture function never had any effect, but it is a common u
 
     @pytest.mark.usefixtures("clean_database")
     @pytest.fixture
-    def user() -> User:
-        ...
+    def user() -> User: ...
 
 Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
 
@@ -907,8 +891,7 @@ Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated
             (50, 500),
         ],
     )
-    def test_foo(a, b):
-        ...
+    def test_foo(a, b): ...
 
 This code applies the ``pytest.mark.xfail(reason="flaky")`` mark to the ``(6, 36)`` value of the above parametrization
 call.
@@ -931,8 +914,7 @@ To update the code, use ``pytest.param``:
             (50, 500),
         ],
     )
-    def test_foo(a, b):
-        ...
+    def test_foo(a, b): ...
 
 
 .. _pytest_funcarg__ prefix deprecated:
@@ -1083,15 +1065,13 @@ This is just a matter of renaming the fixture as the API is the same:
 
 .. code-block:: python
 
-    def test_foo(record_xml_property):
-        ...
+    def test_foo(record_xml_property): ...
 
 Change to:
 
 .. code-block:: python
 
-    def test_foo(record_property):
-        ...
+    def test_foo(record_property): ...
 
 
 .. _passing command-line string to pytest.main deprecated:
@@ -1253,8 +1233,7 @@ Example of usage:
 
 .. code-block:: python
 
-    class MySymbol:
-        ...
+    class MySymbol: ...
 
 
     def pytest_namespace():
