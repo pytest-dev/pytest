@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 
 from _pytest import __version__ as version
 
+
 if TYPE_CHECKING:
     import sphinx.application
 

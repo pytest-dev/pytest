@@ -6,7 +6,6 @@ from typing import Any
 from typing import Dict
 
 import _pytest._code
-import pytest
 from _pytest.config import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
@@ -14,6 +13,7 @@ from _pytest.nodes import Collector
 from _pytest.pytester import Pytester
 from _pytest.python import Class
 from _pytest.python import Function
+import pytest
 
 
 class TestModule:
@@ -54,13 +54,11 @@ class TestModule:
         monkeypatch.syspath_prepend(str(root1))
         p.write_text(
             textwrap.dedent(
-                """\
+                f"""\
                 import x456
                 def test():
-                    assert x456.__file__.startswith({!r})
-                """.format(
-                    str(root2)
-                )
+                    assert x456.__file__.startswith({str(root2)!r})
+                """
             ),
             encoding="utf-8",
         )

@@ -4,10 +4,11 @@ import sys
 from typing import List
 
 import _pytest._code
-import pytest
 from _pytest.debugging import _validate_usepdb_cls
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
+
 
 _ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")
 
@@ -1186,7 +1187,7 @@ def test_quit_with_swallowed_SystemExit(pytester: Pytester) -> None:
 def test_pdb_suspends_fixture_capturing(pytester: Pytester, fixture: str) -> None:
     """Using "-s" with pytest should suspend/resume fixture capturing."""
     p1 = pytester.makepyfile(
-        """
+        f"""
         def test_inner({fixture}):
             import sys
 
@@ -1201,9 +1202,7 @@ def test_pdb_suspends_fixture_capturing(pytester: Pytester, fixture: str) -> Non
             out, err = {fixture}.readouterr()
             assert out =="out_inner_before\\nout_inner_after\\n"
             assert err =="err_inner_before\\nerr_inner_after\\n"
-        """.format(
-            fixture=fixture
-        )
+        """
     )
 
     child = pytester.spawn_pytest(str(p1) + " -s")
@@ -1276,7 +1275,6 @@ def test_pdbcls_via_local_module(pytester: Pytester) -> None:
 
 def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
     """It is not guaranteed that DontReadFromInput's read is called."""
-
     p1 = pytester.makepyfile(
         """
         def input_without_read(*args, **kwargs):

@@ -11,6 +11,7 @@ from typing import TextIO
 
 from .wcwidth import wcswidth
 
+
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
 
 
@@ -183,9 +184,7 @@ class TerminalWriter:
         """
         if indents and len(indents) != len(lines):
             raise ValueError(
-                "indents size ({}) should have same size as lines ({})".format(
-                    len(indents), len(lines)
-                )
+                f"indents size ({len(indents)}) should have same size as lines ({len(lines)})"
             )
         if not indents:
             indents = [""] * len(lines)
@@ -210,8 +209,8 @@ class TerminalWriter:
                 from pygments.lexers.python import PythonLexer as Lexer
             elif lexer == "diff":
                 from pygments.lexers.diff import DiffLexer as Lexer
-            import pygments.util
             from pygments import highlight
+            import pygments.util
         except ImportError:
             return source
         else:

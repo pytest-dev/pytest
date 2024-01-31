@@ -4,9 +4,9 @@ import io
 from typing import List
 from typing import Union
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestPasteCapture:

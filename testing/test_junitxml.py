@@ -1,8 +1,8 @@
 # mypy: allow-untyped-defs
-import os
-import platform
 from datetime import datetime
+import os
 from pathlib import Path
+import platform
 from typing import cast
 from typing import List
 from typing import Optional
@@ -13,7 +13,6 @@ from xml.dom import minidom
 
 import xmlschema
 
-import pytest
 from _pytest.config import Config
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
@@ -23,6 +22,7 @@ from _pytest.pytester import RunResult
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.stash import Stash
+import pytest
 
 
 @pytest.fixture(scope="session")
@@ -1283,12 +1283,10 @@ def test_record_fixtures_without_junitxml(
     pytester: Pytester, fixture_name: str
 ) -> None:
     pytester.makepyfile(
-        """
+        f"""
         def test_record({fixture_name}):
             {fixture_name}("foo", "bar")
-    """.format(
-            fixture_name=fixture_name
-        )
+    """
     )
     result = pytester.runpytest()
     assert result.ret == 0
@@ -1336,7 +1334,7 @@ def test_record_fixtures_xunit2(
     """
     )
     pytester.makepyfile(
-        """
+        f"""
         import pytest
 
         @pytest.fixture
@@ -1344,9 +1342,7 @@ def test_record_fixtures_xunit2(
             {fixture_name}("bar", 1)
         def test_record({fixture_name}, other):
             {fixture_name}("foo", "<1");
-    """.format(
-            fixture_name=fixture_name
-        )
+    """
     )
 
     result, dom = run_and_parse(family=None)
@@ -1356,10 +1352,8 @@ def test_record_fixtures_xunit2(
             "*test_record_fixtures_xunit2.py:6:*record_xml_attribute is an experimental feature"
         )
     expected_lines = [
-        "*test_record_fixtures_xunit2.py:6:*{fixture_name} is incompatible "
-        "with junit_family 'xunit2' (use 'legacy' or 'xunit1')".format(
-            fixture_name=fixture_name
-        )
+        f"*test_record_fixtures_xunit2.py:6:*{fixture_name} is incompatible "
+        "with junit_family 'xunit2' (use 'legacy' or 'xunit1')"
     ]
     result.stdout.fnmatch_lines(expected_lines)
 
@@ -1476,7 +1470,12 @@ def test_fancy_items_regression(pytester: Pytester, run_and_parse: RunAndParse) 
 
     result.stdout.no_fnmatch_line("*INTERNALERROR*")
 
-    items = sorted("%(classname)s %(name)s" % x for x in dom.find_by_tag("testcase"))
+    items = sorted(
+        "%(classname)s %(name)s" % x  # noqa: UP031
+        # dom is a DomNode not a mapping, it's not possible to ** it.
+        for x in dom.find_by_tag("testcase")
+    )
+
     import pprint
 
     pprint.pprint(items)
@@ -1611,13 +1610,11 @@ def test_set_suite_name(
 ) -> None:
     if suite_name:
         pytester.makeini(
-            """
+            f"""
             [pytest]
             junit_suite_name={suite_name}
-            junit_family={family}
-        """.format(
-                suite_name=suite_name, family=xunit_family
-            )
+            junit_family={xunit_family}
+        """
         )
         expected = suite_name
     else:
@@ -1698,14 +1695,12 @@ def test_logging_passing_tests_disabled_does_not_log_test_output(
     pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
 ) -> None:
     pytester.makeini(
-        """
+        f"""
         [pytest]
         junit_log_passing_tests=False
         junit_logging=system-out
-        junit_family={family}
-    """.format(
-            family=xunit_family
-        )
+        junit_family={xunit_family}
+    """
     )
     pytester.makepyfile(
         """
@@ -1735,13 +1730,11 @@ def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
     xunit_family: str,
 ) -> None:
     pytester.makeini(
-        """
+        f"""
         [pytest]
         junit_log_passing_tests=False
-        junit_family={family}
-    """.format(
-            family=xunit_family
-        )
+        junit_family={xunit_family}
+    """
     )
     pytester.makepyfile(
         """

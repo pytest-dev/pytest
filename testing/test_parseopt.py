@@ -2,16 +2,16 @@
 import argparse
 import locale
 import os
+from pathlib import Path
 import shlex
 import subprocess
 import sys
-from pathlib import Path
 
-import pytest
 from _pytest.config import argparsing as parseopt
 from _pytest.config.exceptions import UsageError
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.fixture
@@ -315,9 +315,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash
         fp.write(
-            'COMP_WORDBREAKS="$COMP_WORDBREAKS" {} -m pytest 8>&1 9>&2'.format(
-                shlex.quote(sys.executable)
-            )
+            f'COMP_WORDBREAKS="$COMP_WORDBREAKS" {shlex.quote(sys.executable)} -m pytest 8>&1 9>&2'
         )
     # alternative would be extended Pytester.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
@@ -335,9 +333,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
         pytest.skip("argcomplete not available")
     elif not result.stdout.str():
         pytest.skip(
-            "bash provided no output on stdout, argcomplete not available? (stderr={!r})".format(
-                result.stderr.str()
-            )
+            f"bash provided no output on stdout, argcomplete not available? (stderr={result.stderr.str()!r})"
         )
     else:
         result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])

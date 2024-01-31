@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._code
-import pytest
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
@@ -30,6 +29,8 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
 from _pytest.runner import CallInfo
+import pytest
+
 
 if TYPE_CHECKING:
     import unittest
@@ -203,7 +204,9 @@ class TestCaseFunction(Function):
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
-            excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(rawexcinfo)  # type: ignore[arg-type]
+            excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(
+                rawexcinfo  # type: ignore[arg-type]
+            )
             # Invoke the attributes to trigger storing the traceback
             # trial causes some issue there.
             excinfo.value
@@ -223,7 +226,7 @@ class TestCaseFunction(Function):
                 except BaseException:
                     fail(
                         "ERROR: Unknown Incompatible Exception "
-                        "representation:\n%r" % (rawexcinfo,),
+                        f"representation:\n{rawexcinfo!r}",
                         pytrace=False,
                     )
             except KeyboardInterrupt:
@@ -348,9 +351,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
     # handled internally, and doesn't reach here.
     unittest = sys.modules.get("unittest")
     if (
-        unittest
-        and call.excinfo
-        and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
+        unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
     ):
         excinfo = call.excinfo
         call2 = CallInfo[None].from_call(

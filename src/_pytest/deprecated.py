@@ -15,6 +15,7 @@ from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
 
+
 # set of plugins which have been integrated into the core; we use this list to ignore
 # them during registration to avoid conflicts
 DEPRECATED_EXTERNAL_PLUGINS = {

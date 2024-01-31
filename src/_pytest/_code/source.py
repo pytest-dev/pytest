@@ -1,11 +1,10 @@
 # mypy: allow-untyped-defs
 import ast
+from bisect import bisect_right
 import inspect
 import textwrap
 import tokenize
 import types
-import warnings
-from bisect import bisect_right
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -13,6 +12,7 @@ from typing import Optional
 from typing import overload
 from typing import Tuple
 from typing import Union
+import warnings
 
 
 class Source:
@@ -47,10 +47,12 @@ class Source:
     __hash__ = None  # type: ignore
 
     @overload
-    def __getitem__(self, key: int) -> str: ...
+    def __getitem__(self, key: int) -> str:
+        ...
 
     @overload
-    def __getitem__(self, key: slice) -> "Source": ...
+    def __getitem__(self, key: slice) -> "Source":
+        ...
 
     def __getitem__(self, key: Union[int, slice]) -> Union[str, "Source"]:
         if isinstance(key, int):

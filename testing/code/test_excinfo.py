@@ -4,16 +4,15 @@ from __future__ import annotations
 import importlib
 import io
 import operator
+from pathlib import Path
 import queue
 import re
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
 from typing import TYPE_CHECKING
 
 import _pytest._code
-import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
@@ -23,6 +22,8 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
+import pytest
+
 
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
@@ -1173,9 +1174,7 @@ raise ValueError()
                     "funcargs": funcargs,
                     "tbfilter": tbfilter,
                 },
-                id="style={},showlocals={},funcargs={},tbfilter={}".format(
-                    style, showlocals, funcargs, tbfilter
-                ),
+                id=f"style={style},showlocals={showlocals},funcargs={funcargs},tbfilter={tbfilter}",
             )
             for style in ["long", "short", "line", "no", "native", "value", "auto"]
             for showlocals in (True, False)
@@ -1339,7 +1338,7 @@ raise ValueError()
         """
         raise_suffix = " from None" if mode == "from_none" else ""
         mod = importasmod(
-            """
+            f"""
             def f():
                 try:
                     g()
@@ -1347,9 +1346,7 @@ raise ValueError()
                     raise AttributeError(){raise_suffix}
             def g():
                 raise ValueError()
-        """.format(
-                raise_suffix=raise_suffix
-            )
+        """
         )
         excinfo = pytest.raises(AttributeError, mod.f)
         r = excinfo.getrepr(style="long", chain=mode != "explicit_suppress")
@@ -1361,9 +1358,7 @@ raise ValueError()
         assert tw_mock.lines[2] == "        try:"
         assert tw_mock.lines[3] == "            g()"
         assert tw_mock.lines[4] == "        except Exception:"
-        assert tw_mock.lines[5] == ">           raise AttributeError(){}".format(
-            raise_suffix
-        )
+        assert tw_mock.lines[5] == f">           raise AttributeError(){raise_suffix}"
         assert tw_mock.lines[6] == "E           AttributeError"
         assert tw_mock.lines[7] == ""
         line = tw_mock.get_write_msg(8)
@@ -1394,7 +1389,7 @@ raise ValueError()
         """
         exc_handling_code = " from e" if reason == "cause" else ""
         mod = importasmod(
-            """
+            f"""
             def f():
                 try:
                     g()
@@ -1402,9 +1397,7 @@ raise ValueError()
                     raise RuntimeError('runtime problem'){exc_handling_code}
             def g():
                 raise ValueError('invalid value')
-        """.format(
-                exc_handling_code=exc_handling_code
-            )
+        """
         )
 
         with pytest.raises(RuntimeError) as excinfo:

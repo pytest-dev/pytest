@@ -1,12 +1,12 @@
 import dataclasses
 import inspect
-import warnings
 from types import FunctionType
 from typing import Any
 from typing import final
 from typing import Generic
 from typing import Type
 from typing import TypeVar
+import warnings
 
 
 class PytestWarning(UserWarning):
@@ -73,11 +73,7 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
 
     @classmethod
     def simple(cls, apiname: str) -> "PytestExperimentalApiWarning":
-        return cls(
-            "{apiname} is an experimental api that may change over time".format(
-                apiname=apiname
-            )
-        )
+        return cls(f"{apiname} is an experimental api that may change over time")
 
 
 @final

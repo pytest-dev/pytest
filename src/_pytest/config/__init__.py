@@ -5,18 +5,17 @@ import collections.abc
 import copy
 import dataclasses
 import enum
+from functools import lru_cache
 import glob
 import importlib.metadata
 import inspect
 import os
+from pathlib import Path
 import re
 import shlex
 import sys
-import types
-import warnings
-from functools import lru_cache
-from pathlib import Path
 from textwrap import dedent
+import types
 from types import FunctionType
 from typing import Any
 from typing import Callable
@@ -37,6 +36,7 @@ from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 from pluggy import HookimplMarker
 from pluggy import HookimplOpts
@@ -44,15 +44,15 @@ from pluggy import HookspecMarker
 from pluggy import HookspecOpts
 from pluggy import PluginManager
 
-import _pytest._code
-import _pytest.deprecated
-import _pytest.hookspec
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
+import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
+import _pytest.deprecated
+import _pytest.hookspec
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -64,6 +64,7 @@ from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
+
 
 if TYPE_CHECKING:
     from .argparsing import Argument
@@ -813,7 +814,7 @@ class PytestPluginManager(PluginManager):
 
 
 def _get_plugin_specs_as_list(
-    specs: Union[None, types.ModuleType, str, Sequence[str]]
+    specs: Union[None, types.ModuleType, str, Sequence[str]],
 ) -> List[str]:
     """Parse a plugins specification into a list of plugin names."""
     # None means empty.
@@ -1374,12 +1375,7 @@ class Config:
 
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
-                    "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
-                    % (
-                        self.inipath,
-                        minver,
-                        pytest.__version__,
-                    )
+                    f"{self.inipath}: 'minversion' requires pytest-{minver}, actual pytest-{pytest.__version__}'"
                 )
 
     def _validate_config_options(self) -> None:
@@ -1614,9 +1610,7 @@ class Config:
                 key, user_ini_value = ini_config.split("=", 1)
             except ValueError as e:
                 raise UsageError(
-                    "-o/--override-ini expects option=value style (got: {!r}).".format(
-                        ini_config
-                    )
+                    f"-o/--override-ini expects option=value style (got: {ini_config!r})."
                 ) from e
             else:
                 if key == name:
@@ -1674,7 +1668,6 @@ class Config:
         can be used to explicitly use the global verbosity level.
 
         Example:
-
         .. code-block:: ini
 
             # content of pytest.ini

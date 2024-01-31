@@ -6,6 +6,7 @@ import sys
 import _pytest._py.error as error
 import _pytest._py.path as path
 
+
 sys.modules["py.error"] = error
 sys.modules["py.path"] = path
 

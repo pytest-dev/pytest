@@ -1,17 +1,16 @@
 # mypy: allow-untyped-defs
 import ast
 import errno
+from functools import partial
 import glob
 import importlib
 import marshal
 import os
+from pathlib import Path
 import py_compile
 import stat
 import sys
 import textwrap
-import zipfile
-from functools import partial
-from pathlib import Path
 from typing import cast
 from typing import Dict
 from typing import Generator
@@ -20,9 +19,9 @@ from typing import Mapping
 from typing import Optional
 from typing import Set
 from unittest import mock
+import zipfile
 
 import _pytest._code
-import pytest
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import _get_assertion_exprs
@@ -36,6 +35,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
+import pytest
 
 
 def rewrite(src: str) -> ast.Module:
@@ -781,11 +781,10 @@ class TestRewriteOnImport:
             f.close()
         z.chmod(256)
         pytester.makepyfile(
-            """
+            f"""
             import sys
-            sys.path.append(%r)
+            sys.path.append({z_fn!r})
             import test_gum.test_lizard"""
-            % (z_fn,)
         )
         assert pytester.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
@@ -1857,10 +1856,10 @@ class TestAssertionPass:
         result.assert_outcomes(passed=1)
 
 
+# fmt: off
 @pytest.mark.parametrize(
     ("src", "expected"),
     (
-        # fmt: off
         pytest.param(b"", {}, id="trivial"),
         pytest.param(
             b"def x(): assert 1\n",
@@ -1937,9 +1936,9 @@ class TestAssertionPass:
             {1: "5"},
             id="no newline at end of file",
         ),
-        # fmt: on
     ),
 )
+# fmt: on
 def test_get_assertion_exprs(src, expected) -> None:
     assert _get_assertion_exprs(src) == expected
 
@@ -2035,9 +2034,7 @@ class TestPyCacheDir:
         assert test_foo_pyc.is_file()
 
         # normal file: not touched by pytest, normal cache tag
-        bar_init_pyc = get_cache_dir(bar_init) / "__init__.{cache_tag}.pyc".format(
-            cache_tag=sys.implementation.cache_tag
-        )
+        bar_init_pyc = get_cache_dir(bar_init) / f"__init__.{sys.implementation.cache_tag}.pyc"
         assert bar_init_pyc.is_file()
 
 

@@ -15,9 +15,9 @@
 #  useful, thank small children who sleep at night.
 import collections as _collections
 import dataclasses as _dataclasses
+from io import StringIO as _StringIO
 import re
 import types as _types
-from io import StringIO as _StringIO
 from typing import Any
 from typing import Callable
 from typing import Dict

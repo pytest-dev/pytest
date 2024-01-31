@@ -5,13 +5,13 @@ from typing import List
 from typing import Optional
 from unittest import mock
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestMark:
@@ -934,12 +934,10 @@ def test_parameterset_for_parametrize_marks(
 ) -> None:
     if mark is not None:
         pytester.makeini(
-            """
+            f"""
         [pytest]
-        {}={}
-        """.format(
-                EMPTY_PARAMETERSET_OPTION, mark
-            )
+        {EMPTY_PARAMETERSET_OPTION}={mark}
+        """
         )
 
     config = pytester.parseconfig()
@@ -959,12 +957,10 @@ def test_parameterset_for_parametrize_marks(
 
 def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
     pytester.makeini(
-        """
+        f"""
     [pytest]
-    {}=fail_at_collect
-    """.format(
-            EMPTY_PARAMETERSET_OPTION
-        )
+    {EMPTY_PARAMETERSET_OPTION}=fail_at_collect
+    """
     )
 
     config = pytester.parseconfig()

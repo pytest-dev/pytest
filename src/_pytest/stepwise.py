@@ -2,12 +2,13 @@ from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 
-import pytest
 from _pytest import nodes
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 from _pytest.reports import TestReport
+import pytest
+
 
 if TYPE_CHECKING:
     from _pytest.cacheprovider import Cache
