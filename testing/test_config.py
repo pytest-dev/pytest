@@ -2109,7 +2109,7 @@ class TestPytestPluginsVariable:
         args = ("--pyargs", "pkg") if use_pyargs else ()
         res = pytester.runpytest(*args)
         assert res.ret == (0 if use_pyargs else 2)
-        msg = msg = (
+        msg = (
             "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         )
         if use_pyargs:
