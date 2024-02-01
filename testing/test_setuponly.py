@@ -314,6 +314,6 @@ def test_show_fixture_action_with_bytes(pytester: Pytester) -> None:
         """
     )
     result = pytester.run(
-        sys.executable, "-bb", "-m", "pytest", "--setup-show", str(test_file)
+        sys.executable, "-bb", "-Im", "pytest", "--setup-show", str(test_file)
     )
     assert result.ret == 0

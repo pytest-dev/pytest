@@ -315,7 +315,7 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash
         fp.write(
-            'COMP_WORDBREAKS="$COMP_WORDBREAKS" {} -m pytest 8>&1 9>&2'.format(
+            'COMP_WORDBREAKS="$COMP_WORDBREAKS" {} -Im pytest 8>&1 9>&2'.format(
                 shlex.quote(sys.executable)
             )
         )

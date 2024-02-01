@@ -137,7 +137,7 @@ which are better explained in this excellent `blog post`_ by Ionel Cristian Măr
     directory) you can rely on the fact that Python by default puts the current directory in ``sys.path`` to
     import your package and run ``python -m pytest`` to execute the tests against the local copy directly.
 
-    See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
+    See :ref:`pytest vs python -Im pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
 Tests as part of application code

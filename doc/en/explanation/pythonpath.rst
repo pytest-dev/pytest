@@ -130,13 +130,13 @@ imported in the global import namespace.
 
 This is also discussed in details in :ref:`test discovery`.
 
-.. _`pytest vs python -m pytest`:
+.. _`pytest vs python -Im pytest`:
 
-Invoking ``pytest`` versus ``python -m pytest``
------------------------------------------------
+Invoking ``pytest`` versus ``python -Im pytest``
+------------------------------------------------
 
-Running pytest with ``pytest [...]`` instead of ``python -m pytest [...]`` yields nearly
-equivalent behaviour, except that the latter will add the current directory to ``sys.path``, which
-is standard ``python`` behavior.
+Running pytest with ``pytest [...]`` instead of ``python -Im pytest [...]`` yields nearly
+equivalent behaviour, except that the latter will add the current directory to ``sys.path``
+in case when ``-I`` is omitted, which is standard ``python`` behavior.
 
 See also :ref:`invoke-python`.

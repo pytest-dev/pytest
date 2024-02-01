@@ -299,7 +299,7 @@ Here is a simple overview, with pytest-specific bits:
 #. If instead of using ``tox`` you prefer to run the tests directly, then we suggest to create a virtual environment and use
    an editable install with the ``testing`` extra::
 
-       $ python3 -m venv .venv
+       $ python3 -Im venv .venv
        $ source .venv/bin/activate  # Linux
        $ .venv/Scripts/activate.bat  # Windows
        $ pip install -e ".[testing]"

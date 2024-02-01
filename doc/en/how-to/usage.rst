@@ -158,17 +158,20 @@ Other ways of calling pytest
 
 .. _invoke-python:
 
-Calling pytest through ``python -m pytest``
+Calling pytest through ``python -Im pytest``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can invoke testing through the Python interpreter from the command line:
 
 .. code-block:: text
 
-    python -m pytest [...]
+    python -Im pytest [...]
 
-This is almost equivalent to invoking the command line script ``pytest [...]``
-directly, except that calling via ``python`` will also add the current directory to ``sys.path``.
+This is equivalent to invoking the command line script ``pytest [...]``
+directly, for as long as ``-I`` is used. Dropping it will also add the current
+directory to ``sys.path``, which may have a side effect of not `testing your
+project as installed
+<https://blog.ganssle.io/articles/2019/08/test-as-installed.html>`__.
 
 
 .. _`pytest.main-usage`:

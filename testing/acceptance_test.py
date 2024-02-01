@@ -592,17 +592,17 @@ class TestInvocationVariants:
 
     def test_python_minus_m_invocation_ok(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test_hello(): pass")
-        res = pytester.run(sys.executable, "-m", "pytest", str(p1))
+        res = pytester.run(sys.executable, "-Im", "pytest", str(p1))
         assert res.ret == 0
 
     def test_python_minus_m_invocation_fail(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test_fail(): 0/0")
-        res = pytester.run(sys.executable, "-m", "pytest", str(p1))
+        res = pytester.run(sys.executable, "-Im", "pytest", str(p1))
         assert res.ret == 1
 
     def test_python_pytest_package(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test_pass(): pass")
-        res = pytester.run(sys.executable, "-m", "pytest", str(p1))
+        res = pytester.run(sys.executable, "-Im", "pytest", str(p1))
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 
