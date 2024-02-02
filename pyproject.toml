@@ -178,3 +178,6 @@ force-sort-within-sections = true
 order-by-type = false
 known-local-folder = ["pytest", "_pytest"]
 lines-after-imports = 2
+
+[tool.ruff.lint.per-file-ignores]
+"src/_pytest/_version.py" = ["I001"]
