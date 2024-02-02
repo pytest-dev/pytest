@@ -729,7 +729,7 @@ class TestDoctests:
                 >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
                 'anything'
                 """
-            '''
+            '''  # noqa: RUF001
         )
         result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["Got nothing", "* 1 failed in*"])

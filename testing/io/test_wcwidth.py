@@ -15,7 +15,7 @@ import pytest
         ("\u1ABE", 0),
         ("\u0591", 0),
         ("🉐", 2),
-        ("＄", 2),
+        ("＄", 2),  # noqa: RUF001
     ],
 )
 def test_wcwidth(c: str, expected: int) -> None:

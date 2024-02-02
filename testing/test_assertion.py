@@ -1149,7 +1149,7 @@ class TestAssert_reprcompare_attrsclass:
     def test_attrs_with_auto_detect_and_custom_eq(self) -> None:
         @attr.s(
             auto_detect=True
-        )  # attr.s doesn’t ignore a custom eq if auto_detect=True
+        )  # attr.s doesn't ignore a custom eq if auto_detect=True
         class SimpleDataObject:
             field_a = attr.ib()
 
