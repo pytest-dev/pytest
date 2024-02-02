@@ -160,7 +160,6 @@ ignore = [
     # ruff ignore
     "RUF005", # Consider `(x, *y)` instead of concatenation
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
-    "RUF015", # Prefer `next(iter(x))` over single element slice
 ]
 
 [tool.ruff.format]
