@@ -208,7 +208,7 @@ def main() -> None:
         f.write(f"This list contains {len(plugins)} plugins.\n\n")
         f.write(".. only:: not latex\n\n")
 
-        wcwidth  # reference library that must exist for tabulate to work
+        _ = wcwidth  # reference library that must exist for tabulate to work
         plugin_table = tabulate.tabulate(plugins, headers="keys", tablefmt="rst")
         f.write(indent(plugin_table, "   "))
         f.write("\n\n")

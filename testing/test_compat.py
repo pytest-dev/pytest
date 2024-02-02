@@ -170,9 +170,9 @@ class ErrorsHelper:
 def test_helper_failures() -> None:
     helper = ErrorsHelper()
     with pytest.raises(Exception):
-        helper.raise_exception
+        _ = helper.raise_exception
     with pytest.raises(OutcomeException):
-        helper.raise_fail_outcome
+        _ = helper.raise_fail_outcome
 
 
 def test_safe_getattr() -> None:

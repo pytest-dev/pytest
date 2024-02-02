@@ -209,8 +209,8 @@ class TestCaseFunction(Function):
             )
             # Invoke the attributes to trigger storing the traceback
             # trial causes some issue there.
-            excinfo.value
-            excinfo.traceback
+            _ = excinfo.value
+            _ = excinfo.traceback
         except TypeError:
             try:
                 try:

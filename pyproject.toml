@@ -148,7 +148,6 @@ ignore = [
     "B011", # Do not `assert False` (`python -O` removes these calls)
     "B015", # Pointless comparison. Did you mean to assign a value?
     "B017", # `pytest.raises(Exception)` should be considered evil
-    "B018", # Found useless expression.
     "B023", # Function definition does not bind loop variable `warning`
     "B028", # No explicit `stacklevel` keyword argument found
     # pycodestyle ignore
