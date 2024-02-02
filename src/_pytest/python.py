@@ -358,7 +358,7 @@ class PyobjMixin(nodes.Node):
 # hook is not called for them.
 # fmt: off
 class _EmptyClass: pass  # noqa: E701
-IGNORED_ATTRIBUTES = frozenset.union(  # noqa: E305
+IGNORED_ATTRIBUTES = frozenset.union(
     frozenset(),
     # Module.
     dir(types.ModuleType("empty_module")),

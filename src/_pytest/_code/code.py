@@ -1018,7 +1018,7 @@ class FormattedExcinfo:
             extraline: Optional[str] = (
                 "!!! Recursion error detected, but an error occurred locating the origin of recursion.\n"
                 "  The following exception happened when comparing locals in the stack frame:\n"
-                f"    {type(e).__name__}: {str(e)}\n"
+                f"    {type(e).__name__}: {e!s}\n"
                 f"  Displaying first and last {max_frames} stack frames out of {len(traceback)}."
             )
             # Type ignored because adding two instances of a List subtype

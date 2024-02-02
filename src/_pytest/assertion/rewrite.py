@@ -925,7 +925,7 @@ class AssertionRewriter(ast.NodeVisitor):
             # If any hooks implement assert_pass hook
             hook_impl_test = ast.If(
                 self.helper("_check_if_assertion_pass_impl"),
-                self.expl_stmts + [hook_call_pass],
+                [*self.expl_stmts, hook_call_pass],
                 [],
             )
             statements_pass = [hook_impl_test]

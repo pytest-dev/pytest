@@ -42,7 +42,7 @@ class RunAndParse:
         self, *args: Union[str, "os.PathLike[str]"], family: Optional[str] = "xunit1"
     ) -> Tuple[RunResult, "DomNode"]:
         if family:
-            args = ("-o", "junit_family=" + family) + args
+            args = ("-o", "junit_family=" + family, *args)
         xml_path = self.pytester.path.joinpath("junit.xml")
         result = self.pytester.runpytest("--junitxml=%s" % xml_path, *args)
         if family == "xunit2":

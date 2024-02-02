@@ -1032,7 +1032,7 @@ def test_log_set_path(pytester: Pytester) -> None:
             def pytest_runtest_setup(item):
                 config = item.config
                 logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
-                report_file = os.path.join({repr(report_dir_base)}, item._request.node.name)
+                report_file = os.path.join({report_dir_base!r}, item._request.node.name)
                 logging_plugin.set_log_path(report_file)
                 return (yield)
         """

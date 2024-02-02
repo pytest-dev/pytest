@@ -1105,9 +1105,7 @@ class LocalPath:
                 modname = self.purebasename
             spec = importlib.util.spec_from_file_location(modname, str(self))
             if spec is None or spec.loader is None:
-                raise ImportError(
-                    f"Can't find module {modname} at location {str(self)}"
-                )
+                raise ImportError(f"Can't find module {modname} at location {self!s}")
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
             return mod

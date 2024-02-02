@@ -133,6 +133,7 @@ select = [
     "F",  # pyflakes
     "I",  # isort
     "UP", # pyupgrade
+    "RUF", # ruff
     "W",  # pycodestyle
 ]
 ignore = [
@@ -156,6 +157,8 @@ ignore = [
     "D402", # First line should not be the function's signature
     "D404", # First word of the docstring should not be "This"
     "D415", # First line should end with a period, question mark, or exclamation point
+    # ruff ignore
+    "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
 ]
 
 [tool.ruff.format]

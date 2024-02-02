@@ -406,7 +406,7 @@ def normalize_mark_list(
     for mark in mark_list:
         mark_obj = getattr(mark, "mark", mark)
         if not isinstance(mark_obj, Mark):
-            raise TypeError(f"got {repr(mark_obj)} instead of Mark")
+            raise TypeError(f"got {mark_obj!r} instead of Mark")
         yield mark_obj
 
 

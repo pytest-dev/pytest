@@ -1209,7 +1209,7 @@ class TestReportInfo:
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
         path, lineno, msg = classcol.reportinfo()
-        func = list(classcol.collect())[0]
+        func = next(iter(classcol.collect()))
         assert isinstance(func, Function)
         path, lineno, msg = func.reportinfo()
 

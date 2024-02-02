@@ -730,7 +730,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         # Type ignored because the error is wrong -- not unreachable.
         and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
     ):
-        msg = f"pytest.approx() only supports ordered sequences, but got: {repr(expected)}"
+        msg = f"pytest.approx() only supports ordered sequences, but got: {expected!r}"
         raise TypeError(msg)
     else:
         cls = ApproxScalar
@@ -780,7 +780,7 @@ def raises(
 
 
 @overload
-def raises(  # noqa: F811
+def raises(
     expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     func: Callable[..., Any],
     *args: Any,
@@ -789,7 +789,7 @@ def raises(  # noqa: F811
     ...
 
 
-def raises(  # noqa: F811
+def raises(
     expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
 ) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
     r"""Assert that a code block/function call raises an exception type, or one of its subclasses.

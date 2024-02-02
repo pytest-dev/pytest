@@ -3086,7 +3086,7 @@ class TestFixtureMarker:
             def test_other():
                 pass
         """  # noqa: UP031 (python syntax issues)
-            % {"scope": scope}  # noqa: UP031 (python syntax issues)
+            % {"scope": scope}
         )
         reprec = pytester.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
@@ -4536,5 +4536,5 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
 def test_deduplicate_names() -> None:
     items = deduplicate_names("abacd")
     assert items == ("a", "b", "c", "d")
-    items = deduplicate_names(items + ("g", "f", "g", "e", "b"))
+    items = deduplicate_names((*items, "g", "f", "g", "e", "b"))
     assert items == ("a", "b", "c", "d", "g", "f", "e")

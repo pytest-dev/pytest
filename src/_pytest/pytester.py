@@ -1061,7 +1061,7 @@ class Pytester:
         :param cmdlineargs: Any extra command line arguments to use.
         """
         p = self.makepyfile(source)
-        values = list(cmdlineargs) + [p]
+        values = [*list(cmdlineargs), p]
         return self.inline_run(*values)
 
     def inline_genitems(self, *args) -> Tuple[List[Item], HookRecorder]:
@@ -1491,10 +1491,10 @@ class Pytester:
         """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
-        args = ("--basetemp=%s" % p,) + args
+        args = ("--basetemp=%s" % p, *args)
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
-            args = ("-p", plugins[0]) + args
+            args = ("-p", plugins[0], *args)
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 

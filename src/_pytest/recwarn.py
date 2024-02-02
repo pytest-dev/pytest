@@ -47,13 +47,11 @@ def deprecated_call(
 
 
 @overload
-def deprecated_call(  # noqa: F811
-    func: Callable[..., T], *args: Any, **kwargs: Any
-) -> T:
+def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     ...
 
 
-def deprecated_call(  # noqa: F811
+def deprecated_call(
     func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
 ) -> Union["WarningsRecorder", Any]:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning`` or ``FutureWarning``.
@@ -81,7 +79,7 @@ def deprecated_call(  # noqa: F811
     """
     __tracebackhide__ = True
     if func is not None:
-        args = (func,) + args
+        args = (func, *args)
     return warns(
         (DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs
     )
@@ -97,7 +95,7 @@ def warns(
 
 
 @overload
-def warns(  # noqa: F811
+def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
     func: Callable[..., T],
     *args: Any,
@@ -106,7 +104,7 @@ def warns(  # noqa: F811
     ...
 
 
-def warns(  # noqa: F811
+def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,

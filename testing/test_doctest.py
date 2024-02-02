@@ -190,7 +190,7 @@ class TestDoctests:
         )
         doctest = f"""
             >>> "{test_string}"
-            {repr(test_string)}
+            {test_string!r}
         """
         fn = pytester.path / "test_encoding.txt"
         fn.write_text(doctest, encoding=encoding)
@@ -729,7 +729,7 @@ class TestDoctests:
                 >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
                 'anything'
                 """
-            '''
+            '''  # noqa: RUF001
         )
         result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["Got nothing", "* 1 failed in*"])

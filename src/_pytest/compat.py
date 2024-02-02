@@ -27,7 +27,7 @@ _S = TypeVar("_S")
 # https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
 class NotSetType(enum.Enum):
     token = 0
-NOTSET: Final = NotSetType.token  # noqa: E305
+NOTSET: Final = NotSetType.token
 # fmt: on
 
 

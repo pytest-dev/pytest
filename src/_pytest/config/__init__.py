@@ -238,7 +238,8 @@ essential_plugins = (
     "helpconfig",  # Provides -p.
 )
 
-default_plugins = essential_plugins + (
+default_plugins = (
+    *essential_plugins,
     "python",
     "terminal",
     "debugging",
@@ -671,7 +672,7 @@ class PytestPluginManager(PluginManager):
                 if dirpath in path.parents or path == dirpath:
                     if mod in mods:
                         raise AssertionError(
-                            f"While trying to load conftest path {str(conftestpath)}, "
+                            f"While trying to load conftest path {conftestpath!s}, "
                             f"found that the module {mod} is already loaded with path {mod.__file__}. "
                             "This is not supposed to happen. Please report this issue to pytest."
                         )

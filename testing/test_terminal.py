@@ -417,8 +417,8 @@ class TestTerminal:
 
         result = pytester.runpytest("-v")
         result.stdout.fnmatch_lines(
-            common_output
-            + [
+            [
+                *common_output,
                 "test_verbose_skip_reason.py::test_long_skip SKIPPED (1 cannot *...) *",
                 "test_verbose_skip_reason.py::test_long_xfail XFAIL (2 cannot *...) *",
             ]
@@ -426,17 +426,13 @@ class TestTerminal:
 
         result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(
-            common_output
-            + [
-                (
-                    "test_verbose_skip_reason.py::test_long_skip SKIPPED"
-                    " (1 cannot do foobar"
-                ),
+            [
+                *common_output,
+                "test_verbose_skip_reason.py::test_long_skip SKIPPED"
+                " (1 cannot do foobar",
                 "because baz is missing due to I don't know what) *",
-                (
-                    "test_verbose_skip_reason.py::test_long_xfail XFAIL"
-                    " (2 cannot do foobar"
-                ),
+                "test_verbose_skip_reason.py::test_long_xfail XFAIL"
+                " (2 cannot do foobar",
                 "because baz is missing due to I don't know what) *",
             ]
         )

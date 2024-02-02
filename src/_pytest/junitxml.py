@@ -375,7 +375,7 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
 
     xml = request.config.stash.get(xml_key, None)
     if xml is not None:
-        record_func = xml.add_global_property  # noqa
+        record_func = xml.add_global_property
     return record_func
 
 
