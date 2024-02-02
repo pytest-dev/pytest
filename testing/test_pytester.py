@@ -227,7 +227,7 @@ class TestInlineRunModulesCleanup:
 
     def spy_factory(self):
         class SysModulesSnapshotSpy:
-            instances: List["SysModulesSnapshotSpy"] = []  # noqa: F821
+            instances: List["SysModulesSnapshotSpy"] = []
 
             def __init__(self, preserve=None) -> None:
                 SysModulesSnapshotSpy.instances.append(self)
@@ -725,7 +725,7 @@ def test_run_result_repr() -> None:
     # known exit code
     r = pytester_mod.RunResult(1, outlines, errlines, duration=0.5)
     assert repr(r) == (
-        f"<RunResult ret={str(pytest.ExitCode.TESTS_FAILED)} len(stdout.lines)=3"
+        f"<RunResult ret={pytest.ExitCode.TESTS_FAILED!s} len(stdout.lines)=3"
         " len(stderr.lines)=4 duration=0.50s>"
     )
 

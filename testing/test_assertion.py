@@ -914,16 +914,16 @@ class TestAssert_reprcompare:
         assert expl == [
             r"'hyv\xe4' == 'hyva\u0308'",
             "",
-            f"- {str(right)}",
-            f"+ {str(left)}",
+            f"- {right!s}",
+            f"+ {left!s}",
         ]
 
         expl = callequal(left, right, verbose=2)
         assert expl == [
             r"'hyv\xe4' == 'hyva\u0308'",
             "",
-            f"- {str(right)}",
-            f"+ {str(left)}",
+            f"- {right!s}",
+            f"+ {left!s}",
         ]
 
 

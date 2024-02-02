@@ -3086,7 +3086,7 @@ class TestFixtureMarker:
             def test_other():
                 pass
         """  # noqa: UP031 (python syntax issues)
-            % {"scope": scope}  # noqa: UP031 (python syntax issues)
+            % {"scope": scope}
         )
         reprec = pytester.inline_run("-lvs")
         reprec.assertoutcome(passed=3)

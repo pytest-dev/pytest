@@ -190,7 +190,7 @@ class TestDoctests:
         )
         doctest = f"""
             >>> "{test_string}"
-            {repr(test_string)}
+            {test_string!r}
         """
         fn = pytester.path / "test_encoding.txt"
         fn.write_text(doctest, encoding=encoding)

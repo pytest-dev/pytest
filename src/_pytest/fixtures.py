@@ -1225,7 +1225,7 @@ def fixture(
 
 
 @overload
-def fixture(  # noqa: F811
+def fixture(
     fixture_function: None = ...,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
@@ -1239,7 +1239,7 @@ def fixture(  # noqa: F811
     ...
 
 
-def fixture(  # noqa: F811
+def fixture(
     fixture_function: Optional[FixtureFunction] = None,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = "function",
@@ -1673,7 +1673,7 @@ class FixtureManager:
         raise NotImplementedError()
 
     @overload
-    def parsefactories(  # noqa: F811
+    def parsefactories(
         self,
         node_or_obj: object,
         nodeid: Optional[str],
@@ -1682,7 +1682,7 @@ class FixtureManager:
     ) -> None:
         raise NotImplementedError()
 
-    def parsefactories(  # noqa: F811
+    def parsefactories(
         self,
         node_or_obj: Union[nodes.Node, object],
         nodeid: Union[str, NotSetType, None] = NOTSET,

@@ -17,7 +17,7 @@ import pytest
 def ignore_encoding_warning():
     with warnings.catch_warnings():
         with contextlib.suppress(NameError):  # new in 3.10
-            warnings.simplefilter("ignore", EncodingWarning)  # type: ignore [name-defined]  # noqa: F821
+            warnings.simplefilter("ignore", EncodingWarning)  # type: ignore [name-defined]
         yield
 
 
