@@ -133,6 +133,7 @@ select = [
     "E",  # pycodestyle
     "F",  # pyflakes
     "I",  # isort
+    "PYI", # flake8-pyi
     "UP", # pyupgrade
     "RUF", # ruff
     "W",  # pycodestyle
