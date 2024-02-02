@@ -50,6 +50,13 @@ MARKED_FIXTURE = PytestRemovedIn9Warning(
     "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
 )
 
+ITEM_FUNCARGS_MEMBERS = PytestRemovedIn9Warning(
+    "Accessing `item.funcargs` with a fixture name not directly requested"
+    " by the item, through a direct argument, `usefixtures` marker or"
+    " an `autouse` fixture, is deprecated and will raise KeyError starting"
+    " from pytest 9. Please use request.getfixturevalue instead."
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):

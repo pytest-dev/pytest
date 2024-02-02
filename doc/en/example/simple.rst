@@ -843,7 +843,7 @@ case we just write some information out to a ``failures`` file:
             mode = "a" if os.path.exists("failures") else "w"
             with open("failures", mode, encoding="utf-8") as f:
                 # let's also access a fixture for the fun of it
-                if "tmp_path" in item.fixturenames:
+                if "tmp_path" in item.funcargs:
                     extra = " ({})".format(item.funcargs["tmp_path"])
                 else:
                     extra = ""

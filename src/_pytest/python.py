@@ -15,6 +15,7 @@ import types
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Final
 from typing import final
 from typing import Generator
 from typing import Iterable
@@ -56,6 +57,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import ITEM_FUNCARGS_MEMBERS
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -1650,6 +1652,19 @@ def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
         tw.line(indent + line)
 
 
+class DeprecatingFuncArgs(Dict[str, object]):
+    def __init__(self, initialnames: Sequence[str]) -> None:
+        super().__init__()
+        self.warned: bool = False
+        self.initialnames: Final = initialnames
+
+    def __getitem__(self, key: str) -> object:
+        if not self.warned and key not in self.initialnames:
+            self.warned = True
+            warnings.warn(ITEM_FUNCARGS_MEMBERS, stacklevel=2)
+        return super().__getitem__(key)
+
+
 class Function(PyobjMixin, nodes.Item):
     """Item responsible for setting up and executing a Python test function.
 
@@ -1738,7 +1753,9 @@ class Function(PyobjMixin, nodes.Item):
         return super().from_parent(parent=parent, **kw)
 
     def _initrequest(self) -> None:
-        self.funcargs: Dict[str, object] = {}
+        self.funcargs: Dict[str, object] = DeprecatingFuncArgs(
+            self._fixtureinfo.initialnames
+        )
         self._request = fixtures.TopRequest(self, _ispytest=True)
 
     @property

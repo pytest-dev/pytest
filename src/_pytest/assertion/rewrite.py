@@ -18,6 +18,7 @@ import sys
 import tokenize
 import types
 from typing import Callable
+from typing import DefaultDict
 from typing import Dict
 from typing import IO
 from typing import Iterable
@@ -671,9 +672,9 @@ class AssertionRewriter(ast.NodeVisitor):
         else:
             self.enable_assertion_pass_hook = False
         self.source = source
-        self.scope: tuple[ast.AST, ...] = ()
-        self.variables_overwrite: defaultdict[
-            tuple[ast.AST, ...], Dict[str, str]
+        self.scope: Tuple[ast.AST, ...] = ()
+        self.variables_overwrite: DefaultDict[
+            Tuple[ast.AST, ...], Dict[str, str]
         ] = defaultdict(dict)
 
     def run(self, mod: ast.Module) -> None:

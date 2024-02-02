@@ -1,0 +1,3 @@
+Accessing ``item.funcargs`` with fixture names other than the direct ones, i.e. the direct args, the ones with ``autouse`` and the ones with ``usefixtures`` issues a warning.
+
+This will become an error in pytest 9.

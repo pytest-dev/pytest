@@ -134,3 +134,32 @@ def test_fixture_disallowed_between_marks():
             raise NotImplementedError()
 
     assert len(record) == 2  # one for each mark decorator
+
+
+def test_deprecated_access_to_item_funcargs(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fixture1():
+            return None
+
+        @pytest.fixture
+        def fixture2(fixture1):
+            return None
+
+        def test(request, fixture2):
+            with pytest.warns(
+                pytest.PytestRemovedIn9Warning,
+                match=r"Accessing `item.funcargs` with a fixture",
+            ) as record:
+                request.node.funcargs["fixture1"]
+                assert request.node.funcargs.warned
+                request.node.funcargs.warned = False
+                request.node.funcargs["fixture2"]
+            assert len(record) == 1
+        """
+    )
+    output = pytester.runpytest()
+    output.assert_outcomes(passed=1)

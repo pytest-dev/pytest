@@ -274,6 +274,17 @@ The accompanying ``py.path.local`` based paths have been deprecated: plugins whi
     resolved in future versions as we slowly get rid of the :pypi:`py`
     dependency (see :issue:`9283` for a longer discussion).
 
+.. _item-funcargs-deprecation:
+
+Accessing ``item.funcargs`` with non-directly requested fixture names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionremoved:: 8.1
+
+Accessing ``item.funcargs`` with non-directly requested fixture names issues a warning and will be erroneous starting from pytest 9.
+Directly requested fixtures are the direct arguments to the test, ``usefixtures`` fixtures and ``autouse`` fixtures.
+
+To request a fixture other than the directly requested ones, use :func:`request.getfixturevalue <pytest.FixtureRequest.getfixturevalue>` instead.
 
 .. _nose-deprecation:
 
