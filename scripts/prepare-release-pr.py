@@ -14,8 +14,8 @@ After that, it will create a release using the `release` tox environment, and pu
 `pytest bot <pytestbot@gmail.com>` commit author.
 """
 import argparse
-import re
 from pathlib import Path
+import re
 from subprocess import check_call
 from subprocess import check_output
 from subprocess import run

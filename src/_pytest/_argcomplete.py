@@ -63,9 +63,9 @@ If things do not work right away:
 """
 
 import argparse
+from glob import glob
 import os
 import sys
-from glob import glob
 from typing import Any
 from typing import List
 from typing import Optional

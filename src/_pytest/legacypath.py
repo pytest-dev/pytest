@@ -1,9 +1,9 @@
 """Add backward compatibility support for the legacy py path type."""
 
 import dataclasses
+from pathlib import Path
 import shlex
 import subprocess
-from pathlib import Path
 from typing import Final
 from typing import final
 from typing import List
@@ -32,6 +32,7 @@ from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
 from _pytest.terminal import TerminalReporter
 from _pytest.tmpdir import TempPathFactory
+
 
 if TYPE_CHECKING:
     import pexpect

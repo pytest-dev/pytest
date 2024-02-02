@@ -13,6 +13,7 @@ from functools import total_ordering
 from typing import Literal
 from typing import Optional
 
+
 _ScopeName = Literal["session", "package", "module", "class", "function"]
 
 

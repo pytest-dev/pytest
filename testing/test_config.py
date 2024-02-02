@@ -1,10 +1,10 @@
 import dataclasses
 import importlib.metadata
 import os
+from pathlib import Path
 import re
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -14,7 +14,6 @@ from typing import Type
 from typing import Union
 
 import _pytest._code
-import pytest
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
@@ -31,6 +30,7 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestParseIni:
@@ -50,12 +50,10 @@ class TestParseIni:
         monkeypatch.chdir(sub)
         (tmp_path / filename).write_text(
             textwrap.dedent(
-                """\
+                f"""\
                 [{section}]
                 name = value
-                """.format(
-                    section=section
-                )
+                """
             ),
             encoding="utf-8",
         )
@@ -125,12 +123,10 @@ class TestParseIni:
     def test_ini_names(self, pytester: Pytester, name, section) -> None:
         pytester.path.joinpath(name).write_text(
             textwrap.dedent(
-                """
+                f"""
             [{section}]
             minversion = 3.36
-        """.format(
-                    section=section
-                )
+        """
             ),
             encoding="utf-8",
         )
@@ -864,7 +860,6 @@ class TestConfigAPI:
         """Tests the default values for configuration based on
         config type
         """
-
         pytester.makeconftest(
             """
             def pytest_addoption(parser):
@@ -1621,11 +1616,9 @@ class TestOverrideIniArgs:
         section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
         pytester.path.joinpath(name).write_text(
             textwrap.dedent(
-                """
+                f"""
             {section}
-            custom = 1.0""".format(
-                    section=section
-                )
+            custom = 1.0"""
             ),
             encoding="utf-8",
         )
@@ -2039,7 +2032,6 @@ class TestPytestPluginsVariable:
         self, pytester: Pytester, use_pyargs: bool
     ) -> None:
         """When using --pyargs, do not emit the warning about non-top-level conftest warnings (#4039, #4044)"""
-
         files = {
             "src/pkg/__init__.py": "",
             "src/pkg/conftest.py": "",
@@ -2054,9 +2046,9 @@ class TestPytestPluginsVariable:
         args = ("--pyargs", "pkg") if use_pyargs else ()
         res = pytester.runpytest(*args)
         assert res.ret == (0 if use_pyargs else 2)
-        msg = msg = (
-            "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
-        )
+        msg = (
+            msg
+        ) = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         if use_pyargs:
             assert msg not in res.stdout.str()
         else:

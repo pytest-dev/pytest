@@ -1,8 +1,7 @@
 import argparse
+from gettext import gettext
 import os
 import sys
-import warnings
-from gettext import gettext
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -16,6 +15,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
+import warnings
 
 import _pytest._io
 from _pytest.config.exceptions import UsageError
@@ -23,6 +23,7 @@ from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
 from _pytest.deprecated import ARGUMENT_TYPE_STR
 from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 from _pytest.deprecated import check_ispytest
+
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -219,7 +220,7 @@ class Parser:
 
 
 def get_ini_default_for_type(
-    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]]
+    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]],
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
@@ -480,7 +481,7 @@ class MyOptionParser(argparse.ArgumentParser):
         ) -> Optional[Tuple[Optional[argparse.Action], str, Optional[str]]]:
             if not arg_string:
                 return None
-            if not arg_string[0] in self.prefix_chars:
+            if arg_string[0] not in self.prefix_chars:
                 return None
             if arg_string in self._option_string_actions:
                 action = self._option_string_actions[arg_string]

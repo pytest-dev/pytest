@@ -4,16 +4,15 @@ This is a good source for looking at the various reporting hooks.
 """
 
 import argparse
+from collections import Counter
 import dataclasses
 import datetime
+from functools import partial
 import inspect
+from pathlib import Path
 import platform
 import sys
 import textwrap
-import warnings
-from collections import Counter
-from functools import partial
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import ClassVar
@@ -31,16 +30,17 @@ from typing import TextIO
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 import pluggy
 
-import _pytest._version
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
+import _pytest._version
 from _pytest.assertion.util import running_on_ci
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
@@ -54,6 +54,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+
 
 if TYPE_CHECKING:
     from _pytest.main import Session
@@ -671,8 +672,8 @@ class TerminalReporter:
             return f" [ {collected} / {collected} ]"
         else:
             if collected:
-                return " [{:3d}%]".format(
-                    len(self._progress_nodeids_reported) * 100 // collected
+                return (
+                    f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
                 )
             return " [100%]"
 
@@ -757,9 +758,7 @@ class TerminalReporter:
             if pypy_version_info:
                 verinfo = ".".join(map(str, pypy_version_info[:3]))
                 msg += f"[pypy-{verinfo}-{pypy_version_info[3]}]"
-            msg += ", pytest-{}, pluggy-{}".format(
-                _pytest._version.version, pluggy.__version__
-            )
+            msg += f", pytest-{_pytest._version.version}, pluggy-{pluggy.__version__}"
             if (
                 self.verbosity > 0
                 or self.config.option.debug
@@ -1464,7 +1463,7 @@ def _plugin_nameversions(plugininfo) -> List[str]:
     values: List[str] = []
     for plugin, dist in plugininfo:
         # Gets us name and version!
-        name = "{dist.project_name}-{dist.version}".format(dist=dist)
+        name = f"{dist.project_name}-{dist.version}"
         # Questionable convenience, but it keeps things short.
         if name.startswith("pytest-"):
             name = name[7:]

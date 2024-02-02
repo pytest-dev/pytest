@@ -4,9 +4,9 @@ import abc
 import collections
 import contextlib
 import io
+from io import UnsupportedOperation
 import os
 import sys
-from io import UnsupportedOperation
 from tempfile import TemporaryFile
 from types import TracebackType
 from typing import Any
@@ -38,6 +38,7 @@ from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
 from _pytest.reports import CollectReport
+
 
 _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
@@ -790,9 +791,7 @@ class CaptureManager:
             current_fixture = self._capture_fixture.request.fixturename
             requested_fixture = capture_fixture.request.fixturename
             capture_fixture.request.raiseerror(
-                "cannot use {} and {} at the same time".format(
-                    requested_fixture, current_fixture
-                )
+                f"cannot use {requested_fixture} and {current_fixture} at the same time"
             )
         self._capture_fixture = capture_fixture
 
@@ -988,7 +987,6 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
     Example:
-
     .. code-block:: python
 
         def test_output(capsys):
@@ -1016,7 +1014,6 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
     Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
     Example:
-
     .. code-block:: python
 
         def test_output(capsysbinary):
@@ -1044,7 +1041,6 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
     Example:
-
     .. code-block:: python
 
         def test_system_echo(capfd):
@@ -1072,7 +1068,6 @@ def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, N
     Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
     Example:
-
     .. code-block:: python
 
         def test_system_echo(capfdbinary):

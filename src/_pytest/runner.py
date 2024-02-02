@@ -37,6 +37,7 @@ from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
+
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
@@ -94,8 +95,7 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
         if verbose < 2 and rep.duration < durations_min:
             tr.write_line("")
             tr.write_line(
-                "(%s durations < %gs hidden.  Use -vv to show these durations.)"
-                % (len(dlist) - i, durations_min)
+                f"({len(dlist) - i} durations < {durations_min:g}s hidden.  Use -vv to show these durations.)"
             )
             break
         tr.write_line(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}")

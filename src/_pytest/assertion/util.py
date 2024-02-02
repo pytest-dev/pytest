@@ -15,12 +15,13 @@ from typing import Protocol
 from typing import Sequence
 from unicodedata import normalize
 
-import _pytest._code
 from _pytest import outcomes
+import _pytest._code
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
+
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -302,8 +303,8 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
             if i > 42:
                 i -= 10  # Provide some context
                 explanation += [
-                    "Skipping {} identical trailing "
-                    "characters in diff, use -v to show".format(i)
+                    f"Skipping {i} identical trailing "
+                    "characters in diff, use -v to show"
                 ]
                 left = left[:-i]
                 right = right[:-i]

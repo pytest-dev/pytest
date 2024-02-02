@@ -1,6 +1,6 @@
-import pytest
 from _pytest.config import ExitCode
 from _pytest.pytester import Pytester
+import pytest
 
 
 def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:

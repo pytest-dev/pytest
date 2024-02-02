@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import functools
-import warnings
 from pathlib import Path
 from typing import Mapping
+import warnings
 
 import pluggy
 
 from ..compat import LEGACY_PATH
 from ..compat import legacy_path
 from ..deprecated import HOOK_LEGACY_PATH_ARG
+
 
 # hookname: (Path, LEGACY_PATH)
 imply_paths_hooks: Mapping[str, tuple[str, str]] = {

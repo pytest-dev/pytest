@@ -2,7 +2,6 @@ from typing import Generator
 from typing import Optional
 from typing import Union
 
-import pytest
 from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -10,6 +9,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
 from _pytest.scope import Scope
+import pytest
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -71,7 +71,7 @@ def _show_fixture_action(fixturedef: FixtureDef[object], msg: str) -> None:
     scope_indent = list(reversed(Scope)).index(fixturedef._scope)
     tw.write(" " * 2 * scope_indent)
     tw.write(
-        "{step} {scope} {fixture}".format(
+        "{step} {scope} {fixture}".format(  # noqa: UP032 (Readability)
             step=msg.ljust(8),  # align the output to TEARDOWN
             scope=fixturedef.scope[0].upper(),
             fixture=fixturedef.argname,

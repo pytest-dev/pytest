@@ -13,7 +13,6 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
-import pytest
 from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
@@ -23,6 +22,8 @@ from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
 from _pytest.scope import Scope
+import pytest
+
 
 # import hypothesis
 # from hypothesis import strategies
@@ -1940,7 +1941,7 @@ class TestMarkersWithParametrization:
 
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_passing_is_xpass(self, pytester: Pytester, strict: bool) -> None:
-        s = """
+        s = f"""
             import pytest
 
             m = pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict})
@@ -1952,9 +1953,7 @@ class TestMarkersWithParametrization:
             ])
             def test_increment(n, expected):
                 assert n + 1 == expected
-        """.format(
-            strict=strict
-        )
+        """
         pytester.makepyfile(s)
         reprec = pytester.inline_run()
         passed, failed = (2, 1) if strict else (3, 0)
@@ -2005,7 +2004,7 @@ class TestMarkersWithParametrization:
 
     @pytest.mark.parametrize("strict", [True, False])
     def test_parametrize_marked_value(self, pytester: Pytester, strict: bool) -> None:
-        s = """
+        s = f"""
             import pytest
 
             @pytest.mark.parametrize(("n", "expected"), [
@@ -2020,9 +2019,7 @@ class TestMarkersWithParametrization:
             ])
             def test_increment(n, expected):
                 assert n + 1 == expected
-        """.format(
-            strict=strict
-        )
+        """
         pytester.makepyfile(s)
         reprec = pytester.inline_run()
         passed, failed = (0, 2) if strict else (2, 0)

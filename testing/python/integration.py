@@ -1,8 +1,8 @@
-import pytest
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+import pytest
 
 
 def test_wrapped_getfslineno() -> None:

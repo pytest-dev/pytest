@@ -1,10 +1,10 @@
 from pathlib import Path
 
-import pytest
 from _pytest.compat import LEGACY_PATH
 from _pytest.fixtures import TopRequest
 from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir
+import pytest
 
 
 def test_item_fspath(pytester: pytest.Pytester) -> None:

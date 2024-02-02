@@ -2,7 +2,6 @@
 functions creating them."""
 
 import sys
-import warnings
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -11,6 +10,7 @@ from typing import Optional
 from typing import Protocol
 from typing import Type
 from typing import TypeVar
+import warnings
 
 from _pytest.deprecated import KEYWORD_MSG_ARG
 
@@ -297,8 +297,7 @@ def importorskip(
 
         if verattr is None or Version(verattr) < Version(minversion):
             raise Skipped(
-                "module %r has __version__ %r, required is: %r"
-                % (modname, verattr, minversion),
+                f"module {modname!r} has __version__ {verattr!r}, required is: {minversion!r}",
                 allow_module_level=True,
             )
     return mod

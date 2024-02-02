@@ -1,16 +1,15 @@
 import errno
 import os.path
+from pathlib import Path
 import pickle
 import sys
-import unittest.mock
-from pathlib import Path
 from textwrap import dedent
 from types import ModuleType
 from typing import Any
 from typing import Generator
 from typing import Iterator
+import unittest.mock
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
@@ -30,6 +29,7 @@ from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import TempPathFactory
+import pytest
 
 
 class TestFNMatcherPort:

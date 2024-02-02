@@ -1,6 +1,6 @@
 import dataclasses
-import os
 from io import StringIO
+import os
 from pprint import pprint
 from typing import Any
 from typing import cast
@@ -36,6 +36,7 @@ from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import skip
 
+
 if TYPE_CHECKING:
     from _pytest.runner import CallInfo
 
@@ -45,7 +46,7 @@ def getworkerinfoline(node):
         return node._workerinfocache
     except AttributeError:
         d = node.workerinfo
-        ver = "%s.%s.%s" % d["version_info"][:3]
+        ver = "{}.{}.{}".format(*d["version_info"][:3])
         node._workerinfocache = s = "[{}] {} -- Python {} {}".format(
             d["id"], d["sysplatform"], ver, d["executable"]
         )
@@ -70,7 +71,8 @@ class BaseReport:
 
     if TYPE_CHECKING:
         # Can have arbitrary fields given to __init__().
-        def __getattr__(self, key: str) -> Any: ...
+        def __getattr__(self, key: str) -> Any:
+            ...
 
     def toterminal(self, out: TerminalWriter) -> None:
         if hasattr(self, "node"):
@@ -312,9 +314,7 @@ class TestReport(BaseReport):
         self.__dict__.update(extra)
 
     def __repr__(self) -> str:
-        return "<{} {!r} when={!r} outcome={!r}>".format(
-            self.__class__.__name__, self.nodeid, self.when, self.outcome
-        )
+        return f"<{self.__class__.__name__} {self.nodeid!r} when={self.when!r} outcome={self.outcome!r}>"
 
     @classmethod
     def from_item_and_call(cls, item: Item, call: "CallInfo[None]") -> "TestReport":
@@ -429,9 +429,7 @@ class CollectReport(BaseReport):
         return (self.fspath, None, self.fspath)
 
     def __repr__(self) -> str:
-        return "<CollectReport {!r} lenresult={} outcome={!r}>".format(
-            self.nodeid, len(self.result), self.outcome
-        )
+        return f"<CollectReport {self.nodeid!r} lenresult={len(self.result)} outcome={self.outcome!r}>"
 
 
 class CollectErrorRepr(TerminalRepr):
@@ -443,7 +441,7 @@ class CollectErrorRepr(TerminalRepr):
 
 
 def pytest_report_to_serializable(
-    report: Union[CollectReport, TestReport]
+    report: Union[CollectReport, TestReport],
 ) -> Optional[Dict[str, Any]]:
     if isinstance(report, (TestReport, CollectReport)):
         data = report._to_json()
@@ -475,7 +473,7 @@ def _report_to_json(report: BaseReport) -> Dict[str, Any]:
     """
 
     def serialize_repr_entry(
-        entry: Union[ReprEntry, ReprEntryNative]
+        entry: Union[ReprEntry, ReprEntryNative],
     ) -> Dict[str, Any]:
         data = dataclasses.asdict(entry)
         for key, value in data.items():
@@ -607,9 +605,9 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
                         description,
                     )
                 )
-            exception_info: Union[ExceptionChainRepr, ReprExceptionInfo] = (
-                ExceptionChainRepr(chain)
-            )
+            exception_info: Union[
+                ExceptionChainRepr, ReprExceptionInfo
+            ] = ExceptionChainRepr(chain)
         else:
             exception_info = ReprExceptionInfo(
                 reprtraceback=reprtraceback,

@@ -9,6 +9,7 @@ from typing import Callable
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
+
 if TYPE_CHECKING:
     from typing_extensions import ParamSpec
 

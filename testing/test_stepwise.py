@@ -1,10 +1,10 @@
 from pathlib import Path
 
-import pytest
 from _pytest.cacheprovider import Cache
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.stepwise import STEPWISE_CACHE_DIR
+import pytest
 
 
 @pytest.fixture

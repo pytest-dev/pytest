@@ -1,9 +1,8 @@
 import os
+from pathlib import Path
 import sys
 import textwrap
-from pathlib import Path
 
-import pytest
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
@@ -12,6 +11,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+import pytest
 
 
 def test_getfuncargnames_functions():
@@ -1287,7 +1287,7 @@ class TestFixtureUsages:
     @pytest.mark.parametrize("scope", ["function", "session"])
     def test_parameters_without_eq_semantics(self, scope, pytester: Pytester) -> None:
         pytester.makepyfile(
-            """
+            f"""
             class NoEq1:  # fails on `a == b` statement
                 def __eq__(self, _):
                     raise RuntimeError
@@ -1309,9 +1309,7 @@ class TestFixtureUsages:
 
             def test2(no_eq):
                 pass
-        """.format(
-                scope=scope
-            )
+        """
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*4 passed*"])
@@ -2198,7 +2196,7 @@ class TestAutouseManagement:
                 pass
             def test_check():
                 assert values == ["new1", "new2", "fin2", "fin1"]
-        """
+        """  # noqa: UP031 (python syntax issues)
             % locals()
         )
         reprec = pytester.inline_run("-s")
@@ -3086,8 +3084,8 @@ class TestFixtureMarker:
                 pass
             def test_other():
                 pass
-        """
-            % {"scope": scope}
+        """  # noqa: UP031 (python syntax issues)
+            % {"scope": scope}  # noqa: UP031 (python syntax issues)
         )
         reprec = pytester.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
@@ -3286,7 +3284,7 @@ class TestRequestScopeAccess:
                 assert request.config
             def test_func():
                 pass
-        """
+        """  # noqa: UP031 (python syntax issues)
             % (scope, ok.split(), error.split())
         )
         reprec = pytester.inline_run("-l")
@@ -3307,7 +3305,7 @@ class TestRequestScopeAccess:
                 assert request.config
             def test_func(arg):
                 pass
-        """
+        """  # noqa: UP031 (python syntax issues)
             % (scope, ok.split(), error.split())
         )
         reprec = pytester.inline_run()
