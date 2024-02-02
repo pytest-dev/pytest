@@ -79,7 +79,7 @@ def deprecated_call(
     """
     __tracebackhide__ = True
     if func is not None:
-        args = (func,) + args
+        args = (func, *args)
     return warns(
         (DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs
     )

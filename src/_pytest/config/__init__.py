@@ -238,7 +238,8 @@ essential_plugins = (
     "helpconfig",  # Provides -p.
 )
 
-default_plugins = essential_plugins + (
+default_plugins = (
+    *essential_plugins,
     "python",
     "terminal",
     "debugging",

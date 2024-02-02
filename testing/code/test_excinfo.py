@@ -1739,7 +1739,7 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
 def add_note(err: BaseException, msg: str) -> None:
     """Adds a note to an exception inplace."""
     if sys.version_info < (3, 11):
-        err.__notes__ = getattr(err, "__notes__", []) + [msg]  # type: ignore[attr-defined]
+        err.__notes__ = [*getattr(err, "__notes__", []), msg]  # type: ignore[attr-defined]
     else:
         err.add_note(msg)
 

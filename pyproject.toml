@@ -158,7 +158,6 @@ ignore = [
     "D404", # First word of the docstring should not be "This"
     "D415", # First line should end with a period, question mark, or exclamation point
     # ruff ignore
-    "RUF005", # Consider `(x, *y)` instead of concatenation
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
 ]
 

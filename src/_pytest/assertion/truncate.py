@@ -92,7 +92,8 @@ def _truncate_explanation(
     else:
         # Add proper ellipsis when we were able to fit a full line exactly
         truncated_explanation[-1] = "..."
-    return truncated_explanation + [
+    return [
+        *truncated_explanation,
         "",
         f"...Full output truncated ({truncated_line_count} line"
         f"{'' if truncated_line_count == 1 else 's'} hidden), {USAGE_MSG}",

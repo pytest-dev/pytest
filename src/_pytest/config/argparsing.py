@@ -122,7 +122,7 @@ class Parser:
         from _pytest._argcomplete import filescompleter
 
         optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
-        groups = self._groups + [self._anonymous]
+        groups = [*self._groups, self._anonymous]
         for group in groups:
             if group.options:
                 desc = group.description or group.name

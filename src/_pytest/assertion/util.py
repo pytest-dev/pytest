@@ -233,8 +233,8 @@ def assertrepr_compare(
         return None
 
     if explanation[0] != "":
-        explanation = [""] + explanation
-    return [summary] + explanation
+        explanation = ["", *explanation]
+    return [summary, *explanation]
 
 
 def _compare_eq_any(
