@@ -1,17 +1,18 @@
 # mypy: allow-untyped-defs
 import io
 import os
+from pathlib import Path
 import re
 import shutil
 import sys
-from pathlib import Path
 from typing import Generator
 from typing import Optional
 from unittest import mock
 
-import pytest
 from _pytest._io import terminalwriter
 from _pytest.monkeypatch import MonkeyPatch
+import pytest
+
 
 # These tests were initially copied from py 1.8.1.
 

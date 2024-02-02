@@ -1,12 +1,12 @@
 from typing import Optional
 from typing import Union
 
-import pytest
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
+import pytest
 
 
 def pytest_addoption(parser: Parser) -> None:

@@ -6,10 +6,10 @@ import subprocess
 import sys
 import types
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
+import pytest
 
 
 def prepend_pythonpath(*dirs) -> str:

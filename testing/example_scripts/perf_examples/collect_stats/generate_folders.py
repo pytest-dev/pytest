@@ -2,6 +2,7 @@
 import argparse
 import pathlib
 
+
 HERE = pathlib.Path(__file__).parent
 TEST_CONTENT = (HERE / "template_test.py").read_bytes()
 

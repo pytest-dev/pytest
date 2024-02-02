@@ -2,12 +2,12 @@
 import sys
 import textwrap
 
-import pytest
 from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
 from _pytest.skipping import evaluate_xfail_marks
 from _pytest.skipping import pytest_runtest_setup
+import pytest
 
 
 class TestEvaluation:
@@ -76,14 +76,13 @@ class TestEvaluation:
         ]
         for i in range(0, 2):
             item = pytester.getitem(
-                """
+                f"""
                 import pytest
-                %s
-                %s
+                {lines[i]}
+                {lines[(i + 1) % 2]}
                 def test_func():
                     pass
             """
-                % (lines[i], lines[(i + 1) % 2])
             )
             skipped = evaluate_skip_marks(item)
             assert skipped
@@ -607,7 +606,7 @@ class TestXFail:
             @pytest.mark.xfail(raises=%s)
             def test_raises():
                 raise %s()
-        """
+        """  # noqa: UP031 (python syntax issues)
             % (expected, actual)
         )
         result = pytester.runpytest(p)
@@ -909,7 +908,7 @@ class TestSkipif:
             @pytest.mark.skipif(%(params)s)
             def test_that():
                 assert 0
-        """
+        """  # noqa: UP031 (python syntax issues)
             % dict(params=params)
         )
         result = pytester.runpytest(p, "-s", "-rs")
@@ -935,15 +934,13 @@ class TestSkipif:
         self, pytester: Pytester, marker, msg1, msg2
     ) -> None:
         pytester.makepyfile(
-            test_foo="""
+            test_foo=f"""
             import pytest
             @pytest.mark.{marker}(False, reason='first_condition')
             @pytest.mark.{marker}(True, reason='second_condition')
             def test_foobar():
                 assert 1
-        """.format(
-                marker=marker
-            )
+        """
         )
         result = pytester.runpytest("-s", "-rsxX")
         result.stdout.fnmatch_lines(

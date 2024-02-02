@@ -10,4 +10,5 @@ from time import perf_counter
 from time import sleep
 from time import time
 
+
 __all__ = ["perf_counter", "sleep", "time"]

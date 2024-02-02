@@ -1,15 +1,15 @@
 # mypy: allow-untyped-defs
-import re
-import warnings
 from pathlib import Path
+import re
 from typing import cast
 from typing import Type
+import warnings
 
-import pytest
 from _pytest import nodes
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
+import pytest
 
 
 def test_node_from_parent_disallowed_arguments() -> None:
@@ -39,7 +39,6 @@ def test_subclassing_both_item_and_collector_deprecated(
     Verifies we warn on diamond inheritance as well as correctly managing legacy
     inheritance constructors with missing args as found in plugins.
     """
-
     # We do not expect any warnings messages to issued during class definition.
     with warnings.catch_warnings():
         warnings.simplefilter("error")

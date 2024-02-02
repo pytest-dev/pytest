@@ -1,15 +1,16 @@
 # mypy: allow-untyped-defs
 import os
-import shutil
 from pathlib import Path
+import shutil
 from typing import Generator
 from typing import List
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import TempPathFactory
+import pytest
+
 
 pytest_plugins = ("pytester",)
 
@@ -134,12 +135,10 @@ class TestNewAPI:
     def test_custom_rel_cache_dir(self, pytester: Pytester) -> None:
         rel_cache_dir = os.path.join("custom_cache_dir", "subdir")
         pytester.makeini(
-            """
+            f"""
             [pytest]
-            cache_dir = {cache_dir}
-        """.format(
-                cache_dir=rel_cache_dir
-            )
+            cache_dir = {rel_cache_dir}
+        """
         )
         pytester.makepyfile(test_errored="def test_error():\n    assert False")
         pytester.runpytest()
@@ -151,12 +150,10 @@ class TestNewAPI:
         tmp = tmp_path_factory.mktemp("tmp")
         abs_cache_dir = tmp / "custom_cache_dir"
         pytester.makeini(
-            """
+            f"""
             [pytest]
-            cache_dir = {cache_dir}
-        """.format(
-                cache_dir=abs_cache_dir
-            )
+            cache_dir = {abs_cache_dir}
+        """
         )
         pytester.makepyfile(test_errored="def test_error():\n    assert False")
         pytester.runpytest()
@@ -170,9 +167,7 @@ class TestNewAPI:
             """
             [pytest]
             cache_dir = {cache_dir}
-        """.format(
-                cache_dir="$env_var"
-            )
+        """.format(cache_dir="$env_var")
         )
         pytester.makepyfile(test_errored="def test_error():\n    assert False")
         pytester.runpytest()
@@ -201,12 +196,10 @@ def test_cache_reportheader_external_abspath(
 
     pytester.makepyfile("def test_hello(): pass")
     pytester.makeini(
-        """
+        f"""
     [pytest]
-    cache_dir = {abscache}
-    """.format(
-            abscache=external_cache
-        )
+    cache_dir = {external_cache}
+    """
     )
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines([f"cachedir: {external_cache}"])
@@ -646,13 +639,11 @@ class TestLastFailed:
         assert result.ret == 1
 
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             @pytest.{mark}
             def test(): assert 0
-        """.format(
-                mark=mark
-            )
+        """
         )
         result = pytester.runpytest()
         assert result.ret == 0

@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 import atexit
+from contextlib import contextmanager
 import fnmatch
 import importlib.util
 import io
 import os
-import posixpath
-import sys
-import uuid
-import warnings
-from contextlib import contextmanager
 from os.path import abspath
 from os.path import dirname
 from os.path import exists
@@ -20,17 +16,22 @@ from os.path import isdir
 from os.path import isfile
 from os.path import islink
 from os.path import normpath
+import posixpath
 from stat import S_ISDIR
 from stat import S_ISLNK
 from stat import S_ISREG
+import sys
 from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Literal
 from typing import overload
 from typing import TYPE_CHECKING
+import uuid
+import warnings
 
 from . import error
+
 
 # Moved from local.py.
 iswin32 = sys.platform == "win32" or (getattr(os, "_name", False) == "nt")
@@ -204,10 +205,12 @@ class Stat:
     if TYPE_CHECKING:
 
         @property
-        def size(self) -> int: ...
+        def size(self) -> int:
+            ...
 
         @property
-        def mtime(self) -> float: ...
+        def mtime(self) -> float:
+            ...
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._osstatresult, "st_" + name)
@@ -674,7 +677,7 @@ class LocalPath:
         else:
             kw.setdefault("dirname", dirname)
         kw.setdefault("sep", self.sep)
-        obj.strpath = normpath("%(dirname)s%(sep)s%(basename)s" % kw)
+        obj.strpath = normpath("{dirname}{sep}{basename}".format(**kw))
         return obj
 
     def _getbyspec(self, spec: str) -> list[str]:
@@ -759,7 +762,10 @@ class LocalPath:
             #   expected "Callable[[str, Any, Any], TextIOWrapper]"  [arg-type]
             # Which seems incorrect, given io.open supports the given argument types.
             return error.checked_call(
-                io.open, self.strpath, mode, encoding=encoding  # type:ignore[arg-type]
+                io.open,
+                self.strpath,
+                mode,
+                encoding=encoding,  # type:ignore[arg-type]
             )
         return error.checked_call(open, self.strpath, mode)
 
@@ -778,11 +784,11 @@ class LocalPath:
 
         valid checkers::
 
-            file=1    # is a file
-            file=0    # is not a file (may not even exist)
-            dir=1     # is a dir
-            link=1    # is a link
-            exists=1  # exists
+            file = 1  # is a file
+            file = 0  # is not a file (may not even exist)
+            dir = 1  # is a dir
+            link = 1  # is a link
+            exists = 1  # exists
 
         You can specify multiple checker definitions, for example::
 
@@ -960,10 +966,12 @@ class LocalPath:
             return p
 
     @overload
-    def stat(self, raising: Literal[True] = ...) -> Stat: ...
+    def stat(self, raising: Literal[True] = ...) -> Stat:
+        ...
 
     @overload
-    def stat(self, raising: Literal[False]) -> Stat | None: ...
+    def stat(self, raising: Literal[False]) -> Stat | None:
+        ...
 
     def stat(self, raising: bool = True) -> Stat | None:
         """Return an os.stat() tuple."""
@@ -1275,7 +1283,8 @@ class LocalPath:
         # error: Argument 1 has incompatible type overloaded function; expected "Callable[[str], str]"  [arg-type]
         # Which seems incorrect, given tempfile.mkdtemp supports the given argument types.
         path = error.checked_call(
-            tempfile.mkdtemp, dir=str(rootdir)  # type:ignore[arg-type]
+            tempfile.mkdtemp,
+            dir=str(rootdir),  # type:ignore[arg-type]
         )
         return cls(path)
 

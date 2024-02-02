@@ -2,9 +2,9 @@
 import re
 import sys
 
-import pytest
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestRaises:

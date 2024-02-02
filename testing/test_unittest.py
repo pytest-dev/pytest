@@ -3,10 +3,10 @@ import gc
 import sys
 from typing import List
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 def test_simple_unittest(pytester: Pytester) -> None:
@@ -353,22 +353,21 @@ def test_setup_class(pytester: Pytester) -> None:
 @pytest.mark.parametrize("type", ["Error", "Failure"])
 def test_testcase_adderrorandfailure_defers(pytester: Pytester, type: str) -> None:
     pytester.makepyfile(
-        """
+        f"""
         from unittest import TestCase
         import pytest
         class MyTestCase(TestCase):
             def run(self, result):
                 excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
                 try:
-                    result.add%s(self, excinfo._excinfo)
+                    result.add{type}(self, excinfo._excinfo)
                 except KeyboardInterrupt:
                     raise
                 except:
-                    pytest.fail("add%s should not raise")
+                    pytest.fail("add{type} should not raise")
             def test_hello(self):
                 pass
     """
-        % (type, type)
     )
     result = pytester.runpytest()
     result.stdout.no_fnmatch_line("*should not raise*")
@@ -400,14 +399,13 @@ def test_testcase_custom_exception_info(pytester: Pytester, type: str) -> None:
                 mp.setattr(_pytest._code, 'ExceptionInfo', FakeExceptionInfo)
                 try:
                     excinfo = excinfo._excinfo
-                    result.add%(type)s(self, excinfo)
+                    result.add{type}(self, excinfo)
                 finally:
                     mp.undo()
 
             def test_hello(self):
                 pass
-    """
-        % locals()
+    """.format(**locals())
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
@@ -834,7 +832,7 @@ def test_unittest_expected_failure_for_passing_test_is_fail(
 @pytest.mark.parametrize("stmt", ["return", "yield"])
 def test_unittest_setup_interaction(pytester: Pytester, stmt: str) -> None:
     pytester.makepyfile(
-        """
+        f"""
         import unittest
         import pytest
         class MyTestCase(unittest.TestCase):
@@ -856,9 +854,7 @@ def test_unittest_setup_interaction(pytester: Pytester, stmt: str) -> None:
 
             def test_classattr(self):
                 assert self.__class__.hello == "world"
-    """.format(
-            stmt=stmt
-        )
+    """
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*3 passed*"])
@@ -1063,7 +1059,7 @@ def test_usefixtures_marker_on_unittest(base, pytester: Pytester) -> None:
     )
 
     pytester.makepyfile(
-        """
+        f"""
         import pytest
         import {module}
 
@@ -1082,9 +1078,7 @@ def test_usefixtures_marker_on_unittest(base, pytester: Pytester) -> None:
                 assert self.fixture2
 
 
-    """.format(
-            module=module, base=base
-        )
+    """
     )
 
     result = pytester.runpytest("-s")
@@ -1253,7 +1247,7 @@ def test_pdb_teardown_skipped_for_functions(
     monkeypatch.setattr(pytest, "track_pdb_teardown_skipped", tracked, raising=False)
 
     pytester.makepyfile(
-        """
+        f"""
         import unittest
         import pytest
 
@@ -1269,9 +1263,7 @@ def test_pdb_teardown_skipped_for_functions(
             def test_1(self):
                 pass
 
-    """.format(
-            mark=mark
-        )
+    """
     )
     result = pytester.runpytest_inprocess("--pdb")
     result.stdout.fnmatch_lines("* 1 skipped in *")
@@ -1290,7 +1282,7 @@ def test_pdb_teardown_skipped_for_classes(
     monkeypatch.setattr(pytest, "track_pdb_teardown_skipped", tracked, raising=False)
 
     pytester.makepyfile(
-        """
+        f"""
         import unittest
         import pytest
 
@@ -1306,9 +1298,7 @@ def test_pdb_teardown_skipped_for_classes(
             def test_1(self):
                 pass
 
-    """.format(
-            mark=mark
-        )
+    """
     )
     result = pytester.runpytest_inprocess("--pdb")
     result.stdout.fnmatch_lines("* 1 skipped in *")

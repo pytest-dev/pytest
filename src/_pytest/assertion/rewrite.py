@@ -1,6 +1,7 @@
 """Rewrite assertion AST to produce nice error messages."""
 
 import ast
+from collections import defaultdict
 import errno
 import functools
 import importlib.abc
@@ -10,13 +11,12 @@ import io
 import itertools
 import marshal
 import os
+from pathlib import Path
+from pathlib import PurePath
 import struct
 import sys
 import tokenize
 import types
-from collections import defaultdict
-from pathlib import Path
-from pathlib import PurePath
 from typing import Callable
 from typing import Dict
 from typing import IO
@@ -39,6 +39,7 @@ from _pytest.main import Session
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.stash import StashKey
+
 
 # fmt: off
 from _pytest.assertion.util import format_explanation as _format_explanation  # noqa:F401, isort:skip
@@ -671,9 +672,9 @@ class AssertionRewriter(ast.NodeVisitor):
             self.enable_assertion_pass_hook = False
         self.source = source
         self.scope: tuple[ast.AST, ...] = ()
-        self.variables_overwrite: defaultdict[tuple[ast.AST, ...], Dict[str, str]] = (
-            defaultdict(dict)
-        )
+        self.variables_overwrite: defaultdict[
+            tuple[ast.AST, ...], Dict[str, str]
+        ] = defaultdict(dict)
 
     def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""
@@ -1019,9 +1020,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     ]
                 ):
                     pytest_temp = self.variable()
-                    self.variables_overwrite[self.scope][
-                        v.left.target.id
-                    ] = v.left  # type:ignore[assignment]
+                    self.variables_overwrite[self.scope][v.left.target.id] = v.left  # type:ignore[assignment]
                     v.left.target.id = pytest_temp
             self.push_format_context()
             res, expl = self.visit(v)
@@ -1065,9 +1064,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if isinstance(arg, ast.Name) and arg.id in self.variables_overwrite.get(
                 self.scope, {}
             ):
-                arg = self.variables_overwrite[self.scope][
-                    arg.id
-                ]  # type:ignore[assignment]
+                arg = self.variables_overwrite[self.scope][arg.id]  # type:ignore[assignment]
             res, expl = self.visit(arg)
             arg_expls.append(expl)
             new_args.append(res)
@@ -1075,9 +1072,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if isinstance(
                 keyword.value, ast.Name
             ) and keyword.value.id in self.variables_overwrite.get(self.scope, {}):
-                keyword.value = self.variables_overwrite[self.scope][
-                    keyword.value.id
-                ]  # type:ignore[assignment]
+                keyword.value = self.variables_overwrite[self.scope][keyword.value.id]  # type:ignore[assignment]
             res, expl = self.visit(keyword.value)
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
@@ -1114,13 +1109,9 @@ class AssertionRewriter(ast.NodeVisitor):
         if isinstance(
             comp.left, ast.Name
         ) and comp.left.id in self.variables_overwrite.get(self.scope, {}):
-            comp.left = self.variables_overwrite[self.scope][
-                comp.left.id
-            ]  # type:ignore[assignment]
+            comp.left = self.variables_overwrite[self.scope][comp.left.id]  # type:ignore[assignment]
         if isinstance(comp.left, ast.NamedExpr):
-            self.variables_overwrite[self.scope][
-                comp.left.target.id
-            ] = comp.left  # type:ignore[assignment]
+            self.variables_overwrite[self.scope][comp.left.target.id] = comp.left  # type:ignore[assignment]
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
             left_expl = f"({left_expl})"
@@ -1138,9 +1129,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 and next_operand.target.id == left_res.id
             ):
                 next_operand.target.id = self.variable()
-                self.variables_overwrite[self.scope][
-                    left_res.id
-                ] = next_operand  # type:ignore[assignment]
+                self.variables_overwrite[self.scope][left_res.id] = next_operand  # type:ignore[assignment]
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = f"({next_expl})"

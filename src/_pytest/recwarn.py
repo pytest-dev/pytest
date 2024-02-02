@@ -1,8 +1,7 @@
 # mypy: allow-untyped-defs
 """Record warnings during test function execution."""
-import re
-import warnings
 from pprint import pformat
+import re
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -17,10 +16,12 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
+import warnings
 
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.outcomes import fail
+
 
 T = TypeVar("T")
 
@@ -41,13 +42,15 @@ def recwarn() -> Generator["WarningsRecorder", None, None]:
 @overload
 def deprecated_call(
     *, match: Optional[Union[str, Pattern[str]]] = ...
-) -> "WarningsRecorder": ...
+) -> "WarningsRecorder":
+    ...
 
 
 @overload
 def deprecated_call(  # noqa: F811
     func: Callable[..., T], *args: Any, **kwargs: Any
-) -> T: ...
+) -> T:
+    ...
 
 
 def deprecated_call(  # noqa: F811
@@ -89,7 +92,8 @@ def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
-) -> "WarningsChecker": ...
+) -> "WarningsChecker":
+    ...
 
 
 @overload
@@ -98,7 +102,8 @@ def warns(  # noqa: F811
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any,
-) -> T: ...
+) -> T:
+    ...
 
 
 def warns(  # noqa: F811

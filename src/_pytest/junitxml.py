@@ -7,12 +7,11 @@ Based on initial code from Ross Lawley.
 Output conforms to
 https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
+from datetime import datetime
 import functools
 import os
 import platform
 import re
-import xml.etree.ElementTree as ET
-from datetime import datetime
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -20,8 +19,8 @@ from typing import Match
 from typing import Optional
 from typing import Tuple
 from typing import Union
+import xml.etree.ElementTree as ET
 
-import pytest
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
@@ -33,6 +32,8 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
+import pytest
+
 
 xml_key = StashKey["LogXML"]()
 
@@ -273,9 +274,7 @@ def _warn_incompatibility_with_xunit2(
     if xml is not None and xml.family not in ("xunit1", "legacy"):
         request.node.warn(
             PytestWarning(
-                "{fixture_name} is incompatible with junit_family '{family}' (use 'legacy' or 'xunit1')".format(
-                    fixture_name=fixture_name, family=xml.family
-                )
+                f"{fixture_name} is incompatible with junit_family '{xml.family}' (use 'legacy' or 'xunit1')"
             )
         )
 
@@ -367,7 +366,6 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
         `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See
         :issue:`7767` for details.
     """
-
     __tracebackhide__ = True
 
     def record_func(name: str, value: object) -> None:

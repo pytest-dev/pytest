@@ -1,16 +1,15 @@
 # mypy: allow-untyped-defs
 """Discover and run doctests in modules and test files."""
 import bdb
+from contextlib import contextmanager
 import functools
 import inspect
 import os
+from pathlib import Path
 import platform
 import sys
 import traceback
 import types
-import warnings
-from contextlib import contextmanager
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -24,6 +23,7 @@ from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
@@ -44,6 +44,7 @@ from _pytest.pathlib import import_path
 from _pytest.python import Module
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
+
 
 if TYPE_CHECKING:
     import doctest
@@ -486,9 +487,9 @@ def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
             return real_unwrap(func, stop=lambda obj: _is_mocked(obj) or _stop(func))
         except Exception as e:
             warnings.warn(
-                "Got %r when unwrapping %r.  This is usually caused "
+                f"Got {e!r} when unwrapping {func!r}.  This is usually caused "
                 "by a violation of Python's object protocol; see e.g. "
-                "https://github.com/pytest-dev/pytest/issues/5080" % (e, func),
+                "https://github.com/pytest-dev/pytest/issues/5080",
                 PytestWarning,
             )
             raise

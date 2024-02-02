@@ -5,6 +5,7 @@ from typing import Generic
 from typing import TypeVar
 from typing import Union
 
+
 __all__ = ["Stash", "StashKey"]
 
 

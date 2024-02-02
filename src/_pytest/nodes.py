@@ -1,9 +1,8 @@
 # mypy: allow-untyped-defs
 import abc
-import os
-import warnings
 from functools import cached_property
 from inspect import signature
+import os
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -20,6 +19,7 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 import pluggy
 
@@ -38,6 +38,7 @@ from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
+
 
 if TYPE_CHECKING:
     # Imported here due to circular import.
@@ -229,9 +230,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         # enforce type checks here to avoid getting a generic type error later otherwise.
         if not isinstance(warning, Warning):
             raise ValueError(
-                "warning must be an instance of Warning or subclass, got {!r}".format(
-                    warning
-                )
+                f"warning must be an instance of Warning or subclass, got {warning!r}"
             )
         path, lineno = get_fslocation_from_item(self)
         assert lineno is not None
@@ -326,10 +325,12 @@ class Node(abc.ABC, metaclass=NodeMeta):
                     yield node, mark
 
     @overload
-    def get_closest_marker(self, name: str) -> Optional[Mark]: ...
+    def get_closest_marker(self, name: str) -> Optional[Mark]:
+        ...
 
     @overload
-    def get_closest_marker(self, name: str, default: Mark) -> Mark: ...
+    def get_closest_marker(self, name: str, default: Mark) -> Mark:
+        ...
 
     def get_closest_marker(
         self, name: str, default: Optional[Mark] = None

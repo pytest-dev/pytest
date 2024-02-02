@@ -1,13 +1,12 @@
 # mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import pprint
 import shutil
 import sys
 import textwrap
-from pathlib import Path
 from typing import List
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -17,6 +16,7 @@ from _pytest.nodes import Item
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import Pytester
+import pytest
 
 
 def ensure_file(file_path: Path) -> Path:
@@ -1282,21 +1282,19 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
     subdir = pytester.mkdir("sub")
     pytester.path.joinpath("conftest.py").write_text(
         textwrap.dedent(
-            """
+            f"""
             import os
-            os.chdir(%r)
+            os.chdir({str(subdir)!r})
             """
-            % (str(subdir),)
         ),
         encoding="utf-8",
     )
     pytester.makepyfile(
-        """
+        f"""
         def test_1():
             import os
-            assert os.getcwd() == %r
+            assert os.getcwd() == {str(subdir)!r}
         """
-        % (str(subdir),)
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
@@ -1639,13 +1637,11 @@ class TestImportModeImportlib:
         pytester.makepyfile(
             **{
                 "tests/conftest.py": "",
-                "tests/test_foo.py": """
+                "tests/test_foo.py": f"""
                 import sys
                 def test_check():
                     assert r"{tests_dir}" not in sys.path
-                """.format(
-                    tests_dir=tests_dir
-                ),
+                """,
             }
         )
         result = pytester.runpytest("-v", "--import-mode=importlib")

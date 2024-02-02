@@ -1,18 +1,18 @@
 # mypy: allow-untyped-defs
-import sys
-import warnings
 from contextlib import contextmanager
+import sys
 from typing import Generator
 from typing import Literal
 from typing import Optional
+import warnings
 
-import pytest
 from _pytest.config import apply_warning_filters
 from _pytest.config import Config
 from _pytest.config import parse_warning_filter
 from _pytest.main import Session
 from _pytest.nodes import Item
 from _pytest.terminal import TerminalReporter
+import pytest
 
 
 def pytest_configure(config: Config) -> None:

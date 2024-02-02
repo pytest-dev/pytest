@@ -1,17 +1,18 @@
 # mypy: allow-untyped-defs
-import operator
 from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
 from math import sqrt
+import operator
 from operator import eq
 from operator import ne
 from typing import Optional
 
-import pytest
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
+import pytest
 from pytest import approx
+
 
 inf, nan = float("inf"), float("nan")
 
@@ -38,9 +39,7 @@ def mocked_doctest_runner(monkeypatch):
     class MyDocTestRunner(doctest.DocTestRunner):
         def report_failure(self, out, test, example, got):
             raise AssertionError(
-                "'{}' evaluates to '{}', not '{}'".format(
-                    example.source.strip(), got.strip(), example.want.strip()
-                )
+                f"'{example.source.strip()}' evaluates to '{got.strip()}', not '{example.want.strip()}'"
             )
 
     return MyDocTestRunner()

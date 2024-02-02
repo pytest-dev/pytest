@@ -1,12 +1,12 @@
 # mypy: allow-untyped-defs
-import warnings
 from typing import List
 from typing import Optional
 from typing import Type
+import warnings
 
-import pytest
 from _pytest.pytester import Pytester
 from _pytest.recwarn import WarningsRecorder
+import pytest
 
 
 def test_recwarn_stacklevel(recwarn: WarningsRecorder) -> None:
