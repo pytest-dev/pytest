@@ -146,7 +146,6 @@ ignore = [
     "B009", # Do not call `getattr` with a constant attribute value
     "B010", # [*] Do not call `setattr` with a constant attribute value.
     "B011", # Do not `assert False` (`python -O` removes these calls)
-    "B015", # Pointless comparison. Did you mean to assign a value?
     "B017", # `pytest.raises(Exception)` should be considered evil
     "B023", # Function definition does not bind loop variable `warning`
     "B028", # No explicit `stacklevel` keyword argument found
@@ -193,5 +192,6 @@ known-local-folder = ["pytest", "_pytest"]
 lines-after-imports = 2
 
 [tool.ruff.lint.per-file-ignores]
-"src/_pytest/_version.py" = ["I001"]
 "src/_pytest/_py/**/*.py" = ["B", "PYI"]
+"src/_pytest/_version.py" = ["I001"]
+"testing/python/approx.py" = ["B015"]
