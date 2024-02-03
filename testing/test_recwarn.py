@@ -480,6 +480,8 @@ class TestWarns:
                 raise ValueError("some exception")
 
     def test_multiple_arg_custom_warning(self) -> None:
+        """Test for issue #11906."""
+
         class CustomWarning(UserWarning):
             def __init__(self, a, b):
                 pass
