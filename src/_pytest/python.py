@@ -27,6 +27,7 @@ from typing import Pattern
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 import warnings
 
@@ -80,6 +81,10 @@ from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledCoroutineWarning
+
+
+if TYPE_CHECKING:
+    from typing import Self
 
 
 _PYTEST_DIR = Path(_pytest.__file__).parent
@@ -205,8 +210,7 @@ def pytest_collect_directory(
 ) -> Optional[nodes.Collector]:
     pkginit = path / "__init__.py"
     if pkginit.is_file():
-        pkg: Package = Package.from_parent(parent, path=path)
-        return pkg
+        return Package.from_parent(parent, path=path)
     return None
 
 
@@ -231,8 +235,7 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
 
 
 def pytest_pycollect_makemodule(module_path: Path, parent) -> "Module":
-    mod: Module = Module.from_parent(parent, path=module_path)
-    return mod
+    return Module.from_parent(parent, path=module_path)
 
 
 @hookimpl(trylast=True)
@@ -243,8 +246,7 @@ def pytest_pycollect_makeitem(
     # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
-            klass: Class = Class.from_parent(collector, name=name, obj=obj)
-            return klass
+            return Class.from_parent(collector, name=name, obj=obj)
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it.
         obj = getattr(obj, "__func__", obj)
@@ -263,7 +265,7 @@ def pytest_pycollect_makeitem(
             )
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
-                res: Function = Function.from_parent(collector, name=name)
+                res = Function.from_parent(collector, name=name)
                 reason = (
                     f"yield tests were removed in pytest 4.0 - {name} will be ignored"
                 )
@@ -466,9 +468,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
 
-        definition: FunctionDefinition = FunctionDefinition.from_parent(
-            self, name=name, callobj=funcobj
-        )
+        definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
         fixtureinfo = definition._fixtureinfo
 
         # pytest_generate_tests impls call metafunc.parametrize() which fills
@@ -752,7 +752,7 @@ class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
     @classmethod
-    def from_parent(cls, parent, *, name, obj=None, **kw):
+    def from_parent(cls, parent, *, name, obj=None, **kw) -> "Self":  # type: ignore[override]
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
 
@@ -1732,8 +1732,9 @@ class Function(PyobjMixin, nodes.Item):
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
+    # todo: determine sound type limitations
     @classmethod
-    def from_parent(cls, parent, **kw):  # todo: determine sound type limitations
+    def from_parent(cls, parent, **kw) -> "Self":
         """The public constructor."""
         return super().from_parent(parent=parent, **kw)
 

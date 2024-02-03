@@ -48,6 +48,7 @@ from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     import doctest
+    from typing import Self
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -134,11 +135,9 @@ def pytest_collect_file(
         if config.option.doctestmodules and not any(
             (_is_setup_py(file_path), _is_main_py(file_path))
         ):
-            mod: DoctestModule = DoctestModule.from_parent(parent, path=file_path)
-            return mod
+            return DoctestModule.from_parent(parent, path=file_path)
     elif _is_doctest(config, file_path, parent):
-        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, path=file_path)
-        return txt
+        return DoctestTextfile.from_parent(parent, path=file_path)
     return None
 
 
@@ -273,14 +272,14 @@ class DoctestItem(Item):
         self._initrequest()
 
     @classmethod
-    def from_parent(  # type: ignore
+    def from_parent(  # type: ignore[override]
         cls,
         parent: "Union[DoctestTextfile, DoctestModule]",
         *,
         name: str,
         runner: "doctest.DocTestRunner",
         dtest: "doctest.DocTest",
-    ):
+    ) -> "Self":
         # incompatible signature due to imposed limits on subclass
         """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)

@@ -1596,7 +1596,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
     assert collector.x == 10
 
 
-def test_class_from_parent(pytester: Pytester, request: FixtureRequest) -> None:
+def test_class_from_parent(request: FixtureRequest) -> None:
     """Ensure Class.from_parent can forward custom arguments to the constructor."""
 
     class MyCollector(pytest.Class):
