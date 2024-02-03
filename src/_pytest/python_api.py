@@ -24,7 +24,6 @@ from typing import TypeVar
 from typing import Union
 
 import _pytest._code
-from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
 
 
@@ -721,15 +720,10 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     elif (
         hasattr(expected, "__getitem__")
         and isinstance(expected, Sized)
-        # Type ignored because the error is wrong -- not unreachable.
-        and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
+        and not isinstance(expected, (str, bytes))
     ):
         cls = ApproxSequenceLike
-    elif (
-        isinstance(expected, Collection)
-        # Type ignored because the error is wrong -- not unreachable.
-        and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
-    ):
+    elif isinstance(expected, Collection) and not isinstance(expected, (str, bytes)):
         msg = f"pytest.approx() only supports ordered sequences, but got: {expected!r}"
         raise TypeError(msg)
     else:

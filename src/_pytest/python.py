@@ -50,7 +50,6 @@ from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
-from _pytest.compat import STRING_TYPES
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -998,7 +997,7 @@ class IdMaker:
     def _idval_from_value(self, val: object) -> Optional[str]:
         """Try to make an ID for a parameter in a ParameterSet from its value,
         if the value type is supported."""
-        if isinstance(val, STRING_TYPES):
+        if isinstance(val, (str, bytes)):
             return _ascii_escaped_by_config(val, self.config)
         elif val is None or isinstance(val, (float, int, bool, complex)):
             return str(val)

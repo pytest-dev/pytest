@@ -181,9 +181,6 @@ def _translate_non_printable(s: str) -> str:
     return s.translate(_non_printable_ascii_translate_table)
 
 
-STRING_TYPES = bytes, str
-
-
 def _bytes_to_ascii(val: bytes) -> str:
     return val.decode("ascii", "backslashreplace")
 
