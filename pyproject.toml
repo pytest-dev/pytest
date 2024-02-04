@@ -151,7 +151,6 @@ ignore = [
     "B018", # Found useless expression.
     "B023", # Function definition does not bind loop variable `warning`
     "B028", # No explicit `stacklevel` keyword argument found
-    "B904", # Within an `except` clause, raise exceptions with `raise ... from err`
     # pycodestyle ignore
     # pytest can do weird low-level things, and we usually know
     # what we're doing when we use type(..) is ...
