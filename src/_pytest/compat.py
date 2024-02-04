@@ -177,25 +177,13 @@ _non_printable_ascii_translate_table.update(
 )
 
 
-def _translate_non_printable(s: str) -> str:
-    return s.translate(_non_printable_ascii_translate_table)
-
-
-STRING_TYPES = bytes, str
-
-
-def _bytes_to_ascii(val: bytes) -> str:
-    return val.decode("ascii", "backslashreplace")
-
-
 def ascii_escaped(val: bytes | str) -> str:
     r"""If val is pure ASCII, return it as an str, otherwise, escape
     bytes objects into a sequence of escaped bytes:
 
     b'\xc3\xb4\xc5\xd6' -> r'\xc3\xb4\xc5\xd6'
 
-    and escapes unicode objects into a sequence of escaped unicode
-    ids, e.g.:
+    and escapes strings into a sequence of escaped unicode ids, e.g.:
 
     r'4\nV\U00043efa\x0eMXWB\x1e\u3028\u15fd\xcd\U0007d944'
 
@@ -206,10 +194,10 @@ def ascii_escaped(val: bytes | str) -> str:
        a UTF-8 string.
     """
     if isinstance(val, bytes):
-        ret = _bytes_to_ascii(val)
+        ret = val.decode("ascii", "backslashreplace")
     else:
         ret = val.encode("unicode_escape").decode("ascii")
-    return _translate_non_printable(ret)
+    return ret.translate(_non_printable_ascii_translate_table)
 
 
 @dataclasses.dataclass
