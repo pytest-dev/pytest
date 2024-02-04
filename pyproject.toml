@@ -141,7 +141,6 @@ select = [
 ignore = [
     # bugbear ignore
     "B004", # Using `hasattr(x, "__call__")` to test if x is callable is unreliable.
-    "B006", # Do not use mutable data structures for argument defaults
     "B007", # Loop control variable `i` not used within loop body
     "B009", # Do not call `getattr` with a constant attribute value
     "B010", # [*] Do not call `setattr` with a constant attribute value.
