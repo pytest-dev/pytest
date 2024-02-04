@@ -169,7 +169,7 @@ class ErrorsHelper:
 
 def test_helper_failures() -> None:
     helper = ErrorsHelper()
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         _ = helper.raise_exception
     with pytest.raises(OutcomeException):
         _ = helper.raise_fail_outcome
@@ -179,7 +179,7 @@ def test_safe_getattr() -> None:
     helper = ErrorsHelper()
     assert safe_getattr(helper, "raise_exception", "default") == "default"
     assert safe_getattr(helper, "raise_fail_outcome", "default") == "default"
-    with pytest.raises(BaseException):
+    with pytest.raises(BaseException):  # noqa: B017
         assert safe_getattr(helper, "raise_baseexception", "default")
 
 

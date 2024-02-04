@@ -280,7 +280,7 @@ class TestRaises:
 
     def test_raises_context_manager_with_kwargs(self):
         with pytest.raises(TypeError) as excinfo:
-            with pytest.raises(Exception, foo="bar"):  # type: ignore[call-overload]
+            with pytest.raises(OSError, foo="bar"):  # type: ignore[call-overload]
                 pass
         assert "Unexpected keyword arguments" in str(excinfo.value)
 
