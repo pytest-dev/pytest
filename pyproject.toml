@@ -128,6 +128,7 @@ ignore = "W009"
 src = ["src"]
 line-length = 88
 select = [
+    "B",  # bugbear
     "D",  # pydocstyle
     "E",  # pycodestyle
     "F",  # pyflakes
@@ -137,6 +138,20 @@ select = [
     "W",  # pycodestyle
 ]
 ignore = [
+    # bugbear ignore
+    "B004", # Using `hasattr(x, "__call__")` to test if x is callable is unreliable.
+    "B005", # Using `.strip()` with multi-character strings is misleading
+    "B006", # Do not use mutable data structures for argument defaults
+    "B007", # Loop control variable `i` not used within loop body
+    "B009", # Do not call `getattr` with a constant attribute value
+    "B010", # [*] Do not call `setattr` with a constant attribute value.
+    "B011", # Do not `assert False` (`python -O` removes these calls)
+    "B015", # Pointless comparison. Did you mean to assign a value?
+    "B017", # `pytest.raises(Exception)` should be considered evil
+    "B018", # Found useless expression.
+    "B023", # Function definition does not bind loop variable `warning`
+    "B028", # No explicit `stacklevel` keyword argument found
+    "B904", # Within an `except` clause, raise exceptions with `raise ... from err`
     # pycodestyle ignore
     # pytest can do weird low-level things, and we usually know
     # what we're doing when we use type(..) is ...
@@ -181,3 +196,4 @@ lines-after-imports = 2
 
 [tool.ruff.lint.per-file-ignores]
 "src/_pytest/_version.py" = ["I001"]
+"src/_pytest/_py/**/*.py" = ["B", "PYI"]
