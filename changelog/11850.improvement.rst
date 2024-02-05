@@ -1,0 +1,1 @@
+Added the new `sys.last_exc` value to `pytest_runtest_call()` in `src/_pytest/runner.py`.
