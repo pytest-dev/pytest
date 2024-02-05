@@ -168,6 +168,7 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_type
         del sys.last_value
         del sys.last_traceback
+        del sys.last_exc
     except AttributeError:
         pass
     try:
@@ -176,6 +177,7 @@ def pytest_runtest_call(item: Item) -> None:
         # Store trace info to allow postmortem debugging
         sys.last_type = type(e)
         sys.last_value = e
+        sys.last_exc = e
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next
