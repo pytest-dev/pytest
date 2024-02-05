@@ -1,13 +1,6 @@
 [project]
-
 name = "pytest"
-dynamic = [
-    "version",
-    "optional-dependencies",
-    "dependencies",
-    "scripts",
-    "requires-python"
-]
+dynamic = ["version"]
 description = "pytest: simple powerful testing with Python"
 authors = [
     {name = "Holger Krekel"},
@@ -40,6 +33,32 @@ classifiers = [
     "Topic :: Software Development :: Testing",
     "Topic :: Utilities",
 ]
+
+dependencies = [
+    "colorama;sys_platform=='win32'",
+    "exceptiongroup>=1.0.0rc8;python_version<'3.11'",
+    "iniconfig",
+    "packaging",
+    "pluggy>=1.4.0,<2.0",
+    "tomli>=1.0.0;python_version<'3.11'",
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+testing = [
+    "argcomplete",
+    "attrs>=19.2.0",
+    "hypothesis>=3.56",
+    "mock",
+    "pygments>=2.7.2",
+    "requests",
+    "setuptools",
+    "xmlschema",
+]
+
+[project.scripts]
+"py.test" = "pytest:console_main"
+pytest = "pytest:console_main"
 
 [project.urls]
 Homepage = "https://docs.pytest.org/en/latest/"
