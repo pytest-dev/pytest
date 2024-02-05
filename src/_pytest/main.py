@@ -901,6 +901,10 @@ class Session(nodes.Collector):
                     # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
                     if isinstance(matchparts[0], Path):
                         is_match = node.path == matchparts[0]
+                        if sys.platform == "win32" and not is_match:
+                            # In case the file paths do not match, fallback to samefile() to
+                            # account for short-paths on Windows (#11895).
+                            is_match = os.path.samefile(node.path, matchparts[0])
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
                         # TODO: Remove parametrized workaround once collection structure contains
