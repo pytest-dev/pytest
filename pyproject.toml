@@ -1,3 +1,53 @@
+[project]
+
+name = "pytest"
+dynamic = [
+    "version",
+    "optional-dependencies",
+    "dependencies",
+    "scripts",
+    "requires-python"
+]
+description = "pytest: simple powerful testing with Python"
+authors = [
+    {name = "Holger Krekel"},
+    {name = "Bruno Oliveira"},
+    {name = "Ronny Pfannschmidt"},
+    {name = "Floris Bruynooghe"},
+    {name = "Brianna Laugher"},
+    {name = "Florian Bruhin"},
+    {name = "Others (See AUTHORS)"},
+]
+readme = "README.rst"
+license = {text = "MIT"}
+keywords = ["test", "unittest"]
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://docs.pytest.org/en/latest/"
+Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+Twitter = "https://twitter.com/pytestdotorg"
+Source = "https://github.com/pytest-dev/pytest"
+Tracker = "https://github.com/pytest-dev/pytest/issues"
+
 [build-system]
 requires = [
   "setuptools>=45.0",
