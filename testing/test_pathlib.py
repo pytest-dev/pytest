@@ -669,6 +669,33 @@ class TestImportLibMode:
         mod = import_path(init, root=tmp_path, mode=ImportMode.importlib)
         assert len(mod.instance.INSTANCES) == 1
 
+    def test_importlib_doctest(self, monkeypatch: MonkeyPatch, tmp_path: Path):
+        """
+        Importing a package using --importmode=importlib should
+        import the package using the canonical name
+        """
+        proj_dir = tmp_path / "proj"
+        proj_dir.mkdir()
+        pkgs_dir = tmp_path / "pkgs"
+        pkgs_dir.mkdir()
+        monkeypatch.chdir(proj_dir)
+        monkeypatch.syspath_prepend(pkgs_dir)
+        # this is also there, but shouldn’t be imported from
+        monkeypatch.syspath_prepend(proj_dir)
+
+        package_name = "importlib_doctest"
+        # pkgs_dir is second to set `init`
+        for directory in [proj_dir / "src", pkgs_dir]:
+            pkgdir = directory / package_name
+            pkgdir.mkdir(parents=True)
+            init = pkgdir / "__init__.py"
+            init.write_text("", encoding="ascii")
+
+        mod = import_path(init, root=proj_dir, mode=ImportMode.importlib)
+        # assert that it’s imported with the canonical name, not “path.to.package.<name>”
+        mod_names = [n for n, m in sys.modules.items() if m is mod]
+        assert mod_names == ["importlib_doctest"]
+
     def test_importlib_root_is_package(self, pytester: Pytester) -> None:
         """
         Regression for importing a `__init__`.py file that is at the root

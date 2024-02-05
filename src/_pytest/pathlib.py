@@ -607,11 +607,20 @@ else:
 
 def module_name_from_path(path: Path, root: Path) -> str:
     """
-    Return a dotted module name based on the given path, anchored on root.
+    Return a dotted module name based on the given path,
+    anchored on root or the most likely entry in `sys.path`.
 
     For example: path="projects/src/tests/test_foo.py" and root="/projects", the
     resulting module name will be "src.tests.test_foo".
     """
+    candidates = (
+        _module_name_from_path(path, dir)
+        for dir in itertools.chain([root], map(Path, sys.path))
+    )
+    return ".".join(min(candidates, key=len))
+
+
+def _module_name_from_path(path: Path, root: Path) -> tuple[str, ...]:
     path = path.with_suffix("")
     try:
         relative_path = path.relative_to(root)
@@ -628,7 +637,7 @@ def module_name_from_path(path: Path, root: Path) -> str:
     if len(path_parts) >= 2 and path_parts[-1] == "__init__":
         path_parts = path_parts[:-1]
 
-    return ".".join(path_parts)
+    return path_parts
 
 
 def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> None:
