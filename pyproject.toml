@@ -173,6 +173,9 @@ ignore = [
 [tool.ruff.format]
 docstring-code-format = true
 
+[tool.ruff.lint]
+allowed-confusables = ["’", "×"]
+
 [tool.ruff.lint.pycodestyle]
 # In order to be able to format for 88 char in ruff format
 max-line-length = 120

@@ -691,6 +691,7 @@ class TestImportLibMode:
             init = pkgdir / "__init__.py"
             init.write_text("", encoding="ascii")
 
+        # the PyTest root is `proj_dir`, but the package is imported from `pkgs_dir`
         mod = import_path(init, root=proj_dir, mode=ImportMode.importlib)
         # assert that it’s imported with the canonical name, not “path.to.package.<name>”
         mod_names = [n for n, m in sys.modules.items() if m is mod]

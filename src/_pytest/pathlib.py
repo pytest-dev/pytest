@@ -617,7 +617,7 @@ def module_name_from_path(path: Path, root: Path) -> str:
         _module_name_from_path(path, dir)
         for dir in itertools.chain([root], map(Path, sys.path))
     )
-    return ".".join(min(candidates, key=len))
+    return ".".join(min(candidates, key=len))  # type: ignore[arg-type]
 
 
 def _module_name_from_path(path: Path, root: Path) -> tuple[str, ...]:
