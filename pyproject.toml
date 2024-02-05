@@ -74,6 +74,10 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.package-data]
+"_pytest" = ["py.typed"]
+"pytest" = ["py.typed"]
+
 [tool.setuptools_scm]
 write_to = "src/_pytest/_version.py"
 
