@@ -1,8 +1,8 @@
 # mypy: allow-untyped-defs
+import sys
 from typing import List
 from typing import Optional
 from typing import Type
-import sys
 import warnings
 
 from _pytest.pytester import Pytester
