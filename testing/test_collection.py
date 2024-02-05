@@ -1767,7 +1767,7 @@ def test_does_not_crash_on_recursive_symlink(pytester: Pytester) -> None:
 def test_collect_short_file_windows(pytester: Pytester) -> None:
     """Reproducer for #11895: short paths not colleced on Windows."""
     short_path = tempfile.mkdtemp()
-    if "~" not in short_path:
+    if "~" not in short_path:  # pragma: no cover
         if running_on_ci():
             # On CI, we are expecting that under the current GitHub actions configuration,
             # tempfile.mkdtemp() is producing short paths, so we want to fail to prevent
