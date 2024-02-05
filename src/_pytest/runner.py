@@ -168,7 +168,7 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_type
         del sys.last_value
         del sys.last_traceback
-        if sys.version_info >= (3,12,0):
+        if sys.version_info >= (3, 12, 0):
             del sys.last_exc
     except AttributeError:
         pass
@@ -178,7 +178,7 @@ def pytest_runtest_call(item: Item) -> None:
         # Store trace info to allow postmortem debugging
         sys.last_type = type(e)
         sys.last_value = e
-        if sys.version_info >= (3,12,0):
+        if sys.version_info >= (3, 12, 0):
             sys.last_exc = e
         assert e.__traceback__ is not None
         # Skip *this* frame
