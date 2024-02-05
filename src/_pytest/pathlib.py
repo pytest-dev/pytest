@@ -620,7 +620,7 @@ def module_name_from_path(path: Path, root: Path) -> str:
     return ".".join(min(candidates, key=len))  # type: ignore[arg-type]
 
 
-def _module_name_from_path(path: Path, root: Path) -> tuple[str, ...]:
+def _module_name_from_path(path: Path, root: Path) -> "tuple[str, ...]":
     path = path.with_suffix("")
     try:
         relative_path = path.relative_to(root)
