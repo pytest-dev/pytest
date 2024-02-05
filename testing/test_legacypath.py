@@ -108,7 +108,7 @@ class TestFixtureRequestSessionScoped:
             AttributeError,
             match="path not available in session-scoped context",
         ):
-            session_request.fspath
+            _ = session_request.fspath
 
 
 @pytest.mark.parametrize("config_type", ["ini", "pyproject"])

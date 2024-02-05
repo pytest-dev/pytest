@@ -79,7 +79,7 @@ def prepare_release_pr(
         )
     except InvalidFeatureRelease as e:
         print(f"{Fore.RED}{e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from None
 
     print(f"Version: {Fore.CYAN}{version}")
 

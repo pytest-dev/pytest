@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
 """Terminal reporting of the full testing process."""
-import collections
 from io import StringIO
 import os
 from pathlib import Path
@@ -10,6 +9,7 @@ from types import SimpleNamespace
 from typing import cast
 from typing import Dict
 from typing import List
+from typing import NamedTuple
 from typing import Tuple
 
 import pluggy
@@ -34,7 +34,9 @@ from _pytest.terminal import TerminalReporter
 import pytest
 
 
-DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
+class DistInfo(NamedTuple):
+    project_name: str
+    version: int
 
 
 TRANS_FNMATCH = str.maketrans({"[": "[[]", "]": "[]]"})

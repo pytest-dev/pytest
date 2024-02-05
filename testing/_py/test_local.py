@@ -1241,9 +1241,9 @@ class TestWINLocalPath:
 
     def test_owner_group_not_implemented(self, path1):
         with pytest.raises(NotImplementedError):
-            path1.stat().owner
+            _ = path1.stat().owner
         with pytest.raises(NotImplementedError):
-            path1.stat().group
+            _ = path1.stat().group
 
     def test_chmod_simple_int(self, path1):
         mode = path1.stat().mode

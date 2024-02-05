@@ -1,10 +1,10 @@
 # mypy: allow-untyped-defs
-import collections
 import sys
 import textwrap
 from typing import Any
 from typing import List
 from typing import MutableSequence
+from typing import NamedTuple
 from typing import Optional
 
 import attr
@@ -1179,7 +1179,9 @@ class TestAssert_reprcompare_attrsclass:
 
 class TestAssert_reprcompare_namedtuple:
     def test_namedtuple(self) -> None:
-        NT = collections.namedtuple("NT", ["a", "b"])
+        class NT(NamedTuple):
+            a: Any
+            b: Any
 
         left = NT(1, "b")
         right = NT(1, "c")
@@ -1200,8 +1202,13 @@ class TestAssert_reprcompare_namedtuple:
         ]
 
     def test_comparing_two_different_namedtuple(self) -> None:
-        NT1 = collections.namedtuple("NT1", ["a", "b"])
-        NT2 = collections.namedtuple("NT2", ["a", "b"])
+        class NT1(NamedTuple):
+            a: Any
+            b: Any
+
+        class NT2(NamedTuple):
+            a: Any
+            b: Any
 
         left = NT1(1, "b")
         right = NT2(2, "b")

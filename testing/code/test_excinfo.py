@@ -387,7 +387,7 @@ def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     excinfo = pytest.raises(ValueError, template.render, h=h)
     for item in excinfo.traceback:
         print(item)  # XXX: for some reason jinja.Template.render is printed in full
-        item.source  # shouldn't fail
+        _ = item.source  # shouldn't fail
         if isinstance(item.path, Path) and item.path.name == "test.txt":
             assert str(item.source) == "{{ h()}}:"
 
@@ -418,7 +418,7 @@ def test_codepath_Queue_example() -> None:
 
 def test_match_succeeds():
     with pytest.raises(ZeroDivisionError) as excinfo:
-        0 // 0
+        _ = 0 // 0
     excinfo.match(r".*zero.*")
 
 
@@ -584,7 +584,7 @@ class TestFormattedExcinfo:
         try:
 
             def f():
-                1 / 0
+                _ = 1 / 0
 
             f()
 
@@ -601,7 +601,7 @@ class TestFormattedExcinfo:
             print(line)
         assert lines == [
             "    def f():",
-            ">       1 / 0",
+            ">       _ = 1 / 0",
             "E       ZeroDivisionError: division by zero",
         ]
 
@@ -638,7 +638,7 @@ raise ValueError()
         pr = FormattedExcinfo()
 
         try:
-            1 / 0
+            _ = 1 / 0
         except ZeroDivisionError:
             excinfo = ExceptionInfo.from_current()
 
@@ -1582,7 +1582,7 @@ def test_no_recursion_index_on_recursion_error():
             return getattr(self, "_" + attr)
 
     with pytest.raises(RuntimeError) as excinfo:
-        RecursionDepthError().trigger
+        _ = RecursionDepthError().trigger
     assert "maximum recursion" in str(excinfo.getrepr())
 
 

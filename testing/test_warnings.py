@@ -18,8 +18,7 @@ WARNINGS_SUMMARY_HEADER = "warnings summary"
 def pyfile_with_warnings(pytester: Pytester, request: FixtureRequest) -> str:
     """Create a test file which calls a function in a module which generates warnings."""
     pytester.syspathinsert()
-    test_name = request.function.__name__
-    module_name = test_name.lstrip("test_") + "_module"
+    module_name = request.function.__name__[len("test_") :] + "_module"
     test_file = pytester.makepyfile(
         f"""
         import {module_name}

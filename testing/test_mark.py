@@ -42,7 +42,7 @@ class TestMark:
     def test_pytest_mark_name_starts_with_underscore(self) -> None:
         mark = MarkGenerator(_ispytest=True)
         with pytest.raises(AttributeError):
-            mark._some_name
+            _ = mark._some_name
 
 
 def test_marked_class_run_twice(pytester: Pytester) -> None:

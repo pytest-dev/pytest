@@ -209,8 +209,8 @@ class TestCaseFunction(Function):
             )
             # Invoke the attributes to trigger storing the traceback
             # trial causes some issue there.
-            excinfo.value
-            excinfo.traceback
+            _ = excinfo.value
+            _ = excinfo.traceback
         except TypeError:
             try:
                 try:
@@ -361,14 +361,21 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
 
 
 # Twisted trial support.
+classImplements_has_run = False
 
 
 @hookimpl(wrapper=True)
 def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     if isinstance(item, TestCaseFunction) and "twisted.trial.unittest" in sys.modules:
         ut: Any = sys.modules["twisted.python.failure"]
+        global classImplements_has_run
         Failure__init__ = ut.Failure.__init__
-        check_testcase_implements_trial_reporter()
+        if not classImplements_has_run:
+            from twisted.trial.itrial import IReporter
+            from zope.interface import classImplements
+
+            classImplements(TestCaseFunction, IReporter)
+            classImplements_has_run = True
 
         def excstore(
             self, exc_value=None, exc_type=None, exc_tb=None, captureVars=None
@@ -394,16 +401,6 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     else:
         res = yield
     return res
-
-
-def check_testcase_implements_trial_reporter(done: List[int] = []) -> None:
-    if done:
-        return
-    from twisted.trial.itrial import IReporter
-    from zope.interface import classImplements
-
-    classImplements(TestCaseFunction, IReporter)
-    done.append(1)
 
 
 def _is_skipped(obj) -> bool:

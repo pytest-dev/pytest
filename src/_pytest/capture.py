@@ -598,7 +598,8 @@ if sys.version_info >= (3, 11) or TYPE_CHECKING:
 else:
 
     class CaptureResult(
-        collections.namedtuple("CaptureResult", ["out", "err"]), Generic[AnyStr]
+        collections.namedtuple("CaptureResult", ["out", "err"]),  # noqa: PYI024
+        Generic[AnyStr],
     ):
         """The result of :method:`caplog.readouterr() <pytest.CaptureFixture.readouterr>`."""
 

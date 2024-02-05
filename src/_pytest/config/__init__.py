@@ -1848,13 +1848,13 @@ def parse_warning_filter(
     try:
         action: "warnings._ActionKind" = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
-        raise UsageError(error_template.format(error=str(e)))
+        raise UsageError(error_template.format(error=str(e))) from None
     try:
         category: Type[Warning] = _resolve_warning_category(category_)
     except Exception:
         exc_info = ExceptionInfo.from_current()
         exception_text = exc_info.getrepr(style="native")
-        raise UsageError(error_template.format(error=exception_text))
+        raise UsageError(error_template.format(error=exception_text)) from None
     if message and escape:
         message = re.escape(message)
     if module and escape:
@@ -1867,7 +1867,7 @@ def parse_warning_filter(
         except ValueError as e:
             raise UsageError(
                 error_template.format(error=f"invalid lineno {lineno_!r}: {e}")
-            )
+            ) from None
     else:
         lineno = 0
     return action, message, category, module, lineno

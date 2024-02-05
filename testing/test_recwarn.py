@@ -228,7 +228,7 @@ class TestDeprecatedCall:
         for warning in other_warnings:
 
             def f():
-                warnings.warn(warning("hi"))
+                warnings.warn(warning("hi"))  # noqa: B023
 
             with pytest.warns(warning):
                 with pytest.raises(pytest.fail.Exception):

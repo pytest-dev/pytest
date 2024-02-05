@@ -232,17 +232,17 @@ class TerminalWriter:
                 # which may lead to the previous color being propagated to the
                 # start of the expression, so reset first.
                 return "\x1b[0m" + highlighted
-            except pygments.util.ClassNotFound:
+            except pygments.util.ClassNotFound as e:
                 raise UsageError(
                     "PYTEST_THEME environment variable had an invalid value: '{}'. "
                     "Only valid pygment styles are allowed.".format(
                         os.getenv("PYTEST_THEME")
                     )
-                )
-            except pygments.util.OptionError:
+                ) from e
+            except pygments.util.OptionError as e:
                 raise UsageError(
                     "PYTEST_THEME_MODE environment variable had an invalid value: '{}'. "
                     "The only allowed values are 'dark' and 'light'.".format(
                         os.getenv("PYTEST_THEME_MODE")
                     )
-                )
+                ) from e
