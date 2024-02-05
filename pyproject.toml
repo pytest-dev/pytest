@@ -1,9 +1,82 @@
+[project]
+name = "pytest"
+dynamic = ["version"]
+description = "pytest: simple powerful testing with Python"
+authors = [
+    {name = "Holger Krekel"},
+    {name = "Bruno Oliveira"},
+    {name = "Ronny Pfannschmidt"},
+    {name = "Floris Bruynooghe"},
+    {name = "Brianna Laugher"},
+    {name = "Florian Bruhin"},
+    {name = "Others (See AUTHORS)"},
+]
+readme = "README.rst"
+license = {text = "MIT"}
+keywords = ["test", "unittest"]
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "colorama;sys_platform=='win32'",
+    "exceptiongroup>=1.0.0rc8;python_version<'3.11'",
+    "iniconfig",
+    "packaging",
+    "pluggy>=1.4.0,<2.0",
+    "tomli>=1.0.0;python_version<'3.11'",
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+testing = [
+    "argcomplete",
+    "attrs>=19.2.0",
+    "hypothesis>=3.56",
+    "mock",
+    "pygments>=2.7.2",
+    "requests",
+    "setuptools",
+    "xmlschema",
+]
+
+[project.scripts]
+"py.test" = "pytest:console_main"
+pytest = "pytest:console_main"
+
+[project.urls]
+Homepage = "https://docs.pytest.org/en/latest/"
+Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+Twitter = "https://twitter.com/pytestdotorg"
+Source = "https://github.com/pytest-dev/pytest"
+Tracker = "https://github.com/pytest-dev/pytest/issues"
+
 [build-system]
 requires = [
   "setuptools>=45.0",
   "setuptools-scm[toml]>=6.2.3",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+"_pytest" = ["py.typed"]
+"pytest" = ["py.typed"]
 
 [tool.setuptools_scm]
 write_to = "src/_pytest/_version.py"
