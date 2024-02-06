@@ -42,6 +42,12 @@ repos:
             # for mypy running on python>=3.11 since exceptiongroup is only a dependency
             # on <3.11
           - exceptiongroup>=1.0.0rc8
+- repo: https://github.com/tox-dev/pyproject-fmt
+  rev: "1.7.0"
+  hooks:
+    - id: pyproject-fmt
+      # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
+      additional_dependencies: ["tox>=4.9"]
 -   repo: local
     hooks:
     -   id: rst
