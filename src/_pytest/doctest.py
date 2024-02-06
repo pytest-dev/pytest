@@ -567,6 +567,10 @@ class DoctestModule(Module):
             else:
                 raise
 
+        # While doctests currently don't support fixtures directly, we still
+        # need to pick up autouse fixtures.
+        self.session._fixturemanager.parsefactories(self)
+
         # Uses internal doctest module parsing mechanism.
         finder = MockAwareDocTestFinder()
         optionflags = get_optionflags(self.config)
