@@ -613,31 +613,30 @@ def module_name_from_path(path: Path, root: Path) -> str:
     For example: path="projects/src/tests/test_foo.py" and root="/projects", the
     resulting module name will be "src.tests.test_foo".
     """
+    path = path.with_suffix("")
     candidates = (
-        _module_name_from_path(path, dir)
+        _maybe_relative_parts(path, dir)
         for dir in itertools.chain([root], map(Path, sys.path))
     )
-    return ".".join(min(candidates, key=len))  # type: ignore[arg-type]
-
-
-def _module_name_from_path(path: Path, root: Path) -> "tuple[str, ...]":
-    path = path.with_suffix("")
-    try:
-        relative_path = path.relative_to(root)
-    except ValueError:
-        # If we can't get a relative path to root, use the full path, except
-        # for the first part ("d:\\" or "/" depending on the platform, for example).
-        path_parts = path.parts[1:]
-    else:
-        # Use the parts for the relative path to the root path.
-        path_parts = relative_path.parts
+    path_parts = min(candidates, key=len)  # type: ignore[arg-type]
 
     # Module name for packages do not contain the __init__ file, unless
     # the `__init__.py` file is at the root.
     if len(path_parts) >= 2 and path_parts[-1] == "__init__":
         path_parts = path_parts[:-1]
 
-    return path_parts
+    return ".".join(path_parts)
+
+
+def _maybe_relative_parts(path: Path, root: Path) -> "tuple[str, ...]":
+    try:
+        relative_path = path.relative_to(root)
+    except ValueError:
+        # If we can't get a relative path to root, use the full path, except
+        # for the first part ("d:\\" or "/" depending on the platform, for example).
+        return path.parts[1:]
+    # Use the parts for the relative path to the root path.
+    return relative_path.parts
 
 
 def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> None:

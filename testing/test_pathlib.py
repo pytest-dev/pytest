@@ -669,7 +669,7 @@ class TestImportLibMode:
         mod = import_path(init, root=tmp_path, mode=ImportMode.importlib)
         assert len(mod.instance.INSTANCES) == 1
 
-    def test_importlib_doctest(self, monkeypatch: MonkeyPatch, tmp_path: Path):
+    def test_importlib_doctest(self, monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
         """
         Importing a package using --importmode=importlib should
         import the package using the canonical name
