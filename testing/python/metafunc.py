@@ -14,6 +14,9 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
+import hypothesis
+from hypothesis import strategies
+
 from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
@@ -24,10 +27,6 @@ from _pytest.python import Function
 from _pytest.python import IdMaker
 from _pytest.scope import Scope
 import pytest
-
-
-# import hypothesis
-# from hypothesis import strategies
 
 
 class TestMetafunc:
@@ -294,15 +293,14 @@ class TestMetafunc:
         assert metafunc._calls[2].id == "x1-a"
         assert metafunc._calls[3].id == "x1-b"
 
-    # TODO: Uncomment - https://github.com/HypothesisWorks/hypothesis/pull/3849
-    # @hypothesis.given(strategies.text() | strategies.binary())
-    # @hypothesis.settings(
-    #     deadline=400.0
-    # )  # very close to std deadline and CI boxes are not reliable in CPU power
-    # def test_idval_hypothesis(self, value) -> None:
-    #     escaped = IdMaker([], [], None, None, None, None, None)._idval(value, "a", 6)
-    #     assert isinstance(escaped, str)
-    #     escaped.encode("ascii")
+    @hypothesis.given(strategies.text() | strategies.binary())
+    @hypothesis.settings(
+        deadline=400.0
+    )  # very close to std deadline and CI boxes are not reliable in CPU power
+    def test_idval_hypothesis(self, value) -> None:
+        escaped = IdMaker([], [], None, None, None, None, None)._idval(value, "a", 6)
+        assert isinstance(escaped, str)
+        escaped.encode("ascii")
 
     def test_unicode_idval(self) -> None:
         """Test that Unicode strings outside the ASCII character set get
