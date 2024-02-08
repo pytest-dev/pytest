@@ -750,11 +750,16 @@ class Pytester:
         self._request.addfinalizer(reprec.finish_recording)
         return reprec
 
-    def chdir(self) -> None:
+    def chdir(self, new_path: Optional[Path] = None) -> None:
         """Cd into the temporary directory.
 
         This is done automatically upon instantiation.
+
+        :param new_path:
+            Optionally specify a different path to cd into
         """
+        if new_path:
+            self._path = new_path
         self._monkeypatch.chdir(self.path)
 
     def _makefile(
