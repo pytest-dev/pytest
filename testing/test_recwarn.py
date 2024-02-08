@@ -506,7 +506,7 @@ def test_raise_type_error_on_non_string_warning_cpython() -> None:
             warnings.warn(1)  # type: ignore
 
 
-def test_multiple_arg_custom_warning(self) -> None:
+def test_multiple_arg_custom_warning() -> None:
     """Test for issue #11906."""
 
     class CustomWarning(UserWarning):
