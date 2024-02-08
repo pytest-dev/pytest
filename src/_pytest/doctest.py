@@ -40,7 +40,6 @@ from _pytest.nodes import Item
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
-from _pytest.pathlib import import_path
 from _pytest.python import Module
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
@@ -107,7 +106,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--doctest-ignore-import-errors",
         action="store_true",
         default=False,
-        help="Ignore doctest ImportErrors",
+        help="Ignore doctest collection errors",
         dest="doctest_ignore_import_errors",
     )
     group.addoption(
@@ -568,16 +567,17 @@ class DoctestModule(Module):
             )
         else:
             try:
-                module = import_path(
-                    self.path,
-                    root=self.config.rootpath,
-                    mode=self.config.getoption("importmode"),
-                )
-            except ImportError:
+                module = self.obj
+            except Collector.CollectError:
                 if self.config.getvalue("doctest_ignore_import_errors"):
                     skip("unable to import module %r" % self.path)
                 else:
                     raise
+
+            # While doctests currently don't support fixtures directly, we still
+            # need to pick up autouse fixtures.
+            self.session._fixturemanager.parsefactories(self)
+
         # Uses internal doctest module parsing mechanism.
         finder = MockAwareDocTestFinder()
         optionflags = get_optionflags(self.config)

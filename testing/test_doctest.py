@@ -1375,6 +1375,38 @@ class TestDoctestAutoUseFixtures:
         str(result.stdout.no_fnmatch_line("*FAILURES*"))
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
 
+    @pytest.mark.parametrize("scope", [*SCOPES, "package"])
+    def test_auto_use_defined_in_same_module(
+        self, pytester: Pytester, scope: str
+    ) -> None:
+        """Autouse fixtures defined in the same module as the doctest get picked
+        up properly.
+
+        Regression test for #11929.
+        """
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            AUTO = "the fixture did not run"
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def auto(request):
+                global AUTO
+                AUTO = "the fixture ran"
+
+            def my_doctest():
+                '''My doctest.
+
+                >>> my_doctest()
+                'the fixture ran'
+                '''
+                return AUTO
+            """
+        )
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=1)
+
 
 class TestDoctestNamespaceFixture:
     SCOPES = ["module", "session", "class", "function"]
