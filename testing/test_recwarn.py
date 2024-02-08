@@ -1,4 +1,5 @@
 # mypy: allow-untyped-defs
+import sys
 from typing import List
 from typing import Optional
 from typing import Type
@@ -477,3 +478,29 @@ class TestWarns:
             with pytest.raises(ValueError, match="some exception"):
                 warnings.warn("some warning", category=FutureWarning)
                 raise ValueError("some exception")
+
+
+def test_raise_type_error_on_non_string_warning() -> None:
+    """Check pytest.warns validates warning messages are strings (#10865)."""
+    with pytest.raises(TypeError, match="Warning message must be str"):
+        with pytest.warns(UserWarning):
+            warnings.warn(1)  # type: ignore
+
+
+def test_no_raise_type_error_on_string_warning() -> None:
+    """Check pytest.warns validates warning messages are strings (#10865)."""
+    with pytest.warns(UserWarning):
+        warnings.warn("Warning")
+
+
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"),
+    reason="Not for pypy",
+)
+def test_raise_type_error_on_non_string_warning_cpython() -> None:
+    # Check that we get the same behavior with the stdlib, at least if filtering
+    # (see https://github.com/python/cpython/issues/103577 for details)
+    with pytest.raises(TypeError):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "test")
+            warnings.warn(1)  # type: ignore
