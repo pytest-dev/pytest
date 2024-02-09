@@ -1006,7 +1006,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if i:
                 fail_inner: List[ast.stmt] = []
                 # cond is set in a prior loop iteration below
-                self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
+                self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa: F821
                 self.expl_stmts = fail_inner
                 # Check if the left operand is a ast.NamedExpr and the value has already been visited
                 if (

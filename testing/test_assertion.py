@@ -601,7 +601,7 @@ class TestAssert_reprcompare:
 
     def test_list_dont_wrap_strings(self) -> None:
         long_a = "a" * 10
-        l1 = ["a"] + [long_a for _ in range(0, 7)]
+        l1 = ["a"] + [long_a for _ in range(7)]
         l2 = ["should not get wrapped"]
         diff = callequal(l1, l2, verbose=True)
         assert diff == [

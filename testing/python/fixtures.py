@@ -712,7 +712,7 @@ class TestRequestBasic:
     )
     def test_request_garbage(self, pytester: Pytester) -> None:
         try:
-            import xdist  # noqa
+            import xdist  # noqa: F401
         except ImportError:
             pass
         else:

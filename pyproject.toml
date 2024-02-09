@@ -87,6 +87,11 @@ target-version = ['py38']
 [tool.ruff]
 src = ["src"]
 line-length = 88
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
 select = [
     "B",  # bugbear
     "D",  # pydocstyle
@@ -97,6 +102,8 @@ select = [
     "UP", # pyupgrade
     "RUF", # ruff
     "W",  # pycodestyle
+    "PIE", # flake8-pie
+    "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
 ]
 ignore = [
     # bugbear ignore
@@ -129,9 +136,6 @@ ignore = [
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
 ]
-
-[tool.ruff.format]
-docstring-code-format = true
 
 [tool.ruff.lint.pycodestyle]
 # In order to be able to format for 88 char in ruff format
