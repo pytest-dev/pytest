@@ -103,6 +103,7 @@ select = [
     "RUF", # ruff
     "W",  # pycodestyle
     "PIE", # flake8-pie
+    "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
 ]
 ignore = [
     # bugbear ignore

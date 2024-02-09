@@ -200,7 +200,7 @@ class TestAssertionRewrite:
         assert getmsg(f2) == "assert False"
 
         def f3() -> None:
-            assert a_global  # type: ignore[name-defined] # noqa
+            assert a_global  # type: ignore[name-defined] # noqa: F821
 
         assert getmsg(f3, {"a_global": False}) == "assert False"
 

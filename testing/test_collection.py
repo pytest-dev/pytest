@@ -535,7 +535,7 @@ class TestSession:
         newid = item.nodeid
         assert newid == id
         pprint.pprint(hookrec.calls)
-        topdir = pytester.path  # noqa
+        topdir = pytester.path  # noqa: F841
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == topdir"),
