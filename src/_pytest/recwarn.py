@@ -351,9 +351,20 @@ class WarningsChecker(WarningsRecorder):
             # pytest as the error message produced without this check in place
             # is confusing (#10865).
             for w in self:
-                msg = w.message.args[0]  # type: ignore[union-attr]
+                if type(w.message) is not UserWarning:
+                    # If the warning was of an incorrect type then `warnings.warn()`
+                    # creates a UserWarning. Any other warning must have been specified
+                    # explicitly.
+                    continue
+                if not w.message.args:
+                    # UserWarning() without arguments must have been specified explicitly.
+                    continue
+                msg = w.message.args[0]
                 if isinstance(msg, str):
                     continue
+                # It's possible that UserWarning was explicitly specified, and
+                # its first argument was not a string. But that case can't be
+                # distinguished from an invalid type.
                 raise TypeError(
-                    f"Warning message must be str, got {msg!r} (type {type(msg).__name__})"
+                    f"Warning must be str or Warning, got {msg!r} (type {type(msg).__name__})"
                 )

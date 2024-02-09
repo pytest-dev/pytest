@@ -3,6 +3,7 @@ import sys
 from typing import List
 from typing import Optional
 from typing import Type
+from typing import Union
 import warnings
 
 import pytest
@@ -546,24 +547,34 @@ class TestWarns:
         result.assert_outcomes()
 
 
-def test_raise_type_error_on_non_string_warning() -> None:
-    """Check pytest.warns validates warning messages are strings (#10865)."""
-    with pytest.raises(TypeError, match="Warning message must be str"):
+def test_raise_type_error_on_invalid_warning() -> None:
+    """Check pytest.warns validates warning messages are strings (#10865) or
+    Warning instances (#11959)."""
+    with pytest.raises(TypeError, match="Warning must be str or Warning"):
         with pytest.warns(UserWarning):
             warnings.warn(1)  # type: ignore
 
 
-def test_no_raise_type_error_on_string_warning() -> None:
-    """Check pytest.warns validates warning messages are strings (#10865)."""
-    with pytest.warns(UserWarning):
-        warnings.warn("Warning")
+@pytest.mark.parametrize(
+    "message",
+    [
+        pytest.param("Warning", id="str"),
+        pytest.param(UserWarning(), id="UserWarning"),
+        pytest.param(Warning(), id="Warning"),
+    ],
+)
+def test_no_raise_type_error_on_valid_warning(message: Union[str, Warning]) -> None:
+    """Check pytest.warns validates warning messages are strings (#10865) or
+    Warning instances (#11959)."""
+    with pytest.warns(Warning):
+        warnings.warn(message)
 
 
 @pytest.mark.skipif(
     hasattr(sys, "pypy_version_info"),
     reason="Not for pypy",
 )
-def test_raise_type_error_on_non_string_warning_cpython() -> None:
+def test_raise_type_error_on_invalid_warning_message_cpython() -> None:
     # Check that we get the same behavior with the stdlib, at least if filtering
     # (see https://github.com/python/cpython/issues/103577 for details)
     with pytest.raises(TypeError):
