@@ -102,6 +102,7 @@ select = [
     "UP", # pyupgrade
     "RUF", # ruff
     "W",  # pycodestyle
+    "PIE", # flake8-pie
 ]
 ignore = [
     # bugbear ignore

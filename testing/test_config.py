@@ -1231,8 +1231,7 @@ def test_plugin_loading_order(pytester: Pytester) -> None:
             import myplugin
             assert myplugin.terminal_plugin == [False, True]
         """,
-        **{
-            "myplugin": """
+        myplugin="""
             terminal_plugin = []
 
             def pytest_configure(config):
@@ -1241,8 +1240,7 @@ def test_plugin_loading_order(pytester: Pytester) -> None:
             def pytest_sessionstart(session):
                 config = session.config
                 terminal_plugin.append(bool(config.pluginmanager.get_plugin("terminalreporter")))
-            """
-        },
+            """,
     )
     pytester.syspathinsert()
     result = pytester.runpytest("-p", "myplugin", str(p1))

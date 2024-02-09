@@ -452,7 +452,7 @@ class LocalPath:
 
     def ensure_dir(self, *args):
         """Ensure the path joined with args is a directory."""
-        return self.ensure(*args, **{"dir": True})
+        return self.ensure(*args, dir=True)
 
     def bestrelpath(self, dest):
         """Return a string which is a relative path from self
