@@ -1,5 +1,5 @@
 # mypy: allow-untyped-defs
-"""Python version compatibility code."""
+"""Python version and platform compatibility code."""
 from __future__ import annotations
 
 import dataclasses
@@ -299,6 +299,39 @@ def get_user_id() -> int | None:
         ERROR = -1
         uid = os.getuid()
         return uid if uid != ERROR else None
+
+
+if sys.platform == "win32":
+    from ctypes import create_unicode_buffer
+    from ctypes import windll
+
+    def ensure_long_path(p: Path) -> Path:
+        """
+        Returns the given path in its long form in Windows.
+
+        Short-paths follow the DOS restriction of 8 characters + 3 chars for file extension,
+        and are still supported by Windows.
+        """
+        # If the path does not exist, we cannot discover its long path.
+        if not p.exists():
+            return p
+        short_path = os.fspath(p)
+        # Use a buffer twice the size of the original path size to (reasonably) ensure we will be able
+        # to hold the long path.
+        buffer_size = len(short_path) * 2
+        buffer = create_unicode_buffer(buffer_size)
+        windll.kernel32.GetLongPathNameW(short_path, buffer, buffer_size)
+        long_path_str = buffer.value
+        # If we could not convert it, probably better to hard-crash this now rather
+        # than later.
+        assert long_path_str, f"Failed to convert short path to long path form:\n(size: {len(short_path)}):{short_path}"
+        return Path(buffer.value)
+
+else:
+
+    def ensure_long_path(p: Path) -> Path:
+        """No-op in other platforms."""
+        return p
 
 
 # Perform exhaustiveness checking.

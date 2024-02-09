@@ -9,6 +9,7 @@ import textwrap
 from typing import List
 
 from _pytest.assertion.util import running_on_ci
+from _pytest.compat import ensure_long_path
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -1763,27 +1764,43 @@ def test_does_not_crash_on_recursive_symlink(pytester: Pytester) -> None:
     assert result.parseoutcomes() == {"passed": 1}
 
 
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
-def test_collect_short_file_windows(pytester: Pytester) -> None:
-    """Reproducer for #11895: short paths not colleced on Windows."""
-    short_path = tempfile.mkdtemp()
-    if "~" not in short_path:  # pragma: no cover
-        if running_on_ci():
-            # On CI, we are expecting that under the current GitHub actions configuration,
-            # tempfile.mkdtemp() is producing short paths, so we want to fail to prevent
-            # this from silently changing without us noticing.
-            pytest.fail(
-                f"tempfile.mkdtemp() failed to produce a short path on CI: {short_path}"
-            )
-        else:
-            # We want to skip failing this test locally in this situation because
-            # depending on the local configuration tempfile.mkdtemp() might not produce a short path:
-            # For example, user might have configured %TEMP% exactly to avoid generating short paths.
-            pytest.skip(
-                f"tempfile.mkdtemp() failed to produce a short path: {short_path}, skipping"
-            )
+class TestCollectionShortPaths:
+    @pytest.fixture
+    def short_path(self) -> Path:
+        short_path = tempfile.mkdtemp()
+        if "~" not in short_path:  # pragma: no cover
+            if running_on_ci():
+                # On CI, we are expecting that under the current GitHub actions configuration,
+                # tempfile.mkdtemp() is producing short paths, so we want to fail to prevent
+                # this from silently changing without us noticing.
+                pytest.fail(
+                    f"tempfile.mkdtemp() failed to produce a short path on CI: {short_path}"
+                )
+            else:
+                # We want to skip failing this test locally in this situation because
+                # depending on the local configuration tempfile.mkdtemp() might not produce a short path:
+                # For example, user might have configured %TEMP% exactly to avoid generating short paths.
+                pytest.skip(
+                    f"tempfile.mkdtemp() failed to produce a short path: {short_path}, skipping"
+                )
+        return Path(short_path)
 
-    test_file = Path(short_path).joinpath("test_collect_short_file_windows.py")
-    test_file.write_text("def test(): pass", encoding="UTF-8")
-    result = pytester.runpytest(short_path)
-    assert result.parseoutcomes() == {"passed": 1}
+    @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+    def test_ensure_long_path_win(self, short_path: Path) -> None:
+        long_path = ensure_long_path(short_path)
+        assert len(os.fspath(long_path)) > len(os.fspath(short_path))
+
+    @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+    def test_collect_short_file_windows(
+        self, pytester: Pytester, short_path: Path
+    ) -> None:
+        """Reproducer for #11895: short paths not collected on Windows."""
+        test_file = short_path.joinpath("test_collect_short_file_windows.py")
+        test_file.write_text("def test(): pass", encoding="UTF-8")
+        result = pytester.runpytest(short_path)
+        assert result.parseoutcomes() == {"passed": 1}
+
+    def test_ensure_long_path_general(self, tmp_path: Path) -> None:
+        """Sanity check: a normal path to ensure_long_path works on all platforms."""
+        assert ensure_long_path(tmp_path) == tmp_path
+        assert ensure_long_path(tmp_path / "non-existent") == tmp_path / "non-existent"
