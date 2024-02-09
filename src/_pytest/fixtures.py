@@ -1188,7 +1188,7 @@ class FixtureFunctionMarker:
 
         if getattr(function, "_pytestfixturefunction", False):
             raise ValueError(
-                "fixture is being applied more than once to the same function"
+                f"@pytest.fixture is being applied more than once to the same function {function.__name__!r}"
             )
 
         if hasattr(function, "pytestmark"):
