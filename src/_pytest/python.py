@@ -1787,7 +1787,7 @@ class Function(PyobjMixin, nodes.Item):
                     ntraceback = Traceback(
                         (
                             entry
-                            if i == 0 or i == len(ntraceback) - 1
+                            if i in {0, len(ntraceback) - 1}
                             else entry.with_repr_style("short")
                         )
                         for i, entry in enumerate(ntraceback)

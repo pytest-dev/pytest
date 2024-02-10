@@ -104,6 +104,7 @@ select = [
     "W",  # pycodestyle
     "PIE", # flake8-pie
     "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
+    "PLR1714", # Consider merging multiple comparisons
 ]
 ignore = [
     # bugbear ignore
