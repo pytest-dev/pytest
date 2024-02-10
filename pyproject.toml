@@ -104,6 +104,8 @@ select = [
     "W",  # pycodestyle
     "PIE", # flake8-pie
     "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
+    "PLE", # pylint error
+    "PLW", # pylint warning
     "PLR1714", # Consider merging multiple comparisons
 ]
 ignore = [
@@ -136,6 +138,11 @@ ignore = [
     "D415", # First line should end with a period, question mark, or exclamation point
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+    # pylint ignore
+    "PLW0603",  # Using the global statement
+    "PLW0120",  # remove the else and dedent its contents
+    "PLW2901",  # for loop variable overwritten by assignment target
+    "PLR5501",  # Use `elif` instead of `else` then `if`
 ]
 
 [tool.ruff.lint.pycodestyle]
