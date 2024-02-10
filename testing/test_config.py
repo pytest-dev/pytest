@@ -1874,6 +1874,18 @@ class TestOverrideIniArgs:
         assert "ERROR:" not in result.stderr.str()
         result.stdout.fnmatch_lines(["collected 1 item", "*= 1 passed in *="])
 
+    def test_override_ini_without_config_file(self, pytester: Pytester) -> None:
+        pytester.makepyfile(**{"src/override_ini_without_config_file.py": ""})
+        pytester.makepyfile(
+            **{
+                "tests/test_override_ini_without_config_file.py": (
+                    "import override_ini_without_config_file\ndef test(): pass"
+                ),
+            }
+        )
+        result = pytester.runpytest("--override-ini", "pythonpath=src")
+        assert result.parseoutcomes() == {"passed": 1}
+
 
 def test_help_via_addopts(pytester: Pytester) -> None:
     pytester.makeini(
