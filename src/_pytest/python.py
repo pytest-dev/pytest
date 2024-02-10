@@ -1786,11 +1786,10 @@ class Function(PyobjMixin, nodes.Item):
                 if len(ntraceback) > 2:
                     ntraceback = Traceback(
                         (
-                            entry
-                            if i in {0, len(ntraceback) - 1}
-                            else entry.with_repr_style("short")
+                            ntraceback[0],
+                            *(t.with_repr_style("short") for t in ntraceback[1:-1]),
+                            ntraceback[-1],
                         )
-                        for i, entry in enumerate(ntraceback)
                     )
 
             return ntraceback
