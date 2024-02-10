@@ -177,6 +177,9 @@ Files will only be matched for configuration if:
 * ``tox.ini``: contains a ``[pytest]`` section.
 * ``setup.cfg``: contains a ``[tool:pytest]`` section.
 
+Finally, a ``pyproject.toml`` file will be considered the ``configfile`` if no other match was found, in this case
+even if it does not contain a ``[tool.pytest.ini_options]`` table (this was added in ``8.1``).
+
 The files are considered in the order above. Options from multiple ``configfiles`` candidates
 are never merged - the first match wins.
 

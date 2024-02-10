@@ -101,15 +101,20 @@ def locate_config(
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [invocation_dir]
+    found_pyproject_toml: Optional[Path] = None
     for arg in args:
         argpath = absolutepath(arg)
         for base in (argpath, *argpath.parents):
             for config_name in config_names:
                 p = base / config_name
                 if p.is_file():
+                    if p.name == "pyproject.toml" and found_pyproject_toml is None:
+                        found_pyproject_toml = p
                     ini_config = load_config_dict_from_file(p)
                     if ini_config is not None:
                         return base, p, ini_config
+    if found_pyproject_toml is not None:
+        return found_pyproject_toml.parent, found_pyproject_toml, {}
     return None, None, {}
 
 
