@@ -624,7 +624,7 @@ class LogXML:
     def update_testcase_duration(self, report: TestReport) -> None:
         """Accumulate total duration for nodeid from given report and update
         the Junit.testcase with the new total if already created."""
-        if self.report_duration == "total" or report.when == self.report_duration:
+        if self.report_duration in {"total", report.when}:
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
 

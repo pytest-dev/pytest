@@ -429,7 +429,7 @@ class TestAssertionRewrite:
 
         def f2() -> None:
             x = 1
-            assert x == 1 or x == 2
+            assert x == 1 or x == 2  # noqa: PLR1714
 
         getmsg(f2, must_pass=True)
 
