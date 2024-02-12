@@ -144,6 +144,7 @@ ignore = [
     "PLW2901",  # for loop variable overwritten by assignment target
     "PLR5501",  # Use `elif` instead of `else` then `if`
 ]
+allowed-confusables = ["’"]
 
 [tool.ruff.lint.pycodestyle]
 # In order to be able to format for 88 char in ruff format
