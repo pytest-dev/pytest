@@ -712,7 +712,7 @@ class TestRequestBasic:
     )
     def test_request_garbage(self, pytester: Pytester) -> None:
         try:
-            import xdist  # noqa
+            import xdist  # noqa: F401
         except ImportError:
             pass
         else:
@@ -4351,6 +4351,27 @@ def test_call_fixture_function_error():
 
     with pytest.raises(pytest.fail.Exception):
         assert fix() == 1
+
+
+def test_fixture_double_decorator(pytester: Pytester) -> None:
+    """Check if an error is raised when using @pytest.fixture twice."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        @pytest.fixture
+        def fixt():
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "E * ValueError: @pytest.fixture is being applied more than once to the same function 'fixt'"
+        ]
+    )
 
 
 def test_fixture_param_shadowing(pytester: Pytester) -> None:

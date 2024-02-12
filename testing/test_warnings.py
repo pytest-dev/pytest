@@ -794,7 +794,7 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
     # available, using `importorskip("tracemalloc")` for example,
     # because we want to ensure the same code path does not break in those platforms.
     try:
-        import tracemalloc  # noqa
+        import tracemalloc  # noqa: F401
 
         has_tracemalloc = True
     except ImportError:

@@ -289,7 +289,7 @@ def get_user_id() -> int | None:
     # mypy follows the version and platform checking expectation of PEP 484:
     # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=platform#python-version-and-system-platform-checks
     # Containment checks are too complex for mypy v1.5.0 and cause failure.
-    if sys.platform == "win32" or sys.platform == "emscripten":
+    if sys.platform in {"win32", "emscripten"}:
         # win32 does not have a getuid() function.
         # Emscripten has a return 0 stub.
         return None

@@ -381,7 +381,7 @@ class TerminalReporter:
         if self.config.getoption("setupshow", False):
             return False
         cfg: str = self.config.getini("console_output_style")
-        if cfg == "progress" or cfg == "progress-even-when-capture-no":
+        if cfg in {"progress", "progress-even-when-capture-no"}:
             return "progress"
         elif cfg == "count":
             return "count"

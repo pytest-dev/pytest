@@ -329,3 +329,14 @@ class WarningsChecker(WarningsRecorder):
                         module=w.__module__,
                         source=w.source,
                     )
+            # Check warnings has valid argument type (#10865).
+            wrn: warnings.WarningMessage
+            for wrn in self:
+                self._validate_message(wrn)
+
+    @staticmethod
+    def _validate_message(wrn: Any) -> None:
+        if not isinstance(msg := wrn.message.args[0], str):
+            raise TypeError(
+                f"Warning message must be str, got {msg!r} (type {type(msg).__name__})"
+            )
