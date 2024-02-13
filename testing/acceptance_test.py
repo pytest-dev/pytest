@@ -240,7 +240,7 @@ class TestGeneralUsage:
         pytester.copy_example("issue88_initial_file_multinodes")
         p = pytester.makepyfile("def test_hello(): pass")
         result = pytester.runpytest(p, "--collect-only")
-        result.stdout.fnmatch_lines(["*Module*test_issue88*", "*MyFile*test_issue88*"])
+        result.stdout.fnmatch_lines(["*MyFile*test_issue88*", "*Module*test_issue88*"])
 
     def test_issue93_initialnode_importing_capturing(self, pytester: Pytester) -> None:
         pytester.makeconftest(

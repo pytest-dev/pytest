@@ -898,7 +898,7 @@ class Session(nodes.Collector):
 
                 # Prune this level.
                 any_matched_in_collector = False
-                for node in subnodes:
+                for node in reversed(subnodes):
                     # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
                     if isinstance(matchparts[0], Path):
                         is_match = node.path == matchparts[0]
