@@ -28,6 +28,18 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.0.0 (2024-01-27)
+=========================
+
+Bug Fixes
+---------
+
+- `#11842 <https://github.com/pytest-dev/pytest/issues/11842>`_: Properly escape the ``reason`` of a :ref:`skip <pytest.mark.skip ref>` mark when writing JUnit XML files.
+
+
+- `#11861 <https://github.com/pytest-dev/pytest/issues/11861>`_: Avoid microsecond exceeds ``1_000_000`` when using ``log-date-format`` with ``%f`` specifier, which might cause the test suite to crash.
+
+
 pytest 8.0.0rc2 (2024-01-17)
 ============================
 
@@ -252,6 +264,10 @@ These are breaking changes where deprecation was not possible.
   While this is a new feature, we announce it as a breaking change
   because many test suites are configured to error-out on warnings, and will
   therefore fail on the newly-re-emitted warnings.
+
+
+- The internal ``FixtureManager.getfixtureclosure`` method has changed. Plugins which use this method or
+  which subclass ``FixtureManager`` and overwrite that method will need to adapt to the change.
 
 
 

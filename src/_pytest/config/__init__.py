@@ -1,21 +1,21 @@
+# mypy: allow-untyped-defs
 """Command line options, ini-file and conftest.py processing."""
 import argparse
 import collections.abc
 import copy
 import dataclasses
 import enum
+from functools import lru_cache
 import glob
 import importlib.metadata
 import inspect
 import os
+from pathlib import Path
 import re
 import shlex
 import sys
-import types
-import warnings
-from functools import lru_cache
-from pathlib import Path
 from textwrap import dedent
+import types
 from types import FunctionType
 from typing import Any
 from typing import Callable
@@ -36,6 +36,7 @@ from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 from pluggy import HookimplMarker
 from pluggy import HookimplOpts
@@ -43,15 +44,15 @@ from pluggy import HookspecMarker
 from pluggy import HookspecOpts
 from pluggy import PluginManager
 
-import _pytest._code
-import _pytest.deprecated
-import _pytest.hookspec
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
+import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._io import TerminalWriter
+import _pytest.deprecated
+import _pytest.hookspec
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -64,10 +65,12 @@ from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
+
 if TYPE_CHECKING:
+    from .argparsing import Argument
+    from .argparsing import Parser
     from _pytest._code.code import _TracebackStyle
     from _pytest.terminal import TerminalReporter
-    from .argparsing import Argument, Parser
 
 
 _PluggyPlugin = object
@@ -235,7 +238,8 @@ essential_plugins = (
     "helpconfig",  # Provides -p.
 )
 
-default_plugins = essential_plugins + (
+default_plugins = (
+    *essential_plugins,
     "python",
     "terminal",
     "debugging",
@@ -541,6 +545,7 @@ class PytestPluginManager(PluginManager):
         noconftest: bool,
         rootpath: Path,
         confcutdir: Optional[Path],
+        invocation_dir: Path,
         importmode: Union[ImportMode, str],
     ) -> None:
         """Load initial conftest files given a preparsed "namespace".
@@ -550,8 +555,9 @@ class PytestPluginManager(PluginManager):
         All builtin and 3rd party plugins will have been loaded, however, so
         common options will not confuse our logic here.
         """
-        current = Path.cwd()
-        self._confcutdir = absolutepath(current / confcutdir) if confcutdir else None
+        self._confcutdir = (
+            absolutepath(invocation_dir / confcutdir) if confcutdir else None
+        )
         self._noconftest = noconftest
         self._using_pyargs = pyargs
         foundanchor = False
@@ -561,7 +567,7 @@ class PytestPluginManager(PluginManager):
             i = path.find("::")
             if i != -1:
                 path = path[:i]
-            anchor = absolutepath(current / path)
+            anchor = absolutepath(invocation_dir / path)
 
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
@@ -569,7 +575,7 @@ class PytestPluginManager(PluginManager):
                 self._try_load_conftest(anchor, importmode, rootpath)
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(current, importmode, rootpath)
+            self._try_load_conftest(invocation_dir, importmode, rootpath)
 
     def _is_in_confcutdir(self, path: Path) -> bool:
         """Whether a path is within the confcutdir.
@@ -666,7 +672,7 @@ class PytestPluginManager(PluginManager):
                 if dirpath in path.parents or path == dirpath:
                     if mod in mods:
                         raise AssertionError(
-                            f"While trying to load conftest path {str(conftestpath)}, "
+                            f"While trying to load conftest path {conftestpath!s}, "
                             f"found that the module {mod} is already loaded with path {mod.__file__}. "
                             "This is not supposed to happen. Please report this issue to pytest."
                         )
@@ -743,13 +749,10 @@ class PytestPluginManager(PluginManager):
                 self.set_blocked("pytest_" + name)
         else:
             name = arg
-            # Unblock the plugin.  None indicates that it has been blocked.
-            # There is no interface with pluggy for this.
-            if self._name2plugin.get(name, -1) is None:
-                del self._name2plugin[name]
+            # Unblock the plugin.
+            self.unblock(name)
             if not name.startswith("pytest_"):
-                if self._name2plugin.get("pytest_" + name, -1) is None:
-                    del self._name2plugin["pytest_" + name]
+                self.unblock("pytest_" + name)
             self.import_plugin(arg, consider_entry_points=True)
 
     def consider_conftest(
@@ -812,7 +815,7 @@ class PytestPluginManager(PluginManager):
 
 
 def _get_plugin_specs_as_list(
-    specs: Union[None, types.ModuleType, str, Sequence[str]]
+    specs: Union[None, types.ModuleType, str, Sequence[str]],
 ) -> List[str]:
     """Parse a plugins specification into a list of plugin names."""
     # None means empty.
@@ -973,7 +976,8 @@ class Config:
         *,
         invocation_params: Optional[InvocationParams] = None,
     ) -> None:
-        from .argparsing import Parser, FILE_OR_DIR
+        from .argparsing import FILE_OR_DIR
+        from .argparsing import Parser
 
         if invocation_params is None:
             invocation_params = self.InvocationParams(
@@ -1168,6 +1172,7 @@ class Config:
             noconftest=early_config.known_args_namespace.noconftest,
             rootpath=early_config.rootpath,
             confcutdir=early_config.known_args_namespace.confcutdir,
+            invocation_dir=early_config.invocation_params.dir,
             importmode=early_config.known_args_namespace.importmode,
         )
 
@@ -1176,8 +1181,8 @@ class Config:
             args, namespace=copy.copy(self.option)
         )
         rootpath, inipath, inicfg = determine_setup(
-            ns.inifilename,
-            ns.file_or_dir + unknown_args,
+            inifile=ns.inifilename,
+            args=ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             invocation_dir=self.invocation_params.dir,
         )
@@ -1261,6 +1266,8 @@ class Config:
         """Decide the args (initial paths/nodeids) to use given the relevant inputs.
 
         :param warn: Whether can issue warnings.
+
+        :returns: The args and the args source. Guaranteed to be non-empty.
         """
         if args:
             source = Config.ArgsSource.ARGS
@@ -1369,12 +1376,7 @@ class Config:
 
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
-                    "%s: 'minversion' requires pytest-%s, actual pytest-%s'"
-                    % (
-                        self.inipath,
-                        minver,
-                        pytest.__version__,
-                    )
+                    f"{self.inipath}: 'minversion' requires pytest-{minver}, actual pytest-{pytest.__version__}'"
                 )
 
     def _validate_config_options(self) -> None:
@@ -1387,8 +1389,9 @@ class Config:
             return
 
         # Imported lazily to improve start-up time.
+        from packaging.requirements import InvalidRequirement
+        from packaging.requirements import Requirement
         from packaging.version import Version
-        from packaging.requirements import InvalidRequirement, Requirement
 
         plugin_info = self.pluginmanager.list_plugin_distinfo()
         plugin_dist_info = {dist.project_name: dist.version for _, dist in plugin_info}
@@ -1608,9 +1611,7 @@ class Config:
                 key, user_ini_value = ini_config.split("=", 1)
             except ValueError as e:
                 raise UsageError(
-                    "-o/--override-ini expects option=value style (got: {!r}).".format(
-                        ini_config
-                    )
+                    f"-o/--override-ini expects option=value style (got: {ini_config!r})."
                 ) from e
             else:
                 if key == name:
@@ -1668,7 +1669,6 @@ class Config:
         can be used to explicitly use the global verbosity level.
 
         Example:
-
         .. code-block:: ini
 
             # content of pytest.ini
@@ -1848,13 +1848,13 @@ def parse_warning_filter(
     try:
         action: "warnings._ActionKind" = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
-        raise UsageError(error_template.format(error=str(e)))
+        raise UsageError(error_template.format(error=str(e))) from None
     try:
         category: Type[Warning] = _resolve_warning_category(category_)
     except Exception:
         exc_info = ExceptionInfo.from_current()
         exception_text = exc_info.getrepr(style="native")
-        raise UsageError(error_template.format(error=exception_text))
+        raise UsageError(error_template.format(error=exception_text)) from None
     if message and escape:
         message = re.escape(message)
     if module and escape:
@@ -1867,7 +1867,7 @@ def parse_warning_filter(
         except ValueError as e:
             raise UsageError(
                 error_template.format(error=f"invalid lineno {lineno_!r}: {e}")
-            )
+            ) from None
     else:
         lineno = 0
     return action, message, category, module, lineno

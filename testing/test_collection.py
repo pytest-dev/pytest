@@ -1,12 +1,12 @@
+# mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import pprint
 import shutil
 import sys
 import textwrap
-from pathlib import Path
 from typing import List
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -16,6 +16,7 @@ from _pytest.nodes import Item
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import Pytester
+import pytest
 
 
 def ensure_file(file_path: Path) -> Path:
@@ -534,7 +535,7 @@ class TestSession:
         newid = item.nodeid
         assert newid == id
         pprint.pprint(hookrec.calls)
-        topdir = pytester.path  # noqa
+        topdir = pytester.path  # noqa: F841
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == topdir"),
@@ -591,12 +592,12 @@ class TestSession:
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == collector.session.path"),
-                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
-                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 (
                     "pytest_collectstart",
                     "collector.__class__.__name__ == 'SpecialFile'",
                 ),
+                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
+                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid.startswith(p.name)"),
             ]
         )
@@ -669,6 +670,23 @@ class TestSession:
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
+
+    def test_collect_parametrized_order(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize('i', [0, 1, 2])
+            def test_param(i): ...
+            """
+        )
+        items, hookrec = pytester.inline_genitems(f"{p}::test_param")
+        assert len(items) == 3
+        assert [item.nodeid for item in items] == [
+            "test_collect_parametrized_order.py::test_param[0]",
+            "test_collect_parametrized_order.py::test_param[1]",
+            "test_collect_parametrized_order.py::test_param[2]",
+        ]
 
 
 class Test_getinitialnodes:
@@ -1281,21 +1299,19 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
     subdir = pytester.mkdir("sub")
     pytester.path.joinpath("conftest.py").write_text(
         textwrap.dedent(
-            """
+            f"""
             import os
-            os.chdir(%r)
+            os.chdir({str(subdir)!r})
             """
-            % (str(subdir),)
         ),
         encoding="utf-8",
     )
     pytester.makepyfile(
-        """
+        f"""
         def test_1():
             import os
-            assert os.getcwd() == %r
+            assert os.getcwd() == {str(subdir)!r}
         """
-        % (str(subdir),)
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
@@ -1638,13 +1654,11 @@ class TestImportModeImportlib:
         pytester.makepyfile(
             **{
                 "tests/conftest.py": "",
-                "tests/test_foo.py": """
+                "tests/test_foo.py": f"""
                 import sys
                 def test_check():
                     assert r"{tests_dir}" not in sys.path
-                """.format(
-                    tests_dir=tests_dir
-                ),
+                """,
             }
         )
         result = pytester.runpytest("-v", "--import-mode=importlib")

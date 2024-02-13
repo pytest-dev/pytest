@@ -1,6 +1,6 @@
 # mypy: disallow-untyped-defs
-import sys
 from subprocess import call
+import sys
 
 
 def main() -> int:

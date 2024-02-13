@@ -1,10 +1,10 @@
+# mypy: allow-untyped-defs
 import ast
+from bisect import bisect_right
 import inspect
 import textwrap
 import tokenize
 import types
-import warnings
-from bisect import bisect_right
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -12,6 +12,7 @@ from typing import Optional
 from typing import overload
 from typing import Tuple
 from typing import Union
+import warnings
 
 
 class Source:

@@ -1,10 +1,10 @@
+# mypy: allow-untyped-defs
 import os
 import shutil
 import sys
 import types
 from typing import List
 
-import pytest
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
@@ -13,6 +13,7 @@ from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import import_path
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.fixture

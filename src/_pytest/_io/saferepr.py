@@ -19,8 +19,8 @@ def _format_repr_exception(exc: BaseException, obj: object) -> str:
         raise
     except BaseException as exc:
         exc_info = f"unpresentable exception ({_try_repr_or_str(exc)})"
-    return "<[{} raised in repr()] {} object at 0x{:x}>".format(
-        exc_info, type(obj).__name__, id(obj)
+    return (
+        f"<[{exc_info} raised in repr()] {type(obj).__name__} object at 0x{id(obj):x}>"
     )
 
 
@@ -108,7 +108,6 @@ def saferepr(
     This function is a wrapper around the Repr/reprlib functionality of the
     stdlib.
     """
-
     return SafeRepr(maxsize, use_ascii).repr(obj)
 
 

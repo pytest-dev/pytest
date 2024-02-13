@@ -1,5 +1,5 @@
-import pytest
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.mark.filterwarnings("default::pytest.PytestUnhandledThreadExceptionWarning")

@@ -1,22 +1,23 @@
+# mypy: allow-untyped-defs
 """(Disabled by default) support for testing pytest and pytest plugins.
 
 PYTEST_DONT_REWRITE
 """
 import collections.abc
 import contextlib
+from fnmatch import fnmatch
 import gc
 import importlib
+from io import StringIO
 import locale
 import os
+from pathlib import Path
 import platform
 import re
 import shutil
 import subprocess
 import sys
 import traceback
-from fnmatch import fnmatch
-from io import StringIO
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -68,6 +69,7 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestWarning
+
 
 if TYPE_CHECKING:
     import pexpect
@@ -186,7 +188,7 @@ class LsofFdLeakChecker:
                     "*** After:",
                     *(str(f) for f in lines2),
                     "***** %s FD leakage detected" % len(leaked_files),
-                    "*** function %s:%s: %s " % item.location,
+                    "*** function {}:{}: {} ".format(*item.location),
                     "See issue #2366",
                 ]
                 item.warn(PytestWarning("\n".join(error)))
@@ -375,14 +377,12 @@ class HookRecorder:
                 values.append(rep)
         if not values:
             raise ValueError(
-                "could not find test report matching %r: "
-                "no test reports at all!" % (inamepart,)
+                f"could not find test report matching {inamepart!r}: "
+                "no test reports at all!"
             )
         if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching {!r}: {}".format(
-                    inamepart, values
-                )
+                f"found 2 or more testreports matching {inamepart!r}: {values}"
             )
         return values[0]
 
@@ -807,7 +807,6 @@ class Pytester:
             The first created file.
 
         Examples:
-
         .. code-block:: python
 
             pytester.makefile(".txt", "line1", "line2")
@@ -861,7 +860,6 @@ class Pytester:
         existing files.
 
         Examples:
-
         .. code-block:: python
 
             def test_something(pytester):
@@ -881,7 +879,6 @@ class Pytester:
         existing files.
 
         Examples:
-
         .. code-block:: python
 
             def test_something(pytester):
@@ -1064,7 +1061,7 @@ class Pytester:
         :param cmdlineargs: Any extra command line arguments to use.
         """
         p = self.makepyfile(source)
-        values = list(cmdlineargs) + [p]
+        values = [*list(cmdlineargs), p]
         return self.inline_run(*values)
 
     def inline_genitems(self, *args) -> Tuple[List[Item], HookRecorder]:
@@ -1271,9 +1268,7 @@ class Pytester:
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "{!r} item not found in module:\n{}\nitems: {}".format(
-            funcname, source, items
-        )
+        assert 0, f"{funcname!r} item not found in module:\n{source}\nitems: {items}"
 
     def getitems(self, source: Union[str, "os.PathLike[str]"]) -> List[Item]:
         """Return all test items collected from the module.
@@ -1432,10 +1427,7 @@ class Pytester:
             def handle_timeout() -> None:
                 __tracebackhide__ = True
 
-                timeout_message = (
-                    "{seconds} second timeout expired running:"
-                    " {command}".format(seconds=timeout, command=cmdargs)
-                )
+                timeout_message = f"{timeout} second timeout expired running: {cmdargs}"
 
                 popen.kill()
                 popen.wait()
@@ -1499,10 +1491,10 @@ class Pytester:
         """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
-        args = ("--basetemp=%s" % p,) + args
+        args = ("--basetemp=%s" % p, *args)
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
-            args = ("-p", plugins[0]) + args
+            args = ("-p", plugins[0], *args)
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 

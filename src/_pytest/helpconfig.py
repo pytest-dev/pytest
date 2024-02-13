@@ -1,18 +1,19 @@
+# mypy: allow-untyped-defs
 """Version info, help messages, tracing configuration."""
+from argparse import Action
 import os
 import sys
-from argparse import Action
 from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Union
 
-import pytest
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import Parser
 from _pytest.terminal import TerminalReporter
+import pytest
 
 
 class HelpAction(Action):
@@ -108,11 +109,11 @@ def pytest_cmdline_parse() -> Generator[None, Config, Config]:
         path = config.option.debug
         debugfile = open(path, "w", encoding="utf-8")
         debugfile.write(
-            "versions pytest-%s, "
-            "python-%s\ncwd=%s\nargs=%s\n\n"
-            % (
+            "versions pytest-{}, "
+            "python-{}\ninvocation_dir={}\ncwd={}\nargs={}\n\n".format(
                 pytest.__version__,
                 ".".join(map(str, sys.version_info)),
+                config.invocation_params.dir,
                 os.getcwd(),
                 config.invocation_params.args,
             )
@@ -135,9 +136,7 @@ def pytest_cmdline_parse() -> Generator[None, Config, Config]:
 def showversion(config: Config) -> None:
     if config.option.version > 1:
         sys.stdout.write(
-            "This is pytest version {}, imported from {}\n".format(
-                pytest.__version__, pytest.__file__
-            )
+            f"This is pytest version {pytest.__version__}, imported from {pytest.__file__}\n"
         )
         plugininfo = getpluginversioninfo(config)
         if plugininfo:

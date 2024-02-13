@@ -1,16 +1,16 @@
-import textwrap
 from collections import ChainMap
 from collections import Counter
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
 from dataclasses import dataclass
+import textwrap
 from types import MappingProxyType
 from types import SimpleNamespace
 from typing import Any
 
-import pytest
 from _pytest._io.pprint import PrettyPrinter
+import pytest
 
 
 @dataclass

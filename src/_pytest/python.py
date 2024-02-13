@@ -1,17 +1,17 @@
+# mypy: allow-untyped-defs
 """Python test discovery, setup and run of test functions."""
 import abc
+from collections import Counter
+from collections import defaultdict
 import dataclasses
 import enum
 import fnmatch
+from functools import partial
 import inspect
 import itertools
 import os
-import types
-import warnings
-from collections import Counter
-from collections import defaultdict
-from functools import partial
 from pathlib import Path
+import types
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -28,6 +28,7 @@ from typing import Sequence
 from typing import Set
 from typing import Tuple
 from typing import Union
+import warnings
 
 import _pytest
 from _pytest import fixtures
@@ -49,7 +50,6 @@ from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
-from _pytest.compat import STRING_TYPES
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -263,8 +263,8 @@ def pytest_pycollect_makeitem(
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
                 res: Function = Function.from_parent(collector, name=name)
-                reason = "yield tests were removed in pytest 4.0 - {name} will be ignored".format(
-                    name=name
+                reason = (
+                    f"yield tests were removed in pytest 4.0 - {name} will be ignored"
                 )
                 res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
                 res.warn(PytestCollectionWarning(reason))
@@ -357,7 +357,7 @@ class PyobjMixin(nodes.Node):
 # hook is not called for them.
 # fmt: off
 class _EmptyClass: pass  # noqa: E701
-IGNORED_ATTRIBUTES = frozenset.union(  # noqa: E305
+IGNORED_ATTRIBUTES = frozenset.union(
     frozenset(),
     # Module.
     dir(types.ModuleType("empty_module")),
@@ -524,12 +524,12 @@ def importtestmodule(
     except ImportPathMismatchError as e:
         raise nodes.Collector.CollectError(
             "import file mismatch:\n"
-            "imported module %r has this __file__ attribute:\n"
-            "  %s\n"
+            "imported module {!r} has this __file__ attribute:\n"
+            "  {}\n"
             "which is not the same as the test file we want to collect:\n"
-            "  %s\n"
+            "  {}\n"
             "HINT: remove __pycache__ / .pyc files and/or use a "
-            "unique basename for your test file modules" % e.args
+            "unique basename for your test file modules".format(*e.args)
         ) from e
     except ImportError as e:
         exc_info = ExceptionInfo.from_current()
@@ -542,10 +542,10 @@ def importtestmodule(
         )
         formatted_tb = str(exc_repr)
         raise nodes.Collector.CollectError(
-            "ImportError while importing test module '{path}'.\n"
+            f"ImportError while importing test module '{path}'.\n"
             "Hint: make sure your test modules/packages have valid Python names.\n"
             "Traceback:\n"
-            "{traceback}".format(path=path, traceback=formatted_tb)
+            f"{formatted_tb}"
         ) from e
     except skip.Exception as e:
         if e.allow_module_level:
@@ -765,9 +765,8 @@ class Class(PyCollector):
             assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
-                    "cannot collect test class %r because it has a "
-                    "__init__ constructor (from: %s)"
-                    % (self.obj.__name__, self.parent.nodeid)
+                    f"cannot collect test class {self.obj.__name__!r} because it has a "
+                    f"__init__ constructor (from: {self.parent.nodeid})"
                 )
             )
             return []
@@ -775,9 +774,8 @@ class Class(PyCollector):
             assert self.parent is not None
             self.warn(
                 PytestCollectionWarning(
-                    "cannot collect test class %r because it has a "
-                    "__new__ constructor (from: %s)"
-                    % (self.obj.__name__, self.parent.nodeid)
+                    f"cannot collect test class {self.obj.__name__!r} because it has a "
+                    f"__new__ constructor (from: {self.parent.nodeid})"
                 )
             )
             return []
@@ -999,7 +997,7 @@ class IdMaker:
     def _idval_from_value(self, val: object) -> Optional[str]:
         """Try to make an ID for a parameter in a ParameterSet from its value,
         if the value type is supported."""
-        if isinstance(val, STRING_TYPES):
+        if isinstance(val, (str, bytes)):
             return _ascii_escaped_by_config(val, self.config)
         elif val is None or isinstance(val, (float, int, bool, complex)):
             return str(val)
@@ -1432,17 +1430,14 @@ class Metafunc:
             for arg in indirect:
                 if arg not in argnames:
                     fail(
-                        "In {}: indirect fixture '{}' doesn't exist".format(
-                            self.function.__name__, arg
-                        ),
+                        f"In {self.function.__name__}: indirect fixture '{arg}' doesn't exist",
                         pytrace=False,
                     )
                 arg_directness[arg] = "indirect"
         else:
             fail(
-                "In {func}: expected Sequence or boolean for indirect, got {type}".format(
-                    type=type(indirect).__name__, func=self.function.__name__
-                ),
+                f"In {self.function.__name__}: expected Sequence or boolean"
+                f" for indirect, got {type(indirect).__name__}",
                 pytrace=False,
             )
         return arg_directness
@@ -1464,9 +1459,7 @@ class Metafunc:
             if arg not in self.fixturenames:
                 if arg in default_arg_names:
                     fail(
-                        "In {}: function already takes an argument '{}' with a default value".format(
-                            func_name, arg
-                        ),
+                        f"In {func_name}: function already takes an argument '{arg}' with a default value",
                         pytrace=False,
                     )
                 else:
@@ -1525,14 +1518,13 @@ def _ascii_escaped_by_config(val: Union[str, bytes], config: Optional[Config]) -
     return val if escape_option else ascii_escaped(val)  # type: ignore
 
 
-def _pretty_fixture_path(func) -> str:
-    cwd = Path.cwd()
-    loc = Path(getlocation(func, str(cwd)))
+def _pretty_fixture_path(invocation_dir: Path, func) -> str:
+    loc = Path(getlocation(func, invocation_dir))
     prefix = Path("...", "_pytest")
     try:
         return str(prefix / loc.relative_to(_PYTEST_DIR))
     except ValueError:
-        return bestrelpath(cwd, loc)
+        return bestrelpath(invocation_dir, loc)
 
 
 def show_fixtures_per_test(config):
@@ -1545,19 +1537,19 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = Path.cwd()
+    invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
     def get_best_relpath(func) -> str:
-        loc = getlocation(func, str(curdir))
-        return bestrelpath(curdir, Path(loc))
+        loc = getlocation(func, invocation_dir)
+        return bestrelpath(invocation_dir, Path(loc))
 
     def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
-        prettypath = _pretty_fixture_path(fixture_def.func)
+        prettypath = _pretty_fixture_path(invocation_dir, fixture_def.func)
         tw.write(f"{argname}", green=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
@@ -1601,7 +1593,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     import _pytest.config
 
     session.perform_collect()
-    curdir = Path.cwd()
+    invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
@@ -1615,7 +1607,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if not fixturedefs:
             continue
         for fixturedef in fixturedefs:
-            loc = getlocation(fixturedef.func, str(curdir))
+            loc = getlocation(fixturedef.func, invocation_dir)
             if (fixturedef.argname, loc) in seen:
                 continue
             seen.add((fixturedef.argname, loc))
@@ -1623,7 +1615,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
                 (
                     len(fixturedef.baseid),
                     fixturedef.func.__module__,
-                    _pretty_fixture_path(fixturedef.func),
+                    _pretty_fixture_path(invocation_dir, fixturedef.func),
                     fixturedef.argname,
                     fixturedef,
                 )
@@ -1793,10 +1785,11 @@ class Function(PyobjMixin, nodes.Item):
             if self.config.getoption("tbstyle", "auto") == "auto":
                 if len(ntraceback) > 2:
                     ntraceback = Traceback(
-                        entry
-                        if i == 0 or i == len(ntraceback) - 1
-                        else entry.with_repr_style("short")
-                        for i, entry in enumerate(ntraceback)
+                        (
+                            ntraceback[0],
+                            *(t.with_repr_style("short") for t in ntraceback[1:-1]),
+                            ntraceback[-1],
+                        )
                     )
 
             return ntraceback

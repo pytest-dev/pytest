@@ -30,7 +30,7 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: requests-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pytest-plugin-list/
           key: plugins-http-cache-${{ github.run_id }} # Can use time based key as well

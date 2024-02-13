@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Support for presenting detailed information in failing assertions."""
 import sys
 from typing import Any
@@ -14,6 +15,7 @@ from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
+
 
 if TYPE_CHECKING:
     from _pytest.main import Session
@@ -128,7 +130,6 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     reporting via the pytest_assertrepr_compare hook.  This sets up this custom
     comparison for the test.
     """
-
     ihook = item.ihook
 
     def callbinrepr(op, left: object, right: object) -> Optional[str]:

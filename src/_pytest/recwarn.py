@@ -1,7 +1,7 @@
+# mypy: allow-untyped-defs
 """Record warnings during test function execution."""
-import re
-import warnings
 from pprint import pformat
+import re
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -16,6 +16,7 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
+import warnings
 
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
@@ -46,13 +47,11 @@ def deprecated_call(
 
 
 @overload
-def deprecated_call(  # noqa: F811
-    func: Callable[..., T], *args: Any, **kwargs: Any
-) -> T:
+def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     ...
 
 
-def deprecated_call(  # noqa: F811
+def deprecated_call(
     func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
 ) -> Union["WarningsRecorder", Any]:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning`` or ``FutureWarning``.
@@ -80,7 +79,7 @@ def deprecated_call(  # noqa: F811
     """
     __tracebackhide__ = True
     if func is not None:
-        args = (func,) + args
+        args = (func, *args)
     return warns(
         (DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs
     )
@@ -96,7 +95,7 @@ def warns(
 
 
 @overload
-def warns(  # noqa: F811
+def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
     func: Callable[..., T],
     *args: Any,
@@ -105,7 +104,7 @@ def warns(  # noqa: F811
     ...
 
 
-def warns(  # noqa: F811
+def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
@@ -330,3 +329,14 @@ class WarningsChecker(WarningsRecorder):
                         module=w.__module__,
                         source=w.source,
                     )
+            # Check warnings has valid argument type (#10865).
+            wrn: warnings.WarningMessage
+            for wrn in self:
+                self._validate_message(wrn)
+
+    @staticmethod
+    def _validate_message(wrn: Any) -> None:
+        if not isinstance(msg := wrn.message.args[0], str):
+            raise TypeError(
+                f"Warning message must be str, got {msg!r} (type {type(msg).__name__})"
+            )

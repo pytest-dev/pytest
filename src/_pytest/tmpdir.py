@@ -1,10 +1,11 @@
+# mypy: allow-untyped-defs
 """Support for providing temporary directories to test functions."""
 import dataclasses
 import os
-import re
-import tempfile
 from pathlib import Path
+import re
 from shutil import rmtree
+import tempfile
 from typing import Any
 from typing import Dict
 from typing import final
@@ -30,6 +31,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Item
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
+
 
 tmppath_result_key = StashKey[Dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
@@ -203,7 +205,7 @@ def get_user() -> Optional[str]:
         import getpass
 
         return getpass.getuser()
-    except (ImportError, KeyError):
+    except (ImportError, OSError, KeyError):
         return None
 
 
@@ -267,7 +269,6 @@ def tmp_path(
 
     The returned object is a :class:`pathlib.Path` object.
     """
-
     path = _mk_tmp(request, tmp_path_factory)
     yield path
 

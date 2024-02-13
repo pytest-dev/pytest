@@ -1,20 +1,16 @@
+# mypy: allow-untyped-defs
 import atexit
 import contextlib
-import fnmatch
-import importlib.util
-import itertools
-import os
-import shutil
-import sys
-import types
-import uuid
-import warnings
 from enum import Enum
 from errno import EBADF
 from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
+import fnmatch
 from functools import partial
+import importlib.util
+import itertools
+import os
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
@@ -22,6 +18,9 @@ from os.path import sep
 from pathlib import Path
 from pathlib import PurePath
 from posixpath import sep as posix_sep
+import shutil
+import sys
+import types
 from types import ModuleType
 from typing import Callable
 from typing import Dict
@@ -34,10 +33,13 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
+import uuid
+import warnings
 
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
+
 
 LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
@@ -101,9 +103,7 @@ def on_rm_rf_error(
         if func not in (os.open,):
             warnings.warn(
                 PytestWarning(
-                    "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
-                        func, path, type(exc), exc
-                    )
+                    f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
                 )
             )
         return False
@@ -171,23 +171,23 @@ def rm_rf(path: Path) -> None:
         shutil.rmtree(str(path), onerror=onerror)
 
 
-def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
+def find_prefixed(root: Path, prefix: str) -> Iterator["os.DirEntry[str]"]:
     """Find all elements in root that begin with the prefix, case insensitive."""
     l_prefix = prefix.lower()
-    for x in root.iterdir():
+    for x in os.scandir(root):
         if x.name.lower().startswith(l_prefix):
             yield x
 
 
-def extract_suffixes(iter: Iterable[PurePath], prefix: str) -> Iterator[str]:
+def extract_suffixes(iter: Iterable["os.DirEntry[str]"], prefix: str) -> Iterator[str]:
     """Return the parts of the paths following the prefix.
 
     :param iter: Iterator over path names.
     :param prefix: Expected prefix of the path names.
     """
     p_len = len(prefix)
-    for p in iter:
-        yield p.name[p_len:]
+    for entry in iter:
+        yield entry.name[p_len:]
 
 
 def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
@@ -242,7 +242,7 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
     else:
         raise OSError(
             "could not create numbered dir with prefix "
-            "{prefix} in {root} after 10 tries".format(prefix=prefix, root=root)
+            f"{prefix} in {root} after 10 tries"
         )
 
 
@@ -346,12 +346,12 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
     """List candidates for numbered directories to be removed - follows py.path."""
     max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
     max_delete = max_existing - keep
-    paths = find_prefixed(root, prefix)
-    paths, paths2 = itertools.tee(paths)
-    numbers = map(parse_num, extract_suffixes(paths2, prefix))
-    for path, number in zip(paths, numbers):
+    entries = find_prefixed(root, prefix)
+    entries, entries2 = itertools.tee(entries)
+    numbers = map(parse_num, extract_suffixes(entries2, prefix))
+    for entry, number in zip(entries, numbers):
         if number <= max_delete:
-            yield path
+            yield Path(entry)
 
 
 def cleanup_dead_symlinks(root: Path):

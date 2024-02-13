@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import dataclasses
 import itertools
 import re
@@ -13,7 +14,9 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
-import pytest
+import hypothesis
+from hypothesis import strategies
+
 from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
@@ -23,9 +26,7 @@ from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
 from _pytest.scope import Scope
-
-# import hypothesis
-# from hypothesis import strategies
+import pytest
 
 
 class TestMetafunc:
@@ -292,15 +293,14 @@ class TestMetafunc:
         assert metafunc._calls[2].id == "x1-a"
         assert metafunc._calls[3].id == "x1-b"
 
-    # TODO: Uncomment - https://github.com/HypothesisWorks/hypothesis/pull/3849
-    # @hypothesis.given(strategies.text() | strategies.binary())
-    # @hypothesis.settings(
-    #     deadline=400.0
-    # )  # very close to std deadline and CI boxes are not reliable in CPU power
-    # def test_idval_hypothesis(self, value) -> None:
-    #     escaped = IdMaker([], [], None, None, None, None, None)._idval(value, "a", 6)
-    #     assert isinstance(escaped, str)
-    #     escaped.encode("ascii")
+    @hypothesis.given(strategies.text() | strategies.binary())
+    @hypothesis.settings(
+        deadline=400.0
+    )  # very close to std deadline and CI boxes are not reliable in CPU power
+    def test_idval_hypothesis(self, value) -> None:
+        escaped = IdMaker([], [], None, None, None, None, None)._idval(value, "a", 6)
+        assert isinstance(escaped, str)
+        escaped.encode("ascii")
 
     def test_unicode_idval(self) -> None:
         """Test that Unicode strings outside the ASCII character set get
@@ -1940,7 +1940,7 @@ class TestMarkersWithParametrization:
 
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_passing_is_xpass(self, pytester: Pytester, strict: bool) -> None:
-        s = """
+        s = f"""
             import pytest
 
             m = pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict})
@@ -1952,9 +1952,7 @@ class TestMarkersWithParametrization:
             ])
             def test_increment(n, expected):
                 assert n + 1 == expected
-        """.format(
-            strict=strict
-        )
+        """
         pytester.makepyfile(s)
         reprec = pytester.inline_run()
         passed, failed = (2, 1) if strict else (3, 0)
@@ -2005,7 +2003,7 @@ class TestMarkersWithParametrization:
 
     @pytest.mark.parametrize("strict", [True, False])
     def test_parametrize_marked_value(self, pytester: Pytester, strict: bool) -> None:
-        s = """
+        s = f"""
             import pytest
 
             @pytest.mark.parametrize(("n", "expected"), [
@@ -2020,9 +2018,7 @@ class TestMarkersWithParametrization:
             ])
             def test_increment(n, expected):
                 assert n + 1 == expected
-        """.format(
-            strict=strict
-        )
+        """
         pytester.makepyfile(s)
         reprec = pytester.inline_run()
         passed, failed = (0, 2) if strict else (2, 0)

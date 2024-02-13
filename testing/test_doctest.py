@@ -1,11 +1,11 @@
+# mypy: allow-untyped-defs
 import inspect
+from pathlib import Path
 import sys
 import textwrap
-from pathlib import Path
 from typing import Callable
 from typing import Optional
 
-import pytest
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
 from _pytest.doctest import _is_mocked
@@ -15,6 +15,7 @@ from _pytest.doctest import DoctestItem
 from _pytest.doctest import DoctestModule
 from _pytest.doctest import DoctestTextfile
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestDoctests:
@@ -182,19 +183,15 @@ class TestDoctests:
     def test_encoding(self, pytester, test_string, encoding):
         """Test support for doctest_encoding ini option."""
         pytester.makeini(
-            """
+            f"""
             [pytest]
-            doctest_encoding={}
-        """.format(
-                encoding
-            )
+            doctest_encoding={encoding}
+        """
         )
-        doctest = """
-            >>> "{}"
-            {}
-        """.format(
-            test_string, repr(test_string)
-        )
+        doctest = f"""
+            >>> "{test_string}"
+            {test_string!r}
+        """
         fn = pytester.path / "test_encoding.txt"
         fn.write_text(doctest, encoding=encoding)
 
@@ -732,7 +729,7 @@ class TestDoctests:
                 >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
                 'anything'
                 """
-            '''
+            '''  # noqa: RUF001
         )
         result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["Got nothing", "* 1 failed in*"])
@@ -901,23 +898,19 @@ class TestLiterals:
             comment = "#doctest: +ALLOW_UNICODE"
 
         pytester.maketxtfile(
-            test_doc="""
+            test_doc=f"""
             >>> b'12'.decode('ascii') {comment}
             '12'
-        """.format(
-                comment=comment
-            )
+        """
         )
         pytester.makepyfile(
-            foo="""
+            foo=f"""
             def foo():
               '''
               >>> b'12'.decode('ascii') {comment}
               '12'
               '''
-        """.format(
-                comment=comment
-            )
+        """
         )
         reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
@@ -940,23 +933,19 @@ class TestLiterals:
             comment = "#doctest: +ALLOW_BYTES"
 
         pytester.maketxtfile(
-            test_doc="""
+            test_doc=f"""
             >>> b'foo'  {comment}
             'foo'
-        """.format(
-                comment=comment
-            )
+        """
         )
         pytester.makepyfile(
-            foo="""
+            foo=f"""
             def foo():
               '''
               >>> b'foo'  {comment}
               'foo'
               '''
-        """.format(
-                comment=comment
-            )
+        """
         )
         reprec = pytester.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
@@ -1033,7 +1022,7 @@ class TestLiterals:
             comment = "#doctest: +NUMBER"
 
         pytester.maketxtfile(
-            test_doc="""
+            test_doc=f"""
 
             Scalars:
 
@@ -1085,9 +1074,7 @@ class TestLiterals:
             >>> 'abc' {comment}
             'abc'
             >>> None {comment}
-            """.format(
-                comment=comment
-            )
+            """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -1115,12 +1102,10 @@ class TestLiterals:
     )
     def test_number_non_matches(self, pytester, expression, output):
         pytester.maketxtfile(
-            test_doc="""
+            test_doc=f"""
             >>> {expression} #doctest: +NUMBER
             {output}
-            """.format(
-                expression=expression, output=output
-            )
+            """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=0, failed=1)
@@ -1301,15 +1286,13 @@ class TestDoctestAutoUseFixtures:
         See #1057 and #1100.
         """
         pytester.makeconftest(
-            """
+            f"""
             import pytest
 
             @pytest.fixture(autouse=True, scope="{scope}")
             def auto(request):
                 return 99
-        """.format(
-                scope=scope
-            )
+        """
         )
         pytester.makepyfile(
             test_1='''
@@ -1337,15 +1320,13 @@ class TestDoctestAutoUseFixtures:
         See #1057 and #1100.
         """
         pytester.makeconftest(
-            """
+            f"""
             import pytest
 
             @pytest.fixture(autouse={autouse}, scope="{scope}")
             def auto(request):
                 return 99
-        """.format(
-                scope=scope, autouse=autouse
-            )
+        """
         )
         if use_fixture_in_doctest:
             pytester.maketxtfile(
@@ -1371,7 +1352,7 @@ class TestDoctestAutoUseFixtures:
         behave as expected when requested for a doctest item.
         """
         pytester.makeconftest(
-            """
+            f"""
             import pytest
 
             @pytest.fixture(autouse=True, scope="{scope}")
@@ -1383,9 +1364,7 @@ class TestDoctestAutoUseFixtures:
                 if "{scope}" == 'function':
                     assert request.function is None
                 return 99
-        """.format(
-                scope=scope
-            )
+        """
         )
         pytester.maketxtfile(
             test_doc="""
@@ -1396,6 +1375,38 @@ class TestDoctestAutoUseFixtures:
         result = pytester.runpytest("--doctest-modules")
         str(result.stdout.no_fnmatch_line("*FAILURES*"))
         result.stdout.fnmatch_lines(["*=== 1 passed in *"])
+
+    @pytest.mark.parametrize("scope", [*SCOPES, "package"])
+    def test_auto_use_defined_in_same_module(
+        self, pytester: Pytester, scope: str
+    ) -> None:
+        """Autouse fixtures defined in the same module as the doctest get picked
+        up properly.
+
+        Regression test for #11929.
+        """
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            AUTO = "the fixture did not run"
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def auto(request):
+                global AUTO
+                AUTO = "the fixture ran"
+
+            def my_doctest():
+                '''My doctest.
+
+                >>> my_doctest()
+                'the fixture ran'
+                '''
+                return AUTO
+            """
+        )
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=1)
 
 
 class TestDoctestNamespaceFixture:
@@ -1408,16 +1419,14 @@ class TestDoctestNamespaceFixture:
         simple text file doctest
         """
         pytester.makeconftest(
-            """
+            f"""
             import pytest
             import contextlib
 
             @pytest.fixture(autouse=True, scope="{scope}")
             def add_contextlib(doctest_namespace):
                 doctest_namespace['cl'] = contextlib
-        """.format(
-                scope=scope
-            )
+        """
         )
         p = pytester.maketxtfile(
             """
@@ -1435,16 +1444,14 @@ class TestDoctestNamespaceFixture:
         simple Python file docstring doctest
         """
         pytester.makeconftest(
-            """
+            f"""
             import pytest
             import contextlib
 
             @pytest.fixture(autouse=True, scope="{scope}")
             def add_contextlib(doctest_namespace):
                 doctest_namespace['cl'] = contextlib
-        """.format(
-                scope=scope
-            )
+        """
         )
         p = pytester.makepyfile(
             """
@@ -1547,16 +1554,14 @@ class TestDoctestReportingOption:
 def test_doctest_mock_objects_dont_recurse_missbehaved(mock_module, pytester: Pytester):
     pytest.importorskip(mock_module)
     pytester.makepyfile(
-        """
+        f"""
         from {mock_module} import call
         class Example(object):
             '''
             >>> 1 + 1
             2
             '''
-        """.format(
-            mock_module=mock_module
-        )
+        """
     )
     result = pytester.runpytest("--doctest-modules")
     result.stdout.fnmatch_lines(["* 1 passed *"])
@@ -1571,7 +1576,7 @@ class Broken:
     "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
 )
 def test_warning_on_unwrap_of_broken_object(
-    stop: Optional[Callable[[object], object]]
+    stop: Optional[Callable[[object], object]],
 ) -> None:
     bad_instance = Broken()
     assert inspect.unwrap.__module__ == "inspect"
@@ -1605,7 +1610,7 @@ def test_is_setup_py_different_encoding(tmp_path: Path, mod: str) -> None:
     setup_py = tmp_path.joinpath("setup.py")
     contents = (
         "# -*- coding: cp1252 -*-\n"
-        'from {} import setup; setup(name="foo", description="€")\n'.format(mod)
+        f'from {mod} import setup; setup(name="foo", description="€")\n'
     )
     setup_py.write_bytes(contents.encode("cp1252"))
     assert _is_setup_py(setup_py)

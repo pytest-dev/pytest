@@ -1,10 +1,11 @@
+# mypy: allow-untyped-defs
 """Support for skip/xfail functions and markers."""
+from collections.abc import Mapping
 import dataclasses
 import os
 import platform
 import sys
 import traceback
-from collections.abc import Mapping
 from typing import Generator
 from typing import Optional
 from typing import Tuple
@@ -104,9 +105,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
         ):
             if not isinstance(dictionary, Mapping):
                 raise ValueError(
-                    "pytest_markeval_namespace() needs to return a dict, got {!r}".format(
-                        dictionary
-                    )
+                    f"pytest_markeval_namespace() needs to return a dict, got {dictionary!r}"
                 )
             globals_.update(dictionary)
         if hasattr(item, "obj"):

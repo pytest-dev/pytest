@@ -1,7 +1,7 @@
+# mypy: allow-untyped-defs
 import collections.abc
 import dataclasses
 import inspect
-import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
@@ -21,6 +21,7 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
@@ -31,6 +32,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
+
 
 if TYPE_CHECKING:
     from ..nodes import Node
@@ -111,7 +113,6 @@ class ParameterSet(NamedTuple):
             Enforce tuple wrapping so single argument tuple values
             don't get decomposed and break tests.
         """
-
         if isinstance(parameterset, cls):
             return parameterset
         if force_tuple:
@@ -271,8 +272,8 @@ class MarkDecorator:
 
     ``MarkDecorators`` are created with ``pytest.mark``::
 
-        mark1 = pytest.mark.NAME              # Simple MarkDecorator
-        mark2 = pytest.mark.NAME(name1=value) # Parametrized MarkDecorator
+        mark1 = pytest.mark.NAME  # Simple MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value)  # Parametrized MarkDecorator
 
     and can then be applied as decorators to test functions::
 
@@ -393,7 +394,7 @@ def get_unpacked_marks(
 
 
 def normalize_mark_list(
-    mark_list: Iterable[Union[Mark, MarkDecorator]]
+    mark_list: Iterable[Union[Mark, MarkDecorator]],
 ) -> Iterable[Mark]:
     """
     Normalize an iterable of Mark or MarkDecorator objects into a list of marks
@@ -405,7 +406,7 @@ def normalize_mark_list(
     for mark in mark_list:
         mark_obj = getattr(mark, "mark", mark)
         if not isinstance(mark_obj, Mark):
-            raise TypeError(f"got {repr(mark_obj)} instead of Mark")
+            raise TypeError(f"got {mark_obj!r} instead of Mark")
         yield mark_obj
 
 
@@ -503,9 +504,10 @@ class MarkGenerator:
 
          import pytest
 
+
          @pytest.mark.slowtest
          def test_function():
-            pass
+             pass
 
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """

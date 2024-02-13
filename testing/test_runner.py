@@ -1,15 +1,15 @@
+# mypy: allow-untyped-defs
+from functools import partial
 import inspect
 import os
+from pathlib import Path
 import sys
 import types
-from functools import partial
-from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Type
 
-import pytest
 from _pytest import outcomes
 from _pytest import reports
 from _pytest import runner
@@ -19,6 +19,8 @@ from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
+import pytest
+
 
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import ExceptionGroup

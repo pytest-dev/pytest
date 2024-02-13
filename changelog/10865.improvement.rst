@@ -1,0 +1,2 @@
+:func:`pytest.warns` now validates that warning object's ``message`` is of type  `str` -- currently in Python it is possible to pass other types than `str` when creating `Warning` instances, however this causes an exception when :func:`warnings.filterwarnings` is used to filter those warnings. See `CPython #103577 <https://github.com/python/cpython/issues/103577>`__ for a discussion.
+While this can be considered a bug in CPython, we decided to put guards in pytest as the error message produced without this check in place is confusing.

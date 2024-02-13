@@ -1,6 +1,6 @@
 import os
-import sys
 from pathlib import Path
+import sys
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -37,7 +37,6 @@ def load_config_dict_from_file(
 
     Return None if the file does not contain valid pytest configuration.
     """
-
     # Configuration from ini files are obtained from the [pytest] section, if present.
     if filepath.suffix == ".ini":
         iniconfig = _parse_ini_config(filepath)
@@ -87,6 +86,7 @@ def load_config_dict_from_file(
 
 
 def locate_config(
+    invocation_dir: Path,
     args: Iterable[Path],
 ) -> Tuple[Optional[Path], Optional[Path], Dict[str, Union[str, List[str]]]]:
     """Search in the list of arguments for a valid ini-file for pytest,
@@ -100,7 +100,7 @@ def locate_config(
     ]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
-        args = [Path.cwd()]
+        args = [invocation_dir]
     for arg in args:
         argpath = absolutepath(arg)
         for base in (argpath, *argpath.parents):
@@ -113,7 +113,10 @@ def locate_config(
     return None, None, {}
 
 
-def get_common_ancestor(paths: Iterable[Path]) -> Path:
+def get_common_ancestor(
+    invocation_dir: Path,
+    paths: Iterable[Path],
+) -> Path:
     common_ancestor: Optional[Path] = None
     for path in paths:
         if not path.exists():
@@ -130,7 +133,7 @@ def get_common_ancestor(paths: Iterable[Path]) -> Path:
                 if shared is not None:
                     common_ancestor = shared
     if common_ancestor is None:
-        common_ancestor = Path.cwd()
+        common_ancestor = invocation_dir
     elif common_ancestor.is_file():
         common_ancestor = common_ancestor.parent
     return common_ancestor
@@ -162,10 +165,11 @@ CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supporte
 
 
 def determine_setup(
+    *,
     inifile: Optional[str],
     args: Sequence[str],
-    rootdir_cmd_arg: Optional[str] = None,
-    invocation_dir: Optional[Path] = None,
+    rootdir_cmd_arg: Optional[str],
+    invocation_dir: Path,
 ) -> Tuple[Path, Optional[Path], Dict[str, Union[str, List[str]]]]:
     """Determine the rootdir, inifile and ini configuration values from the
     command line arguments.
@@ -177,8 +181,7 @@ def determine_setup(
     :param rootdir_cmd_arg:
         The `--rootdir` command line argument, if given.
     :param invocation_dir:
-        The working directory when pytest was invoked, if known.
-        If not known, the current working directory is used.
+        The working directory when pytest was invoked.
     """
     rootdir = None
     dirs = get_dirs_from_args(args)
@@ -189,8 +192,8 @@ def determine_setup(
         if rootdir_cmd_arg is None:
             rootdir = inipath_.parent
     else:
-        ancestor = get_common_ancestor(dirs)
-        rootdir, inipath, inicfg = locate_config([ancestor])
+        ancestor = get_common_ancestor(invocation_dir, dirs)
+        rootdir, inipath, inicfg = locate_config(invocation_dir, [ancestor])
         if rootdir is None and rootdir_cmd_arg is None:
             for possible_rootdir in (ancestor, *ancestor.parents):
                 if (possible_rootdir / "setup.py").is_file():
@@ -198,22 +201,18 @@ def determine_setup(
                     break
             else:
                 if dirs != [ancestor]:
-                    rootdir, inipath, inicfg = locate_config(dirs)
+                    rootdir, inipath, inicfg = locate_config(invocation_dir, dirs)
                 if rootdir is None:
-                    if invocation_dir is not None:
-                        cwd = invocation_dir
-                    else:
-                        cwd = Path.cwd()
-                    rootdir = get_common_ancestor([cwd, ancestor])
+                    rootdir = get_common_ancestor(
+                        invocation_dir, [invocation_dir, ancestor]
+                    )
                     if is_fs_root(rootdir):
                         rootdir = ancestor
     if rootdir_cmd_arg:
         rootdir = absolutepath(os.path.expandvars(rootdir_cmd_arg))
         if not rootdir.is_dir():
             raise UsageError(
-                "Directory '{}' not found. Check your '--rootdir' option.".format(
-                    rootdir
-                )
+                f"Directory '{rootdir}' not found. Check your '--rootdir' option."
             )
     assert rootdir is not None
     return rootdir, inipath, inicfg or {}

@@ -1,9 +1,9 @@
+# mypy: allow-untyped-defs
 """Monkeypatching and mocking functionality."""
+from contextlib import contextmanager
 import os
 import re
 import sys
-import warnings
-from contextlib import contextmanager
 from typing import Any
 from typing import final
 from typing import Generator
@@ -15,9 +15,11 @@ from typing import overload
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
+import warnings
 
 from _pytest.fixtures import fixture
 from _pytest.warning_types import PytestWarning
+
 
 RE_IMPORT_ERROR_NAME = re.compile(r"^No module named (.*)$")
 
@@ -89,9 +91,7 @@ def annotated_getattr(obj: object, name: str, ann: str) -> object:
         obj = getattr(obj, name)
     except AttributeError as e:
         raise AttributeError(
-            "{!r} object at {} has no attribute {!r}".format(
-                type(obj).__name__, ann, name
-            )
+            f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
         ) from e
     return obj
 
@@ -141,7 +141,6 @@ class MonkeyPatch:
         which undoes any patching done inside the ``with`` block upon exit.
 
         Example:
-
         .. code-block:: python
 
             import functools
@@ -321,10 +320,8 @@ class MonkeyPatch:
         if not isinstance(value, str):
             warnings.warn(  # type: ignore[unreachable]
                 PytestWarning(
-                    "Value of environment variable {name} type should be str, but got "
-                    "{value!r} (type: {type}); converted to str implicitly".format(
-                        name=name, value=value, type=type(value).__name__
-                    )
+                    f"Value of environment variable {name} type should be str, but got "
+                    f"{value!r} (type: {type(value).__name__}); converted to str implicitly"
                 ),
                 stacklevel=2,
             )
@@ -344,7 +341,6 @@ class MonkeyPatch:
 
     def syspath_prepend(self, path) -> None:
         """Prepend ``path`` to ``sys.path`` list of import locations."""
-
         if self._savesyspath is None:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))

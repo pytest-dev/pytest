@@ -1,9 +1,10 @@
+# mypy: allow-untyped-defs
 """Add backward compatibility support for the legacy py path type."""
 import dataclasses
 import os
+from pathlib import Path
 import shlex
 import subprocess
-from pathlib import Path
 from typing import Final
 from typing import final
 from typing import List
@@ -14,6 +15,7 @@ from typing import Union
 from iniconfig import SectionWrapper
 
 import py
+
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -31,6 +33,7 @@ from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
 from _pytest.terminal import TerminalReporter
 from _pytest.tmpdir import TempPathFactory
+
 
 if TYPE_CHECKING:
     import pexpect

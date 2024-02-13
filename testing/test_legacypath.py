@@ -1,10 +1,11 @@
+# mypy: allow-untyped-defs
 from pathlib import Path
 
-import pytest
 from _pytest.fixtures import TopRequest
 from _pytest.legacypath import LEGACY_PATH
 from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir
+import pytest
 
 
 def test_item_fspath(pytester: pytest.Pytester) -> None:
@@ -107,7 +108,7 @@ class TestFixtureRequestSessionScoped:
             AttributeError,
             match="path not available in session-scoped context",
         ):
-            session_request.fspath
+            _ = session_request.fspath
 
 
 @pytest.mark.parametrize("config_type", ["ini", "pyproject"])

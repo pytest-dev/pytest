@@ -1,14 +1,15 @@
+# mypy: allow-untyped-defs
 import io
 import os
 import re
 from typing import cast
 
-import pytest
 from _pytest.capture import CaptureManager
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
 from _pytest.terminal import TerminalReporter
+import pytest
 
 
 def test_nothing_logged(pytester: Pytester) -> None:
@@ -176,13 +177,11 @@ def test_teardown_logging(pytester: Pytester) -> None:
 def test_log_cli_enabled_disabled(pytester: Pytester, enabled: bool) -> None:
     msg = "critical message logged by test"
     pytester.makepyfile(
-        """
+        f"""
         import logging
         def test_log_cli():
-            logging.critical("{}")
-    """.format(
-            msg
-        )
+            logging.critical("{msg}")
+    """
     )
     if enabled:
         pytester.makeini(
@@ -709,13 +708,11 @@ def test_log_file_ini(pytester: Pytester) -> None:
     log_file = str(pytester.path.joinpath("pytest.log"))
 
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        log_file={}
+        log_file={log_file}
         log_file_level=WARNING
-        """.format(
-            log_file
-        )
+        """
     )
     pytester.makepyfile(
         """
@@ -748,13 +745,11 @@ def test_log_file_ini_level(pytester: Pytester) -> None:
     log_file = str(pytester.path.joinpath("pytest.log"))
 
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        log_file={}
+        log_file={log_file}
         log_file_level = INFO
-        """.format(
-            log_file
-        )
+        """
     )
     pytester.makepyfile(
         """
@@ -787,13 +782,11 @@ def test_log_file_unicode(pytester: Pytester) -> None:
     log_file = str(pytester.path.joinpath("pytest.log"))
 
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        log_file={}
+        log_file={log_file}
         log_file_level = INFO
-        """.format(
-            log_file
-        )
+        """
     )
     pytester.makepyfile(
         """\
@@ -830,9 +823,10 @@ def test_live_logging_suspends_capture(
     We parametrize the test to also make sure _LiveLoggingStreamHandler works correctly if no capture manager plugin
     is installed.
     """
-    import logging
     import contextlib
     from functools import partial
+    import logging
+
     from _pytest.logging import _LiveLoggingStreamHandler
 
     class MockCaptureManager:
@@ -922,13 +916,11 @@ def test_collection_logging_to_file(pytester: Pytester) -> None:
     log_file = str(pytester.path.joinpath("pytest.log"))
 
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        log_file={}
+        log_file={log_file}
         log_file_level = INFO
-        """.format(
-            log_file
-        )
+        """
     )
 
     pytester.makepyfile(
@@ -960,14 +952,12 @@ def test_log_in_hooks(pytester: Pytester) -> None:
     log_file = str(pytester.path.joinpath("pytest.log"))
 
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        log_file={}
+        log_file={log_file}
         log_file_level = INFO
         log_cli=true
-        """.format(
-            log_file
-        )
+        """
     )
     pytester.makeconftest(
         """
@@ -996,14 +986,12 @@ def test_log_in_runtest_logreport(pytester: Pytester) -> None:
     log_file = str(pytester.path.joinpath("pytest.log"))
 
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        log_file={}
+        log_file={log_file}
         log_file_level = INFO
         log_cli=true
-        """.format(
-            log_file
-        )
+        """
     )
     pytester.makeconftest(
         """
@@ -1037,19 +1025,17 @@ def test_log_set_path(pytester: Pytester) -> None:
         """
     )
     pytester.makeconftest(
-        """
+        f"""
             import os
             import pytest
             @pytest.hookimpl(wrapper=True, tryfirst=True)
             def pytest_runtest_setup(item):
                 config = item.config
                 logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
-                report_file = os.path.join({}, item._request.node.name)
+                report_file = os.path.join({report_dir_base!r}, item._request.node.name)
                 logging_plugin.set_log_path(report_file)
                 return (yield)
-        """.format(
-            repr(report_dir_base)
-        )
+        """
     )
     pytester.makepyfile(
         """

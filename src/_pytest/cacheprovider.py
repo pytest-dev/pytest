@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Implementation of the cache provider."""
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
@@ -30,6 +31,7 @@ from _pytest.main import Session
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
+
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -111,6 +113,7 @@ class Cache:
         """
         check_ispytest(_ispytest)
         import warnings
+
         from _pytest.warning_types import PytestCacheWarning
 
         warnings.warn(
@@ -366,15 +369,13 @@ class LFPlugin:
 
                 noun = "failure" if self._previously_failed_count == 1 else "failures"
                 suffix = " first" if self.config.getoption("failedfirst") else ""
-                self._report_status = "rerun previous {count} {noun}{suffix}".format(
-                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                self._report_status = (
+                    f"rerun previous {self._previously_failed_count} {noun}{suffix}"
                 )
 
             if self._skipped_files > 0:
                 files_noun = "file" if self._skipped_files == 1 else "files"
-                self._report_status += " (skipped {files} {files_noun})".format(
-                    files=self._skipped_files, files_noun=files_noun
-                )
+                self._report_status += f" (skipped {self._skipped_files} {files_noun})"
         else:
             self._report_status = "no previously failed tests, "
             if self.config.getoption("last_failed_no_failures") == "none":

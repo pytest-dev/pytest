@@ -1,8 +1,8 @@
+# mypy: allow-untyped-defs
 import abc
-import os
-import warnings
 from functools import cached_property
 from inspect import signature
+import os
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -19,6 +19,7 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 import pluggy
 
@@ -38,10 +39,11 @@ from _pytest.pathlib import commonpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
+
 if TYPE_CHECKING:
     # Imported here due to circular import.
-    from _pytest.main import Session
     from _pytest._code.code import _TracebackStyle
+    from _pytest.main import Session
 
 
 SEP = "/"
@@ -103,6 +105,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ``Collector``\'s are the internal nodes of the tree, and ``Item``\'s are the
     leaf nodes.
     """
+
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
@@ -227,9 +230,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         # enforce type checks here to avoid getting a generic type error later otherwise.
         if not isinstance(warning, Warning):
             raise ValueError(
-                "warning must be an instance of Warning or subclass, got {!r}".format(
-                    warning
-                )
+                f"warning must be an instance of Warning or subclass, got {warning!r}"
             )
         path, lineno = get_fslocation_from_item(self)
         assert lineno is not None

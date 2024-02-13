@@ -1,4 +1,5 @@
 """create errno-specific classes for IO or os calls."""
+
 from __future__ import annotations
 
 import errno
@@ -7,6 +8,7 @@ import sys
 from typing import Callable
 from typing import TYPE_CHECKING
 from typing import TypeVar
+
 
 if TYPE_CHECKING:
     from typing_extensions import ParamSpec
