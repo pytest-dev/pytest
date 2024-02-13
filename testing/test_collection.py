@@ -591,12 +591,12 @@ class TestSession:
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == collector.session.path"),
-                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
-                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 (
                     "pytest_collectstart",
                     "collector.__class__.__name__ == 'SpecialFile'",
                 ),
+                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
+                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid.startswith(p.name)"),
             ]
         )
@@ -669,6 +669,23 @@ class TestSession:
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
+
+    def test_collect_parametrized_order(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize('i', [0, 1, 2])
+            def test_param(i): ...
+            """
+        )
+        items, hookrec = pytester.inline_genitems(f"{p}::test_param")
+        assert len(items) == 3
+        assert [item.nodeid for item in items] == [
+            "test_collect_parametrized_order.py::test_param[0]",
+            "test_collect_parametrized_order.py::test_param[1]",
+            "test_collect_parametrized_order.py::test_param[2]",
+        ]
 
 
 class Test_getinitialnodes:
