@@ -1563,9 +1563,11 @@ class Config:
         #   in this case, we already have a list ready to use.
         #
         if type == "paths":
-            # TODO: This assert is probably not valid in all cases.
-            assert self.inipath is not None
-            dp = self.inipath.parent
+            dp = (
+                self.inipath.parent
+                if self.inipath is not None
+                else self.invocation_params.dir
+            )
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp / x for x in input_values]
         elif type == "args":
