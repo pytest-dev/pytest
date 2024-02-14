@@ -168,7 +168,7 @@ class TestParseIni:
         assert config.inipath == pytester.path / "foo/bar/pyproject.toml"
 
     def test_pytest_ini_trumps_pyproject_toml(self, pytester: Pytester) -> None:
-        """An empty pyproject.toml is considered as config if no other option is found."""
+        """A pytest.ini always take precedence over a pyproject.toml file."""
         pytester.makepyprojecttoml("[tool.pytest.ini_options]")
         pytest_ini = pytester.makefile(".ini", pytest="")
         config = pytester.parseconfig()
