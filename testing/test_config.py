@@ -135,14 +135,44 @@ class TestParseIni:
         assert config.getini("minversion") == "3.36"
 
     def test_pyproject_toml(self, pytester: Pytester) -> None:
-        pytester.makepyprojecttoml(
+        pyproject_toml = pytester.makepyprojecttoml(
             """
             [tool.pytest.ini_options]
             minversion = "1.0"
         """
         )
         config = pytester.parseconfig()
+        assert config.inipath == pyproject_toml
         assert config.getini("minversion") == "1.0"
+
+    def test_empty_pyproject_toml(self, pytester: Pytester) -> None:
+        """An empty pyproject.toml is considered as config if no other option is found."""
+        pyproject_toml = pytester.makepyprojecttoml("")
+        config = pytester.parseconfig()
+        assert config.inipath == pyproject_toml
+
+    def test_empty_pyproject_toml_found_many(self, pytester: Pytester) -> None:
+        """
+        In case we find multiple pyproject.toml files in our search, without a [tool.pytest.ini_options]
+        table and without finding other candidates, the closest to where we started wins.
+        """
+        pytester.makefile(
+            ".toml",
+            **{
+                "pyproject": "",
+                "foo/pyproject": "",
+                "foo/bar/pyproject": "",
+            },
+        )
+        config = pytester.parseconfig(pytester.path / "foo/bar")
+        assert config.inipath == pytester.path / "foo/bar/pyproject.toml"
+
+    def test_pytest_ini_trumps_pyproject_toml(self, pytester: Pytester) -> None:
+        """A pytest.ini always take precedence over a pyproject.toml file."""
+        pytester.makepyprojecttoml("[tool.pytest.ini_options]")
+        pytest_ini = pytester.makefile(".ini", pytest="")
+        config = pytester.parseconfig()
+        assert config.inipath == pytest_ini
 
     def test_toxini_before_lower_pytestini(self, pytester: Pytester) -> None:
         sub = pytester.mkdir("sub")
