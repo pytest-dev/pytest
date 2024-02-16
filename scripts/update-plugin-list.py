@@ -29,7 +29,7 @@ Pytest Plugin List
 ==================
 
 Below is an automated compilation of ``pytest``` plugins available on `PyPI <https://pypi.org>`_.
-It includes PyPI projects whose names begin with "pytest-" and a handful of manually selected projects.
+It includes PyPI projects whose names begin with "pytest-" or "pytest_" and a handful of manually selected projects.
 Packages classified as inactive are excluded.
 
 For detailed insights into how this list is generated,
@@ -110,7 +110,10 @@ def pytest_plugin_projects_from_pypi(session: CachedSession) -> dict[str, int]:
     return {
         name: p["_last-serial"]
         for p in response.json()["projects"]
-        if (name := p["name"]).startswith("pytest-") or name in ADDITIONAL_PROJECTS
+        if (
+            (name := p["name"]).startswith(("pytest-", "pytest_"))
+            or name in ADDITIONAL_PROJECTS
+        )
     }
 
 
