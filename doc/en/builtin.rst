@@ -22,7 +22,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collected 0 items
-    cache -- .../_pytest/cacheprovider.py:526
+    cache -- .../_pytest/cacheprovider.py:527
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -33,7 +33,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         Values can be any object handled by the json stdlib module.
 
-    capsysbinary -- .../_pytest/capture.py:1008
+    capsysbinary -- .../_pytest/capture.py:1007
         Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsysbinary.readouterr()``
@@ -43,7 +43,6 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
         Example:
-
         .. code-block:: python
 
             def test_output(capsysbinary):
@@ -51,7 +50,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capsysbinary.readouterr()
                 assert captured.out == b"hello\n"
 
-    capfd -- .../_pytest/capture.py:1036
+    capfd -- .../_pytest/capture.py:1034
         Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
@@ -61,7 +60,6 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
         Example:
-
         .. code-block:: python
 
             def test_system_echo(capfd):
@@ -69,7 +67,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capfd.readouterr()
                 assert captured.out == "hello\n"
 
-    capfdbinary -- .../_pytest/capture.py:1064
+    capfdbinary -- .../_pytest/capture.py:1061
         Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
@@ -79,7 +77,6 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
         Example:
-
         .. code-block:: python
 
             def test_system_echo(capfdbinary):
@@ -97,7 +94,6 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
         Example:
-
         .. code-block:: python
 
             def test_output(capsys):
@@ -105,7 +101,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capsys.readouterr()
                 assert captured.out == "hello\n"
 
-    doctest_namespace [session scope] -- .../_pytest/doctest.py:743
+    doctest_namespace [session scope] -- .../_pytest/doctest.py:745
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
@@ -119,7 +115,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1365
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1354
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
@@ -129,7 +125,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 if pytestconfig.getoption("verbose") > 0:
                     ...
 
-    record_property -- .../_pytest/junitxml.py:284
+    record_property -- .../_pytest/junitxml.py:283
         Add extra properties to the calling test.
 
         User properties become part of the test report and are available to the
@@ -143,13 +139,13 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             def test_function(record_property):
                 record_property("example_key", 1)
 
-    record_xml_attribute -- .../_pytest/junitxml.py:307
+    record_xml_attribute -- .../_pytest/junitxml.py:306
         Add extra xml attributes to the tag for the calling test.
 
         The fixture is callable with ``name, value``. The value is
         automatically XML-encoded.
 
-    record_testsuite_property [session scope] -- .../_pytest/junitxml.py:345
+    record_testsuite_property [session scope] -- .../_pytest/junitxml.py:344
         Record a new ``<property>`` tag as child of the root ``<testsuite>``.
 
         This is suitable to writing global information regarding the entire test
@@ -174,10 +170,10 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See
             :issue:`7767` for details.
 
-    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:300
+    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:302
         Return a :class:`pytest.TempdirFactory` instance for the test session.
 
-    tmpdir -- .../_pytest/legacypath.py:307
+    tmpdir -- .../_pytest/legacypath.py:309
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
@@ -207,7 +203,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
 
-    monkeypatch -- .../_pytest/monkeypatch.py:30
+    monkeypatch -- .../_pytest/monkeypatch.py:32
         A convenient fixture for monkey-patching.
 
         The fixture provides these methods to modify objects, dictionaries, or
@@ -231,16 +227,16 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         To undo modifications done by the fixture in a contained scope,
         use :meth:`context() <pytest.MonkeyPatch.context>`.
 
-    recwarn -- .../_pytest/recwarn.py:30
+    recwarn -- .../_pytest/recwarn.py:32
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
         See https://docs.pytest.org/en/latest/how-to/capture-warnings.html for information
         on warning categories.
 
-    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:239
+    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:241
         Return a :class:`pytest.TempPathFactory` instance for the test session.
 
-    tmp_path -- .../_pytest/tmpdir.py:254
+    tmp_path -- .../_pytest/tmpdir.py:256
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
