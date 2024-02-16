@@ -581,3 +581,17 @@ def test_raise_type_error_on_invalid_warning_message_cpython() -> None:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "test")
             warnings.warn(1)  # type: ignore
+
+
+def test_multiple_arg_custom_warning() -> None:
+    """Test for issue #11906."""
+
+    class CustomWarning(UserWarning):
+        def __init__(self, a, b):
+            pass
+
+    with pytest.warns(CustomWarning):
+        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.warns(CustomWarning, match="not gonna match"):
+                a, b = 1, 2
+                warnings.warn(CustomWarning(a, b))
