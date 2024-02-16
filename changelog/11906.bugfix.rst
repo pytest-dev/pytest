@@ -1,1 +1,0 @@
-Fix regression with :func:`pytest.warns` using custom warning subclasses which have more than one parameter in their `__init__`.

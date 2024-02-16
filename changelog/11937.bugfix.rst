@@ -1,1 +1,0 @@
-Fix a regression in pytest 8.0.0 whereby items would be collected in reverse order in some circumstances.
