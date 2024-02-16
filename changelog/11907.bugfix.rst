@@ -1,1 +1,0 @@
-Fix a regression in pytest 8.0.0 whereby calling :func:`pytest.skip` and similar control-flow exceptions within a :func:`pytest.warns()` block would get suppressed instead of propagating.
