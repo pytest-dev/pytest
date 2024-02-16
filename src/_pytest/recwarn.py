@@ -344,10 +344,10 @@ class WarningsChecker(WarningsRecorder):
             for w in self:
                 if not self.matches(w):
                     warnings.warn_explicit(
-                        str(w.message),
-                        w.message.__class__,  # type: ignore[arg-type]
-                        w.filename,
-                        w.lineno,
+                        message=w.message,
+                        category=w.category,
+                        filename=w.filename,
+                        lineno=w.lineno,
                         module=w.__module__,
                         source=w.source,
                     )

@@ -550,3 +550,17 @@ class TestWarns:
         result = pytester.runpytest_subprocess()
         assert result.ret == ExitCode.INTERRUPTED
         result.assert_outcomes()
+
+
+def test_multiple_arg_custom_warning() -> None:
+    """Test for issue #11906."""
+
+    class CustomWarning(UserWarning):
+        def __init__(self, a, b):
+            pass
+
+    with pytest.warns(CustomWarning):
+        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.warns(CustomWarning, match="not gonna match"):
+                a, b = 1, 2
+                warnings.warn(CustomWarning(a, b))
