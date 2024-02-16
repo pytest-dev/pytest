@@ -503,10 +503,10 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssssssssssssssss...                                          [100%]
+   ssssssssssss...ssssssssssss                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [12] multipython.py:68: 'python3.9' not found
-   SKIPPED [12] multipython.py:68: 'python3.10' not found
+   SKIPPED [12] multipython.py:65: 'python3.9' not found
+   SKIPPED [12] multipython.py:65: 'python3.11' not found
    3 passed, 24 skipped in 0.12s
 
 Parametrization of optional implementations/imports
