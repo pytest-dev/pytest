@@ -3,9 +3,10 @@ from typing import Optional
 from typing import Type
 import warnings
 
-from _pytest.pytester import Pytester
-from _pytest.recwarn import WarningsRecorder
 import pytest
+from pytest import ExitCode
+from pytest import Pytester
+from pytest import WarningsRecorder
 
 
 def test_recwarn_stacklevel(recwarn: WarningsRecorder) -> None:
@@ -484,3 +485,68 @@ class TestWarns:
             with pytest.raises(ValueError, match="some exception"):
                 warnings.warn("some warning", category=FutureWarning)
                 raise ValueError("some exception")
+
+    def test_skip_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_it():
+                with pytest.warns(Warning):
+                    pytest.skip("this is OK")
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(skipped=1)
+
+    def test_fail_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_it():
+                with pytest.warns(Warning):
+                    pytest.fail("BOOM")
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.assert_outcomes(failed=1)
+        assert "DID NOT WARN" not in str(result.stdout)
+
+    def test_exit_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_it():
+                with pytest.warns(Warning):
+                    pytest.exit("BOOM")
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.INTERRUPTED
+        result.assert_outcomes()
+
+    def test_keyboard_interrupt_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_it():
+                with pytest.warns(Warning):
+                    raise KeyboardInterrupt()
+            """,
+        )
+
+        result = pytester.runpytest_subprocess()
+        assert result.ret == ExitCode.INTERRUPTED
+        result.assert_outcomes()
