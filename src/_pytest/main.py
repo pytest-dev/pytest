@@ -28,7 +28,6 @@ import pluggy
 
 from _pytest import nodes
 import _pytest._code
-from _pytest.compat import ensure_long_path
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -902,6 +901,10 @@ class Session(nodes.Collector):
                     # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
                     if isinstance(matchparts[0], Path):
                         is_match = node.path == matchparts[0]
+                        if sys.platform == "win32" and not is_match:
+                            # In case the file paths do not match, fallback to samefile() to
+                            # account for short-paths on Windows (#11895).
+                            is_match = os.path.samefile(node.path, matchparts[0])
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
                         # TODO: Remove parametrized workaround once collection structure contains
@@ -1009,6 +1012,4 @@ def resolve_collection_argument(
             else "directory argument cannot contain :: selection parts: {arg}"
         )
         raise UsageError(msg.format(arg=arg))
-    # Ensure we expand short paths to long paths on Windows (#11895).
-    fspath = ensure_long_path(fspath)
     return fspath, parts
