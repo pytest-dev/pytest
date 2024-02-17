@@ -196,7 +196,9 @@ def getstatementrange_ast(
         # by using the BlockFinder helper used which inspect.getsource() uses itself.
         block_finder = inspect.BlockFinder()
         # If we start with an indented line, put blockfinder to "started" mode.
-        block_finder.started = source.lines[start][0].isspace()
+        block_finder.started = (
+            bool(source.lines[start]) and source.lines[start][0].isspace()
+        )
         it = ((x + "\n") for x in source.lines[start:end])
         try:
             for tok in tokenize.generate_tokens(lambda: next(it)):
