@@ -1,0 +1,1 @@
+Fix an ``IndexError`` crash raising from ``getstatementrange_ast``.
