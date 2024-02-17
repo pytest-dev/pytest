@@ -3,6 +3,7 @@ import errno
 import os.path
 from pathlib import Path
 import pickle
+import shutil
 import sys
 from textwrap import dedent
 from types import ModuleType
@@ -727,6 +728,146 @@ class TestImportLibMode:
         result = pytester.runpytest("--import-mode=importlib")
         result.stdout.fnmatch_lines("* 1 passed *")
 
+    def create_installed_doctests_and_tests_dir(
+        self, path: Path, monkeypatch: MonkeyPatch
+    ) -> Tuple[Path, Path, Path]:
+        """
+        Create a directory structure where the application code is installed in a virtual environment,
+        and the tests are in an outside ".tests" directory.
+
+        Return the paths to the core module (installed in the virtualenv), and the test modules.
+        """
+        app = path / "src/app"
+        app.mkdir(parents=True)
+        (app / "__init__.py").touch()
+        core_py = app / "core.py"
+        core_py.write_text(
+            dedent(
+                """
+                def foo():
+                    '''
+                    >>> 1 + 1
+                    2
+                    '''
+                """
+            ),
+            encoding="ascii",
+        )
+
+        # Install it into a site-packages directory, and add it to sys.path, mimicking what
+        # happens when installing into a virtualenv.
+        site_packages = path / ".env/lib/site-packages"
+        site_packages.mkdir(parents=True)
+        shutil.copytree(app, site_packages / "app")
+        assert (site_packages / "app/core.py").is_file()
+
+        monkeypatch.syspath_prepend(site_packages)
+
+        # Create the tests files, outside 'src' and the virtualenv.
+        # We use the same test name on purpose, but in different directories, to ensure
+        # this works as advertised.
+        conftest_path1 = path / ".tests/a/conftest.py"
+        conftest_path1.parent.mkdir(parents=True)
+        conftest_path1.write_text(
+            dedent(
+                """
+                import pytest
+                @pytest.fixture
+                def a_fix(): return "a"
+                """
+            ),
+            encoding="ascii",
+        )
+        test_path1 = path / ".tests/a/test_core.py"
+        test_path1.write_text(
+            dedent(
+                """
+                import app.core
+                def test(a_fix):
+                    assert a_fix == "a"
+                """,
+            ),
+            encoding="ascii",
+        )
+
+        conftest_path2 = path / ".tests/b/conftest.py"
+        conftest_path2.parent.mkdir(parents=True)
+        conftest_path2.write_text(
+            dedent(
+                """
+                import pytest
+                @pytest.fixture
+                def b_fix(): return "b"
+                """
+            ),
+            encoding="ascii",
+        )
+
+        test_path2 = path / ".tests/b/test_core.py"
+        test_path2.write_text(
+            dedent(
+                """
+                import app.core
+                def test(b_fix):
+                    assert b_fix == "b"
+                """,
+            ),
+            encoding="ascii",
+        )
+        return (site_packages / "app/core.py"), test_path1, test_path2
+
+    def test_import_using_normal_mechanism_first(
+        self, monkeypatch: MonkeyPatch, pytester: Pytester
+    ) -> None:
+        """
+        Test import_path imports from the canonical location when possible first, only
+        falling back to its normal flow when the module being imported is not reachable via sys.path (#11475).
+        """
+        core_py, test_path1, test_path2 = self.create_installed_doctests_and_tests_dir(
+            pytester.path, monkeypatch
+        )
+
+        # core_py is reached from sys.path, so should be imported normally.
+        mod = import_path(core_py, mode="importlib", root=pytester.path)
+        assert mod.__name__ == "app.core"
+        assert mod.__file__ and Path(mod.__file__) == core_py
+
+        # tests are not reachable from sys.path, so they are imported as a standalone modules.
+        # Instead of '.tests.a.test_core', we import as "_tests.a.test_core" because
+        # importlib considers module names starting with '.' to be local imports.
+        mod = import_path(test_path1, mode="importlib", root=pytester.path)
+        assert mod.__name__ == "_tests.a.test_core"
+        mod = import_path(test_path2, mode="importlib", root=pytester.path)
+        assert mod.__name__ == "_tests.b.test_core"
+
+    def test_import_using_normal_mechanism_first_integration(
+        self, monkeypatch: MonkeyPatch, pytester: Pytester
+    ) -> None:
+        """
+        Same test as above, but verify the behavior calling pytest.
+
+        We should not make this call in the same test as above, as the modules have already
+        been imported by separate import_path() calls.
+        """
+        core_py, test_path1, test_path2 = self.create_installed_doctests_and_tests_dir(
+            pytester.path, monkeypatch
+        )
+        result = pytester.runpytest(
+            "--import-mode=importlib",
+            "--doctest-modules",
+            "--pyargs",
+            "app",
+            "./.tests",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                f"{core_py.relative_to(pytester.path)} . *",
+                f"{test_path1.relative_to(pytester.path)} . *",
+                f"{test_path2.relative_to(pytester.path)} . *",
+                "* 3 passed*",
+            ]
+        )
+
     def test_import_path_imports_correct_file(self, pytester: Pytester) -> None:
         """
         Import the module by the given path, even if other module with the same name
@@ -825,7 +966,7 @@ class TestNamespacePackages:
         monkeypatch.syspath_prepend(tmp_path / "src/dist2")
         return models_py, algorithms_py
 
-    @pytest.mark.parametrize("import_mode", ["prepend", "append"])
+    @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
     def test_resolve_pkg_root_and_module_name_ns_multiple_levels(
         self,
         tmp_path: Path,

@@ -522,6 +522,23 @@ def import_path(
         raise ImportError(path)
 
     if mode is ImportMode.importlib:
+        # Try to import this module using the standard import mechanisms, but
+        # without touching sys.path.
+        try:
+            pkg_root, module_name = resolve_pkg_root_and_module_name(
+                path, consider_ns_packages=True
+            )
+        except CouldNotResolvePathError:
+            pass
+        else:
+            mod = _import_module_using_spec(
+                module_name, path, pkg_root, insert_modules=False
+            )
+            if mod is not None:
+                return mod
+
+        # Could not import the module with the current sys.path, so we fall back
+        # to importing the file as a single module, not being a part of a package.
         module_name = module_name_from_path(path, root)
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
