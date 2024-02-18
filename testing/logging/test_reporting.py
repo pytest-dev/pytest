@@ -840,8 +840,7 @@ def test_log_file_mode_ini(pytester: Pytester) -> None:
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(["test_log_file_mode_ini.py PASSED"])
 
-    # make sure that we get a '0' exit code for the testsuite
-    assert result.ret == 0
+    assert result.ret == ExitCode.OK
     assert os.path.isfile(log_file)
     with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
@@ -1215,7 +1214,8 @@ def test_log_set_path_with_log_file_mode(pytester: Pytester) -> None:
     with open(test_second_log_file, mode="w", encoding="utf-8") as wfh:
         wfh.write("A custom header for test 2\n")
 
-    pytester.runpytest()
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
 
     with open(test_first_log_file, encoding="utf-8") as rfh:
         content = rfh.read()
