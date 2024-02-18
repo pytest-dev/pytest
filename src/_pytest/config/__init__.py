@@ -578,7 +578,7 @@ class PytestPluginManager(PluginManager):
             self._try_load_conftest(invocation_dir, importmode, rootpath)
 
     def _is_in_confcutdir(self, path: Path) -> bool:
-        """Whether consider the given path to load conftests from."""
+        """Whether to consider the given path to load conftests from."""
         if self._confcutdir is None:
             return True
         # The semantics here are literally:
