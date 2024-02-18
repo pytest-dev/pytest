@@ -580,11 +580,9 @@ class PytestPluginManager(PluginManager):
     def _is_in_confcutdir(self, path: Path) -> bool:
         """Whether a path is within the confcutdir.
 
-        When false, should not load conftest.
+        When false, should not load conftest or recurse into path for collection.
         """
-        if self._confcutdir is None:
-            return True
-        return path not in self._confcutdir.parents
+        return path_within_confcutdir(path=path, confcutdir=self._confcutdir)
 
     def _try_load_conftest(
         self, anchor: Path, importmode: Union[str, ImportMode], rootpath: Path
@@ -609,9 +607,6 @@ class PytestPluginManager(PluginManager):
         if directory in self._dirpath2confmods:
             return
 
-        # XXX these days we may rather want to use config.rootpath
-        # and allow users to opt into looking into the rootdir parent
-        # directories instead of requiring to specify confcutdir.
         clist = []
         for parent in reversed((directory, *directory.parents)):
             if self._is_in_confcutdir(parent):
@@ -1908,3 +1903,10 @@ def apply_warning_filters(
 
     for arg in cmdline_filters:
         warnings.filterwarnings(*parse_warning_filter(arg, escape=True))
+
+
+def path_within_confcutdir(*, path: Path, confcutdir: Optional[Path]) -> bool:
+    # Extracted into a function for unit-testing.
+    if confcutdir is None:
+        return True
+    return path.is_relative_to(confcutdir)

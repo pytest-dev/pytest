@@ -1,12 +1,15 @@
 # mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import shutil
 import sys
 import types
 from typing import List
+from typing import Optional
 
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import path_within_confcutdir
 from _pytest.config import PytestPluginManager
 from _pytest.config.exceptions import UsageError
 from _pytest.main import Session
@@ -404,7 +407,7 @@ class TestPytestPluginManager:
             pytestpm.consider_conftest(mod, registration_name="unused")
 
 
-class TestPytestPluginManagerBootstrapming:
+class TestPytestPluginManagerBootstrapping:
     def test_preparse_args(self, pytestpm: PytestPluginManager) -> None:
         pytest.raises(
             ImportError, lambda: pytestpm.consider_preparse(["xyz", "-p", "hello123"])
@@ -464,3 +467,53 @@ class TestPytestPluginManagerBootstrapming:
         assert pytestpm.has_plugin("abc")
         assert not pytestpm.is_blocked("abc")
         assert not pytestpm.is_blocked("pytest_abc")
+
+
+skip_if_win = pytest.mark.skipif(
+    not sys.platform.startswith("win"), reason="Windows only"
+)
+
+
+@pytest.mark.parametrize(
+    "path, confcutdir, expected",
+    [
+        (Path("/projects/app/tests"), Path("/projects/app"), True),
+        (Path("/projects/app"), Path("/projects/app"), True),
+        (Path("/projects"), Path("/projects/app"), False),
+        (Path("/"), Path("/projects/app"), False),
+        pytest.param(
+            Path("e:/projects/app/tests"),
+            Path("e:/projects/app"),
+            True,
+            marks=skip_if_win,
+        ),
+        pytest.param(
+            Path("e:/projects/app"),
+            Path("e:/projects/app"),
+            True,
+            marks=skip_if_win,
+        ),
+        pytest.param(
+            Path("e:/"),
+            Path("e:/projects/app"),
+            False,
+            marks=skip_if_win,
+        ),
+        pytest.param(
+            Path("c:/testing"),
+            Path("e:/projects/app"),
+            False,
+            marks=skip_if_win,
+        ),
+        pytest.param(
+            Path("c:/projects/app"),
+            Path("e:/projects/app"),
+            False,
+            marks=skip_if_win,
+        ),
+    ],
+)
+def test_path_within_confcutdir(
+    path: Path, confcutdir: Optional[Path], expected: bool
+) -> None:
+    assert path_within_confcutdir(path=path, confcutdir=confcutdir) == expected
