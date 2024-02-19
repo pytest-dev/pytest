@@ -878,6 +878,25 @@ class TestDoctests:
         result = pytester.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines(["*collected 1 item*"])
 
+    def test_setup_module(self, pytester: Pytester) -> None:
+        """Regression test for #12011 - setup_module not executed when running
+        with `--doctest-modules`."""
+        pytester.makepyfile(
+            """
+            CONSTANT = 0
+
+            def setup_module():
+                global CONSTANT
+                CONSTANT = 1
+
+            def test():
+                assert CONSTANT == 1
+            """
+        )
+        result = pytester.runpytest("--doctest-modules")
+        assert result.ret == 0
+        result.assert_outcomes(passed=1)
+
 
 class TestLiterals:
     @pytest.mark.parametrize("config_mode", ["ini", "comment"])
