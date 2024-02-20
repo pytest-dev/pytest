@@ -118,6 +118,8 @@ def test_fixture_disallow_marks_on_fixtures():
             raise NotImplementedError()
 
     assert len(record) == 2  # one for each mark decorator
+    # should point to this file
+    assert all(rec.filename == __file__ for rec in record)
 
 
 def test_fixture_disallowed_between_marks():
