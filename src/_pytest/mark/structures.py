@@ -355,7 +355,7 @@ class MarkDecorator:
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
-                store_mark(func, self.mark)
+                store_mark(func, self.mark, stacklevel=3)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -410,7 +410,7 @@ def normalize_mark_list(
         yield mark_obj
 
 
-def store_mark(obj, mark: Mark) -> None:
+def store_mark(obj, mark: Mark, *, stacklevel: int=2) -> None:
     """Store a Mark on an object.
 
     This is used to implement the Mark declarations/decorators correctly.
@@ -420,7 +420,7 @@ def store_mark(obj, mark: Mark) -> None:
     from ..fixtures import getfixturemarker
 
     if getfixturemarker(obj) is not None:
-        warnings.warn(MARKED_FIXTURE, stacklevel=2)
+        warnings.warn(MARKED_FIXTURE, stacklevel=stacklevel)
 
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
