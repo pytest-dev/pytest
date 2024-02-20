@@ -410,7 +410,7 @@ def normalize_mark_list(
         yield mark_obj
 
 
-def store_mark(obj, mark: Mark, *, stacklevel: int=2) -> None:
+def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
     """Store a Mark on an object.
 
     This is used to implement the Mark declarations/decorators correctly.
