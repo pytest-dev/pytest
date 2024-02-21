@@ -1267,7 +1267,6 @@ class Metafunc:
         # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
         # artificial "pseudo" FixtureDef's so that later at test execution time we can
         # rely on a proper FixtureDef to exist for fixture setup.
-        arg2fixturedefs = self._arg2fixturedefs
         node = None
         # If we have a scope that is higher than function, we need
         # to make sure we only ever create an according fixturedef on
@@ -1281,7 +1280,7 @@ class Metafunc:
                 # If used class scope and there is no class, use module-level
                 # collector (for now).
                 if scope_ is Scope.Class:
-                    assert isinstance(collector, _pytest.python.Module)
+                    assert isinstance(collector, Module)
                     node = collector
                 # If used package scope and there is no package, use session
                 # (for now).
@@ -1316,7 +1315,7 @@ class Metafunc:
                 )
                 if name2pseudofixturedef is not None:
                     name2pseudofixturedef[argname] = fixturedef
-            arg2fixturedefs[argname] = [fixturedef]
+            self._arg2fixturedefs[argname] = [fixturedef]
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
         # more than once) then we accumulate those calls generating the cartesian product
