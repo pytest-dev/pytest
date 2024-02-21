@@ -172,10 +172,7 @@ def get_parametrized_fixture_keys(
         callspec: CallSpec2 = item.callspec  # type: ignore[attr-defined]
     except AttributeError:
         return
-    # cs.indices is random order of argnames.  Need to
-    # sort this so that different calls to
-    # get_parametrized_fixture_keys will be deterministic.
-    for argname in sorted(callspec.indices):
+    for argname in callspec.indices:
         if callspec._arg2scope[argname] != scope:
             continue
 
