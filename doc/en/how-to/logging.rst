@@ -206,8 +206,9 @@ option names are:
 * ``log_cli_date_format``
 
 If you need to record the whole test suite logging calls to a file, you can pass
-``--log-file=/path/to/log/file``. This log file is opened in write mode which
+``--log-file=/path/to/log/file``. This log file is opened in write mode by default which
 means that it will be overwritten at each run tests session.
+If you'd like the file opened in append mode instead, then you can pass ``--log-file-mode=a``.
 Note that relative paths for the log-file location, whether passed on the CLI or declared in a
 config file, are always resolved relative to the current working directory.
 
@@ -223,12 +224,13 @@ All of the log file options can also be set in the configuration INI file. The
 option names are:
 
 * ``log_file``
+* ``log_file_mode``
 * ``log_file_level``
 * ``log_file_format``
 * ``log_file_date_format``
 
 You can call ``set_log_path()`` to customize the log_file path dynamically. This functionality
-is considered **experimental**.
+is considered **experimental**. Note that ``set_log_path()`` respects the ``log_file_mode`` option.
 
 .. _log_colors:
 
