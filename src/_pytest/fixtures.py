@@ -169,33 +169,28 @@ def get_parametrized_fixture_keys(
     the specified scope."""
     assert scope is not Scope.Function
     try:
-        callspec = item.callspec  # type: ignore[attr-defined]
+        callspec: CallSpec2 = item.callspec  # type: ignore[attr-defined]
     except AttributeError:
-        pass
-    else:
-        cs: CallSpec2 = callspec
-        # cs.indices is random order of argnames.  Need to
-        # sort this so that different calls to
-        # get_parametrized_fixture_keys will be deterministic.
-        for argname in sorted(cs.indices):
-            if cs._arg2scope[argname] != scope:
-                continue
+        return
+    for argname in callspec.indices:
+        if callspec._arg2scope[argname] != scope:
+            continue
 
-            item_cls = None
-            if scope is Scope.Session:
-                scoped_item_path = None
-            elif scope is Scope.Package:
-                scoped_item_path = item.path
-            elif scope is Scope.Module:
-                scoped_item_path = item.path
-            elif scope is Scope.Class:
-                scoped_item_path = item.path
-                item_cls = item.cls  # type: ignore[attr-defined]
-            else:
-                assert_never(scope)
+        item_cls = None
+        if scope is Scope.Session:
+            scoped_item_path = None
+        elif scope is Scope.Package:
+            scoped_item_path = item.path
+        elif scope is Scope.Module:
+            scoped_item_path = item.path
+        elif scope is Scope.Class:
+            scoped_item_path = item.path
+            item_cls = item.cls  # type: ignore[attr-defined]
+        else:
+            assert_never(scope)
 
-            param_index = cs.indices[argname]
-            yield FixtureArgKey(argname, param_index, scoped_item_path, item_cls)
+        param_index = callspec.indices[argname]
+        yield FixtureArgKey(argname, param_index, scoped_item_path, item_cls)
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.

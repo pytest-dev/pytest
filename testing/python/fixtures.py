@@ -2730,12 +2730,12 @@ class TestFixtureMarker:
             """
             test_dynamic_parametrized_ordering.py::test[flavor1-vxlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test[flavor1-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
         """
         )
 
