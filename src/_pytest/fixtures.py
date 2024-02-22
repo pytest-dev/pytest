@@ -2,7 +2,6 @@
 import abc
 from collections import defaultdict
 from collections import deque
-from contextlib import suppress
 import dataclasses
 import functools
 import inspect
@@ -578,7 +577,6 @@ class FixtureRequest(abc.ABC):
         # (latter managed by fixturedef)
         argname = fixturedef.argname
         funcitem = self._pyfuncitem
-        scope = fixturedef._scope
         try:
             callspec = funcitem.callspec
         except AttributeError:
@@ -586,13 +584,13 @@ class FixtureRequest(abc.ABC):
         if callspec is not None and argname in callspec.params:
             param = callspec.params[argname]
             param_index = callspec.indices[argname]
-            # If a parametrize invocation set a scope it will override
-            # the static scope defined with the fixture function.
-            with suppress(KeyError):
-                scope = callspec._arg2scope[argname]
+            # The parametrize invocation scope overrides the fixture's scope.
+            scope = callspec._arg2scope[argname]
         else:
             param = NOTSET
             param_index = 0
+            scope = fixturedef._scope
+
             has_params = fixturedef.params is not None
             fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
             if has_params and fixtures_not_supported:
