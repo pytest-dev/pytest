@@ -1,0 +1,1 @@
+Fix collection on Windows where initial paths contain the short version of a path (for example ``c:\PROGRA~1\tests``).
