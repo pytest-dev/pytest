@@ -661,6 +661,73 @@ def test_log_file_cli(pytester: Pytester) -> None:
         assert "This log message won't be shown" not in contents
 
 
+def test_log_file_mode_cli(pytester: Pytester) -> None:
+    # Default log file level
+    pytester.makepyfile(
+        """
+        import pytest
+        import logging
+        def test_log_file(request):
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            assert plugin.log_file_handler.level == logging.WARNING
+            logging.getLogger('catchlog').info("This log message won't be shown")
+            logging.getLogger('catchlog').warning("This log message will be shown")
+            print('PASSED')
+    """
+    )
+
+    log_file = str(pytester.path.joinpath("pytest.log"))
+
+    with open(log_file, mode="w", encoding="utf-8") as wfh:
+        wfh.write("A custom header\n")
+
+    result = pytester.runpytest(
+        "-s",
+        f"--log-file={log_file}",
+        "--log-file-mode=a",
+        "--log-file-level=WARNING",
+    )
+
+    # fnmatch_lines does an assertion internally
+    result.stdout.fnmatch_lines(["test_log_file_mode_cli.py PASSED"])
+
+    # make sure that we get a '0' exit code for the testsuite
+    assert result.ret == 0
+    assert os.path.isfile(log_file)
+    with open(log_file, encoding="utf-8") as rfh:
+        contents = rfh.read()
+        assert "A custom header" in contents
+        assert "This log message will be shown" in contents
+        assert "This log message won't be shown" not in contents
+
+
+def test_log_file_mode_cli_invalid(pytester: Pytester) -> None:
+    # Default log file level
+    pytester.makepyfile(
+        """
+        import pytest
+        import logging
+        def test_log_file(request):
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            assert plugin.log_file_handler.level == logging.WARNING
+            logging.getLogger('catchlog').info("This log message won't be shown")
+            logging.getLogger('catchlog').warning("This log message will be shown")
+    """
+    )
+
+    log_file = str(pytester.path.joinpath("pytest.log"))
+
+    result = pytester.runpytest(
+        "-s",
+        f"--log-file={log_file}",
+        "--log-file-mode=b",
+        "--log-file-level=WARNING",
+    )
+
+    # make sure that we get a '4' exit code for the testsuite
+    assert result.ret == ExitCode.USAGE_ERROR
+
+
 def test_log_file_cli_level(pytester: Pytester) -> None:
     # Default log file level
     pytester.makepyfile(
@@ -737,6 +804,47 @@ def test_log_file_ini(pytester: Pytester) -> None:
     assert os.path.isfile(log_file)
     with open(log_file, encoding="utf-8") as rfh:
         contents = rfh.read()
+        assert "This log message will be shown" in contents
+        assert "This log message won't be shown" not in contents
+
+
+def test_log_file_mode_ini(pytester: Pytester) -> None:
+    log_file = str(pytester.path.joinpath("pytest.log"))
+
+    pytester.makeini(
+        f"""
+        [pytest]
+        log_file={log_file}
+        log_file_mode=a
+        log_file_level=WARNING
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        import logging
+        def test_log_file(request):
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
+            assert plugin.log_file_handler.level == logging.WARNING
+            logging.getLogger('catchlog').info("This log message won't be shown")
+            logging.getLogger('catchlog').warning("This log message will be shown")
+            print('PASSED')
+    """
+    )
+
+    with open(log_file, mode="w", encoding="utf-8") as wfh:
+        wfh.write("A custom header\n")
+
+    result = pytester.runpytest("-s")
+
+    # fnmatch_lines does an assertion internally
+    result.stdout.fnmatch_lines(["test_log_file_mode_ini.py PASSED"])
+
+    assert result.ret == ExitCode.OK
+    assert os.path.isfile(log_file)
+    with open(log_file, encoding="utf-8") as rfh:
+        contents = rfh.read()
+        assert "A custom header" in contents
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
 
@@ -1057,6 +1165,66 @@ def test_log_set_path(pytester: Pytester) -> None:
 
     with open(os.path.join(report_dir_base, "test_second"), encoding="utf-8") as rfh:
         content = rfh.read()
+        assert "message from test 2" in content
+
+
+def test_log_set_path_with_log_file_mode(pytester: Pytester) -> None:
+    report_dir_base = str(pytester.path)
+
+    pytester.makeini(
+        """
+        [pytest]
+        log_file_level = DEBUG
+        log_cli=true
+        log_file_mode=a
+        """
+    )
+    pytester.makeconftest(
+        f"""
+            import os
+            import pytest
+            @pytest.hookimpl(wrapper=True, tryfirst=True)
+            def pytest_runtest_setup(item):
+                config = item.config
+                logging_plugin = config.pluginmanager.get_plugin("logging-plugin")
+                report_file = os.path.join({report_dir_base!r}, item._request.node.name)
+                logging_plugin.set_log_path(report_file)
+                return (yield)
+        """
+    )
+    pytester.makepyfile(
+        """
+            import logging
+            logger = logging.getLogger("testcase-logger")
+            def test_first():
+                logger.info("message from test 1")
+                assert True
+
+            def test_second():
+                logger.debug("message from test 2")
+                assert True
+        """
+    )
+
+    test_first_log_file = os.path.join(report_dir_base, "test_first")
+    test_second_log_file = os.path.join(report_dir_base, "test_second")
+    with open(test_first_log_file, mode="w", encoding="utf-8") as wfh:
+        wfh.write("A custom header for test 1\n")
+
+    with open(test_second_log_file, mode="w", encoding="utf-8") as wfh:
+        wfh.write("A custom header for test 2\n")
+
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
+
+    with open(test_first_log_file, encoding="utf-8") as rfh:
+        content = rfh.read()
+        assert "A custom header for test 1" in content
+        assert "message from test 1" in content
+
+    with open(test_second_log_file, encoding="utf-8") as rfh:
+        content = rfh.read()
+        assert "A custom header for test 2" in content
         assert "message from test 2" in content
 
 

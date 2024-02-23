@@ -21,6 +21,7 @@ from typing import Optional
 from typing import overload
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
 import warnings
 
@@ -47,6 +48,10 @@ from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
 from _pytest.warning_types import PytestWarning
+
+
+if TYPE_CHECKING:
+    from typing import Self
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -491,16 +496,16 @@ class Dir(nodes.Directory):
     @classmethod
     def from_parent(  # type: ignore[override]
         cls,
-        parent: nodes.Collector,  # type: ignore[override]
+        parent: nodes.Collector,
         *,
         path: Path,
-    ) -> "Dir":
+    ) -> "Self":
         """The public constructor.
 
         :param parent: The parent collector of this Dir.
         :param path: The directory's path.
         """
-        return super().from_parent(parent=parent, path=path)  # type: ignore[no-any-return]
+        return super().from_parent(parent=parent, path=path)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         config = self.config
@@ -901,6 +906,10 @@ class Session(nodes.Collector):
                     # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
                     if isinstance(matchparts[0], Path):
                         is_match = node.path == matchparts[0]
+                        if sys.platform == "win32" and not is_match:
+                            # In case the file paths do not match, fallback to samefile() to
+                            # account for short-paths on Windows (#11895).
+                            is_match = os.path.samefile(node.path, matchparts[0])
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
                         # TODO: Remove parametrized workaround once collection structure contains

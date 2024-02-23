@@ -3,11 +3,13 @@ import sys
 from typing import List
 from typing import Optional
 from typing import Type
+from typing import Union
 import warnings
 
-from _pytest.pytester import Pytester
-from _pytest.recwarn import WarningsRecorder
 import pytest
+from pytest import ExitCode
+from pytest import Pytester
+from pytest import WarningsRecorder
 
 
 def test_recwarn_stacklevel(recwarn: WarningsRecorder) -> None:
@@ -479,28 +481,117 @@ class TestWarns:
                 warnings.warn("some warning", category=FutureWarning)
                 raise ValueError("some exception")
 
+    def test_skip_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
 
-def test_raise_type_error_on_non_string_warning() -> None:
-    """Check pytest.warns validates warning messages are strings (#10865)."""
-    with pytest.raises(TypeError, match="Warning message must be str"):
+            def test_it():
+                with pytest.warns(Warning):
+                    pytest.skip("this is OK")
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(skipped=1)
+
+    def test_fail_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_it():
+                with pytest.warns(Warning):
+                    pytest.fail("BOOM")
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.TESTS_FAILED
+        result.assert_outcomes(failed=1)
+        assert "DID NOT WARN" not in str(result.stdout)
+
+    def test_exit_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_it():
+                with pytest.warns(Warning):
+                    pytest.exit()
+            """,
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.INTERRUPTED
+        result.assert_outcomes()
+
+    def test_keyboard_interrupt_within_warns(self, pytester: Pytester) -> None:
+        """Regression test for #11907."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_it():
+                with pytest.warns(Warning):
+                    raise KeyboardInterrupt()
+            """,
+        )
+
+        result = pytester.runpytest_subprocess()
+        assert result.ret == ExitCode.INTERRUPTED
+        result.assert_outcomes()
+
+
+def test_raise_type_error_on_invalid_warning() -> None:
+    """Check pytest.warns validates warning messages are strings (#10865) or
+    Warning instances (#11959)."""
+    with pytest.raises(TypeError, match="Warning must be str or Warning"):
         with pytest.warns(UserWarning):
             warnings.warn(1)  # type: ignore
 
 
-def test_no_raise_type_error_on_string_warning() -> None:
-    """Check pytest.warns validates warning messages are strings (#10865)."""
-    with pytest.warns(UserWarning):
-        warnings.warn("Warning")
+@pytest.mark.parametrize(
+    "message",
+    [
+        pytest.param("Warning", id="str"),
+        pytest.param(UserWarning(), id="UserWarning"),
+        pytest.param(Warning(), id="Warning"),
+    ],
+)
+def test_no_raise_type_error_on_valid_warning(message: Union[str, Warning]) -> None:
+    """Check pytest.warns validates warning messages are strings (#10865) or
+    Warning instances (#11959)."""
+    with pytest.warns(Warning):
+        warnings.warn(message)
 
 
 @pytest.mark.skipif(
     hasattr(sys, "pypy_version_info"),
     reason="Not for pypy",
 )
-def test_raise_type_error_on_non_string_warning_cpython() -> None:
+def test_raise_type_error_on_invalid_warning_message_cpython() -> None:
     # Check that we get the same behavior with the stdlib, at least if filtering
     # (see https://github.com/python/cpython/issues/103577 for details)
     with pytest.raises(TypeError):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "test")
             warnings.warn(1)  # type: ignore
+
+
+def test_multiple_arg_custom_warning() -> None:
+    """Test for issue #11906."""
+
+    class CustomWarning(UserWarning):
+        def __init__(self, a, b):
+            pass
+
+    with pytest.warns(CustomWarning):
+        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.warns(CustomWarning, match="not gonna match"):
+                a, b = 1, 2
+                warnings.warn(CustomWarning(a, b))

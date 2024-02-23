@@ -299,6 +299,13 @@ def pytest_addoption(parser: Parser) -> None:
         help="Path to a file when logging will be written to",
     )
     add_option_ini(
+        "--log-file-mode",
+        dest="log_file_mode",
+        default="w",
+        choices=["w", "a"],
+        help="Log file open mode",
+    )
+    add_option_ini(
         "--log-file-level",
         dest="log_file_level",
         default=None,
@@ -669,7 +676,10 @@ class LoggingPlugin:
             if not os.path.isdir(directory):
                 os.makedirs(directory)
 
-        self.log_file_handler = _FileHandler(log_file, mode="w", encoding="UTF-8")
+        self.log_file_mode = get_option_ini(config, "log_file_mode") or "w"
+        self.log_file_handler = _FileHandler(
+            log_file, mode=self.log_file_mode, encoding="UTF-8"
+        )
         log_file_format = get_option_ini(config, "log_file_format", "log_format")
         log_file_date_format = get_option_ini(
             config, "log_file_date_format", "log_date_format"
@@ -746,7 +756,7 @@ class LoggingPlugin:
             fpath.parent.mkdir(exist_ok=True, parents=True)
 
         # https://github.com/python/mypy/issues/11193
-        stream: io.TextIOWrapper = fpath.open(mode="w", encoding="UTF-8")  # type: ignore[assignment]
+        stream: io.TextIOWrapper = fpath.open(mode=self.log_file_mode, encoding="UTF-8")  # type: ignore[assignment]
         old_stream = self.log_file_handler.setStream(stream)
         if old_stream:
             old_stream.close()

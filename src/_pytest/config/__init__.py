@@ -578,12 +578,18 @@ class PytestPluginManager(PluginManager):
             self._try_load_conftest(invocation_dir, importmode, rootpath)
 
     def _is_in_confcutdir(self, path: Path) -> bool:
-        """Whether a path is within the confcutdir.
-
-        When false, should not load conftest.
-        """
+        """Whether to consider the given path to load conftests from."""
         if self._confcutdir is None:
             return True
+        # The semantics here are literally:
+        #   Do not load a conftest if it is found upwards from confcut dir.
+        # But this is *not* the same as:
+        #   Load only conftests from confcutdir or below.
+        # At first glance they might seem the same thing, however we do support use cases where
+        # we want to load conftests that are not found in confcutdir or below, but are found
+        # in completely different directory hierarchies like packages installed
+        # in out-of-source trees.
+        # (see #9767 for a regression where the logic was inverted).
         return path not in self._confcutdir.parents
 
     def _try_load_conftest(
@@ -609,9 +615,6 @@ class PytestPluginManager(PluginManager):
         if directory in self._dirpath2confmods:
             return
 
-        # XXX these days we may rather want to use config.rootpath
-        # and allow users to opt into looking into the rootdir parent
-        # directories instead of requiring to specify confcutdir.
         clist = []
         for parent in reversed((directory, *directory.parents)):
             if self._is_in_confcutdir(parent):
@@ -1563,9 +1566,11 @@ class Config:
         #   in this case, we already have a list ready to use.
         #
         if type == "paths":
-            # TODO: This assert is probably not valid in all cases.
-            assert self.inipath is not None
-            dp = self.inipath.parent
+            dp = (
+                self.inipath.parent
+                if self.inipath is not None
+                else self.invocation_params.dir
+            )
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp / x for x in input_values]
         elif type == "args":

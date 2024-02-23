@@ -2028,7 +2028,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             failure
       --doctest-glob=pat    Doctests file matching pattern, default: test*.txt
       --doctest-ignore-import-errors
-                            Ignore doctest ImportErrors
+                            Ignore doctest collection errors
       --doctest-continue-on-failure
                             For a given doctest, continue to run after the first
                             failure

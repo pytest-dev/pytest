@@ -4,9 +4,11 @@ from pathlib import Path
 import pprint
 import shutil
 import sys
+import tempfile
 import textwrap
 from typing import List
 
+from _pytest.assertion.util import running_on_ci
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -1613,7 +1615,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
     assert collector.x == 10
 
 
-def test_class_from_parent(pytester: Pytester, request: FixtureRequest) -> None:
+def test_class_from_parent(request: FixtureRequest) -> None:
     """Ensure Class.from_parent can forward custom arguments to the constructor."""
 
     class MyCollector(pytest.Class):
@@ -1758,4 +1760,30 @@ def test_does_not_crash_on_recursive_symlink(pytester: Pytester) -> None:
     result = pytester.runpytest()
 
     assert result.ret == ExitCode.OK
+    assert result.parseoutcomes() == {"passed": 1}
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_collect_short_file_windows(pytester: Pytester) -> None:
+    """Reproducer for #11895: short paths not colleced on Windows."""
+    short_path = tempfile.mkdtemp()
+    if "~" not in short_path:  # pragma: no cover
+        if running_on_ci():
+            # On CI, we are expecting that under the current GitHub actions configuration,
+            # tempfile.mkdtemp() is producing short paths, so we want to fail to prevent
+            # this from silently changing without us noticing.
+            pytest.fail(
+                f"tempfile.mkdtemp() failed to produce a short path on CI: {short_path}"
+            )
+        else:
+            # We want to skip failing this test locally in this situation because
+            # depending on the local configuration tempfile.mkdtemp() might not produce a short path:
+            # For example, user might have configured %TEMP% exactly to avoid generating short paths.
+            pytest.skip(
+                f"tempfile.mkdtemp() failed to produce a short path: {short_path}, skipping"
+            )
+
+    test_file = Path(short_path).joinpath("test_collect_short_file_windows.py")
+    test_file.write_text("def test(): pass", encoding="UTF-8")
+    result = pytester.runpytest(short_path)
     assert result.parseoutcomes() == {"passed": 1}

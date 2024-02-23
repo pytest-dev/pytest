@@ -1,0 +1,3 @@
+Add ``--log-file-mode`` option to the logging plugin, enabling appending to log-files. This option accepts either ``"w"`` or ``"a"`` and defaults to ``"w"``.
+
+Previously, the mode was hard-coded to be ``"w"`` which truncates the file before logging.

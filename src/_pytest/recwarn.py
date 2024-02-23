@@ -20,6 +20,7 @@ import warnings
 
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
+from _pytest.outcomes import Exit
 from _pytest.outcomes import fail
 
 
@@ -302,7 +303,18 @@ class WarningsChecker(WarningsRecorder):
 
         __tracebackhide__ = True
 
-        def found_str():
+        # BaseExceptions like pytest.{skip,fail,xfail,exit} or Ctrl-C within
+        # pytest.warns should *not* trigger "DID NOT WARN" and get suppressed
+        # when the warning doesn't happen. Control-flow exceptions should always
+        # propagate.
+        if exc_val is not None and (
+            not isinstance(exc_val, Exception)
+            # Exit is an Exception, not a BaseException, for some reason.
+            or isinstance(exc_val, Exit)
+        ):
+            return
+
+        def found_str() -> str:
             return pformat([record.message for record in self], indent=2)
 
         try:
@@ -322,21 +334,37 @@ class WarningsChecker(WarningsRecorder):
             for w in self:
                 if not self.matches(w):
                     warnings.warn_explicit(
-                        str(w.message),
-                        w.message.__class__,  # type: ignore[arg-type]
-                        w.filename,
-                        w.lineno,
+                        message=w.message,
+                        category=w.category,
+                        filename=w.filename,
+                        lineno=w.lineno,
                         module=w.__module__,
                         source=w.source,
                     )
-            # Check warnings has valid argument type (#10865).
-            wrn: warnings.WarningMessage
-            for wrn in self:
-                self._validate_message(wrn)
 
-    @staticmethod
-    def _validate_message(wrn: Any) -> None:
-        if not isinstance(msg := wrn.message.args[0], str):
-            raise TypeError(
-                f"Warning message must be str, got {msg!r} (type {type(msg).__name__})"
-            )
+            # Currently in Python it is possible to pass other types than an
+            # `str` message when creating `Warning` instances, however this
+            # causes an exception when :func:`warnings.filterwarnings` is used
+            # to filter those warnings. See
+            # https://github.com/python/cpython/issues/103577 for a discussion.
+            # While this can be considered a bug in CPython, we put guards in
+            # pytest as the error message produced without this check in place
+            # is confusing (#10865).
+            for w in self:
+                if type(w.message) is not UserWarning:
+                    # If the warning was of an incorrect type then `warnings.warn()`
+                    # creates a UserWarning. Any other warning must have been specified
+                    # explicitly.
+                    continue
+                if not w.message.args:
+                    # UserWarning() without arguments must have been specified explicitly.
+                    continue
+                msg = w.message.args[0]
+                if isinstance(msg, str):
+                    continue
+                # It's possible that UserWarning was explicitly specified, and
+                # its first argument was not a string. But that case can't be
+                # distinguished from an invalid type.
+                raise TypeError(
+                    f"Warning must be str or Warning, got {msg!r} (type {type(msg).__name__})"
+                )

@@ -55,8 +55,7 @@ def pytest_pycollect_makeitem(
     except Exception:
         return None
     # Yes, so let's collect it.
-    item: UnitTestCase = UnitTestCase.from_parent(collector, name=name, obj=obj)
-    return item
+    return UnitTestCase.from_parent(collector, name=name, obj=obj)
 
 
 class UnitTestCase(Class):
