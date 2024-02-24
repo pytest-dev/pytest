@@ -1,1 +1,0 @@
-Reverted a fix to `--maxfail` handling in pytest 8.0.0 because it caused a regression in pytest-xdist whereby session fixture teardowns may get executed multiple times when the max-fails is reached.

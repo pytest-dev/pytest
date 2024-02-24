@@ -28,6 +28,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.0.2 (2024-02-24)
+=========================
+
+Bug Fixes
+---------
+
+- `#11895 <https://github.com/pytest-dev/pytest/issues/11895>`_: Fix collection on Windows where initial paths contain the short version of a path (for example ``c:\PROGRA~1\tests``).
+
+
+- `#11953 <https://github.com/pytest-dev/pytest/issues/11953>`_: Fix an ``IndexError`` crash raising from ``getstatementrange_ast``.
+
+
+- `#12021 <https://github.com/pytest-dev/pytest/issues/12021>`_: Reverted a fix to `--maxfail` handling in pytest 8.0.0 because it caused a regression in pytest-xdist whereby session fixture teardowns may get executed multiple times when the max-fails is reached.
+
+
 pytest 8.0.1 (2024-02-16)
 =========================
 
