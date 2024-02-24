@@ -1,9 +1,10 @@
-import math
-import pprint
+# mypy: allow-untyped-defs
 from collections.abc import Collection
 from collections.abc import Sized
 from decimal import Decimal
+import math
 from numbers import Complex
+import pprint
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -23,8 +24,8 @@ from typing import TypeVar
 from typing import Union
 
 import _pytest._code
-from _pytest.compat import STRING_TYPES
 from _pytest.outcomes import fail
+
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -237,9 +238,7 @@ class ApproxMapping(ApproxBase):
     with numeric values (the keys can be anything)."""
 
     def __repr__(self) -> str:
-        return "approx({!r})".format(
-            {k: self._approx_scalar(v) for k, v in self.expected.items()}
-        )
+        return f"approx({({k: self._approx_scalar(v) for k, v in self.expected.items()})!r})"
 
     def _repr_compare(self, other_side: Mapping[object, float]) -> List[str]:
         import math
@@ -314,9 +313,7 @@ class ApproxSequenceLike(ApproxBase):
         seq_type = type(self.expected)
         if seq_type not in (tuple, list):
             seq_type = list
-        return "approx({!r})".format(
-            seq_type(self._approx_scalar(x) for x in self.expected)
-        )
+        return f"approx({seq_type(self._approx_scalar(x) for x in self.expected)!r})"
 
     def _repr_compare(self, other_side: Sequence[float]) -> List[str]:
         import math
@@ -696,7 +693,6 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
        ``approx`` falls back to strict equality for nonnumeric types instead
        of raising ``TypeError``.
     """
-
     # Delegate the comparison to a class that knows how to deal with the type
     # of the expected value (e.g. int, float, list, dict, numpy.array, etc).
     #
@@ -724,16 +720,11 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     elif (
         hasattr(expected, "__getitem__")
         and isinstance(expected, Sized)
-        # Type ignored because the error is wrong -- not unreachable.
-        and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
+        and not isinstance(expected, (str, bytes))
     ):
         cls = ApproxSequenceLike
-    elif (
-        isinstance(expected, Collection)
-        # Type ignored because the error is wrong -- not unreachable.
-        and not isinstance(expected, STRING_TYPES)  # type: ignore[unreachable]
-    ):
-        msg = f"pytest.approx() only supports ordered sequences, but got: {repr(expected)}"
+    elif isinstance(expected, Collection) and not isinstance(expected, (str, bytes)):
+        msg = f"pytest.approx() only supports ordered sequences, but got: {expected!r}"
         raise TypeError(msg)
     else:
         cls = ApproxScalar
@@ -783,7 +774,7 @@ def raises(
 
 
 @overload
-def raises(  # noqa: F811
+def raises(
     expected_exception: Union[Type[E], Tuple[Type[E], ...]],
     func: Callable[..., Any],
     *args: Any,
@@ -792,7 +783,7 @@ def raises(  # noqa: F811
     ...
 
 
-def raises(  # noqa: F811
+def raises(
     expected_exception: Union[Type[E], Tuple[Type[E], ...]], *args: Any, **kwargs: Any
 ) -> Union["RaisesContext[E]", _pytest._code.ExceptionInfo[E]]:
     r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
@@ -838,10 +829,10 @@ def raises(  # noqa: F811
     The ``match`` argument searches the formatted exception string, which includes any
     `PEP-678 <https://peps.python.org/pep-0678/>`__ ``__notes__``:
 
-        >>> with pytest.raises(ValueError, match=r'had a note added'):  # doctest: +SKIP
-        ...    e = ValueError("value must be 42")
-        ...    e.add_note("had a note added")
-        ...    raise e
+        >>> with pytest.raises(ValueError, match=r"had a note added"):  # doctest: +SKIP
+        ...     e = ValueError("value must be 42")
+        ...     e.add_note("had a note added")
+        ...     raise e
 
     The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
     details of the captured exception::
@@ -856,7 +847,7 @@ def raises(  # noqa: F811
        Given that ``pytest.raises`` matches subclasses, be wary of using it to match :class:`Exception` like this::
 
            with pytest.raises(Exception):  # Careful, this will catch ANY exception raised.
-                some_function()
+               some_function()
 
        Because :class:`Exception` is the base class of almost all exceptions, it is easy for this to hide
        real bugs, where the user wrote this expecting a specific exception, but some other exception is being

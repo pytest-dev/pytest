@@ -8,11 +8,13 @@ All constants defined in this module should be either instances of
 :class:`PytestWarning`, or :class:`UnformattedWarning`
 in case of warnings which need to format their messages.
 """
+
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
+
 
 # set of plugins which have been integrated into the core; we use this list to ignore
 # them during registration to avoid conflicts

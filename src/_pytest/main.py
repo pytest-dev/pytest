@@ -1,13 +1,13 @@
 """Core implementation of the testing process: init, session, runtest loop."""
+
 import argparse
 import dataclasses
 import fnmatch
 import functools
 import importlib
 import os
-import sys
-import warnings
 from pathlib import Path
+import sys
 from typing import AbstractSet
 from typing import Callable
 from typing import Dict
@@ -21,12 +21,14 @@ from typing import Optional
 from typing import overload
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 import pluggy
 
-import _pytest._code
 from _pytest import nodes
+import _pytest._code
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -46,6 +48,10 @@ from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
 from _pytest.warning_types import PytestWarning
+
+
+if TYPE_CHECKING:
+    from typing import Self
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -376,6 +382,9 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[bool]:
+    if collection_path.name == "__pycache__":
+        return True
+
     ignore_paths = config._getconftest_pathlist(
         "collect_ignore", path=collection_path.parent
     )
@@ -487,16 +496,16 @@ class Dir(nodes.Directory):
     @classmethod
     def from_parent(  # type: ignore[override]
         cls,
-        parent: nodes.Collector,  # type: ignore[override]
+        parent: nodes.Collector,
         *,
         path: Path,
-    ) -> "Dir":
+    ) -> "Self":
         """The public constructor.
 
         :param parent: The parent collector of this Dir.
         :param path: The directory's path.
         """
-        return super().from_parent(parent=parent, path=path)  # type: ignore[no-any-return]
+        return super().from_parent(parent=parent, path=path)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         config = self.config
@@ -505,8 +514,6 @@ class Dir(nodes.Directory):
         ihook = self.ihook
         for direntry in scandir(self.path):
             if direntry.is_dir():
-                if direntry.name == "__pycache__":
-                    continue
                 path = Path(direntry.path)
                 if not self.session.isinitpath(path, with_parents=True):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):
@@ -724,12 +731,12 @@ class Session(nodes.Collector):
         ...
 
     @overload
-    def perform_collect(  # noqa: F811
+    def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         ...
 
-    def perform_collect(  # noqa: F811
+    def perform_collect(
         self, args: Optional[Sequence[str]] = None, genitems: bool = True
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         """Perform the collection phase for this session.
@@ -895,10 +902,14 @@ class Session(nodes.Collector):
 
                 # Prune this level.
                 any_matched_in_collector = False
-                for node in subnodes:
+                for node in reversed(subnodes):
                     # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
                     if isinstance(matchparts[0], Path):
                         is_match = node.path == matchparts[0]
+                        if sys.platform == "win32" and not is_match:
+                            # In case the file paths do not match, fallback to samefile() to
+                            # account for short-paths on Windows (#11895).
+                            is_match = os.path.samefile(node.path, matchparts[0])
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
                         # TODO: Remove parametrized workaround once collection structure contains

@@ -1,5 +1,6 @@
 """Exception classes and constants handling test outcomes as well as
 functions creating them."""
+
 import sys
 from typing import Any
 from typing import Callable
@@ -238,8 +239,7 @@ def importorskip(
 
         if verattr is None or Version(verattr) < Version(minversion):
             raise Skipped(
-                "module %r has __version__ %r, required is: %r"
-                % (modname, verattr, minversion),
+                f"module {modname!r} has __version__ {verattr!r}, required is: {minversion!r}",
                 allow_module_level=True,
             )
     return mod

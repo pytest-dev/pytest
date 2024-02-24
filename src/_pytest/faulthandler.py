@@ -2,11 +2,11 @@ import os
 import sys
 from typing import Generator
 
-import pytest
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 from _pytest.stash import StashKey
+import pytest
 
 
 fault_handler_original_stderr_fd_key = StashKey[int]()

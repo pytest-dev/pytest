@@ -1,16 +1,16 @@
+# mypy: allow-untyped-defs
 import contextlib
 import io
+from io import UnsupportedOperation
 import os
 import subprocess
 import sys
 import textwrap
-from io import UnsupportedOperation
 from typing import BinaryIO
 from typing import cast
 from typing import Generator
 from typing import TextIO
 
-import pytest
 from _pytest import capture
 from _pytest.capture import _get_multicapture
 from _pytest.capture import CaptureFixture
@@ -20,6 +20,8 @@ from _pytest.capture import MultiCapture
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
+
 
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
@@ -502,13 +504,11 @@ class TestCaptureFixture:
         self, pytester: Pytester, method
     ) -> None:
         p = pytester.makepyfile(
-            """\
-            def test_hello(cap{}):
+            f"""\
+            def test_hello(cap{method}):
                 print("xxx42xxx")
                 assert 0
-            """.format(
-                method
-            )
+            """
         )
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["xxx42xxx"])
@@ -623,7 +623,7 @@ class TestCaptureFixture:
         self, pytester: Pytester, fixture: str, no_capture: bool
     ) -> None:
         pytester.makepyfile(
-            """\
+            f"""\
             def test_disabled({fixture}):
                 print('captured before')
                 with {fixture}.disabled():
@@ -633,9 +633,7 @@ class TestCaptureFixture:
 
             def test_normal():
                 print('test_normal executed')
-        """.format(
-                fixture=fixture
-            )
+        """
         )
         args = ("-s",) if no_capture else ()
         result = pytester.runpytest_subprocess(*args)
@@ -680,7 +678,7 @@ class TestCaptureFixture:
         """Ensure that capsys and capfd can be used by other fixtures during
         setup and teardown."""
         pytester.makepyfile(
-            """\
+            f"""\
             import sys
             import pytest
 
@@ -702,9 +700,7 @@ class TestCaptureFixture:
                 out, err = captured_print
                 assert out == 'stdout contents begin\\n'
                 assert err == 'stderr contents begin\\n'
-        """.format(
-                fixture=fixture
-            )
+        """
         )
         result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(["*1 passed*"])
@@ -717,7 +713,7 @@ class TestCaptureFixture:
     ) -> None:
         """Ensure we can access setup and teardown buffers from teardown when using capsys/capfd (##3033)"""
         pytester.makepyfile(
-            """\
+            f"""\
             import sys
             import pytest
             import os
@@ -734,9 +730,7 @@ class TestCaptureFixture:
             def test_a(fix):
                 print("call out")
                 sys.stderr.write("call err\\n")
-        """.format(
-                cap=cap
-            )
+        """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -1048,16 +1042,12 @@ class TestFDCapture:
             pytest.raises(AssertionError, cap.suspend)
 
             assert repr(cap) == (
-                "<FDCapture 1 oldfd={} _state='done' tmpfile={!r}>".format(
-                    cap.targetfd_save, cap.tmpfile
-                )
+                f"<FDCapture 1 oldfd={cap.targetfd_save} _state='done' tmpfile={cap.tmpfile!r}>"
             )
             # Should not crash with missing "_old".
             assert isinstance(cap.syscapture, capture.SysCapture)
             assert repr(cap.syscapture) == (
-                "<SysCapture stdout _old=<UNSET> _state='done' tmpfile={!r}>".format(
-                    cap.syscapture.tmpfile
-                )
+                f"<SysCapture stdout _old=<UNSET> _state='done' tmpfile={cap.syscapture.tmpfile!r}>"
             )
 
     def test_capfd_sys_stdout_mode(self, capfd) -> None:
@@ -1198,7 +1188,6 @@ class TestTeeStdCapture(TestStdCapture):
     def test_capturing_error_recursive(self) -> None:
         r"""For TeeStdCapture since we passthrough stderr/stdout, cap1
         should get all output, while cap2 should only get "cap2\n"."""
-
         with self.getcapture() as cap1:
             print("cap1")
             with self.getcapture() as cap2:
@@ -1393,28 +1382,27 @@ def test_close_and_capture_again(pytester: Pytester) -> None:
 def test_capturing_and_logging_fundamentals(pytester: Pytester, method: str) -> None:
     # here we check a fundamental feature
     p = pytester.makepyfile(
-        """
+        f"""
         import sys, os, logging
         from _pytest import capture
         cap = capture.MultiCapture(
             in_=None,
             out=None,
-            err=capture.%s,
+            err=capture.{method},
         )
         cap.start_capturing()
 
         logging.warning("hello1")
         outerr = cap.readouterr()
-        print("suspend, captured %%s" %%(outerr,))
+        print("suspend, captured %s" %(outerr,))
         logging.warning("hello2")
 
         cap.pop_outerr_to_orig()
         logging.warning("hello3")
 
         outerr = cap.readouterr()
-        print("suspend2, captured %%s" %% (outerr,))
+        print("suspend2, captured %s" % (outerr,))
     """
-        % (method,)
     )
     result = pytester.runpython(p)
     result.stdout.fnmatch_lines(
@@ -1580,16 +1568,16 @@ def test_capture_with_live_logging(
     # capture should work with live cli logging
 
     pytester.makepyfile(
-        """
+        f"""
         import logging
         import sys
 
         logger = logging.getLogger(__name__)
 
-        def test_capture({0}):
+        def test_capture({capture_fixture}):
             print("hello")
             sys.stderr.write("world\\n")
-            captured = {0}.readouterr()
+            captured = {capture_fixture}.readouterr()
             assert captured.out == "hello\\n"
             assert captured.err == "world\\n"
 
@@ -1597,11 +1585,9 @@ def test_capture_with_live_logging(
             print("next")
             logging.info("something")
 
-            captured = {0}.readouterr()
+            captured = {capture_fixture}.readouterr()
             assert captured.out == "next\\n"
-        """.format(
-            capture_fixture
-        )
+        """
     )
 
     result = pytester.runpytest_subprocess("--log-cli-level=INFO")

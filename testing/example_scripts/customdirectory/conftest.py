@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 # content of conftest.py
 import json
 

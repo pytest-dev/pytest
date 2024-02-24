@@ -1,9 +1,9 @@
+# mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import sys
 import textwrap
-from pathlib import Path
 
-import pytest
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
@@ -12,6 +12,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+import pytest
 
 
 def test_getfuncargnames_functions():
@@ -711,7 +712,7 @@ class TestRequestBasic:
     )
     def test_request_garbage(self, pytester: Pytester) -> None:
         try:
-            import xdist  # noqa
+            import xdist  # noqa: F401
         except ImportError:
             pass
         else:
@@ -1287,7 +1288,7 @@ class TestFixtureUsages:
     @pytest.mark.parametrize("scope", ["function", "session"])
     def test_parameters_without_eq_semantics(self, scope, pytester: Pytester) -> None:
         pytester.makepyfile(
-            """
+            f"""
             class NoEq1:  # fails on `a == b` statement
                 def __eq__(self, _):
                     raise RuntimeError
@@ -1309,9 +1310,7 @@ class TestFixtureUsages:
 
             def test2(no_eq):
                 pass
-        """.format(
-                scope=scope
-            )
+        """
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*4 passed*"])
@@ -2198,7 +2197,7 @@ class TestAutouseManagement:
                 pass
             def test_check():
                 assert values == ["new1", "new2", "fin2", "fin1"]
-        """
+        """  # noqa: UP031 (python syntax issues)
             % locals()
         )
         reprec = pytester.inline_run("-s")
@@ -2731,12 +2730,12 @@ class TestFixtureMarker:
             """
             test_dynamic_parametrized_ordering.py::test[flavor1-vxlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
-            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
-            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test[flavor1-vlan] PASSED
             test_dynamic_parametrized_ordering.py::test2[flavor1-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
         """
         )
 
@@ -3086,7 +3085,7 @@ class TestFixtureMarker:
                 pass
             def test_other():
                 pass
-        """
+        """  # noqa: UP031 (python syntax issues)
             % {"scope": scope}
         )
         reprec = pytester.inline_run("-lvs")
@@ -3286,7 +3285,7 @@ class TestRequestScopeAccess:
                 assert request.config
             def test_func():
                 pass
-        """
+        """  # noqa: UP031 (python syntax issues)
             % (scope, ok.split(), error.split())
         )
         reprec = pytester.inline_run("-l")
@@ -3307,7 +3306,7 @@ class TestRequestScopeAccess:
                 assert request.config
             def test_func(arg):
                 pass
-        """
+        """  # noqa: UP031 (python syntax issues)
             % (scope, ok.split(), error.split())
         )
         reprec = pytester.inline_run()
@@ -4354,6 +4353,27 @@ def test_call_fixture_function_error():
         assert fix() == 1
 
 
+def test_fixture_double_decorator(pytester: Pytester) -> None:
+    """Check if an error is raised when using @pytest.fixture twice."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        @pytest.fixture
+        def fixt():
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "E * ValueError: @pytest.fixture is being applied more than once to the same function 'fixt'"
+        ]
+    )
+
+
 def test_fixture_param_shadowing(pytester: Pytester) -> None:
     """Parametrized arguments would be shadowed if a fixture with the same name also exists (#5036)"""
     pytester.makepyfile(
@@ -4403,7 +4423,7 @@ def test_fixture_named_request(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*'request' is a reserved word for fixtures, use another name:",
-            "  *test_fixture_named_request.py:5",
+            "  *test_fixture_named_request.py:6",
         ]
     )
 
@@ -4537,5 +4557,5 @@ def test_yield_fixture_with_no_value(pytester: Pytester) -> None:
 def test_deduplicate_names() -> None:
     items = deduplicate_names("abacd")
     assert items == ("a", "b", "c", "d")
-    items = deduplicate_names(items + ("g", "f", "g", "e", "b"))
+    items = deduplicate_names((*items, "g", "f", "g", "e", "b"))
     assert items == ("a", "b", "c", "d", "g", "f", "e")

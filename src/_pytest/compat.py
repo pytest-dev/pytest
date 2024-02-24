@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Python version compatibility code."""
 from __future__ import annotations
 
@@ -5,20 +6,15 @@ import dataclasses
 import enum
 import functools
 import inspect
-import os
-import sys
 from inspect import Parameter
 from inspect import signature
+import os
 from pathlib import Path
+import sys
 from typing import Any
 from typing import Callable
 from typing import Final
 from typing import NoReturn
-from typing import TypeVar
-
-
-_T = TypeVar("_T")
-_S = TypeVar("_S")
 
 
 # fmt: off
@@ -26,7 +22,7 @@ _S = TypeVar("_S")
 # https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
 class NotSetType(enum.Enum):
     token = 0
-NOTSET: Final = NotSetType.token  # noqa: E305
+NOTSET: Final = NotSetType.token
 # fmt: on
 
 
@@ -176,25 +172,13 @@ _non_printable_ascii_translate_table.update(
 )
 
 
-def _translate_non_printable(s: str) -> str:
-    return s.translate(_non_printable_ascii_translate_table)
-
-
-STRING_TYPES = bytes, str
-
-
-def _bytes_to_ascii(val: bytes) -> str:
-    return val.decode("ascii", "backslashreplace")
-
-
 def ascii_escaped(val: bytes | str) -> str:
     r"""If val is pure ASCII, return it as an str, otherwise, escape
     bytes objects into a sequence of escaped bytes:
 
     b'\xc3\xb4\xc5\xd6' -> r'\xc3\xb4\xc5\xd6'
 
-    and escapes unicode objects into a sequence of escaped unicode
-    ids, e.g.:
+    and escapes strings into a sequence of escaped unicode ids, e.g.:
 
     r'4\nV\U00043efa\x0eMXWB\x1e\u3028\u15fd\xcd\U0007d944'
 
@@ -205,10 +189,10 @@ def ascii_escaped(val: bytes | str) -> str:
        a UTF-8 string.
     """
     if isinstance(val, bytes):
-        ret = _bytes_to_ascii(val)
+        ret = val.decode("ascii", "backslashreplace")
     else:
         ret = val.encode("unicode_escape").decode("ascii")
-    return _translate_non_printable(ret)
+    return ret.translate(_non_printable_ascii_translate_table)
 
 
 @dataclasses.dataclass
@@ -243,9 +227,7 @@ def get_real_func(obj):
         from _pytest._io.saferepr import saferepr
 
         raise ValueError(
-            ("could not find real function of {start}\nstopped at {current}").format(
-                start=saferepr(start_obj), current=saferepr(obj)
-            )
+            f"could not find real function of {saferepr(start_obj)}\nstopped at {saferepr(obj)}"
         )
     if isinstance(obj, functools.partial):
         obj = obj.func
@@ -307,7 +289,7 @@ def get_user_id() -> int | None:
     # mypy follows the version and platform checking expectation of PEP 484:
     # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=platform#python-version-and-system-platform-checks
     # Containment checks are too complex for mypy v1.5.0 and cause failure.
-    if sys.platform == "win32" or sys.platform == "emscripten":
+    if sys.platform == "win32" or sys.platform == "emscripten":  # noqa: PLR1714
         # win32 does not have a getuid() function.
         # Emscripten has a return 0 stub.
         return None

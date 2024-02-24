@@ -1,15 +1,15 @@
+# mypy: allow-untyped-defs
 import dataclasses
 import os
+from pathlib import Path
 import stat
 import sys
-import warnings
-from pathlib import Path
 from typing import Callable
 from typing import cast
 from typing import List
 from typing import Union
+import warnings
 
-import pytest
 from _pytest import pathlib
 from _pytest.config import Config
 from _pytest.monkeypatch import MonkeyPatch
@@ -23,6 +23,7 @@ from _pytest.pathlib import rm_rf
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import TempPathFactory
+import pytest
 
 
 def test_tmp_path_fixture(pytester: Pytester) -> None:
@@ -241,12 +242,10 @@ testdata = [
 def test_mktemp(pytester: Pytester, basename: str, is_ok: bool) -> None:
     mytemp = pytester.mkdir("mytemp")
     p = pytester.makepyfile(
-        """
+        f"""
         def test_abs_path(tmp_path_factory):
-            tmp_path_factory.mktemp('{}', numbered=False)
-        """.format(
-            basename
-        )
+            tmp_path_factory.mktemp('{basename}', numbered=False)
+        """
     )
 
     result = pytester.runpytest(p, "--basetemp=%s" % mytemp)
@@ -337,7 +336,6 @@ def test_tmp_path_fallback_uid_not_found(pytester: Pytester) -> None:
     """Test that tmp_path works even if the current process's user id does not
     correspond to a valid user.
     """
-
     pytester.makepyfile(
         """
         def test_some(tmp_path):

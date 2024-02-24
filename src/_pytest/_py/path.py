@@ -1,16 +1,13 @@
+# mypy: allow-untyped-defs
 """local path implementation."""
 from __future__ import annotations
 
 import atexit
+from contextlib import contextmanager
 import fnmatch
 import importlib.util
 import io
 import os
-import posixpath
-import sys
-import uuid
-import warnings
-from contextlib import contextmanager
 from os.path import abspath
 from os.path import dirname
 from os.path import exists
@@ -19,17 +16,22 @@ from os.path import isdir
 from os.path import isfile
 from os.path import islink
 from os.path import normpath
+import posixpath
 from stat import S_ISDIR
 from stat import S_ISLNK
 from stat import S_ISREG
+import sys
 from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Literal
 from typing import overload
 from typing import TYPE_CHECKING
+import uuid
+import warnings
 
 from . import error
+
 
 # Moved from local.py.
 iswin32 = sys.platform == "win32" or (getattr(os, "_name", False) == "nt")
@@ -450,7 +452,7 @@ class LocalPath:
 
     def ensure_dir(self, *args):
         """Ensure the path joined with args is a directory."""
-        return self.ensure(*args, **{"dir": True})
+        return self.ensure(*args, dir=True)
 
     def bestrelpath(self, dest):
         """Return a string which is a relative path from self
@@ -675,7 +677,7 @@ class LocalPath:
         else:
             kw.setdefault("dirname", dirname)
         kw.setdefault("sep", self.sep)
-        obj.strpath = normpath("%(dirname)s%(sep)s%(basename)s" % kw)
+        obj.strpath = normpath("{dirname}{sep}{basename}".format(**kw))
         return obj
 
     def _getbyspec(self, spec: str) -> list[str]:
@@ -760,7 +762,10 @@ class LocalPath:
             #   expected "Callable[[str, Any, Any], TextIOWrapper]"  [arg-type]
             # Which seems incorrect, given io.open supports the given argument types.
             return error.checked_call(
-                io.open, self.strpath, mode, encoding=encoding  # type:ignore[arg-type]
+                io.open,
+                self.strpath,
+                mode,
+                encoding=encoding,  # type:ignore[arg-type]
             )
         return error.checked_call(open, self.strpath, mode)
 
@@ -779,11 +784,11 @@ class LocalPath:
 
         valid checkers::
 
-            file=1    # is a file
-            file=0    # is not a file (may not even exist)
-            dir=1     # is a dir
-            link=1    # is a link
-            exists=1  # exists
+            file = 1  # is a file
+            file = 0  # is not a file (may not even exist)
+            dir = 1  # is a dir
+            link = 1  # is a link
+            exists = 1  # exists
 
         You can specify multiple checker definitions, for example::
 
@@ -1100,9 +1105,7 @@ class LocalPath:
                 modname = self.purebasename
             spec = importlib.util.spec_from_file_location(modname, str(self))
             if spec is None or spec.loader is None:
-                raise ImportError(
-                    f"Can't find module {modname} at location {str(self)}"
-                )
+                raise ImportError(f"Can't find module {modname} at location {self!s}")
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
             return mod
@@ -1167,7 +1170,8 @@ class LocalPath:
         where the 'self' path points to executable.
         The process is directly invoked and not through a system shell.
         """
-        from subprocess import Popen, PIPE
+        from subprocess import PIPE
+        from subprocess import Popen
 
         popen_opts.pop("stdout", None)
         popen_opts.pop("stderr", None)
@@ -1277,7 +1281,8 @@ class LocalPath:
         # error: Argument 1 has incompatible type overloaded function; expected "Callable[[str], str]"  [arg-type]
         # Which seems incorrect, given tempfile.mkdtemp supports the given argument types.
         path = error.checked_call(
-            tempfile.mkdtemp, dir=str(rootdir)  # type:ignore[arg-type]
+            tempfile.mkdtemp,
+            dir=str(rootdir),  # type:ignore[arg-type]
         )
         return cls(path)
 

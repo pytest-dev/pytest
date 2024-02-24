@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import os
 import subprocess
 import sys
@@ -5,16 +6,16 @@ import time
 from types import ModuleType
 from typing import List
 
-import _pytest.pytester as pytester_mod
-import pytest
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
 from _pytest.monkeypatch import MonkeyPatch
+import _pytest.pytester as pytester_mod
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
+import pytest
 
 
 def test_make_hook_recorder(pytester: Pytester) -> None:
@@ -226,7 +227,7 @@ class TestInlineRunModulesCleanup:
 
     def spy_factory(self):
         class SysModulesSnapshotSpy:
-            instances: List["SysModulesSnapshotSpy"] = []  # noqa: F821
+            instances: List["SysModulesSnapshotSpy"] = []
 
             def __init__(self, preserve=None) -> None:
                 SysModulesSnapshotSpy.instances.append(self)
@@ -704,15 +705,13 @@ def test_spawn_uses_tmphome(pytester: Pytester) -> None:
     pytester._monkeypatch.setenv("CUSTOMENV", "42")
 
     p1 = pytester.makepyfile(
-        """
+        f"""
         import os
 
         def test():
             assert os.environ["HOME"] == {tmphome!r}
             assert os.environ["CUSTOMENV"] == "42"
-        """.format(
-            tmphome=tmphome
-        )
+        """
     )
     child = pytester.spawn_pytest(str(p1))
     out = child.read()
@@ -726,7 +725,7 @@ def test_run_result_repr() -> None:
     # known exit code
     r = pytester_mod.RunResult(1, outlines, errlines, duration=0.5)
     assert repr(r) == (
-        f"<RunResult ret={str(pytest.ExitCode.TESTS_FAILED)} len(stdout.lines)=3"
+        f"<RunResult ret={pytest.ExitCode.TESTS_FAILED!s} len(stdout.lines)=3"
         " len(stderr.lines)=4 duration=0.50s>"
     )
 

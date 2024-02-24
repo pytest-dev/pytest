@@ -1,12 +1,14 @@
+# mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import pprint
 import shutil
 import sys
+import tempfile
 import textwrap
-from pathlib import Path
 from typing import List
 
-import pytest
+from _pytest.assertion.util import running_on_ci
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -16,6 +18,7 @@ from _pytest.nodes import Item
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import Pytester
+import pytest
 
 
 def ensure_file(file_path: Path) -> Path:
@@ -534,7 +537,7 @@ class TestSession:
         newid = item.nodeid
         assert newid == id
         pprint.pprint(hookrec.calls)
-        topdir = pytester.path  # noqa
+        topdir = pytester.path  # noqa: F841
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == topdir"),
@@ -591,12 +594,12 @@ class TestSession:
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == collector.session.path"),
-                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
-                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 (
                     "pytest_collectstart",
                     "collector.__class__.__name__ == 'SpecialFile'",
                 ),
+                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
+                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid.startswith(p.name)"),
             ]
         )
@@ -669,6 +672,23 @@ class TestSession:
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
+
+    def test_collect_parametrized_order(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize('i', [0, 1, 2])
+            def test_param(i): ...
+            """
+        )
+        items, hookrec = pytester.inline_genitems(f"{p}::test_param")
+        assert len(items) == 3
+        assert [item.nodeid for item in items] == [
+            "test_collect_parametrized_order.py::test_param[0]",
+            "test_collect_parametrized_order.py::test_param[1]",
+            "test_collect_parametrized_order.py::test_param[2]",
+        ]
 
 
 class Test_getinitialnodes:
@@ -1281,21 +1301,19 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
     subdir = pytester.mkdir("sub")
     pytester.path.joinpath("conftest.py").write_text(
         textwrap.dedent(
-            """
+            f"""
             import os
-            os.chdir(%r)
+            os.chdir({str(subdir)!r})
             """
-            % (str(subdir),)
         ),
         encoding="utf-8",
     )
     pytester.makepyfile(
-        """
+        f"""
         def test_1():
             import os
-            assert os.getcwd() == %r
+            assert os.getcwd() == {str(subdir)!r}
         """
-        % (str(subdir),)
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
@@ -1597,7 +1615,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
     assert collector.x == 10
 
 
-def test_class_from_parent(pytester: Pytester, request: FixtureRequest) -> None:
+def test_class_from_parent(request: FixtureRequest) -> None:
     """Ensure Class.from_parent can forward custom arguments to the constructor."""
 
     class MyCollector(pytest.Class):
@@ -1638,13 +1656,11 @@ class TestImportModeImportlib:
         pytester.makepyfile(
             **{
                 "tests/conftest.py": "",
-                "tests/test_foo.py": """
+                "tests/test_foo.py": f"""
                 import sys
                 def test_check():
                     assert r"{tests_dir}" not in sys.path
-                """.format(
-                    tests_dir=tests_dir
-                ),
+                """,
             }
         )
         result = pytester.runpytest("-v", "--import-mode=importlib")
@@ -1744,4 +1760,30 @@ def test_does_not_crash_on_recursive_symlink(pytester: Pytester) -> None:
     result = pytester.runpytest()
 
     assert result.ret == ExitCode.OK
+    assert result.parseoutcomes() == {"passed": 1}
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_collect_short_file_windows(pytester: Pytester) -> None:
+    """Reproducer for #11895: short paths not colleced on Windows."""
+    short_path = tempfile.mkdtemp()
+    if "~" not in short_path:  # pragma: no cover
+        if running_on_ci():
+            # On CI, we are expecting that under the current GitHub actions configuration,
+            # tempfile.mkdtemp() is producing short paths, so we want to fail to prevent
+            # this from silently changing without us noticing.
+            pytest.fail(
+                f"tempfile.mkdtemp() failed to produce a short path on CI: {short_path}"
+            )
+        else:
+            # We want to skip failing this test locally in this situation because
+            # depending on the local configuration tempfile.mkdtemp() might not produce a short path:
+            # For example, user might have configured %TEMP% exactly to avoid generating short paths.
+            pytest.skip(
+                f"tempfile.mkdtemp() failed to produce a short path: {short_path}, skipping"
+            )
+
+    test_file = Path(short_path).joinpath("test_collect_short_file_windows.py")
+    test_file.write_text("def test(): pass", encoding="UTF-8")
+    result = pytester.runpytest(short_path)
     assert result.parseoutcomes() == {"passed": 1}

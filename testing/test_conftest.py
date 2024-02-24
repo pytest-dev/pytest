@@ -1,6 +1,7 @@
+# mypy: allow-untyped-defs
 import os
-import textwrap
 from pathlib import Path
+import textwrap
 from typing import cast
 from typing import Dict
 from typing import Generator
@@ -9,13 +10,13 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import TempPathFactory
+import pytest
 
 
 def ConftestWithSetinitial(path) -> PytestPluginManager:
@@ -35,6 +36,7 @@ def conftest_setinitial(
         noconftest=False,
         rootpath=Path(args[0]),
         confcutdir=confcutdir,
+        invocation_dir=Path.cwd(),
         importmode="prepend",
     )
 

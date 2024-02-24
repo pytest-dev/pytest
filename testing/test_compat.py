@@ -1,12 +1,12 @@
+# mypy: allow-untyped-defs
 import enum
-import sys
 from functools import cached_property
 from functools import partial
 from functools import wraps
+import sys
 from typing import TYPE_CHECKING
 from typing import Union
 
-import pytest
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
@@ -15,6 +15,8 @@ from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
+import pytest
+
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -167,17 +169,17 @@ class ErrorsHelper:
 
 def test_helper_failures() -> None:
     helper = ErrorsHelper()
-    with pytest.raises(Exception):
-        helper.raise_exception
+    with pytest.raises(Exception):  # noqa: B017
+        _ = helper.raise_exception
     with pytest.raises(OutcomeException):
-        helper.raise_fail_outcome
+        _ = helper.raise_fail_outcome
 
 
 def test_safe_getattr() -> None:
     helper = ErrorsHelper()
     assert safe_getattr(helper, "raise_exception", "default") == "default"
     assert safe_getattr(helper, "raise_fail_outcome", "default") == "default"
-    with pytest.raises(BaseException):
+    with pytest.raises(BaseException):  # noqa: B017
         assert safe_getattr(helper, "raise_baseexception", "default")
 
 

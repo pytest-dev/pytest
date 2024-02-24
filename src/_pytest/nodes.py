@@ -1,8 +1,8 @@
+# mypy: allow-untyped-defs
 import abc
-import os
-import warnings
 from functools import cached_property
 from inspect import signature
+import os
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -11,6 +11,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import MutableMapping
+from typing import NoReturn
 from typing import Optional
 from typing import overload
 from typing import Set
@@ -19,6 +20,7 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 import pluggy
 
@@ -38,10 +40,13 @@ from _pytest.pathlib import commonpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
+
 if TYPE_CHECKING:
+    from typing import Self
+
     # Imported here due to circular import.
-    from _pytest.main import Session
     from _pytest._code.code import _TracebackStyle
+    from _pytest.main import Session
 
 
 SEP = "/"
@@ -49,6 +54,7 @@ SEP = "/"
 tracebackcutdir = Path(_pytest.__file__).parent
 
 
+_T = TypeVar("_T")
 _NodeType = TypeVar("_NodeType", bound="Node")
 
 
@@ -67,33 +73,33 @@ class NodeMeta(abc.ABCMeta):
     progress on detangling the :class:`Node` classes.
     """
 
-    def __call__(self, *k, **kw):
+    def __call__(cls, *k, **kw) -> NoReturn:
         msg = (
             "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
             "See "
             "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
             " for more details."
-        ).format(name=f"{self.__module__}.{self.__name__}")
+        ).format(name=f"{cls.__module__}.{cls.__name__}")
         fail(msg, pytrace=False)
 
-    def _create(self, *k, **kw):
+    def _create(cls: Type[_T], *k, **kw) -> _T:
         try:
-            return super().__call__(*k, **kw)
+            return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
         except TypeError:
-            sig = signature(getattr(self, "__init__"))
+            sig = signature(getattr(cls, "__init__"))
             known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
             from .warning_types import PytestDeprecationWarning
 
             warnings.warn(
                 PytestDeprecationWarning(
-                    f"{self} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
+                    f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
                     "See https://docs.pytest.org/en/stable/deprecations.html"
                     "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
                     "for more details."
                 )
             )
 
-            return super().__call__(*k, **known_kw)
+            return super().__call__(*k, **known_kw)  # type: ignore[no-any-return,misc]
 
 
 class Node(abc.ABC, metaclass=NodeMeta):
@@ -103,6 +109,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ``Collector``\'s are the internal nodes of the tree, and ``Item``\'s are the
     leaf nodes.
     """
+
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
@@ -178,7 +185,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self._store = self.stash
 
     @classmethod
-    def from_parent(cls, parent: "Node", **kw):
+    def from_parent(cls, parent: "Node", **kw) -> "Self":
         """Public constructor for Nodes.
 
         This indirection got introduced in order to enable removing
@@ -227,9 +234,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         # enforce type checks here to avoid getting a generic type error later otherwise.
         if not isinstance(warning, Warning):
             raise ValueError(
-                "warning must be an instance of Warning or subclass, got {!r}".format(
-                    warning
-                )
+                f"warning must be an instance of Warning or subclass, got {warning!r}"
             )
         path, lineno = get_fslocation_from_item(self)
         assert lineno is not None
@@ -256,7 +261,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def teardown(self) -> None:
         pass
 
-    def iterparents(self) -> Iterator["Node"]:
+    def iter_parents(self) -> Iterator["Node"]:
         """Iterate over all parent collectors starting from and including self
         up to the root of the collection tree.
 
@@ -318,7 +323,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
-        for node in self.iterparents():
+        for node in self.iter_parents():
             for mark in node.own_markers:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
@@ -368,7 +373,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         :param cls: The node class to search for.
         :returns: The node, if found.
         """
-        for node in self.iterparents():
+        for node in self.iter_parents():
             if isinstance(node, cls):
                 return node
         return None
@@ -384,7 +389,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         from _pytest.fixtures import FixtureLookupError
 
         if isinstance(excinfo.value, ConftestImportFailure):
-            excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)
+            excinfo = ExceptionInfo.from_exception(excinfo.value.cause)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 style = "value"
@@ -582,7 +587,7 @@ class FSCollector(Collector, abc.ABC):
         *,
         path: Optional[Path] = None,
         **kw,
-    ):
+    ) -> "Self":
         """The public constructor."""
         return super().from_parent(parent=parent, path=path, **kw)
 

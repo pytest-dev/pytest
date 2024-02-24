@@ -1,18 +1,18 @@
+# mypy: allow-untyped-defs
 from __future__ import annotations
 
 import importlib
 import io
 import operator
+from pathlib import Path
 import queue
 import re
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
 from typing import TYPE_CHECKING
 
 import _pytest._code
-import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
@@ -22,6 +22,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
+import pytest
 
 
 if TYPE_CHECKING:
@@ -386,7 +387,7 @@ def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     excinfo = pytest.raises(ValueError, template.render, h=h)
     for item in excinfo.traceback:
         print(item)  # XXX: for some reason jinja.Template.render is printed in full
-        item.source  # shouldn't fail
+        _ = item.source  # shouldn't fail
         if isinstance(item.path, Path) and item.path.name == "test.txt":
             assert str(item.source) == "{{ h()}}:"
 
@@ -417,7 +418,7 @@ def test_codepath_Queue_example() -> None:
 
 def test_match_succeeds():
     with pytest.raises(ZeroDivisionError) as excinfo:
-        0 // 0
+        _ = 0 // 0
     excinfo.match(r".*zero.*")
 
 
@@ -583,7 +584,7 @@ class TestFormattedExcinfo:
         try:
 
             def f():
-                1 / 0
+                _ = 1 / 0
 
             f()
 
@@ -600,7 +601,7 @@ class TestFormattedExcinfo:
             print(line)
         assert lines == [
             "    def f():",
-            ">       1 / 0",
+            ">       _ = 1 / 0",
             "E       ZeroDivisionError: division by zero",
         ]
 
@@ -637,7 +638,7 @@ raise ValueError()
         pr = FormattedExcinfo()
 
         try:
-            1 / 0
+            _ = 1 / 0
         except ZeroDivisionError:
             excinfo = ExceptionInfo.from_current()
 
@@ -1173,9 +1174,7 @@ raise ValueError()
                     "funcargs": funcargs,
                     "tbfilter": tbfilter,
                 },
-                id="style={},showlocals={},funcargs={},tbfilter={}".format(
-                    style, showlocals, funcargs, tbfilter
-                ),
+                id=f"style={style},showlocals={showlocals},funcargs={funcargs},tbfilter={tbfilter}",
             )
             for style in ["long", "short", "line", "no", "native", "value", "auto"]
             for showlocals in (True, False)
@@ -1339,7 +1338,7 @@ raise ValueError()
         """
         raise_suffix = " from None" if mode == "from_none" else ""
         mod = importasmod(
-            """
+            f"""
             def f():
                 try:
                     g()
@@ -1347,9 +1346,7 @@ raise ValueError()
                     raise AttributeError(){raise_suffix}
             def g():
                 raise ValueError()
-        """.format(
-                raise_suffix=raise_suffix
-            )
+        """
         )
         excinfo = pytest.raises(AttributeError, mod.f)
         r = excinfo.getrepr(style="long", chain=mode != "explicit_suppress")
@@ -1361,9 +1358,7 @@ raise ValueError()
         assert tw_mock.lines[2] == "        try:"
         assert tw_mock.lines[3] == "            g()"
         assert tw_mock.lines[4] == "        except Exception:"
-        assert tw_mock.lines[5] == ">           raise AttributeError(){}".format(
-            raise_suffix
-        )
+        assert tw_mock.lines[5] == f">           raise AttributeError(){raise_suffix}"
         assert tw_mock.lines[6] == "E           AttributeError"
         assert tw_mock.lines[7] == ""
         line = tw_mock.get_write_msg(8)
@@ -1394,7 +1389,7 @@ raise ValueError()
         """
         exc_handling_code = " from e" if reason == "cause" else ""
         mod = importasmod(
-            """
+            f"""
             def f():
                 try:
                     g()
@@ -1402,9 +1397,7 @@ raise ValueError()
                     raise RuntimeError('runtime problem'){exc_handling_code}
             def g():
                 raise ValueError('invalid value')
-        """.format(
-                exc_handling_code=exc_handling_code
-            )
+        """
         )
 
         with pytest.raises(RuntimeError) as excinfo:
@@ -1589,7 +1582,7 @@ def test_no_recursion_index_on_recursion_error():
             return getattr(self, "_" + attr)
 
     with pytest.raises(RuntimeError) as excinfo:
-        RecursionDepthError().trigger
+        _ = RecursionDepthError().trigger
     assert "maximum recursion" in str(excinfo.getrepr())
 
 
@@ -1746,7 +1739,7 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
 def add_note(err: BaseException, msg: str) -> None:
     """Adds a note to an exception inplace."""
     if sys.version_info < (3, 11):
-        err.__notes__ = getattr(err, "__notes__", []) + [msg]  # type: ignore[attr-defined]
+        err.__notes__ = [*getattr(err, "__notes__", []), msg]  # type: ignore[attr-defined]
     else:
         err.add_note(msg)
 

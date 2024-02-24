@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Basic collect and runtest protocol implementations."""
 import bdb
 import dataclasses
@@ -35,6 +36,7 @@ from _pytest.outcomes import Exit
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
+
 
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import BaseExceptionGroup
@@ -93,8 +95,7 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
         if verbose < 2 and rep.duration < durations_min:
             tr.write_line("")
             tr.write_line(
-                "(%s durations < %gs hidden.  Use -vv to show these durations.)"
-                % (len(dlist) - i, durations_min)
+                f"({len(dlist) - i} durations < {durations_min:g}s hidden.  Use -vv to show these durations.)"
             )
             break
         tr.write_line(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}")
@@ -131,10 +132,6 @@ def runtestprotocol(
             show_test_item(item)
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
-    # If the session is about to fail or stop, teardown everything - this is
-    # necessary to correctly report fixture teardown errors (see #11706)
-    if item.session.shouldfail or item.session.shouldstop:
-        nextitem = None
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # After all teardown hooks have been called
     # want funcargs and request info to go away.
@@ -167,6 +164,8 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_type
         del sys.last_value
         del sys.last_traceback
+        if sys.version_info >= (3, 12, 0):
+            del sys.last_exc  # type: ignore[attr-defined]
     except AttributeError:
         pass
     try:
@@ -175,6 +174,8 @@ def pytest_runtest_call(item: Item) -> None:
         # Store trace info to allow postmortem debugging
         sys.last_type = type(e)
         sys.last_value = e
+        if sys.version_info >= (3, 12, 0):
+            sys.last_exc = e  # type: ignore[attr-defined]
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next
@@ -223,13 +224,26 @@ def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str
 def call_and_report(
     item: Item, when: Literal["setup", "call", "teardown"], log: bool = True, **kwds
 ) -> TestReport:
-    call = call_runtest_hook(item, when, **kwds)
-    hook = item.ihook
-    report: TestReport = hook.pytest_runtest_makereport(item=item, call=call)
+    ihook = item.ihook
+    if when == "setup":
+        runtest_hook: Callable[..., None] = ihook.pytest_runtest_setup
+    elif when == "call":
+        runtest_hook = ihook.pytest_runtest_call
+    elif when == "teardown":
+        runtest_hook = ihook.pytest_runtest_teardown
+    else:
+        assert False, f"Unhandled runtest hook case: {when}"
+    reraise: Tuple[Type[BaseException], ...] = (Exit,)
+    if not item.config.getoption("usepdb", False):
+        reraise += (KeyboardInterrupt,)
+    call = CallInfo.from_call(
+        lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+    )
+    report: TestReport = ihook.pytest_runtest_makereport(item=item, call=call)
     if log:
-        hook.pytest_runtest_logreport(report=report)
+        ihook.pytest_runtest_logreport(report=report)
     if check_interactive_exception(call, report):
-        hook.pytest_exception_interact(node=item, call=call, report=report)
+        ihook.pytest_exception_interact(node=item, call=call, report=report)
     return report
 
 
@@ -246,25 +260,6 @@ def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) ->
         # Special control flow exception.
         return False
     return True
-
-
-def call_runtest_hook(
-    item: Item, when: Literal["setup", "call", "teardown"], **kwds
-) -> "CallInfo[None]":
-    if when == "setup":
-        ihook: Callable[..., None] = item.ihook.pytest_runtest_setup
-    elif when == "call":
-        ihook = item.ihook.pytest_runtest_call
-    elif when == "teardown":
-        ihook = item.ihook.pytest_runtest_teardown
-    else:
-        assert False, f"Unhandled runtest hook case: {when}"
-    reraise: Tuple[Type[BaseException], ...] = (Exit,)
-    if not item.config.getoption("usepdb", False):
-        reraise += (KeyboardInterrupt,)
-    return CallInfo.from_call(
-        lambda: ihook(item=item, **kwds), when=when, reraise=reraise
-    )
 
 
 TResult = TypeVar("TResult", covariant=True)

@@ -660,6 +660,31 @@ If we run this:
     E       assert 0
 
     test_step.py:11: AssertionError
+    ================================ XFAILURES =================================
+    ______________________ TestUserHandling.test_deletion ______________________
+
+    item = <Function test_deletion>
+
+        def pytest_runtest_setup(item):
+            if "incremental" in item.keywords:
+                # retrieve the class name of the test
+                cls_name = str(item.cls)
+                # check if a previous test has failed for this class
+                if cls_name in _test_failed_incremental:
+                    # retrieve the index of the test (if parametrize is used in combination with incremental)
+                    parametrize_index = (
+                        tuple(item.callspec.indices.values())
+                        if hasattr(item, "callspec")
+                        else ()
+                    )
+                    # retrieve the name of the first test function to fail for this class name and index
+                    test_name = _test_failed_incremental[cls_name].get(parametrize_index, None)
+                    # if name found, test has failed for the combination of class name & test name
+                    if test_name is not None:
+    >                   pytest.xfail(f"previous test failed ({test_name})")
+    E                   _pytest.outcomes.XFailed: previous test failed (test_modification)
+
+    conftest.py:47: XFailed
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::test_deletion - reason: previous test failed (test_modification)
     ================== 1 failed, 2 passed, 1 xfailed in 0.12s ==================

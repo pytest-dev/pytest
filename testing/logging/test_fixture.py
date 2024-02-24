@@ -3,9 +3,10 @@
 import logging
 from typing import Iterator
 
-import pytest
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
+import pytest
+
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")

@@ -28,6 +28,75 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.0.1 (2024-02-16)
+=========================
+
+Bug Fixes
+---------
+
+- `#11875 <https://github.com/pytest-dev/pytest/issues/11875>`_: Correctly handle errors from :func:`getpass.getuser` in Python 3.13.
+
+
+- `#11879 <https://github.com/pytest-dev/pytest/issues/11879>`_: Fix an edge case where ``ExceptionInfo._stringify_exception`` could crash :func:`pytest.raises`.
+
+
+- `#11906 <https://github.com/pytest-dev/pytest/issues/11906>`_: Fix regression with :func:`pytest.warns` using custom warning subclasses which have more than one parameter in their `__init__`.
+
+
+- `#11907 <https://github.com/pytest-dev/pytest/issues/11907>`_: Fix a regression in pytest 8.0.0 whereby calling :func:`pytest.skip` and similar control-flow exceptions within a :func:`pytest.warns()` block would get suppressed instead of propagating.
+
+
+- `#11929 <https://github.com/pytest-dev/pytest/issues/11929>`_: Fix a regression in pytest 8.0.0 whereby autouse fixtures defined in a module get ignored by the doctests in the module.
+
+
+- `#11937 <https://github.com/pytest-dev/pytest/issues/11937>`_: Fix a regression in pytest 8.0.0 whereby items would be collected in reverse order in some circumstances.
+
+
+pytest 8.0.0 (2024-01-27)
+=========================
+
+Bug Fixes
+---------
+
+- `#11842 <https://github.com/pytest-dev/pytest/issues/11842>`_: Properly escape the ``reason`` of a :ref:`skip <pytest.mark.skip ref>` mark when writing JUnit XML files.
+
+
+- `#11861 <https://github.com/pytest-dev/pytest/issues/11861>`_: Avoid microsecond exceeds ``1_000_000`` when using ``log-date-format`` with ``%f`` specifier, which might cause the test suite to crash.
+
+
+pytest 8.0.0rc2 (2024-01-17)
+============================
+
+
+Improvements
+------------
+
+- `#11233 <https://github.com/pytest-dev/pytest/issues/11233>`_: Improvements to ``-r`` for xfailures and xpasses:
+
+  * Report tracebacks for xfailures when ``-rx`` is set.
+  * Report captured output for xpasses when ``-rX`` is set.
+  * For xpasses, add ``-`` in summary between test name and reason, to match how xfail is displayed.
+
+- `#11825 <https://github.com/pytest-dev/pytest/issues/11825>`_: The :hook:`pytest_plugin_registered` hook has a new ``plugin_name`` parameter containing the name by which ``plugin`` is registered.
+
+
+Bug Fixes
+---------
+
+- `#11706 <https://github.com/pytest-dev/pytest/issues/11706>`_: Fix reporting of teardown errors in higher-scoped fixtures when using `--maxfail` or `--stepwise`.
+
+  NOTE: This change was reverted in pytest 8.0.2 to fix a `regression <https://github.com/pytest-dev/pytest-xdist/issues/1024>`_ it caused in pytest-xdist.
+
+
+- `#11758 <https://github.com/pytest-dev/pytest/issues/11758>`_: Fixed ``IndexError: string index out of range`` crash in ``if highlighted[-1] == "\n" and source[-1] != "\n"``.
+  This bug was introduced in pytest 8.0.0rc1.
+
+
+- `#9765 <https://github.com/pytest-dev/pytest/issues/9765>`_, `#11816 <https://github.com/pytest-dev/pytest/issues/11816>`_: Fixed a frustrating bug that afflicted some users with the only error being ``assert mod not in mods``. The issue was caused by the fact that ``str(Path(mod))`` and ``mod.__file__`` don't necessarily produce the same string, and was being erroneously used interchangably in some places in the code.
+
+  This fix also broke the internal API of ``PytestPluginManager.consider_conftest`` by introducing a new parameter -- we mention this in case it is being used by external code, even if marked as *private*.
+
+
 pytest 8.0.0rc1 (2023-12-30)
 ============================
 
@@ -221,6 +290,10 @@ These are breaking changes where deprecation was not possible.
   While this is a new feature, we announce it as a breaking change
   because many test suites are configured to error-out on warnings, and will
   therefore fail on the newly-re-emitted warnings.
+
+
+- The internal ``FixtureManager.getfixtureclosure`` method has changed. Plugins which use this method or
+  which subclass ``FixtureManager`` and overwrite that method will need to adapt to the change.
 
 
 

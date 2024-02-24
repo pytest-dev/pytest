@@ -1,12 +1,14 @@
+# mypy: allow-untyped-defs
 import dataclasses
 import re
 import sys
 from typing import Generator
 from typing import List
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
+
 
 if sys.gettrace():
 

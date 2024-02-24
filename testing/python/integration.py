@@ -1,8 +1,9 @@
-import pytest
+# mypy: allow-untyped-defs
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+import pytest
 
 
 def test_wrapped_getfslineno() -> None:
@@ -42,8 +43,9 @@ class TestMockDecoration:
         assert values == ("x",)
 
     def test_getfuncargnames_patching(self):
-        from _pytest.compat import getfuncargnames
         from unittest.mock import patch
+
+        from _pytest.compat import getfuncargnames
 
         class T:
             def original(self, x, y, z):

@@ -1,21 +1,23 @@
+# mypy: allow-untyped-defs
 import contextlib
 import multiprocessing
 import os
 import sys
 import time
-import warnings
 from unittest import mock
+import warnings
 
-import pytest
 from py import error
 from py.path import local
+
+import pytest
 
 
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
         with contextlib.suppress(NameError):  # new in 3.10
-            warnings.simplefilter("ignore", EncodingWarning)  # type: ignore [name-defined]  # noqa: F821
+            warnings.simplefilter("ignore", EncodingWarning)  # type: ignore [name-defined]
         yield
 
 
@@ -181,7 +183,7 @@ class CommonFSTests:
     def test_listdir_filter(self, path1):
         p = path1.listdir(lambda x: x.check(dir=1))
         assert path1.join("sampledir") in p
-        assert not path1.join("samplefile") in p
+        assert path1.join("samplefile") not in p
 
     def test_listdir_sorted(self, path1):
         p = path1.listdir(lambda x: x.check(basestarts="sample"), sort=True)
@@ -201,7 +203,7 @@ class CommonFSTests:
         for i in path1.visit(None, lambda x: x.basename != "sampledir"):
             lst.append(i.relto(path1))
         assert "sampledir" in lst
-        assert not path1.sep.join(["sampledir", "otherfile"]) in lst
+        assert path1.sep.join(["sampledir", "otherfile"]) not in lst
 
     @pytest.mark.parametrize(
         "fil",
@@ -1239,9 +1241,9 @@ class TestWINLocalPath:
 
     def test_owner_group_not_implemented(self, path1):
         with pytest.raises(NotImplementedError):
-            path1.stat().owner
+            _ = path1.stat().owner
         with pytest.raises(NotImplementedError):
-            path1.stat().group
+            _ = path1.stat().group
 
     def test_chmod_simple_int(self, path1):
         mode = path1.stat().mode
@@ -1366,8 +1368,8 @@ class TestPOSIXLocalPath:
         assert realpath.basename == "file"
 
     def test_owner(self, path1, tmpdir):
-        from pwd import getpwuid  # type:ignore[attr-defined]
         from grp import getgrgid  # type:ignore[attr-defined]
+        from pwd import getpwuid  # type:ignore[attr-defined]
 
         stat = path1.stat()
         assert stat.path == path1

@@ -1,8 +1,9 @@
+# mypy: allow-untyped-defs
 import inspect
 
-import pytest
 from _pytest import warning_types
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.mark.parametrize(
@@ -42,5 +43,6 @@ def test_pytest_warnings_repr_integration_test(pytester: Pytester) -> None:
 def test_warn_explicit_for_annotates_errors_with_location():
     with pytest.raises(Warning, match="(?m)test\n at .*python_api.py:\\d+"):
         warning_types.warn_explicit_for(
-            pytest.raises, warning_types.PytestWarning("test")  # type: ignore
+            pytest.raises,  # type: ignore[arg-type]
+            warning_types.PytestWarning("test"),
         )

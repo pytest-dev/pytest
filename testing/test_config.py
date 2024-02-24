@@ -1,10 +1,11 @@
+# mypy: allow-untyped-defs
 import dataclasses
 import importlib.metadata
 import os
+from pathlib import Path
 import re
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -14,7 +15,6 @@ from typing import Type
 from typing import Union
 
 import _pytest._code
-import pytest
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
@@ -31,6 +31,7 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestParseIni:
@@ -50,16 +51,14 @@ class TestParseIni:
         monkeypatch.chdir(sub)
         (tmp_path / filename).write_text(
             textwrap.dedent(
-                """\
+                f"""\
                 [{section}]
                 name = value
-                """.format(
-                    section=section
-                )
+                """
             ),
             encoding="utf-8",
         )
-        _, _, cfg = locate_config([sub])
+        _, _, cfg = locate_config(Path.cwd(), [sub])
         assert cfg["name"] == "value"
         config = pytester.parseconfigure(str(sub))
         assert config.inicfg["name"] == "value"
@@ -125,12 +124,10 @@ class TestParseIni:
     def test_ini_names(self, pytester: Pytester, name, section) -> None:
         pytester.path.joinpath(name).write_text(
             textwrap.dedent(
-                """
+                f"""
             [{section}]
             minversion = 3.36
-        """.format(
-                    section=section
-                )
+        """
             ),
             encoding="utf-8",
         )
@@ -138,14 +135,44 @@ class TestParseIni:
         assert config.getini("minversion") == "3.36"
 
     def test_pyproject_toml(self, pytester: Pytester) -> None:
-        pytester.makepyprojecttoml(
+        pyproject_toml = pytester.makepyprojecttoml(
             """
             [tool.pytest.ini_options]
             minversion = "1.0"
         """
         )
         config = pytester.parseconfig()
+        assert config.inipath == pyproject_toml
         assert config.getini("minversion") == "1.0"
+
+    def test_empty_pyproject_toml(self, pytester: Pytester) -> None:
+        """An empty pyproject.toml is considered as config if no other option is found."""
+        pyproject_toml = pytester.makepyprojecttoml("")
+        config = pytester.parseconfig()
+        assert config.inipath == pyproject_toml
+
+    def test_empty_pyproject_toml_found_many(self, pytester: Pytester) -> None:
+        """
+        In case we find multiple pyproject.toml files in our search, without a [tool.pytest.ini_options]
+        table and without finding other candidates, the closest to where we started wins.
+        """
+        pytester.makefile(
+            ".toml",
+            **{
+                "pyproject": "",
+                "foo/pyproject": "",
+                "foo/bar/pyproject": "",
+            },
+        )
+        config = pytester.parseconfig(pytester.path / "foo/bar")
+        assert config.inipath == pytester.path / "foo/bar/pyproject.toml"
+
+    def test_pytest_ini_trumps_pyproject_toml(self, pytester: Pytester) -> None:
+        """A pytest.ini always take precedence over a pyproject.toml file."""
+        pytester.makepyprojecttoml("[tool.pytest.ini_options]")
+        pytest_ini = pytester.makefile(".ini", pytest="")
+        config = pytester.parseconfig()
+        assert config.inipath == pytest_ini
 
     def test_toxini_before_lower_pytestini(self, pytester: Pytester) -> None:
         sub = pytester.mkdir("sub")
@@ -864,7 +891,6 @@ class TestConfigAPI:
         """Tests the default values for configuration based on
         config type
         """
-
         pytester.makeconftest(
             """
             def pytest_addoption(parser):
@@ -1235,8 +1261,7 @@ def test_plugin_loading_order(pytester: Pytester) -> None:
             import myplugin
             assert myplugin.terminal_plugin == [False, True]
         """,
-        **{
-            "myplugin": """
+        myplugin="""
             terminal_plugin = []
 
             def pytest_configure(config):
@@ -1245,8 +1270,7 @@ def test_plugin_loading_order(pytester: Pytester) -> None:
             def pytest_sessionstart(session):
                 config = session.config
                 terminal_plugin.append(bool(config.pluginmanager.get_plugin("terminalreporter")))
-            """
-        },
+            """,
     )
     pytester.syspathinsert()
     result = pytester.runpytest("-p", "myplugin", str(p1))
@@ -1436,16 +1460,16 @@ def test_collect_pytest_prefix_bug(pytestconfig):
 
 class TestRootdir:
     def test_simple_noini(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
-        assert get_common_ancestor([tmp_path]) == tmp_path
+        assert get_common_ancestor(Path.cwd(), [tmp_path]) == tmp_path
         a = tmp_path / "a"
         a.mkdir()
-        assert get_common_ancestor([a, tmp_path]) == tmp_path
-        assert get_common_ancestor([tmp_path, a]) == tmp_path
+        assert get_common_ancestor(Path.cwd(), [a, tmp_path]) == tmp_path
+        assert get_common_ancestor(Path.cwd(), [tmp_path, a]) == tmp_path
         monkeypatch.chdir(tmp_path)
-        assert get_common_ancestor([]) == tmp_path
+        assert get_common_ancestor(Path.cwd(), []) == tmp_path
         no_path = tmp_path / "does-not-exist"
-        assert get_common_ancestor([no_path]) == tmp_path
-        assert get_common_ancestor([no_path / "a"]) == tmp_path
+        assert get_common_ancestor(Path.cwd(), [no_path]) == tmp_path
+        assert get_common_ancestor(Path.cwd(), [no_path / "a"]) == tmp_path
 
     @pytest.mark.parametrize(
         "name, contents",
@@ -1467,10 +1491,20 @@ class TestRootdir:
         b = a / "b"
         b.mkdir()
         for args in ([str(tmp_path)], [str(a)], [str(b)]):
-            rootpath, parsed_inipath, _ = determine_setup(None, args)
+            rootpath, parsed_inipath, _ = determine_setup(
+                inifile=None,
+                args=args,
+                rootdir_cmd_arg=None,
+                invocation_dir=Path.cwd(),
+            )
             assert rootpath == tmp_path
             assert parsed_inipath == inipath
-        rootpath, parsed_inipath, ini_config = determine_setup(None, [str(b), str(a)])
+        rootpath, parsed_inipath, ini_config = determine_setup(
+            inifile=None,
+            args=[str(b), str(a)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert parsed_inipath == inipath
         assert ini_config == {"x": "10"}
@@ -1482,7 +1516,12 @@ class TestRootdir:
         a = tmp_path / "a"
         a.mkdir()
         (a / name).touch()
-        rootpath, parsed_inipath, _ = determine_setup(None, [str(a)])
+        rootpath, parsed_inipath, _ = determine_setup(
+            inifile=None,
+            args=[str(a)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert parsed_inipath == inipath
 
@@ -1491,14 +1530,24 @@ class TestRootdir:
         a.mkdir()
         (a / "setup.cfg").touch()
         (tmp_path / "setup.py").touch()
-        rootpath, inipath, inicfg = determine_setup(None, [str(a)])
+        rootpath, inipath, inicfg = determine_setup(
+            inifile=None,
+            args=[str(a)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert inipath is None
         assert inicfg == {}
 
     def test_nothing(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.chdir(tmp_path)
-        rootpath, inipath, inicfg = determine_setup(None, [str(tmp_path)])
+        rootpath, inipath, inicfg = determine_setup(
+            inifile=None,
+            args=[str(tmp_path)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert inipath is None
         assert inicfg == {}
@@ -1520,7 +1569,12 @@ class TestRootdir:
         p = tmp_path / name
         p.touch()
         p.write_text(contents, encoding="utf-8")
-        rootpath, inipath, ini_config = determine_setup(str(p), [str(tmp_path)])
+        rootpath, inipath, ini_config = determine_setup(
+            inifile=str(p),
+            args=[str(tmp_path)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert inipath == p
         assert ini_config == {"x": "10"}
@@ -1534,14 +1588,24 @@ class TestRootdir:
         monkeypatch.chdir(tmp_path)
 
         # No config file is explicitly given: rootdir is determined to be cwd.
-        rootpath, found_inipath, *_ = determine_setup(None, [str(tests_dir)])
+        rootpath, found_inipath, *_ = determine_setup(
+            inifile=None,
+            args=[str(tests_dir)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert found_inipath is None
 
         # Config file is explicitly given: rootdir is determined to be inifile's directory.
         inipath = tmp_path / "pytest.ini"
         inipath.touch()
-        rootpath, found_inipath, *_ = determine_setup(str(inipath), [str(tests_dir)])
+        rootpath, found_inipath, *_ = determine_setup(
+            inifile=str(inipath),
+            args=[str(tests_dir)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert found_inipath == inipath
 
@@ -1553,7 +1617,12 @@ class TestRootdir:
         a.mkdir()
         b = tmp_path / "b"
         b.mkdir()
-        rootpath, inifile, _ = determine_setup(None, [str(a), str(b)])
+        rootpath, inifile, _ = determine_setup(
+            inifile=None,
+            args=[str(a), str(b)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert inifile is None
 
@@ -1564,7 +1633,12 @@ class TestRootdir:
         b.mkdir()
         inipath = a / "pytest.ini"
         inipath.touch()
-        rootpath, parsed_inipath, _ = determine_setup(None, [str(a), str(b)])
+        rootpath, parsed_inipath, _ = determine_setup(
+            inifile=None,
+            args=[str(a), str(b)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == a
         assert inipath == parsed_inipath
 
@@ -1573,7 +1647,12 @@ class TestRootdir:
         self, dirs: Sequence[str], tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
         monkeypatch.chdir(tmp_path)
-        rootpath, inipath, _ = determine_setup(None, dirs)
+        rootpath, inipath, _ = determine_setup(
+            inifile=None,
+            args=dirs,
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert inipath is None
 
@@ -1584,7 +1663,12 @@ class TestRootdir:
         a.mkdir()
         (a / "exists").touch()
         monkeypatch.chdir(tmp_path)
-        rootpath, inipath, _ = determine_setup(None, ["a/exist"])
+        rootpath, inipath, _ = determine_setup(
+            inifile=None,
+            args=["a/exist"],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
         assert rootpath == tmp_path
         assert inipath is None
 
@@ -1598,7 +1682,12 @@ class TestRootdir:
         (tmp_path / "myproject" / "tests").mkdir()
         monkeypatch.chdir(tmp_path / "myproject")
 
-        rootpath, inipath, _ = determine_setup(None, ["tests/"])
+        rootpath, inipath, _ = determine_setup(
+            inifile=None,
+            args=["tests/"],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
 
         assert rootpath == tmp_path / "myproject"
         assert inipath == tmp_path / "myproject" / "setup.cfg"
@@ -1610,11 +1699,9 @@ class TestOverrideIniArgs:
         section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
         pytester.path.joinpath(name).write_text(
             textwrap.dedent(
-                """
+                f"""
             {section}
-            custom = 1.0""".format(
-                    section=section
-                )
+            custom = 1.0"""
             ),
             encoding="utf-8",
         )
@@ -1779,8 +1866,8 @@ class TestOverrideIniArgs:
         result = pytester.runpytest("cache_dir=ignored")
         result.stderr.fnmatch_lines(
             [
-                "%s: error: argument -o/--override-ini: expected one argument (via addopts config)"
-                % (pytester._request.config._parser.optparser.prog,)
+                f"{pytester._request.config._parser.optparser.prog}: error: "
+                f"argument -o/--override-ini: expected one argument (via addopts config)"
             ]
         )
         assert result.ret == _pytest.config.ExitCode.USAGE_ERROR
@@ -1816,6 +1903,18 @@ class TestOverrideIniArgs:
         result = pytester.runpytest("-o", "foo=1", "-o", "bar=0", "test_foo.py")
         assert "ERROR:" not in result.stderr.str()
         result.stdout.fnmatch_lines(["collected 1 item", "*= 1 passed in *="])
+
+    def test_override_ini_without_config_file(self, pytester: Pytester) -> None:
+        pytester.makepyfile(**{"src/override_ini_without_config_file.py": ""})
+        pytester.makepyfile(
+            **{
+                "tests/test_override_ini_without_config_file.py": (
+                    "import override_ini_without_config_file\ndef test(): pass"
+                ),
+            }
+        )
+        result = pytester.runpytest("--override-ini", "pythonpath=src")
+        assert result.parseoutcomes() == {"passed": 1}
 
 
 def test_help_via_addopts(pytester: Pytester) -> None:
@@ -1868,8 +1967,8 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
     result.stderr.fnmatch_lines(
         [
             "ERROR: usage: *",
-            "%s: error: argument --invalid-option-should-allow-for-help: expected one argument"
-            % (pytester._request.config._parser.optparser.prog,),
+            f"{pytester._request.config._parser.optparser.prog}: error: "
+            f"argument --invalid-option-should-allow-for-help: expected one argument",
         ]
     )
     # Does not display full/default help.
@@ -2028,7 +2127,6 @@ class TestPytestPluginsVariable:
         self, pytester: Pytester, use_pyargs: bool
     ) -> None:
         """When using --pyargs, do not emit the warning about non-top-level conftest warnings (#4039, #4044)"""
-
         files = {
             "src/pkg/__init__.py": "",
             "src/pkg/conftest.py": "",
@@ -2043,9 +2141,7 @@ class TestPytestPluginsVariable:
         args = ("--pyargs", "pkg") if use_pyargs else ()
         res = pytester.runpytest(*args)
         assert res.ret == (0 if use_pyargs else 2)
-        msg = (
-            msg
-        ) = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
+        msg = "Defining 'pytest_plugins' in a non-top-level conftest is no longer supported"
         if use_pyargs:
             assert msg not in res.stdout.str()
         else:
@@ -2108,9 +2204,7 @@ def test_conftest_import_error_repr(tmp_path: Path) -> None:
         try:
             raise RuntimeError("some error")
         except Exception as exc:
-            assert exc.__traceback__ is not None
-            exc_info = (type(exc), exc, exc.__traceback__)
-            raise ConftestImportFailure(path, exc_info) from exc
+            raise ConftestImportFailure(path, cause=exc) from exc
 
 
 def test_strtobool() -> None:

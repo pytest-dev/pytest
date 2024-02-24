@@ -1,12 +1,11 @@
+# mypy: allow-untyped-defs
 import abc
+from collections import defaultdict
+from collections import deque
 import dataclasses
 import functools
 import inspect
 import os
-import warnings
-from collections import defaultdict
-from collections import deque
-from contextlib import suppress
 from pathlib import Path
 from typing import AbstractSet
 from typing import Any
@@ -30,6 +29,7 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 import _pytest
 from _pytest import nodes
@@ -119,7 +119,7 @@ def get_scope_package(
 ) -> Optional[nodes.Node]:
     from _pytest.python import Package
 
-    for parent in node.iterparents():
+    for parent in node.iter_parents():
         if isinstance(parent, Package) and parent.nodeid == fixturedef.baseid:
             return parent
     return node.session
@@ -168,33 +168,28 @@ def get_parametrized_fixture_keys(
     the specified scope."""
     assert scope is not Scope.Function
     try:
-        callspec = item.callspec  # type: ignore[attr-defined]
+        callspec: CallSpec2 = item.callspec  # type: ignore[attr-defined]
     except AttributeError:
-        pass
-    else:
-        cs: CallSpec2 = callspec
-        # cs.indices is random order of argnames.  Need to
-        # sort this so that different calls to
-        # get_parametrized_fixture_keys will be deterministic.
-        for argname in sorted(cs.indices):
-            if cs._arg2scope[argname] != scope:
-                continue
+        return
+    for argname in callspec.indices:
+        if callspec._arg2scope[argname] != scope:
+            continue
 
-            item_cls = None
-            if scope is Scope.Session:
-                scoped_item_path = None
-            elif scope is Scope.Package:
-                scoped_item_path = item.path
-            elif scope is Scope.Module:
-                scoped_item_path = item.path
-            elif scope is Scope.Class:
-                scoped_item_path = item.path
-                item_cls = item.cls  # type: ignore[attr-defined]
-            else:
-                assert_never(scope)
+        item_cls = None
+        if scope is Scope.Session:
+            scoped_item_path = None
+        elif scope is Scope.Package:
+            scoped_item_path = item.path
+        elif scope is Scope.Module:
+            scoped_item_path = item.path
+        elif scope is Scope.Class:
+            scoped_item_path = item.path
+            item_cls = item.cls  # type: ignore[attr-defined]
+        else:
+            assert_never(scope)
 
-            param_index = cs.indices[argname]
-            yield FixtureArgKey(argname, param_index, scoped_item_path, item_cls)
+        param_index = callspec.indices[argname]
+        yield FixtureArgKey(argname, param_index, scoped_item_path, item_cls)
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
@@ -582,7 +577,6 @@ class FixtureRequest(abc.ABC):
         # (latter managed by fixturedef)
         argname = fixturedef.argname
         funcitem = self._pyfuncitem
-        scope = fixturedef._scope
         try:
             callspec = funcitem.callspec
         except AttributeError:
@@ -590,24 +584,20 @@ class FixtureRequest(abc.ABC):
         if callspec is not None and argname in callspec.params:
             param = callspec.params[argname]
             param_index = callspec.indices[argname]
-            # If a parametrize invocation set a scope it will override
-            # the static scope defined with the fixture function.
-            with suppress(KeyError):
-                scope = callspec._arg2scope[argname]
+            # The parametrize invocation scope overrides the fixture's scope.
+            scope = callspec._arg2scope[argname]
         else:
             param = NOTSET
             param_index = 0
+            scope = fixturedef._scope
+
             has_params = fixturedef.params is not None
             fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
             if has_params and fixtures_not_supported:
                 msg = (
-                    "{name} does not support fixtures, maybe unittest.TestCase subclass?\n"
-                    "Node id: {nodeid}\n"
-                    "Function type: {typename}"
-                ).format(
-                    name=funcitem.name,
-                    nodeid=funcitem.nodeid,
-                    typename=type(funcitem).__name__,
+                    f"{funcitem.name} does not support fixtures, maybe unittest.TestCase subclass?\n"
+                    f"Node id: {funcitem.nodeid}\n"
+                    f"Function type: {type(funcitem).__name__}"
                 )
                 fail(msg, pytrace=False)
             if has_params:
@@ -740,9 +730,7 @@ class SubRequest(FixtureRequest):
         if node is None and scope is Scope.Class:
             # Fallback to function item itself.
             node = self._pyfuncitem
-        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(
-            scope, self._pyfuncitem
-        )
+        assert node, f'Could not obtain a node for scope "{scope}" for function {self._pyfuncitem!r}'
         return node
 
     def _check_scope(
@@ -845,8 +833,8 @@ class FixtureLookupError(LookupError):
                 if faclist:
                     available.add(name)
             if self.argname in available:
-                msg = " recursive dependency involving fixture '{}' detected".format(
-                    self.argname
+                msg = (
+                    f" recursive dependency involving fixture '{self.argname}' detected"
                 )
             else:
                 msg = f"fixture '{self.argname}' not found"
@@ -940,15 +928,13 @@ def _eval_scope_callable(
         result = scope_callable(fixture_name=fixture_name, config=config)  # type: ignore[call-arg]
     except Exception as e:
         raise TypeError(
-            "Error evaluating {} while defining fixture '{}'.\n"
-            "Expected a function with the signature (*, fixture_name, config)".format(
-                scope_callable, fixture_name
-            )
+            f"Error evaluating {scope_callable} while defining fixture '{fixture_name}'.\n"
+            "Expected a function with the signature (*, fixture_name, config)"
         ) from e
     if not isinstance(result, str):
         fail(
-            "Expected {} to return a 'str' while defining fixture '{}', but it returned:\n"
-            "{!r}".format(scope_callable, fixture_name, result),
+            f"Expected {scope_callable} to return a 'str' while defining fixture '{fixture_name}', but it returned:\n"
+            f"{result!r}",
             pytrace=False,
         )
     return result
@@ -1090,9 +1076,7 @@ class FixtureDef(Generic[FixtureValue]):
         return request.param_index if not hasattr(request, "param") else request.param
 
     def __repr__(self) -> str:
-        return "<FixtureDef argname={!r} scope={!r} baseid={!r}>".format(
-            self.argname, self.scope, self.baseid
-        )
+        return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
 
 
 def resolve_fixture_function(
@@ -1113,7 +1097,8 @@ def resolve_fixture_function(
             # Handle the case where fixture is defined not in a test class, but some other class
             # (for example a plugin class with a fixture), see #2270.
             if hasattr(fixturefunc, "__self__") and not isinstance(
-                request.instance, fixturefunc.__self__.__class__  # type: ignore[union-attr]
+                request.instance,
+                fixturefunc.__self__.__class__,  # type: ignore[union-attr]
             ):
                 return fixturefunc
             fixturefunc = getimfunc(fixturedef.func)
@@ -1196,7 +1181,7 @@ class FixtureFunctionMarker:
 
         if getattr(function, "_pytestfixturefunction", False):
             raise ValueError(
-                "fixture is being applied more than once to the same function"
+                f"@pytest.fixture is being applied more than once to the same function {function.__name__!r}"
             )
 
         if hasattr(function, "pytestmark"):
@@ -1208,9 +1193,7 @@ class FixtureFunctionMarker:
         if name == "request":
             location = getlocation(function)
             fail(
-                "'request' is a reserved word for fixtures, use another name:\n  {}".format(
-                    location
-                ),
+                f"'request' is a reserved word for fixtures, use another name:\n  {location}",
                 pytrace=False,
             )
 
@@ -1235,7 +1218,7 @@ def fixture(
 
 
 @overload
-def fixture(  # noqa: F811
+def fixture(
     fixture_function: None = ...,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = ...,
@@ -1249,7 +1232,7 @@ def fixture(  # noqa: F811
     ...
 
 
-def fixture(  # noqa: F811
+def fixture(
     fixture_function: Optional[FixtureFunction] = None,
     *,
     scope: "Union[_ScopeName, Callable[[str, Config], _ScopeName]]" = "function",
@@ -1483,25 +1466,27 @@ class FixtureManager:
 
         return FuncFixtureInfo(argnames, initialnames, names_closure, arg2fixturedefs)
 
-    def pytest_plugin_registered(self, plugin: _PluggyPlugin) -> None:
-        nodeid = None
-        try:
-            p = absolutepath(plugin.__file__)  # type: ignore[attr-defined]
-        except AttributeError:
-            pass
+    def pytest_plugin_registered(self, plugin: _PluggyPlugin, plugin_name: str) -> None:
+        # Fixtures defined in conftest plugins are only visible to within the
+        # conftest's directory. This is unlike fixtures in non-conftest plugins
+        # which have global visibility. So for conftests, construct the base
+        # nodeid from the plugin name (which is the conftest path).
+        if plugin_name and plugin_name.endswith("conftest.py"):
+            # Note: we explicitly do *not* use `plugin.__file__` here -- The
+            # difference is that plugin_name has the correct capitalization on
+            # case-insensitive systems (Windows) and other normalization issues
+            # (issue #11816).
+            conftestpath = absolutepath(plugin_name)
+            try:
+                nodeid = str(conftestpath.parent.relative_to(self.config.rootpath))
+            except ValueError:
+                nodeid = ""
+            if nodeid == ".":
+                nodeid = ""
+            if os.sep != nodes.SEP:
+                nodeid = nodeid.replace(os.sep, nodes.SEP)
         else:
-            # Construct the base nodeid which is later used to check
-            # what fixtures are visible for particular tests (as denoted
-            # by their test id).
-            if p.name == "conftest.py":
-                try:
-                    nodeid = str(p.parent.relative_to(self.config.rootpath))
-                except ValueError:
-                    nodeid = ""
-                if nodeid == ".":
-                    nodeid = ""
-                if os.sep != nodes.SEP:
-                    nodeid = nodeid.replace(os.sep, nodes.SEP)
+            nodeid = None
 
         self.parsefactories(plugin, nodeid)
 
@@ -1681,7 +1666,7 @@ class FixtureManager:
         raise NotImplementedError()
 
     @overload
-    def parsefactories(  # noqa: F811
+    def parsefactories(
         self,
         node_or_obj: object,
         nodeid: Optional[str],
@@ -1690,7 +1675,7 @@ class FixtureManager:
     ) -> None:
         raise NotImplementedError()
 
-    def parsefactories(  # noqa: F811
+    def parsefactories(
         self,
         node_or_obj: Union[nodes.Node, object],
         nodeid: Union[str, NotSetType, None] = NOTSET,
@@ -1775,7 +1760,7 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        parentnodeids = {n.nodeid for n in node.iterparents()}
+        parentnodeids = {n.nodeid for n in node.iter_parents()}
         for fixturedef in fixturedefs:
             if fixturedef.baseid in parentnodeids:
                 yield fixturedef

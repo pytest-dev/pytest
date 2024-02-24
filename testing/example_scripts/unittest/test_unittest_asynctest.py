@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Issue #7110"""
 import asyncio
 from typing import List

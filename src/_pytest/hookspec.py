@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Hook specifications for pytest plugins which are invoked by pytest itself
 and by builtin plugins."""
 from pathlib import Path
@@ -13,17 +14,18 @@ from typing import Union
 
 from pluggy import HookspecMarker
 
+
 if TYPE_CHECKING:
     import pdb
-    import warnings
     from typing import Literal
+    import warnings
 
-    from _pytest._code.code import ExceptionRepr
     from _pytest._code.code import ExceptionInfo
+    from _pytest._code.code import ExceptionRepr
+    from _pytest.config import _PluggyPlugin
     from _pytest.config import Config
     from _pytest.config import ExitCode
     from _pytest.config import PytestPluginManager
-    from _pytest.config import _PluggyPlugin
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureDef
     from _pytest.fixtures import SubRequest
@@ -54,24 +56,41 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
     """Called at plugin registration time to allow adding new hooks via a call to
     :func:`pluginmanager.add_hookspecs(module_or_class, prefix) <pytest.PytestPluginManager.add_hookspecs>`.
 
-    :param pytest.PytestPluginManager pluginmanager: The pytest plugin manager.
+    :param pluginmanager: The pytest plugin manager.
 
     .. note::
         This hook is incompatible with hook wrappers.
+
+    Use in conftest plugins
+    =======================
+
+    If a conftest plugin implements this hook, it will be called immediately
+    when the conftest is registered.
     """
 
 
 @hookspec(historic=True)
 def pytest_plugin_registered(
-    plugin: "_PluggyPlugin", manager: "PytestPluginManager"
+    plugin: "_PluggyPlugin",
+    plugin_name: str,
+    manager: "PytestPluginManager",
 ) -> None:
     """A new pytest plugin got registered.
 
     :param plugin: The plugin module or instance.
-    :param pytest.PytestPluginManager manager: pytest plugin manager.
+    :param plugin_name: The name by which the plugin is registered.
+    :param manager: The pytest plugin manager.
 
     .. note::
         This hook is incompatible with hook wrappers.
+
+    Use in conftest plugins
+    =======================
+
+    If a conftest plugin implements this hook, it will be called immediately
+    when the conftest is registered, once for each plugin registered thus far
+    (including itself!), and for all plugins thereafter when they are
+    registered.
     """
 
 
@@ -80,19 +99,13 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
     """Register argparse-style options and ini-style config values,
     called once at the beginning of a test run.
 
-    .. note::
-
-        This function should be implemented only in plugins or ``conftest.py``
-        files situated at the tests root directory due to how pytest
-        :ref:`discovers plugins during startup <pluginorder>`.
-
-    :param pytest.Parser parser:
+    :param parser:
         To add command line options, call
         :py:func:`parser.addoption(...) <pytest.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
         <pytest.Parser.addini>`.
 
-    :param pytest.PytestPluginManager pluginmanager:
+    :param pluginmanager:
         The pytest plugin manager, which can be used to install :py:func:`~pytest.hookspec`'s
         or :py:func:`~pytest.hookimpl`'s and allow one plugin to call another plugin's hooks
         to change how command line options are added.
@@ -111,6 +124,14 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
 
     .. note::
         This hook is incompatible with hook wrappers.
+
+    Use in conftest plugins
+    =======================
+
+    If a conftest plugin implements this hook, it will be called immediately
+    when the conftest is registered.
+
+    This hook is only called for :ref:`initial conftests <pluginorder>`.
     """
 
 
@@ -118,16 +139,17 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
 def pytest_configure(config: "Config") -> None:
     """Allow plugins and conftest files to perform initial configuration.
 
-    This hook is called for every plugin and initial conftest file
-    after command line options have been parsed.
-
-    After that, the hook is called for other conftest files as they are
-    imported.
-
     .. note::
         This hook is incompatible with hook wrappers.
 
-    :param pytest.Config config: The pytest config object.
+    :param config: The pytest config object.
+
+    Use in conftest plugins
+    =======================
+
+    This hook is called for every :ref:`initial conftest <pluginorder>` file
+    after command line options have been parsed. After that, the hook is called
+    for other conftest files as they are registered.
     """
 
 
@@ -146,40 +168,54 @@ def pytest_cmdline_parse(
     Stops at first non-None result, see :ref:`firstresult`.
 
     .. note::
-        This hook will only be called for plugin classes passed to the
+        This hook is only called for plugin classes passed to the
         ``plugins`` arg when using `pytest.main`_ to perform an in-process
         test run.
 
     :param pluginmanager: The pytest plugin manager.
     :param args: List of arguments passed on the command line.
     :returns: A pytest config object.
-    """
 
+    Use in conftest plugins
+    =======================
 
-@hookspec(firstresult=True)
-def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
-    """Called for performing the main command line action. The default
-    implementation will invoke the configure hooks and runtest_mainloop.
-
-    Stops at first non-None result, see :ref:`firstresult`.
-
-    :param config: The pytest config object.
-    :returns: The exit code.
+    This hook is not called for conftest files.
     """
 
 
 def pytest_load_initial_conftests(
     early_config: "Config", parser: "Parser", args: List[str]
 ) -> None:
-    """Called to implement the loading of initial conftest files ahead
-    of command line option parsing.
-
-    .. note::
-        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
+    """Called to implement the loading of :ref:`initial conftest files
+    <pluginorder>` ahead of command line option parsing.
 
     :param early_config: The pytest config object.
     :param args: Arguments passed on the command line.
     :param parser: To add command line options.
+
+    Use in conftest plugins
+    =======================
+
+    This hook is not called for conftest files.
+    """
+
+
+@hookspec(firstresult=True)
+def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
+    """Called for performing the main command line action.
+
+    The default implementation will invoke the configure hooks and
+    :hook:`pytest_runtestloop`.
+
+    Stops at first non-None result, see :ref:`firstresult`.
+
+    :param config: The pytest config object.
+    :returns: The exit code.
+
+    Use in conftest plugins
+    =======================
+
+    This hook is only called for :ref:`initial conftests <pluginorder>`.
     """
 
 
@@ -222,6 +258,11 @@ def pytest_collection(session: "Session") -> Optional[object]:
     counter (and returns `None`).
 
     :param session: The pytest session object.
+
+    Use in conftest plugins
+    =======================
+
+    This hook is only called for :ref:`initial conftests <pluginorder>`.
     """
 
 
@@ -234,6 +275,11 @@ def pytest_collection_modifyitems(
     :param session: The pytest session object.
     :param config: The pytest config object.
     :param items: List of item objects.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -241,6 +287,11 @@ def pytest_collection_finish(session: "Session") -> None:
     """Called after collection has been performed and modified.
 
     :param session: The pytest session object.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -263,6 +314,14 @@ def pytest_ignore_collect(collection_path: Path, config: "Config") -> Optional[b
 
     .. versionchanged:: 8.0.0
         The ``path`` parameter has been removed.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given collection path, only
+    conftest files in parent directories of the collection path are consulted
+    (if the path is a directory, its own conftest file is *not* consulted - a
+    directory cannot ignore itself!).
     """
 
 
@@ -284,6 +343,14 @@ def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Colle
 
     See :ref:`custom directory collectors` for a simple example of use of this
     hook.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given collection path, only
+    conftest files in parent directories of the collection path are consulted
+    (if the path is a directory, its own conftest file is *not* consulted - a
+    directory cannot collect itself!).
     """
 
 
@@ -304,6 +371,12 @@ def pytest_collect_file(file_path: Path, parent: "Collector") -> "Optional[Colle
 
     .. versionchanged:: 8.0.0
         The ``path`` parameter was removed.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given file path, only
+    conftest files in parent directories of the file path are consulted.
     """
 
 
@@ -315,6 +388,13 @@ def pytest_collectstart(collector: "Collector") -> None:
 
     :param collector:
         The collector.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given collector, only
+    conftest files in the collector's directory and its parent directories are
+    consulted.
     """
 
 
@@ -323,6 +403,12 @@ def pytest_itemcollected(item: "Item") -> None:
 
     :param item:
         The item.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -331,6 +417,13 @@ def pytest_collectreport(report: "CollectReport") -> None:
 
     :param report:
         The collect report.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given collector, only
+    conftest files in the collector's directory and its parent directories are
+    consulted.
     """
 
 
@@ -341,6 +434,11 @@ def pytest_deselected(items: Sequence["Item"]) -> None:
 
     :param items:
         The items.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook.
     """
 
 
@@ -353,6 +451,13 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
 
     :param collector:
         The collector.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given collector, only
+    conftest files in the collector's directory and its parent directories are
+    consulted.
     """
 
 
@@ -380,6 +485,13 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Optional["Module"]
 
     .. versionchanged:: 8.0.0
         The ``path`` parameter has been removed in favor of ``module_path``.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given parent collector,
+    only conftest files in the collector's directory and its parent directories
+    are consulted.
     """
 
 
@@ -399,6 +511,13 @@ def pytest_pycollect_makeitem(
         The object.
     :returns:
         The created items/collectors.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given collector, only
+    conftest files in the collector's directory and its parent directories
+    are consulted.
     """
 
 
@@ -410,6 +529,13 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
 
     :param pyfuncitem:
         The function item.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only
+    conftest files in the item's directory and its parent directories
+    are consulted.
     """
 
 
@@ -418,6 +544,13 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 
     :param metafunc:
         The :class:`~pytest.Metafunc` helper for the test function.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given function definition,
+    only conftest files in the functions's directory and its parent directories
+    are consulted.
     """
 
 
@@ -435,7 +568,12 @@ def pytest_make_parametrize_id(
 
     :param config: The pytest config object.
     :param val: The parametrized value.
-    :param str argname: The automatic parameter name produced by pytest.
+    :param argname: The automatic parameter name produced by pytest.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook.
     """
 
 
@@ -462,6 +600,11 @@ def pytest_runtestloop(session: "Session") -> Optional[object]:
 
     Stops at first non-None result, see :ref:`firstresult`.
     The return value is not used, but only stops further processing.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook.
     """
 
 
@@ -500,6 +643,11 @@ def pytest_runtest_protocol(
 
     Stops at first non-None result, see :ref:`firstresult`.
     The return value is not used, but only stops further processing.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook.
     """
 
 
@@ -514,6 +662,12 @@ def pytest_runtest_logstart(
     :param location: A tuple of ``(filename, lineno, testname)``
         where ``filename`` is a file path relative to ``config.rootpath``
         and ``lineno`` is 0-based.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -528,6 +682,12 @@ def pytest_runtest_logfinish(
     :param location: A tuple of ``(filename, lineno, testname)``
         where ``filename`` is a file path relative to ``config.rootpath``
         and ``lineno`` is 0-based.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -541,6 +701,12 @@ def pytest_runtest_setup(item: "Item") -> None:
 
     :param item:
         The item.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -551,6 +717,12 @@ def pytest_runtest_call(item: "Item") -> None:
 
     :param item:
         The item.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -569,6 +741,12 @@ def pytest_runtest_teardown(item: "Item", nextitem: Optional["Item"]) -> None:
         scheduled). This argument is used to perform exact teardowns, i.e.
         calling just enough finalizers so that nextitem only needs to call
         setup functions.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -585,6 +763,12 @@ def pytest_runtest_makereport(
     :param call: The :class:`~pytest.CallInfo` for the phase.
 
     Stops at first non-None result, see :ref:`firstresult`.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -593,6 +777,12 @@ def pytest_runtest_logreport(report: "TestReport") -> None:
     of the setup, call and teardown runtest phases of an item.
 
     See :hook:`pytest_runtest_protocol` for a description of the runtest protocol.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -606,6 +796,12 @@ def pytest_report_to_serializable(
 
     :param config: The pytest config object.
     :param report: The report.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. The exact details may depend
+    on the plugin which calls the hook.
     """
 
 
@@ -618,6 +814,12 @@ def pytest_report_from_serializable(
     :hook:`pytest_report_to_serializable`.
 
     :param config: The pytest config object.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. The exact details may depend
+    on the plugin which calls the hook.
     """
 
 
@@ -645,6 +847,13 @@ def pytest_fixture_setup(
         If the fixture function returns None, other implementations of
         this hook function will continue to be called, according to the
         behavior of the :ref:`firstresult` option.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given fixture, only
+    conftest files in the fixture scope's directory and its parent directories
+    are consulted.
     """
 
 
@@ -659,6 +868,13 @@ def pytest_fixture_post_finalizer(
         The fixture definition object.
     :param request:
         The fixture request object.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given fixture, only
+    conftest files in the fixture scope's directory and its parent directories
+    are consulted.
     """
 
 
@@ -672,6 +888,11 @@ def pytest_sessionstart(session: "Session") -> None:
     and entering the run test loop.
 
     :param session: The pytest session object.
+
+    Use in conftest plugins
+    =======================
+
+    This hook is only called for :ref:`initial conftests <pluginorder>`.
     """
 
 
@@ -683,6 +904,11 @@ def pytest_sessionfinish(
 
     :param session: The pytest session object.
     :param exitstatus: The status which pytest will return to the system.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook.
     """
 
 
@@ -690,6 +916,11 @@ def pytest_unconfigure(config: "Config") -> None:
     """Called before test process is exited.
 
     :param config: The pytest config object.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook.
     """
 
 
@@ -712,6 +943,12 @@ def pytest_assertrepr_compare(
     :param op: The operator, e.g. `"=="`, `"!="`, `"not in"`.
     :param left: The left operand.
     :param right: The right operand.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -740,6 +977,12 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
     :param lineno: Line number of the assert statement.
     :param orig: String with the original assertion.
     :param expl: String with the assert explanation.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in the item's directory and its parent directories are consulted.
     """
 
 
@@ -764,18 +1007,17 @@ def pytest_report_header(  # type:ignore[empty-body]
         If you want to have your line(s) displayed first, use
         :ref:`trylast=True <plugin-hookorder>`.
 
-    .. note::
-
-        This function should be implemented only in plugins or ``conftest.py``
-        files situated at the tests root directory due to how pytest
-        :ref:`discovers plugins during startup <pluginorder>`.
-
     .. versionchanged:: 7.0.0
         The ``start_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``startdir`` parameter.
 
     .. versionchanged:: 8.0.0
         The ``startdir`` parameter has been removed.
+
+    Use in conftest plugins
+    =======================
+
+    This hook is only called for :ref:`initial conftests <pluginorder>`.
     """
 
 
@@ -809,6 +1051,11 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 
     .. versionchanged:: 8.0.0
         The ``startdir`` parameter has been removed.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -837,6 +1084,11 @@ def pytest_report_teststatus(  # type:ignore[empty-body]
     :returns: The test status.
 
     Stops at first non-None result, see :ref:`firstresult`.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -853,6 +1105,11 @@ def pytest_terminal_summary(
 
     .. versionadded:: 4.2
         The ``config`` parameter.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -877,7 +1134,8 @@ def pytest_warning_recorded(
         * ``"runtest"``: during test execution.
 
     :param nodeid:
-        Full id of the item.
+        Full id of the item. Empty string for warnings that are not specific to
+        a particular node.
 
     :param location:
         When available, holds information about the execution context of the captured
@@ -885,6 +1143,13 @@ def pytest_warning_recorded(
         when the execution context is at the module level.
 
     .. versionadded:: 6.0
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. If the warning is specific to a
+    particular node, only conftest files in parent directories of the node are
+    consulted.
     """
 
 
@@ -908,6 +1173,12 @@ def pytest_markeval_namespace(  # type:ignore[empty-body]
 
     :param config: The pytest config object.
     :returns: A dictionary of additional globals to add.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given item, only conftest
+    files in parent directories of the item are consulted.
     """
 
 
@@ -927,6 +1198,11 @@ def pytest_internalerror(
 
     :param excrepr: The exception repr object.
     :param excinfo: The exception info.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -936,6 +1212,11 @@ def pytest_keyboard_interrupt(
     """Called for keyboard interrupt.
 
     :param excinfo: The exception info.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -962,6 +1243,12 @@ def pytest_exception_interact(
         The call information. Contains the exception.
     :param report:
         The collection or test report.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given node, only conftest
+    files in parent directories of the node are consulted.
     """
 
 
@@ -973,6 +1260,11 @@ def pytest_enter_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
 
     :param config: The pytest config object.
     :param pdb: The Pdb instance.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """
 
 
@@ -984,4 +1276,9 @@ def pytest_leave_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
 
     :param config: The pytest config object.
     :param pdb: The Pdb instance.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest plugin can implement this hook.
     """

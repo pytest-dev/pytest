@@ -1,7 +1,8 @@
+# mypy: allow-untyped-defs
 import argparse
+from gettext import gettext
 import os
 import sys
-from gettext import gettext
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -19,6 +20,7 @@ from typing import Union
 import _pytest._io
 from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
+
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -120,7 +122,7 @@ class Parser:
         from _pytest._argcomplete import filescompleter
 
         optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
-        groups = self._groups + [self._anonymous]
+        groups = [*self._groups, self._anonymous]
         for group in groups:
             if group.options:
                 desc = group.description or group.name
@@ -196,8 +198,15 @@ class Parser:
                 * ``paths``: a list of :class:`pathlib.Path`, separated as in a shell
                 * ``pathlist``: a list of ``py.path``, separated as in a shell
 
+            For ``paths`` and ``pathlist`` types, they are considered relative to the ini-file.
+            In case the execution is happening without an ini-file defined,
+            they will be considered relative to the current working directory (for example with ``--override-ini``).
+
             .. versionadded:: 7.0
                 The ``paths`` variable type.
+
+            .. versionadded:: 8.1
+                Use the current working directory to resolve ``paths`` and ``pathlist`` in the absence of an ini-file.
 
             Defaults to ``string`` if ``None`` or not passed.
         :param default:
@@ -215,7 +224,7 @@ class Parser:
 
 
 def get_ini_default_for_type(
-    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]]
+    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]],
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
@@ -447,7 +456,7 @@ class MyOptionParser(argparse.ArgumentParser):
         ) -> Optional[Tuple[Optional[argparse.Action], str, Optional[str]]]:
             if not arg_string:
                 return None
-            if not arg_string[0] in self.prefix_chars:
+            if arg_string[0] not in self.prefix_chars:
                 return None
             if arg_string in self._option_string_actions:
                 action = self._option_string_actions[arg_string]

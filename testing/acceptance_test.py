@@ -1,13 +1,15 @@
+# mypy: allow-untyped-defs
 import dataclasses
 import importlib.metadata
 import os
+import subprocess
 import sys
 import types
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
+import pytest
 
 
 def prepend_pythonpath(*dirs) -> str:
@@ -239,7 +241,7 @@ class TestGeneralUsage:
         pytester.copy_example("issue88_initial_file_multinodes")
         p = pytester.makepyfile("def test_hello(): pass")
         result = pytester.runpytest(p, "--collect-only")
-        result.stdout.fnmatch_lines(["*Module*test_issue88*", "*MyFile*test_issue88*"])
+        result.stdout.fnmatch_lines(["*MyFile*test_issue88*", "*Module*test_issue88*"])
 
     def test_issue93_initialnode_importing_capturing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -1390,3 +1392,61 @@ def test_doctest_and_normal_imports_with_importlib(pytester: Pytester) -> None:
     )
     result = pytester.runpytest_subprocess()
     result.stdout.fnmatch_lines("*1 passed*")
+
+
+@pytest.mark.skip(reason="Test is not isolated")
+def test_issue_9765(pytester: Pytester) -> None:
+    """Reproducer for issue #9765 on Windows
+
+    https://github.com/pytest-dev/pytest/issues/9765
+    """
+    pytester.makepyprojecttoml(
+        """
+        [tool.pytest.ini_options]
+        addopts = "-p my_package.plugin.my_plugin"
+        """
+    )
+    pytester.makepyfile(
+        **{
+            "setup.py": (
+                """
+                from setuptools import setup
+
+                if __name__ == '__main__':
+                    setup(name='my_package', packages=['my_package', 'my_package.plugin'])
+                """
+            ),
+            "my_package/__init__.py": "",
+            "my_package/conftest.py": "",
+            "my_package/test_foo.py": "def test(): pass",
+            "my_package/plugin/__init__.py": "",
+            "my_package/plugin/my_plugin.py": (
+                """
+                import pytest
+
+                def pytest_configure(config):
+
+                    class SimplePlugin:
+                        @pytest.fixture(params=[1, 2, 3])
+                        def my_fixture(self, request):
+                            yield request.param
+
+                    config.pluginmanager.register(SimplePlugin())
+                """
+            ),
+        }
+    )
+
+    subprocess.run([sys.executable, "setup.py", "develop"], check=True)
+    try:
+        # We are using subprocess.run rather than pytester.run on purpose.
+        # pytester.run is adding the current directory to PYTHONPATH which avoids
+        # the bug. We also use pytest rather than python -m pytest for the same
+        # PYTHONPATH reason.
+        subprocess.run(
+            ["pytest", "my_package"], capture_output=True, check=True, text=True
+        )
+    except subprocess.CalledProcessError as exc:
+        raise AssertionError(
+            f"pytest command failed:\n{exc.stdout=!s}\n{exc.stderr=!s}"
+        ) from exc

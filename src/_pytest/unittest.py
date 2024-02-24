@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Discover and run std-library "unittest" style tests."""
 import sys
 import traceback
@@ -14,7 +15,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._code
-import pytest
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
@@ -29,9 +29,12 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
 from _pytest.runner import CallInfo
+import pytest
+
 
 if TYPE_CHECKING:
     import unittest
+
     import twisted.trial.unittest
 
     _SysExcInfoType = Union[
@@ -52,8 +55,7 @@ def pytest_pycollect_makeitem(
     except Exception:
         return None
     # Yes, so let's collect it.
-    item: UnitTestCase = UnitTestCase.from_parent(collector, name=name, obj=obj)
-    return item
+    return UnitTestCase.from_parent(collector, name=name, obj=obj)
 
 
 class UnitTestCase(Class):
@@ -201,11 +203,13 @@ class TestCaseFunction(Function):
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
-            excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(rawexcinfo)  # type: ignore[arg-type]
+            excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(
+                rawexcinfo  # type: ignore[arg-type]
+            )
             # Invoke the attributes to trigger storing the traceback
             # trial causes some issue there.
-            excinfo.value
-            excinfo.traceback
+            _ = excinfo.value
+            _ = excinfo.traceback
         except TypeError:
             try:
                 try:
@@ -221,7 +225,7 @@ class TestCaseFunction(Function):
                 except BaseException:
                     fail(
                         "ERROR: Unknown Incompatible Exception "
-                        "representation:\n%r" % (rawexcinfo,),
+                        f"representation:\n{rawexcinfo!r}",
                         pytrace=False,
                     )
             except KeyboardInterrupt:
@@ -346,9 +350,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
     # handled internally, and doesn't reach here.
     unittest = sys.modules.get("unittest")
     if (
-        unittest
-        and call.excinfo
-        and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
+        unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
     ):
         excinfo = call.excinfo
         call2 = CallInfo[None].from_call(
@@ -358,14 +360,21 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
 
 
 # Twisted trial support.
+classImplements_has_run = False
 
 
 @hookimpl(wrapper=True)
 def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     if isinstance(item, TestCaseFunction) and "twisted.trial.unittest" in sys.modules:
         ut: Any = sys.modules["twisted.python.failure"]
+        global classImplements_has_run
         Failure__init__ = ut.Failure.__init__
-        check_testcase_implements_trial_reporter()
+        if not classImplements_has_run:
+            from twisted.trial.itrial import IReporter
+            from zope.interface import classImplements
+
+            classImplements(TestCaseFunction, IReporter)
+            classImplements_has_run = True
 
         def excstore(
             self, exc_value=None, exc_type=None, exc_tb=None, captureVars=None
@@ -391,16 +400,6 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     else:
         res = yield
     return res
-
-
-def check_testcase_implements_trial_reporter(done: List[int] = []) -> None:
-    if done:
-        return
-    from zope.interface import classImplements
-    from twisted.trial.itrial import IReporter
-
-    classImplements(TestCaseFunction, IReporter)
-    done.append(1)
 
 
 def _is_skipped(obj) -> bool:

@@ -1,16 +1,17 @@
+# mypy: allow-untyped-defs
 """Access and control log capturing."""
-import io
-import logging
-import os
-import re
 from contextlib import contextmanager
 from contextlib import nullcontext
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+import io
 from io import StringIO
+import logging
 from logging import LogRecord
+import os
 from pathlib import Path
+import re
 from types import TracebackType
 from typing import AbstractSet
 from typing import Dict
@@ -43,6 +44,7 @@ from _pytest.main import Session
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 
+
 if TYPE_CHECKING:
     logging_StreamHandler = logging.StreamHandler[StringIO]
 else:
@@ -71,7 +73,8 @@ class DatetimeFormatter(logging.Formatter):
             tz = timezone(timedelta(seconds=ct.tm_gmtoff), ct.tm_zone)
             # Construct `datetime.datetime` object from `struct_time`
             # and msecs information from `record`
-            dt = datetime(*ct[0:6], microsecond=round(record.msecs * 1000), tzinfo=tz)
+            # Using int() instead of round() to avoid it exceeding 1_000_000 and causing a ValueError (#11861).
+            dt = datetime(*ct[0:6], microsecond=int(record.msecs * 1000), tzinfo=tz)
             return dt.strftime(datefmt)
         # Use `logging.Formatter` for non-microsecond formats
         return super().formatTime(record, datefmt)
@@ -114,7 +117,6 @@ class ColoredLevelFormatter(DatetimeFormatter):
         .. warning::
             This is an experimental API.
         """
-
         assert self._fmt is not None
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
         if not levelname_fmt_match:
@@ -181,7 +183,6 @@ class PercentStyleMultiline(logging.PercentStyle):
             0 (auto-indent turned off) or
             >0 (explicitly set indentation position).
         """
-
         if auto_indent_option is None:
             return 0
         elif isinstance(auto_indent_option, bool):
@@ -296,6 +297,13 @@ def pytest_addoption(parser: Parser) -> None:
         dest="log_file",
         default=None,
         help="Path to a file when logging will be written to",
+    )
+    add_option_ini(
+        "--log-file-mode",
+        dest="log_file_mode",
+        default="w",
+        choices=["w", "a"],
+        help="Log file open mode",
     )
     add_option_ini(
         "--log-file-level",
@@ -623,9 +631,9 @@ def get_log_level_for_setting(config: Config, *setting_names: str) -> Optional[i
     except ValueError as e:
         # Python logging does not recognise this as a logging level
         raise UsageError(
-            "'{}' is not recognized as a logging level name for "
-            "'{}'. Please consider passing the "
-            "logging level num instead.".format(log_level, setting_name)
+            f"'{log_level}' is not recognized as a logging level name for "
+            f"'{setting_name}'. Please consider passing the "
+            "logging level num instead."
         ) from e
 
 
@@ -668,7 +676,10 @@ class LoggingPlugin:
             if not os.path.isdir(directory):
                 os.makedirs(directory)
 
-        self.log_file_handler = _FileHandler(log_file, mode="w", encoding="UTF-8")
+        self.log_file_mode = get_option_ini(config, "log_file_mode") or "w"
+        self.log_file_handler = _FileHandler(
+            log_file, mode=self.log_file_mode, encoding="UTF-8"
+        )
         log_file_format = get_option_ini(config, "log_file_format", "log_format")
         log_file_date_format = get_option_ini(
             config, "log_file_date_format", "log_date_format"
@@ -745,7 +756,7 @@ class LoggingPlugin:
             fpath.parent.mkdir(exist_ok=True, parents=True)
 
         # https://github.com/python/mypy/issues/11193
-        stream: io.TextIOWrapper = fpath.open(mode="w", encoding="UTF-8")  # type: ignore[assignment]
+        stream: io.TextIOWrapper = fpath.open(mode=self.log_file_mode, encoding="UTF-8")  # type: ignore[assignment]
         old_stream = self.log_file_handler.setStream(stream)
         if old_stream:
             old_stream.close()

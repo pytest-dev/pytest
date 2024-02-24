@@ -1,22 +1,21 @@
+# mypy: allow-untyped-defs
 """Terminal reporting of the full testing process."""
-import collections
+from io import StringIO
 import os
+from pathlib import Path
 import sys
 import textwrap
-from io import StringIO
-from pathlib import Path
 from types import SimpleNamespace
 from typing import cast
 from typing import Dict
 from typing import List
+from typing import NamedTuple
 from typing import Tuple
 
 import pluggy
 
-import _pytest.config
-import _pytest.terminal
-import pytest
 from _pytest._io.wcwidth import wcswidth
+import _pytest.config
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
@@ -24,6 +23,7 @@ from _pytest.pytester import Pytester
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+import _pytest.terminal
 from _pytest.terminal import _folded_skips
 from _pytest.terminal import _format_trimmed
 from _pytest.terminal import _get_line_with_reprcrash_message
@@ -31,8 +31,12 @@ from _pytest.terminal import _get_raw_skip_reason
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import getreportopt
 from _pytest.terminal import TerminalReporter
+import pytest
 
-DistInfo = collections.namedtuple("DistInfo", ["project_name", "version"])
+
+class DistInfo(NamedTuple):
+    project_name: str
+    version: int
 
 
 TRANS_FNMATCH = str.maketrans({"[": "[[]", "]": "[]]"})
@@ -155,7 +159,6 @@ class TestTerminal:
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
         """Test for "collecting" being updated after 0.5s"""
-
         pytester.makepyfile(
             **{
                 "test1.py": """
@@ -416,8 +419,8 @@ class TestTerminal:
 
         result = pytester.runpytest("-v")
         result.stdout.fnmatch_lines(
-            common_output
-            + [
+            [
+                *common_output,
                 "test_verbose_skip_reason.py::test_long_skip SKIPPED (1 cannot *...) *",
                 "test_verbose_skip_reason.py::test_long_xfail XFAIL (2 cannot *...) *",
             ]
@@ -425,17 +428,13 @@ class TestTerminal:
 
         result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(
-            common_output
-            + [
-                (
-                    "test_verbose_skip_reason.py::test_long_skip SKIPPED"
-                    " (1 cannot do foobar"
-                ),
+            [
+                *common_output,
+                "test_verbose_skip_reason.py::test_long_skip SKIPPED"
+                " (1 cannot do foobar",
                 "because baz is missing due to I don't know what) *",
-                (
-                    "test_verbose_skip_reason.py::test_long_xfail XFAIL"
-                    " (2 cannot do foobar"
-                ),
+                "test_verbose_skip_reason.py::test_long_xfail XFAIL"
+                " (2 cannot do foobar",
                 "because baz is missing due to I don't know what) *",
             ]
         )
@@ -868,13 +867,7 @@ class TestTerminalFunctional:
         result.stdout.fnmatch_lines(
             [
                 "*===== test session starts ====*",
-                "platform %s -- Python %s*pytest-%s**pluggy-%s"
-                % (
-                    sys.platform,
-                    verinfo,
-                    pytest.__version__,
-                    pluggy.__version__,
-                ),
+                f"platform {sys.platform} -- Python {verinfo}*pytest-{pytest.__version__}**pluggy-{pluggy.__version__}",
                 "*test_header_trailer_info.py .*",
                 "=* 1 passed*in *.[0-9][0-9]s *=",
             ]
@@ -895,13 +888,7 @@ class TestTerminalFunctional:
         result = pytester.runpytest("--no-header")
         verinfo = ".".join(map(str, sys.version_info[:3]))
         result.stdout.no_fnmatch_line(
-            "platform %s -- Python %s*pytest-%s**pluggy-%s"
-            % (
-                sys.platform,
-                verinfo,
-                pytest.__version__,
-                pluggy.__version__,
-            )
+            f"platform {sys.platform} -- Python {verinfo}*pytest-{pytest.__version__}**pluggy-{pluggy.__version__}"
         )
         if request.config.pluginmanager.list_plugin_distinfo():
             result.stdout.no_fnmatch_line("plugins: *")
@@ -942,12 +929,10 @@ class TestTerminalFunctional:
         tests = pytester.path.joinpath("tests")
         tests.mkdir()
         pytester.makepyprojecttoml(
-            """
+            f"""
             [tool.pytest.ini_options]
-            testpaths = ['{}']
-        """.format(
-                tests
-            )
+            testpaths = ['{tests}']
+        """
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
@@ -2412,7 +2397,12 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
         __tracebackhide__ = True
         if msg:
             rep.longrepr.reprcrash.message = msg  # type: ignore
-        actual = _get_line_with_reprcrash_message(config, rep(), DummyTerminalWriter(), {})  # type: ignore
+        actual = _get_line_with_reprcrash_message(
+            config,  # type: ignore[arg-type]
+            rep(),  # type: ignore[arg-type]
+            DummyTerminalWriter(),  # type: ignore[arg-type]
+            {},
+        )
 
         assert actual == expected
         if actual != f"{mocked_verbose_word} {mocked_pos}":

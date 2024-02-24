@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import pprint
 from typing import List
 from typing import Tuple

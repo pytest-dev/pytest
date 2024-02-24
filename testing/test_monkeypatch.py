@@ -1,15 +1,16 @@
+# mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import re
 import sys
 import textwrap
-from pathlib import Path
 from typing import Dict
 from typing import Generator
 from typing import Type
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.fixture

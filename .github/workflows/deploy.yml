@@ -26,7 +26,7 @@ jobs:
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.0.0
+      uses: hynek/build-and-inspect-python-package@v2.0.1
 
   deploy:
     if: github.repository == 'pytest-dev/pytest'
@@ -71,6 +71,12 @@ jobs:
       with:
         fetch-depth: 0
         persist-credentials: false
+
+    - name: Download Package
+      uses: actions/download-artifact@v4
+      with:
+        name: Packages
+        path: dist
 
     - name: Set up Python
       uses: actions/setup-python@v5

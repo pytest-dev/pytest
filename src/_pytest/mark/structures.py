@@ -1,7 +1,7 @@
+# mypy: allow-untyped-defs
 import collections.abc
 import dataclasses
 import inspect
-import warnings
 from typing import Any
 from typing import Callable
 from typing import Collection
@@ -21,6 +21,7 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
@@ -31,6 +32,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestUnknownMarkWarning
+
 
 if TYPE_CHECKING:
     from ..nodes import Node
@@ -111,7 +113,6 @@ class ParameterSet(NamedTuple):
             Enforce tuple wrapping so single argument tuple values
             don't get decomposed and break tests.
         """
-
         if isinstance(parameterset, cls):
             return parameterset
         if force_tuple:
@@ -271,8 +272,8 @@ class MarkDecorator:
 
     ``MarkDecorators`` are created with ``pytest.mark``::
 
-        mark1 = pytest.mark.NAME              # Simple MarkDecorator
-        mark2 = pytest.mark.NAME(name1=value) # Parametrized MarkDecorator
+        mark1 = pytest.mark.NAME  # Simple MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value)  # Parametrized MarkDecorator
 
     and can then be applied as decorators to test functions::
 
@@ -354,7 +355,7 @@ class MarkDecorator:
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
-                store_mark(func, self.mark)
+                store_mark(func, self.mark, stacklevel=3)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -393,7 +394,7 @@ def get_unpacked_marks(
 
 
 def normalize_mark_list(
-    mark_list: Iterable[Union[Mark, MarkDecorator]]
+    mark_list: Iterable[Union[Mark, MarkDecorator]],
 ) -> Iterable[Mark]:
     """
     Normalize an iterable of Mark or MarkDecorator objects into a list of marks
@@ -405,11 +406,11 @@ def normalize_mark_list(
     for mark in mark_list:
         mark_obj = getattr(mark, "mark", mark)
         if not isinstance(mark_obj, Mark):
-            raise TypeError(f"got {repr(mark_obj)} instead of Mark")
+            raise TypeError(f"got {mark_obj!r} instead of Mark")
         yield mark_obj
 
 
-def store_mark(obj, mark: Mark) -> None:
+def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
     """Store a Mark on an object.
 
     This is used to implement the Mark declarations/decorators correctly.
@@ -419,7 +420,7 @@ def store_mark(obj, mark: Mark) -> None:
     from ..fixtures import getfixturemarker
 
     if getfixturemarker(obj) is not None:
-        warnings.warn(MARKED_FIXTURE, stacklevel=2)
+        warnings.warn(MARKED_FIXTURE, stacklevel=stacklevel)
 
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
@@ -503,9 +504,10 @@ class MarkGenerator:
 
          import pytest
 
+
          @pytest.mark.slowtest
          def test_function():
-            pass
+             pass
 
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """

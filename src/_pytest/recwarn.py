@@ -1,7 +1,7 @@
+# mypy: allow-untyped-defs
 """Record warnings during test function execution."""
-import re
-import warnings
 from pprint import pformat
+import re
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -16,9 +16,11 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
+import warnings
 
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
+from _pytest.outcomes import Exit
 from _pytest.outcomes import fail
 
 
@@ -46,13 +48,11 @@ def deprecated_call(
 
 
 @overload
-def deprecated_call(  # noqa: F811
-    func: Callable[..., T], *args: Any, **kwargs: Any
-) -> T:
+def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     ...
 
 
-def deprecated_call(  # noqa: F811
+def deprecated_call(
     func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
 ) -> Union["WarningsRecorder", Any]:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning`` or ``FutureWarning``.
@@ -80,7 +80,7 @@ def deprecated_call(  # noqa: F811
     """
     __tracebackhide__ = True
     if func is not None:
-        args = (func,) + args
+        args = (func, *args)
     return warns(
         (DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs
     )
@@ -96,7 +96,7 @@ def warns(
 
 
 @overload
-def warns(  # noqa: F811
+def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
     func: Callable[..., T],
     *args: Any,
@@ -105,7 +105,7 @@ def warns(  # noqa: F811
     ...
 
 
-def warns(  # noqa: F811
+def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
     *args: Any,
     match: Optional[Union[str, Pattern[str]]] = None,
@@ -303,7 +303,18 @@ class WarningsChecker(WarningsRecorder):
 
         __tracebackhide__ = True
 
-        def found_str():
+        # BaseExceptions like pytest.{skip,fail,xfail,exit} or Ctrl-C within
+        # pytest.warns should *not* trigger "DID NOT WARN" and get suppressed
+        # when the warning doesn't happen. Control-flow exceptions should always
+        # propagate.
+        if exc_val is not None and (
+            not isinstance(exc_val, Exception)
+            # Exit is an Exception, not a BaseException, for some reason.
+            or isinstance(exc_val, Exit)
+        ):
+            return
+
+        def found_str() -> str:
             return pformat([record.message for record in self], indent=2)
 
         try:
@@ -323,10 +334,37 @@ class WarningsChecker(WarningsRecorder):
             for w in self:
                 if not self.matches(w):
                     warnings.warn_explicit(
-                        str(w.message),
-                        w.message.__class__,  # type: ignore[arg-type]
-                        w.filename,
-                        w.lineno,
+                        message=w.message,
+                        category=w.category,
+                        filename=w.filename,
+                        lineno=w.lineno,
                         module=w.__module__,
                         source=w.source,
                     )
+
+            # Currently in Python it is possible to pass other types than an
+            # `str` message when creating `Warning` instances, however this
+            # causes an exception when :func:`warnings.filterwarnings` is used
+            # to filter those warnings. See
+            # https://github.com/python/cpython/issues/103577 for a discussion.
+            # While this can be considered a bug in CPython, we put guards in
+            # pytest as the error message produced without this check in place
+            # is confusing (#10865).
+            for w in self:
+                if type(w.message) is not UserWarning:
+                    # If the warning was of an incorrect type then `warnings.warn()`
+                    # creates a UserWarning. Any other warning must have been specified
+                    # explicitly.
+                    continue
+                if not w.message.args:
+                    # UserWarning() without arguments must have been specified explicitly.
+                    continue
+                msg = w.message.args[0]
+                if isinstance(msg, str):
+                    continue
+                # It's possible that UserWarning was explicitly specified, and
+                # its first argument was not a string. But that case can't be
+                # distinguished from an invalid type.
+                raise TypeError(
+                    f"Warning must be str or Warning, got {msg!r} (type {type(msg).__name__})"
+                )

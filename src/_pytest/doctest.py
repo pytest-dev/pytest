@@ -1,15 +1,15 @@
+# mypy: allow-untyped-defs
 """Discover and run doctests in modules and test files."""
 import bdb
+from contextlib import contextmanager
 import functools
 import inspect
 import os
+from pathlib import Path
 import platform
 import sys
 import traceback
 import types
-import warnings
-from contextlib import contextmanager
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -23,6 +23,7 @@ from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
@@ -39,13 +40,14 @@ from _pytest.nodes import Item
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
-from _pytest.pathlib import import_path
 from _pytest.python import Module
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
+
 if TYPE_CHECKING:
     import doctest
+    from typing import Self
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -105,7 +107,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--doctest-ignore-import-errors",
         action="store_true",
         default=False,
-        help="Ignore doctest ImportErrors",
+        help="Ignore doctest collection errors",
         dest="doctest_ignore_import_errors",
     )
     group.addoption(
@@ -132,11 +134,9 @@ def pytest_collect_file(
         if config.option.doctestmodules and not any(
             (_is_setup_py(file_path), _is_main_py(file_path))
         ):
-            mod: DoctestModule = DoctestModule.from_parent(parent, path=file_path)
-            return mod
+            return DoctestModule.from_parent(parent, path=file_path)
     elif _is_doctest(config, file_path, parent):
-        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, path=file_path)
-        return txt
+        return DoctestTextfile.from_parent(parent, path=file_path)
     return None
 
 
@@ -271,14 +271,14 @@ class DoctestItem(Item):
         self._initrequest()
 
     @classmethod
-    def from_parent(  # type: ignore
+    def from_parent(  # type: ignore[override]
         cls,
         parent: "Union[DoctestTextfile, DoctestModule]",
         *,
         name: str,
         runner: "doctest.DocTestRunner",
         dtest: "doctest.DocTest",
-    ):
+    ) -> "Self":
         # incompatible signature due to imposed limits on subclass
         """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
@@ -485,9 +485,9 @@ def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
             return real_unwrap(func, stop=lambda obj: _is_mocked(obj) or _stop(func))
         except Exception as e:
             warnings.warn(
-                "Got %r when unwrapping %r.  This is usually caused "
+                f"Got {e!r} when unwrapping {func!r}.  This is usually caused "
                 "by a violation of Python's object protocol; see e.g. "
-                "https://github.com/pytest-dev/pytest/issues/5080" % (e, func),
+                "https://github.com/pytest-dev/pytest/issues/5080",
                 PytestWarning,
             )
             raise
@@ -558,24 +558,18 @@ class DoctestModule(Module):
             else:  # pragma: no cover
                 pass
 
-        if self.path.name == "conftest.py":
-            module = self.config.pluginmanager._importconftest(
-                self.path,
-                self.config.getoption("importmode"),
-                rootpath=self.config.rootpath,
-            )
-        else:
-            try:
-                module = import_path(
-                    self.path,
-                    root=self.config.rootpath,
-                    mode=self.config.getoption("importmode"),
-                )
-            except ImportError:
-                if self.config.getvalue("doctest_ignore_import_errors"):
-                    skip("unable to import module %r" % self.path)
-                else:
-                    raise
+        try:
+            module = self.obj
+        except Collector.CollectError:
+            if self.config.getvalue("doctest_ignore_import_errors"):
+                skip("unable to import module %r" % self.path)
+            else:
+                raise
+
+        # While doctests currently don't support fixtures directly, we still
+        # need to pick up autouse fixtures.
+        self.session._fixturemanager.parsefactories(self)
+
         # Uses internal doctest module parsing mechanism.
         finder = MockAwareDocTestFinder()
         optionflags = get_optionflags(self.config)

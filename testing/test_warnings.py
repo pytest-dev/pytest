@@ -1,13 +1,15 @@
+# mypy: allow-untyped-defs
 import os
 import sys
-import warnings
 from typing import List
 from typing import Optional
 from typing import Tuple
+import warnings
 
-import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
+import pytest
+
 
 WARNINGS_SUMMARY_HEADER = "warnings summary"
 
@@ -16,16 +18,13 @@ WARNINGS_SUMMARY_HEADER = "warnings summary"
 def pyfile_with_warnings(pytester: Pytester, request: FixtureRequest) -> str:
     """Create a test file which calls a function in a module which generates warnings."""
     pytester.syspathinsert()
-    test_name = request.function.__name__
-    module_name = test_name.lstrip("test_") + "_module"
+    module_name = request.function.__name__[len("test_") :] + "_module"
     test_file = pytester.makepyfile(
-        """
+        f"""
         import {module_name}
         def test_func():
             assert {module_name}.foo() == 1
-        """.format(
-            module_name=module_name
-        ),
+        """,
         **{
             module_name: """
             import warnings
@@ -436,7 +435,7 @@ class TestDeprecationWarningsByDefault:
 
     def create_file(self, pytester: Pytester, mark="") -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest, warnings
 
             warnings.warn(DeprecationWarning("collection"))
@@ -444,9 +443,7 @@ class TestDeprecationWarningsByDefault:
             {mark}
             def test_foo():
                 warnings.warn(PendingDeprecationWarning("test run"))
-        """.format(
-                mark=mark
-            )
+        """
         )
 
     @pytest.mark.parametrize("customize_filters", [True, False])
@@ -623,11 +620,11 @@ def test_group_warnings_by_message_summary(pytester: Pytester) -> None:
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
             "test_1.py: 21 warnings",
             "test_2.py: 1 warning",
-            "  */test_1.py:7: UserWarning: foo",
+            "  */test_1.py:8: UserWarning: foo",
             "    warnings.warn(UserWarning(msg))",
             "",
             "test_1.py: 20 warnings",
-            "  */test_1.py:7: UserWarning: bar",
+            "  */test_1.py:8: UserWarning: bar",
             "    warnings.warn(UserWarning(msg))",
             "",
             "-- Docs: *",
@@ -797,7 +794,7 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
     # available, using `importorskip("tracemalloc")` for example,
     # because we want to ensure the same code path does not break in those platforms.
     try:
-        import tracemalloc  # noqa
+        import tracemalloc  # noqa: F401
 
         has_tracemalloc = True
     except ImportError:
