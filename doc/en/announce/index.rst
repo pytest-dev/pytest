@@ -6,6 +6,7 @@ Release announcements
    :maxdepth: 2
 
 
+   release-8.0.2
    release-8.0.1
    release-8.0.0
    release-8.0.0rc2
