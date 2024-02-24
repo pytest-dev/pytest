@@ -340,7 +340,6 @@ Separate Control For Assertion Verbosity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - `#11387 <https://github.com/pytest-dev/pytest/issues/11387>`_: Added the new :confval:`verbosity_assertions` configuration option for fine-grained control of failed assertions verbosity.
-- `#11653 <https://github.com/pytest-dev/pytest/pull/11653>`_: Added the new :confval:`verbosity_test_cases` configuration option for fine-grained control of test execution verbosity.
 
   If you've ever wished that pytest always show you full diffs, but without making everything else verbose, this is for you.
 
