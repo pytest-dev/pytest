@@ -183,7 +183,6 @@ disable= [
     "comparison-with-callable",
     "comparison-with-itself",
     "condition-evals-to-constant",
-    "consider-iterating-dictionary",
     "consider-using-dict-items",
     "consider-using-enumerate",
     "consider-using-from-import",
