@@ -343,7 +343,6 @@ class FixtureRequest(abc.ABC):
         pyfuncitem: "Function",
         fixturename: Optional[str],
         arg2fixturedefs: Dict[str, Sequence["FixtureDef[Any]"]],
-        arg2index: Dict[str, int],
         fixture_defs: Dict[str, "FixtureDef[Any]"],
         *,
         _ispytest: bool = False,
@@ -357,16 +356,6 @@ class FixtureRequest(abc.ABC):
         # collection. Dynamically requested fixtures (using
         # `request.getfixturevalue("foo")`) are added dynamically.
         self._arg2fixturedefs: Final = arg2fixturedefs
-        # A fixture may override another fixture with the same name, e.g. a fixture
-        # in a module can override a fixture in a conftest, a fixture in a class can
-        # override a fixture in the module, and so on.
-        # An overriding fixture can request its own name; in this case it gets
-        # the value of the fixture it overrides, one level up.
-        # The _arg2index state keeps the current depth in the overriding chain.
-        # The fixturedefs list in _arg2fixturedefs for a given name is ordered from
-        # furthest to closest, so we use negative indexing -1, -2, ... to go from
-        # last to first.
-        self._arg2index: Final = arg2index
         # The evaluated argnames so far, mapping to the FixtureDef they resolved
         # to.
         self._fixture_defs: Final = fixture_defs
@@ -424,11 +413,24 @@ class FixtureRequest(abc.ABC):
         # The are no fixtures with this name applicable for the function.
         if not fixturedefs:
             raise FixtureLookupError(argname, self)
-        index = self._arg2index.get(argname, 0) - 1
-        # The fixture requested its own name, but no remaining to override.
+
+        # A fixture may override another fixture with the same name, e.g. a
+        # fixture in a module can override a fixture in a conftest, a fixture in
+        # a class can override a fixture in the module, and so on.
+        # An overriding fixture can request its own name (possibly indirectly);
+        # in this case it gets the value of the fixture it overrides, one level
+        # up.
+        # Check how many `argname`s deep we are, and take the next one.
+        # `fixturedefs` is sorted from furthest to closest, so use negative
+        # indexing to go in reverse.
+        index = -1
+        for request in self._iter_chain():
+            if request.fixturename == argname:
+                index -= 1
+        # If already consumed all of the available levels, fail.
         if -index > len(fixturedefs):
             raise FixtureLookupError(argname, self)
-        self._arg2index[argname] = index
+
         return fixturedefs[index]
 
     @property
@@ -660,7 +662,6 @@ class TopRequest(FixtureRequest):
             fixturename=None,
             pyfuncitem=pyfuncitem,
             arg2fixturedefs=pyfuncitem._fixtureinfo.name2fixturedefs.copy(),
-            arg2index={},
             fixture_defs={},
             _ispytest=_ispytest,
         )
@@ -706,7 +707,6 @@ class SubRequest(FixtureRequest):
             fixturename=fixturedef.argname,
             fixture_defs=request._fixture_defs,
             arg2fixturedefs=request._arg2fixturedefs,
-            arg2index=request._arg2index,
             _ispytest=_ispytest,
         )
         self._parent_request: Final[FixtureRequest] = request
