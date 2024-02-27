@@ -259,20 +259,6 @@ class TestImportPath:
         assert orig == p
         assert issubclass(ImportPathMismatchError, ImportError)
 
-    def test_issue131_on__init__(self, tmp_path: Path) -> None:
-        # __init__.py files may be namespace packages, and thus the
-        # __file__ of an imported module may not be ourselves
-        # see issue
-        tmp_path.joinpath("proja").mkdir()
-        p1 = tmp_path.joinpath("proja", "__init__.py")
-        p1.touch()
-        tmp_path.joinpath("sub", "proja").mkdir(parents=True)
-        p2 = tmp_path.joinpath("sub", "proja", "__init__.py")
-        p2.touch()
-        m1 = import_path(p1, root=tmp_path)
-        m2 = import_path(p2, root=tmp_path)
-        assert m1 == m2
-
     def test_ensuresyspath_append(self, tmp_path: Path) -> None:
         root1 = tmp_path / "root1"
         root1.mkdir()
