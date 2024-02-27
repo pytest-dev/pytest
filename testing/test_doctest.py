@@ -117,12 +117,12 @@ class TestDoctests:
     def test_importmode(self, pytester: Pytester):
         pytester.makepyfile(
             **{
-                "namespacepkg/innerpkg/__init__.py": "",
-                "namespacepkg/innerpkg/a.py": """
+                "src/namespacepkg/innerpkg/__init__.py": "",
+                "src/namespacepkg/innerpkg/a.py": """
                   def some_func():
                     return 42
                 """,
-                "namespacepkg/innerpkg/b.py": """
+                "src/namespacepkg/innerpkg/b.py": """
                   from namespacepkg.innerpkg.a import some_func
                   def my_func():
                     '''
@@ -133,6 +133,10 @@ class TestDoctests:
                 """,
             }
         )
+        # For 'namespacepkg' to be considered a namespace package, its containing directory
+        # needs to be reachable from sys.path:
+        # https://packaging.python.org/en/latest/guides/packaging-namespace-packages
+        pytester.syspathinsert(pytester.path / "src")
         reprec = pytester.inline_run("--doctest-modules", "--import-mode=importlib")
         reprec.assertoutcome(passed=1)
 
