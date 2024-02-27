@@ -541,16 +541,10 @@ def import_path(
         insert_missing_modules(sys.modules, module_name)
         return mod
 
-    pkg_path = resolve_package_path(path)
-    if pkg_path is not None:
-        pkg_root = pkg_path.parent
-        names = list(path.with_suffix("").relative_to(pkg_root).parts)
-        if names[-1] == "__init__":
-            names.pop()
-        module_name = ".".join(names)
-    else:
-        pkg_root = path.parent
-        module_name = path.stem
+    try:
+        pkg_root, module_name = resolve_pkg_root_and_module_name(path)
+    except CouldNotResolvePathError:
+        pkg_root, module_name = path.parent, path.stem
 
     # Change sys.path permanently: restoring it at the end of this function would cause surprising
     # problems because of delayed imports: for example, a conftest.py file imported by this function
@@ -687,6 +681,38 @@ def resolve_package_path(path: Path) -> Optional[Path]:
                 break
             result = parent
     return result
+
+
+def resolve_pkg_root_and_module_name(path: Path) -> Tuple[Path, str]:
+    """
+    Return the path to the directory of the root package that contains the
+    given Python file, and its module name:
+
+        src/
+            app/
+                __init__.py
+                core/
+                    __init__.py
+                    models.py
+
+    Passing the full path to `models.py` will yield Path("src") and "app.core.models".
+
+    Raises CouldNotResolvePathError if the given path does not belong to a package (missing any __init__.py files).
+    """
+    pkg_path = resolve_package_path(path)
+    if pkg_path is not None:
+        pkg_root = pkg_path.parent
+        names = list(path.with_suffix("").relative_to(pkg_root).parts)
+        if names[-1] == "__init__":
+            names.pop()
+        module_name = ".".join(names)
+        return pkg_root, module_name
+
+    raise CouldNotResolvePathError(f"Could not resolve for {path}")
+
+
+class CouldNotResolvePathError(Exception):
+    """Custom exception raised by resolve_pkg_root_and_module_name."""
 
 
 def scandir(
