@@ -9,11 +9,13 @@ from types import ModuleType
 from typing import Any
 from typing import Generator
 from typing import Iterator
+from typing import Tuple
 import unittest.mock
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
+from _pytest.pathlib import CouldNotResolvePathError
 from _pytest.pathlib import ensure_deletable
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import get_extended_length_path_str
@@ -25,12 +27,27 @@ from _pytest.pathlib import insert_missing_modules
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
+from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import TempPathFactory
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def autouse_pytester(pytester: Pytester) -> None:
+    """
+    Fixture to make pytester() being autouse for all tests in this module.
+
+    pytester makes sure to restore sys.path to its previous state, and many tests in this module
+    import modules and change sys.path because of that, so common module names such as "test" or "test.conftest"
+    end up leaking to tests in other modules.
+
+    Note: we might consider extracting the sys.path restoration aspect into its own fixture, and apply it
+    to the entire test suite always.
+    """
 
 
 class TestFNMatcherPort:
@@ -596,6 +613,33 @@ class TestImportLibMode:
         )
         assert result == "_env_310.tests.test_foo"
 
+    def test_resolve_pkg_root_and_module_name(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        # Create a directory structure first without __init__.py files.
+        (tmp_path / "src/app/core").mkdir(parents=True)
+        models_py = tmp_path / "src/app/core/models.py"
+        models_py.touch()
+        with pytest.raises(CouldNotResolvePathError):
+            _ = resolve_pkg_root_and_module_name(models_py)
+
+        # Create the __init__.py files, it should now resolve to a proper module name.
+        (tmp_path / "src/app/__init__.py").touch()
+        (tmp_path / "src/app/core/__init__.py").touch()
+        assert resolve_pkg_root_and_module_name(models_py) == (
+            tmp_path / "src",
+            "app.core.models",
+        )
+
+        # If we add tmp_path to sys.path, src becomes a namespace package.
+        monkeypatch.syspath_prepend(tmp_path)
+        assert resolve_pkg_root_and_module_name(
+            models_py, consider_ns_packages=True
+        ) == (
+            tmp_path,
+            "src.app.core.models",
+        )
+
     def test_insert_missing_modules(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
     ) -> None:
@@ -741,3 +785,102 @@ def test_safe_exists(tmp_path: Path) -> None:
         side_effect=ValueError("name too long"),
     ):
         assert safe_exists(p) is False
+
+
+class TestNamespacePackages:
+    """Test import_path support when importing from properly namespace packages."""
+
+    def setup_directories(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch, pytester: Pytester
+    ) -> Tuple[Path, Path]:
+        # Set up a namespace package "com.company", containing
+        # two subpackages, "app" and "calc".
+        (tmp_path / "src/dist1/com/company/app/core").mkdir(parents=True)
+        (tmp_path / "src/dist1/com/company/app/__init__.py").touch()
+        (tmp_path / "src/dist1/com/company/app/core/__init__.py").touch()
+        models_py = tmp_path / "src/dist1/com/company/app/core/models.py"
+        models_py.touch()
+
+        (tmp_path / "src/dist2/com/company/calc/algo").mkdir(parents=True)
+        (tmp_path / "src/dist2/com/company/calc/__init__.py").touch()
+        (tmp_path / "src/dist2/com/company/calc/algo/__init__.py").touch()
+        algorithms_py = tmp_path / "src/dist2/com/company/calc/algo/algorithms.py"
+        algorithms_py.touch()
+
+        # Validate the namespace package by importing it in a Python subprocess.
+        r = pytester.runpython_c(
+            dedent(
+                f"""
+                import sys
+                sys.path.append(r{str(tmp_path / "src/dist1")!r})
+                sys.path.append(r{str(tmp_path / "src/dist2")!r})
+                import com.company.app.core.models
+                import com.company.calc.algo.algorithms
+                """
+            )
+        )
+        assert r.ret == 0
+
+        monkeypatch.syspath_prepend(tmp_path / "src/dist1")
+        monkeypatch.syspath_prepend(tmp_path / "src/dist2")
+        return models_py, algorithms_py
+
+    @pytest.mark.parametrize("import_mode", ["prepend", "append"])
+    def test_resolve_pkg_root_and_module_name_ns_multiple_levels(
+        self,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        pytester: Pytester,
+        import_mode: str,
+    ) -> None:
+        models_py, algorithms_py = self.setup_directories(
+            tmp_path, monkeypatch, pytester
+        )
+
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            models_py, consider_ns_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist1",
+            "com.company.app.core.models",
+        )
+
+        mod = import_path(models_py, mode=import_mode, root=tmp_path)
+        assert mod.__name__ == "com.company.app.core.models"
+        assert mod.__file__ == str(models_py)
+
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            algorithms_py, consider_ns_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist2",
+            "com.company.calc.algo.algorithms",
+        )
+
+        mod = import_path(algorithms_py, mode=import_mode, root=tmp_path)
+        assert mod.__name__ == "com.company.calc.algo.algorithms"
+        assert mod.__file__ == str(algorithms_py)
+
+    @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
+    def test_incorrect_namespace_package(
+        self,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        pytester: Pytester,
+        import_mode: str,
+    ) -> None:
+        models_py, algorithms_py = self.setup_directories(
+            tmp_path, monkeypatch, pytester
+        )
+        # Namespace packages must not have an __init__.py at any of its
+        # directories; if it does, we then fall back to importing just the
+        # part of the package containing the __init__.py files.
+        (tmp_path / "src/dist1/com/__init__.py").touch()
+
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            models_py, consider_ns_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist1/com/company",
+            "app.core.models",
+        )

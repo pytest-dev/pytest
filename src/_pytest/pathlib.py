@@ -534,7 +534,9 @@ def import_path(
         return mod
 
     try:
-        pkg_root, module_name = resolve_pkg_root_and_module_name(path)
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            path, consider_ns_packages=True
+        )
     except CouldNotResolvePathError:
         pkg_root, module_name = path.parent, path.stem
 
@@ -714,7 +716,9 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     return result
 
 
-def resolve_pkg_root_and_module_name(path: Path) -> Tuple[Path, str]:
+def resolve_pkg_root_and_module_name(
+    path: Path, *, consider_ns_packages: bool = False
+) -> Tuple[Path, str]:
     """
     Return the path to the directory of the root package that contains the
     given Python file, and its module name:
@@ -728,11 +732,31 @@ def resolve_pkg_root_and_module_name(path: Path) -> Tuple[Path, str]:
 
     Passing the full path to `models.py` will yield Path("src") and "app.core.models".
 
+    If consider_ns_packages is True, then we additionally check upwards in the hierarchy
+    until we find a directory that is reachable from sys.path, which marks it as a namespace package:
+
+    https://packaging.python.org/en/latest/guides/packaging-namespace-packages
+
     Raises CouldNotResolvePathError if the given path does not belong to a package (missing any __init__.py files).
     """
     pkg_path = resolve_package_path(path)
     if pkg_path is not None:
         pkg_root = pkg_path.parent
+        # https://packaging.python.org/en/latest/guides/packaging-namespace-packages/
+        if consider_ns_packages:
+            # Go upwards in the hierarchy, if we find a parent path included
+            # in sys.path, it means the package found by resolve_package_path()
+            # actually belongs to a namespace package.
+            for parent in pkg_root.parents:
+                # If any of the parent paths has a __init__.py, it means it is not
+                # a namespace package (see the docs linked above).
+                if (parent / "__init__.py").is_file():
+                    break
+                if str(parent) in sys.path:
+                    # Point the pkg_root to the root of the namespace package.
+                    pkg_root = parent
+                    break
+
         names = list(path.with_suffix("").relative_to(pkg_root).parts)
         if names[-1] == "__init__":
             names.pop()

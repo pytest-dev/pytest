@@ -1,0 +1,3 @@
+pytest now correctly identifies modules that are part of `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__, for example when importing user-level modules for doctesting.
+
+Previously pytest was not aware of namespace packages, so running a doctest from a subpackage that is part of a namespace package would import just the subpackage (for example ``app.models``) instead of its full path (for example ``com.company.app.models``).
