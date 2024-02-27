@@ -671,6 +671,36 @@ class TestImportLibMode:
         result = pytester.runpytest("--import-mode=importlib")
         result.stdout.fnmatch_lines("* 1 passed *")
 
+    def test_import_path_imports_correct_file(self, pytester: Pytester) -> None:
+        """
+        Import the module by the given path, even if other module with the same name
+        is reachable from sys.path.
+        """
+        pytester.syspathinsert()
+        # Create a 'x.py' module reachable from sys.path that raises AssertionError
+        # if imported.
+        x_at_root = pytester.path / "x.py"
+        x_at_root.write_text("raise AssertionError('x at root')", encoding="ascii")
+
+        # Create another x.py module, but in some subdirectories to ensure it is not
+        # accessible from sys.path.
+        x_in_sub_folder = pytester.path / "a/b/x.py"
+        x_in_sub_folder.parent.mkdir(parents=True)
+        x_in_sub_folder.write_text("X = 'a/b/x'", encoding="ascii")
+
+        # Import our x.py module from the subdirectories.
+        # The 'x.py' module from sys.path was not imported for sure because
+        # otherwise we would get an AssertionError.
+        mod = import_path(
+            x_in_sub_folder, mode=ImportMode.importlib, root=pytester.path
+        )
+        assert mod.__file__ and Path(mod.__file__) == x_in_sub_folder
+        assert mod.X == "a/b/x"
+
+        # Attempt to import root 'x.py'.
+        with pytest.raises(AssertionError, match="x at root"):
+            _ = import_path(x_at_root, mode=ImportMode.importlib, root=pytester.path)
+
 
 def test_safe_exists(tmp_path: Path) -> None:
     d = tmp_path.joinpath("some_dir")
