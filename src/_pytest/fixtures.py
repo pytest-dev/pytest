@@ -540,6 +540,16 @@ class FixtureRequest(abc.ABC):
         )
         return fixturedef.cached_result[0]
 
+    def _iter_chain(self) -> Iterator["SubRequest"]:
+        """Yield all SubRequests in the chain, from self up.
+
+        Note: does *not* yield the TopRequest.
+        """
+        current = self
+        while isinstance(current, SubRequest):
+            yield current
+            current = current._parent_request
+
     def _get_active_fixturedef(
         self, argname: str
     ) -> Union["FixtureDef[object]", PseudoFixtureDef[object]]:
@@ -557,11 +567,7 @@ class FixtureRequest(abc.ABC):
         return fixturedef
 
     def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
-        current = self
-        values: List[FixtureDef[Any]] = []
-        while isinstance(current, SubRequest):
-            values.append(current._fixturedef)  # type: ignore[has-type]
-            current = current._parent_request
+        values = [request._fixturedef for request in self._iter_chain()]
         values.reverse()
         return values
 
@@ -705,7 +711,7 @@ class SubRequest(FixtureRequest):
         )
         self._parent_request: Final[FixtureRequest] = request
         self._scope_field: Final = scope
-        self._fixturedef: Final = fixturedef
+        self._fixturedef: Final[FixtureDef[object]] = fixturedef
         if param is not NOTSET:
             self.param = param
         self.param_index: Final = param_index
