@@ -584,6 +584,18 @@ class TestImportLibMode:
         result = module_name_from_path(tmp_path / "__init__.py", tmp_path)
         assert result == "__init__"
 
+        # Modules which start with "." are considered relative and will not be imported
+        # unless part of a package, so we replace it with a "_" when generating the fake module name.
+        result = module_name_from_path(tmp_path / ".env/tests/test_foo.py", tmp_path)
+        assert result == "_env.tests.test_foo"
+
+        # We want to avoid generating extra intermediate modules if some directory just happens
+        # to contain a "." in the name.
+        result = module_name_from_path(
+            tmp_path / ".env.310/tests/test_foo.py", tmp_path
+        )
+        assert result == "_env_310.tests.test_foo"
+
     def test_insert_missing_modules(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
     ) -> None:

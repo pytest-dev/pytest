@@ -648,6 +648,11 @@ def module_name_from_path(path: Path, root: Path) -> str:
     if len(path_parts) >= 2 and path_parts[-1] == "__init__":
         path_parts = path_parts[:-1]
 
+    # Module names cannot contain ".", normalize them to "_". This prevents
+    # a directory having a "." in the name (".env.310" for example) causing extra intermediate modules.
+    # Also, important to replace "." at the start of paths, as those are considered relative imports.
+    path_parts = [x.replace(".", "_") for x in path_parts]
+
     return ".".join(path_parts)
 
 
