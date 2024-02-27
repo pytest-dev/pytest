@@ -526,19 +526,11 @@ def import_path(
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
-        for meta_importer in sys.meta_path:
-            spec = meta_importer.find_spec(module_name, [str(path.parent)])
-            if spec is not None:
-                break
-        else:
-            spec = importlib.util.spec_from_file_location(module_name, str(path))
-
-        if spec is None:
+        mod = _import_module_using_spec(
+            module_name, path, path.parent, insert_modules=True
+        )
+        if mod is None:
             raise ImportError(f"Can't find module {module_name} at location {path}")
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = mod
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-        insert_missing_modules(sys.modules, module_name)
         return mod
 
     try:
@@ -584,6 +576,40 @@ def import_path(
             raise ImportPathMismatchError(module_name, module_file, path)
 
     return mod
+
+
+def _import_module_using_spec(
+    module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
+) -> Optional[ModuleType]:
+    """
+    Tries to import a module by its canonical name, path to the .py file, and its
+    parent location.
+
+    :param insert_modules:
+        If True, will call insert_missing_modules to create empty intermediate modules
+        for made-up module names (when importing test files not reachable from sys.path).
+        Note: we can probably drop insert_missing_modules altogether: instead of
+        generating module names such as "src.tests.test_foo", which require intermediate
+        empty modules, we might just as well generate unique module names like
+        "src_tests_test_foo".
+    """
+    # Checking with sys.meta_path first in case one of its hooks can import this module,
+    # such as our own assertion-rewrite hook.
+    for meta_importer in sys.meta_path:
+        spec = meta_importer.find_spec(module_name, [str(module_location)])
+        if spec is not None:
+            break
+    else:
+        spec = importlib.util.spec_from_file_location(module_name, str(module_path))
+    if spec is not None:
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = mod
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        if insert_modules:
+            insert_missing_modules(sys.modules, module_name)
+        return mod
+
+    return None
 
 
 # Implement a special _is_same function on Windows which returns True if the two filenames
