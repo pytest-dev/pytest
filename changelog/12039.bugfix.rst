@@ -1,0 +1,1 @@
+Fixed a regression in 8.0.2 where tests have been collected multiple times in the CI under Windows
