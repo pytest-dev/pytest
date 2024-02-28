@@ -413,9 +413,7 @@ class FixtureRequest(abc.ABC):
             # We arrive here because of a dynamic call to
             # getfixturevalue(argname) usage which was naturally
             # not known at parsing/collection time.
-            parent = self._pyfuncitem.parent
-            assert parent is not None
-            fixturedefs = self._fixturemanager.getfixturedefs(argname, parent)
+            fixturedefs = self._fixturemanager.getfixturedefs(argname, self._pyfuncitem)
             if fixturedefs is not None:
                 self._arg2fixturedefs[argname] = fixturedefs
         # No fixtures defined with this name.
