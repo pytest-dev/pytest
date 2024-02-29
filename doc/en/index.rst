@@ -81,7 +81,7 @@ Features
 
 - Python 3.8+ or PyPy 3
 
-- Rich plugin architecture, with over 800+ :ref:`external plugins <plugin-list>` and thriving community
+- Rich plugin architecture, with over 1300+ :ref:`external plugins <plugin-list>` and thriving community
 
 
 Documentation
