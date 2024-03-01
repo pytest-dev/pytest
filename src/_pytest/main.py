@@ -564,7 +564,7 @@ class Session(nodes.Collector):
         self._initialpaths: FrozenSet[Path] = frozenset()
         self._initialpaths_with_parents: FrozenSet[Path] = frozenset()
         self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
-        self._initial_parts: List[Tuple[Path, List[str]]] = []
+        self._initial_parts: List[CollectionArgument] = []
         self._collection_cache: Dict[nodes.Collector, CollectReport] = {}
         self.items: List[nodes.Item] = []
 
@@ -770,15 +770,15 @@ class Session(nodes.Collector):
             initialpaths: List[Path] = []
             initialpaths_with_parents: List[Path] = []
             for arg in args:
-                fspath, parts = resolve_collection_argument(
+                collection_argument = resolve_collection_argument(
                     self.config.invocation_params.dir,
                     arg,
                     as_pypath=self.config.option.pyargs,
                 )
-                self._initial_parts.append((fspath, parts))
-                initialpaths.append(fspath)
-                initialpaths_with_parents.append(fspath)
-                initialpaths_with_parents.extend(fspath.parents)
+                self._initial_parts.append(collection_argument)
+                initialpaths.append(collection_argument.path)
+                initialpaths_with_parents.append(collection_argument.path)
+                initialpaths_with_parents.extend(collection_argument.path.parents)
             self._initialpaths = frozenset(initialpaths)
             self._initialpaths_with_parents = frozenset(initialpaths_with_parents)
 
@@ -840,9 +840,12 @@ class Session(nodes.Collector):
 
         pm = self.config.pluginmanager
 
-        for argpath, names in self._initial_parts:
-            self.trace("processing argument", (argpath, names))
+        for collection_argument in self._initial_parts:
+            self.trace("processing argument", collection_argument)
             self.trace.root.indent += 1
+
+            argpath = collection_argument.path
+            names = collection_argument.parts
 
             # resolve_collection_argument() ensures this.
             if argpath.is_dir():
@@ -862,7 +865,7 @@ class Session(nodes.Collector):
             notfound_collectors = []
             work: List[
                 Tuple[Union[nodes.Collector, nodes.Item], List[Union[Path, str]]]
-            ] = [(self, paths + names)]
+            ] = [(self, [*paths, *names])]
             while work:
                 matchnode, matchparts = work.pop()
 
@@ -971,9 +974,17 @@ def search_pypath(module_name: str) -> str:
         return spec.origin
 
 
+@dataclasses.dataclass(frozen=True)
+class CollectionArgument:
+    """A resolved collection argument."""
+
+    path: Path
+    parts: Sequence[str]
+
+
 def resolve_collection_argument(
     invocation_path: Path, arg: str, *, as_pypath: bool = False
-) -> Tuple[Path, List[str]]:
+) -> CollectionArgument:
     """Parse path arguments optionally containing selection parts and return (fspath, names).
 
     Command-line arguments can point to files and/or directories, and optionally contain
@@ -981,9 +992,12 @@ def resolve_collection_argument(
 
         "pkg/tests/test_foo.py::TestClass::test_foo"
 
-    This function ensures the path exists, and returns a tuple:
+    This function ensures the path exists, and returns a resolved `CollectionArgument`:
 
-        (Path("/full/path/to/pkg/tests/test_foo.py"), ["TestClass", "test_foo"])
+        CollectionArgument(
+            path=Path("/full/path/to/pkg/tests/test_foo.py"),
+            parts=["TestClass", "test_foo"],
+        )
 
     When as_pypath is True, expects that the command-line argument actually contains
     module paths instead of file-system paths:
@@ -991,7 +1005,12 @@ def resolve_collection_argument(
         "pkg.tests.test_foo::TestClass::test_foo"
 
     In which case we search sys.path for a matching module, and then return the *path* to the
-    found module.
+    found module, which may look like this:
+
+        CollectionArgument(
+            path=Path("/home/u/myvenv/lib/site-packages/pkg/tests/test_foo.py"),
+            parts=["TestClass", "test_foo"],
+        )
 
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
@@ -1018,4 +1037,7 @@ def resolve_collection_argument(
             else "directory argument cannot contain :: selection parts: {arg}"
         )
         raise UsageError(msg.format(arg=arg))
-    return fspath, parts
+    return CollectionArgument(
+        path=fspath,
+        parts=parts,
+    )
