@@ -5,6 +5,7 @@ import dataclasses
 import fnmatch
 import functools
 import importlib
+import importlib.util
 import os
 from pathlib import Path
 import sys
