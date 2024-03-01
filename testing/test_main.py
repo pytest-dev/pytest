@@ -139,24 +139,28 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[],
+            module_name=None,
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::"
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[""],
+            module_name=None,
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar"
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar"],
+            module_name=None,
         )
         assert resolve_collection_argument(
             invocation_path, "src/pkg/test.py::foo::bar::"
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar", ""],
+            module_name=None,
         )
 
     def test_dir(self, invocation_path: Path) -> None:
@@ -166,6 +170,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg",
             parts=[],
+            module_name=None,
         )
 
         with pytest.raises(
@@ -185,18 +190,21 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[],
+            module_name="pkg.test",
         )
         assert resolve_collection_argument(
             invocation_path, "pkg.test::foo::bar", as_pypath=True
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar"],
+            module_name="pkg.test",
         )
         assert resolve_collection_argument(
             invocation_path, "pkg", as_pypath=True
         ) == CollectionArgument(
             path=invocation_path / "src/pkg",
             parts=[],
+            module_name="pkg",
         )
 
         with pytest.raises(
@@ -212,6 +220,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["test[a::b]"],
+            module_name=None,
         )
 
     def test_does_not_exist(self, invocation_path: Path) -> None:
@@ -237,6 +246,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=Path(os.path.abspath("src")),
             parts=[],
+            module_name=None,
         )
 
         # ensure full paths given in the command-line without the drive letter resolve
@@ -247,6 +257,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=Path(os.path.abspath("src")),
             parts=[],
+            module_name=None,
         )
 
 

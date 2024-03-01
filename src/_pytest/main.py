@@ -957,17 +957,18 @@ class Session(nodes.Collector):
                 node.ihook.pytest_collectreport(report=rep)
 
 
-def search_pypath(module_name: str) -> str:
-    """Search sys.path for the given a dotted module name, and return its file system path."""
+def search_pypath(module_name: str) -> Optional[str]:
+    """Search sys.path for the given a dotted module name, and return its file
+    system path if found."""
     try:
         spec = importlib.util.find_spec(module_name)
     # AttributeError: looks like package module, but actually filename
     # ImportError: module does not exist
     # ValueError: not a module name
     except (AttributeError, ImportError, ValueError):
-        return module_name
+        return None
     if spec is None or spec.origin is None or spec.origin == "namespace":
-        return module_name
+        return None
     elif spec.submodule_search_locations:
         return os.path.dirname(spec.origin)
     else:
@@ -980,6 +981,7 @@ class CollectionArgument:
 
     path: Path
     parts: Sequence[str]
+    module_name: Optional[str]
 
 
 def resolve_collection_argument(
@@ -997,6 +999,7 @@ def resolve_collection_argument(
         CollectionArgument(
             path=Path("/full/path/to/pkg/tests/test_foo.py"),
             parts=["TestClass", "test_foo"],
+            module_name=None,
         )
 
     When as_pypath is True, expects that the command-line argument actually contains
@@ -1010,6 +1013,7 @@ def resolve_collection_argument(
         CollectionArgument(
             path=Path("/home/u/myvenv/lib/site-packages/pkg/tests/test_foo.py"),
             parts=["TestClass", "test_foo"],
+            module_name="pkg.tests.test_foo",
         )
 
     If the path doesn't exist, raise UsageError.
@@ -1019,8 +1023,12 @@ def resolve_collection_argument(
     strpath, *parts = base.split("::")
     if parts:
         parts[-1] = f"{parts[-1]}{squacket}{rest}"
+    module_name = None
     if as_pypath:
-        strpath = search_pypath(strpath)
+        pyarg_strpath = search_pypath(strpath)
+        if pyarg_strpath is not None:
+            module_name = strpath
+            strpath = pyarg_strpath
     fspath = invocation_path / strpath
     fspath = absolutepath(fspath)
     if not safe_exists(fspath):
@@ -1040,4 +1048,5 @@ def resolve_collection_argument(
     return CollectionArgument(
         path=fspath,
         parts=parts,
+        module_name=module_name,
     )
