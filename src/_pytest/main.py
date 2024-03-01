@@ -851,13 +851,14 @@ class Session(nodes.Collector):
             if argpath.is_dir():
                 assert not names, f"invalid arg {(argpath, names)!r}"
 
-            # Match the argpath from the root, e.g.
+            paths = [argpath]
+            # Add relevant parents of the path, from the root, e.g.
             #   /a/b/c.py -> [/, /a, /a/b, /a/b/c.py]
-            paths = [*reversed(argpath.parents), argpath]
-            # Paths outside of the confcutdir should not be considered, unless
-            # it's the argpath itself.
-            while len(paths) > 1 and not pm._is_in_confcutdir(paths[0]):
-                paths = paths[1:]
+            # Paths outside of the confcutdir should not be considered.
+            for path in argpath.parents:
+                if not pm._is_in_confcutdir(path):
+                    break
+                paths.insert(0, path)
 
             # Start going over the parts from the root, collecting each level
             # and discarding all nodes which don't match the level's part.
