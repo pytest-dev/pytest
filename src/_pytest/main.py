@@ -846,6 +846,7 @@ class Session(nodes.Collector):
 
             argpath = collection_argument.path
             names = collection_argument.parts
+            module_name = collection_argument.module_name
 
             # resolve_collection_argument() ensures this.
             if argpath.is_dir():
@@ -854,11 +855,20 @@ class Session(nodes.Collector):
             paths = [argpath]
             # Add relevant parents of the path, from the root, e.g.
             #   /a/b/c.py -> [/, /a, /a/b, /a/b/c.py]
-            # Paths outside of the confcutdir should not be considered.
-            for path in argpath.parents:
-                if not pm._is_in_confcutdir(path):
-                    break
-                paths.insert(0, path)
+            if module_name is None:
+                # Paths outside of the confcutdir should not be considered.
+                for path in argpath.parents:
+                    if not pm._is_in_confcutdir(path):
+                        break
+                    paths.insert(0, path)
+            else:
+                # For --pyargs arguments, only consider paths matching the module
+                # name. Paths beyond the package hierarchy are not included.
+                module_name_parts = module_name.split(".")
+                for i, path in enumerate(argpath.parents, 2):
+                    if i > len(module_name_parts) or path.stem != module_name_parts[-i]:
+                        break
+                    paths.insert(0, path)
 
             # Start going over the parts from the root, collecting each level
             # and discarding all nodes which don't match the level's part.
