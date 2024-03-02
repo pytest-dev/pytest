@@ -10,8 +10,7 @@ Import modes
 
 pytest as a testing framework needs to import test modules and ``conftest.py`` files for execution.
 
-Importing files in Python (at least until recently) is a non-trivial processes, often requiring
-changing :data:`sys.path`. Some aspects of the
+Importing files in Python is a non-trivial processes, so aspects of the
 import process can be controlled through the ``--import-mode`` command-line flag, which can assume
 these values:
 
@@ -100,9 +99,16 @@ these values:
     Initially we intended to make ``importlib`` the default in future releases, however it is clear now that
     it has its own set of drawbacks so the default will remain ``prepend`` for the foreseeable future.
 
+.. note::
+
+    By default, pytest will not attempt to resolve namespace packages automatically, but that can
+    be changed via the :confval:`consider_namespace_packages` configuration variable.
+
 .. seealso::
 
     The :confval:`pythonpath` configuration variable.
+
+    The :confval:`consider_namespace_packages` configuration variable.
 
     :ref:`test layout`.
 
