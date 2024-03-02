@@ -488,6 +488,7 @@ def import_path(
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend,
     root: Path,
+    consider_namespace_packages: bool,
 ) -> ModuleType:
     """
     Import and return a module from the given path, which can be a file (a module) or
@@ -515,6 +516,9 @@ def import_path(
         a unique name for the module being imported so it can safely be stored
         into ``sys.modules``.
 
+    :param consider_namespace_packages:
+        If True, consider namespace packages when resolving module names.
+
     :raises ImportPathMismatchError:
         If after importing the given `path` and the module `__file__`
         are different. Only raised in `prepend` and `append` modes.
@@ -530,7 +534,7 @@ def import_path(
         # without touching sys.path.
         try:
             pkg_root, module_name = resolve_pkg_root_and_module_name(
-                path, consider_ns_packages=True
+                path, consider_namespace_packages=consider_namespace_packages
             )
         except CouldNotResolvePathError:
             pass
@@ -556,7 +560,7 @@ def import_path(
 
     try:
         pkg_root, module_name = resolve_pkg_root_and_module_name(
-            path, consider_ns_packages=True
+            path, consider_namespace_packages=consider_namespace_packages
         )
     except CouldNotResolvePathError:
         pkg_root, module_name = path.parent, path.stem
@@ -674,7 +678,7 @@ def module_name_from_path(path: Path, root: Path) -> str:
     # Module names cannot contain ".", normalize them to "_". This prevents
     # a directory having a "." in the name (".env.310" for example) causing extra intermediate modules.
     # Also, important to replace "." at the start of paths, as those are considered relative imports.
-    path_parts = [x.replace(".", "_") for x in path_parts]
+    path_parts = tuple(x.replace(".", "_") for x in path_parts)
 
     return ".".join(path_parts)
 
@@ -738,7 +742,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
 
 
 def resolve_pkg_root_and_module_name(
-    path: Path, *, consider_ns_packages: bool = False
+    path: Path, *, consider_namespace_packages: bool = False
 ) -> Tuple[Path, str]:
     """
     Return the path to the directory of the root package that contains the
@@ -753,7 +757,7 @@ def resolve_pkg_root_and_module_name(
 
     Passing the full path to `models.py` will yield Path("src") and "app.core.models".
 
-    If consider_ns_packages is True, then we additionally check upwards in the hierarchy
+    If consider_namespace_packages is True, then we additionally check upwards in the hierarchy
     until we find a directory that is reachable from sys.path, which marks it as a namespace package:
 
     https://packaging.python.org/en/latest/guides/packaging-namespace-packages
@@ -764,7 +768,7 @@ def resolve_pkg_root_and_module_name(
     if pkg_path is not None:
         pkg_root = pkg_path.parent
         # https://packaging.python.org/en/latest/guides/packaging-namespace-packages/
-        if consider_ns_packages:
+        if consider_namespace_packages:
             # Go upwards in the hierarchy, if we find a parent path included
             # in sys.path, it means the package found by resolve_package_path()
             # actually belongs to a namespace package.

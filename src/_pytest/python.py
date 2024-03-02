@@ -516,7 +516,12 @@ def importtestmodule(
     # We assume we are only called once per module.
     importmode = config.getoption("--import-mode")
     try:
-        mod = import_path(path, mode=importmode, root=config.rootpath)
+        mod = import_path(
+            path,
+            mode=importmode,
+            root=config.rootpath,
+            consider_namespace_packages=config.getini("consider_namespace_packages"),
+        )
     except SyntaxError as e:
         raise nodes.Collector.CollectError(
             ExceptionInfo.from_current().getrepr(style="short")

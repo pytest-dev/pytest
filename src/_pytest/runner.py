@@ -380,6 +380,9 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
                 collector.path,
                 collector.config.getoption("importmode"),
                 rootpath=collector.config.rootpath,
+                consider_namespace_packages=collector.config.getini(
+                    "consider_namespace_packages"
+                ),
             )
 
         return list(collector.collect())
