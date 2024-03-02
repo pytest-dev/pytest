@@ -1,0 +1,2 @@
+When multiple finalizers of a fixture raise an exception, now all exceptions are reported as an exception group.
+Previously, only the first exception was reported.

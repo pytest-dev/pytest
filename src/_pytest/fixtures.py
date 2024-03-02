@@ -7,6 +7,7 @@ import functools
 import inspect
 import os
 from pathlib import Path
+import sys
 from typing import AbstractSet
 from typing import Any
 from typing import Callable
@@ -65,6 +66,10 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
+
+
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 
 if TYPE_CHECKING:
@@ -1017,27 +1022,25 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        exc = None
-        try:
-            while self._finalizers:
-                try:
-                    func = self._finalizers.pop()
-                    func()
-                except BaseException as e:
-                    # XXX Only first exception will be seen by user,
-                    #     ideally all should be reported.
-                    if exc is None:
-                        exc = e
-            if exc:
-                raise exc
-        finally:
-            ihook = request.node.ihook
-            ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
-            # Even if finalization fails, we invalidate the cached fixture
-            # value and remove all finalizers because they may be bound methods
-            # which will keep instances alive.
-            self.cached_result = None
-            self._finalizers.clear()
+        exceptions: List[BaseException] = []
+        while self._finalizers:
+            fin = self._finalizers.pop()
+            try:
+                fin()
+            except BaseException as e:
+                exceptions.append(e)
+        node = request.node
+        node.ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
+        # Even if finalization fails, we invalidate the cached fixture
+        # value and remove all finalizers because they may be bound methods
+        # which will keep instances alive.
+        self.cached_result = None
+        self._finalizers.clear()
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif len(exceptions) > 1:
+            msg = f'errors while tearing down fixture "{self.argname}" of {node}'
+            raise BaseExceptionGroup(msg, exceptions[::-1])
 
     def execute(self, request: SubRequest) -> FixtureValue:
         # Get required arguments and register our own finish()

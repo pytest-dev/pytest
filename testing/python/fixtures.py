@@ -932,8 +932,9 @@ class TestRequestBasic:
         self, pytester: Pytester
     ) -> None:
         """
-        Ensure exceptions raised during teardown by a finalizer are suppressed
-        until all finalizers are called, re-raising the first exception (#2440)
+        Ensure exceptions raised during teardown by finalizers are suppressed
+        until all finalizers are called, then re-reaised together in an
+        exception group (#2440)
         """
         pytester.makepyfile(
             """
@@ -960,8 +961,16 @@ class TestRequestBasic:
         """
         )
         result = pytester.runpytest()
+        result.assert_outcomes(passed=2, errors=1)
         result.stdout.fnmatch_lines(
-            ["*Exception: Error in excepts fixture", "* 2 passed, 1 error in *"]
+            [
+                '  | *ExceptionGroup: errors while tearing down fixture "subrequest" of <Function test_first> (2 sub-exceptions)',  # noqa: E501
+                "  +-+---------------- 1 ----------------",
+                "    | Exception: Error in something fixture",
+                "    +---------------- 2 ----------------",
+                "    | Exception: Error in excepts fixture",
+                "    +------------------------------------",
+            ],
         )
 
     def test_request_getmodulepath(self, pytester: Pytester) -> None:
