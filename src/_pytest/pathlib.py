@@ -484,26 +484,31 @@ class ImportPathMismatchError(ImportError):
 
 
 def import_path(
-    p: Union[str, "os.PathLike[str]"],
+    path: Union[str, "os.PathLike[str]"],
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend,
     root: Path,
 ) -> ModuleType:
-    """Import and return a module from the given path, which can be a file (a module) or
+    """
+    Import and return a module from the given path, which can be a file (a module) or
     a directory (a package).
 
-    The import mechanism used is controlled by the `mode` parameter:
+    :param path:
+        Path to the file to import.
 
-    * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
-      `__init__.py` files into account) will be put at the *start* of `sys.path` before
-      being imported with `importlib.import_module`.
+    :param mode:
+        Controls the underlying import mechanism that will be used:
 
-    * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
-      to the end of `sys.path`, if not already in `sys.path`.
+        * ImportMode.prepend: the directory containing the module (or package, taking
+          `__init__.py` files into account) will be put at the *start* of `sys.path` before
+          being imported with `importlib.import_module`.
 
-    * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
-      to import the module, which avoids having to muck with `sys.path` at all. It effectively
-      allows having same-named test modules in different places.
+        * ImportMode.append: same as `prepend`, but the directory will be appended
+          to the end of `sys.path`, if not already in `sys.path`.
+
+        * ImportMode.importlib: uses more fine control mechanisms provided by `importlib`
+          to import the module, which avoids having to muck with `sys.path` at all. It effectively
+          allows having same-named test modules in different places.
 
     :param root:
         Used as an anchor when mode == ImportMode.importlib to obtain
@@ -514,9 +519,8 @@ def import_path(
         If after importing the given `path` and the module `__file__`
         are different. Only raised in `prepend` and `append` modes.
     """
+    path = Path(path)
     mode = ImportMode(mode)
-
-    path = Path(p)
 
     if not path.exists():
         raise ImportError(path)
