@@ -100,6 +100,15 @@ class TestFNMatcherPort:
         assert not fnmatch_ex(pattern, path)
 
 
+@pytest.fixture(params=[True, False])
+def ns_param(request: pytest.FixtureRequest) -> bool:
+    """
+    Simple parametrized fixture for tests which call import_path() with consider_namespace_packages
+    using True and False.
+    """
+    return bool(request.param)
+
+
 class TestImportPath:
     """
 
@@ -170,32 +179,32 @@ class TestImportPath:
             encoding="utf-8",
         )
 
-    def test_smoke_test(self, path1: Path) -> None:
+    def test_smoke_test(self, path1: Path, ns_param: bool) -> None:
         obj = import_path(
-            path1 / "execfile.py", root=path1, consider_namespace_packages=False
+            path1 / "execfile.py", root=path1, consider_namespace_packages=ns_param
         )
         assert obj.x == 42  # type: ignore[attr-defined]
         assert obj.__name__ == "execfile"
 
-    def test_import_path_missing_file(self, path1: Path) -> None:
+    def test_import_path_missing_file(self, path1: Path, ns_param: bool) -> None:
         with pytest.raises(ImportPathMismatchError):
             import_path(
-                path1 / "sampledir", root=path1, consider_namespace_packages=False
+                path1 / "sampledir", root=path1, consider_namespace_packages=ns_param
             )
 
     def test_renamed_dir_creates_mismatch(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
+        self, tmp_path: Path, monkeypatch: MonkeyPatch, ns_param: bool
     ) -> None:
         tmp_path.joinpath("a").mkdir()
         p = tmp_path.joinpath("a", "test_x123.py")
         p.touch()
-        import_path(p, root=tmp_path, consider_namespace_packages=False)
+        import_path(p, root=tmp_path, consider_namespace_packages=ns_param)
         tmp_path.joinpath("a").rename(tmp_path.joinpath("b"))
         with pytest.raises(ImportPathMismatchError):
             import_path(
                 tmp_path.joinpath("b", "test_x123.py"),
                 root=tmp_path,
-                consider_namespace_packages=False,
+                consider_namespace_packages=ns_param,
             )
 
         # Errors can be ignored.
@@ -203,7 +212,7 @@ class TestImportPath:
         import_path(
             tmp_path.joinpath("b", "test_x123.py"),
             root=tmp_path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
 
         # PY_IGNORE_IMPORTMISMATCH=0 does not ignore error.
@@ -212,69 +221,71 @@ class TestImportPath:
             import_path(
                 tmp_path.joinpath("b", "test_x123.py"),
                 root=tmp_path,
-                consider_namespace_packages=False,
+                consider_namespace_packages=ns_param,
             )
 
-    def test_messy_name(self, tmp_path: Path) -> None:
+    def test_messy_name(self, tmp_path: Path, ns_param: bool) -> None:
         # https://bitbucket.org/hpk42/py-trunk/issue/129
         path = tmp_path / "foo__init__.py"
         path.touch()
-        module = import_path(path, root=tmp_path, consider_namespace_packages=False)
+        module = import_path(path, root=tmp_path, consider_namespace_packages=ns_param)
         assert module.__name__ == "foo__init__"
 
-    def test_dir(self, tmp_path: Path) -> None:
+    def test_dir(self, tmp_path: Path, ns_param: bool) -> None:
         p = tmp_path / "hello_123"
         p.mkdir()
         p_init = p / "__init__.py"
         p_init.touch()
-        m = import_path(p, root=tmp_path, consider_namespace_packages=False)
+        m = import_path(p, root=tmp_path, consider_namespace_packages=ns_param)
         assert m.__name__ == "hello_123"
-        m = import_path(p_init, root=tmp_path, consider_namespace_packages=False)
+        m = import_path(p_init, root=tmp_path, consider_namespace_packages=ns_param)
         assert m.__name__ == "hello_123"
 
-    def test_a(self, path1: Path) -> None:
+    def test_a(self, path1: Path, ns_param: bool) -> None:
         otherdir = path1 / "otherdir"
         mod = import_path(
-            otherdir / "a.py", root=path1, consider_namespace_packages=False
+            otherdir / "a.py", root=path1, consider_namespace_packages=ns_param
         )
         assert mod.result == "got it"  # type: ignore[attr-defined]
         assert mod.__name__ == "otherdir.a"
 
-    def test_b(self, path1: Path) -> None:
+    def test_b(self, path1: Path, ns_param: bool) -> None:
         otherdir = path1 / "otherdir"
         mod = import_path(
-            otherdir / "b.py", root=path1, consider_namespace_packages=False
+            otherdir / "b.py", root=path1, consider_namespace_packages=ns_param
         )
         assert mod.stuff == "got it"  # type: ignore[attr-defined]
         assert mod.__name__ == "otherdir.b"
 
-    def test_c(self, path1: Path) -> None:
+    def test_c(self, path1: Path, ns_param: bool) -> None:
         otherdir = path1 / "otherdir"
         mod = import_path(
-            otherdir / "c.py", root=path1, consider_namespace_packages=False
+            otherdir / "c.py", root=path1, consider_namespace_packages=ns_param
         )
         assert mod.value == "got it"  # type: ignore[attr-defined]
 
-    def test_d(self, path1: Path) -> None:
+    def test_d(self, path1: Path, ns_param: bool) -> None:
         otherdir = path1 / "otherdir"
         mod = import_path(
-            otherdir / "d.py", root=path1, consider_namespace_packages=False
+            otherdir / "d.py", root=path1, consider_namespace_packages=ns_param
         )
         assert mod.value2 == "got it"  # type: ignore[attr-defined]
 
-    def test_import_after(self, tmp_path: Path) -> None:
+    def test_import_after(self, tmp_path: Path, ns_param: bool) -> None:
         tmp_path.joinpath("xxxpackage").mkdir()
         tmp_path.joinpath("xxxpackage", "__init__.py").touch()
         mod1path = tmp_path.joinpath("xxxpackage", "module1.py")
         mod1path.touch()
-        mod1 = import_path(mod1path, root=tmp_path, consider_namespace_packages=False)
+        mod1 = import_path(
+            mod1path, root=tmp_path, consider_namespace_packages=ns_param
+        )
         assert mod1.__name__ == "xxxpackage.module1"
         from xxxpackage import module1
 
         assert module1 is mod1
 
     def test_check_filepath_consistency(
-        self, monkeypatch: MonkeyPatch, tmp_path: Path
+        self, monkeypatch: MonkeyPatch, tmp_path: Path, ns_param: bool
     ) -> None:
         name = "pointsback123"
         p = tmp_path.joinpath(name + ".py")
@@ -287,7 +298,7 @@ class TestImportPath:
                 mod.__file__ = str(pseudopath)
                 mp.setitem(sys.modules, name, mod)
                 newmod = import_path(
-                    p, root=tmp_path, consider_namespace_packages=False
+                    p, root=tmp_path, consider_namespace_packages=ns_param
                 )
                 assert mod == newmod
         mod = ModuleType(name)
@@ -296,31 +307,31 @@ class TestImportPath:
         mod.__file__ = str(pseudopath)
         monkeypatch.setitem(sys.modules, name, mod)
         with pytest.raises(ImportPathMismatchError) as excinfo:
-            import_path(p, root=tmp_path, consider_namespace_packages=False)
+            import_path(p, root=tmp_path, consider_namespace_packages=ns_param)
         modname, modfile, orig = excinfo.value.args
         assert modname == name
         assert modfile == str(pseudopath)
         assert orig == p
         assert issubclass(ImportPathMismatchError, ImportError)
 
-    def test_ensuresyspath_append(self, tmp_path: Path) -> None:
+    def test_ensuresyspath_append(self, tmp_path: Path, ns_param: bool) -> None:
         root1 = tmp_path / "root1"
         root1.mkdir()
         file1 = root1 / "x123.py"
         file1.touch()
         assert str(root1) not in sys.path
         import_path(
-            file1, mode="append", root=tmp_path, consider_namespace_packages=False
+            file1, mode="append", root=tmp_path, consider_namespace_packages=ns_param
         )
         assert str(root1) == sys.path[-1]
         assert str(root1) not in sys.path[:-1]
 
-    def test_invalid_path(self, tmp_path: Path) -> None:
+    def test_invalid_path(self, tmp_path: Path, ns_param: bool) -> None:
         with pytest.raises(ImportError):
             import_path(
                 tmp_path / "invalid.py",
                 root=tmp_path,
-                consider_namespace_packages=False,
+                consider_namespace_packages=ns_param,
             )
 
     @pytest.fixture
@@ -336,14 +347,18 @@ class TestImportPath:
         sys.modules.pop(module_name, None)
 
     def test_importmode_importlib(
-        self, simple_module: Path, tmp_path: Path, request: pytest.FixtureRequest
+        self,
+        simple_module: Path,
+        tmp_path: Path,
+        request: pytest.FixtureRequest,
+        ns_param: bool,
     ) -> None:
         """`importlib` mode does not change sys.path."""
         module = import_path(
             simple_module,
             mode="importlib",
             root=tmp_path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert module.foo(2) == 42  # type: ignore[attr-defined]
         assert str(simple_module.parent) not in sys.path
@@ -353,25 +368,29 @@ class TestImportPath:
         assert "_src.tests" in sys.modules
 
     def test_remembers_previous_imports(
-        self, simple_module: Path, tmp_path: Path
+        self, simple_module: Path, tmp_path: Path, ns_param: bool
     ) -> None:
         """`importlib` mode called remembers previous module (#10341, #10811)."""
         module1 = import_path(
             simple_module,
             mode="importlib",
             root=tmp_path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         module2 = import_path(
             simple_module,
             mode="importlib",
             root=tmp_path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert module1 is module2
 
     def test_no_meta_path_found(
-        self, simple_module: Path, monkeypatch: MonkeyPatch, tmp_path: Path
+        self,
+        simple_module: Path,
+        monkeypatch: MonkeyPatch,
+        tmp_path: Path,
+        ns_param: bool,
     ) -> None:
         """Even without any meta_path should still import module."""
         monkeypatch.setattr(sys, "meta_path", [])
@@ -379,7 +398,7 @@ class TestImportPath:
             simple_module,
             mode="importlib",
             root=tmp_path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert module.foo(2) == 42  # type: ignore[attr-defined]
 
@@ -541,7 +560,9 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
 
 
 class TestImportLibMode:
-    def test_importmode_importlib_with_dataclass(self, tmp_path: Path) -> None:
+    def test_importmode_importlib_with_dataclass(
+        self, tmp_path: Path, ns_param: bool
+    ) -> None:
         """Ensure that importlib mode works with a module containing dataclasses (#7856)."""
         fn = tmp_path.joinpath("_src/tests/test_dataclass.py")
         fn.parent.mkdir(parents=True)
@@ -559,14 +580,16 @@ class TestImportLibMode:
         )
 
         module = import_path(
-            fn, mode="importlib", root=tmp_path, consider_namespace_packages=False
+            fn, mode="importlib", root=tmp_path, consider_namespace_packages=ns_param
         )
         Data: Any = getattr(module, "Data")
         data = Data(value="foo")
         assert data.value == "foo"
         assert data.__module__ == "_src.tests.test_dataclass"
 
-    def test_importmode_importlib_with_pickle(self, tmp_path: Path) -> None:
+    def test_importmode_importlib_with_pickle(
+        self, tmp_path: Path, ns_param: bool
+    ) -> None:
         """Ensure that importlib mode works with pickle (#7859)."""
         fn = tmp_path.joinpath("_src/tests/test_pickle.py")
         fn.parent.mkdir(parents=True)
@@ -587,14 +610,14 @@ class TestImportLibMode:
         )
 
         module = import_path(
-            fn, mode="importlib", root=tmp_path, consider_namespace_packages=False
+            fn, mode="importlib", root=tmp_path, consider_namespace_packages=ns_param
         )
         round_trip = getattr(module, "round_trip")
         action = round_trip()
         assert action() == 42
 
     def test_importmode_importlib_with_pickle_separate_modules(
-        self, tmp_path: Path
+        self, tmp_path: Path, ns_param: bool
     ) -> None:
         """
         Ensure that importlib mode works can load pickles that look similar but are
@@ -639,12 +662,12 @@ class TestImportLibMode:
             return pickle.loads(s)
 
         module = import_path(
-            fn1, mode="importlib", root=tmp_path, consider_namespace_packages=False
+            fn1, mode="importlib", root=tmp_path, consider_namespace_packages=ns_param
         )
         Data1 = getattr(module, "Data")
 
         module = import_path(
-            fn2, mode="importlib", root=tmp_path, consider_namespace_packages=False
+            fn2, mode="importlib", root=tmp_path, consider_namespace_packages=ns_param
         )
         Data2 = getattr(module, "Data")
 
@@ -694,7 +717,9 @@ class TestImportLibMode:
         # Create the __init__.py files, it should now resolve to a proper module name.
         (tmp_path / "src/app/__init__.py").touch()
         (tmp_path / "src/app/core/__init__.py").touch()
-        assert resolve_pkg_root_and_module_name(models_py) == (
+        assert resolve_pkg_root_and_module_name(
+            models_py, consider_namespace_packages=True
+        ) == (
             tmp_path / "src",
             "app.core.models",
         )
@@ -706,6 +731,12 @@ class TestImportLibMode:
         ) == (
             tmp_path,
             "src.app.core.models",
+        )
+        assert resolve_pkg_root_and_module_name(
+            models_py, consider_namespace_packages=False
+        ) == (
+            tmp_path / "src",
+            "app.core.models",
         )
 
     def test_insert_missing_modules(
@@ -739,7 +770,9 @@ class TestImportLibMode:
         assert modules["xxx"].tests is modules["xxx.tests"]
         assert modules["xxx.tests"].foo is modules["xxx.tests.foo"]
 
-    def test_importlib_package(self, monkeypatch: MonkeyPatch, tmp_path: Path):
+    def test_importlib_package(
+        self, monkeypatch: MonkeyPatch, tmp_path: Path, ns_param: bool
+    ):
         """
         Importing a package using --importmode=importlib should not import the
         package's __init__.py file more than once (#11306).
@@ -780,7 +813,7 @@ class TestImportLibMode:
             init,
             root=tmp_path,
             mode=ImportMode.importlib,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert len(mod.instance.INSTANCES) == 1
 
@@ -889,7 +922,7 @@ class TestImportLibMode:
         return (site_packages / "app/core.py"), test_path1, test_path2
 
     def test_import_using_normal_mechanism_first(
-        self, monkeypatch: MonkeyPatch, pytester: Pytester
+        self, monkeypatch: MonkeyPatch, pytester: Pytester, ns_param: bool
     ) -> None:
         """
         Test import_path imports from the canonical location when possible first, only
@@ -904,7 +937,7 @@ class TestImportLibMode:
             core_py,
             mode="importlib",
             root=pytester.path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert mod.__name__ == "app.core"
         assert mod.__file__ and Path(mod.__file__) == core_py
@@ -916,19 +949,19 @@ class TestImportLibMode:
             test_path1,
             mode="importlib",
             root=pytester.path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert mod.__name__ == "_tests.a.test_core"
         mod = import_path(
             test_path2,
             mode="importlib",
             root=pytester.path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert mod.__name__ == "_tests.b.test_core"
 
     def test_import_using_normal_mechanism_first_integration(
-        self, monkeypatch: MonkeyPatch, pytester: Pytester
+        self, monkeypatch: MonkeyPatch, pytester: Pytester, ns_param: bool
     ) -> None:
         """
         Same test as above, but verify the behavior calling pytest.
@@ -941,6 +974,8 @@ class TestImportLibMode:
         )
         result = pytester.runpytest(
             "--import-mode=importlib",
+            "-o",
+            f"consider_namespace_packages={ns_param}",
             "--doctest-modules",
             "--pyargs",
             "app",
@@ -955,7 +990,9 @@ class TestImportLibMode:
             ]
         )
 
-    def test_import_path_imports_correct_file(self, pytester: Pytester) -> None:
+    def test_import_path_imports_correct_file(
+        self, pytester: Pytester, ns_param: bool
+    ) -> None:
         """
         Import the module by the given path, even if other module with the same name
         is reachable from sys.path.
@@ -979,7 +1016,7 @@ class TestImportLibMode:
             x_in_sub_folder,
             mode=ImportMode.importlib,
             root=pytester.path,
-            consider_namespace_packages=False,
+            consider_namespace_packages=ns_param,
         )
         assert mod.__file__ and Path(mod.__file__) == x_in_sub_folder
         assert mod.X == "a/b/x"
@@ -990,7 +1027,7 @@ class TestImportLibMode:
                 x_at_root,
                 mode=ImportMode.importlib,
                 root=pytester.path,
-                consider_namespace_packages=False,
+                consider_namespace_packages=ns_param,
             )
 
 
