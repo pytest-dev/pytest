@@ -1789,6 +1789,26 @@ def test_collect_short_file_windows(pytester: Pytester) -> None:
     assert result.parseoutcomes() == {"passed": 1}
 
 
+def test_not_collect_symlink_syblings(
+    pytester: Pytester, tmp_path: Path, request: pytest.FixtureRequest
+) -> None:
+    """
+    Do not collect from directories that are symlinks to other directories in the same path.
+
+    The check for short paths under Windows via os.path.samefile, introduced in #11936, also finds the symlinked
+    directory created by tmp_path/tmpdir.
+
+    #12039
+    """
+    # Use tmp_path because it creates a symlink with the name "current" next to the directory it creates.
+    assert tmp_path.parent.joinpath(f"{request.node.name}current").is_symlink() is True
+
+    tmp_path.joinpath("test_foo.py").write_text("def test(): pass", encoding="UTF-8")
+
+    result = pytester.runpytest_subprocess(tmp_path, "-sv")
+    result.assert_outcomes(passed=1)
+
+
 def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     """When using `--pyargs`, the collection tree of a pyargs collection
     argument should only include parents in the import path, not up to confcutdir.
