@@ -1834,7 +1834,7 @@ def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) ->
     )
 
 
-def test_do_not_collect_symlink_syblings(
+def test_do_not_collect_symlink_siblings(
     pytester: Pytester, tmp_path: Path, request: pytest.FixtureRequest
 ) -> None:
     """
