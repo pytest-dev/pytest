@@ -926,6 +926,9 @@ def test_store_except_info_on_error() -> None:
     # Check that exception info is stored on sys
     assert sys.last_type is IndexError
     assert isinstance(sys.last_value, IndexError)
+    if sys.version_info >= (3, 12, 0):
+        assert isinstance(sys.last_exc, IndexError)  # type: ignore[attr-defined]
+
     assert sys.last_value.args[0] == "TEST"
     assert sys.last_traceback
 
@@ -934,6 +937,8 @@ def test_store_except_info_on_error() -> None:
     runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type]
     assert not hasattr(sys, "last_type")
     assert not hasattr(sys, "last_value")
+    if sys.version_info >= (3, 12, 0):
+        assert not hasattr(sys, "last_exc")
     assert not hasattr(sys, "last_traceback")
 
 
@@ -1089,53 +1094,3 @@ def test_outcome_exception_bad_msg() -> None:
     with pytest.raises(TypeError) as excinfo:
         OutcomeException(func)  # type: ignore
     assert str(excinfo.value) == expected
-
-
-def test_teardown_session_failed(pytester: Pytester) -> None:
-    """Test that higher-scoped fixture teardowns run in the context of the last
-    item after the test session bails early due to --maxfail.
-
-    Regression test for #11706.
-    """
-    pytester.makepyfile(
-        """
-        import pytest
-
-        @pytest.fixture(scope="module")
-        def baz():
-            yield
-            pytest.fail("This is a failing teardown")
-
-        def test_foo(baz):
-            pytest.fail("This is a failing test")
-
-        def test_bar(): pass
-        """
-    )
-    result = pytester.runpytest("--maxfail=1")
-    result.assert_outcomes(failed=1, errors=1)
-
-
-def test_teardown_session_stopped(pytester: Pytester) -> None:
-    """Test that higher-scoped fixture teardowns run in the context of the last
-    item after the test session bails early due to --stepwise.
-
-    Regression test for #11706.
-    """
-    pytester.makepyfile(
-        """
-        import pytest
-
-        @pytest.fixture(scope="module")
-        def baz():
-            yield
-            pytest.fail("This is a failing teardown")
-
-        def test_foo(baz):
-            pytest.fail("This is a failing test")
-
-        def test_bar(): pass
-        """
-    )
-    result = pytester.runpytest("--stepwise")
-    result.assert_outcomes(failed=1, errors=1)

@@ -2611,6 +2611,239 @@ def test_format_trimmed() -> None:
     assert _format_trimmed(" ({}) ", msg, len(msg) + 3) == " (unconditional ...) "
 
 
+class TestFineGrainedTestCase:
+    DEFAULT_FILE_CONTENTS = """
+            import pytest
+
+            @pytest.mark.parametrize("i", range(4))
+            def test_ok(i):
+                '''
+                some docstring
+                '''
+                pass
+
+            def test_fail():
+                assert False
+            """
+    LONG_SKIP_FILE_CONTENTS = """
+            import pytest
+
+            @pytest.mark.skip(
+              "some long skip reason that will not fit on a single line with other content that goes"
+              " on and on and on and on and on"
+            )
+            def test_skip():
+                pass
+            """
+
+    @pytest.mark.parametrize("verbosity", [1, 2])
+    def test_execute_positive(self, verbosity, pytester: Pytester) -> None:
+        # expected: one test case per line (with file name), word describing result
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=verbosity)
+        result = pytester.runpytest(p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items",
+                "",
+                f"{p.name}::test_ok[0] PASSED                              [ 20%]",
+                f"{p.name}::test_ok[1] PASSED                              [ 40%]",
+                f"{p.name}::test_ok[2] PASSED                              [ 60%]",
+                f"{p.name}::test_ok[3] PASSED                              [ 80%]",
+                f"{p.name}::test_fail FAILED                               [100%]",
+            ],
+            consecutive=True,
+        )
+
+    def test_execute_0_global_1(self, pytester: Pytester) -> None:
+        # expected: one file name per line, single character describing result
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=0)
+        result = pytester.runpytest("-v", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collecting ... collected 5 items",
+                "",
+                f"{p.name} ....F                                         [100%]",
+            ],
+            consecutive=True,
+        )
+
+    @pytest.mark.parametrize("verbosity", [-1, -2])
+    def test_execute_negative(self, verbosity, pytester: Pytester) -> None:
+        # expected: single character describing result
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=verbosity)
+        result = pytester.runpytest(p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items",
+                "....F                                                                    [100%]",
+            ],
+            consecutive=True,
+        )
+
+    def test_execute_skipped_positive_2(self, pytester: Pytester) -> None:
+        # expected: one test case per line (with file name), word describing result, full reason
+        p = TestFineGrainedTestCase._initialize_files(
+            pytester,
+            verbosity=2,
+            file_contents=TestFineGrainedTestCase.LONG_SKIP_FILE_CONTENTS,
+        )
+        result = pytester.runpytest(p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 1 item",
+                "",
+                f"{p.name}::test_skip SKIPPED (some long skip",
+                "reason that will not fit on a single line with other content that goes",
+                "on and on and on and on and on)                                          [100%]",
+            ],
+            consecutive=True,
+        )
+
+    def test_execute_skipped_positive_1(self, pytester: Pytester) -> None:
+        # expected: one test case per line (with file name), word describing result, reason truncated
+        p = TestFineGrainedTestCase._initialize_files(
+            pytester,
+            verbosity=1,
+            file_contents=TestFineGrainedTestCase.LONG_SKIP_FILE_CONTENTS,
+        )
+        result = pytester.runpytest(p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 1 item",
+                "",
+                f"{p.name}::test_skip SKIPPED (some long ski...) [100%]",
+            ],
+            consecutive=True,
+        )
+
+    def test_execute_skipped__0_global_1(self, pytester: Pytester) -> None:
+        # expected: one file name per line, single character describing result (no reason)
+        p = TestFineGrainedTestCase._initialize_files(
+            pytester,
+            verbosity=0,
+            file_contents=TestFineGrainedTestCase.LONG_SKIP_FILE_CONTENTS,
+        )
+        result = pytester.runpytest("-v", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collecting ... collected 1 item",
+                "",
+                f"{p.name} s                                    [100%]",
+            ],
+            consecutive=True,
+        )
+
+    @pytest.mark.parametrize("verbosity", [-1, -2])
+    def test_execute_skipped_negative(self, verbosity, pytester: Pytester) -> None:
+        # expected: single character describing result (no reason)
+        p = TestFineGrainedTestCase._initialize_files(
+            pytester,
+            verbosity=verbosity,
+            file_contents=TestFineGrainedTestCase.LONG_SKIP_FILE_CONTENTS,
+        )
+        result = pytester.runpytest(p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 1 item",
+                "s                                                                        [100%]",
+            ],
+            consecutive=True,
+        )
+
+    @pytest.mark.parametrize("verbosity", [1, 2])
+    def test__collect_only_positive(self, verbosity, pytester: Pytester) -> None:
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=verbosity)
+        result = pytester.runpytest("--collect-only", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items",
+                "",
+                f"<Dir {p.parent.name}>",
+                f"  <Module {p.name}>",
+                "    <Function test_ok[0]>",
+                "      some docstring",
+                "    <Function test_ok[1]>",
+                "      some docstring",
+                "    <Function test_ok[2]>",
+                "      some docstring",
+                "    <Function test_ok[3]>",
+                "      some docstring",
+                "    <Function test_fail>",
+            ],
+            consecutive=True,
+        )
+
+    def test_collect_only_0_global_1(self, pytester: Pytester) -> None:
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=0)
+        result = pytester.runpytest("-v", "--collect-only", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collecting ... collected 5 items",
+                "",
+                f"<Dir {p.parent.name}>",
+                f"  <Module {p.name}>",
+                "    <Function test_ok[0]>",
+                "    <Function test_ok[1]>",
+                "    <Function test_ok[2]>",
+                "    <Function test_ok[3]>",
+                "    <Function test_fail>",
+            ],
+            consecutive=True,
+        )
+
+    def test_collect_only_negative_1(self, pytester: Pytester) -> None:
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=-1)
+        result = pytester.runpytest("--collect-only", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items",
+                "",
+                f"{p.name}::test_ok[0]",
+                f"{p.name}::test_ok[1]",
+                f"{p.name}::test_ok[2]",
+                f"{p.name}::test_ok[3]",
+                f"{p.name}::test_fail",
+            ],
+            consecutive=True,
+        )
+
+    def test_collect_only_negative_2(self, pytester: Pytester) -> None:
+        p = TestFineGrainedTestCase._initialize_files(pytester, verbosity=-2)
+        result = pytester.runpytest("--collect-only", p)
+
+        result.stdout.fnmatch_lines(
+            [
+                "collected 5 items",
+                "",
+                f"{p.name}: 5",
+            ],
+            consecutive=True,
+        )
+
+    @staticmethod
+    def _initialize_files(
+        pytester: Pytester, verbosity: int, file_contents: str = DEFAULT_FILE_CONTENTS
+    ) -> Path:
+        p = pytester.makepyfile(file_contents)
+        pytester.makeini(
+            f"""
+            [pytest]
+            verbosity_test_cases = {verbosity}
+            """
+        )
+        return p
+
+
 def test_summary_xfail_reason(pytester: Pytester) -> None:
     pytester.makepyfile(
         """

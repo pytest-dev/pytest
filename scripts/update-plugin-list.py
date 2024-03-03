@@ -29,7 +29,7 @@ Pytest Plugin List
 ==================
 
 Below is an automated compilation of ``pytest``` plugins available on `PyPI <https://pypi.org>`_.
-It includes PyPI projects whose names begin with "pytest-" or "pytest_" and a handful of manually selected projects.
+It includes PyPI projects whose names begin with ``pytest-`` or ``pytest_`` and a handful of manually selected projects.
 Packages classified as inactive are excluded.
 
 For detailed insights into how this list is generated,

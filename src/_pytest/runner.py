@@ -132,10 +132,6 @@ def runtestprotocol(
             show_test_item(item)
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
-    # If the session is about to fail or stop, teardown everything - this is
-    # necessary to correctly report fixture teardown errors (see #11706)
-    if item.session.shouldfail or item.session.shouldstop:
-        nextitem = None
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # After all teardown hooks have been called
     # want funcargs and request info to go away.
@@ -168,6 +164,8 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_type
         del sys.last_value
         del sys.last_traceback
+        if sys.version_info >= (3, 12, 0):
+            del sys.last_exc  # type: ignore[attr-defined]
     except AttributeError:
         pass
     try:
@@ -176,6 +174,8 @@ def pytest_runtest_call(item: Item) -> None:
         # Store trace info to allow postmortem debugging
         sys.last_type = type(e)
         sys.last_value = e
+        if sys.version_info >= (3, 12, 0):
+            sys.last_exc = e  # type: ignore[attr-defined]
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next

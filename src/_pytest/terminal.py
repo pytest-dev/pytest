@@ -255,6 +255,14 @@ def pytest_addoption(parser: Parser) -> None:
         "progress even when capture=no)",
         default="progress",
     )
+    Config._add_verbosity_ini(
+        parser,
+        Config.VERBOSITY_TEST_CASES,
+        help=(
+            "Specify a verbosity level for test case execution, overriding the main level. "
+            "Higher levels will provide more detailed information about each test case executed."
+        ),
+    )
 
 
 def pytest_configure(config: Config) -> None:
@@ -408,7 +416,7 @@ class TerminalReporter:
     @property
     def showfspath(self) -> bool:
         if self._showfspath is None:
-            return self.verbosity >= 0
+            return self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) >= 0
         return self._showfspath
 
     @showfspath.setter
@@ -417,7 +425,7 @@ class TerminalReporter:
 
     @property
     def showlongtestinfo(self) -> bool:
-        return self.verbosity > 0
+        return self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) > 0
 
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
@@ -595,7 +603,7 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
-        if self.verbosity <= 0:
+        if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
         else:
             self._progress_nodeids_reported.add(rep.nodeid)
@@ -604,7 +612,7 @@ class TerminalReporter:
                 self.write_ensure_prefix(line, word, **markup)
                 if rep.skipped or hasattr(report, "wasxfail"):
                     reason = _get_raw_skip_reason(rep)
-                    if self.config.option.verbose < 2:
+                    if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) < 2:
                         available_width = (
                             (self._tw.fullwidth - self._tw.width_of_current_line)
                             - len(" [100%]")
@@ -641,7 +649,10 @@ class TerminalReporter:
 
     def pytest_runtest_logfinish(self, nodeid: str) -> None:
         assert self._session
-        if self.verbosity <= 0 and self._show_progress_info:
+        if (
+            self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
+            and self._show_progress_info
+        ):
             if self._show_progress_info == "count":
                 num_tests = self._session.testscollected
                 progress_length = len(f" [{num_tests}/{num_tests}]")
@@ -819,8 +830,9 @@ class TerminalReporter:
                     rep.toterminal(self._tw)
 
     def _printcollecteditems(self, items: Sequence[Item]) -> None:
-        if self.config.option.verbose < 0:
-            if self.config.option.verbose < -1:
+        test_cases_verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
+        if test_cases_verbosity < 0:
+            if test_cases_verbosity < -1:
                 counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
                 for name, count in sorted(counts.items()):
                     self._tw.line("%s: %d" % (name, count))
@@ -840,7 +852,7 @@ class TerminalReporter:
                 stack.append(col)
                 indent = (len(stack) - 1) * "  "
                 self._tw.line(f"{indent}{col}")
-                if self.config.option.verbose >= 1:
+                if test_cases_verbosity >= 1:
                     obj = getattr(col, "obj", None)
                     doc = inspect.getdoc(obj) if obj else None
                     if doc:

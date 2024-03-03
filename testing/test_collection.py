@@ -1787,3 +1787,48 @@ def test_collect_short_file_windows(pytester: Pytester) -> None:
     test_file.write_text("def test(): pass", encoding="UTF-8")
     result = pytester.runpytest(short_path)
     assert result.parseoutcomes() == {"passed": 1}
+
+
+def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    """When using `--pyargs`, the collection tree of a pyargs collection
+    argument should only include parents in the import path, not up to confcutdir.
+
+    Regression test for #11904.
+    """
+    site_packages = pytester.path / "venv/lib/site-packages"
+    site_packages.mkdir(parents=True)
+    monkeypatch.syspath_prepend(site_packages)
+    pytester.makepyfile(
+        **{
+            "venv/lib/site-packages/pkg/__init__.py": "",
+            "venv/lib/site-packages/pkg/sub/__init__.py": "",
+            "venv/lib/site-packages/pkg/sub/test_it.py": "def test(): pass",
+        }
+    )
+
+    result = pytester.runpytest("--pyargs", "--collect-only", "pkg.sub.test_it")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "<Package venv/lib/site-packages/pkg>",
+            "  <Package sub>",
+            "    <Module test_it.py>",
+            "      <Function test>",
+        ],
+        consecutive=True,
+    )
+
+    # Now with an unrelated rootdir with unrelated files.
+    monkeypatch.chdir(tempfile.gettempdir())
+
+    result = pytester.runpytest("--pyargs", "--collect-only", "pkg.sub.test_it")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "<Package *pkg>",
+            "  <Package sub>",
+            "    <Module test_it.py>",
+            "      <Function test>",
+        ],
+        consecutive=True,
+    )
