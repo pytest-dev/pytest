@@ -1844,9 +1844,16 @@ def test_do_not_collect_symlink_siblings(
     directory created by tmp_path/tmpdir.
     """
     # Use tmp_path because it creates a symlink with the name "current" next to the directory it creates.
-    assert tmp_path.parent.joinpath(f"{request.node.name}current").is_symlink() is True
+    symlink_path = tmp_path.parent / (tmp_path.name[:-1] + "current")
+    assert symlink_path.is_symlink() is True
 
+    # Create test file.
     tmp_path.joinpath("test_foo.py").write_text("def test(): pass", encoding="UTF-8")
 
-    result = pytester.runpytest_subprocess(tmp_path, "-sv")
+    # Ensure we collect it only once if we pass the tmp_path.
+    result = pytester.runpytest(tmp_path, "-sv")
+    result.assert_outcomes(passed=1)
+
+    # Ensure we collect it only once if we pass the symlinked directory.
+    result = pytester.runpytest(symlink_path, "-sv")
     result.assert_outcomes(passed=1)
