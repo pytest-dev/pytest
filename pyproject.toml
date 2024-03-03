@@ -47,7 +47,7 @@ dependencies = [
     'tomli>=1; python_version < "3.11"',
 ]
 [project.optional-dependencies]
-testing = [
+dev = [
     "argcomplete",
     "attrs>=19.2",
     "hypothesis>=3.56",
