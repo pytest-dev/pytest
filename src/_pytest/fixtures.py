@@ -633,13 +633,6 @@ class FixtureRequest(abc.ABC):
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
 
-    def _schedule_finalizers(
-        self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
-    ) -> None:
-        # If fixture function failed it might have registered finalizers.
-        finalizer = functools.partial(fixturedef.finish, request=subrequest)
-        subrequest.node.addfinalizer(finalizer)
-
 
 @final
 class TopRequest(FixtureRequest):
@@ -765,21 +758,6 @@ class SubRequest(FixtureRequest):
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._fixturedef.addfinalizer(finalizer)
-
-    def _schedule_finalizers(
-        self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
-    ) -> None:
-        # If the executing fixturedef was not explicitly requested in the argument list (via
-        # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
-        # first.
-        if (
-            fixturedef.argname not in self._fixture_defs
-            and fixturedef.argname not in self._pyfuncitem.fixturenames
-        ):
-            fixturedef.addfinalizer(
-                functools.partial(self._fixturedef.finish, request=self)
-            )
-        super()._schedule_finalizers(fixturedef, subrequest)
 
 
 @final
@@ -1037,7 +1015,6 @@ class FixtureDef(Generic[FixtureValue]):
             self.cached_result = None
             self._finalizers.clear()
 
-    # Note: the return value is entirely unused, no tests depend on it
     def execute(self, request: SubRequest) -> FixtureValue:
         finalizer = functools.partial(self.finish, request=request)
         # Get required arguments and register our own finish()
@@ -1076,7 +1053,6 @@ class FixtureDef(Generic[FixtureValue]):
             # schedule our finalizer, even if the setup failed
             request.node.addfinalizer(finalizer)
 
-        # note: unused
         return result
 
     def cache_key(self, request: SubRequest) -> object:
