@@ -927,10 +927,9 @@ class Session(nodes.Collector):
                             same_file = os.path.samefile(node.path, matchparts[0])
                             # we don't want to find links, so we at least
                             # exclude symlinks to regular directories
-                            is_match = (
-                                    same_file and
-                                    os.path.islink(node.path) == os.path.islink(matchparts[0])
-                            )
+                            is_match = same_file and os.path.islink(
+                                node.path
+                            ) == os.path.islink(matchparts[0])
 
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
