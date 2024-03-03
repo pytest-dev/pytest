@@ -1,3 +1,0 @@
-Added the new :confval:`consider_namespace_packages` configuration option, defaulting to ``False``.
-
-If set to ``True``, pytest will attempt to identify modules that are part of `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__ when importing modules.

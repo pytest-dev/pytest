@@ -33,7 +33,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         Values can be any object handled by the json stdlib module.
 
-    capsysbinary -- .../_pytest/capture.py:1007
+    capsysbinary -- .../_pytest/capture.py:1008
         Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsysbinary.readouterr()``
@@ -50,7 +50,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capsysbinary.readouterr()
                 assert captured.out == b"hello\n"
 
-    capfd -- .../_pytest/capture.py:1034
+    capfd -- .../_pytest/capture.py:1035
         Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
@@ -67,7 +67,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capfd.readouterr()
                 assert captured.out == "hello\n"
 
-    capfdbinary -- .../_pytest/capture.py:1061
+    capfdbinary -- .../_pytest/capture.py:1062
         Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
@@ -84,7 +84,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capfdbinary.readouterr()
                 assert captured.out == b"hello\n"
 
-    capsys -- .../_pytest/capture.py:980
+    capsys -- .../_pytest/capture.py:981
         Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsys.readouterr()`` method
@@ -101,7 +101,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capsys.readouterr()
                 assert captured.out == "hello\n"
 
-    doctest_namespace [session scope] -- .../_pytest/doctest.py:745
+    doctest_namespace [session scope] -- .../_pytest/doctest.py:737
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
@@ -115,7 +115,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1354
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1346
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
@@ -170,18 +170,18 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
             `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See
             :issue:`7767` for details.
 
-    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:302
+    tmpdir_factory [session scope] -- .../_pytest/legacypath.py:317
         Return a :class:`pytest.TempdirFactory` instance for the test session.
 
-    tmpdir -- .../_pytest/legacypath.py:309
+    tmpdir -- .../_pytest/legacypath.py:324
         Return a temporary directory path object which is unique to each test
         function invocation, created as a sub directory of the base temporary
         directory.
 
         By default, a new base temporary directory is created each test session,
         and old bases are removed after 3 sessions, to aid in debugging. If
-        ``--basetemp`` is used then it is cleared each session. See :ref:`base
-        temporary directory`.
+        ``--basetemp`` is used then it is cleared each session. See
+        :ref:`temporary directory location and retention`.
 
         The returned object is a `legacy_path`_ object.
 
@@ -192,7 +192,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
 
-    caplog -- .../_pytest/logging.py:594
+    caplog -- .../_pytest/logging.py:601
         Access and control log capturing.
 
         Captured logs are available through the following properties/methods::
@@ -227,7 +227,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         To undo modifications done by the fixture in a contained scope,
         use :meth:`context() <pytest.MonkeyPatch.context>`.
 
-    recwarn -- .../_pytest/recwarn.py:32
+    recwarn -- .../_pytest/recwarn.py:31
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
         See https://docs.pytest.org/en/latest/how-to/capture-warnings.html for information
@@ -245,8 +245,8 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         and old bases are removed after 3 sessions, to aid in debugging.
         This behavior can be configured with :confval:`tmp_path_retention_count` and
         :confval:`tmp_path_retention_policy`.
-        If ``--basetemp`` is used then it is cleared each session. See :ref:`base
-        temporary directory`.
+        If ``--basetemp`` is used then it is cleared each session. See
+        :ref:`temporary directory location and retention`.
 
         The returned object is a :class:`pathlib.Path` object.
 
