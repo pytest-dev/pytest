@@ -1765,7 +1765,7 @@ def test_does_not_crash_on_recursive_symlink(pytester: Pytester) -> None:
 
 @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
 def test_collect_short_file_windows(pytester: Pytester) -> None:
-    """Reproducer for #11895: short paths not colleced on Windows."""
+    """Reproducer for #11895: short paths not collected on Windows."""
     short_path = tempfile.mkdtemp()
     if "~" not in short_path:  # pragma: no cover
         if running_on_ci():
@@ -1832,3 +1832,28 @@ def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) ->
         ],
         consecutive=True,
     )
+
+
+def test_do_not_collect_symlink_siblings(
+    pytester: Pytester, tmp_path: Path, request: pytest.FixtureRequest
+) -> None:
+    """
+    Regression test for #12039: Do not collect from directories that are symlinks to other directories in the same path.
+
+    The check for short paths under Windows via os.path.samefile, introduced in #11936, also finds the symlinked
+    directory created by tmp_path/tmpdir.
+    """
+    # Use tmp_path because it creates a symlink with the name "current" next to the directory it creates.
+    symlink_path = tmp_path.parent / (tmp_path.name[:-1] + "current")
+    assert symlink_path.is_symlink() is True
+
+    # Create test file.
+    tmp_path.joinpath("test_foo.py").write_text("def test(): pass", encoding="UTF-8")
+
+    # Ensure we collect it only once if we pass the tmp_path.
+    result = pytester.runpytest(tmp_path, "-sv")
+    result.assert_outcomes(passed=1)
+
+    # Ensure we collect it only once if we pass the symlinked directory.
+    result = pytester.runpytest(symlink_path, "-sv")
+    result.assert_outcomes(passed=1)

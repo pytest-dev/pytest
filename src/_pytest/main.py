@@ -924,7 +924,14 @@ class Session(nodes.Collector):
                         if sys.platform == "win32" and not is_match:
                             # In case the file paths do not match, fallback to samefile() to
                             # account for short-paths on Windows (#11895).
-                            is_match = os.path.samefile(node.path, matchparts[0])
+                            same_file = os.path.samefile(node.path, matchparts[0])
+                            # We don't want to match links to the current node,
+                            # otherwise we would match the same file more than once (#12039).
+                            is_match = same_file and (
+                                os.path.islink(node.path)
+                                == os.path.islink(matchparts[0])
+                            )
+
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
                         # TODO: Remove parametrized workaround once collection structure contains
