@@ -1274,6 +1274,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+.. confval:: consider_namespace_packages
+
+   Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
+   when collecting Python modules. Default is ``False``.
+
+   Set to ``True`` if you are testing namespace packages installed into a virtual environment and it is important for
+   your packages to be imported using their full namespace package name.
+
+   Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
+   are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
+
+   .. versionadded:: 8.1
+
 .. confval:: console_output_style
 
    Sets the console output style while running tests:

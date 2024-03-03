@@ -222,6 +222,12 @@ def pytest_addoption(parser: Parser) -> None:
         help="Prepend/append to sys.path when importing test modules and conftest "
         "files. Default: prepend.",
     )
+    parser.addini(
+        "consider_namespace_packages",
+        type="bool",
+        default=False,
+        help="Consider namespace packages when resolving module names during import",
+    )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
     group.addoption(

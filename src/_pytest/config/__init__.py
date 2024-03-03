@@ -547,6 +547,8 @@ class PytestPluginManager(PluginManager):
         confcutdir: Optional[Path],
         invocation_dir: Path,
         importmode: Union[ImportMode, str],
+        *,
+        consider_namespace_packages: bool,
     ) -> None:
         """Load initial conftest files given a preparsed "namespace".
 
@@ -572,10 +574,20 @@ class PytestPluginManager(PluginManager):
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
             if safe_exists(anchor):
-                self._try_load_conftest(anchor, importmode, rootpath)
+                self._try_load_conftest(
+                    anchor,
+                    importmode,
+                    rootpath,
+                    consider_namespace_packages=consider_namespace_packages,
+                )
                 foundanchor = True
         if not foundanchor:
-            self._try_load_conftest(invocation_dir, importmode, rootpath)
+            self._try_load_conftest(
+                invocation_dir,
+                importmode,
+                rootpath,
+                consider_namespace_packages=consider_namespace_packages,
+            )
 
     def _is_in_confcutdir(self, path: Path) -> bool:
         """Whether to consider the given path to load conftests from."""
@@ -593,17 +605,37 @@ class PytestPluginManager(PluginManager):
         return path not in self._confcutdir.parents
 
     def _try_load_conftest(
-        self, anchor: Path, importmode: Union[str, ImportMode], rootpath: Path
+        self,
+        anchor: Path,
+        importmode: Union[str, ImportMode],
+        rootpath: Path,
+        *,
+        consider_namespace_packages: bool,
     ) -> None:
-        self._loadconftestmodules(anchor, importmode, rootpath)
+        self._loadconftestmodules(
+            anchor,
+            importmode,
+            rootpath,
+            consider_namespace_packages=consider_namespace_packages,
+        )
         # let's also consider test* subdirs
         if anchor.is_dir():
             for x in anchor.glob("test*"):
                 if x.is_dir():
-                    self._loadconftestmodules(x, importmode, rootpath)
+                    self._loadconftestmodules(
+                        x,
+                        importmode,
+                        rootpath,
+                        consider_namespace_packages=consider_namespace_packages,
+                    )
 
     def _loadconftestmodules(
-        self, path: Path, importmode: Union[str, ImportMode], rootpath: Path
+        self,
+        path: Path,
+        importmode: Union[str, ImportMode],
+        rootpath: Path,
+        *,
+        consider_namespace_packages: bool,
     ) -> None:
         if self._noconftest:
             return
@@ -620,7 +652,12 @@ class PytestPluginManager(PluginManager):
             if self._is_in_confcutdir(parent):
                 conftestpath = parent / "conftest.py"
                 if conftestpath.is_file():
-                    mod = self._importconftest(conftestpath, importmode, rootpath)
+                    mod = self._importconftest(
+                        conftestpath,
+                        importmode,
+                        rootpath,
+                        consider_namespace_packages=consider_namespace_packages,
+                    )
                     clist.append(mod)
         self._dirpath2confmods[directory] = clist
 
@@ -642,7 +679,12 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(
-        self, conftestpath: Path, importmode: Union[str, ImportMode], rootpath: Path
+        self,
+        conftestpath: Path,
+        importmode: Union[str, ImportMode],
+        rootpath: Path,
+        *,
+        consider_namespace_packages: bool,
     ) -> types.ModuleType:
         conftestpath_plugin_name = str(conftestpath)
         existing = self.get_plugin(conftestpath_plugin_name)
@@ -661,7 +703,12 @@ class PytestPluginManager(PluginManager):
                 pass
 
         try:
-            mod = import_path(conftestpath, mode=importmode, root=rootpath)
+            mod = import_path(
+                conftestpath,
+                mode=importmode,
+                root=rootpath,
+                consider_namespace_packages=consider_namespace_packages,
+            )
         except Exception as e:
             assert e.__traceback__ is not None
             raise ConftestImportFailure(conftestpath, cause=e) from e
@@ -1177,6 +1224,9 @@ class Config:
             confcutdir=early_config.known_args_namespace.confcutdir,
             invocation_dir=early_config.invocation_params.dir,
             importmode=early_config.known_args_namespace.importmode,
+            consider_namespace_packages=early_config.getini(
+                "consider_namespace_packages"
+            ),
         )
 
     def _initini(self, args: Sequence[str]) -> None:
