@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-import os
 import sys
 from typing import List
 
@@ -8,9 +7,6 @@ from _pytest.debugging import _validate_usepdb_cls
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 import pytest
-
-
-_ENVIRON_PYTHONBREAKPOINT = os.environ.get("PYTHONBREAKPOINT", "")
 
 
 @pytest.fixture(autouse=True)
@@ -959,7 +955,10 @@ class TestDebuggingBreakpoints:
         result = pytester.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines(["*1 passed in *"])
 
-    def test_pdb_custom_cls(self, pytester: Pytester, custom_debugger_hook) -> None:
+    def test_pdb_custom_cls(
+        self, pytester: Pytester, custom_debugger_hook, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("PYTHONBREAKPOINT", raising=False)
         p1 = pytester.makepyfile(
             """
             def test_nothing():
@@ -1003,11 +1002,10 @@ class TestDebuggingBreakpoints:
         result = pytester.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines(["*1 passed in *"])
 
-    @pytest.mark.skipif(
-        not _ENVIRON_PYTHONBREAKPOINT == "",
-        reason="Requires breakpoint() default value",
-    )
-    def test_sys_breakpoint_interception(self, pytester: Pytester) -> None:
+    def test_sys_breakpoint_interception(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("PYTHONBREAKPOINT", raising=False)
         p1 = pytester.makepyfile(
             """
             def test_1():
