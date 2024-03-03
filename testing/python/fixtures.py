@@ -4561,6 +4561,60 @@ def test_deduplicate_names() -> None:
     assert items == ("a", "b", "c", "d", "g", "f", "e")
 
 
+def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:
+    """
+    Make sure teardowns happen in reverse order of setup with scoped fixtures, when
+    a later test only depends on a subset of scoped fixtures.
+    Regression test for https://github.com/pytest-dev/pytest/issues/1489
+    """
+    pytester.makepyfile(
+        """
+        from typing import Generator
+
+        import pytest
+
+
+        last_executed = ""
+
+
+        @pytest.fixture(scope="module")
+        def fixture_1() -> Generator[None, None, None]:
+            global last_executed
+            assert last_executed == ""
+            last_executed = "autouse_setup"
+            yield
+            assert last_executed == "noautouse_teardown"
+            last_executed = "autouse_teardown"
+
+
+        @pytest.fixture(scope="module")
+        def fixture_2() -> Generator[None, None, None]:
+            global last_executed
+            assert last_executed == "autouse_setup"
+            last_executed = "noautouse_setup"
+            yield
+            assert last_executed == "run_test"
+            last_executed = "noautouse_teardown"
+
+
+        def test_autouse_fixture_teardown_order(fixture_1: None, fixture_2: None) -> None:
+            global last_executed
+            assert last_executed == "noautouse_setup"
+            last_executed = "run_test"
+
+
+        def test_2(fixture_1: None) -> None:
+            # this would previously queue an additional teardown of fixture_1,
+            # despite fixture_1's value being cached, which caused fixture_1 to be
+            # torn down before fixture_2 - violating the rule that teardowns should
+            # happen in reverse order of setup.
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+
+
 def test_scope_fixture_caching_1(pytester: Pytester) -> None:
     """
     Make sure setup and finalization is only run once when using fixture

@@ -531,8 +531,11 @@ class FixtureRequest(abc.ABC):
         :raises pytest.FixtureLookupError:
             If the given fixture could not be found.
         """
-        # Note: This is called during setup for evaluating fixtures defined via
-        # function arguments as well.
+        # Note that in addition to the use case described in the docstring,
+        # getfixturevalue() is also called by pytest itself during item setup to
+        # evaluate the fixtures that are requested statically
+        # (using function parameters, autouse, etc).
+
         fixturedef = self._get_active_fixturedef(argname)
         assert fixturedef.cached_result is not None, (
             f'The fixture value for "{argname}" is not available.  '
