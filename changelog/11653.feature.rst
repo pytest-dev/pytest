@@ -1,2 +1,0 @@
-Added the new :confval:`verbosity_test_cases` configuration option for fine-grained control of test execution verbosity.
-See :ref:`Fine-grained verbosity <pytest.fine_grained_verbosity>` for more details.

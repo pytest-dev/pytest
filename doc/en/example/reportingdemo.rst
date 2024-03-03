@@ -445,7 +445,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     self = <failure_demo.TestRaises object at 0xdeadbeef0020>
 
         def test_tupleerror(self):
-    >       a, b = [1]  # NOQA
+    >       a, b = [1]  # noqa: F841
     E       ValueError: not enough values to unpack (expected 2, got 1)
 
     failure_demo.py:175: ValueError
@@ -467,7 +467,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     self = <failure_demo.TestRaises object at 0xdeadbeef0022>
 
         def test_some_error(self):
-    >       if namenotexi:  # NOQA
+    >       if namenotexi:  # noqa: F821
     E       NameError: name 'namenotexi' is not defined
 
     failure_demo.py:183: NameError
