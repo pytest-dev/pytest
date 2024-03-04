@@ -28,8 +28,16 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
-pytest 8.1.0 (2024-03-03)
-=========================
+pytest 8.1.0 (YANKED)
+=====================
+
+
+.. note::
+
+       This release has been **yanked**: it broke some plugins without the proper warning period, due to
+       some warnings not showing up as expected.
+
+       See `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`__.
 
 Features
 --------
