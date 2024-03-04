@@ -539,6 +539,10 @@ def import_path(
         except CouldNotResolvePathError:
             pass
         else:
+            # If the given module name is already in sys.modules, do not import it again.
+            with contextlib.suppress(KeyError):
+                return sys.modules[module_name]
+
             mod = _import_module_using_spec(
                 module_name, path, pkg_root, insert_modules=False
             )
