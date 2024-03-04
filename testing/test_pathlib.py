@@ -587,6 +587,12 @@ class TestImportLibMode:
         assert data.value == "foo"
         assert data.__module__ == "_src.tests.test_dataclass"
 
+        # Ensure we do not import the same module again (#11475).
+        module2 = import_path(
+            fn, mode="importlib", root=tmp_path, consider_namespace_packages=ns_param
+        )
+        assert module is module2
+
     def test_importmode_importlib_with_pickle(
         self, tmp_path: Path, ns_param: bool
     ) -> None:
@@ -615,6 +621,12 @@ class TestImportLibMode:
         round_trip = getattr(module, "round_trip")
         action = round_trip()
         assert action() == 42
+
+        # Ensure we do not import the same module again (#11475).
+        module2 = import_path(
+            fn, mode="importlib", root=tmp_path, consider_namespace_packages=ns_param
+        )
+        assert module is module2
 
     def test_importmode_importlib_with_pickle_separate_modules(
         self, tmp_path: Path, ns_param: bool
@@ -816,6 +828,14 @@ class TestImportLibMode:
             consider_namespace_packages=ns_param,
         )
         assert len(mod.instance.INSTANCES) == 1
+        # Ensure we do not import the same module again (#11475).
+        mod2 = import_path(
+            init,
+            root=tmp_path,
+            mode=ImportMode.importlib,
+            consider_namespace_packages=ns_param,
+        )
+        assert mod is mod2
 
     def test_importlib_root_is_package(self, pytester: Pytester) -> None:
         """
@@ -942,6 +962,15 @@ class TestImportLibMode:
         assert mod.__name__ == "app.core"
         assert mod.__file__ and Path(mod.__file__) == core_py
 
+        # Ensure we do not import the same module again (#11475).
+        mod2 = import_path(
+            core_py,
+            mode="importlib",
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+        assert mod is mod2
+
         # tests are not reachable from sys.path, so they are imported as a standalone modules.
         # Instead of '.tests.a.test_core', we import as "_tests.a.test_core" because
         # importlib considers module names starting with '.' to be local imports.
@@ -952,6 +981,16 @@ class TestImportLibMode:
             consider_namespace_packages=ns_param,
         )
         assert mod.__name__ == "_tests.a.test_core"
+
+        # Ensure we do not import the same module again (#11475).
+        mod2 = import_path(
+            test_path1,
+            mode="importlib",
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+        assert mod is mod2
+
         mod = import_path(
             test_path2,
             mode="importlib",
@@ -959,6 +998,15 @@ class TestImportLibMode:
             consider_namespace_packages=ns_param,
         )
         assert mod.__name__ == "_tests.b.test_core"
+
+        # Ensure we do not import the same module again (#11475).
+        mod2 = import_path(
+            test_path2,
+            mode="importlib",
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+        assert mod is mod2
 
     def test_import_using_normal_mechanism_first_integration(
         self, monkeypatch: MonkeyPatch, pytester: Pytester, ns_param: bool
@@ -1020,6 +1068,14 @@ class TestImportLibMode:
         )
         assert mod.__file__ and Path(mod.__file__) == x_in_sub_folder
         assert mod.X == "a/b/x"
+
+        mod2 = import_path(
+            x_in_sub_folder,
+            mode=ImportMode.importlib,
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+        assert mod is mod2
 
         # Attempt to import root 'x.py'.
         with pytest.raises(AssertionError, match="x at root"):
@@ -1124,6 +1180,12 @@ class TestNamespacePackages:
         assert mod.__name__ == "com.company.app.core.models"
         assert mod.__file__ == str(models_py)
 
+        # Ensure we do not import the same module again (#11475).
+        mod2 = import_path(
+            models_py, mode=import_mode, root=tmp_path, consider_namespace_packages=True
+        )
+        assert mod is mod2
+
         pkg_root, module_name = resolve_pkg_root_and_module_name(
             algorithms_py, consider_namespace_packages=True
         )
@@ -1140,6 +1202,15 @@ class TestNamespacePackages:
         )
         assert mod.__name__ == "com.company.calc.algo.algorithms"
         assert mod.__file__ == str(algorithms_py)
+
+        # Ensure we do not import the same module again (#11475).
+        mod2 = import_path(
+            algorithms_py,
+            mode=import_mode,
+            root=tmp_path,
+            consider_namespace_packages=True,
+        )
+        assert mod is mod2
 
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
     def test_incorrect_namespace_package(
