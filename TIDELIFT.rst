@@ -25,6 +25,7 @@ The current list of contributors receiving funding are:
 
 * `@nicoddemus`_
 * `@The-Compiler`_
+* `@RonnyPfannschmidt`_
 
 Contributors interested in receiving a part of the funds just need to submit a PR adding their
 name to the list. Contributors that want to stop receiving the funds should also submit a PR
@@ -56,3 +57,4 @@ funds. Just drop a line to one of the `@pytest-dev/tidelift-admins`_ or use the 
 
 .. _`@nicoddemus`: https://github.com/nicoddemus
 .. _`@The-Compiler`: https://github.com/The-Compiler
+.. _`@RonnyPfannschmidt`: https://github.com/RonnyPfannschmidt
