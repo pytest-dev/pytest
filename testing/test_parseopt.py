@@ -125,6 +125,14 @@ class TestParser:
         args = parser.parse([Path(".")])
         assert getattr(args, parseopt.FILE_OR_DIR)[0] == "."
 
+    @pytest.mark.filterwarnings("ignore:'encoding' argument not specified")
+    def test_parse_from_file(self, parser: parseopt.Parser, tmp_path: Path) -> None:
+        tests = [".", "some.py::Test::test_method[param0]", "other/test_file.py"]
+        args_file = tmp_path / "tests.txt"
+        args_file.write_text("\n".join(tests), encoding="utf-8")
+        args = parser.parse([f"@{args_file.absolute()}"])
+        assert getattr(args, parseopt.FILE_OR_DIR) == tests
+
     def test_parse_known_args(self, parser: parseopt.Parser) -> None:
         parser.parse_known_args([Path(".")])
         parser.addoption("--hello", action="store_true")
