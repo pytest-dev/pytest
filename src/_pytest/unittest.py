@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._code
-from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
 from _pytest.fixtures import FixtureRequest
@@ -63,6 +62,14 @@ class UnitTestCase(Class):
     # to declare that our children do not support funcargs.
     nofuncargs = True
 
+    def newinstance(self):
+        # TestCase __init__ takes the method (test) name. The TestCase
+        # constructor treats the name "runTest" as a special no-op, so it can be
+        # used when a dummy instance is needed. While unittest.TestCase has a
+        # default, some subclasses omit the default (#9610), so always supply
+        # it.
+        return self.obj("runTest")
+
     def collect(self) -> Iterable[Union[Item, Collector]]:
         from unittest import TestLoader
 
@@ -76,15 +83,15 @@ class UnitTestCase(Class):
             self._register_unittest_setup_class_fixture(cls)
             self._register_setup_class_fixture()
 
-        self.session._fixturemanager.parsefactories(self, unittest=True)
+        self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
+
         loader = TestLoader()
         foundsomething = False
         for name in loader.getTestCaseNames(self.obj):
             x = getattr(self.obj, name)
             if not getattr(x, "__test__", True):
                 continue
-            funcobj = getimfunc(x)
-            yield TestCaseFunction.from_parent(self, name=name, callobj=funcobj)
+            yield TestCaseFunction.from_parent(self, name=name)
             foundsomething = True
 
         if not foundsomething:
@@ -169,23 +176,21 @@ class UnitTestCase(Class):
 class TestCaseFunction(Function):
     nofuncargs = True
     _excinfo: Optional[List[_pytest._code.ExceptionInfo[BaseException]]] = None
-    _testcase: Optional["unittest.TestCase"] = None
 
     def _getobj(self):
-        assert self.parent is not None
-        # Unlike a regular Function in a Class, where `item.obj` returns
-        # a *bound* method (attached to an instance), TestCaseFunction's
-        # `obj` returns an *unbound* method (not attached to an instance).
-        # This inconsistency is probably not desirable, but needs some
-        # consideration before changing.
-        return getattr(self.parent.obj, self.originalname)  # type: ignore[attr-defined]
+        assert isinstance(self.parent, UnitTestCase)
+        testcase = self.parent.obj(self.name)
+        return getattr(testcase, self.name)
+
+    # Backward compat for pytest-django; can be removed after pytest-django
+    # updates + some slack.
+    @property
+    def _testcase(self):
+        return self._obj.__self__
 
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
         self._explicit_tearDown: Optional[Callable[[], None]] = None
-        assert self.parent is not None
-        self._testcase = self.parent.obj(self.name)  # type: ignore[attr-defined]
-        self._obj = getattr(self._testcase, self.name)
         super().setup()
 
     def teardown(self) -> None:
@@ -193,7 +198,6 @@ class TestCaseFunction(Function):
         if self._explicit_tearDown is not None:
             self._explicit_tearDown()
             self._explicit_tearDown = None
-        self._testcase = None
         self._obj = None
 
     def startTest(self, testcase: "unittest.TestCase") -> None:
@@ -292,14 +296,14 @@ class TestCaseFunction(Function):
     def runtest(self) -> None:
         from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
 
-        assert self._testcase is not None
+        testcase = self.obj.__self__
 
         maybe_wrap_pytest_function_for_tracing(self)
 
         # Let the unittest framework handle async functions.
         if is_async_function(self.obj):
             # Type ignored because self acts as the TestResult, but is not actually one.
-            self._testcase(result=self)  # type: ignore[arg-type]
+            testcase(result=self)  # type: ignore[arg-type]
         else:
             # When --pdb is given, we want to postpone calling tearDown() otherwise
             # when entering the pdb prompt, tearDown() would have probably cleaned up
@@ -311,16 +315,16 @@ class TestCaseFunction(Function):
             assert isinstance(self.parent, UnitTestCase)
             skipped = _is_skipped(self.obj) or _is_skipped(self.parent.obj)
             if self.config.getoption("usepdb") and not skipped:
-                self._explicit_tearDown = self._testcase.tearDown
-                setattr(self._testcase, "tearDown", lambda *args: None)
+                self._explicit_tearDown = testcase.tearDown
+                setattr(testcase, "tearDown", lambda *args: None)
 
             # We need to update the actual bound method with self.obj, because
             # wrap_pytest_function_for_tracing replaces self.obj by a wrapper.
-            setattr(self._testcase, self.name, self.obj)
+            setattr(testcase, self.name, self.obj)
             try:
-                self._testcase(result=self)  # type: ignore[arg-type]
+                testcase(result=self)  # type: ignore[arg-type]
             finally:
-                delattr(self._testcase, self.name)
+                delattr(testcase, self.name)
 
     def _traceback_filter(
         self, excinfo: _pytest._code.ExceptionInfo[BaseException]
