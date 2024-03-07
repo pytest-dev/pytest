@@ -1,5 +1,8 @@
 # mypy: allow-untyped-defs
+import re
+
 from _pytest import deprecated
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 import pytest
 from pytest import PytestDeprecationWarning
@@ -83,6 +86,25 @@ def test_private_is_deprecated() -> None:
 
     # Doesn't warn.
     PrivateInit(10, _ispytest=True)
+
+
+def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
+    mod = pytester.getmodulecol("")
+
+    class MyFile(pytest.File):
+        def collect(self):
+            raise NotImplementedError()
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape(
+            "The (fspath: py.path.local) argument to MyFile is deprecated."
+        ),
+    ):
+        MyFile.from_parent(
+            parent=mod.parent,
+            fspath=legacy_path("bla"),
+        )
 
 
 def test_fixture_disallow_on_marked_functions():
