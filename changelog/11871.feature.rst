@@ -1,4 +1,2 @@
-Added support for reading ``file_or_dir`` positional arguments from a file
-using the prefix character '@', like e.g.:
-
-``pytest @tests.txt``
+Added support for reading command line arguments from a file using the prefix character '@',
+like e.g.: ``pytest @tests.txt``.
