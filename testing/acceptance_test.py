@@ -542,6 +542,9 @@ class TestGeneralUsage:
         res = pytester.runpytest(p)
         res.assert_outcomes(passed=3)
 
+    # Warning ignore because of:
+    # https://github.com/python/cpython/issues/85308
+    # Can be removed once Python<3.12 support is dropped.
     @pytest.mark.filterwarnings("ignore:'encoding' argument not specified")
     def test_command_line_args_from_file(
         self, pytester: Pytester, tmp_path: Path
@@ -559,9 +562,10 @@ class TestGeneralUsage:
         tests = [
             "test_file.py::TestClass::test_func[x]",
             "test_file.py::TestClass::test_func[y]",
+            "-q",
         ]
         args_file = pytester.maketxtfile(tests="\n".join(tests))
-        result = pytester.runpytest(f"@{args_file.absolute()}")
+        result = pytester.runpytest(f"@{args_file}")
         result.assert_outcomes(failed=0, passed=2)
 
 
