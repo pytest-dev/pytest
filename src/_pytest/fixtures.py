@@ -388,6 +388,14 @@ class FixtureRequest(abc.ABC):
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
+    @abc.abstractmethod
+    def _check_scope(
+        self,
+        requested_fixturedef: Union["FixtureDef[object]", PseudoFixtureDef[object]],
+        requested_scope: Scope,
+    ) -> None:
+        raise NotImplementedError()
+
     @property
     def fixturenames(self) -> List[str]:
         """Names of all active fixtures in this request."""
@@ -632,12 +640,12 @@ class FixtureRequest(abc.ABC):
                 )
                 fail(msg, pytrace=False)
 
+        # Check if a higher-level scoped fixture accesses a lower level one.
+        self._check_scope(fixturedef, scope)
+
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
-
-        # Check if a higher-level scoped fixture accesses a lower level one.
-        subrequest._check_scope(argname, self._scope, scope)
         try:
             # Call the fixture function.
             fixturedef.execute(request=subrequest)
@@ -668,6 +676,14 @@ class TopRequest(FixtureRequest):
     @property
     def _scope(self) -> Scope:
         return Scope.Function
+
+    def _check_scope(
+        self,
+        requested_fixturedef: Union["FixtureDef[object]", PseudoFixtureDef[object]],
+        requested_scope: Scope,
+    ) -> None:
+        # TopRequest always has function scope so always valid.
+        pass
 
     @property
     def node(self):
@@ -740,37 +756,33 @@ class SubRequest(FixtureRequest):
 
     def _check_scope(
         self,
-        argname: str,
-        invoking_scope: Scope,
+        requested_fixturedef: Union["FixtureDef[object]", PseudoFixtureDef[object]],
         requested_scope: Scope,
     ) -> None:
-        if argname == "request":
+        if isinstance(requested_fixturedef, PseudoFixtureDef):
             return
-        if invoking_scope > requested_scope:
+        if self._scope > requested_scope:
             # Try to report something helpful.
-            text = "\n".join(self._factorytraceback())
+            argname = requested_fixturedef.argname
+            fixture_stack = "\n".join(
+                self._format_fixturedef_line(fixturedef)
+                for fixturedef in self._get_fixturestack()
+            )
+            requested_fixture = self._format_fixturedef_line(requested_fixturedef)
             fail(
                 f"ScopeMismatch: You tried to access the {requested_scope.value} scoped "
-                f"fixture {argname} with a {invoking_scope.value} scoped request object, "
-                f"involved factories:\n{text}",
+                f"fixture {argname} with a {self._scope.value} scoped request object, "
+                f"involved factories:\n{fixture_stack}\n{requested_fixture}",
                 pytrace=False,
             )
 
-    def _factorytraceback(self) -> List[str]:
-        lines = []
-        for fixturedef in self._get_fixturestack():
-            factory = fixturedef.func
-            fs, lineno = getfslineno(factory)
-            if isinstance(fs, Path):
-                session: Session = self._pyfuncitem.session
-                p = bestrelpath(session.path, fs)
-            else:
-                p = fs
-            lines.append(
-                "%s:%d:  def %s%s"
-                % (p, lineno + 1, factory.__name__, inspect.signature(factory))
-            )
-        return lines
+    def _format_fixturedef_line(self, fixturedef: "FixtureDef[object]") -> str:
+        factory = fixturedef.func
+        path, lineno = getfslineno(factory)
+        if isinstance(path, Path):
+            path = bestrelpath(self._pyfuncitem.session.path, path)
+        signature = inspect.signature(factory)
+        return f"{path}:{lineno + 1}:  def {factory.__name__}{signature}"
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._fixturedef.addfinalizer(finalizer)
@@ -1111,7 +1123,7 @@ def pytest_fixture_setup(
         fixdef = request._get_active_fixturedef(argname)
         assert fixdef.cached_result is not None
         result, arg_cache_key, exc = fixdef.cached_result
-        request._check_scope(argname, request._scope, fixdef._scope)
+        request._check_scope(fixdef, fixdef._scope)
         kwargs[argname] = result
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
