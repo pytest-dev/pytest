@@ -1,2 +1,1 @@
-Added support for reading command line arguments from a file using the prefix character '@',
-like e.g.: ``pytest @tests.txt``.
+Added support for reading command line arguments from a file using the prefix character ``@``, like e.g.: ``pytest @tests.txt``. The file must have one argument per line.
