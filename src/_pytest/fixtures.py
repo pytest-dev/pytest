@@ -573,6 +573,8 @@ class FixtureRequest(abc.ABC):
                 raise
             self._compute_fixture_value(fixturedef)
             self._fixture_defs[argname] = fixturedef
+        else:
+            self._check_scope(fixturedef, fixturedef._scope)
         return fixturedef
 
     def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
@@ -1121,11 +1123,7 @@ def pytest_fixture_setup(
     """Execution of fixture setup."""
     kwargs = {}
     for argname in fixturedef.argnames:
-        fixdef = request._get_active_fixturedef(argname)
-        assert fixdef.cached_result is not None
-        result, arg_cache_key, exc = fixdef.cached_result
-        request._check_scope(fixdef, fixdef._scope)
-        kwargs[argname] = result
+        kwargs[argname] = request.getfixturevalue(argname)
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
     my_cache_key = fixturedef.cache_key(request)
