@@ -31,36 +31,10 @@ with advance notice in the **Deprecations** section of releases.
 pytest 8.1.1 (2024-03-08)
 =========================
 
-Bug Fixes
----------
-
-- `#11475 <https://github.com/pytest-dev/pytest/issues/11475>`_: Fixed regression where ``--importmode=importlib`` would import non-test modules more than once.
-
-
-
-Trivial/Internal Changes
-------------------------
-
-- `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`_: Delayed the deprecation of the following features to ``9.0.0``:
-
-  * :ref:`node-ctor-fspath-deprecation`.
-  * :ref:`legacy-path-hooks-deprecated`.
-
-  It was discovered after ``8.1.0`` was released that the warnings about the impeding removal were not being displayed, so the team decided to revert the removal.
-
-  This was the reason for ``8.1.0`` being yanked.
-
-
-pytest 8.1.0 (YANKED)
-=====================
-
-
 .. note::
 
-       This release has been **yanked**: it broke some plugins without the proper warning period, due to
-       some warnings not showing up as expected.
-
-       See `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`__.
+       This release is not a usual bug fix release -- it contains features and improvements, being a follow up
+       to ``8.1.0``, which has been yanked from PyPI.
 
 Features
 --------
@@ -117,6 +91,9 @@ Improvements
 Bug Fixes
 ---------
 
+- `#11475 <https://github.com/pytest-dev/pytest/issues/11475>`_: Fixed regression where ``--importmode=importlib`` would import non-test modules more than once.
+
+
 - `#11904 <https://github.com/pytest-dev/pytest/issues/11904>`_: Fixed a regression in pytest 8.0.0 that would cause test collection to fail due to permission errors when using ``--pyargs``.
 
   This change improves the collection tree for tests specified using ``--pyargs``, see :pull:`12043` for a comparison with pytest 8.0 and <8.
@@ -129,7 +106,6 @@ Bug Fixes
 
 
 - `#12039 <https://github.com/pytest-dev/pytest/issues/12039>`_: Fixed a regression in ``8.0.2`` where tests created using :fixture:`tmp_path` have been collected multiple times in CI under Windows.
-
 
 
 Improved Documentation
@@ -149,6 +125,28 @@ Trivial/Internal Changes
   - The ``_pytest.nodes.iterparentnodeids()`` function is removed without replacement.
     Prefer to traverse the node hierarchy itself instead.
     If you really need to, copy the function from the previous pytest release.
+
+
+- `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`_: Delayed the deprecation of the following features to ``9.0.0``:
+
+  * :ref:`node-ctor-fspath-deprecation`.
+  * :ref:`legacy-path-hooks-deprecated`.
+
+  It was discovered after ``8.1.0`` was released that the warnings about the impeding removal were not being displayed, so the team decided to revert the removal.
+
+  This is the reason for ``8.1.0`` being yanked.
+
+
+pytest 8.1.0 (YANKED)
+=====================
+
+
+.. note::
+
+       This release has been **yanked**: it broke some plugins without the proper warning period, due to
+       some warnings not showing up as expected.
+
+       See `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`__.
 
 
 pytest 8.0.2 (2024-02-24)
