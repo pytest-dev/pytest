@@ -1061,9 +1061,7 @@ class FixtureDef(Generic[FixtureValue]):
         # with their finalization.
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
-            if argname != "request":
-                # PseudoFixtureDef is only for "request".
-                assert isinstance(fixturedef, FixtureDef)
+            if not isinstance(fixturedef, PseudoFixtureDef):
                 fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
         my_cache_key = self.cache_key(request)
