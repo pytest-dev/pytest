@@ -38,12 +38,14 @@ from typing import TYPE_CHECKING
 from typing import Union
 import warnings
 
+import pluggy
 from pluggy import HookimplMarker
 from pluggy import HookimplOpts
 from pluggy import HookspecMarker
 from pluggy import HookspecOpts
 from pluggy import PluginManager
 
+from .compat import PathAwareHookProxy
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
@@ -1068,7 +1070,7 @@ class Config:
         self._store = self.stash
 
         self.trace = self.pluginmanager.trace.root.get("config")
-        self.hook = self.pluginmanager.hook  # type: ignore[assignment]
+        self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
         self._inicache: Dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}

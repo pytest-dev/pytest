@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Python version compatibility code."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -15,6 +16,22 @@ from typing import Any
 from typing import Callable
 from typing import Final
 from typing import NoReturn
+
+import py
+
+
+#: constant to prepare valuing pylib path replacements/lazy proxies later on
+#  intended for removal in pytest 8.0 or 9.0
+
+# fmt: off
+# intentional space to create a fake difference for the verification
+LEGACY_PATH = py.path. local
+# fmt: on
+
+
+def legacy_path(path: str | os.PathLike[str]) -> LEGACY_PATH:
+    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
+    return LEGACY_PATH(path)
 
 
 # fmt: off
