@@ -462,12 +462,8 @@ class FixtureRequest(abc.ABC):
     @property
     def instance(self):
         """Instance (can be None) on which test function was collected."""
-        # unittest support hack, see _pytest.unittest.TestCaseFunction.
-        try:
-            return self._pyfuncitem._testcase  # type: ignore[attr-defined]
-        except AttributeError:
-            function = getattr(self, "function", None)
-            return getattr(function, "__self__", None)
+        function = getattr(self, "function", None)
+        return getattr(function, "__self__", None)
 
     @property
     def module(self):
@@ -965,7 +961,6 @@ class FixtureDef(Generic[FixtureValue]):
         func: "_FixtureFunc[FixtureValue]",
         scope: Union[Scope, _ScopeName, Callable[[str, Config], _ScopeName], None],
         params: Optional[Sequence[object]],
-        unittest: bool = False,
         ids: Optional[
             Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
         ] = None,
@@ -1011,9 +1006,7 @@ class FixtureDef(Generic[FixtureValue]):
         # a parameter value.
         self.ids: Final = ids
         # The names requested by the fixtures.
-        self.argnames: Final = getfuncargnames(func, name=argname, is_method=unittest)
-        # Whether the fixture was collected from a unittest TestCase class.
-        self.unittest: Final = unittest
+        self.argnames: Final = getfuncargnames(func, name=argname)
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
         self.cached_result: Optional[_FixtureCachedResult[FixtureValue]] = None
@@ -1092,25 +1085,20 @@ def resolve_fixture_function(
     """Get the actual callable that can be called to obtain the fixture
     value, dealing with unittest-specific instances and bound methods."""
     fixturefunc = fixturedef.func
-    if fixturedef.unittest:
-        if request.instance is not None:
-            # Bind the unbound method to the TestCase instance.
-            fixturefunc = fixturedef.func.__get__(request.instance)  # type: ignore[union-attr]
-    else:
-        # The fixture function needs to be bound to the actual
-        # request.instance so that code working with "fixturedef" behaves
-        # as expected.
-        if request.instance is not None:
-            # Handle the case where fixture is defined not in a test class, but some other class
-            # (for example a plugin class with a fixture), see #2270.
-            if hasattr(fixturefunc, "__self__") and not isinstance(
-                request.instance,
-                fixturefunc.__self__.__class__,  # type: ignore[union-attr]
-            ):
-                return fixturefunc
-            fixturefunc = getimfunc(fixturedef.func)
-            if fixturefunc != fixturedef.func:
-                fixturefunc = fixturefunc.__get__(request.instance)  # type: ignore[union-attr]
+    # The fixture function needs to be bound to the actual
+    # request.instance so that code working with "fixturedef" behaves
+    # as expected.
+    if request.instance is not None:
+        # Handle the case where fixture is defined not in a test class, but some other class
+        # (for example a plugin class with a fixture), see #2270.
+        if hasattr(fixturefunc, "__self__") and not isinstance(
+            request.instance,
+            fixturefunc.__self__.__class__,  # type: ignore[union-attr]
+        ):
+            return fixturefunc
+        fixturefunc = getimfunc(fixturedef.func)
+        if fixturefunc != fixturedef.func:
+            fixturefunc = fixturefunc.__get__(request.instance)  # type: ignore[union-attr]
     return fixturefunc
 
 
@@ -1614,7 +1602,6 @@ class FixtureManager:
             Union[Tuple[Optional[object], ...], Callable[[Any], Optional[object]]]
         ] = None,
         autouse: bool = False,
-        unittest: bool = False,
     ) -> None:
         """Register a fixture
 
@@ -1635,8 +1622,6 @@ class FixtureManager:
             The fixture's IDs.
         :param autouse:
             Whether this is an autouse fixture.
-        :param unittest:
-            Set this if this is a unittest fixture.
         """
         fixture_def = FixtureDef(
             config=self.config,
@@ -1645,7 +1630,6 @@ class FixtureManager:
             func=func,
             scope=scope,
             params=params,
-            unittest=unittest,
             ids=ids,
             _ispytest=True,
         )
@@ -1667,8 +1651,6 @@ class FixtureManager:
     def parsefactories(
         self,
         node_or_obj: nodes.Node,
-        *,
-        unittest: bool = ...,
     ) -> None:
         raise NotImplementedError()
 
@@ -1677,8 +1659,6 @@ class FixtureManager:
         self,
         node_or_obj: object,
         nodeid: Optional[str],
-        *,
-        unittest: bool = ...,
     ) -> None:
         raise NotImplementedError()
 
@@ -1686,8 +1666,6 @@ class FixtureManager:
         self,
         node_or_obj: Union[nodes.Node, object],
         nodeid: Union[str, NotSetType, None] = NOTSET,
-        *,
-        unittest: bool = False,
     ) -> None:
         """Collect fixtures from a collection node or object.
 
@@ -1739,7 +1717,6 @@ class FixtureManager:
                 func=func,
                 scope=marker.scope,
                 params=marker.params,
-                unittest=unittest,
                 ids=marker.ids,
                 autouse=marker.autouse,
             )

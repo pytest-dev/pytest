@@ -1314,7 +1314,6 @@ class Metafunc:
                     func=get_direct_param_fixture_func,
                     scope=scope_,
                     params=None,
-                    unittest=False,
                     ids=None,
                     _ispytest=True,
                 )

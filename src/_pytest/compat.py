@@ -86,7 +86,6 @@ def getfuncargnames(
     function: Callable[..., object],
     *,
     name: str = "",
-    is_method: bool = False,
     cls: type | None = None,
 ) -> tuple[str, ...]:
     """Return the names of a function's mandatory arguments.
@@ -97,9 +96,8 @@ def getfuncargnames(
     * Aren't bound with functools.partial.
     * Aren't replaced with mocks.
 
-    The is_method and cls arguments indicate that the function should
-    be treated as a bound method even though it's not unless, only in
-    the case of cls, the function is a static method.
+    The cls arguments indicate that the function should be treated as a bound
+    method even though it's not unless the function is a static method.
 
     The name parameter should be the original name in which the function was collected.
     """
@@ -137,7 +135,7 @@ def getfuncargnames(
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, remove the first
     # parameter name.
-    if is_method or (
+    if (
         # Not using `getattr` because we don't want to resolve the staticmethod.
         # Not using `cls.__dict__` because we want to check the entire MRO.
         cls
