@@ -771,8 +771,9 @@ class SubRequest(FixtureRequest):
             requested_fixture = self._format_fixturedef_line(requested_fixturedef)
             fail(
                 f"ScopeMismatch: You tried to access the {requested_scope.value} scoped "
-                f"fixture {argname} with a {self._scope.value} scoped request object, "
-                f"involved factories:\n{fixture_stack}\n{requested_fixture}",
+                f"fixture {argname} with a {self._scope.value} scoped request object. "
+                f"Requesting fixture stack:\n{fixture_stack}\n"
+                f"Requested fixture:\n{requested_fixture}",
                 pytrace=False,
             )
 
