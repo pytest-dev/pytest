@@ -96,6 +96,8 @@ This will import ``pkg.testing`` and use its filesystem location to find and run
 
 **Read arguments from file**
 
+.. versionadded:: 8.2
+
 All of the above can be read from a file using the ``@`` prefix:
 
 .. code-block:: bash
