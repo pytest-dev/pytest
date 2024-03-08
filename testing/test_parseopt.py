@@ -125,6 +125,9 @@ class TestParser:
         args = parser.parse([Path(".")])
         assert getattr(args, parseopt.FILE_OR_DIR)[0] == "."
 
+    # Warning ignore because of:
+    # https://github.com/python/cpython/issues/85308
+    # Can be removed once Python<3.12 support is dropped.
     @pytest.mark.filterwarnings("ignore:'encoding' argument not specified")
     def test_parse_from_file(self, parser: parseopt.Parser, tmp_path: Path) -> None:
         tests = [".", "some.py::Test::test_method[param0]", "other/test_file.py"]
