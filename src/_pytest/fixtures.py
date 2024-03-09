@@ -1096,7 +1096,7 @@ def resolve_fixture_function(
     fixturedef: FixtureDef[FixtureValue], request: FixtureRequest
 ) -> "_FixtureFunc[FixtureValue]":
     """Get the actual callable that can be called to obtain the fixture
-    value, dealing with unittest-specific instances and bound methods."""
+    value."""
     fixturefunc = fixturedef.func
     # The fixture function needs to be bound to the actual
     # request.instance so that code working with "fixturedef" behaves
