@@ -1247,8 +1247,9 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "*ScopeMismatch*involved factories*",
+                "*ScopeMismatch*Requesting fixture stack*",
                 "test_receives_funcargs_scope_mismatch.py:6:  def arg2(arg1)",
+                "Requested fixture:",
                 "test_receives_funcargs_scope_mismatch.py:2:  def arg1()",
                 "*1 error*",
             ]
@@ -1274,7 +1275,13 @@ class TestFixtureUsages:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            ["*ScopeMismatch*involved factories*", "* def arg2*", "*1 error*"]
+            [
+                "*ScopeMismatch*Requesting fixture stack*",
+                "* def arg2(arg1)",
+                "Requested fixture:",
+                "* def arg1()",
+                "*1 error*",
+            ],
         )
 
     def test_invalid_scope(self, pytester: Pytester) -> None:
@@ -2488,8 +2495,10 @@ class TestFixtureMarker:
         assert result.ret == ExitCode.TESTS_FAILED
         result.stdout.fnmatch_lines(
             [
-                "*ScopeMismatch*involved factories*",
+                "*ScopeMismatch*Requesting fixture stack*",
                 "test_it.py:6:  def fixmod(fixfunc)",
+                "Requested fixture:",
+                "test_it.py:3:  def fixfunc()",
             ]
         )
 
