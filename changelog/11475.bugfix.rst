@@ -1,1 +1,0 @@
-Fixed regression where ``--importmode=importlib`` would import non-test modules more than once.
