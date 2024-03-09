@@ -1,8 +1,0 @@
-Delayed the deprecation of the following features to ``9.0.0``:
-
-* :ref:`node-ctor-fspath-deprecation`.
-* :ref:`legacy-path-hooks-deprecated`.
-
-It was discovered after ``8.1.0`` was released that the warnings about the impeding removal were not being displayed, so the team decided to revert the removal.
-
-This was the reason for ``8.1.0`` being yanked.
