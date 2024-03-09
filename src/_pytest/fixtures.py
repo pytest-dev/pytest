@@ -470,8 +470,9 @@ class FixtureRequest(abc.ABC):
     @property
     def instance(self):
         """Instance (can be None) on which test function was collected."""
-        function = getattr(self, "function", None)
-        return getattr(function, "__self__", None)
+        if self.scope != "function":
+            return None
+        return getattr(self._pyfuncitem, "instance", None)
 
     @property
     def module(self):
