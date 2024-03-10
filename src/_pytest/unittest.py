@@ -177,16 +177,15 @@ class TestCaseFunction(Function):
     nofuncargs = True
     _excinfo: Optional[List[_pytest._code.ExceptionInfo[BaseException]]] = None
 
-    def _getobj(self):
+    def _getinstance(self):
         assert isinstance(self.parent, UnitTestCase)
-        testcase = self.parent.obj(self.name)
-        return getattr(testcase, self.name)
+        return self.parent.obj(self.name)
 
     # Backward compat for pytest-django; can be removed after pytest-django
     # updates + some slack.
     @property
     def _testcase(self):
-        return self._obj.__self__
+        return self.instance
 
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
@@ -296,7 +295,8 @@ class TestCaseFunction(Function):
     def runtest(self) -> None:
         from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
 
-        testcase = self.obj.__self__
+        testcase = self.instance
+        assert testcase is not None
 
         maybe_wrap_pytest_function_for_tracing(self)
 

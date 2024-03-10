@@ -4577,3 +4577,48 @@ def test_deduplicate_names() -> None:
     assert items == ("a", "b", "c", "d")
     items = deduplicate_names((*items, "g", "f", "g", "e", "b"))
     assert items == ("a", "b", "c", "d", "g", "f", "e")
+
+
+def test_staticmethod_classmethod_fixture_instance(pytester: Pytester) -> None:
+    """Ensure that static and class methods get and have access to a fresh
+    instance.
+
+    This also ensures `setup_method` works well with static and class methods.
+
+    Regression test for #12065.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Test:
+            ran_setup_method = False
+            ran_fixture = False
+
+            def setup_method(self):
+                assert not self.ran_setup_method
+                self.ran_setup_method = True
+
+            @pytest.fixture(autouse=True)
+            def fixture(self):
+                assert not self.ran_fixture
+                self.ran_fixture = True
+
+            def test_method(self):
+                assert self.ran_setup_method
+                assert self.ran_fixture
+
+            @staticmethod
+            def test_1(request):
+                assert request.instance.ran_setup_method
+                assert request.instance.ran_fixture
+
+            @classmethod
+            def test_2(cls, request):
+                assert request.instance.ran_setup_method
+                assert request.instance.ran_fixture
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
+    result.assert_outcomes(passed=3)
