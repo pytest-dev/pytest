@@ -836,7 +836,7 @@ class LocalPath:
     def copy(self, target, mode=False, stat=False):
         """Copy path to target.
 
-        If mode is True, will copy copy permission from path to target.
+        If mode is True, will copy permission from path to target.
         If stat is True, copy permission, last modification
         time, last access time, and flags from path to target.
         """
