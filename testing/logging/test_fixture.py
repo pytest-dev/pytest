@@ -363,7 +363,7 @@ def test_ini_controls_global_log_level(pytester: Pytester) -> None:
     )
 
     result = pytester.runpytest()
-    # make sure that that we get a '0' exit code for the testsuite
+    # make sure that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
 
