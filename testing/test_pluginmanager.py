@@ -446,7 +446,7 @@ class TestPytestPluginManagerBootstrapming:
         assert len(l2) == len(l1)
         assert 42 not in l2
 
-    def test_plugin_prevent_register_unregistered_alredy_registered(
+    def test_plugin_prevent_register_unregistered_already_registered(
         self, pytestpm: PytestPluginManager
     ) -> None:
         pytestpm.register(42, name="abc")
