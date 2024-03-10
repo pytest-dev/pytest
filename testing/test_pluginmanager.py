@@ -420,7 +420,7 @@ class TestPytestPluginManager:
             pytestpm.consider_conftest(mod, registration_name="unused")
 
 
-class TestPytestPluginManagerBootstrapming:
+class TestPytestPluginManagerBootstrapping:
     def test_preparse_args(self, pytestpm: PytestPluginManager) -> None:
         pytest.raises(
             ImportError, lambda: pytestpm.consider_preparse(["xyz", "-p", "hello123"])
