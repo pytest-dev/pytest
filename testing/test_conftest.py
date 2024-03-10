@@ -396,7 +396,7 @@ def test_conftest_symlink_files(pytester: Pytester) -> None:
 
 @pytest.mark.skipif(
     os.path.normcase("x") != os.path.normcase("X"),
-    reason="only relevant for case insensitive file systems",
+    reason="only relevant for case-insensitive file systems",
 )
 def test_conftest_badcase(pytester: Pytester) -> None:
     """Check conftest.py loading when directory casing is wrong (#5792)."""
