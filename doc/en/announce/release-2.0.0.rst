@@ -62,7 +62,7 @@ New Features
 - new "-q" option which decreases verbosity and prints a more
   nose/unittest-style "dot" output.
 
-- many many more detailed improvements details
+- many, many, more detailed improvements details
 
 Fixes
 -----------------------
