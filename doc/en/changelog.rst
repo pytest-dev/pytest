@@ -1853,7 +1853,7 @@ Bug Fixes
   the ``tmp_path``/``tmpdir`` fixture). Now the directories are created with
   private permissions.
 
-  pytest used to silently use a pre-existing ``/tmp/pytest-of-<username>`` directory,
+  pytest used to silently use a preexisting ``/tmp/pytest-of-<username>`` directory,
   even if owned by another user. This means another user could pre-create such a
   directory and gain control of another user's temporary directory. Now such a
   condition results in an error.
@@ -8186,7 +8186,7 @@ time or change existing behaviors in order to make them less surprising/more use
   one will also have a "reprec" attribute with the recorded events/reports.
 
 - fix monkeypatch.setattr("x.y", raising=False) to actually not raise
-  if "y" is not a pre-existing attribute. Thanks Florian Bruhin.
+  if "y" is not a preexisting attribute. Thanks Florian Bruhin.
 
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
