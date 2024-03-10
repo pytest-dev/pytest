@@ -6362,7 +6362,7 @@ Features
 Bug Fixes
 ---------
 
-- Fix hanging pexpect test on MacOS by using flush() instead of wait().
+- Fix hanging pexpect test on macOS by using flush() instead of wait().
   (:issue:`2022`)
 
 - Fix restoring Python state after in-process pytest runs with the
