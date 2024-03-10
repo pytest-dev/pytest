@@ -627,7 +627,7 @@ def pytest_runtest_protocol(
         - ``pytest_runtest_logreport(report)``
         - ``pytest_exception_interact(call, report)`` if an interactive exception occurred
 
-    - Call phase, if the the setup passed and the ``setuponly`` pytest option is not set:
+    - Call phase, if the setup passed and the ``setuponly`` pytest option is not set:
         - ``call = pytest_runtest_call(item)`` (wrapped in ``CallInfo(when="call")``)
         - ``report = pytest_runtest_makereport(item, call)``
         - ``pytest_runtest_logreport(report)``
