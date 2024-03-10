@@ -732,7 +732,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     """Return the Python package path by looking for the last
     directory upwards which still contains an __init__.py.
 
-    Returns None if it can not be determined.
+    Returns None if it cannot be determined.
     """
     result = None
     for parent in itertools.chain((path,), path.parents):

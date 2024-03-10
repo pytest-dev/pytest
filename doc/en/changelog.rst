@@ -6410,7 +6410,7 @@ Trivial/Internal Changes
 ------------------------
 
 - Show a simple and easy error when keyword expressions trigger a syntax error
-  (for example, ``"-k foo and import"`` will show an error that you can not use
+  (for example, ``"-k foo and import"`` will show an error that you cannot use
   the ``import`` keyword in expressions). (:issue:`2953`)
 
 - Change parametrized automatic test id generation to use the ``__name__``
