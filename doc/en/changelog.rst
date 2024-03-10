@@ -2580,7 +2580,7 @@ Features
   also changes ``sys.modules`` as a side-effect), which works but has a number of drawbacks, like requiring test modules
   that don't live in packages to have unique names (as they need to reside under a unique name in ``sys.modules``).
 
-  ``--import-mode=importlib`` uses more fine grained import mechanisms from ``importlib`` which don't
+  ``--import-mode=importlib`` uses more fine-grained import mechanisms from ``importlib`` which don't
   require pytest to change ``sys.path`` or ``sys.modules`` at all, eliminating much of the drawbacks
   of the previous mode.
 
