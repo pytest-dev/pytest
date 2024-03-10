@@ -2597,7 +2597,7 @@ Improvements
 ------------
 
 - :issue:`4375`: The ``pytest`` command now suppresses the ``BrokenPipeError`` error message that
-  is printed to stderr when the output of ``pytest`` is piped and and the pipe is
+  is printed to stderr when the output of ``pytest`` is piped and the pipe is
   closed by the piped-to program (common examples are ``less`` and ``head``).
 
 
