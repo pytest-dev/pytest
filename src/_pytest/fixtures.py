@@ -1680,7 +1680,7 @@ class FixtureManager:
 
         If `node_or_object` is a collection node (with an underlying Python
         object), the node's object is traversed and the node's nodeid is used to
-        determine the fixtures' visibilty. `nodeid` must not be specified in
+        determine the fixtures' visibility. `nodeid` must not be specified in
         this case.
 
         If `node_or_object` is an object (e.g. a plugin), the object is
