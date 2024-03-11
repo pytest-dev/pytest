@@ -2899,7 +2899,7 @@ Breaking Changes
   This hook has been marked as deprecated and not been even called by pytest for over 10 years now.
 
 
-- :issue:`6673`: Reversed / fix meaning of "+/-" in error diffs.  "-" means that sth. expected is missing in the result and "+" means that there are unexpected extras in the result.
+- :issue:`6673`: Reversed / fix meaning of "+/-" in error diffs.  "-" means that something expected is missing in the result and "+" means that there are unexpected extras in the result.
 
 
 - :issue:`6737`: The ``cached_result`` attribute of ``FixtureDef`` is now set to ``None`` when
