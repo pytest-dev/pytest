@@ -9394,7 +9394,7 @@ Bug fixes:
   unexpected exceptions
 - fix issue47: timing output in junitxml for test cases is now correct
 - fix issue48: typo in MarkInfo repr leading to exception
-- fix issue49: avoid confusing error when initizaliation partially fails
+- fix issue49: avoid confusing error when initialization partially fails
 - fix issue44: env/username expansion for junitxml file path
 - show releaselevel information in test runs for pypy
 - reworked doc pages for better navigation and PDF generation

@@ -70,7 +70,7 @@ class TestConftestValueAccessGlobal:
         )
         assert conftest._rget_with_confmod("a", p)[1] == 1
 
-    def test_immediate_initialiation_and_incremental_are_the_same(
+    def test_immediate_initialization_and_incremental_are_the_same(
         self, basedir: Path
     ) -> None:
         conftest = PytestPluginManager()
