@@ -308,7 +308,7 @@ def private_assert_caplog_records_is_setup_call(caplog: pytest.LogCaptureFixture
     assert set(caplog_records) == {"setup", "call"}
 
 
-def test_caplog_captures_for_all_stages(
+def test_captures_for_all_stages(
     caplog: pytest.LogCaptureFixture, logging_during_setup_and_teardown: None
 ) -> None:
     assert not caplog.records
@@ -367,7 +367,7 @@ def test_ini_controls_global_log_level(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-def test_caplog_can_override_global_log_level(pytester: Pytester) -> None:
+def test_can_override_global_log_level(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         import pytest
@@ -406,7 +406,7 @@ def test_caplog_can_override_global_log_level(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-def test_caplog_captures_despite_exception(pytester: Pytester) -> None:
+def test_captures_despite_exception(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         import pytest
