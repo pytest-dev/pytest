@@ -9519,7 +9519,7 @@ Bug fixes:
   collection-before-running semantics were not
   setup as with pytest 1.3.4.  Note, however, that
   the recommended and much cleaner way to do test
-  parametraization remains the "pytest_generate_tests"
+  parameterization remains the "pytest_generate_tests"
   mechanism, see the docs.
 
 2.0.0 (2010-11-25)
