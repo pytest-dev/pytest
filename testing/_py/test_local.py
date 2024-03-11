@@ -898,7 +898,7 @@ class TestExecutionOnWindows:
 class TestExecution:
     pytestmark = skiponwin32
 
-    def test_sysfind_no_permisson_ignored(self, monkeypatch, tmpdir):
+    def test_sysfind_no_permission_ignored(self, monkeypatch, tmpdir):
         noperm = tmpdir.ensure("noperm", dir=True)
         monkeypatch.setenv("PATH", str(noperm), prepend=":")
         noperm.chmod(0)
