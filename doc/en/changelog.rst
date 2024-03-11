@@ -4504,7 +4504,7 @@ Bug Fixes
 Improved Documentation
 ----------------------
 
-- :issue:`4974`: Update docs for ``pytest_cmdline_parse`` hook to note availability liminations
+- :issue:`4974`: Update docs for ``pytest_cmdline_parse`` hook to note availability limitations
 
 
 
