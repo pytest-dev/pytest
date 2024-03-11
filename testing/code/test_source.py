@@ -255,7 +255,7 @@ def test_getfuncsource_dynamic() -> None:
     assert str(g_source).strip() == "def g():\n    pass  # pragma: no cover"
 
 
-def test_getfuncsource_with_multine_string() -> None:
+def test_getfuncsource_with_multiline_string() -> None:
     def f():
         c = """while True:
     pass
