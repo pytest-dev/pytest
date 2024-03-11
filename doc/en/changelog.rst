@@ -8242,7 +8242,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue854: autouse yield_fixtures defined as class members of
   unittest.TestCase subclasses now work as expected.
-  Thannks xmo-odoo for the report and Bruno Oliveira for the PR.
+  Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
 
 - fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
   fixtures declared on the first one.
