@@ -117,7 +117,7 @@ def test_change_disabled_level_undo(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("*log from test2*")
 
 
-def test_change_level_undos_handler_level(pytester: Pytester) -> None:
+def test_change_level_undoes_handler_level(pytester: Pytester) -> None:
     """Ensure that 'set_level' is undone after the end of the test (handler).
 
     Issue #7569. Tests the handler level specifically.
