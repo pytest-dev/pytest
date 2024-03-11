@@ -38,7 +38,7 @@ class TestNewAPI:
         assert val == -2
 
     @pytest.mark.filterwarnings("ignore:could not create cache path")
-    def test_cache_writefail_cachfile_silent(self, pytester: Pytester) -> None:
+    def test_cache_writefail_cachefile_silent(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")
         pytester.path.joinpath(".pytest_cache").write_text(
             "gone wrong", encoding="utf-8"
