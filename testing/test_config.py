@@ -1740,7 +1740,7 @@ class TestOverrideIniArgs:
         )
         pytester.makepyfile(
             r"""
-            def test_overriden(pytestconfig):
+            def test_overridden(pytestconfig):
                 config_paths = pytestconfig.getini("paths")
                 print(config_paths)
                 for cpf in config_paths:
