@@ -1303,7 +1303,7 @@ Deprecations
   ``__init__`` method, they should take ``**kwargs``. See
   :ref:`uncooperative-constructors-deprecated` for details.
 
-  Note that a deprection warning is only emitted when there is a conflict in the
+  Note that a deprecation warning is only emitted when there is a conflict in the
   arguments pytest expected to pass. This deprecation was already part of pytest
   7.0.0rc1 but wasn't documented.
 
