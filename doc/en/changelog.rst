@@ -8707,7 +8707,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks Ralph Schmitt for the precise failure example.
 
 - fix issue244 by implementing special index for parameters to only use
-  indices for paramentrized test ids
+  indices for parametrized test ids
 
 - fix issue287 by running all finalizers but saving the exception
   from the first failing finalizer and re-raising it so teardown will
