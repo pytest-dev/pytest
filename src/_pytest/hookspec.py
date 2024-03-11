@@ -837,7 +837,7 @@ def pytest_fixture_setup(
 ) -> Optional[object]:
     """Perform fixture setup execution.
 
-    :param fixturdef:
+    :param fixturedef:
         The fixture definition object.
     :param request:
         The fixture request object.
@@ -867,7 +867,7 @@ def pytest_fixture_post_finalizer(
     the fixture result ``fixturedef.cached_result`` is still available (not
     ``None``).
 
-    :param fixturdef:
+    :param fixturedef:
         The fixture definition object.
     :param request:
         The fixture request object.
