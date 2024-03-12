@@ -299,7 +299,7 @@ def test_setup_setUpClass(pytester: Pytester) -> None:
             @classmethod
             def tearDownClass(cls):
                 cls.x -= 1
-        def test_teareddown():
+        def test_torn_down():
             assert MyTestCase.x == 0
     """
     )
@@ -346,7 +346,7 @@ def test_setup_class(pytester: Pytester) -> None:
                 assert self.x == 1
             def teardown_class(cls):
                 cls.x -= 1
-        def test_teareddown():
+        def test_torn_down():
             assert MyTestCase.x == 0
     """
     )
@@ -881,7 +881,7 @@ def test_non_unittest_no_setupclass_support(pytester: Pytester) -> None:
             def tearDownClass(cls):
                 cls.x = 1
 
-        def test_not_teareddown():
+        def test_not_torn_down():
             assert TestFoo.x == 0
 
     """
