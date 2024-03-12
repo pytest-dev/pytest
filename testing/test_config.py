@@ -217,7 +217,7 @@ class TestParseIni:
 
     def test_confcutdir_default_without_configfile(self, pytester: Pytester) -> None:
         # If --confcutdir is not specified, and there is no configfile, default
-        # to the roothpath.
+        # to the rootpath.
         sub = pytester.mkdir("sub")
         os.chdir(sub)
         config = pytester.parseconfigure()
