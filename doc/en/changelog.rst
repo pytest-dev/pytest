@@ -60,7 +60,7 @@ Improvements
 - `#11311 <https://github.com/pytest-dev/pytest/issues/11311>`_: When using ``--override-ini`` for paths in invocations without a configuration file defined, the current working directory is used
   as the relative directory.
 
-  Previoulsy this would raise an :class:`AssertionError`.
+  Previously this would raise an :class:`AssertionError`.
 
 
 - `#11475 <https://github.com/pytest-dev/pytest/issues/11475>`_: :ref:`--import-mode=importlib <import-mode-importlib>` now tries to import modules using the standard import mechanism (but still without changing :py:data:`sys.path`), falling back to importing modules directly only if that fails.
