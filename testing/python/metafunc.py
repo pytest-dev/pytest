@@ -109,7 +109,7 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         # When the input is an iterator, only len(args) are taken,
         # so the bad Exc isn't reached.
-        metafunc.parametrize("x", [1, 2], ids=gen())  # type: ignore[arg-type]
+        metafunc.parametrize("x", [1, 2], ids=gen())
         assert [(x.params, x.id) for x in metafunc._calls] == [
             ({"x": 1}, "0"),
             ({"x": 2}, "2"),
@@ -121,7 +121,7 @@ class TestMetafunc:
                 r"Supported types are: .*"
             ),
         ):
-            metafunc.parametrize("x", [1, 2, 3], ids=gen())  # type: ignore[arg-type]
+            metafunc.parametrize("x", [1, 2, 3], ids=gen())
 
     def test_parametrize_bad_scope(self) -> None:
         def func(x):

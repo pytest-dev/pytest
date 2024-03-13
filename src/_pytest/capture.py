@@ -106,17 +106,16 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
         return
 
     # Bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666).
-    if not hasattr(stream, "buffer"):  # type: ignore[unreachable]
+    if not hasattr(stream, "buffer"):  # type: ignore[unreachable,unused-ignore]
         return
 
-    buffered = hasattr(stream.buffer, "raw")
-    raw_stdout = stream.buffer.raw if buffered else stream.buffer  # type: ignore[attr-defined]
+    raw_stdout = stream.buffer.raw if hasattr(stream.buffer, "raw") else stream.buffer
 
-    if not isinstance(raw_stdout, io._WindowsConsoleIO):  # type: ignore[attr-defined]
+    if not isinstance(raw_stdout, io._WindowsConsoleIO):  # type: ignore[attr-defined,unused-ignore]
         return
 
     def _reopen_stdio(f, mode):
-        if not buffered and mode[0] == "w":
+        if not hasattr(stream.buffer, "raw") and mode[0] == "w":
             buffering = 0
         else:
             buffering = -1
@@ -483,7 +482,10 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         self._state = "initialized"
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} {self.targetfd} oldfd={self.targetfd_save} _state={self._state!r} tmpfile={self.tmpfile!r}>"
+        return (
+            f"<{self.__class__.__name__} {self.targetfd} oldfd={self.targetfd_save} "
+            f"_state={self._state!r} tmpfile={self.tmpfile!r}>"
+        )
 
     def _assert_state(self, op: str, states: Tuple[str, ...]) -> None:
         assert (
@@ -616,7 +618,10 @@ class MultiCapture(Generic[AnyStr]):
         self.err: Optional[CaptureBase[AnyStr]] = err
 
     def __repr__(self) -> str:
-        return f"<MultiCapture out={self.out!r} err={self.err!r} in_={self.in_!r} _state={self._state!r} _in_suspended={self._in_suspended!r}>"
+        return (
+            f"<MultiCapture out={self.out!r} err={self.err!r} in_={self.in_!r} "
+            f"_state={self._state!r} _in_suspended={self._in_suspended!r}>"
+        )
 
     def start_capturing(self) -> None:
         self._state = "started"
@@ -724,7 +729,10 @@ class CaptureManager:
         self._capture_fixture: Optional[CaptureFixture[Any]] = None
 
     def __repr__(self) -> str:
-        return f"<CaptureManager _method={self._method!r} _global_capturing={self._global_capturing!r} _capture_fixture={self._capture_fixture!r}>"
+        return (
+            f"<CaptureManager _method={self._method!r} _global_capturing={self._global_capturing!r} "
+            f"_capture_fixture={self._capture_fixture!r}>"
+        )
 
     def is_capturing(self) -> Union[str, bool]:
         if self.is_globally_capturing():

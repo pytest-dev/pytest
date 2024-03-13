@@ -9,6 +9,7 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 
+from ..compat import assert_never
 from .wcwidth import wcswidth
 
 
@@ -209,6 +210,8 @@ class TerminalWriter:
                 from pygments.lexers.python import PythonLexer as Lexer
             elif lexer == "diff":
                 from pygments.lexers.diff import DiffLexer as Lexer
+            else:
+                assert_never(lexer)
             from pygments import highlight
             import pygments.util
         except ImportError:

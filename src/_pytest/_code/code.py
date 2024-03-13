@@ -1346,7 +1346,7 @@ def getfslineno(obj: object) -> Tuple[Union[str, Path], int]:
     #       in 6ec13a2b9.  It ("place_as") appears to be something very custom.
     obj = get_real_func(obj)
     if hasattr(obj, "place_as"):
-        obj = obj.place_as  # type: ignore[attr-defined]
+        obj = obj.place_as
 
     try:
         code = Code.from_function(obj)

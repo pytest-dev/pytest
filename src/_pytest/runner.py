@@ -85,7 +85,7 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
                 dlist.append(rep)
     if not dlist:
         return
-    dlist.sort(key=lambda x: x.duration, reverse=True)  # type: ignore[no-any-return]
+    dlist.sort(key=lambda x: x.duration, reverse=True)
     if not durations:
         tr.write_sep("=", "slowest durations")
     else:
@@ -396,8 +396,7 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
         skip_exceptions = [Skipped]
         unittest = sys.modules.get("unittest")
         if unittest is not None:
-            # Type ignored because unittest is loaded dynamically.
-            skip_exceptions.append(unittest.SkipTest)  # type: ignore
+            skip_exceptions.append(unittest.SkipTest)
         if isinstance(call.excinfo.value, tuple(skip_exceptions)):
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")

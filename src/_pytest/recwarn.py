@@ -181,8 +181,7 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
     def __init__(self, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
-        # Type ignored due to the way typeshed handles warnings.catch_warnings.
-        super().__init__(record=True)  # type: ignore[call-arg]
+        super().__init__(record=True)
         self._entered = False
         self._list: List[warnings.WarningMessage] = []
 

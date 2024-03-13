@@ -342,7 +342,7 @@ class MarkDecorator:
     # return type. Not much we can do about that. Thankfully mypy picks
     # the first match so it works out even if we break the rules.
     @overload
-    def __call__(self, arg: Markable) -> Markable:  # type: ignore[misc]
+    def __call__(self, arg: Markable) -> Markable:  # type: ignore[overload-overlap]
         pass
 
     @overload
@@ -433,7 +433,7 @@ if TYPE_CHECKING:
     from _pytest.scope import _ScopeName
 
     class _SkipMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,misc,no-overload-impl]
+        @overload  # type: ignore[override,no-overload-impl]
         def __call__(self, arg: Markable) -> Markable: ...
 
         @overload
@@ -448,7 +448,7 @@ if TYPE_CHECKING:
         ) -> MarkDecorator: ...
 
     class _XfailMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,misc,no-overload-impl]
+        @overload  # type: ignore[override,no-overload-impl]
         def __call__(self, arg: Markable) -> Markable: ...
 
         @overload

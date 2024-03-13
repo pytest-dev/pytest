@@ -223,8 +223,9 @@ def assertrepr_compare(
     except outcomes.Exit:
         raise
     except Exception:
+        repr_crash = _pytest._code.ExceptionInfo.from_current()._getreprcrash()
         explanation = [
-            f"(pytest_assertion plugin: representation of details failed: {_pytest._code.ExceptionInfo.from_current()._getreprcrash()}.",
+            f"(pytest_assertion plugin: representation of details failed: {repr_crash}.",
             " Probably an object has a faulty __repr__.)",
         ]
 

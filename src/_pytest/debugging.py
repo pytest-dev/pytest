@@ -155,9 +155,7 @@ class pytestPDB:
     def _get_pdb_wrapper_class(cls, pdb_cls, capman: Optional["CaptureManager"]):
         import _pytest.config
 
-        # Type ignored because mypy doesn't support "dynamic"
-        # inheritance like this.
-        class PytestPdbWrapper(pdb_cls):  # type: ignore[valid-type,misc]
+        class PytestPdbWrapper(pdb_cls):
             _pytest_capman = capman
             _continued = False
 

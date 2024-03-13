@@ -224,7 +224,7 @@ class Stat:
             raise NotImplementedError("XXX win32")
         import pwd
 
-        entry = error.checked_call(pwd.getpwuid, self.uid)  # type:ignore[attr-defined]
+        entry = error.checked_call(pwd.getpwuid, self.uid)  # type:ignore[attr-defined,unused-ignore]
         return entry[0]
 
     @property
@@ -234,7 +234,7 @@ class Stat:
             raise NotImplementedError("XXX win32")
         import grp
 
-        entry = error.checked_call(grp.getgrgid, self.gid)  # type:ignore[attr-defined]
+        entry = error.checked_call(grp.getgrgid, self.gid)  # type:ignore[attr-defined,unused-ignore]
         return entry[0]
 
     def isdir(self):
@@ -252,7 +252,7 @@ def getuserid(user):
     import pwd
 
     if not isinstance(user, int):
-        user = pwd.getpwnam(user)[2]  # type:ignore[attr-defined]
+        user = pwd.getpwnam(user)[2]  # type:ignore[attr-defined,unused-ignore]
     return user
 
 
@@ -260,7 +260,7 @@ def getgroupid(group):
     import grp
 
     if not isinstance(group, int):
-        group = grp.getgrnam(group)[2]  # type:ignore[attr-defined]
+        group = grp.getgrnam(group)[2]  # type:ignore[attr-defined,unused-ignore]
     return group
 
 
@@ -317,7 +317,7 @@ class LocalPath:
         def readlink(self) -> str:
             """Return value of a symbolic link."""
             # https://github.com/python/mypy/issues/12278
-            return error.checked_call(os.readlink, self.strpath)  # type: ignore[arg-type,return-value]
+            return error.checked_call(os.readlink, self.strpath)  # type: ignore[arg-type,return-value,unused-ignore]
 
         def mklinkto(self, oldname):
             """Posix style hard link to another name."""
@@ -756,15 +756,11 @@ class LocalPath:
         if ensure:
             self.dirpath().ensure(dir=1)
         if encoding:
-            # Using type ignore here because of this error:
-            # error: Argument 1 has incompatible type overloaded function;
-            #   expected "Callable[[str, Any, Any], TextIOWrapper]"  [arg-type]
-            # Which seems incorrect, given io.open supports the given argument types.
             return error.checked_call(
                 io.open,
                 self.strpath,
                 mode,
-                encoding=encoding,  # type:ignore[arg-type]
+                encoding=encoding,
             )
         return error.checked_call(open, self.strpath, mode)
 
@@ -1274,13 +1270,7 @@ class LocalPath:
 
         if rootdir is None:
             rootdir = cls.get_temproot()
-        # Using type ignore here because of this error:
-        # error: Argument 1 has incompatible type overloaded function; expected "Callable[[str], str]"  [arg-type]
-        # Which seems incorrect, given tempfile.mkdtemp supports the given argument types.
-        path = error.checked_call(
-            tempfile.mkdtemp,
-            dir=str(rootdir),  # type:ignore[arg-type]
-        )
+        path = error.checked_call(tempfile.mkdtemp, dir=str(rootdir))
         return cls(path)
 
     @classmethod

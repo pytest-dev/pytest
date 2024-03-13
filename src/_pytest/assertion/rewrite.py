@@ -289,15 +289,13 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         else:
             from importlib.abc import TraversableResources
 
-        def get_resource_reader(self, name: str) -> TraversableResources:  # type: ignore
+        def get_resource_reader(self, name: str) -> TraversableResources:
             if sys.version_info < (3, 11):
                 from importlib.readers import FileReader
             else:
                 from importlib.resources.readers import FileReader
 
-            return FileReader(  # type:ignore[no-any-return]
-                types.SimpleNamespace(path=self._rewritten_names[name])
-            )
+            return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
 
 
 def _write_pyc_fp(
@@ -975,7 +973,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # name if it's a local variable or _should_repr_global_name()
         # thinks it's acceptable.
         locs = ast.Call(self.builtin("locals"), [], [])
-        target_id = name.target.id  # type: ignore[attr-defined]
+        target_id = name.target.id
         inlocs = ast.Compare(ast.Constant(target_id), [ast.In()], [locs])
         dorepr = self.helper("_should_repr_global_name", name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])

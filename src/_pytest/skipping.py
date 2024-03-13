@@ -110,7 +110,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
                 )
             globals_.update(dictionary)
         if hasattr(item, "obj"):
-            globals_.update(item.obj.__globals__)  # type: ignore[attr-defined]
+            globals_.update(item.obj.__globals__)
         try:
             filename = f"<{mark.name} condition>"
             condition_code = compile(condition, filename, "eval")

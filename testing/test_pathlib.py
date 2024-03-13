@@ -183,7 +183,7 @@ class TestImportPath:
         obj = import_path(
             path1 / "execfile.py", root=path1, consider_namespace_packages=ns_param
         )
-        assert obj.x == 42  # type: ignore[attr-defined]
+        assert obj.x == 42
         assert obj.__name__ == "execfile"
 
     def test_import_path_missing_file(self, path1: Path, ns_param: bool) -> None:
@@ -246,7 +246,7 @@ class TestImportPath:
         mod = import_path(
             otherdir / "a.py", root=path1, consider_namespace_packages=ns_param
         )
-        assert mod.result == "got it"  # type: ignore[attr-defined]
+        assert mod.result == "got it"
         assert mod.__name__ == "otherdir.a"
 
     def test_b(self, path1: Path, ns_param: bool) -> None:
@@ -254,7 +254,7 @@ class TestImportPath:
         mod = import_path(
             otherdir / "b.py", root=path1, consider_namespace_packages=ns_param
         )
-        assert mod.stuff == "got it"  # type: ignore[attr-defined]
+        assert mod.stuff == "got it"
         assert mod.__name__ == "otherdir.b"
 
     def test_c(self, path1: Path, ns_param: bool) -> None:
@@ -262,14 +262,14 @@ class TestImportPath:
         mod = import_path(
             otherdir / "c.py", root=path1, consider_namespace_packages=ns_param
         )
-        assert mod.value == "got it"  # type: ignore[attr-defined]
+        assert mod.value == "got it"
 
     def test_d(self, path1: Path, ns_param: bool) -> None:
         otherdir = path1 / "otherdir"
         mod = import_path(
             otherdir / "d.py", root=path1, consider_namespace_packages=ns_param
         )
-        assert mod.value2 == "got it"  # type: ignore[attr-defined]
+        assert mod.value2 == "got it"
 
     def test_import_after(self, tmp_path: Path, ns_param: bool) -> None:
         tmp_path.joinpath("xxxpackage").mkdir()
@@ -360,7 +360,7 @@ class TestImportPath:
             root=tmp_path,
             consider_namespace_packages=ns_param,
         )
-        assert module.foo(2) == 42  # type: ignore[attr-defined]
+        assert module.foo(2) == 42
         assert str(simple_module.parent) not in sys.path
         assert module.__name__ in sys.modules
         assert module.__name__ == f"_src.tests.mymod_{request.node.name}"
@@ -400,7 +400,7 @@ class TestImportPath:
             root=tmp_path,
             consider_namespace_packages=ns_param,
         )
-        assert module.foo(2) == 42  # type: ignore[attr-defined]
+        assert module.foo(2) == 42
 
         # mode='importlib' fails if no spec is found to load the module
         import importlib.util

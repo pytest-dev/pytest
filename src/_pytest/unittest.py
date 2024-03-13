@@ -99,8 +99,7 @@ class UnitTestCase(Class):
             runtest = getattr(self.obj, "runTest", None)
             if runtest is not None:
                 ut = sys.modules.get("twisted.trial.unittest", None)
-                # Type ignored because `ut` is an opaque module.
-                if ut is None or runtest != ut.TestCase.runTest:  # type: ignore
+                if ut is None or runtest != ut.TestCase.runTest:
                     yield TestCaseFunction.from_parent(self, name="runTest")
 
     def _register_unittest_setup_class_fixture(self, cls: type) -> None:
@@ -303,8 +302,7 @@ class TestCaseFunction(Function):
 
         # Let the unittest framework handle async functions.
         if is_async_function(self.obj):
-            # Type ignored because self acts as the TestResult, but is not actually one.
-            testcase(result=self)  # type: ignore[arg-type]
+            testcase(result=self)
         else:
             # When --pdb is given, we want to postpone calling tearDown() otherwise
             # when entering the pdb prompt, tearDown() would have probably cleaned up
@@ -323,7 +321,7 @@ class TestCaseFunction(Function):
             # wrap_pytest_function_for_tracing replaces self.obj by a wrapper.
             setattr(testcase, self.name, self.obj)
             try:
-                testcase(result=self)  # type: ignore[arg-type]
+                testcase(result=self)
             finally:
                 delattr(testcase, self.name)
 
@@ -354,9 +352,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
     # its own nose.SkipTest. For unittest TestCases, SkipTest is already
     # handled internally, and doesn't reach here.
     unittest = sys.modules.get("unittest")
-    if (
-        unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest)  # type: ignore[attr-defined]
-    ):
+    if unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest):
         excinfo = call.excinfo
         call2 = CallInfo[None].from_call(
             lambda: pytest.skip(str(excinfo.value)), call.when
