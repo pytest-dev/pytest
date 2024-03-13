@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Implementation of the cache provider."""
+
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
 import dataclasses
@@ -432,7 +433,7 @@ class NFPlugin:
         return res
 
     def _get_increasing_order(self, items: Iterable[nodes.Item]) -> List[nodes.Item]:
-        return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)  # type: ignore[no-any-return]
+        return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)
 
     def pytest_sessionfinish(self) -> None:
         config = self.config

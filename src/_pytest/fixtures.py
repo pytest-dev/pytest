@@ -447,7 +447,7 @@ class FixtureRequest(abc.ABC):
     @property
     def config(self) -> Config:
         """The pytest config object associated with this request."""
-        return self._pyfuncitem.config  # type: ignore[no-any-return]
+        return self._pyfuncitem.config
 
     @property
     def function(self):
@@ -499,7 +499,7 @@ class FixtureRequest(abc.ABC):
     @property
     def session(self) -> "Session":
         """Pytest session object."""
-        return self._pyfuncitem.session  # type: ignore[no-any-return]
+        return self._pyfuncitem.session
 
     @abc.abstractmethod
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
@@ -629,17 +629,14 @@ class FixtureRequest(abc.ABC):
                     )
                 except ValueError:
                     source_path_str = str(source_path)
+                location = getlocation(fixturedef.func, funcitem.config.rootpath)
                 msg = (
                     "The requested fixture has no parameter defined for test:\n"
-                    "    {}\n\n"
-                    "Requested fixture '{}' defined in:\n{}"
-                    "\n\nRequested here:\n{}:{}".format(
-                        funcitem.nodeid,
-                        fixturedef.argname,
-                        getlocation(fixturedef.func, funcitem.config.rootpath),
-                        source_path_str,
-                        source_lineno,
-                    )
+                    f"    {funcitem.nodeid}\n\n"
+                    f"Requested fixture '{fixturedef.argname}' defined in:\n"
+                    f"{location}\n\n"
+                    f"Requested here:\n"
+                    f"{source_path_str}:{source_lineno}"
                 )
                 fail(msg, pytrace=False)
 
@@ -1108,12 +1105,12 @@ def resolve_fixture_function(
         # (for example a plugin class with a fixture), see #2270.
         if hasattr(fixturefunc, "__self__") and not isinstance(
             instance,
-            fixturefunc.__self__.__class__,  # type: ignore[union-attr]
+            fixturefunc.__self__.__class__,
         ):
             return fixturefunc
         fixturefunc = getimfunc(fixturedef.func)
         if fixturefunc != fixturedef.func:
-            fixturefunc = fixturefunc.__get__(instance)  # type: ignore[union-attr]
+            fixturefunc = fixturefunc.__get__(instance)
     return fixturefunc
 
 
@@ -1147,12 +1144,13 @@ def wrap_function_to_error_out_if_called_directly(
 ) -> FixtureFunction:
     """Wrap the given fixture function so we can raise an error about it being called directly,
     instead of used as an argument in a test function."""
+    name = fixture_marker.name or function.__name__
     message = (
-        'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
+        f'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
         "but are created automatically when test functions request them as parameters.\n"
         "See https://docs.pytest.org/en/stable/explanation/fixtures.html for more information about fixtures, and\n"
         "https://docs.pytest.org/en/stable/deprecations.html#calling-fixtures-directly about how to update your code."
-    ).format(name=fixture_marker.name or function.__name__)
+    )
 
     @functools.wraps(function)
     def result(*args, **kwargs):
@@ -1219,8 +1217,7 @@ def fixture(
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = ...,
-) -> FixtureFunction:
-    ...
+) -> FixtureFunction: ...
 
 
 @overload
@@ -1234,8 +1231,7 @@ def fixture(
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = None,
-) -> FixtureFunctionMarker:
-    ...
+) -> FixtureFunctionMarker: ...
 
 
 def fixture(

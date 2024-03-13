@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 """Hook specifications for pytest plugins which are invoked by pytest itself
 and by builtin plugins."""
+
 from pathlib import Path
 from typing import Any
 from typing import Dict

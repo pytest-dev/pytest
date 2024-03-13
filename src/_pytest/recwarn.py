@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Record warnings during test function execution."""
+
 from pprint import pformat
 import re
 from types import TracebackType
@@ -43,13 +44,11 @@ def recwarn() -> Generator["WarningsRecorder", None, None]:
 @overload
 def deprecated_call(
     *, match: Optional[Union[str, Pattern[str]]] = ...
-) -> "WarningsRecorder":
-    ...
+) -> "WarningsRecorder": ...
 
 
 @overload
-def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
-    ...
+def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T: ...
 
 
 def deprecated_call(
@@ -91,8 +90,7 @@ def warns(
     expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
     *,
     match: Optional[Union[str, Pattern[str]]] = ...,
-) -> "WarningsChecker":
-    ...
+) -> "WarningsChecker": ...
 
 
 @overload
@@ -101,8 +99,7 @@ def warns(
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any,
-) -> T:
-    ...
+) -> T: ...
 
 
 def warns(
@@ -184,8 +181,7 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
     def __init__(self, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
-        # Type ignored due to the way typeshed handles warnings.catch_warnings.
-        super().__init__(record=True)  # type: ignore[call-arg]
+        super().__init__(record=True)
         self._entered = False
         self._list: List[warnings.WarningMessage] = []
 

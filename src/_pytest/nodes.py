@@ -363,12 +363,10 @@ class Node(abc.ABC, metaclass=NodeMeta):
                     yield node, mark
 
     @overload
-    def get_closest_marker(self, name: str) -> Optional[Mark]:
-        ...
+    def get_closest_marker(self, name: str) -> Optional[Mark]: ...
 
     @overload
-    def get_closest_marker(self, name: str, default: Mark) -> Mark:
-        ...
+    def get_closest_marker(self, name: str, default: Mark) -> Mark: ...
 
     def get_closest_marker(
         self, name: str, default: Optional[Mark] = None

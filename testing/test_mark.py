@@ -18,7 +18,7 @@ class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     def test_pytest_exists_in_namespace_all(self, attr: str) -> None:
         module = sys.modules["pytest"]
-        assert attr in module.__all__  # type: ignore
+        assert attr in module.__all__
 
     def test_pytest_mark_notcallable(self) -> None:
         mark = MarkGenerator(_ispytest=True)
@@ -34,7 +34,7 @@ class TestMark:
 
         assert pytest.mark.foo(some_function) is some_function
         marked_with_args = pytest.mark.foo.with_args(some_function)
-        assert marked_with_args is not some_function  # type: ignore[comparison-overlap]
+        assert marked_with_args is not some_function
 
         assert pytest.mark.foo(SomeClass) is SomeClass
         assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap]

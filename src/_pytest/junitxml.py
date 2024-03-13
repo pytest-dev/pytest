@@ -7,6 +7,7 @@ Based on initial code from Ross Lawley.
 Output conforms to
 https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
+
 from datetime import datetime
 import functools
 import os
@@ -60,7 +61,7 @@ def bin_xml_escape(arg: object) -> str:
     # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
     # For an unknown(?) reason, we disallow #x7F (DEL) as well.
     illegal_xml_re = (
-        "[^\u0009\u000A\u000D\u0020-\u007E\u0080-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]"
+        "[^\u0009\u000a\u000d\u0020-\u007e\u0080-\ud7ff\ue000-\ufffd\u10000-\u10ffff]"
     )
     return re.sub(illegal_xml_re, repl, str(arg))
 
@@ -261,7 +262,7 @@ class _NodeReporter:
         self.__dict__.clear()
         # Type ignored because mypy doesn't like overriding a method.
         # Also the return value doesn't match...
-        self.to_xml = lambda: data  # type: ignore[assignment]
+        self.to_xml = lambda: data  # type: ignore[method-assign]
 
 
 def _warn_incompatibility_with_xunit2(

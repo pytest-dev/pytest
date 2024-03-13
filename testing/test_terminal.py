@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Terminal reporting of the full testing process."""
+
 from io import StringIO
 import os
 from pathlib import Path

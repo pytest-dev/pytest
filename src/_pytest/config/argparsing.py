@@ -426,8 +426,7 @@ class MyOptionParser(argparse.ArgumentParser):
         msg = f"{self.prog}: error: {message}"
 
         if hasattr(self._parser, "_config_source_hint"):
-            # Type ignored because the attribute is set dynamically.
-            msg = f"{msg} ({self._parser._config_source_hint})"  # type: ignore
+            msg = f"{msg} ({self._parser._config_source_hint})"
 
         raise UsageError(self.format_usage() + msg)
 

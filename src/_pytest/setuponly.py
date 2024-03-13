@@ -58,7 +58,7 @@ def pytest_fixture_post_finalizer(
         if config.option.setupshow:
             _show_fixture_action(fixturedef, request.config, "TEARDOWN")
             if hasattr(fixturedef, "cached_param"):
-                del fixturedef.cached_param  # type: ignore[attr-defined]
+                del fixturedef.cached_param
 
 
 def _show_fixture_action(
@@ -87,7 +87,7 @@ def _show_fixture_action(
             tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
     if hasattr(fixturedef, "cached_param"):
-        tw.write(f"[{saferepr(fixturedef.cached_param, maxsize=42)}]")  # type: ignore[attr-defined]
+        tw.write(f"[{saferepr(fixturedef.cached_param, maxsize=42)}]")
 
     tw.flush()
 

@@ -180,7 +180,7 @@ class TestTraceback_f_g_h:
     def test_traceback_cut_excludepath(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("def f(): raise ValueError")
         with pytest.raises(ValueError) as excinfo:
-            import_path(p, root=pytester.path, consider_namespace_packages=False).f()  # type: ignore[attr-defined]
+            import_path(p, root=pytester.path, consider_namespace_packages=False).f()
         basedir = Path(pytest.__file__).parent
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
         for x in newtraceback:

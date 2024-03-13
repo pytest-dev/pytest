@@ -29,7 +29,7 @@ def runpdb_and_get_stdout(pytester: Pytester, source: str):
 
 def runpdb_and_get_report(pytester: Pytester, source: str):
     result = runpdb(pytester, source)
-    reports = result.reprec.getreports("pytest_runtest_logreport")  # type: ignore[attr-defined]
+    reports = result.reprec.getreports("pytest_runtest_logreport")
     assert len(reports) == 3, reports  # setup/call/teardown
     return reports[1]
 
