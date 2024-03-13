@@ -449,6 +449,21 @@ def test_parametrized_with_kwargs(pytester: Pytester) -> None:
 
 def test_parametrize_overriden_extended_fixture(pytester: Pytester) -> None:
     """Overriden fixtures must pass over dependend fixtures for parameterization (#12091)"""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def not_needed():
+            assert False, "Should not be called!"
+
+        @pytest.fixture
+        def main(foo):
+            assert False, "Should not be called!"
+
+    """
+    )
+
     py_file = pytester.makepyfile(
         """\
         import pytest
