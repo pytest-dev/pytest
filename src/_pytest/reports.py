@@ -72,8 +72,7 @@ class BaseReport:
 
     if TYPE_CHECKING:
         # Can have arbitrary fields given to __init__().
-        def __getattr__(self, key: str) -> Any:
-            ...
+        def __getattr__(self, key: str) -> Any: ...
 
     def toterminal(self, out: TerminalWriter) -> None:
         if hasattr(self, "node"):
@@ -606,9 +605,9 @@ def _report_kwargs_from_json(reportdict: Dict[str, Any]) -> Dict[str, Any]:
                         description,
                     )
                 )
-            exception_info: Union[
-                ExceptionChainRepr, ReprExceptionInfo
-            ] = ExceptionChainRepr(chain)
+            exception_info: Union[ExceptionChainRepr, ReprExceptionInfo] = (
+                ExceptionChainRepr(chain)
+            )
         else:
             exception_info = ReprExceptionInfo(
                 reprtraceback=reprtraceback,

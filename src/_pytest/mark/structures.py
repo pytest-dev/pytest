@@ -434,12 +434,10 @@ if TYPE_CHECKING:
 
     class _SkipMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc,no-overload-impl]
-        def __call__(self, arg: Markable) -> Markable:
-            ...
+        def __call__(self, arg: Markable) -> Markable: ...
 
         @overload
-        def __call__(self, reason: str = ...) -> "MarkDecorator":
-            ...
+        def __call__(self, reason: str = ...) -> "MarkDecorator": ...
 
     class _SkipifMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -447,13 +445,11 @@ if TYPE_CHECKING:
             condition: Union[str, bool] = ...,
             *conditions: Union[str, bool],
             reason: str = ...,
-        ) -> MarkDecorator:
-            ...
+        ) -> MarkDecorator: ...
 
     class _XfailMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,misc,no-overload-impl]
-        def __call__(self, arg: Markable) -> Markable:
-            ...
+        def __call__(self, arg: Markable) -> Markable: ...
 
         @overload
         def __call__(
@@ -466,8 +462,7 @@ if TYPE_CHECKING:
                 None, Type[BaseException], Tuple[Type[BaseException], ...]
             ] = ...,
             strict: bool = ...,
-        ) -> MarkDecorator:
-            ...
+        ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
         def __call__(  # type: ignore[override]
@@ -483,8 +478,7 @@ if TYPE_CHECKING:
                 ]
             ] = ...,
             scope: Optional[_ScopeName] = ...,
-        ) -> MarkDecorator:
-            ...
+        ) -> MarkDecorator: ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):
         def __call__(self, *fixtures: str) -> MarkDecorator:  # type: ignore[override]

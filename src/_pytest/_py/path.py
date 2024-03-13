@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """local path implementation."""
+
 from __future__ import annotations
 
 import atexit
@@ -205,12 +206,10 @@ class Stat:
     if TYPE_CHECKING:
 
         @property
-        def size(self) -> int:
-            ...
+        def size(self) -> int: ...
 
         @property
-        def mtime(self) -> float:
-            ...
+        def mtime(self) -> float: ...
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._osstatresult, "st_" + name)
@@ -966,12 +965,10 @@ class LocalPath:
             return p
 
     @overload
-    def stat(self, raising: Literal[True] = ...) -> Stat:
-        ...
+    def stat(self, raising: Literal[True] = ...) -> Stat: ...
 
     @overload
-    def stat(self, raising: Literal[False]) -> Stat | None:
-        ...
+    def stat(self, raising: Literal[False]) -> Stat | None: ...
 
     def stat(self, raising: bool = True) -> Stat | None:
         """Return an os.stat() tuple."""

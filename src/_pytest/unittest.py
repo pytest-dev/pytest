@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Discover and run std-library "unittest" style tests."""
+
 import sys
 import traceback
 import types

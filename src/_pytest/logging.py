@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Access and control log capturing."""
+
 from contextlib import contextmanager
 from contextlib import nullcontext
 from datetime import datetime

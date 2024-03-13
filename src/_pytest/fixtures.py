@@ -631,15 +631,9 @@ class FixtureRequest(abc.ABC):
                     source_path_str = str(source_path)
                 msg = (
                     "The requested fixture has no parameter defined for test:\n"
-                    "    {}\n\n"
-                    "Requested fixture '{}' defined in:\n{}"
-                    "\n\nRequested here:\n{}:{}".format(
-                        funcitem.nodeid,
-                        fixturedef.argname,
-                        getlocation(fixturedef.func, funcitem.config.rootpath),
-                        source_path_str,
-                        source_lineno,
-                    )
+                    f"    {funcitem.nodeid}\n\n"
+                    f"Requested fixture '{fixturedef.argname}' defined in:\n{getlocation(fixturedef.func, funcitem.config.rootpath)}"
+                    f"\n\nRequested here:\n{source_path_str}:{source_lineno}"
                 )
                 fail(msg, pytrace=False)
 
@@ -1148,11 +1142,11 @@ def wrap_function_to_error_out_if_called_directly(
     """Wrap the given fixture function so we can raise an error about it being called directly,
     instead of used as an argument in a test function."""
     message = (
-        'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
+        f'Fixture "{fixture_marker.name or function.__name__}" called directly. Fixtures are not meant to be called directly,\n'
         "but are created automatically when test functions request them as parameters.\n"
         "See https://docs.pytest.org/en/stable/explanation/fixtures.html for more information about fixtures, and\n"
         "https://docs.pytest.org/en/stable/deprecations.html#calling-fixtures-directly about how to update your code."
-    ).format(name=fixture_marker.name or function.__name__)
+    )
 
     @functools.wraps(function)
     def result(*args, **kwargs):
@@ -1219,8 +1213,7 @@ def fixture(
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = ...,
-) -> FixtureFunction:
-    ...
+) -> FixtureFunction: ...
 
 
 @overload
@@ -1234,8 +1227,7 @@ def fixture(
         Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
     ] = ...,
     name: Optional[str] = None,
-) -> FixtureFunctionMarker:
-    ...
+) -> FixtureFunctionMarker: ...
 
 
 def fixture(

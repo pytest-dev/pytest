@@ -672,9 +672,9 @@ class AssertionRewriter(ast.NodeVisitor):
             self.enable_assertion_pass_hook = False
         self.source = source
         self.scope: tuple[ast.AST, ...] = ()
-        self.variables_overwrite: defaultdict[
-            tuple[ast.AST, ...], Dict[str, str]
-        ] = defaultdict(dict)
+        self.variables_overwrite: defaultdict[tuple[ast.AST, ...], Dict[str, str]] = (
+            defaultdict(dict)
+        )
 
     def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""

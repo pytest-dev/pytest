@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Per-test stdout/stderr capturing mechanism."""
+
 import abc
 import collections
 import contextlib
@@ -482,13 +483,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         self._state = "initialized"
 
     def __repr__(self) -> str:
-        return "<{} {} oldfd={} _state={!r} tmpfile={!r}>".format(
-            self.__class__.__name__,
-            self.targetfd,
-            self.targetfd_save,
-            self._state,
-            self.tmpfile,
-        )
+        return f"<{self.__class__.__name__} {self.targetfd} oldfd={self.targetfd_save} _state={self._state!r} tmpfile={self.tmpfile!r}>"
 
     def _assert_state(self, op: str, states: Tuple[str, ...]) -> None:
         assert (
@@ -621,13 +616,7 @@ class MultiCapture(Generic[AnyStr]):
         self.err: Optional[CaptureBase[AnyStr]] = err
 
     def __repr__(self) -> str:
-        return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
-            self.out,
-            self.err,
-            self.in_,
-            self._state,
-            self._in_suspended,
-        )
+        return f"<MultiCapture out={self.out!r} err={self.err!r} in_={self.in_!r} _state={self._state!r} _in_suspended={self._in_suspended!r}>"
 
     def start_capturing(self) -> None:
         self._state = "started"
@@ -735,9 +724,7 @@ class CaptureManager:
         self._capture_fixture: Optional[CaptureFixture[Any]] = None
 
     def __repr__(self) -> str:
-        return "<CaptureManager _method={!r} _global_capturing={!r} _capture_fixture={!r}>".format(
-            self._method, self._global_capturing, self._capture_fixture
-        )
+        return f"<CaptureManager _method={self._method!r} _global_capturing={self._global_capturing!r} _capture_fixture={self._capture_fixture!r}>"
 
     def is_capturing(self) -> Union[str, bool]:
         if self.is_globally_capturing():

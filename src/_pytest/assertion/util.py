@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Utilities for assertion debugging."""
+
 import collections.abc
 import os
 import pprint
@@ -223,9 +224,7 @@ def assertrepr_compare(
         raise
     except Exception:
         explanation = [
-            "(pytest_assertion plugin: representation of details failed: {}.".format(
-                _pytest._code.ExceptionInfo.from_current()._getreprcrash()
-            ),
+            f"(pytest_assertion plugin: representation of details failed: {_pytest._code.ExceptionInfo.from_current()._getreprcrash()}.",
             " Probably an object has a faulty __repr__.)",
         ]
 

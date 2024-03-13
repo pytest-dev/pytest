@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Support for skip/xfail functions and markers."""
+
 from collections.abc import Mapping
 import dataclasses
 import os

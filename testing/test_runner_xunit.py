@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Test correct setup/teardowns at module, class, and instance level."""
+
 from typing import List
 
 from _pytest.pytester import Pytester
