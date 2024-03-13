@@ -325,7 +325,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
 def _compare_eq_iterable(
     left: Iterable[Any],
     right: Iterable[Any],
-    highligher: _HighlightFunc,
+    highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> List[str]:
     if verbose <= 0 and not running_on_ci():
@@ -340,7 +340,7 @@ def _compare_eq_iterable(
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     explanation.extend(
-        highligher(
+        highlighter(
             "\n".join(
                 line.rstrip()
                 for line in difflib.ndiff(right_formatting, left_formatting)
