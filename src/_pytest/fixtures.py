@@ -570,18 +570,21 @@ class FixtureRequest(abc.ABC):
         self, argname: str
     ) -> Union["FixtureDef[object]", PseudoFixtureDef[object]]:
         fixturedef = self._fixture_defs.get(argname)
-        if fixturedef is None:
-            try:
-                fixturedef = self._getnextfixturedef(argname)
-            except FixtureLookupError:
-                if argname == "request":
-                    cached_result = (self, [0], None)
-                    return PseudoFixtureDef(cached_result, Scope.Function)
-                raise
-            self._compute_fixture_value(fixturedef)
-            self._fixture_defs[argname] = fixturedef
-        else:
+        if fixturedef is not None:
             self._check_scope(fixturedef, fixturedef._scope)
+            return fixturedef
+
+        try:
+            fixturedef = self._getnextfixturedef(argname)
+        except FixtureLookupError:
+            if argname == "request":
+                cached_result = (self, [0], None)
+                return PseudoFixtureDef(cached_result, Scope.Function)
+            raise
+
+        self._compute_fixture_value(fixturedef)
+
+        self._fixture_defs[argname] = fixturedef
         return fixturedef
 
     def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
