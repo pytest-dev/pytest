@@ -569,18 +569,18 @@ class FixtureRequest(abc.ABC):
     def _get_active_fixturedef(
         self, argname: str
     ) -> Union["FixtureDef[object]", PseudoFixtureDef[object]]:
+        if argname == "request":
+            cached_result = (self, [0], None)
+            return PseudoFixtureDef(cached_result, Scope.Function)
+
+        # If we already finished computing a fixture by this name in this item,
+        # return it.
         fixturedef = self._fixture_defs.get(argname)
         if fixturedef is not None:
             self._check_scope(fixturedef, fixturedef._scope)
             return fixturedef
 
-        try:
-            fixturedef = self._getnextfixturedef(argname)
-        except FixtureLookupError:
-            if argname == "request":
-                cached_result = (self, [0], None)
-                return PseudoFixtureDef(cached_result, Scope.Function)
-            raise
+        fixturedef = self._getnextfixturedef(argname)
 
         # Prepare a SubRequest object for calling the fixture.
         funcitem = self._pyfuncitem
