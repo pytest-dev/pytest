@@ -100,7 +100,7 @@ object, the wrapper may modify that result, but it's probably better to avoid it
 
 If the hook implementation failed with an exception, the wrapper can handle that
 exception using a ``try-catch-finally`` around the ``yield``, by propagating it,
-supressing it, or raising a different exception entirely.
+suppressing it, or raising a different exception entirely.
 
 For more information, consult the
 :ref:`pluggy documentation about hook wrappers <pluggy:hookwrappers>`.
