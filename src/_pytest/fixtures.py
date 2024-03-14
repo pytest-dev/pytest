@@ -582,26 +582,7 @@ class FixtureRequest(abc.ABC):
                 return PseudoFixtureDef(cached_result, Scope.Function)
             raise
 
-        self._compute_fixture_value(fixturedef)
-
-        self._fixture_defs[argname] = fixturedef
-        return fixturedef
-
-    def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
-        values = [request._fixturedef for request in self._iter_chain()]
-        values.reverse()
-        return values
-
-    def _compute_fixture_value(self, fixturedef: "FixtureDef[object]") -> None:
-        """Create a SubRequest based on "self" and call the execute method
-        of the given FixtureDef object.
-
-        If the FixtureDef has cached the result it will do nothing, otherwise it will
-        setup and run the fixture, cache the value, and schedule a finalizer for it.
-        """
-        # prepare a subrequest object before calling fixture function
-        # (latter managed by fixturedef)
-        argname = fixturedef.argname
+        # Prepare a SubRequest object for calling the fixture.
         funcitem = self._pyfuncitem
         try:
             callspec = funcitem.callspec
@@ -627,7 +608,7 @@ class FixtureRequest(abc.ABC):
                 )
                 fail(msg, pytrace=False)
             if has_params:
-                frame = inspect.stack()[3]
+                frame = inspect.stack()[2]
                 frameinfo = inspect.getframeinfo(frame[0])
                 source_path = absolutepath(frameinfo.filename)
                 source_lineno = frameinfo.lineno
@@ -657,6 +638,14 @@ class FixtureRequest(abc.ABC):
 
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
+
+        self._fixture_defs[argname] = fixturedef
+        return fixturedef
+
+    def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
+        values = [request._fixturedef for request in self._iter_chain()]
+        values.reverse()
+        return values
 
 
 @final
