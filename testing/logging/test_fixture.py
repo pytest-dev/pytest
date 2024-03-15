@@ -302,7 +302,9 @@ def logging_during_setup_and_teardown(
     assert [x.message for x in caplog.get_records("teardown")] == ["a_teardown_log"]
 
 
-def private_assert_caplog_records_is_setup_call(caplog: pytest.LogCaptureFixture) -> None:
+def private_assert_caplog_records_is_setup_call(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     # This reaches into private API, don't use this type of thing in real tests!
     caplog_records = caplog._item.stash[caplog_records_key]
     assert set(caplog_records) == {"setup", "call"}
@@ -319,6 +321,7 @@ def test_captures_for_all_stages(
     assert [x.message for x in caplog.get_records("setup")] == ["a_setup_log"]
 
     private_assert_caplog_records_is_setup_call(caplog)
+
 
 def test_clear_for_call_stage(
     caplog: pytest.LogCaptureFixture, logging_during_setup_and_teardown: None
