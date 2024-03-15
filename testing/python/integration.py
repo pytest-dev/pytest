@@ -410,22 +410,37 @@ def test_function_instance(pytester: Pytester) -> None:
     items = pytester.getitems(
         """
         def test_func(): pass
+
         class TestIt:
             def test_method(self): pass
+
             @classmethod
             def test_class(cls): pass
+
             @staticmethod
             def test_static(): pass
         """
     )
     assert len(items) == 4
+
     assert isinstance(items[0], Function)
     assert items[0].name == "test_func"
     assert items[0].instance is None
+
     assert isinstance(items[1], Function)
     assert items[1].name == "test_method"
     assert items[1].instance is not None
     assert items[1].instance.__class__.__name__ == "TestIt"
+
+    # Even class and static methods get an instance!
+    # This is the instance used for bound fixture methods, which
+    # class/staticmethod tests are perfectly able to request.
+    assert isinstance(items[2], Function)
+    assert items[2].name == "test_class"
+    assert items[2].instance is not None
+
     assert isinstance(items[3], Function)
     assert items[3].name == "test_static"
-    assert items[3].instance is None
+    assert items[3].instance is not None
+
+    assert items[1].instance is not items[2].instance is not items[3].instance

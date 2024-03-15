@@ -28,6 +28,127 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.1.1 (2024-03-08)
+=========================
+
+.. note::
+
+       This release is not a usual bug fix release -- it contains features and improvements, being a follow up
+       to ``8.1.0``, which has been yanked from PyPI.
+
+Features
+--------
+
+- `#11475 <https://github.com/pytest-dev/pytest/issues/11475>`_: Added the new :confval:`consider_namespace_packages` configuration option, defaulting to ``False``.
+
+  If set to ``True``, pytest will attempt to identify modules that are part of `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__ when importing modules.
+
+
+- `#11653 <https://github.com/pytest-dev/pytest/issues/11653>`_: Added the new :confval:`verbosity_test_cases` configuration option for fine-grained control of test execution verbosity.
+  See :ref:`Fine-grained verbosity <pytest.fine_grained_verbosity>` for more details.
+
+
+
+Improvements
+------------
+
+- `#10865 <https://github.com/pytest-dev/pytest/issues/10865>`_: :func:`pytest.warns` now validates that :func:`warnings.warn` was called with a `str` or a `Warning`.
+  Currently in Python it is possible to use other types, however this causes an exception when :func:`warnings.filterwarnings` is used to filter those warnings (see `CPython #103577 <https://github.com/python/cpython/issues/103577>`__ for a discussion).
+  While this can be considered a bug in CPython, we decided to put guards in pytest as the error message produced without this check in place is confusing.
+
+
+- `#11311 <https://github.com/pytest-dev/pytest/issues/11311>`_: When using ``--override-ini`` for paths in invocations without a configuration file defined, the current working directory is used
+  as the relative directory.
+
+  Previoulsy this would raise an :class:`AssertionError`.
+
+
+- `#11475 <https://github.com/pytest-dev/pytest/issues/11475>`_: :ref:`--import-mode=importlib <import-mode-importlib>` now tries to import modules using the standard import mechanism (but still without changing :py:data:`sys.path`), falling back to importing modules directly only if that fails.
+
+  This means that installed packages will be imported under their canonical name if possible first, for example ``app.core.models``, instead of having the module name always be derived from their path (for example ``.env310.lib.site_packages.app.core.models``).
+
+
+- `#11801 <https://github.com/pytest-dev/pytest/issues/11801>`_: Added the :func:`iter_parents() <_pytest.nodes.Node.iter_parents>` helper method on nodes.
+  It is similar to :func:`listchain <_pytest.nodes.Node.listchain>`, but goes from bottom to top, and returns an iterator, not a list.
+
+
+- `#11850 <https://github.com/pytest-dev/pytest/issues/11850>`_: Added support for :data:`sys.last_exc` for post-mortem debugging on Python>=3.12.
+
+
+- `#11962 <https://github.com/pytest-dev/pytest/issues/11962>`_: In case no other suitable candidates for configuration file are found, a ``pyproject.toml`` (even without a ``[tool.pytest.ini_options]`` table) will be considered as the configuration file and define the ``rootdir``.
+
+
+- `#11978 <https://github.com/pytest-dev/pytest/issues/11978>`_: Add ``--log-file-mode`` option to the logging plugin, enabling appending to log-files. This option accepts either ``"w"`` or ``"a"`` and defaults to ``"w"``.
+
+  Previously, the mode was hard-coded to be ``"w"`` which truncates the file before logging.
+
+
+- `#12047 <https://github.com/pytest-dev/pytest/issues/12047>`_: When multiple finalizers of a fixture raise an exception, now all exceptions are reported as an exception group.
+  Previously, only the first exception was reported.
+
+
+
+Bug Fixes
+---------
+
+- `#11475 <https://github.com/pytest-dev/pytest/issues/11475>`_: Fixed regression where ``--importmode=importlib`` would import non-test modules more than once.
+
+
+- `#11904 <https://github.com/pytest-dev/pytest/issues/11904>`_: Fixed a regression in pytest 8.0.0 that would cause test collection to fail due to permission errors when using ``--pyargs``.
+
+  This change improves the collection tree for tests specified using ``--pyargs``, see :pull:`12043` for a comparison with pytest 8.0 and <8.
+
+
+- `#12011 <https://github.com/pytest-dev/pytest/issues/12011>`_: Fixed a regression in 8.0.1 whereby ``setup_module`` xunit-style fixtures are not executed when ``--doctest-modules`` is passed.
+
+
+- `#12014 <https://github.com/pytest-dev/pytest/issues/12014>`_: Fix the ``stacklevel`` used when warning about marks used on fixtures.
+
+
+- `#12039 <https://github.com/pytest-dev/pytest/issues/12039>`_: Fixed a regression in ``8.0.2`` where tests created using :fixture:`tmp_path` have been collected multiple times in CI under Windows.
+
+
+Improved Documentation
+----------------------
+
+- `#11790 <https://github.com/pytest-dev/pytest/issues/11790>`_: Documented the retention of temporary directories created using the ``tmp_path`` fixture in more detail.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#11785 <https://github.com/pytest-dev/pytest/issues/11785>`_: Some changes were made to private functions which may affect plugins which access them:
+
+  - ``FixtureManager._getautousenames()`` now takes a ``Node`` itself instead of the nodeid.
+  - ``FixtureManager.getfixturedefs()`` now takes the ``Node`` itself instead of the nodeid.
+  - The ``_pytest.nodes.iterparentnodeids()`` function is removed without replacement.
+    Prefer to traverse the node hierarchy itself instead.
+    If you really need to, copy the function from the previous pytest release.
+
+
+- `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`_: Delayed the deprecation of the following features to ``9.0.0``:
+
+  * :ref:`node-ctor-fspath-deprecation`.
+  * :ref:`legacy-path-hooks-deprecated`.
+
+  It was discovered after ``8.1.0`` was released that the warnings about the impeding removal were not being displayed, so the team decided to revert the removal.
+
+  This is the reason for ``8.1.0`` being yanked.
+
+
+pytest 8.1.0 (YANKED)
+=====================
+
+
+.. note::
+
+       This release has been **yanked**: it broke some plugins without the proper warning period, due to
+       some warnings not showing up as expected.
+
+       See `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`__.
+
+
 pytest 8.0.2 (2024-02-24)
 =========================
 

@@ -17,7 +17,8 @@ in the current directory and its subdirectories. More generally, pytest follows 
 Specifying which tests to run
 ------------------------------
 
-Pytest supports several ways to run and select tests from the command-line.
+Pytest supports several ways to run and select tests from the command-line or from a file
+(see below for :ref:`reading arguments from file <args-from-file>`).
 
 **Run tests in a module**
 
@@ -91,6 +92,28 @@ For more information see :ref:`marks <mark>`.
 
 This will import ``pkg.testing`` and use its filesystem location to find and run tests from.
 
+.. _args-from-file:
+
+**Read arguments from file**
+
+.. versionadded:: 8.2
+
+All of the above can be read from a file using the ``@`` prefix:
+
+.. code-block:: bash
+
+    pytest @tests_to_run.txt
+
+where ``tests_to_run.txt`` contains an entry per line, e.g.:
+
+.. code-block:: text
+
+    tests/test_file.py
+    tests/test_mod.py::test_func[x1,y2]
+    tests/test_mod.py::TestClass
+    -m slow
+
+This file can also be generated using ``pytest --collect-only -q`` and modified as needed.
 
 Getting help on version, option names, environment variables
 --------------------------------------------------------------

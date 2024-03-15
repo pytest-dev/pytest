@@ -415,6 +415,7 @@ class MyOptionParser(argparse.ArgumentParser):
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
             allow_abbrev=False,
+            fromfile_prefix_chars="@",
         )
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user.
@@ -425,8 +426,7 @@ class MyOptionParser(argparse.ArgumentParser):
         msg = f"{self.prog}: error: {message}"
 
         if hasattr(self._parser, "_config_source_hint"):
-            # Type ignored because the attribute is set dynamically.
-            msg = f"{msg} ({self._parser._config_source_hint})"  # type: ignore
+            msg = f"{msg} ({self._parser._config_source_hint})"
 
         raise UsageError(self.format_usage() + msg)
 

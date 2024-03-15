@@ -13,6 +13,7 @@ After that, it will create a release using the `release` tox environment, and pu
 **Token**: currently the token from the GitHub Actions is used, pushed with
 `pytest bot <pytestbot@gmail.com>` commit author.
 """
+
 import argparse
 from pathlib import Path
 import re

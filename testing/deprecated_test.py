@@ -1,5 +1,10 @@
 # mypy: allow-untyped-defs
+from pathlib import Path
+import re
+import sys
+
 from _pytest import deprecated
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 import pytest
 from pytest import PytestDeprecationWarning
@@ -83,6 +88,56 @@ def test_private_is_deprecated() -> None:
 
     # Doesn't warn.
     PrivateInit(10, _ispytest=True)
+
+
+@pytest.mark.parametrize("hooktype", ["hook", "ihook"])
+def test_hookproxy_warnings_for_pathlib(tmp_path, hooktype, request):
+    path = legacy_path(tmp_path)
+
+    PATH_WARN_MATCH = r".*path: py\.path\.local\) argument is deprecated, please use \(collection_path: pathlib\.Path.*"
+    if hooktype == "ihook":
+        hooks = request.node.ihook
+    else:
+        hooks = request.config.hook
+
+    with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
+        l1 = sys._getframe().f_lineno
+        hooks.pytest_ignore_collect(
+            config=request.config, path=path, collection_path=tmp_path
+        )
+        l2 = sys._getframe().f_lineno
+
+    (record,) = r
+    assert record.filename == __file__
+    assert l1 < record.lineno < l2
+
+    hooks.pytest_ignore_collect(config=request.config, collection_path=tmp_path)
+
+    # Passing entirely *different* paths is an outright error.
+    with pytest.raises(ValueError, match=r"path.*fspath.*need to be equal"):
+        with pytest.warns(PytestDeprecationWarning, match=PATH_WARN_MATCH) as r:
+            hooks.pytest_ignore_collect(
+                config=request.config, path=path, collection_path=Path("/bla/bla")
+            )
+
+
+def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
+    mod = pytester.getmodulecol("")
+
+    class MyFile(pytest.File):
+        def collect(self):
+            raise NotImplementedError()
+
+    with pytest.warns(
+        pytest.PytestDeprecationWarning,
+        match=re.escape(
+            "The (fspath: py.path.local) argument to MyFile is deprecated."
+        ),
+    ):
+        MyFile.from_parent(
+            parent=mod.parent,
+            fspath=legacy_path("bla"),
+        )
 
 
 def test_fixture_disallow_on_marked_functions():

@@ -200,6 +200,7 @@ nitpick_ignore = [
     ("py:class", "_tracing.TagTracerSub"),
     ("py:class", "warnings.WarningMessage"),
     # Undocumented type aliases
+    ("py:class", "LEGACY_PATH"),
     ("py:class", "_PluggyPlugin"),
     # TypeVars
     ("py:class", "_pytest._code.code.E"),
@@ -394,7 +395,7 @@ epub_copyright = "2013, holger krekel et alii"
 # The format is a list of tuples containing the path and title.
 # epub_pre_files = []
 
-# HTML files shat should be inserted after the pages created by sphinx.
+# HTML files that should be inserted after the pages created by sphinx.
 # The format is a list of tuples containing the path and title.
 # epub_post_files = []
 

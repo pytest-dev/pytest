@@ -37,6 +37,7 @@ from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.config.compat import PathAwareHookProxy
 from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
@@ -221,6 +222,12 @@ def pytest_addoption(parser: Parser) -> None:
         dest="importmode",
         help="Prepend/append to sys.path when importing test modules and conftest "
         "files. Default: prepend.",
+    )
+    parser.addini(
+        "consider_namespace_packages",
+        type="bool",
+        default=False,
+        help="Consider namespace packages when resolving module names during import",
     )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
@@ -551,6 +558,7 @@ class Session(nodes.Collector):
         super().__init__(
             name="",
             path=config.rootpath,
+            fspath=None,
             parent=None,
             config=config,
             session=self,
@@ -688,7 +696,7 @@ class Session(nodes.Collector):
         proxy: pluggy.HookRelay
         if remove_mods:
             # One or more conftests are not in use at this path.
-            proxy = FSHookProxy(pm, remove_mods)  # type: ignore[arg-type,assignment]
+            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))  # type: ignore[arg-type,assignment]
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook
@@ -728,14 +736,12 @@ class Session(nodes.Collector):
     @overload
     def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: "Literal[True]" = ...
-    ) -> Sequence[nodes.Item]:
-        ...
+    ) -> Sequence[nodes.Item]: ...
 
     @overload
     def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
-    ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
-        ...
+    ) -> Sequence[Union[nodes.Item, nodes.Collector]]: ...
 
     def perform_collect(
         self, args: Optional[Sequence[str]] = None, genitems: bool = True
@@ -924,7 +930,14 @@ class Session(nodes.Collector):
                         if sys.platform == "win32" and not is_match:
                             # In case the file paths do not match, fallback to samefile() to
                             # account for short-paths on Windows (#11895).
-                            is_match = os.path.samefile(node.path, matchparts[0])
+                            same_file = os.path.samefile(node.path, matchparts[0])
+                            # We don't want to match links to the current node,
+                            # otherwise we would match the same file more than once (#12039).
+                            is_match = same_file and (
+                                os.path.islink(node.path)
+                                == os.path.islink(matchparts[0])
+                            )
+
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
                         # TODO: Remove parametrized workaround once collection structure contains

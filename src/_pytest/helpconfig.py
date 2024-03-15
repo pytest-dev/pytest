@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Version info, help messages, tracing configuration."""
+
 from argparse import Action
 import os
 import sys

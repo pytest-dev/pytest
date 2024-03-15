@@ -484,73 +484,90 @@ class ImportPathMismatchError(ImportError):
 
 
 def import_path(
-    p: Union[str, "os.PathLike[str]"],
+    path: Union[str, "os.PathLike[str]"],
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend,
     root: Path,
+    consider_namespace_packages: bool,
 ) -> ModuleType:
-    """Import and return a module from the given path, which can be a file (a module) or
+    """
+    Import and return a module from the given path, which can be a file (a module) or
     a directory (a package).
 
-    The import mechanism used is controlled by the `mode` parameter:
+    :param path:
+        Path to the file to import.
 
-    * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
-      `__init__.py` files into account) will be put at the *start* of `sys.path` before
-      being imported with `importlib.import_module`.
+    :param mode:
+        Controls the underlying import mechanism that will be used:
 
-    * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
-      to the end of `sys.path`, if not already in `sys.path`.
+        * ImportMode.prepend: the directory containing the module (or package, taking
+          `__init__.py` files into account) will be put at the *start* of `sys.path` before
+          being imported with `importlib.import_module`.
 
-    * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
-      to import the module, which avoids having to muck with `sys.path` at all. It effectively
-      allows having same-named test modules in different places.
+        * ImportMode.append: same as `prepend`, but the directory will be appended
+          to the end of `sys.path`, if not already in `sys.path`.
+
+        * ImportMode.importlib: uses more fine control mechanisms provided by `importlib`
+          to import the module, which avoids having to muck with `sys.path` at all. It effectively
+          allows having same-named test modules in different places.
 
     :param root:
         Used as an anchor when mode == ImportMode.importlib to obtain
         a unique name for the module being imported so it can safely be stored
         into ``sys.modules``.
 
+    :param consider_namespace_packages:
+        If True, consider namespace packages when resolving module names.
+
     :raises ImportPathMismatchError:
         If after importing the given `path` and the module `__file__`
         are different. Only raised in `prepend` and `append` modes.
     """
+    path = Path(path)
     mode = ImportMode(mode)
-
-    path = Path(p)
 
     if not path.exists():
         raise ImportError(path)
 
     if mode is ImportMode.importlib:
+        # Try to import this module using the standard import mechanisms, but
+        # without touching sys.path.
+        try:
+            pkg_root, module_name = resolve_pkg_root_and_module_name(
+                path, consider_namespace_packages=consider_namespace_packages
+            )
+        except CouldNotResolvePathError:
+            pass
+        else:
+            # If the given module name is already in sys.modules, do not import it again.
+            with contextlib.suppress(KeyError):
+                return sys.modules[module_name]
+
+            mod = _import_module_using_spec(
+                module_name, path, pkg_root, insert_modules=False
+            )
+            if mod is not None:
+                return mod
+
+        # Could not import the module with the current sys.path, so we fall back
+        # to importing the file as a single module, not being a part of a package.
         module_name = module_name_from_path(path, root)
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
-        for meta_importer in sys.meta_path:
-            spec = meta_importer.find_spec(module_name, [str(path.parent)])
-            if spec is not None:
-                break
-        else:
-            spec = importlib.util.spec_from_file_location(module_name, str(path))
-
-        if spec is None:
+        mod = _import_module_using_spec(
+            module_name, path, path.parent, insert_modules=True
+        )
+        if mod is None:
             raise ImportError(f"Can't find module {module_name} at location {path}")
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = mod
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-        insert_missing_modules(sys.modules, module_name)
         return mod
 
-    pkg_path = resolve_package_path(path)
-    if pkg_path is not None:
-        pkg_root = pkg_path.parent
-        names = list(path.with_suffix("").relative_to(pkg_root).parts)
-        if names[-1] == "__init__":
-            names.pop()
-        module_name = ".".join(names)
-    else:
-        pkg_root = path.parent
-        module_name = path.stem
+    try:
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            path, consider_namespace_packages=consider_namespace_packages
+        )
+    except CouldNotResolvePathError:
+        pkg_root, module_name = path.parent, path.stem
 
     # Change sys.path permanently: restoring it at the end of this function would cause surprising
     # problems because of delayed imports: for example, a conftest.py file imported by this function
@@ -592,6 +609,40 @@ def import_path(
     return mod
 
 
+def _import_module_using_spec(
+    module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
+) -> Optional[ModuleType]:
+    """
+    Tries to import a module by its canonical name, path to the .py file, and its
+    parent location.
+
+    :param insert_modules:
+        If True, will call insert_missing_modules to create empty intermediate modules
+        for made-up module names (when importing test files not reachable from sys.path).
+        Note: we can probably drop insert_missing_modules altogether: instead of
+        generating module names such as "src.tests.test_foo", which require intermediate
+        empty modules, we might just as well generate unique module names like
+        "src_tests_test_foo".
+    """
+    # Checking with sys.meta_path first in case one of its hooks can import this module,
+    # such as our own assertion-rewrite hook.
+    for meta_importer in sys.meta_path:
+        spec = meta_importer.find_spec(module_name, [str(module_location)])
+        if spec is not None:
+            break
+    else:
+        spec = importlib.util.spec_from_file_location(module_name, str(module_path))
+    if spec is not None:
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = mod
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        if insert_modules:
+            insert_missing_modules(sys.modules, module_name)
+        return mod
+
+    return None
+
+
 # Implement a special _is_same function on Windows which returns True if the two filenames
 # compare equal, to circumvent os.path.samefile returning False for mounts in UNC (#7678).
 if sys.platform.startswith("win"):
@@ -627,6 +678,11 @@ def module_name_from_path(path: Path, root: Path) -> str:
     # the `__init__.py` file is at the root.
     if len(path_parts) >= 2 and path_parts[-1] == "__init__":
         path_parts = path_parts[:-1]
+
+    # Module names cannot contain ".", normalize them to "_". This prevents
+    # a directory having a "." in the name (".env.310" for example) causing extra intermediate modules.
+    # Also, important to replace "." at the start of paths, as those are considered relative imports.
+    path_parts = tuple(x.replace(".", "_") for x in path_parts)
 
     return ".".join(path_parts)
 
@@ -687,6 +743,60 @@ def resolve_package_path(path: Path) -> Optional[Path]:
                 break
             result = parent
     return result
+
+
+def resolve_pkg_root_and_module_name(
+    path: Path, *, consider_namespace_packages: bool = False
+) -> Tuple[Path, str]:
+    """
+    Return the path to the directory of the root package that contains the
+    given Python file, and its module name:
+
+        src/
+            app/
+                __init__.py
+                core/
+                    __init__.py
+                    models.py
+
+    Passing the full path to `models.py` will yield Path("src") and "app.core.models".
+
+    If consider_namespace_packages is True, then we additionally check upwards in the hierarchy
+    until we find a directory that is reachable from sys.path, which marks it as a namespace package:
+
+    https://packaging.python.org/en/latest/guides/packaging-namespace-packages
+
+    Raises CouldNotResolvePathError if the given path does not belong to a package (missing any __init__.py files).
+    """
+    pkg_path = resolve_package_path(path)
+    if pkg_path is not None:
+        pkg_root = pkg_path.parent
+        # https://packaging.python.org/en/latest/guides/packaging-namespace-packages/
+        if consider_namespace_packages:
+            # Go upwards in the hierarchy, if we find a parent path included
+            # in sys.path, it means the package found by resolve_package_path()
+            # actually belongs to a namespace package.
+            for parent in pkg_root.parents:
+                # If any of the parent paths has a __init__.py, it means it is not
+                # a namespace package (see the docs linked above).
+                if (parent / "__init__.py").is_file():
+                    break
+                if str(parent) in sys.path:
+                    # Point the pkg_root to the root of the namespace package.
+                    pkg_root = parent
+                    break
+
+        names = list(path.with_suffix("").relative_to(pkg_root).parts)
+        if names[-1] == "__init__":
+            names.pop()
+        module_name = ".".join(names)
+        return pkg_root, module_name
+
+    raise CouldNotResolvePathError(f"Could not resolve for {path}")
+
+
+class CouldNotResolvePathError(Exception):
+    """Custom exception raised by resolve_pkg_root_and_module_name."""
 
 
 def scandir(

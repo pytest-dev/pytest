@@ -60,8 +60,10 @@ Within Python modules, ``pytest`` also discovers tests using the standard
 :ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
 
 
-Choosing a test layout / import rules
--------------------------------------
+.. _`test layout`:
+
+Choosing a test layout
+----------------------
 
 ``pytest`` supports two common test layouts:
 

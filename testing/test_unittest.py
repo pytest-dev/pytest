@@ -208,10 +208,14 @@ def test_teardown_issue1649(pytester: Pytester) -> None:
 
     """
     )
+
     pytester.inline_run("-s", testpath)
     gc.collect()
+
+    # Either already destroyed, or didn't run setUp.
     for obj in gc.get_objects():
-        assert type(obj).__name__ != "TestCaseObjectsShouldBeCleanedUp"
+        if type(obj).__name__ == "TestCaseObjectsShouldBeCleanedUp":
+            assert not hasattr(obj, "an_expensive_obj")
 
 
 def test_unittest_skip_issue148(pytester: Pytester) -> None:

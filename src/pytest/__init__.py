@@ -1,5 +1,6 @@
 # PYTHON_ARGCOMPLETE_OK
 """pytest: unit and functional testing with Python."""
+
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo

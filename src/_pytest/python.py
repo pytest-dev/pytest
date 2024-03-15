@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Python test discovery, setup and run of test functions."""
+
 import abc
 from collections import Counter
 from collections import defaultdict
@@ -48,6 +49,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
 from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
+from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -301,10 +303,10 @@ class PyobjMixin(nodes.Node):
         """Python instance object the function is bound to.
 
         Returns None if not a test method, e.g. for a standalone test function,
-        a staticmethod, a class or a module.
+        a class or a module.
         """
-        node = self.getparent(Function)
-        return getattr(node.obj, "__self__", None) if node is not None else None
+        # Overridden by Function.
+        return None
 
     @property
     def obj(self):
@@ -516,7 +518,12 @@ def importtestmodule(
     # We assume we are only called once per module.
     importmode = config.getoption("--import-mode")
     try:
-        mod = import_path(path, mode=importmode, root=config.rootpath)
+        mod = import_path(
+            path,
+            mode=importmode,
+            root=config.rootpath,
+            consider_namespace_packages=config.getini("consider_namespace_packages"),
+        )
     except SyntaxError as e:
         raise nodes.Collector.CollectError(
             ExceptionInfo.from_current().getrepr(style="short")
@@ -660,6 +667,7 @@ class Package(nodes.Directory):
 
     def __init__(
         self,
+        fspath: Optional[LEGACY_PATH],
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
@@ -671,6 +679,7 @@ class Package(nodes.Directory):
         # super().__init__(self, fspath, parent=parent)
         session = parent.session
         super().__init__(
+            fspath=fspath,
             path=path,
             parent=parent,
             config=config,
@@ -1309,7 +1318,6 @@ class Metafunc:
                     func=get_direct_param_fixture_func,
                     scope=scope_,
                     params=None,
-                    unittest=False,
                     ids=None,
                     _ispytest=True,
                 )
@@ -1695,7 +1703,8 @@ class Function(PyobjMixin, nodes.Item):
         super().__init__(name, parent, config=config, session=session)
 
         if callobj is not NOTSET:
-            self.obj = callobj
+            self._obj = callobj
+            self._instance = getattr(callobj, "__self__", None)
 
         #: Original function name, without any decorations (for example
         #: parametrization adds a ``"[...]"`` suffix to function names), used to access
@@ -1745,12 +1754,31 @@ class Function(PyobjMixin, nodes.Item):
         """Underlying python 'function' object."""
         return getimfunc(self.obj)
 
-    def _getobj(self):
-        assert self.parent is not None
+    @property
+    def instance(self):
+        try:
+            return self._instance
+        except AttributeError:
+            if isinstance(self.parent, Class):
+                # Each Function gets a fresh class instance.
+                self._instance = self._getinstance()
+            else:
+                self._instance = None
+        return self._instance
+
+    def _getinstance(self):
         if isinstance(self.parent, Class):
             # Each Function gets a fresh class instance.
-            parent_obj = self.parent.newinstance()
+            return self.parent.newinstance()
         else:
+            return None
+
+    def _getobj(self):
+        instance = self.instance
+        if instance is not None:
+            parent_obj = instance
+        else:
+            assert self.parent is not None
             parent_obj = self.parent.obj  # type: ignore[attr-defined]
         return getattr(parent_obj, self.originalname)
 

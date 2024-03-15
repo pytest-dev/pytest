@@ -87,7 +87,7 @@ Features
 Documentation
 -------------
 
-* :ref:`Get started <get-started>` - install pytest and grasp its basics just twenty minutes
+* :ref:`Get started <get-started>` - install pytest and grasp its basics in just twenty minutes
 * :ref:`How-to guides <how-to>` - step-by-step guides, covering a vast range of use-cases and needs
 * :ref:`Reference guides <reference>` - includes the complete pytest API reference, lists of plugins and more
 * :ref:`Explanation <explanation>` - background, discussion of key topics, answers to higher-level questions

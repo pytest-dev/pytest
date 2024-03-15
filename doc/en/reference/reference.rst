@@ -1274,6 +1274,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+.. confval:: consider_namespace_packages
+
+   Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
+   when collecting Python modules. Default is ``False``.
+
+   Set to ``True`` if you are testing namespace packages installed into a virtual environment and it is important for
+   your packages to be imported using their full namespace package name.
+
+   Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
+   are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
+
+   .. versionadded:: 8.1
+
 .. confval:: console_output_style
 
    Sets the console output style while running tests:
@@ -2090,6 +2103,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --log-cli-date-format=LOG_CLI_DATE_FORMAT
                             Log date format used by the logging module
       --log-file=LOG_FILE   Path to a file when logging will be written to
+      --log-file-mode={w,a}
+                            Log file open mode
       --log-file-level=LOG_FILE_LEVEL
                             Log file logging level
       --log-file-format=LOG_FILE_FORMAT
@@ -2115,6 +2130,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
+      consider_namespace_packages (bool):
+                            Consider namespace packages when resolving module
+                            names during import
       usefixtures (args):   List of default fixtures to be used with this
                             project
       python_files (args):  Glob-style file patterns for Python test module
@@ -2133,6 +2151,11 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             progress information ("progress" (percentage) |
                             "count" | "progress-even-when-capture-no" (forces
                             progress even when capture=no)
+      verbosity_test_cases (string):
+                            Specify a verbosity level for test case execution,
+                            overriding the main level. Higher levels will
+                            provide more detailed information about each test
+                            case executed.
       xfail_strict (bool):  Default for the strict parameter of xfail markers
                             when not given explicitly (default: False)
       tmp_path_retention_count (string):
@@ -2180,6 +2203,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       log_cli_date_format (string):
                             Default value for --log-cli-date-format
       log_file (string):    Default value for --log-file
+      log_file_mode (string):
+                            Default value for --log-file-mode
       log_file_level (string):
                             Default value for --log-file-level
       log_file_format (string):

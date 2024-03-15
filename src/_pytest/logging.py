@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Access and control log capturing."""
+
 from contextlib import contextmanager
 from contextlib import nullcontext
 from datetime import datetime
@@ -209,7 +210,7 @@ class PercentStyleMultiline(logging.PercentStyle):
         if "\n" in record.message:
             if hasattr(record, "auto_indent"):
                 # Passed in from the "extra={}" kwarg on the call to logging.log().
-                auto_indent = self._get_auto_indent(record.auto_indent)  # type: ignore[attr-defined]
+                auto_indent = self._get_auto_indent(record.auto_indent)
             else:
                 auto_indent = self._auto_indent
 
@@ -512,7 +513,7 @@ class LogCaptureFixture:
 
         :return: The original disabled logging level.
         """
-        original_disable_level: int = logger_obj.manager.disable  # type: ignore[attr-defined]
+        original_disable_level: int = logger_obj.manager.disable
 
         if isinstance(level, str):
             # Try to translate the level string to an int for `logging.disable()`

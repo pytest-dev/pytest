@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 """Python version compatibility code."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -15,6 +16,22 @@ from typing import Any
 from typing import Callable
 from typing import Final
 from typing import NoReturn
+
+import py
+
+
+#: constant to prepare valuing pylib path replacements/lazy proxies later on
+#  intended for removal in pytest 8.0 or 9.0
+
+# fmt: off
+# intentional space to create a fake difference for the verification
+LEGACY_PATH = py.path. local
+# fmt: on
+
+
+def legacy_path(path: str | os.PathLike[str]) -> LEGACY_PATH:
+    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
+    return LEGACY_PATH(path)
 
 
 # fmt: off
@@ -86,7 +103,6 @@ def getfuncargnames(
     function: Callable[..., object],
     *,
     name: str = "",
-    is_method: bool = False,
     cls: type | None = None,
 ) -> tuple[str, ...]:
     """Return the names of a function's mandatory arguments.
@@ -97,9 +113,8 @@ def getfuncargnames(
     * Aren't bound with functools.partial.
     * Aren't replaced with mocks.
 
-    The is_method and cls arguments indicate that the function should
-    be treated as a bound method even though it's not unless, only in
-    the case of cls, the function is a static method.
+    The cls arguments indicate that the function should be treated as a bound
+    method even though it's not unless the function is a static method.
 
     The name parameter should be the original name in which the function was collected.
     """
@@ -137,7 +152,7 @@ def getfuncargnames(
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, remove the first
     # parameter name.
-    if is_method or (
+    if (
         # Not using `getattr` because we don't want to resolve the staticmethod.
         # Not using `cls.__dict__` because we want to check the entire MRO.
         cls
@@ -289,7 +304,7 @@ def get_user_id() -> int | None:
     # mypy follows the version and platform checking expectation of PEP 484:
     # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=platform#python-version-and-system-platform-checks
     # Containment checks are too complex for mypy v1.5.0 and cause failure.
-    if sys.platform == "win32" or sys.platform == "emscripten":  # noqa: PLR1714
+    if sys.platform == "win32" or sys.platform == "emscripten":
         # win32 does not have a getuid() function.
         # Emscripten has a return 0 stub.
         return None

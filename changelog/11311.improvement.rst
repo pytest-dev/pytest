@@ -1,4 +1,0 @@
-When using ``--override-ini`` for paths in invocations without a configuration file defined, the current working directory is used
-as the relative directory.
-
-Previoulsy this would raise an :class:`AssertionError`.

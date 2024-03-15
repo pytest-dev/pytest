@@ -16,8 +16,8 @@ import pytest
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
-        with contextlib.suppress(NameError):  # new in 3.10
-            warnings.simplefilter("ignore", EncodingWarning)  # type: ignore [name-defined]
+        if sys.version_info > (3, 10):
+            warnings.simplefilter("ignore", EncodingWarning)
         yield
 
 
@@ -822,7 +822,7 @@ class TestLocalPath(CommonFSTests):
         # depending on how the paths are used), but > 4096 (which is the
         # Linux' limitation) - the behaviour of paths with names > 4096 chars
         # is undetermined
-        newfilename = "/test" * 60  # type:ignore[unreachable]
+        newfilename = "/test" * 60  # type:ignore[unreachable,unused-ignore]
         l1 = tmpdir.join(newfilename)
         l1.ensure(file=True)
         l1.write_text("foo", encoding="utf-8")
@@ -1368,8 +1368,8 @@ class TestPOSIXLocalPath:
         assert realpath.basename == "file"
 
     def test_owner(self, path1, tmpdir):
-        from grp import getgrgid  # type:ignore[attr-defined]
-        from pwd import getpwuid  # type:ignore[attr-defined]
+        from grp import getgrgid  # type:ignore[attr-defined,unused-ignore]
+        from pwd import getpwuid  # type:ignore[attr-defined,unused-ignore]
 
         stat = path1.stat()
         assert stat.path == path1

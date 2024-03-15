@@ -932,8 +932,9 @@ class TestRequestBasic:
         self, pytester: Pytester
     ) -> None:
         """
-        Ensure exceptions raised during teardown by a finalizer are suppressed
-        until all finalizers are called, re-raising the first exception (#2440)
+        Ensure exceptions raised during teardown by finalizers are suppressed
+        until all finalizers are called, then re-reaised together in an
+        exception group (#2440)
         """
         pytester.makepyfile(
             """
@@ -960,8 +961,16 @@ class TestRequestBasic:
         """
         )
         result = pytester.runpytest()
+        result.assert_outcomes(passed=2, errors=1)
         result.stdout.fnmatch_lines(
-            ["*Exception: Error in excepts fixture", "* 2 passed, 1 error in *"]
+            [
+                '  | *ExceptionGroup: errors while tearing down fixture "subrequest" of <Function test_first> (2 sub-exceptions)',  # noqa: E501
+                "  +-+---------------- 1 ----------------",
+                "    | Exception: Error in something fixture",
+                "    +---------------- 2 ----------------",
+                "    | Exception: Error in excepts fixture",
+                "    +------------------------------------",
+            ],
         )
 
     def test_request_getmodulepath(self, pytester: Pytester) -> None:
@@ -1238,8 +1247,9 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "*ScopeMismatch*involved factories*",
+                "*ScopeMismatch*Requesting fixture stack*",
                 "test_receives_funcargs_scope_mismatch.py:6:  def arg2(arg1)",
+                "Requested fixture:",
                 "test_receives_funcargs_scope_mismatch.py:2:  def arg1()",
                 "*1 error*",
             ]
@@ -1265,7 +1275,13 @@ class TestFixtureUsages:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            ["*ScopeMismatch*involved factories*", "* def arg2*", "*1 error*"]
+            [
+                "*ScopeMismatch*Requesting fixture stack*",
+                "* def arg2(arg1)",
+                "Requested fixture:",
+                "* def arg1()",
+                "*1 error*",
+            ],
         )
 
     def test_invalid_scope(self, pytester: Pytester) -> None:
@@ -2479,8 +2495,10 @@ class TestFixtureMarker:
         assert result.ret == ExitCode.TESTS_FAILED
         result.stdout.fnmatch_lines(
             [
-                "*ScopeMismatch*involved factories*",
+                "*ScopeMismatch*Requesting fixture stack*",
                 "test_it.py:6:  def fixmod(fixfunc)",
+                "Requested fixture:",
+                "test_it.py:3:  def fixfunc()",
             ]
         )
 
@@ -4559,6 +4577,51 @@ def test_deduplicate_names() -> None:
     assert items == ("a", "b", "c", "d")
     items = deduplicate_names((*items, "g", "f", "g", "e", "b"))
     assert items == ("a", "b", "c", "d", "g", "f", "e")
+
+
+def test_staticmethod_classmethod_fixture_instance(pytester: Pytester) -> None:
+    """Ensure that static and class methods get and have access to a fresh
+    instance.
+
+    This also ensures `setup_method` works well with static and class methods.
+
+    Regression test for #12065.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Test:
+            ran_setup_method = False
+            ran_fixture = False
+
+            def setup_method(self):
+                assert not self.ran_setup_method
+                self.ran_setup_method = True
+
+            @pytest.fixture(autouse=True)
+            def fixture(self):
+                assert not self.ran_fixture
+                self.ran_fixture = True
+
+            def test_method(self):
+                assert self.ran_setup_method
+                assert self.ran_fixture
+
+            @staticmethod
+            def test_1(request):
+                assert request.instance.ran_setup_method
+                assert request.instance.ran_fixture
+
+            @classmethod
+            def test_2(cls, request):
+                assert request.instance.ran_setup_method
+                assert request.instance.ran_fixture
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
+    result.assert_outcomes(passed=3)
 
 
 def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:

@@ -47,7 +47,7 @@ dependencies = [
     'tomli>=1; python_version < "3.11"',
 ]
 [project.optional-dependencies]
-testing = [
+dev = [
     "argcomplete",
     "attrs>=19.2",
     "hypothesis>=3.56",
@@ -281,6 +281,7 @@ template = "changelog/_template.rst"
   showcontent = true
 
 [tool.mypy]
+files = ["src", "testing", "scripts"]
 mypy_path = ["src"]
 check_untyped_defs = true
 disallow_any_generics = true
@@ -293,3 +294,4 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_configs = true
 no_implicit_reexport = true
+warn_unused_ignores = true
