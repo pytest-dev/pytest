@@ -543,6 +543,11 @@ class FixtureRequest(abc.ABC):
         :raises pytest.FixtureLookupError:
             If the given fixture could not be found.
         """
+        # Note that in addition to the use case described in the docstring,
+        # getfixturevalue() is also called by pytest itself during item and fixture
+        # setup to evaluate the fixtures that are requested statically
+        # (using function parameters, autouse, etc).
+
         fixturedef = self._get_active_fixturedef(argname)
         assert fixturedef.cached_result is not None, (
             f'The fixture value for "{argname}" is not available.  '
@@ -587,9 +592,8 @@ class FixtureRequest(abc.ABC):
         """Create a SubRequest based on "self" and call the execute method
         of the given FixtureDef object.
 
-        This will force the FixtureDef object to throw away any previous
-        results and compute a new fixture value, which will be stored into
-        the FixtureDef object itself.
+        If the FixtureDef has cached the result it will do nothing, otherwise it will
+        setup and run the fixture, cache the value, and schedule a finalizer for it.
         """
         # prepare a subrequest object before calling fixture function
         # (latter managed by fixturedef)
@@ -646,18 +650,9 @@ class FixtureRequest(abc.ABC):
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
-        try:
-            # Call the fixture function.
-            fixturedef.execute(request=subrequest)
-        finally:
-            self._schedule_finalizers(fixturedef, subrequest)
 
-    def _schedule_finalizers(
-        self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
-    ) -> None:
-        # If fixture function failed it might have registered finalizers.
-        finalizer = functools.partial(fixturedef.finish, request=subrequest)
-        subrequest.node.addfinalizer(finalizer)
+        # Make sure the fixture value is cached, running it if it isn't
+        fixturedef.execute(request=subrequest)
 
 
 @final
@@ -787,21 +782,6 @@ class SubRequest(FixtureRequest):
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._fixturedef.addfinalizer(finalizer)
-
-    def _schedule_finalizers(
-        self, fixturedef: "FixtureDef[object]", subrequest: "SubRequest"
-    ) -> None:
-        # If the executing fixturedef was not explicitly requested in the argument list (via
-        # getfixturevalue inside the fixture call) then ensure this fixture def will be finished
-        # first.
-        if (
-            fixturedef.argname not in self._fixture_defs
-            and fixturedef.argname not in self._pyfuncitem.fixturenames
-        ):
-            fixturedef.addfinalizer(
-                functools.partial(self._fixturedef.finish, request=self)
-            )
-        super()._schedule_finalizers(fixturedef, subrequest)
 
 
 @final
@@ -1055,12 +1035,13 @@ class FixtureDef(Generic[FixtureValue]):
             raise BaseExceptionGroup(msg, exceptions[::-1])
 
     def execute(self, request: SubRequest) -> FixtureValue:
+        finalizer = functools.partial(self.finish, request=request)
         # Get required arguments and register our own finish()
         # with their finalization.
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
             if not isinstance(fixturedef, PseudoFixtureDef):
-                fixturedef.addfinalizer(functools.partial(self.finish, request=request))
+                fixturedef.addfinalizer(finalizer)
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
@@ -1080,7 +1061,14 @@ class FixtureDef(Generic[FixtureValue]):
             assert self.cached_result is None
 
         ihook = request.node.ihook
-        result = ihook.pytest_fixture_setup(fixturedef=self, request=request)
+        try:
+            # Setup the fixture, run the code in it, and cache the value
+            # in self.cached_result
+            result = ihook.pytest_fixture_setup(fixturedef=self, request=request)
+        finally:
+            # schedule our finalizer, even if the setup failed
+            request.node.addfinalizer(finalizer)
+
         return result
 
     def cache_key(self, request: SubRequest) -> object:
