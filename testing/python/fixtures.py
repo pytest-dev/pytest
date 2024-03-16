@@ -4697,12 +4697,12 @@ def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
     result = pytester.runpytest()
     assert result.ret == 0
 
-    
+
 def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:
     """
     Make sure teardowns happen in reverse order of setup with scoped fixtures, when
     a later test only depends on a subset of scoped fixtures.
-    
+
     Regression test for https://github.com/pytest-dev/pytest/issues/1489
     """
     pytester.makepyfile(
