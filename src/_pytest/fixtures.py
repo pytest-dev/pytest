@@ -410,41 +410,6 @@ class FixtureRequest(abc.ABC):
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
-    def _getnextfixturedef(self, argname: str) -> "FixtureDef[Any]":
-        fixturedefs = self._arg2fixturedefs.get(argname, None)
-        if fixturedefs is None:
-            # We arrive here because of a dynamic call to
-            # getfixturevalue(argname) usage which was naturally
-            # not known at parsing/collection time.
-            fixturedefs = self._fixturemanager.getfixturedefs(argname, self._pyfuncitem)
-            if fixturedefs is not None:
-                self._arg2fixturedefs[argname] = fixturedefs
-        # No fixtures defined with this name.
-        if fixturedefs is None:
-            raise FixtureLookupError(argname, self)
-        # The are no fixtures with this name applicable for the function.
-        if not fixturedefs:
-            raise FixtureLookupError(argname, self)
-
-        # A fixture may override another fixture with the same name, e.g. a
-        # fixture in a module can override a fixture in a conftest, a fixture in
-        # a class can override a fixture in the module, and so on.
-        # An overriding fixture can request its own name (possibly indirectly);
-        # in this case it gets the value of the fixture it overrides, one level
-        # up.
-        # Check how many `argname`s deep we are, and take the next one.
-        # `fixturedefs` is sorted from furthest to closest, so use negative
-        # indexing to go in reverse.
-        index = -1
-        for request in self._iter_chain():
-            if request.fixturename == argname:
-                index -= 1
-        # If already consumed all of the available levels, fail.
-        if -index > len(fixturedefs):
-            raise FixtureLookupError(argname, self)
-
-        return fixturedefs[index]
-
     @property
     def config(self) -> Config:
         """The pytest config object associated with this request."""
@@ -580,7 +545,40 @@ class FixtureRequest(abc.ABC):
             self._check_scope(fixturedef, fixturedef._scope)
             return fixturedef
 
-        fixturedef = self._getnextfixturedef(argname)
+        # Find the appropriate fixturedef.
+        fixturedefs = self._arg2fixturedefs.get(argname, None)
+        if fixturedefs is None:
+            # We arrive here because of a dynamic call to
+            # getfixturevalue(argname) which was naturally
+            # not known at parsing/collection time.
+            fixturedefs = self._fixturemanager.getfixturedefs(argname, self._pyfuncitem)
+            if fixturedefs is not None:
+                self._arg2fixturedefs[argname] = fixturedefs
+        # No fixtures defined with this name.
+        if fixturedefs is None:
+            raise FixtureLookupError(argname, self)
+        # The are no fixtures with this name applicable for the function.
+        if not fixturedefs:
+            raise FixtureLookupError(argname, self)
+
+        # A fixture may override another fixture with the same name, e.g. a
+        # fixture in a module can override a fixture in a conftest, a fixture in
+        # a class can override a fixture in the module, and so on.
+        # An overriding fixture can request its own name (possibly indirectly);
+        # in this case it gets the value of the fixture it overrides, one level
+        # up.
+        # Check how many `argname`s deep we are, and take the next one.
+        # `fixturedefs` is sorted from furthest to closest, so use negative
+        # indexing to go in reverse.
+        index = -1
+        for request in self._iter_chain():
+            if request.fixturename == argname:
+                index -= 1
+        # If already consumed all of the available levels, fail.
+        if -index > len(fixturedefs):
+            raise FixtureLookupError(argname, self)
+
+        fixturedef = fixturedefs[index]
 
         # Prepare a SubRequest object for calling the fixture.
         funcitem = self._pyfuncitem
