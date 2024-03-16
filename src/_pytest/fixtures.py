@@ -560,7 +560,6 @@ class FixtureRequest(abc.ABC):
         # The are no fixtures with this name applicable for the function.
         if not fixturedefs:
             raise FixtureLookupError(argname, self)
-
         # A fixture may override another fixture with the same name, e.g. a
         # fixture in a module can override a fixture in a conftest, a fixture in
         # a class can override a fixture in the module, and so on.
@@ -577,13 +576,11 @@ class FixtureRequest(abc.ABC):
         # If already consumed all of the available levels, fail.
         if -index > len(fixturedefs):
             raise FixtureLookupError(argname, self)
-
         fixturedef = fixturedefs[index]
 
         # Prepare a SubRequest object for calling the fixture.
-        funcitem = self._pyfuncitem
         try:
-            callspec = funcitem.callspec
+            callspec = self._pyfuncitem.callspec
         except AttributeError:
             callspec = None
         if callspec is not None and argname in callspec.params:
@@ -595,41 +592,8 @@ class FixtureRequest(abc.ABC):
             param = NOTSET
             param_index = 0
             scope = fixturedef._scope
-
-            has_params = fixturedef.params is not None
-            fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
-            if has_params and fixtures_not_supported:
-                msg = (
-                    f"{funcitem.name} does not support fixtures, maybe unittest.TestCase subclass?\n"
-                    f"Node id: {funcitem.nodeid}\n"
-                    f"Function type: {type(funcitem).__name__}"
-                )
-                fail(msg, pytrace=False)
-            if has_params:
-                frame = inspect.stack()[2]
-                frameinfo = inspect.getframeinfo(frame[0])
-                source_path = absolutepath(frameinfo.filename)
-                source_lineno = frameinfo.lineno
-                try:
-                    source_path_str = str(
-                        source_path.relative_to(funcitem.config.rootpath)
-                    )
-                except ValueError:
-                    source_path_str = str(source_path)
-                location = getlocation(fixturedef.func, funcitem.config.rootpath)
-                msg = (
-                    "The requested fixture has no parameter defined for test:\n"
-                    f"    {funcitem.nodeid}\n\n"
-                    f"Requested fixture '{fixturedef.argname}' defined in:\n"
-                    f"{location}\n\n"
-                    f"Requested here:\n"
-                    f"{source_path_str}:{source_lineno}"
-                )
-                fail(msg, pytrace=False)
-
-        # Check if a higher-level scoped fixture accesses a lower level one.
+            self._check_fixturedef_without_param(fixturedef)
         self._check_scope(fixturedef, scope)
-
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
@@ -639,6 +603,39 @@ class FixtureRequest(abc.ABC):
 
         self._fixture_defs[argname] = fixturedef
         return fixturedef
+
+    def _check_fixturedef_without_param(self, fixturedef: "FixtureDef[object]") -> None:
+        """Check that this request is allowed to execute this fixturedef without
+        a param."""
+        funcitem = self._pyfuncitem
+        has_params = fixturedef.params is not None
+        fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
+        if has_params and fixtures_not_supported:
+            msg = (
+                f"{funcitem.name} does not support fixtures, maybe unittest.TestCase subclass?\n"
+                f"Node id: {funcitem.nodeid}\n"
+                f"Function type: {type(funcitem).__name__}"
+            )
+            fail(msg, pytrace=False)
+        if has_params:
+            frame = inspect.stack()[3]
+            frameinfo = inspect.getframeinfo(frame[0])
+            source_path = absolutepath(frameinfo.filename)
+            source_lineno = frameinfo.lineno
+            try:
+                source_path_str = str(source_path.relative_to(funcitem.config.rootpath))
+            except ValueError:
+                source_path_str = str(source_path)
+            location = getlocation(fixturedef.func, funcitem.config.rootpath)
+            msg = (
+                "The requested fixture has no parameter defined for test:\n"
+                f"    {funcitem.nodeid}\n\n"
+                f"Requested fixture '{fixturedef.argname}' defined in:\n"
+                f"{location}\n\n"
+                f"Requested here:\n"
+                f"{source_path_str}:{source_lineno}"
+            )
+            fail(msg, pytrace=False)
 
     def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
         values = [request._fixturedef for request in self._iter_chain()]
