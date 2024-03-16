@@ -4624,10 +4624,85 @@ def test_staticmethod_classmethod_fixture_instance(pytester: Pytester) -> None:
     result.assert_outcomes(passed=3)
 
 
+def test_scoped_fixture_caching(pytester: Pytester) -> None:
+    """Make sure setup and finalization is only run once when using scoped fixture
+    multiple times."""
+    pytester.makepyfile(
+        """
+        from __future__ import annotations
+
+        from typing import Generator
+
+        import pytest
+        executed: list[str] = []
+        @pytest.fixture(scope="class")
+        def fixture_1() -> Generator[None, None, None]:
+            executed.append("fix setup")
+            yield
+            executed.append("fix teardown")
+
+
+        class TestFixtureCaching:
+            def test_1(self, fixture_1: None) -> None:
+                assert executed == ["fix setup"]
+
+            def test_2(self, fixture_1: None) -> None:
+                assert executed == ["fix setup"]
+
+
+        def test_expected_setup_and_teardown() -> None:
+            assert executed == ["fix setup", "fix teardown"]
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+
+
+def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
+    """Make sure setup & finalization is only run once for scoped fixture, with a cached exception."""
+    pytester.makepyfile(
+        """
+        from __future__ import annotations
+
+        import pytest
+        executed_crash: list[str] = []
+
+
+        @pytest.fixture(scope="class")
+        def fixture_crash(request: pytest.FixtureRequest) -> None:
+            executed_crash.append("fix_crash setup")
+
+            def my_finalizer() -> None:
+                executed_crash.append("fix_crash teardown")
+
+            request.addfinalizer(my_finalizer)
+
+            raise Exception("foo")
+
+
+        class TestFixtureCachingException:
+            @pytest.mark.xfail
+            def test_crash_1(self, fixture_crash: None) -> None:
+                ...
+
+            @pytest.mark.xfail
+            def test_crash_2(self, fixture_crash: None) -> None:
+                ...
+
+
+        def test_crash_expected_setup_and_teardown() -> None:
+            assert executed_crash == ["fix_crash setup", "fix_crash teardown"]
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+
+    
 def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:
     """
     Make sure teardowns happen in reverse order of setup with scoped fixtures, when
     a later test only depends on a subset of scoped fixtures.
+    
     Regression test for https://github.com/pytest-dev/pytest/issues/1489
     """
     pytester.makepyfile(
@@ -4644,30 +4719,30 @@ def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:
         def fixture_1() -> Generator[None, None, None]:
             global last_executed
             assert last_executed == ""
-            last_executed = "autouse_setup"
+            last_executed = "fixture_1_setup"
             yield
-            assert last_executed == "noautouse_teardown"
-            last_executed = "autouse_teardown"
+            assert last_executed == "fixture_2_teardown"
+            last_executed = "fixture_1_teardown"
 
 
         @pytest.fixture(scope="module")
         def fixture_2() -> Generator[None, None, None]:
             global last_executed
-            assert last_executed == "autouse_setup"
-            last_executed = "noautouse_setup"
+            assert last_executed == "fixture_1_setup"
+            last_executed = "fixture_2_setup"
             yield
             assert last_executed == "run_test"
-            last_executed = "noautouse_teardown"
+            last_executed = "fixture_2_teardown"
 
 
-        def test_autouse_fixture_teardown_order(fixture_1: None, fixture_2: None) -> None:
+        def test_fixture_teardown_order(fixture_1: None, fixture_2: None) -> None:
             global last_executed
-            assert last_executed == "noautouse_setup"
+            assert last_executed == "fixture_2_setup"
             last_executed = "run_test"
 
 
         def test_2(fixture_1: None) -> None:
-            # this would previously queue an additional teardown of fixture_1,
+            # This would previously queue an additional teardown of fixture_1,
             # despite fixture_1's value being cached, which caused fixture_1 to be
             # torn down before fixture_2 - violating the rule that teardowns should
             # happen in reverse order of setup.
