@@ -544,10 +544,9 @@ class FixtureRequest(abc.ABC):
             If the given fixture could not be found.
         """
         # Note that in addition to the use case described in the docstring,
-        # getfixturevalue() is also called by pytest itself during item setup to
-        # evaluate the fixtures that are requested statically
+        # getfixturevalue() is also called by pytest itself during item and fixture
+        # setup to evaluate the fixtures that are requested statically
         # (using function parameters, autouse, etc).
-        # As well as called by `pytest_fixture_setup()`
 
         fixturedef = self._get_active_fixturedef(argname)
         assert fixturedef.cached_result is not None, (
