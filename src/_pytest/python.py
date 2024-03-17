@@ -1568,7 +1568,7 @@ def _get_fixtures_per_test(test: nodes.Item) -> Optional[List[FixtureDef[object]
         # is stored in the final position of the sequence; therefore, we
         # take the FixtureDef of the final override and add it to the list.
         #
-        # If there wasn't an overide, the final item will simply be the
+        # If there wasn't an override, the final item will simply be the
         # first item, as required.
         fixturedefs[-1]
         for argname, fixturedefs in sorted(name2fixturedefs.items())
