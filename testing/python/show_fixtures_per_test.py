@@ -256,11 +256,10 @@ def test_verbose_include_multiline_docstring(pytester: Pytester) -> None:
 
 def test_should_not_show_pseudo_fixtures(pytester: Pytester) -> None:
     """A fixture is considered pseudo if it was directly created using the
-    @pytest.mark.parametrize decorator as part of internal pytest mechanisms
-    to manage batch execution. These fixtures should not be included in the
-    output because they don't satisfy user expectations for how fixtures are
-    created and used."""
-
+    ``@pytest.mark.parametrize`` decorator as part of internal pytest 
+    mechanisms (such as to manage batch execution). These fixtures should not 
+    be included in the output because they don't satisfy user expectations for 
+    how fixtures are created and used."""
     p = pytester.makepyfile(
         """
         import pytest
@@ -282,45 +281,45 @@ def test_should_show_parametrized_fixtures_used_by_test(pytester: Pytester) -> N
     p = pytester.makepyfile(
         '''
         import pytest
-        
+
         @pytest.fixture(params=['a', 'b'])
         def directly(request):
             """parametrized fixture"""
             return request.param
-            
+
         @pytest.fixture
         def indirectly(request):
             """indirectly parametrized fixture"""
             return request.param
-            
-        def test_parametrized_fixture(directly):
+
+        def test_directly_parametrized_fixture(directly):
             pass
-            
+
         @pytest.mark.parametrize("indirectly", ["a", "b"], indirect=True)
-        def test_indirectly_parametrized(indirectly):
-            pass                    
+        def test_indirectly_parametrized_fixture(indirectly):
+            pass
         '''
     )
     result = pytester.runpytest("--fixtures-per-test", p)
     assert result.ret == 0
 
-    expected_matches_for_parametrized_test = [
-        "*fixtures used by test_parametrized_fixture*",
+    expected_matches_for_directly_parametrized_fixture_test = [
+        "*fixtures used by test_directly_parametrized_fixture*",
         "*(test_should_show_parametrized_fixtures_used_by_test.py:14)*",
         "directly -- test_should_show_parametrized_fixtures_used_by_test.py:4",
         "    parametrized fixture",
     ]
 
-    expected_matches_for_indirectly_parametrized_test = [
-        "*fixtures used by test_indirectly_parametrized*",
+    expected_matches_for_indirectly_parametrized_fixture_test = [
+        "*fixtures used by test_indirectly_parametrized_fixture*",
         "*(test_should_show_parametrized_fixtures_used_by_test.py:17)*",
         "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:9",
         "    indirectly parametrized fixture",
     ]
 
     expected_matches = (
-        expected_matches_for_parametrized_test * 2
-        + expected_matches_for_indirectly_parametrized_test * 2
+        expected_matches_for_directly_parametrized_fixture_test * 2
+        + expected_matches_for_indirectly_parametrized_fixture_test * 2
     )
 
     result.stdout.fnmatch_lines(expected_matches)
