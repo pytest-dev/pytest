@@ -256,9 +256,9 @@ def test_verbose_include_multiline_docstring(pytester: Pytester) -> None:
 
 def test_should_not_show_pseudo_fixtures(pytester: Pytester) -> None:
     """A fixture is considered pseudo if it was directly created using the
-    ``@pytest.mark.parametrize`` decorator as part of internal pytest 
-    mechanisms (such as to manage batch execution). These fixtures should not 
-    be included in the output because they don't satisfy user expectations for 
+    ``@pytest.mark.parametrize`` decorator as part of internal pytest
+    mechanisms (such as to manage batch execution). These fixtures should not
+    be included in the output because they don't satisfy user expectations for
     how fixtures are created and used."""
     p = pytester.makepyfile(
         """
