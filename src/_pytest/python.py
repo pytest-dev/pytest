@@ -58,7 +58,8 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.fixtures import FixtureDef, _get_direct_parametrize_args
+from _pytest.fixtures import _get_direct_parametrize_args
+from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
@@ -1547,8 +1548,8 @@ def _get_fixtures_per_test(test: nodes.Item) -> Optional[List[FixtureDef[object]
     decorator).
 
     In other words, an internal detail that leverages the fixture system
-    to batch execute tests should not be exposed in a report that identifies
-    which fixtures a user is using in their tests.
+    to batch execute tests should not be exposed in a report intended to
+    summarise the user's fixture choices.
     """
     # Contains information on the fixtures the test item requests
     # statically, if any.
@@ -1567,7 +1568,7 @@ def _get_fixtures_per_test(test: nodes.Item) -> Optional[List[FixtureDef[object]
         # is stored in the final position of the sequence; therefore, we
         # take the FixtureDef of the final override and add it to the list.
         #
-        # If there wasn't an ovveride, the final item will simply be the
+        # If there wasn't an overide, the final item will simply be the
         # first item, as required.
         fixturedefs[-1]
         for argname, fixturedefs in sorted(name2fixturedefs.items())
