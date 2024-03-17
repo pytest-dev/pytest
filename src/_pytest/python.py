@@ -58,7 +58,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import FixtureDef, _get_direct_parametrize_args
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
@@ -1603,7 +1603,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
 
         tw.line()
         tw.sep("-", f"fixtures used by {item.name}")
-        tw.sep("-", f"({get_best_relpath(item.function)})") # type: ignore[attr-defined]
+        tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
 
         for fixturedef in fixturedefs:
             write_fixture(fixturedef)
