@@ -303,23 +303,23 @@ def test_should_show_parametrized_fixtures_used_by_test(pytester: Pytester) -> N
     result = pytester.runpytest("--fixtures-per-test", p)
     assert result.ret == 0
 
-    expected_matches_for_directly_parametrized_fixture_test = [
-        "*fixtures used by test_directly_parametrized_fixture*",
-        "*(test_should_show_parametrized_fixtures_used_by_test.py:14)*",
-        "directly -- test_should_show_parametrized_fixtures_used_by_test.py:4",
-        "    parametrized fixture",
-    ]
-
-    expected_matches_for_indirectly_parametrized_fixture_test = [
-        "*fixtures used by test_indirectly_parametrized_fixture*",
-        "*(test_should_show_parametrized_fixtures_used_by_test.py:17)*",
-        "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:9",
-        "    indirectly parametrized fixture",
-    ]
-
-    expected_matches = (
-        expected_matches_for_directly_parametrized_fixture_test * 2
-        + expected_matches_for_indirectly_parametrized_fixture_test * 2
+    result.stdout.fnmatch_lines(
+        [
+            "*fixtures used by test_directly_parametrized_fixture*",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:14)*",
+            "directly -- test_should_show_parametrized_fixtures_used_by_test.py:4",
+            "    parametrized fixture",
+            "*fixtures used by test_directly_parametrized_fixture*",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:14)*",
+            "directly -- test_should_show_parametrized_fixtures_used_by_test.py:4",
+            "    parametrized fixture",
+            "*fixtures used by test_indirectly_parametrized_fixture*",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:17)*",
+            "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:9",
+            "    indirectly parametrized fixture",
+            "*fixtures used by test_indirectly_parametrized_fixture*",
+            "*(test_should_show_parametrized_fixtures_used_by_test.py:17)*",
+            "indirectly -- test_should_show_parametrized_fixtures_used_by_test.py:9",
+            "    indirectly parametrized fixture",
+        ]
     )
-
-    result.stdout.fnmatch_lines(expected_matches)
