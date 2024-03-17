@@ -35,6 +35,7 @@ import warnings
 import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
+from _pytest._code import Source
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
@@ -864,13 +865,6 @@ class FixtureLookupErrorRepr(TerminalRepr):
         tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
 
 
-def fail_fixturefunc(fixturefunc, msg: str) -> NoReturn:
-    fs, lineno = getfslineno(fixturefunc)
-    location = f"{fs}:{lineno + 1}"
-    source = _pytest._code.Source(fixturefunc)
-    fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
-
-
 def call_fixture_func(
     fixturefunc: "_FixtureFunc[FixtureValue]", request: FixtureRequest, kwargs
 ) -> FixtureValue:
@@ -900,7 +894,13 @@ def _teardown_yield_fixture(fixturefunc, it) -> None:
     except StopIteration:
         pass
     else:
-        fail_fixturefunc(fixturefunc, "fixture function has more than one 'yield'")
+        fs, lineno = getfslineno(fixturefunc)
+        fail(
+            f"fixture function has more than one 'yield':\n\n"
+            f"{Source(fixturefunc).indent()}\n"
+            f"{fs}:{lineno + 1}",
+            pytrace=False,
+        )
 
 
 def _eval_scope_callable(
