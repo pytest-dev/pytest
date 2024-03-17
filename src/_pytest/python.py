@@ -1482,7 +1482,7 @@ class Metafunc:
 
 def _find_parametrized_scope(
     argnames: Sequence[str],
-    arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
+    arg2fixturedefs: Mapping[str, Sequence[FixtureDef[object]]],
     indirect: Union[bool, Sequence[str]],
 ) -> Scope:
     """Find the most appropriate scope for a parametrized call based on its arguments.
