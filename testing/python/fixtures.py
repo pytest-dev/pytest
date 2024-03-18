@@ -973,6 +973,31 @@ class TestRequestBasic:
             ],
         )
 
+    @pytest.mark.xfail
+    def test_request_addfinalizer_ordering(self, pytester: Pytester) -> None:
+        """
+        Ensure all function scoped finalizers are run in the same order they
+        are registered.
+        The source of the finalizer should not matter. Explicitly registering
+        using request.addfinalizer and implicitly via a yield fixture should
+        be equivelent.
+        """
+        pytester.copy_example("fixtures/test_request_addfinalizer_ordering.py")
+        result = pytester.runpytest("-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_request_addfinalizer_ordering.py SETUP (1) first",
+                "SETUP (2) second",
+                "SETUP (3) test",
+                "SETUP (4) instance",
+                ".TEARDOWN (4) instance",
+                "TEARDOWN (3) test",
+                "TEARDOWN (2) second",
+                "TEARDOWN (1) first",
+            ],
+            consecutive=True,
+        )
+
     def test_request_getmodulepath(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("def test_somefunc(): pass")
         (item,) = pytester.genitems([modcol])
