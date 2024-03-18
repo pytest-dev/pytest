@@ -1799,7 +1799,6 @@ class TestFixtureManagerParseFactories:
                 @pytest.fixture
                 def hello(self, hello):
                     return "class"
-
                 @pytest.mark.parametrize("param", ["foo"])
                 def test_hello(self, item, hello, fm):
                     print(item)
