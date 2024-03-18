@@ -1035,13 +1035,18 @@ class FixtureDef(Generic[FixtureValue]):
             raise BaseExceptionGroup(msg, exceptions[::-1])
 
     def execute(self, request: SubRequest) -> FixtureValue:
-        finalizer = functools.partial(self.finish, request=request)
-        # Get required arguments and register our own finish()
-        # with their finalization.
+        # Ensure arguments (parent fixtures) are loaded.
+        # If their cache has been invalidated it will finish itself and subfixtures,
+        # which will set our self.cached_result = None.
+        # If/when parent fixture parametrization is included in our cache key this
+        # can be moved after checking our cache key and not require saving in a list.
+        parent_fixtures_to_add_finalizer = []
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
             if not isinstance(fixturedef, PseudoFixtureDef):
-                fixturedef.addfinalizer(finalizer)
+                # save fixture as one to add our finalizer to, if we're not cached
+                # resolves #12135
+                parent_fixtures_to_add_finalizer.append(fixturedef)
 
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
@@ -1059,6 +1064,11 @@ class FixtureDef(Generic[FixtureValue]):
             # so we need to tear it down before creating a new one.
             self.finish(request)
             assert self.cached_result is None
+
+        finalizer = functools.partial(self.finish, request=request)
+        # add finalizer to parent fixtures
+        for parent_fixture in parent_fixtures_to_add_finalizer:
+            parent_fixture.addfinalizer(finalizer)
 
         ihook = request.node.ihook
         try:

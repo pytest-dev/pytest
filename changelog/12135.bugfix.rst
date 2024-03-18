@@ -1,0 +1,1 @@
+Fix subfixtures adding their finalizer multiple times to parent fixtures, causing incorrect teardown ordering in some instances.
