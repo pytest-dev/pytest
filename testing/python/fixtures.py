@@ -1803,7 +1803,7 @@ class TestFixtureManagerParseFactories:
                 def test_hello(self, item, hello, fm):
                     print(item)
                     clousurelist, _ = fm.getfixtureclosure(item, ("hello",), {})
-                    assert clousurelist[0] == ["hello", "param", "request"]
+                    assert clousurelist == ["hello", "param", "request"]
             """
         )
         reprec = pytester.inline_run("-s")
