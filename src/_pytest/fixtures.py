@@ -1508,15 +1508,18 @@ class FixtureManager:
         def dependent_fixtures_argnames(
             fixture_defs: Sequence[FixtureDef[Any]],
         ) -> List[str]:
-            last_fixture = fixture_defs[-1]
             # Initialize with the argnames of the last fixture
-            dependent_argnames = list(last_fixture.argnames)
-            for arg in fixture_defs:
-                if arg.argname in last_fixture.argnames:
-                    # Add new argument names maintaining order and avoiding duplicates
-                    for argname in arg.argnames:
+            dependent_argnames = list(fixture_defs[-1].argnames)
+            # Iterate over the list in reverse order, skipping the last element already processed.
+            for index, current_fixture in enumerate(
+                reversed(fixture_defs[:-1]), start=1
+            ):
+                if current_fixture.argname in fixture_defs[-index].argnames:
+                    for argname in current_fixture.argnames:
                         if argname not in dependent_argnames:
                             dependent_argnames.append(argname)
+                else:
+                    break
             return dependent_argnames
 
         fixturenames_closure = list(initialnames)
