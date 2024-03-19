@@ -1146,9 +1146,9 @@ class TestNewFirst:
         result = pytester.runpytest("--nf", "--collect-only", "-q")
         result.stdout.fnmatch_lines(
             [
-                "test_1/test_1.py::test_2",
-                "test_2/test_2.py::test_1",
-                "test_1/test_1.py::test_1",
+                "test_1/test_1.py::test_2 marks: ",
+                "test_2/test_2.py::test_1 marks: ",
+                "test_1/test_1.py::test_1 marks: ",
             ]
         )
 
@@ -1165,9 +1165,9 @@ class TestNewFirst:
         result.stdout.fnmatch_lines(
             [
                 "new_items: *test_1.py*test_1.py*test_2.py*",
-                "test_1/test_1.py::test_2",
-                "test_2/test_2.py::test_1",
-                "test_1/test_1.py::test_1",
+                "test_1/test_1.py::test_2 marks: ",
+                "test_2/test_2.py::test_1 marks: ",
+                "test_1/test_1.py::test_1 marks: ",
             ]
         )
 
