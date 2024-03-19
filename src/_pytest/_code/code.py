@@ -788,6 +788,8 @@ class ExceptionInfo(Generic[E]):
             If `None`, will search for a matching exception at any nesting depth.
             If >= 1, will only match an exception if it's at the specified depth (depth = 1 being
             the exceptions contained within the topmost exception group).
+
+        .. versionadded:: 8.0
         """
         msg = "Captured exception is not an instance of `BaseExceptionGroup`"
         assert isinstance(self.value, BaseExceptionGroup), msg
