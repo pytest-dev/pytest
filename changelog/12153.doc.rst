@@ -1,1 +1,1 @@
-Updated docs: Documented a better way to detect if a code is running from within a pytest run.
+Updated docs: Documented two ways to detect if a code is running from within a pytest run.
