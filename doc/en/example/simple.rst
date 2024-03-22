@@ -409,25 +409,13 @@ running from a test you can do something like this:
 
 .. code-block:: python
 
-    # content of your_module.py
+    import sys
 
 
-    _called_from_test = False
+    _called_from_test_by_pytest = "pytest" in sys.modules
 
-.. code-block:: python
-
-    # content of conftest.py
-
-
-    def pytest_configure(config):
-        your_module._called_from_test = True
-
-and then check for the ``your_module._called_from_test`` flag:
-
-.. code-block:: python
-
-    if your_module._called_from_test:
-        # called from within a test run
+    if _called_from_test_by_pytest:
+        # called from within a test run by pytest
         ...
     else:
         # called "normally"
