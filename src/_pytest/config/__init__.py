@@ -50,6 +50,7 @@ from .compat import PathAwareHookProxy
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
 from .findpaths import determine_setup
+from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
@@ -152,6 +153,7 @@ def main(
     :returns: An exit code.
     """
     try:
+        os.environ["PYTEST_VERSION"] = __version__
         try:
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
@@ -186,6 +188,8 @@ def main(
         for msg in e.args:
             tw.line(f"ERROR: {msg}\n", red=True)
         return ExitCode.USAGE_ERROR
+    finally:
+        os.environ.pop("PYTEST_VERSION", None)
 
 
 def console_main() -> int:
