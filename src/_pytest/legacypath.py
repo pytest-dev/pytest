@@ -384,7 +384,7 @@ def Config_inifile(self: Config) -> Optional[LEGACY_PATH]:
     return legacy_path(str(self.inipath)) if self.inipath else None
 
 
-def Session_stardir(self: Session) -> LEGACY_PATH:
+def Session_startdir(self: Session) -> LEGACY_PATH:
     """The path from which pytest was invoked.
 
     Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
@@ -439,7 +439,7 @@ def pytest_load_initial_conftests(early_config: Config) -> None:
     mp.setattr(Config, "inifile", property(Config_inifile), raising=False)
 
     # Add Session.startdir property.
-    mp.setattr(Session, "startdir", property(Session_stardir), raising=False)
+    mp.setattr(Session, "startdir", property(Session_startdir), raising=False)
 
     # Add pathlist configuration type.
     mp.setattr(Config, "_getini_unknown_type", Config__getini_unknown_type)

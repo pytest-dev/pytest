@@ -836,7 +836,7 @@ class LocalPath:
     def copy(self, target, mode=False, stat=False):
         """Copy path to target.
 
-        If mode is True, will copy copy permission from path to target.
+        If mode is True, will copy permission from path to target.
         If stat is True, copy permission, last modification
         time, last access time, and flags from path to target.
         """
@@ -1047,7 +1047,7 @@ class LocalPath:
     def pypkgpath(self):
         """Return the Python package path by looking for the last
         directory upwards which still contains an __init__.py.
-        Return None if a pkgpath can not be determined.
+        Return None if a pkgpath cannot be determined.
         """
         pkgpath = None
         for parent in self.parts(reverse=True):

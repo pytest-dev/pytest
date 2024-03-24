@@ -584,7 +584,7 @@ def _get_assertion_exprs(src: bytes) -> Dict[int, str]:
                 # multi-line assert with message
                 elif lineno in seen_lines:
                     lines[-1] = lines[-1][:offset]
-                # multi line assert with escapd newline before message
+                # multi line assert with escaped newline before message
                 else:
                     lines.append(line[:offset])
                 _write_and_reset()

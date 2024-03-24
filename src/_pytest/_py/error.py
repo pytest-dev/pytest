@@ -41,7 +41,7 @@ _winerrnomap = {
     3: errno.ENOENT,
     17: errno.EEXIST,
     18: errno.EXDEV,
-    13: errno.EBUSY,  # empty cd drive, but ENOMEDIUM seems unavailiable
+    13: errno.EBUSY,  # empty cd drive, but ENOMEDIUM seems unavailable
     22: errno.ENOTDIR,
     20: errno.ENOTDIR,
     267: errno.ENOTDIR,

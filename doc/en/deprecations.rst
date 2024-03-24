@@ -427,7 +427,7 @@ Now :class:`~pytest.Class` collects the test methods directly.
 Most plugins which reference ``Instance`` do so in order to ignore or skip it,
 using a check such as ``if isinstance(node, Instance): return``.
 Such plugins should simply remove consideration of ``Instance`` on pytest>=7.
-However, to keep such uses working, a dummy type has been instanted in ``pytest.Instance`` and ``_pytest.python.Instance``,
+However, to keep such uses working, a dummy type has been instanced in ``pytest.Instance`` and ``_pytest.python.Instance``,
 and importing it emits a deprecation warning. This was removed in pytest 8.
 
 

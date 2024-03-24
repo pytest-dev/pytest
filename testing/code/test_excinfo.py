@@ -1515,7 +1515,7 @@ def test_cwd_deleted(pytester: Pytester) -> None:
     result.stderr.no_fnmatch_line("*INTERNALERROR*")
 
 
-def test_regression_nagative_line_index(pytester: Pytester) -> None:
+def test_regression_negative_line_index(pytester: Pytester) -> None:
     """
     With Python 3.10 alphas, there was an INTERNALERROR reported in
     https://github.com/pytest-dev/pytest/pull/8227

@@ -40,7 +40,7 @@ def pytest_addoption(parser: Parser) -> None:
 @pytest.hookimpl
 def pytest_configure(config: Config) -> None:
     if config.option.stepwise_skip:
-        # allow --stepwise-skip to work on it's own merits.
+        # allow --stepwise-skip to work on its own merits.
         config.option.stepwise = True
     if config.getoption("stepwise"):
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")

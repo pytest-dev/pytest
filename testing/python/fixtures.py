@@ -933,7 +933,7 @@ class TestRequestBasic:
     ) -> None:
         """
         Ensure exceptions raised during teardown by finalizers are suppressed
-        until all finalizers are called, then re-reaised together in an
+        until all finalizers are called, then re-raised together in an
         exception group (#2440)
         """
         pytester.makepyfile(

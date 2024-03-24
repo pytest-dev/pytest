@@ -926,7 +926,7 @@ class TestTerminalFunctional:
     def test_header_absolute_testpath(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
-        """Regresstion test for #7814."""
+        """Regression test for #7814."""
         tests = pytester.path.joinpath("tests")
         tests.mkdir()
         pytester.makepyprojecttoml(

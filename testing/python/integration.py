@@ -163,7 +163,7 @@ class TestMockDecoration:
             @mock.patch("os.path.abspath")
             @mock.patch("os.path.normpath")
             @mock.patch("os.path.basename", new=mock_basename)
-            def test_someting(normpath, abspath, tmp_path):
+            def test_something(normpath, abspath, tmp_path):
                 abspath.return_value = "this"
                 os.path.normpath(os.path.abspath("hello"))
                 normpath.assert_any_call("this")
@@ -176,7 +176,7 @@ class TestMockDecoration:
         funcnames = [
             call.report.location[2] for call in calls if call.report.when == "call"
         ]
-        assert funcnames == ["T.test_hello", "test_someting"]
+        assert funcnames == ["T.test_hello", "test_something"]
 
     def test_mock_sorting(self, pytester: Pytester) -> None:
         pytest.importorskip("mock", "1.0.1")

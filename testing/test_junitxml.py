@@ -1002,7 +1002,7 @@ class TestNonPython:
 
 @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
 def test_nullbyte(pytester: Pytester, junit_logging: str) -> None:
-    # A null byte can not occur in XML (see section 2.2 of the spec)
+    # A null byte cannot occur in XML (see section 2.2 of the spec)
     pytester.makepyfile(
         """
         import sys

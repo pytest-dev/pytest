@@ -1122,7 +1122,7 @@ class TestTraceOption:
 
 
 def test_trace_after_runpytest(pytester: Pytester) -> None:
-    """Test that debugging's pytest_configure is re-entrant."""
+    """Test that debugging's pytest_configure is reentrant."""
     p1 = pytester.makepyfile(
         """
         from _pytest.debugging import pytestPDB
@@ -1153,7 +1153,7 @@ def test_trace_after_runpytest(pytester: Pytester) -> None:
 
 
 def test_quit_with_swallowed_SystemExit(pytester: Pytester) -> None:
-    """Test that debugging's pytest_configure is re-entrant."""
+    """Test that debugging's pytest_configure is reentrant."""
     p1 = pytester.makepyfile(
         """
         def call_pdb_set_trace():
