@@ -1072,7 +1072,7 @@ class FixtureDef(Generic[FixtureValue]):
         return result
 
     def cache_key(self, request: SubRequest) -> object:
-        return request.param_index if not hasattr(request, "param") else request.param
+        return getattr(request, "param", None)
 
     def __repr__(self) -> str:
         return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
