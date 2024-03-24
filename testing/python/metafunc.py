@@ -1024,7 +1024,7 @@ class TestMetafunc:
             """
             import pytest
 
-            @pytest.mark.parametrize("arg2", ['a', 'b'], scope='class')
+            @pytest.mark.parametrize("arg2", ['a', 'b', 'c'], scope='class')
             @pytest.mark.parametrize("arg1", [1, 2], scope='class')
             class TestClass:
                 def test1(self, arg1, arg2):
@@ -1041,10 +1041,14 @@ class TestMetafunc:
                 r"      <Function test2\[1-a\]>",
                 r"      <Function test1\[1-b\]>",
                 r"      <Function test2\[1-b\]>",
+                r"      <Function test1\[1-c\]>",
+                r"      <Function test2\[1-c\]>",
                 r"      <Function test1\[2-a\]>",
                 r"      <Function test2\[2-a\]>",
                 r"      <Function test1\[2-b\]>",
                 r"      <Function test2\[2-b\]>",
+                r"      <Function test1\[2-c\]>",
+                r"      <Function test2\[2-c\]>",
             ]
         )
 

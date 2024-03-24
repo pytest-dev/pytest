@@ -1330,8 +1330,7 @@ class Metafunc:
             for param_index, (param_id, param_set) in enumerate(
                 zip(ids, parametersets)
             ):
-                if name2pseudofixturedef:
-                    param_index = callspec_index + param_index
+                param_index = callspec_index * len(parametersets) + param_index
                 newcallspec = callspec.setmulti(
                     argnames=argnames,
                     valset=param_set.values,
