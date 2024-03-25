@@ -12,6 +12,6 @@ pytest-mock==3.14.0
 pytest-rerunfailures==14.0
 pytest-sugar==1.0.0
 pytest-trio==0.7.0
-pytest-twisted==1.14.0
+pytest-twisted==1.14.1
 twisted==24.3.0
 pytest-xvfb==3.0.0
