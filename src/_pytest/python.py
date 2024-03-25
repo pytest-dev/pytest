@@ -58,6 +58,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.fixtures import _get_direct_parametrize_args
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -1482,7 +1483,7 @@ class Metafunc:
 
 def _find_parametrized_scope(
     argnames: Sequence[str],
-    arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
+    arg2fixturedefs: Mapping[str, Sequence[FixtureDef[object]]],
     indirect: Union[bool, Sequence[str]],
 ) -> Scope:
     """Find the most appropriate scope for a parametrized call based on its arguments.
@@ -1534,6 +1535,48 @@ def _pretty_fixture_path(invocation_dir: Path, func) -> str:
         return bestrelpath(invocation_dir, loc)
 
 
+def _get_fixtures_per_test(test: nodes.Item) -> Optional[List[FixtureDef[object]]]:
+    """Returns all fixtures used by the test item except for a) those
+    created by direct parametrization with ``@pytest.mark.parametrize`` and
+    b) those accessed dynamically with ``request.getfixturevalue``.
+
+    The justification for excluding fixtures created by direct
+    parametrization is that their appearance in a report would surprise
+    users currently learning about fixtures, as they do not conform to the
+    documented characteristics of fixtures (reusable, providing
+    setup/teardown features, and created via the ``@pytest.fixture``
+    decorator).
+
+    In other words, an internal detail that leverages the fixture system
+    to batch execute tests should not be exposed in a report intended to
+    summarise the user's fixture choices.
+    """
+    # Contains information on the fixtures the test item requests
+    # statically, if any.
+    fixture_info: Optional[FuncFixtureInfo] = getattr(test, "_fixtureinfo", None)
+    if fixture_info is None:
+        # The given test item does not statically request any fixtures.
+        return []
+
+    # In the transitive closure of fixture names required by the item
+    # through autouse, function parameter or @userfixture mechanisms,
+    # multiple overrides may have occured; for this reason, the fixture
+    # names are matched to a sequence of FixtureDefs.
+    name2fixturedefs = fixture_info.name2fixturedefs
+    fixturedefs = [
+        # The final override, which is the one the test item will utilise,
+        # is stored in the final position of the sequence; therefore, we
+        # take the FixtureDef of the final override and add it to the list.
+        #
+        # If there wasn't an override, the final item will simply be the
+        # first item, as required.
+        fixturedefs[-1]
+        for argname, fixturedefs in sorted(name2fixturedefs.items())
+        if argname not in _get_direct_parametrize_args(test)
+    ]
+    return fixturedefs
+
+
 def show_fixtures_per_test(config):
     from _pytest.main import wrap_session
 
@@ -1552,7 +1595,21 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         loc = getlocation(func, invocation_dir)
         return bestrelpath(invocation_dir, Path(loc))
 
-    def write_fixture(fixture_def: fixtures.FixtureDef[object]) -> None:
+    def write_item(item: nodes.Item) -> None:
+        fixturedefs = _get_fixtures_per_test(item)
+        if not fixturedefs:
+            # This test item does not use any fixtures.
+            # Do not write anything.
+            return
+
+        tw.line()
+        tw.sep("-", f"fixtures used by {item.name}")
+        tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
+
+        for fixturedef in fixturedefs:
+            write_fixture(fixturedef)
+
+    def write_fixture(fixture_def: FixtureDef[object]) -> None:
         argname = fixture_def.argname
         if verbose <= 0 and argname.startswith("_"):
             return
@@ -1567,24 +1624,6 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             )
         else:
             tw.line("    no docstring available", red=True)
-
-    def write_item(item: nodes.Item) -> None:
-        # Not all items have _fixtureinfo attribute.
-        info: Optional[FuncFixtureInfo] = getattr(item, "_fixtureinfo", None)
-        if info is None or not info.name2fixturedefs:
-            # This test item does not use any fixtures.
-            return
-        tw.line()
-        tw.sep("-", f"fixtures used by {item.name}")
-        # TODO: Fix this type ignore.
-        tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
-        # dict key not used in loop but needed for sorting.
-        for _, fixturedefs in sorted(info.name2fixturedefs.items()):
-            assert fixturedefs is not None
-            if not fixturedefs:
-                continue
-            # Last item is expected to be the one used by the test item.
-            write_fixture(fixturedefs[-1])
 
     for session_item in session.items:
         write_item(session_item)

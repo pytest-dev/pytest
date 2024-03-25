@@ -1,0 +1,1 @@
+Improved output of --fixtures-per-test by excluding internal, pseudo fixtures.
