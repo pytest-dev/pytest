@@ -4098,6 +4098,63 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(pytester: Pytester) -> Non
     )
 
 
+def test_exceptions_in_pytest_fixture_setup_and_post_finalizer_hook(
+    pytester: Pytester,
+) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_fixture_setup(fixturedef):
+            result = yield
+            print('SETUP EXCEPTION in {0}: {1}'.format(fixturedef.argname, result.exception))
+        def pytest_fixture_post_finalizer(fixturedef, exception):
+            print('TEARDOWN EXCEPTION in {0}: {1}'.format(fixturedef.argname, exception))
+    """
+    )
+    pytester.makepyfile(
+        **{
+            "tests/test_fixture_exceptions.py": """
+            import pytest
+
+            @pytest.fixture(scope='module')
+            def module_teardown_exeption():
+                yield
+                raise ValueError('exeption in module_teardown_exeption')
+
+            @pytest.fixture()
+            def func_teardown_exeption():
+                yield
+                raise ValueError('exeption in func_teardown_exeption')
+
+            @pytest.fixture()
+            def func_setup_exeption():
+                raise ValueError('exeption in func_setup_exeption')
+
+            @pytest.mark.usefixtures(
+                'module_teardown_exeption',
+                'func_teardown_exeption',
+                'func_setup_exeption',
+            )
+            def test_func():
+                pass
+        """,
+        }
+    )
+    result = pytester.runpytest("-s")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*SETUP EXCEPTION in module_teardown_exeption: None*",
+            "*SETUP EXCEPTION in func_teardown_exeption: None*",
+            "*SETUP EXCEPTION in func_setup_exeption: exeption in func_setup_exeption*",
+            "*TEARDOWN EXCEPTION in func_setup_exeption: None*",
+            "*TEARDOWN EXCEPTION in func_teardown_exeption: exeption in func_teardown_exeption*",
+            "*TEARDOWN EXCEPTION in module_teardown_exeption: exeption in module_teardown_exeption*",
+        ]
+    )
+
+
 class TestScopeOrdering:
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
