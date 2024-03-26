@@ -1,0 +1,1 @@
+Fix fixtures adding their finalizer multiple times to fixtures they request, causing unreliable and non-intuitive teardown ordering in some instances.
