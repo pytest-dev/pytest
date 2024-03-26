@@ -861,7 +861,9 @@ def pytest_fixture_setup(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: "FixtureDef[Any]", request: "SubRequest"
+    fixturedef: "FixtureDef[Any]",
+    request: "SubRequest",
+    exception: "BaseException | None",
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
@@ -871,6 +873,8 @@ def pytest_fixture_post_finalizer(
         The fixture definition object.
     :param request:
         The fixture request object.
+    :param exception:
+        The list of exceptions received at the end of the fixtures.
 
     Use in conftest plugins
     =======================
