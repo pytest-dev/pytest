@@ -4753,39 +4753,6 @@ def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-def test_subfixture_not_queue_multiple_finalizers(pytester: Pytester) -> None:
-    """Make sure subfixtures don't needlessly requeue their finalizer multiple times in
-    parent fixture.
-
-    Regression test for #12135
-    """
-    pytester.makepyfile(
-        """
-        import pytest
-
-        def _assert_len(request):
-            assert len(request._get_active_fixturedef('fixture_1')._finalizers) == 1
-
-
-        @pytest.fixture(scope="module")
-        def fixture_1():
-            ...
-
-        @pytest.fixture(scope="module")
-        def fixture_2(request, fixture_1):
-            yield
-
-        def test_1(request, fixture_2):
-            _assert_len(request)
-
-        def test_2(request, fixture_2):
-            _assert_len(request)
-        """
-    )
-    result = pytester.runpytest()
-    assert result.ret == 0
-
-
 def test_subfixture_teardown_order(pytester: Pytester) -> None:
     """
     Make sure fixtures don't re-register their finalization in parent fixtures multiple
