@@ -905,7 +905,7 @@ def pytest_fixture_post_finalizer(
     :param request:
         The fixture request object.
     :param exception:
-        The list of exceptions received at the end of the fixtures.
+        An exception raised in the finalisation of the fixtures.
 
     Use in conftest plugins
     =======================
