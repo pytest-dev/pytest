@@ -136,7 +136,7 @@ pytest.freeze_includes
 Marks
 -----
 
-Marks can be used apply meta data to *test functions* (but not fixtures), which can then be accessed by
+Marks can be used to apply metadata to *test functions* (but not fixtures), which can then be accessed by
 fixtures or plugins.
 
 
