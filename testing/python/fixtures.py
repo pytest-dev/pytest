@@ -4098,7 +4098,7 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(pytester: Pytester) -> Non
     )
 
 
-def test_exceptions_in_pytest_fixture_setup_and_post_finalizer_hook(
+def test_exceptions_in_pytest_fixture_setup_and_pytest_fixture_teardown(
     pytester: Pytester,
 ) -> None:
     pytester.makeconftest(
@@ -4108,8 +4108,10 @@ def test_exceptions_in_pytest_fixture_setup_and_post_finalizer_hook(
         def pytest_fixture_setup(fixturedef):
             result = yield
             print('SETUP EXCEPTION in {0}: {1}'.format(fixturedef.argname, result.exception))
-        def pytest_fixture_post_finalizer(fixturedef, exception):
-            print('TEARDOWN EXCEPTION in {0}: {1}'.format(fixturedef.argname, exception))
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_fixture_teardown(fixturedef):
+            result = yield
+            print('TEARDOWN EXCEPTION in {0}: {1}'.format(fixturedef.argname, result.exception))
     """
     )
     pytester.makepyfile(
