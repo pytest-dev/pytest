@@ -1731,8 +1731,8 @@ class TestEarlyRewriteBailout:
                     import os
                     import tempfile
 
-                    with tempfile.TemporaryDirectory() as d:
-                        os.chdir(d)
+                    with tempfile.TemporaryDirectory() as newpath:
+                        os.chdir(newpath)
                 """,
                 "test_test.py": """\
                     def test():
