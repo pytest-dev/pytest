@@ -788,9 +788,9 @@ def resolve_pkg_root_and_module_name(
 
 
 def _is_namespace_package(module_path: Path) -> bool:
-    # If the path has na __init__.py file, it means it is not
-    # a namespace package:.
-    # https://packaging.python.org/en/latest/guides/packaging-namespace-packages.
+    # If the path has an __init__.py file, it means it is not
+    # a namespace package:
+    # https://packaging.python.org/en/latest/guides/packaging-namespace-packages
     if (module_path / "__init__.py").is_file():
         return False
 
