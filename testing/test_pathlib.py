@@ -1,5 +1,7 @@
 # mypy: allow-untyped-defs
 import errno
+import importlib.abc
+import importlib.machinery
 import os.path
 from pathlib import Path
 import pickle
@@ -10,6 +12,7 @@ from types import ModuleType
 from typing import Any
 from typing import Generator
 from typing import Iterator
+from typing import Optional
 from typing import Tuple
 import unittest.mock
 
@@ -1120,7 +1123,7 @@ class TestNamespacePackages:
     """Test import_path support when importing from properly namespace packages."""
 
     def setup_directories(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch, pytester: Pytester
+        self, tmp_path: Path, monkeypatch: Optional[MonkeyPatch], pytester: Pytester
     ) -> Tuple[Path, Path]:
         # Set up a namespace package "com.company", containing
         # two subpackages, "app" and "calc".
@@ -1149,9 +1152,9 @@ class TestNamespacePackages:
             )
         )
         assert r.ret == 0
-
-        monkeypatch.syspath_prepend(tmp_path / "src/dist1")
-        monkeypatch.syspath_prepend(tmp_path / "src/dist2")
+        if monkeypatch is not None:
+            monkeypatch.syspath_prepend(tmp_path / "src/dist1")
+            monkeypatch.syspath_prepend(tmp_path / "src/dist2")
         return models_py, algorithms_py
 
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
@@ -1234,4 +1237,62 @@ class TestNamespacePackages:
         assert (pkg_root, module_name) == (
             tmp_path / "src/dist1/com/company",
             "app.core.models",
+        )
+
+    def test_detect_meta_path(
+        self,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        pytester: Pytester,
+    ) -> None:
+        """
+        resolve_pkg_root_and_module_name() considers sys.meta_path when importing namespace packages.
+
+        Regression test for #12112.
+        """
+
+        class CustomImporter(importlib.abc.MetaPathFinder):
+            """
+            Imports the module name "com" as a namespace package.
+
+            This ensures our namespace detection considers sys.meta_path, which is important
+            to support all possible ways a module can be imported (for example editable installs).
+            """
+
+            def find_spec(
+                self, name: str, path: Any = None, target: Any = None
+            ) -> Optional[importlib.machinery.ModuleSpec]:
+                if name == "com":
+                    spec = importlib.machinery.ModuleSpec("com", loader=None)
+                    spec.submodule_search_locations = [str(com_root_2), str(com_root_1)]
+                    return spec
+                return None
+
+        # Setup directories without configuring sys.path.
+        models_py, algorithms_py = self.setup_directories(
+            tmp_path, monkeypatch=None, pytester=pytester
+        )
+        com_root_1 = tmp_path / "src/dist1/com"
+        com_root_2 = tmp_path / "src/dist2/com"
+
+        # Because the namespace package is not setup correctly, we cannot resolve it as a namespace package.
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            models_py, consider_namespace_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist1/com/company",
+            "app.core.models",
+        )
+
+        # Insert our custom importer, which will recognize the "com" directory as a namespace package.
+        new_meta_path = [CustomImporter(), *sys.meta_path]
+        monkeypatch.setattr(sys, "meta_path", new_meta_path)
+
+        # Now we should be able to resolve the path as namespace package.
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            models_py, consider_namespace_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist1",
+            "com.company.app.core.models",
         )
