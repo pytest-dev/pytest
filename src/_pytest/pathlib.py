@@ -771,19 +771,11 @@ def resolve_pkg_root_and_module_name(
     pkg_path = resolve_package_path(path)
     if pkg_path is not None:
         pkg_root = pkg_path.parent
-        # https://packaging.python.org/en/latest/guides/packaging-namespace-packages/
         if consider_namespace_packages:
-            # Go upwards in the hierarchy, if we find a parent path included
-            # in sys.path, it means the package found by resolve_package_path()
-            # actually belongs to a namespace package.
-            for parent in pkg_root.parents:
-                # If any of the parent paths has a __init__.py, it means it is not
-                # a namespace package (see the docs linked above).
-                if (parent / "__init__.py").is_file():
-                    break
-                if str(parent) in sys.path:
+            for candidate in (pkg_root, *pkg_root.parents):
+                if _is_namespace_package(candidate):
                     # Point the pkg_root to the root of the namespace package.
-                    pkg_root = parent
+                    pkg_root = candidate.parent
                     break
 
         names = list(path.with_suffix("").relative_to(pkg_root).parts)
@@ -793,6 +785,35 @@ def resolve_pkg_root_and_module_name(
         return pkg_root, module_name
 
     raise CouldNotResolvePathError(f"Could not resolve for {path}")
+
+
+def _is_namespace_package(module_path: Path) -> bool:
+    # If the path has na __init__.py file, it means it is not
+    # a namespace package:.
+    # https://packaging.python.org/en/latest/guides/packaging-namespace-packages.
+    if (module_path / "__init__.py").is_file():
+        return False
+
+    module_name = module_path.name
+
+    # Empty module names break find_spec.
+    if not module_name:
+        return False
+
+    # Modules starting with "." indicate relative imports and break find_spec, and we are only attempting
+    # to find top-level namespace packages anyway.
+    if module_name.startswith("."):
+        return False
+
+    spec = importlib.util.find_spec(module_name)
+    if spec is not None and spec.submodule_search_locations:
+        # Found a spec, however make sure the module_path is in one of the search locations --
+        # this ensures common module name like "src" (which might be in sys.path under different locations)
+        # is only considered for the module_path we intend to.
+        # Make sure to compare Path(s) instead of strings, this normalizes them on Windows.
+        if module_path in [Path(x) for x in spec.submodule_search_locations]:
+            return True
+    return False
 
 
 class CouldNotResolvePathError(Exception):
