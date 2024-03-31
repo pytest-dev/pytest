@@ -1324,3 +1324,40 @@ class TestNamespacePackages:
         assert _is_namespace_package(path) is False
 
         assert _is_namespace_package(Path()) is False
+
+    def test_intermediate_init_file(
+        self, pytester: Pytester, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        (tmp_path / "src/dist1/ns/b/app/bar/test").mkdir(parents=True)
+        # (tmp_path / "src/dist1/ns/b/app/bar/test/__init__.py").touch()
+        (tmp_path / "src/dist1/ns/b/app/bar/m.py").touch()
+
+        # The presence of this __init__.py is not a problem, ns.b.app is still part of the namespace package.
+        (tmp_path / "src/dist1/ns/b/app/__init__.py").touch()
+
+        (tmp_path / "src/dist2/ns/a/core/foo/test").mkdir(parents=True)
+        # (tmp_path / "src/dist2/ns/a/core/foo/test/__init__.py").touch()
+        (tmp_path / "src/dist2/ns/a/core/foo/m.py").touch()
+
+        # Validate the namespace package by importing it in a Python subprocess.
+        r = pytester.runpython_c(
+            dedent(
+                f"""
+                import sys
+                sys.path.append(r{str(tmp_path / "src/dist1")!r})
+                sys.path.append(r{str(tmp_path / "src/dist2")!r})
+                import ns.b.app.bar.m
+                import ns.a.core.foo.m
+                """
+            )
+        )
+        assert r.ret == 0
+        monkeypatch.syspath_prepend(tmp_path / "src/dist1")
+        monkeypatch.syspath_prepend(tmp_path / "src/dist2")
+
+        assert resolve_pkg_root_and_module_name(
+            tmp_path / "src/dist1/ns/b/app/bar/m.py", consider_namespace_packages=True
+        ) == (tmp_path / "src/dist1", "ns.b.app.bar.m")
+        assert resolve_pkg_root_and_module_name(
+            tmp_path / "src/dist2/ns/a/core/foo/m.py", consider_namespace_packages=True
+        ) == (tmp_path / "src/dist2", "ns.a.core.foo.m")
