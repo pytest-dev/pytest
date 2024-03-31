@@ -1036,7 +1036,7 @@ class FixtureDef(Generic[FixtureValue]):
 
     def execute(self, request: SubRequest) -> FixtureValue:
         """Return the value of this fixture, executing it if not cached."""
-        # Ensure dependent fixtures that this fixture requests are loaded.
+        # Ensure that the dependent fixtures requested by this fixture are loaded.
         # This needs to be done before checking if we have a cached value, since
         # if a dependent fixture has their cache invalidated, e.g. due to
         # parametrization, they finalize themselves and fixtures depending on it
