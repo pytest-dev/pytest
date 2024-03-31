@@ -1163,7 +1163,7 @@ class TestNewFirst:
         )
 
         p1.write_text(
-            "def test_1(): assert 1\n" "def test_2(): assert 1\n", encoding="utf-8"
+            "def test_1(): assert 1\ndef test_2(): assert 1\n", encoding="utf-8"
         )
         os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 
