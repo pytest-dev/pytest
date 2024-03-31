@@ -13,6 +13,7 @@ from typing import Any
 from typing import Generator
 from typing import Iterator
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 import unittest.mock
 
@@ -37,6 +38,7 @@ from _pytest.pathlib import safe_exists
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
 from _pytest.pytester import Pytester
+from _pytest.pytester import RunResult
 from _pytest.tmpdir import TempPathFactory
 import pytest
 
@@ -1141,22 +1143,29 @@ class TestNamespacePackages:
         algorithms_py.touch()
 
         # Validate the namespace package by importing it in a Python subprocess.
-        r = pytester.runpython_c(
-            dedent(
-                f"""
-                import sys
-                sys.path.append(r{str(tmp_path / "src/dist1")!r})
-                sys.path.append(r{str(tmp_path / "src/dist2")!r})
-                import com.company.app.core.models
-                import com.company.calc.algo.algorithms
-                """
-            )
+        r = self.run_ns_imports(
+            pytester,
+            [tmp_path / "src/dist1", tmp_path / "src/dist2"],
+            ["com.company.app.core.models", "com.company.calc.algo.algorithms"],
         )
         assert r.ret == 0
         if monkeypatch is not None:
             monkeypatch.syspath_prepend(tmp_path / "src/dist1")
             monkeypatch.syspath_prepend(tmp_path / "src/dist2")
         return models_py, algorithms_py
+
+    def run_ns_imports(
+        self, pytester: Pytester, paths: Sequence[Path], imports: Sequence[str]
+    ) -> RunResult:
+        """Validate a Python namespace package by importing modules from  it in a Python subprocess"""
+        lines = [
+            "import sys",
+            # Configure sys.path.
+            *[f"sys.path.append(r{str(x)!r})" for x in paths],
+            # Imports.
+            *[f"import {x}" for x in imports],
+        ]
+        return pytester.runpython_c("\n".join(lines))
 
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
     def test_resolve_pkg_root_and_module_name_ns_multiple_levels(
@@ -1233,16 +1242,10 @@ class TestNamespacePackages:
         (tmp_path / "src/dist1/com/__init__.py").touch()
 
         # Ensure Python no longer considers dist1/com a namespace package.
-        r = pytester.runpython_c(
-            dedent(
-                f"""
-                import sys
-                sys.path.append(r{str(tmp_path / "src/dist1")!r})
-                sys.path.append(r{str(tmp_path / "src/dist2")!r})
-                import com.company.app.core.models
-                import com.company.calc.algo.algorithms
-                """
-            )
+        r = self.run_ns_imports(
+            pytester,
+            [tmp_path / "src/dist1", tmp_path / "src/dist2"],
+            ["com.company.app.core.models", "com.company.calc.algo.algorithms"],
         )
         assert r.ret == 1
         r.stderr.fnmatch_lines("*No module named 'com.company.calc*")
@@ -1340,16 +1343,10 @@ class TestNamespacePackages:
         (tmp_path / "src/dist2/ns/a/core/foo/m.py").touch()
 
         # Validate the namespace package by importing it in a Python subprocess.
-        r = pytester.runpython_c(
-            dedent(
-                f"""
-                import sys
-                sys.path.append(r{str(tmp_path / "src/dist1")!r})
-                sys.path.append(r{str(tmp_path / "src/dist2")!r})
-                import ns.b.app.bar.m
-                import ns.a.core.foo.m
-                """
-            )
+        r = self.run_ns_imports(
+            pytester,
+            [tmp_path / "src/dist1", tmp_path / "src/dist2"],
+            ["ns.b.app.bar.m", "ns.a.core.foo.m"],
         )
         assert r.ret == 0
         monkeypatch.syspath_prepend(tmp_path / "src/dist1")
