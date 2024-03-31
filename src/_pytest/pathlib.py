@@ -773,6 +773,11 @@ def resolve_pkg_root_and_module_name(
         pkg_root = pkg_path.parent
         if consider_namespace_packages:
             for candidate in (pkg_root, *pkg_root.parents):
+                # If any of the parent paths has an __init__.py, it means it is not a namespace package:
+                # https://packaging.python.org/en/latest/guides/packaging-namespace-packages
+                if (candidate / "__init__.py").is_file():
+                    break
+
                 if _is_namespace_package(candidate):
                     # Point the pkg_root to the root of the namespace package.
                     pkg_root = candidate.parent
@@ -788,12 +793,6 @@ def resolve_pkg_root_and_module_name(
 
 
 def _is_namespace_package(module_path: Path) -> bool:
-    # If the path has an __init__.py file, it means it is not
-    # a namespace package:
-    # https://packaging.python.org/en/latest/guides/packaging-namespace-packages
-    if (module_path / "__init__.py").is_file():
-        return False
-
     module_name = module_path.name
 
     # Empty module names break find_spec.

@@ -1226,10 +1226,25 @@ class TestNamespacePackages:
         models_py, algorithms_py = self.setup_directories(
             tmp_path, monkeypatch, pytester
         )
-        # Namespace packages must not have an __init__.py at any of its
-        # directories; if it does, we then fall back to importing just the
-        # part of the package containing the __init__.py files.
+        # Namespace packages must not have an __init__.py at its top-level
+        # directory; if it does, it is no longer a namespace package and we fall back
+        # to importing just the part of the package containing the __init__.py files.
         (tmp_path / "src/dist1/com/__init__.py").touch()
+
+        # Ensure Python no longer considers dist1/com a namespace package.
+        r = pytester.runpython_c(
+            dedent(
+                f"""
+                import sys
+                sys.path.append(r{str(tmp_path / "src/dist1")!r})
+                sys.path.append(r{str(tmp_path / "src/dist2")!r})
+                import com.company.app.core.models
+                import com.company.calc.algo.algorithms
+                """
+            )
+        )
+        assert r.ret == 1
+        r.stderr.fnmatch_lines("*No module named 'com.company.calc*")
 
         pkg_root, module_name = resolve_pkg_root_and_module_name(
             models_py, consider_namespace_packages=True
