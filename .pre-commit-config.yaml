@@ -50,6 +50,13 @@ repos:
       additional_dependencies: ["tox>=4.9"]
 -   repo: local
     hooks:
+    - id: pylint
+      name: pylint
+      entry: pylint
+      language: system
+      types: [python]
+      args: ["-rn", "-sn", "--fail-on=I"]
+      stages: [manual]
     -   id: rst
         name: rst
         entry: rst-lint --encoding utf-8

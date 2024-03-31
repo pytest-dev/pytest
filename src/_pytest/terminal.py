@@ -1267,7 +1267,7 @@ class TerminalReporter:
 
     def _set_main_color(self) -> None:
         unknown_types: List[str] = []
-        for found_type in self.stats.keys():
+        for found_type in self.stats:
             if found_type:  # setup/teardown reports have an empty key, ignore them
                 if found_type not in KNOWN_TYPES and found_type not in unknown_types:
                     unknown_types.append(found_type)
