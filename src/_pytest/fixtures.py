@@ -1821,7 +1821,10 @@ def _show_fixtures_per_test(config: Config, session: "Session") -> None:
         fixture_doc = inspect.getdoc(fixture_def.func)
         if fixture_doc:
             write_docstring(
-                tw, fixture_doc.split("\n\n")[0] if verbose <= 0 else fixture_doc
+                tw,
+                fixture_doc.split("\n\n", maxsplit=1)[0]
+                if verbose <= 0
+                else fixture_doc,
             )
         else:
             tw.line("    no docstring available", red=True)
@@ -1903,7 +1906,9 @@ def _showfixtures_main(config: Config, session: "Session") -> None:
         tw.write("\n")
         doc = inspect.getdoc(fixturedef.func)
         if doc:
-            write_docstring(tw, doc.split("\n\n")[0] if verbose <= 0 else doc)
+            write_docstring(
+                tw, doc.split("\n\n", maxsplit=1)[0] if verbose <= 0 else doc
+            )
         else:
             tw.line("    no docstring available", red=True)
         tw.line()

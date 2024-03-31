@@ -276,7 +276,6 @@ disable = [
     "useless-else-on-loop",
     "useless-import-alias",
     "useless-return",
-    "use-maxsplit-arg",
     "using-constant-test",
     "wrong-import-order",
 ]
