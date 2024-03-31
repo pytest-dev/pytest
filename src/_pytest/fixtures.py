@@ -1035,14 +1035,25 @@ class FixtureDef(Generic[FixtureValue]):
             raise BaseExceptionGroup(msg, exceptions[::-1])
 
     def execute(self, request: SubRequest) -> FixtureValue:
-        finalizer = functools.partial(self.finish, request=request)
-        # Get required arguments and register our own finish()
-        # with their finalization.
+        """Return the value of this fixture, executing it if not cached."""
+        # Ensure that the dependent fixtures requested by this fixture are loaded.
+        # This needs to be done before checking if we have a cached value, since
+        # if a dependent fixture has their cache invalidated, e.g. due to
+        # parametrization, they finalize themselves and fixtures depending on it
+        # (which will likely include this fixture) setting `self.cached_result = None`.
+        # See #4871
+        requested_fixtures_that_should_finalize_us = []
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
+            # Saves requested fixtures in a list so we later can add our finalizer
+            # to them, ensuring that if a requested fixture gets torn down we get torn
+            # down first. This is generally handled by SetupState, but still currently
+            # needed when this fixture is not parametrized but depends on a parametrized
+            # fixture.
             if not isinstance(fixturedef, PseudoFixtureDef):
-                fixturedef.addfinalizer(finalizer)
+                requested_fixtures_that_should_finalize_us.append(fixturedef)
 
+        # Check for (and return) cached value/exception.
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
             cache_key = self.cached_result[1]
@@ -1059,6 +1070,13 @@ class FixtureDef(Generic[FixtureValue]):
             # so we need to tear it down before creating a new one.
             self.finish(request)
             assert self.cached_result is None
+
+        # Add finalizer to requested fixtures we saved previously.
+        # We make sure to do this after checking for cached value to avoid
+        # adding our finalizer multiple times. (#12135)
+        finalizer = functools.partial(self.finish, request=request)
+        for parent_fixture in requested_fixtures_that_should_finalize_us:
+            parent_fixture.addfinalizer(finalizer)
 
         ihook = request.node.ihook
         try:

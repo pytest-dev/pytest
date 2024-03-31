@@ -4751,3 +4751,55 @@ def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_subfixture_teardown_order(pytester: Pytester) -> None:
+    """
+    Make sure fixtures don't re-register their finalization in parent fixtures multiple
+    times, causing ordering failure in their teardowns.
+
+    Regression test for #12135
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        execution_order = []
+
+        @pytest.fixture(scope="class")
+        def fixture_1():
+            ...
+
+        @pytest.fixture(scope="class")
+        def fixture_2(fixture_1):
+            execution_order.append("setup 2")
+            yield
+            execution_order.append("teardown 2")
+
+        @pytest.fixture(scope="class")
+        def fixture_3(fixture_1):
+            execution_order.append("setup 3")
+            yield
+            execution_order.append("teardown 3")
+
+        class TestFoo:
+            def test_initialize_fixtures(self, fixture_2, fixture_3):
+                ...
+
+            # This would previously reschedule fixture_2's finalizer in the parent fixture,
+            # causing it to be torn down before fixture 3.
+            def test_reschedule_fixture_2(self, fixture_2):
+                ...
+
+            # Force finalization directly on fixture_1
+            # Otherwise the cleanup would sequence 3&2 before 1 as normal.
+            @pytest.mark.parametrize("fixture_1", [None], indirect=["fixture_1"])
+            def test_finalize_fixture_1(self, fixture_1):
+                ...
+
+        def test_result():
+            assert execution_order == ["setup 2", "setup 3", "teardown 3", "teardown 2"]
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
