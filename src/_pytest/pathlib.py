@@ -795,16 +795,14 @@ def resolve_pkg_root_and_module_name(
 def _is_namespace_package(module_path: Path) -> bool:
     module_name = module_path.name
 
-    # Empty module names break find_spec.
+    # Empty module names (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
     if not module_name:
         return False
 
-    # Modules starting with "." indicate relative imports and break find_spec, and we are only attempting
-    # to find top-level namespace packages anyway.
-    if module_name.startswith("."):
+    try:
+        spec = importlib.util.find_spec(module_name)
+    except ImportError:
         return False
-
-    spec = importlib.util.find_spec(module_name)
     if spec is not None and spec.submodule_search_locations:
         # Found a spec, however make sure the module_path is in one of the search locations --
         # this ensures common module name like "src" (which might be in sys.path under different locations)

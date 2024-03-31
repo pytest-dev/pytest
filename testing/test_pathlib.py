@@ -17,6 +17,7 @@ from typing import Tuple
 import unittest.mock
 
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import _is_namespace_package
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import CouldNotResolvePathError
@@ -1311,3 +1312,15 @@ class TestNamespacePackages:
             tmp_path / "src/dist1",
             "com.company.app.core.models",
         )
+
+    def test_is_namespace_package_bad_arguments(self, pytester: Pytester) -> None:
+        pytester.syspathinsert()
+        path = pytester.path / "bar.x"
+        path.mkdir()
+        assert _is_namespace_package(path) is False
+
+        path = pytester.path / ".bar.x"
+        path.mkdir()
+        assert _is_namespace_package(path) is False
+
+        assert _is_namespace_package(Path()) is False
