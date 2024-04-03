@@ -224,8 +224,8 @@ place the objects you want to appear in the doctest namespace:
 .. code-block:: python
 
     # content of conftest.py
+    import pytest
     import numpy
-
 
     @pytest.fixture(autouse=True)
     def add_np(doctest_namespace):
