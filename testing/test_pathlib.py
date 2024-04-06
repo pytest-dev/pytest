@@ -1170,7 +1170,6 @@ class TestNamespacePackages:
         algorithms_py = tmp_path / "src/dist2/com/company/calc/algo/algorithms.py"
         algorithms_py.write_text(code, encoding="UTF-8")
 
-        # Validate the namespace package by importing it in a Python subprocess.
         r = validate_namespace_package(
             pytester,
             [tmp_path / "src/dist1", tmp_path / "src/dist2"],
@@ -1252,11 +1251,13 @@ class TestNamespacePackages:
             tmp_path, monkeypatch, pytester
         )
         # Namespace packages must not have an __init__.py at its top-level
-        # directory; if it does, it is no longer a namespace package and we fall back
+        # directory; if it does, it is no longer a namespace package, and we fall back
         # to importing just the part of the package containing the __init__.py files.
         (tmp_path / "src/dist1/com/__init__.py").touch()
 
-        # Ensure Python no longer considers dist1/com a namespace package.
+        # Because of the __init__ file, 'com' is no longer a namespace package:
+        # 'com.company.app' is importable as a normal module.
+        # 'com.company.calc' is no longer importable because 'com' is not a namespace package anymore.
         r = validate_namespace_package(
             pytester,
             [tmp_path / "src/dist1", tmp_path / "src/dist2"],
@@ -1265,8 +1266,6 @@ class TestNamespacePackages:
         assert r.ret == 1
         r.stderr.fnmatch_lines("*No module named 'com.company.calc*")
 
-        # dist1 is not a namespace package, but its module is importable; not being a namespace
-        # package prevents "com.company.calc" from being importable.
         pkg_root, module_name = resolve_pkg_root_and_module_name(
             models_py, consider_namespace_packages=True
         )
@@ -1342,30 +1341,6 @@ class TestNamespacePackages:
             "com.company.app.core.models",
         )
 
-    def test_is_importable_bad_arguments(self, pytester: Pytester) -> None:
-        pytester.syspathinsert()
-        path = pytester.path / "bar.x"
-        path.mkdir()
-        assert is_importable(path.parent, path) is False
-
-        path = pytester.path / ".bar.x"
-        path.mkdir()
-        assert is_importable(path.parent, path) is False
-
-    def test_compute_module_name(self, tmp_path: Path) -> None:
-        assert compute_module_name(tmp_path, tmp_path) == ""
-        assert compute_module_name(Path(), Path()) == ""
-
-        assert compute_module_name(tmp_path, tmp_path / "mod.py") == "mod"
-        assert compute_module_name(tmp_path, tmp_path / "src/app/bar") == "src.app.bar"
-        assert (
-            compute_module_name(tmp_path, tmp_path / "src/app/bar.py") == "src.app.bar"
-        )
-        assert (
-            compute_module_name(tmp_path, tmp_path / "src/app/bar/__init__.py")
-            == "src.app.bar"
-        )
-
     @pytest.mark.parametrize("insert", [True, False])
     def test_full_ns_packages_without_init_files(
         self, pytester: Pytester, tmp_path: Path, monkeypatch: MonkeyPatch, insert: bool
@@ -1396,6 +1371,30 @@ class TestNamespacePackages:
         assert resolve_pkg_root_and_module_name(
             tmp_path / "src/dist2/ns/a/core/foo/m.py", consider_namespace_packages=True
         ) == (tmp_path / "src/dist2", "ns.a.core.foo.m")
+
+
+def test_is_importable_bad_arguments(pytester: Pytester) -> None:
+    pytester.syspathinsert()
+    path = pytester.path / "bar.x"
+    path.mkdir()
+    assert is_importable(path.parent, path) is False
+
+    path = pytester.path / ".bar.x"
+    path.mkdir()
+    assert is_importable(path.parent, path) is False
+
+
+def test_compute_module_name(tmp_path: Path) -> None:
+    assert compute_module_name(tmp_path, tmp_path) == ""
+    assert compute_module_name(Path(), Path()) == ""
+
+    assert compute_module_name(tmp_path, tmp_path / "mod.py") == "mod"
+    assert compute_module_name(tmp_path, tmp_path / "src/app/bar") == "src.app.bar"
+    assert compute_module_name(tmp_path, tmp_path / "src/app/bar.py") == "src.app.bar"
+    assert (
+        compute_module_name(tmp_path, tmp_path / "src/app/bar/__init__.py")
+        == "src.app.bar"
+    )
 
 
 def validate_namespace_package(
