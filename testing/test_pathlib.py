@@ -18,9 +18,9 @@ from typing import Tuple
 import unittest.mock
 
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.pathlib import _is_importable
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
+from _pytest.pathlib import compute_module_name
 from _pytest.pathlib import CouldNotResolvePathError
 from _pytest.pathlib import ensure_deletable
 from _pytest.pathlib import fnmatch_ex
@@ -30,6 +30,7 @@ from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportMode
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import insert_missing_modules
+from _pytest.pathlib import is_importable
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
@@ -1321,13 +1322,25 @@ class TestNamespacePackages:
         pytester.syspathinsert()
         path = pytester.path / "bar.x"
         path.mkdir()
-        assert _is_importable(path.parent, path) is False
+        assert is_importable(path.parent, path) is False
 
         path = pytester.path / ".bar.x"
         path.mkdir()
-        assert _is_importable(path.parent, path) is False
+        assert is_importable(path.parent, path) is False
 
-        assert _is_importable(Path(), Path()) is False
+    def test_compute_module_name(self, tmp_path: Path) -> None:
+        assert compute_module_name(tmp_path, tmp_path) == ""
+        assert compute_module_name(Path(), Path()) == ""
+
+        assert compute_module_name(tmp_path, tmp_path / "mod.py") == "mod"
+        assert compute_module_name(tmp_path, tmp_path / "src/app/bar") == "src.app.bar"
+        assert (
+            compute_module_name(tmp_path, tmp_path / "src/app/bar.py") == "src.app.bar"
+        )
+        assert (
+            compute_module_name(tmp_path, tmp_path / "src/app/bar/__init__.py")
+            == "src.app.bar"
+        )
 
     @pytest.mark.parametrize("insert", [True, False])
     def test_full_ns_packages_without_init_files(
@@ -1362,14 +1375,21 @@ class TestNamespacePackages:
 
 
 def validate_namespace_package(
-    pytester: Pytester, paths: Sequence[Path], imports: Sequence[str]
+    pytester: Pytester, paths: Sequence[Path], modules: Sequence[str]
 ) -> RunResult:
-    """Validate a Python namespace package by importing modules from  it in a Python subprocess"""
+    """
+    Validate that a Python namespace package is set up correctly.
+
+    In a sub interpreter, add 'paths' to sys.path and attempt to import the given modules.
+
+    In this module many tests configure a set of files as a namespace package, this function
+    is used as sanity check that our files are configured correctly from the point of view of Python.
+    """
     lines = [
         "import sys",
         # Configure sys.path.
         *[f"sys.path.append(r{str(x)!r})" for x in paths],
         # Imports.
-        *[f"import {x}" for x in imports],
+        *[f"import {x}" for x in modules],
     ]
     return pytester.runpython_c("\n".join(lines))

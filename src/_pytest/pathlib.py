@@ -37,8 +37,6 @@ from typing import Union
 import uuid
 import warnings
 
-from typing_extensions import TypeGuard
-
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
@@ -637,6 +635,7 @@ def _import_module_using_spec(
         spec = importlib.util.spec_from_file_location(module_name, str(module_path))
 
     if spec_matches_module_path(spec, module_path):
+        assert spec is not None
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
@@ -649,7 +648,8 @@ def _import_module_using_spec(
 
 def spec_matches_module_path(
     module_spec: Optional[ModuleSpec], module_path: Path
-) -> TypeGuard[ModuleSpec]:
+) -> bool:
+    """Return true if the given ModuleSpec can be used to import the given module path."""
     if module_spec is not None and module_spec.origin is not None:
         if Path(module_spec.origin) == module_path:
             return True
@@ -775,7 +775,7 @@ def resolve_pkg_root_and_module_name(
     Passing the full path to `models.py` will yield Path("src") and "app.core.models".
 
     If consider_namespace_packages is True, then we additionally check upwards in the hierarchy
-    until we find a directory that is reachable from sys.path, which marks it as a namespace package:
+    for namespace packages:
 
     https://packaging.python.org/en/latest/guides/packaging-namespace-packages
 
@@ -788,39 +788,48 @@ def resolve_pkg_root_and_module_name(
     if consider_namespace_packages:
         start = path.parent if pkg_path is None else pkg_path.parent
         for candidate in (start, *start.parents):
-            if _is_importable(candidate, path):
+            if is_importable(candidate, path):
                 # Point the pkg_root to the root of the namespace package.
-                pkg_root = candidate.parent
+                pkg_root = candidate
                 break
 
     if pkg_root is not None:
-        names = list(path.with_suffix("").relative_to(pkg_root).parts)
-        if names[-1] == "__init__":
-            names.pop()
-        module_name = ".".join(names)
+        module_name = compute_module_name(pkg_root, path)
         return pkg_root, module_name
 
     raise CouldNotResolvePathError(f"Could not resolve for {path}")
 
 
-def _is_importable(root: Path, path: Path) -> bool:
+def is_importable(root: Path, module_path: Path) -> bool:
+    """
+    Return if the given module path could be imported normally by Python, akin to the user
+    entering the REPL and importing the corresponding module name directly.
+    """
+    module_name = compute_module_name(root, module_path)
     try:
-        path_without_suffix = path.with_suffix("")
-    except ValueError:
-        # Empty paths (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
-        return False
-
-    names = list(path_without_suffix.relative_to(root.parent).parts)
-    if names[-1] == "__init__":
-        names.pop()
-    module_name = ".".join(names)
-
-    try:
+        # Note this is different from what we do in ``import_path``, where we also search sys.meta_path.
+        # Searching sys.meta_path will eventually find a spec which can load the file even if the interpreter would
+        # not find this module normally in the REPL, which is exactly what we want to be able to do in
+        # ``import_path``, but not here.
         spec = importlib.util.find_spec(module_name)
     except (ImportError, ValueError, ImportWarning):
         return False
     else:
-        return spec_matches_module_path(spec, path)
+        return spec_matches_module_path(spec, module_path)
+
+
+def compute_module_name(root: Path, path: Path) -> str:
+    """Compute a module name based on a path and a root anchor."""
+    try:
+        path_without_suffix = path.with_suffix("")
+    except ValueError:
+        # Empty paths (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
+        return ""
+
+    names = list(path_without_suffix.relative_to(root).parts)
+    if names and names[-1] == "__init__":
+        names.pop()
+    return ".".join(names)
 
 
 class CouldNotResolvePathError(Exception):
