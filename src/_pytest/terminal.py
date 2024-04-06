@@ -1409,7 +1409,7 @@ def _get_line_with_reprcrash_message(
         pass
     else:
         if not running_on_ci():
-            if config.get_verbosity() >= 2:
+            if config.get_verbosity(Config.VERBOSITY_TEST_CASES) >= 2:
                 available_width = 500
             else:
                 available_width = tw.fullwidth - line_width
