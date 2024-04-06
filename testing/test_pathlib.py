@@ -18,7 +18,7 @@ from typing import Tuple
 import unittest.mock
 
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.pathlib import _is_namespace_package
+from _pytest.pathlib import _is_importable
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import CouldNotResolvePathError
@@ -723,12 +723,13 @@ class TestImportLibMode:
         assert result == "_env_310.tests.test_foo"
 
     def test_resolve_pkg_root_and_module_name(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
+        self, tmp_path: Path, monkeypatch: MonkeyPatch, pytester: Pytester
     ) -> None:
         # Create a directory structure first without __init__.py files.
         (tmp_path / "src/app/core").mkdir(parents=True)
         models_py = tmp_path / "src/app/core/models.py"
         models_py.touch()
+
         with pytest.raises(CouldNotResolvePathError):
             _ = resolve_pkg_root_and_module_name(models_py)
 
@@ -744,6 +745,8 @@ class TestImportLibMode:
 
         # If we add tmp_path to sys.path, src becomes a namespace package.
         monkeypatch.syspath_prepend(tmp_path)
+        validate_namespace_package(pytester, [tmp_path], ["src.app.core.models"])
+
         assert resolve_pkg_root_and_module_name(
             models_py, consider_namespace_packages=True
         ) == (
@@ -1143,7 +1146,7 @@ class TestNamespacePackages:
         algorithms_py.touch()
 
         # Validate the namespace package by importing it in a Python subprocess.
-        r = self.run_ns_imports(
+        r = validate_namespace_package(
             pytester,
             [tmp_path / "src/dist1", tmp_path / "src/dist2"],
             ["com.company.app.core.models", "com.company.calc.algo.algorithms"],
@@ -1153,19 +1156,6 @@ class TestNamespacePackages:
             monkeypatch.syspath_prepend(tmp_path / "src/dist1")
             monkeypatch.syspath_prepend(tmp_path / "src/dist2")
         return models_py, algorithms_py
-
-    def run_ns_imports(
-        self, pytester: Pytester, paths: Sequence[Path], imports: Sequence[str]
-    ) -> RunResult:
-        """Validate a Python namespace package by importing modules from  it in a Python subprocess"""
-        lines = [
-            "import sys",
-            # Configure sys.path.
-            *[f"sys.path.append(r{str(x)!r})" for x in paths],
-            # Imports.
-            *[f"import {x}" for x in imports],
-        ]
-        return pytester.runpython_c("\n".join(lines))
 
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
     def test_resolve_pkg_root_and_module_name_ns_multiple_levels(
@@ -1242,7 +1232,7 @@ class TestNamespacePackages:
         (tmp_path / "src/dist1/com/__init__.py").touch()
 
         # Ensure Python no longer considers dist1/com a namespace package.
-        r = self.run_ns_imports(
+        r = validate_namespace_package(
             pytester,
             [tmp_path / "src/dist1", tmp_path / "src/dist2"],
             ["com.company.app.core.models", "com.company.calc.algo.algorithms"],
@@ -1250,12 +1240,23 @@ class TestNamespacePackages:
         assert r.ret == 1
         r.stderr.fnmatch_lines("*No module named 'com.company.calc*")
 
+        # dist1 is not a namespace package, but its module is importable; not being a namespace
+        # package prevents "com.company.calc" from being importable.
         pkg_root, module_name = resolve_pkg_root_and_module_name(
             models_py, consider_namespace_packages=True
         )
         assert (pkg_root, module_name) == (
-            tmp_path / "src/dist1/com/company",
-            "app.core.models",
+            tmp_path / "src/dist1",
+            "com.company.app.core.models",
+        )
+
+        # dist2/com/company will contain a normal Python package.
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            algorithms_py, consider_namespace_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist2/com/company",
+            "calc.algo.algorithms",
         )
 
     def test_detect_meta_path(
@@ -1316,34 +1317,34 @@ class TestNamespacePackages:
             "com.company.app.core.models",
         )
 
-    def test_is_namespace_package_bad_arguments(self, pytester: Pytester) -> None:
+    def test_is_importable_bad_arguments(self, pytester: Pytester) -> None:
         pytester.syspathinsert()
         path = pytester.path / "bar.x"
         path.mkdir()
-        assert _is_namespace_package(path) is False
+        assert _is_importable(path.parent, path) is False
 
         path = pytester.path / ".bar.x"
         path.mkdir()
-        assert _is_namespace_package(path) is False
+        assert _is_importable(path.parent, path) is False
 
-        assert _is_namespace_package(Path()) is False
+        assert _is_importable(Path(), Path()) is False
 
-    def test_intermediate_init_file(
-        self, pytester: Pytester, tmp_path: Path, monkeypatch: MonkeyPatch
+    @pytest.mark.parametrize("insert", [True, False])
+    def test_full_ns_packages_without_init_files(
+        self, pytester: Pytester, tmp_path: Path, monkeypatch: MonkeyPatch, insert: bool
     ) -> None:
         (tmp_path / "src/dist1/ns/b/app/bar/test").mkdir(parents=True)
-        # (tmp_path / "src/dist1/ns/b/app/bar/test/__init__.py").touch()
         (tmp_path / "src/dist1/ns/b/app/bar/m.py").touch()
 
-        # The presence of this __init__.py is not a problem, ns.b.app is still part of the namespace package.
-        (tmp_path / "src/dist1/ns/b/app/__init__.py").touch()
+        if insert:
+            # The presence of this __init__.py is not a problem, ns.b.app is still part of the namespace package.
+            (tmp_path / "src/dist1/ns/b/app/__init__.py").touch()
 
         (tmp_path / "src/dist2/ns/a/core/foo/test").mkdir(parents=True)
-        # (tmp_path / "src/dist2/ns/a/core/foo/test/__init__.py").touch()
         (tmp_path / "src/dist2/ns/a/core/foo/m.py").touch()
 
         # Validate the namespace package by importing it in a Python subprocess.
-        r = self.run_ns_imports(
+        r = validate_namespace_package(
             pytester,
             [tmp_path / "src/dist1", tmp_path / "src/dist2"],
             ["ns.b.app.bar.m", "ns.a.core.foo.m"],
@@ -1358,3 +1359,17 @@ class TestNamespacePackages:
         assert resolve_pkg_root_and_module_name(
             tmp_path / "src/dist2/ns/a/core/foo/m.py", consider_namespace_packages=True
         ) == (tmp_path / "src/dist2", "ns.a.core.foo.m")
+
+
+def validate_namespace_package(
+    pytester: Pytester, paths: Sequence[Path], imports: Sequence[str]
+) -> RunResult:
+    """Validate a Python namespace package by importing modules from  it in a Python subprocess"""
+    lines = [
+        "import sys",
+        # Configure sys.path.
+        *[f"sys.path.append(r{str(x)!r})" for x in paths],
+        # Imports.
+        *[f"import {x}" for x in imports],
+    ]
+    return pytester.runpython_c("\n".join(lines))

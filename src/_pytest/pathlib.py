@@ -8,6 +8,7 @@ from errno import ENOENT
 from errno import ENOTDIR
 import fnmatch
 from functools import partial
+from importlib.machinery import ModuleSpec
 import importlib.util
 import itertools
 import os
@@ -35,6 +36,8 @@ from typing import TypeVar
 from typing import Union
 import uuid
 import warnings
+
+from typing_extensions import TypeGuard
 
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
@@ -628,11 +631,12 @@ def _import_module_using_spec(
     # such as our own assertion-rewrite hook.
     for meta_importer in sys.meta_path:
         spec = meta_importer.find_spec(module_name, [str(module_location)])
-        if spec is not None:
+        if spec_matches_module_path(spec, module_path):
             break
     else:
         spec = importlib.util.spec_from_file_location(module_name, str(module_path))
-    if spec is not None:
+
+    if spec_matches_module_path(spec, module_path):
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
@@ -641,6 +645,15 @@ def _import_module_using_spec(
         return mod
 
     return None
+
+
+def spec_matches_module_path(
+    module_spec: Optional[ModuleSpec], module_path: Path
+) -> TypeGuard[ModuleSpec]:
+    if module_spec is not None and module_spec.origin is not None:
+        if Path(module_spec.origin) == module_path:
+            return True
+    return False
 
 
 # Implement a special _is_same function on Windows which returns True if the two filenames
@@ -768,21 +781,19 @@ def resolve_pkg_root_and_module_name(
 
     Raises CouldNotResolvePathError if the given path does not belong to a package (missing any __init__.py files).
     """
+    pkg_root: Optional[Path] = None
     pkg_path = resolve_package_path(path)
     if pkg_path is not None:
         pkg_root = pkg_path.parent
-        if consider_namespace_packages:
-            for candidate in (pkg_root, *pkg_root.parents):
-                # If any of the parent paths has an __init__.py, it means it is not a namespace package:
-                # https://packaging.python.org/en/latest/guides/packaging-namespace-packages
-                if (candidate / "__init__.py").is_file():
-                    break
+    if consider_namespace_packages:
+        start = path.parent if pkg_path is None else pkg_path.parent
+        for candidate in (start, *start.parents):
+            if _is_importable(candidate, path):
+                # Point the pkg_root to the root of the namespace package.
+                pkg_root = candidate.parent
+                break
 
-                if _is_namespace_package(candidate):
-                    # Point the pkg_root to the root of the namespace package.
-                    pkg_root = candidate.parent
-                    break
-
+    if pkg_root is not None:
         names = list(path.with_suffix("").relative_to(pkg_root).parts)
         if names[-1] == "__init__":
             names.pop()
@@ -792,25 +803,24 @@ def resolve_pkg_root_and_module_name(
     raise CouldNotResolvePathError(f"Could not resolve for {path}")
 
 
-def _is_namespace_package(module_path: Path) -> bool:
-    module_name = module_path.name
-
-    # Empty module names (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
-    if not module_name:
+def _is_importable(root: Path, path: Path) -> bool:
+    try:
+        path_without_suffix = path.with_suffix("")
+    except ValueError:
+        # Empty paths (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
         return False
+
+    names = list(path_without_suffix.relative_to(root.parent).parts)
+    if names[-1] == "__init__":
+        names.pop()
+    module_name = ".".join(names)
 
     try:
         spec = importlib.util.find_spec(module_name)
-    except ImportError:
+    except (ImportError, ValueError, ImportWarning):
         return False
-    if spec is not None and spec.submodule_search_locations:
-        # Found a spec, however make sure the module_path is in one of the search locations --
-        # this ensures common module name like "src" (which might be in sys.path under different locations)
-        # is only considered for the module_path we intend to.
-        # Make sure to compare Path(s) instead of strings, this normalizes them on Windows.
-        if module_path in [Path(x) for x in spec.submodule_search_locations]:
-            return True
-    return False
+    else:
+        return spec_matches_module_path(spec, path)
 
 
 class CouldNotResolvePathError(Exception):
