@@ -650,10 +650,10 @@ def spec_matches_module_path(
     module_spec: Optional[ModuleSpec], module_path: Path
 ) -> bool:
     """Return true if the given ModuleSpec can be used to import the given module path."""
-    if module_spec is not None and module_spec.origin is not None:
-        if Path(module_spec.origin) == module_path:
-            return True
-    return False
+    if module_spec is None or module_spec.origin is None:
+        return False
+
+    return Path(module_spec.origin) == module_path
 
 
 # Implement a special _is_same function on Windows which returns True if the two filenames
