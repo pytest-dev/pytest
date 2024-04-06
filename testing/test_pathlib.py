@@ -1129,22 +1129,46 @@ def test_safe_exists(tmp_path: Path) -> None:
 class TestNamespacePackages:
     """Test import_path support when importing from properly namespace packages."""
 
+    @pytest.fixture(autouse=True)
+    def setup_imports_tracking(self, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setattr(sys, "pytest_namespace_packages_test", [], raising=False)
+
     def setup_directories(
         self, tmp_path: Path, monkeypatch: Optional[MonkeyPatch], pytester: Pytester
     ) -> Tuple[Path, Path]:
+        # Use a code to guard against modules being imported more than once.
+        # This is a safeguard in case future changes break this invariant.
+        code = dedent(
+            """
+            import sys
+            imported = getattr(sys, "pytest_namespace_packages_test", [])
+            assert __name__ not in imported, f"{__name__} already imported"
+            imported.append(__name__)
+            sys.pytest_namespace_packages_test = imported
+            """
+        )
+
         # Set up a namespace package "com.company", containing
         # two subpackages, "app" and "calc".
         (tmp_path / "src/dist1/com/company/app/core").mkdir(parents=True)
-        (tmp_path / "src/dist1/com/company/app/__init__.py").touch()
-        (tmp_path / "src/dist1/com/company/app/core/__init__.py").touch()
+        (tmp_path / "src/dist1/com/company/app/__init__.py").write_text(
+            code, encoding="UTF-8"
+        )
+        (tmp_path / "src/dist1/com/company/app/core/__init__.py").write_text(
+            code, encoding="UTF-8"
+        )
         models_py = tmp_path / "src/dist1/com/company/app/core/models.py"
         models_py.touch()
 
         (tmp_path / "src/dist2/com/company/calc/algo").mkdir(parents=True)
-        (tmp_path / "src/dist2/com/company/calc/__init__.py").touch()
-        (tmp_path / "src/dist2/com/company/calc/algo/__init__.py").touch()
+        (tmp_path / "src/dist2/com/company/calc/__init__.py").write_text(
+            code, encoding="UTF-8"
+        )
+        (tmp_path / "src/dist2/com/company/calc/algo/__init__.py").write_text(
+            code, encoding="UTF-8"
+        )
         algorithms_py = tmp_path / "src/dist2/com/company/calc/algo/algorithms.py"
-        algorithms_py.touch()
+        algorithms_py.write_text(code, encoding="UTF-8")
 
         # Validate the namespace package by importing it in a Python subprocess.
         r = validate_namespace_package(
