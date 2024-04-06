@@ -1,0 +1,1 @@
+cache: create cache directory supporting files (``CACHEDIR.TAG``, ``.gitignore``, etc.) in a temporary directory to provide atomic semantics.
