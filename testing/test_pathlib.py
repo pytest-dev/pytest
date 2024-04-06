@@ -1377,11 +1377,11 @@ def test_is_importable_bad_arguments(pytester: Pytester) -> None:
     pytester.syspathinsert()
     path = pytester.path / "bar.x"
     path.mkdir()
-    assert is_importable(path.parent, path) is False
+    assert is_importable("bar.x", path) is False
 
     path = pytester.path / ".bar.x"
     path.mkdir()
-    assert is_importable(path.parent, path) is False
+    assert is_importable(".bar.x", path) is False
 
 
 def test_compute_module_name(tmp_path: Path) -> None:

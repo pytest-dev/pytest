@@ -788,7 +788,8 @@ def resolve_pkg_root_and_module_name(
     if consider_namespace_packages:
         start = pkg_root if pkg_root is not None else path.parent
         for candidate in (start, *start.parents):
-            if is_importable(candidate, path):
+            module_name = compute_module_name(candidate, path)
+            if is_importable(module_name, path):
                 # Point the pkg_root to the root of the namespace package.
                 pkg_root = candidate
                 break
@@ -800,17 +801,25 @@ def resolve_pkg_root_and_module_name(
     raise CouldNotResolvePathError(f"Could not resolve for {path}")
 
 
-def is_importable(root: Path, module_path: Path) -> bool:
+def is_importable(module_name: str, module_path: Path) -> bool:
     """
     Return if the given module path could be imported normally by Python, akin to the user
-    entering the REPL and importing the corresponding module name directly.
+    entering the REPL and importing the corresponding module name directly, and corresponds
+    to the module_path specified.
+
+    :param module_name:
+        Full module name that we want to check if is importable.
+        For example, "app.models".
+
+    :param module_path:
+        Full path to the python module/package we want to check if is importable.
+        For example, "/projects/src/app/models.py".
     """
-    module_name = compute_module_name(root, module_path)
     try:
-        # Note this is different from what we do in ``import_path``, where we also search sys.meta_path.
-        # Searching sys.meta_path will eventually find a spec which can load the file even if the interpreter would
-        # not find this module normally in the REPL, which is exactly what we want to be able to do in
-        # ``import_path``, but not here.
+        # Note this is different from what we do in ``_import_module_using_spec``, where we explicitly search through
+        # sys.meta_path to be able to pass the path of the module that we want to import (``meta_importer.find_spec``).
+        # Using importlib.util.find_spec() is different, it gives the same results as trying to import
+        # the module normally in the REPL.
         spec = importlib.util.find_spec(module_name)
     except (ImportError, ValueError, ImportWarning):
         return False
