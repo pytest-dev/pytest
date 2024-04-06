@@ -786,7 +786,7 @@ def resolve_pkg_root_and_module_name(
     if pkg_path is not None:
         pkg_root = pkg_path.parent
     if consider_namespace_packages:
-        start = path.parent if pkg_path is None else pkg_path.parent
+        start = pkg_root if pkg_root is not None else path.parent
         for candidate in (start, *start.parents):
             if is_importable(candidate, path):
                 # Point the pkg_root to the root of the namespace package.
