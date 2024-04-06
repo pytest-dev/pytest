@@ -1409,7 +1409,10 @@ def _get_line_with_reprcrash_message(
         pass
     else:
         if not running_on_ci():
-            available_width = tw.fullwidth - line_width
+            if config.get_verbosity() >= 2:
+                available_width = 500
+            else:
+                available_width = tw.fullwidth - line_width
             msg = _format_trimmed(" - {}", msg, available_width)
         else:
             msg = f" - {msg}"
