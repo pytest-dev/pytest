@@ -818,10 +818,10 @@ def is_importable(root: Path, module_path: Path) -> bool:
         return spec_matches_module_path(spec, module_path)
 
 
-def compute_module_name(root: Path, path: Path) -> str:
+def compute_module_name(root: Path, module_path: Path) -> str:
     """Compute a module name based on a path and a root anchor."""
     try:
-        path_without_suffix = path.with_suffix("")
+        path_without_suffix = module_path.with_suffix("")
     except ValueError:
         # Empty paths (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
         return ""
