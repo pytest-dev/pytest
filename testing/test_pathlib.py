@@ -1373,12 +1373,30 @@ class TestNamespacePackages:
         ) == (tmp_path / "src/dist2", "ns.a.core.foo.m")
 
 
-def test_is_importable_bad_arguments(pytester: Pytester) -> None:
+def test_is_importable(pytester: Pytester) -> None:
     pytester.syspathinsert()
+
+    # Module package.
+    path = pytester.path / "is_importable/foo.py"
+    path.parent.mkdir()
+    path.touch()
+    assert is_importable("is_importable.foo", path) is True
+
+    # Standalone module.
+    path = pytester.path / "is_importable_module.py"
+    path.touch()
+    assert is_importable("is_importable_module", path) is True
+
+    # Ensure that the module that can be imported points to the path we expect.
+    path = pytester.path / "some/other/path/is_importable_module.py"
+    assert is_importable("is_importable_module", path) is False
+
+    # Paths containing "." cannot be imported.
     path = pytester.path / "bar.x"
     path.mkdir()
     assert is_importable("bar.x", path) is False
 
+    # Pass starting with "." denote relative imports and cannot be checked using is_importable.
     path = pytester.path / ".bar.x"
     path.mkdir()
     assert is_importable(".bar.x", path) is False
