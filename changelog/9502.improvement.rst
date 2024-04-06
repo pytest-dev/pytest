@@ -1,0 +1,1 @@
+Added an environment variable which helps to check if a code is running from within a pytest run
