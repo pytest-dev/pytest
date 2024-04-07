@@ -2377,8 +2377,13 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
 
     monkeypatch.setattr(_pytest.terminal, "_get_node_id_with_markup", mock_get_pos)
 
+    class Namespace:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
     class config:
-        pass
+        def __init__(self):
+            object.__setattr__(self, "option", Namespace(verbose=0))
 
     class rep:
         def _get_verbose_word(self, *args):
@@ -2399,7 +2404,7 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
         if msg:
             rep.longrepr.reprcrash.message = msg  # type: ignore
         actual = _get_line_with_reprcrash_message(
-            config,  # type: ignore[arg-type]
+            config(),  # type: ignore[arg-type]
             rep(),  # type: ignore[arg-type]
             DummyTerminalWriter(),  # type: ignore[arg-type]
             {},
