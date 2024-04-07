@@ -1376,29 +1376,26 @@ class TestNamespacePackages:
 def test_is_importable(pytester: Pytester) -> None:
     pytester.syspathinsert()
 
-    # Module package.
-    path = pytester.path / "is_importable/foo.py"
+    path = pytester.path / "bar/foo.py"
     path.parent.mkdir()
     path.touch()
-    assert is_importable("is_importable.foo", path) is True
-
-    # Standalone module.
-    path = pytester.path / "is_importable_module.py"
-    path.touch()
-    assert is_importable("is_importable_module", path) is True
+    assert is_importable("bar.foo", path) is True
 
     # Ensure that the module that can be imported points to the path we expect.
-    path = pytester.path / "some/other/path/is_importable_module.py"
-    assert is_importable("is_importable_module", path) is False
+    path = pytester.path / "some/other/path/bar/foo.py"
+    path.mkdir(parents=True, exist_ok=True)
+    assert is_importable("bar.foo", path) is False
 
     # Paths containing "." cannot be imported.
-    path = pytester.path / "bar.x"
-    path.mkdir()
+    path = pytester.path / "bar.x/__init__.py"
+    path.parent.mkdir()
+    path.touch()
     assert is_importable("bar.x", path) is False
 
     # Pass starting with "." denote relative imports and cannot be checked using is_importable.
-    path = pytester.path / ".bar.x"
-    path.mkdir()
+    path = pytester.path / ".bar.x/__init__.py"
+    path.parent.mkdir()
+    path.touch()
     assert is_importable(".bar.x", path) is False
 
 
