@@ -2513,8 +2513,16 @@ def test_short_summary_with_verbose(monkeypatch: MonkeyPatch) -> None:
 
     # NOTE: constructed, not sure if this is supported.
     mocked_pos = "nodeid::🉐::withunicode"
-    check("🉐🉐🉐🉐🉐\n2nd line", 29, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐\n2nd line")
-    check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐\n2nd line")
+    check(
+        "🉐🉐🉐🉐🉐\n2nd line",
+        29,
+        "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐\n2nd line",
+    )
+    check(
+        "🉐🉐🉐🉐🉐\n2nd line",
+        80,
+        "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐\n2nd line",
+    )
 
 
 @pytest.mark.parametrize(
