@@ -1,1 +1,0 @@
-Added support for verbosity setting in the short test summary info, so that when -vv is enabled, longer text will be printed out.

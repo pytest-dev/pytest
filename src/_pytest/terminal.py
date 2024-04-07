@@ -1408,14 +1408,11 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        if not running_on_ci():
-            if isinstance(config, Config) and config.option.verbose >= 2:
-                available_width = 500
-            else:
-                available_width = tw.fullwidth - line_width
-            msg = _format_trimmed(" - {}", msg, available_width)
-        else:
+        if running_on_ci() or config.option.verbose >= 2:
             msg = f" - {msg}"
+        else:
+            available_width = tw.fullwidth - line_width
+            msg = _format_trimmed(" - {}", msg, available_width)
         if msg is not None:
             line += msg
 
