@@ -789,14 +789,15 @@ def resolve_pkg_root_and_module_name(
         start = pkg_root if pkg_root is not None else path.parent
         for candidate in (start, *start.parents):
             module_name = compute_module_name(candidate, path)
-            if is_importable(module_name, path):
+            if module_name and is_importable(module_name, path):
                 # Point the pkg_root to the root of the namespace package.
                 pkg_root = candidate
                 break
 
     if pkg_root is not None:
         module_name = compute_module_name(pkg_root, path)
-        return pkg_root, module_name
+        if module_name:
+            return pkg_root, module_name
 
     raise CouldNotResolvePathError(f"Could not resolve for {path}")
 
@@ -827,16 +828,22 @@ def is_importable(module_name: str, module_path: Path) -> bool:
         return spec_matches_module_path(spec, module_path)
 
 
-def compute_module_name(root: Path, module_path: Path) -> str:
+def compute_module_name(root: Path, module_path: Path) -> Optional[str]:
     """Compute a module name based on a path and a root anchor."""
     try:
         path_without_suffix = module_path.with_suffix("")
     except ValueError:
         # Empty paths (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
-        return ""
+        return None
 
-    names = list(path_without_suffix.relative_to(root).parts)
-    if names and names[-1] == "__init__":
+    try:
+        relative = path_without_suffix.relative_to(root)
+    except ValueError:  # pragma: no cover
+        return None
+    names = list(relative.parts)
+    if not names:
+        return None
+    if names[-1] == "__init__":
         names.pop()
     return ".".join(names)
 

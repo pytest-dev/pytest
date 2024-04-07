@@ -1400,8 +1400,8 @@ def test_is_importable(pytester: Pytester) -> None:
 
 
 def test_compute_module_name(tmp_path: Path) -> None:
-    assert compute_module_name(tmp_path, tmp_path) == ""
-    assert compute_module_name(Path(), Path()) == ""
+    assert compute_module_name(tmp_path, tmp_path) is None
+    assert compute_module_name(Path(), Path()) is None
 
     assert compute_module_name(tmp_path, tmp_path / "mod.py") == "mod"
     assert compute_module_name(tmp_path, tmp_path / "src/app/bar") == "src.app.bar"
