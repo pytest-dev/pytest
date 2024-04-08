@@ -2383,7 +2383,7 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
 
     class config:
         def __init__(self):
-            object.__setattr__(self, "option", Namespace(verbose=0))
+            self.option = Namespace(verbose=0)
 
     class rep:
         def _get_verbose_word(self, *args):
@@ -2448,80 +2448,40 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
     check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐")
 
 
-def test_short_summary_with_verbose(monkeypatch: MonkeyPatch) -> None:
-    mocked_verbose_word = "FAILED"
+def test_short_summary_with_verbose(
+    monkeypatch: MonkeyPatch, pytester: Pytester
+) -> None:
+    """With -vv do not truncate the summary info (#11777)."""
+    # On CI we also do not truncate the summary info, monkeypatch it to ensure we
+    # are testing against the -vv flag on CI.
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
 
-    mocked_pos = "some::nodeid"
-
-    def mock_running_on_ci():
-        return False
-
-    def mock_get_pos(*args):
-        return mocked_pos
-
-    monkeypatch.setattr(_pytest.terminal, "_get_node_id_with_markup", mock_get_pos)
-    monkeypatch.setattr(_pytest.terminal, "running_on_ci", mock_running_on_ci)
-
-    class Namespace:
-        def __init__(self, **kwargs):
-            self.__dict__.update(kwargs)
-
-    class config:
-        def __init__(self):
-            object.__setattr__(self, "option", Namespace(verbose=2))
-
-    class rep:
-        def _get_verbose_word(self, *args):
-            return mocked_verbose_word
-
-        class longrepr:
-            class reprcrash:
-                pass
-
-    def check(msg, width, expected):
-        class DummyTerminalWriter:
-            fullwidth = width
-
-            def markup(self, word: str, **markup: str):
-                return word
-
-        __tracebackhide__ = True
-        if msg:
-            rep.longrepr.reprcrash.message = msg  # type: ignore
-        actual = _get_line_with_reprcrash_message(
-            config(),  # type: ignore[arg-type]
-            rep(),  # type: ignore[arg-type]
-            DummyTerminalWriter(),  # type: ignore[arg-type]
-            {},
-        )
-
-        assert actual == expected
-
-    # AttributeError with message
-    check(None, 80, "FAILED some::nodeid")
-
-    check("msg", 80, "FAILED some::nodeid - msg")
-    check("msg", 3, "FAILED some::nodeid - msg")
-
-    check("some longer msg", 10, "FAILED some::nodeid - some longer msg")
-
-    check("some\nmessage", 25, "FAILED some::nodeid - some\nmessage")
-    check("some\nmessage", 80, "FAILED some::nodeid - some\nmessage")
-
-    # Test unicode safety.
-    check("🉐🉐🉐🉐🉐\n2nd line", 29, "FAILED some::nodeid - 🉐🉐🉐🉐🉐\n2nd line")
-
-    # NOTE: constructed, not sure if this is supported.
-    mocked_pos = "nodeid::🉐::withunicode"
-    check(
-        "🉐🉐🉐🉐🉐\n2nd line",
-        29,
-        "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐\n2nd line",
+    string_length = 200
+    pytester.makepyfile(
+        f"""
+        def test():
+            s1 = "A" * {string_length}
+            s2 = "B" * {string_length}
+            assert s1 == s2
+        """
     )
-    check(
-        "🉐🉐🉐🉐🉐\n2nd line",
-        80,
-        "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐\n2nd line",
+
+    # No -vv, summary info should be truncated.
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            "* assert 'AAA...",
+        ],
+    )
+
+    # No truncation with -vv.
+    result = pytester.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            f"*{'A' * string_length}*{'B' * string_length}'",
+        ]
     )
 
 
