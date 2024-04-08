@@ -7,6 +7,7 @@ import sys
 import tempfile
 import textwrap
 from typing import List
+from typing import Type
 
 from _pytest.assertion.util import running_on_ci
 from _pytest.config import ExitCode
@@ -1857,3 +1858,23 @@ def test_do_not_collect_symlink_siblings(
     # Ensure we collect it only once if we pass the symlinked directory.
     result = pytester.runpytest(symlink_path, "-sv")
     result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize("exception_class", (KeyboardInterrupt, SystemExit))
+def test_respect_system_exceptions(
+    pytester: Pytester, exception_class: Type[BaseException]
+):
+    ensure_file(pytester.path / "test_bar.py").write_text(
+        "raise SystemError()", encoding="UTF-8"
+    )
+    ensure_file(pytester.path / "test_baz.py").write_text(
+        f"raise {exception_class.__name__}()", encoding="UTF-8"
+    )
+    ensure_file(pytester.path / "test_foo.py").write_text(
+        "raise NotImplementedError()", encoding="UTF-8"
+    )
+
+    result = pytester.runpytest_subprocess()
+    result.stdout.fnmatch_lines(["*SystemError*"])
+    result.stderr.fnmatch_lines([f"*{exception_class.__name__}*"])
+    result.stdout.no_fnmatch_line("*NotImplementedError*")
