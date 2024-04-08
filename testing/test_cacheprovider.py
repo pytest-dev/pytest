@@ -1,3 +1,5 @@
+from enum import auto
+from enum import Enum
 import os
 from pathlib import Path
 import shutil
@@ -7,6 +9,7 @@ from typing import List
 from typing import Sequence
 from typing import Tuple
 
+from _pytest.compat import assert_never
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -1260,20 +1263,41 @@ class TestReadme:
         assert self.check_readme(pytester) is True
 
 
-def test_gitignore(pytester: Pytester) -> None:
+class Action(Enum):
+    """Action to perform on the cache directory."""
+
+    MKDIR = auto()
+    SET = auto()
+
+
+@pytest.mark.parametrize("action", list(Action))
+def test_gitignore(
+    pytester: Pytester,
+    action: Action,
+) -> None:
     """Ensure we automatically create .gitignore file in the pytest_cache directory (#3286)."""
     from _pytest.cacheprovider import Cache
 
     config = pytester.parseconfig()
     cache = Cache.for_config(config, _ispytest=True)
-    cache.set("foo", "bar")
+    if action == Action.MKDIR:
+        cache.mkdir("foo")
+    elif action == Action.SET:
+        cache.set("foo", "bar")
+    else:
+        assert_never(action)
     msg = "# Created by pytest automatically.\n*\n"
     gitignore_path = cache._cachedir.joinpath(".gitignore")
     assert gitignore_path.read_text(encoding="UTF-8") == msg
 
     # Does not overwrite existing/custom one.
     gitignore_path.write_text("custom", encoding="utf-8")
-    cache.set("something", "else")
+    if action == Action.MKDIR:
+        cache.mkdir("something")
+    elif action == Action.SET:
+        cache.set("something", "else")
+    else:
+        assert_never(action)
     assert gitignore_path.read_text(encoding="UTF-8") == "custom"
 
 
