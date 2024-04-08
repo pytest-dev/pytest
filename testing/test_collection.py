@@ -1866,13 +1866,13 @@ def test_respect_system_exceptions(
 ):
     head = "Before exception"
     tail = "After exception"
-    ensure_file(pytester.path / "test_bar.py").write_text(
+    ensure_file(pytester.path / "test_eggs.py").write_text(
         f"print('{head}')", encoding="UTF-8"
     )
-    ensure_file(pytester.path / "test_baz.py").write_text(
+    ensure_file(pytester.path / "test_ham.py").write_text(
         f"raise {exception_class.__name__}()", encoding="UTF-8"
     )
-    ensure_file(pytester.path / "test_foo.py").write_text(
+    ensure_file(pytester.path / "test_spam.py").write_text(
         f"print('{tail}')", encoding="UTF-8"
     )
 
