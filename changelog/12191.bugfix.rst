@@ -1,0 +1,1 @@
+Finally fixed the issue where keyboard interrupts and system exits were not being respected during the tests collection phase in pytest! No more frustration of tests not ending correctly — happy testing! 🐞🔨🎉
