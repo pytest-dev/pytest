@@ -1,9 +1,11 @@
-# mypy: allow-untyped-defs
 import os
 from pathlib import Path
 import shutil
+from typing import Any
 from typing import Generator
 from typing import List
+from typing import Sequence
+from typing import Tuple
 
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
@@ -175,7 +177,9 @@ class TestNewAPI:
 
 
 @pytest.mark.parametrize("env", ((), ("TOX_ENV_DIR", "/tox_env_dir")))
-def test_cache_reportheader(env, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+def test_cache_reportheader(
+    env: Sequence[str], pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
     pytester.makepyfile("""def test_foo(): pass""")
     if env:
         monkeypatch.setenv(*env)
@@ -507,7 +511,7 @@ class TestLastFailed:
         """
         )
 
-        def rlf(fail_import, fail_run):
+        def rlf(fail_import: int, fail_run: int) -> Any:
             monkeypatch.setenv("FAILIMPORT", str(fail_import))
             monkeypatch.setenv("FAILTEST", str(fail_run))
 
@@ -555,7 +559,9 @@ class TestLastFailed:
         """
         )
 
-        def rlf(fail_import, fail_run, args=()):
+        def rlf(
+            fail_import: int, fail_run: int, args: Sequence[str] = ()
+        ) -> Tuple[Any, Any]:
             monkeypatch.setenv("FAILIMPORT", str(fail_import))
             monkeypatch.setenv("FAILTEST", str(fail_run))
 
