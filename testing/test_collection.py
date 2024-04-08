@@ -1864,17 +1864,19 @@ def test_do_not_collect_symlink_siblings(
 def test_respect_system_exceptions(
     pytester: Pytester, exception_class: Type[BaseException]
 ):
+    head = "Before exception"
+    tail = "After exception"
     ensure_file(pytester.path / "test_bar.py").write_text(
-        "raise SystemError()", encoding="UTF-8"
+        f"print('{head}')", encoding="UTF-8"
     )
     ensure_file(pytester.path / "test_baz.py").write_text(
         f"raise {exception_class.__name__}()", encoding="UTF-8"
     )
     ensure_file(pytester.path / "test_foo.py").write_text(
-        "raise NotImplementedError()", encoding="UTF-8"
+        f"print('{tail}')", encoding="UTF-8"
     )
 
-    result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*SystemError*"])
-    result.stderr.fnmatch_lines([f"*{exception_class.__name__}*"])
-    result.stdout.no_fnmatch_line("*NotImplementedError*")
+    result = pytester.runpytest_subprocess("-s")
+    result.stdout.fnmatch_lines([f"*{head}*"])
+    result.stdout.fnmatch_lines([f"*{exception_class.__name__}*"])
+    result.stdout.no_fnmatch_line(f"*{tail}*")
