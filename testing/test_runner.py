@@ -1097,6 +1097,7 @@ def test_outcome_exception_bad_msg() -> None:
 
 
 def test_pytest_version_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    os.environ["PYTEST_VERSION"] = "old version"
     pytester.makepyfile(
         """
         import pytest
@@ -1109,4 +1110,4 @@ def test_pytest_version_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) ->
     )
     result = pytester.runpytest_inprocess()
     assert result.ret == ExitCode.OK
-    assert "PYTEST_VERSION" not in os.environ
+    assert os.environ["PYTEST_VERSION"] == "old version"

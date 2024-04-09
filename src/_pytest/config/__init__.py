@@ -153,6 +153,7 @@ def main(
     :returns: An exit code.
     """
     try:
+        old_pytest_version = os.environ.get("PYTEST_VERSION")
         os.environ["PYTEST_VERSION"] = __version__
         try:
             config = _prepareconfig(args, plugins)
@@ -189,7 +190,10 @@ def main(
             tw.line(f"ERROR: {msg}\n", red=True)
         return ExitCode.USAGE_ERROR
     finally:
-        os.environ.pop("PYTEST_VERSION", None)
+        if old_pytest_version is None:
+            os.environ.pop("PYTEST_VERSION", None)
+        else:
+            os.environ["PYTEST_VERSION"] = old_pytest_version               
 
 
 def console_main() -> int:
