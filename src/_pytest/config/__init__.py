@@ -193,7 +193,7 @@ def main(
         if old_pytest_version is None:
             os.environ.pop("PYTEST_VERSION", None)
         else:
-            os.environ["PYTEST_VERSION"] = old_pytest_version               
+            os.environ["PYTEST_VERSION"] = old_pytest_version
 
 
 def console_main() -> int:
