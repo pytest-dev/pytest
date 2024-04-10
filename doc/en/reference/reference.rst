@@ -785,6 +785,8 @@ Session related reporting hooks:
 .. autofunction:: pytest_terminal_summary
 .. hook:: pytest_fixture_setup
 .. autofunction:: pytest_fixture_setup
+.. hook:: pytest_fixture_teardown
+.. autofunction:: pytest_fixture_teardown
 .. hook:: pytest_fixture_post_finalizer
 .. autofunction:: pytest_fixture_post_finalizer
 .. hook:: pytest_warning_recorded
