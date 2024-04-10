@@ -2377,8 +2377,13 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
 
     monkeypatch.setattr(_pytest.terminal, "_get_node_id_with_markup", mock_get_pos)
 
+    class Namespace:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
     class config:
-        pass
+        def __init__(self):
+            self.option = Namespace(verbose=0)
 
     class rep:
         def _get_verbose_word(self, *args):
@@ -2399,7 +2404,7 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
         if msg:
             rep.longrepr.reprcrash.message = msg  # type: ignore
         actual = _get_line_with_reprcrash_message(
-            config,  # type: ignore[arg-type]
+            config(),  # type: ignore[arg-type]
             rep(),  # type: ignore[arg-type]
             DummyTerminalWriter(),  # type: ignore[arg-type]
             {},
@@ -2441,6 +2446,43 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
     check("🉐🉐🉐🉐🉐\n2nd line", 41, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 42, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐")
+
+
+def test_short_summary_with_verbose(
+    monkeypatch: MonkeyPatch, pytester: Pytester
+) -> None:
+    """With -vv do not truncate the summary info (#11777)."""
+    # On CI we also do not truncate the summary info, monkeypatch it to ensure we
+    # are testing against the -vv flag on CI.
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    string_length = 200
+    pytester.makepyfile(
+        f"""
+        def test():
+            s1 = "A" * {string_length}
+            s2 = "B" * {string_length}
+            assert s1 == s2
+        """
+    )
+
+    # No -vv, summary info should be truncated.
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            "* assert 'AAA...",
+        ],
+    )
+
+    # No truncation with -vv.
+    result = pytester.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            f"*{'A' * string_length}*{'B' * string_length}'",
+        ]
+    )
 
 
 @pytest.mark.parametrize(
