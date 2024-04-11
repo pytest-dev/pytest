@@ -550,9 +550,7 @@ def import_path(
             with contextlib.suppress(KeyError):
                 return sys.modules[module_name]
 
-            mod = _import_module_using_spec(
-                module_name, path, pkg_root, insert_modules=False
-            )
+            mod = _import_module_using_spec(module_name, path, insert_modules=False)
             if mod is not None:
                 return mod
 
@@ -562,9 +560,7 @@ def import_path(
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
-        mod = _import_module_using_spec(
-            module_name, path, path.parent, insert_modules=True
-        )
+        mod = _import_module_using_spec(module_name, path, insert_modules=True)
         if mod is None:
             raise ImportError(f"Can't find module {module_name} at location {path}")
         return mod
@@ -617,7 +613,7 @@ def import_path(
 
 
 def _import_module_using_spec(
-    module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
+    module_name: str, module_path: Path, *, insert_modules: bool
 ) -> Optional[ModuleType]:
     """
     Tries to import a module by its canonical name, path to the .py file, and its
@@ -630,7 +626,7 @@ def _import_module_using_spec(
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
     for meta_importer in sys.meta_path:
-        spec = meta_importer.find_spec(module_name, [str(module_location)])
+        spec = meta_importer.find_spec(module_name, [str(module_path.parent)])
         if spec_matches_module_path(spec, module_path):
             break
     else:
