@@ -4,6 +4,7 @@ import pytest
 
 @pytest.fixture
 def spam():
+    print("function spam!")
     return "spam"
 
 
