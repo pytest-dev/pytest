@@ -641,9 +641,24 @@ def _import_module_using_spec(
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         if insert_modules:
             insert_missing_modules(sys.modules, module_name)
+        _set_name_in_parent(mod)
         return mod
 
     return None
+
+
+def _set_name_in_parent(module: ModuleType) -> None:
+    """
+    Sets an attribute in the module's parent pointing to the module itself (#12194).
+
+    Based on https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1335-L1342.
+    """
+    parent, _, name = module.__name__.rpartition(".")
+    if not parent:
+        return
+    parent_module = sys.modules.get(parent)
+    if parent_module is not None:
+        setattr(sys.modules[parent], name, module)
 
 
 def spec_matches_module_path(

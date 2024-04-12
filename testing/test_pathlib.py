@@ -1126,6 +1126,31 @@ def test_safe_exists(tmp_path: Path) -> None:
         assert safe_exists(p) is False
 
 
+def test_import_sets_module_as_attribute(pytester: Pytester) -> None:
+    """Regression test for #12194."""
+    pytester.path.joinpath("foo/bar/baz").mkdir(parents=True)
+    pytester.path.joinpath("foo/__init__.py").touch()
+    pytester.path.joinpath("foo/bar/__init__.py").touch()
+    pytester.path.joinpath("foo/bar/baz/__init__.py").touch()
+    f = pytester.makepyfile(
+        """
+        import foo
+        from foo.bar import baz
+        foo.bar.baz
+
+        def test_foo() -> None:
+            pass
+        """
+    )
+
+    pytester.syspathinsert()
+    result = pytester.runpython(f)
+    assert result.ret == 0
+
+    result = pytester.runpytest("--import-mode=importlib", "--doctest-modules")
+    assert result.ret == 0
+
+
 class TestNamespacePackages:
     """Test import_path support when importing from properly namespace packages."""
 
