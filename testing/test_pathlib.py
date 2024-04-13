@@ -1161,6 +1161,39 @@ def test_import_sets_module_as_attribute(pytester: Pytester) -> None:
     assert bar_2 is bar
 
 
+def test_import_sets_module_as_attribute_without_init_files(pytester: Pytester) -> None:
+    """Similar to test_import_sets_module_as_attribute, but without __init__.py files."""
+    pytester.path.joinpath("foo/bar").mkdir(parents=True)
+    pytester.path.joinpath("foo/bar/baz.py").touch()
+    pytester.syspathinsert()
+
+    # Import foo.bar.baz and ensure parent modules also ended up imported.
+    baz = import_path(
+        pytester.path.joinpath("foo/bar/baz.py"),
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert baz.__name__ == "foo.bar.baz"
+    foo = sys.modules["foo"]
+    assert foo.__name__ == "foo"
+    bar = sys.modules["foo.bar"]
+    assert bar.__name__ == "foo.bar"
+
+    # Check parent modules have an attribute pointing to their children.
+    assert bar.baz is baz
+    assert foo.bar is bar
+
+    # Ensure we returned the "foo.bar.baz" module cached in sys.modules.
+    baz_2 = import_path(
+        pytester.path.joinpath("foo/bar/baz.py"),
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert baz_2 is baz
+
+
 def test_import_sets_module_as_attribute_regression(pytester: Pytester) -> None:
     """Regression test for #12194."""
     pytester.path.joinpath("foo/bar/baz").mkdir(parents=True)
