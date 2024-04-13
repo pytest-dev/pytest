@@ -620,10 +620,6 @@ def _import_module_using_spec(
     :param insert_modules:
         If True, will call insert_missing_modules to create empty intermediate modules
         for made-up module names (when importing test files not reachable from sys.path).
-        Note: we can probably drop insert_missing_modules altogether: instead of
-        generating module names such as "src.tests.test_foo", which require intermediate
-        empty modules, we might just as well generate unique module names like
-        "src_tests_test_foo".
     """
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
