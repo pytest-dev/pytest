@@ -636,29 +636,28 @@ def _import_module_using_spec(
 
     if spec_matches_module_path(spec, module_path):
         assert spec is not None
+        # Attempt to import the parent module, seems is our responsibility:
+        # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
+        parent_module_name, _, name = module_name.rpartition(".")
+        parent_module: Optional[ModuleType] = sys.modules.get(parent_module_name)
+        if parent_module is None and parent_module_name:
+            with contextlib.suppress(ModuleNotFoundError, ImportWarning):
+                parent_module = importlib.import_module(parent_module_name)
+
+        # Find spec and import this module.
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
+
+        # Set this module as an attribute of the parent module (#12194).
+        if parent_module is not None:
+            setattr(parent_module, name, mod)
+
         if insert_modules:
             insert_missing_modules(sys.modules, module_name)
-        _set_name_in_parent(mod)
         return mod
 
     return None
-
-
-def _set_name_in_parent(module: ModuleType) -> None:
-    """
-    Sets an attribute in the module's parent pointing to the module itself (#12194).
-
-    Based on https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1335-L1342.
-    """
-    parent, _, name = module.__name__.rpartition(".")
-    if not parent:
-        return
-    parent_module = sys.modules.get(parent)
-    if parent_module is not None:
-        setattr(sys.modules[parent], name, module)
 
 
 def spec_matches_module_path(
