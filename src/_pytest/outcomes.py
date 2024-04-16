@@ -225,7 +225,7 @@ def importorskip(
         warnings.simplefilter("ignore")
         try:
             __import__(modname)
-        except ImportError as exc:
+        except ModuleNotFoundError as exc:
             if reason is None:
                 reason = f"could not import {modname!r}: {exc}"
             raise Skipped(reason, allow_module_level=True) from None
