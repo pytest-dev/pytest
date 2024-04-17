@@ -1279,8 +1279,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
    when collecting Python modules. Default is ``False``.
 
-   Set to ``True`` if you are testing namespace packages installed into a virtual environment and it is important for
-   your packages to be imported using their full namespace package name.
+   Set to ``True`` if the package you are testing is part of a namespace package.
 
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.

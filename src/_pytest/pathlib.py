@@ -8,6 +8,7 @@ from errno import ENOENT
 from errno import ENOTDIR
 import fnmatch
 from functools import partial
+from importlib.machinery import ModuleSpec
 import importlib.util
 import itertools
 import os
@@ -628,11 +629,13 @@ def _import_module_using_spec(
     # such as our own assertion-rewrite hook.
     for meta_importer in sys.meta_path:
         spec = meta_importer.find_spec(module_name, [str(module_location)])
-        if spec is not None:
+        if spec_matches_module_path(spec, module_path):
             break
     else:
         spec = importlib.util.spec_from_file_location(module_name, str(module_path))
-    if spec is not None:
+
+    if spec_matches_module_path(spec, module_path):
+        assert spec is not None
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
@@ -641,6 +644,16 @@ def _import_module_using_spec(
         return mod
 
     return None
+
+
+def spec_matches_module_path(
+    module_spec: Optional[ModuleSpec], module_path: Path
+) -> bool:
+    """Return true if the given ModuleSpec can be used to import the given module path."""
+    if module_spec is None or module_spec.origin is None:
+        return False
+
+    return Path(module_spec.origin) == module_path
 
 
 # Implement a special _is_same function on Windows which returns True if the two filenames
@@ -762,37 +775,77 @@ def resolve_pkg_root_and_module_name(
     Passing the full path to `models.py` will yield Path("src") and "app.core.models".
 
     If consider_namespace_packages is True, then we additionally check upwards in the hierarchy
-    until we find a directory that is reachable from sys.path, which marks it as a namespace package:
+    for namespace packages:
 
     https://packaging.python.org/en/latest/guides/packaging-namespace-packages
 
     Raises CouldNotResolvePathError if the given path does not belong to a package (missing any __init__.py files).
     """
+    pkg_root: Optional[Path] = None
     pkg_path = resolve_package_path(path)
     if pkg_path is not None:
         pkg_root = pkg_path.parent
-        # https://packaging.python.org/en/latest/guides/packaging-namespace-packages/
-        if consider_namespace_packages:
-            # Go upwards in the hierarchy, if we find a parent path included
-            # in sys.path, it means the package found by resolve_package_path()
-            # actually belongs to a namespace package.
-            for parent in pkg_root.parents:
-                # If any of the parent paths has a __init__.py, it means it is not
-                # a namespace package (see the docs linked above).
-                if (parent / "__init__.py").is_file():
-                    break
-                if str(parent) in sys.path:
-                    # Point the pkg_root to the root of the namespace package.
-                    pkg_root = parent
-                    break
+    if consider_namespace_packages:
+        start = pkg_root if pkg_root is not None else path.parent
+        for candidate in (start, *start.parents):
+            module_name = compute_module_name(candidate, path)
+            if module_name and is_importable(module_name, path):
+                # Point the pkg_root to the root of the namespace package.
+                pkg_root = candidate
+                break
 
-        names = list(path.with_suffix("").relative_to(pkg_root).parts)
-        if names[-1] == "__init__":
-            names.pop()
-        module_name = ".".join(names)
-        return pkg_root, module_name
+    if pkg_root is not None:
+        module_name = compute_module_name(pkg_root, path)
+        if module_name:
+            return pkg_root, module_name
 
     raise CouldNotResolvePathError(f"Could not resolve for {path}")
+
+
+def is_importable(module_name: str, module_path: Path) -> bool:
+    """
+    Return if the given module path could be imported normally by Python, akin to the user
+    entering the REPL and importing the corresponding module name directly, and corresponds
+    to the module_path specified.
+
+    :param module_name:
+        Full module name that we want to check if is importable.
+        For example, "app.models".
+
+    :param module_path:
+        Full path to the python module/package we want to check if is importable.
+        For example, "/projects/src/app/models.py".
+    """
+    try:
+        # Note this is different from what we do in ``_import_module_using_spec``, where we explicitly search through
+        # sys.meta_path to be able to pass the path of the module that we want to import (``meta_importer.find_spec``).
+        # Using importlib.util.find_spec() is different, it gives the same results as trying to import
+        # the module normally in the REPL.
+        spec = importlib.util.find_spec(module_name)
+    except (ImportError, ValueError, ImportWarning):
+        return False
+    else:
+        return spec_matches_module_path(spec, module_path)
+
+
+def compute_module_name(root: Path, module_path: Path) -> Optional[str]:
+    """Compute a module name based on a path and a root anchor."""
+    try:
+        path_without_suffix = module_path.with_suffix("")
+    except ValueError:
+        # Empty paths (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
+        return None
+
+    try:
+        relative = path_without_suffix.relative_to(root)
+    except ValueError:  # pragma: no cover
+        return None
+    names = list(relative.parts)
+    if not names:
+        return None
+    if names[-1] == "__init__":
+        names.pop()
+    return ".".join(names)
 
 
 class CouldNotResolvePathError(Exception):

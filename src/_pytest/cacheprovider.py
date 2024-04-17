@@ -7,6 +7,7 @@ import dataclasses
 import json
 import os
 from pathlib import Path
+import tempfile
 from typing import Dict
 from typing import final
 from typing import Generator
@@ -123,6 +124,10 @@ class Cache:
             stacklevel=3,
         )
 
+    def _mkdir(self, path: Path) -> None:
+        self._ensure_cache_dir_and_supporting_files()
+        path.mkdir(exist_ok=True, parents=True)
+
     def mkdir(self, name: str) -> Path:
         """Return a directory path object with the given name.
 
@@ -141,7 +146,7 @@ class Cache:
         if len(path.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
         res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
-        res.mkdir(exist_ok=True, parents=True)
+        self._mkdir(res)
         return res
 
     def _getvaluepath(self, key: str) -> Path:
@@ -178,19 +183,13 @@ class Cache:
         """
         path = self._getvaluepath(key)
         try:
-            if path.parent.is_dir():
-                cache_dir_exists_already = True
-            else:
-                cache_dir_exists_already = self._cachedir.exists()
-                path.parent.mkdir(exist_ok=True, parents=True)
+            self._mkdir(path.parent)
         except OSError as exc:
             self.warn(
                 f"could not create cache path {path}: {exc}",
                 _ispytest=True,
             )
             return
-        if not cache_dir_exists_already:
-            self._ensure_supporting_files()
         data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
             f = path.open("w", encoding="UTF-8")
@@ -203,17 +202,32 @@ class Cache:
             with f:
                 f.write(data)
 
-    def _ensure_supporting_files(self) -> None:
-        """Create supporting files in the cache dir that are not really part of the cache."""
-        readme_path = self._cachedir / "README.md"
-        readme_path.write_text(README_CONTENT, encoding="UTF-8")
+    def _ensure_cache_dir_and_supporting_files(self) -> None:
+        """Create the cache dir and its supporting files."""
+        if self._cachedir.is_dir():
+            return
 
-        gitignore_path = self._cachedir.joinpath(".gitignore")
-        msg = "# Created by pytest automatically.\n*\n"
-        gitignore_path.write_text(msg, encoding="UTF-8")
+        self._cachedir.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix="pytest-cache-files-",
+            dir=self._cachedir.parent,
+        ) as newpath:
+            path = Path(newpath)
+            with open(path.joinpath("README.md"), "xt", encoding="UTF-8") as f:
+                f.write(README_CONTENT)
+            with open(path.joinpath(".gitignore"), "xt", encoding="UTF-8") as f:
+                f.write("# Created by pytest automatically.\n*\n")
+            with open(path.joinpath("CACHEDIR.TAG"), "xb") as f:
+                f.write(CACHEDIR_TAG_CONTENT)
 
-        cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
-        cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
+            path.rename(self._cachedir)
+            # Create a directory in place of the one we just moved so that `TemporaryDirectory`'s
+            # cleanup doesn't complain.
+            #
+            # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10. See
+            # https://github.com/python/cpython/issues/74168. Note that passing delete=False would
+            # do the wrong thing in case of errors and isn't supported until python 3.12.
+            path.mkdir()
 
 
 class LFPluginCollWrapper:
