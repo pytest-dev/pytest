@@ -1094,3 +1094,20 @@ def test_outcome_exception_bad_msg() -> None:
     with pytest.raises(TypeError) as excinfo:
         OutcomeException(func)  # type: ignore
     assert str(excinfo.value) == expected
+
+
+def test_pytest_version_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    os.environ["PYTEST_VERSION"] = "old version"
+    pytester.makepyfile(
+        """
+        import pytest
+        import os
+
+
+        def test():
+            assert os.environ.get("PYTEST_VERSION") == pytest.__version__
+    """
+    )
+    result = pytester.runpytest_inprocess()
+    assert result.ret == ExitCode.OK
+    assert os.environ["PYTEST_VERSION"] == "old version"
