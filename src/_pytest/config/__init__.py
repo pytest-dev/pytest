@@ -152,8 +152,8 @@ def main(
 
     :returns: An exit code.
     """
+    old_pytest_version = os.environ.get("PYTEST_VERSION")
     try:
-        old_pytest_version = os.environ.get("PYTEST_VERSION")
         os.environ["PYTEST_VERSION"] = __version__
         try:
             config = _prepareconfig(args, plugins)
