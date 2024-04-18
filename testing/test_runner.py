@@ -1097,7 +1097,7 @@ def test_outcome_exception_bad_msg() -> None:
 
 
 def test_pytest_version_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-    os.environ["PYTEST_VERSION"] = "old version"
+    monkeypatch.setenv("PYTEST_VERSION", "old version")
     pytester.makepyfile(
         """
         import pytest
