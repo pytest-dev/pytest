@@ -1,4 +1,5 @@
 # mypy: allow-untyped-defs
+import builtins
 from functools import partial
 import inspect
 import os
@@ -7,6 +8,8 @@ import sys
 import types
 from typing import Dict
 from typing import List
+from typing import Mapping
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 
@@ -760,6 +763,27 @@ def test_importorskip(monkeypatch) -> None:
 def test_importorskip_imports_last_module_part() -> None:
     ospath = pytest.importorskip("os.path")
     assert os.path == ospath
+
+
+def test_importorskip_importError_Exception() -> None:
+    ## Mocking the import function to raise a importError
+    realimport = builtins.__import__
+
+    def myimport(
+        name: str,
+        globals: Mapping[str, object] | None = None,
+        locals: Mapping[str, object] | None = None,
+        fromlist: Sequence[str] = (),
+        level: int = 0,
+    ) -> types.ModuleType:
+        raise ImportError
+
+    builtins.__import__ = myimport
+
+    with pytest.raises(ImportError):
+        pytest.importorskip("abcdefghi")
+
+    builtins.__import__ = realimport
 
 
 def test_importorskip_dev_module(monkeypatch) -> None:
