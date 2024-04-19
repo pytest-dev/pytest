@@ -1,0 +1,1 @@
+pytest.importorskip will now skip both ImportError and ModuleNotFoundError.
