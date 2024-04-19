@@ -11,6 +11,8 @@ from typing import Protocol
 from typing import Type
 from typing import TypeVar
 
+from .warning_types import PytestDeprecationWarning
+
 
 class OutcomeException(BaseException):
     """OutcomeException and its subclass instances indicate and contain info
@@ -192,7 +194,10 @@ def xfail(reason: str = "") -> NoReturn:
 
 
 def importorskip(
-    modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
+    modname: str,
+    minversion: Optional[str] = None,
+    reason: Optional[str] = None,
+    exc_type: Optional[Type[ImportError]] = None,
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.
@@ -205,6 +210,8 @@ def importorskip(
     :param reason:
         If given, this reason is shown as the message when the module cannot
         be imported.
+    :param exc_type:
+        If given, modules are skipped if this exception is raised.
 
     :returns:
         The imported module. This should be assigned to its canonical name.
@@ -223,12 +230,24 @@ def importorskip(
         # of existing directories with the same name we're trying to
         # import but without a __init__.py file.
         warnings.simplefilter("ignore")
+
+        if exc_type is None:
+            exc_type = ModuleNotFoundError
+        else:
+            exc_type = ImportError
+            warnings.warn(
+                PytestDeprecationWarning(
+                    "The Default behaviour will change to ImportError in future",
+                )
+            )
+
         try:
             __import__(modname)
-        except ModuleNotFoundError as exc:
+        except exc_type as exc:
             if reason is None:
                 reason = f"could not import {modname!r}: {exc}"
             raise Skipped(reason, allow_module_level=True) from None
+
     mod = sys.modules[modname]
     if minversion is None:
         return mod

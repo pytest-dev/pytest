@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-import builtins
 from functools import partial
 import inspect
 import os
@@ -8,8 +7,6 @@ import sys
 import types
 from typing import Dict
 from typing import List
-from typing import Mapping
-from typing import Sequence
 from typing import Tuple
 from typing import Type
 
@@ -22,6 +19,7 @@ from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestDeprecationWarning
 import pytest
 
 
@@ -765,25 +763,18 @@ def test_importorskip_imports_last_module_part() -> None:
     assert os.path == ospath
 
 
-def test_importorskip_importError_Exception() -> None:
-    ## Mocking the import function to raise a importError
-    realimport = builtins.__import__
+def test_importorskip_importError_warning(pytester: Pytester) -> None:
+    """
+    importorskip() will only skip modules by ImportError as well as ModuleNotFoundError
+    will give warning when using ImportError
+    #11523
+    """
+    fn = pytester.makepyfile("raise ImportError('some specific problem')")
+    pytester.syspathinsert()
 
-    def myimport(
-        name: str,
-        globals: Mapping[str, object] | None = None,
-        locals: Mapping[str, object] | None = None,
-        fromlist: Sequence[str] = (),
-        level: int = 0,
-    ) -> types.ModuleType:
-        raise ImportError
-
-    builtins.__import__ = myimport
-
-    with pytest.raises(ImportError):
-        pytest.importorskip("abcdefghi")
-
-    builtins.__import__ = realimport
+    with pytest.raises(pytest.skip.Exception):
+        with pytest.warns(PytestDeprecationWarning):
+            pytest.importorskip(fn.stem, exc_type=ImportError)
 
 
 def test_importorskip_dev_module(monkeypatch) -> None:
