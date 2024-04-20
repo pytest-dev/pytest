@@ -620,10 +620,6 @@ def _import_module_using_spec(
     :param insert_modules:
         If True, will call insert_missing_modules to create empty intermediate modules
         for made-up module names (when importing test files not reachable from sys.path).
-        Note: we can probably drop insert_missing_modules altogether: instead of
-        generating module names such as "src.tests.test_foo", which require intermediate
-        empty modules, we might just as well generate unique module names like
-        "src_tests_test_foo".
     """
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
@@ -636,9 +632,41 @@ def _import_module_using_spec(
 
     if spec_matches_module_path(spec, module_path):
         assert spec is not None
+        # Attempt to import the parent module, seems is our responsibility:
+        # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
+        parent_module_name, _, name = module_name.rpartition(".")
+        parent_module: Optional[ModuleType] = None
+        if parent_module_name:
+            parent_module = sys.modules.get(parent_module_name)
+            if parent_module is None:
+                # Find the directory of this module's parent.
+                parent_dir = (
+                    module_path.parent.parent
+                    if module_path.name == "__init__.py"
+                    else module_path.parent
+                )
+                # Consider the parent module path as its __init__.py file, if it has one.
+                parent_module_path = (
+                    parent_dir / "__init__.py"
+                    if (parent_dir / "__init__.py").is_file()
+                    else parent_dir
+                )
+                parent_module = _import_module_using_spec(
+                    parent_module_name,
+                    parent_module_path,
+                    parent_dir,
+                    insert_modules=insert_modules,
+                )
+
+        # Find spec and import this module.
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
+
+        # Set this module as an attribute of the parent module (#12194).
+        if parent_module is not None:
+            setattr(parent_module, name, mod)
+
         if insert_modules:
             insert_missing_modules(sys.modules, module_name)
         return mod
