@@ -635,26 +635,28 @@ def _import_module_using_spec(
         # Attempt to import the parent module, seems is our responsibility:
         # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
         parent_module_name, _, name = module_name.rpartition(".")
-        parent_module: Optional[ModuleType] = sys.modules.get(parent_module_name)
-        if parent_module is None and parent_module_name:
-            # Find the directory of this module's parent.
-            parent_dir = (
-                module_path.parent.parent
-                if module_path.name == "__init__.py"
-                else module_path.parent
-            )
-            # Consider the parent module path as its __init__.py file, if it has one.
-            parent_module_path = (
-                parent_dir / "__init__.py"
-                if (parent_dir / "__init__.py").is_file()
-                else parent_dir
-            )
-            parent_module = _import_module_using_spec(
-                parent_module_name,
-                parent_module_path,
-                parent_dir,
-                insert_modules=insert_modules,
-            )
+        parent_module: Optional[ModuleType] = None
+        if parent_module_name:
+            parent_module = sys.modules.get(parent_module_name)
+            if parent_module is None:
+                # Find the directory of this module's parent.
+                parent_dir = (
+                    module_path.parent.parent
+                    if module_path.name == "__init__.py"
+                    else module_path.parent
+                )
+                # Consider the parent module path as its __init__.py file, if it has one.
+                parent_module_path = (
+                    parent_dir / "__init__.py"
+                    if (parent_dir / "__init__.py").is_file()
+                    else parent_dir
+                )
+                parent_module = _import_module_using_spec(
+                    parent_module_name,
+                    parent_module_path,
+                    parent_dir,
+                    insert_modules=insert_modules,
+                )
 
         # Find spec and import this module.
         mod = importlib.util.module_from_spec(spec)
