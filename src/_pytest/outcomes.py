@@ -197,6 +197,7 @@ def importorskip(
     modname: str,
     minversion: Optional[str] = None,
     reason: Optional[str] = None,
+    *,
     exc_type: Optional[Type[ImportError]] = None,
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
