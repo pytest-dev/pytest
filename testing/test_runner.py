@@ -774,7 +774,12 @@ def test_importorskip_importError_warning(pytester: Pytester) -> None:
 
     with pytest.raises(pytest.skip.Exception):
         with pytest.warns(PytestDeprecationWarning):
-            pytest.importorskip(fn.stem, exc_type=ImportError)
+            pytest.importorskip(fn.stem)
+
+
+def test_importorskip_ModuleNotFoundError() -> None:
+    with pytest.raises(pytest.skip.Exception):
+        pytest.importorskip("abcdefgh")
 
 
 def test_importorskip_dev_module(monkeypatch) -> None:
