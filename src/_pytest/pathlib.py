@@ -1,4 +1,3 @@
-# mypy: allow-untyped-defs
 import atexit
 import contextlib
 from enum import Enum
@@ -23,6 +22,7 @@ import shutil
 import sys
 import types
 from types import ModuleType
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
@@ -59,7 +59,7 @@ _IGNORED_WINERRORS = (
 )
 
 
-def _ignore_error(exception):
+def _ignore_error(exception: Exception) -> bool:
     return (
         getattr(exception, "errno", None) in _IGNORED_ERRORS
         or getattr(exception, "winerror", None) in _IGNORED_WINERRORS
@@ -71,7 +71,7 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
 
 
 def on_rm_rf_error(
-    func,
+    func: Optional[Callable[..., Any]],
     path: str,
     excinfo: Union[
         BaseException,
@@ -196,7 +196,7 @@ def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
     return extract_suffixes(find_prefixed(root, prefix), prefix)
 
 
-def parse_num(maybe_num) -> int:
+def parse_num(maybe_num: str) -> int:
     """Parse number path suffixes, returns -1 on error."""
     try:
         return int(maybe_num)
@@ -264,7 +264,9 @@ def create_cleanup_lock(p: Path) -> Path:
         return lock_path
 
 
-def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
+def register_cleanup_lock_removal(
+    lock_path: Path, register: Any = atexit.register
+) -> Any:
     """Register a cleanup function for removing a lock, by default on atexit."""
     pid = os.getpid()
 
@@ -355,7 +357,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
             yield Path(entry)
 
 
-def cleanup_dead_symlinks(root: Path):
+def cleanup_dead_symlinks(root: Path) -> None:
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
             if not left_dir.resolve().exists():
@@ -459,10 +461,14 @@ def parts(s: str) -> Set[str]:
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
 
 
-def symlink_or_skip(src, dst, **kwargs):
+def symlink_or_skip(
+    src: Union["os.PathLike[str]", str],
+    dst: Union["os.PathLike[str]", str],
+    **kwargs: Any,
+) -> None:
     """Make a symlink, or skip the test in case symlinks are not supported."""
     try:
-        os.symlink(str(src), str(dst), **kwargs)
+        os.symlink(src, dst, **kwargs)
     except OSError as e:
         skip(f"symlinks not supported: {e}")
 
