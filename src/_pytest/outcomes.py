@@ -232,20 +232,25 @@ def importorskip(
         warnings.simplefilter("ignore")
 
         if exc_type is None:
-            exc_type = ModuleNotFoundError
-        else:
             exc_type = ImportError
-            warnings.warn(
-                PytestDeprecationWarning(
-                    "The Default behaviour will change to ImportError in future",
-                )
-            )
+            warn_on_import_error = True
+        else:
+            warn_on_import_error = False
 
         try:
             __import__(modname)
         except exc_type as exc:
             if reason is None:
                 reason = f"could not import {modname!r}: {exc}"
+            if warn_on_import_error and type(exc) is ImportError:
+                warnings.warn(
+                    PytestDeprecationWarning(
+                        f"""pytest.importorskip() caught {exc},but this will change in a future pytest release
+                        to only capture ModuleNotFoundError exceptions by default.\nTo overwrite the future
+                        behavior and silence this warning, pass exc_type=ImportError explicitly."""
+                    )
+                )
+
             raise Skipped(reason, allow_module_level=True) from None
 
     mod = sys.modules[modname]
