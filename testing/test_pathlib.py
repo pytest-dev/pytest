@@ -1219,6 +1219,46 @@ def test_import_sets_module_as_attribute_regression(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_import_submodule_not_namespace(pytester: Pytester) -> None:
+    """
+    Regression test for importing a submodule 'foo.bar' while there is a 'bar' directory
+    reachable from sys.path -- ensuring the top-level module does not end up imported as a namespace
+    package.
+
+    #12194
+    https://github.com/pytest-dev/pytest/pull/12208#issuecomment-2056458432
+    """
+    pytester.syspathinsert()
+    # Create package 'foo' with a submodule 'bar'.
+    pytester.path.joinpath("foo").mkdir()
+    foo_path = pytester.path.joinpath("foo/__init__.py")
+    foo_path.touch()
+    bar_path = pytester.path.joinpath("foo/bar.py")
+    bar_path.touch()
+    # Create top-level directory in `sys.path` with the same name as that submodule.
+    pytester.path.joinpath("bar").mkdir()
+
+    # Import `foo`, then `foo.bar`, and check they were imported from the correct location.
+    foo = import_path(
+        foo_path,
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    bar = import_path(
+        bar_path,
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert foo.__name__ == "foo"
+    assert bar.__name__ == "foo.bar"
+    assert foo.__file__ is not None
+    assert bar.__file__ is not None
+    assert Path(foo.__file__) == foo_path
+    assert Path(bar.__file__) == bar_path
+
+
 class TestNamespacePackages:
     """Test import_path support when importing from properly namespace packages."""
 
