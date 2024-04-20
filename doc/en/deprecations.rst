@@ -19,6 +19,44 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _import-or-skip-import-error:
+
+``pytest.importorskip`` default behavior regarding :class:`ImportError`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.2
+
+Traditionally :func:`pytest.importorskip` will capture :class:`ImportError`, with the original intent being to skip
+tests where a dependent module is not installed, for example testing with different available dependencies.
+
+However some packages might be installed in the system, but are not importable due to
+some other issue (e.g., a compilation error or a broken installation). In those cases :func:`pytest.importorskip`
+would still silently skip the test, but more often than not users would like to see the unexpected
+error so the underlying issue can be fixed.
+
+In ``8.2`` the ``exc_type`` parameter has been added, giving users the ability of passing :class:`ModuleNotFoundError`
+to only skip tests only if the module cannot really be found, and not because of some other error.
+
+Catching only :class:`ModuleNotFoundError` by default (and let other errors propagate) would be the best solution,
+however for backward compatibility, pytest will keep the existing behavior but raise an warning if:
+
+1. The captured exception is of type :class:`ImportError`, and:
+2. The user does not pass ``exc_type`` explicitly.
+
+If the import attempt raises :class:`ModuleNotFoundError` (the usual case), then the module is skipped and no
+warning is emitted.
+
+This will maintain the normal cases working the same way, while unexpected errors will now issue a warning.
+Users can supress the warning by passing ``exc_type=ImportError`` explicitly.
+
+In ``9.0``, the warning will turn into an error, and in ``9.1`` :func:`pytest.importorskip` will only capture
+:class:`ModuleNotFoundError` by default and no warnings will be issued anymore -- but users can still capture
+:class:`ImportError` by passing it to ``exc_type``.
+
+This roadmap should then be as little disruptive as possible: the intended case will continue to work as normal,
+and the exceptional cases will issue a warning, while providing users with a escape hatch when needed.
+
+
 .. _node-ctor-fspath-deprecation:
 
 ``fspath`` argument for Node constructors replaced with ``pathlib.Path``
