@@ -34,7 +34,7 @@ repos:
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
-          - pluggy>=1.4.0
+          - pluggy>=1.5.0
           - packaging
           - tomli
           - types-pkg_resources
