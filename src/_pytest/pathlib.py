@@ -656,7 +656,6 @@ def _import_module_using_spec(
                 parent_module = _import_module_using_spec(
                     parent_module_name,
                     parent_module_path,
-                    parent_dir,
                     insert_modules=insert_modules,
                 )
 
