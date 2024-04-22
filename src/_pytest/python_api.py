@@ -163,6 +163,9 @@ class ApproxNumpy(ApproxBase):
             self._approx_scalar, self.expected.tolist()
         )
 
+        # convert other_side to numpy array to ensure shape attribute is available
+        other_side = _as_numpy_array(other_side)
+
         if np_array_shape != other_side.shape:
             return [
                 "Impossible to compare arrays with different shapes.",
