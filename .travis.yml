@@ -3,9 +3,5 @@ language: python
 rvm:
  - "3.9"
 
-install:
-  - pip install --user pre-commit
-  - pip install tox
-
 script:
   - pytest testing/python/approx.py
