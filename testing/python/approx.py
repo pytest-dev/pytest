@@ -773,7 +773,6 @@ class TestApprox:
                 self.vals = vals
 
             def __array__(self, dtype=None, copy=None):
-                print("called __array__ in ImplicitArray")
                 return np.array(self.vals)
 
         vec1 = ImplicitArray([1.0, 2.0, 3.0])
