@@ -1,7 +1,0 @@
-language: python
-
-rvm:
- - "3.9"
-
-script:
-  - pytest testing/python/approx.py
