@@ -773,10 +773,12 @@ class TestApprox:
                 self.vals = vals
 
             def __array__(self, dtype=None, copy=None):
+                print("called __array__ in ImplicitArray")
                 return np.array(self.vals)
 
         vec1 = ImplicitArray([1.0, 2.0, 3.0])
         vec2 = ImplicitArray([1.0, 2.0, 4.0])
+        # see issue #12114 for test case
         assert vec1 != approx(vec2)
 
     def test_numpy_array_protocol(self):
