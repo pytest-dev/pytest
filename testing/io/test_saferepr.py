@@ -79,7 +79,7 @@ def test_baseexception():
                 raise self.exc_type(*args)
             raise self.exc_type
 
-        def __str__(self):
+        def __str__(self):  # noqa: PLE0307
             self.raise_exc("__str__")
 
         def __repr__(self):
