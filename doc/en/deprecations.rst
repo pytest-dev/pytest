@@ -37,7 +37,7 @@ error so the underlying issue can be fixed.
 In ``8.2`` the ``exc_type`` parameter has been added, giving users the ability of passing :class:`ModuleNotFoundError`
 to skip tests only if the module cannot really be found, and not because of some other error.
 
-Catching only :class:`ModuleNotFoundError` by default (and let other errors propagate) would be the best solution,
+Catching only :class:`ModuleNotFoundError` by default (and letting other errors propagate) would be the best solution,
 however for backward compatibility, pytest will keep the existing behavior but raise an warning if:
 
 1. The captured exception is of type :class:`ImportError`, and:
