@@ -269,7 +269,7 @@ def importorskip(
                 reason = f"could not import {modname!r}: {exc}"
             skipped = Skipped(reason, allow_module_level=True)
 
-            if warn_on_import_error and not issubclass(exc, ModuleNotFoundError):
+            if warn_on_import_error and not isinstance(exc, ModuleNotFoundError):
                 lines = [
                     "",
                     f"Module '{modname}' was found, but when imported by pytest it raised:",
