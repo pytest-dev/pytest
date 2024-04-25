@@ -1,1 +1,1 @@
-Fixed attribute error in pytest.approx for types implicitly convertible to numpy arrays by converting other_side to a numpy array so that np_array_shape != other_side.shape can be properly checked.
+Fixed error in :func:`pytest.approx` when used with `numpy` arrays and comparing with other types.

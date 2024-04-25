@@ -163,7 +163,7 @@ class ApproxNumpy(ApproxBase):
             self._approx_scalar, self.expected.tolist()
         )
 
-        # convert other_side to numpy array to ensure shape attribute is available
+        # Convert other_side to numpy array to ensure shape attribute is available.
         other_side_as_array = _as_numpy_array(other_side)
         assert other_side_as_array is not None
 
