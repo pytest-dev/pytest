@@ -763,7 +763,8 @@ class TestApprox:
         assert a12 != approx(a21)
         assert a21 != approx(a12)
 
-    def test_numpy_array_implicit_conversion(self):
+    def test_numpy_array_implicit_conversion(self) -> None:
+        """#12114."""
         np = pytest.importorskip("numpy")
 
         class ImplicitArray:
