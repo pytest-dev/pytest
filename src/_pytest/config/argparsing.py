@@ -448,7 +448,7 @@ class MyOptionParser(argparse.ArgumentParser):
             getattr(parsed, FILE_OR_DIR).extend(unrecognized)
         return parsed
 
-    if sys.version_info[:2] < (3, 9):  # pragma: no cover
+    if sys.version_info < (3, 9):  # pragma: no cover
         # Backport of https://github.com/python/cpython/pull/14316 so we can
         # disable long --argument abbreviations without breaking short flags.
         def _parse_optional(

@@ -69,7 +69,7 @@ from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 
