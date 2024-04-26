@@ -12,7 +12,7 @@ result_index = [
     (1, 1, 2)
 ]
 
-@pytest.mark.parametrize("a", "b, expected_result", result_index)
+@pytest.mark.parametrize("a, b,expected_result", result_index)
 
 
 def test_add(a, b, expected_result):
