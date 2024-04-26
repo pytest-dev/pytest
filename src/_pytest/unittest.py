@@ -111,6 +111,19 @@ class UnitTestCase(Class):
             return None
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
+        def process_teardown_exceptions(raise_last: bool):
+            errors = getattr(cls, "tearDown_exceptions", None)
+            if not errors:
+                return
+            others = errors[:-1] if raise_last else errors
+            if others:
+                num = len(errors)
+                for n, (exc_type, exc, tb) in enumerate(others, start=1):
+                    print(f"\nclass cleanup error ({n} of {num}):", file=sys.stderr)
+                    traceback.print_exception(exc_type, exc, tb)
+            if raise_last:
+                raise errors[-1][1]
+
         def unittest_setup_class_fixture(
             request: FixtureRequest,
         ) -> Generator[None, None, None]:
@@ -125,6 +138,7 @@ class UnitTestCase(Class):
                 # follow this here.
                 except Exception:
                     cleanup()
+                    process_teardown_exceptions(raise_last=False)
                     raise
             yield
             try:
@@ -132,6 +146,7 @@ class UnitTestCase(Class):
                     teardown()
             finally:
                 cleanup()
+                process_teardown_exceptions(raise_last=True)
 
         self.session._fixturemanager._register_fixture(
             # Use a unique name to speed up lookup.
