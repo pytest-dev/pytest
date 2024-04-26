@@ -1500,70 +1500,93 @@ def test_do_cleanups_on_teardown_failure(pytester: Pytester) -> None:
     assert passed == 1
 
 
-def test_class_cleanups_failure_in_setup(pytester: Pytester) -> None:
-    testpath = pytester.makepyfile(
-        """
-        import unittest
-        class MyTestCase(unittest.TestCase):
-            @classmethod
-            def setUpClass(cls):
-                def cleanup(n):
-                    raise Exception(f"fail {n}")
-                cls.addClassCleanup(cleanup, 2)
-                cls.addClassCleanup(cleanup, 1)
-                raise Exception("fail 0")
-            def test(self):
-                pass
+class TestClassCleanupErrors:
     """
-    )
-    result = pytester.runpytest("-s", testpath)
-    result.assert_outcomes(passed=0, errors=1)
-    result.stderr.fnmatch_lines(
-        [
-            "class cleanup error (1 of 2):",
-            "Exception: fail 1",
-            "class cleanup error (2 of 2):",
-            "Exception: fail 2",
-        ]
-    )
-    result.stdout.fnmatch_lines(
-        [
-            "* ERROR at setup of MyTestCase.test *",
-            "E * Exception: fail 0",
-        ]
-    )
+    Make sure to show exceptions raised during class cleanup function (those registered
+    via addClassCleanup()).
 
-
-def test_class_cleanups_failure_in_teardown(pytester: Pytester) -> None:
-    testpath = pytester.makepyfile(
-        """
-        import unittest
-        class MyTestCase(unittest.TestCase):
-            @classmethod
-            def setUpClass(cls):
-                def cleanup(n):
-                    raise Exception(f"fail {n}")
-                cls.addClassCleanup(cleanup, 2)
-                cls.addClassCleanup(cleanup, 1)
-            def test(self):
-                pass
+    See #11728.
     """
-    )
-    result = pytester.runpytest("-s", testpath)
-    result.assert_outcomes(passed=1, errors=1)
-    result.stderr.fnmatch_lines(
-        [
-            "class cleanup error (1 of 2):",
-            "Traceback *",
-            "Exception: fail 1",
-        ]
-    )
-    result.stdout.fnmatch_lines(
-        [
-            "* ERROR at teardown of MyTestCase.test *",
-            "E * Exception: fail 2",
-        ]
-    )
+
+    def test_class_cleanups_failure_in_setup(self, pytester: Pytester) -> None:
+        testpath = pytester.makepyfile(
+            """
+            import unittest
+            class MyTestCase(unittest.TestCase):
+                @classmethod
+                def setUpClass(cls):
+                    def cleanup(n):
+                        raise Exception(f"fail {n}")
+                    cls.addClassCleanup(cleanup, 2)
+                    cls.addClassCleanup(cleanup, 1)
+                    raise Exception("fail 0")
+                def test(self):
+                    pass
+        """
+        )
+        result = pytester.runpytest("-s", testpath)
+        result.assert_outcomes(passed=0, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*Unittest class cleanup errors *2 sub-exceptions*",
+                "*Exception: fail 1",
+                "*Exception: fail 2",
+            ]
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "* ERROR at setup of MyTestCase.test *",
+                "E * Exception: fail 0",
+            ]
+        )
+
+    def test_class_cleanups_failure_in_teardown(self, pytester: Pytester) -> None:
+        testpath = pytester.makepyfile(
+            """
+            import unittest
+            class MyTestCase(unittest.TestCase):
+                @classmethod
+                def setUpClass(cls):
+                    def cleanup(n):
+                        raise Exception(f"fail {n}")
+                    cls.addClassCleanup(cleanup, 2)
+                    cls.addClassCleanup(cleanup, 1)
+                def test(self):
+                    pass
+        """
+        )
+        result = pytester.runpytest("-s", testpath)
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*Unittest class cleanup errors *2 sub-exceptions*",
+                "*Exception: fail 1",
+                "*Exception: fail 2",
+            ]
+        )
+
+    def test_class_cleanup_1_failure_in_teardown(self, pytester: Pytester) -> None:
+        testpath = pytester.makepyfile(
+            """
+            import unittest
+            class MyTestCase(unittest.TestCase):
+                @classmethod
+                def setUpClass(cls):
+                    def cleanup(n):
+                        raise Exception(f"fail {n}")
+                    cls.addClassCleanup(cleanup, 1)
+                def test(self):
+                    pass
+        """
+        )
+        result = pytester.runpytest("-s", testpath)
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR at teardown of MyTestCase.test*",
+                "*Exception: fail 1",
+            ]
+        )
 
 
 def test_traceback_pruning(pytester: Pytester) -> None:
