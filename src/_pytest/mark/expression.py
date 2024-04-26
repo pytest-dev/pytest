@@ -206,13 +206,13 @@ class Expression:
         :param input: The input expression - one line.
         """
         astexpr = expression(Scanner(input))
-        
+
         if mark:
             for node in ast.walk(astexpr):
-                #if the node is an identifier, i.e. a mark name
-                if isinstance(node, ast.Name): 
-                    MARK_GEN.verify_mark(node.id[len(IDENT_PREFIX):])
-                    
+                # if the node is an identifier, i.e. a mark name
+                if isinstance(node, ast.Name):
+                    MARK_GEN.verify_mark(node.id[len(IDENT_PREFIX) :])
+
         code: types.CodeType = compile(
             astexpr,
             filename="<pytest match expression>",
