@@ -26,6 +26,7 @@ from typing import Mapping
 from typing import NoReturn
 from typing import Optional
 from typing import Sequence
+
 from .structures import MARK_GEN
 
 
